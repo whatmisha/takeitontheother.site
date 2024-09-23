@@ -1,7 +1,7 @@
 let centerX;
 let centerY;
 let numRays = 11;
-let rayLength = 220; // Длина лучей
+let rayLength = 200; // Длина лучей
 let inputField; // Поле для ввода числа лучей
 let strokeWeightInput; // Поле для ввода толщины линий
 let strokeWeightValue = 2; // Начальная толщина линий
