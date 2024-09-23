@@ -30,7 +30,7 @@ function setup() {
 
   // Кнопки для увеличения и уменьшения толщины линий
   let plusStrokeButton = createButton('+');
-  plusStrokeButton.position(125, height - 40); // Позиция кнопки «+» для толщины
+  plusStrokeButton.position(126, height - 40); // Позиция кнопки «+» для толщины
   plusStrokeButton.mousePressed(increaseStrokeWeight); // Обработчик нажатия на кнопку «+»
 
   let minusStrokeButton = createButton('-');
@@ -39,7 +39,7 @@ function setup() {
 
   // Поле для ввода толщины линий
   strokeWeightInput = createInput(strokeWeightValue.toString());
-  strokeWeightInput.position(77, height - 40); // Позиция поля для ввода
+  strokeWeightInput.position(76, height - 40); // Позиция поля для ввода
   strokeWeightInput.size(40); // Размер поля ввода
   strokeWeightInput.input(updateStrokeWeight); // Обработчик изменения толщины линий
 
