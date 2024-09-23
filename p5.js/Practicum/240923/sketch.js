@@ -30,7 +30,7 @@ function setup() {
 
   // Кнопки для увеличения и уменьшения толщины линий
   let plusStrokeButton = createButton('+');
-  plusStrokeButton.position(126, height - 40); // Позиция кнопки «+» для толщины
+  plusStrokeButton.position(125, height - 40); // Позиция кнопки «+» для толщины
   plusStrokeButton.mousePressed(increaseStrokeWeight); // Обработчик нажатия на кнопку «+»
 
   let minusStrokeButton = createButton('-');
