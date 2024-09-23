@@ -57,21 +57,45 @@ function drawRays() {
   strokeWeight(strokeWeightValue); // Устанавливаем текущую толщину линий
   strokeCap(SQUARE); // Прямоугольные окончания линий
 
-  let firstAngle = HALF_PI; // Первый луч - вертикально вниз (90 градусов)
-  let lastAngle = QUARTER_PI; // Последний луч - 45 градусов
+  let startAngle = HALF_PI; // Начинаем с вертикального луча вниз
+  let endAngle = QUARTER_PI * 3; // Последний луч под углом 135 градусов
 
-  let angleIncrement = (lastAngle - firstAngle) / (numRays - 1); // Шаг между лучами
+  // Угол для распределения остальных лучей
+  let availableAngle = endAngle - startAngle;
 
-  let currentAngle = firstAngle;
+  // Создаем массив углов с увеличивающимся шагом
+  let angles = [];
+  let angleSum = 0;
 
-  for (let i = 0; i < numRays; i++) {
-    let x = centerX + cos(currentAngle) * rayLength;
-    let y = centerY + sin(currentAngle) * rayLength;
+  // Накопительно увеличиваем шаг угла для промежуточных лучей
+  for (let i = 0; i < numRays - 1; i++) {
+    let normalizedIndex = i / (numRays - 2);
+    let step = pow(normalizedIndex, 2); // Квадратная функция для увеличения шага
+    angles.push(step);
+    angleSum += step;
+  }
+
+  // Нормализуем шаги угла, чтобы они занимали доступный угол
+  for (let i = 0; i < angles.length; i++) {
+    angles[i] = (angles[i] / angleSum) * availableAngle;
+  }
+
+  let currentAngle = startAngle;
+
+  for (let i = 0; i < numRays - 1; i++) {
+    let angle = currentAngle;
+    let x = centerX + cos(angle) * rayLength;
+    let y = centerY + sin(angle) * rayLength;
 
     line(centerX, centerY, x, y); // Линии длиной 220 пикселей от центра
 
-    currentAngle += angleIncrement; // Увеличиваем угол на следующий шаг
+    currentAngle += angles[i]; // Увеличиваем угол на следующий шаг
   }
+
+  // Рисуем последний луч под углом 135 градусов (QUARTER_PI * 3)
+  let x = centerX + cos(endAngle) * rayLength;
+  let y = centerY + sin(endAngle) * rayLength;
+  line(centerX, centerY, x, y);
 }
 
 // Увеличение числа лучей
