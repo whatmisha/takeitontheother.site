@@ -57,8 +57,8 @@ function drawRays() {
   strokeWeight(strokeWeightValue); // Устанавливаем текущую толщину линий
   strokeCap(SQUARE); // Прямоугольные окончания линий
 
-  let startAngle = HALF_PI; // Начинаем с вертикального луча вниз
-  let endAngle = QUARTER_PI * 3; // Последний луч под углом 135 градусов
+  let startAngle = HALF_PI; // Начальный луч - вертикально вниз (90 градусов)
+  let endAngle = HALF_PI + PI + HALF_PI + PI / 4; // Последний луч - вправо вниз (135 градусов по часовой)
 
   // Угол для распределения остальных лучей
   let availableAngle = endAngle - startAngle;
@@ -82,6 +82,7 @@ function drawRays() {
 
   let currentAngle = startAngle;
 
+  // Рисуем все лучи кроме последнего
   for (let i = 0; i < numRays - 1; i++) {
     let angle = currentAngle;
     let x = centerX + cos(angle) * rayLength;
@@ -92,7 +93,7 @@ function drawRays() {
     currentAngle += angles[i]; // Увеличиваем угол на следующий шаг
   }
 
-  // Рисуем последний луч под углом 135 градусов (QUARTER_PI * 3)
+  // Рисуем последний луч под углом 135 градусов по часовой стрелке (HALF_PI + PI / 4)
   let x = centerX + cos(endAngle) * rayLength;
   let y = centerY + sin(endAngle) * rayLength;
   line(centerX, centerY, x, y);
@@ -105,9 +106,9 @@ function increaseRays() {
   drawRays(); // Перерисовываем лучи с новым количеством
 }
 
-// Уменьшение числа лучей (минимум 3)
+// Уменьшение числа лучей (минимум 1)
 function decreaseRays() {
-  if (numRays > 3) {
+  if (numRays > 1) {
     numRays--;
     inputField.value(numRays.toString()); // Обновляем значение в поле ввода
     drawRays(); // Перерисовываем лучи с новым количеством
