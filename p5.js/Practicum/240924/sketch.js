@@ -58,7 +58,7 @@ function drawRays() {
   strokeCap(SQUARE); // Прямоугольные окончания линий
 
   let firstAngle = HALF_PI; // Первый луч - вертикально вниз (90 градусов)
-  let lastAngle = QUARTER_PI * 3; // Последний луч - 135 градусов
+  let lastAngle = QUARTER_PI; // Последний луч - 45 градусов
 
   let angleIncrement = (lastAngle - firstAngle) / (numRays - 1); // Шаг между лучами
 
