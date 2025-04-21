@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор паттерна</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <canvas id="patternCanvas" width="1920" height="1080"></canvas>
+    </div>
+    <div class="controls">
+        <div class="control-group">
+            <label for="lineThickness">Толщина линии:</label>
+            <input type="range" id="lineThickness" min="1" max="100" step="1" value="50">
+            <span id="lineThicknessValue">50px</span>
+        </div>
+        <div class="control-group">
+            <label for="cornerRadius">Радиус скругления угла:</label>
+            <input type="range" id="cornerRadius" min="0" max="360" step="1" value="120">
+            <span id="cornerRadiusValue">120px</span>
+        </div>
+        <div class="control-group">
+            <label for="duplicateLayers">Количество слоев дубликатов:</label>
+            <input type="range" id="duplicateLayers" min="0" max="100" step="1" value="0">
+            <span id="duplicateLayersValue">0</span>
+        </div>
+        <div class="control-group">
+            <label for="scaleDown">Масштаб:</label>
+            <input type="range" id="scaleDown" min="0" max="7" step="1" value="0">
+            <span id="scaleDownValue">1:1</span>
+        </div>
+        <div class="control-group">
+            <input type="checkbox" id="roundedCaps">
+            <label for="roundedCaps">Скругленные окончания</label>
+        </div>
+        <div class="control-group">
+            <input type="checkbox" id="tessellationMode" checked>
+            <label for="tessellationMode">Режим теселяции</label>
+        </div>
+        <div class="control-group">
+            <input type="checkbox" id="showGrid" checked>
+            <label for="showGrid">Показывать модульную сетку</label>
+        </div>
+        <button id="exportSVG">Экспорт в SVG (⌘E)</button>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 

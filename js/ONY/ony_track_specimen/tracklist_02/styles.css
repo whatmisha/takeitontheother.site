@@ -1,0 +1,49 @@
+@font-face {
+    font-family: 'Ony Track VGX';
+    src: url('font/Ony_Track_VGX.woff2') format('woff2-variations');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+    font-variation-settings: 'wdth' 400;
+}
+
+body {
+    background-color: black;
+    color: white;
+    margin: 0;
+    font-family: 'Ony Track VGX', Arial, sans-serif;
+    text-transform: uppercase;
+}
+
+.tracklist {
+    width: 100%;
+}
+
+.tracklist h1 {
+    position: fixed;
+    top: 24px;
+    width: 100%;
+    text-align: center;
+    margin: 0;
+    font-size: 48px;
+    font-weight: normal;
+    font-variation-settings: 'wdth' 400;
+}
+
+.tracklist ol {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    text-align: center;
+    list-style: none;
+}
+
+.tracklist li {
+    width: 100%;
+    white-space: nowrap;
+    line-height: 0.8;
+}

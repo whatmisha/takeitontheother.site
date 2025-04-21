@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chladni Figures</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1 class="rooftop-font">CHLADNI FIGURES GENERATOR</h1>
+    
+    <div class="main-content">
+      <!-- Left column with canvas -->
+      <div class="canvas-column">
+        <div id="canvas-container"></div>
+        <div class="controls-wrapper">
+          <div class="controls">
+            <button id="start-button">🔊 Start</button>
+            <button id="stop-button">Stop</button>
+            <button id="pause-button">Pause</button>
+            <button id="export-png-button">PNG</button>
+          </div>
+          <div class="spacebar-hint">Press SPACEBAR to pause/resume</div>
+        </div>
+      </div>
+      
+      <!-- Right column with settings -->
+      <div class="settings-column">
+        <div class="slider-controls">
+          <h3>Display Parameters</h3>
+          <div class="slider-group">
+            <label for="threshold-slider-container">Line Contrast</label>
+            <div id="threshold-slider-container" title="Adjusts the threshold for line contrast"></div>
+          </div>
+          <div class="slider-group">
+            <label for="modeX-slider-container">Horizontal Mode</label>
+            <div id="modeX-slider-container" title="Number of horizontal nodal lines"></div>
+            <div class="sound-reactive-option">
+              <span>Sound-Reactive</span>
+              <div id="audio-reactive-x-checkbox-container"></div>
+            </div>
+          </div>
+          <div class="slider-group">
+            <label for="modeY-slider-container">Vertical Mode</label>
+            <div id="modeY-slider-container" title="Number of vertical nodal lines"></div>
+            <div class="sound-reactive-option">
+              <span>Sound-Reactive</span>
+              <div id="audio-reactive-y-checkbox-container"></div>
+            </div>
+          </div>
+          
+          <div class="checkbox-group">
+            <label for="invert-checkbox-container">Invert Colors</label>
+            <div id="invert-checkbox-container" title="Switch between white-on-black and black-on-white"></div>
+          </div>
+          
+          <div class="checkbox-group">
+            <label for="noise-checkbox-container">Add Noise Effect</label>
+            <div id="noise-checkbox-container" title="Adds noise texture to gradient mode"></div>
+          </div>
+          
+          <div class="checkbox-group">
+            <label for="gradient-checkbox-container">Disable Contrast (Gradient Mode)</label>
+            <div id="gradient-checkbox-container" title="Shows figures in gradient mode without threshold"></div>
+          </div>
+          
+          <div class="checkbox-group">
+            <label for="diag-lines-checkbox-container">Show Diagonal Lines</label>
+            <div id="diag-lines-checkbox-container" title="Enables or disables diagonal lines in figures"></div>
+          </div>
+          
+          <h3>Sound Parameters</h3>
+          <div class="slider-group">
+            <label for="sensitivity-slider-container">Microphone Sensitivity</label>
+            <div id="sensitivity-slider-container" title="Sensitivity to incoming audio signal"></div>
+          </div>
+          <div class="slider-group">
+            <label for="smoothing-slider-container">Animation Smoothing</label>
+            <div id="smoothing-slider-container" title="Smoothness of transitions between figure states"></div>
+          </div>
+          
+          <div class="info">
+            <h3>Tips</h3>
+            <p>Use the microphone to see how sound affects the Chladni figures.</p>
+            <p>Disable contrast to see the gradient version of the figures.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="sketch.js"></script>
+</body>
+</html> 

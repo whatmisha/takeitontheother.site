@@ -1,0 +1,170 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #000000;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+canvas {
+    background-color: #000000;
+    border: 1px solid #3F3F3F;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.controls {
+    padding: 10px;
+    background-color: #111111;
+    border-top: 1px solid #3F3F3F;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    align-items: center;
+    overflow-y: auto;
+    max-height: 40vh; /* Максимальная высота - 40% от высоты окна */
+    min-height: fit-content;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 200px;
+    flex: 0 1 auto;
+}
+
+label {
+    font-size: 14px;
+    color: #999;
+    white-space: nowrap;
+}
+
+input[type="range"] {
+    width: 150px;
+    background-color: #333;
+    -webkit-appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    outline: none;
+    flex: 0 1 auto;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+}
+
+input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background-color: #333;
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    outline: none;
+    flex-shrink: 0;
+}
+
+input[type="checkbox"]:checked {
+    background-color: #555;
+}
+
+input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    color: #fff;
+    font-size: 14px;
+    top: 0;
+    left: 4px;
+}
+
+button {
+    background-color: #333;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #444;
+}
+
+/* Медиа-запросы для адаптивности */
+@media (max-width: 1200px) {
+    .controls {
+        padding: 8px;
+        gap: 10px;
+    }
+    
+    .control-group {
+        min-width: 180px;
+    }
+    
+    input[type="range"] {
+        width: 120px;
+    }
+}
+
+@media (max-width: 768px) {
+    .controls {
+        padding: 5px;
+        gap: 5px;
+    }
+    
+    .control-group {
+        min-width: 160px;
+        gap: 5px;
+    }
+    
+    input[type="range"] {
+        width: 100px;
+    }
+    
+    label {
+        font-size: 12px;
+    }
+}
+
+@media (max-height: 600px) {
+    .controls {
+        max-height: 50vh; /* Увеличиваем максимальную высоту на маленьких экранах */
+    }
+} 

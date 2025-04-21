@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YP Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Mobile message -->
+    <div class="mobile-message">
+        <h2>Desktop Only</h2>
+        <p>This interface is designed for desktop use only. Please visit this page on a desktop computer for the full experience.</p>
+    </div>
+
+    <!-- Tabs navigation -->
+    <div class="desktop-content tabs-container">
+        <div class="tab active" data-tab="dotted-rays">Dotted Rays</div>
+        <div class="tab" data-tab="plus-rays">Plus Rays</div>
+        <div class="tab" data-tab="grid">Dotted Grid</div>
+    </div>
+
+    <!-- Dotted Rays tab content -->
+    <div id="dotted-rays-content" class="tab-content active">
+        <!-- Desktop content -->
+        <div class="desktop-content controls">
+            <div>
+                <label>Additional Rays:</label>
+                <input type="range" id="raysSlider" min="0" max="8" value="0" step="1">
+                <input type="number" id="raysInput" value="0" min="0" max="8">
+            </div>
+            <label>
+                Circle Diameter:
+                <input type="range" id="sizeSlider" min="4" value="4" step="2">
+                <input type="number" id="sizeInput" value="4" min="4" step="2" class="number-input">
+            </label>
+            <br>
+            <label>
+                Distance Between Circles:
+                <input type="range" id="spacingSlider" min="4" max="360" value="24" step="2">
+                <input type="number" id="spacingInput" value="24" min="4" max="360" step="2" class="number-input">
+            </label>
+            <br>
+            <div class="control-row">
+                <button id="exportSVG" class="export-button">Export SVG</button>
+                <span class="keyboard-hint">⌘ + E</span>
+            </div>
+        </div>
+        <div class="desktop-content controls gravity-controls">
+            <label>
+                Cursor Radius:
+                <input type="range" id="radiusSlider" min="50" max="400" value="50" step="10">
+                <input type="number" id="radiusInput" value="50" min="50" max="400" step="10" class="number-input">
+            </label>
+            <br>
+            <label>
+                Cursor Force:
+                <input type="range" id="strengthSlider" min="1" max="100" value="1" step="1">
+                <input type="number" id="strengthInput" value="1" min="1" max="100" step="1" class="number-input">
+            </label>
+            <br>
+            <div class="control-row">
+                <label class="control-row">
+                    <input type="checkbox" id="gravityMode" class="repel-checkbox">
+                    <span>Repel Mode</span>
+                </label>
+            </div>
+            <div class="control-row">
+                <button id="randomMode">Random</button>
+            </div>
+        </div>
+        <div class="container desktop-content">
+            <canvas id="rayCanvas"></canvas>
+        </div>
+    </div>
+
+    <!-- Plus Rays tab content -->
+    <div id="plus-rays-content" class="tab-content">
+        <!-- Controls for Plus Rays -->
+        <div class="desktop-content controls">
+            <div>
+                <label>Additional Rays:</label>
+                <input type="range" id="plusRaysRaysSlider" min="0" max="8" value="0" step="1">
+                <input type="number" id="plusRaysRaysInput" value="0" min="0" max="8">
+            </div>
+            <label>
+                Line Length:
+                <input type="range" id="plusRaysLengthSlider" min="4" max="400" value="12" step="2">
+                <input type="number" id="plusRaysLengthInput" value="12" min="4" max="400" step="2" class="number-input">
+            </label>
+            <br>
+            <label>
+                Line Thickness:
+                <input type="range" id="plusRaysThicknessSlider" min="1" value="1" step="0.5">
+                <input type="number" id="plusRaysThicknessInput" value="1" min="1" step="0.5" class="number-input">
+            </label>
+            <br>
+            <label>
+                Distance Between Crosses:
+                <input type="range" id="plusRaysSpacingSlider" min="4" max="360" value="24" step="2">
+                <input type="number" id="plusRaysSpacingInput" value="24" min="4" max="360" step="2" class="number-input">
+            </label>
+            <br>
+            <div class="control-row">
+                <button id="plusRaysExportSVG" class="export-button">Export SVG</button>
+                <span class="keyboard-hint">⌘ + E</span>
+            </div>
+        </div>
+        <div class="desktop-content controls gravity-controls">
+            <label>
+                Cursor Radius:
+                <input type="range" id="plusRaysRadiusSlider" min="50" max="400" value="50" step="10">
+                <input type="number" id="plusRaysRadiusInput" value="50" min="50" max="400" step="10" class="number-input">
+            </label>
+            <br>
+            <label>
+                Cursor Force:
+                <input type="range" id="plusRaysStrengthSlider" min="1" max="100" value="1" step="1">
+                <input type="number" id="plusRaysStrengthInput" value="1" min="1" max="100" step="1" class="number-input">
+            </label>
+            <br>
+            <div class="control-row">
+                <label class="control-row">
+                    <input type="checkbox" id="plusRaysGravityMode" class="repel-checkbox">
+                    <span>Repel Mode</span>
+                </label>
+            </div>
+            <div class="control-row">
+                <button id="plusRaysRandomMode">Random</button>
+            </div>
+        </div>
+        <div class="container desktop-content">
+            <canvas id="plusRaysCanvas"></canvas>
+        </div>
+    </div>
+
+    <!-- Dotted Grid tab content -->
+    <div id="grid-content" class="tab-content">
+        <!-- Controls for Dotted Grid -->
+        <div class="desktop-content controls">
+            <label>
+                Circle Diameter:
+                <input type="range" id="gridSizeSlider" min="4" value="4" step="2">
+                <input type="number" id="gridSizeInput" value="4" min="4" step="2" class="number-input">
+            </label>
+            <br>
+            <label>
+                Distance Between Points:
+                <input type="range" id="gridSpacingSlider" min="10" max="100" value="24" step="2">
+                <input type="number" id="gridSpacingInput" value="24" min="10" max="100" step="2" class="number-input">
+            </label>
+            <br>
+            <div class="control-row">
+                <button id="gridExportSVG" class="export-button">Export SVG</button>
+                <span class="keyboard-hint">⌘ + E</span>
+            </div>
+        </div>
+        <div class="desktop-content controls gravity-controls">
+            <label>
+                Cursor Radius:
+                <input type="range" id="gridRadiusSlider" min="50" max="400" value="50" step="10">
+                <input type="number" id="gridRadiusInput" value="50" min="50" max="400" step="10" class="number-input">
+            </label>
+            <br>
+            <label>
+                Cursor Force:
+                <input type="range" id="gridStrengthSlider" min="1" max="100" value="10" step="1">
+                <input type="number" id="gridStrengthInput" value="10" min="1" max="100" step="1" class="number-input">
+            </label>
+            <br>
+            <div class="control-row">
+                <label class="control-row">
+                    <input type="checkbox" id="gridGravityMode" class="repel-checkbox">
+                    <span>Repel Mode</span>
+                </label>
+            </div>
+            <div class="control-row">
+                <button id="gridRandomMode">Random</button>
+            </div>
+        </div>
+        <div class="container desktop-content">
+            <canvas id="gridCanvas"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
+    <script src="dotted-rays.js"></script>
+    <script src="plus-rays.js"></script>
+    <script src="grid.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Проверка элементов canvas после загрузки
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('index.html: DOMContentLoaded event');
+            // Проверка элементов canvas
+            console.log('gridCanvas exists?', document.getElementById('gridCanvas') !== null);
+        });
+    </script>
+</body>
+</html> 

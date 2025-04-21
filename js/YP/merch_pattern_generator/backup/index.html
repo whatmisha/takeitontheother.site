@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YP Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Mobile message -->
+    <div class="mobile-message">
+        <h2>Desktop Only</h2>
+        <p>This interface is designed for desktop use only. Please visit this page on a desktop computer for the full experience.</p>
+    </div>
+
+    <!-- Tabs navigation -->
+    <div class="desktop-content tabs-container">
+        <div class="tab active" data-tab="dotted-rays">Dotted Rays Logo</div>
+        <div class="tab" data-tab="cations">Cations</div>
+    </div>
+
+    <!-- Dotted Rays Logo tab content -->
+    <div id="dotted-rays-content" class="tab-content active">
+        <!-- Desktop content -->
+        <div class="desktop-content controls">
+            <div>
+                <label>Additional Rays:</label>
+                <input type="range" id="raysSlider" min="0" max="8" value="0" step="1">
+                <input type="number" id="raysInput" value="0" min="0" max="8">
+            </div>
+            <label>
+                Circle Diameter:
+                <input type="range" id="sizeSlider" min="4" value="4" step="2">
+                <input type="number" id="sizeInput" value="4" min="4" step="2" class="number-input">
+            </label>
+            <br>
+            <label>
+                Distance Between Circles:
+                <input type="range" id="spacingSlider" min="0" max="360" value="24" step="2">
+                <input type="number" id="spacingInput" value="24" min="0" max="360" step="2" class="number-input">
+            </label>
+            <br>
+            <div class="control-row">
+                <button id="exportSVG" class="export-button">Export SVG</button>
+                <span class="keyboard-hint">⌘ + E</span>
+            </div>
+        </div>
+        <div class="desktop-content controls gravity-controls">
+            <label>
+                Cursor Radius:
+                <input type="range" id="radiusSlider" min="50" max="400" value="50" step="10">
+                <input type="number" id="radiusInput" value="50" min="50" max="400" step="10" class="number-input">
+            </label>
+            <br>
+            <label>
+                Cursor Force:
+                <input type="range" id="strengthSlider" min="1" max="100" value="1" step="1">
+                <input type="number" id="strengthInput" value="1" min="1" max="100" step="1" class="number-input">
+            </label>
+            <br>
+            <div class="control-row">
+                <label class="control-row">
+                    <input type="checkbox" id="gravityMode" class="repel-checkbox">
+                    <span>Repel Mode</span>
+                </label>
+            </div>
+            <div class="control-row">
+                <button id="randomMode">Random</button>
+            </div>
+        </div>
+        <div class="desktop-content bottom-hint">
+            Press space or click into artboard to freeze graphics
+        </div>
+        <div id="pauseIndicator" class="desktop-content">
+            <div class="pause-bars">
+                <div class="pause-bar"></div>
+                <div class="pause-bar"></div>
+            </div>
+        </div>
+        <div class="container desktop-content">
+            <canvas id="rayCanvas"></canvas>
+        </div>
+    </div>
+
+    <!-- Cations tab content -->
+    <div id="cations-content" class="tab-content">
+        <!-- Controls for Cations -->
+        <div class="desktop-content controls">
+            <div>
+                <label>Additional Rays:</label>
+                <input type="range" id="cationsRaysSlider" min="0" max="8" value="0" step="1">
+                <input type="number" id="cationsRaysInput" value="0" min="0" max="8">
+            </div>
+            <label>
+                Line Length:
+                <input type="range" id="cationsLengthSlider" min="4" max="400" value="12" step="2">
+                <input type="number" id="cationsLengthInput" value="12" min="4" max="400" step="2" class="number-input">
+            </label>
+            <br>
+            <label>
+                Line Thickness:
+                <input type="range" id="cationsThicknessSlider" min="1" value="1" step="0.5">
+                <input type="number" id="cationsThicknessInput" value="1" min="1" step="0.5" class="number-input">
+            </label>
+            <br>
+            <label>
+                Distance Between Crosses:
+                <input type="range" id="cationsSpacingSlider" min="0" max="360" value="24" step="2">
+                <input type="number" id="cationsSpacingInput" value="24" min="0" max="360" step="2" class="number-input">
+            </label>
+            <br>
+            <div class="control-row">
+                <button id="cationsExportSVG" class="export-button">Export SVG</button>
+                <span class="keyboard-hint">⌘ + E</span>
+            </div>
+        </div>
+        <div class="desktop-content controls gravity-controls">
+            <label>
+                Cursor Radius:
+                <input type="range" id="cationsRadiusSlider" min="50" max="400" value="50" step="10">
+                <input type="number" id="cationsRadiusInput" value="50" min="50" max="400" step="10" class="number-input">
+            </label>
+            <br>
+            <label>
+                Cursor Force:
+                <input type="range" id="cationsStrengthSlider" min="1" max="100" value="1" step="1">
+                <input type="number" id="cationsStrengthInput" value="1" min="1" max="100" step="1" class="number-input">
+            </label>
+            <br>
+            <div class="control-row">
+                <label class="control-row">
+                    <input type="checkbox" id="cationsGravityMode" class="repel-checkbox">
+                    <span>Repel Mode</span>
+                </label>
+            </div>
+            <div class="control-row">
+                <button id="cationsRandomMode">Random</button>
+            </div>
+        </div>
+        <div class="desktop-content bottom-hint">
+            Press space or click into artboard to freeze graphics
+        </div>
+        <div id="cationsPauseIndicator" class="desktop-content pause-indicator">
+            <div class="pause-bars">
+                <div class="pause-bar"></div>
+                <div class="pause-bar"></div>
+            </div>
+        </div>
+        <div class="container desktop-content">
+            <canvas id="cationsCanvas"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html> 

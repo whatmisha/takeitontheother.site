@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ONY Tracklist</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .custom-list {
+            list-style: none;
+            counter-reset: item;
+        }
+
+        .custom-list li::before {
+            counter-increment: item;
+            content: counter(item, decimal-leading-zero) " ";
+            font-size: 48px;
+            font-variation-settings: 'wdth' 200;
+            margin-right: 10px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="tracklist">
+        <h1>ONY Tracklist</h1>
+        <ol class="custom-list">
+            <li>King Geedorah — Monster Zero</li>
+            <li>Run The Jewels — Legend Has It</li>
+            <li>J Dilla — In The Streets</li>
+            <li>Bublle Grog — Indian Tiger Hunting</li>
+            <li>OL — Roaming</li>
+            <li>Kunteynir — Без Косметики</li>
+            <li>Tigran Hamasyan — Poem</li>
+
+        </ol>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

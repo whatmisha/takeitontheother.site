@@ -1,0 +1,203 @@
+body {
+    margin: 0;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Стиль для неактивных элементов управления */
+.disabled-control {
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+}
+
+/* Tabs styles */
+.tabs-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    padding: 0 20px;
+    z-index: 100;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.tab {
+    padding: 15px 25px;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    position: relative;
+}
+
+.tab:hover {
+    color: white;
+}
+
+.tab.active {
+    color: white;
+}
+
+.tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: white;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Adjust controls position to account for tabs */
+.controls {
+    position: fixed;
+    top: 70px;
+    left: 20px;
+    background: rgba(0,0,0,0.7);
+    padding: 15px;
+    border-radius: 8px;
+    color: white;
+}
+
+/* Styles for sliders */
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 200px;
+    height: 2px;
+    background: white;
+    border-radius: 1px;
+    margin: 10px 0;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 15px;
+    height: 15px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+input[type="range"]::-moz-range-track {
+    width: 200px;
+    height: 2px;
+    background: white;
+    border-radius: 1px;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 15px;
+    height: 15px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+/* Mobile message */
+.mobile-message {
+    display: none;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    font-size: 18px;
+    max-width: 80%;
+}
+
+/* Media query for mobile devices */
+@media (max-width: 768px) {
+    .desktop-content {
+        display: none !important;
+    }
+    
+    .mobile-message {
+        display: block;
+    }
+}
+
+.gravity-controls {
+    right: 20px;
+    left: auto;
+}
+
+.bottom-hint {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    color: white;
+    opacity: 0.7;
+}
+
+#pauseIndicator, .pause-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: none;
+}
+
+.pause-bars {
+    width: 125px;
+    height: 100px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.pause-bar {
+    width: 50px;
+    height: 100px;
+    background-color: #333333;
+}
+
+.export-button {
+    margin-top: 10px;
+    padding: 5px 10px;
+}
+
+.keyboard-hint {
+    color: white;
+    margin-left: 10px;
+    opacity: 0.7;
+}
+
+.repel-checkbox {
+    margin-right: 8px;
+}
+
+.control-row {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.number-input {
+    width: 60px;
+    text-align: center;
+}
+
+.container {
+    aspect-ratio: 1;
+    width: min(90vw, 90vh);
+    max-width: 1080px;
+    max-height: 1080px;
+}
+
+#rayCanvas, #cationsCanvas {
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    border: 1px solid #333333;
+} 
