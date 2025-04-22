@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YF Projects</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: black;
+      color: white;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: left;
+      margin-bottom: 30px;
+    }
+    .project-section {
+      margin-bottom: 40px;
+    }
+    .project-title {
+      font-size: 24px;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 5px;
+    }
+    .app-list {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    .app-list li {
+      margin-bottom: 10px;
+    }
+    .app-link {
+      color: #9e9eff;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    .app-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>YF Projects</h1>
+
+  <div id="projects-container">
+    <!-- Projects will be loaded by JavaScript -->
+  </div>
+
+  <script>
+    // Структура проектов и приложений
+    const projects = [
+      {
+        name: "Lunnen",
+        apps: [
+          { name: "pattern_generator", displayName: "Pattern Generator" }
+        ]
+      },
+      {
+        name: "Muted",
+        apps: [
+          { name: "calendar-randomizer", displayName: "Calendar Randomizer" },
+          { name: "chladni-sound-pattern", displayName: "Chladni Sound Pattern" }
+        ]
+      },
+      {
+        name: "Bodycore",
+        apps: [
+          { name: "asterisk_pattern_generator", displayName: "Asterisk Pattern Generator" }
+        ]
+      }
+    ];
+
+    // Функция для преобразования имени приложения
+    function formatAppName(name) {
+      return name
+        .split(/[-_]/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+
+    // Функция для динамического создания списка проектов и приложений
+    function renderProjects() {
+      const container = document.getElementById('projects-container');
+      
+      projects.forEach(project => {
+        // Создаем секцию проекта
+        const projectSection = document.createElement('div');
+        projectSection.className = 'project-section';
+        
+        // Заголовок проекта
+        const projectTitle = document.createElement('h2');
+        projectTitle.className = 'project-title';
+        projectTitle.textContent = project.name;
+        projectSection.appendChild(projectTitle);
+        
+        // Список приложений
+        const appList = document.createElement('ul');
+        appList.className = 'app-list';
+        
+        project.apps.forEach(app => {
+          const listItem = document.createElement('li');
+          const link = document.createElement('a');
+          link.className = 'app-link';
+          link.href = `${project.name.toLowerCase()}/${app.name}/`;
+          
+          // Используем предоставленное отображаемое имя, если оно есть, иначе форматируем имя папки
+          link.textContent = app.displayName || formatAppName(app.name);
+          
+          listItem.appendChild(link);
+          appList.appendChild(listItem);
+        });
+        
+        projectSection.appendChild(appList);
+        container.appendChild(projectSection);
+      });
+    }
+
+    // Загружаем проекты при загрузке страницы
+    document.addEventListener('DOMContentLoaded', renderProjects);
+  </script>
+</body>
+</html> 
