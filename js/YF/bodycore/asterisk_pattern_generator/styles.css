@@ -36,21 +36,28 @@ canvas {
     background-color: #111111;
     border-top: 1px solid #3F3F3F;
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: column;
     gap: 15px;
-    align-items: center;
     overflow-y: auto;
     max-height: 40vh; /* Максимальная высота - 40% от высоты окна */
     min-height: fit-content;
+}
+
+.sliders-row, .checkboxes-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 15px;
+    align-items: center;
+    overflow-x: auto;
+    padding: 5px 0;
 }
 
 .control-group {
     display: flex;
     align-items: center;
     gap: 8px;
-    min-width: 200px;
-    flex: 0 1 auto;
+    min-width: fit-content;
+    flex: 0 0 auto;
 }
 
 label {
@@ -134,8 +141,8 @@ button:hover {
         gap: 10px;
     }
     
-    .control-group {
-        min-width: 180px;
+    .sliders-row, .checkboxes-row {
+        gap: 10px;
     }
     
     input[type="range"] {
@@ -149,8 +156,7 @@ button:hover {
         gap: 5px;
     }
     
-    .control-group {
-        min-width: 160px;
+    .sliders-row, .checkboxes-row {
         gap: 5px;
     }
     
