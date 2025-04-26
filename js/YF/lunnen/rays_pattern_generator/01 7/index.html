@@ -21,17 +21,17 @@
                 
                 <div class="pattern-sliders">
                     <div class="control-group">
-                        <label for="lineWidthSlider">Line Thickness<span class="colon">:</span> <span id="lineWidthValue">2</span> <span class="unit">px</span></label>
+                        <label for="lineWidthSlider">Line Thickness<span class="colon">:</span> <span id="lineWidthValue">2</span> px</label>
                         <input type="range" id="lineWidthSlider" min="1" max="24" value="2" step="0.5">
                     </div>
                     
                     <div class="control-group">
-                        <label for="gapSlider">Center Offset<span class="colon">:</span> <span id="gapValue">19</span> <span class="unit">px</span></label>
+                        <label for="gapSlider">Center Offset<span class="colon">:</span> <span id="gapValue">19</span> px</label>
                         <input type="range" id="gapSlider" min="0" max="50" value="19" step="1">
                     </div>
                     
                     <div class="control-group">
-                        <label for="rayLengthSlider">Ray Length<span class="colon">:</span> <span id="rayLengthValue">56</span> <span class="unit">px</span></label>
+                        <label for="rayLengthSlider">Ray Length<span class="colon">:</span> <span id="rayLengthValue">56</span> px</label>
                         <input type="range" id="rayLengthSlider" min="10" max="200" value="56" step="1">
                     </div>
                     
@@ -55,7 +55,7 @@
                     </div>
                     
                     <div class="control-group">
-                        <label for="scaleSlider">Scale<span class="colon">:</span> <span id="scaleValue">1.0</span><span class="unit">×</span></label>
+                        <label for="scaleSlider">Scale<span class="colon">:</span> <span id="scaleValue">1.0</span>×</label>
                         <input type="range" id="scaleSlider" min="0.2" max="3" value="1" step="0.1">
                     </div>
                 </div>
@@ -72,13 +72,18 @@
                 
                 <div class="raster-sliders">
                     <div class="control-group raster-control">
-                        <label for="zeroRayLengthSlider">0% Ray Length<span class="colon">:</span> <span id="zeroRayLengthValue">30</span> <span class="unit">px</span></label>
-                        <input type="range" id="zeroRayLengthSlider" min="10" max="200" value="30" step="1">
+                        <label for="gradientIntensitySlider">Raster Intensity<span class="colon">:</span> <span id="gradientIntensityValue">50</span><span class="unit">%</span></label>
+                        <input type="range" id="gradientIntensitySlider" min="0" max="100" value="50" step="1">
                     </div>
                     
                     <div class="control-group raster-control">
-                        <label for="hundredRayLengthSlider">100% Ray Length<span class="colon">:</span> <span id="hundredRayLengthValue">100</span> <span class="unit">px</span></label>
-                        <input type="range" id="hundredRayLengthSlider" min="10" max="200" value="100" step="1">
+                        <label for="leftBrightnessSlider">Highlights<span class="colon">:</span> <span id="leftBrightnessValue">30</span><span class="unit">%</span></label>
+                        <input type="range" id="leftBrightnessSlider" min="10" max="100" value="30" step="1">
+                    </div>
+                    
+                    <div class="control-group raster-control">
+                        <label for="rightDarknessSlider">Shadows<span class="colon">:</span> <span id="rightDarknessValue">70</span><span class="unit">%</span></label>
+                        <input type="range" id="rightDarknessSlider" min="0" max="100" value="70" step="1">
                     </div>
                 </div>
             </div>
