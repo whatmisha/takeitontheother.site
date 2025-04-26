@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
         baseRays: baseRays,
         // Круглые окончания линий
         roundCap: false,
-        // Использование стандартного режима (когда false - используется Grid Mode)
+        // Смещение нечетных строк
         offsetRows: false,
         // Режим растрового градиента
         rasterMode: false,
@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
         drawPattern();
     });
     
-    // Обработчик для чекбокса режима сетки (Grid Mode)
+    // Обработчик для чекбокса смещения нечетных строк
     offsetRowsCheckbox.addEventListener('change', function() {
         params.offsetRows = this.checked;
         drawPattern();
@@ -251,18 +251,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const horizontalGap = baseHorizontalGap * params.scale;
         
         // Вертикальный отступ применяется только в режиме смещения нечетных строк
-        const verticalGap = !params.offsetRows ? 10 * params.scale : baseVerticalGap * params.scale;
+        const verticalGap = params.offsetRows ? 10 * params.scale : baseVerticalGap * params.scale;
         
         // Вычисляем количество модулей, которые поместятся на канвасе
         const modulesInRow = Math.ceil(canvas.width / (moduleWidth + horizontalGap));
         const modulesInColumn = Math.ceil(canvas.height / (moduleHeight + verticalGap));
         
         // Вычисляем смещение для нечетных строк
-        const rowOffset = !params.offsetRows ? (moduleWidth + horizontalGap) / 2 : 0;
+        const rowOffset = params.offsetRows ? (moduleWidth + horizontalGap) / 2 : 0;
         
         // Вычисляем общую ширину паттерна с учетом смещения
         // Если используется смещение строк, добавляем половину модуля для последней нечетной строки
-        const extraWidth = !params.offsetRows && (modulesInColumn % 2 === 0) ? rowOffset : 0;
+        const extraWidth = params.offsetRows && (modulesInColumn % 2 === 0) ? rowOffset : 0;
         const totalPatternWidth = modulesInRow * moduleWidth + (modulesInRow - 1) * horizontalGap + extraWidth;
         const totalPatternHeight = modulesInColumn * moduleHeight + (modulesInColumn - 1) * verticalGap;
         
@@ -272,10 +272,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Отрисовываем модули паттерна
         for (let row = 0; row < modulesInColumn; row++) {
             // Вычисляем смещение для текущей строки (нечетные строки смещаются)
-            const currentRowOffset = (row % 2 === 1 && !params.offsetRows) ? rowOffset : 0;
+            const currentRowOffset = (row % 2 === 1 && params.offsetRows) ? rowOffset : 0;
             
             // Определяем, нужно ли добавить дополнительный модуль в нечетных строках
-            const additionalModule = (row % 2 === 1 && !params.offsetRows) ? 1 : 0;
+            const additionalModule = (row % 2 === 1 && params.offsetRows) ? 1 : 0;
             const actualModulesInRow = modulesInRow + additionalModule;
             
             for (let col = 0; col < actualModulesInRow; col++) {
@@ -480,16 +480,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Функция переключения элементов управления растром
     function toggleRasterControls() {
-        // Получаем контейнер для слайдеров растра
-        const rasterControlsRow = document.querySelector('.raster-controls-row');
-        
         if (params.rasterMode) {
-            // При активном режиме растра
-            
-            // Удаляем класс для неактивного режима
-            if (rasterControlsRow) {
-                rasterControlsRow.classList.remove('raster-mode-inactive');
-            }
+            // Показываем слайдеры настройки растра
+            const rasterControls = document.querySelectorAll('.raster-control');
+            rasterControls.forEach(control => {
+                control.classList.add('active');
+            });
             
             // Добавляем класс active для родительского контейнера
             const rasterSliders = document.querySelector('.raster-sliders');
@@ -497,12 +493,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 rasterSliders.classList.add('active');
             }
         } else {
-            // При неактивном режиме растра
-            
-            // Добавляем класс для неактивного режима
-            if (rasterControlsRow) {
-                rasterControlsRow.classList.add('raster-mode-inactive');
-            }
+            // Скрываем слайдеры настройки растра
+            const rasterControls = document.querySelectorAll('.raster-control');
+            rasterControls.forEach(control => {
+                control.classList.remove('active');
+            });
             
             // Удаляем класс active у родительского контейнера
             const rasterSliders = document.querySelector('.raster-sliders');
@@ -527,17 +522,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const horizontalGap = baseHorizontalGap * params.scale;
         
         // Вертикальный отступ применяется только в режиме смещения нечетных строк
-        const verticalGap = !params.offsetRows ? 10 * params.scale : baseVerticalGap * params.scale;
+        const verticalGap = params.offsetRows ? 10 * params.scale : baseVerticalGap * params.scale;
         
         // Вычисляем количество модулей
         const modulesInRow = Math.ceil(canvas.width / (moduleWidth + horizontalGap));
         const modulesInColumn = Math.ceil(canvas.height / (moduleHeight + verticalGap));
         
         // Вычисляем смещение для нечетных строк
-        const rowOffset = !params.offsetRows ? (moduleWidth + horizontalGap) / 2 : 0;
+        const rowOffset = params.offsetRows ? (moduleWidth + horizontalGap) / 2 : 0;
         
         // Вычисляем общую ширину паттерна с учетом смещения
-        const extraWidth = !params.offsetRows && (modulesInColumn % 2 === 0) ? rowOffset : 0;
+        const extraWidth = params.offsetRows && (modulesInColumn % 2 === 0) ? rowOffset : 0;
         const totalPatternWidth = modulesInRow * moduleWidth + (modulesInRow - 1) * horizontalGap + extraWidth;
         const totalPatternHeight = modulesInColumn * moduleHeight + (modulesInColumn - 1) * verticalGap;
         
@@ -547,10 +542,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Отрисовываем модули
         for (let row = 0; row < modulesInColumn; row++) {
             // Вычисляем смещение для текущей строки (нечетные строки смещаются)
-            const currentRowOffset = (row % 2 === 1 && !params.offsetRows) ? rowOffset : 0;
+            const currentRowOffset = (row % 2 === 1 && params.offsetRows) ? rowOffset : 0;
             
             // Определяем, нужно ли добавить дополнительный модуль в нечетных строках
-            const additionalModule = (row % 2 === 1 && !params.offsetRows) ? 1 : 0;
+            const additionalModule = (row % 2 === 1 && params.offsetRows) ? 1 : 0;
             const actualModulesInRow = modulesInRow + additionalModule;
             
             for (let col = 0; col < actualModulesInRow; col++) {

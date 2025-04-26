@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="container">
-        <canvas id="patternCanvas" width="3000" height="1000"></canvas>
+        <canvas id="patternCanvas" width="3000" height="1000" style="width: 100%; height: auto;"></canvas>
         
         <div class="controls-wrapper">
             <!-- Первая строка с основными настройками -->
@@ -55,7 +55,7 @@
             
             <!-- Вторая строка с настройками растра -->
             <div class="controls raster-controls-row">
-                <div class="raster-checkbox control-group">
+                <div class="raster-checkbox">
                     <label class="checkbox-label">
                         <input type="checkbox" id="rasterModeCheckbox">
                         <span class="checkbox-text">Raster Gradient</span>
@@ -64,17 +64,17 @@
                 
                 <div class="raster-sliders">
                     <div class="control-group raster-control">
-                        <label for="gradientIntensitySlider">Raster Intensity: <span id="gradientIntensityValue">50</span><span class="unit">%</span></label>
+                        <label for="gradientIntensitySlider">Raster Intensity: <span id="gradientIntensityValue">50</span>%</label>
                         <input type="range" id="gradientIntensitySlider" min="0" max="100" value="50" step="1">
                     </div>
                     
                     <div class="control-group raster-control">
-                        <label for="leftBrightnessSlider">Highlights: <span id="leftBrightnessValue">30</span><span class="unit">%</span></label>
+                        <label for="leftBrightnessSlider">Highlights: <span id="leftBrightnessValue">30</span>%</label>
                         <input type="range" id="leftBrightnessSlider" min="10" max="100" value="30" step="1">
                     </div>
                     
                     <div class="control-group raster-control">
-                        <label for="rightDarknessSlider">Shadows: <span id="rightDarknessValue">70</span><span class="unit">%</span></label>
+                        <label for="rightDarknessSlider">Shadows: <span id="rightDarknessValue">70</span>%</label>
                         <input type="range" id="rightDarknessSlider" min="0" max="100" value="70" step="1">
                     </div>
                 </div>
@@ -93,7 +93,7 @@
             </label>
             <label class="checkbox-label">
                 <input type="checkbox" id="offsetRowsCheckbox">
-                <span class="checkbox-text">Classic Mode</span>
+                <span class="checkbox-text">Chess Mode</span>
             </label>
         </div>
     </div>
