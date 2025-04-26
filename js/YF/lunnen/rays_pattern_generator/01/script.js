@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const roundCapCheckbox = document.getElementById('roundCapCheckbox');
     const offsetRowsCheckbox = document.getElementById('offsetRowsCheckbox');
     const rasterModeCheckbox = document.getElementById('rasterModeCheckbox');
+    const hideConnectingLinesCheckbox = document.getElementById('hideConnectingLinesCheckbox');
     const lineWidthValueDisplay = document.getElementById('lineWidthValue');
     const gapValueDisplay = document.getElementById('gapValue');
     const rayLengthValueDisplay = document.getElementById('rayLengthValue');
@@ -65,7 +66,8 @@ document.addEventListener('DOMContentLoaded', function() {
         zeroRayLength: 30,
         hundredRayLength: 100,
         zeroLineWidth: 1.0,
-        hundredLineWidth: 2.0
+        hundredLineWidth: 2.0,
+        hideConnectingLines: false
     };
     
     // Функция получения ближайшего разрешенного значения
@@ -130,8 +132,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Толщина линии на левом краю (0%)
         zeroLineWidth: 1.0,
         // Толщина линии на правом краю (100%)
-        hundredLineWidth: 2.0
+        hundredLineWidth: 2.0,
+        // Скрывать вертикальные разделители
+        hideConnectingLines: false
     };
+    
+    // Устанавливаем totalLength как сумму gap и rayLength
+    params.totalLength = params.gap + params.rayLength;
     
     // Устанавливаем начальные значения на слайдерах и в отображении
     rayCountSlider.value = params.rayCount;
@@ -151,6 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
     roundCapCheckbox.checked = params.roundCap;
     offsetRowsCheckbox.checked = params.offsetRows;
     rasterModeCheckbox.checked = params.rasterMode;
+    hideConnectingLinesCheckbox.checked = params.hideConnectingLines;
     
     // Отрисовка первоначального состояния
     drawPattern();
@@ -177,6 +185,11 @@ document.addEventListener('DOMContentLoaded', function() {
     gapSlider.addEventListener('input', function() {
         params.gap = parseInt(this.value);
         gapValueDisplay.textContent = this.value;
+        // Обновляем видимую длину луча, чтобы общая длина оставалась неизменной
+        params.rayLength = params.totalLength - params.gap;
+        // Обновляем слайдер rayLength и его значение на экране
+        rayLengthSlider.value = params.rayLength;
+        rayLengthValueDisplay.textContent = params.rayLength;
         drawPattern();
     });
     
@@ -243,6 +256,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
+    
+    // Обработчик для чекбокса скрытия вертикальных разделителей
+    hideConnectingLinesCheckbox.addEventListener('change', function() {
+        params.hideConnectingLines = this.checked;
+        drawPattern();
+    });
     
     // Обработчик для чекбокса режима растрового градиента
     rasterModeCheckbox.addEventListener('change', function() {
@@ -341,8 +360,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     drawModuleAt(x, y);
                     
                     // Отрисовываем вертикальную линию между модулями,
-                    // но только если это не последний модуль в ряду
-                    if (col < actualModulesInRow - 1) {
+                    // но только если это не последний модуль в ряду и не включен режим скрытия разделителей
+                    if (col < actualModulesInRow - 1 && !params.hideConnectingLines) {
                         drawConnectingLine(x + moduleWidth, y);
                     }
                 }
@@ -358,8 +377,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Если включен режим растра и передана позиция, интерполируем длину и толщину
         if (params.rasterMode && relativeX !== undefined) {
-            // Линейно интерполируем длину между значениями zeroRayLength и hundredRayLength
-            rayLength = params.zeroRayLength + relativeX * (params.hundredRayLength - params.zeroRayLength);
+            // Используем параметр rayLength как коэффициент масштабирования для значений zeroRayLength и hundredRayLength
+            const baseRayLength = params.rayLength;
+            const scaleFactor = baseRayLength / 56; // 56 - значение rayLength по умолчанию
+            const zeroRayScaled = params.zeroRayLength * scaleFactor;
+            const hundredRayScaled = params.hundredRayLength * scaleFactor;
+            
+            // Линейно интерполируем длину между масштабированными значениями
+            rayLength = zeroRayScaled + relativeX * (hundredRayScaled - zeroRayScaled);
             
             // Линейно интерполируем толщину между значениями zeroLineWidth и hundredLineWidth
             lineWidth = params.zeroLineWidth + relativeX * (params.hundredLineWidth - params.zeroLineWidth);
@@ -484,16 +509,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         function drawRay(angle, rayLength) {
-            // Общая длина луча (видимая часть + отступ)
-            const totalLength = gap + rayLength;
+            // Длина видимой части луча уже учитывает масштабирование в соответствии с градиентом, если режим активен
             
             // Начальная точка луча (с отступом от точки схода)
             const startX = vanishingPoint.x + Math.cos(angle) * gap;
             const startY = vanishingPoint.y + Math.sin(angle) * gap;
             
-            // Конечная точка луча
-            const endX = vanishingPoint.x + Math.cos(angle) * totalLength;
-            const endY = vanishingPoint.y + Math.sin(angle) * totalLength;
+            // Вычисляем конечную точку на основе текущего rayLength, а не фиксированного totalLength
+            // Это позволит правильно масштабировать лучи в режиме градиента
+            const endX = vanishingPoint.x + Math.cos(angle) * (gap + rayLength);
+            const endY = vanishingPoint.y + Math.sin(angle) * (gap + rayLength);
             
             // Рисуем луч
             ctx.beginPath();
@@ -623,7 +648,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     svg.appendChild(moduleGroup);
                     
                     // Отрисовываем вертикальную линию между модулями
-                    if (col < actualModulesInRow - 1) {
+                    if (col < actualModulesInRow - 1 && !params.hideConnectingLines) {
                         addConnectingLineToSvg(svg, x + moduleWidth, y, horizontalGap, moduleHeight);
                     }
                 }
@@ -688,16 +713,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         function addRayToSvg(angle, rayLength) {
-            // Общая длина луча (видимая часть + отступ)
-            const totalLength = gap + rayLength;
+            // Длина видимой части луча уже учитывает масштабирование в соответствии с градиентом, если режим активен
             
             // Начальная точка луча (с отступом от точки схода)
             const startX = vanishingPoint.x * scale + Math.cos(angle) * gap * scale;
             const startY = vanishingPoint.y * scale + Math.sin(angle) * gap * scale;
             
-            // Конечная точка луча
-            const endX = vanishingPoint.x * scale + Math.cos(angle) * totalLength * scale;
-            const endY = vanishingPoint.y * scale + Math.sin(angle) * totalLength * scale;
+            // Вычисляем конечную точку на основе текущего rayLength, а не фиксированного totalLength
+            // Это позволит правильно масштабировать лучи в режиме градиента
+            const endX = vanishingPoint.x * scale + Math.cos(angle) * (gap + rayLength) * scale;
+            const endY = vanishingPoint.y * scale + Math.sin(angle) * (gap + rayLength) * scale;
             
             // Создаем линию
             const line = document.createElementNS(svgNS, 'line');
@@ -762,6 +787,7 @@ document.addEventListener('DOMContentLoaded', function() {
         roundCapCheckbox.checked = defaultValues.roundCap;
         offsetRowsCheckbox.checked = defaultValues.offsetRows;
         rasterModeCheckbox.checked = defaultValues.rasterMode;
+        hideConnectingLinesCheckbox.checked = defaultValues.hideConnectingLines;
         zeroRayLengthSlider.value = defaultValues.zeroRayLength;
         hundredRayLengthSlider.value = defaultValues.hundredRayLength;
         zeroLineWidthSlider.value = defaultValues.zeroLineWidth;
@@ -776,6 +802,7 @@ document.addEventListener('DOMContentLoaded', function() {
         params.roundCap = defaultValues.roundCap;
         params.offsetRows = defaultValues.offsetRows;
         params.rasterMode = defaultValues.rasterMode;
+        params.hideConnectingLines = defaultValues.hideConnectingLines;
         params.zeroRayLength = defaultValues.zeroRayLength;
         params.hundredRayLength = defaultValues.hundredRayLength;
         params.zeroLineWidth = defaultValues.zeroLineWidth;
@@ -816,55 +843,4 @@ document.addEventListener('DOMContentLoaded', function() {
         // Перерисовываем паттерн
         drawPattern();
     }
-
-    // Функция для экспорта изображения в формате PNG
-    function exportAsPng() {
-        const canvas = document.createElement('canvas');
-        const canvasWidth = params.gridSize * params.moduleSize * 2;
-        const canvasHeight = params.gridSize * params.moduleSize * 2;
-        
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
-        
-        const ctx = canvas.getContext('2d');
-        
-        // Заполняем фон белым цветом
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-        
-        // Отрисовываем паттерн на канвасе
-        const container = document.getElementById('container');
-        
-        // Получаем SVG данные
-        const svgElement = container.querySelector('svg');
-        const svgData = new XMLSerializer().serializeToString(svgElement);
-        
-        // Создаем изображение из SVG
-        const img = new Image();
-        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-        const url = URL.createObjectURL(svgBlob);
-        
-        img.onload = function() {
-            // Рисуем SVG на канвасе
-            ctx.drawImage(img, 0, 0);
-            
-            // Конвертируем канвас в PNG и скачиваем
-            const pngUrl = canvas.toDataURL('image/png');
-            
-            const downloadLink = document.createElement('a');
-            downloadLink.href = pngUrl;
-            downloadLink.download = 'rays_pattern.png';
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-            
-            // Освобождаем URL
-            URL.revokeObjectURL(url);
-        };
-        
-        img.src = url;
-    }
-
-    // Добавляем обработчик для кнопки экспорта PNG
-    document.getElementById('exportPngBtn').addEventListener('click', exportAsPng);
 }); 
