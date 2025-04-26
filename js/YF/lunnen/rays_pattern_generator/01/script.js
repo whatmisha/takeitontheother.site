@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const scaleSlider = document.getElementById('scaleSlider');
     const zeroRayLengthSlider = document.getElementById('zeroRayLengthSlider');
     const hundredRayLengthSlider = document.getElementById('hundredRayLengthSlider');
+    const zeroLineWidthSlider = document.getElementById('zeroLineWidthSlider');
+    const hundredLineWidthSlider = document.getElementById('hundredLineWidthSlider');
     const exportSvgBtn = document.getElementById('exportSvgBtn');
     const resetBtn = document.getElementById('resetBtn');
     const roundCapCheckbox = document.getElementById('roundCapCheckbox');
@@ -22,6 +24,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const scaleValueDisplay = document.getElementById('scaleValue');
     const zeroRayLengthValueDisplay = document.getElementById('zeroRayLengthValue');
     const hundredRayLengthValueDisplay = document.getElementById('hundredRayLengthValue');
+    const zeroLineWidthValueDisplay = document.getElementById('zeroLineWidthValue');
+    const hundredLineWidthValueDisplay = document.getElementById('hundredLineWidthValue');
     
     // Определяем, какую операционную систему использует пользователь
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -59,7 +63,9 @@ document.addEventListener('DOMContentLoaded', function() {
         offsetRows: false,
         rasterMode: false,
         zeroRayLength: 30,
-        hundredRayLength: 100
+        hundredRayLength: 100,
+        zeroLineWidth: 1.0,
+        hundredLineWidth: 2.0
     };
     
     // Функция получения ближайшего разрешенного значения
@@ -120,7 +126,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Длина луча на левом краю (0%)
         zeroRayLength: 30,
         // Длина луча на правом краю (100%)
-        hundredRayLength: 100
+        hundredRayLength: 100,
+        // Толщина линии на левом краю (0%)
+        zeroLineWidth: 1.0,
+        // Толщина линии на правом краю (100%)
+        hundredLineWidth: 2.0
     };
     
     // Устанавливаем начальные значения на слайдерах и в отображении
@@ -132,6 +142,10 @@ document.addEventListener('DOMContentLoaded', function() {
     zeroRayLengthValueDisplay.textContent = params.zeroRayLength;
     hundredRayLengthSlider.value = params.hundredRayLength;
     hundredRayLengthValueDisplay.textContent = params.hundredRayLength;
+    zeroLineWidthSlider.value = params.zeroLineWidth;
+    zeroLineWidthValueDisplay.textContent = params.zeroLineWidth.toFixed(1);
+    hundredLineWidthSlider.value = params.hundredLineWidth;
+    hundredLineWidthValueDisplay.textContent = params.hundredLineWidth.toFixed(1);
     
     // Устанавливаем состояние чекбоксов
     roundCapCheckbox.checked = params.roundCap;
@@ -255,6 +269,20 @@ document.addEventListener('DOMContentLoaded', function() {
         drawPattern();
     });
     
+    // Обработчик для слайдера 0% Line Width
+    zeroLineWidthSlider.addEventListener('input', function() {
+        params.zeroLineWidth = parseFloat(this.value);
+        zeroLineWidthValueDisplay.textContent = params.zeroLineWidth.toFixed(1);
+        drawPattern();
+    });
+    
+    // Обработчик для слайдера 100% Line Width
+    hundredLineWidthSlider.addEventListener('input', function() {
+        params.hundredLineWidth = parseFloat(this.value);
+        hundredLineWidthValueDisplay.textContent = params.hundredLineWidth.toFixed(1);
+        drawPattern();
+    });
+    
     // Обработчик для кнопки сброса настроек
     resetBtn.addEventListener('click', resetSettings);
     
@@ -322,6 +350,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Создаем функцию для расчета длины луча и толщины линии
+    function calculateRayLengthAndLineWidth(params, relativeX) {
+        // Значения по умолчанию
+        let rayLength = params.rayLength;
+        let lineWidth = params.lineWidth;
+        
+        // Если включен режим растра и передана позиция, интерполируем длину и толщину
+        if (params.rasterMode && relativeX !== undefined) {
+            // Линейно интерполируем длину между значениями zeroRayLength и hundredRayLength
+            rayLength = params.zeroRayLength + relativeX * (params.hundredRayLength - params.zeroRayLength);
+            
+            // Линейно интерполируем толщину между значениями zeroLineWidth и hundredLineWidth
+            lineWidth = params.zeroLineWidth + relativeX * (params.hundredLineWidth - params.zeroLineWidth);
+        }
+        
+        return { rayLength, lineWidth };
+    }
+    
     // Функция отрисовки соединительной линии между модулями
     function drawConnectingLine(x, y) {
         // Размеры элементов с учетом масштаба
@@ -329,28 +375,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const moduleHeight = baseModuleHeight * params.scale;
         const horizontalGap = baseHorizontalGap * params.scale;
         
-        // Если включен режим растра, используем логику интерполяции длины лучей
-        let lineLength;
+        // Если включен режим растра, используем логику интерполяции длины лучей и толщины линий
+        const relativeX = params.rasterMode ? (x + horizontalGap / 2) / canvas.width : undefined;
+        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX);
         
-        if (params.rasterMode) {
-            // Вычисляем относительную позицию по горизонтали (0-1)
-            const relativeX = (x + horizontalGap / 2) / canvas.width;
-            
-            // Линейно интерполируем длину между значениями zeroRayLength и hundredRayLength
-            const interpolatedRayLength = params.zeroRayLength + relativeX * (params.hundredRayLength - params.zeroRayLength);
-            
-            // Используем ту же логику, что и в drawRay - общая длина это gap + rayLength
-            const totalLength = params.gap + interpolatedRayLength;
-            
-            // Видимая длина соединительной линии равна длине луча
-            lineLength = interpolatedRayLength * params.scale;
-            
-            // Предотвращаем отрицательную длину
-            lineLength = Math.max(lineLength, 1); // Минимальная длина 1px, чтобы линия всегда была видна
-        } else {
-            // В обычном режиме линия имеет длину, равную видимой части луча
-            lineLength = params.rayLength * params.scale;
-        }
+        // Вычисляем длину линии
+        let lineLength = rayLength * params.scale;
+        
+        // Предотвращаем отрицательную длину
+        lineLength = Math.max(lineLength, 1); // Минимальная длина 1px, чтобы линия всегда была видна
         
         // Позиция X - после модуля, по центру отступа
         const lineX = x + horizontalGap / 2;
@@ -362,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Установка стилей рисования
         ctx.strokeStyle = params.strokeColor;
-        ctx.lineWidth = params.lineWidth * (params.scale < 1 ? 1 : params.scale);
+        ctx.lineWidth = lineWidth * (params.scale < 1 ? 1 : params.scale);
         ctx.lineCap = params.roundCap ? 'round' : 'butt';
         
         // Рисуем вертикальную линию
@@ -407,18 +440,15 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.restore();
     }
     
-    // Функция отрисовки лучей модуля
+    // Обновляем функцию drawRays для использования общей функции
     function drawRays(params, relativeX) {
         const { vanishingPoint, gap, rayCount, baseRays } = params;
         
-        // Определяем длину луча в зависимости от режима
-        let rayLength = params.rayLength;
+        // Определяем длину луча и толщину линии
+        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX);
         
-        // Если включен режим растра и передана позиция, интерполируем длину
-        if (params.rasterMode && relativeX !== undefined) {
-            // Линейно интерполируем длину между значениями zeroRayLength и hundredRayLength
-            rayLength = params.zeroRayLength + relativeX * (params.hundredRayLength - params.zeroRayLength);
-        }
+        // Устанавливаем текущую толщину линии
+        ctx.lineWidth = lineWidth;
         
         // Рисуем горизонтальные лучи (фиксированные)
         baseRays.horizontal.forEach(angle => {
@@ -498,6 +528,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Включаем слайдеры градиента
             setSliderActive(zeroRayLengthSlider, true);
             setSliderActive(hundredRayLengthSlider, true);
+            setSliderActive(zeroLineWidthSlider, true);
+            setSliderActive(hundredLineWidthSlider, true);
+            
+            // Отключаем основные слайдеры
+            setSliderActive(lineWidthSlider, false);
         } else {
             // При неактивном режиме растра
             
@@ -512,12 +547,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 rasterSliders.classList.remove('active');
             }
             
-            // Включаем слайдер Ray Length
+            // Включаем основные слайдеры
             setSliderActive(rayLengthSlider, true);
+            setSliderActive(lineWidthSlider, true);
             
             // Отключаем слайдеры градиента
             setSliderActive(zeroRayLengthSlider, false);
             setSliderActive(hundredRayLengthSlider, false);
+            setSliderActive(zeroLineWidthSlider, false);
+            setSliderActive(hundredLineWidthSlider, false);
         }
     }
     
@@ -609,22 +647,16 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.removeChild(link);
     }
     
-    // Функция добавления лучей в SVG
+    // Обновляем функцию addRaysToSvg для использования общей функции
     function addRaysToSvg(parentNode, params, x) {
         const svgNS = 'http://www.w3.org/2000/svg';
-        const { vanishingPoint, gap, rayCount, baseRays, scale, lineWidth, roundCap } = params;
+        const { vanishingPoint, gap, rayCount, baseRays, scale, roundCap } = params;
         
-        // Определяем длину луча в зависимости от режима
-        let rayLength = params.rayLength;
+        // Вычисляем относительную позицию по горизонтали (0-1), если она указана
+        const relativeX = x !== undefined ? x / canvas.width : undefined;
         
-        // Если включен режим растра и передана позиция, интерполируем длину
-        if (params.rasterMode && x !== undefined) {
-            // Вычисляем относительную позицию по горизонтали (0-1)
-            const relativeX = x / canvas.width;
-            
-            // Линейно интерполируем длину между значениями zeroRayLength и hundredRayLength
-            rayLength = params.zeroRayLength + relativeX * (params.hundredRayLength - params.zeroRayLength);
-        }
+        // Определяем длину луча и толщину линии
+        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX);
         
         // Рисуем горизонтальные лучи (фиксированные)
         baseRays.horizontal.forEach(angle => {
@@ -684,29 +716,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Функция добавления соединительной линии в SVG
+    // Обновляем функцию addConnectingLineToSvg для использования общей функции
     function addConnectingLineToSvg(parentNode, x, y, horizontalGap, moduleHeight) {
         const svgNS = 'http://www.w3.org/2000/svg';
         
-        // Вычисляем длину соединительной линии с той же логикой, что и для рисования
-        let lineLength;
+        // Вычисляем относительную позицию
+        const relativeX = params.rasterMode ? (x + horizontalGap / 2) / canvas.width : undefined;
+        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX);
         
-        if (params.rasterMode) {
-            // Вычисляем относительную позицию по горизонтали (0-1)
-            const relativeX = (x + horizontalGap / 2) / canvas.width;
-            
-            // Линейно интерполируем длину между значениями zeroRayLength и hundredRayLength
-            const interpolatedRayLength = params.zeroRayLength + relativeX * (params.hundredRayLength - params.zeroRayLength);
-            
-            // Видимая длина соединительной линии равна длине луча
-            lineLength = interpolatedRayLength * params.scale;
-            
-            // Предотвращаем отрицательную длину
-            lineLength = Math.max(lineLength, 1); // Минимальная длина 1px, чтобы линия всегда была видна
-        } else {
-            // В обычном режиме линия имеет длину, равную видимой части луча
-            lineLength = params.rayLength * params.scale;
-        }
+        // Вычисляем длину линии
+        let lineLength = rayLength * params.scale;
+        
+        // Предотвращаем отрицательную длину
+        lineLength = Math.max(lineLength, 1); // Минимальная длина 1px, чтобы линия всегда была видна
         
         // Позиция X - после модуля, по центру отступа
         const lineX = x + horizontalGap / 2;
@@ -720,7 +742,7 @@ document.addEventListener('DOMContentLoaded', function() {
         line.setAttribute('x2', lineX);
         line.setAttribute('y2', lineY + lineLength);
         line.setAttribute('stroke', '#000000'); // Черный цвет для SVG
-        line.setAttribute('stroke-width', params.lineWidth * (params.scale < 1 ? 1 : params.scale));
+        line.setAttribute('stroke-width', lineWidth * (params.scale < 1 ? 1 : params.scale));
         if (params.roundCap) {
             line.setAttribute('stroke-linecap', 'round');
         }
@@ -742,6 +764,8 @@ document.addEventListener('DOMContentLoaded', function() {
         rasterModeCheckbox.checked = defaultValues.rasterMode;
         zeroRayLengthSlider.value = defaultValues.zeroRayLength;
         hundredRayLengthSlider.value = defaultValues.hundredRayLength;
+        zeroLineWidthSlider.value = defaultValues.zeroLineWidth;
+        hundredLineWidthSlider.value = defaultValues.hundredLineWidth;
         
         // Обновляем значения в объекте params
         params.lineWidth = defaultValues.lineWidth;
@@ -754,6 +778,8 @@ document.addEventListener('DOMContentLoaded', function() {
         params.rasterMode = defaultValues.rasterMode;
         params.zeroRayLength = defaultValues.zeroRayLength;
         params.hundredRayLength = defaultValues.hundredRayLength;
+        params.zeroLineWidth = defaultValues.zeroLineWidth;
+        params.hundredLineWidth = defaultValues.hundredLineWidth;
         params.totalLength = params.gap + params.rayLength;
         
         // Обновляем отображаемые значения
@@ -764,9 +790,12 @@ document.addEventListener('DOMContentLoaded', function() {
         scaleValueDisplay.textContent = defaultValues.scale.toFixed(1);
         zeroRayLengthValueDisplay.textContent = defaultValues.zeroRayLength;
         hundredRayLengthValueDisplay.textContent = defaultValues.hundredRayLength;
+        zeroLineWidthValueDisplay.textContent = defaultValues.zeroLineWidth.toFixed(1);
+        hundredLineWidthValueDisplay.textContent = defaultValues.hundredLineWidth.toFixed(1);
         
-        // Включаем слайдер Ray Length (он мог быть отключен в режиме растра)
+        // Включаем слайдер Ray Length и Line Width (они могли быть отключены в режиме растра)
         setSliderActive(rayLengthSlider, true);
+        setSliderActive(lineWidthSlider, true);
         
         // Обновляем видимость элементов управления
         toggleRasterControls();
@@ -775,12 +804,67 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!defaultValues.rasterMode) {
             setSliderActive(zeroRayLengthSlider, false);
             setSliderActive(hundredRayLengthSlider, false);
+            setSliderActive(zeroLineWidthSlider, false);
+            setSliderActive(hundredLineWidthSlider, false);
         } else {
             setSliderActive(zeroRayLengthSlider, true);
             setSliderActive(hundredRayLengthSlider, true);
+            setSliderActive(zeroLineWidthSlider, true);
+            setSliderActive(hundredLineWidthSlider, true);
         }
         
         // Перерисовываем паттерн
         drawPattern();
     }
+
+    // Функция для экспорта изображения в формате PNG
+    function exportAsPng() {
+        const canvas = document.createElement('canvas');
+        const canvasWidth = params.gridSize * params.moduleSize * 2;
+        const canvasHeight = params.gridSize * params.moduleSize * 2;
+        
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Заполняем фон белым цветом
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        
+        // Отрисовываем паттерн на канвасе
+        const container = document.getElementById('container');
+        
+        // Получаем SVG данные
+        const svgElement = container.querySelector('svg');
+        const svgData = new XMLSerializer().serializeToString(svgElement);
+        
+        // Создаем изображение из SVG
+        const img = new Image();
+        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+        
+        img.onload = function() {
+            // Рисуем SVG на канвасе
+            ctx.drawImage(img, 0, 0);
+            
+            // Конвертируем канвас в PNG и скачиваем
+            const pngUrl = canvas.toDataURL('image/png');
+            
+            const downloadLink = document.createElement('a');
+            downloadLink.href = pngUrl;
+            downloadLink.download = 'rays_pattern.png';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            
+            // Освобождаем URL
+            URL.revokeObjectURL(url);
+        };
+        
+        img.src = url;
+    }
+
+    // Добавляем обработчик для кнопки экспорта PNG
+    document.getElementById('exportPngBtn').addEventListener('click', exportAsPng);
 }); 

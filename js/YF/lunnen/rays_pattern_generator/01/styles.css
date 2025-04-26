@@ -593,4 +593,21 @@ input[type="checkbox"]:checked::after {
 /* Контейнер неактивного слайдера в raster-sliders */
 .raster-sliders .inactive-slider-container label span {
     opacity: 0; /* Явно скрываем все элементы в слайдерах градиента */
+}
+
+/* Стили для строк в секции растрового градиента */
+.raster-row {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.raster-row .control-group {
+    flex: 1;
+    margin-right: 20px;
+}
+
+.raster-row .control-group:last-child {
+    margin-right: 0;
 } 
