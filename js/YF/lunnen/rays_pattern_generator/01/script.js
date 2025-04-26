@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const scaleSlider = document.getElementById('scaleSlider');
     const exportSvgBtn = document.getElementById('exportSvgBtn');
     const resetBtn = document.getElementById('resetBtn');
+    const roundCapCheckbox = document.getElementById('roundCapCheckbox');
     const lineWidthValueDisplay = document.getElementById('lineWidthValue');
     const gapValueDisplay = document.getElementById('gapValue');
     const rayLengthValueDisplay = document.getElementById('rayLengthValue');
@@ -47,7 +48,8 @@ document.addEventListener('DOMContentLoaded', function() {
         gap: 19,
         rayLength: 56,
         rayCount: 5,
-        scale: 1.0
+        scale: 1.0,
+        roundCap: false
     };
     
     // Функция получения ближайшего разрешенного значения
@@ -98,7 +100,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Цвет линии
         strokeColor: '#FFFFFF',
         // Базовые лучи
-        baseRays: baseRays
+        baseRays: baseRays,
+        // Круглые окончания линий
+        roundCap: false
     };
     
     // Устанавливаем начальные значения на слайдерах и в отображении
@@ -153,6 +157,12 @@ document.addEventListener('DOMContentLoaded', function() {
     scaleSlider.addEventListener('input', function() {
         params.scale = parseFloat(this.value);
         scaleValueDisplay.textContent = params.scale.toFixed(1);
+        drawPattern();
+    });
+    
+    // Обработчик для чекбокса округлых окончаний линий
+    roundCapCheckbox.addEventListener('change', function() {
+        params.roundCap = this.checked;
         drawPattern();
     });
     
@@ -227,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Установка стилей рисования
         ctx.strokeStyle = params.strokeColor;
         ctx.lineWidth = params.lineWidth * (params.scale < 1 ? 1 : params.scale); // Масштабируем толщину линии, но не тоньше базовой
-        ctx.lineCap = 'butt';
+        ctx.lineCap = params.roundCap ? 'round' : 'butt';
         
         // Рисуем вертикальную линию
         ctx.beginPath();
@@ -257,7 +267,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Установка стилей рисования
         ctx.strokeStyle = params.strokeColor;
         ctx.lineWidth = params.lineWidth;
-        ctx.lineCap = 'butt';
+        ctx.lineCap = params.roundCap ? 'round' : 'butt';
         
         // Отрисовка модуля
         drawRays(params);
@@ -390,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Функция добавления лучей в SVG
     function addRaysToSvg(parentNode, params) {
         const svgNS = 'http://www.w3.org/2000/svg';
-        const { vanishingPoint, gap, totalLength, rayCount, baseRays, scale, lineWidth } = params;
+        const { vanishingPoint, gap, totalLength, rayCount, baseRays, scale, lineWidth, roundCap } = params;
         
         // Рисуем горизонтальные лучи (фиксированные)
         baseRays.horizontal.forEach(angle => {
@@ -438,6 +448,9 @@ document.addEventListener('DOMContentLoaded', function() {
             line.setAttribute('y2', endY);
             line.setAttribute('stroke', '#000000'); // Черный цвет для SVG
             line.setAttribute('stroke-width', lineWidth * (scale < 1 ? 1 : scale));
+            if (roundCap) {
+                line.setAttribute('stroke-linecap', 'round');
+            }
             
             // Добавляем линию к родительскому элементу
             parentNode.appendChild(line);
@@ -464,6 +477,9 @@ document.addEventListener('DOMContentLoaded', function() {
         line.setAttribute('y2', lineY + lineLength);
         line.setAttribute('stroke', '#000000'); // Черный цвет для SVG
         line.setAttribute('stroke-width', params.lineWidth * (params.scale < 1 ? 1 : params.scale));
+        if (params.roundCap) {
+            line.setAttribute('stroke-linecap', 'round');
+        }
         
         // Добавляем линию к родительскому элементу
         parentNode.appendChild(line);
@@ -477,6 +493,7 @@ document.addEventListener('DOMContentLoaded', function() {
         rayLengthSlider.value = defaultValues.rayLength;
         rayCountSlider.value = defaultValues.rayCount;
         scaleSlider.value = defaultValues.scale;
+        roundCapCheckbox.checked = defaultValues.roundCap;
         
         // Обновляем значения в объекте params
         params.lineWidth = defaultValues.lineWidth;
@@ -484,6 +501,7 @@ document.addEventListener('DOMContentLoaded', function() {
         params.rayLength = defaultValues.rayLength;
         params.rayCount = defaultValues.rayCount;
         params.scale = defaultValues.scale;
+        params.roundCap = defaultValues.roundCap;
         params.totalLength = params.gap + params.rayLength;
         
         // Обновляем отображаемые значения

@@ -126,7 +126,13 @@
           const listItem = document.createElement('li');
           const link = document.createElement('a');
           link.className = 'app-link';
-          link.href = `${project.name.toLowerCase()}/${app.name}/`;
+          
+          // Особая обработка для rays_pattern_generator
+          if (app.name === 'rays_pattern_generator') {
+            link.href = `${project.name.toLowerCase()}/${app.name}/01/`;
+          } else {
+            link.href = `${project.name.toLowerCase()}/${app.name}/`;
+          }
           
           // Используем предоставленное отображаемое имя, если оно есть, иначе форматируем имя папки
           link.textContent = app.displayName || formatAppName(app.name);
