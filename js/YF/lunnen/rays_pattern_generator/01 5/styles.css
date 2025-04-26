@@ -51,47 +51,12 @@ body {
     margin-bottom: 20px;
 }
 
-/* Обертка для всех элементов управления */
-.controls-wrapper {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    gap: 20px;
-    margin-top: 20px;
-}
-
-/* Общие стили для контролов */
 .controls {
     display: flex;
+    justify-content: center;
     flex-wrap: wrap;
     gap: 20px;
-    padding: 0 20px;
-}
-
-/* Стили для первой строки (основные настройки) */
-.main-controls {
-    justify-content: flex-start; /* Выравнивание по левому краю */
-}
-
-/* Стили для второй строки (настройки растра) */
-.raster-controls-row {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-}
-
-/* Контейнер для чекбокса растра */
-.raster-checkbox {
-    padding: 15px;
-    display: flex;
-    align-items: center;
-}
-
-/* Контейнер для слайдеров растра */
-.raster-sliders {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
+    margin-top: 20px;
 }
 
 .control-group {
@@ -307,38 +272,11 @@ input[type="checkbox"]:checked::after {
     transform: rotate(45deg);
 }
 
-/* Стили для элементов управления растром */
+/* Скрываем элементы управления растром при выключенном режиме */
 .raster-control {
-    display: none; /* По умолчанию скрыты */
+    display: none;
 }
 
 .raster-control.active {
-    display: flex; /* Отображаются только при активном режиме растра */
-}
-
-/* Отображение слайдеров при активации режима растра */
-.raster-sliders.active .raster-control {
     display: flex;
-}
-
-/* Адаптивная верстка */
-@media (max-width: 1200px) {
-    .controls {
-        justify-content: center;
-    }
-    
-    .raster-controls-row {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .raster-checkbox {
-        padding-left: 20px;
-    }
-}
-
-@media (max-width: 768px) {
-    .control-group {
-        min-width: 200px;
-    }
 } 

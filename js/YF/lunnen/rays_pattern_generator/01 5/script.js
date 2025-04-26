@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const gradientIntensityValueDisplay = document.getElementById('gradientIntensityValue');
     const leftBrightnessValueDisplay = document.getElementById('leftBrightnessValue');
     const rightDarknessValueDisplay = document.getElementById('rightDarknessValue');
+    const rasterControl = document.querySelector('.raster-control');
     
     // Определяем, какую операционную систему использует пользователь
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -134,16 +135,8 @@ document.addEventListener('DOMContentLoaded', function() {
     scaleValueDisplay.textContent = params.scale.toFixed(1);
     lineWidthValueDisplay.textContent = params.lineWidth.toFixed(1);
     
-    // Устанавливаем состояние чекбоксов
-    roundCapCheckbox.checked = params.roundCap;
-    offsetRowsCheckbox.checked = params.offsetRows;
-    rasterModeCheckbox.checked = params.rasterMode;
-    
     // Отрисовка первоначального состояния
     drawPattern();
-    
-    // Инициализация отображения элементов управления растром
-    toggleRasterControls();
     
     // Обработчик для кнопки экспорта в SVG
     exportSvgBtn.addEventListener('click', exportToSvg);
@@ -305,9 +298,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const moduleHeight = baseModuleHeight * params.scale;
         const horizontalGap = baseHorizontalGap * params.scale;
         
-        // Используем ту же логику вычисления длины, что и для лучей (с учетом масштаба)
-        // Видимая длина - это totalLength минус gap
-        let lineLength = (params.totalLength - params.gap) * params.scale;
+        // Используем ту же длину, что и для лучей (с учетом масштаба)
+        let lineLength = params.rayLength * params.scale;
         
         // Если включен режим растра, изменяем длину в зависимости от позиции
         if (params.rasterMode) {
@@ -317,11 +309,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Вычисляем множитель длины с учетом яркости левой и темноты правой части
             const intensityFactor = params.gradientIntensity / 100;
             
-            // Инвертируем значение leftBrightness (100% -> короткие линии, 10% -> длинные линии)
-            const invertedLeftBrightness = 110 - params.leftBrightness; // 100% => 10%, 10% => 100%
-            
             // Применяем интенсивность градиента для регулировки диапазона между min и max
-            const baseMin = invertedLeftBrightness / 100; // Базовая яркость левой части (инвертированная)
+            const baseMin = params.leftBrightness / 100; // Базовая яркость левой части
             const baseMax = params.rightDarkness / 100;  // Базовая темнота правой части
             
             // Регулируем диапазон в зависимости от intensityFactor
@@ -331,9 +320,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Линейный градиент длины от левого края к правому
             const lengthMultiplier = minScale + relativeX * (maxScale - minScale);
             
-            // Применяем множитель к длине линии (только к видимой части, как и у лучей)
-            lineLength = (params.totalLength * lengthMultiplier - params.gap) * params.scale;
-            lineLength = Math.max(lineLength, 0); // Предотвращаем отрицательную длину
+            // Применяем множитель к длине линии
+            lineLength *= lengthMultiplier;
         }
         
         // Позиция X - после модуля, по центру отступа
@@ -401,11 +389,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Вычисляем множитель длины с учетом яркости левой и темноты правой части
             const intensityFactor = params.gradientIntensity / 100;
             
-            // Инвертируем значение leftBrightness (100% -> короткие линии, 10% -> длинные линии)
-            const invertedLeftBrightness = 110 - params.leftBrightness; // 100% => 10%, 10% => 100%
-            
             // Применяем интенсивность градиента для регулировки диапазона между min и max
-            const baseMin = invertedLeftBrightness / 100; // Базовая яркость левой части (инвертированная)
+            const baseMin = params.leftBrightness / 100; // Базовая яркость левой части
             const baseMax = params.rightDarkness / 100;  // Базовая темнота правой части
             
             // Регулируем диапазон в зависимости от intensityFactor
@@ -475,31 +460,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Функция переключения элементов управления растром
     function toggleRasterControls() {
         if (params.rasterMode) {
-            // Показываем слайдеры настройки растра
-            const rasterControls = document.querySelectorAll('.raster-control');
-            rasterControls.forEach(control => {
-                control.classList.add('active');
-            });
-            
-            // Добавляем класс active для родительского контейнера
-            const rasterSliders = document.querySelector('.raster-sliders');
-            if (rasterSliders) {
-                rasterSliders.classList.add('active');
-            }
+            rasterControl.classList.add('active');
         } else {
-            // Скрываем слайдеры настройки растра
-            const rasterControls = document.querySelectorAll('.raster-control');
-            rasterControls.forEach(control => {
-                control.classList.remove('active');
-            });
-            
-            // Удаляем класс active у родительского контейнера
-            const rasterSliders = document.querySelector('.raster-sliders');
-            if (rasterSliders) {
-                rasterSliders.classList.remove('active');
-            }
+            rasterControl.classList.remove('active');
         }
     }
+    
+    // Инициализация отображения элементов управления
+    toggleRasterControls();
     
     // Функция экспорта в SVG
     function exportToSvg() {
@@ -603,11 +571,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Вычисляем множитель длины с учетом яркости левой и темноты правой части
             const intensityFactor = params.gradientIntensity / 100;
             
-            // Инвертируем значение leftBrightness (100% -> короткие линии, 10% -> длинные линии)
-            const invertedLeftBrightness = 110 - params.leftBrightness; // 100% => 10%, 10% => 100%
-            
             // Применяем интенсивность градиента для регулировки диапазона между min и max
-            const baseMin = invertedLeftBrightness / 100; // Базовая яркость левой части (инвертированная)
+            const baseMin = params.leftBrightness / 100; // Базовая яркость левой части
             const baseMax = params.rightDarkness / 100;  // Базовая темнота правой части
             
             // Регулируем диапазон в зависимости от intensityFactor
@@ -683,9 +648,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function addConnectingLineToSvg(parentNode, x, y, horizontalGap, moduleHeight) {
         const svgNS = 'http://www.w3.org/2000/svg';
         
-        // Используем ту же логику вычисления длины, что и для лучей
-        // Видимая длина - это totalLength минус gap
-        let lineLength = (params.totalLength - params.gap) * params.scale;
+        // Используем ту же длину, что и для лучей
+        let lineLength = params.rayLength * params.scale;
         
         // Если включен режим растра, изменяем длину в зависимости от позиции
         if (params.rasterMode) {
@@ -695,11 +659,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Вычисляем множитель длины с учетом яркости левой и темноты правой части
             const intensityFactor = params.gradientIntensity / 100;
             
-            // Инвертируем значение leftBrightness (100% -> короткие линии, 10% -> длинные линии)
-            const invertedLeftBrightness = 110 - params.leftBrightness; // 100% => 10%, 10% => 100%
-            
             // Применяем интенсивность градиента для регулировки диапазона между min и max
-            const baseMin = invertedLeftBrightness / 100; // Базовая яркость левой части (инвертированная)
+            const baseMin = params.leftBrightness / 100; // Базовая яркость левой части
             const baseMax = params.rightDarkness / 100;  // Базовая темнота правой части
             
             // Регулируем диапазон в зависимости от intensityFactor
@@ -709,9 +670,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Линейный градиент длины от левого края к правому
             const lengthMultiplier = minScale + relativeX * (maxScale - minScale);
             
-            // Применяем множитель к длине линии (только к видимой части, как и у лучей)
-            lineLength = (params.totalLength * lengthMultiplier - params.gap) * params.scale;
-            lineLength = Math.max(lineLength, 0); // Предотвращаем отрицательную длину
+            // Применяем множитель к длине линии
+            lineLength *= lengthMultiplier;
         }
         
         // Позиция X - после модуля, по центру отступа
