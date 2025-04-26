@@ -270,13 +270,4 @@ input[type="checkbox"]:checked::after {
     top: 2px;
     left: 6px;
     transform: rotate(45deg);
-}
-
-/* Скрываем элементы управления растром при выключенном режиме */
-.raster-control {
-    display: none;
-}
-
-.raster-control.active {
-    display: flex;
 } 

@@ -8,23 +8,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const rayLengthSlider = document.getElementById('rayLengthSlider');
     const rayCountSlider = document.getElementById('rayCountSlider');
     const scaleSlider = document.getElementById('scaleSlider');
-    const gradientIntensitySlider = document.getElementById('gradientIntensitySlider');
-    const leftBrightnessSlider = document.getElementById('leftBrightnessSlider');
-    const rightDarknessSlider = document.getElementById('rightDarknessSlider');
     const exportSvgBtn = document.getElementById('exportSvgBtn');
     const resetBtn = document.getElementById('resetBtn');
     const roundCapCheckbox = document.getElementById('roundCapCheckbox');
-    const offsetRowsCheckbox = document.getElementById('offsetRowsCheckbox');
-    const rasterModeCheckbox = document.getElementById('rasterModeCheckbox');
+    const alternateLayoutCheckbox = document.getElementById('alternateLayoutCheckbox');
     const lineWidthValueDisplay = document.getElementById('lineWidthValue');
     const gapValueDisplay = document.getElementById('gapValue');
     const rayLengthValueDisplay = document.getElementById('rayLengthValue');
     const rayCountValueDisplay = document.getElementById('rayCountValue');
     const scaleValueDisplay = document.getElementById('scaleValue');
-    const gradientIntensityValueDisplay = document.getElementById('gradientIntensityValue');
-    const leftBrightnessValueDisplay = document.getElementById('leftBrightnessValue');
-    const rightDarknessValueDisplay = document.getElementById('rightDarknessValue');
-    const rasterControl = document.querySelector('.raster-control');
     
     // Определяем, какую операционную систему использует пользователь
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -32,6 +24,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Обновляем текст кнопки с нужным сочетанием клавиш
     exportSvgBtn.textContent = `Export SVG (${hotkeySymbol})`;
+    
+    // Принудительная перерисовка через 100 мс после загрузки страницы
+    setTimeout(function() {
+        // Временно отключаем альтернативную раскладку для гарантированного отображения линий
+        const savedAlternateLayout = params.alternateLayout;
+        params.alternateLayout = false;
+        
+        // Перерисовываем паттерн
+        drawPattern();
+        
+        // Восстанавливаем предыдущее значение настройки
+        params.alternateLayout = savedAlternateLayout;
+        
+        // Если был активен альтернативный режим, снова перерисовываем
+        if (savedAlternateLayout) {
+            drawPattern();
+        }
+        
+        console.log("Forced redraw completed");
+    }, 100);
     
     // Добавляем обработчик клавиатурных сокращений
     document.addEventListener('keydown', function(event) {
@@ -50,6 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const baseModuleHeight = 75;
     const baseHorizontalGap = 20; // Базовый горизонтальный отступ между модулями
     const baseVerticalGap = 0;    // Базовый вертикальный отступ между модулями
+    const baseAlternateVerticalGap = 10; // Базовый вертикальный отступ в альтернативном режиме
     
     // Значения по умолчанию для сброса
     const defaultValues = {
@@ -59,11 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
         rayCount: 5,
         scale: 1.0,
         roundCap: false,
-        offsetRows: false,
-        rasterMode: false,
-        gradientIntensity: 50,
-        leftBrightness: 30,
-        rightDarkness: 170
+        alternateLayout: false
     };
     
     // Функция получения ближайшего разрешенного значения
@@ -117,16 +126,8 @@ document.addEventListener('DOMContentLoaded', function() {
         baseRays: baseRays,
         // Круглые окончания линий
         roundCap: false,
-        // Смещение нечетных строк
-        offsetRows: false,
-        // Режим растрового градиента
-        rasterMode: false,
-        // Интенсивность градиента (в процентах)
-        gradientIntensity: 50,
-        // Яркость левой части (в процентах от нормальной длины)
-        leftBrightness: 30,
-        // Темнота правой части (в процентах от нормальной длины)
-        rightDarkness: 170
+        // Альтернативная расстановка модулей
+        alternateLayout: false
     };
     
     // Устанавливаем начальные значения на слайдерах и в отображении
@@ -156,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     rayLengthSlider.addEventListener('input', function() {
         params.rayLength = parseInt(this.value);
-        // Обновляем totalLength, чтобы сохранить одинаковую видимую длину
+        // Обновляем totalLength, чтобы конечная точка перемещалась
         params.totalLength = params.gap + params.rayLength;
         rayLengthValueDisplay.textContent = this.value;
         drawPattern();
@@ -190,38 +191,20 @@ document.addEventListener('DOMContentLoaded', function() {
         drawPattern();
     });
     
-    // Обработчик для чекбокса смещения нечетных строк
-    offsetRowsCheckbox.addEventListener('change', function() {
-        params.offsetRows = this.checked;
+    // Обработчик для чекбокса альтернативной расстановки
+    alternateLayoutCheckbox.addEventListener('change', function() {
+        params.alternateLayout = this.checked;
+        
+        // Выполняем перерисовку
         drawPattern();
-    });
-    
-    // Обработчик для чекбокса режима растрового градиента
-    rasterModeCheckbox.addEventListener('change', function() {
-        params.rasterMode = this.checked;
-        toggleRasterControls();
-        drawPattern();
-    });
-    
-    // Обработчик для слайдера интенсивности градиента
-    gradientIntensitySlider.addEventListener('input', function() {
-        params.gradientIntensity = parseInt(this.value);
-        gradientIntensityValueDisplay.textContent = this.value;
-        drawPattern();
-    });
-    
-    // Обработчик для слайдера яркости левой части
-    leftBrightnessSlider.addEventListener('input', function() {
-        params.leftBrightness = parseInt(this.value);
-        leftBrightnessValueDisplay.textContent = this.value;
-        drawPattern();
-    });
-    
-    // Обработчик для слайдера темноты правой части
-    rightDarknessSlider.addEventListener('input', function() {
-        params.rightDarkness = parseInt(this.value);
-        rightDarknessValueDisplay.textContent = this.value;
-        drawPattern();
+        
+        // Для обычного режима убеждаемся, что вертикальные линии добавлены
+        if (!this.checked) {
+            setTimeout(function() {
+                ensureConnectingLines();
+                console.log("Reconnecting lines after layout change");
+            }, 50);
+        }
     });
     
     // Обработчик для кнопки сброса настроек
@@ -232,8 +215,58 @@ document.addEventListener('DOMContentLoaded', function() {
         // Очистка канваса
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
+        // Вычисляем реальные размеры модуля с учетом масштаба
+        const moduleWidth = baseModuleWidth * params.scale;
+        const moduleHeight = baseModuleHeight * params.scale;
+        const horizontalGap = baseHorizontalGap * params.scale;
+        const verticalGap = params.alternateLayout ? 
+            baseAlternateVerticalGap * params.scale : baseVerticalGap * params.scale;
+        
+        // Вычисляем количество модулей, которые поместятся на канвасе
+        const modulesInRow = Math.ceil(canvas.width / (moduleWidth + horizontalGap));
+        const modulesInColumn = Math.ceil(canvas.height / (moduleHeight + verticalGap));
+        
+        // Вычисляем смещение для центрирования всего паттерна
+        const totalPatternWidth = modulesInRow * moduleWidth + (modulesInRow - 1) * horizontalGap;
+        const totalPatternHeight = modulesInColumn * moduleHeight + (modulesInColumn - 1) * verticalGap;
+        
+        const offsetX = (canvas.width - totalPatternWidth) / 2;
+        const offsetY = (canvas.height - totalPatternHeight) / 2;
+        
         // Заполняем канвас модулями паттерна
         fillCanvasWithPattern();
+        
+        // Принудительная проверка наличия вертикальных линий в обычном режиме
+        if (!params.alternateLayout) {
+            // ПРИНУДИТЕЛЬНО РИСУЕМ ВЕРТИКАЛЬНЫЕ ЛИНИИ
+            // Сохраняем контекст
+            ctx.save();
+            
+            // Устанавливаем стили
+            ctx.strokeStyle = params.strokeColor;
+            ctx.lineWidth = params.lineWidth * (params.scale < 1 ? 1 : params.scale);
+            ctx.lineCap = params.roundCap ? 'round' : 'butt';
+            
+            // Длина линий (та же, что и для лучей)
+            const lineLength = params.rayLength * params.scale;
+            
+            // Рисуем все соединительные линии напрямую
+            for (let row = 0; row < modulesInColumn; row++) {
+                for (let col = 0; col < modulesInRow - 1; col++) {
+                    const x = offsetX + col * (moduleWidth + horizontalGap) + moduleWidth;
+                    const lineX = x + horizontalGap / 2;
+                    const lineY = offsetY + row * (moduleHeight + verticalGap) + moduleHeight / 2 - lineLength / 2;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(lineX, lineY);
+                    ctx.lineTo(lineX, lineY + lineLength);
+                    ctx.stroke();
+                }
+            }
+            
+            // Восстанавливаем контекст
+            ctx.restore();
+        }
     }
     
     // Функция заполнения канваса паттерном
@@ -242,50 +275,45 @@ document.addEventListener('DOMContentLoaded', function() {
         const moduleWidth = baseModuleWidth * params.scale;
         const moduleHeight = baseModuleHeight * params.scale;
         const horizontalGap = baseHorizontalGap * params.scale;
-        
-        // Вертикальный отступ применяется только в режиме смещения нечетных строк
-        const verticalGap = params.offsetRows ? 10 * params.scale : baseVerticalGap * params.scale;
+        // Выбираем вертикальный отступ в зависимости от режима
+        const verticalGap = params.alternateLayout ? 
+            baseAlternateVerticalGap * params.scale : baseVerticalGap * params.scale;
         
         // Вычисляем количество модулей, которые поместятся на канвасе
         const modulesInRow = Math.ceil(canvas.width / (moduleWidth + horizontalGap));
         const modulesInColumn = Math.ceil(canvas.height / (moduleHeight + verticalGap));
         
-        // Вычисляем смещение для нечетных строк
-        const rowOffset = params.offsetRows ? (moduleWidth + horizontalGap) / 2 : 0;
-        
-        // Вычисляем общую ширину паттерна с учетом смещения
-        // Если используется смещение строк, добавляем половину модуля для последней нечетной строки
-        const extraWidth = params.offsetRows && (modulesInColumn % 2 === 0) ? rowOffset : 0;
-        const totalPatternWidth = modulesInRow * moduleWidth + (modulesInRow - 1) * horizontalGap + extraWidth;
+        // Вычисляем смещение для центрирования всего паттерна
+        const totalPatternWidth = modulesInRow * moduleWidth + (modulesInRow - 1) * horizontalGap;
         const totalPatternHeight = modulesInColumn * moduleHeight + (modulesInColumn - 1) * verticalGap;
         
         const offsetX = (canvas.width - totalPatternWidth) / 2;
         const offsetY = (canvas.height - totalPatternHeight) / 2;
         
-        // Отрисовываем модули паттерна
+        // ПЕРВЫЙ ПРОХОД: Отрисовываем только модули
         for (let row = 0; row < modulesInColumn; row++) {
-            // Вычисляем смещение для текущей строки (нечетные строки смещаются)
-            const currentRowOffset = (row % 2 === 1 && params.offsetRows) ? rowOffset : 0;
-            
-            // Определяем, нужно ли добавить дополнительный модуль в нечетных строках
-            const additionalModule = (row % 2 === 1 && params.offsetRows) ? 1 : 0;
-            const actualModulesInRow = modulesInRow + additionalModule;
-            
-            for (let col = 0; col < actualModulesInRow; col++) {
-                // Вычисляем позицию модуля с учетом смещения строки
-                const x = offsetX + currentRowOffset + col * (moduleWidth + horizontalGap);
+            for (let col = 0; col < modulesInRow; col++) {
+                // Вычисляем позицию модуля
+                let x = offsetX + col * (moduleWidth + horizontalGap);
                 const y = offsetY + row * (moduleHeight + verticalGap);
                 
-                // Отрисовываем модуль только если он видим на холсте
-                if (x < canvas.width && y < canvas.height && x + moduleWidth > 0 && y + moduleHeight > 0) {
-                    // Отрисовываем модуль на этой позиции
-                    drawModuleAt(x, y);
-                    
-                    // Отрисовываем вертикальную линию между модулями,
-                    // но только если это не последний модуль в ряду
-                    if (col < actualModulesInRow - 1) {
-                        drawConnectingLine(x + moduleWidth, y);
-                    }
+                // Применяем смещение для четных строк в альтернативном режиме
+                if (params.alternateLayout && row % 2 === 1) {
+                    x += moduleWidth / 2;
+                }
+                
+                // Отрисовываем модуль на этой позиции
+                drawModuleAt(x, y);
+            }
+        }
+        
+        // ВТОРОЙ ПРОХОД: Отрисовываем только соединительные линии (если не альтернативный режим)
+        if (!params.alternateLayout) {
+            for (let row = 0; row < modulesInColumn; row++) {
+                for (let col = 0; col < modulesInRow - 1; col++) {
+                    const x = offsetX + col * (moduleWidth + horizontalGap) + moduleWidth;
+                    const y = offsetY + row * (moduleHeight + verticalGap);
+                    drawConnectingLine(x, y);
                 }
             }
         }
@@ -298,33 +326,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const moduleHeight = baseModuleHeight * params.scale;
         const horizontalGap = baseHorizontalGap * params.scale;
         
-        // Используем ту же длину, что и для лучей
-        const rayLength = params.rayLength * params.scale;
-        
-        // Если включен режим растра, изменяем длину в зависимости от позиции
-        if (params.rasterMode) {
-            // Вычисляем относительную позицию по горизонтали (0-1)
-            const relativeX = (x + horizontalGap / 2) / canvas.width;
-            
-            // Вычисляем множитель длины с учетом яркости левой и темноты правой части
-            const intensityFactor = params.gradientIntensity / 100;
-            
-            // Применяем интенсивность градиента для регулировки диапазона между min и max
-            const baseMin = params.leftBrightness / 100; // Базовая яркость левой части
-            const baseMax = params.rightDarkness / 100;  // Базовая темнота правой части
-            
-            // Регулируем диапазон в зависимости от intensityFactor
-            const minScale = baseMin + (1 - baseMin) * (1 - intensityFactor);
-            const maxScale = baseMax - (baseMax - 1) * (1 - intensityFactor);
-            
-            // Линейный градиент длины от левого края к правому
-            const lengthMultiplier = minScale + relativeX * (maxScale - minScale);
-            
-            // Применяем множитель к длине линии
-            lineLength = rayLength * lengthMultiplier;
-        } else {
-            lineLength = rayLength;
-        }
+        // Используем ту же длину, что и для лучей (с учетом масштаба)
+        const lineLength = params.rayLength * params.scale;
         
         // Позиция X - после модуля, по центру отступа
         const lineX = x + horizontalGap / 2;
@@ -336,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Установка стилей рисования
         ctx.strokeStyle = params.strokeColor;
-        ctx.lineWidth = params.lineWidth * (params.scale < 1 ? 1 : params.scale);
+        ctx.lineWidth = params.lineWidth * (params.scale < 1 ? 1 : params.scale); // Масштабируем толщину линии, но не тоньше базовой
         ctx.lineCap = params.roundCap ? 'round' : 'butt';
         
         // Рисуем вертикальную линию
@@ -370,38 +373,15 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.lineCap = params.roundCap ? 'round' : 'butt';
         
         // Отрисовка модуля
-        // В режиме растра передаем позицию для вычисления градиента
-        if (params.rasterMode) {
-            drawRays(params, x / canvas.width);
-        } else {
-            drawRays(params);
-        }
+        drawRays(params);
         
         // Восстановление контекста
         ctx.restore();
     }
     
     // Функция отрисовки лучей модуля
-    function drawRays(params, relativeX) {
-        const { vanishingPoint, gap, rayLength, rayCount, baseRays } = params;
-        
-        // Определяем множитель длины для градиента, если включен режим растра
-        let lengthMultiplier = 1;
-        if (params.rasterMode && relativeX !== undefined) {
-            // Вычисляем множитель длины с учетом яркости левой и темноты правой части
-            const intensityFactor = params.gradientIntensity / 100;
-            
-            // Применяем интенсивность градиента для регулировки диапазона между min и max
-            const baseMin = params.leftBrightness / 100; // Базовая яркость левой части
-            const baseMax = params.rightDarkness / 100;  // Базовая темнота правой части
-            
-            // Регулируем диапазон в зависимости от intensityFactor
-            const minScale = baseMin + (1 - baseMin) * (1 - intensityFactor);
-            const maxScale = baseMax - (baseMax - 1) * (1 - intensityFactor);
-            
-            // Линейный градиент длины от левого края к правому
-            lengthMultiplier = minScale + relativeX * (maxScale - minScale);
-        }
+    function drawRays(params) {
+        const { vanishingPoint, gap, totalLength, rayCount, baseRays } = params;
         
         // Рисуем горизонтальные лучи (фиксированные)
         baseRays.horizontal.forEach(angle => {
@@ -437,19 +417,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         function drawRay(angle) {
-            // В режиме растра применяем множитель длины к totalLength
-            let actualRayLength = rayLength;
-            if (params.rasterMode && relativeX !== undefined) {
-                actualRayLength = rayLength * lengthMultiplier;
-            }
-            
             // Начальная точка луча (с отступом от точки схода)
             const startX = vanishingPoint.x + Math.cos(angle) * gap;
             const startY = vanishingPoint.y + Math.sin(angle) * gap;
             
-            // Конечная точка луча - используем конкретную длину луча вместо totalLength
-            const endX = vanishingPoint.x + Math.cos(angle) * (gap + actualRayLength);
-            const endY = vanishingPoint.y + Math.sin(angle) * (gap + actualRayLength);
+            // Конечная точка луча
+            const endX = vanishingPoint.x + Math.cos(angle) * totalLength;
+            const endY = vanishingPoint.y + Math.sin(angle) * totalLength;
             
             // Рисуем луч
             ctx.beginPath();
@@ -459,17 +433,36 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Функция переключения элементов управления растром
-    function toggleRasterControls() {
-        if (params.rasterMode) {
-            rasterControl.classList.add('active');
-        } else {
-            rasterControl.classList.remove('active');
+    // Функция, гарантирующая наличие вертикальных линий в обычном режиме
+    function ensureConnectingLines() {
+        // Если включен альтернативный режим, не добавляем линии
+        if (params.alternateLayout) return;
+        
+        const moduleWidth = baseModuleWidth * params.scale;
+        const moduleHeight = baseModuleHeight * params.scale;
+        const horizontalGap = baseHorizontalGap * params.scale;
+        const verticalGap = baseVerticalGap * params.scale;
+        
+        // Вычисляем количество модулей
+        const modulesInRow = Math.ceil(canvas.width / (moduleWidth + horizontalGap));
+        const modulesInColumn = Math.ceil(canvas.height / (moduleHeight + verticalGap));
+        
+        // Вычисляем смещение для центрирования всего паттерна
+        const totalPatternWidth = modulesInRow * moduleWidth + (modulesInRow - 1) * horizontalGap;
+        const totalPatternHeight = modulesInColumn * moduleHeight + (modulesInColumn - 1) * verticalGap;
+        
+        const offsetX = (canvas.width - totalPatternWidth) / 2;
+        const offsetY = (canvas.height - totalPatternHeight) / 2;
+        
+        // Отрисовываем только соединительные линии между модулями
+        for (let row = 0; row < modulesInColumn; row++) {
+            for (let col = 0; col < modulesInRow - 1; col++) {  // Исключаем последний модуль в ряду
+                const x = offsetX + col * (moduleWidth + horizontalGap) + moduleWidth;
+                const y = offsetY + row * (moduleHeight + verticalGap);
+                drawConnectingLine(x, y);
+            }
         }
     }
-    
-    // Инициализация отображения элементов управления
-    toggleRasterControls();
     
     // Функция экспорта в SVG
     function exportToSvg() {
@@ -484,20 +477,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const moduleWidth = baseModuleWidth * params.scale;
         const moduleHeight = baseModuleHeight * params.scale;
         const horizontalGap = baseHorizontalGap * params.scale;
-        
-        // Вертикальный отступ применяется только в режиме смещения нечетных строк
-        const verticalGap = params.offsetRows ? 10 * params.scale : baseVerticalGap * params.scale;
+        // Выбираем вертикальный отступ в зависимости от режима
+        const verticalGap = params.alternateLayout ? 
+            baseAlternateVerticalGap * params.scale : baseVerticalGap * params.scale;
         
         // Вычисляем количество модулей
         const modulesInRow = Math.ceil(canvas.width / (moduleWidth + horizontalGap));
         const modulesInColumn = Math.ceil(canvas.height / (moduleHeight + verticalGap));
         
-        // Вычисляем смещение для нечетных строк
-        const rowOffset = params.offsetRows ? (moduleWidth + horizontalGap) / 2 : 0;
-        
-        // Вычисляем общую ширину паттерна с учетом смещения
-        const extraWidth = params.offsetRows && (modulesInColumn % 2 === 0) ? rowOffset : 0;
-        const totalPatternWidth = modulesInRow * moduleWidth + (modulesInRow - 1) * horizontalGap + extraWidth;
+        // Вычисляем смещение для центрирования
+        const totalPatternWidth = modulesInRow * moduleWidth + (modulesInRow - 1) * horizontalGap;
         const totalPatternHeight = modulesInColumn * moduleHeight + (modulesInColumn - 1) * verticalGap;
         
         const offsetX = (canvas.width - totalPatternWidth) / 2;
@@ -505,39 +494,29 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Отрисовываем модули
         for (let row = 0; row < modulesInColumn; row++) {
-            // Вычисляем смещение для текущей строки (нечетные строки смещаются)
-            const currentRowOffset = (row % 2 === 1 && params.offsetRows) ? rowOffset : 0;
-            
-            // Определяем, нужно ли добавить дополнительный модуль в нечетных строках
-            const additionalModule = (row % 2 === 1 && params.offsetRows) ? 1 : 0;
-            const actualModulesInRow = modulesInRow + additionalModule;
-            
-            for (let col = 0; col < actualModulesInRow; col++) {
-                // Вычисляем позицию модуля с учетом смещения строки
-                const x = offsetX + currentRowOffset + col * (moduleWidth + horizontalGap);
+            for (let col = 0; col < modulesInRow; col++) {
+                // Вычисляем позицию модуля
+                let x = offsetX + col * (moduleWidth + horizontalGap);
                 const y = offsetY + row * (moduleHeight + verticalGap);
                 
-                // Отрисовываем модуль только если он видим
-                if (x < canvas.width && y < canvas.height && x + moduleWidth > 0 && y + moduleHeight > 0) {
-                    // Создаем группу для модуля
-                    const moduleGroup = document.createElementNS(svgNS, 'g');
-                    moduleGroup.setAttribute('transform', `translate(${x}, ${y})`);
-                    
-                    // Добавляем лучи к группе модуля
-                    // В режиме растра передаем позицию для вычисления градиента
-                    if (params.rasterMode) {
-                        addRaysToSvg(moduleGroup, params, x);
-                    } else {
-                        addRaysToSvg(moduleGroup, params);
-                    }
-                    
-                    // Добавляем группу к SVG
-                    svg.appendChild(moduleGroup);
-                    
-                    // Отрисовываем вертикальную линию между модулями
-                    if (col < actualModulesInRow - 1) {
-                        addConnectingLineToSvg(svg, x + moduleWidth, y, horizontalGap, moduleHeight);
-                    }
+                // Применяем смещение для четных строк в альтернативном режиме
+                if (params.alternateLayout && row % 2 === 1) {
+                    x += moduleWidth / 2;
+                }
+                
+                // Создаем группу для модуля
+                const moduleGroup = document.createElementNS(svgNS, 'g');
+                moduleGroup.setAttribute('transform', `translate(${x}, ${y})`);
+                
+                // Добавляем лучи к группе модуля
+                addRaysToSvg(moduleGroup, params);
+                
+                // Добавляем группу к SVG
+                svg.appendChild(moduleGroup);
+                
+                // Отрисовываем вертикальную линию между модулями
+                if (col < modulesInRow - 1 && !params.alternateLayout) {
+                    addConnectingLineToSvg(svg, x + moduleWidth, y, horizontalGap, moduleHeight);
                 }
             }
         }
@@ -560,30 +539,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Функция добавления лучей в SVG
-    function addRaysToSvg(parentNode, params, x) {
+    function addRaysToSvg(parentNode, params) {
         const svgNS = 'http://www.w3.org/2000/svg';
-        const { vanishingPoint, gap, rayLength, rayCount, baseRays, scale, lineWidth, roundCap } = params;
-        
-        // Определяем множитель длины для градиента, если включен режим растра
-        let lengthMultiplier = 1;
-        if (params.rasterMode && x !== undefined) {
-            // Вычисляем относительную позицию по горизонтали (0-1)
-            const relativeX = x / canvas.width;
-            
-            // Вычисляем множитель длины с учетом яркости левой и темноты правой части
-            const intensityFactor = params.gradientIntensity / 100;
-            
-            // Применяем интенсивность градиента для регулировки диапазона между min и max
-            const baseMin = params.leftBrightness / 100; // Базовая яркость левой части
-            const baseMax = params.rightDarkness / 100;  // Базовая темнота правой части
-            
-            // Регулируем диапазон в зависимости от intensityFactor
-            const minScale = baseMin + (1 - baseMin) * (1 - intensityFactor);
-            const maxScale = baseMax - (baseMax - 1) * (1 - intensityFactor);
-            
-            // Линейный градиент длины от левого края к правому
-            lengthMultiplier = minScale + relativeX * (maxScale - minScale);
-        }
+        const { vanishingPoint, gap, totalLength, rayCount, baseRays, scale, lineWidth, roundCap } = params;
         
         // Рисуем горизонтальные лучи (фиксированные)
         baseRays.horizontal.forEach(angle => {
@@ -615,19 +573,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         function addRayToSvg(angle) {
-            // В режиме растра применяем множитель длины к totalLength
-            let actualRayLength = rayLength;
-            if (params.rasterMode && x !== undefined) {
-                actualRayLength = rayLength * lengthMultiplier;
-            }
-            
             // Начальная точка луча (с отступом от точки схода)
             const startX = vanishingPoint.x * scale + Math.cos(angle) * gap * scale;
             const startY = vanishingPoint.y * scale + Math.sin(angle) * gap * scale;
             
             // Конечная точка луча
-            const endX = vanishingPoint.x * scale + Math.cos(angle) * (gap + actualRayLength) * scale;
-            const endY = vanishingPoint.y * scale + Math.sin(angle) * (gap + actualRayLength) * scale;
+            const endX = vanishingPoint.x * scale + Math.cos(angle) * totalLength * scale;
+            const endY = vanishingPoint.y * scale + Math.sin(angle) * totalLength * scale;
             
             // Создаем линию
             const line = document.createElementNS(svgNS, 'line');
@@ -651,33 +603,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const svgNS = 'http://www.w3.org/2000/svg';
         
         // Используем ту же длину, что и для лучей
-        const rayLength = params.rayLength * params.scale;
-        let lineLength;
-        
-        // Если включен режим растра, изменяем длину в зависимости от позиции
-        if (params.rasterMode) {
-            // Вычисляем относительную позицию по горизонтали (0-1)
-            const relativeX = (x + horizontalGap / 2) / canvas.width;
-            
-            // Вычисляем множитель длины с учетом яркости левой и темноты правой части
-            const intensityFactor = params.gradientIntensity / 100;
-            
-            // Применяем интенсивность градиента для регулировки диапазона между min и max
-            const baseMin = params.leftBrightness / 100; // Базовая яркость левой части
-            const baseMax = params.rightDarkness / 100;  // Базовая темнота правой части
-            
-            // Регулируем диапазон в зависимости от intensityFactor
-            const minScale = baseMin + (1 - baseMin) * (1 - intensityFactor);
-            const maxScale = baseMax - (baseMax - 1) * (1 - intensityFactor);
-            
-            // Линейный градиент длины от левого края к правому
-            const lengthMultiplier = minScale + relativeX * (maxScale - minScale);
-            
-            // Применяем множитель к длине линии
-            lineLength = rayLength * lengthMultiplier;
-        } else {
-            lineLength = rayLength;
-        }
+        const lineLength = params.rayLength * params.scale;
         
         // Позиция X - после модуля, по центру отступа
         const lineX = x + horizontalGap / 2;
@@ -702,18 +628,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Функция сброса настроек к значениям по умолчанию
     function resetSettings() {
-        // Сбрасываем значения слайдеров и чекбоксов
+        // Сбрасываем значения слайдеров
         lineWidthSlider.value = defaultValues.lineWidth;
         gapSlider.value = defaultValues.gap;
         rayLengthSlider.value = defaultValues.rayLength;
         rayCountSlider.value = defaultValues.rayCount;
         scaleSlider.value = defaultValues.scale;
         roundCapCheckbox.checked = defaultValues.roundCap;
-        offsetRowsCheckbox.checked = defaultValues.offsetRows;
-        rasterModeCheckbox.checked = defaultValues.rasterMode;
-        gradientIntensitySlider.value = defaultValues.gradientIntensity;
-        leftBrightnessSlider.value = defaultValues.leftBrightness;
-        rightDarknessSlider.value = defaultValues.rightDarkness;
+        alternateLayoutCheckbox.checked = defaultValues.alternateLayout;
         
         // Обновляем значения в объекте params
         params.lineWidth = defaultValues.lineWidth;
@@ -722,11 +644,7 @@ document.addEventListener('DOMContentLoaded', function() {
         params.rayCount = defaultValues.rayCount;
         params.scale = defaultValues.scale;
         params.roundCap = defaultValues.roundCap;
-        params.offsetRows = defaultValues.offsetRows;
-        params.rasterMode = defaultValues.rasterMode;
-        params.gradientIntensity = defaultValues.gradientIntensity;
-        params.leftBrightness = defaultValues.leftBrightness;
-        params.rightDarkness = defaultValues.rightDarkness;
+        params.alternateLayout = defaultValues.alternateLayout;
         params.totalLength = params.gap + params.rayLength;
         
         // Обновляем отображаемые значения
@@ -735,14 +653,16 @@ document.addEventListener('DOMContentLoaded', function() {
         rayLengthValueDisplay.textContent = defaultValues.rayLength;
         rayCountValueDisplay.textContent = defaultValues.rayCount;
         scaleValueDisplay.textContent = defaultValues.scale.toFixed(1);
-        gradientIntensityValueDisplay.textContent = defaultValues.gradientIntensity;
-        leftBrightnessValueDisplay.textContent = defaultValues.leftBrightness;
-        rightDarknessValueDisplay.textContent = defaultValues.rightDarkness;
-        
-        // Обновляем видимость элементов управления
-        toggleRasterControls();
         
         // Перерисовываем паттерн
         drawPattern();
+        
+        // Убеждаемся, что вертикальные линии отображаются (если не в альтернативном режиме)
+        if (!params.alternateLayout) {
+            setTimeout(function() {
+                ensureConnectingLines();
+                console.log("Reconnecting lines after reset");
+            }, 50);
+        }
     }
 }); 

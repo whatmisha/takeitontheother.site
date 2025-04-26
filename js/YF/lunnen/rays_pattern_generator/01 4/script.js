@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     rayLengthSlider.addEventListener('input', function() {
         params.rayLength = parseInt(this.value);
-        // Обновляем totalLength, чтобы сохранить одинаковую видимую длину
+        // Обновляем totalLength, чтобы конечная точка перемещалась
         params.totalLength = params.gap + params.rayLength;
         rayLengthValueDisplay.textContent = this.value;
         drawPattern();
@@ -298,8 +298,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const moduleHeight = baseModuleHeight * params.scale;
         const horizontalGap = baseHorizontalGap * params.scale;
         
-        // Используем ту же длину, что и для лучей
-        const rayLength = params.rayLength * params.scale;
+        // Используем ту же длину, что и для лучей (с учетом масштаба)
+        let lineLength = params.rayLength * params.scale;
         
         // Если включен режим растра, изменяем длину в зависимости от позиции
         if (params.rasterMode) {
@@ -321,9 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const lengthMultiplier = minScale + relativeX * (maxScale - minScale);
             
             // Применяем множитель к длине линии
-            lineLength = rayLength * lengthMultiplier;
-        } else {
-            lineLength = rayLength;
+            lineLength *= lengthMultiplier;
         }
         
         // Позиция X - после модуля, по центру отступа
@@ -383,7 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Функция отрисовки лучей модуля
     function drawRays(params, relativeX) {
-        const { vanishingPoint, gap, rayLength, rayCount, baseRays } = params;
+        const { vanishingPoint, gap, totalLength, rayCount, baseRays } = params;
         
         // Определяем множитель длины для градиента, если включен режим растра
         let lengthMultiplier = 1;
@@ -438,18 +436,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         function drawRay(angle) {
             // В режиме растра применяем множитель длины к totalLength
-            let actualRayLength = rayLength;
+            let effectiveTotalLength = totalLength;
             if (params.rasterMode && relativeX !== undefined) {
-                actualRayLength = rayLength * lengthMultiplier;
+                effectiveTotalLength = totalLength * lengthMultiplier;
             }
             
             // Начальная точка луча (с отступом от точки схода)
             const startX = vanishingPoint.x + Math.cos(angle) * gap;
             const startY = vanishingPoint.y + Math.sin(angle) * gap;
             
-            // Конечная точка луча - используем конкретную длину луча вместо totalLength
-            const endX = vanishingPoint.x + Math.cos(angle) * (gap + actualRayLength);
-            const endY = vanishingPoint.y + Math.sin(angle) * (gap + actualRayLength);
+            // Конечная точка луча
+            const endX = vanishingPoint.x + Math.cos(angle) * effectiveTotalLength;
+            const endY = vanishingPoint.y + Math.sin(angle) * effectiveTotalLength;
             
             // Рисуем луч
             ctx.beginPath();
@@ -562,7 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Функция добавления лучей в SVG
     function addRaysToSvg(parentNode, params, x) {
         const svgNS = 'http://www.w3.org/2000/svg';
-        const { vanishingPoint, gap, rayLength, rayCount, baseRays, scale, lineWidth, roundCap } = params;
+        const { vanishingPoint, gap, totalLength, rayCount, baseRays, scale, lineWidth, roundCap } = params;
         
         // Определяем множитель длины для градиента, если включен режим растра
         let lengthMultiplier = 1;
@@ -616,9 +614,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         function addRayToSvg(angle) {
             // В режиме растра применяем множитель длины к totalLength
-            let actualRayLength = rayLength;
+            let effectiveTotalLength = totalLength;
             if (params.rasterMode && x !== undefined) {
-                actualRayLength = rayLength * lengthMultiplier;
+                effectiveTotalLength = totalLength * lengthMultiplier;
             }
             
             // Начальная точка луча (с отступом от точки схода)
@@ -626,8 +624,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const startY = vanishingPoint.y * scale + Math.sin(angle) * gap * scale;
             
             // Конечная точка луча
-            const endX = vanishingPoint.x * scale + Math.cos(angle) * (gap + actualRayLength) * scale;
-            const endY = vanishingPoint.y * scale + Math.sin(angle) * (gap + actualRayLength) * scale;
+            const endX = vanishingPoint.x * scale + Math.cos(angle) * effectiveTotalLength * scale;
+            const endY = vanishingPoint.y * scale + Math.sin(angle) * effectiveTotalLength * scale;
             
             // Создаем линию
             const line = document.createElementNS(svgNS, 'line');
@@ -651,8 +649,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const svgNS = 'http://www.w3.org/2000/svg';
         
         // Используем ту же длину, что и для лучей
-        const rayLength = params.rayLength * params.scale;
-        let lineLength;
+        let lineLength = params.rayLength * params.scale;
         
         // Если включен режим растра, изменяем длину в зависимости от позиции
         if (params.rasterMode) {
@@ -674,9 +671,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const lengthMultiplier = minScale + relativeX * (maxScale - minScale);
             
             // Применяем множитель к длине линии
-            lineLength = rayLength * lengthMultiplier;
-        } else {
-            lineLength = rayLength;
+            lineLength *= lengthMultiplier;
         }
         
         // Позиция X - после модуля, по центру отступа

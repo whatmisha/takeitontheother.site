@@ -8,23 +8,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const rayLengthSlider = document.getElementById('rayLengthSlider');
     const rayCountSlider = document.getElementById('rayCountSlider');
     const scaleSlider = document.getElementById('scaleSlider');
-    const gradientIntensitySlider = document.getElementById('gradientIntensitySlider');
-    const leftBrightnessSlider = document.getElementById('leftBrightnessSlider');
-    const rightDarknessSlider = document.getElementById('rightDarknessSlider');
     const exportSvgBtn = document.getElementById('exportSvgBtn');
     const resetBtn = document.getElementById('resetBtn');
     const roundCapCheckbox = document.getElementById('roundCapCheckbox');
     const offsetRowsCheckbox = document.getElementById('offsetRowsCheckbox');
-    const rasterModeCheckbox = document.getElementById('rasterModeCheckbox');
     const lineWidthValueDisplay = document.getElementById('lineWidthValue');
     const gapValueDisplay = document.getElementById('gapValue');
     const rayLengthValueDisplay = document.getElementById('rayLengthValue');
     const rayCountValueDisplay = document.getElementById('rayCountValue');
     const scaleValueDisplay = document.getElementById('scaleValue');
-    const gradientIntensityValueDisplay = document.getElementById('gradientIntensityValue');
-    const leftBrightnessValueDisplay = document.getElementById('leftBrightnessValue');
-    const rightDarknessValueDisplay = document.getElementById('rightDarknessValue');
-    const rasterControl = document.querySelector('.raster-control');
     
     // Определяем, какую операционную систему использует пользователь
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -59,11 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
         rayCount: 5,
         scale: 1.0,
         roundCap: false,
-        offsetRows: false,
-        rasterMode: false,
-        gradientIntensity: 50,
-        leftBrightness: 30,
-        rightDarkness: 170
+        offsetRows: false
     };
     
     // Функция получения ближайшего разрешенного значения
@@ -118,15 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Круглые окончания линий
         roundCap: false,
         // Смещение нечетных строк
-        offsetRows: false,
-        // Режим растрового градиента
-        rasterMode: false,
-        // Интенсивность градиента (в процентах)
-        gradientIntensity: 50,
-        // Яркость левой части (в процентах от нормальной длины)
-        leftBrightness: 30,
-        // Темнота правой части (в процентах от нормальной длины)
-        rightDarkness: 170
+        offsetRows: false
     };
     
     // Устанавливаем начальные значения на слайдерах и в отображении
@@ -156,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     rayLengthSlider.addEventListener('input', function() {
         params.rayLength = parseInt(this.value);
-        // Обновляем totalLength, чтобы сохранить одинаковую видимую длину
+        // Обновляем totalLength, чтобы конечная точка перемещалась
         params.totalLength = params.gap + params.rayLength;
         rayLengthValueDisplay.textContent = this.value;
         drawPattern();
@@ -193,34 +173,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Обработчик для чекбокса смещения нечетных строк
     offsetRowsCheckbox.addEventListener('change', function() {
         params.offsetRows = this.checked;
-        drawPattern();
-    });
-    
-    // Обработчик для чекбокса режима растрового градиента
-    rasterModeCheckbox.addEventListener('change', function() {
-        params.rasterMode = this.checked;
-        toggleRasterControls();
-        drawPattern();
-    });
-    
-    // Обработчик для слайдера интенсивности градиента
-    gradientIntensitySlider.addEventListener('input', function() {
-        params.gradientIntensity = parseInt(this.value);
-        gradientIntensityValueDisplay.textContent = this.value;
-        drawPattern();
-    });
-    
-    // Обработчик для слайдера яркости левой части
-    leftBrightnessSlider.addEventListener('input', function() {
-        params.leftBrightness = parseInt(this.value);
-        leftBrightnessValueDisplay.textContent = this.value;
-        drawPattern();
-    });
-    
-    // Обработчик для слайдера темноты правой части
-    rightDarknessSlider.addEventListener('input', function() {
-        params.rightDarkness = parseInt(this.value);
-        rightDarknessValueDisplay.textContent = this.value;
         drawPattern();
     });
     
@@ -298,33 +250,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const moduleHeight = baseModuleHeight * params.scale;
         const horizontalGap = baseHorizontalGap * params.scale;
         
-        // Используем ту же длину, что и для лучей
-        const rayLength = params.rayLength * params.scale;
-        
-        // Если включен режим растра, изменяем длину в зависимости от позиции
-        if (params.rasterMode) {
-            // Вычисляем относительную позицию по горизонтали (0-1)
-            const relativeX = (x + horizontalGap / 2) / canvas.width;
-            
-            // Вычисляем множитель длины с учетом яркости левой и темноты правой части
-            const intensityFactor = params.gradientIntensity / 100;
-            
-            // Применяем интенсивность градиента для регулировки диапазона между min и max
-            const baseMin = params.leftBrightness / 100; // Базовая яркость левой части
-            const baseMax = params.rightDarkness / 100;  // Базовая темнота правой части
-            
-            // Регулируем диапазон в зависимости от intensityFactor
-            const minScale = baseMin + (1 - baseMin) * (1 - intensityFactor);
-            const maxScale = baseMax - (baseMax - 1) * (1 - intensityFactor);
-            
-            // Линейный градиент длины от левого края к правому
-            const lengthMultiplier = minScale + relativeX * (maxScale - minScale);
-            
-            // Применяем множитель к длине линии
-            lineLength = rayLength * lengthMultiplier;
-        } else {
-            lineLength = rayLength;
-        }
+        // Используем ту же длину, что и для лучей (с учетом масштаба)
+        const lineLength = params.rayLength * params.scale;
         
         // Позиция X - после модуля, по центру отступа
         const lineX = x + horizontalGap / 2;
@@ -336,7 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Установка стилей рисования
         ctx.strokeStyle = params.strokeColor;
-        ctx.lineWidth = params.lineWidth * (params.scale < 1 ? 1 : params.scale);
+        ctx.lineWidth = params.lineWidth * (params.scale < 1 ? 1 : params.scale); // Масштабируем толщину линии, но не тоньше базовой
         ctx.lineCap = params.roundCap ? 'round' : 'butt';
         
         // Рисуем вертикальную линию
@@ -370,38 +297,15 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.lineCap = params.roundCap ? 'round' : 'butt';
         
         // Отрисовка модуля
-        // В режиме растра передаем позицию для вычисления градиента
-        if (params.rasterMode) {
-            drawRays(params, x / canvas.width);
-        } else {
-            drawRays(params);
-        }
+        drawRays(params);
         
         // Восстановление контекста
         ctx.restore();
     }
     
     // Функция отрисовки лучей модуля
-    function drawRays(params, relativeX) {
-        const { vanishingPoint, gap, rayLength, rayCount, baseRays } = params;
-        
-        // Определяем множитель длины для градиента, если включен режим растра
-        let lengthMultiplier = 1;
-        if (params.rasterMode && relativeX !== undefined) {
-            // Вычисляем множитель длины с учетом яркости левой и темноты правой части
-            const intensityFactor = params.gradientIntensity / 100;
-            
-            // Применяем интенсивность градиента для регулировки диапазона между min и max
-            const baseMin = params.leftBrightness / 100; // Базовая яркость левой части
-            const baseMax = params.rightDarkness / 100;  // Базовая темнота правой части
-            
-            // Регулируем диапазон в зависимости от intensityFactor
-            const minScale = baseMin + (1 - baseMin) * (1 - intensityFactor);
-            const maxScale = baseMax - (baseMax - 1) * (1 - intensityFactor);
-            
-            // Линейный градиент длины от левого края к правому
-            lengthMultiplier = minScale + relativeX * (maxScale - minScale);
-        }
+    function drawRays(params) {
+        const { vanishingPoint, gap, totalLength, rayCount, baseRays } = params;
         
         // Рисуем горизонтальные лучи (фиксированные)
         baseRays.horizontal.forEach(angle => {
@@ -437,19 +341,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         function drawRay(angle) {
-            // В режиме растра применяем множитель длины к totalLength
-            let actualRayLength = rayLength;
-            if (params.rasterMode && relativeX !== undefined) {
-                actualRayLength = rayLength * lengthMultiplier;
-            }
-            
             // Начальная точка луча (с отступом от точки схода)
             const startX = vanishingPoint.x + Math.cos(angle) * gap;
             const startY = vanishingPoint.y + Math.sin(angle) * gap;
             
-            // Конечная точка луча - используем конкретную длину луча вместо totalLength
-            const endX = vanishingPoint.x + Math.cos(angle) * (gap + actualRayLength);
-            const endY = vanishingPoint.y + Math.sin(angle) * (gap + actualRayLength);
+            // Конечная точка луча
+            const endX = vanishingPoint.x + Math.cos(angle) * totalLength;
+            const endY = vanishingPoint.y + Math.sin(angle) * totalLength;
             
             // Рисуем луч
             ctx.beginPath();
@@ -458,18 +356,6 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.stroke();
         }
     }
-    
-    // Функция переключения элементов управления растром
-    function toggleRasterControls() {
-        if (params.rasterMode) {
-            rasterControl.classList.add('active');
-        } else {
-            rasterControl.classList.remove('active');
-        }
-    }
-    
-    // Инициализация отображения элементов управления
-    toggleRasterControls();
     
     // Функция экспорта в SVG
     function exportToSvg() {
@@ -524,12 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     moduleGroup.setAttribute('transform', `translate(${x}, ${y})`);
                     
                     // Добавляем лучи к группе модуля
-                    // В режиме растра передаем позицию для вычисления градиента
-                    if (params.rasterMode) {
-                        addRaysToSvg(moduleGroup, params, x);
-                    } else {
-                        addRaysToSvg(moduleGroup, params);
-                    }
+                    addRaysToSvg(moduleGroup, params);
                     
                     // Добавляем группу к SVG
                     svg.appendChild(moduleGroup);
@@ -560,30 +441,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Функция добавления лучей в SVG
-    function addRaysToSvg(parentNode, params, x) {
+    function addRaysToSvg(parentNode, params) {
         const svgNS = 'http://www.w3.org/2000/svg';
-        const { vanishingPoint, gap, rayLength, rayCount, baseRays, scale, lineWidth, roundCap } = params;
-        
-        // Определяем множитель длины для градиента, если включен режим растра
-        let lengthMultiplier = 1;
-        if (params.rasterMode && x !== undefined) {
-            // Вычисляем относительную позицию по горизонтали (0-1)
-            const relativeX = x / canvas.width;
-            
-            // Вычисляем множитель длины с учетом яркости левой и темноты правой части
-            const intensityFactor = params.gradientIntensity / 100;
-            
-            // Применяем интенсивность градиента для регулировки диапазона между min и max
-            const baseMin = params.leftBrightness / 100; // Базовая яркость левой части
-            const baseMax = params.rightDarkness / 100;  // Базовая темнота правой части
-            
-            // Регулируем диапазон в зависимости от intensityFactor
-            const minScale = baseMin + (1 - baseMin) * (1 - intensityFactor);
-            const maxScale = baseMax - (baseMax - 1) * (1 - intensityFactor);
-            
-            // Линейный градиент длины от левого края к правому
-            lengthMultiplier = minScale + relativeX * (maxScale - minScale);
-        }
+        const { vanishingPoint, gap, totalLength, rayCount, baseRays, scale, lineWidth, roundCap } = params;
         
         // Рисуем горизонтальные лучи (фиксированные)
         baseRays.horizontal.forEach(angle => {
@@ -615,19 +475,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         function addRayToSvg(angle) {
-            // В режиме растра применяем множитель длины к totalLength
-            let actualRayLength = rayLength;
-            if (params.rasterMode && x !== undefined) {
-                actualRayLength = rayLength * lengthMultiplier;
-            }
-            
             // Начальная точка луча (с отступом от точки схода)
             const startX = vanishingPoint.x * scale + Math.cos(angle) * gap * scale;
             const startY = vanishingPoint.y * scale + Math.sin(angle) * gap * scale;
             
             // Конечная точка луча
-            const endX = vanishingPoint.x * scale + Math.cos(angle) * (gap + actualRayLength) * scale;
-            const endY = vanishingPoint.y * scale + Math.sin(angle) * (gap + actualRayLength) * scale;
+            const endX = vanishingPoint.x * scale + Math.cos(angle) * totalLength * scale;
+            const endY = vanishingPoint.y * scale + Math.sin(angle) * totalLength * scale;
             
             // Создаем линию
             const line = document.createElementNS(svgNS, 'line');
@@ -651,33 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const svgNS = 'http://www.w3.org/2000/svg';
         
         // Используем ту же длину, что и для лучей
-        const rayLength = params.rayLength * params.scale;
-        let lineLength;
-        
-        // Если включен режим растра, изменяем длину в зависимости от позиции
-        if (params.rasterMode) {
-            // Вычисляем относительную позицию по горизонтали (0-1)
-            const relativeX = (x + horizontalGap / 2) / canvas.width;
-            
-            // Вычисляем множитель длины с учетом яркости левой и темноты правой части
-            const intensityFactor = params.gradientIntensity / 100;
-            
-            // Применяем интенсивность градиента для регулировки диапазона между min и max
-            const baseMin = params.leftBrightness / 100; // Базовая яркость левой части
-            const baseMax = params.rightDarkness / 100;  // Базовая темнота правой части
-            
-            // Регулируем диапазон в зависимости от intensityFactor
-            const minScale = baseMin + (1 - baseMin) * (1 - intensityFactor);
-            const maxScale = baseMax - (baseMax - 1) * (1 - intensityFactor);
-            
-            // Линейный градиент длины от левого края к правому
-            const lengthMultiplier = minScale + relativeX * (maxScale - minScale);
-            
-            // Применяем множитель к длине линии
-            lineLength = rayLength * lengthMultiplier;
-        } else {
-            lineLength = rayLength;
-        }
+        const lineLength = params.rayLength * params.scale;
         
         // Позиция X - после модуля, по центру отступа
         const lineX = x + horizontalGap / 2;
@@ -710,10 +538,6 @@ document.addEventListener('DOMContentLoaded', function() {
         scaleSlider.value = defaultValues.scale;
         roundCapCheckbox.checked = defaultValues.roundCap;
         offsetRowsCheckbox.checked = defaultValues.offsetRows;
-        rasterModeCheckbox.checked = defaultValues.rasterMode;
-        gradientIntensitySlider.value = defaultValues.gradientIntensity;
-        leftBrightnessSlider.value = defaultValues.leftBrightness;
-        rightDarknessSlider.value = defaultValues.rightDarkness;
         
         // Обновляем значения в объекте params
         params.lineWidth = defaultValues.lineWidth;
@@ -723,10 +547,6 @@ document.addEventListener('DOMContentLoaded', function() {
         params.scale = defaultValues.scale;
         params.roundCap = defaultValues.roundCap;
         params.offsetRows = defaultValues.offsetRows;
-        params.rasterMode = defaultValues.rasterMode;
-        params.gradientIntensity = defaultValues.gradientIntensity;
-        params.leftBrightness = defaultValues.leftBrightness;
-        params.rightDarkness = defaultValues.rightDarkness;
         params.totalLength = params.gap + params.rayLength;
         
         // Обновляем отображаемые значения
@@ -735,12 +555,6 @@ document.addEventListener('DOMContentLoaded', function() {
         rayLengthValueDisplay.textContent = defaultValues.rayLength;
         rayCountValueDisplay.textContent = defaultValues.rayCount;
         scaleValueDisplay.textContent = defaultValues.scale.toFixed(1);
-        gradientIntensityValueDisplay.textContent = defaultValues.gradientIntensity;
-        leftBrightnessValueDisplay.textContent = defaultValues.leftBrightness;
-        rightDarknessValueDisplay.textContent = defaultValues.rightDarkness;
-        
-        // Обновляем видимость элементов управления
-        toggleRasterControls();
         
         // Перерисовываем паттерн
         drawPattern();

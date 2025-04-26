@@ -211,20 +211,6 @@ input[type="range"]::-ms-thumb {
     z-index: 1000;
 }
 
-/* Контейнер для чекбоксов */
-.checkbox-container {
-    position: fixed;
-    left: 10px;
-    bottom: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 10px;
-    background-color: #444444;
-    border-radius: 4px;
-    z-index: 1000;
-}
-
 /* Стили для чекбокса */
 .checkbox-group {
     display: flex;
@@ -270,13 +256,4 @@ input[type="checkbox"]:checked::after {
     top: 2px;
     left: 6px;
     transform: rotate(45deg);
-}
-
-/* Скрываем элементы управления растром при выключенном режиме */
-.raster-control {
-    display: none;
-}
-
-.raster-control.active {
-    display: flex;
 } 
