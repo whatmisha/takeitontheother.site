@@ -34,44 +34,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const imageInvertCheckbox = document.getElementById('imageInvertCheckbox');
     const brightnessContrastSlider = document.getElementById('brightnessContrastSlider');
     const brightnessContrastValueDisplay = document.getElementById('brightnessContrastValue');
-    const horizontalGapSlider = document.getElementById('horizontalGapSlider');
-    const verticalGapSlider = document.getElementById('verticalGapSlider');
-    const horizontalGapValueDisplay = document.getElementById('horizontalGapValue');
-    const verticalGapValueDisplay = document.getElementById('verticalGapValue');
-    
-    // Элементы для восстановления настроек
-    const settingsInput = document.getElementById('settingsInput');
-    const restoreSettingsBtn = document.getElementById('restoreSettingsBtn');
-    
-    // Проверка наличия элементов и добавление обработчиков
-    if (settingsInput && restoreSettingsBtn) {
-        console.log('Settings elements found successfully');
-        
-        // Обработчик для кнопки восстановления настроек
-        restoreSettingsBtn.addEventListener('click', function() {
-            console.log('Restore button clicked');
-            const fileName = settingsInput.value.trim();
-            if (fileName) {
-                restoreSettingsFromFileName(fileName);
-            }
-        });
-        
-        // Обработчик для поля ввода, чтобы восстанавливать настройки при нажатии Enter
-        settingsInput.addEventListener('keyup', function(event) {
-            console.log('Key pressed:', event.key);
-            if (event.key === 'Enter') {
-                const fileName = this.value.trim();
-                if (fileName) {
-                    restoreSettingsFromFileName(fileName);
-                }
-            }
-        });
-    } else {
-        console.error('Settings elements not found:', {
-            settingsInput: !!settingsInput,
-            restoreSettingsBtn: !!restoreSettingsBtn
-        });
-    }
     
     // Определяем, какую операционную систему использует пользователь
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -95,6 +57,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Базовые настройки размеров модуля и отступов
     const baseModuleWidth = 150;
     const baseModuleHeight = 75;
+    const baseHorizontalGap = 20; // Базовый горизонтальный отступ между модулями
+    const baseVerticalGap = 0;    // Базовый вертикальный отступ между модулями
     
     // Значения по умолчанию для сброса
     const defaultValues = {
@@ -113,9 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
         hundredLineWidth: 2.0,
         hideConnectingLines: false,
         brightnessContrast: 1.0,
-        invertImage: false,
-        horizontalGap: 20,
-        verticalGap: 10
+        invertImage: false
     };
     
     // Функция получения ближайшего разрешенного значения
@@ -189,10 +151,6 @@ document.addEventListener('DOMContentLoaded', function() {
         brightnessContrast: 1.0,
         // Инвертировать изображение
         invertImage: false,
-        // Горизонтальное расстояние между модулями
-        horizontalGap: parseInt(horizontalGapSlider.value),
-        // Вертикальное расстояние между модулями
-        verticalGap: parseInt(verticalGapSlider.value),
         // Исходное изображение
         sourceImage: null,
         // Кэш данных изображения
@@ -215,10 +173,6 @@ document.addEventListener('DOMContentLoaded', function() {
     zeroLineWidthValueDisplay.textContent = params.zeroLineWidth.toFixed(1);
     hundredLineWidthSlider.value = params.hundredLineWidth;
     hundredLineWidthValueDisplay.textContent = params.hundredLineWidth.toFixed(1);
-    horizontalGapSlider.value = params.horizontalGap;
-    horizontalGapValueDisplay.textContent = params.horizontalGap;
-    verticalGapSlider.value = params.verticalGap;
-    verticalGapValueDisplay.textContent = params.verticalGap;
     
     // Устанавливаем состояние чекбоксов
     roundCapCheckbox.checked = params.roundCap;
@@ -370,20 +324,6 @@ document.addEventListener('DOMContentLoaded', function() {
         drawPattern();
     });
     
-    // Обработчик для слайдера горизонтального расстояния между модулями
-    horizontalGapSlider.addEventListener('input', function() {
-        params.horizontalGap = parseInt(this.value);
-        horizontalGapValueDisplay.textContent = params.horizontalGap;
-        drawPattern();
-    });
-    
-    // Обработчик для слайдера вертикального расстояния между модулями
-    verticalGapSlider.addEventListener('input', function() {
-        params.verticalGap = parseInt(this.value);
-        verticalGapValueDisplay.textContent = params.verticalGap;
-        drawPattern();
-    });
-    
     // Обработчик для кнопки сброса настроек
     resetBtn.addEventListener('click', resetSettings);
     
@@ -401,10 +341,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Вычисляем реальные размеры модуля с учетом масштаба
         const moduleWidth = baseModuleWidth * params.scale;
         const moduleHeight = baseModuleHeight * params.scale;
-        const horizontalGap = params.horizontalGap * params.scale;
+        const horizontalGap = baseHorizontalGap * params.scale;
         
         // Вертикальный отступ применяется только в режиме смещения нечетных строк
-        const verticalGap = !params.offsetRows ? params.verticalGap * params.scale : params.verticalGap * params.scale;
+        const verticalGap = !params.offsetRows ? 10 * params.scale : baseVerticalGap * params.scale;
         
         // Вычисляем количество модулей, которые поместятся на канвасе
         const modulesInRow = Math.ceil(canvas.width / (moduleWidth + horizontalGap));
@@ -547,7 +487,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Размеры элементов с учетом масштаба
         const moduleWidth = baseModuleWidth * params.scale;
         const moduleHeight = baseModuleHeight * params.scale;
-        const horizontalGap = params.horizontalGap * params.scale;
+        const horizontalGap = baseHorizontalGap * params.scale;
         
         // Вычисляем относительную позицию для определения длины линии
         const relativeX = (params.rasterMode || params.imageRasterMode) ? x / canvas.width : undefined;
@@ -813,10 +753,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Вычисляем параметры для отрисовки
         const moduleWidth = baseModuleWidth * params.scale;
         const moduleHeight = baseModuleHeight * params.scale;
-        const horizontalGap = params.horizontalGap * params.scale;
+        const horizontalGap = baseHorizontalGap * params.scale;
         
         // Вертикальный отступ применяется только в режиме смещения нечетных строк
-        const verticalGap = !params.offsetRows ? params.verticalGap * params.scale : params.verticalGap * params.scale;
+        const verticalGap = !params.offsetRows ? 10 * params.scale : baseVerticalGap * params.scale;
         
         // Вычисляем количество модулей
         const modulesInRow = Math.ceil(canvas.width / (moduleWidth + horizontalGap));
@@ -880,61 +820,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // Создаем Blob для сохранения
         const blob = new Blob([svgData], {type: 'image/svg+xml'});
         
-        // Создаем имя файла с параметрами
-        const fileName = generateFileNameWithParams();
-        
         // Создаем ссылку для скачивания
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = fileName;
+        link.download = 'ray_pattern.svg';
         
         // Имитируем клик по ссылке для скачивания
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    }
-    
-    // Функция для генерации имени файла с параметрами
-    function generateFileNameWithParams() {
-        // Базовое имя файла
-        let fileName = 'ray_pattern';
-        
-        // Добавляем основные параметры
-        fileName += `_lw${params.lineWidth.toFixed(1)}`;  // Line Width
-        fileName += `_ll${params.rayLength}`;             // Line Length
-        fileName += `_lc${params.rayCount}`;              // Line Count
-        fileName += `_co${params.gap}`;                   // Center Offset
-        fileName += `_sc${params.scale.toFixed(1)}`;      // Scale
-        
-        // Добавляем настройки отступов между модулями
-        fileName += `_hg${params.horizontalGap}`;         // Horizontal Gap
-        fileName += `_vg${params.verticalGap}`;           // Vertical Gap
-        
-        // Добавляем флаги для чекбоксов
-        if (params.roundCap) fileName += '_rc1';          // Round Caps
-        if (params.offsetRows) fileName += '_cm1';        // Classic Mode
-        if (params.hideConnectingLines) fileName += '_hd1';  // Hide Dividers
-        
-        // Добавляем параметры растра, если режим растра активен
-        if (params.rasterMode) {
-            fileName += '_rm1';                           // Raster Mode
-            fileName += `_hl${params.zeroRayLength}`;     // Highlights Length
-            fileName += `_hw${params.zeroLineWidth.toFixed(1)}`; // Highlights Width
-            fileName += `_sl${params.hundredRayLength}`;  // Shadows Length
-            fileName += `_sw${params.hundredLineWidth.toFixed(1)}`; // Shadows Width
-        }
-        
-        // Добавляем параметры растрового изображения, если режим активен
-        if (params.imageRasterMode) {
-            fileName += '_im1';                           // Image Mode
-            fileName += `_ct${params.brightnessContrast.toFixed(1)}`; // Contrast
-            if (params.invertImage) fileName += '_iv1';   // Invert
-        }
-        
-        // Добавляем расширение файла
-        fileName += '.svg';
-        
-        return fileName;
     }
     
     // Обновляем функцию addRaysToSvg для использования общей функции
@@ -1059,8 +953,6 @@ document.addEventListener('DOMContentLoaded', function() {
         hundredLineWidthSlider.value = defaultValues.hundredLineWidth;
         brightnessContrastSlider.value = defaultValues.brightnessContrast;
         imageInvertCheckbox.checked = defaultValues.invertImage;
-        horizontalGapSlider.value = defaultValues.horizontalGap;
-        verticalGapSlider.value = defaultValues.verticalGap;
         
         // Обновляем значения в объекте params
         params.lineWidth = defaultValues.lineWidth;
@@ -1080,8 +972,6 @@ document.addEventListener('DOMContentLoaded', function() {
         params.totalLength = params.gap + params.rayLength;
         params.brightnessContrast = defaultValues.brightnessContrast;
         params.invertImage = defaultValues.invertImage;
-        params.horizontalGap = defaultValues.horizontalGap;
-        params.verticalGap = defaultValues.verticalGap;
         
         // Сбрасываем данные изображения
         params.sourceImage = null;
@@ -1102,8 +992,6 @@ document.addEventListener('DOMContentLoaded', function() {
         zeroLineWidthValueDisplay.textContent = defaultValues.zeroLineWidth.toFixed(1);
         hundredLineWidthValueDisplay.textContent = defaultValues.hundredLineWidth.toFixed(1);
         brightnessContrastValueDisplay.textContent = defaultValues.brightnessContrast.toFixed(1);
-        horizontalGapValueDisplay.textContent = defaultValues.horizontalGap;
-        verticalGapValueDisplay.textContent = defaultValues.verticalGap;
         
         // Включаем слайдер Line Length и Line Width (они могли быть отключены в режиме растра)
         setSliderActive(rayLengthSlider, true);
@@ -1195,176 +1083,4 @@ document.addEventListener('DOMContentLoaded', function() {
         params.invertImage = this.checked;
         drawPattern();
     });
-    
-    // Функция для восстановления настроек из имени файла
-    function restoreSettingsFromFileName(fileName) {
-        // Удаляем расширение файла, если оно есть
-        fileName = fileName.replace(/\.svg$/i, '');
-        
-        // Объект для хранения восстановленных настроек
-        const restoredSettings = {};
-        
-        // Парсим основные параметры
-        const lineWidthMatch = fileName.match(/_lw([\d.]+)/);
-        if (lineWidthMatch) restoredSettings.lineWidth = parseFloat(lineWidthMatch[1]);
-        
-        const lineLengthMatch = fileName.match(/_ll(\d+)/);
-        if (lineLengthMatch) restoredSettings.rayLength = parseInt(lineLengthMatch[1]);
-        
-        const lineCountMatch = fileName.match(/_lc(\d+)/);
-        if (lineCountMatch) restoredSettings.rayCount = parseInt(lineCountMatch[1]);
-        
-        const centerOffsetMatch = fileName.match(/_co(\d+)/);
-        if (centerOffsetMatch) restoredSettings.gap = parseInt(centerOffsetMatch[1]);
-        
-        const scaleMatch = fileName.match(/_sc([\d.]+)/);
-        if (scaleMatch) restoredSettings.scale = parseFloat(scaleMatch[1]);
-        
-        const horizontalGapMatch = fileName.match(/_hg(\d+)/);
-        if (horizontalGapMatch) restoredSettings.horizontalGap = parseInt(horizontalGapMatch[1]);
-        
-        const verticalGapMatch = fileName.match(/_vg(\d+)/);
-        if (verticalGapMatch) restoredSettings.verticalGap = parseInt(verticalGapMatch[1]);
-        
-        // Парсим булевы параметры
-        restoredSettings.roundCap = fileName.includes('_rc1');
-        restoredSettings.offsetRows = fileName.includes('_cm1');
-        restoredSettings.hideConnectingLines = fileName.includes('_hd1');
-        
-        // Парсим параметры растра
-        restoredSettings.rasterMode = fileName.includes('_rm1');
-        
-        if (restoredSettings.rasterMode) {
-            const highlightsLengthMatch = fileName.match(/_hl(\d+)/);
-            if (highlightsLengthMatch) restoredSettings.zeroRayLength = parseInt(highlightsLengthMatch[1]);
-            
-            const highlightsWidthMatch = fileName.match(/_hw([\d.]+)/);
-            if (highlightsWidthMatch) restoredSettings.zeroLineWidth = parseFloat(highlightsWidthMatch[1]);
-            
-            const shadowsLengthMatch = fileName.match(/_sl(\d+)/);
-            if (shadowsLengthMatch) restoredSettings.hundredRayLength = parseInt(shadowsLengthMatch[1]);
-            
-            const shadowsWidthMatch = fileName.match(/_sw([\d.]+)/);
-            if (shadowsWidthMatch) restoredSettings.hundredLineWidth = parseFloat(shadowsWidthMatch[1]);
-        }
-        
-        // Парсим параметры растрового изображения
-        restoredSettings.imageRasterMode = fileName.includes('_im1');
-        
-        if (restoredSettings.imageRasterMode) {
-            const contrastMatch = fileName.match(/_ct([\d.]+)/);
-            if (contrastMatch) restoredSettings.brightnessContrast = parseFloat(contrastMatch[1]);
-            
-            restoredSettings.invertImage = fileName.includes('_iv1');
-        }
-        
-        // Применяем восстановленные настройки
-        applyRestoredSettings(restoredSettings);
-    }
-    
-    // Функция для применения восстановленных настроек
-    function applyRestoredSettings(settings) {
-        // Применяем числовые параметры только если они были найдены в имени файла
-        if (settings.lineWidth !== undefined) {
-            params.lineWidth = settings.lineWidth;
-            lineWidthSlider.value = settings.lineWidth;
-            lineWidthValueDisplay.textContent = settings.lineWidth.toFixed(1);
-        }
-        
-        if (settings.rayLength !== undefined) {
-            params.rayLength = settings.rayLength;
-            rayLengthSlider.value = settings.rayLength;
-            rayLengthValueDisplay.textContent = settings.rayLength;
-        }
-        
-        if (settings.rayCount !== undefined) {
-            params.rayCount = settings.rayCount;
-            rayCountSlider.value = settings.rayCount;
-            rayCountValueDisplay.textContent = settings.rayCount;
-        }
-        
-        if (settings.gap !== undefined) {
-            params.gap = settings.gap;
-            gapSlider.value = settings.gap;
-            gapValueDisplay.textContent = settings.gap;
-        }
-        
-        if (settings.scale !== undefined) {
-            params.scale = settings.scale;
-            scaleSlider.value = settings.scale;
-            scaleValueDisplay.textContent = settings.scale.toFixed(1);
-        }
-        
-        if (settings.horizontalGap !== undefined) {
-            params.horizontalGap = settings.horizontalGap;
-            horizontalGapSlider.value = settings.horizontalGap;
-            horizontalGapValueDisplay.textContent = settings.horizontalGap;
-        }
-        
-        if (settings.verticalGap !== undefined) {
-            params.verticalGap = settings.verticalGap;
-            verticalGapSlider.value = settings.verticalGap;
-            verticalGapValueDisplay.textContent = settings.verticalGap;
-        }
-        
-        // Применяем булевы параметры
-        params.roundCap = settings.roundCap;
-        roundCapCheckbox.checked = settings.roundCap;
-        
-        params.offsetRows = settings.offsetRows;
-        offsetRowsCheckbox.checked = settings.offsetRows;
-        
-        params.hideConnectingLines = settings.hideConnectingLines;
-        hideConnectingLinesCheckbox.checked = settings.hideConnectingLines;
-        
-        // Применяем настройки растра
-        params.rasterMode = settings.rasterMode;
-        rasterModeCheckbox.checked = settings.rasterMode;
-        
-        if (settings.rasterMode && settings.zeroRayLength !== undefined) {
-            params.zeroRayLength = settings.zeroRayLength;
-            zeroRayLengthSlider.value = settings.zeroRayLength;
-            zeroRayLengthValueDisplay.textContent = settings.zeroRayLength;
-        }
-        
-        if (settings.rasterMode && settings.zeroLineWidth !== undefined) {
-            params.zeroLineWidth = settings.zeroLineWidth;
-            zeroLineWidthSlider.value = settings.zeroLineWidth;
-            zeroLineWidthValueDisplay.textContent = settings.zeroLineWidth.toFixed(1);
-        }
-        
-        if (settings.rasterMode && settings.hundredRayLength !== undefined) {
-            params.hundredRayLength = settings.hundredRayLength;
-            hundredRayLengthSlider.value = settings.hundredRayLength;
-            hundredRayLengthValueDisplay.textContent = settings.hundredRayLength;
-        }
-        
-        if (settings.rasterMode && settings.hundredLineWidth !== undefined) {
-            params.hundredLineWidth = settings.hundredLineWidth;
-            hundredLineWidthSlider.value = settings.hundredLineWidth;
-            hundredLineWidthValueDisplay.textContent = settings.hundredLineWidth.toFixed(1);
-        }
-        
-        // Применяем настройки растрового изображения
-        params.imageRasterMode = settings.imageRasterMode;
-        imageRasterModeCheckbox.checked = settings.imageRasterMode;
-        
-        if (settings.imageRasterMode && settings.brightnessContrast !== undefined) {
-            params.brightnessContrast = settings.brightnessContrast;
-            brightnessContrastSlider.value = settings.brightnessContrast;
-            brightnessContrastValueDisplay.textContent = settings.brightnessContrast.toFixed(1);
-        }
-        
-        if (settings.imageRasterMode) {
-            params.invertImage = settings.invertImage;
-            imageInvertCheckbox.checked = settings.invertImage;
-        }
-        
-        // Обновляем отображение элементов управления
-        toggleRasterControls();
-        toggleImageRasterControls();
-        
-        // Перерисовываем паттерн с новыми настройками
-        drawPattern();
-    }
 }); 

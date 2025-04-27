@@ -55,20 +55,8 @@
                     </div>
                     
                     <div class="control-group">
-                        <label for="scaleSlider">Scale<span class="colon">:</span> <span id="scaleValue">1.0</span></label>
-                        <input type="range" id="scaleSlider" min="0.1" max="3" value="1.0" step="0.1">
-                    </div>
-                    
-                    <!-- Горизонтальное расстояние между модулями -->
-                    <div class="control-group">
-                        <label for="horizontalGapSlider">Horizontal Gap<span class="colon">:</span> <span id="horizontalGapValue">20</span> <span class="unit">px</span></label>
-                        <input type="range" id="horizontalGapSlider" min="0" max="100" value="20" step="1">
-                    </div>
-                    
-                    <!-- Вертикальное расстояние между модулями -->
-                    <div class="control-group">
-                        <label for="verticalGapSlider">Vertical Gap<span class="colon">:</span> <span id="verticalGapValue">10</span> <span class="unit">px</span></label>
-                        <input type="range" id="verticalGapSlider" min="0" max="100" value="10" step="1">
+                        <label for="scaleSlider">Scale<span class="colon">:</span> <span id="scaleValue">1.0</span><span class="unit">×</span></label>
+                        <input type="range" id="scaleSlider" min="0.2" max="3" value="1" step="0.1">
                     </div>
                 </div>
             </div>
@@ -137,10 +125,13 @@
                 </div>
             </div>
         </div>
-    </div>
-    
-    <div class="control-buttons-container">
-        <div class="checkboxes-section">
+        
+        <div class="button-container">
+            <button id="resetBtn" class="reset-btn">Reset</button>
+            <button id="exportSvgBtn" class="export-btn">Export SVG (⌘E)</button>
+        </div>
+        
+        <div class="checkbox-container">
             <label class="checkbox-label">
                 <input type="checkbox" id="offsetRowsCheckbox">
                 <span class="checkbox-text">Classic Mode</span>
@@ -154,18 +145,7 @@
                 <span class="checkbox-text">Hide Dividers</span>
             </label>
         </div>
-        
-        <div class="settings-recovery-section">
-            <input type="text" id="settingsInput" placeholder="Paste filename to restore settings" class="settings-input" autocomplete="off" spellcheck="false">
-            <button id="restoreSettingsBtn" class="restore-btn">Restore</button>
-        </div>
-        
-        <div class="buttons-section">
-            <button id="resetBtn" class="reset-btn">Reset</button>
-            <button id="exportSvgBtn" class="export-btn">Export SVG (⌘E)</button>
-        </div>
     </div>
-    
     <script src="script.js"></script>
 </body>
 </html> 
