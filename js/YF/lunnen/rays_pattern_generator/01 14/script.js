@@ -290,34 +290,34 @@ document.addEventListener('DOMContentLoaded', function() {
         params.rasterMode = this.checked;
         toggleRasterControls();
         
-        // Отключаем/включаем слайдер Line Length при включении/выключении режима растра
+        // Отключаем/включаем слайдер Ray Length при включении/выключении режима растра
         setSliderActive(rayLengthSlider, !this.checked);
         
         drawPattern();
     });
     
-    // Обработчик для слайдера Highlights Length
+    // Обработчик для слайдера 0% Ray Length
     zeroRayLengthSlider.addEventListener('input', function() {
         params.zeroRayLength = parseInt(this.value);
         zeroRayLengthValueDisplay.textContent = this.value;
         drawPattern();
     });
     
-    // Обработчик для слайдера Shadows Length
+    // Обработчик для слайдера 100% Ray Length
     hundredRayLengthSlider.addEventListener('input', function() {
         params.hundredRayLength = parseInt(this.value);
         hundredRayLengthValueDisplay.textContent = this.value;
         drawPattern();
     });
     
-    // Обработчик для слайдера Highlights Width
+    // Обработчик для слайдера 0% Line Width
     zeroLineWidthSlider.addEventListener('input', function() {
         params.zeroLineWidth = parseFloat(this.value);
         zeroLineWidthValueDisplay.textContent = params.zeroLineWidth.toFixed(1);
         drawPattern();
     });
     
-    // Обработчик для слайдера Shadows Width
+    // Обработчик для слайдера 100% Line Width
     hundredLineWidthSlider.addEventListener('input', function() {
         params.hundredLineWidth = parseFloat(this.value);
         hundredLineWidthValueDisplay.textContent = params.hundredLineWidth.toFixed(1);
@@ -635,7 +635,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 rasterSliders.classList.add('active');
             }
             
-            // Отключаем слайдер Line Length
+            // Отключаем слайдер Ray Length
             setSliderActive(rayLengthSlider, false);
             
             // Включаем слайдеры градиента
@@ -683,7 +683,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Если выбран режим растрового изображения
         if (params.imageRasterMode) {
-            // Отключаем слайдер Line Length
+            // Отключаем слайдер Ray Length
             setSliderActive(rayLengthSlider, false);
             
             // Включаем слайдеры градиента
@@ -993,7 +993,7 @@ document.addEventListener('DOMContentLoaded', function() {
         hundredLineWidthValueDisplay.textContent = defaultValues.hundredLineWidth.toFixed(1);
         brightnessContrastValueDisplay.textContent = defaultValues.brightnessContrast.toFixed(1);
         
-        // Включаем слайдер Line Length и Line Width (они могли быть отключены в режиме растра)
+        // Включаем слайдер Ray Length и Line Width (они могли быть отключены в режиме растра)
         setSliderActive(rayLengthSlider, true);
         setSliderActive(lineWidthSlider, true);
         
