@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Lines Pattern Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <canvas id="patternCanvas" width="3000" height="1000"></canvas>
+        
+        <div class="controls-wrapper">
+            <!-- Первая строка с основными настройками -->
+            <div class="controls main-controls-row">
+                <div class="pattern-checkbox control-group">
+                    <label class="checkbox-label" style="margin-left: 0; padding-left: 0;">
+                        <span class="checkbox-text" style="margin-left: 0; padding-left: 0;">Pattern Settings</span>
+                    </label>
+                </div>
+                
+                <div class="pattern-sliders">
+                    <div class="control-group">
+                        <label for="lineLengthSlider">Line Length<span class="colon">:</span> <span id="lineLengthValue">24</span> <span class="unit">px</span></label>
+                        <input type="range" id="lineLengthSlider" min="10" max="200" value="24" step="1">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="lineWidthSlider">Line Width<span class="colon">:</span> <span id="lineWidthValue">8</span> <span class="unit">px</span></label>
+                        <input type="range" id="lineWidthSlider" min="1" max="24" value="8" step="0.5">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="safeFieldSlider">Safe Field<span class="colon">:</span> <span id="safeFieldValue">12</span> <span class="unit">px</span></label>
+                        <input type="range" id="safeFieldSlider" min="0" max="100" value="12" step="1">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="lineCountSlider">Line Density<span class="colon">:</span> <span id="lineCountValue">3000</span></label>
+                        <input type="range" id="lineCountSlider" min="10" max="5000" value="3000" step="100">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="scaleSlider">Scale<span class="colon">:</span> <span id="scaleValue">1.0</span></label>
+                        <input type="range" id="scaleSlider" min="0.1" max="3" value="1.0" step="0.1">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Вторая строка с настройками растра -->
+            <div class="controls raster-controls-row">
+                <div class="raster-checkboxes">
+                <div class="raster-checkbox control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="rasterModeCheckbox">
+                        <span class="checkbox-text">Raster Gradient</span>
+                    </label>
+                    </div>
+                    
+                    <div class="raster-checkbox control-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="imageRasterModeCheckbox">
+                            <span class="checkbox-text">Image Raster</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="raster-sliders">
+                        <div class="control-group">
+                        <label for="zeroLineLengthSlider">Highlights Length<span class="colon">:</span> <span id="zeroLineLengthValue">30</span> <span class="unit">px</span></label>
+                            <input type="range" id="zeroLineLengthSlider" min="0" max="200" value="30">
+                        </div>
+                    
+                    <div class="control-group">
+                        <label for="zeroLineWidthSlider">Highlights Width<span class="colon">:</span> <span id="zeroLineWidthValue">1.0</span> <span class="unit">px</span></label>
+                        <input type="range" id="zeroLineWidthSlider" min="1" max="24" step="0.5" value="1.0">
+                    </div>
+                    
+                        <div class="control-group">
+                        <label for="hundredLineLengthSlider">Shadows Length<span class="colon">:</span> <span id="hundredLineLengthValue">100</span> <span class="unit">px</span></label>
+                            <input type="range" id="hundredLineLengthSlider" min="0" max="200" value="100">
+                        </div>
+                    
+                    <div class="control-group">
+                        <label for="hundredLineWidthSlider">Shadows Width<span class="colon">:</span> <span id="hundredLineWidthValue">2.0</span> <span class="unit">px</span></label>
+                        <input type="range" id="hundredLineWidthSlider" min="1" max="24" step="0.5" value="2.0">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Секция для загрузки изображения -->
+            <div id="imageRasterControls" class="controls image-raster-controls-row" style="display: none;">
+                <div class="image-upload-container">
+                    <label for="imageUpload" class="image-upload-label">Upload Image</label>
+                    <input type="file" id="imageUpload" accept="image/*" class="image-upload-input">
+                    <div class="image-preview-container">
+                        <img id="imagePreview" class="image-preview" src="#" alt="Preview" style="display: none;">
+                    </div>
+                </div>
+                <div class="image-settings">
+                        <div class="control-group">
+                        <label for="brightnessContrastSlider">Contrast<span class="colon">:</span> <span id="brightnessContrastValue">1.0</span></label>
+                        <input type="range" id="brightnessContrastSlider" min="0.1" max="3" value="1" step="0.1">
+                        </div>
+                        <div class="control-group">
+                        <label for="imageInvertCheckbox" class="checkbox-label">
+                            <input type="checkbox" id="imageInvertCheckbox">
+                            <span class="checkbox-text">Invert Brightness</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="control-buttons-container">
+        <div class="checkboxes-section">
+            <label class="checkbox-label">
+                <input type="checkbox" id="roundCapCheckbox">
+                <span class="checkbox-text">Round Line Caps</span>
+            </label>
+        </div>
+        
+        <div class="settings-recovery-section">
+            <input type="text" id="settingsInput" placeholder="Paste filename to restore settings" class="settings-input" autocomplete="off" spellcheck="false">
+            <button id="restoreSettingsBtn" class="restore-btn">Restore</button>
+        </div>
+        
+        <div class="buttons-section">
+            <button id="generateBtn" class="reset-btn">Regenerate</button>
+            <button id="resetBtn" class="reset-btn">Reset</button>
+            <button id="exportSvgBtn" class="export-btn">Export SVG (⌘E)</button>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html> 
