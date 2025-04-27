@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const roundCapCheckbox = document.getElementById('roundCapCheckbox');
     const offsetRowsCheckbox = document.getElementById('offsetRowsCheckbox');
     const rasterModeCheckbox = document.getElementById('rasterModeCheckbox');
-    const imageRasterModeCheckbox = document.getElementById('imageRasterModeCheckbox');
     const hideConnectingLinesCheckbox = document.getElementById('hideConnectingLinesCheckbox');
     const lineWidthValueDisplay = document.getElementById('lineWidthValue');
     const gapValueDisplay = document.getElementById('gapValue');
@@ -28,12 +27,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const hundredRayLengthValueDisplay = document.getElementById('hundredRayLengthValue');
     const zeroLineWidthValueDisplay = document.getElementById('zeroLineWidthValue');
     const hundredLineWidthValueDisplay = document.getElementById('hundredLineWidthValue');
-    const imageUpload = document.getElementById('imageUpload');
-    const imagePreview = document.getElementById('imagePreview');
-    const imageRasterControls = document.getElementById('imageRasterControls');
-    const imageInvertCheckbox = document.getElementById('imageInvertCheckbox');
-    const brightnessContrastSlider = document.getElementById('brightnessContrastSlider');
-    const brightnessContrastValueDisplay = document.getElementById('brightnessContrastValue');
     
     // Определяем, какую операционную систему использует пользователь
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -70,14 +63,11 @@ document.addEventListener('DOMContentLoaded', function() {
         roundCap: false,
         offsetRows: false,
         rasterMode: false,
-        imageRasterMode: false,
         zeroRayLength: 30,
         hundredRayLength: 100,
         zeroLineWidth: 1.0,
         hundredLineWidth: 2.0,
-        hideConnectingLines: false,
-        brightnessContrast: 1.0,
-        invertImage: false
+        hideConnectingLines: false
     };
     
     // Функция получения ближайшего разрешенного значения
@@ -135,8 +125,6 @@ document.addEventListener('DOMContentLoaded', function() {
         offsetRows: false,
         // Режим растрового градиента
         rasterMode: false,
-        // Режим растрового изображения
-        imageRasterMode: false,
         // Длина луча на левом краю (0%)
         zeroRayLength: 30,
         // Длина луча на правом краю (100%)
@@ -146,15 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Толщина линии на правом краю (100%)
         hundredLineWidth: 2.0,
         // Скрывать вертикальные разделители
-        hideConnectingLines: false,
-        // Контраст изображения
-        brightnessContrast: 1.0,
-        // Инвертировать изображение
-        invertImage: false,
-        // Исходное изображение
-        sourceImage: null,
-        // Кэш данных изображения
-        imageData: null
+        hideConnectingLines: false
     };
     
     // Устанавливаем totalLength как сумму gap и rayLength
@@ -178,7 +158,6 @@ document.addEventListener('DOMContentLoaded', function() {
     roundCapCheckbox.checked = params.roundCap;
     offsetRowsCheckbox.checked = params.offsetRows;
     rasterModeCheckbox.checked = params.rasterMode;
-    imageRasterModeCheckbox.checked = params.imageRasterMode;
     hideConnectingLinesCheckbox.checked = params.hideConnectingLines;
     
     // Отрисовка первоначального состояния
@@ -186,7 +165,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Инициализация отображения элементов управления растром
     toggleRasterControls();
-    toggleImageRasterControls();
     
     // Устанавливаем начальное состояние слайдеров градиента в соответствии с начальным состоянием чекбокса
     if (!params.rasterMode) {
@@ -378,15 +356,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Отрисовываем модуль только если он видим на холсте
                 if (x < canvas.width && y < canvas.height && x + moduleWidth > 0 && y + moduleHeight > 0) {
-                    // Относительная позиция для растрового режима
-                    let relativeX = null;
-                    if (params.rasterMode || params.imageRasterMode) {
-                        // Вычисляем относительную позицию по X для всей ширины холста (от 0 до 1)
-                        relativeX = Math.min(1, Math.max(0, x / canvas.width));
-                    }
-                    
                     // Отрисовываем модуль на этой позиции
-                    drawModuleAt(x, y, relativeX, y);
+                    drawModuleAt(x, y);
                     
                     // Отрисовываем вертикальную линию между модулями,
                     // но только если это не последний модуль в ряду и не включен режим скрытия разделителей
@@ -399,7 +370,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Создаем функцию для расчета длины луча и толщины линии
-    function calculateRayLengthAndLineWidth(params, relativeX, moduleY) {
+    function calculateRayLengthAndLineWidth(params, relativeX) {
         // Значения по умолчанию
         let rayLength = params.rayLength;
         let lineWidth = params.lineWidth;
@@ -418,68 +389,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Линейно интерполируем толщину между значениями zeroLineWidth и hundredLineWidth
             lineWidth = params.zeroLineWidth + relativeX * (params.hundredLineWidth - params.zeroLineWidth);
         }
-        // Если включен режим изображения и есть данные изображения
-        else if (params.imageRasterMode && params.imageData && relativeX !== undefined) {
-            // Получаем яркость пикселя в зависимости от относительной позиции
-            const brightness = getPixelBrightness(params, relativeX, moduleY);
-            
-            // Используем параметр rayLength как коэффициент масштабирования для значений zeroRayLength и hundredRayLength
-            const baseRayLength = params.rayLength;
-            const scaleFactor = baseRayLength / 56; // 56 - значение rayLength по умолчанию
-            const zeroRayScaled = params.zeroRayLength * scaleFactor;
-            const hundredRayScaled = params.hundredRayLength * scaleFactor;
-            
-            // Инвертируем яркость, если изображение НЕ инвертировано (чтобы темные области соответствовали zeroRay)
-            // Если изображение инвертировано - оставляем как есть, так как логика уже будет перевернута
-            const adjustedBrightness = params.invertImage ? brightness : 1 - brightness;
-            
-            // Линейно интерполируем длину между масштабированными значениями в зависимости от яркости
-            // 1 - adjustedBrightness инвертирует логику: теперь 0% соответствует темным областям, 100% - светлым
-            rayLength = zeroRayScaled + adjustedBrightness * (hundredRayScaled - zeroRayScaled);
-            
-            // Линейно интерполируем толщину между значениями zeroLineWidth и hundredLineWidth
-            lineWidth = params.zeroLineWidth + adjustedBrightness * (params.hundredLineWidth - params.zeroLineWidth);
-        }
         
         return { rayLength, lineWidth };
-    }
-    
-    // Функция для получения яркости пикселя из изображения
-    function getPixelBrightness(params, relativeX, moduleY) {
-        // Если нет изображения, возвращаем 0.5 (средняя яркость)
-        if (!params.imageData) return 0.5;
-        
-        const { width, height, data } = params.imageData;
-        
-        // Определяем координаты пикселя в изображении
-        const x = Math.floor(relativeX * (width - 1));
-        const y = Math.floor((moduleY / canvas.height) * (height - 1));
-        
-        // Убедимся, что координаты в пределах изображения
-        const safeX = Math.max(0, Math.min(width - 1, x));
-        const safeY = Math.max(0, Math.min(height - 1, y));
-        
-        // Вычисляем индекс пикселя в массиве данных (каждый пиксель представлен 4 байтами: R, G, B, A)
-        const pixelIndex = (safeY * width + safeX) * 4;
-        
-        // Получаем компоненты RGB
-        const r = data[pixelIndex];
-        const g = data[pixelIndex + 1];
-        const b = data[pixelIndex + 2];
-        
-        // Вычисляем яркость пикселя
-        // Используем средневзвешенное значение RGB компонентов (стандартная формула для яркости)
-        let brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        
-        // Применяем контраст
-        if (params.brightnessContrast !== 1.0) {
-            // Настраиваем контраст: значения > 1 усиливают контраст, < 1 уменьшают
-            brightness = 0.5 + (brightness - 0.5) * params.brightnessContrast;
-            // Ограничиваем значение в диапазоне [0, 1]
-            brightness = Math.max(0, Math.min(1, brightness));
-        }
-        
-        return brightness;
     }
     
     // Функция отрисовки соединительной линии между модулями
@@ -489,16 +400,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const moduleHeight = baseModuleHeight * params.scale;
         const horizontalGap = baseHorizontalGap * params.scale;
         
-        // Вычисляем относительную позицию для определения длины линии
-        const relativeX = (params.rasterMode || params.imageRasterMode) ? x / canvas.width : undefined;
+        // Если включен режим растра, используем логику интерполяции длины лучей и толщины линий
+        const relativeX = params.rasterMode ? (x + horizontalGap / 2) / canvas.width : undefined;
+        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX);
         
-        // Получаем длину луча и толщину линии
-        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX, y);
+        // Вычисляем длину линии
+        let lineLength = rayLength * params.scale;
         
-        // Вычисляем длину линии с учетом масштаба
-        const lineLength = rayLength * params.scale;
+        // Предотвращаем отрицательную длину
+        lineLength = Math.max(lineLength, 1); // Минимальная длина 1px, чтобы линия всегда была видна
         
-        // Позиция X - по центру отступа
+        // Позиция X - после модуля, по центру отступа
         const lineX = x + horizontalGap / 2;
         // Позиция Y - центр модуля по вертикали, с учетом длины линии
         const lineY = y + moduleHeight / 2 - lineLength / 2;
@@ -508,7 +420,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Установка стилей рисования
         ctx.strokeStyle = params.strokeColor;
-        ctx.lineWidth = lineWidth * params.scale;
+        ctx.lineWidth = lineWidth * (params.scale < 1 ? 1 : params.scale);
         ctx.lineCap = params.roundCap ? 'round' : 'butt';
         
         // Рисуем вертикальную линию
@@ -522,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Функция отрисовки одного модуля паттерна в указанной позиции
-    function drawModuleAt(x, y, relativeX, moduleY) {
+    function drawModuleAt(x, y) {
         // Сохранение контекста
         ctx.save();
         
@@ -543,8 +455,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Отрисовка модуля
         // В режиме растра передаем позицию для вычисления градиента
-        if (params.rasterMode || params.imageRasterMode) {
-            drawRays(params, relativeX, moduleY);
+        if (params.rasterMode) {
+            drawRays(params, x / canvas.width);
         } else {
             drawRays(params);
         }
@@ -554,22 +466,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Обновляем функцию drawRays для использования общей функции
-    function drawRays(params, relativeX, moduleY) {
+    function drawRays(params, relativeX) {
         const { vanishingPoint, gap, rayCount, baseRays } = params;
         
         // Определяем длину луча и толщину линии
-        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX, moduleY);
+        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX);
         
         // Устанавливаем текущую толщину линии
         ctx.lineWidth = lineWidth;
         
         // Рисуем горизонтальные лучи (фиксированные)
         baseRays.horizontal.forEach(angle => {
-            drawRay(angle, rayLength, moduleY);
+            drawRay(angle, rayLength);
         });
         
         // Рисуем вертикальный луч (фиксированный)
-        drawRay(baseRays.vertical, rayLength, moduleY);
+        drawRay(baseRays.vertical, rayLength);
         
         // Определяем количество лучей в верхнем полукруге
         // Вычитаем 3 базовых луча
@@ -579,10 +491,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Специальный случай для 5 лучей (2 дополнительных) - диагонали под 45°
             if (rayCount === 5) {
                 // Диагональ вверх-влево (225°)
-                drawRay(Math.PI * 1.25, rayLength, moduleY);
+                drawRay(Math.PI * 1.25, rayLength);
                 
                 // Диагональ вверх-вправо (315°)
-                drawRay(Math.PI * 1.75, rayLength, moduleY);
+                drawRay(Math.PI * 1.75, rayLength);
             } else {
                 // Для остальных случаев равномерно распределяем лучи по верхнему полукругу
                 // Верхний полукруг: от 180° до 360° (не включая горизонтальные)
@@ -591,12 +503,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 for (let i = 0; i < upperRaysCount; i++) {
                     // Интерполируем угол от π до 2π (от 180° до 360°)
                     const angle = Math.PI + (i + 1) * Math.PI / (upperRaysCount + 1);
-                    drawRay(angle, rayLength, moduleY);
+                    drawRay(angle, rayLength);
                 }
             }
         }
         
-        function drawRay(angle, rayLength, moduleY) {
+        function drawRay(angle, rayLength) {
             // Длина видимой части луча уже учитывает масштабирование в соответствии с градиентом, если режим активен
             
             // Начальная точка луча (с отступом от точки схода)
@@ -672,75 +584,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Функция переключения элементов управления изображением
-    function toggleImageRasterControls() {
-        // Показываем или скрываем элементы управления изображением
-        if (params.imageRasterMode) {
-            imageRasterControls.style.display = 'flex';
-        } else {
-            imageRasterControls.style.display = 'none';
-        }
-        
-        // Если выбран режим растрового изображения
-        if (params.imageRasterMode) {
-            // Отключаем слайдер Ray Length
-            setSliderActive(rayLengthSlider, false);
-            
-            // Включаем слайдеры градиента
-            setSliderActive(zeroRayLengthSlider, true);
-            setSliderActive(hundredRayLengthSlider, true);
-            setSliderActive(zeroLineWidthSlider, true);
-            setSliderActive(hundredLineWidthSlider, true);
-            
-            // Отключаем основной слайдер толщины линии
-            setSliderActive(lineWidthSlider, false);
-            
-            // Если включаем режим изображения, выключаем режим градиента
-            if (params.rasterMode) {
-                params.rasterMode = false;
-                rasterModeCheckbox.checked = false;
-                toggleRasterControls();
-            }
-            
-            // Показываем и активируем слайдеры градиента
-            const rasterControlsRow = document.querySelector('.raster-controls-row');
-            if (rasterControlsRow) {
-                rasterControlsRow.classList.remove('raster-mode-inactive');
-            }
-            
-            // Добавляем класс active для родительского контейнера
-            const rasterSliders = document.querySelector('.raster-sliders');
-            if (rasterSliders) {
-                rasterSliders.classList.add('active');
-            }
-        } else {
-            // Если режим растрового изображения выключен и не включен режим градиента
-            if (!params.rasterMode) {
-                // Включаем основные слайдеры
-                setSliderActive(rayLengthSlider, true);
-                setSliderActive(lineWidthSlider, true);
-                
-                // Отключаем слайдеры градиента
-                setSliderActive(zeroRayLengthSlider, false);
-                setSliderActive(hundredRayLengthSlider, false);
-                setSliderActive(zeroLineWidthSlider, false);
-                setSliderActive(hundredLineWidthSlider, false);
-                
-                // Добавляем класс для неактивного режима
-                const rasterControlsRow = document.querySelector('.raster-controls-row');
-                if (rasterControlsRow) {
-                    rasterControlsRow.classList.add('raster-mode-inactive');
-                }
-                
-                // Удаляем класс active у родительского контейнера
-                const rasterSliders = document.querySelector('.raster-sliders');
-                if (rasterSliders) {
-                    rasterSliders.classList.remove('active');
-                }
-            }
-        }
-    }
-    
     // Функция экспорта в SVG
     function exportToSvg() {
         // Создаем SVG элемент
@@ -795,10 +638,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Добавляем лучи к группе модуля
                     // В режиме растра передаем позицию для вычисления градиента
-                    if (params.rasterMode || params.imageRasterMode) {
-                        // Вычисляем относительную позицию по X для всей ширины холста (от 0 до 1)
-                        const relativeX = Math.min(1, Math.max(0, x / canvas.width));
-                        addRaysToSvg(moduleGroup, params, relativeX, y);
+                    if (params.rasterMode) {
+                        addRaysToSvg(moduleGroup, params, x);
                     } else {
                         addRaysToSvg(moduleGroup, params);
                     }
@@ -832,15 +673,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Обновляем функцию addRaysToSvg для использования общей функции
-    function addRaysToSvg(parentNode, params, relativeX, moduleY) {
+    function addRaysToSvg(parentNode, params, x) {
         const svgNS = 'http://www.w3.org/2000/svg';
         const { vanishingPoint, gap, rayCount, baseRays, scale, roundCap } = params;
         
         // Вычисляем относительную позицию по горизонтали (0-1), если она указана
-        const effectiveRelativeX = relativeX !== undefined ? relativeX : undefined;
+        const relativeX = x !== undefined ? x / canvas.width : undefined;
         
         // Определяем длину луча и толщину линии
-        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, effectiveRelativeX, moduleY);
+        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX);
         
         // Рисуем горизонтальные лучи (фиксированные)
         baseRays.horizontal.forEach(angle => {
@@ -905,13 +746,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const svgNS = 'http://www.w3.org/2000/svg';
         
         // Вычисляем относительную позицию
-        const relativeX = (params.rasterMode || params.imageRasterMode) ? x / canvas.width : undefined;
-        
-        // Получаем длину луча и толщину линии
-        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX, y);
+        const relativeX = params.rasterMode ? (x + horizontalGap / 2) / canvas.width : undefined;
+        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX);
         
         // Вычисляем длину линии
-        const lineLength = rayLength * params.scale;
+        let lineLength = rayLength * params.scale;
+        
+        // Предотвращаем отрицательную длину
+        lineLength = Math.max(lineLength, 1); // Минимальная длина 1px, чтобы линия всегда была видна
         
         // Позиция X - после модуля, по центру отступа
         const lineX = x + horizontalGap / 2;
@@ -925,7 +767,7 @@ document.addEventListener('DOMContentLoaded', function() {
         line.setAttribute('x2', lineX);
         line.setAttribute('y2', lineY + lineLength);
         line.setAttribute('stroke', '#000000'); // Черный цвет для SVG
-        line.setAttribute('stroke-width', lineWidth * params.scale);
+        line.setAttribute('stroke-width', lineWidth * (params.scale < 1 ? 1 : params.scale));
         if (params.roundCap) {
             line.setAttribute('stroke-linecap', 'round');
         }
@@ -945,14 +787,11 @@ document.addEventListener('DOMContentLoaded', function() {
         roundCapCheckbox.checked = defaultValues.roundCap;
         offsetRowsCheckbox.checked = defaultValues.offsetRows;
         rasterModeCheckbox.checked = defaultValues.rasterMode;
-        imageRasterModeCheckbox.checked = defaultValues.imageRasterMode;
         hideConnectingLinesCheckbox.checked = defaultValues.hideConnectingLines;
         zeroRayLengthSlider.value = defaultValues.zeroRayLength;
         hundredRayLengthSlider.value = defaultValues.hundredRayLength;
         zeroLineWidthSlider.value = defaultValues.zeroLineWidth;
         hundredLineWidthSlider.value = defaultValues.hundredLineWidth;
-        brightnessContrastSlider.value = defaultValues.brightnessContrast;
-        imageInvertCheckbox.checked = defaultValues.invertImage;
         
         // Обновляем значения в объекте params
         params.lineWidth = defaultValues.lineWidth;
@@ -963,23 +802,12 @@ document.addEventListener('DOMContentLoaded', function() {
         params.roundCap = defaultValues.roundCap;
         params.offsetRows = defaultValues.offsetRows;
         params.rasterMode = defaultValues.rasterMode;
-        params.imageRasterMode = defaultValues.imageRasterMode;
         params.hideConnectingLines = defaultValues.hideConnectingLines;
         params.zeroRayLength = defaultValues.zeroRayLength;
         params.hundredRayLength = defaultValues.hundredRayLength;
         params.zeroLineWidth = defaultValues.zeroLineWidth;
         params.hundredLineWidth = defaultValues.hundredLineWidth;
         params.totalLength = params.gap + params.rayLength;
-        params.brightnessContrast = defaultValues.brightnessContrast;
-        params.invertImage = defaultValues.invertImage;
-        
-        // Сбрасываем данные изображения
-        params.sourceImage = null;
-        params.imageData = null;
-        
-        // Сбрасываем предпросмотр изображения
-        imagePreview.src = '#';
-        imagePreview.style.display = 'none';
         
         // Обновляем отображаемые значения
         lineWidthValueDisplay.textContent = defaultValues.lineWidth.toFixed(1);
@@ -991,7 +819,6 @@ document.addEventListener('DOMContentLoaded', function() {
         hundredRayLengthValueDisplay.textContent = defaultValues.hundredRayLength;
         zeroLineWidthValueDisplay.textContent = defaultValues.zeroLineWidth.toFixed(1);
         hundredLineWidthValueDisplay.textContent = defaultValues.hundredLineWidth.toFixed(1);
-        brightnessContrastValueDisplay.textContent = defaultValues.brightnessContrast.toFixed(1);
         
         // Включаем слайдер Ray Length и Line Width (они могли быть отключены в режиме растра)
         setSliderActive(rayLengthSlider, true);
@@ -999,7 +826,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Обновляем видимость элементов управления
         toggleRasterControls();
-        toggleImageRasterControls();
         
         // Устанавливаем состояние слайдеров градиента в зависимости от режима растра
         if (!defaultValues.rasterMode) {
@@ -1017,70 +843,4 @@ document.addEventListener('DOMContentLoaded', function() {
         // Перерисовываем паттерн
         drawPattern();
     }
-    
-    // Обработчик для чекбокса режима изображения
-    imageRasterModeCheckbox.addEventListener('change', function() {
-        params.imageRasterMode = this.checked;
-        
-        // Если включаем режим изображения, выключаем режим градиента
-        if (params.imageRasterMode && params.rasterMode) {
-            params.rasterMode = false;
-            rasterModeCheckbox.checked = false;
-        }
-        
-        toggleRasterControls();
-        toggleImageRasterControls();
-        drawPattern();
-    });
-    
-    // Обработчик для загрузки изображения
-    imageUpload.addEventListener('change', function(event) {
-        const file = event.target.files[0];
-        
-        if (file && file.type.match('image.*')) {
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                imagePreview.src = e.target.result;
-                imagePreview.style.display = 'block';
-                
-                // Загружаем изображение в объект Image для дальнейшего использования
-                params.sourceImage = new Image();
-                params.sourceImage.onload = function() {
-                    // Создаем временный canvas для получения данных изображения
-                    // с размерами соответствующими канвасу
-                    const tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = canvas.width;
-                    tempCanvas.height = canvas.height;
-                    const tempCtx = tempCanvas.getContext('2d');
-                    
-                    // Рисуем изображение на временном canvas
-                    // растягивая его на весь канвас
-                    tempCtx.drawImage(params.sourceImage, 0, 0, canvas.width, canvas.height);
-                    
-                    // Получаем данные изображения в размере канваса
-                    params.imageData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
-                    
-                    // Перерисовываем паттерн с использованием изображения
-                    drawPattern();
-                };
-                params.sourceImage.src = e.target.result;
-            };
-            
-            reader.readAsDataURL(file);
-        }
-    });
-    
-    // Обработчик для слайдера контрастности изображения
-    brightnessContrastSlider.addEventListener('input', function() {
-        params.brightnessContrast = parseFloat(this.value);
-        brightnessContrastValueDisplay.textContent = params.brightnessContrast.toFixed(1);
-        drawPattern();
-    });
-    
-    // Обработчик для чекбокса инвертирования изображения
-    imageInvertCheckbox.addEventListener('change', function() {
-        params.invertImage = this.checked;
-        drawPattern();
-    });
 }); 

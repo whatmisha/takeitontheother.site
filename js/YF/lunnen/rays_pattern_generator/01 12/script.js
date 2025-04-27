@@ -429,12 +429,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const zeroRayScaled = params.zeroRayLength * scaleFactor;
             const hundredRayScaled = params.hundredRayLength * scaleFactor;
             
-            // Инвертируем яркость, если изображение НЕ инвертировано (чтобы темные области соответствовали zeroRay)
-            // Если изображение инвертировано - оставляем как есть, так как логика уже будет перевернута
-            const adjustedBrightness = params.invertImage ? brightness : 1 - brightness;
+            // Если изображение инвертировано, инвертируем яркость
+            const adjustedBrightness = params.invertImage ? 1 - brightness : brightness;
             
             // Линейно интерполируем длину между масштабированными значениями в зависимости от яркости
-            // 1 - adjustedBrightness инвертирует логику: теперь 0% соответствует темным областям, 100% - светлым
             rayLength = zeroRayScaled + adjustedBrightness * (hundredRayScaled - zeroRayScaled);
             
             // Линейно интерполируем толщину между значениями zeroLineWidth и hundredLineWidth
@@ -686,57 +684,16 @@ document.addEventListener('DOMContentLoaded', function() {
             // Отключаем слайдер Ray Length
             setSliderActive(rayLengthSlider, false);
             
-            // Включаем слайдеры градиента
-            setSliderActive(zeroRayLengthSlider, true);
-            setSliderActive(hundredRayLengthSlider, true);
-            setSliderActive(zeroLineWidthSlider, true);
-            setSliderActive(hundredLineWidthSlider, true);
-            
-            // Отключаем основной слайдер толщины линии
-            setSliderActive(lineWidthSlider, false);
-            
             // Если включаем режим изображения, выключаем режим градиента
             if (params.rasterMode) {
                 params.rasterMode = false;
                 rasterModeCheckbox.checked = false;
                 toggleRasterControls();
             }
-            
-            // Показываем и активируем слайдеры градиента
-            const rasterControlsRow = document.querySelector('.raster-controls-row');
-            if (rasterControlsRow) {
-                rasterControlsRow.classList.remove('raster-mode-inactive');
-            }
-            
-            // Добавляем класс active для родительского контейнера
-            const rasterSliders = document.querySelector('.raster-sliders');
-            if (rasterSliders) {
-                rasterSliders.classList.add('active');
-            }
         } else {
-            // Если режим растрового изображения выключен и не включен режим градиента
+            // Включаем слайдер Ray Length, если не включен режим растра
             if (!params.rasterMode) {
-                // Включаем основные слайдеры
                 setSliderActive(rayLengthSlider, true);
-                setSliderActive(lineWidthSlider, true);
-                
-                // Отключаем слайдеры градиента
-                setSliderActive(zeroRayLengthSlider, false);
-                setSliderActive(hundredRayLengthSlider, false);
-                setSliderActive(zeroLineWidthSlider, false);
-                setSliderActive(hundredLineWidthSlider, false);
-                
-                // Добавляем класс для неактивного режима
-                const rasterControlsRow = document.querySelector('.raster-controls-row');
-                if (rasterControlsRow) {
-                    rasterControlsRow.classList.add('raster-mode-inactive');
-                }
-                
-                // Удаляем класс active у родительского контейнера
-                const rasterSliders = document.querySelector('.raster-sliders');
-                if (rasterSliders) {
-                    rasterSliders.classList.remove('active');
-                }
             }
         }
     }
@@ -798,7 +755,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (params.rasterMode || params.imageRasterMode) {
                         // Вычисляем относительную позицию по X для всей ширины холста (от 0 до 1)
                         const relativeX = Math.min(1, Math.max(0, x / canvas.width));
-                        addRaysToSvg(moduleGroup, params, relativeX, y);
+                        addRaysToSvg(moduleGroup, params, relativeX);
                     } else {
                         addRaysToSvg(moduleGroup, params);
                     }
@@ -832,7 +789,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Обновляем функцию addRaysToSvg для использования общей функции
-    function addRaysToSvg(parentNode, params, relativeX, moduleY) {
+    function addRaysToSvg(parentNode, params, relativeX) {
         const svgNS = 'http://www.w3.org/2000/svg';
         const { vanishingPoint, gap, rayCount, baseRays, scale, roundCap } = params;
         
@@ -840,7 +797,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const effectiveRelativeX = relativeX !== undefined ? relativeX : undefined;
         
         // Определяем длину луча и толщину линии
-        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, effectiveRelativeX, moduleY);
+        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, effectiveRelativeX, undefined);
         
         // Рисуем горизонтальные лучи (фиксированные)
         baseRays.horizontal.forEach(angle => {
@@ -908,7 +865,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const relativeX = (params.rasterMode || params.imageRasterMode) ? x / canvas.width : undefined;
         
         // Получаем длину луча и толщину линии
-        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX, y);
+        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX, undefined);
         
         // Вычисляем длину линии
         const lineLength = rayLength * params.scale;

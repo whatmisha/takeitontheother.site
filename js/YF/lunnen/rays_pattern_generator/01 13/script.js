@@ -798,7 +798,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (params.rasterMode || params.imageRasterMode) {
                         // Вычисляем относительную позицию по X для всей ширины холста (от 0 до 1)
                         const relativeX = Math.min(1, Math.max(0, x / canvas.width));
-                        addRaysToSvg(moduleGroup, params, relativeX, y);
+                        addRaysToSvg(moduleGroup, params, relativeX);
                     } else {
                         addRaysToSvg(moduleGroup, params);
                     }
@@ -832,7 +832,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Обновляем функцию addRaysToSvg для использования общей функции
-    function addRaysToSvg(parentNode, params, relativeX, moduleY) {
+    function addRaysToSvg(parentNode, params, relativeX) {
         const svgNS = 'http://www.w3.org/2000/svg';
         const { vanishingPoint, gap, rayCount, baseRays, scale, roundCap } = params;
         
@@ -840,7 +840,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const effectiveRelativeX = relativeX !== undefined ? relativeX : undefined;
         
         // Определяем длину луча и толщину линии
-        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, effectiveRelativeX, moduleY);
+        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, effectiveRelativeX, undefined);
         
         // Рисуем горизонтальные лучи (фиксированные)
         baseRays.horizontal.forEach(angle => {
@@ -908,7 +908,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const relativeX = (params.rasterMode || params.imageRasterMode) ? x / canvas.width : undefined;
         
         // Получаем длину луча и толщину линии
-        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX, y);
+        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX, undefined);
         
         // Вычисляем длину линии
         const lineLength = rayLength * params.scale;

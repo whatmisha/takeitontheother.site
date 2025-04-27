@@ -34,6 +34,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const imageInvertCheckbox = document.getElementById('imageInvertCheckbox');
     const brightnessContrastSlider = document.getElementById('brightnessContrastSlider');
     const brightnessContrastValueDisplay = document.getElementById('brightnessContrastValue');
+    const imageVerticalPositionSlider = document.getElementById('imageVerticalPositionSlider');
+    const imageVerticalPositionValueDisplay = document.getElementById('imageVerticalPositionValue');
+    const scanLine = document.getElementById('scanLine');
     
     // Определяем, какую операционную систему использует пользователь
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -77,7 +80,8 @@ document.addEventListener('DOMContentLoaded', function() {
         hundredLineWidth: 2.0,
         hideConnectingLines: false,
         brightnessContrast: 1.0,
-        invertImage: false
+        invertImage: false,
+        imageVerticalPosition: 50
     };
     
     // Функция получения ближайшего разрешенного значения
@@ -151,6 +155,8 @@ document.addEventListener('DOMContentLoaded', function() {
         brightnessContrast: 1.0,
         // Инвертировать изображение
         invertImage: false,
+        // Вертикальная позиция сканирования изображения (0-100%)
+        imageVerticalPosition: 50,
         // Исходное изображение
         sourceImage: null,
         // Кэш данных изображения
@@ -386,7 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     // Отрисовываем модуль на этой позиции
-                    drawModuleAt(x, y, relativeX, y);
+                    drawModuleAt(x, y, relativeX);
                     
                     // Отрисовываем вертикальную линию между модулями,
                     // но только если это не последний модуль в ряду и не включен режим скрытия разделителей
@@ -399,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Создаем функцию для расчета длины луча и толщины линии
-    function calculateRayLengthAndLineWidth(params, relativeX, moduleY) {
+    function calculateRayLengthAndLineWidth(params, relativeX) {
         // Значения по умолчанию
         let rayLength = params.rayLength;
         let lineWidth = params.lineWidth;
@@ -421,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Если включен режим изображения и есть данные изображения
         else if (params.imageRasterMode && params.imageData && relativeX !== undefined) {
             // Получаем яркость пикселя в зависимости от относительной позиции
-            const brightness = getPixelBrightness(params, relativeX, moduleY);
+            const brightness = getPixelBrightness(params, relativeX);
             
             // Используем параметр rayLength как коэффициент масштабирования для значений zeroRayLength и hundredRayLength
             const baseRayLength = params.rayLength;
@@ -429,12 +435,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const zeroRayScaled = params.zeroRayLength * scaleFactor;
             const hundredRayScaled = params.hundredRayLength * scaleFactor;
             
-            // Инвертируем яркость, если изображение НЕ инвертировано (чтобы темные области соответствовали zeroRay)
-            // Если изображение инвертировано - оставляем как есть, так как логика уже будет перевернута
-            const adjustedBrightness = params.invertImage ? brightness : 1 - brightness;
+            // Если изображение инвертировано, инвертируем яркость
+            const adjustedBrightness = params.invertImage ? 1 - brightness : brightness;
             
             // Линейно интерполируем длину между масштабированными значениями в зависимости от яркости
-            // 1 - adjustedBrightness инвертирует логику: теперь 0% соответствует темным областям, 100% - светлым
             rayLength = zeroRayScaled + adjustedBrightness * (hundredRayScaled - zeroRayScaled);
             
             // Линейно интерполируем толщину между значениями zeroLineWidth и hundredLineWidth
@@ -445,15 +449,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Функция для получения яркости пикселя из изображения
-    function getPixelBrightness(params, relativeX, moduleY) {
+    function getPixelBrightness(params, relativeX) {
         // Если нет изображения, возвращаем 0.5 (средняя яркость)
         if (!params.imageData) return 0.5;
         
         const { width, height, data } = params.imageData;
         
         // Определяем координаты пикселя в изображении
+        // Используем только координату X для создания горизонтального градиента
         const x = Math.floor(relativeX * (width - 1));
-        const y = Math.floor((moduleY / canvas.height) * (height - 1));
+        
+        // Вычисляем Y-координату на основе выбранной вертикальной позиции
+        const y = Math.floor((params.imageVerticalPosition / 100) * (height - 1));
         
         // Убедимся, что координаты в пределах изображения
         const safeX = Math.max(0, Math.min(width - 1, x));
@@ -493,7 +500,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const relativeX = (params.rasterMode || params.imageRasterMode) ? x / canvas.width : undefined;
         
         // Получаем длину луча и толщину линии
-        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX, y);
+        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX);
         
         // Вычисляем длину линии с учетом масштаба
         const lineLength = rayLength * params.scale;
@@ -522,7 +529,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Функция отрисовки одного модуля паттерна в указанной позиции
-    function drawModuleAt(x, y, relativeX, moduleY) {
+    function drawModuleAt(x, y, relativeX) {
         // Сохранение контекста
         ctx.save();
         
@@ -544,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Отрисовка модуля
         // В режиме растра передаем позицию для вычисления градиента
         if (params.rasterMode || params.imageRasterMode) {
-            drawRays(params, relativeX, moduleY);
+            drawRays(params, relativeX);
         } else {
             drawRays(params);
         }
@@ -554,22 +561,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Обновляем функцию drawRays для использования общей функции
-    function drawRays(params, relativeX, moduleY) {
+    function drawRays(params, relativeX) {
         const { vanishingPoint, gap, rayCount, baseRays } = params;
         
         // Определяем длину луча и толщину линии
-        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX, moduleY);
+        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX);
         
         // Устанавливаем текущую толщину линии
         ctx.lineWidth = lineWidth;
         
         // Рисуем горизонтальные лучи (фиксированные)
         baseRays.horizontal.forEach(angle => {
-            drawRay(angle, rayLength, moduleY);
+            drawRay(angle, rayLength);
         });
         
         // Рисуем вертикальный луч (фиксированный)
-        drawRay(baseRays.vertical, rayLength, moduleY);
+        drawRay(baseRays.vertical, rayLength);
         
         // Определяем количество лучей в верхнем полукруге
         // Вычитаем 3 базовых луча
@@ -579,10 +586,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Специальный случай для 5 лучей (2 дополнительных) - диагонали под 45°
             if (rayCount === 5) {
                 // Диагональ вверх-влево (225°)
-                drawRay(Math.PI * 1.25, rayLength, moduleY);
+                drawRay(Math.PI * 1.25, rayLength);
                 
                 // Диагональ вверх-вправо (315°)
-                drawRay(Math.PI * 1.75, rayLength, moduleY);
+                drawRay(Math.PI * 1.75, rayLength);
             } else {
                 // Для остальных случаев равномерно распределяем лучи по верхнему полукругу
                 // Верхний полукруг: от 180° до 360° (не включая горизонтальные)
@@ -591,12 +598,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 for (let i = 0; i < upperRaysCount; i++) {
                     // Интерполируем угол от π до 2π (от 180° до 360°)
                     const angle = Math.PI + (i + 1) * Math.PI / (upperRaysCount + 1);
-                    drawRay(angle, rayLength, moduleY);
+                    drawRay(angle, rayLength);
                 }
             }
         }
         
-        function drawRay(angle, rayLength, moduleY) {
+        function drawRay(angle, rayLength) {
             // Длина видимой части луча уже учитывает масштабирование в соответствии с градиентом, если режим активен
             
             // Начальная точка луча (с отступом от точки схода)
@@ -686,57 +693,16 @@ document.addEventListener('DOMContentLoaded', function() {
             // Отключаем слайдер Ray Length
             setSliderActive(rayLengthSlider, false);
             
-            // Включаем слайдеры градиента
-            setSliderActive(zeroRayLengthSlider, true);
-            setSliderActive(hundredRayLengthSlider, true);
-            setSliderActive(zeroLineWidthSlider, true);
-            setSliderActive(hundredLineWidthSlider, true);
-            
-            // Отключаем основной слайдер толщины линии
-            setSliderActive(lineWidthSlider, false);
-            
             // Если включаем режим изображения, выключаем режим градиента
             if (params.rasterMode) {
                 params.rasterMode = false;
                 rasterModeCheckbox.checked = false;
                 toggleRasterControls();
             }
-            
-            // Показываем и активируем слайдеры градиента
-            const rasterControlsRow = document.querySelector('.raster-controls-row');
-            if (rasterControlsRow) {
-                rasterControlsRow.classList.remove('raster-mode-inactive');
-            }
-            
-            // Добавляем класс active для родительского контейнера
-            const rasterSliders = document.querySelector('.raster-sliders');
-            if (rasterSliders) {
-                rasterSliders.classList.add('active');
-            }
         } else {
-            // Если режим растрового изображения выключен и не включен режим градиента
+            // Включаем слайдер Ray Length, если не включен режим растра
             if (!params.rasterMode) {
-                // Включаем основные слайдеры
                 setSliderActive(rayLengthSlider, true);
-                setSliderActive(lineWidthSlider, true);
-                
-                // Отключаем слайдеры градиента
-                setSliderActive(zeroRayLengthSlider, false);
-                setSliderActive(hundredRayLengthSlider, false);
-                setSliderActive(zeroLineWidthSlider, false);
-                setSliderActive(hundredLineWidthSlider, false);
-                
-                // Добавляем класс для неактивного режима
-                const rasterControlsRow = document.querySelector('.raster-controls-row');
-                if (rasterControlsRow) {
-                    rasterControlsRow.classList.add('raster-mode-inactive');
-                }
-                
-                // Удаляем класс active у родительского контейнера
-                const rasterSliders = document.querySelector('.raster-sliders');
-                if (rasterSliders) {
-                    rasterSliders.classList.remove('active');
-                }
             }
         }
     }
@@ -798,7 +764,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (params.rasterMode || params.imageRasterMode) {
                         // Вычисляем относительную позицию по X для всей ширины холста (от 0 до 1)
                         const relativeX = Math.min(1, Math.max(0, x / canvas.width));
-                        addRaysToSvg(moduleGroup, params, relativeX, y);
+                        addRaysToSvg(moduleGroup, params, relativeX);
                     } else {
                         addRaysToSvg(moduleGroup, params);
                     }
@@ -832,7 +798,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Обновляем функцию addRaysToSvg для использования общей функции
-    function addRaysToSvg(parentNode, params, relativeX, moduleY) {
+    function addRaysToSvg(parentNode, params, relativeX) {
         const svgNS = 'http://www.w3.org/2000/svg';
         const { vanishingPoint, gap, rayCount, baseRays, scale, roundCap } = params;
         
@@ -840,7 +806,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const effectiveRelativeX = relativeX !== undefined ? relativeX : undefined;
         
         // Определяем длину луча и толщину линии
-        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, effectiveRelativeX, moduleY);
+        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, effectiveRelativeX);
         
         // Рисуем горизонтальные лучи (фиксированные)
         baseRays.horizontal.forEach(angle => {
@@ -908,7 +874,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const relativeX = (params.rasterMode || params.imageRasterMode) ? x / canvas.width : undefined;
         
         // Получаем длину луча и толщину линии
-        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX, y);
+        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX);
         
         // Вычисляем длину линии
         const lineLength = rayLength * params.scale;
@@ -953,6 +919,7 @@ document.addEventListener('DOMContentLoaded', function() {
         hundredLineWidthSlider.value = defaultValues.hundredLineWidth;
         brightnessContrastSlider.value = defaultValues.brightnessContrast;
         imageInvertCheckbox.checked = defaultValues.invertImage;
+        imageVerticalPositionSlider.value = defaultValues.imageVerticalPosition;
         
         // Обновляем значения в объекте params
         params.lineWidth = defaultValues.lineWidth;
@@ -972,6 +939,7 @@ document.addEventListener('DOMContentLoaded', function() {
         params.totalLength = params.gap + params.rayLength;
         params.brightnessContrast = defaultValues.brightnessContrast;
         params.invertImage = defaultValues.invertImage;
+        params.imageVerticalPosition = defaultValues.imageVerticalPosition;
         
         // Сбрасываем данные изображения
         params.sourceImage = null;
@@ -992,6 +960,7 @@ document.addEventListener('DOMContentLoaded', function() {
         zeroLineWidthValueDisplay.textContent = defaultValues.zeroLineWidth.toFixed(1);
         hundredLineWidthValueDisplay.textContent = defaultValues.hundredLineWidth.toFixed(1);
         brightnessContrastValueDisplay.textContent = defaultValues.brightnessContrast.toFixed(1);
+        imageVerticalPositionValueDisplay.textContent = defaultValues.imageVerticalPosition;
         
         // Включаем слайдер Ray Length и Line Width (они могли быть отключены в режиме растра)
         setSliderActive(rayLengthSlider, true);
@@ -1013,6 +982,9 @@ document.addEventListener('DOMContentLoaded', function() {
             setSliderActive(zeroLineWidthSlider, true);
             setSliderActive(hundredLineWidthSlider, true);
         }
+        
+        // Обновляем позицию линии сканирования
+        updateScanLine();
         
         // Перерисовываем паттерн
         drawPattern();
@@ -1063,6 +1035,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Перерисовываем паттерн с использованием изображения
                     drawPattern();
+                    
+                    // Обновляем позицию линии сканирования
+                    updateScanLine();
                 };
                 params.sourceImage.src = e.target.result;
             };
@@ -1083,4 +1058,23 @@ document.addEventListener('DOMContentLoaded', function() {
         params.invertImage = this.checked;
         drawPattern();
     });
+    
+    // Обработчик для слайдера вертикальной позиции изображения
+    imageVerticalPositionSlider.addEventListener('input', function() {
+        params.imageVerticalPosition = parseInt(this.value);
+        imageVerticalPositionValueDisplay.textContent = this.value;
+        
+        // Обновляем позицию линии сканирования
+        updateScanLine();
+        
+        drawPattern();
+    });
+    
+    // Функция для обновления позиции линии сканирования
+    function updateScanLine() {
+        // Обновляем стиль линии сканирования на основе выбранной позиции
+        if (scanLine) {
+            scanLine.style.top = params.imageVerticalPosition + '%';
+        }
+    }
 }); 
