@@ -3,26 +3,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const ctx = canvas.getContext('2d');
     
     // Элементы управления
-    const lineWidthInput = document.getElementById('lineWidthInput');
-    const lineLengthInput = document.getElementById('lineLengthInput');
-    const lineCountInput = document.getElementById('lineCountInput');
-    const scaleInput = document.getElementById('scaleInput');
-    const safeFieldInput = document.getElementById('safeFieldInput');
-    const zeroLineLengthInput = document.getElementById('zeroLineLengthInput');
-    const hundredLineLengthInput = document.getElementById('hundredLineLengthInput');
-    const zeroLineWidthInput = document.getElementById('zeroLineWidthInput');
-    const hundredLineWidthInput = document.getElementById('hundredLineWidthInput');
-    const brightnessContrastInput = document.getElementById('brightnessContrastInput');
+    const lineWidthSlider = document.getElementById('lineWidthSlider');
+    const lineLengthSlider = document.getElementById('lineLengthSlider');
+    const lineCountSlider = document.getElementById('lineCountSlider');
+    const scaleSlider = document.getElementById('scaleSlider');
+    const safeFieldSlider = document.getElementById('safeFieldSlider');
+    const zeroLineLengthSlider = document.getElementById('zeroLineLengthSlider');
+    const hundredLineLengthSlider = document.getElementById('hundredLineLengthSlider');
+    const zeroLineWidthSlider = document.getElementById('zeroLineWidthSlider');
+    const hundredLineWidthSlider = document.getElementById('hundredLineWidthSlider');
     const exportSvgBtn = document.getElementById('exportSvgBtn');
     const resetBtn = document.getElementById('resetBtn');
     const generateBtn = document.getElementById('generateBtn');
     const roundCapCheckbox = document.getElementById('roundCapCheckbox');
     const rasterModeCheckbox = document.getElementById('rasterModeCheckbox');
     const imageRasterModeCheckbox = document.getElementById('imageRasterModeCheckbox');
+    const lineWidthValueDisplay = document.getElementById('lineWidthValue');
+    const lineLengthValueDisplay = document.getElementById('lineLengthValue');
+    const lineCountValueDisplay = document.getElementById('lineCountValue');
+    const scaleValueDisplay = document.getElementById('scaleValue');
+    const safeFieldValueDisplay = document.getElementById('safeFieldValue');
+    const zeroLineLengthValueDisplay = document.getElementById('zeroLineLengthValue');
+    const hundredLineLengthValueDisplay = document.getElementById('hundredLineLengthValue');
+    const zeroLineWidthValueDisplay = document.getElementById('zeroLineWidthValue');
+    const hundredLineWidthValueDisplay = document.getElementById('hundredLineWidthValue');
     const imageUpload = document.getElementById('imageUpload');
     const imagePreview = document.getElementById('imagePreview');
     const imageRasterControls = document.getElementById('imageRasterControls');
     const imageInvertCheckbox = document.getElementById('imageInvertCheckbox');
+    const brightnessContrastSlider = document.getElementById('brightnessContrastSlider');
+    const brightnessContrastValueDisplay = document.getElementById('brightnessContrastValue');
     
     // Элементы для восстановления настроек
     const settingsInput = document.getElementById('settingsInput');
@@ -93,25 +103,22 @@ document.addEventListener('DOMContentLoaded', function() {
         invertImage: false
     };
     
-    // Флаг для отслеживания автогенерации паттерна
-    let shouldAutoGeneratePattern = false;
-    
     // Текущие параметры
     const params = {
-        lineWidth: parseFloat(lineWidthInput.value),
-        lineLength: parseInt(lineLengthInput.value),
-        lineCount: parseInt(lineCountInput.value),
-        scale: parseFloat(scaleInput.value),
-        safeField: parseInt(safeFieldInput.value),
+        lineWidth: parseFloat(lineWidthSlider.value),
+        lineLength: parseInt(lineLengthSlider.value),
+        lineCount: parseInt(lineCountSlider.value),
+        scale: parseFloat(scaleSlider.value),
+        safeField: parseInt(safeFieldSlider.value),
         roundCap: false,
         rasterMode: false,
         imageRasterMode: false,
-        zeroLineLength: parseInt(zeroLineLengthInput.value),
-        hundredLineLength: parseInt(hundredLineLengthInput.value),
-        zeroLineWidth: parseFloat(zeroLineWidthInput.value),
-        hundredLineWidth: parseFloat(hundredLineWidthInput.value),
+        zeroLineLength: parseInt(zeroLineLengthSlider.value),
+        hundredLineLength: parseInt(hundredLineLengthSlider.value),
+        zeroLineWidth: parseFloat(zeroLineWidthSlider.value),
+        hundredLineWidth: parseFloat(hundredLineWidthSlider.value),
         strokeColor: strokeColor,
-        brightnessContrast: parseFloat(brightnessContrastInput.value),
+        brightnessContrast: parseFloat(brightnessContrastSlider.value),
         invertImage: false,
         sourceImage: null,
         imageData: null
@@ -200,23 +207,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Функция для рисования всех линий
     function drawPattern() {
-        if (!shouldAutoGeneratePattern && !params.patternGenerated) {
-            // Очищаем canvas, но не рисуем линии
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#666666';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Добавляем сообщение на canvas
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = '24px "CoFo Sans", Arial, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('To display the pattern, press Generate.', canvas.width / 2, canvas.height / 2 - 15);
-            ctx.fillText('We decided to spare your processor.', canvas.width / 2, canvas.height / 2 + 15);
-            
-            return;
-        }
-        
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#666666';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -379,103 +369,40 @@ document.addEventListener('DOMContentLoaded', function() {
         if (savedSettings) {
             const settings = JSON.parse(savedSettings);
             
-            // Применяем только настройки интерфейса, без генерации линий
-            applySettingsToUI(settings);
+            // Применяем сохраненные настройки
+            updateAndApplySettings(settings);
         }
-    }
-    
-    // Функция для применения настроек только к интерфейсу
-    function applySettingsToUI(settings) {
-        // Обновляем слайдеры и чекбоксы
-        if (settings.lineWidth !== undefined) {
-            lineWidthInput.value = settings.lineWidth;
-        }
-        
-        if (settings.lineLength !== undefined) {
-            lineLengthInput.value = settings.lineLength;
-        }
-        
-        if (settings.lineCount !== undefined) {
-            lineCountInput.value = settings.lineCount;
-        }
-        
-        if (settings.scale !== undefined) {
-            scaleInput.value = settings.scale;
-        }
-        
-        if (settings.safeField !== undefined) {
-            safeFieldInput.value = settings.safeField;
-        }
-        
-        if (settings.roundCap !== undefined) {
-            roundCapCheckbox.checked = settings.roundCap;
-        }
-        
-        if (settings.rasterMode !== undefined) {
-            rasterModeCheckbox.checked = settings.rasterMode;
-        }
-        
-        if (settings.imageRasterMode !== undefined) {
-            imageRasterModeCheckbox.checked = settings.imageRasterMode;
-        }
-        
-        if (settings.zeroLineLength !== undefined) {
-            zeroLineLengthInput.value = settings.zeroLineLength;
-        }
-        
-        if (settings.hundredLineLength !== undefined) {
-            hundredLineLengthInput.value = settings.hundredLineLength;
-        }
-        
-        if (settings.zeroLineWidth !== undefined) {
-            zeroLineWidthInput.value = settings.zeroLineWidth;
-        }
-        
-        if (settings.hundredLineWidth !== undefined) {
-            hundredLineWidthInput.value = settings.hundredLineWidth;
-        }
-        
-        if (settings.brightnessContrast !== undefined) {
-            brightnessContrastInput.value = settings.brightnessContrast;
-        }
-        
-        if (settings.invertImage !== undefined) {
-            imageInvertCheckbox.checked = settings.invertImage;
-        }
-        
-        // Обновляем настройки без вызова генерации линий
-        updateSettingsWithoutPatternReset();
     }
     
     // Функция обновления и сохранения настроек
     function updateAndSave() {
-        // Проверка и преобразование введенных значений
-        const validateNumber = (value, min, max, defaultVal) => {
-            // Разрешаем пустую строку и возвращаем текущее значение
-            if (value === '' || value === undefined) {
-                return defaultVal;
-            }
-            
-            const num = parseFloat(value);
-            if (isNaN(num)) return defaultVal;
-            return Math.max(min, Math.min(max, num));
-        };
-        
-        // Обновляем параметры с валидацией, но не меняем значения в полях ввода
-        params.lineWidth = validateNumber(lineWidthInput.value, 1, 24, defaultValues.lineWidth);
-        params.lineLength = validateNumber(lineLengthInput.value, 10, 200, defaultValues.lineLength);
-        params.lineCount = validateNumber(lineCountInput.value, 10, 5000, defaultValues.lineCount);
-        params.scale = validateNumber(scaleInput.value, 0.1, 3, defaultValues.scale);
-        params.safeField = validateNumber(safeFieldInput.value, 0, 100, defaultValues.safeField);
+        // Обновляем параметры
+        params.lineWidth = parseFloat(lineWidthSlider.value);
+        params.lineLength = parseInt(lineLengthSlider.value);
+        params.lineCount = parseInt(lineCountSlider.value);
+        params.scale = parseFloat(scaleSlider.value);
+        params.safeField = parseInt(safeFieldSlider.value);
         params.roundCap = roundCapCheckbox.checked;
         params.rasterMode = rasterModeCheckbox.checked;
         params.imageRasterMode = imageRasterModeCheckbox.checked;
-        params.zeroLineLength = validateNumber(zeroLineLengthInput.value, 0, 200, defaultValues.zeroLineLength);
-        params.hundredLineLength = validateNumber(hundredLineLengthInput.value, 0, 200, defaultValues.hundredLineLength);
-        params.zeroLineWidth = validateNumber(zeroLineWidthInput.value, 1, 24, defaultValues.zeroLineWidth);
-        params.hundredLineWidth = validateNumber(hundredLineWidthInput.value, 1, 24, defaultValues.hundredLineWidth);
-        params.brightnessContrast = validateNumber(brightnessContrastInput.value, 0.1, 3, defaultValues.brightnessContrast);
+        params.zeroLineLength = parseInt(zeroLineLengthSlider.value);
+        params.hundredLineLength = parseInt(hundredLineLengthSlider.value);
+        params.zeroLineWidth = parseFloat(zeroLineWidthSlider.value);
+        params.hundredLineWidth = parseFloat(hundredLineWidthSlider.value);
+        params.brightnessContrast = parseFloat(brightnessContrastSlider.value);
         params.invertImage = imageInvertCheckbox.checked;
+        
+        // Обновляем отображаемые значения
+        lineWidthValueDisplay.textContent = params.lineWidth.toFixed(1);
+        lineLengthValueDisplay.textContent = params.lineLength;
+        lineCountValueDisplay.textContent = params.lineCount;
+        scaleValueDisplay.textContent = params.scale.toFixed(1);
+        safeFieldValueDisplay.textContent = params.safeField;
+        zeroLineLengthValueDisplay.textContent = params.zeroLineLength;
+        hundredLineLengthValueDisplay.textContent = params.hundredLineLength;
+        zeroLineWidthValueDisplay.textContent = params.zeroLineWidth.toFixed(1);
+        hundredLineWidthValueDisplay.textContent = params.hundredLineWidth.toFixed(1);
+        brightnessContrastValueDisplay.textContent = params.brightnessContrast.toFixed(1);
         
         // Отображаем/скрываем элементы управления растром
         toggleRasterControls();
@@ -483,13 +410,24 @@ document.addEventListener('DOMContentLoaded', function() {
         // Отображаем/скрываем элементы управления растровым изображением
         toggleImageRasterControls();
         
-        // Если изменились параметры - сбрасываем паттерн
-        params.patternGenerated = false;
+        // Если изменилось охранное поле, регенерируем линии
+        const safeFieldChanged = params.safeField > 0;
         
-        // Помечаем, что нужно изменить существующие линии, если они уже сгенерированы
-        params.needsLinesUpdate = true;
+        // Если изменились параметры линий или охранное поле, регенерируем их
+        if (params.lineCount !== lines.length || safeFieldChanged) {
+            generateLines();
+        } else {
+            // Обновляем параметры существующих линий
+            lines.forEach(function(line) {
+                line.lineWidth = params.lineWidth;
+                line.length = params.lineLength;
+            });
+        }
         
-        // Отрисовываем паттерн или сообщение
+        // Применяем растровые эффекты, если они включены
+        applyRasterMode();
+        
+        // Отрисовываем паттерн
         drawPattern();
         
         // Сохраняем настройки
@@ -498,57 +436,40 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Функция для сброса настроек
     function resetSettings() {
-        // Обновляем значения в полях ввода
-        lineWidthInput.value = defaultValues.lineWidth;
-        lineLengthInput.value = defaultValues.lineLength;
-        lineCountInput.value = defaultValues.lineCount;
-        scaleInput.value = defaultValues.scale;
-        safeFieldInput.value = defaultValues.safeField;
+        lineWidthSlider.value = defaultValues.lineWidth;
+        lineLengthSlider.value = defaultValues.lineLength;
+        lineCountSlider.value = defaultValues.lineCount;
+        scaleSlider.value = defaultValues.scale;
+        safeFieldSlider.value = defaultValues.safeField;
         roundCapCheckbox.checked = defaultValues.roundCap;
         rasterModeCheckbox.checked = defaultValues.rasterMode;
         imageRasterModeCheckbox.checked = defaultValues.imageRasterMode;
-        zeroLineLengthInput.value = defaultValues.zeroLineLength;
-        hundredLineLengthInput.value = defaultValues.hundredLineLength;
-        zeroLineWidthInput.value = defaultValues.zeroLineWidth;
-        hundredLineWidthInput.value = defaultValues.hundredLineWidth;
-        brightnessContrastInput.value = defaultValues.brightnessContrast;
+        zeroLineLengthSlider.value = defaultValues.zeroLineLength;
+        hundredLineLengthSlider.value = defaultValues.hundredLineLength;
+        zeroLineWidthSlider.value = defaultValues.zeroLineWidth;
+        hundredLineWidthSlider.value = defaultValues.hundredLineWidth;
+        brightnessContrastSlider.value = defaultValues.brightnessContrast;
         imageInvertCheckbox.checked = defaultValues.invertImage;
         
-        // Сбрасываем флаг генерации паттерна
-        params.patternGenerated = false;
-        
-        // Очищаем массив линий
-        lines = [];
-        
-        // Возвращаем кнопке первоначальное название
-        generateBtn.textContent = 'Generate';
-        
-        // Обновляем настройки
+        // Обновляем и сохраняем
         updateAndSave();
+        
+        // Заново генерируем линии
+        generateLines();
+        drawPattern();
     }
     
     // Функция переключения элементов управления растром
     function toggleRasterControls() {
         const isRasterMode = params.rasterMode || params.imageRasterMode;
         
-        // Получаем все инпуты растра
-        const rasterInputs = document.querySelectorAll('.raster-sliders input[type="text"]');
+        // Получаем все слайдеры растра
+        const rasterSliders = document.querySelectorAll('.raster-sliders input[type="range"]');
         
-        // Активируем/деактивируем инпуты
-        rasterInputs.forEach(function(input) {
-            setInputActive(input, isRasterMode);
+        // Активируем/деактивируем слайдеры
+        rasterSliders.forEach(function(slider) {
+            setSliderActive(slider, isRasterMode);
         });
-    }
-    
-    // Функция для активации/деактивации инпута
-    function setInputActive(input, isActive) {
-        if (isActive) {
-            input.classList.remove('inactive-input');
-            input.disabled = false;
-        } else {
-            input.classList.add('inactive-input');
-            input.disabled = true;
-        }
     }
     
     // Функция переключения элементов управления растровым изображением
@@ -577,17 +498,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         imagePreview.src = e.target.result;
                         imagePreview.style.display = 'block';
                         
-                        // Обрабатываем изображение
+                        // Обрабатываем изображение и обновляем отображение
                         processUploadedImage();
-                        
-                        // Только если паттерн уже сгенерирован, применяем к нему растр
-                        if (params.patternGenerated && lines.length > 0) {
-                            applyRasterMode();
-                            drawPattern();
-                        } else {
-                            // Просто обновляем канвас с сообщением
-                            drawPattern();
-                        }
+                        applyRasterMode();
+                        drawPattern();
                     };
                     
                     img.src = e.target.result;
@@ -724,160 +638,126 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (part === "img") {
                     settings.imageRasterMode = true;
                 }
-            }
-            
-            // После восстановления настроек активируем отображение паттерна и генерируем линии
-            applySettingsToUI(settings);
-            
-            // После восстановления настроек из файла сразу генерируем паттерн
-            params.patternGenerated = true;
-            params.needsLinesUpdate = false; // Уже обновили линии
-            generateBtn.textContent = 'Regenerate';
-            generateLines();
-            applyRasterMode();
-            drawPattern();
-            
+        }
+        
+        // Применяем восстановленные настройки
+            updateAndApplySettings(settings);
             console.log("Settings restored successfully:", settings);
         } catch (error) {
             console.error("Error restoring settings:", error);
         }
     }
     
-    // Функция обновления настроек без сброса паттерна
-    function updateSettingsWithoutPatternReset() {
-        // Проверка и преобразование введенных значений
-        const validateNumber = (value, min, max, defaultVal) => {
-            const num = parseFloat(value);
-            if (isNaN(num)) return defaultVal;
-            return Math.max(min, Math.min(max, num));
-        };
+    // Функция для применения восстановленных настроек
+    function updateAndApplySettings(settings) {
+        // Обновляем слайдеры и чекбоксы
+        if (settings.lineWidth !== undefined) {
+            lineWidthSlider.value = settings.lineWidth;
+        }
         
-        // Обновляем параметры с валидацией
-        params.lineWidth = validateNumber(lineWidthInput.value, 1, 24, defaultValues.lineWidth);
-        params.lineLength = validateNumber(lineLengthInput.value, 10, 200, defaultValues.lineLength);
-        params.lineCount = validateNumber(lineCountInput.value, 10, 5000, defaultValues.lineCount);
-        params.scale = validateNumber(scaleInput.value, 0.1, 3, defaultValues.scale);
-        params.safeField = validateNumber(safeFieldInput.value, 0, 100, defaultValues.safeField);
-        params.roundCap = roundCapCheckbox.checked;
-        params.rasterMode = rasterModeCheckbox.checked;
-        params.imageRasterMode = imageRasterModeCheckbox.checked;
-        params.zeroLineLength = validateNumber(zeroLineLengthInput.value, 0, 200, defaultValues.zeroLineLength);
-        params.hundredLineLength = validateNumber(hundredLineLengthInput.value, 0, 200, defaultValues.hundredLineLength);
-        params.zeroLineWidth = validateNumber(zeroLineWidthInput.value, 1, 24, defaultValues.zeroLineWidth);
-        params.hundredLineWidth = validateNumber(hundredLineWidthInput.value, 1, 24, defaultValues.hundredLineWidth);
-        params.brightnessContrast = validateNumber(brightnessContrastInput.value, 0.1, 3, defaultValues.brightnessContrast);
-        params.invertImage = imageInvertCheckbox.checked;
+        if (settings.lineLength !== undefined) {
+            lineLengthSlider.value = settings.lineLength;
+        }
         
-        // Отображаем/скрываем элементы управления растром
-        toggleRasterControls();
+        if (settings.lineCount !== undefined) {
+            lineCountSlider.value = settings.lineCount;
+        }
         
-        // Отображаем/скрываем элементы управления растровым изображением
-        toggleImageRasterControls();
+        if (settings.scale !== undefined) {
+            scaleSlider.value = settings.scale;
+        }
         
-        // Сохраняем настройки
-        saveSettingsToLocalStorage();
+        if (settings.safeField !== undefined) {
+            safeFieldSlider.value = settings.safeField;
+        }
+        
+        if (settings.roundCap !== undefined) {
+            roundCapCheckbox.checked = settings.roundCap;
+        }
+        
+        if (settings.rasterMode !== undefined) {
+        rasterModeCheckbox.checked = settings.rasterMode;
+        }
+        
+        if (settings.imageRasterMode !== undefined) {
+            imageRasterModeCheckbox.checked = settings.imageRasterMode;
+        }
+        
+        if (settings.zeroLineLength !== undefined) {
+            zeroLineLengthSlider.value = settings.zeroLineLength;
+        }
+        
+        if (settings.hundredLineLength !== undefined) {
+            hundredLineLengthSlider.value = settings.hundredLineLength;
+        }
+        
+        if (settings.zeroLineWidth !== undefined) {
+            zeroLineWidthSlider.value = settings.zeroLineWidth;
+        }
+        
+        if (settings.hundredLineWidth !== undefined) {
+            hundredLineWidthSlider.value = settings.hundredLineWidth;
+        }
+        
+        if (settings.brightnessContrast !== undefined) {
+            brightnessContrastSlider.value = settings.brightnessContrast;
+        }
+        
+        if (settings.invertImage !== undefined) {
+            imageInvertCheckbox.checked = settings.invertImage;
+        }
+        
+        // Обновляем настройки и перерисовываем
+        updateAndSave();
+        
+        // Заново генерируем линии
+        generateLines();
+        applyRasterMode();
+        drawPattern();
+    }
+    
+    // Функция для активации/деактивации слайдера
+    function setSliderActive(slider, isActive) {
+        if (isActive) {
+            slider.classList.remove('inactive-slider');
+            slider.disabled = false;
+        } else {
+            slider.classList.add('inactive-slider');
+            slider.disabled = true;
+        }
     }
     
     // Добавляем обработчики событий
-    lineWidthInput.addEventListener('change', updateAndSave);
-    lineLengthInput.addEventListener('change', updateAndSave);
-    lineCountInput.addEventListener('change', updateAndSave);
-    scaleInput.addEventListener('change', updateAndSave);
-    safeFieldInput.addEventListener('change', updateAndSave);
-    zeroLineLengthInput.addEventListener('change', updateAndSave);
-    hundredLineLengthInput.addEventListener('change', updateAndSave);
-    zeroLineWidthInput.addEventListener('change', updateAndSave);
-    hundredLineWidthInput.addEventListener('change', updateAndSave);
-    brightnessContrastInput.addEventListener('change', updateAndSave);
-    
-    // Для чекбоксов используем 'change', так как они меняются сразу
+    lineWidthSlider.addEventListener('input', updateAndSave);
+    lineLengthSlider.addEventListener('input', updateAndSave);
+    lineCountSlider.addEventListener('input', updateAndSave);
+    scaleSlider.addEventListener('input', updateAndSave);
+    safeFieldSlider.addEventListener('input', updateAndSave);
+    zeroLineLengthSlider.addEventListener('input', updateAndSave);
+    hundredLineLengthSlider.addEventListener('input', updateAndSave);
+    zeroLineWidthSlider.addEventListener('input', updateAndSave);
+    hundredLineWidthSlider.addEventListener('input', updateAndSave);
     roundCapCheckbox.addEventListener('change', updateAndSave);
     rasterModeCheckbox.addEventListener('change', updateAndSave);
     imageRasterModeCheckbox.addEventListener('change', updateAndSave);
     imageInvertCheckbox.addEventListener('change', updateAndSave);
+    brightnessContrastSlider.addEventListener('input', updateAndSave);
     
     // Обработчики для кнопок
     exportSvgBtn.addEventListener('click', exportToSvg);
     resetBtn.addEventListener('click', resetSettings);
-    
-    // Обработчик для кнопки Generate/Regenerate
     generateBtn.addEventListener('click', function() {
-        // Обновляем значения параметров перед генерацией
-        updateAndSave();
-        
-        // Проверяем, что значения в полях ввода корректны
-        if (!validateAllInputs()) {
-            alert("Please enter valid numeric values in all input fields before generating.");
-            return;
-        }
-        
-        params.patternGenerated = true;
-        
-        // Проверяем, нужно ли обновить существующие линии или сгенерировать новые
-        if (lines.length === 0 || params.needsLinesUpdate) {
-            // Генерация линий
-            generateLines();
-            params.needsLinesUpdate = false;
-        }
-        
-        // Применяем растровые эффекты
+        generateLines();
         applyRasterMode();
         drawPattern();
-        
-        // Изменяем текст кнопки на "Regenerate" после первого нажатия
-        if (generateBtn.textContent === 'Generate') {
-            generateBtn.textContent = 'Regenerate';
-        }
     });
-    
-    // Функция для проверки всех инпутов
-    function validateAllInputs() {
-        // Проверяем, что все числовые поля содержат корректные числа
-        const inputs = [
-            { elem: lineWidthInput, min: 1, max: 24 },
-            { elem: lineLengthInput, min: 10, max: 200 },
-            { elem: lineCountInput, min: 10, max: 5000 },
-            { elem: scaleInput, min: 0.1, max: 3 },
-            { elem: safeFieldInput, min: 0, max: 100 },
-            { elem: zeroLineLengthInput, min: 0, max: 200 },
-            { elem: hundredLineLengthInput, min: 0, max: 200 },
-            { elem: zeroLineWidthInput, min: 1, max: 24 },
-            { elem: hundredLineWidthInput, min: 1, max: 24 },
-            { elem: brightnessContrastInput, min: 0.1, max: 3 }
-        ];
-        
-        // Проверяем каждый инпут
-        for (const input of inputs) {
-            const value = input.elem.value.trim();
-            if (value === '') {
-                return false;
-            }
-            
-            const num = parseFloat(value);
-            if (isNaN(num) || num < input.min || num > input.max) {
-                return false;
-            }
-        }
-        
-        return true;
-    }
     
     // Инициализация
     loadSettingsFromLocalStorage();
-    
-    // При первой загрузке не отображаем паттерн и не генерируем линии
-    params.patternGenerated = false;
-    params.needsLinesUpdate = true; // При первом нажатии на Generate нужно сгенерировать линии
-    lines = []; // Инициализируем пустой массив линий
-    
-    // Только настраиваем элементы интерфейса
+    generateLines();
     toggleRasterControls();
     toggleImageRasterControls();
-    
-    // Установка режима автогенерации
-    shouldAutoGeneratePattern = false;
-    
-    // Отображаем canvas с сообщением
+    applyRasterMode();
     drawPattern();
 
     // Функция для проверки, находится ли точка внутри охранного поля линии
@@ -963,24 +843,4 @@ document.addEventListener('DOMContentLoaded', function() {
         
         return false; // Нет пересечений
     }
-
-    // Добавляем обработчики для клавиши Enter
-    const numberInputs = [
-        lineWidthInput, lineLengthInput, lineCountInput, scaleInput, safeFieldInput,
-        zeroLineLengthInput, hundredLineLengthInput, zeroLineWidthInput, hundredLineWidthInput,
-        brightnessContrastInput
-    ];
-    
-    // Добавляем обработчик для всех текстовых инпутов
-    numberInputs.forEach(input => {
-        input.addEventListener('keydown', function(event) {
-            // Если нажата клавиша Enter
-            if (event.key === 'Enter') {
-                // Убираем фокус с поля ввода
-                input.blur();
-                // Вызываем обновление настроек
-                updateAndSave();
-            }
-        });
-    });
 }); 

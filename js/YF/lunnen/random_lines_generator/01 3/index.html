@@ -21,28 +21,28 @@
                 
                 <div class="pattern-sliders">
                     <div class="control-group">
-                        <label for="lineLengthInput">Line Length<span class="colon">:</span> <span class="unit">px</span></label>
-                        <input type="text" id="lineLengthInput" class="number-input" value="24" autocomplete="off">
+                        <label for="lineLengthSlider">Line Length<span class="colon">:</span> <span id="lineLengthValue">24</span> <span class="unit">px</span></label>
+                        <input type="range" id="lineLengthSlider" min="10" max="200" value="24" step="1">
                     </div>
                     
                     <div class="control-group">
-                        <label for="lineWidthInput">Line Width<span class="colon">:</span> <span class="unit">px</span></label>
-                        <input type="text" id="lineWidthInput" class="number-input" value="8" autocomplete="off">
+                        <label for="lineWidthSlider">Line Width<span class="colon">:</span> <span id="lineWidthValue">8</span> <span class="unit">px</span></label>
+                        <input type="range" id="lineWidthSlider" min="1" max="24" value="8" step="0.5">
                     </div>
                     
                     <div class="control-group">
-                        <label for="safeFieldInput">Safe Field<span class="colon">:</span> <span class="unit">px</span></label>
-                        <input type="text" id="safeFieldInput" class="number-input" value="12" autocomplete="off">
+                        <label for="safeFieldSlider">Safe Field<span class="colon">:</span> <span id="safeFieldValue">12</span> <span class="unit">px</span></label>
+                        <input type="range" id="safeFieldSlider" min="0" max="100" value="12" step="1">
                     </div>
                     
                     <div class="control-group">
-                        <label for="lineCountInput">Line Density (max 5000)<span class="colon">:</span></label>
-                        <input type="text" id="lineCountInput" class="number-input" value="3000" autocomplete="off">
+                        <label for="lineCountSlider">Line Density<span class="colon">:</span> <span id="lineCountValue">3000</span></label>
+                        <input type="range" id="lineCountSlider" min="10" max="5000" value="3000" step="100">
                     </div>
                     
                     <div class="control-group">
-                        <label for="scaleInput">Scale<span class="colon">:</span></label>
-                        <input type="text" id="scaleInput" class="number-input" value="1.0" autocomplete="off">
+                        <label for="scaleSlider">Scale<span class="colon">:</span> <span id="scaleValue">1.0</span></label>
+                        <input type="range" id="scaleSlider" min="0.1" max="3" value="1.0" step="0.1">
                     </div>
                 </div>
             </div>
@@ -67,23 +67,23 @@
                 
                 <div class="raster-sliders">
                         <div class="control-group">
-                        <label for="zeroLineLengthInput">Highlights Length<span class="colon">:</span> <span class="unit">px</span></label>
-                            <input type="text" id="zeroLineLengthInput" class="number-input" value="30" autocomplete="off">
+                        <label for="zeroLineLengthSlider">Highlights Length<span class="colon">:</span> <span id="zeroLineLengthValue">30</span> <span class="unit">px</span></label>
+                            <input type="range" id="zeroLineLengthSlider" min="0" max="200" value="30">
                         </div>
                     
                     <div class="control-group">
-                        <label for="zeroLineWidthInput">Highlights Width<span class="colon">:</span> <span class="unit">px</span></label>
-                        <input type="text" id="zeroLineWidthInput" class="number-input" value="1.0" autocomplete="off">
+                        <label for="zeroLineWidthSlider">Highlights Width<span class="colon">:</span> <span id="zeroLineWidthValue">1.0</span> <span class="unit">px</span></label>
+                        <input type="range" id="zeroLineWidthSlider" min="1" max="24" step="0.5" value="1.0">
                     </div>
                     
                         <div class="control-group">
-                        <label for="hundredLineLengthInput">Shadows Length<span class="colon">:</span> <span class="unit">px</span></label>
-                            <input type="text" id="hundredLineLengthInput" class="number-input" value="100" autocomplete="off">
+                        <label for="hundredLineLengthSlider">Shadows Length<span class="colon">:</span> <span id="hundredLineLengthValue">100</span> <span class="unit">px</span></label>
+                            <input type="range" id="hundredLineLengthSlider" min="0" max="200" value="100">
                         </div>
                     
                     <div class="control-group">
-                        <label for="hundredLineWidthInput">Shadows Width<span class="colon">:</span> <span class="unit">px</span></label>
-                        <input type="text" id="hundredLineWidthInput" class="number-input" value="2.0" autocomplete="off">
+                        <label for="hundredLineWidthSlider">Shadows Width<span class="colon">:</span> <span id="hundredLineWidthValue">2.0</span> <span class="unit">px</span></label>
+                        <input type="range" id="hundredLineWidthSlider" min="1" max="24" step="0.5" value="2.0">
                     </div>
                 </div>
             </div>
@@ -99,8 +99,8 @@
                 </div>
                 <div class="image-settings">
                         <div class="control-group">
-                        <label for="brightnessContrastInput">Contrast<span class="colon">:</span></label>
-                        <input type="text" id="brightnessContrastInput" class="number-input" value="1.0" autocomplete="off">
+                        <label for="brightnessContrastSlider">Contrast<span class="colon">:</span> <span id="brightnessContrastValue">1.0</span></label>
+                        <input type="range" id="brightnessContrastSlider" min="0.1" max="3" value="1" step="0.1">
                         </div>
                         <div class="control-group">
                         <label for="imageInvertCheckbox" class="checkbox-label">
@@ -127,7 +127,7 @@
         </div>
         
         <div class="buttons-section">
-            <button id="generateBtn" class="generate-btn">Generate</button>
+            <button id="generateBtn" class="reset-btn">Regenerate</button>
             <button id="resetBtn" class="reset-btn">Reset</button>
             <button id="exportSvgBtn" class="export-btn">Export SVG (⌘E)</button>
         </div>
