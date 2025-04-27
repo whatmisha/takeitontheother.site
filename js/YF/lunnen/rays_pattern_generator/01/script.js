@@ -8,8 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const rayLengthSlider = document.getElementById('rayLengthSlider');
     const rayCountSlider = document.getElementById('rayCountSlider');
     const scaleSlider = document.getElementById('scaleSlider');
-    const horizontalGapSlider = document.getElementById('horizontalGapSlider');
-    const verticalGapSlider = document.getElementById('verticalGapSlider');
     const zeroRayLengthSlider = document.getElementById('zeroRayLengthSlider');
     const hundredRayLengthSlider = document.getElementById('hundredRayLengthSlider');
     const zeroLineWidthSlider = document.getElementById('zeroLineWidthSlider');
@@ -25,8 +23,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const rayLengthValueDisplay = document.getElementById('rayLengthValue');
     const rayCountValueDisplay = document.getElementById('rayCountValue');
     const scaleValueDisplay = document.getElementById('scaleValue');
-    const horizontalGapValueDisplay = document.getElementById('horizontalGapValue');
-    const verticalGapValueDisplay = document.getElementById('verticalGapValue');
     const zeroRayLengthValueDisplay = document.getElementById('zeroRayLengthValue');
     const hundredRayLengthValueDisplay = document.getElementById('hundredRayLengthValue');
     const zeroLineWidthValueDisplay = document.getElementById('zeroLineWidthValue');
@@ -64,8 +60,6 @@ document.addEventListener('DOMContentLoaded', function() {
         rayLength: 56,
         rayCount: 5,
         scale: 1.0,
-        horizontalGap: 20,
-        verticalGap: 0,
         roundCap: false,
         offsetRows: false,
         rasterMode: false,
@@ -119,10 +113,6 @@ document.addEventListener('DOMContentLoaded', function() {
         rayCount: getNearestAllowedValue(parseInt(rayCountSlider.value)),
         // Масштаб
         scale: parseFloat(scaleSlider.value),
-        // Горизонтальный отступ между модулями
-        horizontalGap: parseInt(horizontalGapSlider.value),
-        // Вертикальный отступ между модулями
-        verticalGap: parseInt(verticalGapSlider.value),
         // Толщина линии
         lineWidth: parseFloat(lineWidthSlider.value),
         // Цвет линии
@@ -154,10 +144,6 @@ document.addEventListener('DOMContentLoaded', function() {
     rayCountSlider.value = params.rayCount;
     rayCountValueDisplay.textContent = params.rayCount;
     scaleValueDisplay.textContent = params.scale.toFixed(1);
-    horizontalGapSlider.value = params.horizontalGap;
-    horizontalGapValueDisplay.textContent = params.horizontalGap;
-    verticalGapSlider.value = params.verticalGap;
-    verticalGapValueDisplay.textContent = params.verticalGap;
     lineWidthValueDisplay.textContent = params.lineWidth.toFixed(1);
     zeroRayLengthSlider.value = params.zeroRayLength;
     zeroRayLengthValueDisplay.textContent = params.zeroRayLength;
@@ -316,19 +302,6 @@ document.addEventListener('DOMContentLoaded', function() {
         drawPattern();
     });
     
-    // Добавляем обработчики для новых слайдеров
-    horizontalGapSlider.addEventListener('input', function() {
-        params.horizontalGap = parseInt(this.value);
-        horizontalGapValueDisplay.textContent = this.value;
-        drawPattern();
-    });
-    
-    verticalGapSlider.addEventListener('input', function() {
-        params.verticalGap = parseInt(this.value);
-        verticalGapValueDisplay.textContent = this.value;
-        drawPattern();
-    });
-    
     // Обработчик для кнопки сброса настроек
     resetBtn.addEventListener('click', resetSettings);
     
@@ -346,10 +319,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Вычисляем реальные размеры модуля с учетом масштаба
         const moduleWidth = baseModuleWidth * params.scale;
         const moduleHeight = baseModuleHeight * params.scale;
-        const horizontalGap = params.horizontalGap * params.scale;
+        const horizontalGap = baseHorizontalGap * params.scale;
         
         // Вертикальный отступ применяется только в режиме смещения нечетных строк
-        const verticalGap = !params.offsetRows ? params.verticalGap * params.scale : params.verticalGap * params.scale;
+        const verticalGap = !params.offsetRows ? 10 * params.scale : baseVerticalGap * params.scale;
         
         // Вычисляем количество модулей, которые поместятся на канвасе
         const modulesInRow = Math.ceil(canvas.width / (moduleWidth + horizontalGap));
@@ -623,10 +596,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Вычисляем параметры для отрисовки
         const moduleWidth = baseModuleWidth * params.scale;
         const moduleHeight = baseModuleHeight * params.scale;
-        const horizontalGap = params.horizontalGap * params.scale;
+        const horizontalGap = baseHorizontalGap * params.scale;
         
         // Вертикальный отступ применяется только в режиме смещения нечетных строк
-        const verticalGap = !params.offsetRows ? params.verticalGap * params.scale : params.verticalGap * params.scale;
+        const verticalGap = !params.offsetRows ? 10 * params.scale : baseVerticalGap * params.scale;
         
         // Вычисляем количество модулей
         const modulesInRow = Math.ceil(canvas.width / (moduleWidth + horizontalGap));
@@ -811,8 +784,6 @@ document.addEventListener('DOMContentLoaded', function() {
         rayLengthSlider.value = defaultValues.rayLength;
         rayCountSlider.value = defaultValues.rayCount;
         scaleSlider.value = defaultValues.scale;
-        horizontalGapSlider.value = defaultValues.horizontalGap;
-        verticalGapSlider.value = defaultValues.verticalGap;
         roundCapCheckbox.checked = defaultValues.roundCap;
         offsetRowsCheckbox.checked = defaultValues.offsetRows;
         rasterModeCheckbox.checked = defaultValues.rasterMode;
@@ -828,8 +799,6 @@ document.addEventListener('DOMContentLoaded', function() {
         params.rayLength = defaultValues.rayLength;
         params.rayCount = defaultValues.rayCount;
         params.scale = defaultValues.scale;
-        params.horizontalGap = defaultValues.horizontalGap;
-        params.verticalGap = defaultValues.verticalGap;
         params.roundCap = defaultValues.roundCap;
         params.offsetRows = defaultValues.offsetRows;
         params.rasterMode = defaultValues.rasterMode;
@@ -846,8 +815,6 @@ document.addEventListener('DOMContentLoaded', function() {
         rayLengthValueDisplay.textContent = defaultValues.rayLength;
         rayCountValueDisplay.textContent = defaultValues.rayCount;
         scaleValueDisplay.textContent = defaultValues.scale.toFixed(1);
-        horizontalGapValueDisplay.textContent = defaultValues.horizontalGap;
-        verticalGapValueDisplay.textContent = defaultValues.verticalGap;
         zeroRayLengthValueDisplay.textContent = defaultValues.zeroRayLength;
         hundredRayLengthValueDisplay.textContent = defaultValues.hundredRayLength;
         zeroLineWidthValueDisplay.textContent = defaultValues.zeroLineWidth.toFixed(1);
