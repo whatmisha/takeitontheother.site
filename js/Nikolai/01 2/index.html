@@ -28,7 +28,6 @@
             max-width: 50vw;
             width: auto;
             height: auto;
-            border: 1px solid #333;
         }
         .controls {
             display: flex;
@@ -61,16 +60,6 @@
         input[type="range"] {
             width: 200px;
         }
-        select {
-            background-color: #333;
-            color: white;
-            padding: 5px 10px;
-            border: none;
-            border-radius: 5px;
-        }
-        .pattern-selector {
-            margin-top: 15px;
-        }
     </style>
 </head>
 <body>
@@ -90,14 +79,6 @@
                 <label for="noiseLevel">Уровень шума:</label>
                 <input type="range" id="noiseLevel" min="0" max="100" value="30">
             </div>
-        </div>
-        <div class="pattern-selector">
-            <label for="patternType">Тип паттерна:</label>
-            <select id="patternType">
-                <option value="organic">Органический</option>
-                <option value="crystallize">Кристаллизация</option>
-                <option value="flow">Поток</option>
-            </select>
         </div>
     </div>
     <script src="neural-automaton.js"></script>

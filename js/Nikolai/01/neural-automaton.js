@@ -14,6 +14,12 @@ class NeuralAutomaton {
         this.learningRate = 0.5;
         this.noiseLevel = 0.3;
         
+        // Новые параметры для более интересных эффектов
+        this.activationThreshold = 0.2; // Порог активации (начиная с темных участков)
+        this.evolutionSpeed = 0.05; // Скорость эволюции
+        this.patternType = 'organic'; // Тип паттерна: 'organic', 'crystallize', 'flow'
+        this.frameCount = 0; // Счетчик кадров
+        
         // Размер клетки для автомата
         this.cellSize = 8;
         
@@ -21,6 +27,7 @@ class NeuralAutomaton {
         this.imageData = null;
         this.currentState = null;
         this.nextState = null;
+        this.activationMap = null; // Карта активации клеток
     }
 
     initializeCanvas() {
@@ -52,17 +59,29 @@ class NeuralAutomaton {
         // Инициализируем массивы
         this.currentState = new Array(this.height);
         this.nextState = new Array(this.height);
+        this.activationMap = new Array(this.height);
         
         for (let y = 0; y < this.height; y++) {
             this.currentState[y] = new Array(this.width);
             this.nextState[y] = new Array(this.width);
+            this.activationMap[y] = new Array(this.width);
             
             for (let x = 0; x < this.width; x++) {
                 // Получаем средний цвет для клетки
                 this.currentState[y][x] = this.getCellAverageColor(x, y);
                 this.nextState[y][x] = [...this.currentState[y][x]];
+                
+                // Инициализируем карту активации на основе яркости
+                // Более темные участки будут активированы раньше
+                const brightness = this.calculateBrightness(this.currentState[y][x]);
+                this.activationMap[y][x] = 1.0 - brightness / 255; // Инвертируем, чтобы темные были активнее
             }
         }
+    }
+    
+    calculateBrightness(color) {
+        // Вычисляем воспринимаемую яркость (с учетом разного восприятия цветов)
+        return 0.299 * color[0] + 0.587 * color[1] + 0.114 * color[2];
     }
     
     getCellAverageColor(cellX, cellY) {
@@ -95,6 +114,9 @@ class NeuralAutomaton {
     processFrame() {
         if (!this.isRunning) return;
         
+        // Увеличиваем счетчик кадров
+        this.frameCount++;
+        
         // Обновляем состояние на основе правил
         this.updateState();
         
@@ -108,25 +130,87 @@ class NeuralAutomaton {
     updateState() {
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
-                // Применяем правила нейронного автомата
-                const newState = this.applyRules(x, y);
-                this.nextState[y][x] = newState;
+                // Проверяем, активирована ли клетка
+                if (this.activationMap[y][x] > this.activationThreshold) {
+                    // Применяем правила нейронного автомата
+                    const newState = this.applyRules(x, y);
+                    this.nextState[y][x] = newState;
+                    
+                    // Постепенно увеличиваем активацию соседей
+                    this.propagateActivation(x, y);
+                } else {
+                    // Если клетка не активирована, просто копируем текущее состояние
+                    this.nextState[y][x] = [...this.currentState[y][x]];
+                }
             }
         }
         
         // Меняем местами текущее и следующее состояния
         [this.currentState, this.nextState] = [this.nextState, this.currentState];
+        
+        // Обновляем порог активации со временем для постепенного распространения эффекта
+        if (this.frameCount % 30 === 0) {
+            this.activationThreshold = Math.max(0.05, this.activationThreshold - 0.01);
+        }
+    }
+    
+    propagateActivation(x, y) {
+        // Распространяем активацию на соседей
+        const neighbors = this.getNeighborCoordinates(x, y);
+        
+        for (const [nx, ny] of neighbors) {
+            // Увеличиваем активацию соседних клеток
+            this.activationMap[ny][nx] = Math.min(
+                1.0,
+                this.activationMap[ny][nx] + this.evolutionSpeed * Math.random()
+            );
+        }
+    }
+    
+    getNeighborCoordinates(x, y) {
+        const neighbors = [];
+        
+        // Перебираем соседей (8 направлений)
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                if (dx === 0 && dy === 0) continue; // Пропускаем центральную клетку
+                
+                const nx = x + dx;
+                const ny = y + dy;
+                
+                // Проверяем границы
+                if (nx >= 0 && nx < this.width && ny >= 0 && ny < this.height) {
+                    neighbors.push([nx, ny]);
+                }
+            }
+        }
+        
+        return neighbors;
     }
     
     applyRules(x, y) {
         const current = this.currentState[y][x];
         
-        // Получаем состояния соседей (восемь соседей + текущая клетка)
-        const neighbors = this.getNeighbors(x, y);
+        // Получаем состояния соседей
+        const neighborValues = this.getNeighborValues(x, y);
         
         // Вычисляем новое состояние на основе текущего и соседей
         const newState = [0, 0, 0];
         
+        // Применяем разные типы паттернов
+        switch (this.patternType) {
+            case 'organic':
+                return this.applyOrganicPattern(current, neighborValues);
+            case 'crystallize':
+                return this.applyCrystallizePattern(current, neighborValues);
+            case 'flow':
+                return this.applyFlowPattern(current, neighborValues, x, y);
+            default:
+                return this.applyOrganicPattern(current, neighborValues);
+        }
+    }
+    
+    applyOrganicPattern(current, neighbors) {
         // Сумма значений соседей для каждого канала
         let sumR = 0, sumG = 0, sumB = 0;
         
@@ -137,9 +221,15 @@ class NeuralAutomaton {
         }
         
         // Среднее значение
-        const avgR = sumR / neighbors.length;
-        const avgG = sumG / neighbors.length;
-        const avgB = sumB / neighbors.length;
+        const avgR = neighbors.length > 0 ? sumR / neighbors.length : current[0];
+        const avgG = neighbors.length > 0 ? sumG / neighbors.length : current[1];
+        const avgB = neighbors.length > 0 ? sumB / neighbors.length : current[2];
+        
+        // Добавляем нелинейности с помощью синусоидальных функций
+        const phase = this.frameCount * 0.01;
+        const factorR = 0.5 + 0.5 * Math.sin(phase + current[0] * 0.01);
+        const factorG = 0.5 + 0.5 * Math.sin(phase + current[1] * 0.01 + 2.0);
+        const factorB = 0.5 + 0.5 * Math.sin(phase + current[2] * 0.01 + 4.0);
         
         // Добавляем шум
         const noiseR = (Math.random() * 2 - 1) * this.noiseLevel * 25.5;
@@ -147,25 +237,88 @@ class NeuralAutomaton {
         const noiseB = (Math.random() * 2 - 1) * this.noiseLevel * 25.5;
         
         // Вычисляем новое состояние с элементами "нейронной" логики
-        newState[0] = Math.min(255, Math.max(0, Math.round(
-            current[0] * (1 - this.learningRate) + avgR * this.learningRate + noiseR
+        const newR = Math.min(255, Math.max(0, Math.round(
+            current[0] * (1 - this.learningRate * factorR) + avgR * this.learningRate * factorR + noiseR
         )));
-        newState[1] = Math.min(255, Math.max(0, Math.round(
-            current[1] * (1 - this.learningRate) + avgG * this.learningRate + noiseG
+        const newG = Math.min(255, Math.max(0, Math.round(
+            current[1] * (1 - this.learningRate * factorG) + avgG * this.learningRate * factorG + noiseG
         )));
-        newState[2] = Math.min(255, Math.max(0, Math.round(
-            current[2] * (1 - this.learningRate) + avgB * this.learningRate + noiseB
+        const newB = Math.min(255, Math.max(0, Math.round(
+            current[2] * (1 - this.learningRate * factorB) + avgB * this.learningRate * factorB + noiseB
         )));
         
-        return newState;
+        return [newR, newG, newB];
     }
     
-    getNeighbors(x, y) {
+    applyCrystallizePattern(current, neighbors) {
+        // Находим наиболее часто встречающийся цвет среди соседей
+        const colorCounts = {};
+        let maxCount = 0;
+        let dominantColor = current;
+        
+        for (const neighbor of neighbors) {
+            const colorKey = neighbor.join(',');
+            colorCounts[colorKey] = (colorCounts[colorKey] || 0) + 1;
+            
+            if (colorCounts[colorKey] > maxCount) {
+                maxCount = colorCounts[colorKey];
+                dominantColor = neighbor;
+            }
+        }
+        
+        // С некоторой вероятностью клетка становится доминантным цветом
+        if (Math.random() < this.learningRate) {
+            return [...dominantColor];
+        } else {
+            // Иначе добавляем небольшой шум
+            return [
+                Math.min(255, Math.max(0, current[0] + (Math.random() * 2 - 1) * 5)),
+                Math.min(255, Math.max(0, current[1] + (Math.random() * 2 - 1) * 5)),
+                Math.min(255, Math.max(0, current[2] + (Math.random() * 2 - 1) * 5))
+            ];
+        }
+    }
+    
+    applyFlowPattern(current, neighbors, x, y) {
+        // Создаем эффект течения в зависимости от координат
+        const angle = Math.atan2(y - this.height / 2, x - this.width / 2);
+        const distance = Math.sqrt((x - this.width / 2) ** 2 + (y - this.height / 2) ** 2);
+        
+        // Определяем направление потока
+        const dirX = Math.cos(angle + this.frameCount * 0.01);
+        const dirY = Math.sin(angle + this.frameCount * 0.01);
+        
+        // Находим соседа, ближайшего к направлению потока
+        let closestNeighbor = current;
+        let minDist = Number.MAX_VALUE;
+        
+        for (let i = 0; i < neighbors.length; i++) {
+            const nx = i % 3 - 1;
+            const ny = Math.floor(i / 3) - 1;
+            
+            const dist = Math.abs(nx - dirX) + Math.abs(ny - dirY);
+            if (dist < minDist) {
+                minDist = dist;
+                closestNeighbor = neighbors[i];
+            }
+        }
+        
+        // Смешиваем текущий цвет с соседом в направлении потока
+        return [
+            Math.round(current[0] * (1 - this.learningRate) + closestNeighbor[0] * this.learningRate),
+            Math.round(current[1] * (1 - this.learningRate) + closestNeighbor[1] * this.learningRate),
+            Math.round(current[2] * (1 - this.learningRate) + closestNeighbor[2] * this.learningRate)
+        ];
+    }
+    
+    getNeighborValues(x, y) {
         const neighbors = [];
         
-        // Перебираем соседей (8 направлений + центр)
+        // Перебираем соседей (8 направлений)
         for (let dy = -1; dy <= 1; dy++) {
             for (let dx = -1; dx <= 1; dx++) {
+                if (dx === 0 && dy === 0) continue; // Пропускаем центральную клетку
+                
                 const nx = x + dx;
                 const ny = y + dy;
                 
@@ -228,6 +381,8 @@ class NeuralAutomaton {
         this.ctx.drawImage(this.originalImage, 0, 0, this.canvas.width, this.canvas.height);
         this.imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
         this.initializeState();
+        this.frameCount = 0;
+        this.activationThreshold = 0.2; // Сбрасываем порог активации
     }
 
     setLearningRate(value) {
@@ -236,6 +391,10 @@ class NeuralAutomaton {
 
     setNoiseLevel(value) {
         this.noiseLevel = value / 100;
+    }
+    
+    setPatternType(type) {
+        this.patternType = type;
     }
 }
 
@@ -257,4 +416,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('noiseLevel').addEventListener('input', (e) => {
         automaton.setNoiseLevel(e.target.value);
     });
+    
+    // Обработчик выбора паттерна
+    if (document.getElementById('patternType')) {
+        document.getElementById('patternType').addEventListener('change', (e) => {
+            automaton.setPatternType(e.target.value);
+        });
+    }
 }); 
