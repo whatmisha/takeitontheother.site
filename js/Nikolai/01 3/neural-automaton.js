@@ -21,7 +21,7 @@ class NeuralAutomaton {
         this.frameCount = 0; // Счетчик кадров
         
         // Размер клетки для автомата
-        this.cellSize = 1;
+        this.cellSize = 8;
         
         // Массивы состояний
         this.imageData = null;
