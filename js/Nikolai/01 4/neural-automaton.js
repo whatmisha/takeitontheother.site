@@ -4,7 +4,7 @@ class NeuralAutomaton {
         this.ctx = canvas.getContext('2d');
         this.isRunning = false;
         this.originalImage = new Image();
-        this.originalImage.src = 'IMG_1250.jpg'; // Дефолтное изображение
+        this.originalImage.src = 'IMG_1250.jpg';
         
         this.originalImage.onload = () => {
             this.initializeCanvas();
@@ -28,28 +28,6 @@ class NeuralAutomaton {
         this.currentState = null;
         this.nextState = null;
         this.activationMap = null; // Карта активации клеток
-    }
-    
-    /**
-     * Загружает новое изображение и инициализирует автомат
-     * @param {string | File} source - URL изображения или объект File
-     */
-    loadImage(source) {
-        this.stop(); // Останавливаем текущую анимацию
-        
-        if (typeof source === 'string') {
-            // Если передана строка - считаем её URL изображения
-            this.originalImage.src = source;
-        } else if (source instanceof File) {
-            // Если передан файл - создаём URL и загружаем изображение
-            const fileUrl = URL.createObjectURL(source);
-            this.originalImage.onload = () => {
-                this.initializeCanvas();
-                // Освобождаем URL после загрузки
-                URL.revokeObjectURL(fileUrl);
-            };
-            this.originalImage.src = fileUrl;
-        }
     }
 
     initializeCanvas() {
@@ -451,27 +429,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('patternType')) {
         document.getElementById('patternType').addEventListener('change', (e) => {
             automaton.setPatternType(e.target.value);
-        });
-    }
-    
-    // Обработчик загрузки изображения
-    const imageUpload = document.getElementById('imageUpload');
-    const fileName = document.getElementById('fileName');
-    
-    if (imageUpload) {
-        imageUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                // Обновляем отображаемое имя файла
-                fileName.textContent = file.name;
-                
-                // Проверяем тип файла
-                if (file.type.match('image.*')) {
-                    automaton.loadImage(file);
-                } else {
-                    alert('Пожалуйста, выберите изображение');
-                }
-            }
         });
     }
 }); 

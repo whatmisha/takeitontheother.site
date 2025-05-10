@@ -84,41 +84,11 @@
         .pattern-selector {
             margin-top: 15px;
         }
-        /* Стили для загрузки файла */
-        .file-upload {
-            margin-top: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .file-upload input[type="file"] {
-            display: none;
-        }
-        .file-upload label {
-            background-color: #333;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .file-upload label:hover {
-            background-color: #444;
-        }
-        .file-name {
-            font-size: 0.9em;
-            color: #aaa;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <canvas id="imageCanvas"></canvas>
-        <div class="file-upload">
-            <label for="imageUpload">Загрузить своё фото</label>
-            <input type="file" id="imageUpload" accept="image/*">
-            <span class="file-name" id="fileName">Файл не выбран</span>
-        </div>
         <div class="controls">
             <button id="startBtn">Старт</button>
             <button id="stopBtn">Стоп</button>
