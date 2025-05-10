@@ -62,31 +62,53 @@ class NeuralAutomaton {
     async processFrame() {
         if (!this.isRunning) return;
 
-        // Получаем текущие данные изображения
-        const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-        const tensor = tf.browser.fromPixels(imageData)
-            .expandDims(0)
-            .div(255.0);
+        try {
+            // Получаем текущие данные изображения
+            const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+            
+            // Нормализуем входные данные в диапазон [0-1]
+            const tensor = tf.tidy(() => {
+                return tf.browser.fromPixels(imageData)
+                    .expandDims(0)
+                    .div(255.0)
+                    .clipByValue(0, 1);
+            });
 
-        // Добавляем шум
-        const noise = tf.randomNormal(tensor.shape).mul(this.noiseLevel);
-        const noisyTensor = tensor.add(noise);
+            // Добавляем шум в контролируемом диапазоне
+            const noise = tf.tidy(() => {
+                return tf.randomNormal(tensor.shape)
+                    .mul(this.noiseLevel)
+                    .clipByValue(-this.noiseLevel, this.noiseLevel);
+            });
 
-        // Пропускаем через сеть
-        const output = this.network.predict(noisyTensor);
-        
-        // Отрисовываем результат
-        const processedData = await tf.browser.toPixels(output.squeeze().mul(255));
-        this.ctx.putImageData(new ImageData(processedData, this.canvas.width, this.canvas.height), 0, 0);
+            // Складываем тензоры и нормализуем результат
+            const noisyTensor = tf.tidy(() => {
+                return tensor.add(noise)
+                    .clipByValue(0, 1);
+            });
 
-        // Очищаем память
-        tensor.dispose();
-        noise.dispose();
-        noisyTensor.dispose();
-        output.dispose();
+            // Пропускаем через сеть
+            const output = tf.tidy(() => {
+                return this.network.predict(noisyTensor)
+                    .clipByValue(0, 1);
+            });
+            
+            // Отрисовываем результат
+            const processedData = await tf.browser.toPixels(output.squeeze().mul(255));
+            this.ctx.putImageData(new ImageData(processedData, this.canvas.width, this.canvas.height), 0, 0);
 
-        // Запускаем следующий кадр
-        requestAnimationFrame(() => this.processFrame());
+            // Очищаем память
+            tensor.dispose();
+            noise.dispose();
+            noisyTensor.dispose();
+            output.dispose();
+
+            // Запускаем следующий кадр
+            requestAnimationFrame(() => this.processFrame());
+        } catch (error) {
+            console.error('Ошибка при обработке кадра:', error);
+            this.stop();
+        }
     }
 
     start() {
