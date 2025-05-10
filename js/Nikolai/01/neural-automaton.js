@@ -386,11 +386,19 @@ class NeuralAutomaton {
     }
 
     setLearningRate(value) {
-        this.learningRate = value / 100;
+        // Преобразуем строку в число и проверяем диапазон
+        const rate = parseFloat(value);
+        if (!isNaN(rate) && rate >= 0 && rate <= 1) {
+            this.learningRate = rate;
+        }
     }
 
     setNoiseLevel(value) {
-        this.noiseLevel = value / 100;
+        // Преобразуем строку в число и проверяем диапазон
+        const noise = parseFloat(value);
+        if (!isNaN(noise) && noise >= 0 && noise <= 1) {
+            this.noiseLevel = noise;
+        }
     }
     
     setPatternType(type) {
@@ -408,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('stopBtn').addEventListener('click', () => automaton.stop());
     document.getElementById('resetBtn').addEventListener('click', () => automaton.reset());
 
-    // Обработчики слайдеров
+    // Обработчики текстовых полей
     document.getElementById('learningRate').addEventListener('input', (e) => {
         automaton.setLearningRate(e.target.value);
     });
