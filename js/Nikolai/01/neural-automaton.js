@@ -439,10 +439,10 @@ class NeuralAutomaton {
     }
 
     /**
-     * Экспортирует текущее состояние в PNG изображение с удвоенным размером
+     * Экспортирует текущее состояние в PNG изображение с увеличенным размером
      * @param {number} scaleFactor - Множитель для увеличения размера при экспорте
      */
-    exportToPNG(scaleFactor = 2) {
+    exportToPNG(scaleFactor = 4) {
         // Получаем скрытый холст для экспорта
         const exportCanvas = document.getElementById('exportCanvas');
         if (!exportCanvas) return;
@@ -591,7 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Экспортируем изображение
-            automaton.exportToPNG(2);
+            automaton.exportToPNG(4);
             
             // Возобновляем работу, если была приостановлена
             if (wasRunning) {
