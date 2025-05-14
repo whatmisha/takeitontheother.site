@@ -112,17 +112,6 @@
             font-size: 0.9em;
             color: #aaa;
         }
-        .export-btn {
-            background-color: #2c7;
-            margin-top: 15px;
-        }
-        .export-btn:hover {
-            background-color: #3d8;
-        }
-        /* Стили для скрытого холста для экспорта */
-        #exportCanvas {
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -155,9 +144,6 @@
                 <option value="flow">Поток</option>
             </select>
         </div>
-        <button id="exportBtn" class="export-btn">📥 Экспорт в PNG (x2)</button>
-        <!-- Скрытый холст для экспорта в высоком разрешении -->
-        <canvas id="exportCanvas"></canvas>
     </div>
     <script src="neural-automaton.js"></script>
 </body>

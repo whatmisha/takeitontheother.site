@@ -437,79 +437,6 @@ class NeuralAutomaton {
     setPatternType(type) {
         this.patternType = type;
     }
-
-    /**
-     * Экспортирует текущее состояние в PNG изображение с удвоенным размером
-     * @param {number} scaleFactor - Множитель для увеличения размера при экспорте
-     */
-    exportToPNG(scaleFactor = 2) {
-        // Получаем скрытый холст для экспорта
-        const exportCanvas = document.getElementById('exportCanvas');
-        if (!exportCanvas) return;
-        
-        const exportCtx = exportCanvas.getContext('2d');
-        
-        // Устанавливаем размеры холста в увеличенном масштабе
-        exportCanvas.width = this.canvas.width * scaleFactor;
-        exportCanvas.height = this.canvas.height * scaleFactor;
-        
-        // Очищаем холст
-        exportCtx.fillStyle = 'black';
-        exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-        
-        // Рисуем в высоком разрешении
-        if (this.currentState) {
-            const imageData = new ImageData(exportCanvas.width, exportCanvas.height);
-            
-            // Заполняем пиксели в увеличенном масштабе
-            for (let y = 0; y < this.height; y++) {
-                for (let x = 0; x < this.width; x++) {
-                    const color = this.currentState[y][x];
-                    
-                    // Заполняем блок пикселей в увеличенном масштабе
-                    this.fillExportBlock(imageData, x, y, color, scaleFactor);
-                }
-            }
-            
-            // Отрисовываем изображение на холсте
-            exportCtx.putImageData(imageData, 0, 0);
-        } else {
-            // Если состояние не инициализировано, просто растягиваем текущее изображение
-            exportCtx.drawImage(this.canvas, 0, 0, exportCanvas.width, exportCanvas.height);
-        }
-        
-        // Создаем ссылку для скачивания
-        const dataURL = exportCanvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        
-        // Генерируем имя файла с датой и временем
-        const date = new Date();
-        const fileName = `neuro-art_${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}_${date.getHours()}-${date.getMinutes()}.png`;
-        
-        link.download = fileName;
-        link.href = dataURL;
-        link.click();
-    }
-    
-    /**
-     * Заполняет блок пикселей в изображении для экспорта
-     */
-    fillExportBlock(imageData, cellX, cellY, color, scaleFactor) {
-        const startX = cellX * this.cellSize * scaleFactor;
-        const startY = cellY * this.cellSize * scaleFactor;
-        const endX = Math.min(startX + this.cellSize * scaleFactor, imageData.width);
-        const endY = Math.min(startY + this.cellSize * scaleFactor, imageData.height);
-        
-        for (let y = startY; y < endY; y++) {
-            for (let x = startX; x < endX; x++) {
-                const index = (y * imageData.width + x) * 4;
-                imageData.data[index] = color[0];
-                imageData.data[index + 1] = color[1];
-                imageData.data[index + 2] = color[2];
-                imageData.data[index + 3] = 255; // Альфа-канал
-            }
-        }
-    }
 }
 
 // Инициализация после загрузки страницы
@@ -574,30 +501,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     alert('Пожалуйста, выберите изображение');
                 }
-            }
-        });
-    }
-
-    // Обработчик кнопки экспорта
-    const exportBtn = document.getElementById('exportBtn');
-    if (exportBtn) {
-        exportBtn.addEventListener('click', () => {
-            // Приостанавливаем автомат на время экспорта
-            const wasRunning = automaton.isRunning;
-            if (wasRunning) {
-                automaton.stop();
-                toggleBtn.textContent = '▶️ Старт';
-                toggleBtn.classList.remove('active');
-            }
-            
-            // Экспортируем изображение
-            automaton.exportToPNG(2);
-            
-            // Возобновляем работу, если была приостановлена
-            if (wasRunning) {
-                automaton.start();
-                toggleBtn.textContent = '⏸️ Пауза';
-                toggleBtn.classList.add('active');
             }
         });
     }
