@@ -390,12 +390,23 @@ class NeuralAutomaton {
     }
 
     start() {
-        this.isRunning = true;
-        this.processFrame();
+        if (!this.isRunning) {
+            this.isRunning = true;
+            this.processFrame();
+        }
     }
 
     stop() {
         this.isRunning = false;
+    }
+    
+    toggle() {
+        if (this.isRunning) {
+            this.stop();
+        } else {
+            this.start();
+        }
+        return this.isRunning; // Возвращаем текущее состояние
     }
 
     reset() {
@@ -432,11 +443,27 @@ class NeuralAutomaton {
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('imageCanvas');
     const automaton = new NeuralAutomaton(canvas);
+    const toggleBtn = document.getElementById('toggleBtn');
 
-    // Обработчики кнопок
-    document.getElementById('startBtn').addEventListener('click', () => automaton.start());
-    document.getElementById('stopBtn').addEventListener('click', () => automaton.stop());
-    document.getElementById('resetBtn').addEventListener('click', () => automaton.reset());
+    // Обработчик кнопки старт/пауза
+    toggleBtn.addEventListener('click', () => {
+        const isRunning = automaton.toggle();
+        if (isRunning) {
+            toggleBtn.textContent = '⏸️ Пауза';
+            toggleBtn.classList.add('active');
+        } else {
+            toggleBtn.textContent = '▶️ Старт';
+            toggleBtn.classList.remove('active');
+        }
+    });
+
+    // Обработчик кнопки сброса
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        automaton.reset();
+        // Обновляем состояние кнопки, так как сброс останавливает автомат
+        toggleBtn.textContent = '▶️ Старт';
+        toggleBtn.classList.remove('active');
+    });
 
     // Обработчики текстовых полей
     document.getElementById('learningRate').addEventListener('input', (e) => {
@@ -468,6 +495,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Проверяем тип файла
                 if (file.type.match('image.*')) {
                     automaton.loadImage(file);
+                    // Обновляем состояние кнопки, так как загрузка останавливает автомат
+                    toggleBtn.textContent = '▶️ Старт';
+                    toggleBtn.classList.remove('active');
                 } else {
                     alert('Пожалуйста, выберите изображение');
                 }

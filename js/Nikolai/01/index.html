@@ -47,6 +47,9 @@
         button:hover {
             background-color: #444;
         }
+        button.active {
+            background-color: #555;
+        }
         .params {
             display: flex;
             flex-direction: column;
@@ -120,9 +123,8 @@
             <span class="file-name" id="fileName">Файл не выбран</span>
         </div>
         <div class="controls">
-            <button id="startBtn">Старт</button>
-            <button id="stopBtn">Стоп</button>
-            <button id="resetBtn">Сброс</button>
+            <button id="toggleBtn">▶️ Старт</button>
+            <button id="resetBtn">🔄 Сброс</button>
         </div>
         <div class="params">
             <div class="param-container">
