@@ -240,8 +240,8 @@ function draw() {
     
     // Вычисляем шаг по вертикали
     if (checkerboardMode) {
-      // В шахматном режиме используем вертикальный шаг равный половине горизонтального
-      currentY += gridStep / 2;
+      // В шахматном режиме строки ближе на половину размера креста
+      currentY += gridStep - crossSize / 2;
     } else {
       // Обычный режим
       currentY += gridStep;
