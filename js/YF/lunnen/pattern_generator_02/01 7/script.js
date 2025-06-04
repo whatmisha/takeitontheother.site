@@ -7,7 +7,6 @@ let roundCaps = true; // Круглые окончания штрихов по �
 let spacingPercent = 50; // Расстояние между крестами в процентах от размера креста
 let checkerboardMode = true; // Шахматный режим расстановки включен по умолчанию
 let lineBLengthPercent = 100; // Длина линии квадрата Б в процентах
-let bothSquaresBMode = false; // Режим, где оба квадрата работают как квадрат Б
 let controlsContainer; // Контейнер для всех контролов
 
 // Ссылки на элементы интерфейса для прямого обновления
@@ -25,8 +24,7 @@ let controlElements = {
   sizeSlider: null,
   sizeLabel: null,
   capsCheckbox: null,
-  checkerboardCheckbox: null,
-  bothSquaresBCheckbox: null
+  checkerboardCheckbox: null
 };
 
 // Система отмены изменений
@@ -120,18 +118,6 @@ function createControlsPanel() {
   controlElements.checkerboardCheckbox.style('font-size', '14px');
   controlElements.checkerboardCheckbox.changed(updateCheckerboard);
   controlElements.checkerboardCheckbox.parent(checkerboardContainer);
-  
-  // Создаем чекбокс для режима двух квадратов
-  let bothSquaresBContainer = createDiv('');
-  bothSquaresBContainer.style('margin-top', '10px');
-  bothSquaresBContainer.parent(controlsContainer);
-  
-  controlElements.bothSquaresBCheckbox = createCheckbox('Режим двух квадратов', bothSquaresBMode);
-  controlElements.bothSquaresBCheckbox.style('color', 'black');
-  controlElements.bothSquaresBCheckbox.style('font-family', 'Arial, sans-serif');
-  controlElements.bothSquaresBCheckbox.style('font-size', '14px');
-  controlElements.bothSquaresBCheckbox.changed(updateBothSquaresBMode);
-  controlElements.bothSquaresBCheckbox.parent(bothSquaresBContainer);
   
   // Создаем кнопку экспорта SVG
   let buttonContainer = createDiv('');
@@ -308,16 +294,6 @@ function updateLineBLength(newValue) {
   loop(); // Перезапускаем цикл отрисовки
 }
 
-// Функция обновления режима двух квадратов при изменении чекбокса
-function updateBothSquaresBMode() {
-  if (!isUpdatingControls) {
-    saveCurrentStateImmediately(); // Для чекбоксов оставляем сохранение, так как это однократное действие
-  }
-  // Получаем состояние чекбокса из события
-  bothSquaresBMode = this.checked();
-  loop(); // Перезапускаем цикл отрисовки
-}
-
 function draw() {
   // Очищаем канвас
   background(0);
@@ -393,43 +369,23 @@ function draw() {
 
 // Функция для рисования одного креста
 function drawCross(cornerRadius, lineLength) {
-  if (bothSquaresBMode) {
-    // Режим двух квадратов Б
-    // Рисуем первый квадрат Б (верхний правый)
-    push();
-    drawSquareB(cornerRadius, lineBLengthPercent);
-    pop();
-    
-    // Рисуем второй квадрат Б (нижний левый) - отраженный по обеим осям
-    push();
-    // Смещаем к позиции нижнего левого квадрата
-    translate(-squareSize, squareSize);
-    // Отражаем по обеим осям (поворот на 180 градусов)
-    scale(-1, -1);
-    // Компенсируем смещение после отражения
-    translate(-squareSize, -squareSize);
-    drawSquareB(cornerRadius, lineBLengthPercent);
-    pop();
-  } else {
-    // Обычный режим (квадрат Б + квадрат А)
-    // Рисуем квадрат Б (верхний правый)
-    push();
-    drawSquareB(cornerRadius, lineBLengthPercent);
-    pop();
-    
-    // Рисуем квадрат А (нижний левый)
-    push();
-    // Смещаем квадрат А вниз и влево
-    translate(-squareSize, squareSize);
-    
-    // Верхняя грань квадрата А с регулируемой длиной (фиксированная левая точка)
-    line(0, 0, lineLength, 0);
-    
-    // Правая грань квадрата А с регулируемой длиной (фиксированная нижняя точка)
-    line(squareSize, squareSize - lineLength, squareSize, squareSize);
-    
-    pop();
-  }
+  // Рисуем квадрат Б (верхний правый)
+  push();
+  drawSquareB(cornerRadius, lineBLengthPercent);
+  pop();
+  
+  // Рисуем квадрат А (нижний левый)
+  push();
+  // Смещаем квадрат А вниз и влево
+  translate(-squareSize, squareSize);
+  
+  // Верхняя грань квадрата А с регулируемой длиной (фиксированная левая точка)
+  line(0, 0, lineLength, 0);
+  
+  // Правая грань квадрата А с регулируемой длиной (фиксированная нижняя точка)
+  line(squareSize, squareSize - lineLength, squareSize, squareSize);
+  
+  pop();
 }
 
 // Функция для рисования квадрата Б с математическим вычислением разрыва
@@ -606,35 +562,18 @@ function generateCrossSVG(x, y, cornerRadius, lineLength, lineWeight) {
   let svg = '';
   let capStyle = roundCaps ? 'round' : 'square';
   
-  if (bothSquaresBMode) {
-    // Режим двух квадратов Б
-    // Первый квадрат Б (верхний правый)
-    svg += generateSquareBSVG(x, y, cornerRadius, lineWeight, capStyle);
-    
-    // Второй квадрат Б (нижний левый) - отраженный по обеим осям
-    // Позиция нижнего левого квадрата
-    let aX = x - squareSize;
-    let aY = y + squareSize;
-    
-    // Для отражения по обеим осям в SVG используем transform
-    svg += `<g transform="translate(${aX + squareSize}, ${aY + squareSize}) scale(-1, -1) translate(${-squareSize}, ${-squareSize})">`;
-    svg += generateSquareBSVG(0, 0, cornerRadius, lineWeight, capStyle);
-    svg += '</g>';
-  } else {
-    // Обычный режим (квадрат Б + квадрат А)
-    // Квадрат Б (верхний правый)
-    svg += generateSquareBSVG(x, y, cornerRadius, lineWeight, capStyle);
-    
-    // Квадрат А (нижний левый)
-    let aX = x - squareSize;
-    let aY = y + squareSize;
-    
-    // Верхняя грань квадрата А
-    svg += `<line x1="${aX}" y1="${aY}" x2="${aX + lineLength}" y2="${aY}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`;
-    
-    // Правая грань квадрата А
-    svg += `<line x1="${aX + squareSize}" y1="${aY + squareSize - lineLength}" x2="${aX + squareSize}" y2="${aY + squareSize}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`;
-  }
+  // Квадрат Б (верхний правый)
+  svg += generateSquareBSVG(x, y, cornerRadius, lineWeight, capStyle);
+  
+  // Квадрат А (нижний левый)
+  let aX = x - squareSize;
+  let aY = y + squareSize;
+  
+  // Верхняя грань квадрата А
+  svg += `<line x1="${aX}" y1="${aY}" x2="${aX + lineLength}" y2="${aY}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`;
+  
+  // Правая грань квадрата А
+  svg += `<line x1="${aX + squareSize}" y1="${aY + squareSize - lineLength}" x2="${aX + squareSize}" y2="${aY + squareSize}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`;
   
   return svg;
 }
@@ -786,8 +725,7 @@ function saveCurrentStateImmediately() {
     roundCaps: roundCaps,
     spacingPercent: spacingPercent,
     checkerboardMode: checkerboardMode,
-    lineBLengthPercent: lineBLengthPercent,
-    bothSquaresBMode: bothSquaresBMode
+    lineBLengthPercent: lineBLengthPercent
   };
   
   stateHistory.push(currentState);
@@ -822,8 +760,7 @@ function undoLastChange() {
     roundCaps: roundCaps,
     spacingPercent: spacingPercent,
     checkerboardMode: checkerboardMode,
-    lineBLengthPercent: lineBLengthPercent,
-    bothSquaresBMode: bothSquaresBMode
+    lineBLengthPercent: lineBLengthPercent
   };
   
   redoHistory.push(currentState);
@@ -848,7 +785,6 @@ function undoLastChange() {
   spacingPercent = previousState.spacingPercent;
   checkerboardMode = previousState.checkerboardMode;
   lineBLengthPercent = previousState.lineBLengthPercent;
-  bothSquaresBMode = previousState.bothSquaresBMode;
   
   // Обновляем интерфейс
   updateAllControls();
@@ -875,8 +811,7 @@ function redoLastChange() {
     roundCaps: roundCaps,
     spacingPercent: spacingPercent,
     checkerboardMode: checkerboardMode,
-    lineBLengthPercent: lineBLengthPercent,
-    bothSquaresBMode: bothSquaresBMode
+    lineBLengthPercent: lineBLengthPercent
   };
   
   stateHistory.push(currentState);
@@ -901,7 +836,6 @@ function redoLastChange() {
   spacingPercent = redoState.spacingPercent;
   checkerboardMode = redoState.checkerboardMode;
   lineBLengthPercent = redoState.lineBLengthPercent;
-  bothSquaresBMode = redoState.bothSquaresBMode;
   
   // Обновляем интерфейс
   updateAllControls();
@@ -953,9 +887,5 @@ function updateAllControls() {
   
   if (controlElements.checkerboardCheckbox) {
     controlElements.checkerboardCheckbox.checked(checkerboardMode);
-  }
-  
-  if (controlElements.bothSquaresBCheckbox) {
-    controlElements.bothSquaresBCheckbox.checked(bothSquaresBMode);
   }
 } 
