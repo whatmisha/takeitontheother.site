@@ -7,7 +7,7 @@ let roundCaps = true; // Круглые окончания штрихов по �
 let spacingPercent = 50; // Расстояние между крестами в процентах от размера креста
 let checkerboardMode = true; // Шахматный режим расстановки включен по умолчанию
 let lineBLengthPercent = 100; // Длина линии квадрата Б в процентах
-let bothSquaresBMode = false; // Режим, где оба квадрата работают как квадрат Б
+let bothSquaresBMode = false; // Режим, где оба квадрата работают как квадрат Б (режим двух дуг)
 let controlsContainer; // Контейнер для всех контролов
 
 // Ссылки на элементы интерфейса для прямого обновления
@@ -121,12 +121,12 @@ function createControlsPanel() {
   controlElements.checkerboardCheckbox.changed(updateCheckerboard);
   controlElements.checkerboardCheckbox.parent(checkerboardContainer);
   
-  // Создаем чекбокс для режима двух квадратов
+  // Создаем чекбокс для режима двух дуг
   let bothSquaresBContainer = createDiv('');
   bothSquaresBContainer.style('margin-top', '10px');
   bothSquaresBContainer.parent(controlsContainer);
   
-  controlElements.bothSquaresBCheckbox = createCheckbox('Режим двух квадратов', bothSquaresBMode);
+  controlElements.bothSquaresBCheckbox = createCheckbox('Режим двух дуг', bothSquaresBMode);
   controlElements.bothSquaresBCheckbox.style('color', 'black');
   controlElements.bothSquaresBCheckbox.style('font-family', 'Arial, sans-serif');
   controlElements.bothSquaresBCheckbox.style('font-size', '14px');
@@ -308,7 +308,7 @@ function updateLineBLength(newValue) {
   loop(); // Перезапускаем цикл отрисовки
 }
 
-// Функция обновления режима двух квадратов при изменении чекбокса
+// Функция обновления режима двух дуг при изменении чекбокса
 function updateBothSquaresBMode() {
   if (!isUpdatingControls) {
     saveCurrentStateImmediately(); // Для чекбоксов оставляем сохранение, так как это однократное действие
@@ -394,7 +394,7 @@ function draw() {
 // Функция для рисования одного креста
 function drawCross(cornerRadius, lineLength) {
   if (bothSquaresBMode) {
-    // Режим двух квадратов Б
+    // Режим двух дуг
     // Рисуем первый квадрат Б (верхний правый)
     push();
     drawSquareB(cornerRadius, lineBLengthPercent);
@@ -607,7 +607,7 @@ function generateCrossSVG(x, y, cornerRadius, lineLength, lineWeight) {
   let capStyle = roundCaps ? 'round' : 'square';
   
   if (bothSquaresBMode) {
-    // Режим двух квадратов Б
+    // Режим двух дуг
     // Первый квадрат Б (верхний правый)
     svg += generateSquareBSVG(x, y, cornerRadius, lineWeight, capStyle);
     
