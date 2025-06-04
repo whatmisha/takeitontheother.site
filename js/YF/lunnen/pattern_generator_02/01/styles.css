@@ -12,8 +12,141 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    font-family: Arial, sans-serif;
 }
 
 canvas {
     display: block;
-} 
+}
+
+/* Панель настроек */
+.controls-panel {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #606060;
+    padding: 20px;
+    border-radius: 6px;
+    width: 280px;
+    font-size: 14px;
+    color: black;
+    z-index: 1000;
+}
+
+/* Группы контролов */
+.control-group {
+    margin-bottom: 15px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: normal;
+}
+
+/* Стили для слайдеров */
+.control-group input[type="range"] {
+    width: 100%;
+    height: 12px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: black;
+    outline: none;
+    border-radius: 1px;
+    cursor: pointer;
+}
+
+/* Thumb для WebKit (Chrome, Safari) */
+.control-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 12px;
+    width: 12px;
+    border-radius: 50%;
+    background: black;
+    cursor: pointer;
+    border: 1px solid white;
+}
+
+/* Thumb для Firefox */
+.control-group input[type="range"]::-moz-range-thumb {
+    height: 12px;
+    width: 12px;
+    border-radius: 50%;
+    background: black;
+    cursor: pointer;
+    border: 1px solid white;
+    box-shadow: none;
+}
+
+/* Track для Firefox */
+.control-group input[type="range"]::-moz-range-track {
+    height: 1px;
+    background: black;
+    border: none;
+}
+
+/* Группы чекбоксов */
+.checkbox-group {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.checkbox-group label {
+    cursor: pointer;
+    margin: 0;
+    user-select: none;
+}
+
+/* Кнопка экспорта */
+.export-btn {
+    width: 100%;
+    background: white;
+    color: black;
+    border: 1px solid black;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: background-color 0.2s;
+}
+
+.export-btn:hover {
+    background: #f0f0f0;
+}
+
+.export-btn:active {
+    background: #e0e0e0;
+}
+
+/* Показываем разные ярлыки в зависимости от платформы */
+.pc-shortcut {
+    display: inline;
+}
+
+.mac-shortcut {
+    display: none;
+}
+
+/* Для Mac */
+@supports (-webkit-touch-callout: none) {
+    .pc-shortcut {
+        display: none;
+    }
+    
+    .mac-shortcut {
+        display: inline;
+    }
+}
+
+/* Медиа-запрос для определения Mac по user agent (через CSS не работает, делаем через JS) */ 

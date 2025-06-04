@@ -8,12 +8,34 @@ let spacingPercent = 50; // Расстояние между крестами в 
 let checkerboardMode = true; // Шахматный режим расстановки включен по умолчанию
 let lineBLengthPercent = 100; // Длина линии квадрата Б в процентах
 let bothSquaresBMode = false; // Режим, где оба квадрата работают как квадрат Б (режим двух дуг)
+let controlsContainer; // Контейнер для всех контролов
+
+// Ссылки на элементы интерфейса для прямого обновления
+let controlElements = {
+  radiusSlider: null,
+  radiusLabel: null,
+  lengthSlider: null,
+  lengthLabel: null,
+  lengthBSlider: null,
+  lengthBLabel: null,
+  thicknessSlider: null,
+  thicknessLabel: null,
+  spacingSlider: null,
+  spacingLabel: null,
+  sizeSlider: null,
+  sizeLabel: null,
+  capsCheckbox: null,
+  checkerboardCheckbox: null,
+  bothSquaresBCheckbox: null
+};
 
 // Система отмены изменений
 let stateHistory = [];
 let redoHistory = []; // Массив для хранения отмененных состояний
 let maxHistorySize = 50; // Максимальное количество шагов в истории
 let isUpdatingControls = false; // Флаг для предотвращения циклических обновлений
+let debounceTimeout = null; // Таймер для debouncing
+let pendingStateUpdate = false; // Флаг ожидающего обновления состояния
 let isInteractingWithControl = false; // Флаг активного взаимодействия с контролом
 
 function setup() {
@@ -25,156 +47,275 @@ function setup() {
   noFill();
   stroke(255);
   
-  // Настраиваем обработчики событий для HTML контролов
-  setupHTMLControls();
+  // Создаем контейнер для контролов
+  createControlsPanel();
   
   // Добавляем обработчик клавиатуры для хоткеев
   setupKeyboardShortcuts();
-  
-  // Определяем платформу для кнопки экспорта
-  setupPlatformSpecificUI();
   
   // Сохраняем начальное состояние сразу (без debounce)
   saveCurrentStateImmediately();
 }
 
-// Функция настройки HTML контролов
-function setupHTMLControls() {
-  // Слайдеры
-  const radiusSlider = document.getElementById('radius-slider');
-  const lengthSlider = document.getElementById('length-slider');
-  const lengthBSlider = document.getElementById('length-b-slider');
-  const thicknessSlider = document.getElementById('thickness-slider');
-  const spacingSlider = document.getElementById('spacing-slider');
-  const sizeSlider = document.getElementById('size-slider');
+// Функция создания панели контролов
+function createControlsPanel() {
+  // Создаем основной контейнер
+  controlsContainer = createDiv('');
+  controlsContainer.style('position', 'fixed');
+  controlsContainer.style('bottom', '20px');
+  controlsContainer.style('right', '20px');
+  controlsContainer.style('background', '#606060'); // Светлее предыдущего #404040
+  controlsContainer.style('padding', '20px');
+  controlsContainer.style('border-radius', '6px');
+  controlsContainer.style('font-family', 'Arial, sans-serif');
+  controlsContainer.style('font-size', '14px');
+  controlsContainer.style('color', 'black');
+  controlsContainer.style('width', '280px'); // Увеличено с 240px до 280px
   
-  // Значения слайдеров
-  const radiusValue = document.getElementById('radius-value');
-  const lengthValue = document.getElementById('length-value');
-  const lengthBValue = document.getElementById('length-b-value');
-  const thicknessValue = document.getElementById('thickness-value');
-  const spacingValue = document.getElementById('spacing-value');
-  const sizeValue = document.getElementById('size-value');
+  // Создаем контролы и сохраняем ссылки
+  let radiusControl = createControl('Радиус скругления', 'range', 0, 100, cornerRadiusPercent, updateRadius);
+  controlElements.radiusSlider = radiusControl.slider;
+  controlElements.radiusLabel = radiusControl.label;
   
-  // Чекбоксы
-  const capsCheckbox = document.getElementById('caps-checkbox');
-  const checkerboardCheckbox = document.getElementById('checkerboard-checkbox');
-  const bothSquaresCheckbox = document.getElementById('both-squares-checkbox');
+  let lengthControl = createControl('Длина линий квадрата А', 'range', 0, 100, lineLengthPercent, updateLength);
+  controlElements.lengthSlider = lengthControl.slider;
+  controlElements.lengthLabel = lengthControl.label;
   
-  // Кнопка экспорта
-  const exportButton = document.getElementById('export-button');
+  let lengthBControl = createControl('Длина линии квадрата Б', 'range', 0, 100, lineBLengthPercent, updateLineBLength);
+  controlElements.lengthBSlider = lengthBControl.slider;
+  controlElements.lengthBLabel = lengthBControl.label;
   
-  // Обработчики для слайдеров с сохранением состояния
-  setupSliderWithHistory(radiusSlider, radiusValue, (value) => {
-    cornerRadiusPercent = value;
-    radiusValue.textContent = value + '%';
-    loop();
-  });
+  let thicknessControl = createControl('Толщина линий', 'range', 1, 100, lineWeightPercent, updateThickness);
+  controlElements.thicknessSlider = thicknessControl.slider;
+  controlElements.thicknessLabel = thicknessControl.label;
   
-  setupSliderWithHistory(lengthSlider, lengthValue, (value) => {
-    lineLengthPercent = value;
-    lengthValue.textContent = value + '%';
-    loop();
-  });
+  let spacingControl = createControl('Расстояние между крестами', 'range', 0, 100, spacingPercent, updateSpacing);
+  controlElements.spacingSlider = spacingControl.slider;
+  controlElements.spacingLabel = spacingControl.label;
   
-  setupSliderWithHistory(lengthBSlider, lengthBValue, (value) => {
-    lineBLengthPercent = value;
-    lengthBValue.textContent = value + '%';
-    loop();
-  });
+  let sizeControl = createControl('Размер креста', 'range', 10, 200, squareSize, updateSize);
+  controlElements.sizeSlider = sizeControl.slider;
+  controlElements.sizeLabel = sizeControl.label;
   
-  setupSliderWithHistory(thicknessSlider, thicknessValue, (value) => {
-    lineWeightPercent = value;
-    thicknessValue.textContent = value + '%';
-    loop();
-  });
+  // Создаем чекбокс
+  let checkboxContainer = createDiv('');
+  checkboxContainer.style('margin-top', '15px');
+  checkboxContainer.parent(controlsContainer);
   
-  setupSliderWithHistory(spacingSlider, spacingValue, (value) => {
-    spacingPercent = value;
-    spacingValue.textContent = value + '%';
-    loop();
-  });
+  controlElements.capsCheckbox = createCheckbox('Круглые окончания', roundCaps);
+  controlElements.capsCheckbox.style('color', 'black');
+  controlElements.capsCheckbox.style('font-family', 'Arial, sans-serif');
+  controlElements.capsCheckbox.style('font-size', '14px');
+  controlElements.capsCheckbox.changed(updateCaps);
+  controlElements.capsCheckbox.parent(checkboxContainer);
   
-  setupSliderWithHistory(sizeSlider, sizeValue, (value) => {
-    squareSize = value;
-    sizeValue.textContent = value + 'px';
-    loop();
-  });
+  // Создаем чекбокс для шахматного режима
+  let checkerboardContainer = createDiv('');
+  checkerboardContainer.style('margin-top', '10px');
+  checkerboardContainer.parent(controlsContainer);
   
-  // Обработчики для чекбоксов
-  capsCheckbox.addEventListener('change', () => {
-    if (!isUpdatingControls) {
-      saveCurrentStateImmediately();
-    }
-    roundCaps = capsCheckbox.checked;
-    loop();
-  });
+  controlElements.checkerboardCheckbox = createCheckbox('Шахматный порядок', checkerboardMode);
+  controlElements.checkerboardCheckbox.style('color', 'black');
+  controlElements.checkerboardCheckbox.style('font-family', 'Arial, sans-serif');
+  controlElements.checkerboardCheckbox.style('font-size', '14px');
+  controlElements.checkerboardCheckbox.changed(updateCheckerboard);
+  controlElements.checkerboardCheckbox.parent(checkerboardContainer);
   
-  checkerboardCheckbox.addEventListener('change', () => {
-    if (!isUpdatingControls) {
-      saveCurrentStateImmediately();
-    }
-    checkerboardMode = checkerboardCheckbox.checked;
-    loop();
-  });
+  // Создаем чекбокс для режима двух дуг
+  let bothSquaresBContainer = createDiv('');
+  bothSquaresBContainer.style('margin-top', '10px');
+  bothSquaresBContainer.parent(controlsContainer);
   
-  bothSquaresCheckbox.addEventListener('change', () => {
-    if (!isUpdatingControls) {
-      saveCurrentStateImmediately();
-    }
-    bothSquaresBMode = bothSquaresCheckbox.checked;
-    loop();
-  });
+  controlElements.bothSquaresBCheckbox = createCheckbox('Режим двух дуг', bothSquaresBMode);
+  controlElements.bothSquaresBCheckbox.style('color', 'black');
+  controlElements.bothSquaresBCheckbox.style('font-family', 'Arial, sans-serif');
+  controlElements.bothSquaresBCheckbox.style('font-size', '14px');
+  controlElements.bothSquaresBCheckbox.changed(updateBothSquaresBMode);
+  controlElements.bothSquaresBCheckbox.parent(bothSquaresBContainer);
   
-  // Обработчик для кнопки экспорта
-  exportButton.addEventListener('click', exportSVG);
+  // Создаем кнопку экспорта SVG
+  let buttonContainer = createDiv('');
+  buttonContainer.style('margin-top', '15px');
+  buttonContainer.parent(controlsContainer);
+  
+  // Определяем текст для кнопки в зависимости от операционной системы
+  let isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  let buttonText = isMac ? 'SVG (⌘E)' : 'SVG (Ctrl+E)';
+  
+  let svgButton = createButton(buttonText);
+  svgButton.style('background', 'white');
+  svgButton.style('color', 'black');
+  svgButton.style('border', '1px solid black');
+  svgButton.style('padding', '8px 16px');
+  svgButton.style('border-radius', '4px');
+  svgButton.style('font-family', 'Arial, sans-serif');
+  svgButton.style('font-size', '14px');
+  svgButton.style('cursor', 'pointer');
+  svgButton.style('width', '100%');
+  svgButton.mousePressed(exportSVG);
+  svgButton.parent(buttonContainer);
 }
 
-// Функция настройки слайдера с сохранением истории
-function setupSliderWithHistory(slider, valueDisplay, callback) {
-  // Обработчик начала взаимодействия
-  slider.addEventListener('mousedown', () => {
+// Функция создания одного контрола
+function createControl(label, type, min, max, value, callback) {
+  // Контейнер для контрола
+  let container = createDiv('');
+  container.style('margin-bottom', '15px');
+  container.parent(controlsContainer);
+  
+  // Лейбл
+  let labelDiv = createDiv(label + ': ' + (type === 'range' && max <= 100 ? value + '%' : value + (max > 100 ? 'px' : '')));
+  labelDiv.style('margin-bottom', '5px');
+  labelDiv.style('font-size', '14px');
+  labelDiv.style('color', 'black');
+  labelDiv.parent(container);
+  
+  // Слайдер
+  let slider = createSlider(min, max, value);
+  slider.style('width', '100%');
+  slider.style('height', '1px');
+  slider.style('background', 'black');
+  slider.style('outline', 'none');
+  slider.style('-webkit-appearance', 'none');
+  slider.style('appearance', 'none');
+  slider.parent(container);
+  
+  // Стили для круглого элемента слайдера (thumb)
+  let sliderElement = slider.elt;
+  let style = document.createElement('style');
+  style.textContent = `
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 12px;
+      width: 12px;
+      border-radius: 50%;
+      background: black;
+      cursor: pointer;
+    }
+    
+    input[type="range"]::-moz-range-thumb {
+      height: 12px;
+      width: 12px;
+      border-radius: 50%;
+      background: black;
+      cursor: pointer;
+      border: none;
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // Обработчик начала взаимодействия (нажатие на слайдер)
+  sliderElement.addEventListener('mousedown', function() {
     if (!isUpdatingControls && !isInteractingWithControl) {
-      saveCurrentStateImmediately();
+      saveCurrentStateImmediately(); // Сохраняем состояние только при начале взаимодействия
       isInteractingWithControl = true;
     }
   });
   
-  slider.addEventListener('mouseup', () => {
+  // Обработчик окончания взаимодействия (отпускание мыши)
+  sliderElement.addEventListener('mouseup', function() {
     isInteractingWithControl = false;
   });
   
   // Для сенсорных устройств
-  slider.addEventListener('touchstart', () => {
+  sliderElement.addEventListener('touchstart', function() {
     if (!isUpdatingControls && !isInteractingWithControl) {
       saveCurrentStateImmediately();
       isInteractingWithControl = true;
     }
   });
   
-  slider.addEventListener('touchend', () => {
+  sliderElement.addEventListener('touchend', function() {
     isInteractingWithControl = false;
   });
   
-  // Обработчик изменения значения
-  slider.addEventListener('input', () => {
-    callback(parseInt(slider.value));
+  // Обработчик изменения - теперь НЕ сохраняет состояние
+  slider.input(() => {
+    let newValue = slider.value();
+    let unit = max <= 100 ? '%' : (max > 100 ? 'px' : '');
+    labelDiv.html(label + ': ' + newValue + unit);
+    callback(newValue);
   });
+  
+  // Возвращаем ссылки на созданные элементы
+  return {
+    container: container,
+    label: labelDiv,
+    slider: slider
+  };
 }
 
-// Функция настройки платформо-специфичного UI
-function setupPlatformSpecificUI() {
-  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-  const macShortcut = document.querySelector('.mac-shortcut');
-  const pcShortcut = document.querySelector('.pc-shortcut');
-  
-  if (isMac) {
-    macShortcut.style.display = 'inline';
-    pcShortcut.style.display = 'none';
-  } else {
-    macShortcut.style.display = 'none';
-    pcShortcut.style.display = 'inline';
+// Функция обновления радиуса при изменении слайдера
+function updateRadius(newValue) {
+  // Убираем сохранение состояния отсюда - теперь оно происходит при нажатии на слайдер
+  cornerRadiusPercent = newValue;
+  loop(); // Перезапускаем цикл отрисовки
+}
+
+// Функция обновления длины линий при изменении слайдера
+function updateLength(newValue) {
+  // Убираем сохранение состояния отсюда - теперь оно происходит при нажатии на слайдер
+  lineLengthPercent = newValue;
+  loop(); // Перезапускаем цикл отрисовки
+}
+
+// Функция обновления толщины линий при изменении слайдера
+function updateThickness(newValue) {
+  // Убираем сохранение состояния отсюда - теперь оно происходит при нажатии на слайдер
+  lineWeightPercent = newValue;
+  loop(); // Перезапускаем цикл отрисовки
+}
+
+// Функция обновления окончаний штрихов при изменении чекбокса
+function updateCaps() {
+  if (!isUpdatingControls) {
+    saveCurrentStateImmediately(); // Для чекбоксов оставляем сохранение, так как это однократное действие
   }
+  // Получаем состояние чекбокса из события
+  roundCaps = this.checked();
+  loop(); // Перезапускаем цикл отрисовки
+}
+
+// Функция обновления расстояния между крестами при изменении слайдера
+function updateSpacing(newValue) {
+  // Убираем сохранение состояния отсюда - теперь оно происходит при нажатии на слайдер
+  spacingPercent = newValue;
+  loop(); // Перезапускаем цикл отрисовки
+}
+
+// Функция обновления размера креста при изменении слайдера
+function updateSize(newValue) {
+  // Убираем сохранение состояния отсюда - теперь оно происходит при нажатии на слайдер
+  squareSize = newValue;
+  loop(); // Перезапускаем цикл отрисовки
+}
+
+// Функция обновления шахматного режима при изменении чекбокса
+function updateCheckerboard() {
+  if (!isUpdatingControls) {
+    saveCurrentStateImmediately(); // Для чекбоксов оставляем сохранение, так как это однократное действие
+  }
+  // Получаем состояние чекбокса из события
+  checkerboardMode = this.checked();
+  loop(); // Перезапускаем цикл отрисовки
+}
+
+// Функция обновления длины линии квадрата Б при изменении слайдера
+function updateLineBLength(newValue) {
+  // Убираем сохранение состояния отсюда - теперь оно происходит при нажатии на слайдер
+  lineBLengthPercent = newValue;
+  loop(); // Перезапускаем цикл отрисовки
+}
+
+// Функция обновления режима двух дуг при изменении чекбокса
+function updateBothSquaresBMode() {
+  if (!isUpdatingControls) {
+    saveCurrentStateImmediately(); // Для чекбоксов оставляем сохранение, так как это однократное действие
+  }
+  // Получаем состояние чекбокса из события
+  bothSquaresBMode = this.checked();
+  loop(); // Перезапускаем цикл отрисовки
 }
 
 function draw() {
@@ -774,68 +915,47 @@ function redoLastChange() {
 
 // Функция обновления всех контролов в интерфейсе
 function updateAllControls() {
-  // Устанавливаем флаг обновления
-  isUpdatingControls = true;
-  
-  // Обновляем слайдеры и их значения
-  const radiusSlider = document.getElementById('radius-slider');
-  const radiusValue = document.getElementById('radius-value');
-  if (radiusSlider && radiusValue) {
-    radiusSlider.value = cornerRadiusPercent;
-    radiusValue.textContent = cornerRadiusPercent + '%';
+  // Обновляем слайдеры и их лейблы
+  if (controlElements.radiusSlider && controlElements.radiusLabel) {
+    controlElements.radiusSlider.value(cornerRadiusPercent);
+    controlElements.radiusLabel.html('Радиус скругления: ' + cornerRadiusPercent + '%');
   }
   
-  const lengthSlider = document.getElementById('length-slider');
-  const lengthValue = document.getElementById('length-value');
-  if (lengthSlider && lengthValue) {
-    lengthSlider.value = lineLengthPercent;
-    lengthValue.textContent = lineLengthPercent + '%';
+  if (controlElements.lengthSlider && controlElements.lengthLabel) {
+    controlElements.lengthSlider.value(lineLengthPercent);
+    controlElements.lengthLabel.html('Длина линий квадрата А: ' + lineLengthPercent + '%');
   }
   
-  const lengthBSlider = document.getElementById('length-b-slider');
-  const lengthBValue = document.getElementById('length-b-value');
-  if (lengthBSlider && lengthBValue) {
-    lengthBSlider.value = lineBLengthPercent;
-    lengthBValue.textContent = lineBLengthPercent + '%';
+  if (controlElements.lengthBSlider && controlElements.lengthBLabel) {
+    controlElements.lengthBSlider.value(lineBLengthPercent);
+    controlElements.lengthBLabel.html('Длина линии квадрата Б: ' + lineBLengthPercent + '%');
   }
   
-  const thicknessSlider = document.getElementById('thickness-slider');
-  const thicknessValue = document.getElementById('thickness-value');
-  if (thicknessSlider && thicknessValue) {
-    thicknessSlider.value = lineWeightPercent;
-    thicknessValue.textContent = lineWeightPercent + '%';
+  if (controlElements.thicknessSlider && controlElements.thicknessLabel) {
+    controlElements.thicknessSlider.value(lineWeightPercent);
+    controlElements.thicknessLabel.html('Толщина линий: ' + lineWeightPercent + '%');
   }
   
-  const spacingSlider = document.getElementById('spacing-slider');
-  const spacingValue = document.getElementById('spacing-value');
-  if (spacingSlider && spacingValue) {
-    spacingSlider.value = spacingPercent;
-    spacingValue.textContent = spacingPercent + '%';
+  if (controlElements.spacingSlider && controlElements.spacingLabel) {
+    controlElements.spacingSlider.value(spacingPercent);
+    controlElements.spacingLabel.html('Расстояние между крестами: ' + spacingPercent + '%');
   }
   
-  const sizeSlider = document.getElementById('size-slider');
-  const sizeValue = document.getElementById('size-value');
-  if (sizeSlider && sizeValue) {
-    sizeSlider.value = squareSize;
-    sizeValue.textContent = squareSize + 'px';
+  if (controlElements.sizeSlider && controlElements.sizeLabel) {
+    controlElements.sizeSlider.value(squareSize);
+    controlElements.sizeLabel.html('Размер креста: ' + squareSize + 'px');
   }
   
   // Обновляем чекбоксы
-  const capsCheckbox = document.getElementById('caps-checkbox');
-  if (capsCheckbox) {
-    capsCheckbox.checked = roundCaps;
+  if (controlElements.capsCheckbox) {
+    controlElements.capsCheckbox.checked(roundCaps);
   }
   
-  const checkerboardCheckbox = document.getElementById('checkerboard-checkbox');
-  if (checkerboardCheckbox) {
-    checkerboardCheckbox.checked = checkerboardMode;
+  if (controlElements.checkerboardCheckbox) {
+    controlElements.checkerboardCheckbox.checked(checkerboardMode);
   }
   
-  const bothSquaresCheckbox = document.getElementById('both-squares-checkbox');
-  if (bothSquaresCheckbox) {
-    bothSquaresCheckbox.checked = bothSquaresBMode;
+  if (controlElements.bothSquaresBCheckbox) {
+    controlElements.bothSquaresBCheckbox.checked(bothSquaresBMode);
   }
-  
-  // Сбрасываем флаг обновления
-  isUpdatingControls = false;
 } 
