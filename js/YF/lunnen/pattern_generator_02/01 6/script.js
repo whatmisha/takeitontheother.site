@@ -9,31 +9,6 @@ let checkerboardMode = true; // Шахматный режим расстанов
 let lineBLengthPercent = 100; // Длина линии квадрата Б в процентах
 let controlsContainer; // Контейнер для всех контролов
 
-// Ссылки на элементы интерфейса для прямого обновления
-let controlElements = {
-  radiusSlider: null,
-  radiusLabel: null,
-  lengthSlider: null,
-  lengthLabel: null,
-  lengthBSlider: null,
-  lengthBLabel: null,
-  thicknessSlider: null,
-  thicknessLabel: null,
-  spacingSlider: null,
-  spacingLabel: null,
-  sizeSlider: null,
-  sizeLabel: null,
-  capsCheckbox: null,
-  checkerboardCheckbox: null
-};
-
-// Система отмены изменений
-let stateHistory = [];
-let maxHistorySize = 50; // Максимальное количество шагов в истории
-let isUpdatingControls = false; // Флаг для предотвращения циклических обновлений
-let debounceTimeout = null; // Таймер для debouncing
-let pendingStateUpdate = false; // Флаг ожидающего обновления состояния
-
 function setup() {
   // Создаем канвас
   createCanvas(windowWidth, windowHeight);
@@ -48,9 +23,6 @@ function setup() {
   
   // Добавляем обработчик клавиатуры для хоткеев
   setupKeyboardShortcuts();
-  
-  // Сохраняем начальное состояние сразу (без debounce)
-  saveCurrentStateImmediately();
 }
 
 // Функция создания панели контролов
@@ -68,54 +40,37 @@ function createControlsPanel() {
   controlsContainer.style('color', 'black');
   controlsContainer.style('width', '240px');
   
-  // Создаем контролы и сохраняем ссылки
-  let radiusControl = createControl('Радиус скругления', 'range', 0, 100, cornerRadiusPercent, updateRadius);
-  controlElements.radiusSlider = radiusControl.slider;
-  controlElements.radiusLabel = radiusControl.label;
-  
-  let lengthControl = createControl('Длина линий квадрата А', 'range', 0, 100, lineLengthPercent, updateLength);
-  controlElements.lengthSlider = lengthControl.slider;
-  controlElements.lengthLabel = lengthControl.label;
-  
-  let lengthBControl = createControl('Длина линии квадрата Б', 'range', 0, 100, lineBLengthPercent, updateLineBLength);
-  controlElements.lengthBSlider = lengthBControl.slider;
-  controlElements.lengthBLabel = lengthBControl.label;
-  
-  let thicknessControl = createControl('Толщина линий', 'range', 1, 100, lineWeightPercent, updateThickness);
-  controlElements.thicknessSlider = thicknessControl.slider;
-  controlElements.thicknessLabel = thicknessControl.label;
-  
-  let spacingControl = createControl('Расстояние между крестами', 'range', 0, 100, spacingPercent, updateSpacing);
-  controlElements.spacingSlider = spacingControl.slider;
-  controlElements.spacingLabel = spacingControl.label;
-  
-  let sizeControl = createControl('Размер креста', 'range', 10, 200, squareSize, updateSize);
-  controlElements.sizeSlider = sizeControl.slider;
-  controlElements.sizeLabel = sizeControl.label;
+  // Создаем контролы
+  createControl('Радиус скругления', 'range', 0, 100, cornerRadiusPercent, updateRadius);
+  createControl('Длина линий квадрата А', 'range', 0, 100, lineLengthPercent, updateLength);
+  createControl('Длина линии квадрата Б', 'range', 0, 100, lineBLengthPercent, updateLineBLength);
+  createControl('Толщина линий', 'range', 1, 100, lineWeightPercent, updateThickness);
+  createControl('Расстояние между крестами', 'range', 0, 100, spacingPercent, updateSpacing);
+  createControl('Размер креста', 'range', 10, 200, squareSize, updateSize);
   
   // Создаем чекбокс
   let checkboxContainer = createDiv('');
   checkboxContainer.style('margin-top', '15px');
   checkboxContainer.parent(controlsContainer);
   
-  controlElements.capsCheckbox = createCheckbox('Круглые окончания', roundCaps);
-  controlElements.capsCheckbox.style('color', 'black');
-  controlElements.capsCheckbox.style('font-family', 'Arial, sans-serif');
-  controlElements.capsCheckbox.style('font-size', '14px');
-  controlElements.capsCheckbox.changed(updateCaps);
-  controlElements.capsCheckbox.parent(checkboxContainer);
+  let checkbox = createCheckbox('Круглые окончания', roundCaps);
+  checkbox.style('color', 'black');
+  checkbox.style('font-family', 'Arial, sans-serif');
+  checkbox.style('font-size', '14px');
+  checkbox.changed(updateCaps);
+  checkbox.parent(checkboxContainer);
   
   // Создаем чекбокс для шахматного режима
   let checkerboardContainer = createDiv('');
   checkerboardContainer.style('margin-top', '10px');
   checkerboardContainer.parent(controlsContainer);
   
-  controlElements.checkerboardCheckbox = createCheckbox('Шахматный порядок', checkerboardMode);
-  controlElements.checkerboardCheckbox.style('color', 'black');
-  controlElements.checkerboardCheckbox.style('font-family', 'Arial, sans-serif');
-  controlElements.checkerboardCheckbox.style('font-size', '14px');
-  controlElements.checkerboardCheckbox.changed(updateCheckerboard);
-  controlElements.checkerboardCheckbox.parent(checkerboardContainer);
+  let checkerboardCheckbox = createCheckbox('Шахматный порядок', checkerboardMode);
+  checkerboardCheckbox.style('color', 'black');
+  checkerboardCheckbox.style('font-family', 'Arial, sans-serif');
+  checkerboardCheckbox.style('font-size', '14px');
+  checkerboardCheckbox.changed(updateCheckerboard);
+  checkerboardCheckbox.parent(checkerboardContainer);
   
   // Создаем кнопку экспорта SVG
   let buttonContainer = createDiv('');
@@ -196,47 +151,28 @@ function createControl(label, type, min, max, value, callback) {
     labelDiv.html(label + ': ' + newValue + unit);
     callback(newValue);
   });
-  
-  // Возвращаем ссылки на созданные элементы
-  return {
-    container: container,
-    label: labelDiv,
-    slider: slider
-  };
 }
 
 // Функция обновления радиуса при изменении слайдера
 function updateRadius(newValue) {
-  if (!isUpdatingControls) {
-    saveCurrentStateImmediately(); // Сохраняем текущее состояние перед изменением
-  }
   cornerRadiusPercent = newValue;
   loop(); // Перезапускаем цикл отрисовки
 }
 
 // Функция обновления длины линий при изменении слайдера
 function updateLength(newValue) {
-  if (!isUpdatingControls) {
-    saveCurrentStateImmediately(); // Сохраняем текущее состояние перед изменением
-  }
   lineLengthPercent = newValue;
   loop(); // Перезапускаем цикл отрисовки
 }
 
 // Функция обновления толщины линий при изменении слайдера
 function updateThickness(newValue) {
-  if (!isUpdatingControls) {
-    saveCurrentStateImmediately(); // Сохраняем текущее состояние перед изменением
-  }
   lineWeightPercent = newValue;
   loop(); // Перезапускаем цикл отрисовки
 }
 
 // Функция обновления окончаний штрихов при изменении чекбокса
 function updateCaps() {
-  if (!isUpdatingControls) {
-    saveCurrentStateImmediately(); // Сохраняем текущее состояние перед изменением
-  }
   // Получаем состояние чекбокса из события
   roundCaps = this.checked();
   loop(); // Перезапускаем цикл отрисовки
@@ -244,27 +180,18 @@ function updateCaps() {
 
 // Функция обновления расстояния между крестами при изменении слайдера
 function updateSpacing(newValue) {
-  if (!isUpdatingControls) {
-    saveCurrentStateImmediately(); // Сохраняем текущее состояние перед изменением
-  }
   spacingPercent = newValue;
   loop(); // Перезапускаем цикл отрисовки
 }
 
 // Функция обновления размера креста при изменении слайдера
 function updateSize(newValue) {
-  if (!isUpdatingControls) {
-    saveCurrentStateImmediately(); // Сохраняем текущее состояние перед изменением
-  }
   squareSize = newValue;
   loop(); // Перезапускаем цикл отрисовки
 }
 
 // Функция обновления шахматного режима при изменении чекбокса
 function updateCheckerboard() {
-  if (!isUpdatingControls) {
-    saveCurrentStateImmediately(); // Сохраняем текущее состояние перед изменением
-  }
   // Получаем состояние чекбокса из события
   checkerboardMode = this.checked();
   loop(); // Перезапускаем цикл отрисовки
@@ -272,9 +199,6 @@ function updateCheckerboard() {
 
 // Функция обновления длины линии квадрата Б при изменении слайдера
 function updateLineBLength(newValue) {
-  if (!isUpdatingControls) {
-    saveCurrentStateImmediately(); // Сохраняем текущее состояние перед изменением
-  }
   lineBLengthPercent = newValue;
   loop(); // Перезапускаем цикл отрисовки
 }
@@ -679,120 +603,10 @@ function windowResized() {
 // Функция настройки горячих клавиш
 function setupKeyboardShortcuts() {
   document.addEventListener('keydown', function(event) {
-    // Проверяем комбинацию Cmd+E (на Mac) или Ctrl+E (на PC) для экспорта
+    // Проверяем комбинацию Cmd+E (на Mac) или Ctrl+E (на PC)
     if ((event.metaKey || event.ctrlKey) && event.key === 'e') {
       event.preventDefault(); // Предотвращаем стандартное поведение браузера
       exportSVG(); // Вызываем функцию экспорта
     }
-    
-    // Проверяем комбинацию Cmd+Z (на Mac) или Ctrl+Z (на PC) для отмены
-    if ((event.metaKey || event.ctrlKey) && event.key === 'z') {
-      event.preventDefault(); // Предотвращаем стандартное поведение браузера
-      undoLastChange(); // Вызываем функцию отмены
-    }
   });
-}
-
-// Функция немедленного сохранения текущего состояния в историю
-function saveCurrentStateImmediately() {
-  if (isUpdatingControls) return; // Не сохраняем состояние при программном обновлении
-  
-  let currentState = {
-    squareSize: squareSize,
-    lineWeightPercent: lineWeightPercent,
-    cornerRadiusPercent: cornerRadiusPercent,
-    lineLengthPercent: lineLengthPercent,
-    roundCaps: roundCaps,
-    spacingPercent: spacingPercent,
-    checkerboardMode: checkerboardMode,
-    lineBLengthPercent: lineBLengthPercent
-  };
-  
-  stateHistory.push(currentState);
-  
-  // Ограничиваем размер истории
-  if (stateHistory.length > maxHistorySize) {
-    stateHistory.shift(); // Удаляем самый старый элемент
-  }
-}
-
-// Функция сохранения текущего состояния в историю с debouncing (убираем, заменяем на немедленное сохранение)
-function saveStateToHistory() {
-  // Эта функция больше не нужна, но оставляем для совместимости
-  saveCurrentStateImmediately();
-}
-
-// Функция отмены последнего изменения
-function undoLastChange() {
-  if (stateHistory.length === 0) {
-    return; // Нет истории для отмены
-  }
-  
-  // Получаем предыдущее состояние
-  let previousState = stateHistory.pop();
-  
-  // Устанавливаем флаг обновления
-  isUpdatingControls = true;
-  
-  // Восстанавливаем все параметры
-  squareSize = previousState.squareSize;
-  lineWeightPercent = previousState.lineWeightPercent;
-  cornerRadiusPercent = previousState.cornerRadiusPercent;
-  lineLengthPercent = previousState.lineLengthPercent;
-  roundCaps = previousState.roundCaps;
-  spacingPercent = previousState.spacingPercent;
-  checkerboardMode = previousState.checkerboardMode;
-  lineBLengthPercent = previousState.lineBLengthPercent;
-  
-  // Обновляем интерфейс
-  updateAllControls();
-  
-  // Сбрасываем флаг обновления
-  isUpdatingControls = false;
-  
-  // Перерисовываем
-  loop();
-}
-
-// Функция обновления всех контролов в интерфейсе
-function updateAllControls() {
-  // Обновляем слайдеры и их лейблы
-  if (controlElements.radiusSlider && controlElements.radiusLabel) {
-    controlElements.radiusSlider.value(cornerRadiusPercent);
-    controlElements.radiusLabel.html('Радиус скругления: ' + cornerRadiusPercent + '%');
-  }
-  
-  if (controlElements.lengthSlider && controlElements.lengthLabel) {
-    controlElements.lengthSlider.value(lineLengthPercent);
-    controlElements.lengthLabel.html('Длина линий квадрата А: ' + lineLengthPercent + '%');
-  }
-  
-  if (controlElements.lengthBSlider && controlElements.lengthBLabel) {
-    controlElements.lengthBSlider.value(lineBLengthPercent);
-    controlElements.lengthBLabel.html('Длина линии квадрата Б: ' + lineBLengthPercent + '%');
-  }
-  
-  if (controlElements.thicknessSlider && controlElements.thicknessLabel) {
-    controlElements.thicknessSlider.value(lineWeightPercent);
-    controlElements.thicknessLabel.html('Толщина линий: ' + lineWeightPercent + '%');
-  }
-  
-  if (controlElements.spacingSlider && controlElements.spacingLabel) {
-    controlElements.spacingSlider.value(spacingPercent);
-    controlElements.spacingLabel.html('Расстояние между крестами: ' + spacingPercent + '%');
-  }
-  
-  if (controlElements.sizeSlider && controlElements.sizeLabel) {
-    controlElements.sizeSlider.value(squareSize);
-    controlElements.sizeLabel.html('Размер креста: ' + squareSize + 'px');
-  }
-  
-  // Обновляем чекбоксы
-  if (controlElements.capsCheckbox) {
-    controlElements.capsCheckbox.checked(roundCaps);
-  }
-  
-  if (controlElements.checkerboardCheckbox) {
-    controlElements.checkerboardCheckbox.checked(checkerboardMode);
-  }
 } 
