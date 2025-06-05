@@ -9,12 +9,62 @@ let checkerboardMode = true; // Шахматный режим расстанов
 let lineBLengthPercent = 100; // Длина линии квадрата Б в процентах
 let bothSquaresBMode = false; // Режим, где оба квадрата работают как квадрат Б (режим двух дуг)
 
+// Кэшированные вычисления для оптимизации
+let cachedCornerRadius = 0;
+let cachedLineWeight = 0;
+let cachedLineLength = 0;
+let cachedCrossSize = 0;
+let cachedSpacing = 0;
+let cachedGridStep = 0;
+let cacheValid = false;
+
 // Система отмены изменений
 let stateHistory = [];
 let redoHistory = []; // Массив для хранения отмененных состояний
 let maxHistorySize = 50; // Максимальное количество шагов в истории
 let isUpdatingControls = false; // Флаг для предотвращения циклических обновлений
 let isInteractingWithControl = false; // Флаг активного взаимодействия с контролом
+
+// Кэширование DOM элементов для оптимизации
+let domElements = {};
+
+// Общая функция для вычисления границ сетки
+function calculateGridBounds(width, height, gridStep) {
+  return {
+    startX: -gridStep,
+    startY: -gridStep,
+    endX: width + gridStep,
+    endY: height + gridStep
+  };
+}
+
+// Общая функция для итерации по сетке
+function iterateGrid(bounds, gridStep, checkerboardMode, callback) {
+  let rowIndex = 0;
+  let currentY = bounds.startY;
+  
+  while (currentY < bounds.endY) {
+    for (let x = bounds.startX; x < bounds.endX; x += gridStep) {
+      // В шахматном режиме сдвигаем каждую вторую строку
+      let offsetX = x;
+      if (checkerboardMode && rowIndex % 2 === 1) {
+        offsetX = x + gridStep / 2;
+      }
+      
+      // Вызываем callback функцию для каждой позиции
+      callback(offsetX, currentY, rowIndex);
+    }
+    
+    // Вычисляем шаг по вертикали
+    if (checkerboardMode) {
+      currentY += gridStep / 2;
+    } else {
+      currentY += gridStep;
+    }
+    
+    rowIndex++;
+  }
+}
 
 function setup() {
   // Создаем канвас
@@ -25,6 +75,12 @@ function setup() {
   noFill();
   stroke(255);
   
+  // Останавливаем автоматическую перерисовку
+  noLoop();
+  
+  // Сохраняем начальное состояние ПЕРВЫМ ДЕЛОМ
+  saveCurrentStateImmediately();
+  
   // Настраиваем обработчики событий для HTML контролов
   setupHTMLControls();
   
@@ -34,100 +90,126 @@ function setup() {
   // Определяем платформу для кнопки экспорта
   setupPlatformSpecificUI();
   
-  // Сохраняем начальное состояние сразу (без debounce)
-  saveCurrentStateImmediately();
+  // Обновляем кэш и рисуем первый кадр
+  updateCache();
+  redraw();
 }
 
 // Функция настройки HTML контролов
 function setupHTMLControls() {
-  // Слайдеры
-  const radiusSlider = document.getElementById('radius-slider');
-  const lengthSlider = document.getElementById('length-slider');
-  const lengthBSlider = document.getElementById('length-b-slider');
-  const thicknessSlider = document.getElementById('thickness-slider');
-  const spacingSlider = document.getElementById('spacing-slider');
-  const sizeSlider = document.getElementById('size-slider');
+  // Кэшируем все DOM элементы
+  domElements.radiusSlider = document.getElementById('radius-slider');
+  domElements.lengthSlider = document.getElementById('length-slider');
+  domElements.lengthBSlider = document.getElementById('length-b-slider');
+  domElements.thicknessSlider = document.getElementById('thickness-slider');
+  domElements.spacingSlider = document.getElementById('spacing-slider');
+  domElements.sizeSlider = document.getElementById('size-slider');
   
-  // Значения слайдеров
-  const radiusValue = document.getElementById('radius-value');
-  const lengthValue = document.getElementById('length-value');
-  const lengthBValue = document.getElementById('length-b-value');
-  const thicknessValue = document.getElementById('thickness-value');
-  const spacingValue = document.getElementById('spacing-value');
-  const sizeValue = document.getElementById('size-value');
+  domElements.radiusValue = document.getElementById('radius-value');
+  domElements.lengthValue = document.getElementById('length-value');
+  domElements.lengthBValue = document.getElementById('length-b-value');
+  domElements.thicknessValue = document.getElementById('thickness-value');
+  domElements.spacingValue = document.getElementById('spacing-value');
+  domElements.sizeValue = document.getElementById('size-value');
   
-  // Чекбоксы
-  const capsCheckbox = document.getElementById('caps-checkbox');
-  const checkerboardCheckbox = document.getElementById('checkerboard-checkbox');
-  const bothSquaresCheckbox = document.getElementById('both-squares-checkbox');
+  domElements.capsCheckbox = document.getElementById('caps-checkbox');
+  domElements.checkerboardCheckbox = document.getElementById('checkerboard-checkbox');
+  domElements.bothSquaresCheckbox = document.getElementById('both-squares-checkbox');
   
-  // Кнопка экспорта
-  const exportButton = document.getElementById('export-button');
+  domElements.exportButton = document.getElementById('export-button');
   
   // Обработчики для слайдеров с сохранением состояния
-  setupSliderWithHistory(radiusSlider, radiusValue, (value) => {
+  setupSliderWithHistory(domElements.radiusSlider, domElements.radiusValue, (value) => {
     cornerRadiusPercent = value;
-    radiusValue.textContent = value + '%';
-    loop();
+    domElements.radiusValue.textContent = value + '%';
+    cacheValid = false;
+    redraw();
   });
   
-  setupSliderWithHistory(lengthSlider, lengthValue, (value) => {
+  setupSliderWithHistory(domElements.lengthSlider, domElements.lengthValue, (value) => {
     lineLengthPercent = value;
-    lengthValue.textContent = value + '%';
-    loop();
+    domElements.lengthValue.textContent = value + '%';
+    cacheValid = false;
+    redraw();
   });
   
-  setupSliderWithHistory(lengthBSlider, lengthBValue, (value) => {
+  setupSliderWithHistory(domElements.lengthBSlider, domElements.lengthBValue, (value) => {
     lineBLengthPercent = value;
-    lengthBValue.textContent = value + '%';
-    loop();
+    domElements.lengthBValue.textContent = value + '%';
+    cacheValid = false;
+    redraw();
   });
   
-  setupSliderWithHistory(thicknessSlider, thicknessValue, (value) => {
+  setupSliderWithHistory(domElements.thicknessSlider, domElements.thicknessValue, (value) => {
     lineWeightPercent = value;
-    thicknessValue.textContent = value + '%';
-    loop();
+    domElements.thicknessValue.textContent = value + '%';
+    cacheValid = false;
+    redraw();
   });
   
-  setupSliderWithHistory(spacingSlider, spacingValue, (value) => {
+  setupSliderWithHistory(domElements.spacingSlider, domElements.spacingValue, (value) => {
     spacingPercent = value;
-    spacingValue.textContent = value + '%';
-    loop();
+    domElements.spacingValue.textContent = value + '%';
+    cacheValid = false;
+    redraw();
   });
   
-  setupSliderWithHistory(sizeSlider, sizeValue, (value) => {
+  setupSliderWithHistory(domElements.sizeSlider, domElements.sizeValue, (value) => {
     squareSize = value;
-    sizeValue.textContent = value + 'px';
-    loop();
+    domElements.sizeValue.textContent = value + 'px';
+    cacheValid = false;
+    redraw();
   });
   
   // Обработчики для чекбоксов
-  capsCheckbox.addEventListener('change', () => {
+  domElements.capsCheckbox.addEventListener('change', () => {
+    // Состояние уже изменено браузером, нужно сохранить предыдущее
     if (!isUpdatingControls) {
+      // Временно возвращаем к предыдущему состоянию для сохранения
+      let oldValue = !domElements.capsCheckbox.checked;
+      roundCaps = oldValue;
       saveCurrentStateImmediately();
+      // Применяем новое значение
+      roundCaps = domElements.capsCheckbox.checked;
+    } else {
+      roundCaps = domElements.capsCheckbox.checked;
     }
-    roundCaps = capsCheckbox.checked;
-    loop();
+    redraw();
   });
   
-  checkerboardCheckbox.addEventListener('change', () => {
+  domElements.checkerboardCheckbox.addEventListener('change', () => {
+    // Состояние уже изменено браузером, нужно сохранить предыдущее
     if (!isUpdatingControls) {
+      // Временно возвращаем к предыдущему состоянию для сохранения
+      let oldValue = !domElements.checkerboardCheckbox.checked;
+      checkerboardMode = oldValue;
       saveCurrentStateImmediately();
+      // Применяем новое значение
+      checkerboardMode = domElements.checkerboardCheckbox.checked;
+    } else {
+      checkerboardMode = domElements.checkerboardCheckbox.checked;
     }
-    checkerboardMode = checkerboardCheckbox.checked;
-    loop();
+    cacheValid = false;
+    redraw();
   });
   
-  bothSquaresCheckbox.addEventListener('change', () => {
+  domElements.bothSquaresCheckbox.addEventListener('change', () => {
+    // Состояние уже изменено браузером, нужно сохранить предыдущее
     if (!isUpdatingControls) {
+      // Временно возвращаем к предыдущему состоянию для сохранения
+      let oldValue = !domElements.bothSquaresCheckbox.checked;
+      bothSquaresBMode = oldValue;
       saveCurrentStateImmediately();
+      // Применяем новое значение
+      bothSquaresBMode = domElements.bothSquaresCheckbox.checked;
+    } else {
+      bothSquaresBMode = domElements.bothSquaresCheckbox.checked;
     }
-    bothSquaresBMode = bothSquaresCheckbox.checked;
-    loop();
+    redraw();
   });
   
   // Обработчик для кнопки экспорта
-  exportButton.addEventListener('click', exportSVG);
+  domElements.exportButton.addEventListener('click', exportSVG);
 }
 
 // Функция настройки слайдера с сохранением истории
@@ -135,7 +217,7 @@ function setupSliderWithHistory(slider, valueDisplay, callback) {
   // Обработчик начала взаимодействия
   slider.addEventListener('mousedown', () => {
     if (!isUpdatingControls && !isInteractingWithControl) {
-      saveCurrentStateImmediately();
+      saveCurrentStateImmediately(); // Сохраняем состояние ДО начала изменений
       isInteractingWithControl = true;
     }
   });
@@ -147,7 +229,7 @@ function setupSliderWithHistory(slider, valueDisplay, callback) {
   // Для сенсорных устройств
   slider.addEventListener('touchstart', () => {
     if (!isUpdatingControls && !isInteractingWithControl) {
-      saveCurrentStateImmediately();
+      saveCurrentStateImmediately(); // Сохраняем состояние ДО начала изменений
       isInteractingWithControl = true;
     }
   });
@@ -178,29 +260,18 @@ function setupPlatformSpecificUI() {
 }
 
 function draw() {
+  // Проверяем валидность кэша
+  if (!cacheValid) {
+    updateCache();
+  }
+  
   // Очищаем канвас
   background(0);
-  
-  // Вычисляем параметры в пикселях на основе процентов
-  let cornerRadius = (cornerRadiusPercent / 100) * squareSize;
-  let lineWeight = (lineWeightPercent / 100) * squareSize;
-  
-  // Вычисляем длину линий в пикселях на основе процентов
-  // Если значение 0, используем 0.01% чтобы линии не исчезали полностью
-  let actualLengthPercent = lineLengthPercent === 0 ? 0.01 : lineLengthPercent;
-  let lineLength = (actualLengthPercent / 100) * squareSize;
-  
-  // Размер креста (два квадрата)
-  let crossSize = squareSize * 2;
-  // Расстояние между крестами в пикселях
-  let spacing = (spacingPercent / 100) * crossSize;
-  // Общий шаг сетки (размер креста + расстояние)
-  let gridStep = crossSize + spacing;
   
   // Устанавливаем параметры для рисования
   noFill();
   stroke(255);
-  strokeWeight(lineWeight);
+  strokeWeight(cachedLineWeight);
   // Устанавливаем тип окончаний штрихов
   if (roundCaps) {
     strokeCap(ROUND);
@@ -208,46 +279,19 @@ function draw() {
     strokeCap(SQUARE);
   }
   
-  // Вычисляем количество крестов, которые поместятся на экране
-  let startX = -gridStep;
-  let startY = -gridStep;
-  let endX = width + gridStep;
-  let endY = height + gridStep;
+  // Вычисляем границы для рисования
+  let bounds = calculateGridBounds(width, height, cachedGridStep);
   
   // Рисуем сетку крестов
-  let rowIndex = 0;
-  let currentY = startY;
-  
-  while (currentY < endY) {
-    let colIndex = 0;
-    for (let x = startX; x < endX; x += gridStep) {
-      // В шахматном режиме сдвигаем каждую вторую строку
-      let offsetX = x;
-      if (checkerboardMode && rowIndex % 2 === 1) {
-        offsetX = x + gridStep / 2;
-      }
-      
-      push();
-      translate(offsetX, currentY);
-      
-      // Рисуем один крест (квадрат Б + квадрат А)
-      drawCross(cornerRadius, lineLength);
-      
-      pop();
-      colIndex++;
-    }
+  iterateGrid(bounds, cachedGridStep, checkerboardMode, (x, y) => {
+    push();
+    translate(x, y);
     
-    // Вычисляем шаг по вертикали
-    if (checkerboardMode) {
-      // В шахматном режиме используем вертикальный шаг равный половине горизонтального
-      currentY += gridStep / 2;
-    } else {
-      // Обычный режим
-      currentY += gridStep;
-    }
+    // Рисуем один крест (квадрат Б + квадрат А)
+    drawCross(cachedCornerRadius, cachedLineLength);
     
-    rowIndex++;
-  }
+    pop();
+  });
 }
 
 // Функция для рисования одного креста
@@ -406,11 +450,12 @@ function exportSVG() {
 
 // Функция генерации SVG контента
 function generateSVGContent() {
-  // Вычисляем параметры
+  // Кэшируем все параметры для избежания повторных вычислений
   let cornerRadius = (cornerRadiusPercent / 100) * squareSize;
   let lineWeight = (lineWeightPercent / 100) * squareSize;
   let actualLengthPercent = lineLengthPercent === 0 ? 0.01 : lineLengthPercent;
   let lineLength = (actualLengthPercent / 100) * squareSize;
+  let capStyle = roundCaps ? 'round' : 'square';
   
   let crossSize = squareSize * 2;
   let spacing = (spacingPercent / 100) * crossSize;
@@ -420,86 +465,153 @@ function generateSVGContent() {
   let svgWidth = windowWidth;
   let svgHeight = windowHeight;
   
+  // Используем массив для эффективной генерации SVG
+  let svgParts = [];
+  
   // Начало SVG
-  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">`;
-  svg += `<rect width="100%" height="100%" fill="black"/>`;
+  svgParts.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">`);
+  svgParts.push(`<rect width="100%" height="100%" fill="black"/>`);
   
-  // Вычисляем границы для рисования
-  let startX = -gridStep;
-  let startY = -gridStep;
-  let endX = svgWidth + gridStep;
-  let endY = svgHeight + gridStep;
+  // Вычисляем границы для рисования используя общую функцию
+  let bounds = calculateGridBounds(svgWidth, svgHeight, gridStep);
   
-  // Рисуем сетку крестов
-  let rowIndex = 0;
-  let currentY = startY;
+  // Рисуем сетку крестов используя общую функцию
+  iterateGrid(bounds, gridStep, checkerboardMode, (offsetX, offsetY) => {
+    // Генерируем SVG для одного креста с кэшированными параметрами
+    generateCrossSVG(svgParts, offsetX, offsetY, cornerRadius, lineLength, lineWeight, capStyle);
+  });
   
-  while (currentY < endY) {
-    for (let x = startX; x < endX; x += gridStep) {
-      // В шахматном режиме сдвигаем каждую вторую строку
-      let offsetX = x;
-      if (checkerboardMode && rowIndex % 2 === 1) {
-        offsetX = x + gridStep / 2;
-      }
-      
-      // Генерируем SVG для одного креста
-      svg += generateCrossSVG(offsetX, currentY, cornerRadius, lineLength, lineWeight);
-    }
-    
-    // Вычисляем шаг по вертикали
-    if (checkerboardMode) {
-      currentY += gridStep / 2;
-    } else {
-      currentY += gridStep;
-    }
-    
-    rowIndex++;
-  }
-  
-  svg += '</svg>';
-  return svg;
+  svgParts.push('</svg>');
+  return svgParts.join('');
 }
 
 // Функция генерации SVG для одного креста
-function generateCrossSVG(x, y, cornerRadius, lineLength, lineWeight) {
-  let svg = '';
-  let capStyle = roundCaps ? 'round' : 'square';
-  
+function generateCrossSVG(svgParts, x, y, cornerRadius, lineLength, lineWeight, capStyle) {
   if (bothSquaresBMode) {
     // Режим двух дуг
     // Первый квадрат Б (верхний правый)
-    svg += generateSquareBSVG(x, y, cornerRadius, lineWeight, capStyle);
+    generateSquareBSVG(svgParts, x, y, cornerRadius, lineWeight, capStyle);
     
-    // Второй квадрат Б (нижний левый) - отраженный по обеим осям
-    // Позиция нижнего левого квадрата
-    let aX = x - squareSize;
-    let aY = y + squareSize;
+    // Второй квадрат Б (нижний левый) - делаем отраженную копию
+    // Позиция второго квадрата (нижний левый)
+    let secondX = x - squareSize;
+    let secondY = y + squareSize;
     
-    // Для отражения по обеим осям в SVG используем transform
-    svg += `<g transform="translate(${aX + squareSize}, ${aY + squareSize}) scale(-1, -1) translate(${-squareSize}, ${-squareSize})">`;
-    svg += generateSquareBSVG(0, 0, cornerRadius, lineWeight, capStyle);
-    svg += '</g>';
+    // Генерируем отраженную версию квадрата Б для нижнего левого положения
+    generateReflectedSquareBSVG(svgParts, secondX, secondY, cornerRadius, lineWeight, capStyle);
   } else {
     // Обычный режим (квадрат Б + квадрат А)
     // Квадрат Б (верхний правый)
-    svg += generateSquareBSVG(x, y, cornerRadius, lineWeight, capStyle);
+    generateSquareBSVG(svgParts, x, y, cornerRadius, lineWeight, capStyle);
     
     // Квадрат А (нижний левый)
     let aX = x - squareSize;
     let aY = y + squareSize;
     
     // Верхняя грань квадрата А
-    svg += `<line x1="${aX}" y1="${aY}" x2="${aX + lineLength}" y2="${aY}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`;
+    svgParts.push(`<line x1="${aX}" y1="${aY}" x2="${aX + lineLength}" y2="${aY}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`);
     
     // Правая грань квадрата А
-    svg += `<line x1="${aX + squareSize}" y1="${aY + squareSize - lineLength}" x2="${aX + squareSize}" y2="${aY + squareSize}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`;
+    svgParts.push(`<line x1="${aX + squareSize}" y1="${aY + squareSize - lineLength}" x2="${aX + squareSize}" y2="${aY + squareSize}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`);
+  }
+}
+
+// Функция генерации отраженной версии квадрата Б для нижнего левого положения
+function generateReflectedSquareBSVG(svgParts, x, y, cornerRadius, lineWeight, capStyle) {
+  let actualLengthPercent = lineBLengthPercent === 0 ? 0.01 : lineBLengthPercent;
+  
+  // Вычисляем общую длину линии
+  let verticalLength = squareSize - cornerRadius;
+  let arcLength = (PI / 2) * cornerRadius;
+  let horizontalLength = squareSize - cornerRadius;
+  let fullLength = verticalLength + arcLength + horizontalLength;
+  
+  let desiredLength = (actualLengthPercent / 100) * fullLength;
+  
+  if (desiredLength >= fullLength) {
+    // Полная отраженная линия
+    generateFullReflectedSquareBSVG(svgParts, x, y, cornerRadius, lineWeight, capStyle);
+  } else {
+    // Сегменты с разрывом для отраженной версии
+    let segment1Length = desiredLength / 2;
+    let segment2Start = fullLength - desiredLength / 2;
+    
+    generateReflectedSquareBSegmentSVG(svgParts, x, y, cornerRadius, lineWeight, capStyle, 0, segment1Length, verticalLength, arcLength);
+    generateReflectedSquareBSegmentSVG(svgParts, x, y, cornerRadius, lineWeight, capStyle, segment2Start, fullLength, verticalLength, arcLength);
+  }
+}
+
+// Функция генерации полной отраженной версии квадрата Б
+function generateFullReflectedSquareBSVG(svgParts, x, y, cornerRadius, lineWeight, capStyle) {
+  if (cornerRadius <= 0) {
+    // Прямые линии для отраженной версии (правая вертикаль + верхняя горизонталь)
+    svgParts.push(`<line x1="${x + squareSize}" y1="${y + squareSize}" x2="${x + squareSize}" y2="${y}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`);
+    svgParts.push(`<line x1="${x + squareSize}" y1="${y}" x2="${x}" y2="${y}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`);
+  } else {
+    // Правая грань (снизу вверх)
+    svgParts.push(`<line x1="${x + squareSize}" y1="${y + squareSize}" x2="${x + squareSize}" y2="${y + cornerRadius}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`);
+    
+    // Дуга скругления для отраженной версии - в правом верхнем углу
+    // От точки (x + squareSize, y + cornerRadius) к точке (x + squareSize - cornerRadius, y)
+    svgParts.push(`<path d="M ${x + squareSize} ${y + cornerRadius} A ${cornerRadius} ${cornerRadius} 0 0 0 ${x + squareSize - cornerRadius} ${y}" stroke="white" stroke-width="${lineWeight}" fill="none" stroke-linecap="${capStyle}"/>`);
+    
+    // Верхняя грань (справа налево)
+    svgParts.push(`<line x1="${x + squareSize - cornerRadius}" y1="${y}" x2="${x}" y2="${y}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`);
+  }
+}
+
+// Функция генерации сегмента отраженной версии квадрата Б
+function generateReflectedSquareBSegmentSVG(svgParts, x, y, cornerRadius, lineWeight, capStyle, startPos, endPos, verticalLength, arcLength) {
+  let length = endPos - startPos;
+  
+  if (length <= 0) return;
+  
+  if (startPos < verticalLength) {
+    // Вертикальная часть (правая грань, снизу вверх)
+    let segmentStart = startPos;
+    let segmentEnd = min(endPos, verticalLength);
+    if (segmentEnd > segmentStart) {
+      svgParts.push(`<line x1="${x + squareSize}" y1="${y + squareSize - segmentStart}" x2="${x + squareSize}" y2="${y + squareSize - segmentEnd}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`);
+    }
   }
   
-  return svg;
+  if (startPos < verticalLength + arcLength && endPos > verticalLength) {
+    // Дуга для отраженной версии
+    let arcStart = max(0, startPos - verticalLength);
+    let arcEnd = min(arcLength, endPos - verticalLength);
+    
+    if (arcEnd > arcStart) {
+      let totalArcAngle = HALF_PI; // 90 градусов
+      let startAngle = (arcStart / arcLength) * totalArcAngle;
+      let endAngle = (arcEnd / arcLength) * totalArcAngle;
+      
+      // Центр дуги для отраженной версии
+      let cx = x + squareSize - cornerRadius;
+      let cy = y + cornerRadius;
+      
+      // Вычисляем начальную и конечную точки для отраженной дуги
+      let startX = cx + cornerRadius * sin(startAngle);
+      let startY = cy - cornerRadius * cos(startAngle);
+      let endX = cx + cornerRadius * sin(endAngle);
+      let endY = cy - cornerRadius * cos(endAngle);
+      
+      svgParts.push(`<path d="M ${startX} ${startY} A ${cornerRadius} ${cornerRadius} 0 0 0 ${endX} ${endY}" stroke="white" stroke-width="${lineWeight}" fill="none" stroke-linecap="${capStyle}"/>`);
+    }
+  }
+  
+  if (endPos > verticalLength + arcLength) {
+    // Горизонтальная часть (верхняя грань, справа налево)
+    let segmentStart = max(0, startPos - verticalLength - arcLength);
+    let segmentEnd = endPos - verticalLength - arcLength;
+    
+    if (segmentEnd > segmentStart) {
+      svgParts.push(`<line x1="${x + squareSize - cornerRadius - segmentStart}" y1="${y}" x2="${x + squareSize - cornerRadius - segmentEnd}" y2="${y}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`);
+    }
+  }
 }
 
 // Функция генерации SVG для квадрата Б
-function generateSquareBSVG(x, y, cornerRadius, lineWeight, capStyle) {
+function generateSquareBSVG(svgParts, x, y, cornerRadius, lineWeight, capStyle) {
   let actualLengthPercent = lineBLengthPercent === 0 ? 0.01 : lineBLengthPercent;
   
   // Вычисляем общую длину линии
@@ -512,56 +624,49 @@ function generateSquareBSVG(x, y, cornerRadius, lineWeight, capStyle) {
   
   if (desiredLength >= fullLength) {
     // Полная линия
-    return generateFullSquareBSVG(x, y, cornerRadius, lineWeight, capStyle);
+    generateFullSquareBSVG(svgParts, x, y, cornerRadius, lineWeight, capStyle);
   } else {
     // Сегменты с разрывом
     let segment1Length = desiredLength / 2;
     let segment2Start = fullLength - desiredLength / 2;
     
-    let svg1 = generateSquareBSegmentSVG(x, y, cornerRadius, lineWeight, capStyle, 0, segment1Length, verticalLength, arcLength);
-    let svg2 = generateSquareBSegmentSVG(x, y, cornerRadius, lineWeight, capStyle, segment2Start, fullLength, verticalLength, arcLength);
-    
-    return svg1 + svg2;
+    generateSquareBSegmentSVG(svgParts, x, y, cornerRadius, lineWeight, capStyle, 0, segment1Length, verticalLength, arcLength);
+    generateSquareBSegmentSVG(svgParts, x, y, cornerRadius, lineWeight, capStyle, segment2Start, fullLength, verticalLength, arcLength);
   }
 }
 
 // Функция генерации SVG для полного квадрата Б
-function generateFullSquareBSVG(x, y, cornerRadius, lineWeight, capStyle) {
-  let svg = '';
-  
+function generateFullSquareBSVG(svgParts, x, y, cornerRadius, lineWeight, capStyle) {
   if (cornerRadius <= 0) {
     // Прямые линии
-    svg += `<line x1="${x}" y1="${y}" x2="${x}" y2="${y + squareSize}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`;
-    svg += `<line x1="${x}" y1="${y + squareSize}" x2="${x + squareSize}" y2="${y + squareSize}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`;
+    svgParts.push(`<line x1="${x}" y1="${y}" x2="${x}" y2="${y + squareSize}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`);
+    svgParts.push(`<line x1="${x}" y1="${y + squareSize}" x2="${x + squareSize}" y2="${y + squareSize}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`);
   } else {
     // Левая грань
-    svg += `<line x1="${x}" y1="${y}" x2="${x}" y2="${y + squareSize - cornerRadius}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`;
+    svgParts.push(`<line x1="${x}" y1="${y}" x2="${x}" y2="${y + squareSize - cornerRadius}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`);
     
     // Дуга скругления - простой подход
     // От точки (x, y + squareSize - cornerRadius) к точке (x + cornerRadius, y + squareSize)
     // Это создает вогнутую дугу в левом нижнем углу
-    svg += `<path d="M ${x} ${y + squareSize - cornerRadius} A ${cornerRadius} ${cornerRadius} 0 0 0 ${x + cornerRadius} ${y + squareSize}" stroke="white" stroke-width="${lineWeight}" fill="none" stroke-linecap="${capStyle}"/>`;
+    svgParts.push(`<path d="M ${x} ${y + squareSize - cornerRadius} A ${cornerRadius} ${cornerRadius} 0 0 0 ${x + cornerRadius} ${y + squareSize}" stroke="white" stroke-width="${lineWeight}" fill="none" stroke-linecap="${capStyle}"/>`);
     
     // Нижняя грань
-    svg += `<line x1="${x + cornerRadius}" y1="${y + squareSize}" x2="${x + squareSize}" y2="${y + squareSize}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`;
+    svgParts.push(`<line x1="${x + cornerRadius}" y1="${y + squareSize}" x2="${x + squareSize}" y2="${y + squareSize}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`);
   }
-  
-  return svg;
 }
 
 // Функция генерации SVG для сегмента квадрата Б
-function generateSquareBSegmentSVG(x, y, cornerRadius, lineWeight, capStyle, startPos, endPos, verticalLength, arcLength) {
-  let svg = '';
+function generateSquareBSegmentSVG(svgParts, x, y, cornerRadius, lineWeight, capStyle, startPos, endPos, verticalLength, arcLength) {
   let length = endPos - startPos;
   
-  if (length <= 0) return svg;
+  if (length <= 0) return;
   
   if (startPos < verticalLength) {
     // Вертикальная часть
     let segmentStart = startPos;
     let segmentEnd = min(endPos, verticalLength);
     if (segmentEnd > segmentStart) {
-      svg += `<line x1="${x}" y1="${y + segmentStart}" x2="${x}" y2="${y + segmentEnd}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`;
+      svgParts.push(`<line x1="${x}" y1="${y + segmentStart}" x2="${x}" y2="${y + segmentEnd}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`);
     }
   }
   
@@ -588,7 +693,7 @@ function generateSquareBSegmentSVG(x, y, cornerRadius, lineWeight, capStyle, sta
       let endY = cy + cornerRadius * sin(endAngle);
       
       // Используем sweep-flag = 0 для движения по часовой стрелке
-      svg += `<path d="M ${startX} ${startY} A ${cornerRadius} ${cornerRadius} 0 0 0 ${endX} ${endY}" stroke="white" stroke-width="${lineWeight}" fill="none" stroke-linecap="${capStyle}"/>`;
+      svgParts.push(`<path d="M ${startX} ${startY} A ${cornerRadius} ${cornerRadius} 0 0 0 ${endX} ${endY}" stroke="white" stroke-width="${lineWeight}" fill="none" stroke-linecap="${capStyle}"/>`);
     }
   }
   
@@ -598,17 +703,15 @@ function generateSquareBSegmentSVG(x, y, cornerRadius, lineWeight, capStyle, sta
     let segmentEnd = endPos - verticalLength - arcLength;
     
     if (segmentEnd > segmentStart) {
-      svg += `<line x1="${x + cornerRadius + segmentStart}" y1="${y + squareSize}" x2="${x + cornerRadius + segmentEnd}" y2="${y + squareSize}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`;
+      svgParts.push(`<line x1="${x + cornerRadius + segmentStart}" y1="${y + squareSize}" x2="${x + cornerRadius + segmentEnd}" y2="${y + squareSize}" stroke="white" stroke-width="${lineWeight}" stroke-linecap="${capStyle}"/>`);
     }
   }
-  
-  return svg;
 }
 
 // Обработка изменения размера окна
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  background(0);
+  redraw();
 }
 
 // Функция настройки горячих клавиш
@@ -637,19 +740,7 @@ function setupKeyboardShortcuts() {
 function saveCurrentStateImmediately() {
   if (isUpdatingControls) return; // Не сохраняем состояние при программном обновлении
   
-  let currentState = {
-    squareSize: squareSize,
-    lineWeightPercent: lineWeightPercent,
-    cornerRadiusPercent: cornerRadiusPercent,
-    lineLengthPercent: lineLengthPercent,
-    roundCaps: roundCaps,
-    spacingPercent: spacingPercent,
-    checkerboardMode: checkerboardMode,
-    lineBLengthPercent: lineBLengthPercent,
-    bothSquaresBMode: bothSquaresBMode
-  };
-  
-  stateHistory.push(currentState);
+  stateHistory.push(getCurrentState());
   
   // При новом изменении очищаем redo историю
   redoHistory = [];
@@ -660,12 +751,6 @@ function saveCurrentStateImmediately() {
   }
 }
 
-// Функция сохранения текущего состояния в историю с debouncing (убираем, заменяем на немедленное сохранение)
-function saveStateToHistory() {
-  // Эта функция больше не нужна, но оставляем для совместимости
-  saveCurrentStateImmediately();
-}
-
 // Функция отмены последнего изменения
 function undoLastChange() {
   if (stateHistory.length === 0) {
@@ -673,19 +758,7 @@ function undoLastChange() {
   }
   
   // Сохраняем текущее состояние в redo историю
-  let currentState = {
-    squareSize: squareSize,
-    lineWeightPercent: lineWeightPercent,
-    cornerRadiusPercent: cornerRadiusPercent,
-    lineLengthPercent: lineLengthPercent,
-    roundCaps: roundCaps,
-    spacingPercent: spacingPercent,
-    checkerboardMode: checkerboardMode,
-    lineBLengthPercent: lineBLengthPercent,
-    bothSquaresBMode: bothSquaresBMode
-  };
-  
-  redoHistory.push(currentState);
+  redoHistory.push(getCurrentState());
   
   // Ограничиваем размер redo истории
   if (redoHistory.length > maxHistorySize) {
@@ -698,16 +771,8 @@ function undoLastChange() {
   // Устанавливаем флаг обновления
   isUpdatingControls = true;
   
-  // Восстанавливаем все параметры
-  squareSize = previousState.squareSize;
-  lineWeightPercent = previousState.lineWeightPercent;
-  cornerRadiusPercent = previousState.cornerRadiusPercent;
-  lineLengthPercent = previousState.lineLengthPercent;
-  roundCaps = previousState.roundCaps;
-  spacingPercent = previousState.spacingPercent;
-  checkerboardMode = previousState.checkerboardMode;
-  lineBLengthPercent = previousState.lineBLengthPercent;
-  bothSquaresBMode = previousState.bothSquaresBMode;
+  // Восстанавливаем состояние
+  restoreState(previousState);
   
   // Обновляем интерфейс
   updateAllControls();
@@ -715,8 +780,9 @@ function undoLastChange() {
   // Сбрасываем флаг обновления
   isUpdatingControls = false;
   
-  // Перерисовываем
-  loop();
+  // Инвалидируем кэш и перерисовываем
+  cacheValid = false;
+  redraw();
 }
 
 // Функция повтора последнего отмененного изменения
@@ -726,19 +792,7 @@ function redoLastChange() {
   }
   
   // Сохраняем текущее состояние в undo историю
-  let currentState = {
-    squareSize: squareSize,
-    lineWeightPercent: lineWeightPercent,
-    cornerRadiusPercent: cornerRadiusPercent,
-    lineLengthPercent: lineLengthPercent,
-    roundCaps: roundCaps,
-    spacingPercent: spacingPercent,
-    checkerboardMode: checkerboardMode,
-    lineBLengthPercent: lineBLengthPercent,
-    bothSquaresBMode: bothSquaresBMode
-  };
-  
-  stateHistory.push(currentState);
+  stateHistory.push(getCurrentState());
   
   // Ограничиваем размер undo истории
   if (stateHistory.length > maxHistorySize) {
@@ -751,16 +805,8 @@ function redoLastChange() {
   // Устанавливаем флаг обновления
   isUpdatingControls = true;
   
-  // Восстанавливаем все параметры
-  squareSize = redoState.squareSize;
-  lineWeightPercent = redoState.lineWeightPercent;
-  cornerRadiusPercent = redoState.cornerRadiusPercent;
-  lineLengthPercent = redoState.lineLengthPercent;
-  roundCaps = redoState.roundCaps;
-  spacingPercent = redoState.spacingPercent;
-  checkerboardMode = redoState.checkerboardMode;
-  lineBLengthPercent = redoState.lineBLengthPercent;
-  bothSquaresBMode = redoState.bothSquaresBMode;
+  // Восстанавливаем состояние
+  restoreState(redoState);
   
   // Обновляем интерфейс
   updateAllControls();
@@ -768,8 +814,9 @@ function redoLastChange() {
   // Сбрасываем флаг обновления
   isUpdatingControls = false;
   
-  // Перерисовываем
-  loop();
+  // Инвалидируем кэш и перерисовываем
+  cacheValid = false;
+  redraw();
 }
 
 // Функция обновления всех контролов в интерфейсе
@@ -778,64 +825,93 @@ function updateAllControls() {
   isUpdatingControls = true;
   
   // Обновляем слайдеры и их значения
-  const radiusSlider = document.getElementById('radius-slider');
-  const radiusValue = document.getElementById('radius-value');
-  if (radiusSlider && radiusValue) {
-    radiusSlider.value = cornerRadiusPercent;
-    radiusValue.textContent = cornerRadiusPercent + '%';
+  if (domElements.radiusSlider && domElements.radiusValue) {
+    domElements.radiusSlider.value = cornerRadiusPercent;
+    domElements.radiusValue.textContent = cornerRadiusPercent + '%';
   }
   
-  const lengthSlider = document.getElementById('length-slider');
-  const lengthValue = document.getElementById('length-value');
-  if (lengthSlider && lengthValue) {
-    lengthSlider.value = lineLengthPercent;
-    lengthValue.textContent = lineLengthPercent + '%';
+  if (domElements.lengthSlider && domElements.lengthValue) {
+    domElements.lengthSlider.value = lineLengthPercent;
+    domElements.lengthValue.textContent = lineLengthPercent + '%';
   }
   
-  const lengthBSlider = document.getElementById('length-b-slider');
-  const lengthBValue = document.getElementById('length-b-value');
-  if (lengthBSlider && lengthBValue) {
-    lengthBSlider.value = lineBLengthPercent;
-    lengthBValue.textContent = lineBLengthPercent + '%';
+  if (domElements.lengthBSlider && domElements.lengthBValue) {
+    domElements.lengthBSlider.value = lineBLengthPercent;
+    domElements.lengthBValue.textContent = lineBLengthPercent + '%';
   }
   
-  const thicknessSlider = document.getElementById('thickness-slider');
-  const thicknessValue = document.getElementById('thickness-value');
-  if (thicknessSlider && thicknessValue) {
-    thicknessSlider.value = lineWeightPercent;
-    thicknessValue.textContent = lineWeightPercent + '%';
+  if (domElements.thicknessSlider && domElements.thicknessValue) {
+    domElements.thicknessSlider.value = lineWeightPercent;
+    domElements.thicknessValue.textContent = lineWeightPercent + '%';
   }
   
-  const spacingSlider = document.getElementById('spacing-slider');
-  const spacingValue = document.getElementById('spacing-value');
-  if (spacingSlider && spacingValue) {
-    spacingSlider.value = spacingPercent;
-    spacingValue.textContent = spacingPercent + '%';
+  if (domElements.spacingSlider && domElements.spacingValue) {
+    domElements.spacingSlider.value = spacingPercent;
+    domElements.spacingValue.textContent = spacingPercent + '%';
   }
   
-  const sizeSlider = document.getElementById('size-slider');
-  const sizeValue = document.getElementById('size-value');
-  if (sizeSlider && sizeValue) {
-    sizeSlider.value = squareSize;
-    sizeValue.textContent = squareSize + 'px';
+  if (domElements.sizeSlider && domElements.sizeValue) {
+    domElements.sizeSlider.value = squareSize;
+    domElements.sizeValue.textContent = squareSize + 'px';
   }
   
   // Обновляем чекбоксы
-  const capsCheckbox = document.getElementById('caps-checkbox');
-  if (capsCheckbox) {
-    capsCheckbox.checked = roundCaps;
+  if (domElements.capsCheckbox) {
+    domElements.capsCheckbox.checked = roundCaps;
   }
   
-  const checkerboardCheckbox = document.getElementById('checkerboard-checkbox');
-  if (checkerboardCheckbox) {
-    checkerboardCheckbox.checked = checkerboardMode;
+  if (domElements.checkerboardCheckbox) {
+    domElements.checkerboardCheckbox.checked = checkerboardMode;
   }
   
-  const bothSquaresCheckbox = document.getElementById('both-squares-checkbox');
-  if (bothSquaresCheckbox) {
-    bothSquaresCheckbox.checked = bothSquaresBMode;
+  if (domElements.bothSquaresCheckbox) {
+    domElements.bothSquaresCheckbox.checked = bothSquaresBMode;
   }
   
   // Сбрасываем флаг обновления
   isUpdatingControls = false;
+}
+
+// Функция обновления кэша вычислений
+function updateCache() {
+  cachedCornerRadius = (cornerRadiusPercent / 100) * squareSize;
+  cachedLineWeight = (lineWeightPercent / 100) * squareSize;
+  
+  // Если значение 0, используем 0.01% чтобы линии не исчезали полностью
+  let actualLengthPercent = lineLengthPercent === 0 ? 0.01 : lineLengthPercent;
+  cachedLineLength = (actualLengthPercent / 100) * squareSize;
+  
+  cachedCrossSize = squareSize * 2;
+  cachedSpacing = (spacingPercent / 100) * cachedCrossSize;
+  cachedGridStep = cachedCrossSize + cachedSpacing;
+  
+  cacheValid = true;
+}
+
+// Функция получения текущего состояния приложения
+function getCurrentState() {
+  return {
+    squareSize: squareSize,
+    lineWeightPercent: lineWeightPercent,
+    cornerRadiusPercent: cornerRadiusPercent,
+    lineLengthPercent: lineLengthPercent,
+    roundCaps: roundCaps,
+    spacingPercent: spacingPercent,
+    checkerboardMode: checkerboardMode,
+    lineBLengthPercent: lineBLengthPercent,
+    bothSquaresBMode: bothSquaresBMode
+  };
+}
+
+// Функция восстановления состояния приложения
+function restoreState(state) {
+  squareSize = state.squareSize;
+  lineWeightPercent = state.lineWeightPercent;
+  cornerRadiusPercent = state.cornerRadiusPercent;
+  lineLengthPercent = state.lineLengthPercent;
+  roundCaps = state.roundCaps;
+  spacingPercent = state.spacingPercent;
+  checkerboardMode = state.checkerboardMode;
+  lineBLengthPercent = state.lineBLengthPercent;
+  bothSquaresBMode = state.bothSquaresBMode;
 } 
