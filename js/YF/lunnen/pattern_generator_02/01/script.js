@@ -246,16 +246,41 @@ function setupSliderWithHistory(slider, valueDisplay, callback) {
 
 // Функция настройки платформо-специфичного UI
 function setupPlatformSpecificUI() {
-  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  // Определяем мобильное устройство
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   (navigator.maxTouchPoints > 0 && navigator.platform === 'MacIntel'); // iPad на iOS 13+
+  
+  // Определяем Mac (но не мобильный)
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0 && !isMobile;
+  
   const macShortcut = document.querySelector('.mac-shortcut');
   const pcShortcut = document.querySelector('.pc-shortcut');
   
-  if (isMac) {
+  if (isMobile) {
+    // На мобильных устройствах показываем просто "SVG" без хоткея
+    macShortcut.style.display = 'none';
+    pcShortcut.style.display = 'none';
+    // Создаем элемент для мобильной версии если его нет
+    let mobileText = document.querySelector('.mobile-text');
+    if (!mobileText) {
+      mobileText = document.createElement('span');
+      mobileText.className = 'mobile-text';
+      mobileText.textContent = 'SVG';
+      document.getElementById('export-button').appendChild(mobileText);
+    }
+    mobileText.style.display = 'inline';
+  } else if (isMac) {
     macShortcut.style.display = 'inline';
     pcShortcut.style.display = 'none';
+    // Скрываем мобильный текст если есть
+    const mobileText = document.querySelector('.mobile-text');
+    if (mobileText) mobileText.style.display = 'none';
   } else {
     macShortcut.style.display = 'none';
     pcShortcut.style.display = 'inline';
+    // Скрываем мобильный текст если есть
+    const mobileText = document.querySelector('.mobile-text');
+    if (mobileText) mobileText.style.display = 'none';
   }
 }
 
