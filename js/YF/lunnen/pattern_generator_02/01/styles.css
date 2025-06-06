@@ -149,4 +149,108 @@ canvas {
     }
 }
 
-/* Медиа-запрос для определения Mac по user agent (через CSS не работает, делаем через JS) */ 
+/* Медиа-запрос для определения Mac по user agent (через CSS не работает, делаем через JS) */
+
+/* Мобильные устройства - компактная панель */
+@media (max-width: 768px) {
+    .controls-panel {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+        padding: 12px;
+        font-size: 12px;
+        border-radius: 4px;
+    }
+    
+    .control-group {
+        margin-bottom: 8px;
+    }
+    
+    .control-group label {
+        margin-bottom: 3px;
+        font-size: 12px;
+    }
+    
+    .checkbox-group {
+        margin-bottom: 6px;
+        gap: 6px;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+        width: 14px;
+        height: 14px;
+    }
+    
+    .checkbox-group label {
+        font-size: 12px;
+    }
+    
+    .export-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+        margin-top: 8px;
+    }
+    
+    /* Thumb для слайдеров на мобиле - немного меньше */
+    .control-group input[type="range"]::-webkit-slider-thumb {
+        height: 16px;
+        width: 16px;
+    }
+    
+    .control-group input[type="range"]::-moz-range-thumb {
+        height: 16px;
+        width: 16px;
+    }
+}
+
+/* Очень маленькие экраны - еще более компактно */
+@media (max-width: 480px) {
+    .controls-panel {
+        bottom: 5px;
+        right: 5px;
+        left: 5px;
+        padding: 8px;
+        font-size: 11px;
+    }
+    
+    .control-group {
+        margin-bottom: 6px;
+    }
+    
+    .control-group label {
+        margin-bottom: 2px;
+        font-size: 11px;
+    }
+    
+    .checkbox-group {
+        margin-bottom: 4px;
+        gap: 4px;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+        width: 12px;
+        height: 12px;
+    }
+    
+    .checkbox-group label {
+        font-size: 11px;
+    }
+    
+    .export-btn {
+        padding: 4px 8px;
+        font-size: 11px;
+        margin-top: 6px;
+    }
+    
+    /* Еще меньшие thumb на очень маленьких экранах */
+    .control-group input[type="range"]::-webkit-slider-thumb {
+        height: 18px;
+        width: 18px;
+    }
+    
+    .control-group input[type="range"]::-moz-range-thumb {
+        height: 18px;
+        width: 18px;
+    }
+} 

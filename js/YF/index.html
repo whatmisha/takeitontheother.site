@@ -77,6 +77,7 @@
         name: "Lunnen",
         apps: [
           { name: "pattern_generator", displayName: "Pattern Generator" },
+          { name: "pattern_generator_02", displayName: "Pattern Generator 02" },
           { name: "rays_pattern_generator", displayName: "Rays Pattern Generator" },
           { name: "random_lines_generator", displayName: "Random Lines Generator" }
         ]
@@ -129,7 +130,7 @@
           link.className = 'app-link';
           
           // Особая обработка для rays_pattern_generator
-          if (app.name === 'rays_pattern_generator' || app.name === 'random_lines_generator') {
+          if (app.name === 'rays_pattern_generator' || app.name === 'random_lines_generator' || app.name === 'pattern_generator_02') {
             link.href = `${project.name.toLowerCase()}/${app.name}/01/`;
           } else {
             link.href = `${project.name.toLowerCase()}/${app.name}/`;
