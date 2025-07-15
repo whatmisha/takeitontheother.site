@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Interactive Scroll Video Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: Arial, sans-serif;
+      background: #000;
+      color: white;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      width: 1920px;
+      height: 4840px;
+      margin: 0 auto;
+      background: #000;
+      contain: layout style paint;
+    }
+    
+    /* Header Section */
+    .header-section {
+      height: 30vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 0 60px;
+      background: #000;
+    }
+    
+    .main-title {
+      font-size: 96px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.1;
+      margin: 0;
+      letter-spacing: -0.02em;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      animation: fadeInUp 1s ease-out;
+    }
+    
+    .subtitle {
+      font-size: 28px;
+      font-weight: 400;
+      color: #a1a1a6;
+      margin: 24px 0 0 0;
+      line-height: 1.4;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      animation: fadeInUp 1s ease-out 0.3s both;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Video Section */
+    .video-section {
+      height: 70vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: #000;
+      padding: 20px;
+    }
+    
+    /* Убрали подложку полностью */
+    
+    video {
+      width: 100%;
+      height: auto;
+      max-width: 1920px;
+      border-radius: 20px; /* Закругленные края */
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+      will-change: transform;
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      image-rendering: optimizeSpeed;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: optimize-contrast;
+      animation: fadeInUp 1s ease-out 0.6s both;
+      transition: all 0.3s ease;
+      position: relative;
+      z-index: 2;
+    }
+    
+    /* Убрали hover эффекты для видео */
+    
+    /* Убрали overlay подсказку */
+    
+    /* Content Sections */
+    .content-section {
+      min-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 80px 60px;
+      background: #000;
+      border-top: 1px solid #1d1d1f;
+      transition: background-color 0.3s ease;
+    }
+    
+    .content-section:hover {
+      background: #0a0a0a;
+    }
+    
+    .content-section:first-of-type {
+      background: linear-gradient(180deg, #000 0%, #000 100%);
+      border-top: none;
+    }
+    
+    .footer-section {
+      height: 60vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 80px 60px;
+      background: linear-gradient(180deg, #000 0%, #0a0a0a 100%);
+      border-top: 1px solid #1d1d1f;
+      transition: background-color 0.3s ease;
+    }
+    
+    .footer-section:hover {
+      background: linear-gradient(180deg, #0a0a0a 0%, #111 100%);
+    }
+    
+    .section-title {
+      font-size: 72px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.1;
+      margin: 0 0 32px 0;
+      letter-spacing: -0.02em;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: color 0.3s ease;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: none;
+    }
+    
+    .description {
+      font-size: 24px;
+      font-weight: 400;
+      color: #a1a1a6;
+      line-height: 1.5;
+      margin: 0;
+      max-width: 800px;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: color 0.3s ease;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: none;
+    }
+    
+    .section-title.visible {
+      animation: fadeInUp 0.8s ease-out forwards;
+    }
+    
+    .description.visible {
+      animation: fadeInUp 0.8s ease-out 0.2s forwards;
+    }
+    
+    .content-section:hover .section-title,
+    .footer-section:hover .section-title {
+      color: #f5f5f7;
+    }
+    
+    .content-section:hover .description,
+    .footer-section:hover .description {
+      color: #d2d2d7;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .main-title {
+        font-size: 64px;
+      }
+      .section-title {
+        font-size: 48px;
+      }
+      .subtitle, .description {
+        font-size: 20px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .main-title {
+        font-size: 48px;
+      }
+      .section-title {
+        font-size: 36px;
+      }
+      .subtitle, .description {
+        font-size: 18px;
+      }
+      .header-section, .content-section, .footer-section {
+        padding: 40px 30px;
+      }
+    }
+    
+    .progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      z-index: 999;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #007aff, #5ac8fa);
+      width: 0%;
+      box-shadow: 0 0 8px rgba(0, 122, 255, 0.5);
+      transition: width 0.1s ease-out;
+    }
+    
+    /* Убрали отладочные стили */
+  </style>
+</head>
+<body>
+  <div class="progress">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+  
+  <div class="container">
+    <!-- Header Section -->
+    <div class="header-section">
+      <h1 class="main-title">Simple Video Experience</h1>
+      <p class="subtitle">Scroll down to play, return to top to reset</p>
+    </div>
+    
+    <!-- Video Section -->
+    <div class="video-section" id="videoSection">
+      <video id="video" muted preload="auto" playsinline>
+        <source src="daycycle.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+    
+    <!-- Content Sections -->
+    <div class="content-section">
+      <h2 class="section-title">One Scroll to Play</h2>
+      <p class="description">Simply scroll down to trigger video playback. The video plays automatically to the end.</p>
+    </div>
+    
+    <div class="content-section">
+      <h2 class="section-title">Return to Reset</h2>
+      <p class="description">After watching, scroll back to the top to reset for the next viewing.</p>
+    </div>
+    
+    <div class="content-section">
+      <h2 class="section-title">Elegant Simplicity</h2>
+      <p class="description">No complex controls or interactions. Just scroll and enjoy the experience.</p>
+    </div>
+    
+    <div class="content-section">
+      <h2 class="section-title">Beautiful Design</h2>
+      <p class="description">Clean Apple-inspired interface with rounded corners and smooth animations.</p>
+    </div>
+    
+    <div class="content-section">
+      <h2 class="section-title">Seamless Experience</h2>
+      <p class="description">Video integrates naturally with the page flow. No distractions, just pure content.</p>
+    </div>
+    
+    <div class="footer-section">
+      <h2 class="section-title">Pure Simplicity</h2>
+      <p class="description">The most elegant way to experience video. Scroll to play, return to replay.</p>
+    </div>
+  </div>
+
+  <script>
+    const video = document.getElementById('video');
+    const progressBar = document.getElementById('progressBar');
+    
+    let videoLoaded = false;
+    let videoDuration = 8;
+    let lastScrollY = 0;
+    let scrollDirection = 0; // 1 = вниз, -1 = вверх, 0 = без движения
+    let videoPlaying = false;
+    let hasReturnedToTop = true; // Флаг что пользователь вернулся наверх
+    
+    // Убрали отладочные функции
+    
+    function checkScrollTriggers() {
+      const scrollY = window.pageYOffset;
+      
+      // Проверяем, вернулся ли пользователь наверх (первые 200px)
+      if (scrollY < 200) {
+        if (!hasReturnedToTop) {
+          hasReturnedToTop = true;
+          // Полный сброс видео
+          video.currentTime = 0;
+          video.pause();
+          videoPlaying = false;
+          progressBar.style.width = '0%';
+        }
+      }
+      
+      // Триггер: Скролл вниз + пользователь был наверху + видео не играет
+      if (scrollDirection === 1 && hasReturnedToTop && !videoPlaying && scrollY > 100) {
+        startVideo();
+        hasReturnedToTop = false; // Сбрасываем флаг
+      }
+    }
+    
+    function startVideo() {
+      videoPlaying = true;
+      video.currentTime = 0;
+      video.play();
+    }
+    
+    function calculateScrollDirection() {
+      const currentScrollY = window.pageYOffset;
+      const deltaY = currentScrollY - lastScrollY;
+      
+      // Определяем направление скролла
+      if (deltaY > 2) {
+        scrollDirection = 1; // Вниз
+      } else if (deltaY < -2) {
+        scrollDirection = -1; // Вверх
+      } else {
+        scrollDirection = 0; // Нет движения
+      }
+      
+      lastScrollY = currentScrollY;
+    }
+    
+    // Упростили до минимума
+    
+    // Video event listeners
+    video.addEventListener('loadedmetadata', () => {
+      videoLoaded = true;
+      videoDuration = video.duration;
+    });
+    
+    video.addEventListener('timeupdate', () => {
+      // Обновляем прогресс-бар
+      if (videoPlaying && video.duration) {
+        const progress = video.currentTime / video.duration;
+        progressBar.style.width = (progress * 100) + '%';
+      }
+    });
+    
+    video.addEventListener('ended', () => {
+      videoPlaying = false;
+      progressBar.style.width = '100%';
+      // Видео останется на последнем кадре, ждем возврата наверх
+    });
+    
+    // Scroll handler
+    let ticking = false;
+    let lastScrollTime = 0;
+    
+    function onScroll() {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const now = performance.now();
+          const deltaTime = now - lastScrollTime;
+          
+          if (deltaTime > 16) {
+            calculateScrollDirection();
+            checkScrollTriggers();
+            lastScrollTime = now;
+          }
+          
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }
+    
+    window.addEventListener('scroll', onScroll, { passive: true });
+    
+    // Initialize
+    video.muted = true;
+    video.preload = 'auto';
+    video.playsInline = true;
+    video.load();
+    video.currentTime = 0;
+    
+    // Intersection Observer for content animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const title = entry.target.querySelector('.section-title');
+          const description = entry.target.querySelector('.description');
+          
+          if (title) title.classList.add('visible');
+          if (description) description.classList.add('visible');
+        }
+      });
+    }, observerOptions);
+    
+    document.querySelectorAll('.content-section, .footer-section').forEach(section => {
+      observer.observe(section);
+    });
+    
+    // Убрали wheel обработчик - теперь простая логика
+  </script>
+</body>
+</html> 

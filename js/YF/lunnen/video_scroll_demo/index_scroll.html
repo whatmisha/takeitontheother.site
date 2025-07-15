@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Scroll Video Experience</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: Arial, sans-serif;
+      background: #000;
+      color: white;
+    }
+    
+    .container {
+      width: 1920px;
+      height: 4840px;
+      margin: 0 auto;
+      background: #000;
+      /* Оптимизация для скролла */
+      contain: layout style paint;
+    }
+    
+    /* Header Section */
+    .header-section {
+      height: 30vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 0 60px;
+      background: #000;
+    }
+    
+    .main-title {
+      font-size: 96px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.1;
+      margin: 0;
+      letter-spacing: -0.02em;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      animation: fadeInUp 1s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .subtitle {
+      font-size: 28px;
+      font-weight: 400;
+      color: #a1a1a6;
+      margin: 24px 0 0 0;
+      line-height: 1.4;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      animation: fadeInUp 1s ease-out 0.3s both;
+    }
+    
+    /* Video Section */
+    .video-section {
+      height: 70vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: #000;
+    }
+    
+    video {
+      width: 100%;
+      height: auto;
+      max-width: 1920px;
+      /* Оптимизация для плавности */
+      will-change: transform;
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      /* Улучшенная интерполяция */
+      image-rendering: optimizeSpeed;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: optimize-contrast;
+      animation: fadeInUp 1s ease-out 0.6s both;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Content Sections */
+    .content-section {
+      min-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 80px 60px;
+      background: #000;
+      border-top: 1px solid #1d1d1f;
+      transition: background-color 0.3s ease;
+    }
+    
+    .content-section:hover {
+      background: #0a0a0a;
+    }
+    
+    .content-section:first-of-type {
+      background: linear-gradient(180deg, #000 0%, #000 100%);
+      border-top: none;
+    }
+    
+    .footer-section {
+      height: 60vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 80px 60px;
+      background: linear-gradient(180deg, #000 0%, #0a0a0a 100%);
+      border-top: 1px solid #1d1d1f;
+      transition: background-color 0.3s ease;
+    }
+    
+    .footer-section:hover {
+      background: linear-gradient(180deg, #0a0a0a 0%, #111 100%);
+    }
+    
+    .section-title {
+      font-size: 72px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.1;
+      margin: 0 0 32px 0;
+      letter-spacing: -0.02em;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: color 0.3s ease;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: none;
+    }
+    
+    .description {
+      font-size: 24px;
+      font-weight: 400;
+      color: #a1a1a6;
+      line-height: 1.5;
+      margin: 0;
+      max-width: 800px;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: color 0.3s ease;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: none;
+    }
+    
+    /* Анимация при появлении в viewport */
+    .section-title.visible {
+      animation: fadeInUp 0.8s ease-out forwards;
+    }
+    
+    .description.visible {
+      animation: fadeInUp 0.8s ease-out 0.2s forwards;
+    }
+    
+    /* Subtle hover effects */
+    .content-section:hover .section-title,
+    .footer-section:hover .section-title {
+      color: #f5f5f7;
+    }
+    
+    .content-section:hover .description,
+    .footer-section:hover .description {
+      color: #d2d2d7;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .main-title {
+        font-size: 64px;
+      }
+      .section-title {
+        font-size: 48px;
+      }
+      .subtitle, .description {
+        font-size: 20px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .main-title {
+        font-size: 48px;
+      }
+      .section-title {
+        font-size: 36px;
+      }
+      .subtitle, .description {
+        font-size: 18px;
+      }
+      .header-section, .content-section, .footer-section {
+        padding: 40px 30px;
+      }
+    }
+    
+    .progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      z-index: 999;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #007aff, #5ac8fa);
+      width: 0%;
+      box-shadow: 0 0 8px rgba(0, 122, 255, 0.5);
+    }
+
+    /* Video Controller */
+    .video-controller {
+      position: fixed;
+      top: 60px;
+      right: 30px;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 12px;
+      z-index: 1000;
+      color: white;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      min-width: 250px;
+    }
+
+    .controller-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #f5f5f7;
+    }
+
+    .controller-item {
+      margin-bottom: 12px;
+    }
+
+    .controller-label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 5px;
+      color: #a1a1a6;
+    }
+
+    .controller-slider {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .controller-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #007aff;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .controller-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: #007aff;
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+    }
+
+    .controller-value {
+      font-size: 12px;
+      color: #d2d2d7;
+      margin-left: 5px;
+    }
+
+    .controller-toggle {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s ease;
+    }
+
+    .controller-toggle:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .controller-toggle.active {
+      background: #007aff;
+    }
+
+    .controller-select {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      outline: none;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .controller-select:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .controller-select:focus {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: #007aff;
+    }
+
+    .controller-select option {
+      background: #1a1a1a;
+      color: white;
+    }
+
+    /* Page Scale Styles */
+    .page-container {
+      transform-origin: top center;
+      transition: transform 0.3s ease;
+    }
+
+    .page-container.scaled {
+      transform: scale(var(--scale-factor));
+    }
+
+    /* Adjust body overflow for scaling */
+    body.scaling {
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="progress">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+  
+  <!-- Video Controller -->
+  <div class="video-controller" id="videoController">
+    <div class="controller-title">Управление видео</div>
+    
+    <div class="controller-item">
+      <label class="controller-label">Выбор видео:</label>
+      <select class="controller-select" id="videoSelector">
+        <option value="daycycle.mp4">Day Cycle</option>
+        <option value="daycycle_02.mp4">Day Cycle 02</option>
+        <option value="daycycle_03.mp4">Day Cycle 03</option>
+      </select>
+    </div>
+    
+    <div class="controller-item">
+      <label class="controller-label">Скорость проматывания: <span class="controller-value" id="speedValue">1.0x</span></label>
+      <input type="range" class="controller-slider" id="speedSlider" min="0.5" max="3" step="0.1" value="1.0">
+    </div>
+    
+    <div class="controller-item">
+      <label class="controller-label">Зона завершения: <span class="controller-value" id="endZoneValue">50%</span></label>
+      <input type="range" class="controller-slider" id="endZoneSlider" min="0" max="100" step="5" value="50">
+    </div>
+    
+    <div class="controller-item">
+      <label class="controller-label">Кривая ускорения: <span class="controller-value" id="curveValue">0.6</span></label>
+      <input type="range" class="controller-slider" id="curveSlider" min="0.3" max="1.0" step="0.1" value="0.6">
+    </div>
+    
+    <div class="controller-item">
+      <label class="controller-label">Направление проигрывания:</label>
+      <div style="display: flex; gap: 10px; margin-top: 8px;">
+        <button class="controller-toggle active" id="forwardBtn">Вперед ▶</button>
+        <button class="controller-toggle" id="backwardBtn">Назад ◀</button>
+      </div>
+    </div>
+    
+    <div class="controller-item">
+      <label class="controller-label">Масштаб страницы: <span class="controller-value" id="scaleValue">100%</span></label>
+      <input type="range" class="controller-slider" id="scaleSlider" min="50" max="200" step="5" value="100">
+      <div style="display: flex; gap: 5px; margin-top: 8px;">
+        <button class="controller-toggle" id="zoomOutBtn" style="padding: 4px 8px; font-size: 12px;">-</button>
+        <button class="controller-toggle" id="resetZoomBtn" style="padding: 4px 8px; font-size: 12px;">100%</button>
+        <button class="controller-toggle" id="zoomInBtn" style="padding: 4px 8px; font-size: 12px;">+</button>
+      </div>
+    </div>
+    
+    <div class="controller-item">
+      <button class="controller-toggle" id="toggleController">Скрыть панель</button>
+    </div>
+  </div>
+  
+  <div class="page-container" id="pageContainer">
+    <div class="container">
+      <!-- Header Section -->
+      <div class="header-section">
+        <h1 class="main-title">Revolutionary Experience</h1>
+        <p class="subtitle">Seamlessly blending technology with nature</p>
+      </div>
+      
+      <!-- Video Section -->
+      <div class="video-section">
+        <video id="video" muted preload="auto" playsinline>
+          <source src="daycycle.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+      
+      <!-- Content Sections -->
+      <div class="content-section">
+        <h2 class="section-title">Immersive Design</h2>
+        <p class="description">Experience the perfect harmony of form and function. Every detail crafted with precision.</p>
+      </div>
+      
+      <div class="content-section">
+        <h2 class="section-title">Advanced Technology</h2>
+        <p class="description">Powered by cutting-edge innovation. Seamlessly integrated for effortless interaction.</p>
+      </div>
+      
+      <div class="content-section">
+        <h2 class="section-title">Sustainable Future</h2>
+        <p class="description">Built with the environment in mind. Carbon neutral by design.</p>
+      </div>
+      
+      <div class="content-section">
+        <h2 class="section-title">Unparalleled Performance</h2>
+        <p class="description">Breakthrough capabilities that redefine what's possible. Simply extraordinary.</p>
+      </div>
+      
+      <div class="content-section">
+        <h2 class="section-title">Effortless Integration</h2>
+        <p class="description">Works seamlessly with your existing ecosystem. Intuitive from day one.</p>
+      </div>
+      
+      <div class="footer-section">
+        <h2 class="section-title">The Future is Here</h2>
+        <p class="description">Experience tomorrow's technology today. Available now.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const video = document.getElementById('video');
+    const progressBar = document.getElementById('progressBar');
+    
+    // Controller elements
+    const speedSlider = document.getElementById('speedSlider');
+    const endZoneSlider = document.getElementById('endZoneSlider');
+    const curveSlider = document.getElementById('curveSlider');
+    const speedValue = document.getElementById('speedValue');
+    const endZoneValue = document.getElementById('endZoneValue');
+    const curveValue = document.getElementById('curveValue');
+    const toggleController = document.getElementById('toggleController');
+    const videoController = document.getElementById('videoController');
+    const forwardBtn = document.getElementById('forwardBtn');
+    const backwardBtn = document.getElementById('backwardBtn');
+    const scaleSlider = document.getElementById('scaleSlider');
+    const scaleValue = document.getElementById('scaleValue');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const resetZoomBtn = document.getElementById('resetZoomBtn');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const pageContainer = document.getElementById('pageContainer');
+    const videoSelector = document.getElementById('videoSelector');
+    
+    let videoLoaded = false;
+    let videoDuration = 8; // fallback
+    
+    // Video control settings
+    let videoSpeed = 1.0; // Множитель скорости
+    let endZonePercent = 50; // Процент зоны, где видео должно закончиться
+    let accelerationCurve = 0.6; // Кривая ускорения
+    let playDirection = 'forward'; // 'forward' или 'backward'
+    let currentScale = 1.0; // Текущий масштаб страницы
+    
+    // Page scaling function
+    function applyPageScale(scale) {
+      currentScale = scale;
+      const scalePercent = Math.round(scale * 100);
+      
+      // Сохраняем текущую позицию скролла
+      const scrollPosition = window.pageYOffset;
+      const scrollPercentage = scrollPosition / (document.body.scrollHeight - window.innerHeight);
+      
+      // Применяем масштаб
+      document.documentElement.style.setProperty('--scale-factor', scale);
+      pageContainer.classList.add('scaled');
+      
+      // Обновляем отображение значения
+      scaleValue.textContent = scalePercent + '%';
+      scaleSlider.value = scalePercent;
+      
+      // Добавляем класс для управления overflow
+      if (scale !== 1.0) {
+        document.body.classList.add('scaling');
+      } else {
+        document.body.classList.remove('scaling');
+      }
+      
+      // Восстанавливаем позицию скролла с учетом нового масштаба
+      setTimeout(() => {
+        const newScrollHeight = document.body.scrollHeight - window.innerHeight;
+        window.scrollTo(0, scrollPercentage * newScrollHeight);
+        updateVideo();
+      }, 50);
+    }
+    
+    function updateVideo() {
+      const scrollY = window.pageYOffset;
+      const videoSection = document.querySelector('.video-section');
+      const headerSection = document.querySelector('.header-section');
+      
+      // Позиция видео секции относительно верха страницы
+      const videoSectionTop = headerSection.offsetHeight;
+      const videoSectionHeight = videoSection.offsetHeight;
+      
+      // Рассчитываем зону завершения видео
+      const videoEndZone = videoSectionTop + (videoSectionHeight * endZonePercent / 100);
+      
+      // Видео проигрывается от начала страницы до зоны завершения
+      const totalVideoScrollDistance = videoEndZone;
+      const rawProgress = Math.min(Math.max(scrollY / totalVideoScrollDistance, 0), 1);
+      
+      // Применяем кривую ускорения и множитель скорости
+      const acceleratedProgress = Math.pow(rawProgress, accelerationCurve);
+      const speedAdjustedProgress = Math.min(acceleratedProgress * videoSpeed, 1);
+      
+      const duration = video.duration || videoDuration;
+      
+      // Рассчитываем время воспроизведения в зависимости от направления
+      let targetTime;
+      if (playDirection === 'forward') {
+        targetTime = speedAdjustedProgress * duration;
+      } else {
+        // Обратное проигрывание: начинаем с конца
+        targetTime = (1 - speedAdjustedProgress) * duration;
+      }
+      
+      // Плавное обновление времени видео
+      if (!isNaN(targetTime) && targetTime >= 0) {
+        const timeDiff = Math.abs(video.currentTime - targetTime);
+        if (timeDiff > 0.005) { 
+          video.currentTime = targetTime;
+        }
+      }
+      
+      // Обновляем прогресс бар исходя из общей области прокрутки
+      const totalProgress = Math.min(Math.max(scrollY / (videoSectionTop + videoSectionHeight), 0), 1);
+      progressBar.style.width = (totalProgress * 100) + '%';
+    }
+    
+    // Direction control event listeners
+    forwardBtn.addEventListener('click', () => {
+      playDirection = 'forward';
+      forwardBtn.classList.add('active');
+      backwardBtn.classList.remove('active');
+      // Сбрасываем позицию видео при переключении направления
+      if (videoLoaded) {
+        video.currentTime = 0;
+      }
+      updateVideo();
+    });
+    
+    backwardBtn.addEventListener('click', () => {
+      playDirection = 'backward';
+      backwardBtn.classList.add('active');
+      forwardBtn.classList.remove('active');
+      // Сбрасываем позицию видео при переключении направления
+      if (videoLoaded) {
+        video.currentTime = videoDuration;
+      }
+      updateVideo();
+    });
+    
+    // Function to reset video position based on direction
+    function resetVideoPosition() {
+      if (playDirection === 'forward') {
+        video.currentTime = 0;
+      } else {
+        video.currentTime = videoDuration;
+      }
+    }
+    
+    // Video switching function
+    function switchVideo(videoPath) {
+      // Сохраняем текущие настройки
+      const currentTime = video.currentTime;
+      const currentProgress = video.currentTime / videoDuration;
+      
+      // Показываем индикатор загрузки (опционально)
+      const controllerTitle = document.querySelector('.controller-title');
+      const originalTitle = controllerTitle.textContent;
+      controllerTitle.textContent = 'Загрузка видео...';
+      
+      // Обновляем источник видео
+      video.src = videoPath;
+      
+      // Перезагружаем видео
+      video.load();
+      
+      // Сбрасываем статус загрузки
+      videoLoaded = false;
+      
+      // Обновляем видео после загрузки
+      video.addEventListener('loadedmetadata', function onMetadataLoaded() {
+        videoLoaded = true;
+        videoDuration = video.duration;
+        
+        // Восстанавливаем заголовок
+        controllerTitle.textContent = originalTitle;
+        
+        // Устанавливаем позицию видео в зависимости от направления
+        resetVideoPosition();
+        
+        // Обновляем видео
+        updateVideo();
+        
+        // Удаляем этот слушатель событий
+        video.removeEventListener('loadedmetadata', onMetadataLoaded);
+      });
+      
+      // Обработка ошибок загрузки
+      video.addEventListener('error', function onVideoError() {
+        controllerTitle.textContent = 'Ошибка загрузки';
+        setTimeout(() => {
+          controllerTitle.textContent = originalTitle;
+        }, 2000);
+        video.removeEventListener('error', onVideoError);
+      });
+    }
+    
+    // Scale control event listeners
+    scaleSlider.addEventListener('input', (e) => {
+      const scale = parseFloat(e.target.value) / 100;
+      applyPageScale(scale);
+    });
+    
+    zoomOutBtn.addEventListener('click', () => {
+      const newScale = Math.max(currentScale - 0.1, 0.5);
+      applyPageScale(newScale);
+    });
+    
+    zoomInBtn.addEventListener('click', () => {
+      const newScale = Math.min(currentScale + 0.1, 2.0);
+      applyPageScale(newScale);
+    });
+    
+    resetZoomBtn.addEventListener('click', () => {
+      applyPageScale(1.0);
+    });
+    
+    // Controller event listeners
+    speedSlider.addEventListener('input', (e) => {
+      videoSpeed = parseFloat(e.target.value);
+      speedValue.textContent = videoSpeed.toFixed(1) + 'x';
+      updateVideo();
+    });
+    
+    endZoneSlider.addEventListener('input', (e) => {
+      endZonePercent = parseInt(e.target.value);
+      endZoneValue.textContent = endZonePercent + '%';
+      updateVideo();
+    });
+    
+    curveSlider.addEventListener('input', (e) => {
+      accelerationCurve = parseFloat(e.target.value);
+      curveValue.textContent = accelerationCurve.toFixed(1);
+      updateVideo();
+    });
+
+    // Video switching event listener
+    videoSelector.addEventListener('change', (e) => {
+      const selectedVideoPath = e.target.value;
+      switchVideo(selectedVideoPath);
+    });
+    
+    // Toggle controller visibility
+    let controllerVisible = true;
+    toggleController.addEventListener('click', () => {
+      controllerVisible = !controllerVisible;
+      if (controllerVisible) {
+        videoController.style.display = 'block';
+        toggleController.textContent = 'Скрыть панель';
+      } else {
+        videoController.style.display = 'none';
+        toggleController.textContent = 'Показать панель';
+      }
+    });
+    
+    // Добавляем возможность скрыть/показать панель по клавише 'C'
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'c') {
+        toggleController.click();
+      }
+      // Переключение направления по клавише 'D'
+      if (e.key.toLowerCase() === 'd') {
+        if (playDirection === 'forward') {
+          backwardBtn.click();
+        } else {
+          forwardBtn.click();
+        }
+      }
+      // Масштабирование по клавишам '=' и '-'
+      if (e.key === '=' || e.key === '+') {
+        e.preventDefault();
+        zoomInBtn.click();
+      }
+      if (e.key === '-') {
+        e.preventDefault();
+        zoomOutBtn.click();
+      }
+      // Сброс масштаба по клавише '0'
+      if (e.key === '0') {
+        e.preventDefault();
+        resetZoomBtn.click();
+      }
+      // Переключение видео по клавише 'V'
+      if (e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        const currentIndex = videoSelector.selectedIndex;
+        const nextIndex = (currentIndex + 1) % videoSelector.options.length;
+        videoSelector.selectedIndex = nextIndex;
+        videoSelector.dispatchEvent(new Event('change'));
+      }
+    });
+
+    // Video event listeners
+    video.addEventListener('loadedmetadata', () => {
+      videoLoaded = true;
+      videoDuration = video.duration;
+      // Устанавливаем начальное положение видео в зависимости от направления
+      if (playDirection === 'forward') {
+        video.currentTime = 0;
+      } else {
+        video.currentTime = videoDuration;
+      }
+      updateVideo();
+    });
+    
+    video.addEventListener('loadeddata', () => {
+      updateVideo();
+    });
+    
+    video.addEventListener('canplay', () => {
+      updateVideo();
+    });
+    
+    video.addEventListener('canplaythrough', () => {
+      updateVideo();
+    });
+    
+    video.addEventListener('error', (e) => {
+      console.error('Video error:', e.message);
+    });
+    
+    // Scroll handler - плавная обработка скролла
+    let ticking = false;
+    let lastScrollTime = 0;
+    
+    function onScroll() {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const now = performance.now();
+          const deltaTime = now - lastScrollTime;
+          
+          // Обновляем видео только если прошло достаточно времени
+          if (deltaTime > 8) { // ~120 FPS максимум
+            updateVideo();
+            lastScrollTime = now;
+          }
+          
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }
+    
+    window.addEventListener('scroll', onScroll, { passive: true });
+    
+    // Initialize
+    video.muted = true;
+    video.preload = 'auto';
+    video.playsInline = true;
+    
+    // Force load
+    video.load();
+    
+    // Устанавливаем начальный кадр
+    resetVideoPosition();
+    
+    // Initial update
+    setTimeout(() => {
+      updateVideo();
+    }, 100);
+    
+    // Дополнительная инициализация после загрузки
+    setTimeout(() => {
+      if (videoLoaded) {
+        resetVideoPosition();
+        updateVideo();
+      }
+    }, 500);
+    
+    // Intersection Observer для анимации элементов
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const title = entry.target.querySelector('.section-title');
+          const description = entry.target.querySelector('.description');
+          
+          if (title) title.classList.add('visible');
+          if (description) description.classList.add('visible');
+        }
+      });
+    }, observerOptions);
+    
+    // Наблюдаем за всеми секциями контента
+    document.querySelectorAll('.content-section, .footer-section').forEach(section => {
+      observer.observe(section);
+    });
+    
+    // Initialize page scale
+    applyPageScale(1.0);
+    
+    // Initialize video selector
+    videoSelector.value = 'daycycle.mp4';
+  </script>
+</body>
+</html>
