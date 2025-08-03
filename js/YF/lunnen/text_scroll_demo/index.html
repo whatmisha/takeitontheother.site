@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Спутник - Scroll Effect</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            overflow-y: hidden;
+            overflow-x: auto;
+            height: 100vh;
+            margin: 0;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px;
+            width: 100vw;
+            overflow-x: visible;
+            gap: 40px;
+        }
+
+        .text-container {
+            width: 100%;
+            max-width: 1200px;
+            text-align: left;
+            align-self: flex-start;
+        }
+
+        .animated-text {
+            font-size: clamp(1.2rem, 2.5vw, 2.5rem);
+            font-weight: 600;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            position: relative;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .text-line {
+            display: block;
+            margin-bottom: 0.3em;
+            position: relative;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .text-content {
+            background: linear-gradient(to right, 
+                #ffffff 0%, 
+                #ffffff calc(var(--progress, 0%) + var(--gradient-offset, -10%)), 
+                #bbbbbb calc(var(--progress, 0%) + var(--gradient-offset, -10%) + var(--gradient-width, 10%) * 0.33), 
+                #888888 calc(var(--progress, 0%) + var(--gradient-offset, -10%) + var(--gradient-width, 10%) * 0.66), 
+                #333333 calc(var(--progress, 0%) + var(--gradient-offset, -10%) + var(--gradient-width, 10%)), 
+                #333333 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            transition: background 0.1s ease-out;
+            word-wrap: normal;
+            word-break: keep-all;
+        }
+
+
+        /* Видео блок */
+        .video-container {
+            width: 100%;
+            max-width: var(--video-size, 1400px);
+            aspect-ratio: 16/9;
+            background: #000000;
+            border-radius: 8px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            transition: max-width 0.3s ease;
+        }
+
+        .video-placeholder {
+            color: #666;
+            font-size: 1.5rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+            background: #000000;
+            /* Оптимизация для плавности */
+            will-change: transform;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            /* Улучшенная интерполяция */
+            image-rendering: optimizeSpeed;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: optimize-contrast;
+        }
+
+        .video-container video::-webkit-media-controls-panel {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        /* Контроллеры */
+        .controllers {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 1000;
+        }
+        
+        .controllers-toggle {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            transition: all 0.2s ease;
+            margin-bottom: 5px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            animation: fadeInRight 0.8s ease-out 0.8s both;
+        }
+
+        .controllers-toggle:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .controllers-panels {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .controllers-panels.collapsed {
+            height: 0;
+            padding: 0 12px;
+            opacity: 0;
+        }
+
+        .controller-panel {
+            background: none;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 0;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 500;
+            min-width: 160px;
+        }
+
+        .controller-panel label {
+            display: block;
+            margin-bottom: 6px;
+            color: #cccccc;
+            font-size: 11px;
+        }
+
+        .controller-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #333;
+            outline: none;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .controller-slider:hover {
+            opacity: 1;
+        }
+
+        .controller-slider::-webkit-slider-thumb {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .controller-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .controller-value {
+            text-align: center;
+            margin-top: 4px;
+            font-weight: 500;
+            color: #ffffff;
+            font-size: 11px;
+        }
+
+        .direction-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .direction-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .direction-btn.active {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .video-select {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .video-select:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .video-select:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .video-select option {
+            background: #1a1a1a;
+            color: white;
+        }
+
+        /* Анимация плавного появления */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Применяем анимации к элементам */
+        .text-container {
+            animation: fadeInUp 1s ease-out 0.1s both;
+        }
+
+        .video-container {
+            animation: fadeInUp 1.2s ease-out 0.4s both;
+        }
+
+        .controllers {
+            animation: fadeInRight 0.8s ease-out 0.8s both;
+        }
+
+        /* Анимация для отдельных строк текста */
+        .text-line:nth-child(1) {
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        .text-line:nth-child(2) {
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+
+        .text-line:nth-child(3) {
+            animation: fadeInUp 1s ease-out 0.4s both;
+        }
+
+        /* Анимация для панелей контроллеров */
+        .controller-panel {
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out both;
+        }
+
+        .controller-panel:nth-child(1) { animation-delay: 1.0s; }
+        .controller-panel:nth-child(2) { animation-delay: 1.05s; }
+        .controller-panel:nth-child(3) { animation-delay: 1.1s; }
+        .controller-panel:nth-child(4) { animation-delay: 1.15s; }
+        .controller-panel:nth-child(5) { animation-delay: 1.2s; }
+        .controller-panel:nth-child(6) { animation-delay: 1.25s; }
+        .controller-panel:nth-child(7) { animation-delay: 1.3s; }
+
+        /* Стилизация скроллбара */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #111;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Адаптивные стили */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                gap: 40px;
+            }
+            
+            .animated-text {
+                font-size: clamp(1rem, 4vw, 1.8rem);
+            }
+            
+            .video-container {
+                border-radius: 4px;
+                max-width: 100%;
+            }
+            
+            .controllers {
+                top: 20px;
+                right: 20px;
+                gap: 3px;
+            }
+            
+            .controllers-toggle {
+                padding: 6px;
+                font-size: 12px;
+                width: 28px;
+                height: 28px;
+            }
+            
+            .controllers-panels {
+                padding: 8px;
+            }
+            
+            .controller-panel {
+                padding: 6px 0;
+                min-width: 140px;
+            }
+            
+            /* Ускоренная анимация для мобильных */
+            body {
+                animation-duration: 0.3s;
+            }
+            
+            .text-container,
+            .video-container,
+            .controllers {
+                animation-duration: 0.6s;
+            }
+            
+            .text-line {
+                animation-duration: 0.6s;
+            }
+            
+            .controller-panel {
+                animation-duration: 0.3s;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Контроллеры -->
+    <div class="controllers">
+        <button class="controllers-toggle" id="controllersToggle">⚙️</button>
+        
+        <div class="controllers-panels collapsed" id="controllersPanels">
+            <!-- Контроллер скорости -->
+            <div class="controller-panel">
+                <label for="speedSlider">Скорость скролла</label>
+                <input type="range" id="speedSlider" class="controller-slider" min="0.5" max="5" step="0.1" value="4">
+                <div class="controller-value" id="speedValue">4.0x</div>
+            </div>
+            
+            <!-- Контроллер размера видео -->
+            <div class="controller-panel">
+                <label for="videoSizeSlider">Размер видео</label>
+                <input type="range" id="videoSizeSlider" class="controller-slider" min="400" max="1400" step="50" value="1400">
+                <div class="controller-value" id="videoSizeValue">1400px</div>
+            </div>
+            
+            <!-- Контроллер скорости видео -->
+            <div class="controller-panel">
+                <label for="videoSpeedSlider">Скорость видео</label>
+                <input type="range" id="videoSpeedSlider" class="controller-slider" min="0.5" max="3" step="0.1" value="1.0">
+                <div class="controller-value" id="videoSpeedValue">1.0x</div>
+            </div>
+            
+            <!-- Контроллер направления видео -->
+            <div class="controller-panel">
+                <label>Направление видео</label>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button class="direction-btn active" id="forwardBtn">▶</button>
+                    <button class="direction-btn" id="backwardBtn">◀</button>
+                </div>
+            </div>
+            
+            <!-- Контроллер ширины градиента -->
+            <div class="controller-panel">
+                <label for="gradientWidthSlider">Ширина градиента</label>
+                <input type="range" id="gradientWidthSlider" class="controller-slider" min="1" max="15" step="1" value="10">
+                <div class="controller-value" id="gradientWidthValue">10%</div>
+            </div>
+            
+            <!-- Контроллер смещения градиента -->
+            <div class="controller-panel">
+                <label for="gradientOffsetSlider">Смещение градиента</label>
+                <input type="range" id="gradientOffsetSlider" class="controller-slider" min="-10" max="10" step="1" value="-10">
+                <div class="controller-value" id="gradientOffsetValue">-10%</div>
+            </div>
+            
+            <!-- Выбор видео -->
+            <div class="controller-panel">
+                <label for="videoSelector">Видео файл</label>
+                <select id="videoSelector" class="video-select">
+                    <option value="scroll_01.mp4">scroll_01.mp4</option>
+                    <option value="scroll_02.mp4">scroll_02.mp4</option>
+                    <option value="scroll_03.mp4">scroll_03.mp4</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="text-container">
+            <div class="animated-text">
+                <span class="text-line">
+                    <span class="text-content">Спутник в исследованиях, открытиях</span>
+                </span>
+                <span class="text-line">
+                    <span class="text-content">и экспедициях — в границах Земли</span>
+                </span>
+                <span class="text-line">
+                    <span class="text-content">и за её пределами</span>
+                </span>
+            </div>
+        </div>
+        
+        <!-- Видео блок -->
+        <div class="video-container">
+            <video id="scrollVideo" muted preload="auto" playsinline>
+                <source src="scroll_01.mp4" type="video/mp4">
+                <div class="video-placeholder">
+                    Video not found<br>
+                    <small style="color: #888; font-size: 1rem;">Place scroll_01.mp4 in the same folder</small>
+                </div>
+            </video>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const textLines = document.querySelectorAll('.text-content');
+            const speedSlider = document.getElementById('speedSlider');
+            const speedValue = document.getElementById('speedValue');
+            const videoSizeSlider = document.getElementById('videoSizeSlider');
+            const videoSizeValue = document.getElementById('videoSizeValue');
+            const videoContainer = document.querySelector('.video-container');
+            
+            // Видео элементы
+            const scrollVideo = document.getElementById('scrollVideo');
+            const videoSpeedSlider = document.getElementById('videoSpeedSlider');
+            const videoSpeedValue = document.getElementById('videoSpeedValue');
+            const forwardBtn = document.getElementById('forwardBtn');
+            const backwardBtn = document.getElementById('backwardBtn');
+            
+            // Элементы для управления панелями
+            const controllersToggle = document.getElementById('controllersToggle');
+            const controllersPanels = document.getElementById('controllersPanels');
+            
+            // Элементы градиента
+            const gradientWidthSlider = document.getElementById('gradientWidthSlider');
+            const gradientWidthValue = document.getElementById('gradientWidthValue');
+            const gradientOffsetSlider = document.getElementById('gradientOffsetSlider');
+            const gradientOffsetValue = document.getElementById('gradientOffsetValue');
+            
+            // Элементы выбора видео
+            const videoSelector = document.getElementById('videoSelector');
+            
+            let scrollProgress = -10; // Начинаем с отрицательного значения
+            const maxProgress = 100; // Максимальный прогресс для полного заполнения
+            
+            // Видео переменные
+            let videoLoaded = false;
+            let videoDuration = 10; // fallback
+            let videoSpeed = 1.0; // Множитель скорости видео
+            let playDirection = 'forward'; // 'forward' или 'backward'
+            
+            // Градиент переменные
+            let gradientWidth = 10; // Ширина градиента в %
+            let gradientOffset = -10; // Смещение градиента в %
+            
+            function updateTextReveal() {
+                const progressPercent = scrollProgress / maxProgress;
+                const totalLines = textLines.length;
+                
+                textLines.forEach((line, index) => {
+                    // Рассчитываем прогресс для каждой строки
+                    const lineStart = (index / totalLines); // Начало анимации для строки
+                    const lineEnd = ((index + 1) / totalLines); // Конец анимации для строки
+                    
+                    let lineProgress = 0;
+                    
+                    if (progressPercent > lineStart) {
+                        if (progressPercent < lineEnd) {
+                            // Строка в процессе заполнения
+                            lineProgress = ((progressPercent - lineStart) / (lineEnd - lineStart)) * 100;
+                        } else {
+                            // Строка полностью заполнена
+                            lineProgress = 100;
+                        }
+                    }
+                    
+                    // Ограничиваем значения от 0 до 100
+                    lineProgress = Math.max(0, Math.min(100, lineProgress));
+                    
+                    // Применяем CSS переменные для градиента
+                    line.style.setProperty('--progress', lineProgress + '%');
+                    line.style.setProperty('--gradient-width', gradientWidth + '%');
+                    line.style.setProperty('--gradient-offset', gradientOffset + '%');
+                });
+            }
+            
+            // Обновляем отображение значения скорости
+            function updateSpeedDisplay() {
+                const speed = parseFloat(speedSlider.value);
+                speedValue.textContent = speed.toFixed(1) + 'x';
+            }
+            
+            // Обновляем позицию видео на основе скролла
+            function updateVideoPosition() {
+                if (!videoLoaded || !scrollVideo) return;
+                
+                // Нормализуем прогресс от -10 до 100 в диапазон 0-1
+                const normalizedProgress = Math.max(0, Math.min(1, (scrollProgress + 10) / 110));
+                
+                // Применяем скорость видео
+                const speedAdjustedProgress = Math.min(normalizedProgress * videoSpeed, 1);
+                
+                const duration = scrollVideo.duration || videoDuration;
+                
+                // Рассчитываем время воспроизведения в зависимости от направления
+                let targetTime;
+                if (playDirection === 'forward') {
+                    targetTime = speedAdjustedProgress * duration;
+                } else {
+                    // Обратное проигрывание: начинаем с конца
+                    targetTime = (1 - speedAdjustedProgress) * duration;
+                }
+                
+                // Плавное обновление времени видео
+                if (!isNaN(targetTime) && targetTime >= 0 && targetTime <= duration) {
+                    const timeDiff = Math.abs(scrollVideo.currentTime - targetTime);
+                    if (timeDiff > 0.005) { 
+                        scrollVideo.currentTime = targetTime;
+                    }
+                }
+            }
+            
+            // Обновляем размер видео
+            function updateVideoSize() {
+                const size = parseInt(videoSizeSlider.value);
+                videoSizeValue.textContent = size + 'px';
+                videoContainer.style.setProperty('--video-size', size + 'px');
+            }
+            
+            // Обновляем скорость видео
+            function updateVideoSpeed() {
+                videoSpeed = parseFloat(videoSpeedSlider.value);
+                videoSpeedValue.textContent = videoSpeed.toFixed(1) + 'x';
+                updateVideoPosition();
+            }
+            
+            // Переключение направления видео
+            function setVideoDirection(direction) {
+                playDirection = direction;
+                
+                if (direction === 'forward') {
+                    forwardBtn.classList.add('active');
+                    backwardBtn.classList.remove('active');
+                } else {
+                    backwardBtn.classList.add('active');
+                    forwardBtn.classList.remove('active');
+                }
+                
+                updateVideoPosition();
+            }
+            
+            // Обновляем ширину градиента
+            function updateGradientWidth() {
+                gradientWidth = parseInt(gradientWidthSlider.value);
+                gradientWidthValue.textContent = gradientWidth + '%';
+                updateTextReveal();
+            }
+            
+            // Обновляем смещение градиента
+            function updateGradientOffset() {
+                gradientOffset = parseInt(gradientOffsetSlider.value);
+                gradientOffsetValue.textContent = gradientOffset + '%';
+                updateTextReveal();
+            }
+            
+            // Переключение видео
+            function switchVideo(newVideoSrc) {
+                if (scrollVideo.src.endsWith(newVideoSrc)) return;
+                
+                videoLoaded = false;
+                
+                // Обновляем источник видео
+                scrollVideo.src = newVideoSrc;
+                scrollVideo.load();
+                
+                // Обновляем после загрузки метаданных
+                scrollVideo.addEventListener('loadedmetadata', function onLoaded() {
+                    videoLoaded = true;
+                    videoDuration = scrollVideo.duration;
+                    updateVideoPosition();
+                    scrollVideo.removeEventListener('loadedmetadata', onLoaded);
+                });
+            }
+            
+            // Обрабатываем изменение слайдеров
+            speedSlider.addEventListener('input', updateSpeedDisplay);
+            videoSizeSlider.addEventListener('input', updateVideoSize);
+            videoSpeedSlider.addEventListener('input', updateVideoSpeed);
+            gradientWidthSlider.addEventListener('input', updateGradientWidth);
+            gradientOffsetSlider.addEventListener('input', updateGradientOffset);
+            
+            // Обрабатываем кнопки направления видео
+            forwardBtn.addEventListener('click', () => setVideoDirection('forward'));
+            backwardBtn.addEventListener('click', () => setVideoDirection('backward'));
+            
+            // Обрабатываем выбор видео
+            videoSelector.addEventListener('change', (e) => {
+                switchVideo(e.target.value);
+            });
+            
+            // Функция переключения панелей
+            function toggleControllersPanels() {
+                const isCollapsed = controllersPanels.classList.contains('collapsed');
+                
+                if (isCollapsed) {
+                    controllersPanels.classList.remove('collapsed');
+                } else {
+                    controllersPanels.classList.add('collapsed');
+                }
+            }
+            
+            // Обрабатываем кнопку переключения панелей
+            controllersToggle.addEventListener('click', toggleControllersPanels);
+            
+            // Обрабатываем колесо мыши
+            window.addEventListener('wheel', function(e) {
+                e.preventDefault(); // Предотвращаем обычное поведение скролла
+                
+                // Определяем направление скролла
+                const delta = e.deltaY > 0 ? 1 : -1;
+                
+                // Получаем текущую скорость из слайдера
+                const speed = parseFloat(speedSlider.value);
+                
+                // Увеличиваем или уменьшаем прогресс с учетом скорости
+                scrollProgress += delta * speed;
+                
+                // Ограничиваем прогресс от -10 до maxProgress
+                scrollProgress = Math.max(-10, Math.min(maxProgress, scrollProgress));
+                
+                // Обновляем отображение
+                updateTextReveal();
+                updateVideoPosition();
+            });
+            
+            // Обработчики событий видео
+            scrollVideo.addEventListener('loadedmetadata', () => {
+                videoLoaded = true;
+                videoDuration = scrollVideo.duration;
+                updateVideoPosition();
+            });
+            
+            scrollVideo.addEventListener('loadeddata', () => {
+                updateVideoPosition();
+            });
+            
+            scrollVideo.addEventListener('canplay', () => {
+                updateVideoPosition();
+            });
+            
+            scrollVideo.addEventListener('error', (e) => {
+                console.error('Video error:', e);
+                videoLoaded = false;
+            });
+            
+            // Инициализация видео
+            scrollVideo.muted = true;
+            scrollVideo.preload = 'auto';
+            scrollVideo.playsInline = true;
+            scrollVideo.load();
+            
+            // Начальное обновление
+            updateTextReveal();
+            updateSpeedDisplay();
+            updateVideoSize();
+            updateVideoSpeed();
+            updateGradientWidth();
+            updateGradientOffset();
+        });
+    </script>
+</body>
+</html> 
