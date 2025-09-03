@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperspace Jump Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+        canvas {
+            display: block;
+        }
+        .controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        .controls label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .controls input {
+            margin-bottom: 10px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <label for="lineCount">Количество линий: <span id="lineCountValue">200</span></label>
+        <input type="range" id="lineCount" min="50" max="500" value="200">
+        
+        <label for="opacity">Прозрачность линий: <span id="opacityValue">80</span>%</label>
+        <input type="range" id="opacity" min="10" max="100" value="80">
+        
+        <label for="fadeLength">Длина затухания: <span id="fadeLengthValue">30</span>%</label>
+        <input type="range" id="fadeLength" min="5" max="50" value="30">
+        
+        <label for="segmentsCount">Качество градиента: <span id="segmentsCountValue">10</span></label>
+        <input type="range" id="segmentsCount" min="5" max="50" value="10">
+        
+        <label for="lineWidth">Толщина линий: <span id="lineWidthValue">2</span></label>
+        <input type="range" id="lineWidth" min="1" max="5" value="2" step="0.5">
+        
+        <label for="widthGrowth">Расширение линий: <span id="widthGrowthValue">0</span></label>
+        <input type="range" id="widthGrowth" min="0" max="15" value="5" step="0.5">
+        
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+            <input type="checkbox" id="reverseWedge" style="width: auto; margin-right: 10px;">
+            <label for="reverseWedge">Обратный клин</label>
+        </div>
+        
+        <label for="speed">Скорость: <span id="speedValue">3</span></label>
+        <input type="range" id="speed" min="1" max="10" value="3">
+        
+        <p>Кликните мышью, чтобы изменить точку схода</p>
+    </div>
+    <script src="sketch.js"></script>
+</body>
+</html>
