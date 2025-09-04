@@ -9,6 +9,7 @@ let widthGrowth;
 let reverseWedge;
 let speed;
 let maxDist;
+let isPaused = false;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -24,6 +25,9 @@ function setup() {
   
   // Добавление обработчиков событий для слайдеров
   setupSliderEvents();
+  
+  // Добавление обработчика клавиш
+  document.addEventListener('keydown', handleKeyPress);
 }
 
 function draw() {
@@ -31,6 +35,20 @@ function draw() {
   
   // Обновление и отображение звезд
   updateAndDrawStars();
+  
+  // Отображение индикатора паузы
+  if (isPaused) {
+    // Полупрозрачный фон для индикатора паузы
+    fill(0, 0, 0, 150);
+    noStroke();
+    rect(10, height - 40, 100, 30, 5);
+    
+    // Текст "ПАУЗА"
+    fill(255);
+    textSize(16);
+    textAlign(LEFT, CENTER);
+    text("ПАУЗА", 20, height - 25);
+  }
 }
 
 function mousePressed() {
@@ -77,13 +95,15 @@ function updateAndDrawStars() {
     let star = stars[i];
     
     if (star.active) {
-      // Увеличение длины линии
-      star.currentLength += star.speed;
-      
-      // Если линия достигла максимальной длины, создаем новую
-      if (star.currentLength >= star.maxLength) {
-        stars[i] = createRandomStar();
-        continue;
+      // Увеличение длины линии только если не на паузе
+      if (!isPaused) {
+        star.currentLength += star.speed;
+        
+        // Если линия достигла максимальной длины, создаем новую
+        if (star.currentLength >= star.maxLength) {
+          stars[i] = createRandomStar();
+          continue;
+        }
       }
       
       // Рисование линии с градиентом прозрачности
@@ -131,6 +151,12 @@ function setupSliderEvents() {
   document.getElementById('widthGrowth').addEventListener('input', updateParameters);
   document.getElementById('reverseWedge').addEventListener('change', updateParameters);
   document.getElementById('speed').addEventListener('input', updateParameters);
+  
+  // Добавление обработчика для кнопки экспорта
+  document.getElementById('exportButton').addEventListener('click', exportCanvas);
+  
+  // Добавление обработчика для кнопки возврата в центр
+  document.getElementById('centerButton').addEventListener('click', centerVanishingPoint);
 }
 
 function windowResized() {
@@ -146,6 +172,141 @@ function windowResized() {
   
   // Пересоздаем звезды, чтобы они корректно уходили за края экрана
   createStars();
+}
+
+// Функция для экспорта канваса в PNG
+function exportCanvas() {
+  // Создаем временный канвас для рендеринга изображения без UI
+  let tempCanvas = createGraphics(width, height);
+  
+  // Устанавливаем черный фон
+  tempCanvas.background(0);
+  
+  // Сохраняем текущее состояние звезд
+  let currentStars = [...stars];
+  
+  // Рисуем звезды на временном канвасе
+  for (let star of currentStars) {
+    if (star.active) {
+      let fadeStart = star.currentLength * (1 - fadeLength/100);
+      
+      for (let i = 0; i < segmentsCount; i++) {
+        let t1 = i / segmentsCount;
+        let t2 = (i + 1) / segmentsCount;
+        
+        let len1 = fadeStart + (star.currentLength - fadeStart) * t1;
+        let len2 = fadeStart + (star.currentLength - fadeStart) * t2;
+        
+        if (len2 <= fadeStart) continue;
+        if (len1 < fadeStart) len1 = fadeStart;
+        
+        let x1 = vanishingPoint.x + cos(star.angle) * len1;
+        let y1 = vanishingPoint.y + sin(star.angle) * len1;
+        let x2 = vanishingPoint.x + cos(star.angle) * len2;
+        let y2 = vanishingPoint.y + sin(star.angle) * len2;
+        
+        let progress = (len1 - fadeStart) / (star.currentLength - fadeStart);
+        let alpha = opacity * (1 - progress);
+        
+        let currentWidth = lineWidth;
+        if (widthGrowth > 0) {
+          let distFactor = len1 / star.maxLength;
+          
+          if (reverseWedge) {
+            currentWidth = lineWidth + (widthGrowth * (1 - distFactor) * (1 - distFactor));
+          } else {
+            currentWidth = 1 + (widthGrowth * 1.5 * distFactor * distFactor);
+          }
+        }
+        
+        tempCanvas.strokeWeight(currentWidth);
+        tempCanvas.stroke(255, 255, 255, alpha);
+        tempCanvas.line(x1, y1, x2, y2);
+      }
+    }
+  }
+  
+  // Генерируем имя файла с датой и временем
+  let now = new Date();
+  let filename = 'hyperspace_' + 
+                 now.getFullYear() + 
+                 padDigits(now.getMonth() + 1) + 
+                 padDigits(now.getDate()) + '_' + 
+                 padDigits(now.getHours()) + 
+                 padDigits(now.getMinutes()) + 
+                 padDigits(now.getSeconds()) + 
+                 '.png';
+  
+  // Сохраняем изображение
+  tempCanvas.save(filename);
+  
+  // Удаляем временный канвас
+  tempCanvas.remove();
+  
+  // Показываем сообщение о сохранении
+  let button = document.getElementById('exportButton');
+  let originalText = button.textContent;
+  let originalBackground = button.style.background;
+  let originalColor = button.style.color;
+  button.textContent = 'Сохранено!';
+  button.style.background = '#3B53FD';
+  button.style.color = 'white';
+  button.style.boxShadow = 'none';
+  
+  // Возвращаем исходный текст кнопки через 2 секунды
+  setTimeout(function() {
+    button.textContent = originalText;
+    button.style.background = originalBackground;
+    button.style.color = originalColor;
+    if (button !== document.getElementById('centerButton')) {
+      button.style.boxShadow = '';
+    } else {
+      button.style.boxShadow = '0 0 0 2px white inset';
+    }
+  }, 2000);
+}
+
+// Вспомогательная функция для добавления ведущих нулей
+function padDigits(number) {
+  return number.toString().padStart(2, '0');
+}
+
+// Функция для возврата точки схода в центр экрана
+function centerVanishingPoint() {
+  // Устанавливаем точку схода в центр экрана
+  vanishingPoint.x = width / 2;
+  vanishingPoint.y = height / 2;
+  
+  // Пересоздаем звезды для корректного отображения
+  createStars();
+  
+  // Визуальное подтверждение
+  let button = document.getElementById('centerButton');
+  let originalBackground = button.style.background;
+  let originalColor = button.style.color;
+  let originalBoxShadow = button.style.boxShadow;
+  button.style.background = '#3B53FD';
+  button.style.color = 'white';
+  button.style.boxShadow = 'none';
+  
+  // Возвращаем исходный цвет кнопки через 0.5 секунды
+  setTimeout(function() {
+    button.style.background = originalBackground;
+    button.style.color = originalColor;
+    button.style.boxShadow = originalBoxShadow;
+  }, 500);
+}
+
+// Обработчик нажатия клавиш
+function handleKeyPress(event) {
+  // Пробел - пауза/продолжение
+  if (event.code === 'Space') {
+    // Предотвращаем прокрутку страницы
+    event.preventDefault();
+    
+    // Переключаем состояние паузы
+    isPaused = !isPaused;
+  }
 }
 
 // Функция для расчета расстояния от точки до края экрана в заданном направлении
