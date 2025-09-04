@@ -10,21 +10,12 @@ let reverseWedge;
 let speed;
 let maxDist;
 let isPaused = false;
-let startColor;
-let midColor;
-let endColor;
-let useColorGradient = false;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   
   // Инициализация точки схода в центре экрана
   vanishingPoint = createVector(width / 2, height / 2);
-  
-  // Инициализация цветов
-  startColor = color('#2353DB');
-  midColor = color('#23DBD3');
-  endColor = color('#5723DB');
   
   // Получение значений из слайдеров
   updateParameters();
@@ -130,13 +121,7 @@ function updateParameters() {
   lineWidth = parseFloat(document.getElementById('lineWidth').value);
   widthGrowth = parseFloat(document.getElementById('widthGrowth').value);
   reverseWedge = document.getElementById('reverseWedge').checked;
-  useColorGradient = document.getElementById('useColorGradient').checked;
   speed = parseFloat(document.getElementById('speed').value);
-  
-  // Обновление цветов
-  startColor = color(document.getElementById('startColor').value);
-  midColor = color(document.getElementById('midColor').value);
-  endColor = color(document.getElementById('endColor').value);
   
   // Обновление отображаемых значений
   document.getElementById('lineCountValue').textContent = lineCount;
@@ -166,12 +151,6 @@ function setupSliderEvents() {
   document.getElementById('widthGrowth').addEventListener('input', updateParameters);
   document.getElementById('reverseWedge').addEventListener('change', updateParameters);
   document.getElementById('speed').addEventListener('input', updateParameters);
-  
-  // Обработчики для цветов и режима
-  document.getElementById('startColor').addEventListener('input', updateParameters);
-  document.getElementById('midColor').addEventListener('input', updateParameters);
-  document.getElementById('endColor').addEventListener('input', updateParameters);
-  document.getElementById('useColorGradient').addEventListener('change', updateParameters);
   
   // Добавление обработчика для кнопки экспорта
   document.getElementById('exportButton').addEventListener('click', exportCanvas);
@@ -240,29 +219,8 @@ function exportCanvas() {
           }
         }
         
-        // Определение цвета сегмента
-        let segmentColor;
-        if (useColorGradient) {
-          // Интерполяция между тремя цветами
-          let colorProgress = len1 / star.maxLength;
-          
-          if (colorProgress < 0.5) {
-            // Первая половина градиента: от startColor до midColor
-            segmentColor = lerpColor(startColor, midColor, colorProgress * 2);
-          } else {
-            // Вторая половина градиента: от midColor до endColor
-            segmentColor = lerpColor(midColor, endColor, (colorProgress - 0.5) * 2);
-          }
-          
-          // Устанавливаем прозрачность
-          segmentColor.setAlpha(alpha);
-        } else {
-          // Черно-белый режим
-          segmentColor = color(255, 255, 255, alpha);
-        }
-        
         tempCanvas.strokeWeight(currentWidth);
-        tempCanvas.stroke(segmentColor);
+        tempCanvas.stroke(255, 255, 255, alpha);
         tempCanvas.line(x1, y1, x2, y2);
       }
     }
@@ -349,12 +307,6 @@ function handleKeyPress(event) {
     // Переключаем состояние паузы
     isPaused = !isPaused;
   }
-  
-  // Cmd+E (Mac) или Ctrl+E (Windows/Linux) - экспорт изображения
-  if (event.code === 'KeyE' && (event.metaKey || event.ctrlKey)) {
-    event.preventDefault();
-    exportCanvas();
-  }
 }
 
 // Функция для расчета расстояния от точки до края экрана в заданном направлении
@@ -424,30 +376,9 @@ function drawStarLine(star) {
       }
     }
     
-    // Определение цвета сегмента
-    let segmentColor;
-    if (useColorGradient) {
-      // Интерполяция между тремя цветами
-      let colorProgress = len1 / star.maxLength;
-      
-      if (colorProgress < 0.5) {
-        // Первая половина градиента: от startColor до midColor
-        segmentColor = lerpColor(startColor, midColor, colorProgress * 2);
-      } else {
-        // Вторая половина градиента: от midColor до endColor
-        segmentColor = lerpColor(midColor, endColor, (colorProgress - 0.5) * 2);
-      }
-      
-      // Устанавливаем прозрачность
-      segmentColor.setAlpha(alpha);
-    } else {
-      // Черно-белый режим
-      segmentColor = color(255, 255, 255, alpha);
-    }
-    
     // Рисование сегмента
     strokeWeight(currentWidth);
-    stroke(segmentColor);
+    stroke(255, 255, 255, alpha);
     line(x1, y1, x2, y2);
   }
 }
