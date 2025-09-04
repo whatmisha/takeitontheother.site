@@ -84,7 +84,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 #centerButton {
-    background: black;
+    background: transparent;
     color: white;
     box-shadow: 0 0 0 2px white inset;
     flex: 1;
