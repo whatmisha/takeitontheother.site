@@ -1,7 +1,5 @@
 let stars = [];
-let vanishingPoint; // Текущая точка схода (визуальная)
-let actualVanishingPoint; // Фактическая точка схода (для генерации новых линий)
-let targetVanishingPoint; // Целевая точка схода (куда движется мышь)
+let vanishingPoint;
 let lineCount;
 let opacity;
 let fadeLength;
@@ -21,18 +19,12 @@ let initialStarsCount = 100; // Увеличенное начальное кол
 let targetStarsCount; // Целевое количество звезд
 let starsCreationRate = 10; // Увеличенное количество новых звезд в кадре
 let starsToReset = 1; // Минимальное количество звезд для сброса в каждом кадре
-let isMouseDragging = false; // Флаг для отслеживания зажатия кнопки мыши
-let inertiaFactor = 0.05; // Коэффициент инерции (0-1, где меньшее значение = больше инерции)
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   
-  // Инициализация точек схода в центре экрана
-  let centerX = width / 2;
-  let centerY = height / 2;
-  vanishingPoint = createVector(centerX, centerY);
-  actualVanishingPoint = createVector(centerX, centerY);
-  targetVanishingPoint = createVector(centerX, centerY);
+  // Инициализация точки схода в центре экрана
+  vanishingPoint = createVector(width / 2, height / 2);
   
   // Инициализация цветов
   startColor = color('#2353DB');
@@ -59,9 +51,6 @@ function setup() {
 function draw() {
   background(0);
   
-  // Обновление позиции точки схода с инерцией
-  updateVanishingPoint();
-  
   // Обновление и отображение звезд
   updateAndDrawStars();
   
@@ -78,41 +67,10 @@ function draw() {
     textAlign(LEFT, CENTER);
     text("ПАУЗА", 20, height - 25);
   }
-  
-  // Отображение точки схода (для отладки)
-  // drawVanishingPoints();
-}
-
-// Функция для обновления позиции точки схода с эффектом инерции
-function updateVanishingPoint() {
-  if (!isPaused) {
-    // Плавное перемещение фактической точки схода к целевой с инерцией
-    actualVanishingPoint.x += (targetVanishingPoint.x - actualVanishingPoint.x) * inertiaFactor;
-    actualVanishingPoint.y += (targetVanishingPoint.y - actualVanishingPoint.y) * inertiaFactor;
-    
-    // Визуальная точка схода следует за фактической
-    vanishingPoint.x = actualVanishingPoint.x;
-    vanishingPoint.y = actualVanishingPoint.y;
-  }
-}
-
-// Функция для отображения точек схода (для отладки)
-function drawVanishingPoints() {
-  // Рисуем целевую точку схода
-  noStroke();
-  fill(255, 0, 0, 150);
-  ellipse(targetVanishingPoint.x, targetVanishingPoint.y, 10, 10);
-  
-  // Рисуем фактическую точку схода
-  fill(0, 255, 0, 150);
-  ellipse(actualVanishingPoint.x, actualVanishingPoint.y, 8, 8);
-  
-  // Рисуем визуальную точку схода
-  fill(0, 0, 255, 150);
-  ellipse(vanishingPoint.x, vanishingPoint.y, 6, 6);
 }
 
 function mousePressed() {
+  // Изменение точки схода при клике мыши
   // Получаем элемент панели управления
   let controlsPanel = document.querySelector('.controls');
   let controlsRect = controlsPanel.getBoundingClientRect();
@@ -122,46 +80,9 @@ function mousePressed() {
         mouseX <= controlsRect.right && 
         mouseY >= controlsRect.top && 
         mouseY <= controlsRect.bottom)) {
-    // Устанавливаем целевую точку схода на позицию мыши
-    targetVanishingPoint.x = mouseX;
-    targetVanishingPoint.y = mouseY;
-    
-    // Устанавливаем флаг перетаскивания
-    isMouseDragging = true;
-    
-    // Предотвращаем дальнейшее распространение события только для холста
-    return false;
+    vanishingPoint.x = mouseX;
+    vanishingPoint.y = mouseY;
   }
-  
-  // Не блокируем событие для элементов управления
-  return true;
-}
-
-function mouseDragged() {
-  // Если мышь зажата и перетаскивается для рисования
-  if (isMouseDragging) {
-    // Получаем элемент панели управления
-    let controlsPanel = document.querySelector('.controls');
-    let controlsRect = controlsPanel.getBoundingClientRect();
-    
-    // Проверяем, что перетаскивание не над панелью управления
-    if (!(mouseX >= controlsRect.left && 
-          mouseX <= controlsRect.right && 
-          mouseY >= controlsRect.top && 
-          mouseY <= controlsRect.bottom)) {
-      // Обновляем целевую точку схода
-      targetVanishingPoint.x = mouseX;
-      targetVanishingPoint.y = mouseY;
-    }
-  }
-  
-  // НЕ предотвращаем стандартное поведение браузера при перетаскивании,
-  // чтобы слайдеры работали нормально
-}
-
-function mouseReleased() {
-  // Сбрасываем флаг перетаскивания
-  isMouseDragging = false;
 }
 
 function createStars() {
@@ -194,7 +115,7 @@ function createStarsWithDistribution() {
     let progress = i / initialCount; // От 0 до 1
     
     // Получаем угол и расстояние до края для этой звезды
-    let edgeDist = distToEdge(actualVanishingPoint, star.angle);
+    let edgeDist = distToEdge(vanishingPoint, star.angle);
     let resetLength = edgeDist * circleRadius;
     
     // Распределяем начальные длины по всему диапазону
@@ -214,8 +135,7 @@ function createRandomStar() {
   let angle = random(TWO_PI);
   
   // Расчет расстояния до края экрана от точки схода в этом направлении
-  // Используем actualVanishingPoint для генерации новых линий
-  let edgeDist = distToEdge(actualVanishingPoint, angle);
+  let edgeDist = distToEdge(vanishingPoint, angle);
   
   // Расчет максимального расстояния по диагонали экрана (для гарантии выхода за пределы)
   let maxScreenDist = sqrt(width * width + height * height);
@@ -247,8 +167,7 @@ function createRandomStar() {
     resetLength: edgeDist * circleRadius, // Длина, при которой линия будет сброшена
     speed: random(0.5, 2) * speed, // Увеличиваем разброс скоростей
     active: true,
-    creationTime: millis(), // Запоминаем время создания звезды
-    origin: createVector(actualVanishingPoint.x, actualVanishingPoint.y) // Запоминаем точку создания
+    creationTime: millis() // Запоминаем время создания звезды
   };
 }
 
@@ -422,18 +341,15 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   // При изменении размера окна, если точка схода была в центре, оставляем ее в центре
   if (vanishingPoint.x === width / 2 && vanishingPoint.y === height / 2) {
-    let centerX = windowWidth / 2;
-    let centerY = windowHeight / 2;
-    vanishingPoint.x = centerX;
-    vanishingPoint.y = centerY;
-    actualVanishingPoint.x = centerX;
-    actualVanishingPoint.y = centerY;
-    targetVanishingPoint.x = centerX;
-    targetVanishingPoint.y = centerY;
+    vanishingPoint.x = windowWidth / 2;
+    vanishingPoint.y = windowHeight / 2;
   }
   
   // Пересчитываем максимальное расстояние
   maxDist = dist(0, 0, width, height);
+  
+  // Сохраняем текущее количество звезд
+  let currentStarsCount = stars.length;
   
   // Пересоздаем звезды с распределением длин для непрерывности
   createStarsWithDistribution();
@@ -468,11 +384,10 @@ function exportCanvas() {
         if (len2 <= fadeStart) continue;
         if (len1 < fadeStart) len1 = fadeStart;
         
-        // Используем origin (точку создания звезды) вместо vanishingPoint
-        let x1 = star.origin.x + cos(star.angle) * len1;
-        let y1 = star.origin.y + sin(star.angle) * len1;
-        let x2 = star.origin.x + cos(star.angle) * len2;
-        let y2 = star.origin.y + sin(star.angle) * len2;
+        let x1 = vanishingPoint.x + cos(star.angle) * len1;
+        let y1 = vanishingPoint.y + sin(star.angle) * len1;
+        let x2 = vanishingPoint.x + cos(star.angle) * len2;
+        let y2 = vanishingPoint.y + sin(star.angle) * len2;
         
         let progress = (len1 - fadeStart) / (star.currentLength - fadeStart);
         let alpha = opacity * (1 - progress);
@@ -583,15 +498,9 @@ function isValidHex(hex) {
 
 // Функция для возврата точки схода в центр экрана
 function centerVanishingPoint() {
-  // Устанавливаем все точки схода в центр экрана
-  let centerX = width / 2;
-  let centerY = height / 2;
-  vanishingPoint.x = centerX;
-  vanishingPoint.y = centerY;
-  actualVanishingPoint.x = centerX;
-  actualVanishingPoint.y = centerY;
-  targetVanishingPoint.x = centerX;
-  targetVanishingPoint.y = centerY;
+  // Устанавливаем точку схода в центр экрана
+  vanishingPoint.x = width / 2;
+  vanishingPoint.y = height / 2;
   
   // Пересоздаем звезды с распределением длин для непрерывности
   createStarsWithDistribution();
@@ -675,11 +584,11 @@ function drawStarLine(star) {
     // Если мы начали до точки затухания, корректируем
     if (len1 < fadeStart) len1 = fadeStart;
     
-    // Координаты сегмента - используем origin (точку создания звезды) вместо vanishingPoint
-    let x1 = star.origin.x + cos(star.angle) * len1;
-    let y1 = star.origin.y + sin(star.angle) * len1;
-    let x2 = star.origin.x + cos(star.angle) * len2;
-    let y2 = star.origin.y + sin(star.angle) * len2;
+    // Координаты сегмента
+    let x1 = vanishingPoint.x + cos(star.angle) * len1;
+    let y1 = vanishingPoint.y + sin(star.angle) * len1;
+    let x2 = vanishingPoint.x + cos(star.angle) * len2;
+    let y2 = vanishingPoint.y + sin(star.angle) * len2;
     
     // Расчет прозрачности для текущего сегмента
     let progress = (len1 - fadeStart) / (star.currentLength - fadeStart);
