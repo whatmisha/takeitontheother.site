@@ -14,7 +14,6 @@ let startColor;
 let midColor;
 let endColor;
 let useColorGradient = false;
-let circleRadius; // Радиус круговой маски для сброса линий
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -26,10 +25,6 @@ function setup() {
   startColor = color('#2353DB');
   midColor = color('#23DBD3');
   endColor = color('#5723DB');
-  
-  // Расчет максимального расстояния от центра до угла экрана
-  // Используется для нормализации длины линий
-  maxDist = dist(0, 0, width, height);
   
   // Получение значений из слайдеров
   updateParameters();
@@ -95,14 +90,10 @@ function createRandomStar() {
   // Расчет расстояния до края экрана от точки схода в этом направлении
   let edgeDist = distToEdge(vanishingPoint, angle);
   
-  // Расчет максимального расстояния по диагонали экрана (для гарантии выхода за пределы)
-  let maxScreenDist = sqrt(width * width + height * height);
-  
   return {
     angle: angle,
     currentLength: random(5, 20), // Начальная длина (короткая)
-    maxLength: maxScreenDist * 2, // Гарантируем, что линия уйдет далеко за край экрана
-    resetLength: edgeDist * circleRadius, // Длина, при которой линия будет сброшена
+    maxLength: edgeDist * 1.2, // Гарантируем, что линия выйдет за край экрана
     speed: random(0.5, 1.5) * speed,
     active: true
   };
@@ -117,9 +108,8 @@ function updateAndDrawStars() {
       if (!isPaused) {
         star.currentLength += star.speed;
         
-        // Если линия ушла достаточно далеко за край экрана, создаем новую
-        // Используем resetLength вместо maxLength для сброса
-        if (star.currentLength >= star.resetLength) {
+        // Если линия достигла максимальной длины, создаем новую
+        if (star.currentLength >= star.maxLength) {
           stars[i] = createRandomStar();
           continue;
         }
@@ -142,7 +132,6 @@ function updateParameters() {
   reverseWedge = document.getElementById('reverseWedge').checked;
   useColorGradient = document.getElementById('useColorGradient').checked;
   speed = parseFloat(document.getElementById('speed').value);
-  circleRadius = parseFloat(document.getElementById('circleRadius').value);
   
   // Обновление цветов
   startColor = color(document.getElementById('startColor').value);
@@ -156,8 +145,11 @@ function updateParameters() {
   document.getElementById('segmentsCountValue').textContent = segmentsCount;
   document.getElementById('lineWidthValue').textContent = lineWidth;
   document.getElementById('widthGrowthValue').textContent = widthGrowth;
-  document.getElementById('circleRadiusValue').textContent = circleRadius;
   document.getElementById('speedValue').textContent = speed;
+  
+  // Расчет максимального расстояния от центра до угла экрана
+  // Используется для нормализации длины линий
+  maxDist = dist(0, 0, width, height);
 }
 
 function setupSliderEvents() {
@@ -172,45 +164,13 @@ function setupSliderEvents() {
   document.getElementById('segmentsCount').addEventListener('input', updateParameters);
   document.getElementById('lineWidth').addEventListener('input', updateParameters);
   document.getElementById('widthGrowth').addEventListener('input', updateParameters);
-  document.getElementById('circleRadius').addEventListener('input', updateParameters);
   document.getElementById('reverseWedge').addEventListener('change', updateParameters);
   document.getElementById('speed').addEventListener('input', updateParameters);
   
   // Обработчики для цветов и режима
-  document.getElementById('startColor').addEventListener('input', function() {
-    document.getElementById('startColorHex').value = this.value.toUpperCase();
-    updateParameters();
-  });
-  document.getElementById('midColor').addEventListener('input', function() {
-    document.getElementById('midColorHex').value = this.value.toUpperCase();
-    updateParameters();
-  });
-  document.getElementById('endColor').addEventListener('input', function() {
-    document.getElementById('endColorHex').value = this.value.toUpperCase();
-    updateParameters();
-  });
-  
-  // Обработчики для HEX-полей
-  document.getElementById('startColorHex').addEventListener('input', function() {
-    // Проверяем, что введен валидный HEX-код
-    if (isValidHex(this.value)) {
-      document.getElementById('startColor').value = this.value;
-      updateParameters();
-    }
-  });
-  document.getElementById('midColorHex').addEventListener('input', function() {
-    if (isValidHex(this.value)) {
-      document.getElementById('midColor').value = this.value;
-      updateParameters();
-    }
-  });
-  document.getElementById('endColorHex').addEventListener('input', function() {
-    if (isValidHex(this.value)) {
-      document.getElementById('endColor').value = this.value;
-      updateParameters();
-    }
-  });
-  
+  document.getElementById('startColor').addEventListener('input', updateParameters);
+  document.getElementById('midColor').addEventListener('input', updateParameters);
+  document.getElementById('endColor').addEventListener('input', updateParameters);
   document.getElementById('useColorGradient').addEventListener('change', updateParameters);
   
   // Добавление обработчика для кнопки экспорта
@@ -269,38 +229,29 @@ function exportCanvas() {
         let progress = (len1 - fadeStart) / (star.currentLength - fadeStart);
         let alpha = opacity * (1 - progress);
         
-        // Базовая толщина линии из слайдера
-        let baseWidth = lineWidth;
-        let currentWidth = baseWidth;
-        
+        let currentWidth = lineWidth;
         if (widthGrowth > 0) {
-          // Используем resetLength вместо maxLength для более естественного изменения толщины
-          let distFactor = min(1, len1 / star.resetLength);
+          let distFactor = len1 / star.maxLength;
           
           if (reverseWedge) {
-            // Обратный клин: толще в центре, тоньше на краях
-            currentWidth = baseWidth + (widthGrowth * (1 - distFactor) * (1 - distFactor));
+            currentWidth = lineWidth + (widthGrowth * (1 - distFactor) * (1 - distFactor));
           } else {
-            // Прямой клин: тоньше в центре, толще на краях
-            // Начинаем с минимальной толщины в центре
-            let minWidth = max(0.5, baseWidth * 0.5); // Минимум 0.5px или половина базовой толщины
-            currentWidth = minWidth + (widthGrowth * 1.5 * distFactor * distFactor);
+            currentWidth = 1 + (widthGrowth * 1.5 * distFactor * distFactor);
           }
         }
         
         // Определение цвета сегмента
         let segmentColor;
         if (useColorGradient) {
-          // Нормализуем прогресс цвета относительно видимой части линии
-          // Используем resetLength для расчета градиента
-          let visibleProgress = min(1, len1 / star.resetLength);
+          // Интерполяция между тремя цветами
+          let colorProgress = len1 / star.maxLength;
           
-          if (visibleProgress < 0.5) {
+          if (colorProgress < 0.5) {
             // Первая половина градиента: от startColor до midColor
-            segmentColor = lerpColor(startColor, midColor, visibleProgress * 2);
+            segmentColor = lerpColor(startColor, midColor, colorProgress * 2);
           } else {
             // Вторая половина градиента: от midColor до endColor
-            segmentColor = lerpColor(midColor, endColor, (visibleProgress - 0.5) * 2);
+            segmentColor = lerpColor(midColor, endColor, (colorProgress - 0.5) * 2);
           }
           
           // Устанавливаем прозрачность
@@ -360,17 +311,6 @@ function exportCanvas() {
 // Вспомогательная функция для добавления ведущих нулей
 function padDigits(number) {
   return number.toString().padStart(2, '0');
-}
-
-// Функция для проверки валидности HEX-кода цвета
-function isValidHex(hex) {
-  // Удаляем # в начале, если есть
-  if (hex.startsWith('#')) {
-    hex = hex.substring(1);
-  }
-  
-  // Проверяем, что строка содержит только допустимые символы и имеет правильную длину
-  return /^[0-9A-Fa-f]{3}$|^[0-9A-Fa-f]{6}$/.test(hex);
 }
 
 // Функция для возврата точки схода в центр экрана
@@ -469,38 +409,33 @@ function drawStarLine(star) {
     let alpha = opacity * (1 - progress);
     
     // Расчет толщины линии с учетом перспективы (клиновидность)
-    // Базовая толщина линии из слайдера
-    let baseWidth = lineWidth;
-    let currentWidth = baseWidth;
-    
+    let currentWidth = lineWidth;
     if (widthGrowth > 0) {
-      // Используем resetLength вместо maxLength для более естественного изменения толщины
-      let distFactor = min(1, len1 / star.resetLength);
+      // Нормализованное расстояние от точки схода (0 в центре, 1 на краю)
+      let distFactor = len1 / star.maxLength;
       
       if (reverseWedge) {
         // Обратный клин: толще в центре, тоньше на краях
-        currentWidth = baseWidth + (widthGrowth * (1 - distFactor) * (1 - distFactor));
+        currentWidth = lineWidth + (widthGrowth * (1 - distFactor) * (1 - distFactor));
       } else {
         // Прямой клин: тоньше в центре, толще на краях
-        // Начинаем с минимальной толщины в центре
-        let minWidth = max(0.5, baseWidth * 0.5); // Минимум 0.5px или половина базовой толщины
-        currentWidth = minWidth + (widthGrowth * 1.5 * distFactor * distFactor);
+        // Начинаем с 1px в центре
+        currentWidth = 1 + (widthGrowth * 1.5 * distFactor * distFactor);
       }
     }
     
     // Определение цвета сегмента
     let segmentColor;
     if (useColorGradient) {
-      // Нормализуем прогресс цвета относительно видимой части линии
-      // Используем resetLength для расчета градиента
-      let visibleProgress = min(1, len1 / star.resetLength);
+      // Интерполяция между тремя цветами
+      let colorProgress = len1 / star.maxLength;
       
-      if (visibleProgress < 0.5) {
+      if (colorProgress < 0.5) {
         // Первая половина градиента: от startColor до midColor
-        segmentColor = lerpColor(startColor, midColor, visibleProgress * 2);
+        segmentColor = lerpColor(startColor, midColor, colorProgress * 2);
       } else {
         // Вторая половина градиента: от midColor до endColor
-        segmentColor = lerpColor(midColor, endColor, (visibleProgress - 0.5) * 2);
+        segmentColor = lerpColor(midColor, endColor, (colorProgress - 0.5) * 2);
       }
       
       // Устанавливаем прозрачность
