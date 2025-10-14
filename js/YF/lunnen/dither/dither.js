@@ -21,6 +21,23 @@ class DitheringTool {
         };
         
         this.initEventListeners();
+        
+        // Загрузка изображения по умолчанию
+        this.loadDefaultImage();
+    }
+    
+    loadDefaultImage() {
+        const img = new Image();
+        img.onload = () => {
+            this.originalImage = img;
+            this.resizeCanvas(img);
+            this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+            document.getElementById('uploadPlaceholder').classList.add('hidden');
+            document.getElementById('exportBtn').disabled = false;
+            document.getElementById('resetBtn').disabled = false;
+            this.applyEffects();
+        };
+        img.src = 'images/sample_image_01.jpg';
     }
     
     initEventListeners() {
@@ -138,6 +155,7 @@ class DitheringTool {
     }
     
     resizeCanvas(img) {
+        // Используем фиксированный размер для лучшего центрирования
         const maxWidth = 800;
         const maxHeight = 600;
         let width = img.width;
@@ -145,8 +163,8 @@ class DitheringTool {
         
         if (width > maxWidth || height > maxHeight) {
             const ratio = Math.min(maxWidth / width, maxHeight / height);
-            width = width * ratio;
-            height = height * ratio;
+            width = Math.floor(width * ratio);
+            height = Math.floor(height * ratio);
         }
         
         this.canvas.width = width;
@@ -174,6 +192,9 @@ class DitheringTool {
         
         // Put processed image back
         this.ctx.putImageData(imageData, 0, 0);
+        
+        // Скрыть placeholder после загрузки изображения
+        document.getElementById('uploadPlaceholder').classList.add('hidden');
     }
     
     applyPreprocessing(imageData) {
