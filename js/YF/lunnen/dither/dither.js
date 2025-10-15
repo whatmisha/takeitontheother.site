@@ -28,6 +28,7 @@ class DitheringTool {
     
     loadDefaultImage() {
         const img = new Image();
+        img.crossOrigin = 'anonymous'; // Предотвращаем CORS проблемы
         img.onload = () => {
             this.originalImage = img;
             this.resizeCanvas(img);
@@ -36,6 +37,10 @@ class DitheringTool {
             document.getElementById('exportBtn').disabled = false;
             document.getElementById('resetBtn').disabled = false;
             this.applyEffects();
+        };
+        img.onerror = () => {
+            console.log('Не удалось загрузить изображение по умолчанию. Показываем placeholder.');
+            // Если изображение не загрузилось, просто показываем placeholder
         };
         img.src = 'images/sample_image_01.jpg';
     }
