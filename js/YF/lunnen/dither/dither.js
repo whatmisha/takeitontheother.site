@@ -263,9 +263,6 @@ class DitheringTool {
         
         // Put processed image back
         this.ctx.putImageData(imageData, 0, 0);
-        
-        // Скрыть placeholder после загрузки изображения
-        document.getElementById('uploadPlaceholder').classList.add('hidden');
     }
     
     applyPreprocessing(imageData) {
