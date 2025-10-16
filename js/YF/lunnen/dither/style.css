@@ -124,11 +124,10 @@ header p {
 .control-section {
     margin-bottom: 30px;
     padding-bottom: 20px;
-    border-bottom: 1px solid #fff;
+    border-bottom: none;
 }
 
 .control-section:last-child {
-    border-bottom: none;
     margin-bottom: 0;
 }
 
@@ -152,7 +151,7 @@ header p {
 
 .control-group input[type="range"] {
     width: calc(100% - 60px);
-    height: 6px;
+    height: 1px;
     border-radius: 0;
     background: #fff;
     outline: none;
@@ -163,9 +162,9 @@ header p {
 .control-group input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
     background: #fff;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -178,9 +177,9 @@ header p {
 }
 
 .control-group input[type="range"]::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
-    border-radius: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
     background: #fff;
     cursor: pointer;
     border: 1px solid #000;
