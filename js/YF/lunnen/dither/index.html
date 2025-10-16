@@ -15,9 +15,6 @@
                     <div class="upload-icon">📁</div>
                     <p>Загрузите изображение</p>
                     <p class="upload-hint">.jpg, .png или перетащите файл</p>
-                    <button class="btn-primary" onclick="document.getElementById('imageInput').click()">
-                        Выбрать файл
-                    </button>
                 </div>
                 <input type="file" id="imageInput" accept="image/*" style="display: none;">
             </div>
@@ -127,6 +124,10 @@
             </div>
         </div>
     </div>
+
+    <button class="upload-btn-fixed" id="uploadBtnFixed" onclick="document.getElementById('imageInput').click()">
+        + Добавить изображение
+    </button>
 
     <script src="dither.js"></script>
 </body>

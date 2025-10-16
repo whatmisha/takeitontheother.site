@@ -278,6 +278,33 @@ header p {
     border: 3px dashed #667eea;
 }
 
+/* Fixed upload button */
+.upload-btn-fixed {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    padding: 15px 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.upload-btn-fixed:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+}
+
+.upload-btn-fixed:active {
+    transform: translateY(-1px);
+}
+
 /* Scrollbar styling */
 .controls-panel::-webkit-scrollbar {
     width: 8px;
@@ -315,6 +342,13 @@ header p {
     
     .controls-panel {
         padding: 20px;
+    }
+    
+    .upload-btn-fixed {
+        bottom: 20px;
+        left: 20px;
+        padding: 12px 24px;
+        font-size: 0.9rem;
     }
 }
 
