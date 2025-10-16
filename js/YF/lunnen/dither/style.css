@@ -9,7 +9,7 @@ body {
     background: #000;
     min-height: 100vh;
     padding: 20px;
-    color: #333;
+    color: #fff;
 }
 
 .container {
@@ -30,18 +30,16 @@ header {
 header h1 {
     font-size: 2.5rem;
     margin-bottom: 10px;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    text-shadow: none;
 }
 
 header p {
     font-size: 1.1rem;
-    opacity: 0.9;
+    opacity: 1;
 }
 
 .main-content {
-    display: grid;
-    grid-template-columns: 1fr 400px;
-    gap: 20px;
+    display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
@@ -49,8 +47,9 @@ header p {
 
 .canvas-container {
     background: black;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(255,255,255,0.1);
+    border-radius: 0;
+    box-shadow: none;
+    border: 1px solid #fff;
     overflow: hidden;
     position: relative;
     min-height: 400px;
@@ -78,7 +77,7 @@ header p {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #111;
+    background: #000;
     transition: all 0.3s ease;
     color: #fff;
 }
@@ -95,29 +94,71 @@ header p {
 
 .upload-placeholder p {
     margin: 5px 0;
-    color: #ddd;
+    color: #fff;
 }
 
 .upload-hint {
     font-size: 0.9rem;
-    color: #888;
+    color: #fff;
     margin-bottom: 20px !important;
 }
 
 .controls-panel {
-    background: #222;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(255,255,255,0.1);
-    padding: 25px;
-    max-height: 85vh;
-    overflow-y: auto;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 400px;
+    background: #000;
+    border-radius: 0;
+    box-shadow: none;
+    border: 1px solid #fff;
+    padding: 0;
+    max-height: calc(100vh - 40px);
+    overflow: hidden;
     color: #fff;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
+    background: #000;
+    padding: 15px 25px;
+    border-radius: 0;
+    cursor: move;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #fff;
+    flex-shrink: 0;
+}
+
+.panel-header:active {
+    cursor: grabbing;
+}
+
+.drag-icon {
+    color: #fff;
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.panel-header span:last-child {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.panel-content {
+    padding: 20px 25px;
+    overflow-y: auto;
+    flex: 1;
 }
 
 .control-section {
     margin-bottom: 30px;
     padding-bottom: 20px;
-    border-bottom: 1px solid #444;
+    border-bottom: 1px solid #fff;
 }
 
 .control-section:last-child {
@@ -128,7 +169,7 @@ header p {
 .control-section h3 {
     font-size: 1.2rem;
     margin-bottom: 20px;
-    color: #7d8fff;
+    color: #fff;
 }
 
 .control-group {
@@ -139,15 +180,15 @@ header p {
     display: block;
     font-weight: 500;
     margin-bottom: 8px;
-    color: #bbb;
+    color: #fff;
     font-size: 0.95rem;
 }
 
 .control-group input[type="range"] {
     width: calc(100% - 60px);
     height: 6px;
-    border-radius: 3px;
-    background: #e0e0e0;
+    border-radius: 0;
+    background: #fff;
     outline: none;
     -webkit-appearance: none;
     margin-right: 10px;
@@ -158,30 +199,31 @@ header p {
     appearance: none;
     width: 18px;
     height: 18px;
-    border-radius: 50%;
-    background: #667eea;
+    border-radius: 0;
+    background: #fff;
     cursor: pointer;
     transition: all 0.2s ease;
+    border: 1px solid #000;
 }
 
 .control-group input[type="range"]::-webkit-slider-thumb:hover {
     transform: scale(1.2);
-    background: #764ba2;
+    background: #fff;
 }
 
 .control-group input[type="range"]::-moz-range-thumb {
     width: 18px;
     height: 18px;
-    border-radius: 50%;
-    background: #667eea;
+    border-radius: 0;
+    background: #fff;
     cursor: pointer;
-    border: none;
+    border: 1px solid #000;
     transition: all 0.2s ease;
 }
 
 .control-group input[type="range"]::-moz-range-thumb:hover {
     transform: scale(1.2);
-    background: #764ba2;
+    background: #fff;
 }
 
 .value-display {
@@ -189,7 +231,7 @@ header p {
     min-width: 50px;
     text-align: right;
     font-weight: 600;
-    color: #667eea;
+    color: #fff;
     font-size: 0.9rem;
 }
 
@@ -204,12 +246,13 @@ header p {
     align-items: center;
     cursor: pointer;
     padding: 8px 12px;
-    border-radius: 6px;
+    border-radius: 0;
     transition: background 0.2s ease;
 }
 
 .radio-label:hover {
-    background: #333;
+    background: #fff;
+    color: #000;
 }
 
 .radio-label input[type="radio"] {
@@ -231,8 +274,8 @@ header p {
 
 .btn-primary, .btn-secondary {
     padding: 12px 24px;
-    border: none;
-    border-radius: 8px;
+    border: 1px solid #fff;
+    border-radius: 0;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
@@ -240,13 +283,13 @@ header p {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: #fff;
+    color: #000;
 }
 
 .btn-primary:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    background: #000;
+    color: #fff;
 }
 
 .btn-primary:disabled {
@@ -255,12 +298,13 @@ header p {
 }
 
 .btn-secondary {
-    background: #e0e0e0;
-    color: #555;
+    background: #000;
+    color: #fff;
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background: #d0d0d0;
+    background: #fff;
+    color: #000;
 }
 
 .btn-secondary:disabled {
@@ -275,7 +319,7 @@ header p {
 
 /* Drag and drop styles */
 .canvas-container.dragover {
-    border: 3px dashed #667eea;
+    border: 3px solid #fff;
 }
 
 /* Fixed upload button */
@@ -284,54 +328,52 @@ header p {
     bottom: 30px;
     left: 30px;
     padding: 15px 30px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 50px;
+    background: #fff;
+    color: #000;
+    border: 1px solid #fff;
+    border-radius: 0;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: none;
     transition: all 0.3s ease;
     z-index: 1000;
 }
 
 .upload-btn-fixed:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+    background: #000;
+    color: #fff;
+    border: 1px solid #fff;
 }
 
 .upload-btn-fixed:active {
-    transform: translateY(-1px);
+    transform: none;
 }
 
 /* Scrollbar styling */
-.controls-panel::-webkit-scrollbar {
+.panel-content::-webkit-scrollbar {
     width: 8px;
 }
 
-.controls-panel::-webkit-scrollbar-track {
-    background: #333;
-    border-radius: 4px;
+.panel-content::-webkit-scrollbar-track {
+    background: #000;
+    border-radius: 0;
 }
 
-.controls-panel::-webkit-scrollbar-thumb {
-    background: #7d8fff;
-    border-radius: 4px;
+.panel-content::-webkit-scrollbar-thumb {
+    background: #fff;
+    border-radius: 0;
 }
 
-.controls-panel::-webkit-scrollbar-thumb:hover {
-    background: #5a6cff;
+.panel-content::-webkit-scrollbar-thumb:hover {
+    background: #fff;
 }
 
 /* Responsive design */
 @media (max-width: 1024px) {
-    .main-content {
-        grid-template-columns: 1fr;
-    }
-    
     .controls-panel {
-        max-height: none;
+        width: 350px;
+        max-height: calc(100vh - 40px);
     }
 }
 
@@ -341,7 +383,14 @@ header p {
     }
     
     .controls-panel {
-        padding: 20px;
+        width: 300px;
+        top: 10px;
+        right: 10px;
+        max-height: calc(100vh - 20px);
+    }
+    
+    .panel-content {
+        padding: 15px 20px;
     }
     
     .upload-btn-fixed {
@@ -351,4 +400,3 @@ header p {
         font-size: 0.9rem;
     }
 }
-

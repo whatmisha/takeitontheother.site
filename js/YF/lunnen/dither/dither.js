@@ -21,28 +21,7 @@ class DitheringTool {
         };
         
         this.initEventListeners();
-        
-        // Загрузка изображения по умолчанию
-        this.loadDefaultImage();
-    }
-    
-    loadDefaultImage() {
-        const img = new Image();
-        img.crossOrigin = 'anonymous'; // Предотвращаем CORS проблемы
-        img.onload = () => {
-            this.originalImage = img;
-            this.resizeCanvas(img);
-            this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
-            document.getElementById('uploadPlaceholder').classList.add('hidden');
-            document.getElementById('exportBtn').disabled = false;
-            document.getElementById('resetBtn').disabled = false;
-            this.applyEffects();
-        };
-        img.onerror = () => {
-            console.log('Не удалось загрузить изображение по умолчанию. Показываем placeholder.');
-            // Если изображение не загрузилось, просто показываем placeholder
-        };
-        img.src = 'images/sample_image_01.jpg';
+        this.initPanelDrag();
     }
     
     initEventListeners() {
@@ -134,6 +113,86 @@ class DitheringTool {
         });
     }
     
+    initPanelDrag() {
+        const panel = document.getElementById('controlsPanel');
+        const header = document.getElementById('panelHeader');
+        
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+        
+        // Get initial position from CSS
+        const computedStyle = window.getComputedStyle(panel);
+        const top = parseInt(computedStyle.top);
+        const right = parseInt(computedStyle.right);
+        
+        // Convert right to left for easier calculations
+        xOffset = window.innerWidth - right - panel.offsetWidth;
+        yOffset = top;
+        
+        header.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+        
+        // Touch events for mobile
+        header.addEventListener('touchstart', dragStart);
+        document.addEventListener('touchmove', drag);
+        document.addEventListener('touchend', dragEnd);
+        
+        function dragStart(e) {
+            if (e.type === 'touchstart') {
+                initialX = e.touches[0].clientX - xOffset;
+                initialY = e.touches[0].clientY - yOffset;
+            } else {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+            }
+            
+            if (e.target === header || header.contains(e.target)) {
+                isDragging = true;
+                panel.style.transition = 'none';
+            }
+        }
+        
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                
+                if (e.type === 'touchmove') {
+                    currentX = e.touches[0].clientX - initialX;
+                    currentY = e.touches[0].clientY - initialY;
+                } else {
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+                }
+                
+                xOffset = currentX;
+                yOffset = currentY;
+                
+                setTranslate(currentX, currentY, panel);
+            }
+        }
+        
+        function dragEnd(e) {
+            if (isDragging) {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+            }
+        }
+        
+        function setTranslate(xPos, yPos, el) {
+            el.style.left = xPos + 'px';
+            el.style.top = yPos + 'px';
+            el.style.right = 'auto';
+            el.style.bottom = 'auto';
+        }
+    }
+    
     handleFileSelect(event) {
         const file = event.target.files[0];
         if (file) {
@@ -150,7 +209,6 @@ class DitheringTool {
                 this.resizeCanvas(img);
                 this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
                 document.getElementById('uploadPlaceholder').classList.add('hidden');
-                document.getElementById('uploadBtnFixed').style.display = 'none';
                 document.getElementById('exportBtn').disabled = false;
                 document.getElementById('resetBtn').disabled = false;
                 this.applyEffects();
