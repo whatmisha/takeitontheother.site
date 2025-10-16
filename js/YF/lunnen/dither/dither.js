@@ -571,6 +571,10 @@ class DitheringTool {
     }
     
     resetSettings() {
+        if (!this.originalImage) {
+            return;
+        }
+        
         this.settings = {
             blur: 0,
             grain: 0,
