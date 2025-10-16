@@ -82,11 +82,18 @@ class DitheringTool {
             this.applyEffects();
         });
         
+        // Bottom fixed buttons
         // Export button
-        document.getElementById('exportBtn').addEventListener('click', () => this.exportImage());
+        const exportBtn = document.getElementById('exportBtn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => this.exportImage());
+        }
         
         // Reset button
-        document.getElementById('resetBtn').addEventListener('click', () => this.resetSettings());
+        const resetBtn = document.getElementById('resetBtn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => this.resetSettings());
+        }
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {

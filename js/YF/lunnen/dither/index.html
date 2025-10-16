@@ -113,22 +113,23 @@
                     </div>
                 </div>
 
-                <div class="control-section">
-                    <button class="btn-primary btn-full" id="exportBtn" disabled>
-                        Экспортировать (Ctrl + S)
-                    </button>
-                    <button class="btn-secondary btn-full" id="resetBtn" disabled>
-                        Сбросить настройки
-                    </button>
-                </div>
+                
                 </div>
             </div>
         </div>
     </div>
 
-    <button class="upload-btn-fixed" id="uploadBtnFixed" onclick="document.getElementById('imageInput').click()">
-        + Добавить изображение
-    </button>
+    <div class="bottom-buttons">
+        <button class="btn-fixed" id="uploadBtnFixed" onclick="document.getElementById('imageInput').click()">
+            + Добавить изображение
+        </button>
+        <button class="btn-fixed btn-export" id="exportBtn" disabled>
+            Экспортировать
+        </button>
+        <button class="btn-fixed btn-reset" id="resetBtn" disabled>
+            Сбросить
+        </button>
+    </div>
 
     <script src="dither.js"></script>
 </body>

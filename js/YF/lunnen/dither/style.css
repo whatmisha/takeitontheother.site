@@ -287,12 +287,18 @@ header p {
     border: 3px solid #fff;
 }
 
-/* Fixed upload button */
-.upload-btn-fixed {
+/* Bottom buttons */
+.bottom-buttons {
     position: fixed;
     bottom: 30px;
     left: 30px;
-    padding: 15px 30px;
+    display: flex;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.btn-fixed {
+    padding: 15px 20px;
     background: #fff;
     color: #000;
     border: 1px solid #fff;
@@ -302,17 +308,31 @@ header p {
     cursor: pointer;
     box-shadow: none;
     transition: all 0.3s ease;
-    z-index: 1000;
 }
 
-.upload-btn-fixed:hover {
+.btn-fixed:hover {
     background: #000;
     color: #fff;
     border: 1px solid #fff;
 }
 
-.upload-btn-fixed:active {
+.btn-fixed:active {
     transform: none;
+}
+
+.btn-fixed:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-export {
+    background: #fff;
+    color: #000;
+}
+
+.btn-reset {
+    background: #000;
+    color: #fff;
 }
 
 /* Scrollbar styling */
@@ -358,10 +378,15 @@ header p {
         padding: 15px 20px;
     }
     
-    .upload-btn-fixed {
+    .bottom-buttons {
         bottom: 20px;
         left: 20px;
-        padding: 12px 24px;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .btn-fixed {
+        padding: 12px 20px;
         font-size: 0.9rem;
     }
 }
