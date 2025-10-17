@@ -220,6 +220,7 @@ header p {
     padding: 4px 0;
     border-radius: 0;
     transition: all 0.15s ease;
+    justify-content: flex-start;
 }
 
 .radio-label:hover {
@@ -237,6 +238,7 @@ header p {
 .radio-label span {
     font-size: 0.85rem;
     color: #ccc;
+    text-align: left;
 }
 
 .radio-label:hover span {
@@ -249,11 +251,13 @@ header p {
     cursor: pointer;
     padding: 4px 0;
     margin-bottom: 0 !important;
+    justify-content: flex-start !important;
 }
 
 .checkbox-label span {
     font-size: 0.85rem;
     color: #ccc;
+    text-align: left;
 }
 
 .checkbox-label:hover span {
