@@ -220,6 +220,7 @@ header p {
     padding: 4px 0;
     border-radius: 0;
     transition: all 0.15s ease;
+    justify-content: flex-start;
 }
 
 .radio-label:hover {
@@ -231,11 +232,13 @@ header p {
     cursor: pointer;
     width: 14px;
     height: 14px;
+    flex-shrink: 0;
 }
 
 .radio-label span {
     font-size: 0.85rem;
     color: #ccc;
+    text-align: left;
 }
 
 .radio-label:hover span {
@@ -248,11 +251,13 @@ header p {
     cursor: pointer;
     padding: 4px 0;
     margin-bottom: 0 !important;
+    justify-content: flex-start !important;
 }
 
 .checkbox-label span {
     font-size: 0.85rem;
     color: #ccc;
+    text-align: left;
 }
 
 .checkbox-label:hover span {
@@ -265,6 +270,7 @@ header p {
     width: 14px;
     height: 14px;
     vertical-align: middle;
+    flex-shrink: 0;
 }
 
 .btn-primary, .btn-secondary {
