@@ -220,7 +220,6 @@ header p {
     padding: 4px 0;
     border-radius: 0;
     transition: all 0.15s ease;
-    justify-content: space-between;
 }
 
 .radio-label:hover {
@@ -228,19 +227,16 @@ header p {
 }
 
 .radio-label input[type="radio"] {
-    margin-right: 0;
+    margin-right: 8px;
     cursor: pointer;
     width: 14px;
     height: 14px;
     flex-shrink: 0;
-    order: 0;
 }
 
 .radio-label span {
     font-size: 0.85rem;
     color: #ccc;
-    text-align: right;
-    flex: 1;
 }
 
 .radio-label:hover span {
@@ -253,14 +249,11 @@ header p {
     cursor: pointer;
     padding: 4px 0;
     margin-bottom: 0 !important;
-    justify-content: space-between !important;
 }
 
 .checkbox-label span {
     font-size: 0.85rem;
     color: #ccc;
-    text-align: right;
-    flex: 1;
 }
 
 .checkbox-label:hover span {
@@ -268,7 +261,7 @@ header p {
 }
 
 .control-group input[type="checkbox"] {
-    margin-right: 0;
+    margin-right: 8px;
     cursor: pointer;
     width: 14px;
     height: 14px;
