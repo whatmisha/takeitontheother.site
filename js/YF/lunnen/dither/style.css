@@ -147,7 +147,6 @@ header p {
 .control-group label {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     font-weight: 400;
     margin-bottom: 6px;
     color: #ccc;

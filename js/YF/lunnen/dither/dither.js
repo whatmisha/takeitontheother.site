@@ -17,7 +17,8 @@ class DitheringTool {
             pixelSize: 1,
             threshold: 128,
             colorMode: 'monochrome',
-            showEffect: true
+            showEffect: true,
+            invertImage: false
         };
         
         this.initEventListeners();
@@ -77,6 +78,12 @@ class DitheringTool {
             });
         });
         
+        // Invert image checkbox
+        document.getElementById('invertImage').addEventListener('change', (e) => {
+            this.settings.invertImage = e.target.checked;
+            this.applyEffects();
+        });
+        
         // Show effect checkbox
         document.getElementById('showEffect').addEventListener('change', (e) => {
             this.settings.showEffect = e.target.checked;
@@ -94,9 +101,7 @@ class DitheringTool {
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
                 e.preventDefault();
-                if (this.originalImage) {
-                    this.exportImage();
-                }
+                this.exportImage();
             }
             if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
                 e.preventDefault();
@@ -283,6 +288,16 @@ class DitheringTool {
     
     applyPreprocessing(imageData) {
         const data = imageData.data;
+        
+        // Apply invert
+        if (this.settings.invertImage) {
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = 255 - data[i];         // R
+                data[i + 1] = 255 - data[i + 1]; // G
+                data[i + 2] = 255 - data[i + 2]; // B
+                // Alpha remains unchanged
+            }
+        }
         
         // Apply blur
         if (this.settings.blur > 0) {
