@@ -22,6 +22,7 @@ class DitheringTool {
         
         this.initEventListeners();
         this.initPanelDrag();
+        this.loadDefaultImage();
     }
     
     initEventListeners() {
@@ -192,6 +193,25 @@ class DitheringTool {
             el.style.right = 'auto';
             el.style.bottom = 'auto';
         }
+    }
+    
+    loadDefaultImage() {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        img.onload = () => {
+            this.originalImage = img;
+            this.resizeCanvas(img);
+            this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+            document.getElementById('exportBtn').disabled = false;
+            this.applyEffects();
+        };
+        
+        img.onerror = () => {
+            console.log('Не удалось загрузить изображение по умолчанию');
+        };
+        
+        img.src = 'images/sample_image_01.jpg';
     }
     
     handleFileSelect(event) {
