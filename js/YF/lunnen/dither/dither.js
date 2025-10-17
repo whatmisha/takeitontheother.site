@@ -92,9 +92,11 @@ class DitheringTool {
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
                 e.preventDefault();
-                this.exportImage();
+                if (this.originalImage) {
+                    this.exportImage();
+                }
             }
             if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
                 e.preventDefault();
