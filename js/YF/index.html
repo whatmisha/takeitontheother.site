@@ -74,12 +74,21 @@
     // Структура проектов и приложений
     const projects = [
       {
+        name: "Bodycore",
+        apps: [
+          { name: "asterisk_pattern_generator", displayName: "Asterisk Pattern Generator" }
+        ]
+      },
+      {
         name: "Lunnen",
         apps: [
-          { name: "pattern_generator", displayName: "Pattern Generator 01" },
-          { name: "pattern_generator_02", displayName: "Pattern Generator 02" },
-          { name: "rays_pattern_generator", displayName: "Rays Pattern Generator" },
-          { name: "random_lines_generator", displayName: "Random Lines Generator" }
+          { name: "dither", displayName: "Dither" },
+          { name: "hyperspace", displayName: "Hyperspace" },
+          { name: "new", displayName: "New" },
+          { name: "pattern_generator", displayName: "Pattern Generator" },
+          { name: "pattern_generator_02", displayName: "Pattern Generator 02", hasSubfolder: true },
+          { name: "random_lines_generator", displayName: "Random Lines Generator", hasSubfolder: true },
+          { name: "rays_pattern_generator", displayName: "Rays Pattern Generator", hasSubfolder: true }
         ]
       },
       {
@@ -87,12 +96,6 @@
         apps: [
           { name: "calendar-randomizer", displayName: "Calendar Randomizer" },
           { name: "chladni-sound-pattern", displayName: "Chladni Sound Pattern" }
-        ]
-      },
-      {
-        name: "Bodycore",
-        apps: [
-          { name: "asterisk_pattern_generator", displayName: "Asterisk Pattern Generator" }
         ]
       }
     ];
@@ -129,8 +132,8 @@
           const link = document.createElement('a');
           link.className = 'app-link';
           
-          // Особая обработка для rays_pattern_generator
-          if (app.name === 'rays_pattern_generator' || app.name === 'random_lines_generator' || app.name === 'pattern_generator_02') {
+          // Если index.html находится в подпапке /01/, добавляем /01/ к ссылке
+          if (app.hasSubfolder) {
             link.href = `${project.name.toLowerCase()}/${app.name}/01/`;
           } else {
             link.href = `${project.name.toLowerCase()}/${app.name}/`;
