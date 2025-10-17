@@ -1,3 +1,72 @@
+<?php
+// Папки проектов
+$projectFolders = ['bodycore', 'lunnen', 'muted'];
+
+// Функция для форматирования имени папки в отображаемое имя
+function formatDisplayName($folderName) {
+    $words = preg_split('/[-_]/', $folderName);
+    $words = array_map('ucfirst', $words);
+    return implode(' ', $words);
+}
+
+// Функция для сканирования проектов
+function scanProjects($projectFolders) {
+    $projects = [];
+
+    foreach ($projectFolders as $projectFolder) {
+        $projectPath = __DIR__ . '/' . $projectFolder;
+        
+        if (!is_dir($projectPath)) {
+            continue;
+        }
+
+        $apps = [];
+        $items = @scandir($projectPath);
+        
+        if (!$items) continue;
+
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') continue;
+            
+            $itemPath = $projectPath . '/' . $item;
+            $indexPath = $itemPath . '/index.html';
+            $index01Path = $itemPath . '/01/index.html';
+
+            // Проверяем, что это папка и в ней есть index.html (в корне или в /01/)
+            if (is_dir($itemPath)) {
+                $hasIndex = file_exists($indexPath);
+                $hasIndex01 = file_exists($index01Path);
+                
+                if ($hasIndex || $hasIndex01) {
+                    $apps[] = [
+                        'name' => $item,
+                        'displayName' => formatDisplayName($item),
+                        'hasSubfolder' => $hasIndex01 && !$hasIndex
+                    ];
+                }
+            }
+        }
+
+        // Сортируем приложения по имени
+        usort($apps, function($a, $b) {
+            return strcmp($a['name'], $b['name']);
+        });
+
+        if (count($apps) > 0) {
+            $projects[] = [
+                'name' => ucfirst($projectFolder),
+                'apps' => $apps
+            ];
+        }
+    }
+
+    return $projects;
+}
+
+// Получаем список проектов
+$projects = scanProjects($projectFolders);
+$projectsJson = json_encode($projects, JSON_UNESCAPED_UNICODE);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -84,33 +153,8 @@
   </div>
 
   <script>
-    // Структура проектов и приложений
-    const projects = [
-      {
-        name: "Bodycore",
-        apps: [
-          { name: "asterisk_pattern_generator", displayName: "Asterisk Pattern Generator" }
-        ]
-      },
-      {
-        name: "Lunnen",
-        apps: [
-          { name: "dither", displayName: "Dither" },
-          { name: "hyperspace", displayName: "Hyperspace" },
-          { name: "pattern_generator", displayName: "Pattern Generator" },
-          { name: "pattern_generator_02", displayName: "Pattern Generator 02", hasSubfolder: true },
-          { name: "random_lines_generator", displayName: "Random Lines Generator", hasSubfolder: true },
-          { name: "rays_pattern_generator", displayName: "Rays Pattern Generator", hasSubfolder: true }
-        ]
-      },
-      {
-        name: "Muted",
-        apps: [
-          { name: "calendar-randomizer", displayName: "Calendar Randomizer" },
-          { name: "chladni-sound-pattern", displayName: "Chladni Sound Pattern" }
-        ]
-      }
-    ];
+    // Структура проектов и приложений (генерируется динамически PHP)
+    const projects = <?php echo $projectsJson; ?>;
 
     // Функция для преобразования имени приложения
     function formatAppName(name) {
@@ -167,4 +211,5 @@
     document.addEventListener('DOMContentLoaded', renderProjects);
   </script>
 </body>
-</html> 
+</html>
+
