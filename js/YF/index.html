@@ -34,14 +34,12 @@
       text-align: left;
       margin: 0;
       margin-bottom: 30px;
-      padding: 20px 20px 20px 20px;
+      padding: 20px;
       font-weight: 500;
       width: 100%;
       box-sizing: border-box;
-      font-size: 18vw;
       line-height: 0.9;
       display: block;
-      letter-spacing: -0.02em;
       white-space: nowrap;
       overflow: visible;
     }
@@ -164,8 +162,48 @@
       });
     }
 
+    // Функция для подгонки размера шрифта заголовка под ширину окна
+    function fitTitle() {
+      const title = document.querySelector('h1');
+      if (!title) return;
+      
+      // Получаем доступную ширину (ширина окна минус padding)
+      const availableWidth = window.innerWidth - 40; // 20px padding с каждой стороны
+      
+      // Начинаем с большого размера
+      let fontSize = 200;
+      title.style.fontSize = fontSize + 'px';
+      
+      // Уменьшаем размер, пока текст не поместится
+      while (title.scrollWidth > availableWidth && fontSize > 10) {
+        fontSize -= 1;
+        title.style.fontSize = fontSize + 'px';
+      }
+      
+      // Точная подгонка: увеличиваем размер до максимума
+      while (title.scrollWidth <= availableWidth && fontSize < 500) {
+        fontSize += 0.5;
+        title.style.fontSize = fontSize + 'px';
+        if (title.scrollWidth > availableWidth) {
+          fontSize -= 0.5;
+          title.style.fontSize = fontSize + 'px';
+          break;
+        }
+      }
+    }
+
     // Загружаем проекты при загрузке страницы
-    document.addEventListener('DOMContentLoaded', renderProjects);
+    document.addEventListener('DOMContentLoaded', () => {
+      renderProjects();
+      fitTitle();
+    });
+    
+    // Пересчитываем размер при изменении размера окна
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(fitTitle, 100);
+    });
   </script>
 </body>
 </html> 
