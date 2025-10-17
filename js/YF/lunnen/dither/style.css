@@ -330,11 +330,6 @@ header p {
     color: #000;
 }
 
-.btn-reset {
-    background: #000;
-    color: #fff;
-}
-
 /* Scrollbar styling */
 .panel-content::-webkit-scrollbar {
     width: 8px;

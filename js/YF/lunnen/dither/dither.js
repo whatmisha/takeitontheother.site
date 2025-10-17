@@ -89,12 +89,6 @@ class DitheringTool {
             exportBtn.addEventListener('click', () => this.exportImage());
         }
         
-        // Reset button
-        const resetBtn = document.getElementById('resetBtn');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => this.resetSettings());
-        }
-        
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -568,46 +562,6 @@ class DitheringTool {
         link.download = 'dithered-image.png';
         link.href = this.canvas.toDataURL('image/png');
         link.click();
-    }
-    
-    resetSettings() {
-        if (!this.originalImage) {
-            return;
-        }
-        
-        this.settings = {
-            blur: 0,
-            grain: 0,
-            gamma: 1,
-            blackPoint: 0,
-            whitePoint: 255,
-            pattern: 'floyd-steinberg',
-            pixelSize: 1,
-            threshold: 128,
-            colorMode: 'monochrome',
-            showEffect: true
-        };
-        
-        // Update UI
-        document.getElementById('blur').value = 0;
-        document.getElementById('blurValue').textContent = '0';
-        document.getElementById('grain').value = 0;
-        document.getElementById('grainValue').textContent = '0';
-        document.getElementById('gamma').value = 1;
-        document.getElementById('gammaValue').textContent = '1.0';
-        document.getElementById('blackPoint').value = 0;
-        document.getElementById('blackPointValue').textContent = '0';
-        document.getElementById('whitePoint').value = 255;
-        document.getElementById('whitePointValue').textContent = '255';
-        document.getElementById('pixelSize').value = 1;
-        document.getElementById('pixelSizeValue').textContent = '1';
-        document.getElementById('threshold').value = 128;
-        document.getElementById('thresholdValue').textContent = '128';
-        document.querySelector('input[name="pattern"][value="floyd-steinberg"]').checked = true;
-        document.querySelector('input[name="colorMode"][value="monochrome"]').checked = true;
-        document.getElementById('showEffect').checked = true;
-        
-        this.applyEffects();
     }
 }
 
