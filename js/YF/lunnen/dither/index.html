@@ -24,33 +24,43 @@
                     <h3>Предобработка изображения</h3>
                     
                     <div class="control-group">
-                        <label for="blur">Blur (Размытие)</label>
+                        <label for="blur">
+                            <span>Blur</span>
+                            <span class="value-display" id="blurValue">0</span>
+                        </label>
                         <input type="range" id="blur" min="0" max="10" step="0.1" value="0">
-                        <span class="value-display" id="blurValue">0</span>
                     </div>
 
                     <div class="control-group">
-                        <label for="grain">Grain (Зернистость)</label>
+                        <label for="grain">
+                            <span>Grain</span>
+                            <span class="value-display" id="grainValue">0</span>
+                        </label>
                         <input type="range" id="grain" min="0" max="100" step="1" value="0">
-                        <span class="value-display" id="grainValue">0</span>
                     </div>
 
                     <div class="control-group">
-                        <label for="gamma">Gamma (Гамма)</label>
+                        <label for="gamma">
+                            <span>Gamma</span>
+                            <span class="value-display" id="gammaValue">1.0</span>
+                        </label>
                         <input type="range" id="gamma" min="0.1" max="3" step="0.1" value="1">
-                        <span class="value-display" id="gammaValue">1.0</span>
                     </div>
 
                     <div class="control-group">
-                        <label for="blackPoint">Black Point (Черная точка)</label>
+                        <label for="blackPoint">
+                            <span>Black Point</span>
+                            <span class="value-display" id="blackPointValue">0</span>
+                        </label>
                         <input type="range" id="blackPoint" min="0" max="255" step="1" value="0">
-                        <span class="value-display" id="blackPointValue">0</span>
                     </div>
 
                     <div class="control-group">
-                        <label for="whitePoint">White Point (Белая точка)</label>
+                        <label for="whitePoint">
+                            <span>White Point</span>
+                            <span class="value-display" id="whitePointValue">255</span>
+                        </label>
                         <input type="range" id="whitePoint" min="0" max="255" step="1" value="255">
-                        <span class="value-display" id="whitePointValue">255</span>
                     </div>
                 </div>
 
@@ -58,7 +68,7 @@
                     <h3>Настройки дизеринга</h3>
                     
                     <div class="control-group">
-                        <label>Pattern (Паттерн)</label>
+                        <label>Pattern</label>
                         <div class="radio-group">
                             <label class="radio-label">
                                 <input type="radio" name="pattern" value="floyd-steinberg" checked>
@@ -76,19 +86,23 @@
                     </div>
 
                     <div class="control-group">
-                        <label for="pixelSize">Pixel Size (Размер пикселя)</label>
+                        <label for="pixelSize">
+                            <span>Pixel Size</span>
+                            <span class="value-display" id="pixelSizeValue">1</span>
+                        </label>
                         <input type="range" id="pixelSize" min="1" max="16" step="1" value="1">
-                        <span class="value-display" id="pixelSizeValue">1</span>
                     </div>
 
                     <div class="control-group">
-                        <label for="threshold">Threshold (Порог)</label>
+                        <label for="threshold">
+                            <span>Threshold</span>
+                            <span class="value-display" id="thresholdValue">128</span>
+                        </label>
                         <input type="range" id="threshold" min="0" max="255" step="1" value="128">
-                        <span class="value-display" id="thresholdValue">128</span>
                     </div>
 
                     <div class="control-group">
-                        <label>Color Mode (Цветовой режим)</label>
+                        <label>Color Mode</label>
                         <div class="radio-group">
                             <label class="radio-label">
                                 <input type="radio" name="colorMode" value="monochrome" checked>
@@ -106,9 +120,9 @@
                     </div>
 
                     <div class="control-group">
-                        <label>
+                        <label class="checkbox-label">
                             <input type="checkbox" id="showEffect" checked>
-                            Показать эффект
+                            <span>Показать эффект</span>
                         </label>
                     </div>
                 </div>
