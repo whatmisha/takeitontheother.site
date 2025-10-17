@@ -235,10 +235,8 @@ class DitheringTool {
             img.onload = () => {
                 this.originalImage = img;
                 this.resizeCanvas(img);
-                this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
                 // Placeholder removed
                 document.getElementById('exportBtn').disabled = false;
-                document.getElementById('resetBtn').disabled = false;
                 this.applyEffects();
             };
             img.src = e.target.result;
