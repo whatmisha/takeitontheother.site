@@ -1099,22 +1099,36 @@ class DitheringTool {
             height: this.transform.height
         };
         
-        // Create a temporary canvas for the processed image preview
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
-        tempCanvas.width = Math.floor(t.width);
-        tempCanvas.height = Math.floor(t.height);
+        // Create a temporary canvas for the processed image preview (same logic as applyEffects)
+        const transformCanvas = document.createElement('canvas');
+        const transformCtx = transformCanvas.getContext('2d', { willReadFrequently: true });
         
-        // Draw and process image on temp canvas (same as main rendering)
-        tempCtx.drawImage(this.originalImage, 0, 0, tempCanvas.width, tempCanvas.height);
-        let imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        // Make canvas large enough to accommodate rotated image
+        const diagonal = Math.sqrt(t.width ** 2 + t.height ** 2);
+        transformCanvas.width = Math.ceil(diagonal);
+        transformCanvas.height = Math.ceil(diagonal);
+        
+        // Center of the transform canvas
+        const tcx = transformCanvas.width / 2;
+        const tcy = transformCanvas.height / 2;
+        
+        // Draw original image with rotation at center
+        transformCtx.save();
+        transformCtx.translate(tcx, tcy);
+        transformCtx.rotate((this.transform.rotation * Math.PI) / 180);
+        transformCtx.translate(-t.width / 2, -t.height / 2);
+        transformCtx.drawImage(this.originalImage, 0, 0, t.width, t.height);
+        transformCtx.restore();
+        
+        // Get image data and apply effects
+        let imageData = transformCtx.getImageData(0, 0, transformCanvas.width, transformCanvas.height);
         
         if (this.settings.showEffect) {
             imageData = this.applyPreprocessing(imageData);
             imageData = this.applyDithering(imageData);
         }
         
-        tempCtx.putImageData(imageData, 0, 0);
+        transformCtx.putImageData(imageData, 0, 0);
         
         // Draw only the parts outside canvas with reduced opacity
         // This allows sample image to stay on top inside the canvas
@@ -1137,22 +1151,17 @@ class DitheringTool {
         this.overlayCtx.rect(canvasBounds.x, canvasBounds.y, canvasBounds.width, canvasBounds.height);
         this.overlayCtx.clip('evenodd'); // This creates an inverted clip
         
-        // Draw parts outside canvas with reduced opacity and rotation
+        // Draw parts outside canvas with reduced opacity
         this.overlayCtx.globalAlpha = 0.1;
         
-        // Apply rotation
-        const imgCenterX = t.x + t.width / 2;
-        const imgCenterY = t.y + t.height / 2;
-        this.overlayCtx.translate(imgCenterX, imgCenterY);
-        this.overlayCtx.rotate((this.transform.rotation * Math.PI) / 180);
-        this.overlayCtx.translate(-imgCenterX, -imgCenterY);
+        // Position the rotated image (no additional rotation needed, already in transformCanvas)
+        const drawX = t.x + t.width / 2 - transformCanvas.width / 2;
+        const drawY = t.y + t.height / 2 - transformCanvas.height / 2;
         
         this.overlayCtx.drawImage(
-            tempCanvas,
-            Math.floor(t.x),
-            Math.floor(t.y),
-            Math.floor(t.width),
-            Math.floor(t.height)
+            transformCanvas,
+            Math.floor(drawX),
+            Math.floor(drawY)
         );
         this.overlayCtx.restore();
         
@@ -1385,19 +1394,39 @@ class DitheringTool {
         this.ctx.fillStyle = this.settings.backgroundColor;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Create a temporary canvas for processing the image
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+        // Step 1: Create a temporary canvas for transforming the original image
+        const transformCanvas = document.createElement('canvas');
+        const transformCtx = transformCanvas.getContext('2d', { willReadFrequently: true });
         
-        // Set temp canvas size to match transform size
-        tempCanvas.width = Math.floor(this.transform.width);
-        tempCanvas.height = Math.floor(this.transform.height);
+        // Make canvas large enough to accommodate rotated image
+        const diagonal = Math.sqrt(this.transform.width ** 2 + this.transform.height ** 2);
+        transformCanvas.width = Math.ceil(diagonal);
+        transformCanvas.height = Math.ceil(diagonal);
         
-        // Draw original image on temp canvas
-        tempCtx.drawImage(this.originalImage, 0, 0, tempCanvas.width, tempCanvas.height);
+        // Center of the transform canvas
+        const tcx = transformCanvas.width / 2;
+        const tcy = transformCanvas.height / 2;
         
-        // Get image data from temp canvas
-        let imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        // Draw original image with rotation at center
+        transformCtx.save();
+        transformCtx.translate(tcx, tcy);
+        transformCtx.rotate((this.transform.rotation * Math.PI) / 180);
+        transformCtx.translate(-this.transform.width / 2, -this.transform.height / 2);
+        transformCtx.drawImage(this.originalImage, 0, 0, this.transform.width, this.transform.height);
+        transformCtx.restore();
+        
+        // Get the rotated bounds to crop to actual content
+        const rotatedImageData = transformCtx.getImageData(0, 0, transformCanvas.width, transformCanvas.height);
+        
+        // Step 2: Create processing canvas with exact size needed
+        const processCanvas = document.createElement('canvas');
+        const processCtx = processCanvas.getContext('2d', { willReadFrequently: true });
+        processCanvas.width = transformCanvas.width;
+        processCanvas.height = transformCanvas.height;
+        processCtx.putImageData(rotatedImageData, 0, 0);
+        
+        // Step 3: Apply effects to the rotated image
+        let imageData = processCtx.getImageData(0, 0, processCanvas.width, processCanvas.height);
         
         if (this.settings.showEffect) {
             // Apply preprocessing
@@ -1407,30 +1436,18 @@ class DitheringTool {
             imageData = this.applyDithering(imageData);
         }
         
-        // Put processed image back to temp canvas
-        tempCtx.putImageData(imageData, 0, 0);
+        // Put processed image back to canvas
+        processCtx.putImageData(imageData, 0, 0);
         
-        // Draw the processed image on main canvas at transform position with rotation
-        this.ctx.save();
-        
-        // Calculate center of the image for rotation
-        const centerX = this.transform.x + this.transform.width / 2;
-        const centerY = this.transform.y + this.transform.height / 2;
-        
-        // Move to center, rotate, move back
-        this.ctx.translate(centerX, centerY);
-        this.ctx.rotate((this.transform.rotation * Math.PI) / 180);
-        this.ctx.translate(-centerX, -centerY);
+        // Step 4: Draw the processed and rotated image on main canvas at position
+        const drawX = this.transform.x + this.transform.width / 2 - processCanvas.width / 2;
+        const drawY = this.transform.y + this.transform.height / 2 - processCanvas.height / 2;
         
         this.ctx.drawImage(
-            tempCanvas, 
-            Math.floor(this.transform.x), 
-            Math.floor(this.transform.y),
-            Math.floor(this.transform.width),
-            Math.floor(this.transform.height)
+            processCanvas, 
+            Math.floor(drawX), 
+            Math.floor(drawY)
         );
-        
-        this.ctx.restore();
         
         // Draw sample image on top if it exists
         if (this.sampleImage) {
@@ -1752,19 +1769,33 @@ class DitheringTool {
         exportCtx.fillStyle = this.settings.backgroundColor;
         exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
         
-        // Create a temporary canvas for processing the image at export scale
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+        // Step 1: Create transform canvas with rotation BEFORE applying effects
+        const transformCanvas = document.createElement('canvas');
+        const transformCtx = transformCanvas.getContext('2d', { willReadFrequently: true });
         
-        // Set temp canvas size to match transform size at export scale
-        tempCanvas.width = Math.floor(this.transform.width * exportScale);
-        tempCanvas.height = Math.floor(this.transform.height * exportScale);
+        // Scale dimensions
+        const scaledWidth = this.transform.width * exportScale;
+        const scaledHeight = this.transform.height * exportScale;
         
-        // Draw original image on temp canvas at export scale
-        tempCtx.drawImage(this.originalImage, 0, 0, tempCanvas.width, tempCanvas.height);
+        // Make canvas large enough to accommodate rotated image
+        const diagonal = Math.sqrt(scaledWidth ** 2 + scaledHeight ** 2);
+        transformCanvas.width = Math.ceil(diagonal);
+        transformCanvas.height = Math.ceil(diagonal);
         
-        // Get image data from temp canvas
-        let imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        // Center of the transform canvas
+        const tcx = transformCanvas.width / 2;
+        const tcy = transformCanvas.height / 2;
+        
+        // Draw original image with rotation at center
+        transformCtx.save();
+        transformCtx.translate(tcx, tcy);
+        transformCtx.rotate((this.transform.rotation * Math.PI) / 180);
+        transformCtx.translate(-scaledWidth / 2, -scaledHeight / 2);
+        transformCtx.drawImage(this.originalImage, 0, 0, scaledWidth, scaledHeight);
+        transformCtx.restore();
+        
+        // Step 2: Apply effects to the rotated image
+        let imageData = transformCtx.getImageData(0, 0, transformCanvas.width, transformCanvas.height);
         
         if (this.settings.showEffect) {
             // Apply preprocessing
@@ -1774,28 +1805,18 @@ class DitheringTool {
             imageData = this.applyDithering(imageData);
         }
         
-        // Put processed image back to temp canvas
-        tempCtx.putImageData(imageData, 0, 0);
+        // Put processed image back to canvas
+        transformCtx.putImageData(imageData, 0, 0);
         
-        // Draw the processed image on export canvas at transform position with rotation (at export scale)
-        exportCtx.save();
-        
-        const centerX = (this.transform.x + this.transform.width / 2) * exportScale;
-        const centerY = (this.transform.y + this.transform.height / 2) * exportScale;
-        
-        exportCtx.translate(centerX, centerY);
-        exportCtx.rotate((this.transform.rotation * Math.PI) / 180);
-        exportCtx.translate(-centerX, -centerY);
+        // Step 3: Draw the processed and rotated image on export canvas
+        const drawX = (this.transform.x + this.transform.width / 2) * exportScale - transformCanvas.width / 2;
+        const drawY = (this.transform.y + this.transform.height / 2) * exportScale - transformCanvas.height / 2;
         
         exportCtx.drawImage(
-            tempCanvas, 
-            Math.floor(this.transform.x * exportScale), 
-            Math.floor(this.transform.y * exportScale),
-            Math.floor(this.transform.width * exportScale),
-            Math.floor(this.transform.height * exportScale)
+            transformCanvas, 
+            Math.floor(drawX), 
+            Math.floor(drawY)
         );
-        
-        exportCtx.restore();
         
         // If export with alpha is enabled, process for transparency
         if (this.settings.exportWithAlpha) {
