@@ -85,10 +85,10 @@ header p {
     top: 20px;
     right: 20px;
     width: 300px;
-    background: #000;
+    background: #1a1a1a;
     border-radius: 0;
     box-shadow: none;
-    border: 1px solid #333;
+    border: none;
     padding: 0;
     max-height: calc(100vh - 40px);
     overflow: hidden;
@@ -104,15 +104,15 @@ header p {
 }
 
 .panel-header {
-    background: #000;
-    padding: 12px 20px;
+    background: #1a1a1a;
+    padding: 20px 20px 0;
     border-radius: 0;
     cursor: move;
     user-select: none;
     display: flex;
     align-items: center;
-    gap: 8px;
-    border-bottom: 1px solid #222;
+    justify-content: space-between;
+    border-bottom: none;
     flex-shrink: 0;
 }
 
@@ -126,14 +126,14 @@ header p {
     line-height: 1;
 }
 
-.panel-header span:last-child {
+.panel-header span:first-child {
     font-weight: 500;
-    font-size: 0.9rem;
-    color: #ccc;
+    font-size: 0.85rem;
+    color: #666;
 }
 
 .panel-content {
-    padding: 15px 20px;
+    padding: 20px 20px;
     overflow-y: auto;
     flex: 1;
     display: flex;
@@ -142,7 +142,6 @@ header p {
 
 .control-section {
     margin-bottom: 25px;
-    padding-bottom: 15px;
     border-bottom: none;
 }
 
@@ -165,7 +164,7 @@ header p {
 }
 
 .control-group {
-    margin-bottom: 6px;
+    margin-bottom: 10px;
     padding-top: 6px;
 }
 
@@ -173,7 +172,7 @@ header p {
     display: flex;
     align-items: center;
     font-weight: 400;
-    margin-bottom: 6px;
+    margin-bottom: 2px;
     color: #ccc;
     font-size: 0.85rem;
 }
@@ -182,7 +181,7 @@ header p {
     width: 100%;
     height: 1px;
     border-radius: 0;
-    background: #444;
+    background: #333;
     outline: none;
     -webkit-appearance: none;
     margin-top: 8px;
@@ -230,7 +229,7 @@ header p {
 .control-group input[type="color"] {
     width: 60px;
     height: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid #333;
     border-radius: 0;
     background: transparent;
     cursor: pointer;
@@ -240,15 +239,15 @@ header p {
 
 .control-group input[type="color"]:hover,
 .control-group input[type="color"]:focus {
-    border-color: rgba(255, 255, 255, 0.6);
+    border-color: #555;
     outline: none;
 }
 
 .control-group input[type="text"]#hexColorInput {
     flex: 1;
     height: 30px;
-    background: #222;
-    border: 1px solid #444;
+    background: #0a0a0a;
+    border: 1px solid #333;
     color: #fff;
     font-family: monospace;
     font-size: 0.9rem;
@@ -277,7 +276,7 @@ header p {
 }
 
 .color-preset {
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     color: #666;
     cursor: pointer;
     padding: 2px 6px;
@@ -288,13 +287,13 @@ header p {
 
 .color-preset:hover {
     color: #fff;
-    background: #333;
+    background: #2a2a2a;
 }
 
 .radio-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 2px;
     margin-top: 6px;
 }
 
@@ -333,6 +332,10 @@ header p {
     cursor: pointer;
     padding: 4px 0;
     margin-bottom: 0 !important;
+}
+
+.control-group:has(.checkbox-label) {
+    margin-bottom: 2px;
 }
 
 .checkbox-label span {
@@ -401,12 +404,26 @@ header p {
 
 .btn-full {
     width: 100%;
-    margin-bottom: 10px;
 }
 
 .transform-reset-group {
     margin-top: auto;
+    margin-bottom: 0;
     padding-top: 30px;
+    display: flex;
+    align-items: flex-end;
+    min-height: 52px;
+}
+
+#transformPanel .btn-secondary {
+    background: #1a1a1a;
+    border: 1px solid #333;
+}
+
+#transformPanel .btn-secondary:hover:not(:disabled) {
+    background: #fff;
+    color: #000;
+    border: 1px solid #fff;
 }
 
 /* Drag and drop styles */
@@ -489,7 +506,7 @@ header p {
 }
 
 .panel-content::-webkit-scrollbar-track {
-    background: #000;
+    background: #1a1a1a;
     border-radius: 0;
 }
 
