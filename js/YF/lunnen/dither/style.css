@@ -440,6 +440,35 @@ legend {
     vertical-align: middle;
 }
 
+/* Select styles */
+.control-group select {
+    width: 100%;
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 0.85rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: border-color var(--transition-normal);
+}
+
+.control-group select:hover {
+    border-color: var(--color-text-subtle);
+}
+
+.control-group select:focus {
+    outline: none;
+    border-color: var(--color-text);
+}
+
+.control-group select option {
+    background: var(--color-bg-panel);
+    color: var(--color-text);
+}
+
 .hint-text {
     font-size: 0.75rem;
     color: var(--color-text-dim);
