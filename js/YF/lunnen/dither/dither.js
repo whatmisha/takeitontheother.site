@@ -17,7 +17,8 @@ class DitheringTool {
             width: 0,
             height: 0,
             originalWidth: 0,
-            originalHeight: 0
+            originalHeight: 0,
+            rotation: 0
         };
         
         // Interaction state
@@ -42,12 +43,13 @@ class DitheringTool {
             colorMode: 'monochrome', // Fixed to monochrome
             showEffect: true,
             invertImage: false,
-            exportWithAlpha: false,
+            exportWithAlpha: true,
             backgroundColor: '#000000'
         };
         
         this.initEventListeners();
-        this.initPanelDrag();
+        this.initPanelDrag('controlsPanel', 'panelHeader');
+        this.initPanelDrag('transformPanel', 'transformPanelHeader');
         this.initCanvasInteraction();
         this.loadDefaultImage();
     }
@@ -182,6 +184,18 @@ class DitheringTool {
             resetBtn.addEventListener('click', () => this.resetTransform());
         }
         
+        // Rotation slider
+        const rotationSlider = document.getElementById('rotation');
+        if (rotationSlider) {
+            rotationSlider.addEventListener('input', (e) => {
+                const rotation = parseInt(e.target.value);
+                document.getElementById('rotationValue').textContent = rotation + '°';
+                this.transform.rotation = rotation;
+                this.applyEffects();
+                this.drawOverlay();
+            });
+        }
+        
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
@@ -211,9 +225,11 @@ class DitheringTool {
         });
     }
     
-    initPanelDrag() {
-        const panel = document.getElementById('controlsPanel');
-        const header = document.getElementById('panelHeader');
+    initPanelDrag(panelId, headerId) {
+        const panel = document.getElementById(panelId);
+        const header = document.getElementById(headerId);
+        
+        if (!panel || !header) return;
         
         let isDragging = false;
         let currentX;
@@ -226,10 +242,15 @@ class DitheringTool {
         // Get initial position from CSS
         const computedStyle = window.getComputedStyle(panel);
         const top = parseInt(computedStyle.top);
+        const left = parseInt(computedStyle.left);
         const right = parseInt(computedStyle.right);
         
-        // Convert right to left for easier calculations
-        xOffset = window.innerWidth - right - panel.offsetWidth;
+        // Handle both left and right positioned panels
+        if (!isNaN(left) && left !== 0) {
+            xOffset = left;
+        } else if (!isNaN(right)) {
+            xOffset = window.innerWidth - right - panel.offsetWidth;
+        }
         yOffset = top;
         
         header.addEventListener('mousedown', dragStart);
@@ -370,10 +391,29 @@ class DitheringTool {
             height: this.transform.height
         };
         
-        return x >= t.x && 
-               x <= t.x + t.width &&
-               y >= t.y && 
-               y <= t.y + t.height;
+        // Rotate point back to image's local coordinate system
+        const centerX = t.x + t.width / 2;
+        const centerY = t.y + t.height / 2;
+        const rotatedPoint = this.rotatePoint(x, y, centerX, centerY, -this.transform.rotation);
+        
+        return rotatedPoint.x >= t.x && 
+               rotatedPoint.x <= t.x + t.width &&
+               rotatedPoint.y >= t.y && 
+               rotatedPoint.y <= t.y + t.height;
+    }
+    
+    rotatePoint(x, y, centerX, centerY, angle) {
+        const radians = (angle * Math.PI) / 180;
+        const cos = Math.cos(radians);
+        const sin = Math.sin(radians);
+        
+        const dx = x - centerX;
+        const dy = y - centerY;
+        
+        return {
+            x: centerX + (dx * cos - dy * sin),
+            y: centerY + (dx * sin + dy * cos)
+        };
     }
     
     getResizeHandle(x, y) {
@@ -388,17 +428,25 @@ class DitheringTool {
             height: this.transform.height
         };
         
+        // Rotate point back to image's local coordinate system
+        const centerX = t.x + t.width / 2;
+        const centerY = t.y + t.height / 2;
+        const rotatedPoint = this.rotatePoint(x, y, centerX, centerY, -this.transform.rotation);
+        
+        const rx = rotatedPoint.x;
+        const ry = rotatedPoint.y;
+        
         // Check corners first
-        if (Math.abs(x - t.x) < handleSize && Math.abs(y - t.y) < handleSize) return 'nw';
-        if (Math.abs(x - (t.x + t.width)) < handleSize && Math.abs(y - t.y) < handleSize) return 'ne';
-        if (Math.abs(x - t.x) < handleSize && Math.abs(y - (t.y + t.height)) < handleSize) return 'sw';
-        if (Math.abs(x - (t.x + t.width)) < handleSize && Math.abs(y - (t.y + t.height)) < handleSize) return 'se';
+        if (Math.abs(rx - t.x) < handleSize && Math.abs(ry - t.y) < handleSize) return 'nw';
+        if (Math.abs(rx - (t.x + t.width)) < handleSize && Math.abs(ry - t.y) < handleSize) return 'ne';
+        if (Math.abs(rx - t.x) < handleSize && Math.abs(ry - (t.y + t.height)) < handleSize) return 'sw';
+        if (Math.abs(rx - (t.x + t.width)) < handleSize && Math.abs(ry - (t.y + t.height)) < handleSize) return 'se';
         
         // Check edges
-        if (Math.abs(x - t.x) < handleSize && y >= t.y && y <= t.y + t.height) return 'w';
-        if (Math.abs(x - (t.x + t.width)) < handleSize && y >= t.y && y <= t.y + t.height) return 'e';
-        if (Math.abs(y - t.y) < handleSize && x >= t.x && x <= t.x + t.width) return 'n';
-        if (Math.abs(y - (t.y + t.height)) < handleSize && x >= t.x && x <= t.x + t.width) return 's';
+        if (Math.abs(rx - t.x) < handleSize && ry >= t.y && ry <= t.y + t.height) return 'w';
+        if (Math.abs(rx - (t.x + t.width)) < handleSize && ry >= t.y && ry <= t.y + t.height) return 'e';
+        if (Math.abs(ry - t.y) < handleSize && rx >= t.x && rx <= t.x + t.width) return 'n';
+        if (Math.abs(ry - (t.y + t.height)) < handleSize && rx >= t.x && rx <= t.x + t.width) return 's';
         
         return null;
     }
@@ -523,8 +571,16 @@ class DitheringTool {
         this.overlayCtx.rect(canvasBounds.x, canvasBounds.y, canvasBounds.width, canvasBounds.height);
         this.overlayCtx.clip('evenodd'); // This creates an inverted clip
         
-        // Draw parts outside canvas with reduced opacity
+        // Draw parts outside canvas with reduced opacity and rotation
         this.overlayCtx.globalAlpha = 0.3;
+        
+        // Apply rotation
+        const imgCenterX = t.x + t.width / 2;
+        const imgCenterY = t.y + t.height / 2;
+        this.overlayCtx.translate(imgCenterX, imgCenterY);
+        this.overlayCtx.rotate((this.transform.rotation * Math.PI) / 180);
+        this.overlayCtx.translate(-imgCenterX, -imgCenterY);
+        
         this.overlayCtx.drawImage(
             tempCanvas,
             Math.floor(t.x),
@@ -534,11 +590,18 @@ class DitheringTool {
         );
         this.overlayCtx.restore();
         
-        // Draw border and handles
+        // Draw border and handles with rotation
+        this.overlayCtx.save();
+        
         const handleSize = 8;
         this.overlayCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
         this.overlayCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
         this.overlayCtx.lineWidth = 2;
+        
+        // Apply rotation for border and handles (reuse center coordinates)
+        this.overlayCtx.translate(imgCenterX, imgCenterY);
+        this.overlayCtx.rotate((this.transform.rotation * Math.PI) / 180);
+        this.overlayCtx.translate(-imgCenterX, -imgCenterY);
         
         // Draw border around image
         this.overlayCtx.strokeRect(t.x, t.y, t.width, t.height);
@@ -690,8 +753,16 @@ class DitheringTool {
             width: width,
             height: height,
             originalWidth: width,
-            originalHeight: height
+            originalHeight: height,
+            rotation: 0
         };
+        
+        // Reset rotation slider
+        const rotationSlider = document.getElementById('rotation');
+        if (rotationSlider) {
+            rotationSlider.value = 0;
+            document.getElementById('rotationValue').textContent = '0°';
+        }
         
         this.applyEffects();
     }
@@ -728,7 +799,18 @@ class DitheringTool {
         // Put processed image back to temp canvas
         tempCtx.putImageData(imageData, 0, 0);
         
-        // Draw the processed image on main canvas at transform position
+        // Draw the processed image on main canvas at transform position with rotation
+        this.ctx.save();
+        
+        // Calculate center of the image for rotation
+        const centerX = this.transform.x + this.transform.width / 2;
+        const centerY = this.transform.y + this.transform.height / 2;
+        
+        // Move to center, rotate, move back
+        this.ctx.translate(centerX, centerY);
+        this.ctx.rotate((this.transform.rotation * Math.PI) / 180);
+        this.ctx.translate(-centerX, -centerY);
+        
         this.ctx.drawImage(
             tempCanvas, 
             Math.floor(this.transform.x), 
@@ -736,6 +818,8 @@ class DitheringTool {
             Math.floor(this.transform.width),
             Math.floor(this.transform.height)
         );
+        
+        this.ctx.restore();
         
         // Draw sample image on top if it exists
         if (this.sampleImage) {
@@ -1072,7 +1156,16 @@ class DitheringTool {
         // Put processed image back to temp canvas
         tempCtx.putImageData(imageData, 0, 0);
         
-        // Draw the processed image on export canvas at transform position
+        // Draw the processed image on export canvas at transform position with rotation
+        exportCtx.save();
+        
+        const centerX = this.transform.x + this.transform.width / 2;
+        const centerY = this.transform.y + this.transform.height / 2;
+        
+        exportCtx.translate(centerX, centerY);
+        exportCtx.rotate((this.transform.rotation * Math.PI) / 180);
+        exportCtx.translate(-centerX, -centerY);
+        
         exportCtx.drawImage(
             tempCanvas, 
             Math.floor(this.transform.x), 
@@ -1080,6 +1173,8 @@ class DitheringTool {
             Math.floor(this.transform.width),
             Math.floor(this.transform.height)
         );
+        
+        exportCtx.restore();
         
         // If export with alpha is enabled, process for transparency
         if (this.settings.exportWithAlpha) {

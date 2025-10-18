@@ -16,6 +16,26 @@
                 <input type="file" id="sampleInput" accept="image/*" style="display: none;">
             </div>
 
+            <div class="controls-panel controls-panel-left" id="transformPanel">
+                <div class="panel-header" id="transformPanelHeader">
+                    <span class="drag-icon">⋮⋮</span>
+                    <span>Transform</span>
+                </div>
+                <div class="panel-content">
+                    <div class="control-section">
+                        <h3>Rotation</h3>
+                        
+                        <div class="control-group">
+                            <label for="rotation">
+                                <span>Angle</span>
+                                <span class="value-display" id="rotationValue">0°</span>
+                            </label>
+                            <input type="range" id="rotation" min="-180" max="180" step="1" value="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="controls-panel" id="controlsPanel">
                 <div class="panel-header" id="panelHeader">
                     <span class="drag-icon">⋮⋮</span>
@@ -148,7 +168,7 @@
                     
                     <div class="control-group">
                         <label class="checkbox-label">
-                            <input type="checkbox" id="exportWithAlpha">
+                            <input type="checkbox" id="exportWithAlpha" checked>
                             <span>Export with Transparency</span>
                         </label>
                         <p class="hint-text">Black becomes transparent, white stays opaque</p>

@@ -98,6 +98,11 @@ header p {
     flex-direction: column;
 }
 
+.controls-panel-left {
+    left: 20px;
+    right: auto;
+}
+
 .panel-header {
     background: #000;
     padding: 12px 20px;
