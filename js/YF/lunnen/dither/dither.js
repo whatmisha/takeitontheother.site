@@ -479,6 +479,21 @@ class DitheringTool {
             }
         }
         
+        // Check edge midpoints with distance range for rotation zone
+        const edges = [
+            { x: t.x + t.width / 2, y: t.y, handle: 'n' },
+            { x: t.x + t.width / 2, y: t.y + t.height, handle: 's' },
+            { x: t.x, y: t.y + t.height / 2, handle: 'w' },
+            { x: t.x + t.width, y: t.y + t.height / 2, handle: 'e' }
+        ];
+        
+        for (const edge of edges) {
+            const dist = Math.sqrt(Math.pow(rx - edge.x, 2) + Math.pow(ry - edge.y, 2));
+            if (dist > innerRadius && dist < outerRadius) {
+                return edge.handle;
+            }
+        }
+        
         return null;
     }
     
