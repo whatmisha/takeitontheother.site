@@ -18,7 +18,10 @@ class DitheringTool {
             height: 0,
             originalWidth: 0,
             originalHeight: 0,
-            rotation: 0
+            baseWidth: 0,  // Base width for scale calculation
+            baseHeight: 0, // Base height for scale calculation
+            rotation: 0,
+            scale: 1
         };
         
         // Interaction state
@@ -186,6 +189,30 @@ class DitheringTool {
         const resetBtn = document.getElementById('resetTransform');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => this.resetTransform());
+        }
+        
+        // Scale slider
+        const scaleSlider = document.getElementById('scale');
+        if (scaleSlider) {
+            scaleSlider.addEventListener('input', (e) => {
+                const scale = parseFloat(e.target.value);
+                const percentage = Math.round(scale * 100);
+                document.getElementById('scaleValue').textContent = percentage + '%';
+                this.transform.scale = scale;
+                
+                // Recalculate width and height based on scale
+                this.transform.width = this.transform.baseWidth * scale;
+                this.transform.height = this.transform.baseHeight * scale;
+                
+                // Recenter after scaling
+                const canvasWidth = this.canvas.width;
+                const canvasHeight = this.canvas.height;
+                this.transform.x = (canvasWidth - this.transform.width) / 2;
+                this.transform.y = (canvasHeight - this.transform.height) / 2;
+                
+                this.applyEffects();
+                this.drawOverlay();
+            });
         }
         
         // Rotation slider
@@ -586,6 +613,18 @@ class DitheringTool {
         this.transform.width = newWidth;
         this.transform.height = newHeight;
         
+        // Update scale based on new size
+        const newScale = newWidth / this.transform.baseWidth;
+        this.transform.scale = newScale;
+        
+        // Update scale slider
+        const scaleSlider = document.getElementById('scale');
+        if (scaleSlider) {
+            scaleSlider.value = newScale;
+            const percentage = Math.round(newScale * 100);
+            document.getElementById('scaleValue').textContent = percentage + '%';
+        }
+        
         this.applyEffects();
         this.drawOverlay();
     }
@@ -886,8 +925,18 @@ class DitheringTool {
             height: height,
             originalWidth: width,
             originalHeight: height,
-            rotation: 0
+            baseWidth: width,
+            baseHeight: height,
+            rotation: 0,
+            scale: 1
         };
+        
+        // Reset scale slider
+        const scaleSlider = document.getElementById('scale');
+        if (scaleSlider) {
+            scaleSlider.value = 1;
+            document.getElementById('scaleValue').textContent = '100%';
+        }
         
         // Reset rotation slider
         const rotationSlider = document.getElementById('rotation');
