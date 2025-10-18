@@ -1217,8 +1217,10 @@ class DitheringTool {
         img.onload = () => {
             this.originalImage = img;
             this.updateCanvasSize();
-            if (this.dom.exportBtn) {
-                this.dom.exportBtn.disabled = false;
+            // Enable export button
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) {
+                exportBtn.disabled = false;
             }
             this.applyEffects();
         };
@@ -1261,8 +1263,10 @@ class DitheringTool {
             img.onload = () => {
                 this.originalImage = img;
                 this.updateCanvasSize();
-                if (this.dom.exportBtn) {
-                    this.dom.exportBtn.disabled = false;
+                // Enable export button
+                const exportBtn = document.getElementById('exportBtn');
+                if (exportBtn) {
+                    exportBtn.disabled = false;
                 }
                 this.applyEffects();
             };
