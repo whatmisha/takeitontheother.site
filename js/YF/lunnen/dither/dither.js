@@ -16,9 +16,11 @@ class DitheringTool {
             pattern: 'floyd-steinberg',
             pixelSize: 1,
             threshold: 128,
-            colorMode: 'monochrome',
+            colorMode: 'monochrome', // Fixed to monochrome
             showEffect: true,
-            invertImage: false
+            invertImage: false,
+            exportWithAlpha: false,
+            backgroundColor: '#000000'
         };
         
         this.initEventListeners();
@@ -70,13 +72,7 @@ class DitheringTool {
             });
         });
         
-        // Color mode selection
-        document.querySelectorAll('input[name="colorMode"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                this.settings.colorMode = e.target.value;
-                this.applyEffects();
-            });
-        });
+        // Color mode is fixed to monochrome
         
         // Invert image checkbox
         document.getElementById('invertImage').addEventListener('change', (e) => {
@@ -87,6 +83,61 @@ class DitheringTool {
         // Show effect checkbox
         document.getElementById('showEffect').addEventListener('change', (e) => {
             this.settings.showEffect = e.target.checked;
+            this.applyEffects();
+        });
+        
+        // Export with alpha checkbox
+        document.getElementById('exportWithAlpha').addEventListener('change', (e) => {
+            this.settings.exportWithAlpha = e.target.checked;
+        });
+        
+        // Background color picker
+        document.getElementById('backgroundColor').addEventListener('input', (e) => {
+            const colorValue = e.target.value;
+            this.settings.backgroundColor = colorValue;
+            document.getElementById('hexColorInput').value = colorValue;
+            this.applyEffects();
+        });
+        
+        // Hex color input
+        document.getElementById('hexColorInput').addEventListener('input', (e) => {
+            let hexValue = e.target.value;
+            
+            // Make sure it starts with #
+            if (!hexValue.startsWith('#')) {
+                hexValue = '#' + hexValue;
+                e.target.value = hexValue;
+            }
+            
+            // Validate hex color format
+            const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+            if (hexRegex.test(hexValue)) {
+                // Convert 3-digit hex to 6-digit if needed
+                if (hexValue.length === 4) {
+                    const r = hexValue[1];
+                    const g = hexValue[2];
+                    const b = hexValue[3];
+                    hexValue = `#${r}${r}${g}${g}${b}${b}`;
+                }
+                
+                this.settings.backgroundColor = hexValue;
+                document.getElementById('backgroundColor').value = hexValue;
+                this.applyEffects();
+            }
+        });
+        
+        // Validate hex input when focus is lost
+        document.getElementById('hexColorInput').addEventListener('blur', (e) => {
+            let hexValue = e.target.value;
+            
+            // Default to black if invalid
+            if (!hexValue.match(/^#[0-9A-Fa-f]{6}$/)) {
+                hexValue = '#000000';
+            }
+            
+            e.target.value = hexValue;
+            document.getElementById('backgroundColor').value = hexValue;
+            this.settings.backgroundColor = hexValue;
             this.applyEffects();
         });
         
@@ -534,68 +585,102 @@ class DitheringTool {
     }
     
     getPixelValue(data, idx) {
-        if (this.settings.colorMode === 'monochrome' || this.settings.colorMode === 'grayscale') {
-            // Convert to grayscale
-            return data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
-        } else {
-            // Return average for color mode
-            return (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
-        }
+        // Convert to grayscale using luminance formula
+        return data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
     }
     
     setPixelValue(data, idx, value) {
-        if (this.settings.colorMode === 'monochrome') {
+        // If value is 0 (black), use the background color
+        if (value === 0) {
+            // Parse the hex color to RGB
+            const hexColor = this.settings.backgroundColor;
+            const r = parseInt(hexColor.slice(1, 3), 16);
+            const g = parseInt(hexColor.slice(3, 5), 16);
+            const b = parseInt(hexColor.slice(5, 7), 16);
+            
+            data[idx] = r;
+            data[idx + 1] = g;
+            data[idx + 2] = b;
+        } else {
+            // White or other values stay as they are
             data[idx] = value;
             data[idx + 1] = value;
             data[idx + 2] = value;
-        } else if (this.settings.colorMode === 'grayscale') {
-            const levels = 4; // Number of gray levels
-            const quantized = Math.round(value / 255 * (levels - 1)) * (255 / (levels - 1));
-            data[idx] = quantized;
-            data[idx + 1] = quantized;
-            data[idx + 2] = quantized;
-        } else {
-            // Color mode - apply to each channel separately
-            const levels = 2; // Binary for each channel
-            data[idx] = value > this.settings.threshold ? 255 : 0;
-            data[idx + 1] = data[idx + 1] > this.settings.threshold ? 255 : 0;
-            data[idx + 2] = data[idx + 2] > this.settings.threshold ? 255 : 0;
         }
     }
     
     distributeError(data, idx, error) {
-        if (this.settings.colorMode === 'color') {
-            // For color mode, distribute to each channel
-            data[idx] = Math.max(0, Math.min(255, data[idx] + error));
-            data[idx + 1] = Math.max(0, Math.min(255, data[idx + 1] + error));
-            data[idx + 2] = Math.max(0, Math.min(255, data[idx + 2] + error));
-        } else {
-            // For grayscale/monochrome
-            const currentValue = this.getPixelValue(data, idx);
-            const newValue = Math.max(0, Math.min(255, currentValue + error));
-            data[idx] = newValue;
-            data[idx + 1] = newValue;
-            data[idx + 2] = newValue;
-        }
+        // For monochrome
+        const currentValue = this.getPixelValue(data, idx);
+        const newValue = Math.max(0, Math.min(255, currentValue + error));
+        data[idx] = newValue;
+        data[idx + 1] = newValue;
+        data[idx + 2] = newValue;
     }
     
     quantizePixel(value) {
-        if (this.settings.colorMode === 'monochrome') {
-            return value > this.settings.threshold ? 255 : 0;
-        } else if (this.settings.colorMode === 'grayscale') {
-            const levels = 4;
-            return Math.round(value / 255 * (levels - 1)) * (255 / (levels - 1));
-        } else {
-            return value > this.settings.threshold ? 255 : 0;
-        }
+        // Binary threshold for monochrome
+        return value > this.settings.threshold ? 255 : 0;
     }
     
     exportImage() {
         if (!this.originalImage) return;
         
+        let exportCanvas = this.canvas;
+        
+        // If export with alpha is enabled, create a new canvas with transparency
+        if (this.settings.exportWithAlpha) {
+            exportCanvas = document.createElement('canvas');
+            exportCanvas.width = this.canvas.width;
+            exportCanvas.height = this.canvas.height;
+            const exportCtx = exportCanvas.getContext('2d');
+            
+            // Get the current image data
+            const sourceImageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+            const exportImageData = exportCtx.createImageData(this.canvas.width, this.canvas.height);
+            
+            const srcData = sourceImageData.data;
+            const expData = exportImageData.data;
+            
+            // Process each pixel: black/background color becomes transparent, white stays white
+            for (let i = 0; i < srcData.length; i += 4) {
+                const r = srcData[i];
+                const g = srcData[i + 1];
+                const b = srcData[i + 2];
+                
+                // Parse background color to RGB
+                const hexColor = this.settings.backgroundColor;
+                const bgR = parseInt(hexColor.slice(1, 3), 16);
+                const bgG = parseInt(hexColor.slice(3, 5), 16);
+                const bgB = parseInt(hexColor.slice(5, 7), 16);
+                
+                // Check if this pixel is close to the background color
+                const isBackground = (
+                    Math.abs(r - bgR) < 30 && 
+                    Math.abs(g - bgG) < 30 && 
+                    Math.abs(b - bgB) < 30
+                );
+                
+                // Calculate brightness for non-background pixels
+                const brightness = (r + g + b) / 3;
+                
+                // Set white color
+                expData[i] = 255;     // R
+                expData[i + 1] = 255; // G
+                expData[i + 2] = 255; // B
+                
+                // Alpha based on whether it's background or not
+                // Background -> alpha 0 (transparent)
+                // White -> alpha 255 (opaque)
+                expData[i + 3] = isBackground ? 0 : brightness;
+            }
+            
+            exportCtx.putImageData(exportImageData, 0, 0);
+        }
+        
         const link = document.createElement('a');
         link.download = 'dithered-image.png';
-        link.href = this.canvas.toDataURL('image/png');
+        link.href = exportCanvas.toDataURL('image/png');
         link.click();
     }
 }

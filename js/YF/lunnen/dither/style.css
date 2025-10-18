@@ -195,6 +195,35 @@ header p {
     background: #fff;
 }
 
+.color-input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.control-group input[type="color"] {
+    width: 60px;
+    height: 30px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+}
+
+.control-group input[type="text"]#hexColorInput {
+    flex: 1;
+    height: 30px;
+    background: #222;
+    border: 1px solid #444;
+    color: #fff;
+    font-family: monospace;
+    font-size: 0.9rem;
+    padding: 0 8px;
+    border-radius: 0;
+}
+
 .value-display {
     display: inline-block;
     min-width: auto;
@@ -264,6 +293,13 @@ header p {
     width: 14px;
     height: 14px;
     vertical-align: middle;
+}
+
+.hint-text {
+    font-size: 0.75rem;
+    color: #666;
+    margin-top: 4px;
+    line-height: 1.3;
 }
 
 .btn-primary, .btn-secondary {
