@@ -133,9 +133,26 @@ class DitheringTool {
             this.settings.exportWithAlpha = e.target.checked;
         });
         
-        // Export x4 checkbox
+        // Export x2 checkbox (mutually exclusive with x4)
+        document.getElementById('export2x').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                this.settings.export2x = true;
+                this.settings.export4x = false;
+                document.getElementById('export4x').checked = false;
+            } else {
+                this.settings.export2x = false;
+            }
+        });
+        
+        // Export x4 checkbox (mutually exclusive with x2)
         document.getElementById('export4x').addEventListener('change', (e) => {
-            this.settings.export4x = e.target.checked;
+            if (e.target.checked) {
+                this.settings.export4x = true;
+                this.settings.export2x = false;
+                document.getElementById('export2x').checked = false;
+            } else {
+                this.settings.export4x = false;
+            }
         });
         
         // Background color picker
@@ -1617,7 +1634,13 @@ class DitheringTool {
     exportImage() {
         if (!this.originalImage) return;
         
-        const exportScale = this.settings.export4x ? 4 : 1; // Export at 4x or 1x resolution
+        // Determine export scale: 2x, 4x, or 1x (default)
+        let exportScale = 1;
+        if (this.settings.export4x) {
+            exportScale = 4;
+        } else if (this.settings.export2x) {
+            exportScale = 2;
+        }
         
         // Create export canvas with scaled dimensions
         const exportCanvas = document.createElement('canvas');
