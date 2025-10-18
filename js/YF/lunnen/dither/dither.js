@@ -59,6 +59,7 @@ class DitheringTool {
         this.initPanelDrag('controlsPanel', 'panelHeader');
         this.initPanelDrag('transformPanel', 'transformPanelHeader');
         this.initCanvasInteraction();
+        this.initValueInputs();
         this.loadDefaultImage();
         this.loadDefaultSample();
     }
@@ -198,7 +199,7 @@ class DitheringTool {
         if (positionXSlider) {
             positionXSlider.addEventListener('input', (e) => {
                 const value = parseInt(e.target.value);
-                document.getElementById('positionXValue').textContent = value;
+                document.getElementById('positionXValue').value = value;
                 this.transform.positionX = value;
                 this.updatePositionFromSliders();
             });
@@ -209,7 +210,7 @@ class DitheringTool {
         if (positionYSlider) {
             positionYSlider.addEventListener('input', (e) => {
                 const value = parseInt(e.target.value);
-                document.getElementById('positionYValue').textContent = value;
+                document.getElementById('positionYValue').value = value;
                 this.transform.positionY = value;
                 this.updatePositionFromSliders();
             });
@@ -221,7 +222,7 @@ class DitheringTool {
             scaleSlider.addEventListener('input', (e) => {
                 const scale = parseFloat(e.target.value);
                 const percentage = Math.round(scale * 100);
-                document.getElementById('scaleValue').textContent = percentage + '%';
+                document.getElementById('scaleValue').value = percentage + '%';
                 this.transform.scale = scale;
                 
                 // Recalculate width and height based on scale
@@ -238,7 +239,7 @@ class DitheringTool {
         if (rotationSlider) {
             rotationSlider.addEventListener('input', (e) => {
                 const rotation = parseInt(e.target.value);
-                document.getElementById('rotationValue').textContent = rotation + '°';
+                document.getElementById('rotationValue').value = rotation + '°';
                 this.transform.rotation = rotation;
                 this.applyEffects();
                 this.drawOverlay();
@@ -268,7 +269,7 @@ class DitheringTool {
         
         slider.addEventListener('input', (e) => {
             const value = parser(e.target.value);
-            display.textContent = value;
+            display.value = value;
             this.settings[id] = value;
             this.applyEffects();
         });
@@ -321,12 +322,12 @@ class DitheringTool {
         
         if (positionXSlider) {
             positionXSlider.value = this.transform.positionX;
-            document.getElementById('positionXValue').textContent = this.transform.positionX;
+            document.getElementById('positionXValue').value = this.transform.positionX;
         }
         
         if (positionYSlider) {
             positionYSlider.value = this.transform.positionY;
-            document.getElementById('positionYValue').textContent = this.transform.positionY;
+            document.getElementById('positionYValue').value = this.transform.positionY;
         }
     }
     
@@ -423,6 +424,217 @@ class DitheringTool {
         this.overlayCanvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.overlayCanvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
         this.overlayCanvas.addEventListener('mouseleave', (e) => this.handleMouseUp(e));
+    }
+    
+    initValueInputs() {
+        // Add keyboard input support for all value display fields
+        const valueInputs = document.querySelectorAll('.value-display');
+        
+        valueInputs.forEach(input => {
+            const sliderId = input.dataset.slider;
+            const slider = document.getElementById(sliderId);
+            const min = parseFloat(input.dataset.min);
+            const max = parseFloat(input.dataset.max);
+            
+            if (!slider) return;
+            
+            // Get step from slider or determine from data
+            const step = parseFloat(slider.step) || this.getStepForSlider(sliderId);
+            
+            // Store original value on focus
+            input.addEventListener('focus', () => {
+                input.dataset.originalValue = input.value;
+                input.select();
+            });
+            
+            // Handle input changes
+            input.addEventListener('blur', () => {
+                this.processValueInput(input, slider, min, max);
+            });
+            
+            // Handle keyboard shortcuts
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    input.blur();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    input.value = input.dataset.originalValue;
+                    input.blur();
+                } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    this.handleArrowKey(e, input, slider, min, max, step);
+                }
+            });
+        });
+    }
+    
+    getStepForSlider(sliderId) {
+        // Determine appropriate step based on slider type
+        const integerSliders = ['positionX', 'positionY', 'rotation', 'grain', 'blackPoint', 'whitePoint', 'pixelSize', 'threshold'];
+        const decimalSliders = ['blur', 'gamma', 'scale'];
+        
+        if (integerSliders.includes(sliderId)) {
+            return 1;
+        } else if (decimalSliders.includes(sliderId)) {
+            return 0.1;
+        }
+        return 1;
+    }
+    
+    handleArrowKey(e, input, slider, min, max, baseStep) {
+        const sliderId = slider.id;
+        
+        // Get current numeric value
+        let rawValue = input.value.replace(/[^\d.-]/g, '');
+        let currentValue = parseFloat(rawValue);
+        
+        if (isNaN(currentValue)) {
+            currentValue = parseFloat(slider.value);
+        }
+        
+        // Determine step (x10 if Shift is pressed)
+        const step = e.shiftKey ? baseStep * 10 : baseStep;
+        
+        // Calculate new value
+        let newValue = e.key === 'ArrowUp' 
+            ? currentValue + step 
+            : currentValue - step;
+        
+        // Clamp to min/max
+        newValue = Math.max(min, Math.min(max, newValue));
+        
+        // Round to appropriate precision
+        const precision = baseStep < 1 ? 1 : 0;
+        newValue = parseFloat(newValue.toFixed(precision));
+        
+        // Update slider
+        slider.value = newValue;
+        
+        // Update input and apply changes
+        this.updateValueFromArrowKey(sliderId, newValue);
+    }
+    
+    updateValueFromArrowKey(sliderId, numValue) {
+        // Update display and settings based on slider type
+        if (sliderId === 'positionX') {
+            document.getElementById('positionXValue').value = Math.round(numValue);
+            this.transform.positionX = Math.round(numValue);
+            this.updatePositionFromSliders();
+        } else if (sliderId === 'positionY') {
+            document.getElementById('positionYValue').value = Math.round(numValue);
+            this.transform.positionY = Math.round(numValue);
+            this.updatePositionFromSliders();
+        } else if (sliderId === 'scale') {
+            const percentage = Math.round(numValue * 100);
+            document.getElementById('scaleValue').value = percentage + '%';
+            this.transform.scale = numValue;
+            this.transform.width = this.transform.baseWidth * numValue;
+            this.transform.height = this.transform.baseHeight * numValue;
+            this.updatePositionFromSliders();
+        } else if (sliderId === 'rotation') {
+            document.getElementById('rotationValue').value = Math.round(numValue) + '°';
+            this.transform.rotation = Math.round(numValue);
+            this.applyEffects();
+            this.drawOverlay();
+        } else if (sliderId === 'blur') {
+            document.getElementById('blurValue').value = numValue.toFixed(1);
+            this.settings.blur = numValue;
+            this.applyEffects();
+        } else if (sliderId === 'grain') {
+            document.getElementById('grainValue').value = Math.round(numValue);
+            this.settings.grain = Math.round(numValue);
+            this.applyEffects();
+        } else if (sliderId === 'gamma') {
+            document.getElementById('gammaValue').value = numValue.toFixed(1);
+            this.settings.gamma = numValue;
+            this.applyEffects();
+        } else if (sliderId === 'blackPoint') {
+            document.getElementById('blackPointValue').value = Math.round(numValue);
+            this.settings.blackPoint = Math.round(numValue);
+            this.applyEffects();
+        } else if (sliderId === 'whitePoint') {
+            document.getElementById('whitePointValue').value = Math.round(numValue);
+            this.settings.whitePoint = Math.round(numValue);
+            this.applyEffects();
+        } else if (sliderId === 'pixelSize') {
+            document.getElementById('pixelSizeValue').value = Math.round(numValue);
+            this.settings.pixelSize = Math.round(numValue);
+            this.applyEffects();
+        } else if (sliderId === 'threshold') {
+            document.getElementById('thresholdValue').value = Math.round(numValue);
+            this.settings.threshold = Math.round(numValue);
+            this.applyEffects();
+        }
+    }
+    
+    processValueInput(input, slider, min, max) {
+        const sliderId = slider.id;
+        let rawValue = input.value.replace(/[^\d.-]/g, ''); // Remove non-numeric characters except - and .
+        let numValue = parseFloat(rawValue);
+        
+        // Validate and clamp value
+        if (isNaN(numValue)) {
+            // Restore original value if invalid
+            input.value = input.dataset.originalValue;
+            return;
+        }
+        
+        numValue = Math.max(min, Math.min(max, numValue));
+        
+        // Update slider
+        slider.value = numValue;
+        
+        // Trigger the appropriate handler based on slider type
+        if (sliderId === 'positionX') {
+            document.getElementById('positionXValue').value = Math.round(numValue);
+            this.transform.positionX = Math.round(numValue);
+            this.updatePositionFromSliders();
+        } else if (sliderId === 'positionY') {
+            document.getElementById('positionYValue').value = Math.round(numValue);
+            this.transform.positionY = Math.round(numValue);
+            this.updatePositionFromSliders();
+        } else if (sliderId === 'scale') {
+            const percentage = Math.round(numValue * 100);
+            document.getElementById('scaleValue').value = percentage + '%';
+            this.transform.scale = numValue;
+            this.transform.width = this.transform.baseWidth * numValue;
+            this.transform.height = this.transform.baseHeight * numValue;
+            this.updatePositionFromSliders();
+        } else if (sliderId === 'rotation') {
+            document.getElementById('rotationValue').value = Math.round(numValue) + '°';
+            this.transform.rotation = Math.round(numValue);
+            this.applyEffects();
+            this.drawOverlay();
+        } else if (sliderId === 'blur') {
+            document.getElementById('blurValue').value = numValue.toFixed(1);
+            this.settings.blur = numValue;
+            this.applyEffects();
+        } else if (sliderId === 'grain') {
+            document.getElementById('grainValue').value = Math.round(numValue);
+            this.settings.grain = Math.round(numValue);
+            this.applyEffects();
+        } else if (sliderId === 'gamma') {
+            document.getElementById('gammaValue').value = numValue.toFixed(1);
+            this.settings.gamma = numValue;
+            this.applyEffects();
+        } else if (sliderId === 'blackPoint') {
+            document.getElementById('blackPointValue').value = Math.round(numValue);
+            this.settings.blackPoint = Math.round(numValue);
+            this.applyEffects();
+        } else if (sliderId === 'whitePoint') {
+            document.getElementById('whitePointValue').value = Math.round(numValue);
+            this.settings.whitePoint = Math.round(numValue);
+            this.applyEffects();
+        } else if (sliderId === 'pixelSize') {
+            document.getElementById('pixelSizeValue').value = Math.round(numValue);
+            this.settings.pixelSize = Math.round(numValue);
+            this.applyEffects();
+        } else if (sliderId === 'threshold') {
+            document.getElementById('thresholdValue').value = Math.round(numValue);
+            this.settings.threshold = Math.round(numValue);
+            this.applyEffects();
+        }
     }
     
     handleMouseDown(e) {
@@ -699,7 +911,7 @@ class DitheringTool {
         if (scaleSlider) {
             scaleSlider.value = newScale;
             const percentage = Math.round(newScale * 100);
-            document.getElementById('scaleValue').textContent = percentage + '%';
+            document.getElementById('scaleValue').value = percentage + '%';
         }
         
         // Update position sliders
@@ -734,7 +946,7 @@ class DitheringTool {
         const rotationSlider = document.getElementById('rotation');
         if (rotationSlider) {
             rotationSlider.value = Math.round(newRotation);
-            document.getElementById('rotationValue').textContent = Math.round(newRotation) + '°';
+            document.getElementById('rotationValue').value = Math.round(newRotation) + '°';
         }
         
         this.applyEffects();
@@ -1017,28 +1229,28 @@ class DitheringTool {
         const positionXSlider = document.getElementById('positionX');
         if (positionXSlider) {
             positionXSlider.value = 0;
-            document.getElementById('positionXValue').textContent = '0';
+            document.getElementById('positionXValue').value = '0';
         }
         
         // Reset position Y slider
         const positionYSlider = document.getElementById('positionY');
         if (positionYSlider) {
             positionYSlider.value = 0;
-            document.getElementById('positionYValue').textContent = '0';
+            document.getElementById('positionYValue').value = '0';
         }
         
         // Reset scale slider
         const scaleSlider = document.getElementById('scale');
         if (scaleSlider) {
             scaleSlider.value = 1;
-            document.getElementById('scaleValue').textContent = '100%';
+            document.getElementById('scaleValue').value = '100%';
         }
         
         // Reset rotation slider
         const rotationSlider = document.getElementById('rotation');
         if (rotationSlider) {
             rotationSlider.value = 0;
-            document.getElementById('rotationValue').textContent = '0°';
+            document.getElementById('rotationValue').value = '0°';
         }
         
         this.applyEffects();
