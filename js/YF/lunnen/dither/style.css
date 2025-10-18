@@ -306,6 +306,22 @@ body {
     cursor: pointer;
     padding: 0;
     transition: border-color var(--transition-normal);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.control-group input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.control-group input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: var(--radius);
+}
+
+.control-group input[type="color"]::-moz-color-swatch {
+    border: none;
+    border-radius: var(--radius);
 }
 
 .control-group input[type="color"]:hover,
@@ -438,35 +454,6 @@ legend {
     width: var(--checkbox-size);
     height: var(--checkbox-size);
     vertical-align: middle;
-}
-
-/* Select styles */
-.control-group select {
-    width: 100%;
-    padding: var(--spacing-md);
-    margin-top: var(--spacing-md);
-    background: var(--color-bg-input);
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-    font-family: inherit;
-    font-size: 0.85rem;
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: border-color var(--transition-normal);
-}
-
-.control-group select:hover {
-    border-color: var(--color-text-subtle);
-}
-
-.control-group select:focus {
-    outline: none;
-    border-color: var(--color-text);
-}
-
-.control-group select option {
-    background: var(--color-bg-panel);
-    color: var(--color-text);
 }
 
 .hint-text {

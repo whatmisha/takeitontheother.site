@@ -101,8 +101,7 @@ class DitheringTool {
             exportWithAlpha: true,
             export2x: false,
             export4x: false,
-            backgroundColor: '#000000',
-            sortCriteria: 'lightness'
+            backgroundColor: '#000000'
         };
         
         this.initEventListeners();
@@ -211,19 +210,9 @@ class DitheringTool {
         document.querySelectorAll('input[name="pattern"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
                 this.settings.pattern = e.target.value;
-                this.toggleSortCriteriaVisibility();
                 this.applyEffects();
             });
         });
-        
-        // Sort criteria selection
-        const sortCriteria = document.getElementById('sortCriteria');
-        if (sortCriteria) {
-            sortCriteria.addEventListener('change', (e) => {
-                this.settings.sortCriteria = e.target.value;
-                this.applyEffects();
-            });
-        }
         
         // Color mode is fixed to monochrome
         
@@ -493,15 +482,6 @@ class DitheringTool {
             this.settings[id] = value;
             this.applyEffects();
         });
-    }
-    
-    toggleSortCriteriaVisibility() {
-        const sortCriteriaGroup = document.getElementById('sortCriteriaGroup');
-        if (sortCriteriaGroup) {
-            const isPixelSort = this.settings.pattern === 'pixel-sort-h' || 
-                               this.settings.pattern === 'pixel-sort-v';
-            sortCriteriaGroup.style.display = isPixelSort ? 'block' : 'none';
-        }
     }
     
     getBaseValue() {
@@ -1570,12 +1550,6 @@ class DitheringTool {
             case 'random':
                 imageData = this.randomDither(imageData);
                 break;
-            case 'pixel-sort-h':
-                imageData = this.pixelSortHorizontal(imageData);
-                break;
-            case 'pixel-sort-v':
-                imageData = this.pixelSortVertical(imageData);
-                break;
         }
         
         if (pixelSize > 1) {
@@ -1715,155 +1689,6 @@ class DitheringTool {
         }
         
         return new ImageData(data, width, height);
-    }
-    
-    pixelSortHorizontal(imageData) {
-        const data = new Uint8ClampedArray(imageData.data);
-        const width = imageData.width;
-        const height = imageData.height;
-        const threshold = this.settings.threshold;
-        
-        for (let y = 0; y < height; y++) {
-            let startX = -1;
-            
-            for (let x = 0; x <= width; x++) {
-                const idx = (y * width + x) * 4;
-                const brightness = x < width ? this.getSortValue(data, idx) : 0;
-                
-                // Start sorting interval
-                if (brightness > threshold && startX === -1) {
-                    startX = x;
-                }
-                
-                // End sorting interval
-                if ((brightness <= threshold || x === width) && startX !== -1) {
-                    this.sortPixelRange(data, width, y, startX, x, true);
-                    startX = -1;
-                }
-            }
-        }
-        
-        return new ImageData(data, width, height);
-    }
-    
-    pixelSortVertical(imageData) {
-        const data = new Uint8ClampedArray(imageData.data);
-        const width = imageData.width;
-        const height = imageData.height;
-        const threshold = this.settings.threshold;
-        
-        for (let x = 0; x < width; x++) {
-            let startY = -1;
-            
-            for (let y = 0; y <= height; y++) {
-                const idx = (y * width + x) * 4;
-                const brightness = y < height ? this.getSortValue(data, idx) : 0;
-                
-                // Start sorting interval
-                if (brightness > threshold && startY === -1) {
-                    startY = y;
-                }
-                
-                // End sorting interval
-                if ((brightness <= threshold || y === height) && startY !== -1) {
-                    this.sortPixelRange(data, width, x, startY, y, false);
-                    startY = -1;
-                }
-            }
-        }
-        
-        return new ImageData(data, width, height);
-    }
-    
-    getSortValue(data, idx) {
-        const criteria = this.settings.sortCriteria;
-        const r = data[idx];
-        const g = data[idx + 1];
-        const b = data[idx + 2];
-        
-        switch (criteria) {
-            case 'lightness':
-                return (Math.max(r, g, b) + Math.min(r, g, b)) / 2;
-            case 'hue':
-                return this.rgbToHue(r, g, b);
-            case 'saturation':
-                return this.rgbToSaturation(r, g, b);
-            case 'red':
-                return r;
-            case 'green':
-                return g;
-            case 'blue':
-                return b;
-            default:
-                return this.getPixelValue(data, idx);
-        }
-    }
-    
-    rgbToHue(r, g, b) {
-        r /= 255;
-        g /= 255;
-        b /= 255;
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        const delta = max - min;
-        
-        if (delta === 0) return 0;
-        
-        let hue;
-        if (max === r) {
-            hue = ((g - b) / delta) % 6;
-        } else if (max === g) {
-            hue = (b - r) / delta + 2;
-        } else {
-            hue = (r - g) / delta + 4;
-        }
-        
-        return (hue * 60 + 360) % 360;
-    }
-    
-    rgbToSaturation(r, g, b) {
-        r /= 255;
-        g /= 255;
-        b /= 255;
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        const delta = max - min;
-        
-        if (max === 0) return 0;
-        return (delta / max) * 255;
-    }
-    
-    sortPixelRange(data, width, coord, start, end, isHorizontal) {
-        // Extract pixels
-        const pixels = [];
-        for (let i = start; i < end; i++) {
-            const idx = isHorizontal ? 
-                (coord * width + i) * 4 : 
-                (i * width + coord) * 4;
-            
-            pixels.push({
-                r: data[idx],
-                g: data[idx + 1],
-                b: data[idx + 2],
-                a: data[idx + 3],
-                sortValue: this.getSortValue(data, idx)
-            });
-        }
-        
-        // Sort by sort value
-        pixels.sort((a, b) => a.sortValue - b.sortValue);
-        
-        // Put back sorted pixels
-        for (let i = 0; i < pixels.length; i++) {
-            const idx = isHorizontal ? 
-                (coord * width + (start + i)) * 4 : 
-                ((start + i) * width + coord) * 4;
-            
-            data[idx] = pixels[i].r;
-            data[idx + 1] = pixels[i].g;
-            data[idx + 2] = pixels[i].b;
-            data[idx + 3] = pixels[i].a;
-        }
     }
     
     getPixelValue(data, idx) {
