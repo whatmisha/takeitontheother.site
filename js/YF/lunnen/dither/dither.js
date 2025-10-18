@@ -207,7 +207,7 @@ class DitheringTool {
                 e.preventDefault();
                 imageInput.click();
             }
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
                 e.preventDefault();
                 sampleInput.click();
             }
@@ -748,8 +748,7 @@ class DitheringTool {
     resetTransform() {
         if (!this.originalImage) return;
         
-        // If there's a sample image, fit the processed image within canvas
-        // Otherwise, fill the canvas
+        // Fill the canvas with the image, maintaining aspect ratio (cover behavior)
         const canvasWidth = this.canvas.width;
         const canvasHeight = this.canvas.height;
         
@@ -757,12 +756,15 @@ class DitheringTool {
         const canvasAspect = canvasWidth / canvasHeight;
         
         let width, height;
+        // Cover logic: choose the dimension that fills the canvas
         if (imgAspect > canvasAspect) {
-            width = canvasWidth;
-            height = canvasWidth / imgAspect;
-        } else {
+            // Image is wider - fit to height, width will overflow
             height = canvasHeight;
             width = canvasHeight * imgAspect;
+        } else {
+            // Image is taller - fit to width, height will overflow
+            width = canvasWidth;
+            height = canvasWidth / imgAspect;
         }
         
         this.transform = {
