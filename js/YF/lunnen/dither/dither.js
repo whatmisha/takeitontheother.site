@@ -685,7 +685,7 @@ class DitheringTool {
         this.overlayCtx.clip('evenodd'); // This creates an inverted clip
         
         // Draw parts outside canvas with reduced opacity and rotation
-        this.overlayCtx.globalAlpha = 0.3;
+        this.overlayCtx.globalAlpha = 0.1;
         
         // Apply rotation
         const imgCenterX = t.x + t.width / 2;
