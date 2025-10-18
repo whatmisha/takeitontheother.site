@@ -4,6 +4,8 @@ class DitheringTool {
     constructor() {
         this.canvas = document.getElementById('canvas');
         this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
+        this.overlayCanvas = document.getElementById('overlayCanvas');
+        this.overlayCtx = this.overlayCanvas.getContext('2d', { willReadFrequently: true });
         this.originalImage = null;
         this.currentImageData = null;
         this.sampleImage = null;
@@ -290,16 +292,17 @@ class DitheringTool {
     }
     
     initCanvasInteraction() {
-        this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-        this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-        this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
-        this.canvas.addEventListener('mouseleave', (e) => this.handleMouseUp(e));
+        // Enable pointer events on overlay when sample is loaded
+        this.overlayCanvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+        this.overlayCanvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+        this.overlayCanvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+        this.overlayCanvas.addEventListener('mouseleave', (e) => this.handleMouseUp(e));
     }
     
     handleMouseDown(e) {
         if (!this.originalImage || !this.sampleImage) return;
         
-        const rect = this.canvas.getBoundingClientRect();
+        const rect = this.overlayCanvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         
@@ -320,7 +323,7 @@ class DitheringTool {
     }
     
     handleMouseMove(e) {
-        const rect = this.canvas.getBoundingClientRect();
+        const rect = this.overlayCanvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         
@@ -328,11 +331,11 @@ class DitheringTool {
         if (!this.interaction.isDragging && !this.interaction.isResizing && this.sampleImage) {
             const handle = this.getResizeHandle(x, y);
             if (handle) {
-                this.canvas.style.cursor = this.getCursorForHandle(handle);
+                this.overlayCanvas.style.cursor = this.getCursorForHandle(handle);
             } else if (this.isPointInImage(x, y)) {
-                this.canvas.style.cursor = 'move';
+                this.overlayCanvas.style.cursor = 'move';
             } else {
-                this.canvas.style.cursor = 'default';
+                this.overlayCanvas.style.cursor = 'default';
             }
         }
         
@@ -344,6 +347,7 @@ class DitheringTool {
             this.transform.y = this.interaction.startTransform.y + dy;
             
             this.applyEffects();
+            this.drawOverlay();
         } else if (this.interaction.isResizing) {
             this.handleResize(x, y);
         }
@@ -353,19 +357,36 @@ class DitheringTool {
         this.interaction.isDragging = false;
         this.interaction.isResizing = false;
         this.interaction.resizeHandle = null;
-        this.canvas.style.cursor = 'default';
+        this.overlayCanvas.style.cursor = 'default';
+        this.applyEffects();
     }
     
     isPointInImage(x, y) {
-        return x >= this.transform.x && 
-               x <= this.transform.x + this.transform.width &&
-               y >= this.transform.y && 
-               y <= this.transform.y + this.transform.height;
+        const padding = (this.overlayCanvas.width - this.canvas.width) / 2;
+        const t = {
+            x: this.transform.x + padding,
+            y: this.transform.y + padding,
+            width: this.transform.width,
+            height: this.transform.height
+        };
+        
+        return x >= t.x && 
+               x <= t.x + t.width &&
+               y >= t.y && 
+               y <= t.y + t.height;
     }
     
     getResizeHandle(x, y) {
         const handleSize = 10;
-        const t = this.transform;
+        const padding = (this.overlayCanvas.width - this.canvas.width) / 2;
+        
+        // Transform coordinates to overlay space
+        const t = {
+            x: this.transform.x + padding,
+            y: this.transform.y + padding,
+            width: this.transform.width,
+            height: this.transform.height
+        };
         
         // Check corners first
         if (Math.abs(x - t.x) < handleSize && Math.abs(y - t.y) < handleSize) return 'nw';
@@ -437,21 +458,95 @@ class DitheringTool {
         this.transform.height = newHeight;
         
         this.applyEffects();
+        this.drawOverlay();
     }
     
-    drawInteractionHandles() {
-        // Only draw handles if sample image exists (making processed image interactive)
-        if (!this.sampleImage || !this.originalImage) return;
+    drawOverlay() {
+        // Only draw overlay if sample image exists (making processed image interactive)
+        if (!this.sampleImage || !this.originalImage) {
+            this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+            this.overlayCanvas.style.pointerEvents = 'none';
+            return;
+        }
         
-        const t = this.transform;
+        this.overlayCanvas.style.pointerEvents = 'auto';
+        
+        // Clear overlay
+        this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+        
+        // Calculate padding offset (overlay is centered over main canvas)
+        const padding = (this.overlayCanvas.width - this.canvas.width) / 2;
+        
+        // Transform coordinates for overlay canvas
+        const t = {
+            x: this.transform.x + padding,
+            y: this.transform.y + padding,
+            width: this.transform.width,
+            height: this.transform.height
+        };
+        
+        // Create a temporary canvas for the processed image preview
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+        tempCanvas.width = Math.floor(t.width);
+        tempCanvas.height = Math.floor(t.height);
+        
+        // Draw and process image on temp canvas (same as main rendering)
+        tempCtx.drawImage(this.originalImage, 0, 0, tempCanvas.width, tempCanvas.height);
+        let imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        
+        if (this.settings.showEffect) {
+            imageData = this.applyPreprocessing(imageData);
+            imageData = this.applyDithering(imageData);
+        }
+        
+        tempCtx.putImageData(imageData, 0, 0);
+        
+        // Draw the processed image with different opacity for overflow parts
+        // First, save the context
+        this.overlayCtx.save();
+        
+        // Define the main canvas bounds on overlay
+        const canvasBounds = {
+            x: padding,
+            y: padding,
+            width: this.canvas.width,
+            height: this.canvas.height
+        };
+        
+        // Draw parts outside canvas with reduced opacity
+        this.overlayCtx.globalAlpha = 0.3;
+        this.overlayCtx.drawImage(
+            tempCanvas,
+            Math.floor(t.x),
+            Math.floor(t.y),
+            Math.floor(t.width),
+            Math.floor(t.height)
+        );
+        
+        // Draw part inside canvas with full opacity
+        this.overlayCtx.globalAlpha = 1.0;
+        this.overlayCtx.save();
+        this.overlayCtx.beginPath();
+        this.overlayCtx.rect(canvasBounds.x, canvasBounds.y, canvasBounds.width, canvasBounds.height);
+        this.overlayCtx.clip();
+        this.overlayCtx.drawImage(
+            tempCanvas,
+            Math.floor(t.x),
+            Math.floor(t.y),
+            Math.floor(t.width),
+            Math.floor(t.height)
+        );
+        this.overlayCtx.restore();
+        
+        // Draw border and handles
         const handleSize = 8;
-        
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        this.ctx.lineWidth = 2;
+        this.overlayCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        this.overlayCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        this.overlayCtx.lineWidth = 2;
         
         // Draw border around image
-        this.ctx.strokeRect(t.x, t.y, t.width, t.height);
+        this.overlayCtx.strokeRect(t.x, t.y, t.width, t.height);
         
         // Draw corner handles
         const corners = [
@@ -462,8 +557,8 @@ class DitheringTool {
         ];
         
         corners.forEach(([cx, cy]) => {
-            this.ctx.fillRect(cx - handleSize/2, cy - handleSize/2, handleSize, handleSize);
-            this.ctx.strokeRect(cx - handleSize/2, cy - handleSize/2, handleSize, handleSize);
+            this.overlayCtx.fillRect(cx - handleSize/2, cy - handleSize/2, handleSize, handleSize);
+            this.overlayCtx.strokeRect(cx - handleSize/2, cy - handleSize/2, handleSize, handleSize);
         });
         
         // Draw edge handles
@@ -475,9 +570,11 @@ class DitheringTool {
         ];
         
         edges.forEach(([cx, cy]) => {
-            this.ctx.fillRect(cx - handleSize/2, cy - handleSize/2, handleSize, handleSize);
-            this.ctx.strokeRect(cx - handleSize/2, cy - handleSize/2, handleSize, handleSize);
+            this.overlayCtx.fillRect(cx - handleSize/2, cy - handleSize/2, handleSize, handleSize);
+            this.overlayCtx.strokeRect(cx - handleSize/2, cy - handleSize/2, handleSize, handleSize);
         });
+        
+        this.overlayCtx.restore();
     }
     
     loadDefaultImage() {
@@ -560,6 +657,11 @@ class DitheringTool {
         
         this.canvas.width = width;
         this.canvas.height = height;
+        
+        // Set overlay canvas to be larger to show overflow
+        const padding = 200; // Extra space around canvas
+        this.overlayCanvas.width = width + padding * 2;
+        this.overlayCanvas.height = height + padding * 2;
         
         // Initialize or reset transform for the processed image
         if (this.originalImage && (this.transform.originalWidth === 0 || !this.sampleImage)) {
@@ -645,8 +747,8 @@ class DitheringTool {
             this.ctx.drawImage(this.sampleImage, 0, 0, this.canvas.width, this.canvas.height);
         }
         
-        // Draw interaction handles if needed
-        this.drawInteractionHandles();
+        // Draw overlay with handles and overflow preview
+        this.drawOverlay();
     }
     
     applyPreprocessing(imageData) {

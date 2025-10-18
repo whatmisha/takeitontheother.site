@@ -50,7 +50,7 @@ header p {
     border-radius: 0;
     box-shadow: none;
     border: none;
-    overflow: hidden;
+    overflow: visible;
     position: relative;
     min-height: 400px;
     display: flex;
@@ -65,6 +65,17 @@ header p {
     max-height: 70vh;
     width: auto;
     height: auto;
+    position: relative;
+    z-index: 1;
+}
+
+#overlayCanvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 2;
 }
 
 /* Placeholder removed */
