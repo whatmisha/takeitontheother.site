@@ -38,7 +38,6 @@
       font-weight: 500;
       width: 100%;
       box-sizing: border-box;
-      font-size: 18vw;
       line-height: 0.9;
       display: block;
       letter-spacing: -0.05em;
@@ -95,9 +94,9 @@
       {
         name: "Lunnen",
         apps: [
-          { name: "dither", displayName: "Dither" },
+          { name: "dither", displayName: "Dithering 01" },
           { name: "hyperspace", displayName: "Hyperspace" },
-          { name: "pattern_generator", displayName: "Pattern Generator" },
+          { name: "pattern_generator", displayName: "Pattern Generator 01" },
           { name: "pattern_generator_02", displayName: "Pattern Generator 02", hasSubfolder: true },
           { name: "random_lines_generator", displayName: "Random Lines Generator", hasSubfolder: true },
           { name: "rays_pattern_generator", displayName: "Rays Pattern Generator", hasSubfolder: true }
@@ -163,8 +162,44 @@
       });
     }
 
+    // Функция для подгонки размера заголовка под ширину окна
+    function fitTitle() {
+      const title = document.querySelector('h1');
+      if (!title) return;
+      
+      const containerWidth = window.innerWidth - 40; // Вычитаем padding
+      let fontSize = 10;
+      
+      // Увеличиваем размер шрифта, пока текст помещается
+      while (fontSize < 1000) {
+        title.style.fontSize = fontSize + 'px';
+        if (title.scrollWidth > containerWidth) {
+          // Немного уменьшаем, чтобы текст точно поместился
+          title.style.fontSize = (fontSize - 2) + 'px';
+          break;
+        }
+        fontSize += 2;
+      }
+    }
+
     // Загружаем проекты при загрузке страницы
-    document.addEventListener('DOMContentLoaded', renderProjects);
+    document.addEventListener('DOMContentLoaded', () => {
+      renderProjects();
+      
+      // Подгоняем размер заголовка после загрузки шрифтов
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(fitTitle);
+      } else {
+        setTimeout(fitTitle, 100);
+      }
+    });
+    
+    // Пересчитываем размер при изменении окна
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(fitTitle, 100);
+    });
   </script>
 </body>
 </html> 
