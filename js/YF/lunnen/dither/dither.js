@@ -163,6 +163,15 @@ class DitheringTool {
             this.applyEffects();
         });
         
+        // Lunnen Blue preset
+        document.getElementById('lunnenBlue').addEventListener('click', () => {
+            const lunnenBlueColor = '#2353DB';
+            this.settings.backgroundColor = lunnenBlueColor;
+            document.getElementById('backgroundColor').value = lunnenBlueColor;
+            document.getElementById('hexColorInput').value = lunnenBlueColor;
+            this.applyEffects();
+        });
+        
         // Hex color input
         document.getElementById('hexColorInput').addEventListener('input', (e) => {
             let hexValue = e.target.value;

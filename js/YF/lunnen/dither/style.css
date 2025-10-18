@@ -276,6 +276,21 @@ header p {
     color: #fff;
 }
 
+.color-preset {
+    font-size: 0.75rem;
+    color: #666;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+    margin-left: auto;
+}
+
+.color-preset:hover {
+    color: #fff;
+    background: #333;
+}
+
 .radio-group {
     display: flex;
     flex-direction: column;
