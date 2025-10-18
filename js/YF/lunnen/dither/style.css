@@ -165,7 +165,8 @@ header p {
 }
 
 .control-group {
-    margin-bottom: 12px;
+    margin-bottom: 6px;
+    padding-top: 6px;
 }
 
 .control-group label {

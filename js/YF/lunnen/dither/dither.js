@@ -21,7 +21,9 @@ class DitheringTool {
             baseWidth: 0,  // Base width for scale calculation
             baseHeight: 0, // Base height for scale calculation
             rotation: 0,
-            scale: 1
+            scale: 1,
+            positionX: 0,  // Relative position -100 to 100
+            positionY: 0   // Relative position -100 to 100
         };
         
         // Interaction state
@@ -191,6 +193,28 @@ class DitheringTool {
             resetBtn.addEventListener('click', () => this.resetTransform());
         }
         
+        // Position X slider
+        const positionXSlider = document.getElementById('positionX');
+        if (positionXSlider) {
+            positionXSlider.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                document.getElementById('positionXValue').textContent = value;
+                this.transform.positionX = value;
+                this.updatePositionFromSliders();
+            });
+        }
+        
+        // Position Y slider
+        const positionYSlider = document.getElementById('positionY');
+        if (positionYSlider) {
+            positionYSlider.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                document.getElementById('positionYValue').textContent = value;
+                this.transform.positionY = value;
+                this.updatePositionFromSliders();
+            });
+        }
+        
         // Scale slider
         const scaleSlider = document.getElementById('scale');
         if (scaleSlider) {
@@ -204,14 +228,8 @@ class DitheringTool {
                 this.transform.width = this.transform.baseWidth * scale;
                 this.transform.height = this.transform.baseHeight * scale;
                 
-                // Recenter after scaling
-                const canvasWidth = this.canvas.width;
-                const canvasHeight = this.canvas.height;
-                this.transform.x = (canvasWidth - this.transform.width) / 2;
-                this.transform.y = (canvasHeight - this.transform.height) / 2;
-                
-                this.applyEffects();
-                this.drawOverlay();
+                // Apply position based on current relative values
+                this.updatePositionFromSliders();
             });
         }
         
@@ -254,6 +272,62 @@ class DitheringTool {
             this.settings[id] = value;
             this.applyEffects();
         });
+    }
+    
+    getBaseValue() {
+        // Use the larger of base width or height as reference
+        return Math.max(this.transform.baseWidth, this.transform.baseHeight);
+    }
+    
+    updatePositionFromSliders() {
+        if (!this.originalImage) return;
+        
+        const baseValue = this.getBaseValue();
+        const canvasWidth = this.canvas.width;
+        const canvasHeight = this.canvas.height;
+        
+        // Convert relative position (-100 to 100) to absolute pixels
+        // positionX: 0 means centered, -100 means shifted left by baseValue, +100 means shifted right by baseValue
+        const centerX = (canvasWidth - this.transform.width) / 2;
+        const centerY = (canvasHeight - this.transform.height) / 2;
+        
+        this.transform.x = centerX + (this.transform.positionX / 100) * baseValue;
+        this.transform.y = centerY + (this.transform.positionY / 100) * baseValue;
+        
+        this.applyEffects();
+        this.drawOverlay();
+    }
+    
+    updateSlidersFromPosition() {
+        if (!this.originalImage) return;
+        
+        const baseValue = this.getBaseValue();
+        const canvasWidth = this.canvas.width;
+        const canvasHeight = this.canvas.height;
+        
+        const centerX = (canvasWidth - this.transform.width) / 2;
+        const centerY = (canvasHeight - this.transform.height) / 2;
+        
+        // Convert absolute position to relative (-100 to 100)
+        const relativeX = ((this.transform.x - centerX) / baseValue) * 100;
+        const relativeY = ((this.transform.y - centerY) / baseValue) * 100;
+        
+        this.transform.positionX = Math.round(relativeX);
+        this.transform.positionY = Math.round(relativeY);
+        
+        // Update sliders
+        const positionXSlider = document.getElementById('positionX');
+        const positionYSlider = document.getElementById('positionY');
+        
+        if (positionXSlider) {
+            positionXSlider.value = this.transform.positionX;
+            document.getElementById('positionXValue').textContent = this.transform.positionX;
+        }
+        
+        if (positionYSlider) {
+            positionYSlider.value = this.transform.positionY;
+            document.getElementById('positionYValue').textContent = this.transform.positionY;
+        }
     }
     
     initPanelDrag(panelId, headerId) {
@@ -416,6 +490,9 @@ class DitheringTool {
             
             this.transform.x = this.interaction.startTransform.x + dx;
             this.transform.y = this.interaction.startTransform.y + dy;
+            
+            // Update position sliders
+            this.updateSlidersFromPosition();
             
             this.applyEffects();
             this.drawOverlay();
@@ -624,6 +701,9 @@ class DitheringTool {
             const percentage = Math.round(newScale * 100);
             document.getElementById('scaleValue').textContent = percentage + '%';
         }
+        
+        // Update position sliders
+        this.updateSlidersFromPosition();
         
         this.applyEffects();
         this.drawOverlay();
@@ -928,8 +1008,24 @@ class DitheringTool {
             baseWidth: width,
             baseHeight: height,
             rotation: 0,
-            scale: 1
+            scale: 1,
+            positionX: 0,
+            positionY: 0
         };
+        
+        // Reset position X slider
+        const positionXSlider = document.getElementById('positionX');
+        if (positionXSlider) {
+            positionXSlider.value = 0;
+            document.getElementById('positionXValue').textContent = '0';
+        }
+        
+        // Reset position Y slider
+        const positionYSlider = document.getElementById('positionY');
+        if (positionYSlider) {
+            positionYSlider.value = 0;
+            document.getElementById('positionYValue').textContent = '0';
+        }
         
         // Reset scale slider
         const scaleSlider = document.getElementById('scale');
