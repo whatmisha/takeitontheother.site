@@ -226,7 +226,19 @@ body {
 }
 
 /* Unified slider thumb styles */
-.control-group input[type="range"]::-webkit-slider-thumb,
+.control-group input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: var(--slider-thumb-size);
+    height: var(--slider-thumb-size);
+    border-radius: 50%;
+    background: var(--color-text);
+    cursor: pointer;
+    border: none;
+    transition: all var(--transition-fast);
+    margin-top: -4.5px; /* Center thumb on track: (10px - 1px) / 2 */
+}
+
 .control-group input[type="range"]::-moz-range-thumb {
     width: var(--slider-thumb-size);
     height: var(--slider-thumb-size);
@@ -235,16 +247,47 @@ body {
     cursor: pointer;
     border: none;
     transition: all var(--transition-fast);
+    margin-top: 0; /* Firefox centers automatically */
 }
 
-.control-group input[type="range"]::-webkit-slider-thumb {
-    appearance: none;
-    -webkit-appearance: none;
+.control-group input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.3);
+    background: var(--color-text);
 }
 
-.control-group input[type="range"]::-webkit-slider-thumb:hover,
 .control-group input[type="range"]::-moz-range-thumb:hover {
     transform: scale(1.3);
+    background: var(--color-text);
+}
+
+/* Track styles */
+.control-group input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 1px;
+    background: var(--color-border);
+    border: none;
+    border-radius: var(--radius);
+}
+
+.control-group input[type="range"]::-moz-range-track {
+    width: 100%;
+    height: 1px;
+    background: var(--color-border);
+    border: none;
+    border-radius: var(--radius);
+}
+
+/* Focus styles */
+.control-group input[type="range"]:focus {
+    outline: none;
+}
+
+.control-group input[type="range"]:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
+}
+
+.control-group input[type="range"]:focus::-moz-range-thumb {
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
 }
 
 .color-input-group {
