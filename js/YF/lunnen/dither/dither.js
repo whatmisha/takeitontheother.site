@@ -1253,25 +1253,27 @@ class DitheringTool {
     exportImage() {
         if (!this.originalImage) return;
         
-        // Create export canvas with canvas dimensions
+        const exportScale = 4; // Export at 4x resolution
+        
+        // Create export canvas with 4x dimensions
         const exportCanvas = document.createElement('canvas');
-        exportCanvas.width = this.canvas.width;
-        exportCanvas.height = this.canvas.height;
+        exportCanvas.width = this.canvas.width * exportScale;
+        exportCanvas.height = this.canvas.height * exportScale;
         const exportCtx = exportCanvas.getContext('2d', { willReadFrequently: true });
         
         // Fill with background color
         exportCtx.fillStyle = this.settings.backgroundColor;
         exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
         
-        // Create a temporary canvas for processing the image
+        // Create a temporary canvas for processing the image at 4x resolution
         const tempCanvas = document.createElement('canvas');
         const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
         
-        // Set temp canvas size to match transform size
-        tempCanvas.width = Math.floor(this.transform.width);
-        tempCanvas.height = Math.floor(this.transform.height);
+        // Set temp canvas size to match transform size at 4x scale
+        tempCanvas.width = Math.floor(this.transform.width * exportScale);
+        tempCanvas.height = Math.floor(this.transform.height * exportScale);
         
-        // Draw original image on temp canvas
+        // Draw original image on temp canvas at 4x scale
         tempCtx.drawImage(this.originalImage, 0, 0, tempCanvas.width, tempCanvas.height);
         
         // Get image data from temp canvas
@@ -1288,11 +1290,11 @@ class DitheringTool {
         // Put processed image back to temp canvas
         tempCtx.putImageData(imageData, 0, 0);
         
-        // Draw the processed image on export canvas at transform position with rotation
+        // Draw the processed image on export canvas at transform position with rotation (scaled 4x)
         exportCtx.save();
         
-        const centerX = this.transform.x + this.transform.width / 2;
-        const centerY = this.transform.y + this.transform.height / 2;
+        const centerX = (this.transform.x + this.transform.width / 2) * exportScale;
+        const centerY = (this.transform.y + this.transform.height / 2) * exportScale;
         
         exportCtx.translate(centerX, centerY);
         exportCtx.rotate((this.transform.rotation * Math.PI) / 180);
@@ -1300,10 +1302,10 @@ class DitheringTool {
         
         exportCtx.drawImage(
             tempCanvas, 
-            Math.floor(this.transform.x), 
-            Math.floor(this.transform.y),
-            Math.floor(this.transform.width),
-            Math.floor(this.transform.height)
+            Math.floor(this.transform.x * exportScale), 
+            Math.floor(this.transform.y * exportScale),
+            Math.floor(this.transform.width * exportScale),
+            Math.floor(this.transform.height * exportScale)
         );
         
         exportCtx.restore();
