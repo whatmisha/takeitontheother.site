@@ -25,10 +25,13 @@ class DitheringTool {
         this.interaction = {
             isDragging: false,
             isResizing: false,
+            isRotating: false,
             resizeHandle: null, // 'nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'
+            rotateHandle: null, // 'nw', 'ne', 'sw', 'se'
             startX: 0,
             startY: 0,
-            startTransform: null
+            startTransform: null,
+            startAngle: 0
         };
         
         this.settings = {
@@ -328,16 +331,26 @@ class DitheringTool {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         
-        const handle = this.getResizeHandle(x, y);
+        const rotateHandle = this.getRotateHandle(x, y);
+        const resizeHandle = this.getResizeHandle(x, y);
         
-        if (handle) {
+        if (rotateHandle) {
+            this.interaction.isRotating = true;
+            this.interaction.rotateHandle = rotateHandle;
+            
+            // Calculate initial angle
+            const padding = (this.overlayCanvas.width - this.canvas.width) / 2;
+            const centerX = this.transform.x + padding + this.transform.width / 2;
+            const centerY = this.transform.y + padding + this.transform.height / 2;
+            this.interaction.startAngle = Math.atan2(y - centerY, x - centerX) * (180 / Math.PI);
+        } else if (resizeHandle) {
             this.interaction.isResizing = true;
-            this.interaction.resizeHandle = handle;
+            this.interaction.resizeHandle = resizeHandle;
         } else if (this.isPointInImage(x, y)) {
             this.interaction.isDragging = true;
         }
         
-        if (this.interaction.isDragging || this.interaction.isResizing) {
+        if (this.interaction.isDragging || this.interaction.isResizing || this.interaction.isRotating) {
             this.interaction.startX = x;
             this.interaction.startY = y;
             this.interaction.startTransform = { ...this.transform };
@@ -350,15 +363,24 @@ class DitheringTool {
         const y = e.clientY - rect.top;
         
         // Update cursor
-        if (!this.interaction.isDragging && !this.interaction.isResizing && this.sampleImage) {
-            const handle = this.getResizeHandle(x, y);
-            if (handle) {
-                this.overlayCanvas.style.cursor = this.getCursorForHandle(handle);
+        if (!this.interaction.isDragging && !this.interaction.isResizing && !this.interaction.isRotating && this.sampleImage) {
+            const rotateHandle = this.getRotateHandle(x, y);
+            const resizeHandle = this.getResizeHandle(x, y);
+            
+            if (rotateHandle) {
+                this.overlayCanvas.style.cursor = 'grab';
+            } else if (resizeHandle) {
+                this.overlayCanvas.style.cursor = this.getCursorForHandle(resizeHandle);
             } else if (this.isPointInImage(x, y)) {
                 this.overlayCanvas.style.cursor = 'move';
             } else {
                 this.overlayCanvas.style.cursor = 'default';
             }
+        }
+        
+        // Update cursor during rotation
+        if (this.interaction.isRotating) {
+            this.overlayCanvas.style.cursor = 'grabbing';
         }
         
         if (this.interaction.isDragging) {
@@ -372,13 +394,17 @@ class DitheringTool {
             this.drawOverlay();
         } else if (this.interaction.isResizing) {
             this.handleResize(x, y);
+        } else if (this.interaction.isRotating) {
+            this.handleRotate(x, y);
         }
     }
     
     handleMouseUp(e) {
         this.interaction.isDragging = false;
         this.interaction.isResizing = false;
+        this.interaction.isRotating = false;
         this.interaction.resizeHandle = null;
+        this.interaction.rotateHandle = null;
         this.overlayCanvas.style.cursor = 'default';
         this.applyEffects();
     }
@@ -415,6 +441,45 @@ class DitheringTool {
             x: centerX + (dx * cos - dy * sin),
             y: centerY + (dx * sin + dy * cos)
         };
+    }
+    
+    getRotateHandle(x, y) {
+        const innerRadius = 20; // Inner radius - where resize handles end
+        const outerRadius = 40; // Outer radius - where rotation zone ends
+        const padding = (this.overlayCanvas.width - this.canvas.width) / 2;
+        
+        // Transform coordinates to overlay space
+        const t = {
+            x: this.transform.x + padding,
+            y: this.transform.y + padding,
+            width: this.transform.width,
+            height: this.transform.height
+        };
+        
+        // Rotate point back to image's local coordinate system
+        const centerX = t.x + t.width / 2;
+        const centerY = t.y + t.height / 2;
+        const rotatedPoint = this.rotatePoint(x, y, centerX, centerY, -this.transform.rotation);
+        
+        const rx = rotatedPoint.x;
+        const ry = rotatedPoint.y;
+        
+        // Check corners with distance range for rotation zone
+        const corners = [
+            { x: t.x, y: t.y, handle: 'nw' },
+            { x: t.x + t.width, y: t.y, handle: 'ne' },
+            { x: t.x, y: t.y + t.height, handle: 'sw' },
+            { x: t.x + t.width, y: t.y + t.height, handle: 'se' }
+        ];
+        
+        for (const corner of corners) {
+            const dist = Math.sqrt(Math.pow(rx - corner.x, 2) + Math.pow(ry - corner.y, 2));
+            if (dist > innerRadius && dist < outerRadius) {
+                return corner.handle;
+            }
+        }
+        
+        return null;
     }
     
     getResizeHandle(x, y) {
@@ -505,6 +570,38 @@ class DitheringTool {
         this.transform.y = newY;
         this.transform.width = newWidth;
         this.transform.height = newHeight;
+        
+        this.applyEffects();
+        this.drawOverlay();
+    }
+    
+    handleRotate(x, y) {
+        // Calculate center of image in overlay coordinates
+        const padding = (this.overlayCanvas.width - this.canvas.width) / 2;
+        const centerX = this.transform.x + padding + this.transform.width / 2;
+        const centerY = this.transform.y + padding + this.transform.height / 2;
+        
+        // Calculate current angle
+        const currentAngle = Math.atan2(y - centerY, x - centerX) * (180 / Math.PI);
+        
+        // Calculate rotation delta
+        const angleDelta = currentAngle - this.interaction.startAngle;
+        
+        // Apply rotation
+        let newRotation = this.interaction.startTransform.rotation + angleDelta;
+        
+        // Normalize to -180 to 180 range
+        while (newRotation > 180) newRotation -= 360;
+        while (newRotation < -180) newRotation += 360;
+        
+        this.transform.rotation = newRotation;
+        
+        // Update rotation slider
+        const rotationSlider = document.getElementById('rotation');
+        if (rotationSlider) {
+            rotationSlider.value = Math.round(newRotation);
+            document.getElementById('rotationValue').textContent = Math.round(newRotation) + '°';
+        }
         
         this.applyEffects();
         this.drawOverlay();
