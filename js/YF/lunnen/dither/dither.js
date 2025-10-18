@@ -1741,10 +1741,21 @@ class DitheringTool {
             exportCtx.putImageData(exportImageData, 0, 0);
         }
         
-        const link = document.createElement('a');
-        link.download = 'dithered-image.png';
-        link.href = exportCanvas.toDataURL('image/png');
-        link.click();
+        // Use toBlob for better Safari compatibility
+        exportCanvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = 'dithered-image.png';
+            link.href = url;
+            
+            // Add to DOM, click, and remove (Safari compatibility)
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up the URL object
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        }, 'image/png');
     }
 }
 
