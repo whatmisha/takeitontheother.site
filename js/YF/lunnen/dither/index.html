@@ -23,8 +23,6 @@
                 </div>
                 <div class="panel-content">
                     <div class="control-section">
-                        <h3>Scale</h3>
-                        
                         <div class="control-group">
                             <label for="scale">
                                 <span>Scale</span>
@@ -32,10 +30,6 @@
                             </label>
                             <input type="range" id="scale" min="0.1" max="10" step="0.1" value="1">
                         </div>
-                    </div>
-                    
-                    <div class="control-section">
-                        <h3>Rotation</h3>
                         
                         <div class="control-group">
                             <label for="rotation">
@@ -44,14 +38,9 @@
                             </label>
                             <input type="range" id="rotation" min="-180" max="180" step="1" value="0">
                         </div>
-                    </div>
-                    
-                    <div class="control-section">
-                        <h3>Controls</h3>
                         
-                        <div class="control-group">
-                            <p class="hint-text">Click and drag to move, drag edges to resize</p>
-                            <button class="btn-secondary btn-full" id="resetTransform">Reset Position & Scale</button>
+                        <div class="control-group transform-reset-group">
+                            <button class="btn-secondary btn-full" id="resetTransform">Reset</button>
                         </div>
                     </div>
                 </div>
@@ -175,18 +164,6 @@
                     </div>
                 </div>
                 
-                <div class="control-section">
-                    <h3>Export Settings</h3>
-                    
-                    <div class="control-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="exportWithAlpha" checked>
-                            <span>Export with Transparency</span>
-                        </label>
-                        <p class="hint-text">Black becomes transparent, white stays opaque</p>
-                    </div>
-                </div>
-                
                 </div>
             </div>
         </div>
@@ -202,6 +179,10 @@
         <button class="btn-fixed btn-export" id="exportBtn" disabled>
             Export (⌘E)
         </button>
+        <label class="export-transparency-label">
+            <input type="checkbox" id="exportWithAlpha" checked>
+            <span>Export with Transparency</span>
+        </label>
     </div>
 
     <script src="dither.js"></script>

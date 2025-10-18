@@ -136,12 +136,20 @@ header p {
     padding: 15px 20px;
     overflow-y: auto;
     flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .control-section {
     margin-bottom: 25px;
     padding-bottom: 15px;
     border-bottom: none;
+}
+
+#transformPanel .control-section {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 .control-section:last-child {
@@ -370,6 +378,11 @@ header p {
     margin-bottom: 10px;
 }
 
+.transform-reset-group {
+    margin-top: auto;
+    padding-top: 30px;
+}
+
 /* Drag and drop styles */
 .canvas-container.dragover {
     border: 3px solid #fff;
@@ -382,6 +395,7 @@ header p {
     left: 30px;
     display: flex;
     gap: 10px;
+    align-items: center;
     z-index: 1000;
 }
 
@@ -416,6 +430,31 @@ header p {
 .btn-export {
     background: #fff;
     color: #000;
+}
+
+.export-transparency-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    font-size: 0.9rem;
+    cursor: pointer;
+    user-select: none;
+    margin-left: 10px;
+}
+
+.export-transparency-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.export-transparency-label span {
+    color: #fff;
+}
+
+.export-transparency-label:hover span {
+    color: #ccc;
 }
 
 /* Scrollbar styling */
