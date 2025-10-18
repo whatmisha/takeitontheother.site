@@ -178,6 +178,12 @@ class DitheringTool {
             exportBtn.addEventListener('click', () => this.exportImage());
         }
         
+        // Add Sample button
+        const uploadSampleBtn = document.getElementById('uploadSampleBtn');
+        if (uploadSampleBtn) {
+            uploadSampleBtn.addEventListener('click', () => this.loadDefaultSampleImage());
+        }
+        
         // Reset transform button
         const resetBtn = document.getElementById('resetTransform');
         if (resetBtn) {
@@ -208,7 +214,7 @@ class DitheringTool {
             }
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                 e.preventDefault();
-                sampleInput.click();
+                this.loadDefaultSampleImage();
             }
         });
     }
@@ -679,6 +685,9 @@ class DitheringTool {
         const file = event.target.files[0];
         if (file) {
             this.loadSampleImage(file);
+        } else {
+            // Если файл не выбран, загружаем изображение по умолчанию
+            this.loadDefaultSampleImage();
         }
     }
     
@@ -694,6 +703,23 @@ class DitheringTool {
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
+    }
+    
+    loadDefaultSampleImage() {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        img.onload = () => {
+            this.sampleImage = img;
+            this.updateCanvasSize();
+            this.applyEffects();
+        };
+        
+        img.onerror = () => {
+            console.log('Не удалось загрузить изображение-образец по умолчанию');
+        };
+        
+        img.src = 'images/sample_image_02.png';
     }
     
     updateCanvasSize() {
