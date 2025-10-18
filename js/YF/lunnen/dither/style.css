@@ -1,15 +1,66 @@
+/* CSS Variables for easy theming and maintenance */
+:root {
+    /* Colors */
+    --color-bg: #000;
+    --color-bg-panel: #1a1a1a;
+    --color-bg-input: #0a0a0a;
+    --color-text: #fff;
+    --color-text-secondary: #ccc;
+    --color-text-muted: #888;
+    --color-text-dim: #666;
+    --color-text-subtle: #555;
+    --color-border: #333;
+    
+    /* Spacing */
+    --spacing-xs: 2px;
+    --spacing-sm: 4px;
+    --spacing-md: 8px;
+    --spacing-lg: 10px;
+    --spacing-xl: 12px;
+    --spacing-2xl: 15px;
+    --spacing-3xl: 20px;
+    --spacing-4xl: 30px;
+    
+    /* Border radius */
+    --radius: 0;
+    --radius-sm: 2px;
+    
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.2s ease;
+    --transition-slow: 0.3s ease;
+    
+    /* Sizes */
+    --slider-thumb-size: 10px;
+    --checkbox-size: 14px;
+    --handle-size: 8px;
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+/* Screen reader only - for accessibility */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: #000;
+    background: var(--color-bg);
     min-height: 100vh;
-    padding: 20px;
-    color: #fff;
+    padding: var(--spacing-3xl);
+    color: var(--color-text);
 }
 
 .container {
@@ -21,22 +72,7 @@ body {
     justify-content: center;
 }
 
-header {
-    text-align: center;
-    color: white;
-    margin-bottom: 30px;
-}
-
-header h1 {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
-    text-shadow: none;
-}
-
-header p {
-    font-size: 1.1rem;
-    opacity: 1;
-}
+/* Removed unused header styles */
 
 .main-content {
     display: flex;
@@ -46,8 +82,8 @@ header p {
 }
 
 .canvas-container {
-    background: black;
-    border-radius: 0;
+    background: var(--color-bg);
+    border-radius: var(--radius);
     box-shadow: none;
     border: none;
     overflow: visible;
@@ -82,31 +118,31 @@ header p {
 
 .controls-panel {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    top: var(--spacing-3xl);
+    right: var(--spacing-3xl);
     width: 300px;
-    background: #1a1a1a;
-    border-radius: 0;
+    background: var(--color-bg-panel);
+    border-radius: var(--radius);
     box-shadow: none;
     border: none;
     padding: 0;
     max-height: calc(100vh - 40px);
     overflow: hidden;
-    color: #fff;
+    color: var(--color-text);
     z-index: 999;
     display: flex;
     flex-direction: column;
 }
 
 .controls-panel-left {
-    left: 20px;
+    left: var(--spacing-3xl);
     right: auto;
 }
 
 .panel-header {
-    background: #1a1a1a;
-    padding: 20px 20px 0;
-    border-radius: 0;
+    background: var(--color-bg-panel);
+    padding: var(--spacing-3xl) var(--spacing-3xl) 0;
+    border-radius: var(--radius);
     cursor: move;
     user-select: none;
     display: flex;
@@ -121,7 +157,7 @@ header p {
 }
 
 .drag-icon {
-    color: #555;
+    color: var(--color-text-subtle);
     font-size: 1rem;
     line-height: 1;
 }
@@ -129,11 +165,11 @@ header p {
 .panel-header span:first-child {
     font-weight: 500;
     font-size: 0.85rem;
-    color: #666;
+    color: var(--color-text-dim);
 }
 
 .panel-content {
-    padding: 20px 20px;
+    padding: var(--spacing-3xl) var(--spacing-3xl);
     overflow-y: auto;
     flex: 1;
     display: flex;
@@ -157,14 +193,14 @@ header p {
 
 .control-section h3 {
     font-size: 1rem;
-    margin-bottom: 15px;
-    color: #fff;
+    margin-bottom: var(--spacing-2xl);
+    color: var(--color-text);
     font-weight: 600;
     letter-spacing: 0.5px;
 }
 
 .control-group {
-    margin-bottom: 10px;
+    margin-bottom: var(--spacing-lg);
     padding-top: 6px;
 }
 
@@ -172,87 +208,79 @@ header p {
     display: flex;
     align-items: center;
     font-weight: 400;
-    margin-bottom: 2px;
-    color: #ccc;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-secondary);
     font-size: 0.85rem;
 }
 
+/* Range slider styles */
 .control-group input[type="range"] {
     width: 100%;
     height: 1px;
-    border-radius: 0;
-    background: #333;
+    border-radius: var(--radius);
+    background: var(--color-border);
     outline: none;
+    appearance: none;
     -webkit-appearance: none;
-    margin-top: 8px;
+    margin-top: var(--spacing-md);
+}
+
+/* Unified slider thumb styles */
+.control-group input[type="range"]::-webkit-slider-thumb,
+.control-group input[type="range"]::-moz-range-thumb {
+    width: var(--slider-thumb-size);
+    height: var(--slider-thumb-size);
+    border-radius: 50%;
+    background: var(--color-text);
+    cursor: pointer;
+    border: none;
+    transition: all var(--transition-fast);
 }
 
 .control-group input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
     appearance: none;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #fff;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    border: none;
+    -webkit-appearance: none;
 }
 
-.control-group input[type="range"]::-webkit-slider-thumb:hover {
-    transform: scale(1.3);
-    background: #fff;
-}
-
-.control-group input[type="range"]::-moz-range-thumb {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #fff;
-    cursor: pointer;
-    border: none;
-    transition: all 0.15s ease;
-}
-
+.control-group input[type="range"]::-webkit-slider-thumb:hover,
 .control-group input[type="range"]::-moz-range-thumb:hover {
     transform: scale(1.3);
-    background: #fff;
 }
 
 .color-input-group {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 8px;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-md);
 }
 
 .control-group input[type="color"] {
     width: 60px;
     height: 30px;
-    border: 1px solid #333;
-    border-radius: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
     background: transparent;
     cursor: pointer;
     padding: 0;
-    transition: border-color 0.2s ease;
+    transition: border-color var(--transition-normal);
 }
 
 .control-group input[type="color"]:hover,
 .control-group input[type="color"]:focus {
-    border-color: #555;
+    border-color: var(--color-text-subtle);
     outline: none;
 }
 
 .control-group input[type="text"]#hexColorInput {
     flex: 1;
     height: 30px;
-    background: #0a0a0a;
-    border: 1px solid #333;
-    color: #fff;
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
     font-family: monospace;
     font-size: 0.9rem;
-    padding: 0 8px;
-    border-radius: 0;
+    padding: 0 var(--spacing-md);
+    border-radius: var(--radius);
 }
 
 .value-display {
@@ -260,7 +288,7 @@ header p {
     min-width: 40px;
     text-align: right;
     font-weight: 400;
-    color: #888;
+    color: var(--color-text-muted);
     font-size: 0.8rem;
     margin-left: auto;
     background: transparent;
@@ -272,28 +300,42 @@ header p {
 }
 
 .value-display:focus {
-    color: #fff;
+    color: var(--color-text);
 }
 
 .color-preset {
     font-size: 0.85rem;
-    color: #666;
+    color: var(--color-text-dim);
     cursor: pointer;
-    padding: 2px 6px;
-    border-radius: 2px;
-    transition: all 0.2s ease;
+    padding: var(--spacing-xs) 6px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-normal);
     margin-left: auto;
+    background: transparent;
+    border: none;
+    font-family: inherit;
 }
 
 .color-preset:hover {
-    color: #fff;
+    color: var(--color-text);
     background: #2a2a2a;
+}
+
+/* Fieldset reset */
+fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+legend {
+    padding: 0;
 }
 
 .radio-group {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--spacing-xs);
     margin-top: 6px;
 }
 
@@ -301,103 +343,104 @@ header p {
     display: flex;
     align-items: center;
     cursor: pointer;
-    padding: 4px 0;
-    border-radius: 0;
-    transition: all 0.15s ease;
+    padding: var(--spacing-sm) 0;
+    border-radius: var(--radius);
+    transition: all var(--transition-fast);
 }
 
 .radio-label:hover {
-    color: #fff;
+    color: var(--color-text);
 }
 
 .radio-label input[type="radio"] {
-    margin-right: 8px;
+    margin-right: var(--spacing-md);
     cursor: pointer;
-    width: 14px;
-    height: 14px;
+    width: var(--checkbox-size);
+    height: var(--checkbox-size);
 }
 
 .radio-label span {
     font-size: 0.85rem;
-    color: #ccc;
+    color: var(--color-text-secondary);
 }
 
 .radio-label:hover span {
-    color: #fff;
+    color: var(--color-text);
 }
 
 .checkbox-label {
     display: flex !important;
     align-items: center !important;
     cursor: pointer;
-    padding: 4px 0;
+    padding: var(--spacing-sm) 0;
     margin-bottom: 0 !important;
 }
 
 .control-group:has(.checkbox-label) {
-    margin-bottom: 2px;
+    margin-bottom: var(--spacing-xs);
 }
 
 .checkbox-label span {
     font-size: 0.85rem;
-    color: #ccc;
+    color: var(--color-text-secondary);
 }
 
 .checkbox-label:hover span {
-    color: #fff;
+    color: var(--color-text);
 }
 
 .control-group input[type="checkbox"] {
-    margin-right: 8px;
+    margin-right: var(--spacing-md);
     cursor: pointer;
-    width: 14px;
-    height: 14px;
+    width: var(--checkbox-size);
+    height: var(--checkbox-size);
     vertical-align: middle;
 }
 
 .hint-text {
     font-size: 0.75rem;
-    color: #666;
-    margin-top: 4px;
+    color: var(--color-text-dim);
+    margin-top: var(--spacing-sm);
     line-height: 1.3;
 }
 
-.btn-primary, .btn-secondary {
-    padding: 12px 24px;
-    border: 1px solid #fff;
-    border-radius: 0;
+/* Base button styles - DRY principle */
+.btn-primary,
+.btn-secondary,
+.btn-fixed {
+    padding: var(--spacing-xl) 24px;
+    border: 1px solid var(--color-text);
+    border-radius: var(--radius);
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all var(--transition-slow);
 }
 
 .btn-primary {
-    background: #fff;
-    color: #000;
+    background: var(--color-text);
+    color: var(--color-bg);
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: #000;
-    color: #fff;
-}
-
-.btn-primary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+    background: var(--color-bg);
+    color: var(--color-text);
 }
 
 .btn-secondary {
-    background: #000;
-    color: #fff;
+    background: var(--color-bg);
+    color: var(--color-text);
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background: #fff;
-    color: #000;
+    background: var(--color-text);
+    color: var(--color-bg);
 }
 
-.btn-secondary:disabled {
+/* Disabled state for all buttons */
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-fixed:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
@@ -409,81 +452,69 @@ header p {
 .transform-reset-group {
     margin-top: auto;
     margin-bottom: 0;
-    padding-top: 30px;
+    padding-top: var(--spacing-4xl);
     display: flex;
     align-items: flex-end;
     min-height: 52px;
 }
 
 #transformPanel .btn-secondary {
-    background: #1a1a1a;
-    border: 1px solid #333;
+    background: var(--color-bg-panel);
+    border: 1px solid var(--color-border);
 }
 
 #transformPanel .btn-secondary:hover:not(:disabled) {
-    background: #fff;
-    color: #000;
-    border: 1px solid #fff;
+    background: var(--color-text);
+    color: var(--color-bg);
+    border: 1px solid var(--color-text);
 }
 
 /* Drag and drop styles */
 .canvas-container.dragover {
-    border: 3px solid #fff;
+    border: 3px solid var(--color-text);
 }
 
 /* Bottom buttons */
 .bottom-buttons {
     position: fixed;
-    bottom: 30px;
-    left: 30px;
+    bottom: var(--spacing-4xl);
+    left: var(--spacing-4xl);
     display: flex;
-    gap: 10px;
+    gap: var(--spacing-lg);
     align-items: center;
     z-index: 1000;
 }
 
 .btn-fixed {
-    padding: 15px 20px;
-    background: #fff;
-    color: #000;
-    border: 1px solid #fff;
-    border-radius: 0;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
+    padding: var(--spacing-2xl) var(--spacing-3xl);
+    background: var(--color-text);
+    color: var(--color-bg);
     box-shadow: none;
-    transition: all 0.3s ease;
 }
 
 .btn-fixed:hover {
-    background: #000;
-    color: #fff;
-    border: 1px solid #fff;
+    background: var(--color-bg);
+    color: var(--color-text);
 }
 
 .btn-fixed:active {
     transform: none;
 }
 
-.btn-fixed:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
 .btn-export {
-    background: #fff;
-    color: #000;
+    background: var(--color-text);
+    color: var(--color-bg);
 }
 
 .export-transparency-label {
     display: flex;
     align-items: center;
-    gap: 8px;
-    color: #fff;
+    gap: var(--spacing-md);
+    color: var(--color-text);
     font-size: 0.9rem;
     cursor: pointer;
     user-select: none;
-    margin-left: 10px;
+    margin-left: var(--spacing-lg);
 }
 
 .export-transparency-label input[type="checkbox"] {
@@ -493,33 +524,33 @@ header p {
 }
 
 .export-transparency-label span {
-    color: #fff;
+    color: var(--color-text);
 }
 
 .export-transparency-label:hover span {
-    color: #ccc;
+    color: var(--color-text-secondary);
 }
 
 /* Scrollbar styling */
 .panel-content::-webkit-scrollbar {
-    width: 8px;
+    width: var(--spacing-md);
 }
 
 .panel-content::-webkit-scrollbar-track {
-    background: #1a1a1a;
-    border-radius: 0;
+    background: var(--color-bg-panel);
+    border-radius: var(--radius);
 }
 
 .panel-content::-webkit-scrollbar-thumb {
-    background: #fff;
-    border-radius: 0;
+    background: var(--color-text);
+    border-radius: var(--radius);
 }
 
 .panel-content::-webkit-scrollbar-thumb:hover {
-    background: #fff;
+    background: var(--color-text);
 }
 
-/* Responsive design */
+/* Responsive design - consolidated media queries */
 @media (max-width: 1024px) {
     .controls-panel {
         width: 280px;
@@ -528,30 +559,26 @@ header p {
 }
 
 @media (max-width: 768px) {
-    header h1 {
-        font-size: 2rem;
-    }
-    
     .controls-panel {
         width: 260px;
-        top: 10px;
-        right: 10px;
-        max-height: calc(100vh - 20px);
+        top: var(--spacing-lg);
+        right: var(--spacing-lg);
+        max-height: calc(100vh - var(--spacing-3xl));
     }
     
     .panel-content {
-        padding: 12px 16px;
+        padding: var(--spacing-xl) 16px;
     }
     
     .bottom-buttons {
-        bottom: 20px;
-        left: 20px;
+        bottom: var(--spacing-3xl);
+        left: var(--spacing-3xl);
         flex-direction: column;
         gap: 5px;
     }
     
     .btn-fixed {
-        padding: 12px 20px;
+        padding: var(--spacing-xl) var(--spacing-3xl);
         font-size: 0.9rem;
     }
 }

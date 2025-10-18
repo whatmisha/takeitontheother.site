@@ -1,6 +1,39 @@
-// Dithering Tool - Main JavaScript File
-
 class DitheringTool {
+    // Constants
+    static CONSTANTS = {
+        // Canvas dimensions
+        MAX_CANVAS_WIDTH: 800,
+        MAX_CANVAS_HEIGHT: 600,
+        OVERLAY_PADDING: 200,
+        
+        // Interaction handles
+        HANDLE_SIZE: 10,
+        ROTATE_INNER_RADIUS: 20,
+        ROTATE_OUTER_RADIUS: 40,
+        MIN_IMAGE_SIZE: 50,
+        
+        // Floyd-Steinberg dithering coefficients
+        FLOYD_STEINBERG: {
+            RIGHT: 7/16,
+            BOTTOM_LEFT: 3/16,
+            BOTTOM: 5/16,
+            BOTTOM_RIGHT: 1/16
+        },
+        
+        // Luminance formula coefficients
+        LUMINANCE: {
+            R: 0.299,
+            G: 0.587,
+            B: 0.114
+        },
+        
+        // Color tolerance for alpha export
+        COLOR_TOLERANCE: 30,
+        
+        // Debounce delay (ms)
+        DEBOUNCE_DELAY: 16 // ~60fps
+    };
+    
     constructor() {
         this.canvas = document.getElementById('canvas');
         this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
@@ -9,6 +42,20 @@ class DitheringTool {
         this.originalImage = null;
         this.currentImageData = null;
         this.sampleImage = null;
+        
+        // Cache DOM elements
+        this.dom = this.cacheDOMElements();
+        
+        // Debounced version of applyEffects
+        this.debouncedApplyEffects = this.debounce(
+            this.applyEffects.bind(this), 
+            DitheringTool.CONSTANTS.DEBOUNCE_DELAY
+        );
+        
+        // Cache for computed values
+        this.cache = {
+            baseValue: 0
+        };
         
         // Transform state for the processed image
         this.transform = {
@@ -66,14 +113,67 @@ class DitheringTool {
         this.loadDefaultSample();
     }
     
+    // Cache frequently accessed DOM elements
+    cacheDOMElements() {
+        return {
+            imageInput: document.getElementById('imageInput'),
+            sampleInput: document.getElementById('sampleInput'),
+            exportBtn: document.getElementById('exportBtn'),
+            
+            // Value displays
+            blurValue: document.getElementById('blurValue'),
+            grainValue: document.getElementById('grainValue'),
+            gammaValue: document.getElementById('gammaValue'),
+            blackPointValue: document.getElementById('blackPointValue'),
+            whitePointValue: document.getElementById('whitePointValue'),
+            pixelSizeValue: document.getElementById('pixelSizeValue'),
+            thresholdValue: document.getElementById('thresholdValue'),
+            positionXValue: document.getElementById('positionXValue'),
+            positionYValue: document.getElementById('positionYValue'),
+            scaleValue: document.getElementById('scaleValue'),
+            rotationValue: document.getElementById('rotationValue'),
+            
+            // Sliders
+            blurSlider: document.getElementById('blur'),
+            grainSlider: document.getElementById('grain'),
+            gammaSlider: document.getElementById('gamma'),
+            blackPointSlider: document.getElementById('blackPoint'),
+            whitePointSlider: document.getElementById('whitePoint'),
+            pixelSizeSlider: document.getElementById('pixelSize'),
+            thresholdSlider: document.getElementById('threshold'),
+            positionXSlider: document.getElementById('positionX'),
+            positionYSlider: document.getElementById('positionY'),
+            scaleSlider: document.getElementById('scale'),
+            rotationSlider: document.getElementById('rotation'),
+            
+            // Other controls
+            invertImage: document.getElementById('invertImage'),
+            showEffect: document.getElementById('showEffect'),
+            exportWithAlpha: document.getElementById('exportWithAlpha'),
+            export2x: document.getElementById('export2x'),
+            export4x: document.getElementById('export4x'),
+            backgroundColor: document.getElementById('backgroundColor'),
+            hexColorInput: document.getElementById('hexColorInput'),
+            lunnenBlue: document.getElementById('lunnenBlue'),
+            resetTransform: document.getElementById('resetTransform')
+        };
+    }
+    
+    // Debounce utility function
+    debounce(func, delay) {
+        let timeoutId;
+        return function(...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
+    
     initEventListeners() {
         // File input
-        const imageInput = document.getElementById('imageInput');
-        imageInput.addEventListener('change', (e) => this.handleFileSelect(e));
+        this.dom.imageInput.addEventListener('change', (e) => this.handleFileSelect(e));
         
         // Sample input
-        const sampleInput = document.getElementById('sampleInput');
-        sampleInput.addEventListener('change', (e) => this.handleSampleSelect(e));
+        this.dom.sampleInput.addEventListener('change', (e) => this.handleSampleSelect(e));
         
         // Drag and drop
         const canvasContainer = document.querySelector('.canvas-container');
@@ -117,63 +217,63 @@ class DitheringTool {
         // Color mode is fixed to monochrome
         
         // Invert image checkbox
-        document.getElementById('invertImage').addEventListener('change', (e) => {
+        this.dom.invertImage.addEventListener('change', (e) => {
             this.settings.invertImage = e.target.checked;
             this.applyEffects();
         });
         
         // Show effect checkbox
-        document.getElementById('showEffect').addEventListener('change', (e) => {
+        this.dom.showEffect.addEventListener('change', (e) => {
             this.settings.showEffect = e.target.checked;
             this.applyEffects();
         });
         
         // Export with alpha checkbox
-        document.getElementById('exportWithAlpha').addEventListener('change', (e) => {
+        this.dom.exportWithAlpha.addEventListener('change', (e) => {
             this.settings.exportWithAlpha = e.target.checked;
         });
         
         // Export x2 checkbox (mutually exclusive with x4)
-        document.getElementById('export2x').addEventListener('change', (e) => {
+        this.dom.export2x.addEventListener('change', (e) => {
             if (e.target.checked) {
                 this.settings.export2x = true;
                 this.settings.export4x = false;
-                document.getElementById('export4x').checked = false;
+                this.dom.export4x.checked = false;
             } else {
                 this.settings.export2x = false;
             }
         });
         
         // Export x4 checkbox (mutually exclusive with x2)
-        document.getElementById('export4x').addEventListener('change', (e) => {
+        this.dom.export4x.addEventListener('change', (e) => {
             if (e.target.checked) {
                 this.settings.export4x = true;
                 this.settings.export2x = false;
-                document.getElementById('export2x').checked = false;
+                this.dom.export2x.checked = false;
             } else {
                 this.settings.export4x = false;
             }
         });
         
         // Background color picker
-        document.getElementById('backgroundColor').addEventListener('input', (e) => {
+        this.dom.backgroundColor.addEventListener('input', (e) => {
             const colorValue = e.target.value;
             this.settings.backgroundColor = colorValue;
-            document.getElementById('hexColorInput').value = colorValue;
+            this.dom.hexColorInput.value = colorValue;
             this.applyEffects();
         });
         
         // Lunnen Blue preset
-        document.getElementById('lunnenBlue').addEventListener('click', () => {
+        this.dom.lunnenBlue.addEventListener('click', () => {
             const lunnenBlueColor = '#2353DB';
             this.settings.backgroundColor = lunnenBlueColor;
-            document.getElementById('backgroundColor').value = lunnenBlueColor;
-            document.getElementById('hexColorInput').value = lunnenBlueColor;
+            this.dom.backgroundColor.value = lunnenBlueColor;
+            this.dom.hexColorInput.value = lunnenBlueColor;
             this.applyEffects();
         });
         
         // Hex color input
-        document.getElementById('hexColorInput').addEventListener('input', (e) => {
+        this.dom.hexColorInput.addEventListener('input', (e) => {
             let hexValue = e.target.value;
             
             // Make sure it starts with #
@@ -194,13 +294,13 @@ class DitheringTool {
                 }
                 
                 this.settings.backgroundColor = hexValue;
-                document.getElementById('backgroundColor').value = hexValue;
+                this.dom.backgroundColor.value = hexValue;
                 this.applyEffects();
             }
         });
         
         // Validate hex input when focus is lost
-        document.getElementById('hexColorInput').addEventListener('blur', (e) => {
+        this.dom.hexColorInput.addEventListener('blur', (e) => {
             let hexValue = e.target.value;
             
             // Default to black if invalid
@@ -209,53 +309,57 @@ class DitheringTool {
             }
             
             e.target.value = hexValue;
-            document.getElementById('backgroundColor').value = hexValue;
+            this.dom.backgroundColor.value = hexValue;
             this.settings.backgroundColor = hexValue;
             this.applyEffects();
         });
         
         // Bottom fixed buttons
-        // Export button
-        const exportBtn = document.getElementById('exportBtn');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', () => this.exportImage());
+        if (this.dom.exportBtn) {
+            this.dom.exportBtn.addEventListener('click', () => this.exportImage());
         }
         
-        // Reset transform button
-        const resetBtn = document.getElementById('resetTransform');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => this.resetTransform());
+        if (this.dom.resetTransform) {
+            this.dom.resetTransform.addEventListener('click', () => this.resetTransform());
+        }
+        
+        // Upload buttons (replaced inline onclick handlers)
+        const uploadBtnFixed = document.getElementById('uploadBtnFixed');
+        if (uploadBtnFixed) {
+            uploadBtnFixed.addEventListener('click', () => this.dom.imageInput.click());
+        }
+        
+        const uploadSampleBtn = document.getElementById('uploadSampleBtn');
+        if (uploadSampleBtn) {
+            uploadSampleBtn.addEventListener('click', () => this.dom.sampleInput.click());
         }
         
         // Position X slider
-        const positionXSlider = document.getElementById('positionX');
-        if (positionXSlider) {
-            positionXSlider.addEventListener('input', (e) => {
+        if (this.dom.positionXSlider) {
+            this.dom.positionXSlider.addEventListener('input', (e) => {
                 const value = parseInt(e.target.value);
-                document.getElementById('positionXValue').value = value;
+                this.dom.positionXValue.value = value;
                 this.transform.positionX = value;
                 this.updatePositionFromSliders();
             });
         }
         
         // Position Y slider
-        const positionYSlider = document.getElementById('positionY');
-        if (positionYSlider) {
-            positionYSlider.addEventListener('input', (e) => {
+        if (this.dom.positionYSlider) {
+            this.dom.positionYSlider.addEventListener('input', (e) => {
                 const value = parseInt(e.target.value);
-                document.getElementById('positionYValue').value = value;
+                this.dom.positionYValue.value = value;
                 this.transform.positionY = value;
                 this.updatePositionFromSliders();
             });
         }
         
         // Scale slider
-        const scaleSlider = document.getElementById('scale');
-        if (scaleSlider) {
-            scaleSlider.addEventListener('input', (e) => {
+        if (this.dom.scaleSlider) {
+            this.dom.scaleSlider.addEventListener('input', (e) => {
                 const scale = parseFloat(e.target.value);
                 const percentage = Math.round(scale * 100);
-                document.getElementById('scaleValue').value = percentage + '%';
+                this.dom.scaleValue.value = percentage + '%';
                 this.transform.scale = scale;
                 
                 // Recalculate width and height based on scale
@@ -268,11 +372,10 @@ class DitheringTool {
         }
         
         // Rotation slider
-        const rotationSlider = document.getElementById('rotation');
-        if (rotationSlider) {
-            rotationSlider.addEventListener('input', (e) => {
+        if (this.dom.rotationSlider) {
+            this.dom.rotationSlider.addEventListener('input', (e) => {
                 const rotation = parseInt(e.target.value);
-                document.getElementById('rotationValue').value = rotation + '°';
+                this.dom.rotationValue.value = rotation + '°';
                 this.transform.rotation = rotation;
                 this.applyEffects();
                 this.drawOverlay();
@@ -287,13 +390,86 @@ class DitheringTool {
             }
             if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
                 e.preventDefault();
-                imageInput.click();
+                this.dom.imageInput.click();
             }
             if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
                 e.preventDefault();
-                sampleInput.click();
+                this.dom.sampleInput.click();
             }
         });
+    }
+    
+    // Unified slider update handler map
+    getSliderHandlers() {
+        return {
+            positionX: (value) => {
+                const numValue = Math.round(value);
+                this.dom.positionXValue.value = numValue;
+                this.transform.positionX = numValue;
+                this.updatePositionFromSliders();
+            },
+            positionY: (value) => {
+                const numValue = Math.round(value);
+                this.dom.positionYValue.value = numValue;
+                this.transform.positionY = numValue;
+                this.updatePositionFromSliders();
+            },
+            scale: (value) => {
+                const percentage = Math.round(value * 100);
+                this.dom.scaleValue.value = percentage + '%';
+                this.transform.scale = value;
+                this.transform.width = this.transform.baseWidth * value;
+                this.transform.height = this.transform.baseHeight * value;
+                this.updatePositionFromSliders();
+            },
+            rotation: (value) => {
+                const numValue = Math.round(value);
+                this.dom.rotationValue.value = numValue + '°';
+                this.transform.rotation = numValue;
+                this.applyEffects();
+                this.drawOverlay();
+            },
+            blur: (value) => {
+                this.dom.blurValue.value = value.toFixed(1);
+                this.settings.blur = value;
+                this.debouncedApplyEffects();
+            },
+            grain: (value) => {
+                const numValue = Math.round(value);
+                this.dom.grainValue.value = numValue;
+                this.settings.grain = numValue;
+                this.debouncedApplyEffects();
+            },
+            gamma: (value) => {
+                this.dom.gammaValue.value = value.toFixed(1);
+                this.settings.gamma = value;
+                this.debouncedApplyEffects();
+            },
+            blackPoint: (value) => {
+                const numValue = Math.round(value);
+                this.dom.blackPointValue.value = numValue;
+                this.settings.blackPoint = numValue;
+                this.debouncedApplyEffects();
+            },
+            whitePoint: (value) => {
+                const numValue = Math.round(value);
+                this.dom.whitePointValue.value = numValue;
+                this.settings.whitePoint = numValue;
+                this.debouncedApplyEffects();
+            },
+            pixelSize: (value) => {
+                const numValue = Math.round(value);
+                this.dom.pixelSizeValue.value = numValue;
+                this.settings.pixelSize = numValue;
+                this.debouncedApplyEffects();
+            },
+            threshold: (value) => {
+                const numValue = Math.round(value);
+                this.dom.thresholdValue.value = numValue;
+                this.settings.threshold = numValue;
+                this.debouncedApplyEffects();
+            }
+        };
     }
     
     addSliderListener(id, parser) {
@@ -310,7 +486,15 @@ class DitheringTool {
     
     getBaseValue() {
         // Use the larger of base width or height as reference
-        return Math.max(this.transform.baseWidth, this.transform.baseHeight);
+        // Cache the result to avoid repeated calculations
+        if (this.cache.baseValue === 0 || 
+            this.cache.lastBaseWidth !== this.transform.baseWidth ||
+            this.cache.lastBaseHeight !== this.transform.baseHeight) {
+            this.cache.baseValue = Math.max(this.transform.baseWidth, this.transform.baseHeight);
+            this.cache.lastBaseWidth = this.transform.baseWidth;
+            this.cache.lastBaseHeight = this.transform.baseHeight;
+        }
+        return this.cache.baseValue;
     }
     
     updatePositionFromSliders() {
@@ -350,17 +534,14 @@ class DitheringTool {
         this.transform.positionY = Math.round(relativeY);
         
         // Update sliders
-        const positionXSlider = document.getElementById('positionX');
-        const positionYSlider = document.getElementById('positionY');
-        
-        if (positionXSlider) {
-            positionXSlider.value = this.transform.positionX;
-            document.getElementById('positionXValue').value = this.transform.positionX;
+        if (this.dom.positionXSlider) {
+            this.dom.positionXSlider.value = this.transform.positionX;
+            this.dom.positionXValue.value = this.transform.positionX;
         }
         
-        if (positionYSlider) {
-            positionYSlider.value = this.transform.positionY;
-            document.getElementById('positionYValue').value = this.transform.positionY;
+        if (this.dom.positionYSlider) {
+            this.dom.positionYSlider.value = this.transform.positionY;
+            this.dom.positionYValue.value = this.transform.positionY;
         }
     }
     
@@ -464,7 +645,8 @@ class DitheringTool {
         const valueInputs = document.querySelectorAll('.value-display');
         
         valueInputs.forEach(input => {
-            const sliderId = input.dataset.slider;
+            // Get slider ID from input ID (e.g., 'blurValue' -> 'blur')
+            const sliderId = input.id.replace('Value', '');
             const slider = document.getElementById(sliderId);
             const min = parseFloat(input.dataset.min);
             const max = parseFloat(input.dataset.max);
@@ -549,55 +731,11 @@ class DitheringTool {
     }
     
     updateValueFromArrowKey(sliderId, numValue) {
-        // Update display and settings based on slider type
-        if (sliderId === 'positionX') {
-            document.getElementById('positionXValue').value = Math.round(numValue);
-            this.transform.positionX = Math.round(numValue);
-            this.updatePositionFromSliders();
-        } else if (sliderId === 'positionY') {
-            document.getElementById('positionYValue').value = Math.round(numValue);
-            this.transform.positionY = Math.round(numValue);
-            this.updatePositionFromSliders();
-        } else if (sliderId === 'scale') {
-            const percentage = Math.round(numValue * 100);
-            document.getElementById('scaleValue').value = percentage + '%';
-            this.transform.scale = numValue;
-            this.transform.width = this.transform.baseWidth * numValue;
-            this.transform.height = this.transform.baseHeight * numValue;
-            this.updatePositionFromSliders();
-        } else if (sliderId === 'rotation') {
-            document.getElementById('rotationValue').value = Math.round(numValue) + '°';
-            this.transform.rotation = Math.round(numValue);
-            this.applyEffects();
-            this.drawOverlay();
-        } else if (sliderId === 'blur') {
-            document.getElementById('blurValue').value = numValue.toFixed(1);
-            this.settings.blur = numValue;
-            this.applyEffects();
-        } else if (sliderId === 'grain') {
-            document.getElementById('grainValue').value = Math.round(numValue);
-            this.settings.grain = Math.round(numValue);
-            this.applyEffects();
-        } else if (sliderId === 'gamma') {
-            document.getElementById('gammaValue').value = numValue.toFixed(1);
-            this.settings.gamma = numValue;
-            this.applyEffects();
-        } else if (sliderId === 'blackPoint') {
-            document.getElementById('blackPointValue').value = Math.round(numValue);
-            this.settings.blackPoint = Math.round(numValue);
-            this.applyEffects();
-        } else if (sliderId === 'whitePoint') {
-            document.getElementById('whitePointValue').value = Math.round(numValue);
-            this.settings.whitePoint = Math.round(numValue);
-            this.applyEffects();
-        } else if (sliderId === 'pixelSize') {
-            document.getElementById('pixelSizeValue').value = Math.round(numValue);
-            this.settings.pixelSize = Math.round(numValue);
-            this.applyEffects();
-        } else if (sliderId === 'threshold') {
-            document.getElementById('thresholdValue').value = Math.round(numValue);
-            this.settings.threshold = Math.round(numValue);
-            this.applyEffects();
+        // Use unified slider handler
+        const handlers = this.getSliderHandlers();
+        const handler = handlers[sliderId];
+        if (handler) {
+            handler(numValue);
         }
     }
     
@@ -618,56 +756,8 @@ class DitheringTool {
         // Update slider
         slider.value = numValue;
         
-        // Trigger the appropriate handler based on slider type
-        if (sliderId === 'positionX') {
-            document.getElementById('positionXValue').value = Math.round(numValue);
-            this.transform.positionX = Math.round(numValue);
-            this.updatePositionFromSliders();
-        } else if (sliderId === 'positionY') {
-            document.getElementById('positionYValue').value = Math.round(numValue);
-            this.transform.positionY = Math.round(numValue);
-            this.updatePositionFromSliders();
-        } else if (sliderId === 'scale') {
-            const percentage = Math.round(numValue * 100);
-            document.getElementById('scaleValue').value = percentage + '%';
-            this.transform.scale = numValue;
-            this.transform.width = this.transform.baseWidth * numValue;
-            this.transform.height = this.transform.baseHeight * numValue;
-            this.updatePositionFromSliders();
-        } else if (sliderId === 'rotation') {
-            document.getElementById('rotationValue').value = Math.round(numValue) + '°';
-            this.transform.rotation = Math.round(numValue);
-            this.applyEffects();
-            this.drawOverlay();
-        } else if (sliderId === 'blur') {
-            document.getElementById('blurValue').value = numValue.toFixed(1);
-            this.settings.blur = numValue;
-            this.applyEffects();
-        } else if (sliderId === 'grain') {
-            document.getElementById('grainValue').value = Math.round(numValue);
-            this.settings.grain = Math.round(numValue);
-            this.applyEffects();
-        } else if (sliderId === 'gamma') {
-            document.getElementById('gammaValue').value = numValue.toFixed(1);
-            this.settings.gamma = numValue;
-            this.applyEffects();
-        } else if (sliderId === 'blackPoint') {
-            document.getElementById('blackPointValue').value = Math.round(numValue);
-            this.settings.blackPoint = Math.round(numValue);
-            this.applyEffects();
-        } else if (sliderId === 'whitePoint') {
-            document.getElementById('whitePointValue').value = Math.round(numValue);
-            this.settings.whitePoint = Math.round(numValue);
-            this.applyEffects();
-        } else if (sliderId === 'pixelSize') {
-            document.getElementById('pixelSizeValue').value = Math.round(numValue);
-            this.settings.pixelSize = Math.round(numValue);
-            this.applyEffects();
-        } else if (sliderId === 'threshold') {
-            document.getElementById('thresholdValue').value = Math.round(numValue);
-            this.settings.threshold = Math.round(numValue);
-            this.applyEffects();
-        }
+        // Use unified slider handler
+        this.updateValueFromArrowKey(sliderId, numValue);
     }
     
     handleMouseDown(e) {
@@ -793,8 +883,8 @@ class DitheringTool {
     }
     
     getRotateHandle(x, y) {
-        const innerRadius = 20; // Inner radius - where resize handles end
-        const outerRadius = 40; // Outer radius - where rotation zone ends
+        const innerRadius = DitheringTool.CONSTANTS.ROTATE_INNER_RADIUS;
+        const outerRadius = DitheringTool.CONSTANTS.ROTATE_OUTER_RADIUS;
         const padding = (this.overlayCanvas.width - this.canvas.width) / 2;
         
         // Transform coordinates to overlay space
@@ -847,7 +937,7 @@ class DitheringTool {
     }
     
     getResizeHandle(x, y) {
-        const handleSize = 10;
+        const handleSize = DitheringTool.CONSTANTS.HANDLE_SIZE;
         const padding = (this.overlayCanvas.width - this.canvas.width) / 2;
         
         // Transform coordinates to overlay space
@@ -928,7 +1018,8 @@ class DitheringTool {
         }
         
         // Minimum size
-        if (newWidth < 50 || newHeight < 50) return;
+        if (newWidth < DitheringTool.CONSTANTS.MIN_IMAGE_SIZE || 
+            newHeight < DitheringTool.CONSTANTS.MIN_IMAGE_SIZE) return;
         
         this.transform.x = newX;
         this.transform.y = newY;
@@ -940,11 +1031,10 @@ class DitheringTool {
         this.transform.scale = newScale;
         
         // Update scale slider
-        const scaleSlider = document.getElementById('scale');
-        if (scaleSlider) {
-            scaleSlider.value = newScale;
+        if (this.dom.scaleSlider) {
+            this.dom.scaleSlider.value = newScale;
             const percentage = Math.round(newScale * 100);
-            document.getElementById('scaleValue').value = percentage + '%';
+            this.dom.scaleValue.value = percentage + '%';
         }
         
         // Update position sliders
@@ -976,10 +1066,9 @@ class DitheringTool {
         this.transform.rotation = newRotation;
         
         // Update rotation slider
-        const rotationSlider = document.getElementById('rotation');
-        if (rotationSlider) {
-            rotationSlider.value = Math.round(newRotation);
-            document.getElementById('rotationValue').value = Math.round(newRotation) + '°';
+        if (this.dom.rotationSlider) {
+            this.dom.rotationSlider.value = Math.round(newRotation);
+            this.dom.rotationValue.value = Math.round(newRotation) + '°';
         }
         
         this.applyEffects();
@@ -1070,7 +1159,7 @@ class DitheringTool {
         // Draw border and handles with rotation
         this.overlayCtx.save();
         
-        const handleSize = 8;
+        const handleSize = DitheringTool.CONSTANTS.HANDLE_SIZE;
         this.overlayCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
         this.overlayCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
         this.overlayCtx.lineWidth = 2;
@@ -1119,7 +1208,9 @@ class DitheringTool {
         img.onload = () => {
             this.originalImage = img;
             this.updateCanvasSize();
-            document.getElementById('exportBtn').disabled = false;
+            if (this.dom.exportBtn) {
+                this.dom.exportBtn.disabled = false;
+            }
             this.applyEffects();
         };
         
@@ -1161,7 +1252,9 @@ class DitheringTool {
             img.onload = () => {
                 this.originalImage = img;
                 this.updateCanvasSize();
-                document.getElementById('exportBtn').disabled = false;
+                if (this.dom.exportBtn) {
+                    this.dom.exportBtn.disabled = false;
+                }
                 this.applyEffects();
             };
             img.src = e.target.result;
@@ -1196,8 +1289,8 @@ class DitheringTool {
         
         if (!referenceImage) return;
         
-        const maxWidth = 800;
-        const maxHeight = 600;
+        const maxWidth = DitheringTool.CONSTANTS.MAX_CANVAS_WIDTH;
+        const maxHeight = DitheringTool.CONSTANTS.MAX_CANVAS_HEIGHT;
         let width = referenceImage.width;
         let height = referenceImage.height;
         
@@ -1211,7 +1304,7 @@ class DitheringTool {
         this.canvas.height = height;
         
         // Set overlay canvas to be larger to show overflow
-        const padding = 200; // Extra space around canvas
+        const padding = DitheringTool.CONSTANTS.OVERLAY_PADDING;
         this.overlayCanvas.width = width + padding * 2;
         this.overlayCanvas.height = height + padding * 2;
         
@@ -1259,31 +1352,27 @@ class DitheringTool {
         };
         
         // Reset position X slider
-        const positionXSlider = document.getElementById('positionX');
-        if (positionXSlider) {
-            positionXSlider.value = 0;
-            document.getElementById('positionXValue').value = '0';
+        if (this.dom.positionXSlider) {
+            this.dom.positionXSlider.value = 0;
+            this.dom.positionXValue.value = '0';
         }
         
         // Reset position Y slider
-        const positionYSlider = document.getElementById('positionY');
-        if (positionYSlider) {
-            positionYSlider.value = 0;
-            document.getElementById('positionYValue').value = '0';
+        if (this.dom.positionYSlider) {
+            this.dom.positionYSlider.value = 0;
+            this.dom.positionYValue.value = '0';
         }
         
         // Reset scale slider
-        const scaleSlider = document.getElementById('scale');
-        if (scaleSlider) {
-            scaleSlider.value = 1;
-            document.getElementById('scaleValue').value = '100%';
+        if (this.dom.scaleSlider) {
+            this.dom.scaleSlider.value = 1;
+            this.dom.scaleValue.value = '100%';
         }
         
         // Reset rotation slider
-        const rotationSlider = document.getElementById('rotation');
-        if (rotationSlider) {
-            rotationSlider.value = 0;
-            document.getElementById('rotationValue').value = '0°';
+        if (this.dom.rotationSlider) {
+            this.dom.rotationSlider.value = 0;
+            this.dom.rotationValue.value = '0°';
         }
         
         this.applyEffects();
@@ -1530,17 +1619,18 @@ class DitheringTool {
                 
                 this.setPixelValue(data, idx, newPixel);
                 
-                // Distribute error to neighboring pixels
+                // Distribute error to neighboring pixels using Floyd-Steinberg coefficients
+                const fs = DitheringTool.CONSTANTS.FLOYD_STEINBERG;
                 if (x + 1 < width) {
-                    this.distributeError(data, (y * width + x + 1) * 4, error * 7 / 16);
+                    this.distributeError(data, (y * width + x + 1) * 4, error * fs.RIGHT);
                 }
                 if (y + 1 < height) {
                     if (x > 0) {
-                        this.distributeError(data, ((y + 1) * width + x - 1) * 4, error * 3 / 16);
+                        this.distributeError(data, ((y + 1) * width + x - 1) * 4, error * fs.BOTTOM_LEFT);
                     }
-                    this.distributeError(data, ((y + 1) * width + x) * 4, error * 5 / 16);
+                    this.distributeError(data, ((y + 1) * width + x) * 4, error * fs.BOTTOM);
                     if (x + 1 < width) {
-                        this.distributeError(data, ((y + 1) * width + x + 1) * 4, error * 1 / 16);
+                        this.distributeError(data, ((y + 1) * width + x + 1) * 4, error * fs.BOTTOM_RIGHT);
                     }
                 }
             }
@@ -1603,7 +1693,8 @@ class DitheringTool {
     
     getPixelValue(data, idx) {
         // Convert to grayscale using luminance formula
-        return data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
+        const lum = DitheringTool.CONSTANTS.LUMINANCE;
+        return data[idx] * lum.R + data[idx + 1] * lum.G + data[idx + 2] * lum.B;
     }
     
     setPixelValue(data, idx, value) {
@@ -1727,10 +1818,11 @@ class DitheringTool {
                 const b = srcData[i + 2];
                 
                 // Check if this pixel is close to the background color
+                const tolerance = DitheringTool.CONSTANTS.COLOR_TOLERANCE;
                 const isBackground = (
-                    Math.abs(r - bgR) < 30 && 
-                    Math.abs(g - bgG) < 30 && 
-                    Math.abs(b - bgB) < 30
+                    Math.abs(r - bgR) < tolerance && 
+                    Math.abs(g - bgG) < tolerance && 
+                    Math.abs(b - bgB) < tolerance
                 );
                 
                 // Calculate brightness for non-background pixels
