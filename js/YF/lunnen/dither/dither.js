@@ -1173,7 +1173,11 @@ class DitheringTool {
         this.overlayCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
         this.overlayCtx.lineWidth = 2;
         
-        // Apply rotation for border and handles (reuse center coordinates)
+        // Calculate center coordinates for rotation
+        const imgCenterX = t.x + t.width / 2;
+        const imgCenterY = t.y + t.height / 2;
+        
+        // Apply rotation for border and handles
         this.overlayCtx.translate(imgCenterX, imgCenterY);
         this.overlayCtx.rotate((this.transform.rotation * Math.PI) / 180);
         this.overlayCtx.translate(-imgCenterX, -imgCenterY);
