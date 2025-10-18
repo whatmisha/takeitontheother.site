@@ -12,6 +12,7 @@
             <div class="canvas-container">
                 <canvas id="canvas"></canvas>
                 <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                <input type="file" id="sampleInput" accept="image/*" style="display: none;">
             </div>
 
             <div class="controls-panel" id="controlsPanel">
@@ -118,6 +119,15 @@
                 </div>
 
                 <div class="control-section">
+                    <h3>Image Transform</h3>
+                    
+                    <div class="control-group">
+                        <p class="hint-text">Click and drag to move, drag edges to resize</p>
+                        <button class="btn-secondary btn-full" id="resetTransform">Reset Position & Scale</button>
+                    </div>
+                </div>
+                
+                <div class="control-section">
                     <h3>Color Settings</h3>
                     
                     <div class="control-group">
@@ -152,6 +162,9 @@
     <div class="bottom-buttons">
         <button class="btn-fixed" id="uploadBtnFixed" onclick="document.getElementById('imageInput').click()">
             + Add Image (⌘O)
+        </button>
+        <button class="btn-fixed" id="uploadSampleBtn" onclick="document.getElementById('sampleInput').click()">
+            + Add Sample (⌘S)
         </button>
         <button class="btn-fixed btn-export" id="exportBtn" disabled>
             Export (⌘E)

@@ -6,6 +6,27 @@ class DitheringTool {
         this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
         this.originalImage = null;
         this.currentImageData = null;
+        this.sampleImage = null;
+        
+        // Transform state for the processed image
+        this.transform = {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+            originalWidth: 0,
+            originalHeight: 0
+        };
+        
+        // Interaction state
+        this.interaction = {
+            isDragging: false,
+            isResizing: false,
+            resizeHandle: null, // 'nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'
+            startX: 0,
+            startY: 0,
+            startTransform: null
+        };
         
         this.settings = {
             blur: 0,
@@ -25,6 +46,7 @@ class DitheringTool {
         
         this.initEventListeners();
         this.initPanelDrag();
+        this.initCanvasInteraction();
         this.loadDefaultImage();
     }
     
@@ -32,6 +54,10 @@ class DitheringTool {
         // File input
         const imageInput = document.getElementById('imageInput');
         imageInput.addEventListener('change', (e) => this.handleFileSelect(e));
+        
+        // Sample input
+        const sampleInput = document.getElementById('sampleInput');
+        sampleInput.addEventListener('change', (e) => this.handleSampleSelect(e));
         
         // Drag and drop
         const canvasContainer = document.querySelector('.canvas-container');
@@ -148,6 +174,12 @@ class DitheringTool {
             exportBtn.addEventListener('click', () => this.exportImage());
         }
         
+        // Reset transform button
+        const resetBtn = document.getElementById('resetTransform');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => this.resetTransform());
+        }
+        
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
@@ -157,6 +189,10 @@ class DitheringTool {
             if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
                 e.preventDefault();
                 imageInput.click();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                sampleInput.click();
             }
         });
     }
@@ -253,14 +289,204 @@ class DitheringTool {
         }
     }
     
+    initCanvasInteraction() {
+        this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+        this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+        this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+        this.canvas.addEventListener('mouseleave', (e) => this.handleMouseUp(e));
+    }
+    
+    handleMouseDown(e) {
+        if (!this.originalImage || !this.sampleImage) return;
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const handle = this.getResizeHandle(x, y);
+        
+        if (handle) {
+            this.interaction.isResizing = true;
+            this.interaction.resizeHandle = handle;
+        } else if (this.isPointInImage(x, y)) {
+            this.interaction.isDragging = true;
+        }
+        
+        if (this.interaction.isDragging || this.interaction.isResizing) {
+            this.interaction.startX = x;
+            this.interaction.startY = y;
+            this.interaction.startTransform = { ...this.transform };
+        }
+    }
+    
+    handleMouseMove(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Update cursor
+        if (!this.interaction.isDragging && !this.interaction.isResizing && this.sampleImage) {
+            const handle = this.getResizeHandle(x, y);
+            if (handle) {
+                this.canvas.style.cursor = this.getCursorForHandle(handle);
+            } else if (this.isPointInImage(x, y)) {
+                this.canvas.style.cursor = 'move';
+            } else {
+                this.canvas.style.cursor = 'default';
+            }
+        }
+        
+        if (this.interaction.isDragging) {
+            const dx = x - this.interaction.startX;
+            const dy = y - this.interaction.startY;
+            
+            this.transform.x = this.interaction.startTransform.x + dx;
+            this.transform.y = this.interaction.startTransform.y + dy;
+            
+            this.applyEffects();
+        } else if (this.interaction.isResizing) {
+            this.handleResize(x, y);
+        }
+    }
+    
+    handleMouseUp(e) {
+        this.interaction.isDragging = false;
+        this.interaction.isResizing = false;
+        this.interaction.resizeHandle = null;
+        this.canvas.style.cursor = 'default';
+    }
+    
+    isPointInImage(x, y) {
+        return x >= this.transform.x && 
+               x <= this.transform.x + this.transform.width &&
+               y >= this.transform.y && 
+               y <= this.transform.y + this.transform.height;
+    }
+    
+    getResizeHandle(x, y) {
+        const handleSize = 10;
+        const t = this.transform;
+        
+        // Check corners first
+        if (Math.abs(x - t.x) < handleSize && Math.abs(y - t.y) < handleSize) return 'nw';
+        if (Math.abs(x - (t.x + t.width)) < handleSize && Math.abs(y - t.y) < handleSize) return 'ne';
+        if (Math.abs(x - t.x) < handleSize && Math.abs(y - (t.y + t.height)) < handleSize) return 'sw';
+        if (Math.abs(x - (t.x + t.width)) < handleSize && Math.abs(y - (t.y + t.height)) < handleSize) return 'se';
+        
+        // Check edges
+        if (Math.abs(x - t.x) < handleSize && y >= t.y && y <= t.y + t.height) return 'w';
+        if (Math.abs(x - (t.x + t.width)) < handleSize && y >= t.y && y <= t.y + t.height) return 'e';
+        if (Math.abs(y - t.y) < handleSize && x >= t.x && x <= t.x + t.width) return 'n';
+        if (Math.abs(y - (t.y + t.height)) < handleSize && x >= t.x && x <= t.x + t.width) return 's';
+        
+        return null;
+    }
+    
+    getCursorForHandle(handle) {
+        const cursors = {
+            'nw': 'nw-resize',
+            'ne': 'ne-resize',
+            'sw': 'sw-resize',
+            'se': 'se-resize',
+            'n': 'n-resize',
+            's': 's-resize',
+            'e': 'e-resize',
+            'w': 'w-resize'
+        };
+        return cursors[handle] || 'default';
+    }
+    
+    handleResize(x, y) {
+        const dx = x - this.interaction.startX;
+        const dy = y - this.interaction.startY;
+        const st = this.interaction.startTransform;
+        const handle = this.interaction.resizeHandle;
+        
+        let newX = st.x;
+        let newY = st.y;
+        let newWidth = st.width;
+        let newHeight = st.height;
+        
+        // Maintain aspect ratio
+        const aspectRatio = this.originalImage.width / this.originalImage.height;
+        
+        if (handle.includes('e')) {
+            newWidth = st.width + dx;
+            newHeight = newWidth / aspectRatio;
+        } else if (handle.includes('w')) {
+            newWidth = st.width - dx;
+            newHeight = newWidth / aspectRatio;
+            newX = st.x + dx;
+        }
+        
+        if (handle.includes('s')) {
+            newHeight = st.height + dy;
+            newWidth = newHeight * aspectRatio;
+        } else if (handle.includes('n')) {
+            newHeight = st.height - dy;
+            newWidth = newHeight * aspectRatio;
+            newY = st.y + dy;
+        }
+        
+        // Minimum size
+        if (newWidth < 50 || newHeight < 50) return;
+        
+        this.transform.x = newX;
+        this.transform.y = newY;
+        this.transform.width = newWidth;
+        this.transform.height = newHeight;
+        
+        this.applyEffects();
+    }
+    
+    drawInteractionHandles() {
+        // Only draw handles if sample image exists (making processed image interactive)
+        if (!this.sampleImage || !this.originalImage) return;
+        
+        const t = this.transform;
+        const handleSize = 8;
+        
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        this.ctx.lineWidth = 2;
+        
+        // Draw border around image
+        this.ctx.strokeRect(t.x, t.y, t.width, t.height);
+        
+        // Draw corner handles
+        const corners = [
+            [t.x, t.y],
+            [t.x + t.width, t.y],
+            [t.x, t.y + t.height],
+            [t.x + t.width, t.y + t.height]
+        ];
+        
+        corners.forEach(([cx, cy]) => {
+            this.ctx.fillRect(cx - handleSize/2, cy - handleSize/2, handleSize, handleSize);
+            this.ctx.strokeRect(cx - handleSize/2, cy - handleSize/2, handleSize, handleSize);
+        });
+        
+        // Draw edge handles
+        const edges = [
+            [t.x + t.width/2, t.y],
+            [t.x + t.width/2, t.y + t.height],
+            [t.x, t.y + t.height/2],
+            [t.x + t.width, t.y + t.height/2]
+        ];
+        
+        edges.forEach(([cx, cy]) => {
+            this.ctx.fillRect(cx - handleSize/2, cy - handleSize/2, handleSize, handleSize);
+            this.ctx.strokeRect(cx - handleSize/2, cy - handleSize/2, handleSize, handleSize);
+        });
+    }
+    
     loadDefaultImage() {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         
         img.onload = () => {
             this.originalImage = img;
-            this.resizeCanvas(img);
-            this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+            this.updateCanvasSize();
             document.getElementById('exportBtn').disabled = false;
             this.applyEffects();
         };
@@ -285,8 +511,7 @@ class DitheringTool {
             const img = new Image();
             img.onload = () => {
                 this.originalImage = img;
-                this.resizeCanvas(img);
-                // Placeholder removed
+                this.updateCanvasSize();
                 document.getElementById('exportBtn').disabled = false;
                 this.applyEffects();
             };
@@ -295,12 +520,37 @@ class DitheringTool {
         reader.readAsDataURL(file);
     }
     
-    resizeCanvas(img) {
-        // Используем фиксированный размер для лучшего центрирования
+    handleSampleSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            this.loadSampleImage(file);
+        }
+    }
+    
+    loadSampleImage(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                this.sampleImage = img;
+                this.updateCanvasSize();
+                this.applyEffects();
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    updateCanvasSize() {
+        // Canvas size is determined by sample image if it exists, otherwise by processed image
+        const referenceImage = this.sampleImage || this.originalImage;
+        
+        if (!referenceImage) return;
+        
         const maxWidth = 800;
         const maxHeight = 600;
-        let width = img.width;
-        let height = img.height;
+        let width = referenceImage.width;
+        let height = referenceImage.height;
         
         if (width > maxWidth || height > maxHeight) {
             const ratio = Math.min(maxWidth / width, maxHeight / height);
@@ -310,29 +560,93 @@ class DitheringTool {
         
         this.canvas.width = width;
         this.canvas.height = height;
+        
+        // Initialize or reset transform for the processed image
+        if (this.originalImage && (this.transform.originalWidth === 0 || !this.sampleImage)) {
+            this.resetTransform();
+        }
+    }
+    
+    resetTransform() {
+        if (!this.originalImage) return;
+        
+        // If there's a sample image, fit the processed image within canvas
+        // Otherwise, fill the canvas
+        const canvasWidth = this.canvas.width;
+        const canvasHeight = this.canvas.height;
+        
+        const imgAspect = this.originalImage.width / this.originalImage.height;
+        const canvasAspect = canvasWidth / canvasHeight;
+        
+        let width, height;
+        if (imgAspect > canvasAspect) {
+            width = canvasWidth;
+            height = canvasWidth / imgAspect;
+        } else {
+            height = canvasHeight;
+            width = canvasHeight * imgAspect;
+        }
+        
+        this.transform = {
+            x: (canvasWidth - width) / 2,
+            y: (canvasHeight - height) / 2,
+            width: width,
+            height: height,
+            originalWidth: width,
+            originalHeight: height
+        };
+        
+        this.applyEffects();
     }
     
     applyEffects() {
         if (!this.originalImage) return;
         
-        // Redraw original image
-        this.ctx.drawImage(this.originalImage, 0, 0, this.canvas.width, this.canvas.height);
+        // Clear canvas and fill with background color
+        this.ctx.fillStyle = this.settings.backgroundColor;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Get image data
-        let imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        // Create a temporary canvas for processing the image
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
         
-        if (!this.settings.showEffect) {
-            return;
+        // Set temp canvas size to match transform size
+        tempCanvas.width = Math.floor(this.transform.width);
+        tempCanvas.height = Math.floor(this.transform.height);
+        
+        // Draw original image on temp canvas
+        tempCtx.drawImage(this.originalImage, 0, 0, tempCanvas.width, tempCanvas.height);
+        
+        // Get image data from temp canvas
+        let imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        
+        if (this.settings.showEffect) {
+            // Apply preprocessing
+            imageData = this.applyPreprocessing(imageData);
+            
+            // Apply dithering
+            imageData = this.applyDithering(imageData);
         }
         
-        // Apply preprocessing
-        imageData = this.applyPreprocessing(imageData);
+        // Put processed image back to temp canvas
+        tempCtx.putImageData(imageData, 0, 0);
         
-        // Apply dithering
-        imageData = this.applyDithering(imageData);
+        // Draw the processed image on main canvas at transform position
+        this.ctx.drawImage(
+            tempCanvas, 
+            Math.floor(this.transform.x), 
+            Math.floor(this.transform.y),
+            Math.floor(this.transform.width),
+            Math.floor(this.transform.height)
+        );
         
-        // Put processed image back
-        this.ctx.putImageData(imageData, 0, 0);
+        // Draw sample image on top if it exists
+        if (this.sampleImage) {
+            this.ctx.drawImage(this.sampleImage, 0, 0, this.canvas.width, this.canvas.height);
+        }
+        
+        // Draw interaction handles if needed
+        this.drawInteractionHandles();
     }
     
     applyPreprocessing(imageData) {
@@ -626,33 +940,69 @@ class DitheringTool {
     exportImage() {
         if (!this.originalImage) return;
         
-        let exportCanvas = this.canvas;
+        // Create export canvas with canvas dimensions
+        const exportCanvas = document.createElement('canvas');
+        exportCanvas.width = this.canvas.width;
+        exportCanvas.height = this.canvas.height;
+        const exportCtx = exportCanvas.getContext('2d', { willReadFrequently: true });
         
-        // If export with alpha is enabled, create a new canvas with transparency
-        if (this.settings.exportWithAlpha) {
-            exportCanvas = document.createElement('canvas');
-            exportCanvas.width = this.canvas.width;
-            exportCanvas.height = this.canvas.height;
-            const exportCtx = exportCanvas.getContext('2d');
+        // Fill with background color
+        exportCtx.fillStyle = this.settings.backgroundColor;
+        exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+        
+        // Create a temporary canvas for processing the image
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+        
+        // Set temp canvas size to match transform size
+        tempCanvas.width = Math.floor(this.transform.width);
+        tempCanvas.height = Math.floor(this.transform.height);
+        
+        // Draw original image on temp canvas
+        tempCtx.drawImage(this.originalImage, 0, 0, tempCanvas.width, tempCanvas.height);
+        
+        // Get image data from temp canvas
+        let imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        
+        if (this.settings.showEffect) {
+            // Apply preprocessing
+            imageData = this.applyPreprocessing(imageData);
             
-            // Get the current image data
-            const sourceImageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-            const exportImageData = exportCtx.createImageData(this.canvas.width, this.canvas.height);
+            // Apply dithering
+            imageData = this.applyDithering(imageData);
+        }
+        
+        // Put processed image back to temp canvas
+        tempCtx.putImageData(imageData, 0, 0);
+        
+        // Draw the processed image on export canvas at transform position
+        exportCtx.drawImage(
+            tempCanvas, 
+            Math.floor(this.transform.x), 
+            Math.floor(this.transform.y),
+            Math.floor(this.transform.width),
+            Math.floor(this.transform.height)
+        );
+        
+        // If export with alpha is enabled, process for transparency
+        if (this.settings.exportWithAlpha) {
+            const sourceImageData = exportCtx.getImageData(0, 0, exportCanvas.width, exportCanvas.height);
+            const exportImageData = exportCtx.createImageData(exportCanvas.width, exportCanvas.height);
             
             const srcData = sourceImageData.data;
             const expData = exportImageData.data;
+            
+            // Parse background color to RGB
+            const hexColor = this.settings.backgroundColor;
+            const bgR = parseInt(hexColor.slice(1, 3), 16);
+            const bgG = parseInt(hexColor.slice(3, 5), 16);
+            const bgB = parseInt(hexColor.slice(5, 7), 16);
             
             // Process each pixel: black/background color becomes transparent, white stays white
             for (let i = 0; i < srcData.length; i += 4) {
                 const r = srcData[i];
                 const g = srcData[i + 1];
                 const b = srcData[i + 2];
-                
-                // Parse background color to RGB
-                const hexColor = this.settings.backgroundColor;
-                const bgR = parseInt(hexColor.slice(1, 3), 16);
-                const bgG = parseInt(hexColor.slice(3, 5), 16);
-                const bgB = parseInt(hexColor.slice(5, 7), 16);
                 
                 // Check if this pixel is close to the background color
                 const isBackground = (
