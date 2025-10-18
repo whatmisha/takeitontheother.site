@@ -187,17 +187,25 @@
 
     <div class="bottom-buttons">
         <button class="btn-fixed" id="uploadBtnFixed" onclick="document.getElementById('imageInput').click()">
-            + Add Image (⌘O)
+            + Add Image ⌘O
         </button>
         <button class="btn-fixed" id="uploadSampleBtn" onclick="document.getElementById('sampleInput').click()">
-            + Add Layout (⌘I)
+            + Add Layout ⌘I
         </button>
         <button class="btn-fixed btn-export" id="exportBtn" disabled>
-            Export (⌘E)
+            Export ⌘E
         </button>
         <label class="export-transparency-label">
             <input type="checkbox" id="exportWithAlpha" checked>
             <span>Export with Transparency</span>
+        </label>
+        <label class="export-transparency-label">
+            <input type="checkbox" id="export2x">
+            <span>×2</span>
+        </label>
+        <label class="export-transparency-label">
+            <input type="checkbox" id="export4x">
+            <span>×4</span>
         </label>
     </div>
 

@@ -52,6 +52,8 @@ class DitheringTool {
             showEffect: true,
             invertImage: false,
             exportWithAlpha: true,
+            export2x: false,
+            export4x: false,
             backgroundColor: '#000000'
         };
         
@@ -129,6 +131,11 @@ class DitheringTool {
         // Export with alpha checkbox
         document.getElementById('exportWithAlpha').addEventListener('change', (e) => {
             this.settings.exportWithAlpha = e.target.checked;
+        });
+        
+        // Export x4 checkbox
+        document.getElementById('export4x').addEventListener('change', (e) => {
+            this.settings.export4x = e.target.checked;
         });
         
         // Background color picker
@@ -1610,9 +1617,9 @@ class DitheringTool {
     exportImage() {
         if (!this.originalImage) return;
         
-        const exportScale = 4; // Export at 4x resolution
+        const exportScale = this.settings.export4x ? 4 : 1; // Export at 4x or 1x resolution
         
-        // Create export canvas with 4x dimensions
+        // Create export canvas with scaled dimensions
         const exportCanvas = document.createElement('canvas');
         exportCanvas.width = this.canvas.width * exportScale;
         exportCanvas.height = this.canvas.height * exportScale;
@@ -1622,15 +1629,15 @@ class DitheringTool {
         exportCtx.fillStyle = this.settings.backgroundColor;
         exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
         
-        // Create a temporary canvas for processing the image at 4x resolution
+        // Create a temporary canvas for processing the image at export scale
         const tempCanvas = document.createElement('canvas');
         const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
         
-        // Set temp canvas size to match transform size at 4x scale
+        // Set temp canvas size to match transform size at export scale
         tempCanvas.width = Math.floor(this.transform.width * exportScale);
         tempCanvas.height = Math.floor(this.transform.height * exportScale);
         
-        // Draw original image on temp canvas at 4x scale
+        // Draw original image on temp canvas at export scale
         tempCtx.drawImage(this.originalImage, 0, 0, tempCanvas.width, tempCanvas.height);
         
         // Get image data from temp canvas
@@ -1647,7 +1654,7 @@ class DitheringTool {
         // Put processed image back to temp canvas
         tempCtx.putImageData(imageData, 0, 0);
         
-        // Draw the processed image on export canvas at transform position with rotation (scaled 4x)
+        // Draw the processed image on export canvas at transform position with rotation (at export scale)
         exportCtx.save();
         
         const centerX = (this.transform.x + this.transform.width / 2) * exportScale;
