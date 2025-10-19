@@ -1002,7 +1002,6 @@ class DitheringTool {
             this.interaction.startX = x;
             this.interaction.startY = y;
             this.interaction.startTransform = { ...this.transform };
-            this.interaction.dominantAxis = null; // Reset dominant axis for new drag
         }
     }
     
@@ -1033,29 +1032,8 @@ class DitheringTool {
         }
         
         if (this.interaction.isDragging) {
-            let dx = x - this.interaction.startX;
-            let dy = y - this.interaction.startY;
-            
-            // If Shift is pressed, constrain movement to one axis
-            if (e.shiftKey) {
-                // Determine dominant axis on first significant movement
-                if (!this.interaction.dominantAxis) {
-                    const threshold = 10; // Minimum pixels before locking axis
-                    if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
-                        this.interaction.dominantAxis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
-                    }
-                }
-                
-                // Lock to dominant axis
-                if (this.interaction.dominantAxis === 'x') {
-                    dy = 0;
-                } else if (this.interaction.dominantAxis === 'y') {
-                    dx = 0;
-                }
-            } else {
-                // Reset dominant axis if Shift is released
-                this.interaction.dominantAxis = null;
-            }
+            const dx = x - this.interaction.startX;
+            const dy = y - this.interaction.startY;
             
             this.transform.x = this.interaction.startTransform.x + dx;
             this.transform.y = this.interaction.startTransform.y + dy;
