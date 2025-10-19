@@ -1313,9 +1313,18 @@ class DitheringTool {
     }
     
     drawOverlay() {
-        // Only draw overlay if sample image exists (making processed image interactive)
-        if (!this.sampleImage || !this.originalImage) {
+        // Draw overlay if sample image exists
+        if (!this.sampleImage) {
             this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+            this.overlayCanvas.style.pointerEvents = 'none';
+            return;
+        }
+        
+        // If there's no original image, draw sample image directly on the main canvas
+        if (!this.originalImage) {
+            const ctx = this.canvas.getContext('2d');
+            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            ctx.drawImage(this.sampleImage, 0, 0, this.canvas.width, this.canvas.height);
             this.overlayCanvas.style.pointerEvents = 'none';
             return;
         }
