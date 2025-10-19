@@ -60,15 +60,16 @@
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background: var(--color-bg);
-    min-height: 100vh;
+    height: 100vh;
     padding: var(--spacing-3xl);
     color: var(--color-text);
+    overflow: hidden;
 }
 
 .container {
     max-width: 1400px;
     margin: 0 auto;
-    height: 100vh;
+    height: calc(100vh - 2 * var(--spacing-3xl));
     display: flex;
     flex-direction: column;
     align-items: center;
