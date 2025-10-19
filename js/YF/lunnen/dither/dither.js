@@ -1589,6 +1589,7 @@ class DitheringTool {
         const file = event.target.files[0];
         if (file) {
             this.loadImage(file);
+            event.target.value = ''; // Reset input to allow reloading the same file
         }
     }
     
@@ -1618,6 +1619,7 @@ class DitheringTool {
         const file = event.target.files[0];
         if (file) {
             this.loadSampleImage(file);
+            event.target.value = ''; // Reset input to allow reloading the same file
         }
     }
     
