@@ -973,7 +973,7 @@ class DitheringTool {
     }
     
     handleMouseDown(e) {
-        if (!this.originalImage || !this.sampleImage) return;
+        if (!this.originalImage) return; // Only require original image for transform controls
         
         const rect = this.overlayCanvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -1012,7 +1012,7 @@ class DitheringTool {
         const y = e.clientY - rect.top;
         
         // Update cursor
-        if (!this.interaction.isDragging && !this.interaction.isResizing && !this.interaction.isRotating && this.sampleImage) {
+        if (!this.interaction.isDragging && !this.interaction.isResizing && !this.interaction.isRotating && this.originalImage) {
             const rotateHandle = this.getRotateHandle(x, y);
             const resizeHandle = this.getResizeHandle(x, y);
             
@@ -1335,22 +1335,20 @@ class DitheringTool {
     }
     
     drawOverlay() {
-        // If there's no sample image, just clear overlay and return
-        if (!this.sampleImage) {
+        // If there's no original image, we can't show transform controls
+        if (!this.originalImage) {
             this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
             this.overlayCanvas.style.pointerEvents = 'none';
-            return;
-        }
-        
-        // If there's sample but no original image, draw sample on main canvas
-        if (!this.originalImage) {
-            const ctx = this.canvas.getContext('2d');
-            // Fill background with custom color
-            ctx.fillStyle = this.settings.backgroundColor;
-            ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            // Draw sample image on top
-            ctx.drawImage(this.sampleImage, 0, 0, this.canvas.width, this.canvas.height);
-            this.overlayCanvas.style.pointerEvents = 'none';
+            
+            // If there's only sample image, draw it on main canvas
+            if (this.sampleImage) {
+                const ctx = this.canvas.getContext('2d');
+                // Fill background with custom color
+                ctx.fillStyle = this.settings.backgroundColor;
+                ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                // Draw sample image on top
+                ctx.drawImage(this.sampleImage, 0, 0, this.canvas.width, this.canvas.height);
+            }
             return;
         }
         
