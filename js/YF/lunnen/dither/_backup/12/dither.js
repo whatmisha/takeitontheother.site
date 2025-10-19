@@ -54,15 +54,8 @@ class DitheringTool {
         
         // Cache for computed values
         this.cache = {
-            baseValue: 0,
-            processedImage: null,  // Кэш обработанного изображения
-            lastProcessedSettings: null,  // Последние настройки обработки
-            overlayImage: null  // Кэш для overlay
+            baseValue: 0
         };
-        
-        // RequestAnimationFrame для плавной отрисовки
-        this.rafId = null;
-        this.needsRedraw = false;
         
         // Transform state for the processed image
         this.transform = {
@@ -175,72 +168,6 @@ class DitheringTool {
         };
     }
     
-    // Запросить отрисовку через requestAnimationFrame
-    requestRedraw() {
-        if (this.rafId) return;
-        
-        this.rafId = requestAnimationFrame(() => {
-            this.rafId = null;
-            if (this.needsRedraw) {
-                this.needsRedraw = false;
-                this.performRedraw();
-            }
-        });
-    }
-    
-    // Выполнить быструю отрисовку без пересчета эффектов
-    performRedraw() {
-        if (!this.cache.processedImage) {
-            this.applyEffects();
-            return;
-        }
-        
-        // Быстрая отрисовка из кэша
-        this.ctx.fillStyle = this.settings.backgroundColor;
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        const drawX = this.transform.x + this.transform.width / 2 - this.cache.processedImage.width / 2;
-        const drawY = this.transform.y + this.transform.height / 2 - this.cache.processedImage.height / 2;
-        
-        this.ctx.drawImage(
-            this.cache.processedImage,
-            Math.floor(drawX),
-            Math.floor(drawY)
-        );
-        
-        if (this.sampleImage) {
-            this.ctx.drawImage(this.sampleImage, 0, 0, this.canvas.width, this.canvas.height);
-        }
-        
-        this.drawOverlay();
-    }
-    
-    // Проверить, изменились ли настройки обработки
-    hasProcessingSettingsChanged() {
-        const current = JSON.stringify({
-            blur: this.settings.blur,
-            grain: this.settings.grain,
-            gamma: this.settings.gamma,
-            blackPoint: this.settings.blackPoint,
-            whitePoint: this.settings.whitePoint,
-            pattern: this.settings.pattern,
-            pixelSize: this.settings.pixelSize,
-            threshold: this.settings.threshold,
-            invertImage: this.settings.invertImage,
-            showEffect: this.settings.showEffect,
-            backgroundColor: this.settings.backgroundColor,
-            rotation: this.transform.rotation,
-            width: this.transform.width,
-            height: this.transform.height
-        });
-        
-        if (this.cache.lastProcessedSettings !== current) {
-            this.cache.lastProcessedSettings = current;
-            return true;
-        }
-        return false;
-    }
-    
     initEventListeners() {
         // File input
         this.dom.imageInput.addEventListener('change', (e) => this.handleFileSelect(e));
@@ -283,7 +210,6 @@ class DitheringTool {
         document.querySelectorAll('input[name="pattern"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
                 this.settings.pattern = e.target.value;
-                this.cache.processedImage = null;
                 this.applyEffects();
             });
         });
@@ -293,14 +219,12 @@ class DitheringTool {
         // Invert image checkbox
         this.dom.invertImage.addEventListener('change', (e) => {
             this.settings.invertImage = e.target.checked;
-            this.cache.processedImage = null;
             this.applyEffects();
         });
         
         // Show effect checkbox
         this.dom.showEffect.addEventListener('change', (e) => {
             this.settings.showEffect = e.target.checked;
-            this.cache.processedImage = null;
             this.applyEffects();
         });
         
@@ -336,7 +260,6 @@ class DitheringTool {
             const colorValue = e.target.value;
             this.settings.backgroundColor = colorValue;
             this.dom.hexColorInput.value = colorValue;
-            this.cache.processedImage = null;
             this.applyEffects();
         });
         
@@ -346,7 +269,6 @@ class DitheringTool {
             this.settings.backgroundColor = lunnenBlueColor;
             this.dom.backgroundColor.value = lunnenBlueColor;
             this.dom.hexColorInput.value = lunnenBlueColor;
-            this.cache.processedImage = null;
             this.applyEffects();
         });
         
@@ -373,7 +295,6 @@ class DitheringTool {
                 
                 this.settings.backgroundColor = hexValue;
                 this.dom.backgroundColor.value = hexValue;
-                this.cache.processedImage = null;
                 this.applyEffects();
             }
         });
@@ -390,7 +311,6 @@ class DitheringTool {
             e.target.value = hexValue;
             this.dom.backgroundColor.value = hexValue;
             this.settings.backgroundColor = hexValue;
-            this.cache.processedImage = null;
             this.applyEffects();
         });
         
@@ -500,62 +420,53 @@ class DitheringTool {
                 this.transform.scale = value;
                 this.transform.width = this.transform.baseWidth * value;
                 this.transform.height = this.transform.baseHeight * value;
-                this.cache.processedImage = null;
                 this.updatePositionFromSliders();
             },
             rotation: (value) => {
                 const numValue = Math.round(value);
                 this.dom.rotationValue.value = numValue + '°';
                 this.transform.rotation = numValue;
-                this.cache.processedImage = null;
                 this.applyEffects();
                 this.drawOverlay();
             },
             blur: (value) => {
                 this.dom.blurValue.value = value.toFixed(1);
                 this.settings.blur = value;
-                this.cache.processedImage = null;
                 this.debouncedApplyEffects();
             },
             grain: (value) => {
                 const numValue = Math.round(value);
                 this.dom.grainValue.value = numValue;
                 this.settings.grain = numValue;
-                this.cache.processedImage = null;
                 this.debouncedApplyEffects();
             },
             gamma: (value) => {
                 this.dom.gammaValue.value = value.toFixed(1);
                 this.settings.gamma = value;
-                this.cache.processedImage = null;
                 this.debouncedApplyEffects();
             },
             blackPoint: (value) => {
                 const numValue = Math.round(value);
                 this.dom.blackPointValue.value = numValue;
                 this.settings.blackPoint = numValue;
-                this.cache.processedImage = null;
                 this.debouncedApplyEffects();
             },
             whitePoint: (value) => {
                 const numValue = Math.round(value);
                 this.dom.whitePointValue.value = numValue;
                 this.settings.whitePoint = numValue;
-                this.cache.processedImage = null;
                 this.debouncedApplyEffects();
             },
             pixelSize: (value) => {
                 const numValue = Math.round(value);
                 this.dom.pixelSizeValue.value = numValue;
                 this.settings.pixelSize = numValue;
-                this.cache.processedImage = null;
                 this.debouncedApplyEffects();
             },
             threshold: (value) => {
                 const numValue = Math.round(value);
                 this.dom.thresholdValue.value = numValue;
                 this.settings.threshold = numValue;
-                this.cache.processedImage = null;
                 this.debouncedApplyEffects();
             }
         };
@@ -569,8 +480,6 @@ class DitheringTool {
             const value = parser(e.target.value);
             display.value = value;
             this.settings[id] = value;
-            // Инвалидировать кэш при изменении настроек
-            this.cache.processedImage = null;
             this.applyEffects();
         });
     }
@@ -920,9 +829,8 @@ class DitheringTool {
             // Update position sliders
             this.updateSlidersFromPosition();
             
-            // Использовать быструю отрисовку вместо полного пересчета
-            this.needsRedraw = true;
-            this.requestRedraw();
+            this.applyEffects();
+            this.drawOverlay();
         } else if (this.interaction.isResizing) {
             this.handleResize(x, y);
         } else if (this.interaction.isRotating) {
@@ -931,29 +839,13 @@ class DitheringTool {
     }
     
     handleMouseUp(e) {
-        const wasInteracting = this.interaction.isDragging || 
-                              this.interaction.isResizing || 
-                              this.interaction.isRotating;
-        
         this.interaction.isDragging = false;
         this.interaction.isResizing = false;
         this.interaction.isRotating = false;
         this.interaction.resizeHandle = null;
         this.interaction.rotateHandle = null;
         this.overlayCanvas.style.cursor = 'default';
-        
-        // При окончании взаимодействия выполнить финальный пересчет
-        if (wasInteracting) {
-            // Отменить любую запланированную быструю отрисовку
-            if (this.rafId) {
-                cancelAnimationFrame(this.rafId);
-                this.rafId = null;
-            }
-            this.needsRedraw = false;
-            
-            // Выполнить полный пересчет
-            this.applyEffects();
-        }
+        this.applyEffects();
     }
     
     isPointInImage(x, y) {
@@ -1148,12 +1040,8 @@ class DitheringTool {
         // Update position sliders
         this.updateSlidersFromPosition();
         
-        // Инвалидировать кэш при изменении размера
-        this.cache.processedImage = null;
-        
-        // Использовать быструю отрисовку
-        this.needsRedraw = true;
-        this.requestRedraw();
+        this.applyEffects();
+        this.drawOverlay();
     }
     
     handleRotate(x, y) {
@@ -1183,12 +1071,8 @@ class DitheringTool {
             this.dom.rotationValue.value = Math.round(newRotation) + '°';
         }
         
-        // Инвалидировать кэш при вращении
-        this.cache.processedImage = null;
-        
-        // Использовать быструю отрисовку
-        this.needsRedraw = true;
-        this.requestRedraw();
+        this.applyEffects();
+        this.drawOverlay();
     }
     
     drawOverlay() {
@@ -1215,42 +1099,36 @@ class DitheringTool {
             height: this.transform.height
         };
         
-        // Использовать кэшированное изображение, если оно есть
-        let transformCanvas;
-        if (this.cache.processedImage) {
-            transformCanvas = this.cache.processedImage;
-        } else {
-            // Создать canvas только если кэш пуст
-            transformCanvas = document.createElement('canvas');
-            const transformCtx = transformCanvas.getContext('2d', { willReadFrequently: true });
-            
-            // Make canvas large enough to accommodate rotated image
-            const diagonal = Math.sqrt(t.width ** 2 + t.height ** 2);
-            transformCanvas.width = Math.ceil(diagonal);
-            transformCanvas.height = Math.ceil(diagonal);
-            
-            // Center of the transform canvas
-            const tcx = transformCanvas.width / 2;
-            const tcy = transformCanvas.height / 2;
-            
-            // Draw original image with rotation at center
-            transformCtx.save();
-            transformCtx.translate(tcx, tcy);
-            transformCtx.rotate((this.transform.rotation * Math.PI) / 180);
-            transformCtx.translate(-t.width / 2, -t.height / 2);
-            transformCtx.drawImage(this.originalImage, 0, 0, t.width, t.height);
-            transformCtx.restore();
-            
-            // Get image data and apply effects
-            let imageData = transformCtx.getImageData(0, 0, transformCanvas.width, transformCanvas.height);
-            
-            if (this.settings.showEffect) {
-                imageData = this.applyPreprocessing(imageData);
-                imageData = this.applyDithering(imageData);
-            }
-            
-            transformCtx.putImageData(imageData, 0, 0);
+        // Create a temporary canvas for the processed image preview (same logic as applyEffects)
+        const transformCanvas = document.createElement('canvas');
+        const transformCtx = transformCanvas.getContext('2d', { willReadFrequently: true });
+        
+        // Make canvas large enough to accommodate rotated image
+        const diagonal = Math.sqrt(t.width ** 2 + t.height ** 2);
+        transformCanvas.width = Math.ceil(diagonal);
+        transformCanvas.height = Math.ceil(diagonal);
+        
+        // Center of the transform canvas
+        const tcx = transformCanvas.width / 2;
+        const tcy = transformCanvas.height / 2;
+        
+        // Draw original image with rotation at center
+        transformCtx.save();
+        transformCtx.translate(tcx, tcy);
+        transformCtx.rotate((this.transform.rotation * Math.PI) / 180);
+        transformCtx.translate(-t.width / 2, -t.height / 2);
+        transformCtx.drawImage(this.originalImage, 0, 0, t.width, t.height);
+        transformCtx.restore();
+        
+        // Get image data and apply effects
+        let imageData = transformCtx.getImageData(0, 0, transformCanvas.width, transformCanvas.height);
+        
+        if (this.settings.showEffect) {
+            imageData = this.applyPreprocessing(imageData);
+            imageData = this.applyDithering(imageData);
         }
+        
+        transformCtx.putImageData(imageData, 0, 0);
         
         // Draw only the parts outside canvas with reduced opacity
         // This allows sample image to stay on top inside the canvas
@@ -1342,7 +1220,6 @@ class DitheringTool {
         
         img.onload = () => {
             this.originalImage = img;
-            this.cache.processedImage = null;
             this.updateCanvasSize();
             // Enable export button
             const exportBtn = document.getElementById('exportBtn');
@@ -1389,7 +1266,6 @@ class DitheringTool {
             const img = new Image();
             img.onload = () => {
                 this.originalImage = img;
-                this.cache.processedImage = null;
                 this.updateCanvasSize();
                 // Enable export button
                 const exportBtn = document.getElementById('exportBtn');
@@ -1416,7 +1292,6 @@ class DitheringTool {
             const img = new Image();
             img.onload = () => {
                 this.sampleImage = img;
-                this.cache.processedImage = null;
                 this.updateCanvasSize();
                 this.applyEffects();
             };
@@ -1493,9 +1368,6 @@ class DitheringTool {
             positionY: 0
         };
         
-        // Инвалидировать кэш при сбросе трансформации
-        this.cache.processedImage = null;
-        
         // Reset position X slider
         if (this.dom.positionXSlider) {
             this.dom.positionXSlider.value = 0;
@@ -1526,67 +1398,54 @@ class DitheringTool {
     applyEffects() {
         if (!this.originalImage) return;
         
-        // Проверить, нужно ли пересчитывать эффекты
-        const needsProcessing = this.hasProcessingSettingsChanged() || !this.cache.processedImage;
-        
         // Clear canvas and fill with background color
         this.ctx.fillStyle = this.settings.backgroundColor;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        let processCanvas;
+        // Step 1: Create a temporary canvas for transforming the original image
+        const transformCanvas = document.createElement('canvas');
+        const transformCtx = transformCanvas.getContext('2d', { willReadFrequently: true });
         
-        if (needsProcessing) {
-            // Step 1: Create a temporary canvas for transforming the original image
-            const transformCanvas = document.createElement('canvas');
-            const transformCtx = transformCanvas.getContext('2d', { willReadFrequently: true });
+        // Make canvas large enough to accommodate rotated image
+        const diagonal = Math.sqrt(this.transform.width ** 2 + this.transform.height ** 2);
+        transformCanvas.width = Math.ceil(diagonal);
+        transformCanvas.height = Math.ceil(diagonal);
+        
+        // Center of the transform canvas
+        const tcx = transformCanvas.width / 2;
+        const tcy = transformCanvas.height / 2;
+        
+        // Draw original image with rotation at center
+        transformCtx.save();
+        transformCtx.translate(tcx, tcy);
+        transformCtx.rotate((this.transform.rotation * Math.PI) / 180);
+        transformCtx.translate(-this.transform.width / 2, -this.transform.height / 2);
+        transformCtx.drawImage(this.originalImage, 0, 0, this.transform.width, this.transform.height);
+        transformCtx.restore();
+        
+        // Get the rotated bounds to crop to actual content
+        const rotatedImageData = transformCtx.getImageData(0, 0, transformCanvas.width, transformCanvas.height);
+        
+        // Step 2: Create processing canvas with exact size needed
+        const processCanvas = document.createElement('canvas');
+        const processCtx = processCanvas.getContext('2d', { willReadFrequently: true });
+        processCanvas.width = transformCanvas.width;
+        processCanvas.height = transformCanvas.height;
+        processCtx.putImageData(rotatedImageData, 0, 0);
+        
+        // Step 3: Apply effects to the rotated image
+        let imageData = processCtx.getImageData(0, 0, processCanvas.width, processCanvas.height);
+        
+        if (this.settings.showEffect) {
+            // Apply preprocessing
+            imageData = this.applyPreprocessing(imageData);
             
-            // Make canvas large enough to accommodate rotated image
-            const diagonal = Math.sqrt(this.transform.width ** 2 + this.transform.height ** 2);
-            transformCanvas.width = Math.ceil(diagonal);
-            transformCanvas.height = Math.ceil(diagonal);
-            
-            // Center of the transform canvas
-            const tcx = transformCanvas.width / 2;
-            const tcy = transformCanvas.height / 2;
-            
-            // Draw original image with rotation at center
-            transformCtx.save();
-            transformCtx.translate(tcx, tcy);
-            transformCtx.rotate((this.transform.rotation * Math.PI) / 180);
-            transformCtx.translate(-this.transform.width / 2, -this.transform.height / 2);
-            transformCtx.drawImage(this.originalImage, 0, 0, this.transform.width, this.transform.height);
-            transformCtx.restore();
-            
-            // Get the rotated bounds to crop to actual content
-            const rotatedImageData = transformCtx.getImageData(0, 0, transformCanvas.width, transformCanvas.height);
-            
-            // Step 2: Create processing canvas with exact size needed
-            processCanvas = document.createElement('canvas');
-            const processCtx = processCanvas.getContext('2d', { willReadFrequently: true });
-            processCanvas.width = transformCanvas.width;
-            processCanvas.height = transformCanvas.height;
-            processCtx.putImageData(rotatedImageData, 0, 0);
-            
-            // Step 3: Apply effects to the rotated image
-            let imageData = processCtx.getImageData(0, 0, processCanvas.width, processCanvas.height);
-            
-            if (this.settings.showEffect) {
-                // Apply preprocessing
-                imageData = this.applyPreprocessing(imageData);
-                
-                // Apply dithering
-                imageData = this.applyDithering(imageData);
-            }
-            
-            // Put processed image back to canvas
-            processCtx.putImageData(imageData, 0, 0);
-            
-            // Сохранить в кэш
-            this.cache.processedImage = processCanvas;
-        } else {
-            // Использовать кэшированное изображение
-            processCanvas = this.cache.processedImage;
+            // Apply dithering
+            imageData = this.applyDithering(imageData);
         }
+        
+        // Put processed image back to canvas
+        processCtx.putImageData(imageData, 0, 0);
         
         // Step 4: Draw the processed and rotated image on main canvas at position
         const drawX = this.transform.x + this.transform.width / 2 - processCanvas.width / 2;
