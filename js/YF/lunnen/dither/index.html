@@ -79,8 +79,7 @@
                     <span class="drag-icon" aria-hidden="true">⋮⋮</span>
                 </div>
                 <div class="panel-content">
-                <section class="control-section" aria-labelledby="preprocessing-heading">
-                    <h3 id="preprocessing-heading">Image Preprocessing</h3>
+                <section class="control-section">
                     
                     <div class="control-group">
                         <label for="gamma">
@@ -115,27 +114,32 @@
                     </div>
                 </section>
 
-                <section class="control-section" aria-labelledby="dithering-heading">
-                    <h3 id="dithering-heading">Dithering Settings</h3>
-                    
-                    <fieldset class="control-group">
-                        <legend class="sr-only">Dithering pattern</legend>
-                        <div class="radio-group" role="radiogroup" aria-label="Dithering pattern selection">
-                            <label class="radio-label">
-                                <input type="radio" name="pattern" value="floyd-steinberg" checked aria-label="Floyd-Steinberg pattern">
-                                <span>Floyd-Steinberg</span>
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="pattern" value="bayer" aria-label="Bayer pattern">
-                                <span>Bayer</span>
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="pattern" value="random" aria-label="Random pattern">
-                                <span>Random</span>
-                            </label>
-                        </div>
-                    </fieldset>
+                <section class="control-section">
+                    <div class="control-group">
+                        <label>
+                            <span>Pattern</span>
+                        </label>
+                        <fieldset>
+                            <legend class="sr-only">Dithering pattern</legend>
+                            <div class="radio-group" role="radiogroup" aria-label="Dithering pattern selection">
+                                <label class="radio-label">
+                                    <input type="radio" name="pattern" value="floyd-steinberg" checked aria-label="Floyd-Steinberg pattern">
+                                    <span>Floyd-Steinberg</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="pattern" value="bayer" aria-label="Bayer pattern">
+                                    <span>Bayer</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="pattern" value="random" aria-label="Random pattern">
+                                    <span>Random</span>
+                                </label>
+                            </div>
+                        </fieldset>
+                    </div>
+                </section>
 
+                <section class="control-section">
                     <div class="control-group">
                         <label for="pixelSize">
                             <span>Pixel Size</span>
@@ -151,8 +155,9 @@
                         </label>
                         <input type="range" id="threshold" min="0" max="255" step="1" value="128" aria-label="Threshold slider" aria-valuemin="0" aria-valuemax="255" aria-valuenow="128">
                     </div>
+                </section>
 
-
+                <section class="control-section">
                     <div class="control-group">
                         <label class="checkbox-label">
                             <input type="checkbox" id="invertImage" aria-label="Invert image colors">
