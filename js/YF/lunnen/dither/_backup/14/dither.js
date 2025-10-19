@@ -116,7 +116,6 @@ class DitheringTool {
         this.initPanelDrag('transformPanel', 'transformPanelHeader');
         this.initCanvasInteraction();
         this.initValueInputs();
-        this.initYFToolsLink();
         this.loadDefaultImage();
         this.loadDefaultSample();
     }
@@ -816,23 +815,6 @@ class DitheringTool {
                 }
             });
         });
-    }
-
-    initYFToolsLink() {
-        // Initialize YF Tools link with relative URL
-        const yfToolsLink = document.querySelector('.yf-tools-link');
-        if (yfToolsLink) {
-            // Use relative path that works on any domain
-            const yfToolsUrl = `/js/YF/`;
-            
-            yfToolsLink.href = yfToolsUrl;
-            
-            // Add click handler for analytics or additional functionality if needed
-            yfToolsLink.addEventListener('click', (e) => {
-                // Optional: Add analytics tracking here
-                console.log('Navigating to YF Tools');
-            });
-        }
     }
     
     getStepForSlider(sliderId) {

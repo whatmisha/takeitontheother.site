@@ -70,35 +70,11 @@ body {
     margin: 0 auto;
     height: 100vh;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    position: relative;
 }
 
-/* YF Tools Link */
-.yf-tools-link {
-    position: absolute;
-    top: var(--spacing-3xl);
-    left: 50%;
-    transform: translateX(-50%);
-    padding: var(--spacing-md) var(--spacing-2xl);
-    background: var(--color-text);
-    color: var(--color-bg);
-    border: none;
-    border-radius: var(--radius-button);
-    font-size: 0.9rem;
-    font-weight: 600;
-    text-decoration: none;
-    cursor: pointer;
-    transition: all var(--transition-slow);
-    z-index: 1000;
-}
-
-.yf-tools-link:hover {
-    background: var(--color-bg);
-    color: var(--color-text);
-}
+/* Removed unused header styles */
 
 .main-content {
     display: flex;
