@@ -786,15 +786,10 @@ class DitheringTool {
         
         // Special handling for scale (which displays as percentage)
         if (sliderId === 'scale') {
-            // Get current value from slider (0.1 - 4.0)
-            let currentValue = parseFloat(slider.value);
-            
-            if (isNaN(currentValue)) {
-                currentValue = 1.0;
-            }
+            // Get current value from transform (the source of truth)
+            let currentValue = this.transform.scale || 1.0;
             
             // Work in percentage space to avoid floating point issues
-            // Convert to percentage (multiply by 100)
             let currentPercent = Math.round(currentValue * 100);
             
             // Step in percentage points: 1% or 10%
@@ -811,11 +806,18 @@ class DitheringTool {
             // Convert back to decimal
             let newValue = newPercent / 100;
             
-            // Update slider
-            slider.value = newValue;
+            // Directly update transform and UI (bypass slider)
+            this.transform.scale = newValue;
+            this.transform.width = this.transform.baseWidth * newValue;
+            this.transform.height = this.transform.baseHeight * newValue;
             
-            // Update input and apply changes
-            this.updateValueFromArrowKey(sliderId, newValue);
+            // Update both slider and input display
+            slider.value = newValue;
+            input.value = newPercent + '%';
+            
+            // Invalidate cache and redraw
+            this.cache.processedImage = null;
+            this.updatePositionFromSliders();
             return;
         }
         
