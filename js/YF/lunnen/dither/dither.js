@@ -1579,8 +1579,12 @@ class DitheringTool {
         const overlayCtx = this.overlayCanvas.getContext('2d');
         overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
         
-        // Redraw if there's still a main image
-        if (this.originalImage) {
+        // Clear main canvas if there's no original image
+        if (!this.originalImage) {
+            const ctx = this.canvas.getContext('2d');
+            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        } else {
+            // Redraw if there's still a main image
             this.applyEffects();
         }
     }
