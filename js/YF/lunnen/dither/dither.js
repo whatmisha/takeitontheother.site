@@ -1672,8 +1672,13 @@ class DitheringTool {
         this.overlayCanvas.height = height + padding * 2;
         
         // Initialize or reset transform for the processed image
-        if (this.originalImage && (this.transform.originalWidth === 0 || !this.sampleImage)) {
-            this.resetTransform();
+        // Reset if: no transform exists, no sample, or original image dimensions changed
+        if (this.originalImage) {
+            const dimensionsChanged = this.transform.originalWidth !== this.originalImage.width || 
+                                     this.transform.originalHeight !== this.originalImage.height;
+            if (this.transform.originalWidth === 0 || !this.sampleImage || dimensionsChanged) {
+                this.resetTransform();
+            }
         }
     }
     
