@@ -1017,7 +1017,7 @@ class DitheringTool {
             const resizeHandle = this.getResizeHandle(x, y);
             
             if (rotateHandle) {
-                this.overlayCanvas.style.cursor = 'grab';
+                this.overlayCanvas.style.cursor = 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'17\' height=\'17\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'white\' stroke-width=\'2\'><path d=\'M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2\'/></svg>") 8 8, auto';
             } else if (resizeHandle) {
                 this.overlayCanvas.style.cursor = this.getCursorForHandle(resizeHandle);
             } else if (this.isPointInImage(x, y)) {
@@ -1029,7 +1029,7 @@ class DitheringTool {
         
         // Update cursor during rotation
         if (this.interaction.isRotating) {
-            this.overlayCanvas.style.cursor = 'grabbing';
+            this.overlayCanvas.style.cursor = 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'17\' height=\'17\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'white\' stroke-width=\'2\'><path d=\'M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2\'/></svg>") 8 8, auto';
         }
         
         if (this.interaction.isDragging) {
