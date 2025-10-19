@@ -94,6 +94,7 @@ class DitheringTool {
         };
         
         this.settings = {
+            blur: 0,
             grain: 0,
             gamma: 1,
             blackPoint: 0,
@@ -130,6 +131,7 @@ class DitheringTool {
             removeSampleBtn: document.getElementById('removeSampleBtn'),
             
             // Value displays
+            blurValue: document.getElementById('blurValue'),
             grainValue: document.getElementById('grainValue'),
             gammaValue: document.getElementById('gammaValue'),
             blackPointValue: document.getElementById('blackPointValue'),
@@ -142,6 +144,7 @@ class DitheringTool {
             rotationValue: document.getElementById('rotationValue'),
             
             // Sliders
+            blurSlider: document.getElementById('blur'),
             grainSlider: document.getElementById('grain'),
             gammaSlider: document.getElementById('gamma'),
             blackPointSlider: document.getElementById('blackPoint'),
@@ -269,6 +272,7 @@ class DitheringTool {
         });
         
         // Preprocessing controls
+        this.addSliderListener('blur', (val) => parseFloat(val));
         this.addSliderListener('grain', (val) => parseInt(val));
         this.addSliderListener('gamma', (val) => parseFloat(val));
         this.addSliderListener('blackPoint', (val) => parseInt(val));
@@ -562,6 +566,12 @@ class DitheringTool {
                 this.applyEffects();
                 this.drawOverlay();
             },
+            blur: (value) => {
+                this.dom.blurValue.value = value.toFixed(1);
+                this.settings.blur = value;
+                this.cache.processedImage = null;
+                this.debouncedApplyEffects();
+            },
             grain: (value) => {
                 const numValue = Math.round(value);
                 this.dom.grainValue.value = numValue;
@@ -840,7 +850,7 @@ class DitheringTool {
     getStepForSlider(sliderId) {
         // Determine appropriate step based on slider type
         const integerSliders = ['positionX', 'positionY', 'rotation', 'grain', 'blackPoint', 'whitePoint', 'pixelSize', 'threshold'];
-        const decimalSliders = ['gamma', 'scale'];
+        const decimalSliders = ['blur', 'gamma', 'scale'];
         
         if (integerSliders.includes(sliderId)) {
             return 1;
@@ -1838,6 +1848,11 @@ class DitheringTool {
             }
         }
         
+        // Apply blur
+        if (this.settings.blur > 0) {
+            imageData = this.applyBlur(imageData, this.settings.blur);
+        }
+        
         // Apply grain
         if (this.settings.grain > 0) {
             for (let i = 0; i < data.length; i += 4) {
@@ -1872,6 +1887,44 @@ class DitheringTool {
         }
         
         return imageData;
+    }
+    
+    applyBlur(imageData, radius) {
+        const data = imageData.data;
+        const width = imageData.width;
+        const height = imageData.height;
+        const newData = new Uint8ClampedArray(data);
+        
+        const kernelSize = Math.ceil(radius) * 2 + 1;
+        const halfKernel = Math.floor(kernelSize / 2);
+        
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                let r = 0, g = 0, b = 0, count = 0;
+                
+                for (let ky = -halfKernel; ky <= halfKernel; ky++) {
+                    for (let kx = -halfKernel; kx <= halfKernel; kx++) {
+                        const px = x + kx;
+                        const py = y + ky;
+                        
+                        if (px >= 0 && px < width && py >= 0 && py < height) {
+                            const idx = (py * width + px) * 4;
+                            r += data[idx];
+                            g += data[idx + 1];
+                            b += data[idx + 2];
+                            count++;
+                        }
+                    }
+                }
+                
+                const idx = (y * width + x) * 4;
+                newData[idx] = r / count;
+                newData[idx + 1] = g / count;
+                newData[idx + 2] = b / count;
+            }
+        }
+        
+        return new ImageData(newData, width, height);
     }
     
     applyDithering(imageData) {

@@ -83,6 +83,14 @@
                     <h3 id="preprocessing-heading">Image Preprocessing</h3>
                     
                     <div class="control-group">
+                        <label for="blur">
+                            <span>Blur</span>
+                            <input type="text" class="value-display" id="blurValue" value="0" data-min="0" data-max="10" aria-label="Blur amount value">
+                        </label>
+                        <input type="range" id="blur" min="0" max="10" step="0.1" value="0" aria-label="Blur amount slider" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0">
+                    </div>
+
+                    <div class="control-group">
                         <label for="grain">
                             <span>Grain</span>
                             <input type="text" class="value-display" id="grainValue" value="0" data-min="0" data-max="100" aria-label="Grain amount value">
