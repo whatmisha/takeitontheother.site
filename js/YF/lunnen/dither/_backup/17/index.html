@@ -22,9 +22,7 @@
         <div class="main-content">
             <div class="canvas-container">
                 <canvas id="canvas"></canvas>
-                <canvas id="maskCanvas"></canvas>
                 <canvas id="overlayCanvas"></canvas>
-                <canvas id="brushCursor"></canvas>
                 <input type="file" id="imageInput" accept="image/*" style="display: none;">
                 <input type="file" id="sampleInput" accept="image/*" style="display: none;">
             </div>
@@ -72,114 +70,6 @@
                             <button class="btn-secondary btn-full" id="resetTransform" aria-label="Reset transform settings">Reset</button>
                         </div>
                     </section>
-                </div>
-            </aside>
-
-            <aside class="controls-panel controls-panel-left" id="correctionsPanel" role="complementary" aria-label="Corrections">
-                <div class="panel-header" id="correctionsPanelHeader">
-                    <span>Corrections</span>
-                    <span class="drag-icon" aria-hidden="true">⋮⋮</span>
-                </div>
-                <div class="panel-content">
-                <section class="control-section">
-                    <div class="control-group">
-                        <label>
-                            <span>Paint Mode</span>
-                        </label>
-                        <fieldset>
-                            <legend class="sr-only">Paint mode toggle</legend>
-                            <div class="radio-group" role="radiogroup" aria-label="Paint mode selection">
-                                <label class="radio-label">
-                                    <input type="radio" name="paintMode" value="off" checked aria-label="Paint mode off">
-                                    <span>Off</span>
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="paintMode" value="on" aria-label="Paint mode on">
-                                    <span>On</span>
-                                </label>
-                            </div>
-                        </fieldset>
-                    </div>
-                </section>
-
-                <section class="control-section">
-                    <div class="control-group">
-                        <label>
-                            <span>Tool</span>
-                        </label>
-                        <fieldset>
-                            <legend class="sr-only">Paint tool</legend>
-                            <div class="radio-group" role="radiogroup" aria-label="Paint tool selection">
-                                <label class="radio-label">
-                                    <input type="radio" name="paintTool" value="dodge" checked aria-label="Dodge tool">
-                                    <span>🔆 Dodge (осветление)</span>
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="paintTool" value="burn" aria-label="Burn tool">
-                                    <span>🔥 Burn (затемнение)</span>
-                                </label>
-                            </div>
-                        </fieldset>
-                    </div>
-                </section>
-
-                <section class="control-section">
-                    <div class="control-group">
-                        <label for="brushSize">
-                            <span>Brush Size</span>
-                            <input type="text" class="value-display" id="brushSizeValue" value="50" data-min="5" data-max="200" aria-label="Brush size value">
-                        </label>
-                        <input type="range" id="brushSize" min="5" max="200" step="1" value="50" aria-label="Brush size slider" aria-valuemin="5" aria-valuemax="200" aria-valuenow="50">
-                    </div>
-
-                    <div class="control-group">
-                        <label for="brushStrength">
-                            <span>Strength</span>
-                            <input type="text" class="value-display" id="brushStrengthValue" value="30%" data-min="1" data-max="100" aria-label="Brush strength value">
-                        </label>
-                        <input type="range" id="brushStrength" min="1" max="100" step="1" value="30" aria-label="Brush strength slider" aria-valuemin="1" aria-valuemax="100" aria-valuenow="30">
-                    </div>
-
-                    <div class="control-group">
-                        <label for="brushHardness">
-                            <span>Hardness</span>
-                            <input type="text" class="value-display" id="brushHardnessValue" value="20%" data-min="0" data-max="100" aria-label="Brush hardness value">
-                        </label>
-                        <input type="range" id="brushHardness" min="0" max="100" step="1" value="20" aria-label="Brush hardness slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="20">
-                    </div>
-                </section>
-
-                <section class="control-section">
-                    <h3>Layer Settings</h3>
-                    <div class="control-group">
-                        <label for="adjustmentIntensity">
-                            <span>Intensity</span>
-                            <input type="text" class="value-display" id="adjustmentIntensityValue" value="100%" data-min="-100" data-max="100" aria-label="Adjustment intensity value">
-                        </label>
-                        <input type="range" id="adjustmentIntensity" min="-100" max="100" step="1" value="100" aria-label="Adjustment intensity slider" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="100">
-                    </div>
-                </section>
-
-                <section class="control-section">
-                    <div class="control-group">
-                        <button class="btn-secondary btn-full" id="clearAdjustments" aria-label="Clear all adjustments">Clear All</button>
-                    </div>
-                    
-                    <div class="control-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="showMask" aria-label="Show adjustment mask">
-                            <span>Show Mask</span>
-                        </label>
-                    </div>
-
-                    <div class="control-group">
-                        <button class="btn-secondary btn-full" id="undoAdjustment" disabled aria-label="Undo last adjustment">↶ Undo</button>
-                    </div>
-                    
-                    <div class="control-group">
-                        <button class="btn-secondary btn-full" id="redoAdjustment" disabled aria-label="Redo adjustment">↷ Redo</button>
-                    </div>
-                </section>
                 </div>
             </aside>
 

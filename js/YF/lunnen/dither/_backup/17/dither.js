@@ -39,16 +39,9 @@ class DitheringTool {
         this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
         this.overlayCanvas = document.getElementById('overlayCanvas');
         this.overlayCtx = this.overlayCanvas.getContext('2d', { willReadFrequently: true });
-        this.maskCanvas = document.getElementById('maskCanvas');
-        this.maskCtx = this.maskCanvas.getContext('2d', { willReadFrequently: true });
-        this.brushCursor = document.getElementById('brushCursor');
-        this.brushCursorCtx = this.brushCursor.getContext('2d', { willReadFrequently: true });
         this.originalImage = null;
         this.currentImageData = null;
         this.sampleImage = null;
-        
-        // Adjustment layer (grayscale, 128 = neutral, <128 = darken, >128 = lighten)
-        this.adjustmentLayer = null;
         
         // Cache DOM elements
         this.dom = this.cacheDOMElements();
@@ -117,35 +110,12 @@ class DitheringTool {
             backgroundColor: '#000000'
         };
         
-        // Paint mode state
-        this.paintMode = {
-            enabled: false,
-            tool: 'dodge', // 'dodge' or 'burn'
-            brushSize: 50,
-            brushStrength: 30, // 1-100%
-            brushHardness: 20, // 0-100%
-            adjustmentIntensity: 100, // -100 to 100%
-            showMask: false,
-            isPainting: false,
-            lastX: null,
-            lastY: null
-        };
-        
-        // History for undo/redo
-        this.adjustmentHistory = {
-            states: [],
-            currentIndex: -1,
-            maxStates: 50
-        };
-        
         this.initEventListeners();
         this.initPanelDrag('controlsPanel', 'panelHeader');
         this.initPanelDrag('transformPanel', 'transformPanelHeader');
-        this.initPanelDrag('correctionsPanel', 'correctionsPanelHeader');
         this.initCanvasInteraction();
         this.initValueInputs();
         this.initYFToolsLink();
-        this.initCorrectionsPanel();
         this.loadDefaultImage();
         this.loadDefaultSample();
     }
@@ -192,21 +162,7 @@ class DitheringTool {
             backgroundColor: document.getElementById('backgroundColor'),
             hexColorInput: document.getElementById('hexColorInput'),
             lunnenBlue: document.getElementById('lunnenBlue'),
-            resetTransform: document.getElementById('resetTransform'),
-            
-            // Corrections panel controls
-            brushSizeValue: document.getElementById('brushSizeValue'),
-            brushSizeSlider: document.getElementById('brushSize'),
-            brushStrengthValue: document.getElementById('brushStrengthValue'),
-            brushStrengthSlider: document.getElementById('brushStrength'),
-            brushHardnessValue: document.getElementById('brushHardnessValue'),
-            brushHardnessSlider: document.getElementById('brushHardness'),
-            adjustmentIntensityValue: document.getElementById('adjustmentIntensityValue'),
-            adjustmentIntensitySlider: document.getElementById('adjustmentIntensity'),
-            clearAdjustments: document.getElementById('clearAdjustments'),
-            showMask: document.getElementById('showMask'),
-            undoAdjustment: document.getElementById('undoAdjustment'),
-            redoAdjustment: document.getElementById('redoAdjustment')
+            resetTransform: document.getElementById('resetTransform')
         };
     }
     
@@ -522,36 +478,6 @@ class DitheringTool {
                 e.preventDefault();
                 this.dom.sampleInput.click();
             }
-            // Paint mode shortcuts
-            if (e.key === 'b' || e.key === 'B') {
-                e.preventDefault();
-                this.togglePaintModeShortcut();
-            }
-            if (e.key === 'd' || e.key === 'D') {
-                e.preventDefault();
-                if (e.shiftKey) {
-                    this.selectPaintTool('burn');
-                } else {
-                    this.selectPaintTool('dodge');
-                }
-            }
-            if (e.key === '[') {
-                e.preventDefault();
-                this.adjustBrushSize(-5);
-            }
-            if (e.key === ']') {
-                e.preventDefault();
-                this.adjustBrushSize(5);
-            }
-            // Undo/Redo for adjustments
-            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey && this.paintMode.enabled) {
-                e.preventDefault();
-                this.undoAdjustment();
-            }
-            if ((e.ctrlKey || e.metaKey) && (e.key === 'Z' || (e.key === 'z' && e.shiftKey)) && this.paintMode.enabled) {
-                e.preventDefault();
-                this.redoAdjustment();
-            }
             // Close modal on Escape
             if (e.key === 'Escape') {
                 const modalOverlay = document.getElementById('modalOverlay');
@@ -676,30 +602,6 @@ class DitheringTool {
                 this.settings.threshold = numValue;
                 this.cache.processedImage = null;
                 this.debouncedApplyEffects();
-            },
-            brushSize: (value) => {
-                const numValue = Math.round(value);
-                this.dom.brushSizeValue.value = numValue;
-                this.paintMode.brushSize = numValue;
-                this.updateBrushCursor();
-            },
-            brushStrength: (value) => {
-                const numValue = Math.round(value);
-                this.dom.brushStrengthValue.value = numValue + '%';
-                this.paintMode.brushStrength = numValue;
-            },
-            brushHardness: (value) => {
-                const numValue = Math.round(value);
-                this.dom.brushHardnessValue.value = numValue + '%';
-                this.paintMode.brushHardness = numValue;
-                this.updateBrushCursor();
-            },
-            adjustmentIntensity: (value) => {
-                const numValue = Math.round(value);
-                this.dom.adjustmentIntensityValue.value = numValue + '%';
-                this.paintMode.adjustmentIntensity = numValue;
-                this.cache.processedImage = null;
-                this.applyEffects();
             }
         };
     }
@@ -935,593 +837,9 @@ class DitheringTool {
         }
     }
     
-    initCorrectionsPanel() {
-        // Paint Mode radio buttons
-        document.querySelectorAll('input[name="paintMode"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                this.paintMode.enabled = e.target.value === 'on';
-                this.togglePaintMode(this.paintMode.enabled);
-            });
-        });
-        
-        // Paint Tool radio buttons
-        document.querySelectorAll('input[name="paintTool"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                this.paintMode.tool = e.target.value;
-            });
-        });
-        
-        // Brush Size slider
-        if (this.dom.brushSizeSlider) {
-            this.dom.brushSizeSlider.addEventListener('input', (e) => {
-                const value = parseInt(e.target.value);
-                this.dom.brushSizeValue.value = value;
-                this.paintMode.brushSize = value;
-                this.updateBrushCursor();
-            });
-        }
-        
-        // Brush Strength slider
-        if (this.dom.brushStrengthSlider) {
-            this.dom.brushStrengthSlider.addEventListener('input', (e) => {
-                const value = parseInt(e.target.value);
-                this.dom.brushStrengthValue.value = value + '%';
-                this.paintMode.brushStrength = value;
-            });
-        }
-        
-        // Brush Hardness slider
-        if (this.dom.brushHardnessSlider) {
-            this.dom.brushHardnessSlider.addEventListener('input', (e) => {
-                const value = parseInt(e.target.value);
-                this.dom.brushHardnessValue.value = value + '%';
-                this.paintMode.brushHardness = value;
-                this.updateBrushCursor();
-            });
-        }
-        
-        // Adjustment Intensity slider
-        if (this.dom.adjustmentIntensitySlider) {
-            this.dom.adjustmentIntensitySlider.addEventListener('input', (e) => {
-                const value = parseInt(e.target.value);
-                this.dom.adjustmentIntensityValue.value = value + '%';
-                this.paintMode.adjustmentIntensity = value;
-                this.cache.processedImage = null;
-                this.applyEffects();
-            });
-        }
-        
-        // Clear All button
-        if (this.dom.clearAdjustments) {
-            this.dom.clearAdjustments.addEventListener('click', () => {
-                this.clearAdjustmentLayer();
-            });
-        }
-        
-        // Show Mask checkbox
-        if (this.dom.showMask) {
-            this.dom.showMask.addEventListener('change', (e) => {
-                this.paintMode.showMask = e.target.checked;
-                this.updateMaskVisualization();
-            });
-        }
-        
-        // Undo button
-        if (this.dom.undoAdjustment) {
-            this.dom.undoAdjustment.addEventListener('click', () => {
-                this.undoAdjustment();
-            });
-        }
-        
-        // Redo button
-        if (this.dom.redoAdjustment) {
-            this.dom.redoAdjustment.addEventListener('click', () => {
-                this.redoAdjustment();
-            });
-        }
-        
-        // Initialize adjustment layer
-        this.createAdjustmentLayer();
-    }
-    
-    createAdjustmentLayer() {
-        if (!this.originalImage) return;
-        
-        const width = this.originalImage.width;
-        const height = this.originalImage.height;
-        
-        // Create canvas for adjustment layer
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = width;
-        tempCanvas.height = height;
-        const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
-        
-        // Fill with neutral gray (128)
-        tempCtx.fillStyle = 'rgb(128, 128, 128)';
-        tempCtx.fillRect(0, 0, width, height);
-        
-        this.adjustmentLayer = tempCtx.getImageData(0, 0, width, height);
-        
-        // Save initial state
-        this.saveAdjustmentState();
-    }
-    
-    togglePaintMode(enabled) {
-        const container = document.querySelector('.canvas-container');
-        
-        if (enabled) {
-            container.classList.add('paint-mode');
-            this.overlayCanvas.style.pointerEvents = 'none';
-            
-            // Initialize brush cursor
-            this.brushCursor.width = this.canvas.width;
-            this.brushCursor.height = this.canvas.height;
-            this.brushCursor.classList.add('visible');
-            
-            // Add paint event listeners
-            this.canvas.addEventListener('mousedown', this.handlePaintStart);
-            this.canvas.addEventListener('mousemove', this.handlePaintMove);
-            this.canvas.addEventListener('mouseup', this.handlePaintEnd);
-            this.canvas.addEventListener('mouseleave', this.handlePaintEnd);
-            
-        } else {
-            container.classList.remove('paint-mode');
-            this.overlayCanvas.style.pointerEvents = 'auto';
-            this.brushCursor.classList.remove('visible');
-            
-            // Remove paint event listeners
-            this.canvas.removeEventListener('mousedown', this.handlePaintStart);
-            this.canvas.removeEventListener('mousemove', this.handlePaintMove);
-            this.canvas.removeEventListener('mouseup', this.handlePaintEnd);
-            this.canvas.removeEventListener('mouseleave', this.handlePaintEnd);
-        }
-    }
-    
-    handlePaintStart = (e) => {
-        if (!this.paintMode.enabled || !this.originalImage) return;
-        
-        this.paintMode.isPainting = true;
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        // Convert canvas coordinates to original image coordinates
-        const imgCoords = this.canvasToImageCoords(x, y);
-        if (!imgCoords) return;
-        
-        this.paintMode.lastX = imgCoords.x;
-        this.paintMode.lastY = imgCoords.y;
-        
-        this.applyBrushStroke(imgCoords.x, imgCoords.y);
-    }
-    
-    handlePaintMove = (e) => {
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        // Update brush cursor position
-        this.updateBrushCursorPosition(x, y);
-        
-        if (!this.paintMode.isPainting || !this.originalImage) return;
-        
-        // Convert canvas coordinates to original image coordinates
-        const imgCoords = this.canvasToImageCoords(x, y);
-        if (!imgCoords) return;
-        
-        // Interpolate between last and current position for smooth strokes
-        if (this.paintMode.lastX !== null && this.paintMode.lastY !== null) {
-            this.interpolateBrushStroke(
-                this.paintMode.lastX, this.paintMode.lastY,
-                imgCoords.x, imgCoords.y
-            );
-        }
-        
-        this.paintMode.lastX = imgCoords.x;
-        this.paintMode.lastY = imgCoords.y;
-    }
-    
-    handlePaintEnd = (e) => {
-        if (!this.paintMode.isPainting) return;
-        
-        this.paintMode.isPainting = false;
-        this.paintMode.lastX = null;
-        this.paintMode.lastY = null;
-        
-        // Save state for undo
-        this.saveAdjustmentState();
-    }
-    
-    canvasToImageCoords(canvasX, canvasY) {
-        if (!this.originalImage) return null;
-        
-        // Account for transform (position, scale, rotation)
-        const centerX = this.transform.x + this.transform.width / 2;
-        const centerY = this.transform.y + this.transform.height / 2;
-        
-        // Translate to transform center
-        let tx = canvasX - centerX;
-        let ty = canvasY - centerY;
-        
-        // Rotate back
-        const angle = -this.transform.rotation * Math.PI / 180;
-        const cos = Math.cos(angle);
-        const sin = Math.sin(angle);
-        const rx = tx * cos - ty * sin;
-        const ry = tx * sin + ty * cos;
-        
-        // Scale back
-        const sx = rx / this.transform.scale;
-        const sy = ry / this.transform.scale;
-        
-        // Translate to image coordinates
-        const imgX = sx + this.originalImage.width / 2;
-        const imgY = sy + this.originalImage.height / 2;
-        
-        // Check if within bounds
-        if (imgX < 0 || imgX >= this.originalImage.width || 
-            imgY < 0 || imgY >= this.originalImage.height) {
-            return null;
-        }
-        
-        return { x: Math.floor(imgX), y: Math.floor(imgY) };
-    }
-    
-    interpolateBrushStroke(x0, y0, x1, y1) {
-        // Bresenham-like interpolation for smooth strokes
-        const dx = Math.abs(x1 - x0);
-        const dy = Math.abs(y1 - y0);
-        const sx = x0 < x1 ? 1 : -1;
-        const sy = y0 < y1 ? 1 : -1;
-        let err = dx - dy;
-        
-        let x = x0;
-        let y = y0;
-        
-        while (true) {
-            this.applyBrushStroke(x, y);
-            
-            if (x === x1 && y === y1) break;
-            
-            const e2 = 2 * err;
-            if (e2 > -dy) {
-                err -= dy;
-                x += sx;
-            }
-            if (e2 < dx) {
-                err += dx;
-                y += sy;
-            }
-        }
-    }
-    
-    applyBrushStroke(centerX, centerY) {
-        if (!this.adjustmentLayer) return;
-        
-        const data = this.adjustmentLayer.data;
-        const width = this.adjustmentLayer.width;
-        const height = this.adjustmentLayer.height;
-        const radius = this.paintMode.brushSize / 2;
-        const strength = this.paintMode.brushStrength / 100;
-        const hardness = this.paintMode.brushHardness / 100;
-        
-        // Determine adjustment direction
-        const adjustmentDir = this.paintMode.tool === 'dodge' ? 1 : -1;
-        
-        // Apply brush in a circle
-        const minX = Math.max(0, Math.floor(centerX - radius));
-        const maxX = Math.min(width - 1, Math.ceil(centerX + radius));
-        const minY = Math.max(0, Math.floor(centerY - radius));
-        const maxY = Math.min(height - 1, Math.ceil(centerY + radius));
-        
-        for (let y = minY; y <= maxY; y++) {
-            for (let x = minX; x <= maxX; x++) {
-                const dx = x - centerX;
-                const dy = y - centerY;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance > radius) continue;
-                
-                // Calculate falloff based on hardness
-                let falloff;
-                if (hardness === 1) {
-                    falloff = 1; // Hard brush
-                } else {
-                    const softRadius = radius * (1 - hardness);
-                    const hardRadius = radius * hardness;
-                    
-                    if (distance < hardRadius) {
-                        falloff = 1;
-                    } else {
-                        const t = (distance - hardRadius) / softRadius;
-                        falloff = 1 - t; // Linear falloff
-                    }
-                }
-                
-                falloff = Math.max(0, Math.min(1, falloff));
-                
-                const idx = (y * width + x) * 4;
-                const currentValue = data[idx];
-                
-                // Apply adjustment
-                const adjustment = adjustmentDir * strength * falloff * 127;
-                let newValue = currentValue + adjustment;
-                newValue = Math.max(0, Math.min(255, newValue));
-                
-                data[idx] = newValue;
-                data[idx + 1] = newValue;
-                data[idx + 2] = newValue;
-                // Alpha stays at 255
-            }
-        }
-        
-        // Invalidate cache and redraw
-        this.cache.processedImage = null;
-        this.applyEffects();
-        this.updateMaskVisualization();
-    }
-    
-    saveAdjustmentState() {
-        if (!this.adjustmentLayer) return;
-        
-        // Clone current adjustment layer
-        const state = new ImageData(
-            new Uint8ClampedArray(this.adjustmentLayer.data),
-            this.adjustmentLayer.width,
-            this.adjustmentLayer.height
-        );
-        
-        // Remove any states after current index (for redo)
-        this.adjustmentHistory.states = this.adjustmentHistory.states.slice(
-            0, 
-            this.adjustmentHistory.currentIndex + 1
-        );
-        
-        // Add new state
-        this.adjustmentHistory.states.push(state);
-        this.adjustmentHistory.currentIndex++;
-        
-        // Limit history size
-        if (this.adjustmentHistory.states.length > this.adjustmentHistory.maxStates) {
-            this.adjustmentHistory.states.shift();
-            this.adjustmentHistory.currentIndex--;
-        }
-        
-        // Update undo/redo button states
-        this.updateUndoRedoButtons();
-    }
-    
-    undoAdjustment() {
-        if (this.adjustmentHistory.currentIndex <= 0) return;
-        
-        this.adjustmentHistory.currentIndex--;
-        const state = this.adjustmentHistory.states[this.adjustmentHistory.currentIndex];
-        
-        // Restore state
-        this.adjustmentLayer = new ImageData(
-            new Uint8ClampedArray(state.data),
-            state.width,
-            state.height
-        );
-        
-        // Redraw
-        this.cache.processedImage = null;
-        this.applyEffects();
-        this.updateMaskVisualization();
-        this.updateUndoRedoButtons();
-    }
-    
-    redoAdjustment() {
-        if (this.adjustmentHistory.currentIndex >= this.adjustmentHistory.states.length - 1) return;
-        
-        this.adjustmentHistory.currentIndex++;
-        const state = this.adjustmentHistory.states[this.adjustmentHistory.currentIndex];
-        
-        // Restore state
-        this.adjustmentLayer = new ImageData(
-            new Uint8ClampedArray(state.data),
-            state.width,
-            state.height
-        );
-        
-        // Redraw
-        this.cache.processedImage = null;
-        this.applyEffects();
-        this.updateMaskVisualization();
-        this.updateUndoRedoButtons();
-    }
-    
-    updateUndoRedoButtons() {
-        if (this.dom.undoAdjustment) {
-            this.dom.undoAdjustment.disabled = this.adjustmentHistory.currentIndex <= 0;
-        }
-        
-        if (this.dom.redoAdjustment) {
-            this.dom.redoAdjustment.disabled = 
-                this.adjustmentHistory.currentIndex >= this.adjustmentHistory.states.length - 1;
-        }
-    }
-    
-    clearAdjustmentLayer() {
-        this.createAdjustmentLayer();
-        this.cache.processedImage = null;
-        this.applyEffects();
-        this.updateMaskVisualization();
-    }
-    
-    updateBrushCursorPosition(x, y) {
-        if (!this.paintMode.enabled) return;
-        
-        const radius = this.paintMode.brushSize / 2;
-        
-        // Clear previous cursor
-        this.brushCursorCtx.clearRect(0, 0, this.brushCursor.width, this.brushCursor.height);
-        
-        // Draw brush preview
-        this.brushCursorCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-        this.brushCursorCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        this.brushCursorCtx.lineWidth = 1;
-        
-        this.brushCursorCtx.beginPath();
-        this.brushCursorCtx.arc(x, y, radius, 0, Math.PI * 2);
-        this.brushCursorCtx.fill();
-        this.brushCursorCtx.stroke();
-        
-        // Draw inner circle for hardness
-        const hardness = this.paintMode.brushHardness / 100;
-        const innerRadius = radius * hardness;
-        
-        if (innerRadius > 0) {
-            this.brushCursorCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            this.brushCursorCtx.beginPath();
-            this.brushCursorCtx.arc(x, y, innerRadius, 0, Math.PI * 2);
-            this.brushCursorCtx.stroke();
-        }
-    }
-    
-    updateBrushCursor() {
-        // Redraw cursor at current position
-        // This is called when brush size or hardness changes
-    }
-    
-    updateMaskVisualization() {
-        if (!this.paintMode.showMask || !this.adjustmentLayer) {
-            this.maskCanvas.classList.remove('visible');
-            return;
-        }
-        
-        this.maskCanvas.width = this.canvas.width;
-        this.maskCanvas.height = this.canvas.height;
-        this.maskCanvas.classList.add('visible');
-        
-        // Create visualization canvas at original image size
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = this.adjustmentLayer.width;
-        tempCanvas.height = this.adjustmentLayer.height;
-        const tempCtx = tempCanvas.getContext('2d');
-        
-        const visualData = tempCtx.createImageData(tempCanvas.width, tempCanvas.height);
-        const srcData = this.adjustmentLayer.data;
-        const dstData = visualData.data;
-        
-        for (let i = 0; i < srcData.length; i += 4) {
-            const value = srcData[i];
-            
-            if (value < 128) {
-                // Darken - show as red
-                const intensity = (128 - value) / 128;
-                dstData[i] = 255;
-                dstData[i + 1] = 0;
-                dstData[i + 2] = 0;
-                dstData[i + 3] = intensity * 255;
-            } else if (value > 128) {
-                // Lighten - show as blue
-                const intensity = (value - 128) / 127;
-                dstData[i] = 0;
-                dstData[i + 1] = 100;
-                dstData[i + 2] = 255;
-                dstData[i + 3] = intensity * 255;
-            } else {
-                // Neutral - transparent
-                dstData[i + 3] = 0;
-            }
-        }
-        
-        tempCtx.putImageData(visualData, 0, 0);
-        
-        // Draw transformed mask on maskCanvas
-        this.maskCtx.clearRect(0, 0, this.maskCanvas.width, this.maskCanvas.height);
-        
-        this.maskCtx.save();
-        this.maskCtx.translate(
-            this.transform.x + this.transform.width / 2,
-            this.transform.y + this.transform.height / 2
-        );
-        this.maskCtx.rotate(this.transform.rotation * Math.PI / 180);
-        this.maskCtx.scale(this.transform.scale, this.transform.scale);
-        this.maskCtx.drawImage(
-            tempCanvas,
-            -tempCanvas.width / 2,
-            -tempCanvas.height / 2
-        );
-        this.maskCtx.restore();
-    }
-    
-    applyAdjustmentLayerToImage(imageData) {
-        const imgData = imageData.data;
-        const adjData = this.adjustmentLayer.data;
-        const intensity = this.paintMode.adjustmentIntensity / 100;
-        
-        for (let i = 0; i < imgData.length; i += 4) {
-            const adjValue = adjData[i];
-            
-            // Calculate adjustment amount
-            // 128 = neutral, <128 = darken, >128 = lighten
-            let adjustment = (adjValue - 128) / 127; // -1 to 1
-            
-            // Apply global intensity modifier
-            adjustment *= intensity;
-            
-            // Apply to RGB channels
-            for (let c = 0; c < 3; c++) {
-                const pixelValue = imgData[i + c];
-                
-                if (adjustment > 0) {
-                    // Lighten (move towards 255)
-                    imgData[i + c] = pixelValue + (255 - pixelValue) * adjustment;
-                } else {
-                    // Darken (move towards 0)
-                    imgData[i + c] = pixelValue + pixelValue * adjustment;
-                }
-            }
-            // Alpha remains unchanged
-        }
-    }
-    
-    togglePaintModeShortcut() {
-        const newValue = !this.paintMode.enabled;
-        this.paintMode.enabled = newValue;
-        
-        // Update radio button
-        document.querySelectorAll('input[name="paintMode"]').forEach(radio => {
-            if ((radio.value === 'on' && newValue) || (radio.value === 'off' && !newValue)) {
-                radio.checked = true;
-            }
-        });
-        
-        this.togglePaintMode(newValue);
-    }
-    
-    selectPaintTool(tool) {
-        if (!this.paintMode.enabled) return;
-        
-        this.paintMode.tool = tool;
-        
-        // Update radio button
-        document.querySelectorAll('input[name="paintTool"]').forEach(radio => {
-            if (radio.value === tool) {
-                radio.checked = true;
-            }
-        });
-    }
-    
-    adjustBrushSize(delta) {
-        if (!this.paintMode.enabled) return;
-        
-        const newSize = Math.max(5, Math.min(200, this.paintMode.brushSize + delta));
-        this.paintMode.brushSize = newSize;
-        
-        if (this.dom.brushSizeSlider) {
-            this.dom.brushSizeSlider.value = newSize;
-            this.dom.brushSizeValue.value = newSize;
-        }
-        
-        this.updateBrushCursor();
-    }
-    
     getStepForSlider(sliderId) {
         // Determine appropriate step based on slider type
-        const integerSliders = ['positionX', 'positionY', 'rotation', 'grain', 'blackPoint', 'whitePoint', 'pixelSize', 'threshold', 'brushSize', 'brushStrength', 'brushHardness', 'adjustmentIntensity'];
+        const integerSliders = ['positionX', 'positionY', 'rotation', 'grain', 'blackPoint', 'whitePoint', 'pixelSize', 'threshold'];
         const decimalSliders = ['gamma', 'scale'];
         
         if (integerSliders.includes(sliderId)) {
@@ -2168,7 +1486,6 @@ class DitheringTool {
         img.onload = () => {
             this.originalImage = img;
             this.cache.processedImage = null;
-            this.createAdjustmentLayer();
             this.updateCanvasSize();
             // Enable export button and show remove button
             if (this.dom.exportBtn) {
@@ -2275,7 +1592,6 @@ class DitheringTool {
             img.onload = () => {
                 this.originalImage = img;
                 this.cache.processedImage = null;
-                this.createAdjustmentLayer();
                 this.updateCanvasSize();
                 // Enable export button and show remove button
                 if (this.dom.exportBtn) {
@@ -2342,12 +1658,6 @@ class DitheringTool {
         const padding = DitheringTool.CONSTANTS.OVERLAY_PADDING;
         this.overlayCanvas.width = width + padding * 2;
         this.overlayCanvas.height = height + padding * 2;
-        
-        // Update brush cursor and mask canvas sizes
-        this.brushCursor.width = width;
-        this.brushCursor.height = height;
-        this.maskCanvas.width = width;
-        this.maskCanvas.height = height;
         
         // Initialize or reset transform for the processed image
         // Reset if: no transform exists, no sample, or original image dimensions changed
@@ -2517,13 +1827,6 @@ class DitheringTool {
     
     applyPreprocessing(imageData) {
         const data = imageData.data;
-        
-        // Apply adjustment layer first (if exists)
-        if (this.adjustmentLayer && 
-            this.adjustmentLayer.width === imageData.width && 
-            this.adjustmentLayer.height === imageData.height) {
-            this.applyAdjustmentLayerToImage(imageData);
-        }
         
         // Apply invert
         if (this.settings.invertImage) {

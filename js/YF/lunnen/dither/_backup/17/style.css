@@ -141,46 +141,6 @@ body {
     z-index: 2;
 }
 
-/* Brush cursor canvas */
-#brushCursor {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    z-index: 4;
-    display: none;
-}
-
-#brushCursor.visible {
-    display: block;
-}
-
-/* Mask visualization canvas */
-#maskCanvas {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    z-index: 3;
-    display: none;
-    opacity: 0.5;
-}
-
-#maskCanvas.visible {
-    display: block;
-}
-
-/* Paint mode cursor */
-.canvas-container.paint-mode {
-    cursor: none;
-}
-
-.canvas-container.paint-mode #canvas {
-    cursor: none;
-}
-
 /* Placeholder removed */
 
 .controls-panel {
@@ -204,11 +164,6 @@ body {
 .controls-panel-left {
     left: var(--spacing-3xl);
     right: auto;
-}
-
-#correctionsPanel {
-    top: calc(var(--spacing-3xl) + 380px);
-    max-height: calc(100vh - var(--spacing-3xl) - 380px - 40px);
 }
 
 .panel-header {
