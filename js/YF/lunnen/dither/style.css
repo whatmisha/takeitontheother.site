@@ -590,6 +590,23 @@ legend {
     transform: none;
 }
 
+/* Danger button styles */
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+    color: white;
+}
+
+.btn-danger:disabled {
+    background: #6c757d;
+    color: #adb5bd;
+    cursor: not-allowed;
+}
+
 .btn-export {
     background: var(--color-text);
     color: var(--color-bg);

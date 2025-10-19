@@ -119,6 +119,7 @@ class DitheringTool {
         this.initYFToolsLink();
         this.loadDefaultImage();
         this.loadDefaultSample();
+        this.updateRemoveButtonsState();
     }
     
     // Cache frequently accessed DOM elements
@@ -413,6 +414,17 @@ class DitheringTool {
         const uploadSampleBtn = document.getElementById('uploadSampleBtn');
         if (uploadSampleBtn) {
             uploadSampleBtn.addEventListener('click', () => this.dom.sampleInput.click());
+        }
+        
+        // Remove buttons
+        const removeImageBtn = document.getElementById('removeImageBtn');
+        if (removeImageBtn) {
+            removeImageBtn.addEventListener('click', () => this.removeImage());
+        }
+        
+        const removeSampleBtn = document.getElementById('removeSampleBtn');
+        if (removeSampleBtn) {
+            removeSampleBtn.addEventListener('click', () => this.removeSample());
         }
         
         // Position X slider
@@ -1458,6 +1470,7 @@ class DitheringTool {
             if (exportBtn) {
                 exportBtn.disabled = false;
             }
+            this.updateRemoveButtonsState();
             this.applyEffects();
         };
         
@@ -1475,6 +1488,7 @@ class DitheringTool {
         img.onload = () => {
             this.sampleImage = img;
             this.updateCanvasSize();
+            this.updateRemoveButtonsState();
             this.applyEffects();
         };
         
@@ -1483,6 +1497,60 @@ class DitheringTool {
         };
         
         img.src = 'images/sample_image_02.png';
+    }
+    
+    removeImage() {
+        this.originalImage = null;
+        this.cache.processedImage = null;
+        this.updateCanvasSize();
+        
+        // Disable export button
+        const exportBtn = document.getElementById('exportBtn');
+        if (exportBtn) {
+            exportBtn.disabled = true;
+        }
+        
+        // Clear canvas
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+        
+        // Reset transform
+        this.resetTransform();
+        
+        // Update button states
+        this.updateRemoveButtonsState();
+        
+        console.log('Image removed');
+    }
+    
+    removeSample() {
+        this.sampleImage = null;
+        this.updateCanvasSize();
+        
+        // Clear canvas
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+        
+        // Reset transform
+        this.resetTransform();
+        
+        // Update button states
+        this.updateRemoveButtonsState();
+        
+        console.log('Sample removed');
+    }
+    
+    updateRemoveButtonsState() {
+        const removeImageBtn = document.getElementById('removeImageBtn');
+        const removeSampleBtn = document.getElementById('removeSampleBtn');
+        
+        if (removeImageBtn) {
+            removeImageBtn.disabled = !this.originalImage;
+        }
+        
+        if (removeSampleBtn) {
+            removeSampleBtn.disabled = !this.sampleImage;
+        }
     }
     
     handleFileSelect(event) {
@@ -1505,6 +1573,7 @@ class DitheringTool {
                 if (exportBtn) {
                     exportBtn.disabled = false;
                 }
+                this.updateRemoveButtonsState();
                 this.applyEffects();
             };
             img.src = e.target.result;
