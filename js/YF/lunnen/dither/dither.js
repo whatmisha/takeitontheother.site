@@ -1535,6 +1535,9 @@ class DitheringTool {
         
         // Reset canvas size
         this.updateCanvasSize();
+        
+        // Redraw - if sample exists, it will be shown
+        this.applyEffects();
     }
     
     removeSample() {
