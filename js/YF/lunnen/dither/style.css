@@ -710,6 +710,7 @@ legend {
 .modal-body {
     color: var(--color-text-secondary);
     line-height: 1.7;
+    font-size: 0.85rem;
 }
 
 .modal-body p {
