@@ -1711,7 +1711,11 @@ class DitheringTool {
     }
     
     applyEffects() {
-        if (!this.originalImage) return;
+        // If there's no original image, just draw the overlay (which handles sample-only case)
+        if (!this.originalImage) {
+            this.drawOverlay();
+            return;
+        }
         
         // Проверить, нужно ли пересчитывать эффекты
         const needsProcessing = this.hasProcessingSettingsChanged() || !this.cache.processedImage;
