@@ -1313,14 +1313,14 @@ class DitheringTool {
     }
     
     drawOverlay() {
-        // Draw overlay if sample image exists
+        // If there's no sample image, just clear overlay and return
         if (!this.sampleImage) {
             this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
             this.overlayCanvas.style.pointerEvents = 'none';
             return;
         }
         
-        // If there's no original image, draw sample image directly on the main canvas
+        // If there's sample but no original image, draw sample on main canvas
         if (!this.originalImage) {
             const ctx = this.canvas.getContext('2d');
             ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
