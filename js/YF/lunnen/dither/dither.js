@@ -8,8 +8,8 @@ class DitheringTool {
         
         // Interaction handles
         HANDLE_SIZE: 10,
-        ROTATE_INNER_RADIUS: 20,
-        ROTATE_OUTER_RADIUS: 40,
+        ROTATE_INNER_RADIUS: 10,  // Start rotation zone right after handle
+        ROTATE_OUTER_RADIUS: 30,  // Keep rotation zone compact
         MIN_IMAGE_SIZE: 50,
         
         // Floyd-Steinberg dithering coefficients
