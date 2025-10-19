@@ -434,20 +434,13 @@ class DitheringTool {
             });
         }
         
-        // Scale slider
+        // Scale slider - теперь обрабатывается через getSliderHandlers()
         if (this.dom.scaleSlider) {
             this.dom.scaleSlider.addEventListener('input', (e) => {
                 const scale = parseFloat(e.target.value);
-                const percentage = Math.round(scale * 100);
-                this.dom.scaleValue.value = percentage + '%';
-                this.transform.scale = scale;
-                
-                // Recalculate width and height based on scale
-                this.transform.width = this.transform.baseWidth * scale;
-                this.transform.height = this.transform.baseHeight * scale;
-                
-                // Apply position based on current relative values
-                this.updatePositionFromSliders();
+                // Используем unified handler для консистентности
+                const handlers = this.getSliderHandlers();
+                handlers.scale(scale);
             });
         }
         
@@ -791,6 +784,41 @@ class DitheringTool {
     handleArrowKey(e, input, slider, min, max, baseStep) {
         const sliderId = slider.id;
         
+        // Special handling for scale (which displays as percentage)
+        if (sliderId === 'scale') {
+            // Get current value from slider (0.1 - 4.0)
+            let currentValue = parseFloat(slider.value);
+            
+            if (isNaN(currentValue)) {
+                currentValue = 1.0;
+            }
+            
+            // Work in percentage space to avoid floating point issues
+            // Convert to percentage (multiply by 100)
+            let currentPercent = Math.round(currentValue * 100);
+            
+            // Step in percentage points: 1% or 10%
+            const percentStep = e.shiftKey ? 10 : 1;
+            
+            // Calculate new percentage
+            let newPercent = e.key === 'ArrowUp' 
+                ? currentPercent + percentStep 
+                : currentPercent - percentStep;
+            
+            // Clamp to min/max (10% - 400%)
+            newPercent = Math.max(10, Math.min(400, newPercent));
+            
+            // Convert back to decimal
+            let newValue = newPercent / 100;
+            
+            // Update slider
+            slider.value = newValue;
+            
+            // Update input and apply changes
+            this.updateValueFromArrowKey(sliderId, newValue);
+            return;
+        }
+        
         // Get current numeric value
         let rawValue = input.value.replace(/[^\d.-]/g, '');
         let currentValue = parseFloat(rawValue);
@@ -842,7 +870,19 @@ class DitheringTool {
             return;
         }
         
-        numValue = Math.max(min, Math.min(max, numValue));
+        // Special handling for scale (convert percentage to decimal)
+        if (sliderId === 'scale') {
+            // Input is in percentage (e.g., 100), convert to decimal (1.0)
+            numValue = numValue / 100;
+            
+            // Clamp to 0.1 - 4.0 (10% - 400%)
+            numValue = Math.max(0.1, Math.min(4.0, numValue));
+            
+            // Round to 2 decimal places
+            numValue = parseFloat(numValue.toFixed(2));
+        } else {
+            numValue = Math.max(min, Math.min(max, numValue));
+        }
         
         // Update slider
         slider.value = numValue;
