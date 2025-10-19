@@ -1323,7 +1323,10 @@ class DitheringTool {
         // If there's sample but no original image, draw sample on main canvas
         if (!this.originalImage) {
             const ctx = this.canvas.getContext('2d');
-            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            // Fill background with custom color
+            ctx.fillStyle = this.settings.backgroundColor;
+            ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            // Draw sample image on top
             ctx.drawImage(this.sampleImage, 0, 0, this.canvas.width, this.canvas.height);
             this.overlayCanvas.style.pointerEvents = 'none';
             return;
