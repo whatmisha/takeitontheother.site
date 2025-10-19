@@ -535,6 +535,30 @@ legend {
     cursor: not-allowed;
 }
 
+.btn-remove {
+    background: transparent !important;
+    color: var(--color-text) !important;
+    border: 1px solid var(--color-text) !important;
+    padding: var(--spacing-md) !important;
+    min-width: auto !important;
+    width: 36px !important;  /* Равно высоте кнопки */
+    height: 36px !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+}
+
+.btn-remove.visible {
+    display: flex !important;
+}
+
+.btn-remove:hover {
+    background: #ff4444 !important;
+    color: white !important;
+    border-color: #ff4444 !important;
+}
+
 .btn-full {
     width: 100%;
 }
@@ -588,23 +612,6 @@ legend {
 
 .btn-fixed:active {
     transform: none;
-}
-
-/* Danger button styles */
-.btn-danger {
-    background: #dc3545;
-    color: white;
-}
-
-.btn-danger:hover {
-    background: #c82333;
-    color: white;
-}
-
-.btn-danger:disabled {
-    background: #6c757d;
-    color: #adb5bd;
-    cursor: not-allowed;
 }
 
 .btn-export {

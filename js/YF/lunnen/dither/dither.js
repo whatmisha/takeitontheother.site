@@ -119,7 +119,6 @@ class DitheringTool {
         this.initYFToolsLink();
         this.loadDefaultImage();
         this.loadDefaultSample();
-        this.updateRemoveButtonsState();
     }
     
     // Cache frequently accessed DOM elements
@@ -128,6 +127,8 @@ class DitheringTool {
             imageInput: document.getElementById('imageInput'),
             sampleInput: document.getElementById('sampleInput'),
             exportBtn: document.getElementById('exportBtn'),
+            removeImageBtn: document.getElementById('removeImageBtn'),
+            removeSampleBtn: document.getElementById('removeSampleBtn'),
             
             // Value displays
             blurValue: document.getElementById('blurValue'),
@@ -416,15 +417,14 @@ class DitheringTool {
             uploadSampleBtn.addEventListener('click', () => this.dom.sampleInput.click());
         }
         
-        // Remove buttons
-        const removeImageBtn = document.getElementById('removeImageBtn');
-        if (removeImageBtn) {
-            removeImageBtn.addEventListener('click', () => this.removeImage());
+        // Remove image button
+        if (this.dom.removeImageBtn) {
+            this.dom.removeImageBtn.addEventListener('click', () => this.removeImage());
         }
         
-        const removeSampleBtn = document.getElementById('removeSampleBtn');
-        if (removeSampleBtn) {
-            removeSampleBtn.addEventListener('click', () => this.removeSample());
+        // Remove sample button
+        if (this.dom.removeSampleBtn) {
+            this.dom.removeSampleBtn.addEventListener('click', () => this.removeSample());
         }
         
         // Position X slider
@@ -1470,7 +1470,6 @@ class DitheringTool {
             if (exportBtn) {
                 exportBtn.disabled = false;
             }
-            this.updateRemoveButtonsState();
             this.applyEffects();
         };
         
@@ -1488,7 +1487,6 @@ class DitheringTool {
         img.onload = () => {
             this.sampleImage = img;
             this.updateCanvasSize();
-            this.updateRemoveButtonsState();
             this.applyEffects();
         };
         
@@ -1500,56 +1498,47 @@ class DitheringTool {
     }
     
     removeImage() {
+        // Remove the main image and reset to default
         this.originalImage = null;
         this.cache.processedImage = null;
-        this.updateCanvasSize();
         
-        // Disable export button
-        const exportBtn = document.getElementById('exportBtn');
-        if (exportBtn) {
-            exportBtn.disabled = true;
+        // Disable export button and hide remove button
+        if (this.dom.exportBtn) {
+            this.dom.exportBtn.disabled = true;
+        }
+        if (this.dom.removeImageBtn) {
+            this.dom.removeImageBtn.classList.remove('visible');
         }
         
         // Clear canvas
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+        const ctx = this.canvas.getContext('2d');
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Reset transform
-        this.resetTransform();
+        // Clear overlay canvas
+        const overlayCtx = this.overlayCanvas.getContext('2d');
+        overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
         
-        // Update button states
-        this.updateRemoveButtonsState();
-        
-        console.log('Image removed');
+        // Reset canvas size
+        this.updateCanvasSize();
     }
     
     removeSample() {
+        // Remove the sample image
         this.sampleImage = null;
-        this.updateCanvasSize();
+        this.cache.overlayImage = null;
         
-        // Clear canvas
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
-        
-        // Reset transform
-        this.resetTransform();
-        
-        // Update button states
-        this.updateRemoveButtonsState();
-        
-        console.log('Sample removed');
-    }
-    
-    updateRemoveButtonsState() {
-        const removeImageBtn = document.getElementById('removeImageBtn');
-        const removeSampleBtn = document.getElementById('removeSampleBtn');
-        
-        if (removeImageBtn) {
-            removeImageBtn.disabled = !this.originalImage;
+        // Hide remove button
+        if (this.dom.removeSampleBtn) {
+            this.dom.removeSampleBtn.classList.remove('visible');
         }
         
-        if (removeSampleBtn) {
-            removeSampleBtn.disabled = !this.sampleImage;
+        // Clear overlay canvas
+        const overlayCtx = this.overlayCanvas.getContext('2d');
+        overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+        
+        // Redraw if there's still a main image
+        if (this.originalImage) {
+            this.applyEffects();
         }
     }
     
@@ -1568,12 +1557,13 @@ class DitheringTool {
                 this.originalImage = img;
                 this.cache.processedImage = null;
                 this.updateCanvasSize();
-                // Enable export button
-                const exportBtn = document.getElementById('exportBtn');
-                if (exportBtn) {
-                    exportBtn.disabled = false;
+                // Enable export button and show remove button
+                if (this.dom.exportBtn) {
+                    this.dom.exportBtn.disabled = false;
                 }
-                this.updateRemoveButtonsState();
+                if (this.dom.removeImageBtn) {
+                    this.dom.removeImageBtn.classList.add('visible');
+                }
                 this.applyEffects();
             };
             img.src = e.target.result;
@@ -1596,6 +1586,10 @@ class DitheringTool {
                 this.sampleImage = img;
                 this.cache.processedImage = null;
                 this.updateCanvasSize();
+                // Show remove button
+                if (this.dom.removeSampleBtn) {
+                    this.dom.removeSampleBtn.classList.add('visible');
+                }
                 this.applyEffects();
             };
             img.src = e.target.result;
