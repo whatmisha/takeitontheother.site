@@ -22,9 +22,8 @@
     --spacing-4xl: 30px;
     
     /* Border radius */
-    --radius: 12px;
-    --radius-sm: 12px;
-    --radius-button: 6px;
+    --radius: 0;
+    --radius-sm: 2px;
     
     /* Transitions */
     --transition-fast: 0.15s ease;
@@ -302,7 +301,7 @@ body {
     width: 60px;
     height: 30px;
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-button);
+    border-radius: var(--radius);
     background: transparent;
     cursor: pointer;
     padding: 0;
@@ -317,12 +316,12 @@ body {
 
 .control-group input[type="color"]::-webkit-color-swatch {
     border: none;
-    border-radius: var(--radius-button);
+    border-radius: var(--radius);
 }
 
 .control-group input[type="color"]::-moz-color-swatch {
     border: none;
-    border-radius: var(--radius-button);
+    border-radius: var(--radius);
 }
 
 .control-group input[type="color"]:hover,
@@ -340,7 +339,7 @@ body {
     font-family: monospace;
     font-size: 0.9rem;
     padding: 0 var(--spacing-md);
-    border-radius: var(--radius-button);
+    border-radius: var(--radius);
 }
 
 .value-display {
@@ -470,7 +469,7 @@ legend {
 .btn-fixed {
     padding: var(--spacing-xl) 24px;
     border: 1px solid var(--color-text);
-    border-radius: var(--radius-button);
+    border-radius: var(--radius);
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
@@ -658,7 +657,7 @@ legend {
 /* Modal Content */
 .modal-content {
     background: var(--color-bg-panel);
-    border: none;
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     max-width: 600px;
     width: 90%;
