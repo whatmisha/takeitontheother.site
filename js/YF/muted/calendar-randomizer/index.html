@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Календарь</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             margin: 0;
             padding: 0;
@@ -16,12 +20,13 @@
             height: 100vh;
             width: 100vw;
             overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
         
         .svg-container {
             position: relative;
             width: 100%;
-            height: 90%;
+            height: calc(100vh - 180px);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -35,116 +40,6 @@
             object-fit: contain;
         }
         
-        button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #1a1a1a;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            z-index: 10;
-        }
-        
-        button:hover {
-            background-color: #333;
-        }
-        
-        .buttons {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-            justify-content: center;
-            padding: 10px;
-        }
-        
-        .control-item {
-            padding: 10px;
-            font-size: 16px;
-            background-color: #1a1a1a;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        
-        .control-item:hover {
-            background-color: #333;
-        }
-        
-        .slider-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0 10px;
-            min-width: 150px;
-        }
-        
-        .slider-label {
-            font-size: 14px;
-            margin-bottom: 5px;
-            color: #1a1a1a;
-        }
-        
-        .slider {
-            width: 100%;
-            height: 5px;
-            -webkit-appearance: none;
-            appearance: none;
-            background: #e6e6e6;
-            outline: none;
-            border-radius: 5px;
-        }
-        
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 15px;
-            height: 15px;
-            border-radius: 50%;
-            background: #1a1a1a;
-            cursor: pointer;
-        }
-        
-        .slider::-moz-range-thumb {
-            width: 15px;
-            height: 15px;
-            border-radius: 50%;
-            background: #1a1a1a;
-            cursor: pointer;
-        }
-        
-        .slider-value {
-            font-size: 12px;
-            margin-top: 5px;
-            color: #1a1a1a;
-        }
-        
-        .svg-select {
-            padding: 10px;
-            font-size: 16px;
-            background-color: #1a1a1a;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 0 10px;
-            min-width: 200px;
-        }
-        
-        .svg-select option {
-            padding: 5px;
-        }
-        
         .loading {
             display: flex;
             justify-content: center;
@@ -155,61 +50,173 @@
             color: #1a1a1a;
         }
         
+        .controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .control-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+        }
+        
+        .svg-select, .easing-select {
+            padding: 8px 12px;
+            font-size: 14px;
+            background-color: #fff;
+            color: #1a1a1a;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            min-width: 140px;
+            transition: all 0.2s;
+        }
+        
+        .svg-select:hover, .easing-select:hover {
+            border-color: #999;
+        }
+        
+        .svg-select:focus, .easing-select:focus {
+            outline: none;
+            border-color: #1a1a1a;
+        }
+        
         .color-picker-container {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px;
-            background-color: #f5f5f5;
-            border-radius: 5px;
+            gap: 8px;
         }
         
         .color-picker {
-            width: 50px;
-            height: 40px;
-            border: 2px solid #1a1a1a;
-            border-radius: 5px;
+            width: 36px;
+            height: 36px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
             cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        
+        .color-picker:hover {
+            border-color: #999;
         }
         
         .hex-input {
-            padding: 8px 12px;
-            font-size: 16px;
-            border: 2px solid #1a1a1a;
-            border-radius: 5px;
-            width: 100px;
-            font-family: monospace;
+            padding: 8px 10px;
+            font-size: 13px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            width: 90px;
+            font-family: 'Monaco', 'Menlo', monospace;
             text-transform: uppercase;
+            transition: border-color 0.2s;
         }
         
-        .color-label {
+        .hex-input:hover {
+            border-color: #999;
+        }
+        
+        .hex-input:focus {
+            outline: none;
+            border-color: #1a1a1a;
+        }
+        
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 140px;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #e0e0e0;
+            outline: none;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #1a1a1a;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #1a1a1a;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .slider-value {
+            font-size: 11px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        button {
+            padding: 10px 20px;
             font-size: 14px;
-            color: #1a1a1a;
-            font-weight: bold;
-        }
-        
-        .easing-select {
-            padding: 10px;
-            font-size: 16px;
+            font-weight: 600;
             background-color: #1a1a1a;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
-            min-width: 180px;
+            transition: all 0.2s;
+            white-space: nowrap;
         }
         
-        .easing-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
+        button:hover {
+            background-color: #333;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
         
-        .easing-label {
-            font-size: 14px;
-            color: #1a1a1a;
-            font-weight: bold;
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .separator {
+            width: 1px;
+            height: 40px;
+            background: #ddd;
+            margin: 0 5px;
         }
     </style>
 </head>
@@ -219,30 +226,43 @@
     </div>
     
     <div class="controls">
-        <select id="svgSelector" class="svg-select">
-            <option value="">Загрузка списка файлов...</option>
-        </select>
-        
-        <div class="color-picker-container">
-            <span class="color-label">Цвет графики:</span>
-            <input type="color" id="colorPicker" class="color-picker" value="#1a1a1a">
-            <input type="text" id="hexInput" class="hex-input" value="#1A1A1A" maxlength="7" placeholder="#000000">
+        <div class="control-group">
+            <span class="control-label">Файл</span>
+            <select id="svgSelector" class="svg-select">
+                <option value="">Загрузка...</option>
+            </select>
         </div>
         
-        <div class="color-picker-container">
-            <span class="color-label">Цвет фона:</span>
-            <input type="color" id="bgColorPicker" class="color-picker" value="#f7f6f2">
-            <input type="text" id="bgHexInput" class="hex-input" value="#F7F6F2" maxlength="7" placeholder="#F7F6F2">
+        <div class="separator"></div>
+        
+        <div class="control-group">
+            <span class="control-label">Цвет графики</span>
+            <div class="color-picker-container">
+                <input type="color" id="colorPicker" class="color-picker" value="#1a1a1a">
+                <input type="text" id="hexInput" class="hex-input" value="#1A1A1A" maxlength="7" placeholder="#000000">
+            </div>
         </div>
         
-        <div class="slider-container">
-            <span class="slider-label">Степень перемещения</span>
-            <input type="range" min="1" max="200" value="30" class="slider" id="randomRange">
-            <span class="slider-value" id="rangeValue">30px</span>
+        <div class="control-group">
+            <span class="control-label">Цвет фона</span>
+            <div class="color-picker-container">
+                <input type="color" id="bgColorPicker" class="color-picker" value="#f7f6f2">
+                <input type="text" id="bgHexInput" class="hex-input" value="#F7F6F2" maxlength="7" placeholder="#F7F6F2">
+            </div>
         </div>
         
-        <div class="easing-container">
-            <span class="easing-label">Тип анимации</span>
+        <div class="separator"></div>
+        
+        <div class="control-group">
+            <span class="control-label">Степень перемещения</span>
+            <div class="slider-container">
+                <input type="range" min="1" max="200" value="30" class="slider" id="randomRange">
+                <span class="slider-value" id="rangeValue">30px</span>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <span class="control-label">Тип анимации</span>
             <select id="easingSelect" class="easing-select">
                 <option value="linear">Linear</option>
                 <option value="ease">Ease</option>
@@ -256,15 +276,19 @@
             </select>
         </div>
         
-        <div class="slider-container">
-            <span class="slider-label">Скорость анимации</span>
-            <input type="range" min="0.1" max="3" step="0.1" value="1.2" class="slider" id="speedRange">
-            <span class="slider-value" id="speedValue">1.2s</span>
+        <div class="control-group">
+            <span class="control-label">Скорость</span>
+            <div class="slider-container">
+                <input type="range" min="0.1" max="3" step="0.1" value="1.2" class="slider" id="speedRange">
+                <span class="slider-value" id="speedValue">1.2s</span>
+            </div>
         </div>
         
-        <button id="randomize" class="control-item">Случайная анимация</button>
-        <button id="reset" class="control-item">Сбросить</button>
-        <button id="exportSVG" class="control-item">Экспорт SVG</button>
+        <div class="separator"></div>
+        
+        <button id="randomize">Вжух</button>
+        <button id="reset">Сбросить</button>
+        <button id="exportSVG">Экспорт SVG</button>
     </div>
     
     <script src="list-svgs.js"></script>
