@@ -367,9 +367,27 @@
                     const svgElement = document.querySelector('svg');
                     if (!svgElement) return;
                     
-                    // Находим все элементы с атрибутами fill и stroke
-                    const allElements = svgElement.querySelectorAll('*');
+                    // 1. Обрабатываем CSS внутри <style> тегов
+                    const styleTags = svgElement.querySelectorAll('style');
+                    styleTags.forEach(styleTag => {
+                        let css = styleTag.textContent;
+                        
+                        // Заменяем все fill: значения на новый цвет
+                        css = css.replace(/fill:\s*#[0-9a-fA-F]{3,6}/gi, `fill: ${color}`);
+                        css = css.replace(/fill:\s*rgb\([^)]+\)/gi, `fill: ${color}`);
+                        css = css.replace(/fill:\s*rgba\([^)]+\)/gi, `fill: ${color}`);
+                        
+                        // Заменяем все stroke: значения на новый цвет
+                        css = css.replace(/stroke:\s*#[0-9a-fA-F]{3,6}/gi, `stroke: ${color}`);
+                        css = css.replace(/stroke:\s*rgb\([^)]+\)/gi, `stroke: ${color}`);
+                        css = css.replace(/stroke:\s*rgba\([^)]+\)/gi, `stroke: ${color}`);
+                        
+                        styleTag.textContent = css;
+                        console.log('CSS внутри <style> обновлён');
+                    });
                     
+                    // 2. Обрабатываем прямые атрибуты fill и stroke
+                    const allElements = svgElement.querySelectorAll('*');
                     allElements.forEach(element => {
                         // Меняем fill, если он есть и не равен 'none'
                         const fill = element.getAttribute('fill');
