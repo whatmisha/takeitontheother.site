@@ -65,6 +65,48 @@
             flex-wrap: wrap;
             justify-content: center;
             box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .controls.collapsed {
+            transform: translateY(calc(100% - 40px));
+        }
+        
+        .toggle-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #1a1a1a;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            transition: transform 0.3s;
+        }
+        
+        .toggle-panel:hover {
+            transform: scale(1.1);
+            background: #333;
+        }
+        
+        .toggle-panel::before {
+            content: "";
+            display: block;
+            width: 12px;
+            height: 12px;
+            border-left: 2px solid white;
+            border-bottom: 2px solid white;
+            transform: translateY(-2px) rotate(135deg);
+            transition: transform 0.3s;
+        }
+        
+        .controls.collapsed .toggle-panel::before {
+            transform: translateY(2px) rotate(-45deg);
         }
         
         .control-group {
@@ -228,6 +270,7 @@
     </div>
     
     <div class="controls">
+        <div class="toggle-panel" id="togglePanel" title="Свернуть/развернуть панель"></div>
         <div class="control-group">
             <span class="control-label">Файл</span>
             <select id="svgSelector" class="svg-select">
@@ -696,6 +739,24 @@
                         }
                     }
                 });
+                
+                // Обработчик для кнопки сворачивания панели
+                const togglePanel = document.getElementById('togglePanel');
+                const controlsPanel = document.querySelector('.controls');
+                
+                togglePanel.addEventListener('click', function() {
+                    controlsPanel.classList.toggle('collapsed');
+                    
+                    // Сохраняем состояние в localStorage
+                    const isCollapsed = controlsPanel.classList.contains('collapsed');
+                    localStorage.setItem('controlsCollapsed', isCollapsed);
+                });
+                
+                // Восстанавливаем состояние панели при загрузке
+                const savedCollapsedState = localStorage.getItem('controlsCollapsed');
+                if (savedCollapsedState === 'true') {
+                    controlsPanel.classList.add('collapsed');
+                }
                 
                 // Функция для экспорта SVG
                 function exportSVG() {
