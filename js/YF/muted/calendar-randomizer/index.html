@@ -187,6 +187,30 @@
             color: #1a1a1a;
             font-weight: bold;
         }
+        
+        .easing-select {
+            padding: 10px;
+            font-size: 16px;
+            background-color: #1a1a1a;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            min-width: 180px;
+        }
+        
+        .easing-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .easing-label {
+            font-size: 14px;
+            color: #1a1a1a;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -210,6 +234,28 @@
             <input type="range" min="1" max="200" value="30" class="slider" id="randomRange">
             <span class="slider-value" id="rangeValue">30px</span>
         </div>
+        
+        <div class="easing-container">
+            <span class="easing-label">Тип анимации</span>
+            <select id="easingSelect" class="easing-select">
+                <option value="linear">Linear</option>
+                <option value="ease">Ease</option>
+                <option value="ease-in">Ease In</option>
+                <option value="ease-out">Ease Out</option>
+                <option value="ease-in-out">Ease In-Out</option>
+                <option value="cubic-bezier(0.34, 1.56, 0.64, 1)" selected>Bounce</option>
+                <option value="cubic-bezier(0.68, -0.55, 0.265, 1.55)">Elastic</option>
+                <option value="cubic-bezier(0.175, 0.885, 0.32, 1.275)">Back</option>
+                <option value="cubic-bezier(0.6, -0.28, 0.735, 0.045)">Anticipate</option>
+            </select>
+        </div>
+        
+        <div class="slider-container">
+            <span class="slider-label">Скорость анимации</span>
+            <input type="range" min="0.1" max="3" step="0.1" value="1.2" class="slider" id="speedRange">
+            <span class="slider-value" id="speedValue">1.2s</span>
+        </div>
+        
         <button id="randomize" class="control-item">Случайная анимация</button>
         <button id="reset" class="control-item">Сбросить</button>
         <button id="exportSVG" class="control-item">Экспорт SVG</button>
@@ -352,10 +398,18 @@
                 const exportSVGBtn = document.getElementById('exportSVG');
                 const randomRangeSlider = document.getElementById('randomRange');
                 const rangeValueDisplay = document.getElementById('rangeValue');
+                const easingSelect = document.getElementById('easingSelect');
+                const speedRange = document.getElementById('speedRange');
+                const speedValue = document.getElementById('speedValue');
                 
-                // Обработчик изменения значения слайдера
+                // Обработчик изменения значения слайдера перемещения
                 randomRangeSlider.addEventListener('input', function() {
                     rangeValueDisplay.textContent = `${this.value}px`;
+                });
+                
+                // Обработчик изменения скорости анимации
+                speedRange.addEventListener('input', function() {
+                    speedValue.textContent = `${this.value}s`;
                 });
                 
                 // Получаем элементы колор пикера
@@ -474,13 +528,18 @@
                 function randomizeGroups() {
                     console.log('Выполняем случайное размещение элементов...');
                     
-                    // Получаем текущее значение слайдера
+                    // Получаем текущие значения настроек
                     const randomRange = parseInt(randomRangeSlider.value);
+                    const easing = easingSelect.value;
+                    const speed = parseFloat(speedRange.value);
+                    
                     console.log(`Диапазон случайного перемещения: ±${randomRange}px`);
+                    console.log(`Тип анимации: ${easing}`);
+                    console.log(`Скорость анимации: ${speed}s`);
                     
                     animatableElements.forEach((element, index) => {
-                        // Настраиваем анимацию перехода
-                        element.style.transition = 'transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                        // Настраиваем анимацию перехода с выбранными параметрами
+                        element.style.transition = `transform ${speed}s ${easing}`;
                         
                         // Генерируем случайные значения для трансформации с учетом выбранного диапазона
                         const randomX = Math.random() * randomRange * 2 - randomRange; // от -randomRange до randomRange
@@ -498,9 +557,15 @@
                 function resetGroups() {
                     console.log('Сбрасываем положение элементов...');
                     
+                    // Получаем текущие значения настроек
+                    const easing = easingSelect.value;
+                    const speed = parseFloat(speedRange.value);
+                    
+                    console.log(`Сброс с анимацией: ${easing}, скорость: ${speed}s`);
+                    
                     animatableElements.forEach((element, index) => {
-                        // Настраиваем анимацию возврата
-                        element.style.transition = 'transform 0.8s ease-in-out';
+                        // Настраиваем анимацию возврата с выбранными параметрами
+                        element.style.transition = `transform ${speed}s ${easing}`;
                         
                         // Сбрасываем все трансформации
                         element.style.transform = 'translate(0, 0)';
