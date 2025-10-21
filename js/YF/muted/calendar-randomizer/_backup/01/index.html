@@ -154,39 +154,6 @@
             font-size: 18px;
             color: #1a1a1a;
         }
-        
-        .color-picker-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            background-color: #f5f5f5;
-            border-radius: 5px;
-        }
-        
-        .color-picker {
-            width: 50px;
-            height: 40px;
-            border: 2px solid #1a1a1a;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        
-        .hex-input {
-            padding: 8px 12px;
-            font-size: 16px;
-            border: 2px solid #1a1a1a;
-            border-radius: 5px;
-            width: 100px;
-            font-family: monospace;
-            text-transform: uppercase;
-        }
-        
-        .color-label {
-            font-size: 14px;
-            color: #1a1a1a;
-            font-weight: bold;
-        }
     </style>
 </head>
 <body>
@@ -198,12 +165,6 @@
         <select id="svgSelector" class="svg-select">
             <option value="">Загрузка списка файлов...</option>
         </select>
-        
-        <div class="color-picker-container">
-            <span class="color-label">Цвет:</span>
-            <input type="color" id="colorPicker" class="color-picker" value="#1a1a1a">
-            <input type="text" id="hexInput" class="hex-input" value="#1A1A1A" maxlength="7" placeholder="#000000">
-        </div>
         
         <div class="slider-container">
             <span class="slider-label">Степень перемещения</span>
@@ -356,100 +317,6 @@
                 // Обработчик изменения значения слайдера
                 randomRangeSlider.addEventListener('input', function() {
                     rangeValueDisplay.textContent = `${this.value}px`;
-                });
-                
-                // Получаем элементы колор пикера
-                const colorPicker = document.getElementById('colorPicker');
-                const hexInput = document.getElementById('hexInput');
-                
-                // Функция для изменения цвета всех элементов SVG
-                function changeAllColors(color) {
-                    const svgElement = document.querySelector('svg');
-                    if (!svgElement) return;
-                    
-                    // Находим все элементы с атрибутами fill и stroke
-                    const allElements = svgElement.querySelectorAll('*');
-                    
-                    allElements.forEach(element => {
-                        // Меняем fill, если он есть и не равен 'none'
-                        const fill = element.getAttribute('fill');
-                        if (fill && fill !== 'none') {
-                            element.setAttribute('fill', color);
-                        }
-                        
-                        // Меняем stroke, если он есть и не равен 'none'
-                        const stroke = element.getAttribute('stroke');
-                        if (stroke && stroke !== 'none') {
-                            element.setAttribute('stroke', color);
-                        }
-                        
-                        // Проверяем инлайн стили
-                        const style = element.getAttribute('style');
-                        if (style) {
-                            let newStyle = style;
-                            // Заменяем fill в стилях
-                            newStyle = newStyle.replace(/fill:\s*[^;]+/gi, `fill: ${color}`);
-                            // Заменяем stroke в стилях
-                            newStyle = newStyle.replace(/stroke:\s*[^;]+/gi, `stroke: ${color}`);
-                            element.setAttribute('style', newStyle);
-                        }
-                    });
-                    
-                    console.log(`Цвет всех элементов изменён на: ${color}`);
-                }
-                
-                // Функция для валидации и нормализации hex-кода
-                function normalizeHex(hex) {
-                    // Удаляем пробелы
-                    hex = hex.trim();
-                    
-                    // Добавляем # если его нет
-                    if (!hex.startsWith('#')) {
-                        hex = '#' + hex;
-                    }
-                    
-                    // Проверяем формат
-                    const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-                    if (hexRegex.test(hex)) {
-                        // Конвертируем короткую форму в полную
-                        if (hex.length === 4) {
-                            hex = '#' + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
-                        }
-                        return hex.toUpperCase();
-                    }
-                    
-                    return null;
-                }
-                
-                // Обработчик колор пикера
-                colorPicker.addEventListener('input', function() {
-                    const color = this.value.toUpperCase();
-                    hexInput.value = color;
-                    changeAllColors(color);
-                });
-                
-                // Обработчик ввода hex-кода
-                hexInput.addEventListener('input', function() {
-                    let hex = this.value;
-                    const normalized = normalizeHex(hex);
-                    
-                    if (normalized) {
-                        this.value = normalized;
-                        colorPicker.value = normalized;
-                        changeAllColors(normalized);
-                    }
-                });
-                
-                // Обработчик потери фокуса (blur) для hex-инпута
-                hexInput.addEventListener('blur', function() {
-                    const normalized = normalizeHex(this.value);
-                    if (normalized) {
-                        this.value = normalized;
-                        colorPicker.value = normalized;
-                    } else {
-                        // Если некорректный hex, возвращаем значение из колор пикера
-                        this.value = colorPicker.value.toUpperCase();
-                    }
                 });
                 
                 // Функция для случайного размещения групп
