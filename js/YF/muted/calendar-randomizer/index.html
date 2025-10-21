@@ -406,44 +406,6 @@
                 xhr.send();
             }
             
-            function initializeCalendar() {
-                // Получаем SVG элемент
-                const svgElement = document.querySelector('svg');
-                if (!svgElement) {
-                    console.error('SVG элемент не найден');
-                    return;
-                }
-                
-                console.log('SVG загружен успешно');
-                
-                // Сохраняем исходные позиции групп
-                const groups = document.querySelectorAll('svg g');
-                console.log(`Найдено ${groups.length} групп`);
-                
-                // Получаем все анимируемые элементы SVG
-                const animatableElements = document.querySelectorAll('svg > :not(defs), svg > g > *, svg > g > g > *');
-                console.log(`Найдено ${animatableElements.length} анимируемых элементов`);
-                
-                // Добавляем обработчики для кнопок
-                const randomizeBtn = document.getElementById('randomize');
-                const resetBtn = document.getElementById('reset');
-                const exportSVGBtn = document.getElementById('exportSVG');
-                const randomRangeSlider = document.getElementById('randomRange');
-                const rangeValueDisplay = document.getElementById('rangeValue');
-                const easingSelect = document.getElementById('easingSelect');
-                const speedRange = document.getElementById('speedRange');
-                const speedValue = document.getElementById('speedValue');
-                
-                // Обработчик изменения значения слайдера перемещения
-                randomRangeSlider.addEventListener('input', function() {
-                    rangeValueDisplay.textContent = `${this.value}px`;
-                });
-                
-                // Обработчик изменения скорости анимации
-                speedRange.addEventListener('input', function() {
-                    speedValue.textContent = `${this.value}s`;
-                });
-                
                 // Получаем элементы колор пикера для графики
                 const colorPicker = document.getElementById('colorPicker');
                 const hexInput = document.getElementById('hexInput');
@@ -451,6 +413,49 @@
                 // Получаем элементы колор пикера для фона
                 const bgColorPicker = document.getElementById('bgColorPicker');
                 const bgHexInput = document.getElementById('bgHexInput');
+                
+                function initializeCalendar() {
+                    // Получаем SVG элемент
+                    const svgElement = document.querySelector('svg');
+                    if (!svgElement) {
+                        console.error('SVG элемент не найден');
+                        return;
+                    }
+                    
+                    console.log('SVG загружен успешно');
+                    
+                    // Сохраняем исходные позиции групп
+                    const groups = document.querySelectorAll('svg g');
+                    console.log(`Найдено ${groups.length} групп`);
+                    
+                    // Получаем все анимируемые элементы SVG
+                    const animatableElements = document.querySelectorAll('svg > :not(defs), svg > g > *, svg > g > g > *');
+                    console.log(`Найдено ${animatableElements.length} анимируемых элементов`);
+                    
+                    // Применяем цвет графики по умолчанию из пикера
+                    const defaultColor = colorPicker.value;
+                    console.log(`Применяем цвет графики по умолчанию: ${defaultColor}`);
+                    changeAllColors(defaultColor);
+                    
+                    // Добавляем обработчики для кнопок
+                    const randomizeBtn = document.getElementById('randomize');
+                    const resetBtn = document.getElementById('reset');
+                    const exportSVGBtn = document.getElementById('exportSVG');
+                    const randomRangeSlider = document.getElementById('randomRange');
+                    const rangeValueDisplay = document.getElementById('rangeValue');
+                    const easingSelect = document.getElementById('easingSelect');
+                    const speedRange = document.getElementById('speedRange');
+                    const speedValue = document.getElementById('speedValue');
+                    
+                    // Обработчик изменения значения слайдера перемещения
+                    randomRangeSlider.addEventListener('input', function() {
+                        rangeValueDisplay.textContent = `${this.value}px`;
+                    });
+                    
+                    // Обработчик изменения скорости анимации
+                    speedRange.addEventListener('input', function() {
+                        speedValue.textContent = `${this.value}s`;
+                    });
                 
                 // Функция для изменения цвета всех элементов SVG
                 function changeAllColors(color) {
