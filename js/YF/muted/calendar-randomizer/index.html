@@ -8,7 +8,7 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #ffffff;
+            background-color: #f7f6f2;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -224,9 +224,15 @@
         </select>
         
         <div class="color-picker-container">
-            <span class="color-label">Цвет:</span>
+            <span class="color-label">Цвет графики:</span>
             <input type="color" id="colorPicker" class="color-picker" value="#1a1a1a">
             <input type="text" id="hexInput" class="hex-input" value="#1A1A1A" maxlength="7" placeholder="#000000">
+        </div>
+        
+        <div class="color-picker-container">
+            <span class="color-label">Цвет фона:</span>
+            <input type="color" id="bgColorPicker" class="color-picker" value="#f7f6f2">
+            <input type="text" id="bgHexInput" class="hex-input" value="#F7F6F2" maxlength="7" placeholder="#F7F6F2">
         </div>
         
         <div class="slider-container">
@@ -412,9 +418,13 @@
                     speedValue.textContent = `${this.value}s`;
                 });
                 
-                // Получаем элементы колор пикера
+                // Получаем элементы колор пикера для графики
                 const colorPicker = document.getElementById('colorPicker');
                 const hexInput = document.getElementById('hexInput');
+                
+                // Получаем элементы колор пикера для фона
+                const bgColorPicker = document.getElementById('bgColorPicker');
+                const bgHexInput = document.getElementById('bgHexInput');
                 
                 // Функция для изменения цвета всех элементов SVG
                 function changeAllColors(color) {
@@ -521,6 +531,43 @@
                     } else {
                         // Если некорректный hex, возвращаем значение из колор пикера
                         this.value = colorPicker.value.toUpperCase();
+                    }
+                });
+                
+                // Функция для изменения цвета фона
+                function changeBackgroundColor(color) {
+                    document.body.style.backgroundColor = color;
+                    console.log(`Цвет фона изменён на: ${color}`);
+                }
+                
+                // Обработчик колор пикера фона
+                bgColorPicker.addEventListener('input', function() {
+                    const color = this.value.toUpperCase();
+                    bgHexInput.value = color;
+                    changeBackgroundColor(color);
+                });
+                
+                // Обработчик ввода hex-кода фона
+                bgHexInput.addEventListener('input', function() {
+                    let hex = this.value;
+                    const normalized = normalizeHex(hex);
+                    
+                    if (normalized) {
+                        this.value = normalized;
+                        bgColorPicker.value = normalized;
+                        changeBackgroundColor(normalized);
+                    }
+                });
+                
+                // Обработчик потери фокуса (blur) для hex-инпута фона
+                bgHexInput.addEventListener('blur', function() {
+                    const normalized = normalizeHex(this.value);
+                    if (normalized) {
+                        this.value = normalized;
+                        bgColorPicker.value = normalized;
+                    } else {
+                        // Если некорректный hex, возвращаем значение из колор пикера
+                        this.value = bgColorPicker.value.toUpperCase();
                     }
                 });
                 
