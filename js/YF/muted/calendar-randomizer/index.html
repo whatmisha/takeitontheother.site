@@ -208,8 +208,10 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
         
-        button:active {
+        button:active, button.active {
             transform: translateY(0);
+            background-color: #333;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
         .separator {
@@ -651,9 +653,44 @@
                     }
                 }
                 
-                // Привязываем обработчики событий
+                // Привязываем обработчики событий для кнопок
                 randomizeBtn.addEventListener('click', randomizeGroups);
                 resetBtn.addEventListener('click', resetGroups);
+                
+                // Добавляем обработчик клавиатурных событий для всего документа
+                document.addEventListener('keydown', function(event) {
+                    // Проверяем, что фокус не находится в текстовом поле или другом элементе ввода
+                    const activeElement = document.activeElement;
+                    const isInputActive = activeElement.tagName === 'INPUT' || 
+                                          activeElement.tagName === 'TEXTAREA' || 
+                                          activeElement.tagName === 'SELECT';
+                    
+                    if (!isInputActive) {
+                        // Пробел (код 32) для активации кнопки "Вжух"
+                        if (event.keyCode === 32 || event.key === ' ') {
+                            event.preventDefault(); // Предотвращаем прокрутку страницы
+                            randomizeGroups();
+                            
+                            // Добавляем визуальный эффект нажатия кнопки
+                            randomizeBtn.classList.add('active');
+                            setTimeout(() => {
+                                randomizeBtn.classList.remove('active');
+                            }, 200);
+                        }
+                        
+                        // Backspace (код 8) для активации кнопки "Сбросить"
+                        if (event.keyCode === 8 || event.key === 'Backspace') {
+                            event.preventDefault();
+                            resetGroups();
+                            
+                            // Добавляем визуальный эффект нажатия кнопки
+                            resetBtn.classList.add('active');
+                            setTimeout(() => {
+                                resetBtn.classList.remove('active');
+                            }, 200);
+                        }
+                    }
+                });
                 
                 // Функция для экспорта SVG
                 function exportSVG() {
