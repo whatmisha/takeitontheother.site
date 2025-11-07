@@ -15,6 +15,7 @@ class GridGenerator {
             columnCount: 12,
             rowCount: 20,  // will be calculated after DOM is ready
             rowHeight: 6,  // in modules
+            linkRowsHeight: true,  // link rows and row height
             showColumns: true,
             showRows: true,
             showBaseline: true
@@ -64,6 +65,7 @@ class GridGenerator {
             // Checkboxes
             showDimensions: document.getElementById('showDimensions'),
             showSidePanels: document.getElementById('showSidePanels'),
+            linkRowsHeight: document.getElementById('linkRowsHeight'),
             showColumns: document.getElementById('showColumns'),
             showRows: document.getElementById('showRows'),
             showBaseline: document.getElementById('showBaseline'),
@@ -136,6 +138,11 @@ class GridGenerator {
             this.updateGrid();
         });
         
+        // Link rows and row height checkbox
+        this.dom.linkRowsHeight.addEventListener('change', (e) => {
+            this.settings.linkRowsHeight = e.target.checked;
+        });
+        
         // Show columns checkbox
         this.dom.showColumns.addEventListener('change', (e) => {
             this.settings.showColumns = e.target.checked;
@@ -193,7 +200,9 @@ class GridGenerator {
             const value = parseInt(e.target.value);
             this.dom.rowCountValue.value = value;
             this.settings.rowCount = value;
-            this.calculateRowHeight();
+            if (this.settings.linkRowsHeight) {
+                this.calculateRowHeight();
+            }
             this.updatePresetButtons();
             this.updateGrid();
         };
@@ -205,7 +214,9 @@ class GridGenerator {
             const value = parseInt(e.target.value);
             this.dom.rowHeightValue.value = value;
             this.settings.rowHeight = value;
-            this.calculateRowCount();
+            if (this.settings.linkRowsHeight) {
+                this.calculateRowCount();
+            }
             this.updatePresetButtons();
             this.updateGrid();
         };
@@ -445,7 +456,12 @@ class GridGenerator {
             currentValue = parseFloat(slider.value);
         }
         
-        const step = e.shiftKey ? 10 : 0.5;
+        // Determine step based on slider type
+        const sliderId = slider.id;
+        const isIntegerSlider = (sliderId === 'columnCount' || sliderId === 'rowCount' || sliderId === 'rowHeight');
+        const baseStep = isIntegerSlider ? 1 : 0.5;
+        const step = e.shiftKey ? 10 : baseStep;
+        
         let newValue = e.key === 'ArrowUp' ? currentValue + step : currentValue - step;
         newValue = Math.max(min, Math.min(max, newValue));
         newValue = parseFloat(newValue.toFixed(1));
@@ -454,7 +470,6 @@ class GridGenerator {
         input.value = newValue.toFixed(1);
         
         // Update settings
-        const sliderId = slider.id;
         if (sliderId === 'frontWidth') {
             this.settings.frontWidth = newValue;
         } else if (sliderId === 'frontHeight') {
@@ -480,14 +495,18 @@ class GridGenerator {
             slider.value = intValue;
             input.value = intValue;
             this.settings.rowCount = intValue;
-            this.calculateRowHeight();
+            if (this.settings.linkRowsHeight) {
+                this.calculateRowHeight();
+            }
             this.updatePresetButtons();
         } else if (sliderId === 'rowHeight') {
             const intValue = Math.round(newValue);
             slider.value = intValue;
             input.value = intValue;
             this.settings.rowHeight = intValue;
-            this.calculateRowCount();
+            if (this.settings.linkRowsHeight) {
+                this.calculateRowCount();
+            }
             this.updatePresetButtons();
         }
         
@@ -536,14 +555,18 @@ class GridGenerator {
             slider.value = intValue;
             input.value = intValue;
             this.settings.rowCount = intValue;
-            this.calculateRowHeight();
+            if (this.settings.linkRowsHeight) {
+                this.calculateRowHeight();
+            }
             this.updatePresetButtons();
         } else if (sliderId === 'rowHeight') {
             const intValue = Math.round(numValue);
             slider.value = intValue;
             input.value = intValue;
             this.settings.rowHeight = intValue;
-            this.calculateRowCount();
+            if (this.settings.linkRowsHeight) {
+                this.calculateRowCount();
+            }
             this.updatePresetButtons();
         }
         
@@ -667,6 +690,12 @@ class GridGenerator {
             button.addEventListener('click', () => {
                 this.settings.rowCount = combo.rowCount;
                 this.settings.rowHeight = combo.rowHeight;
+                
+                // Enable link if it was disabled
+                if (!this.settings.linkRowsHeight) {
+                    this.settings.linkRowsHeight = true;
+                    this.dom.linkRowsHeight.checked = true;
+                }
                 
                 // Update UI
                 this.dom.rowCountValue.value = combo.rowCount;
