@@ -38,6 +38,8 @@ class GridGenerator {
         this.initPanelDrag('controlsPanel', 'panelHeader');
         this.initPanelDrag('gridPanel', 'gridPanelHeader');
         this.initValueInputs();
+        this.updateLinkedControlsVisual();
+        this.initColorPreview();
         this.updateCanvasSize();
         this.updateGrid();
         
@@ -82,10 +84,20 @@ class GridGenerator {
             rowHeightSlider: document.getElementById('rowHeight'),
             rowHeightValue: document.getElementById('rowHeightValue'),
             
+            // Containers
+            linkedControlsContainer: document.getElementById('linkedControlsContainer'),
+            
             // Color controls
-            boxColor: document.getElementById('boxColor'),
+            colorPreview: document.getElementById('colorPreview'),
             hexColorInput: document.getElementById('hexColorInput'),
             lunnenBlue: document.getElementById('lunnenBlue'),
+            hsbPicker: document.getElementById('hsbPicker'),
+            hueSlider: document.getElementById('hueSlider'),
+            saturationSlider: document.getElementById('saturationSlider'),
+            brightnessSlider: document.getElementById('brightnessSlider'),
+            hueValue: document.getElementById('hueValue'),
+            saturationValue: document.getElementById('saturationValue'),
+            brightnessValue: document.getElementById('brightnessValue'),
             
             // Buttons
             exportBtn: document.getElementById('exportBtn'),
@@ -141,6 +153,7 @@ class GridGenerator {
         // Link rows and row height checkbox
         this.dom.linkRowsHeight.addEventListener('change', (e) => {
             this.settings.linkRowsHeight = e.target.checked;
+            this.updateLinkedControlsVisual();
         });
         
         // Show columns checkbox
@@ -223,20 +236,51 @@ class GridGenerator {
         addSliderEvents(this.dom.rowHeightSlider, rowHeightHandler);
         this.dom.rowHeightSlider.addEventListener('keyup', rowHeightHandler);
         
-        // Box color picker
-        this.dom.boxColor.addEventListener('input', (e) => {
-            const colorValue = e.target.value;
-            this.settings.boxColor = colorValue;
-            this.dom.hexColorInput.value = colorValue;
-            this.updateGrid();
+        // Color preview button - toggle HSB picker
+        this.dom.colorPreview.addEventListener('click', () => {
+            const isVisible = this.dom.hsbPicker.style.display !== 'none';
+            this.dom.hsbPicker.style.display = isVisible ? 'none' : 'block';
+            if (!isVisible) {
+                this.updateHSBFromHex(this.settings.boxColor);
+            }
         });
+        
+        // HSB sliders
+        const hueHandler = (e) => {
+            const value = parseInt(e.target.value);
+            this.dom.hueValue.value = value;
+            this.updateColorFromHSB();
+            this.updateSaturationGradient();
+            this.updateBrightnessGradient();
+        };
+        this.dom.hueSlider.addEventListener('input', hueHandler);
+        this.dom.hueSlider.addEventListener('change', hueHandler);
+        
+        const saturationHandler = (e) => {
+            const value = parseInt(e.target.value);
+            this.dom.saturationValue.value = value;
+            this.updateColorFromHSB();
+            this.updateBrightnessGradient();
+        };
+        this.dom.saturationSlider.addEventListener('input', saturationHandler);
+        this.dom.saturationSlider.addEventListener('change', saturationHandler);
+        
+        const brightnessHandler = (e) => {
+            const value = parseInt(e.target.value);
+            this.dom.brightnessValue.value = value;
+            this.updateColorFromHSB();
+            this.updateSaturationGradient();
+        };
+        this.dom.brightnessSlider.addEventListener('input', brightnessHandler);
+        this.dom.brightnessSlider.addEventListener('change', brightnessHandler);
         
         // Lunnen Blue preset
         this.dom.lunnenBlue.addEventListener('click', () => {
             const lunnenBlueColor = '#2353DB';
             this.settings.boxColor = lunnenBlueColor;
-            this.dom.boxColor.value = lunnenBlueColor;
             this.dom.hexColorInput.value = lunnenBlueColor;
+            this.dom.colorPreview.style.backgroundColor = lunnenBlueColor;
+            this.updateHSBFromHex(lunnenBlueColor);
             this.updateGrid();
         });
         
@@ -259,7 +303,8 @@ class GridGenerator {
                 }
                 
                 this.settings.boxColor = hexValue;
-                this.dom.boxColor.value = hexValue;
+                this.dom.colorPreview.style.backgroundColor = hexValue;
+                this.updateHSBFromHex(hexValue);
                 this.updateGrid();
             }
         });
@@ -273,8 +318,9 @@ class GridGenerator {
             }
             
             e.target.value = hexValue;
-            this.dom.boxColor.value = hexValue;
             this.settings.boxColor = hexValue;
+            this.dom.colorPreview.style.backgroundColor = hexValue;
+            this.updateHSBFromHex(hexValue);
             this.updateGrid();
         });
         
@@ -326,6 +372,188 @@ class GridGenerator {
             this.dom.modalOverlay.setAttribute('aria-hidden', 'true');
             document.body.style.overflow = '';
         }
+    }
+    
+    updateLinkedControlsVisual() {
+        // Update visual grouping of linked controls based on linkRowsHeight state
+        if (this.dom.linkedControlsContainer) {
+            if (this.settings.linkRowsHeight) {
+                this.dom.linkedControlsContainer.classList.add('linked-controls-group');
+            } else {
+                this.dom.linkedControlsContainer.classList.remove('linked-controls-group');
+            }
+        }
+    }
+    
+    initColorPreview() {
+        // Set initial color preview
+        this.dom.colorPreview.style.backgroundColor = this.settings.boxColor;
+        this.updateHSBFromHex(this.settings.boxColor);
+    }
+    
+    // Color conversion methods
+    hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+    
+    rgbToHex(r, g, b) {
+        return '#' + [r, g, b].map(x => {
+            const hex = Math.round(x).toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        }).join('');
+    }
+    
+    rgbToHsb(r, g, b) {
+        r /= 255;
+        g /= 255;
+        b /= 255;
+        
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const delta = max - min;
+        
+        let h = 0;
+        let s = max === 0 ? 0 : delta / max;
+        let v = max;
+        
+        if (delta !== 0) {
+            if (max === r) {
+                h = ((g - b) / delta + (g < b ? 6 : 0)) / 6;
+            } else if (max === g) {
+                h = ((b - r) / delta + 2) / 6;
+            } else {
+                h = ((r - g) / delta + 4) / 6;
+            }
+        }
+        
+        return {
+            h: Math.round(h * 360),
+            s: Math.round(s * 100),
+            b: Math.round(v * 100)
+        };
+    }
+    
+    hsbToRgb(h, s, b) {
+        h = h / 360;
+        s = s / 100;
+        b = b / 100;
+        
+        let r, g, bl;
+        
+        if (s === 0) {
+            r = g = bl = b;
+        } else {
+            const i = Math.floor(h * 6);
+            const f = h * 6 - i;
+            const p = b * (1 - s);
+            const q = b * (1 - f * s);
+            const t = b * (1 - (1 - f) * s);
+            
+            switch (i % 6) {
+                case 0: r = b; g = t; bl = p; break;
+                case 1: r = q; g = b; bl = p; break;
+                case 2: r = p; g = b; bl = t; break;
+                case 3: r = p; g = q; bl = b; break;
+                case 4: r = t; g = p; bl = b; break;
+                case 5: r = b; g = p; bl = q; break;
+            }
+        }
+        
+        return {
+            r: r * 255,
+            g: g * 255,
+            b: bl * 255
+        };
+    }
+    
+    updateHSBFromHex(hex) {
+        const rgb = this.hexToRgb(hex);
+        if (rgb) {
+            const hsb = this.rgbToHsb(rgb.r, rgb.g, rgb.b);
+            this.dom.hueSlider.value = hsb.h;
+            this.dom.saturationSlider.value = hsb.s;
+            this.dom.brightnessSlider.value = hsb.b;
+            this.dom.hueValue.value = hsb.h;
+            this.dom.saturationValue.value = hsb.s;
+            this.dom.brightnessValue.value = hsb.b;
+            this.updateSaturationGradient();
+            this.updateBrightnessGradient();
+        }
+    }
+    
+    updateColorFromHSB() {
+        const h = parseInt(this.dom.hueSlider.value);
+        const s = parseInt(this.dom.saturationSlider.value);
+        const b = parseInt(this.dom.brightnessSlider.value);
+        
+        const rgb = this.hsbToRgb(h, s, b);
+        const hex = this.rgbToHex(rgb.r, rgb.g, rgb.b);
+        
+        this.settings.boxColor = hex;
+        this.dom.hexColorInput.value = hex;
+        this.dom.colorPreview.style.backgroundColor = hex;
+        this.updateGrid();
+    }
+    
+    updateSaturationGradient() {
+        const h = parseInt(this.dom.hueSlider.value);
+        const b = parseInt(this.dom.brightnessSlider.value);
+        
+        const leftColor = this.hsbToRgb(h, 0, b);
+        const rightColor = this.hsbToRgb(h, 100, b);
+        
+        const leftHex = this.rgbToHex(leftColor.r, leftColor.g, leftColor.b);
+        const rightHex = this.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
+        
+        const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
+        this.dom.saturationSlider.style.background = gradient;
+        
+        // Update custom CSS for the slider track
+        this.updateSliderTrackGradient('saturationSlider', gradient);
+    }
+    
+    updateBrightnessGradient() {
+        const h = parseInt(this.dom.hueSlider.value);
+        const s = parseInt(this.dom.saturationSlider.value);
+        
+        const leftColor = this.hsbToRgb(h, s, 0);
+        const rightColor = this.hsbToRgb(h, s, 100);
+        
+        const leftHex = this.rgbToHex(leftColor.r, leftColor.g, leftColor.b);
+        const rightHex = this.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
+        
+        const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
+        this.dom.brightnessSlider.style.background = gradient;
+        
+        // Update custom CSS for the slider track
+        this.updateSliderTrackGradient('brightnessSlider', gradient);
+    }
+    
+    updateSliderTrackGradient(sliderId, gradient) {
+        // Remove existing style if present
+        let styleId = `${sliderId}-track-style`;
+        let existingStyle = document.getElementById(styleId);
+        if (existingStyle) {
+            existingStyle.remove();
+        }
+        
+        // Create new style element
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = `
+            #${sliderId}::-webkit-slider-runnable-track {
+                background: ${gradient};
+            }
+            #${sliderId}::-moz-range-track {
+                background: ${gradient};
+            }
+        `;
+        document.head.appendChild(style);
     }
     
     initPanelDrag(panelId, headerId) {
@@ -416,8 +644,15 @@ class GridGenerator {
         const valueInputs = document.querySelectorAll('.value-display');
         
         valueInputs.forEach(input => {
-            const sliderId = input.id.replace('Value', '');
-            const slider = document.getElementById(sliderId);
+            let sliderId = input.id.replace('Value', '');
+            let slider = document.getElementById(sliderId);
+            
+            // Special handling for HSB sliders (they have "Slider" suffix)
+            if (!slider) {
+                sliderId = sliderId + 'Slider';
+                slider = document.getElementById(sliderId);
+            }
+            
             const min = parseFloat(input.dataset.min);
             const max = parseFloat(input.dataset.max);
             
@@ -458,16 +693,23 @@ class GridGenerator {
         
         // Determine step based on slider type
         const sliderId = slider.id;
-        const isIntegerSlider = (sliderId === 'columnCount' || sliderId === 'rowCount' || sliderId === 'rowHeight');
+        const isIntegerSlider = (sliderId === 'columnCount' || sliderId === 'rowCount' || sliderId === 'rowHeight' || 
+                                sliderId === 'hueSlider' || sliderId === 'saturationSlider' || sliderId === 'brightnessSlider');
         const baseStep = isIntegerSlider ? 1 : 0.5;
         const step = e.shiftKey ? 10 : baseStep;
         
         let newValue = e.key === 'ArrowUp' ? currentValue + step : currentValue - step;
         newValue = Math.max(min, Math.min(max, newValue));
-        newValue = parseFloat(newValue.toFixed(1));
         
-        slider.value = newValue;
-        input.value = newValue.toFixed(1);
+        if (isIntegerSlider) {
+            newValue = Math.round(newValue);
+            slider.value = newValue;
+            input.value = newValue;
+        } else {
+            newValue = parseFloat(newValue.toFixed(1));
+            slider.value = newValue;
+            input.value = newValue.toFixed(1);
+        }
         
         // Update settings
         if (sliderId === 'frontWidth') {
@@ -486,28 +728,32 @@ class GridGenerator {
             this.calculateRowCount();
             this.generateRowPresets();
         } else if (sliderId === 'columnCount') {
-            const intValue = Math.round(newValue);
-            slider.value = intValue;
-            input.value = intValue;
-            this.settings.columnCount = intValue;
+            this.settings.columnCount = newValue;
         } else if (sliderId === 'rowCount') {
-            const intValue = Math.round(newValue);
-            slider.value = intValue;
-            input.value = intValue;
-            this.settings.rowCount = intValue;
+            this.settings.rowCount = newValue;
             if (this.settings.linkRowsHeight) {
                 this.calculateRowHeight();
             }
             this.updatePresetButtons();
         } else if (sliderId === 'rowHeight') {
-            const intValue = Math.round(newValue);
-            slider.value = intValue;
-            input.value = intValue;
-            this.settings.rowHeight = intValue;
+            this.settings.rowHeight = newValue;
             if (this.settings.linkRowsHeight) {
                 this.calculateRowCount();
             }
             this.updatePresetButtons();
+        } else if (sliderId === 'hueSlider') {
+            this.updateColorFromHSB();
+            this.updateSaturationGradient();
+            this.updateBrightnessGradient();
+            return; // HSB updates grid separately
+        } else if (sliderId === 'saturationSlider') {
+            this.updateColorFromHSB();
+            this.updateBrightnessGradient();
+            return; // HSB updates grid separately
+        } else if (sliderId === 'brightnessSlider') {
+            this.updateColorFromHSB();
+            this.updateSaturationGradient();
+            return; // HSB updates grid separately
         }
         
         this.updateGrid();
@@ -523,13 +769,22 @@ class GridGenerator {
         }
         
         numValue = Math.max(min, Math.min(max, numValue));
-        numValue = parseFloat(numValue.toFixed(1));
-        
-        slider.value = numValue;
-        input.value = numValue.toFixed(1);
         
         // Update settings
         const sliderId = slider.id;
+        const isIntegerSlider = (sliderId === 'columnCount' || sliderId === 'rowCount' || sliderId === 'rowHeight' || 
+                                sliderId === 'hueSlider' || sliderId === 'saturationSlider' || sliderId === 'brightnessSlider');
+        
+        if (isIntegerSlider) {
+            numValue = Math.round(numValue);
+            slider.value = numValue;
+            input.value = numValue;
+        } else {
+            numValue = parseFloat(numValue.toFixed(1));
+            slider.value = numValue;
+            input.value = numValue.toFixed(1);
+        }
+        
         if (sliderId === 'frontWidth') {
             this.settings.frontWidth = numValue;
         } else if (sliderId === 'frontHeight') {
@@ -546,28 +801,32 @@ class GridGenerator {
             this.calculateRowCount();
             this.generateRowPresets();
         } else if (sliderId === 'columnCount') {
-            const intValue = Math.round(numValue);
-            slider.value = intValue;
-            input.value = intValue;
-            this.settings.columnCount = intValue;
+            this.settings.columnCount = numValue;
         } else if (sliderId === 'rowCount') {
-            const intValue = Math.round(numValue);
-            slider.value = intValue;
-            input.value = intValue;
-            this.settings.rowCount = intValue;
+            this.settings.rowCount = numValue;
             if (this.settings.linkRowsHeight) {
                 this.calculateRowHeight();
             }
             this.updatePresetButtons();
         } else if (sliderId === 'rowHeight') {
-            const intValue = Math.round(numValue);
-            slider.value = intValue;
-            input.value = intValue;
-            this.settings.rowHeight = intValue;
+            this.settings.rowHeight = numValue;
             if (this.settings.linkRowsHeight) {
                 this.calculateRowCount();
             }
             this.updatePresetButtons();
+        } else if (sliderId === 'hueSlider') {
+            this.updateColorFromHSB();
+            this.updateSaturationGradient();
+            this.updateBrightnessGradient();
+            return; // HSB updates grid separately
+        } else if (sliderId === 'saturationSlider') {
+            this.updateColorFromHSB();
+            this.updateBrightnessGradient();
+            return; // HSB updates grid separately
+        } else if (sliderId === 'brightnessSlider') {
+            this.updateColorFromHSB();
+            this.updateSaturationGradient();
+            return; // HSB updates grid separately
         }
         
         this.updateGrid();
