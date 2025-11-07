@@ -996,36 +996,56 @@ class GridGenerator {
         exportSvg.setAttribute('height', `${totalHeight}mm`);
         exportSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${totalHeight}`);
         
+        // Create groups for better organization in Figma/Illustrator
+        const boxGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        boxGroup.setAttribute('id', 'box');
+        exportSvg.appendChild(boxGroup);
+        
         // Draw rectangles at actual mm scale
-        this.drawRectanglesToSVG(exportSvg, 0, 0, frontWidth, frontHeight, thickness);
+        this.drawRectanglesToSVG(boxGroup, 0, 0, frontWidth, frontHeight, thickness);
         
         // Draw grid elements on front panel (in mm)
         const frontX = thickness;
         const frontY = thickness;
         
-        // Draw columns if enabled
+        // Draw columns if enabled (in separate group)
         if (this.settings.showColumns) {
-            this.drawColumnsToSVG(exportSvg, frontX, frontY, frontWidth, frontHeight);
+            const columnsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            columnsGroup.setAttribute('id', 'columns');
+            exportSvg.appendChild(columnsGroup);
+            this.drawColumnsToSVG(columnsGroup, frontX, frontY, frontWidth, frontHeight);
         }
         
-        // Draw rows if enabled
+        // Draw rows if enabled (in separate group)
         if (this.settings.showRows) {
-            this.drawRowsToSVG(exportSvg, frontX, frontY, frontWidth, frontHeight);
+            const rowsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            rowsGroup.setAttribute('id', 'rows');
+            exportSvg.appendChild(rowsGroup);
+            this.drawRowsToSVG(rowsGroup, frontX, frontY, frontWidth, frontHeight);
         }
         
-        // Draw baseline if enabled
+        // Draw baseline if enabled (in separate group)
         if (this.settings.showBaseline) {
-            this.drawBaselineToSVG(exportSvg, frontX, frontY, frontWidth, frontHeight);
+            const baselineGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            baselineGroup.setAttribute('id', 'baseline');
+            exportSvg.appendChild(baselineGroup);
+            this.drawBaselineToSVG(baselineGroup, frontX, frontY, frontWidth, frontHeight);
         }
         
-        // Add dimensions if enabled
+        // Add dimensions if enabled (in separate group)
         if (this.settings.showDimensions) {
-            this.drawDimensionsToSVG(exportSvg, 0, 0, frontWidth, frontHeight, thickness);
+            const dimensionsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            dimensionsGroup.setAttribute('id', 'dimensions');
+            exportSvg.appendChild(dimensionsGroup);
+            this.drawDimensionsToSVG(dimensionsGroup, 0, 0, frontWidth, frontHeight, thickness);
         }
         
-        // Add labels if enabled
+        // Add labels if enabled (in separate group)
         if (this.settings.showLabels) {
-            this.drawLabelsToSVG(exportSvg, 0, 0, frontWidth, frontHeight, thickness);
+            const labelsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            labelsGroup.setAttribute('id', 'labels');
+            exportSvg.appendChild(labelsGroup);
+            this.drawLabelsToSVG(labelsGroup, 0, 0, frontWidth, frontHeight, thickness);
         }
         
         // Convert to string
