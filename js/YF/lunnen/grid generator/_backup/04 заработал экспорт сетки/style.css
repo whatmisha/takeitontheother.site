@@ -10,6 +10,7 @@
     --color-text-dim: #666;
     --color-text-subtle: #555;
     --color-border: #333;
+    --color-grid: #ffffff;
     
     /* Spacing */
     --spacing-xs: 2px;
@@ -122,26 +123,11 @@ body {
     margin: 0 auto;
 }
 
-#canvas {
+#gridSvg {
     display: block;
-    max-width: 100%;
-    max-height: 70vh;
     width: auto;
     height: auto;
-    position: relative;
-    z-index: 1;
 }
-
-#overlayCanvas {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    z-index: 2;
-}
-
-/* Placeholder removed */
 
 .controls-panel {
     position: fixed;
@@ -206,12 +192,6 @@ body {
 .control-section {
     margin-bottom: 20px;
     border-bottom: none;
-}
-
-#transformPanel .control-section {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
 }
 
 .control-section:last-child {
@@ -412,51 +392,36 @@ body {
     background: #2a2a2a;
 }
 
-/* Fieldset reset */
-fieldset {
-    border: none;
-    padding: 0;
-    margin: 0;
-}
-
-legend {
-    padding: 0;
-}
-
-.radio-group {
+.row-presets {
     display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-    margin-top: 6px;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: var(--spacing-md);
 }
 
-.radio-label {
-    display: flex;
-    align-items: center;
+.row-preset-btn {
+    font-size: 0.75rem;
+    color: var(--color-text-dim);
     cursor: pointer;
-    padding: var(--spacing-sm) 0;
-    border-radius: var(--radius);
-    transition: all var(--transition-fast);
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: all var(--transition-normal);
+    background: transparent;
+    border: 1px solid var(--color-border);
+    font-family: inherit;
+    min-width: auto;
 }
 
-.radio-label:hover {
+.row-preset-btn:hover {
     color: var(--color-text);
+    background: #2a2a2a;
+    border-color: var(--color-text-dim);
 }
 
-.radio-label input[type="radio"] {
-    margin-right: var(--spacing-md);
-    cursor: pointer;
-    width: var(--checkbox-size);
-    height: var(--checkbox-size);
-}
-
-.radio-label span {
-    font-size: 0.85rem;
-    color: var(--color-text-secondary);
-}
-
-.radio-label:hover span {
+.row-preset-btn.active {
     color: var(--color-text);
+    background: var(--color-text-dim);
+    border-color: var(--color-text-dim);
 }
 
 .checkbox-label {
@@ -486,13 +451,6 @@ legend {
     width: var(--checkbox-size);
     height: var(--checkbox-size);
     vertical-align: middle;
-}
-
-.hint-text {
-    font-size: 0.75rem;
-    color: var(--color-text-dim);
-    margin-top: var(--spacing-sm);
-    line-height: 1.3;
 }
 
 /* Base button styles - DRY principle */
@@ -536,59 +494,6 @@ legend {
     cursor: not-allowed;
 }
 
-.btn-remove {
-    background: transparent !important;
-    color: var(--color-text) !important;
-    border: 1px solid var(--color-text) !important;
-    padding: var(--spacing-md) !important;
-    min-width: auto !important;
-    width: 36px !important;  /* Равно высоте кнопки */
-    height: 36px !important;
-    display: none !important;
-    align-items: center !important;
-    justify-content: center !important;
-    line-height: 1 !important;
-}
-
-.btn-remove.visible {
-    display: flex !important;
-}
-
-.btn-remove:hover {
-    background: #ff4444 !important;
-    color: white !important;
-    border-color: #ff4444 !important;
-}
-
-.btn-full {
-    width: 100%;
-}
-
-.transform-reset-group {
-    margin-top: auto;
-    margin-bottom: 0;
-    padding-top: var(--spacing-4xl);
-    display: flex;
-    align-items: flex-end;
-    min-height: 52px;
-}
-
-#transformPanel .btn-secondary {
-    background: var(--color-bg-panel);
-    border: 1px solid var(--color-border);
-}
-
-#transformPanel .btn-secondary:hover:not(:disabled) {
-    background: var(--color-text);
-    color: var(--color-bg);
-    border: 1px solid var(--color-text);
-}
-
-/* Drag and drop styles */
-.canvas-container.dragover {
-    border: 3px solid var(--color-text);
-}
-
 /* Bottom buttons */
 .bottom-buttons {
     position: fixed;
@@ -618,31 +523,6 @@ legend {
 .btn-export {
     background: var(--color-text);
     color: var(--color-bg);
-}
-
-.export-transparency-label {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-    color: var(--color-text);
-    font-size: 0.9rem;
-    cursor: pointer;
-    user-select: none;
-    margin-left: var(--spacing-lg);
-}
-
-.export-transparency-label input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-}
-
-.export-transparency-label span {
-    color: var(--color-text);
-}
-
-.export-transparency-label:hover span {
-    color: var(--color-text-secondary);
 }
 
 /* Scrollbar styling */
@@ -771,6 +651,15 @@ legend {
     margin-bottom: var(--spacing-2xl);
 }
 
+.modal-body ul {
+    margin-bottom: var(--spacing-2xl);
+    padding-left: var(--spacing-3xl);
+}
+
+.modal-body li {
+    margin-bottom: var(--spacing-md);
+}
+
 .modal-body p:last-child {
     margin-bottom: 0;
 }
@@ -797,6 +686,27 @@ legend {
 
 .modal-content::-webkit-scrollbar-thumb:hover {
     background: var(--color-text-secondary);
+}
+
+/* SVG Grid Styles */
+.grid-rect {
+    fill: none;
+    stroke: var(--color-grid);
+    stroke-width: 2;
+}
+
+.grid-text {
+    fill: #ffffff;
+    font-size: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    mix-blend-mode: difference;
+}
+
+.grid-label {
+    fill: var(--color-text-secondary);
+    font-size: 16px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 /* Responsive design - consolidated media queries */
@@ -832,7 +742,7 @@ legend {
     }
     
     .help-container {
-        bottom: calc(var(--spacing-3xl) + 250px);
+        bottom: calc(var(--spacing-3xl) + 60px);
         right: var(--spacing-3xl);
     }
     
@@ -849,3 +759,4 @@ legend {
         margin-bottom: var(--spacing-3xl);
     }
 }
+
