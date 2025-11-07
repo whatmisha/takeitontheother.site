@@ -55,9 +55,9 @@ class GridGenerator {
             svg: document.getElementById('gridSvg'),
             
             // Sliders
-            frontWidthSlider: document.getElementById('frontWidth'),
-            frontHeightSlider: document.getElementById('frontHeight'),
-            thicknessSlider: document.getElementById('thickness'),
+            frontWidthSlider: document.getElementById('frontWidthSlider'),
+            frontHeightSlider: document.getElementById('frontHeightSlider'),
+            thicknessSlider: document.getElementById('thicknessSlider'),
             
             // Value displays
             frontWidthValue: document.getElementById('frontWidthValue'),
@@ -73,15 +73,15 @@ class GridGenerator {
             showBaseline: document.getElementById('showBaseline'),
             
             // Grid controls
-            gridModuleSlider: document.getElementById('gridModule'),
+            gridModuleSlider: document.getElementById('gridModuleSlider'),
             gridModuleValue: document.getElementById('gridModuleValue'),
-            marginsSlider: document.getElementById('margins'),
+            marginsSlider: document.getElementById('marginsSlider'),
             marginsValue: document.getElementById('marginsValue'),
-            columnCountSlider: document.getElementById('columnCount'),
+            columnCountSlider: document.getElementById('columnCountSlider'),
             columnCountValue: document.getElementById('columnCountValue'),
-            rowCountSlider: document.getElementById('rowCount'),
+            rowCountSlider: document.getElementById('rowCountSlider'),
             rowCountValue: document.getElementById('rowCountValue'),
-            rowHeightSlider: document.getElementById('rowHeight'),
+            rowHeightSlider: document.getElementById('rowHeightSlider'),
             rowHeightValue: document.getElementById('rowHeightValue'),
             
             // Containers
@@ -644,14 +644,9 @@ class GridGenerator {
         const valueInputs = document.querySelectorAll('.value-display');
         
         valueInputs.forEach(input => {
-            let sliderId = input.id.replace('Value', '');
-            let slider = document.getElementById(sliderId);
-            
-            // Special handling for HSB sliders (they have "Slider" suffix)
-            if (!slider) {
-                sliderId = sliderId + 'Slider';
-                slider = document.getElementById(sliderId);
-            }
+            // Universal naming convention: inputValue -> inputSlider
+            const sliderId = input.id.replace('Value', 'Slider');
+            const slider = document.getElementById(sliderId);
             
             const min = parseFloat(input.dataset.min);
             const max = parseFloat(input.dataset.max);
@@ -693,7 +688,7 @@ class GridGenerator {
         
         // Determine step based on slider type
         const sliderId = slider.id;
-        const isIntegerSlider = (sliderId === 'columnCount' || sliderId === 'rowCount' || sliderId === 'rowHeight' || 
+        const isIntegerSlider = (sliderId === 'columnCountSlider' || sliderId === 'rowCountSlider' || sliderId === 'rowHeightSlider' || 
                                 sliderId === 'hueSlider' || sliderId === 'saturationSlider' || sliderId === 'brightnessSlider');
         const baseStep = isIntegerSlider ? 1 : 0.5;
         const step = e.shiftKey ? 10 : baseStep;
@@ -712,30 +707,30 @@ class GridGenerator {
         }
         
         // Update settings
-        if (sliderId === 'frontWidth') {
+        if (sliderId === 'frontWidthSlider') {
             this.settings.frontWidth = newValue;
-        } else if (sliderId === 'frontHeight') {
+        } else if (sliderId === 'frontHeightSlider') {
             this.settings.frontHeight = newValue;
-        } else if (sliderId === 'thickness') {
+        } else if (sliderId === 'thicknessSlider') {
             this.settings.thickness = newValue;
-        } else if (sliderId === 'gridModule') {
+        } else if (sliderId === 'gridModuleSlider') {
             this.settings.gridModule = newValue;
             this.dom.gridModuleValue.value = newValue.toFixed(2);
             this.calculateRowCount();
             this.generateRowPresets();
-        } else if (sliderId === 'margins') {
+        } else if (sliderId === 'marginsSlider') {
             this.settings.margins = newValue;
             this.calculateRowCount();
             this.generateRowPresets();
-        } else if (sliderId === 'columnCount') {
+        } else if (sliderId === 'columnCountSlider') {
             this.settings.columnCount = newValue;
-        } else if (sliderId === 'rowCount') {
+        } else if (sliderId === 'rowCountSlider') {
             this.settings.rowCount = newValue;
             if (this.settings.linkRowsHeight) {
                 this.calculateRowHeight();
             }
             this.updatePresetButtons();
-        } else if (sliderId === 'rowHeight') {
+        } else if (sliderId === 'rowHeightSlider') {
             this.settings.rowHeight = newValue;
             if (this.settings.linkRowsHeight) {
                 this.calculateRowCount();
@@ -772,7 +767,7 @@ class GridGenerator {
         
         // Update settings
         const sliderId = slider.id;
-        const isIntegerSlider = (sliderId === 'columnCount' || sliderId === 'rowCount' || sliderId === 'rowHeight' || 
+        const isIntegerSlider = (sliderId === 'columnCountSlider' || sliderId === 'rowCountSlider' || sliderId === 'rowHeightSlider' || 
                                 sliderId === 'hueSlider' || sliderId === 'saturationSlider' || sliderId === 'brightnessSlider');
         
         if (isIntegerSlider) {
@@ -785,30 +780,30 @@ class GridGenerator {
             input.value = numValue.toFixed(1);
         }
         
-        if (sliderId === 'frontWidth') {
+        if (sliderId === 'frontWidthSlider') {
             this.settings.frontWidth = numValue;
-        } else if (sliderId === 'frontHeight') {
+        } else if (sliderId === 'frontHeightSlider') {
             this.settings.frontHeight = numValue;
-        } else if (sliderId === 'thickness') {
+        } else if (sliderId === 'thicknessSlider') {
             this.settings.thickness = numValue;
-        } else if (sliderId === 'gridModule') {
+        } else if (sliderId === 'gridModuleSlider') {
             this.settings.gridModule = numValue;
             this.dom.gridModuleValue.value = numValue.toFixed(2);
             this.calculateRowCount();
             this.generateRowPresets();
-        } else if (sliderId === 'margins') {
+        } else if (sliderId === 'marginsSlider') {
             this.settings.margins = numValue;
             this.calculateRowCount();
             this.generateRowPresets();
-        } else if (sliderId === 'columnCount') {
+        } else if (sliderId === 'columnCountSlider') {
             this.settings.columnCount = numValue;
-        } else if (sliderId === 'rowCount') {
+        } else if (sliderId === 'rowCountSlider') {
             this.settings.rowCount = numValue;
             if (this.settings.linkRowsHeight) {
                 this.calculateRowHeight();
             }
             this.updatePresetButtons();
-        } else if (sliderId === 'rowHeight') {
+        } else if (sliderId === 'rowHeightSlider') {
             this.settings.rowHeight = numValue;
             if (this.settings.linkRowsHeight) {
                 this.calculateRowCount();
@@ -1193,25 +1188,33 @@ class GridGenerator {
         const bLinear = toLinear(b);
         
         // Calculate relative luminance
-        const luminance = 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
+        let luminance = 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
         
-        // Store luminance for opacity calculation
+        // Clamp luminance to avoid extreme values at pure black/white
+        // This prevents harsh contrast jumps at #000000 and #ffffff
+        const minLuminance = 0.02;
+        const maxLuminance = 0.98;
+        luminance = Math.max(minLuminance, Math.min(maxLuminance, luminance));
+        
+        // Store clamped luminance for opacity calculation
         this.currentLuminance = luminance;
         
         // Return black for light backgrounds, white for dark backgrounds
-        return luminance > 0.5 ? '#000000' : '#ffffff';
+        // Use original luminance for color decision to keep accurate contrast
+        const originalLuminance = 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
+        return originalLuminance > 0.5 ? '#000000' : '#ffffff';
     }
     
     getGridOpacity(baseOpacity) {
         // Calculate opacity based on luminance
         // Maximum opacity when luminance is around 0.5 (medium brightness)
-        // Reduced opacity when luminance is close to 0 (very dark) or 1 (very light)
+        // Reduced opacity when luminance is close to extremes (very dark or very light)
         
         const luminance = this.currentLuminance || 0.5;
         
-        // Use a parabolic curve: maximum at 0.5, minimum at 0 and 1
+        // Use a parabolic curve: maximum at 0.5, minimum at edges
         // Formula: 1 - (2 * luminance - 1)^2
-        // This gives us: 1 at luminance=0.5, 0 at luminance=0 or 1
+        // luminance is already clamped in getContrastColor()
         const factor = 1 - Math.pow(2 * luminance - 1, 2);
         
         // Define opacity range
