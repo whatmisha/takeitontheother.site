@@ -200,7 +200,7 @@ body {
 
 .control-section h3 {
     font-size: 1rem;
-    margin-bottom: var(--spacing-2xl);
+    margin-bottom: var(--spacing-md);
     color: var(--color-text);
     font-weight: 600;
     letter-spacing: 0.5px;
