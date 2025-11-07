@@ -332,11 +332,32 @@ class GridGenerator {
         }
         yOffset = top;
         
+        // Prevent dragging from interactive elements
+        panel.addEventListener('mousedown', (e) => {
+            const target = e.target;
+            // Don't interfere with input elements (sliders, text inputs, buttons, checkboxes)
+            if (target.tagName === 'INPUT' || 
+                target.tagName === 'BUTTON' || 
+                target.tagName === 'TEXTAREA' ||
+                target.tagName === 'SELECT') {
+                e.stopPropagation();
+                return;
+            }
+        }, true); // Use capture phase
+        
         header.addEventListener('mousedown', dragStart);
         document.addEventListener('mousemove', drag);
         document.addEventListener('mouseup', dragEnd);
         
         function dragStart(e) {
+            // Only start dragging if clicking directly on header, not on interactive elements
+            if (e.target.tagName === 'INPUT' || 
+                e.target.tagName === 'BUTTON' || 
+                e.target.tagName === 'TEXTAREA' ||
+                e.target.tagName === 'SELECT') {
+                return;
+            }
+            
             initialX = e.clientX - xOffset;
             initialY = e.clientY - yOffset;
             
@@ -432,6 +453,34 @@ class GridGenerator {
             this.settings.frontHeight = newValue;
         } else if (sliderId === 'thickness') {
             this.settings.thickness = newValue;
+        } else if (sliderId === 'gridModule') {
+            this.settings.gridModule = newValue;
+            this.dom.gridModuleValue.value = newValue.toFixed(2);
+            this.calculateRowCount();
+            this.generateRowPresets();
+        } else if (sliderId === 'margins') {
+            this.settings.margins = newValue;
+            this.calculateRowCount();
+            this.generateRowPresets();
+        } else if (sliderId === 'columnCount') {
+            const intValue = Math.round(newValue);
+            slider.value = intValue;
+            input.value = intValue;
+            this.settings.columnCount = intValue;
+        } else if (sliderId === 'rowCount') {
+            const intValue = Math.round(newValue);
+            slider.value = intValue;
+            input.value = intValue;
+            this.settings.rowCount = intValue;
+            this.calculateRowHeight();
+            this.updatePresetButtons();
+        } else if (sliderId === 'rowHeight') {
+            const intValue = Math.round(newValue);
+            slider.value = intValue;
+            input.value = intValue;
+            this.settings.rowHeight = intValue;
+            this.calculateRowCount();
+            this.updatePresetButtons();
         }
         
         this.updateGrid();
@@ -460,6 +509,34 @@ class GridGenerator {
             this.settings.frontHeight = numValue;
         } else if (sliderId === 'thickness') {
             this.settings.thickness = numValue;
+        } else if (sliderId === 'gridModule') {
+            this.settings.gridModule = numValue;
+            this.dom.gridModuleValue.value = numValue.toFixed(2);
+            this.calculateRowCount();
+            this.generateRowPresets();
+        } else if (sliderId === 'margins') {
+            this.settings.margins = numValue;
+            this.calculateRowCount();
+            this.generateRowPresets();
+        } else if (sliderId === 'columnCount') {
+            const intValue = Math.round(numValue);
+            slider.value = intValue;
+            input.value = intValue;
+            this.settings.columnCount = intValue;
+        } else if (sliderId === 'rowCount') {
+            const intValue = Math.round(numValue);
+            slider.value = intValue;
+            input.value = intValue;
+            this.settings.rowCount = intValue;
+            this.calculateRowHeight();
+            this.updatePresetButtons();
+        } else if (sliderId === 'rowHeight') {
+            const intValue = Math.round(numValue);
+            slider.value = intValue;
+            input.value = intValue;
+            this.settings.rowHeight = intValue;
+            this.calculateRowCount();
+            this.updatePresetButtons();
         }
         
         this.updateGrid();
