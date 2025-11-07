@@ -147,52 +147,62 @@ class GridGenerator {
         });
         
         // Grid module slider
-        addSliderEvents(this.dom.gridModuleSlider, (e) => {
+        const gridModuleHandler = (e) => {
             const value = parseFloat(e.target.value);
             this.dom.gridModuleValue.value = value.toFixed(2);
             this.settings.gridModule = value;
             this.calculateRowCount();
             this.generateRowPresets();
             this.updateGrid();
-        });
+        };
+        addSliderEvents(this.dom.gridModuleSlider, gridModuleHandler);
+        this.dom.gridModuleSlider.addEventListener('keyup', gridModuleHandler);
         
         // Margins slider
-        addSliderEvents(this.dom.marginsSlider, (e) => {
+        const marginsHandler = (e) => {
             const value = parseFloat(e.target.value);
             this.dom.marginsValue.value = value.toFixed(1);
             this.settings.margins = value;
             this.calculateRowCount();
             this.generateRowPresets();
             this.updateGrid();
-        });
+        };
+        addSliderEvents(this.dom.marginsSlider, marginsHandler);
+        this.dom.marginsSlider.addEventListener('keyup', marginsHandler);
         
         // Column count slider
-        addSliderEvents(this.dom.columnCountSlider, (e) => {
+        const columnCountHandler = (e) => {
             const value = parseInt(e.target.value);
             this.dom.columnCountValue.value = value;
             this.settings.columnCount = value;
             this.updateGrid();
-        });
+        };
+        addSliderEvents(this.dom.columnCountSlider, columnCountHandler);
+        this.dom.columnCountSlider.addEventListener('keyup', columnCountHandler);
         
         // Row count slider
-        addSliderEvents(this.dom.rowCountSlider, (e) => {
+        const rowCountHandler = (e) => {
             const value = parseInt(e.target.value);
             this.dom.rowCountValue.value = value;
             this.settings.rowCount = value;
             this.calculateRowHeight();
             this.updatePresetButtons();
             this.updateGrid();
-        });
+        };
+        addSliderEvents(this.dom.rowCountSlider, rowCountHandler);
+        this.dom.rowCountSlider.addEventListener('keyup', rowCountHandler);
         
         // Row height slider
-        addSliderEvents(this.dom.rowHeightSlider, (e) => {
+        const rowHeightHandler = (e) => {
             const value = parseInt(e.target.value);
             this.dom.rowHeightValue.value = value;
             this.settings.rowHeight = value;
             this.calculateRowCount();
             this.updatePresetButtons();
             this.updateGrid();
-        });
+        };
+        addSliderEvents(this.dom.rowHeightSlider, rowHeightHandler);
+        this.dom.rowHeightSlider.addEventListener('keyup', rowHeightHandler);
         
         // Box color picker
         this.dom.boxColor.addEventListener('input', (e) => {
