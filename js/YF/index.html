@@ -87,20 +87,16 @@
     // Структура проектов и приложений
     const projects = [
       {
-        name: "Bodycore",
-        apps: [
-          { name: "asterisk_pattern_generator", displayName: "Asterisk Pattern Generator" }
-        ]
-      },
-      {
         name: "Lunnen",
         apps: [
-          { name: "dither", displayName: "Dither" },
+          { name: "grid generator", displayName: "Grid" },
+          { name: "dither", displayName: "Dithering Texture" },
           { name: "hyperspace", displayName: "Hyperspace" },
-          { name: "pattern_generator", displayName: "Pattern Generator" },
-          { name: "pattern_generator_02", displayName: "Pattern Generator 02", hasSubfolder: true },
-          { name: "random_lines_generator", displayName: "Random Lines Generator", hasSubfolder: true },
-          { name: "rays_pattern_generator", displayName: "Rays Pattern Generator", hasSubfolder: true }
+          { name: "pattern_generator", displayName: "Pattern 01" },
+          { name: "pattern_generator_02", displayName: "Pattern 02", hasSubfolder: true },
+          { name: "random_lines_generator", displayName: "Random Lines", hasSubfolder: true },
+          { name: "rays_pattern_generator", displayName: "Rays Pattern", hasSubfolder: true },
+          { name: "asterisk_pattern_generator", displayName: "Asterisk Pattern" }
         ]
       },
       {
@@ -144,11 +140,14 @@
           const link = document.createElement('a');
           link.className = 'app-link';
           
+          // Определяем папку проекта (если указана кастомная, используем её)
+          const folderName = app.folder || project.name.toLowerCase();
+          
           // Если index.html находится в подпапке /01/, добавляем /01/ к ссылке
           if (app.hasSubfolder) {
-            link.href = `${project.name.toLowerCase()}/${app.name}/01/`;
+            link.href = `${folderName}/${app.name}/01/`;
           } else {
-            link.href = `${project.name.toLowerCase()}/${app.name}/`;
+            link.href = `${folderName}/${app.name}/`;
           }
           
           // Используем предоставленное отображаемое имя, если оно есть, иначе форматируем имя папки
