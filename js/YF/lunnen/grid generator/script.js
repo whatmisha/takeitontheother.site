@@ -7,6 +7,7 @@ class GridGenerator {
             thickness: 39,      // mm
             showDimensions: false,
             showLabels: false,
+            showSidePanels: true,
             boxColor: '#e6e6e6',
             // Grid settings
             gridModule: 2.91,  // mm - base unit for gutter and baseline
@@ -62,6 +63,7 @@ class GridGenerator {
             
             // Checkboxes
             showDimensions: document.getElementById('showDimensions'),
+            showSidePanels: document.getElementById('showSidePanels'),
             showColumns: document.getElementById('showColumns'),
             showRows: document.getElementById('showRows'),
             showBaseline: document.getElementById('showBaseline'),
@@ -125,6 +127,12 @@ class GridGenerator {
         // Show dimensions checkbox
         this.dom.showDimensions.addEventListener('change', (e) => {
             this.settings.showDimensions = e.target.checked;
+            this.updateGrid();
+        });
+        
+        // Show side panels checkbox
+        this.dom.showSidePanels.addEventListener('change', (e) => {
+            this.settings.showSidePanels = e.target.checked;
             this.updateGrid();
         });
         
@@ -758,20 +766,23 @@ class GridGenerator {
     }
     
     drawRectangles(x, y, frontW, frontH, thickness) {
-        // Front (center)
+        // Front (center) - always visible
         this.createRect(x + thickness, y + thickness, frontW, frontH);
         
-        // Left
-        this.createRect(x, y + thickness, thickness, frontH);
-        
-        // Right
-        this.createRect(x + thickness + frontW, y + thickness, thickness, frontH);
-        
-        // Top
-        this.createRect(x + thickness, y, frontW, thickness);
-        
-        // Bottom
-        this.createRect(x + thickness, y + thickness + frontH, frontW, thickness);
+        // Side panels - only if showSidePanels is enabled
+        if (this.settings.showSidePanels) {
+            // Left
+            this.createRect(x, y + thickness, thickness, frontH);
+            
+            // Right
+            this.createRect(x + thickness + frontW, y + thickness, thickness, frontH);
+            
+            // Top
+            this.createRect(x + thickness, y, frontW, thickness);
+            
+            // Bottom
+            this.createRect(x + thickness, y + thickness + frontH, frontW, thickness);
+        }
     }
     
     createRect(x, y, width, height) {
