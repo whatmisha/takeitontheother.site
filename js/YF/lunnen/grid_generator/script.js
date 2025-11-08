@@ -8,7 +8,7 @@ class GridGenerator {
             showDimensions: false,
             showLabels: false,
             showSidePanels: true,
-            boxColor: '#e6e6e6',
+            boxColor: '#dadde6',
             // Grid settings
             gridModule: 5.0,  // mm - base unit for gutter and baseline
             margins: 2,  // in modules - margin from edges
@@ -290,7 +290,9 @@ class GridGenerator {
         this.dom.hexColorInput.addEventListener('input', (e) => {
             let hexValue = e.target.value;
             
-            if (!hexValue.startsWith('#')) {
+            // Remove all # symbols and add one at the start
+            hexValue = hexValue.replace(/#/g, '');
+            if (hexValue) {
                 hexValue = '#' + hexValue;
                 e.target.value = hexValue;
             }
@@ -316,7 +318,7 @@ class GridGenerator {
             let hexValue = e.target.value;
             
             if (!hexValue.match(/^#[0-9A-Fa-f]{6}$/)) {
-                hexValue = '#e6e6e6';
+                hexValue = '#dadde6';
             }
             
             e.target.value = hexValue;
