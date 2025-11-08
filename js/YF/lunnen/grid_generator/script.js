@@ -711,20 +711,17 @@ class GridGenerator {
         if (isIntegerSlider) {
             baseStep = 1;
             shiftStep = 10;
-        } else if (isModuleSlider) {
+        } else if (isModuleSlider || isMarginsSlider) {
             baseStep = 0.01;
             shiftStep = 0.1;
-        } else if (isMarginsSlider) {
-            baseStep = 0.5;
-            shiftStep = 1.0;
         } else {
             baseStep = 0.5;
             shiftStep = 10;
         }
         
         let newValue;
-        if (e.shiftKey && isModuleSlider) {
-            // For Module with Shift: round to tenths first, then add/subtract 0.1
+        if (e.shiftKey && (isModuleSlider || isMarginsSlider)) {
+            // For Module and Margins with Shift: round to tenths first, then add/subtract 0.1
             const roundedToTenth = Math.round(currentValue * 10) / 10;
             const step = (e.key === 'ArrowUp' ? 1 : -1) * shiftStep;
             newValue = roundedToTenth + step;
@@ -1705,7 +1702,7 @@ class GridGenerator {
     }
     
     exportSVG() {
-        const { frontWidth, frontHeight, thickness } = this.settings;
+        const { frontWidth, frontHeight, thickness, gridModule, margins, columnCount, rowCount, rowHeight } = this.settings;
         
         // Create a new SVG for export with actual mm dimensions
         const totalWidth = frontWidth + 2 * thickness;
@@ -1810,7 +1807,7 @@ class GridGenerator {
         const blob = new Blob([svgString], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.download = `grid-${frontWidth}x${frontHeight}-${thickness}.svg`;
+        link.download = `grid_width${frontWidth}_height${frontHeight}_thickness${thickness}_module${gridModule.toFixed(2)}_margins${margins.toFixed(2)}_columns${columnCount}_rows${rowCount}_rowheight${rowHeight}.svg`;
         link.href = url;
         
         document.body.appendChild(link);
