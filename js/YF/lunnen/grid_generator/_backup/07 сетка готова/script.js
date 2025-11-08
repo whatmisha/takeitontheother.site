@@ -690,8 +690,20 @@ class GridGenerator {
         const sliderId = slider.id;
         const isIntegerSlider = (sliderId === 'columnCountSlider' || sliderId === 'rowCountSlider' || sliderId === 'rowHeightSlider' || 
                                 sliderId === 'hueSlider' || sliderId === 'saturationSlider' || sliderId === 'brightnessSlider');
-        const baseStep = isIntegerSlider ? 1 : 0.5;
-        const step = e.shiftKey ? 10 : baseStep;
+        const isModuleSlider = (sliderId === 'gridModuleSlider');
+        
+        let baseStep, shiftStep;
+        if (isIntegerSlider) {
+            baseStep = 1;
+            shiftStep = 10;
+        } else if (isModuleSlider) {
+            baseStep = 0.01;
+            shiftStep = 0.1;
+        } else {
+            baseStep = 0.5;
+            shiftStep = 10;
+        }
+        const step = e.shiftKey ? shiftStep : baseStep;
         
         let newValue = e.key === 'ArrowUp' ? currentValue + step : currentValue - step;
         newValue = Math.max(min, Math.min(max, newValue));
@@ -700,10 +712,14 @@ class GridGenerator {
             newValue = Math.round(newValue);
             slider.value = newValue;
             input.value = newValue;
+        } else if (isModuleSlider) {
+            newValue = parseFloat(newValue.toFixed(2));
+            slider.value = newValue;
+            input.value = newValue.toFixed(2);
         } else {
-        newValue = parseFloat(newValue.toFixed(1));
-        slider.value = newValue;
-        input.value = newValue.toFixed(1);
+            newValue = parseFloat(newValue.toFixed(1));
+            slider.value = newValue;
+            input.value = newValue.toFixed(1);
         }
         
         // Update settings
@@ -715,7 +731,6 @@ class GridGenerator {
             this.settings.thickness = newValue;
         } else if (sliderId === 'gridModuleSlider') {
             this.settings.gridModule = newValue;
-            this.dom.gridModuleValue.value = newValue.toFixed(2);
             this.calculateRowCount();
             this.generateRowPresets();
         } else if (sliderId === 'marginsSlider') {
@@ -769,15 +784,20 @@ class GridGenerator {
         const sliderId = slider.id;
         const isIntegerSlider = (sliderId === 'columnCountSlider' || sliderId === 'rowCountSlider' || sliderId === 'rowHeightSlider' || 
                                 sliderId === 'hueSlider' || sliderId === 'saturationSlider' || sliderId === 'brightnessSlider');
+        const isModuleSlider = (sliderId === 'gridModuleSlider');
         
         if (isIntegerSlider) {
             numValue = Math.round(numValue);
             slider.value = numValue;
             input.value = numValue;
+        } else if (isModuleSlider) {
+            numValue = parseFloat(numValue.toFixed(2));
+            slider.value = numValue;
+            input.value = numValue.toFixed(2);
         } else {
-        numValue = parseFloat(numValue.toFixed(1));
-        slider.value = numValue;
-        input.value = numValue.toFixed(1);
+            numValue = parseFloat(numValue.toFixed(1));
+            slider.value = numValue;
+            input.value = numValue.toFixed(1);
         }
         
         if (sliderId === 'frontWidthSlider') {
@@ -788,7 +808,6 @@ class GridGenerator {
             this.settings.thickness = numValue;
         } else if (sliderId === 'gridModuleSlider') {
             this.settings.gridModule = numValue;
-            this.dom.gridModuleValue.value = numValue.toFixed(2);
             this.calculateRowCount();
             this.generateRowPresets();
         } else if (sliderId === 'marginsSlider') {

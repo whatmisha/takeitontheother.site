@@ -18,7 +18,24 @@ class GridGenerator {
             linkRowsHeight: true,  // link rows and row height
             showColumns: true,
             showRows: true,
-            showBaseline: true
+            showBaseline: true,
+            // Text settings
+            headlineMeasure: 'xheight',  // 'xheight' or 'capheight'
+            headlineSize: 1.0,  // in modules
+            headlineLeading: 5.67,  // in modules
+            textMeasure: 'capheight',  // 'xheight' or 'capheight'
+            textSize: 1.0,  // in modules
+            textLeading: 5.67  // in modules
+        };
+        
+        // Font metrics for TT Commons Classic
+        // Cap height / x-height ratio: 630 / 447 ≈ 1.409
+        this.fontMetrics = {
+            capToXHeight: 630 / 447,
+            // At module 5mm with x-height = 1 mod → font-size = 31.5pt
+            // At module 5mm with cap height = 1 mod → font-size = 22.5pt
+            xHeightToFontSize: 31.5 / 5,  // 6.3 (font-size in pt per mm of x-height)
+            capHeightToFontSize: 22.5 / 5  // 4.5 (font-size in pt per mm of cap height)
         };
         
         // Display constants
@@ -37,6 +54,7 @@ class GridGenerator {
         this.initEventListeners();
         this.initPanelDrag('controlsPanel', 'panelHeader');
         this.initPanelDrag('gridPanel', 'gridPanelHeader');
+        this.initPanelDrag('textPanel', 'textPanelHeader');
         this.initValueInputs();
         this.updateLinkedControlsVisual();
         this.initColorPreview();
@@ -103,7 +121,21 @@ class GridGenerator {
             exportBtn: document.getElementById('exportBtn'),
             helpButton: document.getElementById('helpButton'),
             modalOverlay: document.getElementById('modalOverlay'),
-            modalClose: document.getElementById('modalClose')
+            modalClose: document.getElementById('modalClose'),
+            
+            // Text controls
+            headlineMeasureXHeight: document.querySelector('input[name="headlineMeasure"][value="xheight"]'),
+            headlineMeasureCapHeight: document.querySelector('input[name="headlineMeasure"][value="capheight"]'),
+            headlineSizeSlider: document.getElementById('headlineSizeSlider'),
+            headlineSizeValue: document.getElementById('headlineSizeValue'),
+            headlineLeadingSlider: document.getElementById('headlineLeadingSlider'),
+            headlineLeadingValue: document.getElementById('headlineLeadingValue'),
+            textMeasureXHeight: document.querySelector('input[name="textMeasure"][value="xheight"]'),
+            textMeasureCapHeight: document.querySelector('input[name="textMeasure"][value="capheight"]'),
+            textSizeSlider: document.getElementById('textSizeSlider'),
+            textSizeValue: document.getElementById('textSizeValue'),
+            textLeadingSlider: document.getElementById('textLeadingSlider'),
+            textLeadingValue: document.getElementById('textLeadingValue')
         };
     }
     
@@ -343,6 +375,68 @@ class GridGenerator {
                 }
             });
         }
+        
+        // Text measure radio buttons
+        if (this.dom.headlineMeasureXHeight) {
+            this.dom.headlineMeasureXHeight.addEventListener('change', () => {
+                this.settings.headlineMeasure = 'xheight';
+                this.updateGrid();
+            });
+        }
+        if (this.dom.headlineMeasureCapHeight) {
+            this.dom.headlineMeasureCapHeight.addEventListener('change', () => {
+                this.settings.headlineMeasure = 'capheight';
+                this.updateGrid();
+            });
+        }
+        if (this.dom.textMeasureXHeight) {
+            this.dom.textMeasureXHeight.addEventListener('change', () => {
+                this.settings.textMeasure = 'xheight';
+                this.updateGrid();
+            });
+        }
+        if (this.dom.textMeasureCapHeight) {
+            this.dom.textMeasureCapHeight.addEventListener('change', () => {
+                this.settings.textMeasure = 'capheight';
+                this.updateGrid();
+            });
+        }
+        
+        // Headline size slider
+        const headlineSizeHandler = (e) => {
+            const value = parseFloat(e.target.value);
+            this.dom.headlineSizeValue.value = value.toFixed(2);
+            this.settings.headlineSize = value;
+            this.updateGrid();
+        };
+        addSliderEvents(this.dom.headlineSizeSlider, headlineSizeHandler);
+        
+        // Headline leading slider
+        const headlineLeadingHandler = (e) => {
+            const value = parseFloat(e.target.value);
+            this.dom.headlineLeadingValue.value = value.toFixed(2);
+            this.settings.headlineLeading = value;
+            this.updateGrid();
+        };
+        addSliderEvents(this.dom.headlineLeadingSlider, headlineLeadingHandler);
+        
+        // Text size slider
+        const textSizeHandler = (e) => {
+            const value = parseFloat(e.target.value);
+            this.dom.textSizeValue.value = value.toFixed(2);
+            this.settings.textSize = value;
+            this.updateGrid();
+        };
+        addSliderEvents(this.dom.textSizeSlider, textSizeHandler);
+        
+        // Text leading slider
+        const textLeadingHandler = (e) => {
+            const value = parseFloat(e.target.value);
+            this.dom.textLeadingValue.value = value.toFixed(2);
+            this.settings.textLeading = value;
+            this.updateGrid();
+        };
+        addSliderEvents(this.dom.textLeadingSlider, textLeadingHandler);
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -690,8 +784,22 @@ class GridGenerator {
         const sliderId = slider.id;
         const isIntegerSlider = (sliderId === 'columnCountSlider' || sliderId === 'rowCountSlider' || sliderId === 'rowHeightSlider' || 
                                 sliderId === 'hueSlider' || sliderId === 'saturationSlider' || sliderId === 'brightnessSlider');
-        const baseStep = isIntegerSlider ? 1 : 0.5;
-        const step = e.shiftKey ? 10 : baseStep;
+        const isModuleSlider = (sliderId === 'gridModuleSlider');
+        const isTextSlider = (sliderId === 'headlineSizeSlider' || sliderId === 'headlineLeadingSlider' || 
+                             sliderId === 'textSizeSlider' || sliderId === 'textLeadingSlider');
+        
+        let baseStep, shiftStep;
+        if (isIntegerSlider) {
+            baseStep = 1;
+            shiftStep = 10;
+        } else if (isModuleSlider || isTextSlider) {
+            baseStep = 0.01;
+            shiftStep = 0.1;
+        } else {
+            baseStep = 0.5;
+            shiftStep = 10;
+        }
+        const step = e.shiftKey ? shiftStep : baseStep;
         
         let newValue = e.key === 'ArrowUp' ? currentValue + step : currentValue - step;
         newValue = Math.max(min, Math.min(max, newValue));
@@ -700,10 +808,14 @@ class GridGenerator {
             newValue = Math.round(newValue);
             slider.value = newValue;
             input.value = newValue;
+        } else if (isModuleSlider || isTextSlider) {
+            newValue = parseFloat(newValue.toFixed(2));
+            slider.value = newValue;
+            input.value = newValue.toFixed(2);
         } else {
-        newValue = parseFloat(newValue.toFixed(1));
-        slider.value = newValue;
-        input.value = newValue.toFixed(1);
+            newValue = parseFloat(newValue.toFixed(1));
+            slider.value = newValue;
+            input.value = newValue.toFixed(1);
         }
         
         // Update settings
@@ -749,6 +861,14 @@ class GridGenerator {
             this.updateColorFromHSB();
             this.updateSaturationGradient();
             return; // HSB updates grid separately
+        } else if (sliderId === 'headlineSizeSlider') {
+            this.settings.headlineSize = newValue;
+        } else if (sliderId === 'headlineLeadingSlider') {
+            this.settings.headlineLeading = newValue;
+        } else if (sliderId === 'textSizeSlider') {
+            this.settings.textSize = newValue;
+        } else if (sliderId === 'textLeadingSlider') {
+            this.settings.textLeading = newValue;
         }
         
         this.updateGrid();
@@ -769,15 +889,22 @@ class GridGenerator {
         const sliderId = slider.id;
         const isIntegerSlider = (sliderId === 'columnCountSlider' || sliderId === 'rowCountSlider' || sliderId === 'rowHeightSlider' || 
                                 sliderId === 'hueSlider' || sliderId === 'saturationSlider' || sliderId === 'brightnessSlider');
+        const isModuleSlider = (sliderId === 'gridModuleSlider');
+        const isTextSlider = (sliderId === 'headlineSizeSlider' || sliderId === 'headlineLeadingSlider' || 
+                             sliderId === 'textSizeSlider' || sliderId === 'textLeadingSlider');
         
         if (isIntegerSlider) {
             numValue = Math.round(numValue);
             slider.value = numValue;
             input.value = numValue;
+        } else if (isModuleSlider || isTextSlider) {
+            numValue = parseFloat(numValue.toFixed(2));
+            slider.value = numValue;
+            input.value = numValue.toFixed(2);
         } else {
-        numValue = parseFloat(numValue.toFixed(1));
-        slider.value = numValue;
-        input.value = numValue.toFixed(1);
+            numValue = parseFloat(numValue.toFixed(1));
+            slider.value = numValue;
+            input.value = numValue.toFixed(1);
         }
         
         if (sliderId === 'frontWidthSlider') {
@@ -822,6 +949,14 @@ class GridGenerator {
             this.updateColorFromHSB();
             this.updateSaturationGradient();
             return; // HSB updates grid separately
+        } else if (sliderId === 'headlineSizeSlider') {
+            this.settings.headlineSize = numValue;
+        } else if (sliderId === 'headlineLeadingSlider') {
+            this.settings.headlineLeading = numValue;
+        } else if (sliderId === 'textSizeSlider') {
+            this.settings.textSize = numValue;
+        } else if (sliderId === 'textLeadingSlider') {
+            this.settings.textLeading = numValue;
         }
         
         this.updateGrid();
@@ -1076,6 +1211,9 @@ class GridGenerator {
             // Bottom panel - horizontal columns (using columns parameters from front)
             this.drawColumnsTopBottom(frontX, startY + scaledThickness + scaledFrontHeight, scaledFrontWidth, scaledThickness, scale, 'bottom');
         }
+        
+        // Draw text
+        this.drawText(frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
     }
     
     drawRectangles(x, y, frontW, frontH, thickness) {
@@ -1430,6 +1568,119 @@ class GridGenerator {
         }
     }
     
+    // Calculate font size in pt from module size
+    calculateFontSize(sizeInModules, measure) {
+        const module = this.settings.gridModule; // in mm
+        const sizeInMm = sizeInModules * module;
+        
+        // Convert mm to pt
+        // 1 mm = 2.834645669 pt
+        let fontSize;
+        if (measure === 'xheight') {
+            fontSize = sizeInMm * this.fontMetrics.xHeightToFontSize;
+        } else { // capheight
+            fontSize = sizeInMm * this.fontMetrics.capHeightToFontSize;
+        }
+        
+        return fontSize;
+    }
+    
+    // Calculate column width in mm
+    calculateColumnWidth() {
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const n = this.settings.columnCount;
+        return (this.settings.frontWidth - module * margins * 2 - module * (n - 1)) / n;
+    }
+    
+    drawText(x, y, width, height, scale) {
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const margin = module * margins * scale;
+        
+        // Headline
+        const headlineFontSize = this.calculateFontSize(this.settings.headlineSize, this.settings.headlineMeasure);
+        const headlineLeading = this.settings.headlineLeading * module * scale;
+        const scaledHeadlineFontSize = headlineFontSize * scale;
+        
+        const headlineText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        headlineText.setAttribute('x', x + margin);
+        headlineText.setAttribute('y', y + margin + scaledHeadlineFontSize);
+        headlineText.setAttribute('font-family', 'TT Commons Classic');
+        headlineText.setAttribute('font-weight', '500');
+        headlineText.setAttribute('font-size', `${scaledHeadlineFontSize}px`);
+        headlineText.setAttribute('fill', this.getContrastColor());
+        headlineText.textContent = 'Ноутбук Lunnen Outer 16';
+        this.dom.svg.appendChild(headlineText);
+        
+        // Text (bottom left, 4 columns width)
+        const textFontSize = this.calculateFontSize(this.settings.textSize, this.settings.textMeasure);
+        const textLeading = this.settings.textLeading * module * scale;
+        const scaledTextFontSize = textFontSize * scale;
+        
+        const columnWidth = this.calculateColumnWidth();
+        const gutter = module * scale;
+        const paragraphWidth = (columnWidth * 4 + gutter * 3) * scale;
+        
+        // Position at bottom left
+        const textY = y + height - margin - textLeading * 2; // Approximate position for 2 lines
+        
+        const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textElement.setAttribute('x', x + margin);
+        textElement.setAttribute('y', textY);
+        textElement.setAttribute('font-family', 'TT Commons Classic');
+        textElement.setAttribute('font-weight', '400');
+        textElement.setAttribute('font-size', `${scaledTextFontSize}px`);
+        textElement.setAttribute('fill', this.getContrastColor());
+        
+        // Split text into lines (simple word wrap)
+        const fullText = 'Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.';
+        const words = fullText.split(' ');
+        let line = '';
+        let lineCount = 0;
+        let currentY = textY;
+        
+        // Create temporary text element to measure width
+        const tempText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        tempText.setAttribute('font-family', 'TT Commons Classic');
+        tempText.setAttribute('font-weight', '400');
+        tempText.setAttribute('font-size', `${scaledTextFontSize}px`);
+        tempText.setAttribute('opacity', '0');
+        this.dom.svg.appendChild(tempText);
+        
+        for (let i = 0; i < words.length; i++) {
+            const testLine = line + (line ? ' ' : '') + words[i];
+            tempText.textContent = testLine;
+            const lineWidth = tempText.getComputedTextLength();
+            
+            if (lineWidth > paragraphWidth && line) {
+                const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                tspan.setAttribute('x', x + margin);
+                tspan.setAttribute('y', currentY);
+                tspan.textContent = line;
+                textElement.appendChild(tspan);
+                
+                line = words[i];
+                currentY += textLeading;
+                lineCount++;
+            } else {
+                line = testLine;
+            }
+        }
+        
+        // Add last line
+        if (line) {
+            const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+            tspan.setAttribute('x', x + margin);
+            tspan.setAttribute('y', currentY);
+            tspan.textContent = line;
+            textElement.appendChild(tspan);
+        }
+        
+        this.dom.svg.removeChild(tempText);
+        this.dom.svg.appendChild(textElement);
+    }
+    
     drawBaselineVerticalLeftRight(x, y, width, height, scale, side) {
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
@@ -1706,6 +1957,12 @@ class GridGenerator {
             exportSvg.appendChild(labelsGroup);
             this.drawLabelsToSVG(labelsGroup, 0, 0, frontWidth, frontHeight, thickness);
         }
+        
+        // Add text (in separate group)
+        const textGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        textGroup.setAttribute('id', 'text');
+        exportSvg.appendChild(textGroup);
+        this.drawTextToSVG(textGroup, frontX, frontY, frontWidth, frontHeight);
         
         // Convert to string
         const serializer = new XMLSerializer();
@@ -2177,6 +2434,80 @@ class GridGenerator {
             marginLine.setAttribute('stroke-opacity', opacity);
             svg.appendChild(marginLine);
         }
+    }
+    
+    drawTextToSVG(svg, x, y, width, height) {
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const margin = module * margins;
+        
+        // Headline
+        const headlineFontSize = this.calculateFontSize(this.settings.headlineSize, this.settings.headlineMeasure);
+        const headlineLeading = this.settings.headlineLeading * module;
+        
+        const headlineText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        headlineText.setAttribute('x', x + margin);
+        headlineText.setAttribute('y', y + margin + headlineFontSize);
+        headlineText.setAttribute('font-family', 'TT Commons Classic');
+        headlineText.setAttribute('font-weight', '500');
+        headlineText.setAttribute('font-size', `${headlineFontSize}pt`);
+        headlineText.setAttribute('fill', this.getContrastColor());
+        headlineText.textContent = 'Ноутбук Lunnen Outer 16';
+        svg.appendChild(headlineText);
+        
+        // Text (bottom left, 4 columns width)
+        const textFontSize = this.calculateFontSize(this.settings.textSize, this.settings.textMeasure);
+        const textLeading = this.settings.textLeading * module;
+        
+        const columnWidth = this.calculateColumnWidth();
+        const gutter = module;
+        const paragraphWidth = columnWidth * 4 + gutter * 3;
+        
+        // Position at bottom left
+        const textY = y + height - margin - textLeading * 2; // Approximate position for 2 lines
+        
+        const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textElement.setAttribute('x', x + margin);
+        textElement.setAttribute('y', textY);
+        textElement.setAttribute('font-family', 'TT Commons Classic');
+        textElement.setAttribute('font-weight', '400');
+        textElement.setAttribute('font-size', `${textFontSize}pt`);
+        textElement.setAttribute('fill', this.getContrastColor());
+        
+        // Split text into lines (simple approximation for SVG export)
+        const fullText = 'Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.';
+        const words = fullText.split(' ');
+        let line = '';
+        let lines = [];
+        
+        // Simple word wrapping based on character count approximation
+        const charsPerLine = Math.floor(paragraphWidth / (textFontSize * 0.5)); // Rough approximation
+        
+        for (let i = 0; i < words.length; i++) {
+            const testLine = line + (line ? ' ' : '') + words[i];
+            if (testLine.length > charsPerLine && line) {
+                lines.push(line);
+                line = words[i];
+            } else {
+                line = testLine;
+            }
+        }
+        if (line) {
+            lines.push(line);
+        }
+        
+        // Add lines as tspans
+        let currentY = textY;
+        for (let i = 0; i < lines.length; i++) {
+            const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+            tspan.setAttribute('x', x + margin);
+            tspan.setAttribute('y', currentY);
+            tspan.textContent = lines[i];
+            textElement.appendChild(tspan);
+            currentY += textLeading;
+        }
+        
+        svg.appendChild(textElement);
     }
 }
 

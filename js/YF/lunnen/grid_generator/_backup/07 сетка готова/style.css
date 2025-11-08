@@ -179,10 +179,12 @@ body {
     font-weight: 500;
     font-size: 0.85rem;
     color: var(--color-text-dim);
+    white-space: nowrap;
 }
 
 .panel-header .unit {
     opacity: 0.4;
+    white-space: nowrap;
 }
 
 .panel-content {
@@ -224,8 +226,13 @@ body {
     font-size: 0.85rem;
 }
 
+.control-group label > span:first-child {
+    white-space: nowrap;
+}
+
 .control-group label .unit {
     opacity: 0.4;
+    white-space: nowrap;
 }
 
 /* Range slider styles */

@@ -107,6 +107,82 @@
                 </div>
             </aside>
 
+            <aside class="controls-panel controls-panel-bottom-right" id="textPanel" role="complementary" aria-label="Text settings">
+                <div class="panel-header" id="textPanelHeader">
+                    <span>Text</span>
+                    <span class="drag-icon" aria-hidden="true">⋮⋮</span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <h3>Headline</h3>
+                        
+                        <div class="control-group">
+                            <label class="radio-group-label">Measure</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="headlineMeasure" value="xheight" checked>
+                                    <span>x-height</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="headlineMeasure" value="capheight">
+                                    <span>Cap Height</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="headlineSizeSlider">
+                                <span>Size <span class="unit">× mod</span></span>
+                                <input type="text" class="value-display" id="headlineSizeValue" value="1.00" data-min="0.1" data-max="10" aria-label="Headline size">
+                            </label>
+                            <input type="range" id="headlineSizeSlider" min="0.1" max="10" step="0.01" value="1.00" aria-label="Headline size slider">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="headlineLeadingSlider">
+                                <span>Leading <span class="unit">× mod</span></span>
+                                <input type="text" class="value-display" id="headlineLeadingValue" value="5.67" data-min="0.1" data-max="20" aria-label="Headline leading">
+                            </label>
+                            <input type="range" id="headlineLeadingSlider" min="0.1" max="20" step="0.01" value="5.67" aria-label="Headline leading slider">
+                        </div>
+                    </section>
+                    
+                    <section class="control-section">
+                        <h3>Text</h3>
+                        
+                        <div class="control-group">
+                            <label class="radio-group-label">Measure</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="textMeasure" value="xheight">
+                                    <span>x-height</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="textMeasure" value="capheight" checked>
+                                    <span>Cap Height</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="textSizeSlider">
+                                <span>Size <span class="unit">× mod</span></span>
+                                <input type="text" class="value-display" id="textSizeValue" value="1.00" data-min="0.1" data-max="10" aria-label="Text size">
+                            </label>
+                            <input type="range" id="textSizeSlider" min="0.1" max="10" step="0.01" value="1.00" aria-label="Text size slider">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="textLeadingSlider">
+                                <span>Leading <span class="unit">× mod</span></span>
+                                <input type="text" class="value-display" id="textLeadingValue" value="5.67" data-min="0.1" data-max="20" aria-label="Text leading">
+                            </label>
+                            <input type="range" id="textLeadingSlider" min="0.1" max="20" step="0.01" value="5.67" aria-label="Text leading slider">
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
             <aside class="controls-panel controls-panel-left" id="controlsPanel" role="complementary" aria-label="Dimensions settings">
                 <div class="panel-header" id="panelHeader">
                     <span>Dimensions <span class="unit">mm</span></span>

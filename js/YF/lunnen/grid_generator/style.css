@@ -1,3 +1,20 @@
+/* Font imports */
+@font-face {
+    font-family: 'TT Commons Classic';
+    src: url('fonts/TT_Commons_Classic_Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'TT Commons Classic';
+    src: url('fonts/TT_Commons_Classic_Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* CSS Variables for easy theming and maintenance */
 :root {
     /* Colors */
@@ -152,6 +169,13 @@ body {
     right: auto;
 }
 
+.controls-panel-bottom-right {
+    bottom: var(--spacing-3xl);
+    right: var(--spacing-3xl);
+    top: auto;
+    left: auto;
+}
+
 .panel-header {
     background: var(--color-bg-panel);
     padding: var(--spacing-3xl) var(--spacing-3xl) 0;
@@ -179,10 +203,12 @@ body {
     font-weight: 500;
     font-size: 0.85rem;
     color: var(--color-text-dim);
+    white-space: nowrap;
 }
 
 .panel-header .unit {
     opacity: 0.4;
+    white-space: nowrap;
 }
 
 .panel-content {
@@ -224,8 +250,13 @@ body {
     font-size: 0.85rem;
 }
 
+.control-group label > span:first-child {
+    white-space: nowrap;
+}
+
 .control-group label .unit {
     opacity: 0.4;
+    white-space: nowrap;
 }
 
 /* Range slider styles */
@@ -710,6 +741,72 @@ body {
 
 #linkedControlsContainer .control-group:last-child {
     margin-bottom: 0;
+}
+
+/* Radio buttons */
+.radio-group-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.radio-group {
+    display: flex;
+    gap: var(--spacing-xl);
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+.radio-label input[type="radio"] {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    margin-right: var(--spacing-md);
+    position: relative;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.radio-label input[type="radio"]:checked {
+    border-color: var(--color-text-secondary);
+}
+
+.radio-label input[type="radio"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 6px;
+    height: 6px;
+    background: var(--color-text-secondary);
+    border-radius: 50%;
+}
+
+.radio-label:hover {
+    color: var(--color-text);
+}
+
+.radio-label:hover input[type="radio"] {
+    border-color: var(--color-text-muted);
+}
+
+/* Section headings */
+.control-section h3 {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--color-text-dim);
+    margin-bottom: var(--spacing-lg);
+    text-transform: none;
 }
 
 /* Base button styles - DRY principle */
