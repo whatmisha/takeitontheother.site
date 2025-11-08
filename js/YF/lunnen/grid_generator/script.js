@@ -1065,7 +1065,8 @@ class GridGenerator {
     }
     
     drawRectangles(container, x, y, frontW, frontH, thickness, scale = 1) {
-        const strokeWidth = scale === 1 ? '0.25' : '0.5';
+        // For export: 0.25pt = 25.4/72*0.25 = 0.088194444... mm (since viewBox is in mm)
+        const strokeWidth = scale === 1 ? '0.088194444' : '0.5';
         
         // Front (center) - always visible
         this.createSVGElement('rect', {
@@ -1361,6 +1362,8 @@ class GridGenerator {
         const margin = module * margins * scale;
         const baselineHeight = module * scale;
         const baselineWidth = width - 2 * margin;
+        // For export: 0.25pt = 25.4/72*0.25 = 0.088194444... mm (since viewBox is in mm)
+        const strokeWidth = scale === 1 ? '0.088194444' : '0.5';
         
         let currentY = y + margin;
         const maxY = y + height - margin;
@@ -1373,7 +1376,7 @@ class GridGenerator {
                 height: baselineHeight,
                 fill: 'none',
                 stroke: gridColor,
-                'stroke-width': '0.5',
+                'stroke-width': strokeWidth,
                 'stroke-opacity': opacity
             }, container);
             
@@ -1485,6 +1488,8 @@ class GridGenerator {
         const opacity = this.getGridOpacity(0.3);
         const margin = module * margins * scale;
         const baselineWidth = module * scale;
+        // For export: 0.25pt = 25.4/72*0.25 = 0.088194444... mm (since viewBox is in mm)
+        const strokeWidth = scale === 1 ? '0.088194444' : '0.5';
         
         // Height with margins top and bottom
         const baselineHeight = height - 2 * margin;
@@ -1502,7 +1507,7 @@ class GridGenerator {
                 x2: centerX,
                 y2: y + height - margin,
                 stroke: gridColor,
-                'stroke-width': '0.5',
+                'stroke-width': strokeWidth,
                 'stroke-opacity': opacity
             }, container);
             return;
@@ -1528,7 +1533,7 @@ class GridGenerator {
                     height: baselineHeight,
                     fill: 'none',
                     stroke: gridColor,
-                    'stroke-width': '0.5',
+                    'stroke-width': strokeWidth,
                     'stroke-opacity': opacity
                 }, container);
                 
@@ -1542,7 +1547,7 @@ class GridGenerator {
                 x2: x + margin,
                 y2: y + height - margin,
                 stroke: gridColor,
-                'stroke-width': '0.5',
+                'stroke-width': strokeWidth,
                 'stroke-opacity': opacity
             }, container);
             
@@ -1559,7 +1564,7 @@ class GridGenerator {
                     height: baselineHeight,
                     fill: 'none',
                     stroke: gridColor,
-                    'stroke-width': '0.5',
+                    'stroke-width': strokeWidth,
                     'stroke-opacity': opacity
                 }, container);
                 
@@ -1573,7 +1578,7 @@ class GridGenerator {
                 x2: x + width - margin,
                 y2: y + height - margin,
                 stroke: gridColor,
-                'stroke-width': '0.5',
+                'stroke-width': strokeWidth,
                 'stroke-opacity': opacity
             }, container);
         }
@@ -1586,6 +1591,8 @@ class GridGenerator {
         const opacity = this.getGridOpacity(0.3);
         const margin = module * margins * scale;
         const baselineHeight = module * scale;
+        // For export: 0.25pt = 25.4/72*0.25 = 0.088194444... mm (since viewBox is in mm)
+        const strokeWidth = scale === 1 ? '0.088194444' : '0.5';
         
         // Width with margins left and right
         const baselineWidth = width - 2 * margin;
@@ -1603,7 +1610,7 @@ class GridGenerator {
                 x2: x + width - margin,
                 y2: centerY,
                 stroke: gridColor,
-                'stroke-width': '0.5',
+                'stroke-width': strokeWidth,
                 'stroke-opacity': opacity
             }, container);
             return;
@@ -1628,7 +1635,7 @@ class GridGenerator {
                     height: baselineHeight,
                     fill: 'none',
                     stroke: gridColor,
-                    'stroke-width': '0.5',
+                    'stroke-width': strokeWidth,
                     'stroke-opacity': opacity
                 }, container);
                 
@@ -1642,7 +1649,7 @@ class GridGenerator {
                 x2: x + width - margin,
                 y2: y + margin,
                 stroke: gridColor,
-                'stroke-width': '0.5',
+                'stroke-width': strokeWidth,
                 'stroke-opacity': opacity
             }, container);
             
@@ -1659,7 +1666,7 @@ class GridGenerator {
                     height: baselineHeight,
                     fill: 'none',
                     stroke: gridColor,
-                    'stroke-width': '0.5',
+                    'stroke-width': strokeWidth,
                     'stroke-opacity': opacity
                 }, container);
                 
@@ -1673,7 +1680,7 @@ class GridGenerator {
                 x2: x + width - margin,
                 y2: y + height - margin,
                 stroke: gridColor,
-                'stroke-width': '0.5',
+                'stroke-width': strokeWidth,
                 'stroke-opacity': opacity
             }, container);
         }
