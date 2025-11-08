@@ -701,9 +701,9 @@ class GridGenerator {
             slider.value = newValue;
             input.value = newValue;
         } else {
-            newValue = parseFloat(newValue.toFixed(1));
-            slider.value = newValue;
-            input.value = newValue.toFixed(1);
+        newValue = parseFloat(newValue.toFixed(1));
+        slider.value = newValue;
+        input.value = newValue.toFixed(1);
         }
         
         // Update settings
@@ -775,9 +775,9 @@ class GridGenerator {
             slider.value = numValue;
             input.value = numValue;
         } else {
-            numValue = parseFloat(numValue.toFixed(1));
-            slider.value = numValue;
-            input.value = numValue.toFixed(1);
+        numValue = parseFloat(numValue.toFixed(1));
+        slider.value = numValue;
+        input.value = numValue.toFixed(1);
         }
         
         if (sliderId === 'frontWidthSlider') {
@@ -1359,28 +1359,14 @@ class GridGenerator {
             // Calculate how many full-width elements can fit
             const availableWidth = width - 2 * margin;
             const numFullElements = Math.floor(availableWidth / baselineWidth);
-            const remainingWidth = availableWidth - (numFullElements * baselineWidth);
             
             // Start from right edge with margin
             currentX = x + width - margin;
             
-            // Draw elements from right to left
-            for (let i = 0; i < numFullElements + 1; i++) {
-                let elementWidth;
-                let elementX;
-                
-                if (i === numFullElements) {
-                    // Last element (partial)
-                    elementWidth = remainingWidth;
-                    elementX = x + margin;
-                } else {
-                    // Regular full-width element
-                    elementWidth = baselineWidth;
-                    elementX = currentX - elementWidth;
-                }
-                
-                // Skip if width is 0
-                if (elementWidth <= 0) continue;
+            // Draw elements from right to left (only full-width elements)
+            for (let i = 0; i < numFullElements; i++) {
+                const elementWidth = baselineWidth;
+                const elementX = currentX - elementWidth;
                 
                 const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 baseline.setAttribute('x', elementX);
@@ -1395,20 +1381,32 @@ class GridGenerator {
                 
                 currentX -= elementWidth;
             }
+            
+            // Draw a vertical line at the left margin
+            const marginLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            marginLine.setAttribute('x1', x + margin);
+            marginLine.setAttribute('y1', y + margin);
+            marginLine.setAttribute('x2', x + margin);
+            marginLine.setAttribute('y2', y + height - margin);
+            marginLine.setAttribute('stroke', gridColor);
+            marginLine.setAttribute('stroke-width', '0.5');
+            marginLine.setAttribute('stroke-opacity', opacity);
+            this.dom.svg.appendChild(marginLine);
+            
         } else { // right
+            // Calculate how many full-width elements can fit
+            const availableWidth = width - 2 * margin;
+            const numFullElements = Math.floor(availableWidth / baselineWidth);
+            
             // Start from left edge + margin, go right
             currentX = x + margin;
-            maxX = x + width - margin;
             
-            while (currentX < maxX) {
-                // Check if this is the last element
-                const remainingWidth = maxX - currentX;
-                const actualWidth = Math.min(baselineWidth, remainingWidth);
-                
+            // Draw elements from left to right (only full-width elements)
+            for (let i = 0; i < numFullElements; i++) {
                 const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 baseline.setAttribute('x', currentX);
                 baseline.setAttribute('y', y + margin);
-                baseline.setAttribute('width', actualWidth);
+                baseline.setAttribute('width', baselineWidth);
                 baseline.setAttribute('height', baselineHeight);
                 baseline.setAttribute('fill', 'none');
                 baseline.setAttribute('stroke', gridColor);
@@ -1416,8 +1414,19 @@ class GridGenerator {
                 baseline.setAttribute('stroke-opacity', opacity);
                 this.dom.svg.appendChild(baseline);
                 
-                currentX += actualWidth;
+                currentX += baselineWidth;
             }
+            
+            // Draw a vertical line at the right margin
+            const marginLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            marginLine.setAttribute('x1', x + width - margin);
+            marginLine.setAttribute('y1', y + margin);
+            marginLine.setAttribute('x2', x + width - margin);
+            marginLine.setAttribute('y2', y + height - margin);
+            marginLine.setAttribute('stroke', gridColor);
+            marginLine.setAttribute('stroke-width', '0.5');
+            marginLine.setAttribute('stroke-opacity', opacity);
+            this.dom.svg.appendChild(marginLine);
         }
     }
     
@@ -1434,71 +1443,79 @@ class GridGenerator {
         
         // Top panel: start from bottom edge (touching front) with margin, go up
         // Bottom panel: start from top edge (touching front) with margin, go down
-        let currentY, minY, maxY;
+        let currentY;
         
         if (side === 'top') {
             // Calculate how many full-height elements can fit
             const availableHeight = height - 2 * margin;
             const numFullElements = Math.floor(availableHeight / baselineHeight);
-            const remainingHeight = availableHeight - (numFullElements * baselineHeight);
             
             // Start from bottom edge with margin
             currentY = y + height - margin;
             
-            // Draw elements from bottom to top
-            for (let i = 0; i < numFullElements + 1; i++) {
-                let elementHeight;
-                let elementY;
-                
-                if (i === numFullElements) {
-                    // Last element (partial)
-                    elementHeight = remainingHeight;
-                    elementY = y + margin;
-                } else {
-                    // Regular full-height element
-                    elementHeight = baselineHeight;
-                    elementY = currentY - elementHeight;
-                }
-                
-                // Skip if height is 0
-                if (elementHeight <= 0) continue;
+            // Draw only full-height elements from bottom to top
+            for (let i = 0; i < numFullElements; i++) {
+                const elementY = currentY - baselineHeight;
                 
                 const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 baseline.setAttribute('x', x + margin);
                 baseline.setAttribute('y', elementY);
                 baseline.setAttribute('width', baselineWidth);
-                baseline.setAttribute('height', elementHeight);
+                baseline.setAttribute('height', baselineHeight);
                 baseline.setAttribute('fill', 'none');
                 baseline.setAttribute('stroke', gridColor);
                 baseline.setAttribute('stroke-width', '0.5');
                 baseline.setAttribute('stroke-opacity', opacity);
                 this.dom.svg.appendChild(baseline);
                 
-                currentY -= elementHeight;
+                currentY -= baselineHeight;
             }
+            
+            // Draw a horizontal line at the top margin
+            const marginLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            marginLine.setAttribute('x1', x + margin);
+            marginLine.setAttribute('y1', y + margin);
+            marginLine.setAttribute('x2', x + width - margin);
+            marginLine.setAttribute('y2', y + margin);
+            marginLine.setAttribute('stroke', gridColor);
+            marginLine.setAttribute('stroke-width', '0.5');
+            marginLine.setAttribute('stroke-opacity', opacity);
+            this.dom.svg.appendChild(marginLine);
+            
         } else { // bottom
+            // Calculate how many full-height elements can fit
+            const availableHeight = height - 2 * margin;
+            const numFullElements = Math.floor(availableHeight / baselineHeight);
+            
             // Start from top edge + margin, go down
             currentY = y + margin;
-            maxY = y + height - margin;
             
-            while (currentY < maxY) {
-                // Check if this is the last element
-                const remainingHeight = maxY - currentY;
-                const actualHeight = Math.min(baselineHeight, remainingHeight);
-                
+            // Draw only full-height elements from top to bottom
+            for (let i = 0; i < numFullElements; i++) {
                 const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 baseline.setAttribute('x', x + margin);
                 baseline.setAttribute('y', currentY);
                 baseline.setAttribute('width', baselineWidth);
-                baseline.setAttribute('height', actualHeight);
+                baseline.setAttribute('height', baselineHeight);
                 baseline.setAttribute('fill', 'none');
                 baseline.setAttribute('stroke', gridColor);
                 baseline.setAttribute('stroke-width', '0.5');
                 baseline.setAttribute('stroke-opacity', opacity);
                 this.dom.svg.appendChild(baseline);
                 
-                currentY += actualHeight;
+                currentY += baselineHeight;
             }
+            
+            // Draw a horizontal line at the bottom margin
+            const marginLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            marginLine.setAttribute('x1', x + margin);
+            marginLine.setAttribute('y1', y + height - margin);
+            marginLine.setAttribute('x2', x + width - margin);
+            marginLine.setAttribute('y2', y + height - margin);
+            marginLine.setAttribute('stroke', gridColor);
+            marginLine.setAttribute('stroke-width', '0.5');
+            marginLine.setAttribute('stroke-opacity', opacity);
+            this.dom.svg.appendChild(marginLine);
         }
     }
     
@@ -1817,34 +1834,20 @@ class GridGenerator {
         
         // Left panel: start from right edge (touching front) with margin, go left
         // Right panel: start from left edge (touching front) with margin, go right
-        let currentX, minX, maxX;
+        let currentX;
         
         if (side === 'left') {
             // Calculate how many full-width elements can fit
             const availableWidth = width - 2 * margin;
             const numFullElements = Math.floor(availableWidth / baselineWidth);
-            const remainingWidth = availableWidth - (numFullElements * baselineWidth);
             
             // Start from right edge with margin
             currentX = x + width - margin;
             
-            // Draw elements from right to left
-            for (let i = 0; i < numFullElements + 1; i++) {
-                let elementWidth;
-                let elementX;
-                
-                if (i === numFullElements) {
-                    // Last element (partial)
-                    elementWidth = remainingWidth;
-                    elementX = x + margin;
-                } else {
-                    // Regular full-width element
-                    elementWidth = baselineWidth;
-                    elementX = currentX - elementWidth;
-                }
-                
-                // Skip if width is 0
-                if (elementWidth <= 0) continue;
+            // Draw elements from right to left (only full-width elements)
+            for (let i = 0; i < numFullElements; i++) {
+                const elementWidth = baselineWidth;
+                const elementX = currentX - elementWidth;
                 
                 const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 baseline.setAttribute('x', elementX);
@@ -1859,20 +1862,32 @@ class GridGenerator {
                 
                 currentX -= elementWidth;
             }
+            
+            // Draw a vertical line at the left margin
+            const marginLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            marginLine.setAttribute('x1', x + margin);
+            marginLine.setAttribute('y1', y + margin);
+            marginLine.setAttribute('x2', x + margin);
+            marginLine.setAttribute('y2', y + height - margin);
+            marginLine.setAttribute('stroke', gridColor);
+            marginLine.setAttribute('stroke-width', '0.5');
+            marginLine.setAttribute('stroke-opacity', opacity);
+            svg.appendChild(marginLine);
+            
         } else { // right
+            // Calculate how many full-width elements can fit
+            const availableWidth = width - 2 * margin;
+            const numFullElements = Math.floor(availableWidth / baselineWidth);
+            
             // Start from left edge + margin, go right
             currentX = x + margin;
-            maxX = x + width - margin;
             
-            while (currentX < maxX) {
-                // Check if this is the last element
-                const remainingWidth = maxX - currentX;
-                const actualWidth = Math.min(baselineWidth, remainingWidth);
-                
+            // Draw elements from left to right (only full-width elements)
+            for (let i = 0; i < numFullElements; i++) {
                 const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 baseline.setAttribute('x', currentX);
                 baseline.setAttribute('y', y + margin);
-                baseline.setAttribute('width', actualWidth);
+                baseline.setAttribute('width', baselineWidth);
                 baseline.setAttribute('height', baselineHeight);
                 baseline.setAttribute('fill', 'none');
                 baseline.setAttribute('stroke', gridColor);
@@ -1880,8 +1895,19 @@ class GridGenerator {
                 baseline.setAttribute('stroke-opacity', opacity);
                 svg.appendChild(baseline);
                 
-                currentX += actualWidth;
+                currentX += baselineWidth;
             }
+            
+            // Draw a vertical line at the right margin
+            const marginLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            marginLine.setAttribute('x1', x + width - margin);
+            marginLine.setAttribute('y1', y + margin);
+            marginLine.setAttribute('x2', x + width - margin);
+            marginLine.setAttribute('y2', y + height - margin);
+            marginLine.setAttribute('stroke', gridColor);
+            marginLine.setAttribute('stroke-width', '0.5');
+            marginLine.setAttribute('stroke-opacity', opacity);
+            svg.appendChild(marginLine);
         }
     }
     
@@ -1898,57 +1924,79 @@ class GridGenerator {
         
         // Top panel: start from bottom edge (touching front) with margin, go up
         // Bottom panel: start from top edge (touching front) with margin, go down
-        let currentY, minY, maxY;
+        let currentY;
         
         if (side === 'top') {
-            // Start from bottom edge - margin - baselineHeight, go up
-            currentY = y + height - margin - baselineHeight;
-            minY = y + margin; // stop at top edge + margin
-            maxY = y + height - margin; // for boundary check
+            // Calculate how many full-height elements can fit
+            const availableHeight = height - 2 * margin;
+            const numFullElements = Math.floor(availableHeight / baselineHeight);
             
-            while (currentY >= minY) {
-                // Check if this is the last element (won't fit another full height)
-                const isLast = (currentY - baselineHeight < minY);
-                const actualHeight = isLast ? (currentY - minY + baselineHeight) : baselineHeight;
-                const actualY = isLast ? minY : currentY;
+            // Start from bottom edge with margin
+            currentY = y + height - margin;
+            
+            // Draw only full-height elements from bottom to top
+            for (let i = 0; i < numFullElements; i++) {
+                const elementY = currentY - baselineHeight;
                 
                 const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 baseline.setAttribute('x', x + margin);
-                baseline.setAttribute('y', actualY);
+                baseline.setAttribute('y', elementY);
                 baseline.setAttribute('width', baselineWidth);
-                baseline.setAttribute('height', actualHeight);
+                baseline.setAttribute('height', baselineHeight);
                 baseline.setAttribute('fill', 'none');
                 baseline.setAttribute('stroke', gridColor);
                 baseline.setAttribute('stroke-width', '0.5');
                 baseline.setAttribute('stroke-opacity', opacity);
                 svg.appendChild(baseline);
                 
-                if (isLast) break;
                 currentY -= baselineHeight;
             }
+            
+            // Draw a horizontal line at the top margin
+            const marginLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            marginLine.setAttribute('x1', x + margin);
+            marginLine.setAttribute('y1', y + margin);
+            marginLine.setAttribute('x2', x + width - margin);
+            marginLine.setAttribute('y2', y + margin);
+            marginLine.setAttribute('stroke', gridColor);
+            marginLine.setAttribute('stroke-width', '0.5');
+            marginLine.setAttribute('stroke-opacity', opacity);
+            svg.appendChild(marginLine);
+            
         } else { // bottom
+            // Calculate how many full-height elements can fit
+            const availableHeight = height - 2 * margin;
+            const numFullElements = Math.floor(availableHeight / baselineHeight);
+            
             // Start from top edge + margin, go down
             currentY = y + margin;
-            maxY = y + height - margin;
             
-            while (currentY < maxY) {
-                // Check if this is the last element
-                const remainingHeight = maxY - currentY;
-                const actualHeight = Math.min(baselineHeight, remainingHeight);
-                
+            // Draw only full-height elements from top to bottom
+            for (let i = 0; i < numFullElements; i++) {
                 const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 baseline.setAttribute('x', x + margin);
                 baseline.setAttribute('y', currentY);
                 baseline.setAttribute('width', baselineWidth);
-                baseline.setAttribute('height', actualHeight);
+                baseline.setAttribute('height', baselineHeight);
                 baseline.setAttribute('fill', 'none');
                 baseline.setAttribute('stroke', gridColor);
                 baseline.setAttribute('stroke-width', '0.5');
                 baseline.setAttribute('stroke-opacity', opacity);
                 svg.appendChild(baseline);
                 
-                currentY += actualHeight;
+                currentY += baselineHeight;
             }
+            
+            // Draw a horizontal line at the bottom margin
+            const marginLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            marginLine.setAttribute('x1', x + margin);
+            marginLine.setAttribute('y1', y + height - margin);
+            marginLine.setAttribute('x2', x + width - margin);
+            marginLine.setAttribute('y2', y + height - margin);
+            marginLine.setAttribute('stroke', gridColor);
+            marginLine.setAttribute('stroke-width', '0.5');
+            marginLine.setAttribute('stroke-opacity', opacity);
+            svg.appendChild(marginLine);
         }
     }
 }
