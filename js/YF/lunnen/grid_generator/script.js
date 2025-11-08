@@ -1045,6 +1045,21 @@ class GridGenerator {
         // Draw baseline if enabled
         if (this.settings.showBaseline) {
             this.drawBaseline(frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
+            
+            // Draw baseline on side panels if they are visible
+            if (this.settings.showSidePanels) {
+                // Left panel - vertical baseline (margin from right side where it touches front)
+                this.drawBaselineVerticalLeftRight(startX, frontY, scaledThickness, scaledFrontHeight, scale, 'left');
+                
+                // Right panel - vertical baseline (margin from left side where it touches front)
+                this.drawBaselineVerticalLeftRight(startX + scaledThickness + scaledFrontWidth, frontY, scaledThickness, scaledFrontHeight, scale, 'right');
+                
+                // Top panel - horizontal baseline (margin from bottom where it touches front)
+                this.drawBaselineTopBottom(frontX, startY, scaledFrontWidth, scaledThickness, scale, 'top');
+                
+                // Bottom panel - horizontal baseline (margin from top where it touches front)
+                this.drawBaselineTopBottom(frontX, startY + scaledThickness + scaledFrontHeight, scaledFrontWidth, scaledThickness, scale, 'bottom');
+            }
         }
     }
     
@@ -1325,6 +1340,168 @@ class GridGenerator {
         }
     }
     
+    drawBaselineVerticalLeftRight(x, y, width, height, scale, side) {
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const gridColor = this.getContrastColor();
+        const opacity = this.getGridOpacity(0.3);
+        const margin = module * margins * scale;
+        const baselineWidth = module * scale;
+        
+        // Height with margins top and bottom
+        const baselineHeight = height - 2 * margin;
+        
+        // Left panel: start from right edge (touching front) with margin, go left
+        // Right panel: start from left edge (touching front) with margin, go right
+        let currentX, minX, maxX;
+        
+        if (side === 'left') {
+            // Calculate how many full-width elements can fit
+            const availableWidth = width - 2 * margin;
+            const numFullElements = Math.floor(availableWidth / baselineWidth);
+            const remainingWidth = availableWidth - (numFullElements * baselineWidth);
+            
+            // Start from right edge with margin
+            currentX = x + width - margin;
+            
+            // Draw elements from right to left
+            for (let i = 0; i < numFullElements + 1; i++) {
+                let elementWidth;
+                let elementX;
+                
+                if (i === numFullElements) {
+                    // Last element (partial)
+                    elementWidth = remainingWidth;
+                    elementX = x + margin;
+                } else {
+                    // Regular full-width element
+                    elementWidth = baselineWidth;
+                    elementX = currentX - elementWidth;
+                }
+                
+                // Skip if width is 0
+                if (elementWidth <= 0) continue;
+                
+                const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                baseline.setAttribute('x', elementX);
+                baseline.setAttribute('y', y + margin);
+                baseline.setAttribute('width', elementWidth);
+                baseline.setAttribute('height', baselineHeight);
+                baseline.setAttribute('fill', 'none');
+                baseline.setAttribute('stroke', gridColor);
+                baseline.setAttribute('stroke-width', '0.5');
+                baseline.setAttribute('stroke-opacity', opacity);
+                this.dom.svg.appendChild(baseline);
+                
+                currentX -= elementWidth;
+            }
+        } else { // right
+            // Start from left edge + margin, go right
+            currentX = x + margin;
+            maxX = x + width - margin;
+            
+            while (currentX < maxX) {
+                // Check if this is the last element
+                const remainingWidth = maxX - currentX;
+                const actualWidth = Math.min(baselineWidth, remainingWidth);
+                
+                const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                baseline.setAttribute('x', currentX);
+                baseline.setAttribute('y', y + margin);
+                baseline.setAttribute('width', actualWidth);
+                baseline.setAttribute('height', baselineHeight);
+                baseline.setAttribute('fill', 'none');
+                baseline.setAttribute('stroke', gridColor);
+                baseline.setAttribute('stroke-width', '0.5');
+                baseline.setAttribute('stroke-opacity', opacity);
+                this.dom.svg.appendChild(baseline);
+                
+                currentX += actualWidth;
+            }
+        }
+    }
+    
+    drawBaselineTopBottom(x, y, width, height, scale, side) {
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const gridColor = this.getContrastColor();
+        const opacity = this.getGridOpacity(0.3);
+        const margin = module * margins * scale;
+        const baselineHeight = module * scale;
+        
+        // Width with margins left and right
+        const baselineWidth = width - 2 * margin;
+        
+        // Top panel: start from bottom edge (touching front) with margin, go up
+        // Bottom panel: start from top edge (touching front) with margin, go down
+        let currentY, minY, maxY;
+        
+        if (side === 'top') {
+            // Calculate how many full-height elements can fit
+            const availableHeight = height - 2 * margin;
+            const numFullElements = Math.floor(availableHeight / baselineHeight);
+            const remainingHeight = availableHeight - (numFullElements * baselineHeight);
+            
+            // Start from bottom edge with margin
+            currentY = y + height - margin;
+            
+            // Draw elements from bottom to top
+            for (let i = 0; i < numFullElements + 1; i++) {
+                let elementHeight;
+                let elementY;
+                
+                if (i === numFullElements) {
+                    // Last element (partial)
+                    elementHeight = remainingHeight;
+                    elementY = y + margin;
+                } else {
+                    // Regular full-height element
+                    elementHeight = baselineHeight;
+                    elementY = currentY - elementHeight;
+                }
+                
+                // Skip if height is 0
+                if (elementHeight <= 0) continue;
+                
+                const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                baseline.setAttribute('x', x + margin);
+                baseline.setAttribute('y', elementY);
+                baseline.setAttribute('width', baselineWidth);
+                baseline.setAttribute('height', elementHeight);
+                baseline.setAttribute('fill', 'none');
+                baseline.setAttribute('stroke', gridColor);
+                baseline.setAttribute('stroke-width', '0.5');
+                baseline.setAttribute('stroke-opacity', opacity);
+                this.dom.svg.appendChild(baseline);
+                
+                currentY -= elementHeight;
+            }
+        } else { // bottom
+            // Start from top edge + margin, go down
+            currentY = y + margin;
+            maxY = y + height - margin;
+            
+            while (currentY < maxY) {
+                // Check if this is the last element
+                const remainingHeight = maxY - currentY;
+                const actualHeight = Math.min(baselineHeight, remainingHeight);
+                
+                const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                baseline.setAttribute('x', x + margin);
+                baseline.setAttribute('y', currentY);
+                baseline.setAttribute('width', baselineWidth);
+                baseline.setAttribute('height', actualHeight);
+                baseline.setAttribute('fill', 'none');
+                baseline.setAttribute('stroke', gridColor);
+                baseline.setAttribute('stroke-width', '0.5');
+                baseline.setAttribute('stroke-opacity', opacity);
+                this.dom.svg.appendChild(baseline);
+                
+                currentY += actualHeight;
+            }
+        }
+    }
+    
     exportSVG() {
         const { frontWidth, frontHeight, thickness } = this.settings;
         
@@ -1372,7 +1549,24 @@ class GridGenerator {
             const baselineGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             baselineGroup.setAttribute('id', 'baseline');
             exportSvg.appendChild(baselineGroup);
+            
+            // Front panel baseline
             this.drawBaselineToSVG(baselineGroup, frontX, frontY, frontWidth, frontHeight);
+            
+            // Side panels baseline if enabled
+            if (this.settings.showSidePanels) {
+                // Left panel - vertical baseline (margin from right side where it touches front)
+                this.drawBaselineVerticalLeftRightToSVG(baselineGroup, 0, frontY, thickness, frontHeight, 'left');
+                
+                // Right panel - vertical baseline (margin from left side where it touches front)
+                this.drawBaselineVerticalLeftRightToSVG(baselineGroup, thickness + frontWidth, frontY, thickness, frontHeight, 'right');
+                
+                // Top panel - horizontal baseline (margin from bottom where it touches front)
+                this.drawBaselineTopBottomToSVG(baselineGroup, frontX, 0, frontWidth, thickness, 'top');
+                
+                // Bottom panel - horizontal baseline (margin from top where it touches front)
+                this.drawBaselineTopBottomToSVG(baselineGroup, frontX, thickness + frontHeight, frontWidth, thickness, 'bottom');
+            }
         }
         
         // Add dimensions if enabled (in separate group)
@@ -1607,6 +1801,154 @@ class GridGenerator {
             svg.appendChild(baseline);
             
             currentY += baselineHeight;
+        }
+    }
+    
+    drawBaselineVerticalLeftRightToSVG(svg, x, y, width, height, side) {
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const gridColor = this.getContrastColor();
+        const opacity = this.getGridOpacity(0.3);
+        const margin = module * margins;
+        const baselineWidth = module;
+        
+        // Height with margins top and bottom
+        const baselineHeight = height - 2 * margin;
+        
+        // Left panel: start from right edge (touching front) with margin, go left
+        // Right panel: start from left edge (touching front) with margin, go right
+        let currentX, minX, maxX;
+        
+        if (side === 'left') {
+            // Calculate how many full-width elements can fit
+            const availableWidth = width - 2 * margin;
+            const numFullElements = Math.floor(availableWidth / baselineWidth);
+            const remainingWidth = availableWidth - (numFullElements * baselineWidth);
+            
+            // Start from right edge with margin
+            currentX = x + width - margin;
+            
+            // Draw elements from right to left
+            for (let i = 0; i < numFullElements + 1; i++) {
+                let elementWidth;
+                let elementX;
+                
+                if (i === numFullElements) {
+                    // Last element (partial)
+                    elementWidth = remainingWidth;
+                    elementX = x + margin;
+                } else {
+                    // Regular full-width element
+                    elementWidth = baselineWidth;
+                    elementX = currentX - elementWidth;
+                }
+                
+                // Skip if width is 0
+                if (elementWidth <= 0) continue;
+                
+                const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                baseline.setAttribute('x', elementX);
+                baseline.setAttribute('y', y + margin);
+                baseline.setAttribute('width', elementWidth);
+                baseline.setAttribute('height', baselineHeight);
+                baseline.setAttribute('fill', 'none');
+                baseline.setAttribute('stroke', gridColor);
+                baseline.setAttribute('stroke-width', '0.5');
+                baseline.setAttribute('stroke-opacity', opacity);
+                svg.appendChild(baseline);
+                
+                currentX -= elementWidth;
+            }
+        } else { // right
+            // Start from left edge + margin, go right
+            currentX = x + margin;
+            maxX = x + width - margin;
+            
+            while (currentX < maxX) {
+                // Check if this is the last element
+                const remainingWidth = maxX - currentX;
+                const actualWidth = Math.min(baselineWidth, remainingWidth);
+                
+                const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                baseline.setAttribute('x', currentX);
+                baseline.setAttribute('y', y + margin);
+                baseline.setAttribute('width', actualWidth);
+                baseline.setAttribute('height', baselineHeight);
+                baseline.setAttribute('fill', 'none');
+                baseline.setAttribute('stroke', gridColor);
+                baseline.setAttribute('stroke-width', '0.5');
+                baseline.setAttribute('stroke-opacity', opacity);
+                svg.appendChild(baseline);
+                
+                currentX += actualWidth;
+            }
+        }
+    }
+    
+    drawBaselineTopBottomToSVG(svg, x, y, width, height, side) {
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const gridColor = this.getContrastColor();
+        const opacity = this.getGridOpacity(0.3);
+        const margin = module * margins;
+        const baselineHeight = module;
+        
+        // Width with margins left and right
+        const baselineWidth = width - 2 * margin;
+        
+        // Top panel: start from bottom edge (touching front) with margin, go up
+        // Bottom panel: start from top edge (touching front) with margin, go down
+        let currentY, minY, maxY;
+        
+        if (side === 'top') {
+            // Start from bottom edge - margin - baselineHeight, go up
+            currentY = y + height - margin - baselineHeight;
+            minY = y + margin; // stop at top edge + margin
+            maxY = y + height - margin; // for boundary check
+            
+            while (currentY >= minY) {
+                // Check if this is the last element (won't fit another full height)
+                const isLast = (currentY - baselineHeight < minY);
+                const actualHeight = isLast ? (currentY - minY + baselineHeight) : baselineHeight;
+                const actualY = isLast ? minY : currentY;
+                
+                const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                baseline.setAttribute('x', x + margin);
+                baseline.setAttribute('y', actualY);
+                baseline.setAttribute('width', baselineWidth);
+                baseline.setAttribute('height', actualHeight);
+                baseline.setAttribute('fill', 'none');
+                baseline.setAttribute('stroke', gridColor);
+                baseline.setAttribute('stroke-width', '0.5');
+                baseline.setAttribute('stroke-opacity', opacity);
+                svg.appendChild(baseline);
+                
+                if (isLast) break;
+                currentY -= baselineHeight;
+            }
+        } else { // bottom
+            // Start from top edge + margin, go down
+            currentY = y + margin;
+            maxY = y + height - margin;
+            
+            while (currentY < maxY) {
+                // Check if this is the last element
+                const remainingHeight = maxY - currentY;
+                const actualHeight = Math.min(baselineHeight, remainingHeight);
+                
+                const baseline = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                baseline.setAttribute('x', x + margin);
+                baseline.setAttribute('y', currentY);
+                baseline.setAttribute('width', baselineWidth);
+                baseline.setAttribute('height', actualHeight);
+                baseline.setAttribute('fill', 'none');
+                baseline.setAttribute('stroke', gridColor);
+                baseline.setAttribute('stroke-width', '0.5');
+                baseline.setAttribute('stroke-opacity', opacity);
+                svg.appendChild(baseline);
+                
+                currentY += actualHeight;
+            }
         }
     }
 }
