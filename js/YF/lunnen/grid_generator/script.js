@@ -1414,12 +1414,26 @@ class GridGenerator {
         const opacity = this.getGridOpacity(0.1);
         
         // Calculate "column" height (which is row height from front panel)
-        const columnHeight = module * rowHeightInModules * scale;
+        let columnHeight = module * rowHeightInModules * scale;
         const margin = module * margins * scale;
         const gutter = module * scale;
         
         // Width with margins (same as front panel height logic)
-        const columnWidth = width - 2 * margin;
+        let columnWidth = width - 2 * margin;
+        
+        // Ensure minimum column width and center if needed
+        const minColumnWidth = module * scale;
+        let columnX = x + margin;
+        if (columnWidth < minColumnWidth) {
+            columnWidth = minColumnWidth;
+            columnX = x + (width - columnWidth) / 2;
+        }
+        
+        // Ensure minimum column height
+        const minColumnHeight = module * scale;
+        if (columnHeight < minColumnHeight) {
+            columnHeight = minColumnHeight;
+        }
         
         let currentY = y + margin;
         
@@ -1431,7 +1445,7 @@ class GridGenerator {
             }
             
             const column = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            column.setAttribute('x', x + margin);
+            column.setAttribute('x', columnX);
             column.setAttribute('y', currentY);
             column.setAttribute('width', columnWidth);
             column.setAttribute('height', columnHeight);
@@ -1460,14 +1474,22 @@ class GridGenerator {
         const gutter = module * scale;
         
         // Height with margins
-        const columnHeight = height - 2 * margin;
+        let columnHeight = height - 2 * margin;
+        
+        // Ensure minimum column height and center if needed
+        const minColumnHeight = module * scale;
+        let columnY = y + margin;
+        if (columnHeight < minColumnHeight) {
+            columnHeight = minColumnHeight;
+            columnY = y + (height - columnHeight) / 2;
+        }
         
         let currentX = x + margin;
         
         for (let i = 0; i < n; i++) {
             const column = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             column.setAttribute('x', currentX);
-            column.setAttribute('y', y + margin);
+            column.setAttribute('y', columnY);
             column.setAttribute('width', scaledColumnWidth);
             column.setAttribute('height', columnHeight);
             column.setAttribute('fill', gridColor);
@@ -1490,15 +1512,30 @@ class GridGenerator {
         // Height with margins top and bottom
         const baselineHeight = height - 2 * margin;
         
+        // Calculate how many full-width elements can fit
+        const availableWidth = width - 2 * margin;
+        const numFullElements = Math.floor(availableWidth / baselineWidth);
+        
+        // If no elements fit, draw a line at the center of the panel
+        if (numFullElements <= 0) {
+            const centerX = x + width / 2;
+            const marginLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            marginLine.setAttribute('x1', centerX);
+            marginLine.setAttribute('y1', y + margin);
+            marginLine.setAttribute('x2', centerX);
+            marginLine.setAttribute('y2', y + height - margin);
+            marginLine.setAttribute('stroke', gridColor);
+            marginLine.setAttribute('stroke-width', '0.5');
+            marginLine.setAttribute('stroke-opacity', opacity);
+            this.dom.svg.appendChild(marginLine);
+            return;
+        }
+        
         // Left panel: start from right edge (touching front) with margin, go left
         // Right panel: start from left edge (touching front) with margin, go right
-        let currentX, minX, maxX;
+        let currentX;
         
         if (side === 'left') {
-            // Calculate how many full-width elements can fit
-            const availableWidth = width - 2 * margin;
-            const numFullElements = Math.floor(availableWidth / baselineWidth);
-            
             // Start from right edge with margin
             currentX = x + width - margin;
             
@@ -1533,10 +1570,6 @@ class GridGenerator {
             this.dom.svg.appendChild(marginLine);
             
         } else { // right
-            // Calculate how many full-width elements can fit
-            const availableWidth = width - 2 * margin;
-            const numFullElements = Math.floor(availableWidth / baselineWidth);
-            
             // Start from left edge + margin, go right
             currentX = x + margin;
             
@@ -1580,15 +1613,30 @@ class GridGenerator {
         // Width with margins left and right
         const baselineWidth = width - 2 * margin;
         
+        // Calculate how many full-height elements can fit
+        const availableHeight = height - 2 * margin;
+        const numFullElements = Math.floor(availableHeight / baselineHeight);
+        
+        // If no elements fit, draw a line at the center of the panel
+        if (numFullElements <= 0) {
+            const centerY = y + height / 2;
+            const marginLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            marginLine.setAttribute('x1', x + margin);
+            marginLine.setAttribute('y1', centerY);
+            marginLine.setAttribute('x2', x + width - margin);
+            marginLine.setAttribute('y2', centerY);
+            marginLine.setAttribute('stroke', gridColor);
+            marginLine.setAttribute('stroke-width', '0.5');
+            marginLine.setAttribute('stroke-opacity', opacity);
+            this.dom.svg.appendChild(marginLine);
+            return;
+        }
+        
         // Top panel: start from bottom edge (touching front) with margin, go up
         // Bottom panel: start from top edge (touching front) with margin, go down
         let currentY;
         
         if (side === 'top') {
-            // Calculate how many full-height elements can fit
-            const availableHeight = height - 2 * margin;
-            const numFullElements = Math.floor(availableHeight / baselineHeight);
-            
             // Start from bottom edge with margin
             currentY = y + height - margin;
             
@@ -1622,10 +1670,6 @@ class GridGenerator {
             this.dom.svg.appendChild(marginLine);
             
         } else { // bottom
-            // Calculate how many full-height elements can fit
-            const availableHeight = height - 2 * margin;
-            const numFullElements = Math.floor(availableHeight / baselineHeight);
-            
             // Start from top edge + margin, go down
             currentY = y + margin;
             
@@ -1985,12 +2029,26 @@ class GridGenerator {
         const opacity = this.getGridOpacity(0.1);
         
         // Calculate "column" height (which is row height from front panel)
-        const columnHeight = module * rowHeightInModules;
+        let columnHeight = module * rowHeightInModules;
         const margin = module * margins;
         const gutter = module;
         
         // Width with margins (same as front panel height logic)
-        const columnWidth = width - 2 * margin;
+        let columnWidth = width - 2 * margin;
+        
+        // Ensure minimum column width and center if needed
+        const minColumnWidth = module;
+        let columnX = x + margin;
+        if (columnWidth < minColumnWidth) {
+            columnWidth = minColumnWidth;
+            columnX = x + (width - columnWidth) / 2;
+        }
+        
+        // Ensure minimum column height
+        const minColumnHeight = module;
+        if (columnHeight < minColumnHeight) {
+            columnHeight = minColumnHeight;
+        }
         
         let currentY = y + margin;
         
@@ -2002,7 +2060,7 @@ class GridGenerator {
             }
             
             const column = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            column.setAttribute('x', x + margin);
+            column.setAttribute('x', columnX);
             column.setAttribute('y', currentY);
             column.setAttribute('width', columnWidth);
             column.setAttribute('height', columnHeight);
@@ -2030,14 +2088,22 @@ class GridGenerator {
         const gutter = module;
         
         // Height with margins
-        const columnHeight = height - 2 * margin;
+        let columnHeight = height - 2 * margin;
+        
+        // Ensure minimum column height and center if needed
+        const minColumnHeight = module;
+        let columnY = y + margin;
+        if (columnHeight < minColumnHeight) {
+            columnHeight = minColumnHeight;
+            columnY = y + (height - columnHeight) / 2;
+        }
         
         let currentX = x + margin;
         
         for (let i = 0; i < n; i++) {
             const column = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             column.setAttribute('x', currentX);
-            column.setAttribute('y', y + margin);
+            column.setAttribute('y', columnY);
             column.setAttribute('width', columnWidth);
             column.setAttribute('height', columnHeight);
             column.setAttribute('fill', gridColor);
@@ -2060,15 +2126,30 @@ class GridGenerator {
         // Height with margins top and bottom
         const baselineHeight = height - 2 * margin;
         
+        // Calculate how many full-width elements can fit
+        const availableWidth = width - 2 * margin;
+        const numFullElements = Math.floor(availableWidth / baselineWidth);
+        
+        // If no elements fit, draw a line at the center of the panel
+        if (numFullElements <= 0) {
+            const centerX = x + width / 2;
+            const marginLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            marginLine.setAttribute('x1', centerX);
+            marginLine.setAttribute('y1', y + margin);
+            marginLine.setAttribute('x2', centerX);
+            marginLine.setAttribute('y2', y + height - margin);
+            marginLine.setAttribute('stroke', gridColor);
+            marginLine.setAttribute('stroke-width', '0.5');
+            marginLine.setAttribute('stroke-opacity', opacity);
+            svg.appendChild(marginLine);
+            return;
+        }
+        
         // Left panel: start from right edge (touching front) with margin, go left
         // Right panel: start from left edge (touching front) with margin, go right
         let currentX;
         
         if (side === 'left') {
-            // Calculate how many full-width elements can fit
-            const availableWidth = width - 2 * margin;
-            const numFullElements = Math.floor(availableWidth / baselineWidth);
-            
             // Start from right edge with margin
             currentX = x + width - margin;
             
@@ -2103,10 +2184,6 @@ class GridGenerator {
             svg.appendChild(marginLine);
             
         } else { // right
-            // Calculate how many full-width elements can fit
-            const availableWidth = width - 2 * margin;
-            const numFullElements = Math.floor(availableWidth / baselineWidth);
-            
             // Start from left edge + margin, go right
             currentX = x + margin;
             
@@ -2150,15 +2227,30 @@ class GridGenerator {
         // Width with margins left and right
         const baselineWidth = width - 2 * margin;
         
+        // Calculate how many full-height elements can fit
+        const availableHeight = height - 2 * margin;
+        const numFullElements = Math.floor(availableHeight / baselineHeight);
+        
+        // If no elements fit, draw a line at the center of the panel
+        if (numFullElements <= 0) {
+            const centerY = y + height / 2;
+            const marginLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            marginLine.setAttribute('x1', x + margin);
+            marginLine.setAttribute('y1', centerY);
+            marginLine.setAttribute('x2', x + width - margin);
+            marginLine.setAttribute('y2', centerY);
+            marginLine.setAttribute('stroke', gridColor);
+            marginLine.setAttribute('stroke-width', '0.5');
+            marginLine.setAttribute('stroke-opacity', opacity);
+            svg.appendChild(marginLine);
+            return;
+        }
+        
         // Top panel: start from bottom edge (touching front) with margin, go up
         // Bottom panel: start from top edge (touching front) with margin, go down
         let currentY;
         
         if (side === 'top') {
-            // Calculate how many full-height elements can fit
-            const availableHeight = height - 2 * margin;
-            const numFullElements = Math.floor(availableHeight / baselineHeight);
-            
             // Start from bottom edge with margin
             currentY = y + height - margin;
             
@@ -2192,10 +2284,6 @@ class GridGenerator {
             svg.appendChild(marginLine);
             
         } else { // bottom
-            // Calculate how many full-height elements can fit
-            const availableHeight = height - 2 * margin;
-            const numFullElements = Math.floor(availableHeight / baselineHeight);
-            
             // Start from top edge + margin, go down
             currentY = y + margin;
             
