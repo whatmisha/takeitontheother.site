@@ -176,42 +176,13 @@
                 <section class="control-section" aria-labelledby="color-heading">
                     <h3 id="color-heading" class="sr-only">Color Settings</h3>
                     <div class="control-group">
-                        <label>
+                        <label for="backgroundColor">
                             <span>Background Color</span>
                             <button type="button" class="color-preset" id="lunnenBlue" aria-label="Apply Lunnen Blue preset color">Lunnen Blue</button>
                         </label>
                         <div class="color-input-group">
-                            <button type="button" class="color-preview" id="colorPreview" aria-label="Open color picker"></button>
+                            <input type="color" id="backgroundColor" value="#000000" aria-label="Background color picker">
                             <input type="text" id="hexColorInput" value="#000000" placeholder="#000000" maxlength="7" aria-label="Hex color code input">
-                        </div>
-                    </div>
-                    
-                    <!-- Custom HSB Color Picker -->
-                    <div class="hsb-picker" id="hsbPicker" style="display: none;">
-                        <div class="hsb-controls">
-                            <div class="hsb-control-group">
-                                <label for="hueSlider">
-                                    <span>Hue</span>
-                                    <input type="text" class="value-display hsb-value" id="hueValue" value="0" data-min="0" data-max="360" data-suffix="°" aria-label="Hue value">
-                                </label>
-                                <input type="range" id="hueSlider" min="0" max="360" step="1" value="0">
-                            </div>
-                            
-                            <div class="hsb-control-group">
-                                <label for="saturationSlider">
-                                    <span>Saturation</span>
-                                    <input type="text" class="value-display hsb-value" id="saturationValue" value="0" data-min="0" data-max="100" data-suffix="%" aria-label="Saturation value">
-                                </label>
-                                <input type="range" id="saturationSlider" min="0" max="100" step="1" value="0">
-                            </div>
-                            
-                            <div class="hsb-control-group">
-                                <label for="brightnessSlider">
-                                    <span>Brightness</span>
-                                    <input type="text" class="value-display hsb-value" id="brightnessValue" value="0" data-min="0" data-max="100" data-suffix="%" aria-label="Brightness value">
-                                </label>
-                                <input type="range" id="brightnessSlider" min="0" max="100" step="1" value="0">
-                            </div>
                         </div>
                     </div>
                 </section>

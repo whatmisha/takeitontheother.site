@@ -159,19 +159,10 @@ class DitheringTool {
             exportWithAlpha: document.getElementById('exportWithAlpha'),
             export2x: document.getElementById('export2x'),
             export4x: document.getElementById('export4x'),
+            backgroundColor: document.getElementById('backgroundColor'),
             hexColorInput: document.getElementById('hexColorInput'),
             lunnenBlue: document.getElementById('lunnenBlue'),
-            resetTransform: document.getElementById('resetTransform'),
-            
-            // Color picker
-            colorPreview: document.getElementById('colorPreview'),
-            hsbPicker: document.getElementById('hsbPicker'),
-            hueSlider: document.getElementById('hueSlider'),
-            saturationSlider: document.getElementById('saturationSlider'),
-            brightnessSlider: document.getElementById('brightnessSlider'),
-            hueValue: document.getElementById('hueValue'),
-            saturationValue: document.getElementById('saturationValue'),
-            brightnessValue: document.getElementById('brightnessValue')
+            resetTransform: document.getElementById('resetTransform')
         };
     }
     
