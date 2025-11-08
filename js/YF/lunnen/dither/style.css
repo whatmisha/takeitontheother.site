@@ -240,6 +240,20 @@ body {
     font-size: 0.85rem;
 }
 
+.control-group-header {
+    display: flex;
+    align-items: center;
+    font-weight: 400;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+}
+
+.control-label {
+    display: inline-block;
+    margin-right: auto;
+}
+
 /* Range slider styles */
 .control-group input[type="range"] {
     width: 100%;
