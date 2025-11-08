@@ -36,8 +36,8 @@
                         
                         <div class="control-group">
                             <label for="marginsSlider">
-                                <span>Margins <span class="unit">× mod</span></span>
-                                <input type="text" class="value-display" id="marginsValue" value="2" data-min="0" data-max="10" aria-label="Margins in modules">
+                                <span>Margins <span class="unit">mod</span></span>
+                                <input type="text" class="value-display" id="marginsValue" value="2.00" data-min="0" data-max="10" aria-label="Margins in modules">
                             </label>
                             <input type="range" id="marginsSlider" min="0" max="10" step="0.5" value="2" aria-label="Margins slider">
                         </div>
@@ -61,7 +61,7 @@
                             
                             <div class="control-group">
                                 <label for="rowHeightSlider">
-                                    <span>Row Height <span class="unit">× mod</span></span>
+                                    <span>Row Height <span class="unit">mod</span></span>
                                     <input type="text" class="value-display" id="rowHeightValue" value="3" data-min="1" data-max="20" aria-label="Row height in modules">
                                 </label>
                                 <input type="range" id="rowHeightSlider" min="1" max="20" step="1" value="3" aria-label="Row height slider">
@@ -222,22 +222,30 @@
             <button class="modal-close" id="modalClose" aria-label="Close instructions">&times;</button>
             <h2 id="modalTitle">How it Works?</h2>
             <div class="modal-body">
-                <p>This tool generates packaging layout grids for use in <strong>Adobe Illustrator</strong>.</p>
+                <p>This is a <strong>modular grid generator</strong> for Lunnen packaging design.</p>
                 
-                <p>The layout shows an unfolded box with five panels:</p>
+                <h3>Default Layout</h3>
+                <p>The default dimensions match the current <strong>Lunnen Outer 16</strong> laptop packaging. The layout shows an unfolded box with five panels:</p>
                 <ul>
-                    <li><strong>Front</strong> - The main front panel of the box</li>
-                    <li><strong>Left/Right</strong> - Side panels (vertical)</li>
-                    <li><strong>Top/Bottom</strong> - Top and bottom flaps (horizontal)</li>
+                    <li><strong>Front</strong> — Main panel</li>
+                    <li><strong>Left/Right</strong> — Side panels (vertical)</li>
+                    <li><strong>Top/Bottom</strong> — Flaps (horizontal)</li>
                 </ul>
                 
-                <p>Adjust the <strong>Front Panel Size</strong> to set the width and height of the main panel. The side panels will automatically adjust their length to match.</p>
+                <h3>Key Setting: Module</h3>
+                <p>The <strong>Module</strong> setting (in millimeters) is the foundation of the entire grid system. It controls:</p>
+                <ul>
+                    <li><strong>Baseline Grid</strong> — The finest grid division</li>
+                    <li><strong>Spacing</strong> — Gaps between Columns and Rows</li>
+                    <li><strong>Margins</strong> — Edge spacing</li>
+                    <li><strong>Row Height</strong> — Height of each row in modules</li>
+                </ul>
                 
-                <p>Set the <strong>Side Panel Thickness</strong> to control how wide the side, top, and bottom panels are.</p>
+                <h3>Perfect Fit Calculator</h3>
+                <p>When <strong>Link Rows ⇄ Row Height</strong> is enabled, the interface suggests optimal combinations where rows fit perfectly into the layout height with an exact number of modules — no leftover space.</p>
                 
-                <p>All dimensions are in <strong>millimeters</strong> for print accuracy. The preview automatically scales to fit your screen.</p>
-                
-                <p>Click <strong>Export SVG</strong> to download the grid as a vector file ready for Adobe Illustrator.</p>
+                <h3>Export to Adobe Illustrator</h3>
+                <p>Click <strong>Export SVG</strong> to download your grid. When opened in Adobe Illustrator, all dimensions will match the real millimeter measurements — ready for print production.</p>
             </div>
         </div>
     </div>
