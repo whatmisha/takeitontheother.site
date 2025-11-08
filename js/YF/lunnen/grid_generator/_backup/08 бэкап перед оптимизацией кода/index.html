@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Grid generator for packaging layout design. Create custom grids for print design in Adobe Illustrator.">
+    <meta name="keywords" content="grid generator, packaging, print design, Adobe Illustrator, SVG">
+    
+    <title>Grid Generator - Packaging Layout Tool</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="/js/YF/" class="yf-tools-link" aria-label="Back to YF Tools">
+            ←YF Tools
+        </a>
+        <div class="main-content">
+            <div class="canvas-container">
+                <svg id="gridSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+
+            <aside class="controls-panel" id="gridPanel" role="complementary" aria-label="Grid settings">
+                <div class="panel-header" id="gridPanelHeader">
+                    <span>Grid</span>
+                    <span class="drag-icon" aria-hidden="true">⋮⋮</span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="gridModuleSlider">
+                                <span>Module <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="gridModuleValue" value="5.00" data-min="0.5" data-max="20" aria-label="Grid module">
+                            </label>
+                            <input type="range" id="gridModuleSlider" min="0.5" max="20" step="0.01" value="5.00" aria-label="Grid module slider">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="marginsSlider">
+                                <span>Margins <span class="unit">mod</span></span>
+                                <input type="text" class="value-display" id="marginsValue" value="2.00" data-min="0" data-max="10" aria-label="Margins in modules">
+                            </label>
+                            <input type="range" id="marginsSlider" min="0" max="10" step="0.5" value="2" aria-label="Margins slider">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="columnCountSlider">
+                                <span>Columns</span>
+                                <input type="text" class="value-display" id="columnCountValue" value="12" data-min="1" data-max="24" aria-label="Column count">
+                            </label>
+                            <input type="range" id="columnCountSlider" min="1" max="24" step="1" value="12" aria-label="Column count slider">
+                        </div>
+                        
+                        <div id="linkedControlsContainer">
+                            <div class="control-group">
+                                <label for="rowCountSlider">
+                                    <span>Rows</span>
+                                    <input type="text" class="value-display" id="rowCountValue" value="19" data-min="1" data-max="50" aria-label="Row count">
+                                </label>
+                                <input type="range" id="rowCountSlider" min="1" max="50" step="1" value="19" aria-label="Row count slider">
+                            </div>
+                            
+                            <div class="control-group">
+                                <label for="rowHeightSlider">
+                                    <span>Row Height <span class="unit">mod</span></span>
+                                    <input type="text" class="value-display" id="rowHeightValue" value="3" data-min="1" data-max="20" aria-label="Row height in modules">
+                                </label>
+                                <input type="range" id="rowHeightSlider" min="1" max="20" step="1" value="3" aria-label="Row height slider">
+                            </div>
+                            
+                            <div class="control-group">
+                                <div id="rowPresetsContainer" class="row-presets"></div>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="linkRowsHeight" checked aria-label="Link rows and row height">
+                                    <span>Link Rows ⇄ Row Height</span>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <section class="control-section">
+                        <h3>Show</h3>
+                        
+                        <div class="control-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showColumns" checked aria-label="Show columns">
+                                <span>Columns</span>
+                            </label>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showRows" checked aria-label="Show rows">
+                                <span>Rows</span>
+                            </label>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showBaseline" checked aria-label="Show baseline grid">
+                                <span>Baseline</span>
+                            </label>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <aside class="controls-panel controls-panel-left" id="controlsPanel" role="complementary" aria-label="Dimensions settings">
+                <div class="panel-header" id="panelHeader">
+                    <span>Dimensions <span class="unit">mm</span></span>
+                    <span class="drag-icon" aria-hidden="true">⋮⋮</span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="frontWidthSlider">
+                                <span>Width</span>
+                                <input type="text" class="value-display" id="frontWidthValue" value="390.5" data-min="50" data-max="1000" aria-label="Front width value">
+                            </label>
+                            <input type="range" id="frontWidthSlider" min="50" max="1000" step="0.5" value="390.5" aria-label="Front width slider" aria-valuemin="50" aria-valuemax="1000" aria-valuenow="390.5">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="frontHeightSlider">
+                                <span>Height</span>
+                                <input type="text" class="value-display" id="frontHeightValue" value="395.5" data-min="50" data-max="1000" aria-label="Front height value">
+                            </label>
+                            <input type="range" id="frontHeightSlider" min="50" max="1000" step="0.5" value="395.5" aria-label="Front height slider" aria-valuemin="50" aria-valuemax="1000" aria-valuenow="395.5">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="thicknessSlider">
+                                <span>Thickness</span>
+                                <input type="text" class="value-display" id="thicknessValue" value="39" data-min="5" data-max="200" aria-label="Thickness value">
+                            </label>
+                            <input type="range" id="thicknessSlider" min="5" max="200" step="0.5" value="39" aria-label="Thickness slider" aria-valuemin="5" aria-valuemax="200" aria-valuenow="39">
+                        </div>
+                    </section>
+
+                    <section class="control-section" aria-labelledby="color-heading">
+                        <h3 id="color-heading" class="sr-only">Color Settings</h3>
+                        <div class="control-group">
+                            <label>
+                                <span>Background Color</span>
+                                <button type="button" class="color-preset" id="lunnenBlue" aria-label="Apply Lunnen Blue preset color">Lunnen Blue</button>
+                            </label>
+                            <div class="color-input-group">
+                                <button type="button" class="color-preview" id="colorPreview" aria-label="Open color picker"></button>
+                                <input type="text" id="hexColorInput" value="#e6e6e6" placeholder="#e6e6e6" maxlength="7" aria-label="Hex color code input">
+                            </div>
+                        </div>
+                        
+                        <!-- Custom HSB Color Picker -->
+                        <div class="hsb-picker" id="hsbPicker" style="display: none;">
+                            <div class="hsb-controls">
+                                <div class="hsb-control-group">
+                                    <label for="hueSlider">
+                                        <span>Hue</span>
+                                        <input type="text" class="value-display hsb-value" id="hueValue" value="0" data-min="0" data-max="360" data-suffix="°" aria-label="Hue value">
+                                    </label>
+                                    <input type="range" id="hueSlider" min="0" max="360" step="1" value="0">
+                                </div>
+                                
+                                <div class="hsb-control-group">
+                                    <label for="saturationSlider">
+                                        <span>Saturation</span>
+                                        <input type="text" class="value-display hsb-value" id="saturationValue" value="0" data-min="0" data-max="100" data-suffix="%" aria-label="Saturation value">
+                                    </label>
+                                    <input type="range" id="saturationSlider" min="0" max="100" step="1" value="0">
+                                </div>
+                                
+                                <div class="hsb-control-group">
+                                    <label for="brightnessSlider">
+                                        <span>Brightness</span>
+                                        <input type="text" class="value-display hsb-value" id="brightnessValue" value="0" data-min="0" data-max="100" data-suffix="%" aria-label="Brightness value">
+                                    </label>
+                                    <input type="range" id="brightnessSlider" min="0" max="100" step="1" value="0">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="control-section">
+                        <h3>Show</h3>
+                        
+                        <div class="control-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showDimensions" aria-label="Show dimensions">
+                                <span>Dimensions</span>
+                            </label>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showSidePanels" checked aria-label="Show side panels">
+                                <span>Side Panels</span>
+                            </label>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <nav class="bottom-buttons" role="toolbar" aria-label="Main actions">
+        <button class="btn-fixed btn-export" id="exportBtn" aria-label="Export SVG (Command/Control + E)">
+            Export SVG ⌘E
+        </button>
+    </nav>
+
+    <div class="help-container">
+        <button class="btn-fixed btn-help" id="helpButton" aria-label="Show instructions">
+            How it Works?
+        </button>
+    </div>
+
+    <!-- Instructions Modal -->
+    <div class="modal-overlay" id="modalOverlay" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
+            <button class="modal-close" id="modalClose" aria-label="Close instructions">&times;</button>
+            <h2 id="modalTitle">How it Works?</h2>
+            <div class="modal-body">
+                <p>This is a <strong>modular grid generator</strong> for Lunnen packaging design.</p>
+                
+                <h3>Default Layout</h3>
+                <p>The default dimensions match the current <strong>Lunnen Outer 16</strong> laptop packaging. The layout shows an unfolded box with five panels:</p>
+                <ul>
+                    <li><strong>Front</strong> — Main panel</li>
+                    <li><strong>Left/Right</strong> — Side panels (vertical)</li>
+                    <li><strong>Top/Bottom</strong> — Flaps (horizontal)</li>
+                </ul>
+                
+                <h3>Key Setting: Module</h3>
+                <p>The <strong>Module</strong> setting (in millimeters) is the foundation of the entire grid system. It controls:</p>
+                <ul>
+                    <li><strong>Baseline Grid</strong> — The finest grid division</li>
+                    <li><strong>Spacing</strong> — Gaps between Columns and Rows</li>
+                    <li><strong>Margins</strong> — Edge spacing</li>
+                    <li><strong>Row Height</strong> — Height of each row in modules</li>
+                </ul>
+                
+                <h3>Perfect Fit Calculator</h3>
+                <p>When <strong>Link Rows ⇄ Row Height</strong> is enabled, the interface suggests optimal combinations where rows fit perfectly into the layout height with an exact number of modules — no leftover space.</p>
+                
+                <h3>Export to Adobe Illustrator</h3>
+                <p>Click <strong>Export SVG</strong> to download your grid. When opened in Adobe Illustrator, all dimensions will match the real millimeter measurements — ready for print production.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js" defer></script>
+</body>
+</html>
+
