@@ -127,6 +127,8 @@ class GridGenerator {
             const value = parseFloat(e.target.value);
             this.dom.frontHeightValue.value = value.toFixed(1);
             this.settings.frontHeight = value;
+            this.calculateRowCount();
+            this.generateRowPresets();
             this.updateGrid();
         });
         
@@ -750,6 +752,8 @@ class GridGenerator {
             this.settings.frontWidth = newValue;
         } else if (sliderId === 'frontHeightSlider') {
             this.settings.frontHeight = newValue;
+            this.calculateRowCount();
+            this.generateRowPresets();
         } else if (sliderId === 'thicknessSlider') {
             this.settings.thickness = newValue;
         } else if (sliderId === 'gridModuleSlider') {
@@ -828,6 +832,8 @@ class GridGenerator {
             this.settings.frontWidth = numValue;
         } else if (sliderId === 'frontHeightSlider') {
             this.settings.frontHeight = numValue;
+            this.calculateRowCount();
+            this.generateRowPresets();
         } else if (sliderId === 'thicknessSlider') {
             this.settings.thickness = numValue;
         } else if (sliderId === 'gridModuleSlider') {
