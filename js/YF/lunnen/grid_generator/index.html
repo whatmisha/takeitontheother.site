@@ -28,7 +28,7 @@
                     <section class="control-section">
                         <div class="control-group">
                             <label for="gridModuleSlider">
-                                <span>Module</span>
+                                <span>Module <span class="unit">mm</span></span>
                                 <input type="text" class="value-display" id="gridModuleValue" value="5.00" data-min="0.5" data-max="20" aria-label="Grid module">
                             </label>
                             <input type="range" id="gridModuleSlider" min="0.5" max="20" step="0.01" value="5.00" aria-label="Grid module slider">
@@ -36,7 +36,7 @@
                         
                         <div class="control-group">
                             <label for="marginsSlider">
-                                <span>Margins</span>
+                                <span>Margins <span class="unit">× mod</span></span>
                                 <input type="text" class="value-display" id="marginsValue" value="2" data-min="0" data-max="10" aria-label="Margins in modules">
                             </label>
                             <input type="range" id="marginsSlider" min="0" max="10" step="0.5" value="2" aria-label="Margins slider">
@@ -61,7 +61,7 @@
                             
                             <div class="control-group">
                                 <label for="rowHeightSlider">
-                                    <span>Row Height</span>
+                                    <span>Row Height <span class="unit">× mod</span></span>
                                     <input type="text" class="value-display" id="rowHeightValue" value="3" data-min="1" data-max="20" aria-label="Row height in modules">
                                 </label>
                                 <input type="range" id="rowHeightSlider" min="1" max="20" step="1" value="3" aria-label="Row height slider">
@@ -109,7 +109,7 @@
 
             <aside class="controls-panel controls-panel-left" id="controlsPanel" role="complementary" aria-label="Dimensions settings">
                 <div class="panel-header" id="panelHeader">
-                    <span>Dimensions</span>
+                    <span>Dimensions <span class="unit">mm</span></span>
                     <span class="drag-icon" aria-hidden="true">⋮⋮</span>
                 </div>
                 <div class="panel-content">

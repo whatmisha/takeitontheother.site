@@ -181,6 +181,10 @@ body {
     color: var(--color-text-dim);
 }
 
+.panel-header .unit {
+    opacity: 0.4;
+}
+
 .panel-content {
     padding: var(--spacing-3xl) var(--spacing-3xl);
     overflow-y: auto;
@@ -218,6 +222,10 @@ body {
     margin-bottom: var(--spacing-xs);
     color: var(--color-text-secondary);
     font-size: 0.85rem;
+}
+
+.control-group label .unit {
+    opacity: 0.4;
 }
 
 /* Range slider styles */

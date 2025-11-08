@@ -1061,6 +1061,21 @@ class GridGenerator {
                 this.drawBaselineTopBottom(frontX, startY + scaledThickness + scaledFrontHeight, scaledFrontWidth, scaledThickness, scale, 'bottom');
             }
         }
+        
+        // Draw columns on side panels if they are visible and columns are enabled
+        if (this.settings.showColumns && this.settings.showSidePanels) {
+            // Left panel - vertical columns (using rows parameters from front)
+            this.drawColumnsVerticalLeftRight(startX, frontY, scaledThickness, scaledFrontHeight, scale, 'left');
+            
+            // Right panel - vertical columns (using rows parameters from front)
+            this.drawColumnsVerticalLeftRight(startX + scaledThickness + scaledFrontWidth, frontY, scaledThickness, scaledFrontHeight, scale, 'right');
+            
+            // Top panel - horizontal columns (using columns parameters from front)
+            this.drawColumnsTopBottom(frontX, startY, scaledFrontWidth, scaledThickness, scale, 'top');
+            
+            // Bottom panel - horizontal columns (using columns parameters from front)
+            this.drawColumnsTopBottom(frontX, startY + scaledThickness + scaledFrontHeight, scaledFrontWidth, scaledThickness, scale, 'bottom');
+        }
     }
     
     drawRectangles(x, y, frontW, frontH, thickness) {
@@ -1340,6 +1355,81 @@ class GridGenerator {
         }
     }
     
+    drawColumnsVerticalLeftRight(x, y, width, height, scale, side) {
+        // Left and right panels use rows parameters from front (rotated 90°)
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const n = this.settings.rowCount;
+        const rowHeightInModules = this.settings.rowHeight;
+        const gridColor = this.getContrastColor();
+        const opacity = this.getGridOpacity(0.1);
+        
+        // Calculate "column" height (which is row height from front panel)
+        const columnHeight = module * rowHeightInModules * scale;
+        const margin = module * margins * scale;
+        const gutter = module * scale;
+        
+        // Width with margins (same as front panel height logic)
+        const columnWidth = width - 2 * margin;
+        
+        let currentY = y + margin;
+        
+        // Draw n "columns" vertically (using row parameters)
+        for (let i = 0; i < n; i++) {
+            // Check if there's enough space for this column
+            if (currentY + columnHeight > y + height - margin) {
+                break;
+            }
+            
+            const column = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            column.setAttribute('x', x + margin);
+            column.setAttribute('y', currentY);
+            column.setAttribute('width', columnWidth);
+            column.setAttribute('height', columnHeight);
+            column.setAttribute('fill', gridColor);
+            column.setAttribute('fill-opacity', opacity);
+            column.setAttribute('stroke', 'none');
+            this.dom.svg.appendChild(column);
+            
+            currentY += columnHeight + gutter;
+        }
+    }
+    
+    drawColumnsTopBottom(x, y, width, height, scale, side) {
+        // Top and bottom panels use the same columns parameters as front
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const n = this.settings.columnCount;
+        const gridColor = this.getContrastColor();
+        const opacity = this.getGridOpacity(0.1);
+        
+        // Calculate column width (same as front panel)
+        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (n - 1)) / n;
+        
+        const margin = module * margins * scale;
+        const scaledColumnWidth = columnWidth * scale;
+        const gutter = module * scale;
+        
+        // Height with margins
+        const columnHeight = height - 2 * margin;
+        
+        let currentX = x + margin;
+        
+        for (let i = 0; i < n; i++) {
+            const column = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            column.setAttribute('x', currentX);
+            column.setAttribute('y', y + margin);
+            column.setAttribute('width', scaledColumnWidth);
+            column.setAttribute('height', columnHeight);
+            column.setAttribute('fill', gridColor);
+            column.setAttribute('fill-opacity', opacity);
+            column.setAttribute('stroke', 'none');
+            this.dom.svg.appendChild(column);
+            
+            currentX += scaledColumnWidth + gutter;
+        }
+    }
+    
     drawBaselineVerticalLeftRight(x, y, width, height, scale, side) {
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
@@ -1551,6 +1641,21 @@ class GridGenerator {
             columnsGroup.setAttribute('id', 'columns');
             exportSvg.appendChild(columnsGroup);
             this.drawColumnsToSVG(columnsGroup, frontX, frontY, frontWidth, frontHeight);
+            
+            // Draw columns on side panels if enabled
+            if (this.settings.showSidePanels) {
+                // Left panel - vertical columns (using rows parameters from front)
+                this.drawColumnsVerticalLeftRightToSVG(columnsGroup, 0, frontY, thickness, frontHeight, 'left');
+                
+                // Right panel - vertical columns (using rows parameters from front)
+                this.drawColumnsVerticalLeftRightToSVG(columnsGroup, thickness + frontWidth, frontY, thickness, frontHeight, 'right');
+                
+                // Top panel - horizontal columns (using columns parameters from front)
+                this.drawColumnsTopBottomToSVG(columnsGroup, frontX, 0, frontWidth, thickness, 'top');
+                
+                // Bottom panel - horizontal columns (using columns parameters from front)
+                this.drawColumnsTopBottomToSVG(columnsGroup, frontX, thickness + frontHeight, frontWidth, thickness, 'bottom');
+            }
         }
         
         // Draw rows if enabled (in separate group)
@@ -1818,6 +1923,80 @@ class GridGenerator {
             svg.appendChild(baseline);
             
             currentY += baselineHeight;
+        }
+    }
+    
+    drawColumnsVerticalLeftRightToSVG(svg, x, y, width, height, side) {
+        // Left and right panels use rows parameters from front (rotated 90°)
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const n = this.settings.rowCount;
+        const rowHeightInModules = this.settings.rowHeight;
+        const gridColor = this.getContrastColor();
+        const opacity = this.getGridOpacity(0.1);
+        
+        // Calculate "column" height (which is row height from front panel)
+        const columnHeight = module * rowHeightInModules;
+        const margin = module * margins;
+        const gutter = module;
+        
+        // Width with margins (same as front panel height logic)
+        const columnWidth = width - 2 * margin;
+        
+        let currentY = y + margin;
+        
+        // Draw n "columns" vertically (using row parameters)
+        for (let i = 0; i < n; i++) {
+            // Check if there's enough space for this column
+            if (currentY + columnHeight > y + height - margin) {
+                break;
+            }
+            
+            const column = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            column.setAttribute('x', x + margin);
+            column.setAttribute('y', currentY);
+            column.setAttribute('width', columnWidth);
+            column.setAttribute('height', columnHeight);
+            column.setAttribute('fill', gridColor);
+            column.setAttribute('fill-opacity', opacity);
+            column.setAttribute('stroke', 'none');
+            svg.appendChild(column);
+            
+            currentY += columnHeight + gutter;
+        }
+    }
+    
+    drawColumnsTopBottomToSVG(svg, x, y, width, height, side) {
+        // Top and bottom panels use the same columns parameters as front
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const n = this.settings.columnCount;
+        const gridColor = this.getContrastColor();
+        const opacity = this.getGridOpacity(0.1);
+        
+        // Calculate column width (same as front panel)
+        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (n - 1)) / n;
+        
+        const margin = module * margins;
+        const gutter = module;
+        
+        // Height with margins
+        const columnHeight = height - 2 * margin;
+        
+        let currentX = x + margin;
+        
+        for (let i = 0; i < n; i++) {
+            const column = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            column.setAttribute('x', currentX);
+            column.setAttribute('y', y + margin);
+            column.setAttribute('width', columnWidth);
+            column.setAttribute('height', columnHeight);
+            column.setAttribute('fill', gridColor);
+            column.setAttribute('fill-opacity', opacity);
+            column.setAttribute('stroke', 'none');
+            svg.appendChild(column);
+            
+            currentX += columnWidth + gutter;
         }
     }
     
