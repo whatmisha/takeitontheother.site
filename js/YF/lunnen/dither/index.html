@@ -121,19 +121,15 @@
                         </label>
                         <fieldset>
                             <legend class="sr-only">Dithering pattern</legend>
-                            <div class="radio-group" role="radiogroup" aria-label="Dithering pattern selection">
-                                <label class="radio-label">
-                                    <input type="radio" name="pattern" value="floyd-steinberg" checked aria-label="Floyd-Steinberg pattern">
-                                    <span>Floyd-Steinberg</span>
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="pattern" value="bayer" aria-label="Bayer pattern">
-                                    <span>Bayer</span>
-                                </label>
-                                <label class="radio-label">
-                                    <input type="radio" name="pattern" value="random" aria-label="Random pattern">
-                                    <span>Random</span>
-                                </label>
+                            <div class="segmented-control" role="radiogroup" aria-label="Dithering pattern selection">
+                                <input type="radio" name="pattern" value="floyd-steinberg" id="patternFloyd" checked aria-label="Floyd-Steinberg pattern">
+                                <label for="patternFloyd">FS</label>
+                                
+                                <input type="radio" name="pattern" value="bayer" id="patternBayer" aria-label="Bayer pattern">
+                                <label for="patternBayer">Bayer</label>
+                                
+                                <input type="radio" name="pattern" value="random" id="patternRandom" aria-label="Random pattern">
+                                <label for="patternRandom">Random</label>
                             </div>
                         </fieldset>
                     </div>
