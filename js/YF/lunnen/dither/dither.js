@@ -115,6 +115,7 @@ class DitheringTool {
         this.initPanelDrag('transformPanel', 'transformPanelHeader');
         this.initCanvasInteraction();
         this.initValueInputs();
+        this.initColorPreview();
         this.initYFToolsLink();
         this.loadDefaultImage();
         this.loadDefaultSample();
@@ -250,6 +251,178 @@ class DitheringTool {
         return false;
     }
     
+    // Color conversion methods
+    hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+    
+    rgbToHex(r, g, b) {
+        return '#' + [r, g, b].map(x => {
+            const hex = Math.round(x).toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        }).join('');
+    }
+    
+    rgbToHsb(r, g, b) {
+        r /= 255;
+        g /= 255;
+        b /= 255;
+        
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const delta = max - min;
+        
+        let h = 0;
+        let s = max === 0 ? 0 : delta / max;
+        let v = max;
+        
+        if (delta !== 0) {
+            if (max === r) {
+                h = ((g - b) / delta + (g < b ? 6 : 0)) / 6;
+            } else if (max === g) {
+                h = ((b - r) / delta + 2) / 6;
+            } else {
+                h = ((r - g) / delta + 4) / 6;
+            }
+        }
+        
+        return {
+            h: Math.round(h * 360),
+            s: Math.round(s * 100),
+            b: Math.round(v * 100)
+        };
+    }
+    
+    hsbToRgb(h, s, b) {
+        h = h / 360;
+        s = s / 100;
+        b = b / 100;
+        
+        let r, g, bl;
+        
+        if (s === 0) {
+            r = g = bl = b;
+        } else {
+            const i = Math.floor(h * 6);
+            const f = h * 6 - i;
+            const p = b * (1 - s);
+            const q = b * (1 - f * s);
+            const t = b * (1 - (1 - f) * s);
+            
+            switch (i % 6) {
+                case 0: r = b; g = t; bl = p; break;
+                case 1: r = q; g = b; bl = p; break;
+                case 2: r = p; g = b; bl = t; break;
+                case 3: r = p; g = q; bl = b; break;
+                case 4: r = t; g = p; bl = b; break;
+                case 5: r = b; g = p; bl = q; break;
+            }
+        }
+        
+        return {
+            r: r * 255,
+            g: g * 255,
+            b: bl * 255
+        };
+    }
+    
+    updateHSBFromHex(hex) {
+        const rgb = this.hexToRgb(hex);
+        if (rgb) {
+            const hsb = this.rgbToHsb(rgb.r, rgb.g, rgb.b);
+            this.dom.hueSlider.value = hsb.h;
+            this.dom.saturationSlider.value = hsb.s;
+            this.dom.brightnessSlider.value = hsb.b;
+            this.dom.hueValue.value = hsb.h;
+            this.dom.saturationValue.value = hsb.s;
+            this.dom.brightnessValue.value = hsb.b;
+            this.updateSaturationGradient();
+            this.updateBrightnessGradient();
+        }
+    }
+    
+    updateColorFromHSB() {
+        const h = parseInt(this.dom.hueSlider.value);
+        const s = parseInt(this.dom.saturationSlider.value);
+        const b = parseInt(this.dom.brightnessSlider.value);
+        
+        const rgb = this.hsbToRgb(h, s, b);
+        const hex = this.rgbToHex(rgb.r, rgb.g, rgb.b);
+        
+        this.settings.backgroundColor = hex;
+        this.dom.hexColorInput.value = hex;
+        this.dom.colorPreview.style.backgroundColor = hex;
+        this.cache.processedImage = null;
+        this.applyEffects();
+    }
+    
+    updateSaturationGradient() {
+        const h = parseInt(this.dom.hueSlider.value);
+        const b = parseInt(this.dom.brightnessSlider.value);
+        
+        const leftColor = this.hsbToRgb(h, 0, b);
+        const rightColor = this.hsbToRgb(h, 100, b);
+        
+        const leftHex = this.rgbToHex(leftColor.r, leftColor.g, leftColor.b);
+        const rightHex = this.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
+        
+        const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
+        this.dom.saturationSlider.style.background = gradient;
+        
+        // Update custom CSS for the slider track
+        this.updateSliderTrackGradient('saturationSlider', gradient);
+    }
+    
+    updateBrightnessGradient() {
+        const h = parseInt(this.dom.hueSlider.value);
+        const s = parseInt(this.dom.saturationSlider.value);
+        
+        const leftColor = this.hsbToRgb(h, s, 0);
+        const rightColor = this.hsbToRgb(h, s, 100);
+        
+        const leftHex = this.rgbToHex(leftColor.r, leftColor.g, leftColor.b);
+        const rightHex = this.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
+        
+        const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
+        this.dom.brightnessSlider.style.background = gradient;
+        
+        // Update custom CSS for the slider track
+        this.updateSliderTrackGradient('brightnessSlider', gradient);
+    }
+    
+    updateSliderTrackGradient(sliderId, gradient) {
+        // Remove existing style if present
+        let styleId = `${sliderId}-track-style`;
+        let existingStyle = document.getElementById(styleId);
+        if (existingStyle) {
+            existingStyle.remove();
+        }
+        
+        // Create new style element
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = `
+            #${sliderId}::-webkit-slider-runnable-track {
+                background: ${gradient};
+            }
+            #${sliderId}::-moz-range-track {
+                background: ${gradient};
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    initColorPreview() {
+        // Set initial color preview
+        this.dom.colorPreview.style.backgroundColor = this.settings.backgroundColor;
+        this.updateHSBFromHex(this.settings.backgroundColor);
+    }
+    
     initEventListeners() {
         // File input
         this.dom.imageInput.addEventListener('change', (e) => this.handleFileSelect(e));
@@ -339,39 +512,59 @@ class DitheringTool {
             }
         });
         
-        // Background color picker
-        this.dom.backgroundColor.addEventListener('input', (e) => {
-            const colorValue = e.target.value;
-            this.settings.backgroundColor = colorValue;
-            this.dom.hexColorInput.value = colorValue;
-            this.cache.processedImage = null;
-            this.applyEffects();
+        // Color preview button - toggle HSB picker
+        this.dom.colorPreview.addEventListener('click', () => {
+            const isVisible = this.dom.hsbPicker.style.display !== 'none';
+            this.dom.hsbPicker.style.display = isVisible ? 'none' : 'block';
+            if (!isVisible) {
+                this.updateHSBFromHex(this.settings.backgroundColor);
+            }
         });
         
         // Lunnen Blue preset
         this.dom.lunnenBlue.addEventListener('click', () => {
             const lunnenBlueColor = '#2353DB';
             this.settings.backgroundColor = lunnenBlueColor;
-            this.dom.backgroundColor.value = lunnenBlueColor;
             this.dom.hexColorInput.value = lunnenBlueColor;
+            this.dom.colorPreview.style.backgroundColor = lunnenBlueColor;
+            this.updateHSBFromHex(lunnenBlueColor);
             this.cache.processedImage = null;
             this.applyEffects();
+        });
+        
+        // HSB Sliders
+        this.dom.hueSlider.addEventListener('input', (e) => {
+            this.dom.hueValue.value = e.target.value;
+            this.updateColorFromHSB();
+            this.updateSaturationGradient();
+            this.updateBrightnessGradient();
+        });
+        
+        this.dom.saturationSlider.addEventListener('input', (e) => {
+            this.dom.saturationValue.value = e.target.value;
+            this.updateColorFromHSB();
+            this.updateBrightnessGradient();
+        });
+        
+        this.dom.brightnessSlider.addEventListener('input', (e) => {
+            this.dom.brightnessValue.value = e.target.value;
+            this.updateColorFromHSB();
+            this.updateSaturationGradient();
         });
         
         // Hex color input
         this.dom.hexColorInput.addEventListener('input', (e) => {
             let hexValue = e.target.value;
             
-            // Make sure it starts with #
-            if (!hexValue.startsWith('#')) {
+            // Remove all # symbols and add one at the start
+            hexValue = hexValue.replace(/#/g, '');
+            if (hexValue) {
                 hexValue = '#' + hexValue;
                 e.target.value = hexValue;
             }
             
-            // Validate hex color format
             const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
             if (hexRegex.test(hexValue)) {
-                // Convert 3-digit hex to 6-digit if needed
                 if (hexValue.length === 4) {
                     const r = hexValue[1];
                     const g = hexValue[2];
@@ -380,7 +573,8 @@ class DitheringTool {
                 }
                 
                 this.settings.backgroundColor = hexValue;
-                this.dom.backgroundColor.value = hexValue;
+                this.dom.colorPreview.style.backgroundColor = hexValue;
+                this.updateHSBFromHex(hexValue);
                 this.cache.processedImage = null;
                 this.applyEffects();
             }
@@ -390,14 +584,14 @@ class DitheringTool {
         this.dom.hexColorInput.addEventListener('blur', (e) => {
             let hexValue = e.target.value;
             
-            // Default to black if invalid
             if (!hexValue.match(/^#[0-9A-Fa-f]{6}$/)) {
                 hexValue = '#000000';
             }
             
             e.target.value = hexValue;
-            this.dom.backgroundColor.value = hexValue;
             this.settings.backgroundColor = hexValue;
+            this.dom.colorPreview.style.backgroundColor = hexValue;
+            this.updateHSBFromHex(hexValue);
             this.cache.processedImage = null;
             this.applyEffects();
         });
@@ -718,6 +912,19 @@ class DitheringTool {
         }
         yOffset = top;
         
+        // Prevent dragging from interactive elements
+        panel.addEventListener('mousedown', (e) => {
+            const target = e.target;
+            // Don't interfere with input elements (sliders, text inputs, buttons, checkboxes)
+            if (target.tagName === 'INPUT' || 
+                target.tagName === 'BUTTON' || 
+                target.tagName === 'TEXTAREA' ||
+                target.tagName === 'SELECT') {
+                e.stopPropagation();
+                return;
+            }
+        }, true); // Use capture phase
+        
         header.addEventListener('mousedown', dragStart);
         document.addEventListener('mousemove', drag);
         document.addEventListener('mouseup', dragEnd);
@@ -728,6 +935,14 @@ class DitheringTool {
         document.addEventListener('touchend', dragEnd);
         
         function dragStart(e) {
+            // Only start dragging if clicking directly on header, not on interactive elements
+            if (e.target.tagName === 'INPUT' || 
+                e.target.tagName === 'BUTTON' || 
+                e.target.tagName === 'TEXTAREA' ||
+                e.target.tagName === 'SELECT') {
+                return;
+            }
+            
             if (e.type === 'touchstart') {
                 initialX = e.touches[0].clientX - xOffset;
                 initialY = e.touches[0].clientY - yOffset;
@@ -739,6 +954,16 @@ class DitheringTool {
             if (e.target === header || header.contains(e.target)) {
                 isDragging = true;
                 panel.style.transition = 'none';
+                
+                // Bring this panel to front
+                const allPanels = document.querySelectorAll('.controls-panel');
+                allPanels.forEach(p => {
+                    if (p === panel) {
+                        p.style.zIndex = '1000';
+                    } else {
+                        p.style.zIndex = '999';
+                    }
+                });
             }
         }
         
