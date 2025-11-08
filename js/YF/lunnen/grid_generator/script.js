@@ -720,17 +720,16 @@ class GridGenerator {
             shiftStep = 10;
         }
         
-        let step;
+        let newValue;
         if (e.shiftKey && isModuleSlider) {
             // For Module with Shift: round to tenths first, then add/subtract 0.1
             const roundedToTenth = Math.round(currentValue * 10) / 10;
-            step = (e.key === 'ArrowUp' ? 1 : -1) * shiftStep;
-            currentValue = roundedToTenth;
+            const step = (e.key === 'ArrowUp' ? 1 : -1) * shiftStep;
+            newValue = roundedToTenth + step;
         } else {
-            step = e.shiftKey ? shiftStep : baseStep;
+            const step = e.shiftKey ? shiftStep : baseStep;
+            newValue = e.key === 'ArrowUp' ? currentValue + step : currentValue - step;
         }
-        
-        let newValue = e.key === 'ArrowUp' ? currentValue + step : currentValue - step;
         newValue = Math.max(min, Math.min(max, newValue));
         
         if (isIntegerSlider) {
