@@ -71,23 +71,15 @@
                                 <div id="rowPresetsContainer" class="row-presets"></div>
                             </div>
                             
-                            <div class="control-group">
-                                <label>
-                                    <span>Link Mode</span>
+                            <div class="control-group" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <label class="checkbox-label" style="flex: 1; min-width: 140px;">
+                                    <input type="checkbox" id="linkRowsHeight" checked aria-label="Link rows and row height">
+                                    <span>Link R⇄RH</span>
                                 </label>
-                                <fieldset>
-                                    <legend class="sr-only">Link mode selection</legend>
-                                    <div class="segmented-control" role="radiogroup" aria-label="Link mode selection">
-                                        <input type="radio" name="linkMode" value="off" id="linkModeOff" aria-label="No linking">
-                                        <label for="linkModeOff">Off</label>
-                                        
-                                        <input type="radio" name="linkMode" value="rows-height" id="linkModeRowsHeight" aria-label="Link rows and row height">
-                                        <label for="linkModeRowsHeight">R⇄RH</label>
-                                        
-                                        <input type="radio" name="linkMode" value="module" id="linkModeModule" checked aria-label="Link rows, row height and module">
-                                        <label for="linkModeModule">RRH⇄Mod</label>
-                                    </div>
-                                </fieldset>
+                                <label class="checkbox-label" style="flex: 1; min-width: 140px;">
+                                    <input type="checkbox" id="linkModuleToGrid" aria-label="Link rows, row height and module">
+                                    <span>Link RRH⇄Module</span>
+                                </label>
                             </div>
                         </div>
                     </section>

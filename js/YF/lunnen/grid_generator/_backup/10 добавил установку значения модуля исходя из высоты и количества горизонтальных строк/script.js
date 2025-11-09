@@ -15,7 +15,7 @@ class GridGenerator {
                 baseStep: 0.5,
                 shiftStep: 10,
                 onUpdate: () => {
-                    if (this.settings.linkMode === 'module') {
+                    if (this.settings.linkModuleToGrid) {
                         this.calculateModule();
                     } else {
                         this.calculateRowCount();
@@ -48,7 +48,7 @@ class GridGenerator {
                 baseStep: 0.01,
                 shiftStep: 0.1,
                 onUpdate: () => {
-                    if (this.settings.linkMode === 'module') {
+                    if (this.settings.linkModuleToGrid) {
                         this.calculateModule();
                     } else {
                         this.calculateRowCount();
@@ -73,9 +73,9 @@ class GridGenerator {
                 baseStep: 1,
                 shiftStep: 10,
                 onUpdate: () => {
-                    if (this.settings.linkMode === 'module') {
+                    if (this.settings.linkModuleToGrid) {
                         this.calculateModule();
-                    } else if (this.settings.linkMode === 'rows-height') {
+                    } else if (this.settings.linkRowsHeight) {
                         this.calculateRowHeight();
                     }
                     this.updatePresetButtons();
@@ -88,9 +88,9 @@ class GridGenerator {
                 baseStep: 1,
                 shiftStep: 10,
                 onUpdate: () => {
-                    if (this.settings.linkMode === 'module') {
+                    if (this.settings.linkModuleToGrid) {
                         this.calculateModule();
-                    } else if (this.settings.linkMode === 'rows-height') {
+                    } else if (this.settings.linkRowsHeight) {
                         this.calculateRowCount();
                     }
                     this.updatePresetButtons();
@@ -173,7 +173,8 @@ class GridGenerator {
             columnCount: 12,
             rowCount: 19,  // will be calculated after DOM is ready
             rowHeight: 5,  // in modules (5 baseline per row)
-            linkMode: 'module',  // 'off', 'rows-height', or 'module'
+            linkRowsHeight: true,  // link rows and row height
+            linkModuleToGrid: false,  // auto-calculate module to fit rows perfectly
             showColumns: true,
             showRows: true,
             showBaseline: true,
@@ -242,14 +243,11 @@ class GridGenerator {
             // Checkboxes
             showDimensions: document.getElementById('showDimensions'),
             showSidePanels: document.getElementById('showSidePanels'),
+            linkRowsHeight: document.getElementById('linkRowsHeight'),
+            linkModuleToGrid: document.getElementById('linkModuleToGrid'),
             showColumns: document.getElementById('showColumns'),
             showRows: document.getElementById('showRows'),
             showBaseline: document.getElementById('showBaseline'),
-            
-            // Link mode radio buttons
-            linkModeOff: document.getElementById('linkModeOff'),
-            linkModeRowsHeight: document.getElementById('linkModeRowsHeight'),
-            linkModeModule: document.getElementById('linkModeModule'),
             
             // Grid controls
             gridModuleSlider: document.getElementById('gridModuleSlider'),
@@ -346,21 +344,20 @@ class GridGenerator {
             this.updateGrid();
         });
         
-        // Link mode radio buttons
-        const linkModeHandler = (e) => {
-            this.settings.linkMode = e.target.value;
+        // Link rows and row height checkbox
+        this.dom.linkRowsHeight.addEventListener('change', (e) => {
+            this.settings.linkRowsHeight = e.target.checked;
             this.updateLinkedControlsVisual();
-            
-            // If switching to module mode, calculate module immediately
-            if (e.target.value === 'module') {
+        });
+        
+        // Link module to grid checkbox
+        this.dom.linkModuleToGrid.addEventListener('change', (e) => {
+            this.settings.linkModuleToGrid = e.target.checked;
+            if (e.target.checked) {
                 this.calculateModule();
                 this.updateGrid();
             }
-        };
-        
-        this.dom.linkModeOff.addEventListener('change', linkModeHandler);
-        this.dom.linkModeRowsHeight.addEventListener('change', linkModeHandler);
-        this.dom.linkModeModule.addEventListener('change', linkModeHandler);
+        });
         
         // Show columns checkbox
         this.dom.showColumns.addEventListener('change', (e) => {
@@ -510,9 +507,9 @@ class GridGenerator {
     }
     
     updateLinkedControlsVisual() {
-        // Update visual grouping of linked controls based on linkMode
+        // Update visual grouping of linked controls based on linkRowsHeight state
         if (this.dom.linkedControlsContainer) {
-            if (this.settings.linkMode !== 'off') {
+            if (this.settings.linkRowsHeight) {
                 this.dom.linkedControlsContainer.classList.add('linked-controls-group');
             } else {
                 this.dom.linkedControlsContainer.classList.remove('linked-controls-group');
@@ -707,19 +704,12 @@ class GridGenerator {
         
         const computedStyle = window.getComputedStyle(panel);
         const top = parseInt(computedStyle.top);
-        const bottom = parseInt(computedStyle.bottom);
         const right = parseInt(computedStyle.right);
         
         if (!isNaN(right)) {
             xOffset = window.innerWidth - right - panel.offsetWidth;
         }
-        
-        // Handle both top and bottom positioning
-        if (!isNaN(bottom) && computedStyle.top === 'auto') {
-            yOffset = window.innerHeight - bottom - panel.offsetHeight;
-        } else {
-            yOffset = top;
-        }
+        yOffset = top;
         
         // Prevent dragging from interactive elements
         panel.addEventListener('mousedown', (e) => {
@@ -789,7 +779,6 @@ class GridGenerator {
             el.style.left = xPos + 'px';
             el.style.top = yPos + 'px';
             el.style.right = 'auto';
-            el.style.bottom = 'auto';
         }
     }
     
@@ -1057,10 +1046,10 @@ class GridGenerator {
                 this.settings.rowCount = combo.rowCount;
                 this.settings.rowHeight = combo.rowHeight;
                 
-                // Enable rows-height link mode if it was disabled
-                if (this.settings.linkMode === 'off') {
-                    this.settings.linkMode = 'rows-height';
-                    this.dom.linkModeRowsHeight.checked = true;
+                // Enable link if it was disabled
+                if (!this.settings.linkRowsHeight) {
+                    this.settings.linkRowsHeight = true;
+                    this.dom.linkRowsHeight.checked = true;
                     this.updateLinkedControlsVisual();
                 }
                 
