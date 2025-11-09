@@ -293,7 +293,6 @@ class GridGenerator {
             trackingValue: document.getElementById('trackingValue'),
             textWidthSlider: document.getElementById('textWidthSlider'),
             textWidthValue: document.getElementById('textWidthValue'),
-            textContentArea: document.getElementById('textContentArea'),
             useXHeight: document.getElementById('useXHeight'),
             showTextBounds: document.getElementById('showTextBounds')
         };
@@ -386,11 +385,7 @@ class GridGenerator {
             this.updateGrid();
         });
         
-        // Text content textarea
-        this.dom.textContentArea.addEventListener('input', (e) => {
-            this.settings.textContent = e.target.value;
-            this.updateGrid();
-        });
+        // Text editing will be handled by click on canvas
         
         // Show text bounds checkbox
         this.dom.showTextBounds.addEventListener('change', (e) => {
@@ -1232,9 +1227,34 @@ class GridGenerator {
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         
-        // Get text lines from textarea
+        // Get text lines from settings
         const inputLines = this.settings.textContent.split('\n').filter(line => line.trim() !== '');
-        if (inputLines.length === 0) return;
+        if (inputLines.length === 0) {
+            // Show placeholder if no text
+            const placeholderGroup = this.createSVGElement('g', {
+                id: 'text-group',
+                style: 'cursor: pointer;'
+            }, container);
+            
+            const leftMargin = module * margins * scale;
+            const topMargin = module * margins * scale;
+            const textX = frontX + leftMargin;
+            const textY = frontY + topMargin + 20 * scale;
+            
+            const placeholder = this.createSVGElement('text', {
+                x: textX,
+                y: textY,
+                'font-family': 'TT Commons Classic, -apple-system, BlinkMacSystemFont, sans-serif',
+                'font-size': `${14 * scale}`,
+                'fill': gridColor,
+                'fill-opacity': '0.3',
+                style: 'cursor: pointer;'
+            }, placeholderGroup);
+            placeholder.textContent = 'Click to add text';
+            
+            this.attachTextClickHandler(placeholderGroup, frontX, frontY, scale);
+            return;
+        }
         
         // Calculate text block width in mm
         const textBlockWidth = this.calculateTextWidth();
@@ -1267,6 +1287,12 @@ class GridGenerator {
         
         // Calculate line height in mm
         const lineHeightInMm = module * this.settings.lineHeight * scale;
+        
+        // Create a group for all text elements to make them clickable
+        const textGroup = this.createSVGElement('g', {
+            id: 'text-group',
+            style: 'cursor: pointer;'
+        }, container);
         
         // Create text elements with proper font styling
         const textAttrs = {
@@ -1301,9 +1327,12 @@ class GridGenerator {
                 ...textAttrs,
                 x: textX,
                 y: lineBaselineY
-            }, container);
+            }, textGroup);
             textElement.textContent = line;
         });
+        
+        // Attach click handler for editing
+        this.attachTextClickHandler(textGroup, frontX, frontY, scale);
         
         // Optional: Draw debug rectangle showing text block boundaries
         if (this.settings.showTextBounds) { // Set to true for debugging
@@ -1318,6 +1347,105 @@ class GridGenerator {
                 'stroke-dasharray': '4,4'
             }, container);
         }
+    }
+    
+    attachTextClickHandler(textGroup, frontX, frontY, scale) {
+        textGroup.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.showTextEditor(frontX, frontY, scale);
+        });
+    }
+    
+    showTextEditor(frontX, frontY, scale) {
+        // Remove existing editor if any
+        const existingEditor = document.getElementById('text-editor-overlay');
+        if (existingEditor) {
+            existingEditor.remove();
+        }
+        
+        // Get SVG position
+        const svgRect = this.dom.svg.getBoundingClientRect();
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const leftMargin = module * margins * scale;
+        const topMargin = module * margins * scale;
+        
+        // Calculate editor position
+        const editorX = svgRect.left + frontX + leftMargin;
+        const editorY = svgRect.top + frontY + topMargin;
+        
+        // Calculate text block width
+        const textBlockWidth = this.calculateTextWidth();
+        const scaledTextWidth = textBlockWidth * scale;
+        
+        // Create overlay editor
+        const editorOverlay = document.createElement('div');
+        editorOverlay.id = 'text-editor-overlay';
+        editorOverlay.style.cssText = `
+            position: fixed;
+            left: ${editorX}px;
+            top: ${editorY}px;
+            width: ${scaledTextWidth}px;
+            min-height: 60px;
+            z-index: 10000;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid white;
+            border-radius: 4px;
+            padding: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        `;
+        
+        const textarea = document.createElement('textarea');
+        textarea.value = this.settings.textContent;
+        textarea.style.cssText = `
+            width: 100%;
+            min-height: 60px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'TT Commons Classic', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.5;
+            resize: vertical;
+            outline: none;
+        `;
+        
+        editorOverlay.appendChild(textarea);
+        document.body.appendChild(editorOverlay);
+        
+        // Focus and select all
+        textarea.focus();
+        textarea.select();
+        
+        // Handle closing
+        const closeEditor = () => {
+            this.settings.textContent = textarea.value;
+            editorOverlay.remove();
+            this.updateGrid();
+        };
+        
+        // Close on Escape or when clicking outside
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                closeEditor();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        
+        const handleClickOutside = (e) => {
+            if (!editorOverlay.contains(e.target)) {
+                closeEditor();
+                document.removeEventListener('click', handleClickOutside);
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        
+        // Add listeners with slight delay to prevent immediate closure
+        setTimeout(() => {
+            document.addEventListener('keydown', handleEscape);
+            document.addEventListener('click', handleClickOutside);
+        }, 100);
     }
     
     updateGrid() {
