@@ -1,3 +1,18 @@
+/* Font Face Declarations */
+@font-face {
+    font-family: 'TT Commons Classic';
+    src: url('fonts/TT_Commons_Classic_Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'TT Commons Classic';
+    src: url('fonts/TT_Commons_Classic_Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+}
+
 /* CSS Variables for easy theming and maintenance */
 :root {
     /* Colors */
@@ -139,7 +154,6 @@ body {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     border: none;
     padding: 0;
-    max-height: calc(100vh - 40px);
     overflow: hidden;
     color: var(--color-text);
     z-index: 999;
@@ -150,6 +164,12 @@ body {
 .controls-panel-left {
     left: var(--spacing-3xl);
     right: auto;
+}
+
+.controls-panel-text {
+    left: var(--spacing-3xl);
+    right: auto;
+    top: 520px; /* Initial position - below Dimensions panel */
 }
 
 .panel-header {
@@ -599,6 +619,31 @@ body {
     color: var(--color-text);
 }
 
+/* Textarea styles */
+textarea {
+    width: 100%;
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-input);
+    resize: vertical;
+    min-height: 60px;
+    line-height: 1.5;
+    transition: border-color var(--transition-normal);
+}
+
+textarea:focus {
+    outline: none;
+    border-color: var(--color-text-dim);
+}
+
+textarea::placeholder {
+    color: var(--color-text-muted);
+}
+
 .color-preset {
     font-size: 0.85rem;
     color: var(--color-text-dim);
@@ -784,7 +829,8 @@ body {
 .bottom-buttons {
     position: fixed;
     bottom: var(--spacing-3xl);
-    left: var(--spacing-3xl);
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     gap: var(--spacing-lg);
     align-items: center;
@@ -794,7 +840,7 @@ body {
 .btn-fixed {
     background: var(--color-text);
     color: var(--color-bg);
-    box-shadow: none;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
 .btn-fixed:hover {
@@ -1011,7 +1057,6 @@ body {
 @media (max-width: 1024px) {
     .controls-panel {
         width: 280px;
-        max-height: calc(100vh - 40px);
     }
 }
 
@@ -1020,7 +1065,10 @@ body {
         width: 260px;
         top: var(--spacing-lg);
         right: var(--spacing-lg);
-        max-height: calc(100vh - var(--spacing-3xl));
+    }
+    
+    .controls-panel-text {
+        top: 320px; /* Adjusted for mobile - below Dimensions panel */
     }
     
     .panel-content {
@@ -1029,7 +1077,6 @@ body {
     
     .bottom-buttons {
         bottom: var(--spacing-3xl);
-        left: var(--spacing-3xl);
         flex-direction: column;
         gap: 5px;
     }

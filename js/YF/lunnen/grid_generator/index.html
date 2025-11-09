@@ -210,6 +210,71 @@
         </button>
     </nav>
 
+    <aside class="controls-panel controls-panel-text" id="textPanel" role="complementary" aria-label="Text styles settings">
+        <div class="panel-header" id="textPanelHeader">
+            <span>Text Styles</span>
+            <span class="drag-icon" aria-hidden="true">⋮⋮</span>
+        </div>
+        <div class="panel-content">
+            <section class="control-section">
+                <h3>Headline</h3>
+                
+                <div class="control-group">
+                    <label for="headlineSizeSlider">
+                        <span>Size <span class="unit">mod</span></span>
+                        <input type="text" class="value-display" id="headlineSizeValue" value="1.00" data-min="0.25" data-max="10" aria-label="Headline size in modules">
+                    </label>
+                    <input type="range" id="headlineSizeSlider" min="0.25" max="10" step="0.25" value="1" aria-label="Headline size slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="lineHeightSlider">
+                        <span>Line Height <span class="unit">mod</span></span>
+                        <input type="text" class="value-display" id="lineHeightValue" value="2.00" data-min="0.25" data-max="10" aria-label="Line height in modules">
+                    </label>
+                    <input type="range" id="lineHeightSlider" min="0.25" max="10" step="0.25" value="2" aria-label="Line height slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="trackingSlider">
+                        <span>Tracking <span class="unit">em</span></span>
+                        <input type="text" class="value-display" id="trackingValue" value="-0.02" data-min="-0.05" data-max="0.05" aria-label="Tracking in em units">
+                    </label>
+                    <input type="range" id="trackingSlider" min="-0.05" max="0.05" step="0.01" value="-0.02" aria-label="Tracking slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="textWidthSlider">
+                        <span>Width <span class="unit">col</span></span>
+                        <input type="text" class="value-display" id="textWidthValue" value="6" data-min="1" data-max="24" aria-label="Text width in columns">
+                    </label>
+                    <input type="range" id="textWidthSlider" min="1" max="24" step="1" value="6" aria-label="Text width slider">
+                </div>
+                
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="useXHeight" checked aria-label="Use x-height for measurement">
+                        <span>x-height</span>
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="showTextBounds" aria-label="Show text bounds">
+                        <span>Show Text Bounds</span>
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="textContentArea" style="display: block; margin-bottom: 4px;">
+                        <span>Text Content</span>
+                    </label>
+                    <textarea id="textContentArea" rows="3" aria-label="Text content">This is a modular grid generator for Lunnen packaging design. The default dimensions match the current Lunnen Outer 16 laptop packaging.</textarea>
+                </div>
+            </section>
+        </div>
+    </aside>
+
     <div class="help-container">
         <button class="btn-fixed btn-help" id="helpButton" aria-label="Show instructions">
             How it Works?

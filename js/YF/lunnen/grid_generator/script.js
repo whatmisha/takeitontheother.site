@@ -54,7 +54,10 @@ class GridGenerator {
                 decimals: 0,
                 baseStep: 1,
                 shiftStep: 10,
-                onUpdate: () => this.updateGrid()
+                onUpdate: () => {
+                    this.updateTextWidthConstraints();
+                    this.updateGrid();
+                }
             },
             rowCountSlider: {
                 setting: 'rowCount',
@@ -112,6 +115,34 @@ class GridGenerator {
                     this.updateColorFromHSB();
                     this.updateSaturationGradient();
                 }
+            },
+            headlineSizeSlider: {
+                setting: 'headlineSize',
+                decimals: 2,
+                baseStep: 0.25,
+                shiftStep: 1,
+                onUpdate: () => this.updateGrid()
+            },
+            lineHeightSlider: {
+                setting: 'lineHeight',
+                decimals: 2,
+                baseStep: 0.25,
+                shiftStep: 1,
+                onUpdate: () => this.updateGrid()
+            },
+            trackingSlider: {
+                setting: 'tracking',
+                decimals: 2,
+                baseStep: 0.01,
+                shiftStep: 0.05,
+                onUpdate: () => this.updateGrid()
+            },
+            textWidthSlider: {
+                setting: 'textWidth',
+                decimals: 0,
+                baseStep: 1,
+                shiftStep: 2,
+                onUpdate: () => this.updateGrid()
             }
         };
         
@@ -133,7 +164,22 @@ class GridGenerator {
             linkRowsHeight: true,  // link rows and row height
             showColumns: true,
             showRows: true,
-            showBaseline: true
+            showBaseline: true,
+            // Text settings
+            headlineSize: 1.0,  // in modules
+            lineHeight: 2.0,    // in modules - интерлиньяж
+            tracking: -0.02,    // in em - межбуквенный интервал
+            textWidth: 6,       // in columns - ширина блока текста
+            textContent: 'This is a modular grid generator for Lunnen packaging design. The default dimensions match the current Lunnen Outer 16 laptop packaging.',
+            useXHeight: true,   // false = cap height, true = x-height
+            showTextBounds: false  // show debug rectangle for text bounds
+        };
+        
+        // Font metrics for TT Commons Classic (measured in font units, assuming UPM=1000)
+        this.fontMetrics = {
+            capHeight: 630,
+            xHeight: 447,
+            unitsPerEm: 1000
         };
         
         // Display constants
@@ -152,9 +198,11 @@ class GridGenerator {
         this.initEventListeners();
         this.initPanelDrag('controlsPanel', 'panelHeader');
         this.initPanelDrag('gridPanel', 'gridPanelHeader');
+        this.initPanelDrag('textPanel', 'textPanelHeader');
         this.initValueInputs();
         this.updateLinkedControlsVisual();
         this.initColorPreview();
+        this.updateTextWidthConstraints();
         this.updateCanvasSize();
         this.updateGrid();
         
@@ -218,7 +266,20 @@ class GridGenerator {
             exportBtn: document.getElementById('exportBtn'),
             helpButton: document.getElementById('helpButton'),
             modalOverlay: document.getElementById('modalOverlay'),
-            modalClose: document.getElementById('modalClose')
+            modalClose: document.getElementById('modalClose'),
+            
+            // Text controls
+            headlineSizeSlider: document.getElementById('headlineSizeSlider'),
+            headlineSizeValue: document.getElementById('headlineSizeValue'),
+            lineHeightSlider: document.getElementById('lineHeightSlider'),
+            lineHeightValue: document.getElementById('lineHeightValue'),
+            trackingSlider: document.getElementById('trackingSlider'),
+            trackingValue: document.getElementById('trackingValue'),
+            textWidthSlider: document.getElementById('textWidthSlider'),
+            textWidthValue: document.getElementById('textWidthValue'),
+            textContentArea: document.getElementById('textContentArea'),
+            useXHeight: document.getElementById('useXHeight'),
+            showTextBounds: document.getElementById('showTextBounds')
         };
     }
     
@@ -290,6 +351,24 @@ class GridGenerator {
         // Show baseline checkbox
         this.dom.showBaseline.addEventListener('change', (e) => {
             this.settings.showBaseline = e.target.checked;
+            this.updateGrid();
+        });
+        
+        // Use x-height checkbox
+        this.dom.useXHeight.addEventListener('change', (e) => {
+            this.settings.useXHeight = e.target.checked;
+            this.updateGrid();
+        });
+        
+        // Text content textarea
+        this.dom.textContentArea.addEventListener('input', (e) => {
+            this.settings.textContent = e.target.value;
+            this.updateGrid();
+        });
+        
+        // Show text bounds checkbox
+        this.dom.showTextBounds.addEventListener('change', (e) => {
+            this.settings.showTextBounds = e.target.checked;
             this.updateGrid();
         });
         
@@ -958,6 +1037,234 @@ class GridGenerator {
         });
     }
     
+    updateTextWidthConstraints() {
+        // Update max value for text width slider based on column count
+        const maxTextWidth = this.settings.columnCount;
+        
+        if (this.dom.textWidthSlider) {
+            this.dom.textWidthSlider.max = maxTextWidth;
+            this.dom.textWidthValue.dataset.max = maxTextWidth;
+            
+            // Clamp current value if it exceeds new max
+            if (this.settings.textWidth > maxTextWidth) {
+                this.settings.textWidth = maxTextWidth;
+                this.dom.textWidthSlider.value = maxTextWidth;
+                this.dom.textWidthValue.value = maxTextWidth;
+            }
+        }
+    }
+    
+    // Calculate font size in mm based on module and height mode
+    calculateFontSize() {
+        const module = this.settings.gridModule;
+        const sizeInModules = this.settings.headlineSize;
+        const targetSize = module * sizeInModules; // size in mm
+        
+        // Calculate font size based on whether we're using cap height or x-height
+        let fontSize;
+        if (this.settings.useXHeight) {
+            // x-height should equal targetSize
+            fontSize = targetSize * (this.fontMetrics.unitsPerEm / this.fontMetrics.xHeight);
+        } else {
+            // cap height should equal targetSize
+            fontSize = targetSize * (this.fontMetrics.unitsPerEm / this.fontMetrics.capHeight);
+        }
+        
+        return fontSize; // in mm
+    }
+    
+    // Snap position to nearest baseline grid line (relative to front panel)
+    // isFirstLine - если true, привязываем к целому модулю, иначе к четверти модуля
+    snapToBaseline(y, frontY, scale, isFirstLine = false) {
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const topMargin = module * margins * scale;
+        
+        // Calculate the relative position from the front panel's top margin
+        const relativeY = y - (frontY + topMargin);
+        
+        let nearestBaseline;
+        if (isFirstLine) {
+            // Первая строка - привязываем к целому модулю (baseline сетка)
+            const fullModule = module * scale;
+            nearestBaseline = Math.round(relativeY / fullModule) * fullModule;
+        } else {
+            // Остальные строки - привязываем к четверти модуля
+            const quarterModule = (module * scale) / 4;
+            nearestBaseline = Math.round(relativeY / quarterModule) * quarterModule;
+        }
+        
+        return frontY + topMargin + nearestBaseline;
+    }
+    
+    // Calculate text block width in mm based on columns
+    calculateTextWidth() {
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const columnCount = this.settings.columnCount;
+        const textWidthInColumns = this.settings.textWidth;
+        
+        // Calculate column width (same formula as in drawColumns)
+        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
+        
+        // Text width = column width × number of columns + gutters between them
+        const textWidth = columnWidth * textWidthInColumns + module * (textWidthInColumns - 1);
+        
+        return textWidth;
+    }
+    
+    // Измерить ширину текста в SVG точно
+    measureTextWidth(text, fontSize, scale) {
+        // Создаем временный SVG элемент для точного измерения
+        if (!this._measurementSVG) {
+            this._measurementSVG = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            this._measurementSVG.style.position = 'absolute';
+            this._measurementSVG.style.visibility = 'hidden';
+            this._measurementSVG.style.pointerEvents = 'none';
+            document.body.appendChild(this._measurementSVG);
+        }
+        
+        // Создаем текстовый элемент с теми же стилями
+        const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textElement.setAttribute('font-family', 'TT Commons Classic, -apple-system, BlinkMacSystemFont, sans-serif');
+        textElement.setAttribute('font-weight', '500');
+        textElement.setAttribute('font-size', fontSize * scale);
+        textElement.setAttribute('letter-spacing', `${this.settings.tracking}em`);
+        textElement.textContent = text;
+        
+        this._measurementSVG.appendChild(textElement);
+        
+        // Получаем реальную ширину
+        const bbox = textElement.getBBox();
+        const width = bbox.width;
+        
+        // Очищаем
+        this._measurementSVG.removeChild(textElement);
+        
+        return width;
+    }
+    
+    // Разбить текст на строки с учетом ширины блока
+    wrapText(text, maxWidth, fontSize, scale) {
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+        
+        words.forEach(word => {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            const testWidth = this.measureTextWidth(testLine, fontSize, scale);
+            
+            if (testWidth > maxWidth && currentLine !== '') {
+                lines.push(currentLine);
+                currentLine = word;
+            } else {
+                currentLine = testLine;
+            }
+        });
+        
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+        
+        return lines;
+    }
+    
+    // Draw text on the canvas
+    drawText(container, frontX, frontY, frontWidth, frontHeight, scale) {
+        const fontSize = this.calculateFontSize();
+        const scaledFontSize = fontSize * scale;
+        const gridColor = this.getContrastColor();
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        
+        // Get text lines from textarea
+        const inputLines = this.settings.textContent.split('\n').filter(line => line.trim() !== '');
+        if (inputLines.length === 0) return;
+        
+        // Calculate text block width in mm
+        const textBlockWidth = this.calculateTextWidth();
+        const scaledTextWidth = textBlockWidth * scale;
+        
+        // Wrap text lines to fit width
+        const wrappedLines = [];
+        inputLines.forEach(line => {
+            const wrapped = this.wrapText(line, scaledTextWidth, fontSize, scale);
+            wrappedLines.push(...wrapped);
+        });
+        
+        // Position text at top-left corner with margins
+        const leftMargin = module * margins * scale;
+        const topMargin = module * margins * scale;
+        
+        // Calculate cap height in actual size for positioning
+        let actualCapHeight;
+        if (this.settings.useXHeight) {
+            const actualXHeight = module * this.settings.headlineSize * scale;
+            actualCapHeight = actualXHeight * (this.fontMetrics.capHeight / this.fontMetrics.xHeight);
+        } else {
+            actualCapHeight = module * this.settings.headlineSize * scale;
+        }
+        
+        const textX = frontX + leftMargin;
+        // Baseline первой строки должен быть ниже на величину cap height,
+        // чтобы верх букв начинался от линии margin
+        const firstLineY = frontY + topMargin + actualCapHeight;
+        
+        // Calculate line height in mm
+        const lineHeightInMm = module * this.settings.lineHeight * scale;
+        
+        // Create text elements with proper font styling
+        const textAttrs = {
+            'font-family': 'TT Commons Classic, -apple-system, BlinkMacSystemFont, sans-serif',
+            'font-weight': '500',
+            'font-size': `${scaledFontSize}`,
+            'text-anchor': 'start',  // Выравнивание по левому краю
+            'fill': gridColor,
+            'fill-opacity': '1',
+            'letter-spacing': `${this.settings.tracking}em`  // Трекинг
+        };
+        
+        // Draw each line
+        let previousBaselineY = null;
+        wrappedLines.forEach((line, index) => {
+            let lineBaselineY;
+            
+            if (index === 0) {
+                // Первая строка - привязываем к целому модулю baseline
+                const lineApproxY = firstLineY;
+                lineBaselineY = this.snapToBaseline(lineApproxY, frontY, scale, true);
+                previousBaselineY = lineBaselineY;
+            } else {
+                // Последующие строки - отсчитываем от РЕАЛЬНОЙ позиции предыдущей строки
+                const lineApproxY = previousBaselineY + lineHeightInMm;
+                lineBaselineY = this.snapToBaseline(lineApproxY, frontY, scale, false);
+                previousBaselineY = lineBaselineY;
+            }
+            
+            // Create text element
+            const textElement = this.createSVGElement('text', {
+                ...textAttrs,
+                x: textX,
+                y: lineBaselineY
+            }, container);
+            textElement.textContent = line;
+        });
+        
+        // Optional: Draw debug rectangle showing text block boundaries
+        if (this.settings.showTextBounds) { // Set to true for debugging
+            this.createSVGElement('rect', {
+                x: textX,
+                y: frontY + topMargin,
+                width: scaledTextWidth,
+                height: lineHeightInMm * wrappedLines.length,
+                fill: 'rgba(255, 0, 0, 0.1)',
+                stroke: 'red',
+                'stroke-width': scale === 1 ? '0.5' : '1',
+                'stroke-dasharray': '4,4'
+            }, container);
+        }
+    }
+    
     updateGrid() {
         const { frontWidth, frontHeight, thickness } = this.settings;
         
@@ -1052,6 +1359,9 @@ class GridGenerator {
             // Bottom panel - horizontal columns (using columns parameters from front)
             this.drawColumnsTopBottom(this.dom.svg, frontX, startY + scaledThickness + scaledFrontHeight, scaledFrontWidth, scaledThickness, scale, 'bottom');
         }
+        
+        // Draw text on front panel
+        this.drawText(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
     }
     
     // Universal method for creating SVG elements
@@ -1784,6 +2094,12 @@ class GridGenerator {
             exportSvg.appendChild(labelsGroup);
             this.drawLabels(labelsGroup, 0, 0, frontWidth, frontHeight, thickness, scale);
         }
+        
+        // Add text (in separate group)
+        const textGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        textGroup.setAttribute('id', 'text');
+        exportSvg.appendChild(textGroup);
+        this.drawText(textGroup, frontX, frontY, frontWidth, frontHeight, scale);
         
         // Convert to string
         const serializer = new XMLSerializer();

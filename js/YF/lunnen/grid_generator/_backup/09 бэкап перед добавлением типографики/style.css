@@ -225,6 +225,21 @@ body {
     gap: var(--spacing-md);
 }
 
+.control-group-header {
+    display: flex;
+    align-items: center;
+    font-weight: 400;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    gap: var(--spacing-md);
+}
+
+.control-label {
+    display: inline-block;
+    margin-right: auto;
+}
+
 .control-group label > span:first-child {
     white-space: nowrap;
     flex: 1 1 auto;
