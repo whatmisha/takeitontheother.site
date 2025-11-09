@@ -109,7 +109,7 @@ body {
     text-decoration: none;
     cursor: pointer;
     transition: all var(--transition-slow);
-    z-index: 10000;
+    z-index: 1000;
 }
 
 .yf-tools-link:hover {
@@ -173,16 +173,6 @@ body {
     bottom: var(--spacing-3xl); /* Same spacing as other panels from their edges */
 }
 
-.paragraph-settings-panel {
-    /* Позиция будет установлена JavaScript'ом при открытии */
-    z-index: 1001;
-    display: none;
-}
-
-.paragraph-settings-panel.active {
-    display: flex;
-}
-
 .panel-header {
     background: var(--color-bg-panel);
     padding: var(--spacing-3xl) var(--spacing-3xl) 0;
@@ -216,27 +206,6 @@ body {
     opacity: 0.4;
 }
 
-.panel-close-btn {
-    background: transparent;
-    border: none;
-    color: var(--color-text-secondary);
-    font-size: 2rem;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color var(--transition-fast);
-    margin-left: auto;
-}
-
-.panel-close-btn:hover {
-    color: var(--color-text);
-}
-
 .panel-content {
     padding: var(--spacing-3xl) var(--spacing-3xl);
     overflow-y: auto;
@@ -260,74 +229,6 @@ body {
     color: var(--color-text);
     font-weight: 600;
     letter-spacing: 0.5px;
-}
-
-/* Collapsible header styles - override h3 defaults */
-.control-section h3.collapsible-header {
-    font-size: 0.85rem;
-    font-weight: 400;
-    color: var(--color-text-secondary);
-    letter-spacing: 0;
-    margin-bottom: var(--spacing-xs);
-}
-
-.collapsible-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    user-select: none;
-    transition: background var(--transition-fast);
-    padding: var(--spacing-sm) var(--spacing-lg);
-    margin-left: calc(-1 * var(--spacing-lg));
-    margin-right: calc(-1 * var(--spacing-lg));
-    border-radius: var(--radius-input);
-}
-
-.collapsible-header:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.collapsible-header span {
-    font-weight: 400;
-    color: var(--color-text-secondary);
-}
-
-.collapse-toggle {
-    background: transparent;
-    border: none;
-    color: var(--color-text-dim);
-    cursor: pointer;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color var(--transition-fast);
-}
-
-.collapsible-header:hover .collapse-toggle {
-    color: var(--color-text);
-}
-
-.collapse-toggle svg {
-    transition: transform var(--transition-normal);
-}
-
-.collapse-toggle[aria-expanded="false"] svg {
-    transform: rotate(-90deg);
-}
-
-/* Collapsible content */
-.collapsible-content {
-    overflow: hidden;
-    max-height: 1000px;
-    opacity: 1;
-    transition: max-height var(--transition-slow), opacity var(--transition-normal);
-}
-
-.collapsible-content.collapsed {
-    max-height: 0;
-    opacity: 0;
 }
 
 .control-group {
@@ -699,14 +600,6 @@ body {
     border-radius: var(--radius-input);
 }
 
-/* Value input with dropdown */
-.value-input-with-dropdown {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    margin-left: auto;
-}
-
 .value-display {
     display: inline-block;
     min-width: 40px;
@@ -714,102 +607,17 @@ body {
     font-weight: 400;
     color: var(--color-text-muted);
     font-size: 0.8rem;
+    margin-left: auto;
     background: transparent;
     border: none;
     outline: none;
     padding: 0;
-    padding-right: 4px;
     cursor: text;
     font-family: inherit;
 }
 
 .value-display:focus {
     color: var(--color-text);
-}
-
-.dropdown-toggle {
-    background: transparent;
-    border: none;
-    color: var(--color-text-dim);
-    cursor: pointer;
-    padding: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color var(--transition-fast);
-    margin-left: 2px;
-}
-
-.dropdown-toggle:hover {
-    color: var(--color-text);
-}
-
-.dropdown-toggle svg {
-    display: block;
-}
-
-/* Dropdown menu */
-.dropdown-menu {
-    position: absolute;
-    top: calc(100% + 4px);
-    right: 0;
-    background: var(--color-bg-panel);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-input);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    padding: 4px;
-    min-width: 60px;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1001;
-    display: none;
-}
-
-.dropdown-menu.active {
-    display: block;
-}
-
-.dropdown-item {
-    display: block;
-    width: 100%;
-    padding: 4px 8px;
-    background: transparent;
-    border: none;
-    color: var(--color-text-secondary);
-    font-size: 0.8rem;
-    font-family: inherit;
-    text-align: right;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background var(--transition-fast);
-}
-
-.dropdown-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--color-text);
-}
-
-.dropdown-item.selected {
-    background: rgba(255, 255, 255, 0.12);
-    color: var(--color-text);
-}
-
-/* Scrollbar for dropdown */
-.dropdown-menu::-webkit-scrollbar {
-    width: 6px;
-}
-
-.dropdown-menu::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.dropdown-menu::-webkit-scrollbar-thumb {
-    background: var(--color-border);
-    border-radius: 3px;
-}
-
-.dropdown-menu::-webkit-scrollbar-thumb:hover {
-    background: var(--color-text-dim);
 }
 
 .color-preset {
@@ -853,37 +661,6 @@ textarea:focus {
 
 textarea::placeholder {
     color: var(--color-text-muted);
-}
-
-.textarea-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: var(--spacing-md);
-    gap: var(--spacing-md);
-}
-
-.btn-apply {
-    padding: var(--spacing-sm) var(--spacing-2xl);
-    background: var(--color-text);
-    color: var(--color-bg);
-    border: none;
-    border-radius: var(--radius-button);
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    font-family: inherit;
-}
-
-.btn-apply:hover {
-    opacity: 0.9;
-}
-
-.char-counter {
-    font-size: 0.75rem;
-    color: var(--color-text-dim);
-    white-space: nowrap;
 }
 
 .row-presets {
@@ -1121,7 +898,7 @@ legend {
     display: flex;
     gap: var(--spacing-lg);
     align-items: center;
-    z-index: 10000;
+    z-index: 1000;
 }
 
 .btn-fixed {
@@ -1140,16 +917,6 @@ legend {
 }
 
 .btn-export {
-    background: var(--color-text);
-    color: var(--color-bg);
-}
-
-.btn-export-settings {
-    background: var(--color-bg);
-    color: var(--color-text);
-}
-
-.btn-export-settings:hover {
     background: var(--color-text);
     color: var(--color-bg);
 }
@@ -1178,7 +945,7 @@ legend {
     position: fixed;
     bottom: var(--spacing-3xl);
     right: var(--spacing-3xl);
-    z-index: 10000;
+    z-index: 1000;
 }
 
 .btn-help {
@@ -1207,7 +974,7 @@ legend {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 20000;
+    z-index: 1000;
     opacity: 0;
     pointer-events: none;
     transition: opacity var(--transition-normal);

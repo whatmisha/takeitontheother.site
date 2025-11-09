@@ -1144,16 +1144,6 @@ legend {
     color: var(--color-bg);
 }
 
-.btn-export-settings {
-    background: var(--color-bg);
-    color: var(--color-text);
-}
-
-.btn-export-settings:hover {
-    background: var(--color-text);
-    color: var(--color-bg);
-}
-
 /* Scrollbar styling */
 .panel-content::-webkit-scrollbar {
     width: var(--spacing-md);

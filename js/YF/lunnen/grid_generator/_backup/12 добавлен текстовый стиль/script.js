@@ -149,6 +149,13 @@ class GridGenerator {
                 shiftStep: 0.05,
                 onUpdate: () => this.updateGrid()
             },
+            textWidthSlider: {
+                setting: 'textWidth',
+                decimals: 0,
+                baseStep: 1,
+                shiftStep: 2,
+                onUpdate: () => this.updateGrid()
+            },
             textSizeSlider: {
                 setting: 'textSize',
                 decimals: 2,
@@ -168,6 +175,13 @@ class GridGenerator {
                 decimals: 2,
                 baseStep: 0.01,
                 shiftStep: 0.05,
+                onUpdate: () => this.updateGrid()
+            },
+            textWidthSlider2: {
+                setting: 'textWidth2',
+                decimals: 0,
+                baseStep: 1,
+                shiftStep: 2,
                 onUpdate: () => this.updateGrid()
             }
         };
@@ -191,61 +205,23 @@ class GridGenerator {
             showColumns: true,
             showRows: true,
             showBaseline: true,
-            // Text styles - только типографические параметры
+            // Text settings - Headline
             headlineSize: 1.0,  // in modules
             lineHeight: 2.0,    // in modules - интерлиньяж
             tracking: -0.02,    // in em - межбуквенный интервал
+            textWidth: 6,       // in columns - ширина блока текста
+            textContent: 'This is a modular grid generator for Lunnen packaging design. The default dimensions match the current Lunnen Outer 16 laptop packaging.',
             useXHeight: true,   // false = cap height, true = x-height
+            showTextBounds: false,  // show debug rectangle for text bounds
+            // Text settings - Text (cap height or x-height)
             textSize: 1.0,     // in modules
             textLineHeight: 2.0,    // in modules - интерлиньяж
             textTracking: 0,    // in em - межбуквенный интервал
-            useXHeight2: false   // false = cap height, true = x-height
+            textWidth2: 3,       // in columns - ширина блока текста
+            textContent2: 'This is a modular grid generator for Lunnen packaging design. The default dimensions match the current Lunnen Outer 16 laptop packaging.',
+            useXHeight2: false,   // false = cap height, true = x-height
+            showTextBounds2: false  // show debug rectangle for text bounds
         };
-        
-        // Text blocks - параметры конкретных текстовых блоков на канвасе
-        this.textBlocks = [
-            {
-                id: 'headline',
-                content: 'This is a modular grid generator for Lunnen packaging design. The default dimensions match the current Lunnen Outer 16 laptop packaging.',
-                styleRef: 'headline',  // ссылка на стиль в settings
-                x: 0,  // позиция в колонках от левого края (0 = first column after margin)
-                row: 0,  // номер строки Row (0 = первый row)
-                baselineOffset: 0,  // смещение в модулях baseline внутри row (0 = первый baseline в row)
-                width: 6,  // ширина в колонках
-                baselineAlign: 'bottom',  // 'bottom' = низ текста к низу baseline, 'top' = x-height к верху baseline
-                showBounds: false  // показывать ли границы (toggle on hover)
-            },
-            {
-                id: 'text',
-                content: 'This is a modular grid generator for Lunnen packaging design. The default dimensions match the current Lunnen Outer 16 laptop packaging.',
-                styleRef: 'text',  // ссылка на стиль в settings
-                x: 6,  // позиция в колонках от левого края
-                row: 0,  // номер строки Row
-                baselineOffset: 0,  // смещение в модулях baseline внутри row
-                width: 3,  // ширина в колонках
-                baselineAlign: 'bottom',  // 'bottom' = низ текста к низу baseline, 'top' = x-height к верху baseline
-                showBounds: false
-            }
-        ];
-        
-        // Состояние для drag & drop текстовых блоков
-        this.textDragState = {
-            isDragging: false,
-            blockId: null,
-            startMouseX: 0,
-            startMouseY: 0,
-            startBlockX: 0,  // позиция блока в колонках
-            startBlockY: 0,  // позиция блока в модулях baseline
-            frontX: 0,  // координаты front панели для расчетов
-            frontY: 0,
-            scale: 1
-        };
-        
-        // Добавим обработчики событий для перемещения текстовых блоков
-        this.initTextBlockDrag();
-        
-        // Текущий редактируемый блок в панели параграфа
-        this.currentEditingBlock = null;
         
         // Font metrics for TT Commons Classic (measured in font units, assuming UPM=1000)
         this.fontMetrics = {
@@ -271,11 +247,8 @@ class GridGenerator {
         this.initPanelDrag('controlsPanel', 'panelHeader');
         this.initPanelDrag('gridPanel', 'gridPanelHeader');
         this.initPanelDrag('textPanel', 'textPanelHeader');
-        this.initPanelDrag('paragraphPanel', 'paragraphPanelHeader');
         this.initValueInputs();
         this.initCollapsibleSections();
-        this.initDropdowns();
-        this.initParagraphPanel();
         this.updateLinkedControlsVisual();
         this.initColorPreview();
         this.updateTextWidthConstraints();
@@ -344,7 +317,6 @@ class GridGenerator {
             
             // Buttons
             exportBtn: document.getElementById('exportBtn'),
-            exportSettingsBtn: document.getElementById('exportSettingsBtn'),
             helpButton: document.getElementById('helpButton'),
             modalOverlay: document.getElementById('modalOverlay'),
             modalClose: document.getElementById('modalClose'),
@@ -356,7 +328,10 @@ class GridGenerator {
             lineHeightValue: document.getElementById('lineHeightValue'),
             trackingSlider: document.getElementById('trackingSlider'),
             trackingValue: document.getElementById('trackingValue'),
+            textWidthSlider: document.getElementById('textWidthSlider'),
+            textWidthValue: document.getElementById('textWidthValue'),
             useXHeight: document.getElementById('useXHeight'),
+            showTextBounds: document.getElementById('showTextBounds'),
             // Text controls - Text
             textSizeSlider: document.getElementById('textSizeSlider'),
             textSizeValue: document.getElementById('textSizeValue'),
@@ -364,19 +339,10 @@ class GridGenerator {
             textLineHeightValue: document.getElementById('textLineHeightValue'),
             textTrackingSlider: document.getElementById('textTrackingSlider'),
             textTrackingValue: document.getElementById('textTrackingValue'),
+            textWidthSlider2: document.getElementById('textWidthSlider2'),
+            textWidthValue2: document.getElementById('textWidthValue2'),
             useXHeight2: document.getElementById('useXHeight2'),
-            // Paragraph settings panel
-            paragraphPanel: document.getElementById('paragraphPanel'),
-            paragraphPanelTitle: document.getElementById('paragraphPanelTitle'),
-            paragraphXInput: document.getElementById('paragraphXInput'),
-            paragraphRowInput: document.getElementById('paragraphRowInput'),
-            paragraphBaselineInput: document.getElementById('paragraphBaselineInput'),
-            paragraphWidthInput: document.getElementById('paragraphWidthInput'),
-            baselineAlignBottom: document.getElementById('baselineAlignBottom'),
-            baselineAlignTop: document.getElementById('baselineAlignTop'),
-            paragraphTextArea: document.getElementById('paragraphTextArea'),
-            paragraphApplyBtn: document.getElementById('paragraphApplyBtn'),
-            charCounter: document.getElementById('charCounter')
+            showTextBounds2: document.getElementById('showTextBounds2')
         };
     }
     
@@ -473,6 +439,20 @@ class GridGenerator {
             this.updateGrid();
         });
         
+        // Text editing will be handled by click on canvas
+        
+        // Show text bounds checkbox
+        this.dom.showTextBounds.addEventListener('change', (e) => {
+            this.settings.showTextBounds = e.target.checked;
+            this.updateGrid();
+        });
+        
+        // Show text bounds 2 checkbox
+        this.dom.showTextBounds2.addEventListener('change', (e) => {
+            this.settings.showTextBounds2 = e.target.checked;
+            this.updateGrid();
+        });
+        
         // Color preview button - toggle HSB picker
         this.dom.colorPreview.addEventListener('click', () => {
             const isVisible = this.dom.hsbPicker.style.display !== 'none';
@@ -536,9 +516,6 @@ class GridGenerator {
         
         // Export button
         this.dom.exportBtn.addEventListener('click', () => this.exportSVG());
-        
-        // Export Settings button
-        this.dom.exportSettingsBtn.addEventListener('click', () => this.exportSettings());
         
         // Help button and modal
         if (this.dom.helpButton) {
@@ -642,325 +619,6 @@ class GridGenerator {
                 e.stopPropagation();
             });
         });
-    }
-    
-    initDropdowns() {
-        // Initialize dropdown menus for value inputs
-        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-        
-        dropdownToggles.forEach(toggle => {
-            const targetId = toggle.getAttribute('data-target');
-            const dropdown = document.getElementById(targetId);
-            
-            if (!dropdown) return;
-            
-            // Get the input field (sibling of toggle)
-            const container = toggle.closest('.value-input-with-dropdown');
-            const input = container.querySelector('.value-display');
-            const sliderId = input.id.replace('Value', 'Slider');
-            
-            // Toggle dropdown on button click
-            toggle.addEventListener('click', (e) => {
-                e.stopPropagation();
-                
-                // Close all other dropdowns
-                document.querySelectorAll('.dropdown-menu.active').forEach(menu => {
-                    if (menu !== dropdown) {
-                        menu.classList.remove('active');
-                    }
-                });
-                
-                // Toggle this dropdown
-                dropdown.classList.toggle('active');
-                
-                // Update selected state
-                this.updateDropdownSelection(dropdown, input.value);
-            });
-            
-            // Handle item selection
-            const items = dropdown.querySelectorAll('.dropdown-item');
-            items.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const value = parseFloat(item.getAttribute('data-value'));
-                    
-                    // Update slider using universal method
-                    this.updateSliderValue(sliderId, value);
-                    
-                    // Close dropdown
-                    dropdown.classList.remove('active');
-                });
-            });
-        });
-        
-        // Close dropdowns when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.value-input-with-dropdown')) {
-                document.querySelectorAll('.dropdown-menu.active').forEach(menu => {
-                    menu.classList.remove('active');
-                });
-            }
-        });
-    }
-    
-    updateDropdownSelection(dropdown, currentValue) {
-        // Update selected state for dropdown items
-        const items = dropdown.querySelectorAll('.dropdown-item');
-        const numValue = parseFloat(currentValue);
-        
-        items.forEach(item => {
-            const itemValue = parseFloat(item.getAttribute('data-value'));
-            if (Math.abs(itemValue - numValue) < 0.01) {
-                item.classList.add('selected');
-            } else {
-                item.classList.remove('selected');
-            }
-        });
-    }
-    
-    // Инициализация панели настроек параграфа
-    initParagraphPanel() {
-        // Обработчики изменений параметров
-        if (this.dom.paragraphXInput) {
-            this.dom.paragraphXInput.addEventListener('change', () => {
-                if (this.currentEditingBlock) {
-                    const newX = parseInt(this.dom.paragraphXInput.value);
-                    const maxX = this.settings.columnCount - this.currentEditingBlock.width;
-                    this.currentEditingBlock.x = Math.max(0, Math.min(newX, maxX));
-                    this.dom.paragraphXInput.value = this.currentEditingBlock.x;
-                    this.updateGrid();
-                }
-            });
-            // Обработка стрелок клавиатуры
-            this.dom.paragraphXInput.addEventListener('keydown', (e) => {
-                this.handleArrowKeysForInput(e, 'x', 'paragraphXInput');
-            });
-        }
-        
-        if (this.dom.paragraphRowInput) {
-            this.dom.paragraphRowInput.addEventListener('change', () => {
-                if (this.currentEditingBlock) {
-                    const newRow = parseInt(this.dom.paragraphRowInput.value);
-                    this.currentEditingBlock.row = Math.max(-1, newRow);
-                    this.dom.paragraphRowInput.value = this.currentEditingBlock.row;
-                    this.updateGrid();
-                }
-            });
-            // Обработка стрелок клавиатуры
-            this.dom.paragraphRowInput.addEventListener('keydown', (e) => {
-                this.handleArrowKeysForInput(e, 'row', 'paragraphRowInput');
-            });
-        }
-        
-        if (this.dom.paragraphBaselineInput) {
-            this.dom.paragraphBaselineInput.addEventListener('change', () => {
-                if (this.currentEditingBlock) {
-                    const newBaseline = parseInt(this.dom.paragraphBaselineInput.value);
-                    const rowHeight = this.settings.rowHeight;
-                    this.currentEditingBlock.baselineOffset = Math.max(0, Math.min(newBaseline, rowHeight));
-                    this.dom.paragraphBaselineInput.value = this.currentEditingBlock.baselineOffset;
-                    this.updateGrid();
-                }
-            });
-            // Обработка стрелок клавиатуры
-            this.dom.paragraphBaselineInput.addEventListener('keydown', (e) => {
-                this.handleArrowKeysForInput(e, 'baselineOffset', 'paragraphBaselineInput');
-            });
-        }
-        
-        if (this.dom.paragraphWidthInput) {
-            this.dom.paragraphWidthInput.addEventListener('change', () => {
-                if (this.currentEditingBlock) {
-                    const newWidth = parseInt(this.dom.paragraphWidthInput.value);
-                    const maxWidth = this.settings.columnCount;
-                    this.currentEditingBlock.width = Math.max(1, Math.min(newWidth, maxWidth));
-                    this.dom.paragraphWidthInput.value = this.currentEditingBlock.width;
-                    
-                    // Корректируем X если блок вышел за пределы
-                    const maxX = this.settings.columnCount - this.currentEditingBlock.width;
-                    if (this.currentEditingBlock.x > maxX) {
-                        this.currentEditingBlock.x = Math.max(0, maxX);
-                        this.dom.paragraphXInput.value = this.currentEditingBlock.x;
-                    }
-                    
-                    this.updateGrid();
-                }
-            });
-            // Обработка стрелок клавиатуры
-            this.dom.paragraphWidthInput.addEventListener('keydown', (e) => {
-                this.handleArrowKeysForInput(e, 'width', 'paragraphWidthInput');
-            });
-        }
-        
-        // Обработчики для режима выравнивания
-        if (this.dom.baselineAlignBottom) {
-            this.dom.baselineAlignBottom.addEventListener('change', () => {
-                if (this.currentEditingBlock && this.dom.baselineAlignBottom.checked) {
-                    this.currentEditingBlock.baselineAlign = 'bottom';
-                    this.updateGrid();
-                }
-            });
-        }
-        
-        if (this.dom.baselineAlignTop) {
-            this.dom.baselineAlignTop.addEventListener('change', () => {
-                if (this.currentEditingBlock && this.dom.baselineAlignTop.checked) {
-                    this.currentEditingBlock.baselineAlign = 'top';
-                    this.updateGrid();
-                }
-            });
-        }
-        
-        // Обработчик для текстового поля
-        if (this.dom.paragraphTextArea) {
-            this.dom.paragraphTextArea.addEventListener('input', () => {
-                if (this.currentEditingBlock) {
-                    this.currentEditingBlock.content = this.dom.paragraphTextArea.value;
-                    this.updateCharCounter();
-                    this.updateGrid();
-                }
-            });
-        }
-        
-        // Кнопка Apply and Close (изменения применяются автоматически, кнопка закрывает панель)
-        if (this.dom.paragraphApplyBtn) {
-            this.dom.paragraphApplyBtn.addEventListener('click', () => {
-                // Показываем визуальный фидбек
-                this.dom.paragraphApplyBtn.textContent = 'Applied!';
-                setTimeout(() => {
-                    this.dom.paragraphApplyBtn.textContent = 'Apply and Close';
-                    this.closeParagraphPanel();
-                }, 500);
-            });
-        }
-    }
-    
-    // Обновить счетчик символов
-    updateCharCounter() {
-        if (this.dom.charCounter && this.dom.paragraphTextArea) {
-            const count = this.dom.paragraphTextArea.value.length;
-            const plural = count === 1 ? 'character' : 'characters';
-            this.dom.charCounter.textContent = `${count} ${plural}`;
-        }
-    }
-    
-    // Обработка стрелок клавиатуры для числовых полей
-    handleArrowKeysForInput(e, property, inputId) {
-        if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
-        if (!this.currentEditingBlock) return;
-        
-        e.preventDefault();
-        
-        const step = e.shiftKey ? 10 : 1;
-        const direction = e.key === 'ArrowUp' ? 1 : -1;
-        const delta = step * direction;
-        
-        let newValue = this.currentEditingBlock[property] + delta;
-        
-        // Применяем ограничения в зависимости от поля
-        if (property === 'x') {
-            const maxX = this.settings.columnCount - this.currentEditingBlock.width;
-            newValue = Math.max(0, Math.min(newValue, maxX));
-            this.currentEditingBlock.x = newValue;
-            this.dom[inputId].value = newValue;
-        } else if (property === 'row') {
-            newValue = Math.max(-1, newValue);
-            this.currentEditingBlock.row = newValue;
-            this.dom[inputId].value = newValue;
-        } else if (property === 'baselineOffset') {
-            const rowHeight = this.settings.rowHeight;
-            newValue = Math.max(0, Math.min(newValue, rowHeight));
-            this.currentEditingBlock.baselineOffset = newValue;
-            this.dom[inputId].value = newValue;
-        } else if (property === 'width') {
-            const maxWidth = this.settings.columnCount;
-            newValue = Math.max(1, Math.min(newValue, maxWidth));
-            this.currentEditingBlock.width = newValue;
-            this.dom[inputId].value = newValue;
-            
-            // Корректируем X если блок вышел за пределы
-            const maxX = this.settings.columnCount - this.currentEditingBlock.width;
-            if (this.currentEditingBlock.x > maxX) {
-                this.currentEditingBlock.x = Math.max(0, maxX);
-                this.dom.paragraphXInput.value = this.currentEditingBlock.x;
-            }
-        }
-        
-        this.updateGrid();
-    }
-    
-    // Показать панель настроек параграфа
-    showParagraphPanel(blockId) {
-        const block = this.getTextBlock(blockId);
-        if (!block) return;
-        
-        this.currentEditingBlock = block;
-        
-        // Устанавливаем заголовок панели с названием стиля и номером
-        if (this.dom.paragraphPanelTitle) {
-            const styleName = this.getStyleDisplayName(block.styleRef);
-            const blockNumber = this.getBlockNumber(blockId);
-            const formattedNumber = blockNumber.toString().padStart(2, '0');
-            this.dom.paragraphPanelTitle.textContent = `${styleName} ${formattedNumber} Settings`;
-        }
-        
-        // Если панель открывается впервые или была закрыта, центрируем её
-        if (this.dom.paragraphPanel && !this.dom.paragraphPanel.classList.contains('active')) {
-            // Временно показываем панель для получения размеров
-            this.dom.paragraphPanel.style.display = 'flex';
-            const rect = this.dom.paragraphPanel.getBoundingClientRect();
-            
-            // Вычисляем центральную позицию
-            const centerX = (window.innerWidth - rect.width) / 2;
-            const centerY = (window.innerHeight - rect.height) / 2;
-            
-            // Устанавливаем позицию напрямую через left/top, убирая transform
-            this.dom.paragraphPanel.style.left = `${centerX}px`;
-            this.dom.paragraphPanel.style.top = `${centerY}px`;
-            this.dom.paragraphPanel.style.transform = 'none';
-        }
-        
-        // Заполняем поля панели
-        if (this.dom.paragraphXInput) {
-            this.dom.paragraphXInput.value = block.x;
-        }
-        if (this.dom.paragraphRowInput) {
-            this.dom.paragraphRowInput.value = block.row;
-        }
-        if (this.dom.paragraphBaselineInput) {
-            this.dom.paragraphBaselineInput.value = block.baselineOffset;
-        }
-        if (this.dom.paragraphWidthInput) {
-            this.dom.paragraphWidthInput.value = block.width;
-        }
-        if (this.dom.baselineAlignBottom && this.dom.baselineAlignTop) {
-            if (block.baselineAlign === 'bottom') {
-                this.dom.baselineAlignBottom.checked = true;
-            } else {
-                this.dom.baselineAlignTop.checked = true;
-            }
-        }
-        if (this.dom.paragraphTextArea) {
-            this.dom.paragraphTextArea.value = block.content;
-        }
-        
-        // Обновляем счетчик символов
-        this.updateCharCounter();
-        
-        // Показываем панель
-        if (this.dom.paragraphPanel) {
-            this.dom.paragraphPanel.classList.add('active');
-            this.dom.paragraphPanel.style.display = 'flex';
-        }
-    }
-    
-    // Закрыть панель настроек параграфа
-    closeParagraphPanel() {
-        this.currentEditingBlock = null;
-        if (this.dom.paragraphPanel) {
-            this.dom.paragraphPanel.classList.remove('active');
-            this.dom.paragraphPanel.style.display = 'none';
-        }
     }
     
     // Color conversion methods
@@ -1522,66 +1180,34 @@ class GridGenerator {
     }
     
     updateTextWidthConstraints() {
-        // Обновляем ограничения ширины для всех текстовых блоков
-        const maxColumns = this.settings.columnCount;
+        // Update max value for text width sliders based on column count
+        const maxTextWidth = this.settings.columnCount;
         
-        this.textBlocks.forEach(block => {
-            // Клампируем ширину если она превышает количество колонок
-            if (block.width > maxColumns) {
-                block.width = maxColumns;
-            }
+        // Headline text width
+        if (this.dom.textWidthSlider) {
+            this.dom.textWidthSlider.max = maxTextWidth;
+            this.dom.textWidthValue.dataset.max = maxTextWidth;
             
-            // Клампируем позицию + ширину чтобы блок не выходил за пределы
-            if (block.x + block.width > maxColumns) {
-                block.x = Math.max(0, maxColumns - block.width);
+            // Clamp current value if it exceeds new max
+            if (this.settings.textWidth > maxTextWidth) {
+                this.settings.textWidth = maxTextWidth;
+                this.dom.textWidthSlider.value = maxTextWidth;
+                this.dom.textWidthValue.value = maxTextWidth;
             }
-        });
-    }
-    
-    // Получить текстовый блок по ID
-    getTextBlock(id) {
-        return this.textBlocks.find(block => block.id === id);
-    }
-    
-    // Получить номер блока (для отображения в UI)
-    getBlockNumber(blockId) {
-        // Группируем блоки по styleRef и считаем номер внутри группы
-        const block = this.getTextBlock(blockId);
-        if (!block) return 1;
+        }
         
-        const blocksWithSameStyle = this.textBlocks.filter(b => b.styleRef === block.styleRef);
-        const index = blocksWithSameStyle.findIndex(b => b.id === blockId);
-        return (index >= 0 ? index : 0) + 1;
-    }
-    
-    // Получить название стиля для отображения
-    getStyleDisplayName(styleRef) {
-        // Преобразуем 'headline' в 'Headline', 'text' в 'Text'
-        return styleRef.charAt(0).toUpperCase() + styleRef.slice(1);
-    }
-    
-    // Конвертировать Row + BaselineOffset в Y (позиция в baseline модулях)
-    rowBaselineToY(row, baselineOffset) {
-        const rowHeight = this.settings.rowHeight;
-        // Формула: row * (rowHeight + 1) + baselineOffset
-        // +1 это gutter между rows (1 модуль baseline)
-        return row * (rowHeight + 1) + baselineOffset;
-    }
-    
-    // Конвертировать Y (позиция в baseline модулях) в Row + BaselineOffset
-    yToRowBaseline(y) {
-        const rowHeight = this.settings.rowHeight;
-        const rowWithGutter = rowHeight + 1;
-        
-        const row = Math.floor(y / rowWithGutter);
-        const baselineOffset = y % rowWithGutter;
-        
-        return { row, baselineOffset };
-    }
-    
-    // Получить Y позицию блока в baseline модулях
-    getBlockY(block) {
-        return this.rowBaselineToY(block.row, block.baselineOffset);
+        // Text style width
+        if (this.dom.textWidthSlider2) {
+            this.dom.textWidthSlider2.max = maxTextWidth;
+            this.dom.textWidthValue2.dataset.max = maxTextWidth;
+            
+            // Clamp current value if it exceeds new max
+            if (this.settings.textWidth2 > maxTextWidth) {
+                this.settings.textWidth2 = maxTextWidth;
+                this.dom.textWidthSlider2.value = maxTextWidth;
+                this.dom.textWidthValue2.value = maxTextWidth;
+            }
+        }
     }
     
     // Calculate font size in mm based on module and height mode
@@ -1647,40 +1273,35 @@ class GridGenerator {
     }
     
     // Calculate text block width in mm based on columns
-    calculateBlockWidth(block) {
+    calculateTextWidth() {
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         const columnCount = this.settings.columnCount;
-        const widthInColumns = block.width;
+        const textWidthInColumns = this.settings.textWidth;
         
         // Calculate column width (same formula as in drawColumns)
         const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
         
         // Text width = column width × number of columns + gutters between them
-        const textWidth = columnWidth * widthInColumns + module * (widthInColumns - 1);
+        const textWidth = columnWidth * textWidthInColumns + module * (textWidthInColumns - 1);
         
         return textWidth;
     }
     
-    // Calculate text block position in mm
-    calculateBlockPosition(block, scale = 1) {
+    // Calculate text style block width in mm based on columns
+    calculateTextStyleWidth() {
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         const columnCount = this.settings.columnCount;
+        const textWidthInColumns = this.settings.textWidth2;
         
-        // Calculate column width
+        // Calculate column width (same formula as in drawColumns)
         const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
-        const gutter = module;
         
-        // Position based on column and row
-        // x включает левый margin, так как колонки считаются внутри margin
-        const x = module * margins * scale + block.x * (columnWidth * scale + gutter * scale);
-        // y НЕ включает topMargin - он добавляется при отрисовке
-        // Получаем Y позицию в baseline модулях из row + baselineOffset
-        const yInBaseline = this.getBlockY(block);
-        const y = yInBaseline * (module * scale);
+        // Text width = column width × number of columns + gutters between them
+        const textWidth = columnWidth * textWidthInColumns + module * (textWidthInColumns - 1);
         
-        return { x, y };
+        return textWidth;
     }
     
     // Измерить ширину текста в SVG точно
@@ -1736,225 +1357,8 @@ class GridGenerator {
         return lines;
     }
     
-    // Draw text block on canvas with hover effects and drag handles
-    drawTextBlock(container, block, frontX, frontY, frontWidth, frontHeight, scale) {
-        const gridColor = this.getContrastColor();
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        
-        // Get style settings based on block's styleRef
-        const isHeadline = block.styleRef === 'headline';
-        const fontSize = isHeadline ? this.calculateFontSize() : this.calculateTextStyleFontSize();
-        const scaledFontSize = fontSize * scale;
-        const lineHeightSetting = isHeadline ? this.settings.lineHeight : this.settings.textLineHeight;
-        const trackingSetting = isHeadline ? this.settings.tracking : this.settings.textTracking;
-        const useXHeight = isHeadline ? this.settings.useXHeight : this.settings.useXHeight2;
-        
-        // Get text content
-        const inputLines = block.content.split('\n').filter(line => line.trim() !== '');
-        if (inputLines.length === 0) {
-            // Show placeholder
-            const placeholderGroup = this.createSVGElement('g', {
-                id: `text-group-${block.id}`,
-                style: 'cursor: move;',
-                'data-block-id': block.id
-            }, container);
-            
-            const position = this.calculateBlockPosition(block, scale);
-            const textX = frontX + position.x;
-            const topMargin = module * margins * scale;
-            const textY = frontY + position.y + topMargin + 20 * scale;
-            
-            const placeholder = this.createSVGElement('text', {
-                x: textX,
-                y: textY,
-                'font-family': 'TT Commons Classic, -apple-system, BlinkMacSystemFont, sans-serif',
-                'font-size': `${14 * scale}`,
-                'fill': gridColor,
-                'fill-opacity': '0.3',
-                style: 'cursor: move;'
-            }, placeholderGroup);
-            placeholder.textContent = 'Click to add text';
-            
-            this.attachTextBlockHandlers(placeholderGroup, block, frontX, frontY, scale);
-            return;
-        }
-        
-        // Calculate text block width
-        const textBlockWidth = this.calculateBlockWidth(block);
-        const scaledTextWidth = textBlockWidth * scale;
-        
-        // Wrap text lines to fit width
-        const wrappedLines = [];
-        inputLines.forEach(line => {
-            const wrapped = this.wrapText(line, scaledTextWidth, fontSize, scale);
-            wrappedLines.push(...wrapped);
-        });
-        
-        // Calculate position
-        const position = this.calculateBlockPosition(block, scale);
-        const textX = frontX + position.x;
-        
-        // Calculate cap height and x-height for positioning
-        let actualCapHeight, actualXHeight;
-        const textSize = isHeadline ? this.settings.headlineSize : this.settings.textSize;
-        if (useXHeight) {
-            actualXHeight = module * textSize * scale;
-            actualCapHeight = actualXHeight * (this.fontMetrics.capHeight / this.fontMetrics.xHeight);
-        } else {
-            actualCapHeight = module * textSize * scale;
-            actualXHeight = actualCapHeight * (this.fontMetrics.xHeight / this.fontMetrics.capHeight);
-        }
-        
-        const topMargin = module * margins * scale;
-        
-        // Рассчитываем firstLineY в зависимости от режима выравнивания
-        let firstLineY;
-        if (block.baselineAlign === 'top') {
-            // Режим 'top': x-height выравнивается по верху ближайшего baseline
-            // Baseline текста должен быть выше на величину x-height
-            firstLineY = frontY + position.y + topMargin + actualXHeight;
-        } else {
-            // Режим 'bottom' (по умолчанию): низ текста (baseline) к низу baseline
-            // Baseline текста = низ блока baseline, cap-height сверху
-            firstLineY = frontY + position.y + topMargin + actualCapHeight;
-        }
-        const lineHeightInMm = module * lineHeightSetting * scale;
-        
-        // Create group for text block with hover
-        const textGroup = this.createSVGElement('g', {
-            id: `text-group-${block.id}`,
-            style: 'cursor: move;',
-            'data-block-id': block.id
-        }, container);
-        
-        // Create text elements
-        const textAttrs = {
-            'font-family': 'TT Commons Classic, -apple-system, BlinkMacSystemFont, sans-serif',
-            'font-weight': '500',
-            'font-size': `${scaledFontSize}`,
-            'text-anchor': 'start',
-            'fill': gridColor,
-            'fill-opacity': '1',
-            'letter-spacing': `${trackingSetting}em`
-        };
-        
-        // Draw each line
-        let previousBaselineY = null;
-        wrappedLines.forEach((line, index) => {
-            let lineBaselineY;
-            
-            if (index === 0) {
-                const lineApproxY = firstLineY;
-                lineBaselineY = this.snapToBaseline(lineApproxY, frontY, scale, true);
-                previousBaselineY = lineBaselineY;
-            } else {
-                const lineApproxY = previousBaselineY + lineHeightInMm;
-                lineBaselineY = this.snapToBaseline(lineApproxY, frontY, scale, false);
-                previousBaselineY = lineBaselineY;
-            }
-            
-            const textElement = this.createSVGElement('text', {
-                ...textAttrs,
-                x: textX,
-                y: lineBaselineY
-            }, textGroup);
-            textElement.textContent = line;
-        });
-        
-        // Create bounds rectangle (hidden by default, shown on hover)
-        const boundsRect = this.createSVGElement('rect', {
-            id: `bounds-${block.id}`,
-            x: textX,
-            y: frontY + position.y + topMargin,
-            width: scaledTextWidth,
-            height: lineHeightInMm * wrappedLines.length,
-            fill: 'rgba(255, 255, 255, 0.05)',
-            stroke: gridColor,
-            'stroke-width': scale === 1 ? '0.5' : '1',
-            'stroke-dasharray': '4,4',
-            'stroke-opacity': '0',
-            'fill-opacity': '0',
-            style: 'pointer-events: none; transition: opacity 0.2s;',
-            'data-block-id': block.id
-        }, container);
-        
-        // Store bounds element reference for hover effect
-        textGroup.boundsElement = boundsRect;
-        
-        // Attach event handlers
-        this.attachTextBlockHandlers(textGroup, block, frontX, frontY, scale);
-    }
-    
-    // Attach event handlers for text block (click, hover, drag)
-    attachTextBlockHandlers(textGroup, block, frontX, frontY, scale) {
-        let mouseDownTime = 0;
-        let mouseDownX = 0;
-        let mouseDownY = 0;
-        let hasMoved = false;
-        
-        // Mouse down - начало потенциального drag или клика
-        textGroup.addEventListener('mousedown', (e) => {
-            // Только левая кнопка мыши
-            if (e.button !== 0) return;
-            
-            e.stopPropagation();
-            e.preventDefault();
-            
-            mouseDownTime = Date.now();
-            mouseDownX = e.clientX;
-            mouseDownY = e.clientY;
-            hasMoved = false;
-            
-            // Подписываемся на движение мыши для определения drag
-            const mouseMoveHandler = (moveEvent) => {
-                const deltaX = Math.abs(moveEvent.clientX - mouseDownX);
-                const deltaY = Math.abs(moveEvent.clientY - mouseDownY);
-                
-                // Если мышь сдвинулась больше чем на 3 пикселя, начинаем drag
-                if (!hasMoved && (deltaX > 3 || deltaY > 3)) {
-                    hasMoved = true;
-                    this.startTextBlockDrag(block.id, mouseDownX, mouseDownY, frontX, frontY, scale);
-                }
-            };
-            
-            const mouseUpHandler = (upEvent) => {
-                document.removeEventListener('mousemove', mouseMoveHandler);
-                document.removeEventListener('mouseup', mouseUpHandler);
-                
-                // Если не было движения, обрабатываем как клик для открытия панели настроек
-                if (!hasMoved) {
-                    const clickDuration = Date.now() - mouseDownTime;
-                    // Короткий клик открывает панель настроек параграфа
-                    if (clickDuration < 300) {
-                        this.showParagraphPanel(block.id);
-                    }
-                }
-            };
-            
-            document.addEventListener('mousemove', mouseMoveHandler);
-            document.addEventListener('mouseup', mouseUpHandler);
-        });
-        
-        // Hover handlers для показа границ
-        textGroup.addEventListener('mouseenter', () => {
-            if (textGroup.boundsElement && !this.textDragState.isDragging) {
-                textGroup.boundsElement.setAttribute('stroke-opacity', '0.5');
-                textGroup.boundsElement.setAttribute('fill-opacity', '0.05');
-            }
-        });
-        
-        textGroup.addEventListener('mouseleave', () => {
-            if (textGroup.boundsElement && !this.textDragState.isDragging) {
-                textGroup.boundsElement.setAttribute('stroke-opacity', '0');
-                textGroup.boundsElement.setAttribute('fill-opacity', '0');
-            }
-        });
-    }
-    
-    // OLD METHOD - will be removed after testing
     // Draw Headline text on the canvas
-    drawHeadlineText_OLD(container, frontX, frontY, frontWidth, frontHeight, scale) {
+    drawHeadlineText(container, frontX, frontY, frontWidth, frontHeight, scale) {
         const fontSize = this.calculateFontSize();
         const scaledFontSize = fontSize * scale;
         const gridColor = this.getContrastColor();
@@ -2212,136 +1616,42 @@ class GridGenerator {
         });
     }
     
-    // Инициализация drag & drop для текстовых блоков
-    initTextBlockDrag() {
-        // Обработчики мыши на уровне документа
-        document.addEventListener('mousemove', (e) => {
-            if (!this.textDragState.isDragging) return;
-            
-            e.preventDefault();
-            this.handleTextBlockDrag(e);
-        });
-        
-        document.addEventListener('mouseup', (e) => {
-            if (!this.textDragState.isDragging) return;
-            
-            e.preventDefault();
-            this.endTextBlockDrag();
-        });
-    }
-    
-    // Начать перемещение текстового блока
-    startTextBlockDrag(blockId, mouseX, mouseY, frontX, frontY, scale) {
-        const block = this.getTextBlock(blockId);
-        if (!block) return;
-        
-        this.textDragState = {
-            isDragging: true,
-            blockId: blockId,
-            startMouseX: mouseX,
-            startMouseY: mouseY,
-            startBlockX: block.x,
-            startBlockRow: block.row,
-            startBlockBaselineOffset: block.baselineOffset,
-            frontX: frontX,
-            frontY: frontY,
-            scale: scale
-        };
-        
-        // Показать границы блока во время перемещения
-        const boundsElement = document.getElementById(`bounds-${blockId}`);
-        if (boundsElement) {
-            boundsElement.setAttribute('stroke-opacity', '0.5');
-            boundsElement.setAttribute('fill-opacity', '0.05');
-        }
-    }
-    
-    // Обработка перемещения мыши
-    handleTextBlockDrag(e) {
-        const block = this.getTextBlock(this.textDragState.blockId);
-        if (!block) return;
-        
-        const { startMouseX, startMouseY, startBlockX, startBlockRow, startBlockBaselineOffset, frontX, frontY, scale } = this.textDragState;
-        
-        // Вычисляем смещение мыши
-        const deltaX = e.clientX - startMouseX;
-        const deltaY = e.clientY - startMouseY;
-        
-        // Преобразуем смещение в колонки и baseline модули
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const columnCount = this.settings.columnCount;
-        
-        // Вычисляем ширину колонки и gutter
-        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
-        const gutter = module;
-        const columnWithGutter = (columnWidth + gutter) * scale;
-        const baselineUnit = module * scale;
-        
-        // Новая позиция в колонках
-        let newX = startBlockX + Math.round(deltaX / columnWithGutter);
-        
-        // Новая позиция в baseline модулях
-        const startY = this.rowBaselineToY(startBlockRow, startBlockBaselineOffset);
-        const deltaYInBaseline = Math.round(deltaY / baselineUnit);
-        let newY = startY + deltaYInBaseline;
-        
-        // Ограничиваем позицию, чтобы блок не выходил за пределы
-        newX = Math.max(0, Math.min(newX, columnCount - block.width));
-        // Разрешаем отрицательные значения Y, но не выше чем -margins
-        const minY = -Math.floor(margins);
-        newY = Math.max(minY, newY);
-        
-        // Конвертируем Y обратно в row + baselineOffset
-        const { row, baselineOffset } = this.yToRowBaseline(newY);
-        
-        // Обновляем позицию блока
-        block.x = newX;
-        block.row = row;
-        block.baselineOffset = baselineOffset;
-        
-        // Перерисовываем сетку
-        this.updateGrid();
-    }
-    
-    // Завершить перемещение
-    endTextBlockDrag() {
-        const blockId = this.textDragState.blockId;
-        
-        // Скрыть границы после окончания перемещения
-        const boundsElement = document.getElementById(`bounds-${blockId}`);
-        if (boundsElement) {
-            boundsElement.setAttribute('stroke-opacity', '0');
-            boundsElement.setAttribute('fill-opacity', '0');
-        }
-        
-        this.textDragState.isDragging = false;
-        this.textDragState.blockId = null;
-    }
-    
-    showTextEditor(blockId, frontX, frontY, scale) {
+    showTextEditor(frontX, frontY, scale, textType = 'headline') {
         // Remove existing editor if any
         const existingEditor = document.getElementById('text-editor-overlay');
         if (existingEditor) {
             existingEditor.remove();
         }
         
-        // Get block data
-        const block = this.getTextBlock(blockId);
-        if (!block) return;
-        
         // Get SVG position
         const svgRect = this.dom.svg.getBoundingClientRect();
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
+        const columnCount = this.settings.columnCount;
+        const leftMargin = module * margins * scale;
+        const topMargin = module * margins * scale;
         
-        // Calculate text block width and position
-        const textBlockWidth = this.calculateBlockWidth(block);
-        const scaledTextWidth = textBlockWidth * scale;
-        const position = this.calculateBlockPosition(block, scale);
+        // Calculate text block width and position based on text type
+        let textBlockWidth, scaledTextWidth, editorX;
         
-        const editorX = svgRect.left + frontX + position.x;
-        const editorY = svgRect.top + frontY + position.y + module * margins * scale;
+        if (textType === 'headline') {
+            textBlockWidth = this.calculateTextWidth();
+            scaledTextWidth = textBlockWidth * scale;
+            editorX = svgRect.left + frontX + leftMargin;
+        } else {
+            // Text style - positioned at the column after Headline
+            textBlockWidth = this.calculateTextStyleWidth();
+            scaledTextWidth = textBlockWidth * scale;
+            
+            // Calculate column width and gutter for precise positioning
+            const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
+            const gutter = module;
+            
+            const columnAfterHeadline = this.settings.textWidth;
+            editorX = svgRect.left + frontX + leftMargin + columnAfterHeadline * (columnWidth * scale + gutter * scale);
+        }
+        
+        const editorY = svgRect.top + frontY + topMargin;
         
         // Create overlay editor
         const editorOverlay = document.createElement('div');
@@ -2361,7 +1671,7 @@ class GridGenerator {
         `;
         
         const textarea = document.createElement('textarea');
-        textarea.value = block.content;
+        textarea.value = textType === 'headline' ? this.settings.textContent : this.settings.textContent2;
         textarea.style.cssText = `
             width: 100%;
             min-height: 60px;
@@ -2385,7 +1695,11 @@ class GridGenerator {
         
         // Handle closing
         const closeEditor = () => {
-            block.content = textarea.value;
+            if (textType === 'headline') {
+                this.settings.textContent = textarea.value;
+            } else {
+                this.settings.textContent2 = textarea.value;
+            }
             editorOverlay.remove();
             this.updateGrid();
         };
@@ -2509,9 +1823,8 @@ class GridGenerator {
         }
         
         // Draw text blocks on front panel
-        this.textBlocks.forEach(block => {
-            this.drawTextBlock(this.dom.svg, block, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
-        });
+        this.drawHeadlineText(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
+        this.drawTextStyleText(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
     }
     
     // Universal method for creating SVG elements
@@ -3245,13 +2558,16 @@ class GridGenerator {
             this.drawLabels(labelsGroup, 0, 0, frontWidth, frontHeight, thickness, scale);
         }
         
-        // Add text blocks (in separate groups)
-        this.textBlocks.forEach(block => {
-            const textGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            textGroup.setAttribute('id', `text-${block.id}`);
-            exportSvg.appendChild(textGroup);
-            this.drawTextBlock(textGroup, block, frontX, frontY, frontWidth, frontHeight, scale);
-        });
+        // Add text (in separate groups)
+        const headlineGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        headlineGroup.setAttribute('id', 'headline');
+        exportSvg.appendChild(headlineGroup);
+        this.drawHeadlineText(headlineGroup, frontX, frontY, frontWidth, frontHeight, scale);
+        
+        const textStyleGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        textStyleGroup.setAttribute('id', 'text');
+        exportSvg.appendChild(textStyleGroup);
+        this.drawTextStyleText(textStyleGroup, frontX, frontY, frontWidth, frontHeight, scale);
         
         // Convert to string
         const serializer = new XMLSerializer();
@@ -3262,115 +2578,6 @@ class GridGenerator {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.download = `grid_width${frontWidth}_height${frontHeight}_thickness${thickness}_module${gridModule.toFixed(2)}_margins${margins.toFixed(2)}_columns${columnCount}_rows${rowCount}_rowheight${rowHeight}.svg`;
-        link.href = url;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        setTimeout(() => URL.revokeObjectURL(url), 100);
-    }
-    
-    exportSettings() {
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-        let settingsText = '';
-        
-        // Заголовок файла
-        settingsText += '========================================\n';
-        settingsText += 'GRID GENERATOR - НАСТРОЙКИ МАКЕТА\n';
-        settingsText += `Экспорт: ${new Date().toLocaleString('ru-RU')}\n`;
-        settingsText += '========================================\n\n';
-        
-        // Раздел 1: Размеры упаковки
-        settingsText += '--- РАЗМЕРЫ УПАКОВКИ (mm) ---\n';
-        settingsText += `Ширина (Width): ${this.settings.frontWidth}\n`;
-        settingsText += `Высота (Height): ${this.settings.frontHeight}\n`;
-        settingsText += `Толщина (Thickness): ${this.settings.thickness}\n`;
-        settingsText += `Цвет фона (Background Color): ${this.settings.boxColor}\n`;
-        settingsText += `Показывать размеры (Show Dimensions): ${this.settings.showDimensions ? 'Да' : 'Нет'}\n`;
-        settingsText += `Показывать боковые панели (Show Side Panels): ${this.settings.showSidePanels ? 'Да' : 'Нет'}\n`;
-        settingsText += '\n';
-        
-        // Раздел 2: Настройки сетки
-        settingsText += '--- НАСТРОЙКИ СЕТКИ ---\n';
-        settingsText += `Модуль (Module, mm): ${this.settings.gridModule}\n`;
-        settingsText += `Поля (Margins, mod): ${this.settings.margins}\n`;
-        settingsText += `Количество колонок (Columns): ${this.settings.columnCount}\n`;
-        settingsText += `Количество строк (Rows): ${this.settings.rowCount}\n`;
-        settingsText += `Высота строки (Row Height, mod): ${this.settings.rowHeight}\n`;
-        settingsText += `Режим связи (Link Mode): ${this.settings.linkMode === 'off' ? 'Отключен' : this.settings.linkMode === 'rows-height' ? 'R⇄RH' : 'RRH⇄Mod'}\n`;
-        settingsText += `Показывать колонки (Show Columns): ${this.settings.showColumns ? 'Да' : 'Нет'}\n`;
-        settingsText += `Показывать строки (Show Rows): ${this.settings.showRows ? 'Да' : 'Нет'}\n`;
-        settingsText += `Показывать базовую сетку (Show Baseline): ${this.settings.showBaseline ? 'Да' : 'Нет'}\n`;
-        settingsText += '\n';
-        
-        // Раздел 3: Стили текста - Headline
-        settingsText += '--- СТИЛЬ ТЕКСТА: HEADLINE ---\n';
-        settingsText += `Размер (Size, mod): ${this.settings.headlineSize}\n`;
-        settingsText += `Интерлиньяж (Line Height, mod): ${this.settings.lineHeight}\n`;
-        settingsText += `Трекинг (Tracking, em): ${this.settings.tracking}\n`;
-        settingsText += `Использовать x-height: ${this.settings.useXHeight ? 'Да' : 'Нет'}\n`;
-        settingsText += '\n';
-        
-        // Раздел 4: Стили текста - Text
-        settingsText += '--- СТИЛЬ ТЕКСТА: TEXT ---\n';
-        settingsText += `Размер (Size, mod): ${this.settings.textSize}\n`;
-        settingsText += `Интерлиньяж (Line Height, mod): ${this.settings.textLineHeight}\n`;
-        settingsText += `Трекинг (Tracking, em): ${this.settings.textTracking}\n`;
-        settingsText += `Использовать x-height: ${this.settings.useXHeight2 ? 'Да' : 'Нет'}\n`;
-        settingsText += '\n';
-        
-        // Раздел 5: Текстовые блоки
-        settingsText += '========================================\n';
-        settingsText += 'ТЕКСТОВЫЕ БЛОКИ\n';
-        settingsText += '========================================\n\n';
-        
-        this.textBlocks.forEach((block, index) => {
-            settingsText += `--- БЛОК ${index + 1}: ${block.id.toUpperCase()} ---\n`;
-            settingsText += `ID: ${block.id}\n`;
-            settingsText += `Стиль (Style Reference): ${block.styleRef}\n`;
-            settingsText += `Колонка (Column): ${block.x}\n`;
-            settingsText += `Строка (Row): ${block.row}\n`;
-            settingsText += `Смещение baseline (Baseline Offset, mod): ${block.baselineOffset}\n`;
-            settingsText += `Ширина (Width, columns): ${block.width}\n`;
-            settingsText += `Выравнивание по baseline (Baseline Align): ${block.baselineAlign === 'bottom' ? 'Низ' : 'Верх'}\n`;
-            settingsText += `Показывать границы (Show Bounds): ${block.showBounds ? 'Да' : 'Нет'}\n`;
-            settingsText += `\nСодержимое текста:\n`;
-            settingsText += `${block.content}\n`;
-            settingsText += `\n`;
-        });
-        
-        // Раздел 6: Вычисляемые параметры
-        settingsText += '========================================\n';
-        settingsText += 'ВЫЧИСЛЯЕМЫЕ ПАРАМЕТРЫ\n';
-        settingsText += '========================================\n\n';
-        
-        const contentWidth = this.settings.frontWidth - 2 * this.settings.margins * this.settings.gridModule;
-        const contentHeight = this.settings.frontHeight - 2 * this.settings.margins * this.settings.gridModule;
-        const gutterWidth = this.settings.gridModule;
-        const columnWidth = (contentWidth - (this.settings.columnCount - 1) * gutterWidth) / this.settings.columnCount;
-        const rowHeightMm = this.settings.rowHeight * this.settings.gridModule;
-        const totalRows = this.settings.rowCount;
-        const totalHeight = totalRows * rowHeightMm + (totalRows - 1) * this.settings.gridModule;
-        
-        settingsText += `Ширина контента (без полей, mm): ${contentWidth.toFixed(2)}\n`;
-        settingsText += `Высота контента (без полей, mm): ${contentHeight.toFixed(2)}\n`;
-        settingsText += `Ширина желоба (Gutter Width, mm): ${gutterWidth.toFixed(4)}\n`;
-        settingsText += `Ширина колонки (Column Width, mm): ${columnWidth.toFixed(2)}\n`;
-        settingsText += `Высота строки (Row Height, mm): ${rowHeightMm.toFixed(2)}\n`;
-        settingsText += `Общая высота всех строк с желобами (mm): ${totalHeight.toFixed(2)}\n`;
-        settingsText += '\n';
-        
-        // Конец файла
-        settingsText += '========================================\n';
-        settingsText += 'КОНЕЦ ФАЙЛА НАСТРОЕК\n';
-        settingsText += '========================================\n';
-        
-        // Создание и скачивание файла
-        const blob = new Blob([settingsText], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `grid-settings_${timestamp}.txt`;
         link.href = url;
         
         document.body.appendChild(link);

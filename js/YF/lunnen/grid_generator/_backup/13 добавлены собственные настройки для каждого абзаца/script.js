@@ -344,7 +344,6 @@ class GridGenerator {
             
             // Buttons
             exportBtn: document.getElementById('exportBtn'),
-            exportSettingsBtn: document.getElementById('exportSettingsBtn'),
             helpButton: document.getElementById('helpButton'),
             modalOverlay: document.getElementById('modalOverlay'),
             modalClose: document.getElementById('modalClose'),
@@ -536,9 +535,6 @@ class GridGenerator {
         
         // Export button
         this.dom.exportBtn.addEventListener('click', () => this.exportSVG());
-        
-        // Export Settings button
-        this.dom.exportSettingsBtn.addEventListener('click', () => this.exportSettings());
         
         // Help button and modal
         if (this.dom.helpButton) {
@@ -3262,115 +3258,6 @@ class GridGenerator {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.download = `grid_width${frontWidth}_height${frontHeight}_thickness${thickness}_module${gridModule.toFixed(2)}_margins${margins.toFixed(2)}_columns${columnCount}_rows${rowCount}_rowheight${rowHeight}.svg`;
-        link.href = url;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        setTimeout(() => URL.revokeObjectURL(url), 100);
-    }
-    
-    exportSettings() {
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-        let settingsText = '';
-        
-        // Заголовок файла
-        settingsText += '========================================\n';
-        settingsText += 'GRID GENERATOR - НАСТРОЙКИ МАКЕТА\n';
-        settingsText += `Экспорт: ${new Date().toLocaleString('ru-RU')}\n`;
-        settingsText += '========================================\n\n';
-        
-        // Раздел 1: Размеры упаковки
-        settingsText += '--- РАЗМЕРЫ УПАКОВКИ (mm) ---\n';
-        settingsText += `Ширина (Width): ${this.settings.frontWidth}\n`;
-        settingsText += `Высота (Height): ${this.settings.frontHeight}\n`;
-        settingsText += `Толщина (Thickness): ${this.settings.thickness}\n`;
-        settingsText += `Цвет фона (Background Color): ${this.settings.boxColor}\n`;
-        settingsText += `Показывать размеры (Show Dimensions): ${this.settings.showDimensions ? 'Да' : 'Нет'}\n`;
-        settingsText += `Показывать боковые панели (Show Side Panels): ${this.settings.showSidePanels ? 'Да' : 'Нет'}\n`;
-        settingsText += '\n';
-        
-        // Раздел 2: Настройки сетки
-        settingsText += '--- НАСТРОЙКИ СЕТКИ ---\n';
-        settingsText += `Модуль (Module, mm): ${this.settings.gridModule}\n`;
-        settingsText += `Поля (Margins, mod): ${this.settings.margins}\n`;
-        settingsText += `Количество колонок (Columns): ${this.settings.columnCount}\n`;
-        settingsText += `Количество строк (Rows): ${this.settings.rowCount}\n`;
-        settingsText += `Высота строки (Row Height, mod): ${this.settings.rowHeight}\n`;
-        settingsText += `Режим связи (Link Mode): ${this.settings.linkMode === 'off' ? 'Отключен' : this.settings.linkMode === 'rows-height' ? 'R⇄RH' : 'RRH⇄Mod'}\n`;
-        settingsText += `Показывать колонки (Show Columns): ${this.settings.showColumns ? 'Да' : 'Нет'}\n`;
-        settingsText += `Показывать строки (Show Rows): ${this.settings.showRows ? 'Да' : 'Нет'}\n`;
-        settingsText += `Показывать базовую сетку (Show Baseline): ${this.settings.showBaseline ? 'Да' : 'Нет'}\n`;
-        settingsText += '\n';
-        
-        // Раздел 3: Стили текста - Headline
-        settingsText += '--- СТИЛЬ ТЕКСТА: HEADLINE ---\n';
-        settingsText += `Размер (Size, mod): ${this.settings.headlineSize}\n`;
-        settingsText += `Интерлиньяж (Line Height, mod): ${this.settings.lineHeight}\n`;
-        settingsText += `Трекинг (Tracking, em): ${this.settings.tracking}\n`;
-        settingsText += `Использовать x-height: ${this.settings.useXHeight ? 'Да' : 'Нет'}\n`;
-        settingsText += '\n';
-        
-        // Раздел 4: Стили текста - Text
-        settingsText += '--- СТИЛЬ ТЕКСТА: TEXT ---\n';
-        settingsText += `Размер (Size, mod): ${this.settings.textSize}\n`;
-        settingsText += `Интерлиньяж (Line Height, mod): ${this.settings.textLineHeight}\n`;
-        settingsText += `Трекинг (Tracking, em): ${this.settings.textTracking}\n`;
-        settingsText += `Использовать x-height: ${this.settings.useXHeight2 ? 'Да' : 'Нет'}\n`;
-        settingsText += '\n';
-        
-        // Раздел 5: Текстовые блоки
-        settingsText += '========================================\n';
-        settingsText += 'ТЕКСТОВЫЕ БЛОКИ\n';
-        settingsText += '========================================\n\n';
-        
-        this.textBlocks.forEach((block, index) => {
-            settingsText += `--- БЛОК ${index + 1}: ${block.id.toUpperCase()} ---\n`;
-            settingsText += `ID: ${block.id}\n`;
-            settingsText += `Стиль (Style Reference): ${block.styleRef}\n`;
-            settingsText += `Колонка (Column): ${block.x}\n`;
-            settingsText += `Строка (Row): ${block.row}\n`;
-            settingsText += `Смещение baseline (Baseline Offset, mod): ${block.baselineOffset}\n`;
-            settingsText += `Ширина (Width, columns): ${block.width}\n`;
-            settingsText += `Выравнивание по baseline (Baseline Align): ${block.baselineAlign === 'bottom' ? 'Низ' : 'Верх'}\n`;
-            settingsText += `Показывать границы (Show Bounds): ${block.showBounds ? 'Да' : 'Нет'}\n`;
-            settingsText += `\nСодержимое текста:\n`;
-            settingsText += `${block.content}\n`;
-            settingsText += `\n`;
-        });
-        
-        // Раздел 6: Вычисляемые параметры
-        settingsText += '========================================\n';
-        settingsText += 'ВЫЧИСЛЯЕМЫЕ ПАРАМЕТРЫ\n';
-        settingsText += '========================================\n\n';
-        
-        const contentWidth = this.settings.frontWidth - 2 * this.settings.margins * this.settings.gridModule;
-        const contentHeight = this.settings.frontHeight - 2 * this.settings.margins * this.settings.gridModule;
-        const gutterWidth = this.settings.gridModule;
-        const columnWidth = (contentWidth - (this.settings.columnCount - 1) * gutterWidth) / this.settings.columnCount;
-        const rowHeightMm = this.settings.rowHeight * this.settings.gridModule;
-        const totalRows = this.settings.rowCount;
-        const totalHeight = totalRows * rowHeightMm + (totalRows - 1) * this.settings.gridModule;
-        
-        settingsText += `Ширина контента (без полей, mm): ${contentWidth.toFixed(2)}\n`;
-        settingsText += `Высота контента (без полей, mm): ${contentHeight.toFixed(2)}\n`;
-        settingsText += `Ширина желоба (Gutter Width, mm): ${gutterWidth.toFixed(4)}\n`;
-        settingsText += `Ширина колонки (Column Width, mm): ${columnWidth.toFixed(2)}\n`;
-        settingsText += `Высота строки (Row Height, mm): ${rowHeightMm.toFixed(2)}\n`;
-        settingsText += `Общая высота всех строк с желобами (mm): ${totalHeight.toFixed(2)}\n`;
-        settingsText += '\n';
-        
-        // Конец файла
-        settingsText += '========================================\n';
-        settingsText += 'КОНЕЦ ФАЙЛА НАСТРОЕК\n';
-        settingsText += '========================================\n';
-        
-        // Создание и скачивание файла
-        const blob = new Blob([settingsText], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `grid-settings_${timestamp}.txt`;
         link.href = url;
         
         document.body.appendChild(link);

@@ -220,9 +220,6 @@
         <button class="btn-fixed btn-export" id="exportBtn" aria-label="Export SVG (Command/Control + E)">
             Export SVG ⌘E
         </button>
-        <button class="btn-fixed btn-export-settings" id="exportSettingsBtn" aria-label="Export Settings">
-            Export Settings
-        </button>
     </nav>
 
     <aside class="controls-panel controls-panel-text" id="textPanel" role="complementary" aria-label="Text styles settings">
@@ -245,30 +242,7 @@
                 <div class="control-group">
                     <label for="headlineSizeSlider">
                         <span>Size <span class="unit">mod</span></span>
-                        <div class="value-input-with-dropdown">
-                            <input type="text" class="value-display" id="headlineSizeValue" value="1.00" data-min="0.25" data-max="10" aria-label="Headline size in modules">
-                            <button type="button" class="dropdown-toggle" data-target="headlineSizeDropdown" aria-label="Show size presets">
-                                <svg width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M1 1L4 4L7 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                            <div class="dropdown-menu" id="headlineSizeDropdown">
-                                <button type="button" class="dropdown-item" data-value="0.25">0.25</button>
-                                <button type="button" class="dropdown-item" data-value="0.5">0.5</button>
-                                <button type="button" class="dropdown-item" data-value="0.75">0.75</button>
-                                <button type="button" class="dropdown-item" data-value="1">1</button>
-                                <button type="button" class="dropdown-item" data-value="1.25">1.25</button>
-                                <button type="button" class="dropdown-item" data-value="1.5">1.5</button>
-                                <button type="button" class="dropdown-item" data-value="2">2</button>
-                                <button type="button" class="dropdown-item" data-value="2.5">2.5</button>
-                                <button type="button" class="dropdown-item" data-value="3">3</button>
-                                <button type="button" class="dropdown-item" data-value="4">4</button>
-                                <button type="button" class="dropdown-item" data-value="5">5</button>
-                                <button type="button" class="dropdown-item" data-value="6">6</button>
-                                <button type="button" class="dropdown-item" data-value="8">8</button>
-                                <button type="button" class="dropdown-item" data-value="10">10</button>
-                            </div>
-                        </div>
+                        <input type="text" class="value-display" id="headlineSizeValue" value="1.00" data-min="0.25" data-max="10" aria-label="Headline size in modules">
                     </label>
                     <input type="range" id="headlineSizeSlider" min="0.25" max="10" step="0.25" value="1" aria-label="Headline size slider">
                 </div>
@@ -290,9 +264,24 @@
                 </div>
                 
                 <div class="control-group">
+                    <label for="textWidthSlider">
+                        <span>Width <span class="unit">col</span></span>
+                        <input type="text" class="value-display" id="textWidthValue" value="6" data-min="1" data-max="24" aria-label="Text width in columns">
+                    </label>
+                    <input type="range" id="textWidthSlider" min="1" max="24" step="1" value="6" aria-label="Text width slider">
+                </div>
+                
+                <div class="control-group">
                     <label class="checkbox-label">
                         <input type="checkbox" id="useXHeight" checked aria-label="Use x-height for measurement">
                         <span>x-height</span>
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="showTextBounds" aria-label="Show text bounds">
+                        <span>Show Text Bounds</span>
                     </label>
                 </div>
                 </div>
@@ -312,30 +301,7 @@
                 <div class="control-group">
                     <label for="textSizeSlider">
                         <span>Size <span class="unit">mod</span></span>
-                        <div class="value-input-with-dropdown">
-                            <input type="text" class="value-display" id="textSizeValue" value="1.00" data-min="0.25" data-max="10" aria-label="Text size in modules">
-                            <button type="button" class="dropdown-toggle" data-target="textSizeDropdown" aria-label="Show size presets">
-                                <svg width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M1 1L4 4L7 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                            <div class="dropdown-menu" id="textSizeDropdown">
-                                <button type="button" class="dropdown-item" data-value="0.25">0.25</button>
-                                <button type="button" class="dropdown-item" data-value="0.5">0.5</button>
-                                <button type="button" class="dropdown-item" data-value="0.75">0.75</button>
-                                <button type="button" class="dropdown-item" data-value="1">1</button>
-                                <button type="button" class="dropdown-item" data-value="1.25">1.25</button>
-                                <button type="button" class="dropdown-item" data-value="1.5">1.5</button>
-                                <button type="button" class="dropdown-item" data-value="2">2</button>
-                                <button type="button" class="dropdown-item" data-value="2.5">2.5</button>
-                                <button type="button" class="dropdown-item" data-value="3">3</button>
-                                <button type="button" class="dropdown-item" data-value="4">4</button>
-                                <button type="button" class="dropdown-item" data-value="5">5</button>
-                                <button type="button" class="dropdown-item" data-value="6">6</button>
-                                <button type="button" class="dropdown-item" data-value="8">8</button>
-                                <button type="button" class="dropdown-item" data-value="10">10</button>
-                            </div>
-                        </div>
+                        <input type="text" class="value-display" id="textSizeValue" value="1.00" data-min="0.25" data-max="10" aria-label="Text size in modules">
                     </label>
                     <input type="range" id="textSizeSlider" min="0.25" max="10" step="0.25" value="1" aria-label="Text size slider">
                 </div>
@@ -357,81 +323,26 @@
                 </div>
                 
                 <div class="control-group">
+                    <label for="textWidthSlider2">
+                        <span>Width <span class="unit">col</span></span>
+                        <input type="text" class="value-display" id="textWidthValue2" value="3" data-min="1" data-max="24" aria-label="Text width in columns">
+                    </label>
+                    <input type="range" id="textWidthSlider2" min="1" max="24" step="1" value="3" aria-label="Text width slider">
+                </div>
+                
+                <div class="control-group">
                     <label class="checkbox-label">
                         <input type="checkbox" id="useXHeight2" aria-label="Use x-height for measurement">
                         <span>x-height</span>
                     </label>
                 </div>
-                </div>
-            </section>
-        </div>
-    </aside>
-
-    <!-- Paragraph Settings Panel -->
-    <aside class="controls-panel paragraph-settings-panel" id="paragraphPanel" style="display: none;" role="complementary" aria-label="Paragraph settings">
-        <div class="panel-header" id="paragraphPanelHeader">
-            <span id="paragraphPanelTitle">Paragraph Settings</span>
-            <span class="drag-icon" aria-hidden="true">⋮⋮</span>
-        </div>
-        <div class="panel-content">
-            <section class="control-section">
-                <h3>Position & Size</h3>
                 
                 <div class="control-group">
-                    <label for="paragraphXInput">
-                        <span>Column</span>
-                        <input type="text" class="value-display" id="paragraphXInput" value="0" data-min="0" data-max="12" aria-label="Column position">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="showTextBounds2" aria-label="Show text bounds">
+                        <span>Show Text Bounds</span>
                     </label>
                 </div>
-                
-                <div class="control-group">
-                    <label for="paragraphRowInput">
-                        <span>Row</span>
-                        <input type="text" class="value-display" id="paragraphRowInput" value="0" data-min="-1" data-max="50" aria-label="Row position">
-                    </label>
-                </div>
-                
-                <div class="control-group">
-                    <label for="paragraphBaselineInput">
-                        <span>Baseline <span class="unit">in row</span></span>
-                        <input type="text" class="value-display" id="paragraphBaselineInput" value="0" data-min="0" data-max="20" aria-label="Baseline offset in row">
-                    </label>
-                </div>
-                
-                <div class="control-group">
-                    <label for="paragraphWidthInput">
-                        <span>Width <span class="unit">columns</span></span>
-                        <input type="text" class="value-display" id="paragraphWidthInput" value="6" data-min="1" data-max="12" aria-label="Width in columns">
-                    </label>
-                </div>
-            </section>
-            
-            <section class="control-section">
-                <h3>Baseline Align</h3>
-                
-                <div class="control-group">
-                    <fieldset>
-                        <legend class="sr-only">Baseline alignment mode</legend>
-                        <div class="segmented-control" role="radiogroup" aria-label="Baseline alignment mode">
-                            <input type="radio" name="baselineAlign" value="bottom" id="baselineAlignBottom" checked aria-label="Align text bottom to baseline bottom">
-                            <label for="baselineAlignBottom">Bottom</label>
-                            
-                            <input type="radio" name="baselineAlign" value="top" id="baselineAlignTop" aria-label="Align x-height to baseline top">
-                            <label for="baselineAlignTop">Top</label>
-                        </div>
-                    </fieldset>
-                </div>
-            </section>
-            
-            <section class="control-section">
-                <h3>Text Content</h3>
-                
-                <div class="control-group">
-                    <textarea id="paragraphTextArea" placeholder="Enter text here..." rows="7" aria-label="Paragraph text"></textarea>
-                    <div class="textarea-footer">
-                        <button type="button" class="btn-apply" id="paragraphApplyBtn">Apply and Close</button>
-                        <span class="char-counter" id="charCounter">0 characters</span>
-                    </div>
                 </div>
             </section>
         </div>
