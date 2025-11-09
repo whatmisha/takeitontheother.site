@@ -212,7 +212,6 @@ class GridGenerator {
                 row: 0,  // номер строки Row (0 = первый row)
                 baselineOffset: 0,  // смещение в модулях baseline внутри row (0 = первый baseline в row)
                 width: 6,  // ширина в колонках
-                baselineAlign: 'bottom',  // 'bottom' = низ текста к низу baseline, 'top' = x-height к верху baseline
                 showBounds: false  // показывать ли границы (toggle on hover)
             },
             {
@@ -223,7 +222,6 @@ class GridGenerator {
                 row: 0,  // номер строки Row
                 baselineOffset: 0,  // смещение в модулях baseline внутри row
                 width: 3,  // ширина в колонках
-                baselineAlign: 'bottom',  // 'bottom' = низ текста к низу baseline, 'top' = x-height к верху baseline
                 showBounds: false
             }
         ];
@@ -375,8 +373,6 @@ class GridGenerator {
             paragraphRowInput: document.getElementById('paragraphRowInput'),
             paragraphBaselineInput: document.getElementById('paragraphBaselineInput'),
             paragraphWidthInput: document.getElementById('paragraphWidthInput'),
-            baselineAlignBottom: document.getElementById('baselineAlignBottom'),
-            baselineAlignTop: document.getElementById('baselineAlignTop'),
             paragraphTextArea: document.getElementById('paragraphTextArea'),
             paragraphApplyBtn: document.getElementById('paragraphApplyBtn'),
             paragraphCloseBtn: document.getElementById('paragraphCloseBtn'),
@@ -833,25 +829,6 @@ class GridGenerator {
             });
         }
         
-        // Обработчики для режима выравнивания
-        if (this.dom.baselineAlignBottom) {
-            this.dom.baselineAlignBottom.addEventListener('change', () => {
-                if (this.currentEditingBlock && this.dom.baselineAlignBottom.checked) {
-                    this.currentEditingBlock.baselineAlign = 'bottom';
-                    this.updateGrid();
-                }
-            });
-        }
-        
-        if (this.dom.baselineAlignTop) {
-            this.dom.baselineAlignTop.addEventListener('change', () => {
-                if (this.currentEditingBlock && this.dom.baselineAlignTop.checked) {
-                    this.currentEditingBlock.baselineAlign = 'top';
-                    this.updateGrid();
-                }
-            });
-        }
-        
         // Обработчик для текстового поля
         if (this.dom.paragraphTextArea) {
             this.dom.paragraphTextArea.addEventListener('input', () => {
@@ -995,13 +972,6 @@ class GridGenerator {
         if (this.dom.paragraphWidthInput) {
             this.dom.paragraphWidthInput.value = block.width;
         }
-        if (this.dom.baselineAlignBottom && this.dom.baselineAlignTop) {
-            if (block.baselineAlign === 'bottom') {
-                this.dom.baselineAlignBottom.checked = true;
-            } else {
-                this.dom.baselineAlignTop.checked = true;
-            }
-        }
         if (this.dom.paragraphTextArea) {
             this.dom.paragraphTextArea.value = block.content;
         }
@@ -1023,7 +993,6 @@ class GridGenerator {
             row: block.row,
             baselineOffset: block.baselineOffset,
             width: block.width,
-            baselineAlign: block.baselineAlign,
             content: block.content
         };
     }
@@ -1036,7 +1005,6 @@ class GridGenerator {
             this.currentEditingBlock.row = this.initialBlockState.row;
             this.currentEditingBlock.baselineOffset = this.initialBlockState.baselineOffset;
             this.currentEditingBlock.width = this.initialBlockState.width;
-            this.currentEditingBlock.baselineAlign = this.initialBlockState.baselineAlign;
             this.currentEditingBlock.content = this.initialBlockState.content;
             
             // Обновляем сетку с восстановленными значениями
@@ -1907,17 +1875,12 @@ class GridGenerator {
         
         const topMargin = module * margins * scale;
         
-        // Рассчитываем firstLineY в зависимости от режима выравнивания
-        let firstLineY;
-        if (block.baselineAlign === 'top') {
-            // Режим 'top': x-height выравнивается по верху ближайшего baseline
-            // Baseline текста должен быть выше на величину x-height
-            firstLineY = frontY + position.y + topMargin + actualXHeight;
-        } else {
-            // Режим 'bottom' (по умолчанию): низ текста (baseline) к низу baseline
-            // Baseline текста = низ блока baseline, cap-height сверху
-            firstLineY = frontY + position.y + topMargin + actualCapHeight;
-        }
+        // Рассчитываем firstLineY
+        // Элементы baseline сетки - это прямоугольники высотой = module
+        // position.y указывает на ВЕРХ элемента baseline
+        // Baseline текста выравнивается по НИЗУ элемента baseline
+        const baselineElementHeight = module * scale;
+        const firstLineY = frontY + position.y + topMargin + baselineElementHeight;
         const lineHeightInMm = module * lineHeightSetting * scale;
         
         // Create group for text block with hover
@@ -3463,7 +3426,6 @@ class GridGenerator {
             settingsText += `Baseline (на всей сетке): ${globalBaseline}\n`;
             settingsText += `Baseline смещение внутри строки (Baseline Offset, mod): ${block.baselineOffset}\n`;
             settingsText += `Ширина (Width, columns): ${block.width}\n`;
-            settingsText += `Выравнивание по baseline (Baseline Align): ${block.baselineAlign === 'bottom' ? 'Низ' : 'Верх'}\n`;
             settingsText += `Показывать границы (Show Bounds): ${block.showBounds ? 'Да' : 'Нет'}\n`;
             settingsText += `\nСодержимое текста:\n`;
             settingsText += `${block.content}\n`;

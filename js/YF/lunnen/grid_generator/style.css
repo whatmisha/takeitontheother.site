@@ -133,14 +133,13 @@ body {
     font-size: 0.9rem;
     font-weight: 600;
     text-decoration: none;
-    cursor: url('images/pizza_boxer.png') 16 16, pointer;
+    cursor: pointer;
     transition: all var(--transition-slow);
 }
 
 .pizza-boxer-link:hover {
     background: var(--color-bg);
     color: var(--color-text);
-    cursor: url('images/pizza_boxer.png') 16 16, pointer;
 }
 
 .main-content {
