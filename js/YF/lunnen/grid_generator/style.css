@@ -93,12 +93,19 @@ body {
     position: relative;
 }
 
-/* YF Tools Link */
-.yf-tools-link {
+/* Top Links Container */
+.top-links {
     position: absolute;
     top: 0;
     left: 50%;
     transform: translateX(-50%);
+    display: flex;
+    gap: var(--spacing-lg);
+    z-index: 10000;
+}
+
+/* YF Tools Link */
+.yf-tools-link {
     padding: var(--spacing-md) var(--spacing-2xl);
     background: var(--color-text);
     color: var(--color-bg);
@@ -109,12 +116,31 @@ body {
     text-decoration: none;
     cursor: pointer;
     transition: all var(--transition-slow);
-    z-index: 10000;
 }
 
 .yf-tools-link:hover {
     background: var(--color-bg);
     color: var(--color-text);
+}
+
+/* Pizza Boxer Link */
+.pizza-boxer-link {
+    padding: var(--spacing-md) var(--spacing-2xl);
+    background: var(--color-text);
+    color: var(--color-bg);
+    border: none;
+    border-radius: var(--radius-button);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: url('images/pizza_boxer.png') 16 16, pointer;
+    transition: all var(--transition-slow);
+}
+
+.pizza-boxer-link:hover {
+    background: var(--color-bg);
+    color: var(--color-text);
+    cursor: url('images/pizza_boxer.png') 16 16, pointer;
 }
 
 .main-content {
@@ -863,6 +889,11 @@ textarea::placeholder {
     gap: var(--spacing-md);
 }
 
+.button-group {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
 .btn-apply {
     padding: var(--spacing-sm) var(--spacing-2xl);
     background: var(--color-text);
@@ -878,6 +909,25 @@ textarea::placeholder {
 
 .btn-apply:hover {
     opacity: 0.9;
+}
+
+.btn-close {
+    padding: var(--spacing-sm) var(--spacing-2xl);
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-button);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-family: inherit;
+}
+
+.btn-close:hover {
+    background: var(--color-bg-input);
+    color: var(--color-text);
+    border-color: var(--color-text-dim);
 }
 
 .char-counter {
@@ -1173,27 +1223,30 @@ legend {
     background: var(--color-text);
 }
 
-/* Help Container and Button */
-.help-container {
-    position: fixed;
-    bottom: var(--spacing-3xl);
-    right: var(--spacing-3xl);
-    z-index: 10000;
-}
-
+/* Help Button */
 .btn-help {
-    background: none !important;
-    border: none !important;
-    color: var(--color-text-muted);
-    transition: color var(--transition-fast);
-    box-shadow: none !important;
+    background: var(--color-bg) !important;
+    border: 1px solid var(--color-text) !important;
+    color: var(--color-text);
+    transition: all var(--transition-slow);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 600;
 }
 
 .btn-help:hover {
-    background: none !important;
-    border: none !important;
-    color: var(--color-text);
-    box-shadow: none !important;
+    background: var(--color-text) !important;
+    color: var(--color-bg);
+    border-color: var(--color-text) !important;
 }
 
 /* Modal Overlay */
@@ -1381,15 +1434,6 @@ legend {
     .btn-fixed {
         padding: var(--spacing-xl) var(--spacing-3xl);
         font-size: 0.9rem;
-    }
-    
-    .help-container {
-        bottom: calc(var(--spacing-3xl) + 60px);
-        right: var(--spacing-3xl);
-    }
-    
-    .btn-help {
-        font-size: 0.8rem;
     }
     
     .modal-content {

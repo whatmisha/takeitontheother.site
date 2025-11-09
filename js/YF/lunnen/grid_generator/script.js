@@ -144,8 +144,8 @@ class GridGenerator {
             },
             trackingSlider: {
                 setting: 'tracking',
-                decimals: 2,
-                baseStep: 0.01,
+                decimals: 3,
+                baseStep: 0.005,
                 shiftStep: 0.05,
                 onUpdate: () => this.updateGrid()
             },
@@ -194,7 +194,7 @@ class GridGenerator {
             // Text styles - только типографические параметры
             headlineSize: 1.0,  // in modules
             lineHeight: 2.0,    // in modules - интерлиньяж
-            tracking: -0.02,    // in em - межбуквенный интервал
+            tracking: -0.015,   // in em - межбуквенный интервал
             useXHeight: true,   // false = cap height, true = x-height
             textSize: 1.0,     // in modules
             textLineHeight: 2.0,    // in modules - интерлиньяж
@@ -246,6 +246,9 @@ class GridGenerator {
         
         // Текущий редактируемый блок в панели параграфа
         this.currentEditingBlock = null;
+        
+        // Начальное состояние блока (для отмены изменений)
+        this.initialBlockState = null;
         
         // Font metrics for TT Commons Classic (measured in font units, assuming UPM=1000)
         this.fontMetrics = {
@@ -376,6 +379,7 @@ class GridGenerator {
             baselineAlignTop: document.getElementById('baselineAlignTop'),
             paragraphTextArea: document.getElementById('paragraphTextArea'),
             paragraphApplyBtn: document.getElementById('paragraphApplyBtn'),
+            paragraphCloseBtn: document.getElementById('paragraphCloseBtn'),
             charCounter: document.getElementById('charCounter')
         };
     }
@@ -724,9 +728,21 @@ class GridGenerator {
         if (this.dom.paragraphXInput) {
             this.dom.paragraphXInput.addEventListener('change', () => {
                 if (this.currentEditingBlock) {
-                    const newX = parseInt(this.dom.paragraphXInput.value);
-                    const maxX = this.settings.columnCount - this.currentEditingBlock.width;
-                    this.currentEditingBlock.x = Math.max(0, Math.min(newX, maxX));
+                    let newX = parseInt(this.dom.paragraphXInput.value);
+                    
+                    // Ограничиваем X: минимум 0, максимум columnCount - 1 (чтобы width был минимум 1)
+                    newX = Math.max(0, Math.min(newX, this.settings.columnCount - 1));
+                    
+                    // Устанавливаем новое значение X
+                    this.currentEditingBlock.x = newX;
+                    
+                    // Корректируем width если блок выходит за пределы
+                    if (this.currentEditingBlock.x + this.currentEditingBlock.width > this.settings.columnCount) {
+                        this.currentEditingBlock.width = Math.max(1, this.settings.columnCount - this.currentEditingBlock.x);
+                        this.dom.paragraphWidthInput.value = this.currentEditingBlock.width;
+                    }
+                    
+                    // Обновляем отображение X (на случай коррекции)
                     this.dom.paragraphXInput.value = this.currentEditingBlock.x;
                     this.updateGrid();
                 }
@@ -741,7 +757,7 @@ class GridGenerator {
             this.dom.paragraphRowInput.addEventListener('change', () => {
                 if (this.currentEditingBlock) {
                     const newRow = parseInt(this.dom.paragraphRowInput.value);
-                    this.currentEditingBlock.row = Math.max(-1, newRow);
+                    this.currentEditingBlock.row = Math.max(0, newRow);
                     this.dom.paragraphRowInput.value = this.currentEditingBlock.row;
                     this.updateGrid();
                 }
@@ -755,16 +771,41 @@ class GridGenerator {
         if (this.dom.paragraphBaselineInput) {
             this.dom.paragraphBaselineInput.addEventListener('change', () => {
                 if (this.currentEditingBlock) {
-                    const newBaseline = parseInt(this.dom.paragraphBaselineInput.value);
+                    const globalBaseline = parseInt(this.dom.paragraphBaselineInput.value);
                     const rowHeight = this.settings.rowHeight;
-                    this.currentEditingBlock.baselineOffset = Math.max(0, Math.min(newBaseline, rowHeight));
-                    this.dom.paragraphBaselineInput.value = this.currentEditingBlock.baselineOffset;
+                    
+                    // Преобразуем глобальный номер baseline в row и baselineOffset
+                    const newRow = Math.floor(globalBaseline / rowHeight);
+                    const newBaselineOffset = globalBaseline % rowHeight;
+                    
+                    this.currentEditingBlock.row = Math.max(0, newRow);
+                    this.currentEditingBlock.baselineOffset = newBaselineOffset;
+                    
+                    // Обновляем отображение (на случай коррекции)
+                    const correctedGlobalBaseline = this.currentEditingBlock.row * rowHeight + this.currentEditingBlock.baselineOffset;
+                    this.dom.paragraphBaselineInput.value = correctedGlobalBaseline;
+                    this.dom.paragraphRowInput.value = this.currentEditingBlock.row;
+                    
                     this.updateGrid();
                 }
             });
             // Обработка стрелок клавиатуры
             this.dom.paragraphBaselineInput.addEventListener('keydown', (e) => {
-                this.handleArrowKeysForInput(e, 'baselineOffset', 'paragraphBaselineInput');
+                if (this.currentEditingBlock && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+                    e.preventDefault();
+                    const globalBaseline = parseInt(this.dom.paragraphBaselineInput.value);
+                    const delta = e.key === 'ArrowUp' ? 1 : -1;
+                    const step = e.shiftKey ? 10 : 1;
+                    const newGlobalBaseline = Math.max(0, globalBaseline + delta * step);
+                    
+                    const rowHeight = this.settings.rowHeight;
+                    this.currentEditingBlock.row = Math.floor(newGlobalBaseline / rowHeight);
+                    this.currentEditingBlock.baselineOffset = newGlobalBaseline % rowHeight;
+                    
+                    this.dom.paragraphBaselineInput.value = newGlobalBaseline;
+                    this.dom.paragraphRowInput.value = this.currentEditingBlock.row;
+                    this.updateGrid();
+                }
             });
         }
         
@@ -825,12 +866,25 @@ class GridGenerator {
         // Кнопка Apply and Close (изменения применяются автоматически, кнопка закрывает панель)
         if (this.dom.paragraphApplyBtn) {
             this.dom.paragraphApplyBtn.addEventListener('click', () => {
-                // Показываем визуальный фидбек
+                // Обновляем начальное состояние, чтобы текущие изменения стали базовыми
+                if (this.currentEditingBlock) {
+                    this.saveInitialBlockState(this.currentEditingBlock);
+                }
+                
+                // Показываем визуальный фидбек и закрываем панель
+                const originalText = this.dom.paragraphApplyBtn.textContent;
                 this.dom.paragraphApplyBtn.textContent = 'Applied!';
                 setTimeout(() => {
-                    this.dom.paragraphApplyBtn.textContent = 'Apply and Close';
+                    this.dom.paragraphApplyBtn.textContent = originalText;
                     this.closeParagraphPanel();
                 }, 500);
+            });
+        }
+        
+        // Обработчик для кнопки Close
+        if (this.dom.paragraphCloseBtn) {
+            this.dom.paragraphCloseBtn.addEventListener('click', () => {
+                this.cancelParagraphChanges();
             });
         }
     }
@@ -859,18 +913,21 @@ class GridGenerator {
         
         // Применяем ограничения в зависимости от поля
         if (property === 'x') {
-            const maxX = this.settings.columnCount - this.currentEditingBlock.width;
-            newValue = Math.max(0, Math.min(newValue, maxX));
+            // Ограничиваем X: минимум 0, максимум columnCount - 1 (чтобы width был минимум 1)
+            newValue = Math.max(0, Math.min(newValue, this.settings.columnCount - 1));
+            
+            // Устанавливаем новое значение X
             this.currentEditingBlock.x = newValue;
             this.dom[inputId].value = newValue;
+            
+            // Корректируем width если блок выходит за пределы
+            if (this.currentEditingBlock.x + this.currentEditingBlock.width > this.settings.columnCount) {
+                this.currentEditingBlock.width = Math.max(1, this.settings.columnCount - this.currentEditingBlock.x);
+                this.dom.paragraphWidthInput.value = this.currentEditingBlock.width;
+            }
         } else if (property === 'row') {
-            newValue = Math.max(-1, newValue);
+            newValue = Math.max(0, newValue);
             this.currentEditingBlock.row = newValue;
-            this.dom[inputId].value = newValue;
-        } else if (property === 'baselineOffset') {
-            const rowHeight = this.settings.rowHeight;
-            newValue = Math.max(0, Math.min(newValue, rowHeight));
-            this.currentEditingBlock.baselineOffset = newValue;
             this.dom[inputId].value = newValue;
         } else if (property === 'width') {
             const maxWidth = this.settings.columnCount;
@@ -895,6 +952,9 @@ class GridGenerator {
         if (!block) return;
         
         this.currentEditingBlock = block;
+        
+        // Сохраняем начальное состояние блока для возможности отмены
+        this.saveInitialBlockState(block);
         
         // Устанавливаем заголовок панели с названием стиля и номером
         if (this.dom.paragraphPanelTitle) {
@@ -928,7 +988,9 @@ class GridGenerator {
             this.dom.paragraphRowInput.value = block.row;
         }
         if (this.dom.paragraphBaselineInput) {
-            this.dom.paragraphBaselineInput.value = block.baselineOffset;
+            // Показываем глобальный номер baseline на всей сетке
+            const globalBaseline = block.row * this.settings.rowHeight + block.baselineOffset;
+            this.dom.paragraphBaselineInput.value = globalBaseline;
         }
         if (this.dom.paragraphWidthInput) {
             this.dom.paragraphWidthInput.value = block.width;
@@ -954,9 +1016,41 @@ class GridGenerator {
         }
     }
     
+    // Сохранить начальное состояние блока
+    saveInitialBlockState(block) {
+        this.initialBlockState = {
+            x: block.x,
+            row: block.row,
+            baselineOffset: block.baselineOffset,
+            width: block.width,
+            baselineAlign: block.baselineAlign,
+            content: block.content
+        };
+    }
+    
+    // Отменить изменения и закрыть панель
+    cancelParagraphChanges() {
+        if (this.currentEditingBlock && this.initialBlockState) {
+            // Восстанавливаем начальные значения
+            this.currentEditingBlock.x = this.initialBlockState.x;
+            this.currentEditingBlock.row = this.initialBlockState.row;
+            this.currentEditingBlock.baselineOffset = this.initialBlockState.baselineOffset;
+            this.currentEditingBlock.width = this.initialBlockState.width;
+            this.currentEditingBlock.baselineAlign = this.initialBlockState.baselineAlign;
+            this.currentEditingBlock.content = this.initialBlockState.content;
+            
+            // Обновляем сетку с восстановленными значениями
+            this.updateGrid();
+        }
+        
+        // Закрываем панель
+        this.closeParagraphPanel();
+    }
+    
     // Закрыть панель настроек параграфа
     closeParagraphPanel() {
         this.currentEditingBlock = null;
+        this.initialBlockState = null;
         if (this.dom.paragraphPanel) {
             this.dom.paragraphPanel.classList.remove('active');
             this.dom.paragraphPanel.style.display = 'none';
@@ -1526,6 +1620,11 @@ class GridGenerator {
         const maxColumns = this.settings.columnCount;
         
         this.textBlocks.forEach(block => {
+            // Клампируем позицию X: максимум columnCount - 1 (чтобы width был минимум 1)
+            if (block.x > maxColumns - 1) {
+                block.x = maxColumns - 1;
+            }
+            
             // Клампируем ширину если она превышает количество колонок
             if (block.width > maxColumns) {
                 block.width = maxColumns;
@@ -1533,7 +1632,7 @@ class GridGenerator {
             
             // Клампируем позицию + ширину чтобы блок не выходил за пределы
             if (block.x + block.width > maxColumns) {
-                block.x = Math.max(0, maxColumns - block.width);
+                block.width = Math.max(1, maxColumns - block.x);
             }
         });
     }
@@ -2286,19 +2385,42 @@ class GridGenerator {
         const deltaYInBaseline = Math.round(deltaY / baselineUnit);
         let newY = startY + deltaYInBaseline;
         
-        // Ограничиваем позицию, чтобы блок не выходил за пределы
+        // Ограничиваем позицию, чтобы блок не выходил за пределы margins
+        // Ограничение по X (колонки)
         newX = Math.max(0, Math.min(newX, columnCount - block.width));
-        // Разрешаем отрицательные значения Y, но не выше чем -margins
-        const minY = -Math.floor(margins);
-        newY = Math.max(minY, newY);
+        
+        // Ограничиваем Y: минимум 0 (не выходим за верхний margin)
+        // Максимум - высота контента в baseline модулях
+        const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+        const maxYInBaseline = Math.floor(contentHeightMm / module);
+        newY = Math.max(0, Math.min(newY, maxYInBaseline - 1));
         
         // Конвертируем Y обратно в row + baselineOffset
         const { row, baselineOffset } = this.yToRowBaseline(newY);
         
+        // Дополнительные проверки: row и baselineOffset не могут быть отрицательными
+        const finalRow = Math.max(0, row);
+        const finalBaselineOffset = Math.max(0, baselineOffset);
+        
         // Обновляем позицию блока
         block.x = newX;
-        block.row = row;
-        block.baselineOffset = baselineOffset;
+        block.row = finalRow;
+        block.baselineOffset = finalBaselineOffset;
+        
+        // Если панель настроек открыта для этого блока, обновляем значения в полях
+        if (this.currentEditingBlock && this.currentEditingBlock.id === block.id) {
+            if (this.dom.paragraphXInput) {
+                this.dom.paragraphXInput.value = block.x;
+            }
+            if (this.dom.paragraphRowInput) {
+                this.dom.paragraphRowInput.value = block.row;
+            }
+            if (this.dom.paragraphBaselineInput) {
+                // Показываем глобальный номер baseline на всей сетке
+                const globalBaseline = block.row * this.settings.rowHeight + block.baselineOffset;
+                this.dom.paragraphBaselineInput.value = globalBaseline;
+            }
+        }
         
         // Перерисовываем сетку
         this.updateGrid();
@@ -2313,6 +2435,12 @@ class GridGenerator {
         if (boundsElement) {
             boundsElement.setAttribute('stroke-opacity', '0');
             boundsElement.setAttribute('fill-opacity', '0');
+        }
+        
+        // Если панель настроек открыта для этого блока, обновляем начальное состояние
+        // чтобы кнопка Close не возвращала блок на старое место
+        if (this.currentEditingBlock && this.currentEditingBlock.id === blockId) {
+            this.saveInitialBlockState(this.currentEditingBlock);
         }
         
         this.textDragState.isDragging = false;
@@ -3326,12 +3454,14 @@ class GridGenerator {
         settingsText += '========================================\n\n';
         
         this.textBlocks.forEach((block, index) => {
+            const globalBaseline = block.row * this.settings.rowHeight + block.baselineOffset;
             settingsText += `--- БЛОК ${index + 1}: ${block.id.toUpperCase()} ---\n`;
             settingsText += `ID: ${block.id}\n`;
             settingsText += `Стиль (Style Reference): ${block.styleRef}\n`;
             settingsText += `Колонка (Column): ${block.x}\n`;
             settingsText += `Строка (Row): ${block.row}\n`;
-            settingsText += `Смещение baseline (Baseline Offset, mod): ${block.baselineOffset}\n`;
+            settingsText += `Baseline (на всей сетке): ${globalBaseline}\n`;
+            settingsText += `Baseline смещение внутри строки (Baseline Offset, mod): ${block.baselineOffset}\n`;
             settingsText += `Ширина (Width, columns): ${block.width}\n`;
             settingsText += `Выравнивание по baseline (Baseline Align): ${block.baselineAlign === 'bottom' ? 'Низ' : 'Верх'}\n`;
             settingsText += `Показывать границы (Show Bounds): ${block.showBounds ? 'Да' : 'Нет'}\n`;
