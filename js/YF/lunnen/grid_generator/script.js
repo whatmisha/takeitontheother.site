@@ -196,6 +196,7 @@ class GridGenerator {
             showColumns: true,
             showRows: true,
             showBaseline: true,
+            showObjects: true,
             // Text styles - только типографические параметры
             headlineSize: 1.5,  // in modules
             lineHeight: 2.0,    // in modules - интерлиньяж
@@ -430,6 +431,7 @@ class GridGenerator {
             showColumns: document.getElementById('showColumns'),
             showRows: document.getElementById('showRows'),
             showBaseline: document.getElementById('showBaseline'),
+            showObjects: document.getElementById('showObjects'),
             
             // Link mode radio buttons
             linkModeOff: document.getElementById('linkModeOff'),
@@ -608,6 +610,12 @@ class GridGenerator {
         // Show baseline checkbox
         this.dom.showBaseline.addEventListener('change', (e) => {
             this.settings.showBaseline = e.target.checked;
+            this.updateGrid();
+        });
+        
+        // Show objects checkbox
+        this.dom.showObjects.addEventListener('change', (e) => {
+            this.settings.showObjects = e.target.checked;
             this.updateGrid();
         });
         
@@ -3004,28 +3012,30 @@ class GridGenerator {
             textElement.textContent = line;
         });
         
-        // Create bounds rectangle (hidden by default, shown on hover)
-        const boundsRect = this.createSVGElement('rect', {
-            id: `bounds-${block.id}`,
-            x: textX,
-            y: frontY + position.y + topMargin,
-            width: scaledTextWidth,
-            height: lineHeightInMm * wrappedLines.length,
-            fill: 'rgba(255, 255, 255, 0.05)',
-            stroke: gridColor,
-            'stroke-width': scale === 1 ? '0.5' : '1',
-            'stroke-dasharray': '4,4',
-            'stroke-opacity': '0',
-            'fill-opacity': '0',
-            style: 'pointer-events: none; transition: opacity 0.2s;',
-            'data-block-id': block.id
-        }, container);
-        
-        // Store bounds element reference for hover effect
-        textGroup.boundsElement = boundsRect;
-        
-        // Attach event handlers
-        this.attachTextBlockHandlers(textGroup, block, frontX, frontY, scale);
+        // Create bounds rectangle only for canvas (not for export)
+        if (scale !== 1) {
+            const boundsRect = this.createSVGElement('rect', {
+                id: `bounds-${block.id}`,
+                x: textX,
+                y: frontY + position.y + topMargin,
+                width: scaledTextWidth,
+                height: lineHeightInMm * wrappedLines.length,
+                fill: 'rgba(255, 255, 255, 0.05)',
+                stroke: gridColor,
+                'stroke-width': '1',
+                'stroke-dasharray': '4,4',
+                'stroke-opacity': '0',
+                'fill-opacity': '0',
+                style: 'pointer-events: none; transition: opacity 0.2s;',
+                'data-block-id': block.id
+            }, container);
+            
+            // Store bounds element reference for hover effect
+            textGroup.boundsElement = boundsRect;
+            
+            // Attach event handlers
+            this.attachTextBlockHandlers(textGroup, block, frontX, frontY, scale);
+        }
     }
     
     // Attach event handlers for text block (click, hover, drag)
@@ -4607,16 +4617,19 @@ class GridGenerator {
             this.drawColumnsTopBottom(this.dom.svg, frontX, startY + scaledThickness + scaledFrontHeight, scaledFrontWidth, scaledThickness, scale, 'bottom');
         }
         
-        // Draw text blocks on front panel
-        this.textBlocks.forEach(block => {
-            this.drawTextBlock(this.dom.svg, block, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
-        });
-        
-        // Draw icons block on front panel
-        this.drawIconsBlock(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
-        
-        // Draw claim block on front panel
-        this.drawClaimBlock(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
+        // Draw text blocks, icons and claim on front panel (if enabled)
+        if (this.settings.showObjects) {
+            // Draw text blocks on front panel
+            this.textBlocks.forEach(block => {
+                this.drawTextBlock(this.dom.svg, block, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
+            });
+            
+            // Draw icons block on front panel
+            this.drawIconsBlock(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
+            
+            // Draw claim block on front panel
+            this.drawClaimBlock(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
+        }
         
         // Update font size displays
         this.updateFontSizeDisplays();
