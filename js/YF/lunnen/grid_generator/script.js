@@ -20,6 +20,7 @@ class GridGenerator {
                     } else {
                         this.calculateRowCount();
                     }
+                    this.constrainAllObjectsToGrid();
                     this.generateRowPresets();
                     this.updateGrid();
                 }
@@ -38,6 +39,7 @@ class GridGenerator {
                 shiftStep: 0.1,
                 onUpdate: () => {
                     this.calculateRowCount();
+                    this.constrainAllObjectsToGrid();
                     this.generateRowPresets();
                     this.updateGrid();
                 }
@@ -53,6 +55,7 @@ class GridGenerator {
                     } else {
                         this.calculateRowCount();
                     }
+                    this.constrainAllObjectsToGrid();
                     this.generateRowPresets();
                     this.updateGrid();
                 }
@@ -63,7 +66,7 @@ class GridGenerator {
                 baseStep: 1,
                 shiftStep: 10,
                 onUpdate: () => {
-                    this.updateTextWidthConstraints();
+                    this.constrainAllObjectsToGrid();
                     this.updateGrid();
                 }
             },
@@ -78,6 +81,7 @@ class GridGenerator {
                     } else if (this.settings.linkMode === 'rows-height') {
                         this.calculateRowHeight();
                     }
+                    this.constrainAllObjectsToGrid();
                     this.updatePresetButtons();
                     this.updateGrid();
                 }
@@ -93,6 +97,7 @@ class GridGenerator {
                     } else if (this.settings.linkMode === 'rows-height') {
                         this.calculateRowCount();
                     }
+                    this.constrainAllObjectsToGrid();
                     this.updatePresetButtons();
                     this.updateGrid();
                 }
@@ -2500,11 +2505,18 @@ class GridGenerator {
         });
     }
     
-    updateTextWidthConstraints() {
-        // Обновляем ограничения ширины для всех текстовых блоков
+    // Функция для ограничения всех объектов в пределах сетки
+    constrainAllObjectsToGrid() {
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
         const maxColumns = this.settings.columnCount;
+        const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+        const maxYInBaseline = Math.floor(contentHeightMm / module);
+        const rowHeight = this.settings.rowHeight;
         
+        // Ограничение текстовых блоков
         this.textBlocks.forEach(block => {
+            // Горизонтальные ограничения
             // Клампируем позицию X: максимум columnCount - 1 (чтобы width был минимум 1)
             if (block.x > maxColumns - 1) {
                 block.x = maxColumns - 1;
@@ -2519,7 +2531,79 @@ class GridGenerator {
             if (block.x + block.width > maxColumns) {
                 block.width = Math.max(1, maxColumns - block.x);
             }
+            
+            // Вертикальные ограничения
+            const textBlockHeightInModules = this.getTextBlockHeightInModules(block);
+            const maxY = maxYInBaseline - textBlockHeightInModules;
+            const currentY = this.getBlockY(block);
+            
+            if (currentY > maxY) {
+                // Корректируем позицию если блок вышел за пределы
+                const constrainedY = Math.max(0, maxY);
+                const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
+                block.row = Math.max(0, row);
+                block.baselineOffset = baselineOffset;
+            }
         });
+        
+        // Ограничение иконок
+        if (this.iconsBlock) {
+            const iconHeightModules = this.iconsBlock.heightInModules;
+            const maxY = maxYInBaseline - iconHeightModules;
+            const currentY = this.getBlockY(this.iconsBlock);
+            
+            if (currentY > maxY) {
+                const constrainedY = Math.max(0, maxY);
+                const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
+                this.iconsBlock.row = Math.max(0, row);
+                this.iconsBlock.baselineOffset = baselineOffset;
+            }
+            
+            // Проверяем горизонтальное положение иконок
+            const heightInMm = module * this.iconsBlock.heightInModules;
+            const aspectRatio = this.iconsBlock.originalWidth / this.iconsBlock.originalHeight;
+            const widthInMm = heightInMm * aspectRatio;
+            const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (maxColumns - 1)) / maxColumns;
+            const gutter = module;
+            const iconsWidthInColumns = Math.ceil(widthInMm / (columnWidth + gutter));
+            const maxX = Math.max(1, maxColumns - iconsWidthInColumns + 1);
+            
+            if (this.iconsBlock.x > maxX) {
+                this.iconsBlock.x = maxX;
+            }
+        }
+        
+        // Ограничение claim
+        if (this.claimBlock) {
+            const claimHeightModules = this.claimBlock.heightInModules;
+            const maxY = maxYInBaseline - claimHeightModules;
+            const currentY = this.getBlockY(this.claimBlock);
+            
+            if (currentY > maxY) {
+                const constrainedY = Math.max(0, maxY);
+                const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
+                this.claimBlock.row = Math.max(0, row);
+                this.claimBlock.baselineOffset = baselineOffset;
+            }
+            
+            // Проверяем горизонтальное положение claim
+            const heightInMm = module * this.claimBlock.heightInModules;
+            const aspectRatio = this.claimBlock.originalWidth / this.claimBlock.originalHeight;
+            const widthInMm = heightInMm * aspectRatio;
+            const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (maxColumns - 1)) / maxColumns;
+            const gutter = module;
+            const claimWidthInColumns = Math.ceil(widthInMm / (columnWidth + gutter));
+            const maxX = Math.max(1, maxColumns - claimWidthInColumns + 1);
+            
+            if (this.claimBlock.x > maxX) {
+                this.claimBlock.x = maxX;
+            }
+        }
+    }
+    
+    // Обратная совместимость - alias для старого названия
+    updateTextWidthConstraints() {
+        this.constrainAllObjectsToGrid();
     }
     
     // Получить текстовый блок по ID
