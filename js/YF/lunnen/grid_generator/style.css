@@ -1414,16 +1414,9 @@ legend {
 
 /* Elements Navigator Panel */
 .elements-navigator {
-    position: fixed;
     bottom: var(--spacing-3xl);
     right: var(--spacing-3xl);
-    background: var(--color-bg-panel);
-    border-radius: var(--radius);
-    padding: var(--spacing-lg);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-    border: none;
-    z-index: 1000;
-    max-width: 400px;
+    top: auto;
 }
 
 .elements-list {

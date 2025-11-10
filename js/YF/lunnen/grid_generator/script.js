@@ -299,6 +299,36 @@ class GridGenerator {
                 baselineOffset: 0,  // смещение в модулях baseline внутри row
                 width: 2.0,  // ширина в колонках
                 showBounds: false
+            },
+            {
+                id: 'manufacturer',
+                content: 'Изготовитель: ООО Харбинская Импортно-Экспортная Торговая Компания «Цзиньдинсинь», Китай. Адрес местонахождения: Китай, г. Харбин, р-н Даоли, микрорайон Цюньли, ул. 4-я, д. 399, бизнес-центр Хучжи, восточный корпус, эт. 12, ком. 1204.',
+                styleRef: 'text',
+                x: 1,
+                row: 9,  // row 10 в пользовательском интерфейсе (0-based индекс = 9)
+                baselineOffset: 0,
+                width: 3,
+                showBounds: false
+            },
+            {
+                id: 'importer',
+                content: 'Импортер: ООО «Маркет. Трейд». Адрес местонахождения: 121099, Россия, г. Москва, Новинский бульвар, 8.',
+                styleRef: 'text',
+                x: 7,
+                row: 9,  // row 10 в пользовательском интерфейсе
+                baselineOffset: 0,
+                width: 2,
+                showBounds: false
+            },
+            {
+                id: 'origin',
+                content: 'Произведено в Китае. info@lunnen.pro',
+                styleRef: 'text',
+                x: 10,
+                row: 9,  // row 10 в пользовательском интерфейсе
+                baselineOffset: 0,
+                width: 2,
+                showBounds: false
             }
         ];
         
@@ -351,6 +381,7 @@ class GridGenerator {
         this.initPanelDrag('paragraphPanel', 'paragraphPanelHeader');
         this.initPanelDrag('iconsPanel', 'iconsPanelHeader');
         this.initPanelDrag('claimPanel', 'claimPanelHeader');
+        this.initPanelDrag('elementsNavigator', 'elementsNavigatorHeader');
         this.initValueInputs();
         this.initSizeInputsWithArrows();
         this.initCollapsibleSections();
@@ -489,6 +520,7 @@ class GridGenerator {
             claimCloseBtn: document.getElementById('claimCloseBtn'),
             // Elements navigator
             elementsNavigator: document.getElementById('elementsNavigator'),
+            elementsNavigatorHeader: document.getElementById('elementsNavigatorHeader'),
             elementsList: document.getElementById('elementsList')
         };
     }
@@ -3624,6 +3656,15 @@ class GridGenerator {
                 this.selectElement('text', block.id);
             });
             
+            // Hover handlers
+            button.addEventListener('mouseenter', () => {
+                this.showElementBounds('text', block.id);
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                this.hideElementBounds('text', block.id);
+            });
+            
             this.dom.elementsList.appendChild(button);
         });
         
@@ -3638,6 +3679,15 @@ class GridGenerator {
                 this.selectElement('icons');
             });
             
+            // Hover handlers
+            button.addEventListener('mouseenter', () => {
+                this.showElementBounds('icons');
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                this.hideElementBounds('icons');
+            });
+            
             this.dom.elementsList.appendChild(button);
         }
         
@@ -3650,6 +3700,15 @@ class GridGenerator {
             
             button.addEventListener('click', () => {
                 this.selectElement('claim');
+            });
+            
+            // Hover handlers
+            button.addEventListener('mouseenter', () => {
+                this.showElementBounds('claim');
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                this.hideElementBounds('claim');
             });
             
             this.dom.elementsList.appendChild(button);
@@ -3728,6 +3787,56 @@ class GridGenerator {
                     claimGroup.boundsElement.setAttribute('stroke-opacity', '0');
                     claimGroup.boundsElement.setAttribute('fill-opacity', '0');
                 }, 2000);
+            }
+        }
+    }
+    
+    // Show element bounds on hover (from Objects panel)
+    showElementBounds(type, blockId = null) {
+        if (this.textDragState.isDragging) return;
+        
+        if (type === 'text' && blockId) {
+            const bounds = document.getElementById(`bounds-${blockId}`);
+            if (bounds) {
+                bounds.setAttribute('stroke-opacity', '0.5');
+                bounds.setAttribute('fill-opacity', '0.05');
+            }
+        } else if (type === 'icons') {
+            const iconsGroup = document.getElementById('icons-group');
+            if (iconsGroup && iconsGroup.boundsElement) {
+                iconsGroup.boundsElement.setAttribute('stroke-opacity', '0.5');
+                iconsGroup.boundsElement.setAttribute('fill-opacity', '0.05');
+            }
+        } else if (type === 'claim') {
+            const claimGroup = document.getElementById('claim-group');
+            if (claimGroup && claimGroup.boundsElement) {
+                claimGroup.boundsElement.setAttribute('stroke-opacity', '0.5');
+                claimGroup.boundsElement.setAttribute('fill-opacity', '0.05');
+            }
+        }
+    }
+    
+    // Hide element bounds on hover leave (from Objects panel)
+    hideElementBounds(type, blockId = null) {
+        if (this.textDragState.isDragging) return;
+        
+        if (type === 'text' && blockId) {
+            const bounds = document.getElementById(`bounds-${blockId}`);
+            if (bounds) {
+                bounds.setAttribute('stroke-opacity', '0');
+                bounds.setAttribute('fill-opacity', '0');
+            }
+        } else if (type === 'icons') {
+            const iconsGroup = document.getElementById('icons-group');
+            if (iconsGroup && iconsGroup.boundsElement) {
+                iconsGroup.boundsElement.setAttribute('stroke-opacity', '0');
+                iconsGroup.boundsElement.setAttribute('fill-opacity', '0');
+            }
+        } else if (type === 'claim') {
+            const claimGroup = document.getElementById('claim-group');
+            if (claimGroup && claimGroup.boundsElement) {
+                claimGroup.boundsElement.setAttribute('stroke-opacity', '0');
+                claimGroup.boundsElement.setAttribute('fill-opacity', '0');
             }
         }
     }
@@ -4121,11 +4230,8 @@ class GridGenerator {
             boundsElement.setAttribute('fill-opacity', '0');
         }
         
-        // Если панель настроек открыта для этого блока, обновляем начальное состояние
-        // чтобы кнопка Close не возвращала блок на старое место
-        if (this.currentEditingBlock && this.currentEditingBlock.id === blockId) {
-            this.saveInitialBlockState(this.currentEditingBlock);
-        }
+        // Не сохраняем начальное состояние автоматически при перетаскивании
+        // Изменения будут применены только при нажатии кнопки Apply
         
         this.textDragState.isDragging = false;
         this.textDragState.blockId = null;
