@@ -1412,6 +1412,52 @@ legend {
     background: var(--color-text-secondary);
 }
 
+/* Elements Navigator Panel */
+.elements-navigator {
+    position: fixed;
+    bottom: var(--spacing-3xl);
+    right: var(--spacing-3xl);
+    background: var(--color-bg-panel);
+    border-radius: var(--radius);
+    padding: var(--spacing-lg);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    border: none;
+    z-index: 1000;
+    max-width: 400px;
+}
+
+.elements-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.element-item {
+    font-size: 0.75rem;
+    color: var(--color-text-dim);
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: all var(--transition-normal);
+    background: transparent;
+    border: 1px solid var(--color-border);
+    font-family: inherit;
+    min-width: auto;
+    white-space: nowrap;
+}
+
+.element-item:hover {
+    color: var(--color-text);
+    background: #2a2a2a;
+    border-color: var(--color-text-dim);
+}
+
+.element-item.active {
+    color: var(--color-text);
+    background: var(--color-text-dim);
+    border-color: var(--color-text-dim);
+}
+
 /* SVG Grid Styles */
 .grid-rect {
     fill: none;

@@ -360,6 +360,7 @@ class GridGenerator {
         this.initIconsInputsWithArrows();
         this.initClaimPanel();
         this.initClaimInputsWithArrows();
+        this.initElementsNavigator();
         this.updateLinkedControlsVisual();
         this.initColorPreview();
         this.updateTextWidthConstraints();
@@ -485,7 +486,10 @@ class GridGenerator {
             claimBaselineInput: document.getElementById('claimBaselineInput'),
             claimHeightInput: document.getElementById('claimHeightInput'),
             claimApplyBtn: document.getElementById('claimApplyBtn'),
-            claimCloseBtn: document.getElementById('claimCloseBtn')
+            claimCloseBtn: document.getElementById('claimCloseBtn'),
+            // Elements navigator
+            elementsNavigator: document.getElementById('elementsNavigator'),
+            elementsList: document.getElementById('elementsList')
         };
     }
     
@@ -945,8 +949,33 @@ class GridGenerator {
             this.dom.paragraphRowInput.addEventListener('change', () => {
                 if (this.currentEditingBlock) {
                     const newRow = parseInt(this.dom.paragraphRowInput.value) - 1;
-                    this.currentEditingBlock.row = Math.max(0, newRow);
+                    
+                    // Calculate max allowed row based on content height and text block height
+                    const module = this.settings.gridModule;
+                    const margins = this.settings.margins;
+                    const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+                    const maxYInBaseline = Math.floor(contentHeightMm / module);
+                    const textBlockHeightInModules = this.getTextBlockHeightInModules(this.currentEditingBlock);
+                    const maxY = maxYInBaseline - textBlockHeightInModules;
+                    
+                    // Calculate Y position from row
+                    const rowHeight = this.settings.rowHeight;
+                    const yPos = newRow * (rowHeight + 1) + this.currentEditingBlock.baselineOffset;
+                    
+                    // Constrain Y and convert back to row
+                    const constrainedY = Math.max(0, Math.min(yPos, maxY));
+                    const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
+                    
+                    this.currentEditingBlock.row = Math.max(0, row);
+                    this.currentEditingBlock.baselineOffset = baselineOffset;
                     this.dom.paragraphRowInput.value = this.currentEditingBlock.row + 1;
+                    
+                    // Update baseline input if needed
+                    if (this.dom.paragraphBaselineInput) {
+                        const globalBaseline = this.currentEditingBlock.row * rowHeight + this.currentEditingBlock.baselineOffset;
+                        this.dom.paragraphBaselineInput.value = globalBaseline + 1;
+                    }
+                    
                     this.updateGrid();
                 }
             });
@@ -962,9 +991,20 @@ class GridGenerator {
                     const globalBaseline = parseInt(this.dom.paragraphBaselineInput.value) - 1;
                     const rowHeight = this.settings.rowHeight;
                     
+                    // Calculate max allowed baseline based on content height and text block height
+                    const module = this.settings.gridModule;
+                    const margins = this.settings.margins;
+                    const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+                    const maxYInBaseline = Math.floor(contentHeightMm / module);
+                    const textBlockHeightInModules = this.getTextBlockHeightInModules(this.currentEditingBlock);
+                    const maxY = maxYInBaseline - textBlockHeightInModules;
+                    
+                    // Constrain baseline
+                    const constrainedBaseline = Math.max(0, Math.min(globalBaseline, maxY));
+                    
                     // Преобразуем глобальный номер baseline в row и baselineOffset
-                    const newRow = Math.floor(globalBaseline / rowHeight);
-                    const newBaselineOffset = globalBaseline % rowHeight;
+                    const newRow = Math.floor(constrainedBaseline / rowHeight);
+                    const newBaselineOffset = constrainedBaseline % rowHeight;
                     
                     this.currentEditingBlock.row = Math.max(0, newRow);
                     this.currentEditingBlock.baselineOffset = newBaselineOffset;
@@ -984,7 +1024,17 @@ class GridGenerator {
                     const globalBaseline = parseInt(this.dom.paragraphBaselineInput.value) - 1;
                     const delta = e.key === 'ArrowUp' ? 1 : -1;
                     const step = e.shiftKey ? 10 : 1;
-                    const newGlobalBaseline = Math.max(0, globalBaseline + delta * step);
+                    let newGlobalBaseline = globalBaseline + delta * step;
+                    
+                    // Calculate max allowed baseline
+                    const module = this.settings.gridModule;
+                    const margins = this.settings.margins;
+                    const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+                    const maxYInBaseline = Math.floor(contentHeightMm / module);
+                    const textBlockHeightInModules = this.getTextBlockHeightInModules(this.currentEditingBlock);
+                    const maxY = maxYInBaseline - textBlockHeightInModules;
+                    
+                    newGlobalBaseline = Math.max(0, Math.min(newGlobalBaseline, maxY));
                     
                     const rowHeight = this.settings.rowHeight;
                     this.currentEditingBlock.row = Math.floor(newGlobalBaseline / rowHeight);
@@ -1697,9 +1747,31 @@ class GridGenerator {
                 this.dom.paragraphWidthInput.value = this.currentEditingBlock.width.toFixed(2);
             }
         } else if (property === 'row') {
-            newValue = Math.max(0, newValue);
-            this.currentEditingBlock.row = newValue;
-            this.dom[inputId].value = newValue + 1;
+            // Calculate max allowed row based on content height and text block height
+            const module = this.settings.gridModule;
+            const margins = this.settings.margins;
+            const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+            const maxYInBaseline = Math.floor(contentHeightMm / module);
+            const textBlockHeightInModules = this.getTextBlockHeightInModules(this.currentEditingBlock);
+            const maxY = maxYInBaseline - textBlockHeightInModules;
+            
+            // Calculate Y position from row
+            const rowHeight = this.settings.rowHeight;
+            const yPos = newValue * (rowHeight + 1) + this.currentEditingBlock.baselineOffset;
+            
+            // Constrain Y and convert back to row
+            const constrainedY = Math.max(0, Math.min(yPos, maxY));
+            const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
+            
+            this.currentEditingBlock.row = Math.max(0, row);
+            this.currentEditingBlock.baselineOffset = baselineOffset;
+            this.dom[inputId].value = this.currentEditingBlock.row + 1;
+            
+            // Update baseline input if needed
+            if (this.dom.paragraphBaselineInput) {
+                const globalBaseline = this.currentEditingBlock.row * rowHeight + this.currentEditingBlock.baselineOffset;
+                this.dom.paragraphBaselineInput.value = globalBaseline + 1;
+            }
         } else if (property === 'width') {
             const maxWidth = this.settings.columnCount;
             // Округляем до ближайшего кратного 0.25
@@ -2648,6 +2720,35 @@ class GridGenerator {
         return lines;
     }
     
+    // Calculate text block height in modules
+    getTextBlockHeightInModules(block) {
+        const module = this.settings.gridModule;
+        
+        // Get style settings based on block's styleRef
+        const isHeadline = block.styleRef === 'headline';
+        const fontSize = isHeadline ? this.calculateFontSize() : this.calculateTextStyleFontSize();
+        const lineHeightSetting = isHeadline ? this.settings.lineHeight : this.settings.textLineHeight;
+        
+        // Get text content
+        const inputLines = block.content.split('\n').filter(line => line.trim() !== '');
+        if (inputLines.length === 0) {
+            return lineHeightSetting; // Return minimum height for empty block
+        }
+        
+        // Calculate text block width
+        const textBlockWidth = this.calculateBlockWidth(block);
+        
+        // Wrap text lines to fit width
+        const wrappedLines = [];
+        inputLines.forEach(line => {
+            const wrapped = this.wrapText(line, textBlockWidth, fontSize, 1);
+            wrappedLines.push(...wrapped);
+        });
+        
+        // Height in modules = lineHeight * number of lines
+        return lineHeightSetting * wrappedLines.length;
+    }
+    
     // Draw text block on canvas with hover effects and drag handles
     drawTextBlock(container, block, frontX, frontY, frontWidth, frontHeight, scale) {
         const gridColor = this.getContrastColor();
@@ -3494,6 +3595,143 @@ class GridGenerator {
         this.dom.claimPanel.classList.remove('active');
     }
     
+    // Initialize Elements Navigator
+    initElementsNavigator() {
+        this.updateElementsNavigator();
+    }
+    
+    // Update Elements Navigator with current elements
+    updateElementsNavigator() {
+        if (!this.dom.elementsList) return;
+        
+        // Clear existing items
+        this.dom.elementsList.innerHTML = '';
+        
+        // Add text blocks
+        this.textBlocks.forEach(block => {
+            const styleName = this.getStyleDisplayName(block.styleRef);
+            const blockNumber = this.getBlockNumber(block.id);
+            const formattedNumber = blockNumber.toString().padStart(2, '0');
+            const name = `${styleName} ${formattedNumber}`;
+            
+            const button = document.createElement('button');
+            button.className = 'element-item';
+            button.textContent = name;
+            button.dataset.elementType = 'text';
+            button.dataset.elementId = block.id;
+            
+            button.addEventListener('click', () => {
+                this.selectElement('text', block.id);
+            });
+            
+            this.dom.elementsList.appendChild(button);
+        });
+        
+        // Add icons block
+        if (this.iconsBlock) {
+            const button = document.createElement('button');
+            button.className = 'element-item';
+            button.textContent = 'Icons';
+            button.dataset.elementType = 'icons';
+            
+            button.addEventListener('click', () => {
+                this.selectElement('icons');
+            });
+            
+            this.dom.elementsList.appendChild(button);
+        }
+        
+        // Add claim block
+        if (this.claimBlock) {
+            const button = document.createElement('button');
+            button.className = 'element-item';
+            button.textContent = 'Claim';
+            button.dataset.elementType = 'claim';
+            
+            button.addEventListener('click', () => {
+                this.selectElement('claim');
+            });
+            
+            this.dom.elementsList.appendChild(button);
+        }
+    }
+    
+    // Select and highlight element
+    selectElement(type, blockId = null) {
+        // Remove all active states
+        const allButtons = this.dom.elementsList.querySelectorAll('.element-item');
+        allButtons.forEach(btn => btn.classList.remove('active'));
+        
+        // Highlight selected element on canvas
+        this.highlightElement(type, blockId);
+        
+        // Open appropriate settings panel
+        if (type === 'text' && blockId) {
+            this.showParagraphPanel(blockId);
+            
+            // Set active state on button
+            const button = this.dom.elementsList.querySelector(`[data-element-id="${blockId}"]`);
+            if (button) button.classList.add('active');
+        } else if (type === 'icons') {
+            this.showIconsPanel();
+            
+            const button = this.dom.elementsList.querySelector('[data-element-type="icons"]');
+            if (button) button.classList.add('active');
+        } else if (type === 'claim') {
+            this.showClaimPanel();
+            
+            const button = this.dom.elementsList.querySelector('[data-element-type="claim"]');
+            if (button) button.classList.add('active');
+        }
+    }
+    
+    // Highlight element on canvas
+    highlightElement(type, blockId = null) {
+        // Remove all existing highlights
+        const allBounds = document.querySelectorAll('[id^="bounds-"]');
+        allBounds.forEach(bounds => {
+            bounds.setAttribute('stroke-opacity', '0');
+            bounds.setAttribute('fill-opacity', '0');
+        });
+        
+        // Highlight selected element
+        if (type === 'text' && blockId) {
+            const bounds = document.getElementById(`bounds-${blockId}`);
+            if (bounds) {
+                bounds.setAttribute('stroke-opacity', '0.8');
+                bounds.setAttribute('fill-opacity', '0.1');
+                
+                // Auto-hide after 2 seconds
+                setTimeout(() => {
+                    bounds.setAttribute('stroke-opacity', '0');
+                    bounds.setAttribute('fill-opacity', '0');
+                }, 2000);
+            }
+        } else if (type === 'icons') {
+            const iconsGroup = document.getElementById('icons-group');
+            if (iconsGroup && iconsGroup.boundsElement) {
+                iconsGroup.boundsElement.setAttribute('stroke-opacity', '0.8');
+                iconsGroup.boundsElement.setAttribute('fill-opacity', '0.1');
+                
+                setTimeout(() => {
+                    iconsGroup.boundsElement.setAttribute('stroke-opacity', '0');
+                    iconsGroup.boundsElement.setAttribute('fill-opacity', '0');
+                }, 2000);
+            }
+        } else if (type === 'claim') {
+            const claimGroup = document.getElementById('claim-group');
+            if (claimGroup && claimGroup.boundsElement) {
+                claimGroup.boundsElement.setAttribute('stroke-opacity', '0.8');
+                claimGroup.boundsElement.setAttribute('fill-opacity', '0.1');
+                
+                setTimeout(() => {
+                    claimGroup.boundsElement.setAttribute('stroke-opacity', '0');
+                    claimGroup.boundsElement.setAttribute('fill-opacity', '0');
+                }, 2000);
+            }
+        }
+    }
+    
     // OLD METHOD - will be removed after testing
     // Draw Headline text on the canvas
     drawHeadlineText_OLD(container, frontX, frontY, frontWidth, frontHeight, scale) {
@@ -3834,10 +4072,12 @@ class GridGenerator {
         newX = Math.max(1, Math.min(newX, columnCount - block.width + 1));
         
         // Ограничиваем Y: минимум 0 (не выходим за верхний margin)
-        // Максимум - высота контента в baseline модулях
+        // Максимум - высота контента в baseline модулях минус высота текстового блока
         const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
         const maxYInBaseline = Math.floor(contentHeightMm / module);
-        newY = Math.max(0, Math.min(newY, maxYInBaseline - 1));
+        const textBlockHeightInModules = this.getTextBlockHeightInModules(block);
+        const maxY = maxYInBaseline - textBlockHeightInModules;
+        newY = Math.max(0, Math.min(newY, maxY));
         
         // Конвертируем Y обратно в row + baselineOffset
         const { row, baselineOffset } = this.yToRowBaseline(newY);
@@ -4093,6 +4333,9 @@ class GridGenerator {
         
         // Update font size displays
         this.updateFontSizeDisplays();
+        
+        // Update elements navigator
+        this.updateElementsNavigator();
     }
     
     // Universal method for creating SVG elements
