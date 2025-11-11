@@ -4256,9 +4256,6 @@ class GridGenerator {
         
         // Add text blocks
         this.textBlocks.forEach(block => {
-            // Пропускаем скрытые блоки (через toggle visibility)
-            if (block.visible === false) return;
-            
             // Получаем имя из первых символов контента
             let displayName = block.content.trim().substring(0, 15);
             if (block.content.trim().length > 15) {
@@ -4272,29 +4269,31 @@ class GridGenerator {
                 displayName = `${styleName} ${formattedNumber}`;
             }
             
-            // Создаем элемент (с особым оформлением, если deleting)
-            this.createElementItem(displayName, 'text', block.id, true, block.deleting);
+            // Создаем элемент (передаем реальное состояние видимости)
+            const isVisible = block.visible !== false;
+            this.createElementItem(displayName, 'text', block.id, isVisible, block.deleting);
         });
         
         // Add graphics blocks
         if (this.graphicsBlocks) {
             this.graphicsBlocks.forEach(block => {
-                // Пропускаем скрытые блоки (через toggle visibility)
-                if (block.visible === false) return;
-                
                 const displayName = block.name || 'Graphic';
-                this.createElementItem(displayName, 'graphics', block.id, true, block.deleting);
+                // Создаем элемент (передаем реальное состояние видимости)
+                const isVisible = block.visible !== false;
+                this.createElementItem(displayName, 'graphics', block.id, isVisible, block.deleting);
             });
         }
         
         // Add icons block
-        if (this.iconsBlock && this.iconsBlock.visible !== false) {
-            this.createElementItem('Icons', 'icons', null, true, this.iconsBlock.deleting);
+        if (this.iconsBlock) {
+            const isVisible = this.iconsBlock.visible !== false;
+            this.createElementItem('Icons', 'icons', null, isVisible, this.iconsBlock.deleting);
         }
         
         // Add claim block
-        if (this.claimBlock && this.claimBlock.visible !== false) {
-            this.createElementItem('Claim', 'claim', null, true, this.claimBlock.deleting);
+        if (this.claimBlock) {
+            const isVisible = this.claimBlock.visible !== false;
+            this.createElementItem('Claim', 'claim', null, isVisible, this.claimBlock.deleting);
         }
     }
     
