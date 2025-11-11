@@ -1811,6 +1811,241 @@ class GridGenerator {
         });
     }
     
+    // Инициализация управления стрелками клавиатуры для полей пользовательской графики
+    initGraphicsInputsWithArrows() {
+        // Эта функция будет вызываться при открытии панели редактирования графики
+        // Она инициализирует обработчики для текущей редактируемой графики
+        
+        const setupGraphicsHandlers = () => {
+            if (!this.currentEditingGraphicsId) return;
+            
+            const block = this.graphicsBlocks?.find(b => b.id === this.currentEditingGraphicsId);
+            if (!block) return;
+            
+            const graphicsInputs = [
+                { 
+                    id: 'graphicsXInput', 
+                    property: 'x',
+                    baseStep: 1,
+                    shiftStep: 5,
+                    decimals: 0,
+                    applyConstraints: (value) => {
+                        const maxColumns = this.settings.columnCount;
+                        const module = this.settings.gridModule;
+                        const margins = this.settings.margins;
+                        const heightInMm = module * block.heightInModules;
+                        const aspectRatio = block.originalWidth / block.originalHeight;
+                        const widthInMm = heightInMm * aspectRatio;
+                        
+                        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (maxColumns - 1)) / maxColumns;
+                        const gutter = module;
+                        const graphicsWidthInColumns = Math.ceil(widthInMm / (columnWidth + gutter));
+                        const maxX = Math.max(1, maxColumns - graphicsWidthInColumns + 1);
+                        
+                        return Math.max(1, Math.min(value, maxX));
+                    }
+                },
+                { 
+                    id: 'graphicsRowInput', 
+                    property: 'row',
+                    baseStep: 1,
+                    shiftStep: 5,
+                    decimals: 0,
+                    applyConstraints: (value) => {
+                        // Convert from 1-based display value to 0-based internal value
+                        const row0based = value - 1;
+                        
+                        const module = this.settings.gridModule;
+                        const margins = this.settings.margins;
+                        const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+                        const maxYInBaseline = Math.floor(contentHeightMm / module);
+                        const graphicsHeightModules = block.heightInModules;
+                        const maxY = maxYInBaseline - graphicsHeightModules;
+                        
+                        const rowHeight = this.settings.rowHeight;
+                        const yPos = row0based * (rowHeight + 1) + block.baselineOffset;
+                        const constrainedY = Math.max(0, Math.min(yPos, maxY));
+                        const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
+                        
+                        // Update baselineOffset if needed
+                        block.baselineOffset = baselineOffset;
+                        if (this.dom.graphicsBaselineInput) {
+                            const globalBaseline = row * rowHeight + baselineOffset;
+                            this.dom.graphicsBaselineInput.value = globalBaseline + 1;
+                        }
+                        
+                        // Return 1-based value for display
+                        return Math.max(0, row) + 1;
+                    }
+                },
+                { 
+                    id: 'graphicsBaselineInput', 
+                    property: 'baseline',
+                    baseStep: 1,
+                    shiftStep: 5,
+                    decimals: 0,
+                    applyConstraints: (value) => {
+                        // Convert from 1-based display value to 0-based internal value
+                        const baseline0based = value - 1;
+                        
+                        const module = this.settings.gridModule;
+                        const margins = this.settings.margins;
+                        const rowHeight = this.settings.rowHeight;
+                        const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+                        const maxYInBaseline = Math.floor(contentHeightMm / module);
+                        const graphicsHeightModules = block.heightInModules;
+                        const maxY = maxYInBaseline - graphicsHeightModules;
+                        
+                        // Constrain the value directly
+                        const constrainedY = Math.max(0, Math.min(Math.round(baseline0based), maxY));
+                        const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
+                        
+                        // Update row and baselineOffset
+                        block.row = Math.max(0, row);
+                        block.baselineOffset = baselineOffset;
+                        if (this.dom.graphicsRowInput) {
+                            this.dom.graphicsRowInput.value = block.row + 1;
+                        }
+                        
+                        // Return the constrained baseline value (1-based for display)
+                        return constrainedY + 1;
+                    }
+                },
+                { 
+                    id: 'graphicsHeightInput', 
+                    property: 'heightInModules',
+                    baseStep: 0.25,
+                    shiftStep: 1,
+                    decimals: 2,
+                    applyConstraints: (value) => {
+                        const constrainedValue = Math.max(0.25, Math.min(value, 20));
+                        
+                        // After changing height, recheck vertical position constraints
+                        const module = this.settings.gridModule;
+                        const margins = this.settings.margins;
+                        const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+                        const maxYInBaseline = Math.floor(contentHeightMm / module);
+                        const maxY = maxYInBaseline - constrainedValue;
+                        
+                        const currentY = this.getBlockY(block);
+                        if (currentY > maxY) {
+                            const adjustedY = Math.max(0, maxY);
+                            const { row, baselineOffset } = this.yToRowBaseline(adjustedY);
+                            block.row = row;
+                            block.baselineOffset = baselineOffset;
+                            
+                            if (this.dom.graphicsRowInput) this.dom.graphicsRowInput.value = row + 1;
+                            if (this.dom.graphicsBaselineInput) {
+                                const globalBaseline = row * this.settings.rowHeight + baselineOffset;
+                                this.dom.graphicsBaselineInput.value = globalBaseline + 1;
+                            }
+                        }
+                        
+                        return constrainedValue;
+                    }
+                }
+            ];
+            
+            graphicsInputs.forEach(({ id, property, baseStep, shiftStep, decimals, applyConstraints }) => {
+                const input = this.dom[id];
+                if (!input) return;
+                
+                // Remove old event listeners by cloning the node
+                const newInput = input.cloneNode(true);
+                input.parentNode.replaceChild(newInput, input);
+                this.dom[id] = newInput;
+                
+                newInput.addEventListener('focus', () => {
+                    newInput.dataset.originalValue = newInput.value;
+                    newInput.select();
+                });
+                
+                newInput.addEventListener('change', () => {
+                    let value = parseFloat(newInput.value);
+                    if (isNaN(value)) {
+                        value = property === 'baseline' 
+                            ? (block.row * this.settings.rowHeight + block.baselineOffset + 1)
+                            : block[property];
+                    }
+                    
+                    // Apply constraints
+                    if (applyConstraints) {
+                        value = applyConstraints(value);
+                    }
+                    
+                    // Update the block property
+                    if (property === 'baseline') {
+                        // Already handled in applyConstraints
+                    } else {
+                        block[property] = value;
+                    }
+                    
+                    // Update input display
+                    newInput.value = decimals > 0 ? value.toFixed(decimals) : Math.round(value);
+                    
+                    this.updateGrid();
+                });
+                
+                newInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        newInput.blur();
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        newInput.value = newInput.dataset.originalValue;
+                        
+                        // Restore original value
+                        const originalValue = parseFloat(newInput.dataset.originalValue);
+                        if (property === 'baseline') {
+                            const rowHeight = this.settings.rowHeight;
+                            const { row, baselineOffset } = this.yToRowBaseline(originalValue - 1);
+                            block.row = row;
+                            block.baselineOffset = baselineOffset;
+                        } else {
+                            block[property] = originalValue;
+                        }
+                        
+                        newInput.blur();
+                        this.updateGrid();
+                    } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        
+                        let currentValue = parseFloat(newInput.value);
+                        if (isNaN(currentValue)) {
+                            currentValue = property === 'baseline' 
+                                ? (block.row * this.settings.rowHeight + block.baselineOffset + 1)
+                                : block[property];
+                        }
+                        
+                        const step = e.shiftKey ? shiftStep : baseStep;
+                        const direction = e.key === 'ArrowUp' ? 1 : -1;
+                        let newValue = currentValue + (step * direction);
+                        
+                        // Apply constraints
+                        if (applyConstraints) {
+                            newValue = applyConstraints(newValue);
+                        }
+                        
+                        // Update the block property
+                        if (property === 'baseline') {
+                            // Already handled in applyConstraints
+                        } else {
+                            block[property] = newValue;
+                        }
+                        
+                        // Update input display
+                        newInput.value = decimals > 0 ? newValue.toFixed(decimals) : Math.round(newValue);
+                        
+                        this.updateGrid();
+                    }
+                });
+            });
+        };
+        
+        // Call setup when editing graphics
+        setupGraphicsHandlers();
+    }
+    
     // Обработка стрелок клавиатуры для числовых полей
     handleArrowKeysForInput(e, property, inputId) {
         if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
@@ -2049,6 +2284,27 @@ class GridGenerator {
         
         // Clear any uploaded SVG data
         this.uploadedSvgData = null;
+        
+        // Reset editing state
+        this.currentEditingGraphicsId = null;
+        
+        // Reset button text and show file upload area
+        if (this.dom.graphicsApplyBtn) {
+            this.dom.graphicsApplyBtn.textContent = 'Add';
+        }
+        
+        if (this.dom.fileUploadArea) {
+            this.dom.fileUploadArea.style.display = 'block';
+            const placeholder = this.dom.fileUploadArea.querySelector('.upload-placeholder p');
+            if (placeholder) {
+                placeholder.textContent = 'Click or drag & drop SVG file here';
+            }
+        }
+        
+        // Reset panel title
+        if (this.dom.graphicsPanelTitle) {
+            this.dom.graphicsPanelTitle.textContent = 'Add Graphics';
+        }
     }
     
     // Initialize Graphics Panel
@@ -2098,7 +2354,27 @@ class GridGenerator {
         // Apply button handler
         if (this.dom.graphicsApplyBtn) {
             this.dom.graphicsApplyBtn.addEventListener('click', () => {
-                if (this.uploadedSvgData) {
+                // Check if we are editing existing graphics or adding new one
+                if (this.currentEditingGraphicsId) {
+                    // Update existing graphics block
+                    const block = this.graphicsBlocks?.find(b => b.id === this.currentEditingGraphicsId);
+                    if (block) {
+                        const x = parseInt(this.dom.graphicsXInput?.value || 1);
+                        const row = parseInt(this.dom.graphicsRowInput?.value || 1) - 1;
+                        const baseline = parseInt(this.dom.graphicsBaselineInput?.value || 1) - 1;
+                        const height = parseFloat(this.dom.graphicsHeightInput?.value || 3);
+                        
+                        block.x = x;
+                        block.row = row;
+                        block.baselineOffset = baseline % this.settings.rowHeight;
+                        block.heightInModules = height;
+                        
+                        this.updateGrid();
+                        this.closeGraphicsPanel();
+                        this.currentEditingGraphicsId = null;
+                    }
+                } else if (this.uploadedSvgData) {
+                    // Add new graphics block
                     const x = parseInt(this.dom.graphicsXInput?.value || 1);
                     const row = parseInt(this.dom.graphicsRowInput?.value || 1) - 1;
                     const baseline = parseInt(this.dom.graphicsBaselineInput?.value || 1) - 1;
@@ -2157,9 +2433,25 @@ class GridGenerator {
                     height = parseFloat(svgElement.getAttribute('height')) || 100;
                 }
                 
+                // Process SVG content to replace fill colors with currentColor
+                let processedContent = svgContent;
+                
+                // Replace all fill attributes with currentColor (except 'none')
+                // This regex matches fill="..." but not fill="none"
+                processedContent = processedContent.replace(/fill="(?!none)[^"]*"/gi, 'fill="currentColor"');
+                processedContent = processedContent.replace(/fill='(?!none)[^']*'/gi, "fill='currentColor'");
+                
+                // Replace stroke colors with currentColor (except 'none')
+                processedContent = processedContent.replace(/stroke="(?!none)[^"]*"/gi, 'stroke="currentColor"');
+                processedContent = processedContent.replace(/stroke='(?!none)[^']*'/gi, "stroke='currentColor'");
+                
+                // Replace fill in style attributes
+                processedContent = processedContent.replace(/fill:\s*(?!none)[^;"}]+/gi, 'fill: currentColor');
+                processedContent = processedContent.replace(/stroke:\s*(?!none)[^;"}]+/gi, 'stroke: currentColor');
+                
                 // Store uploaded SVG data
                 this.uploadedSvgData = {
-                    content: svgContent,
+                    content: processedContent,
                     name: file.name.replace('.svg', ''),
                     width: width,
                     height: height
@@ -3483,37 +3775,133 @@ class GridGenerator {
         this.attachGraphicsBlockHandlers(graphicsGroup, block, frontX, frontY, scale);
     }
     
-    // Attach event handlers for graphics block (click, hover)
+    // Attach event handlers for graphics block (click, hover, drag)
     attachGraphicsBlockHandlers(graphicsGroup, block, frontX, frontY, scale) {
         let mouseDownTime = 0;
+        let mouseDownX = 0;
+        let mouseDownY = 0;
         
-        // Click handler - открыть панель настроек
-        graphicsGroup.addEventListener('click', (e) => {
+        graphicsGroup.addEventListener('mousedown', (e) => {
+            // Только левая кнопка мыши
+            if (e.button !== 0) return;
+            
             e.stopPropagation();
             e.preventDefault();
             
-            const clickDuration = Date.now() - mouseDownTime;
-            if (clickDuration < 300) {
-                this.showGraphicsEditPanel(block.id);
+            mouseDownTime = Date.now();
+            mouseDownX = e.clientX;
+            mouseDownY = e.clientY;
+            
+            // Start dragging
+            this.textDragState.isDragging = true;
+            this.textDragState.blockId = block.id;
+            this.textDragState.startMouseX = e.clientX;
+            this.textDragState.startMouseY = e.clientY;
+            this.textDragState.startBlockX = block.x;
+            this.textDragState.startBlockY = this.getBlockY(block);
+            this.textDragState.frontX = frontX;
+            this.textDragState.frontY = frontY;
+            this.textDragState.scale = scale;
+            
+            // Show bounds during drag
+            if (graphicsGroup.boundsElement) {
+                graphicsGroup.boundsElement.setAttribute('stroke-opacity', '0.5');
+                graphicsGroup.boundsElement.setAttribute('fill-opacity', '0.05');
             }
-        });
-        
-        graphicsGroup.addEventListener('mousedown', (e) => {
-            if (e.button === 0) {
-                mouseDownTime = Date.now();
-            }
+            
+            const mouseMoveHandler = (e) => {
+                if (!this.textDragState.isDragging) return;
+                
+                const dx = e.clientX - this.textDragState.startMouseX;
+                const dy = e.clientY - this.textDragState.startMouseY;
+                
+                const module = this.settings.gridModule;
+                const margins = this.settings.margins;
+                const columnCount = this.settings.columnCount;
+                
+                // Calculate column width
+                const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
+                const gutter = module;
+                
+                // Convert pixel movement to grid units
+                const columnWithGutter = (columnWidth + gutter) * scale;
+                const moduleScaled = module * scale;
+                
+                const newX = Math.round((this.textDragState.startBlockX * columnWithGutter + dx) / columnWithGutter);
+                let newY = Math.round((this.textDragState.startBlockY * moduleScaled + dy) / moduleScaled);
+                
+                // Calculate graphics width considering aspect ratio
+                const heightInMm = module * block.heightInModules;
+                const aspectRatio = block.originalWidth / block.originalHeight;
+                const widthInMm = heightInMm * aspectRatio;
+                const widthInColumns = widthInMm / (columnWidth + gutter);
+                
+                // Constrain within grid boundaries
+                const minX = 1;
+                const maxX = Math.max(1, Math.floor(columnCount - widthInColumns) + 1);
+                block.x = Math.max(minX, Math.min(maxX, newX));
+                
+                // Convert Y from baseline grid to row and baseline offset
+                const rowHeight = this.settings.rowHeight;
+                const row = Math.floor(newY / rowHeight);
+                const baselineOffset = newY % rowHeight;
+                
+                block.row = Math.max(0, row);
+                block.baselineOffset = Math.max(0, baselineOffset);
+                
+                // Update panel inputs if open
+                if (this.dom.graphicsPanel && this.dom.graphicsPanel.classList.contains('active')) {
+                    if (this.dom.graphicsXInput) this.dom.graphicsXInput.value = block.x;
+                    if (this.dom.graphicsRowInput) this.dom.graphicsRowInput.value = block.row + 1;
+                    if (this.dom.graphicsBaselineInput) {
+                        const globalBaseline = block.row * this.settings.rowHeight + block.baselineOffset;
+                        this.dom.graphicsBaselineInput.value = globalBaseline + 1;
+                    }
+                }
+                
+                this.updateGrid();
+            };
+            
+            const mouseUpHandler = () => {
+                this.textDragState.isDragging = false;
+                
+                // Check if it was a click (not a drag)
+                const timeDiff = Date.now() - mouseDownTime;
+                const distance = Math.sqrt(
+                    Math.pow(e.clientX - mouseDownX, 2) + 
+                    Math.pow(e.clientY - mouseDownY, 2)
+                );
+                
+                // Более щедрые условия для клика: 300мс и 10px
+                if (timeDiff < 300 && distance < 10) {
+                    // It's a click - open settings panel
+                    this.showGraphicsEditPanel(block.id);
+                }
+                
+                // Hide bounds after drag
+                if (graphicsGroup.boundsElement) {
+                    graphicsGroup.boundsElement.setAttribute('stroke-opacity', '0');
+                    graphicsGroup.boundsElement.setAttribute('fill-opacity', '0');
+                }
+                
+                document.removeEventListener('mousemove', mouseMoveHandler);
+                document.removeEventListener('mouseup', mouseUpHandler);
+            };
+            
+            document.addEventListener('mousemove', mouseMoveHandler);
+            document.addEventListener('mouseup', mouseUpHandler);
         });
         
         // Hover handlers - показать/скрыть границы
         graphicsGroup.addEventListener('mouseenter', () => {
-            if (graphicsGroup.boundsElement) {
+            if (graphicsGroup.boundsElement && !this.textDragState.isDragging) {
                 graphicsGroup.boundsElement.setAttribute('stroke-opacity', '0.5');
                 graphicsGroup.boundsElement.setAttribute('fill-opacity', '0.05');
             }
         });
         
         graphicsGroup.addEventListener('mouseleave', () => {
-            if (graphicsGroup.boundsElement) {
+            if (graphicsGroup.boundsElement && !this.textDragState.isDragging) {
                 graphicsGroup.boundsElement.setAttribute('stroke-opacity', '0');
                 graphicsGroup.boundsElement.setAttribute('fill-opacity', '0');
             }
@@ -3576,6 +3964,9 @@ class GridGenerator {
         
         // Store current editing block ID
         this.currentEditingGraphicsId = blockId;
+        
+        // Initialize input handlers with arrow key support
+        this.initGraphicsInputsWithArrows();
     }
     
     // Draw claim block on canvas
@@ -3833,7 +4224,8 @@ class GridGenerator {
                     Math.pow(e.clientY - mouseDownY, 2)
                 );
                 
-                if (timeDiff < 200 && distance < 5) {
+                // Более щедрые условия для клика: 300мс и 10px
+                if (timeDiff < 300 && distance < 10) {
                     // It's a click - open settings panel
                     this.showIconsPanel();
                 }
@@ -3979,7 +4371,8 @@ class GridGenerator {
                     Math.pow(e.clientY - mouseDownY, 2)
                 );
                 
-                if (timeDiff < 200 && distance < 5) {
+                // Более щедрые условия для клика: 300мс и 10px
+                if (timeDiff < 300 && distance < 10) {
                     // It's a click - open settings panel
                     this.showClaimPanel();
                 }
