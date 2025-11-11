@@ -2418,10 +2418,50 @@ class GridGenerator {
     }
     
     // Load and process SVG file (same as handleSvgFile but for file paths)
+    // Works over HTTP and tries XMLHttpRequest as fallback for file:// protocol
     async loadAndProcessSvg(filePath) {
         try {
+            let svgContent = null;
+            
+            // Try fetch first (works over HTTP)
+        try {
             const response = await fetch(filePath);
-            let svgContent = await response.text();
+                if (response.ok) {
+                    svgContent = await response.text();
+                }
+            } catch (fetchError) {
+                // If fetch fails (e.g., file:// protocol), try XMLHttpRequest
+                // Note: XMLHttpRequest also doesn't work with file:// in most browsers
+                console.log(`Fetch failed for ${filePath}, trying XMLHttpRequest...`);
+                try {
+                    svgContent = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('GET', filePath, true);
+                        xhr.onload = () => {
+                            if (xhr.status === 0 || xhr.status === 200) {
+                                resolve(xhr.responseText);
+                            } else {
+                                reject(new Error(`XMLHttpRequest failed with status ${xhr.status}`));
+                            }
+                        };
+                        xhr.onerror = () => reject(new Error('XMLHttpRequest failed'));
+                        xhr.send();
+                    });
+                } catch (xhrError) {
+                    // Both fetch and XMLHttpRequest failed - likely file:// protocol
+                    const isFileProtocol = window.location.protocol === 'file:';
+                    if (isFileProtocol) {
+                        console.warn(`Cannot load ${filePath} via file:// protocol. Please use a local HTTP server or open via http://localhost`);
+                    }
+                    throw fetchError; // Re-throw original error
+                }
+            }
+            
+            if (!svgContent) {
+                console.warn(`Could not load ${filePath} - file may not exist or protocol not supported`);
+                return null;
+            }
+            
             const parser = new DOMParser();
             const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
             const svgElement = svgDoc.querySelector('svg');
@@ -4381,8 +4421,8 @@ class GridGenerator {
                 
                 // Более щедрые условия для клика: 300мс и 10px
                 if (timeDiff < 300 && distance < 10) {
-                    // It's a click - open icons settings panel
-                    this.showIconsPanel();
+                    // It's a click - open settings panel (same as user graphics)
+                    this.showGraphicsEditPanel('icons');
                 }
                 
                 // Hide bounds after drag
@@ -4528,8 +4568,8 @@ class GridGenerator {
                 
                 // Более щедрые условия для клика: 300мс и 10px
                 if (timeDiff < 300 && distance < 10) {
-                    // It's a click - open claim settings panel
-                    this.showClaimPanel();
+                    // It's a click - open settings panel (same as user graphics)
+                    this.showGraphicsEditPanel('claim');
                 }
                 
                 // Hide bounds after drag
