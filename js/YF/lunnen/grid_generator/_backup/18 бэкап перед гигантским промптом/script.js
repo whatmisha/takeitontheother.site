@@ -387,7 +387,6 @@ class GridGenerator {
         this.initPanelDrag('paragraphPanel', 'paragraphPanelHeader');
         this.initPanelDrag('iconsPanel', 'iconsPanelHeader');
         this.initPanelDrag('claimPanel', 'claimPanelHeader');
-        this.initPanelDrag('graphicsPanel', 'graphicsPanelHeader');
         this.initPanelDrag('elementsNavigator', 'elementsNavigatorHeader');
         this.initValueInputs();
         this.initSizeInputsWithArrows();
@@ -398,7 +397,6 @@ class GridGenerator {
         this.initIconsInputsWithArrows();
         this.initClaimPanel();
         this.initClaimInputsWithArrows();
-        this.initGraphicsPanel();
         this.initElementsNavigator();
         this.updateLinkedControlsVisual();
         this.initColorPreview();
@@ -530,22 +528,7 @@ class GridGenerator {
             // Elements navigator
             elementsNavigator: document.getElementById('elementsNavigator'),
             elementsNavigatorHeader: document.getElementById('elementsNavigatorHeader'),
-            elementsList: document.getElementById('elementsList'),
-            addTextBtn: document.getElementById('addTextBtn'),
-            addGraphicsBtn: document.getElementById('addGraphicsBtn'),
-            // Graphics upload panel
-            graphicsPanel: document.getElementById('graphicsPanel'),
-            graphicsPanelTitle: document.getElementById('graphicsPanelTitle'),
-            graphicsXInput: document.getElementById('graphicsXInput'),
-            graphicsRowInput: document.getElementById('graphicsRowInput'),
-            graphicsBaselineInput: document.getElementById('graphicsBaselineInput'),
-            graphicsHeightInput: document.getElementById('graphicsHeightInput'),
-            graphicsApplyBtn: document.getElementById('graphicsApplyBtn'),
-            graphicsCloseBtn: document.getElementById('graphicsCloseBtn'),
-            fileUploadArea: document.getElementById('fileUploadArea'),
-            svgFileInput: document.getElementById('svgFileInput'),
-            // Paragraph style select
-            paragraphStyleSelect: document.getElementById('paragraphStyleSelect')
+            elementsList: document.getElementById('elementsList')
         };
     }
     
@@ -648,10 +631,21 @@ class GridGenerator {
             this.updateGrid();
         });
         
-        // Style dropdowns в панели Text Styles (пока без функционала, для будущего расширения)
-        const headlineStyleDropdown = document.getElementById('headlineStyleDropdown');
-        const textStyleDropdown = document.getElementById('textStyleDropdown');
-        // Дропдауны готовы для добавления новых стилей в будущем
+        // Headline font weight radio buttons
+        const headlineFontWeightHandler = (e) => {
+            this.settings.headlineFontWeight = parseInt(e.target.value);
+            this.updateGrid();
+        };
+        this.dom.headlineFontWeightRegular.addEventListener('change', headlineFontWeightHandler);
+        this.dom.headlineFontWeightMedium.addEventListener('change', headlineFontWeightHandler);
+        
+        // Text font weight radio buttons
+        const textFontWeightHandler = (e) => {
+            this.settings.textFontWeight = parseInt(e.target.value);
+            this.updateGrid();
+        };
+        this.dom.textFontWeightRegular.addEventListener('change', textFontWeightHandler);
+        this.dom.textFontWeightMedium.addEventListener('change', textFontWeightHandler);
         
         // Color preview button - toggle HSB picker
         this.dom.colorPreview.addEventListener('click', () => {
@@ -1002,8 +996,8 @@ class GridGenerator {
                         this.dom.paragraphWidthInput.value = this.currentEditingBlock.width.toFixed(2);
                     }
                     
-                    // Обновляем отображение X (на случай коррекции), округляем до целого
-                    this.dom.paragraphXInput.value = Math.round(this.currentEditingBlock.x);
+                    // Обновляем отображение X (на случай коррекции)
+                    this.dom.paragraphXInput.value = this.currentEditingBlock.x;
                     this.updateGrid();
                 }
             });
@@ -1050,19 +1044,6 @@ class GridGenerator {
             // Обработка стрелок клавиатуры
             this.dom.paragraphRowInput.addEventListener('keydown', (e) => {
                 this.handleArrowKeysForInput(e, 'row', 'paragraphRowInput');
-            });
-        }
-        
-        // Обработчик для Column (всегда целое число)
-        if (this.dom.paragraphXInput) {
-            this.dom.paragraphXInput.addEventListener('change', () => {
-                if (this.currentEditingBlock) {
-                    const newX = parseFloat(this.dom.paragraphXInput.value);
-                    // Column всегда целое число
-                    this.currentEditingBlock.x = Math.max(1, Math.round(newX));
-                    this.dom.paragraphXInput.value = this.currentEditingBlock.x;
-                    this.updateGrid();
-                }
             });
         }
         
@@ -1139,14 +1120,11 @@ class GridGenerator {
                     this.dom.paragraphWidthInput.value = this.currentEditingBlock.width.toFixed(2);
                     
                     // Корректируем X если блок вышел за пределы
-                    // X всегда целое число (текст привязывается к левому краю колонки)
                     const maxX = this.settings.columnCount - this.currentEditingBlock.width;
                     if (this.currentEditingBlock.x > maxX) {
-                        this.currentEditingBlock.x = Math.max(1, Math.floor(maxX + 1));
+                        this.currentEditingBlock.x = Math.max(0, maxX);
+                        this.dom.paragraphXInput.value = this.currentEditingBlock.x;
                     }
-                    // Округляем X до целого числа
-                    this.currentEditingBlock.x = Math.round(this.currentEditingBlock.x);
-                    this.dom.paragraphXInput.value = this.currentEditingBlock.x;
                     
                     this.updateGrid();
                 }
@@ -1163,17 +1141,6 @@ class GridGenerator {
                 if (this.currentEditingBlock) {
                     this.currentEditingBlock.content = this.dom.paragraphTextArea.value;
                     this.updateCharCounter();
-                    this.updateGrid();
-                }
-            });
-        }
-        
-        // Обработчик для дропдауна стиля текста
-        if (this.dom.paragraphStyleSelect) {
-            this.dom.paragraphStyleSelect.addEventListener('change', () => {
-                if (this.currentEditingBlock) {
-                    this.currentEditingBlock.styleRef = this.dom.paragraphStyleSelect.value;
-                    this.updateElementsNavigator();
                     this.updateGrid();
                 }
             });
@@ -1878,11 +1845,9 @@ class GridGenerator {
             // Корректируем X если блок вышел за пределы
             const maxX = this.settings.columnCount - this.currentEditingBlock.width;
             if (this.currentEditingBlock.x > maxX) {
-                this.currentEditingBlock.x = Math.max(1, Math.floor(maxX + 1));
-            }
-            // Округляем X до целого числа
-            this.currentEditingBlock.x = Math.round(this.currentEditingBlock.x);
+                this.currentEditingBlock.x = Math.max(0, maxX);
                 this.dom.paragraphXInput.value = this.currentEditingBlock.x;
+            }
         }
         
         this.updateGrid();
@@ -1898,20 +1863,12 @@ class GridGenerator {
         // Сохраняем начальное состояние блока для возможности отмены
         this.saveInitialBlockState(block);
         
-        // Устанавливаем заголовок панели с названием из контента
+        // Устанавливаем заголовок панели с названием стиля и номером
         if (this.dom.paragraphPanelTitle) {
-            let displayName = block.content.trim().substring(0, 24);
-            if (block.content.trim().length > 24) {
-                displayName = displayName + '...';
-            }
-            // Если текст пустой, используем стандартное имя
-            if (!displayName) {
             const styleName = this.getStyleDisplayName(block.styleRef);
             const blockNumber = this.getBlockNumber(blockId);
             const formattedNumber = blockNumber.toString().padStart(2, '0');
-                displayName = `${styleName} ${formattedNumber}`;
-            }
-            this.dom.paragraphPanelTitle.textContent = displayName;
+            this.dom.paragraphPanelTitle.textContent = `${styleName} ${formattedNumber} Settings`;
         }
         
         // Если панель открывается впервые или была закрыта, центрируем её
@@ -1931,13 +1888,8 @@ class GridGenerator {
         }
         
         // Заполняем поля панели
-        if (this.dom.paragraphStyleSelect) {
-            // Дропдаун управляет стилем текста (headline/text)
-            this.dom.paragraphStyleSelect.value = block.styleRef || 'text';
-        }
         if (this.dom.paragraphXInput) {
-            // Column всегда целое число - текст привязывается к левому краю колонки
-            this.dom.paragraphXInput.value = Math.round(block.x);
+            this.dom.paragraphXInput.value = block.x;
         }
         if (this.dom.paragraphRowInput) {
             this.dom.paragraphRowInput.value = block.row + 1;
@@ -2001,179 +1953,6 @@ class GridGenerator {
             this.dom.paragraphPanel.classList.remove('active');
             this.dom.paragraphPanel.style.display = 'none';
         }
-    }
-    
-    // Show Graphics Upload Panel
-    showGraphicsPanel() {
-        // Reset panel fields
-        if (this.dom.graphicsXInput) {
-            this.dom.graphicsXInput.value = 1;
-        }
-        if (this.dom.graphicsRowInput) {
-            this.dom.graphicsRowInput.value = 1;
-        }
-        if (this.dom.graphicsBaselineInput) {
-            this.dom.graphicsBaselineInput.value = 1;
-        }
-        if (this.dom.graphicsHeightInput) {
-            this.dom.graphicsHeightInput.value = '3.00';
-        }
-        
-        // Center panel
-        if (this.dom.graphicsPanel) {
-            this.dom.graphicsPanel.style.display = 'flex';
-            const rect = this.dom.graphicsPanel.getBoundingClientRect();
-            
-            const centerX = (window.innerWidth - rect.width) / 2;
-            const centerY = (window.innerHeight - rect.height) / 2;
-            
-            this.dom.graphicsPanel.style.left = `${centerX}px`;
-            this.dom.graphicsPanel.style.top = `${centerY}px`;
-            this.dom.graphicsPanel.style.transform = 'none';
-            
-            this.dom.graphicsPanel.classList.add('active');
-        }
-    }
-    
-    // Close Graphics Upload Panel
-    closeGraphicsPanel() {
-        if (this.dom.graphicsPanel) {
-            this.dom.graphicsPanel.classList.remove('active');
-            this.dom.graphicsPanel.style.display = 'none';
-        }
-        
-        // Reset file input
-        if (this.dom.svgFileInput) {
-            this.dom.svgFileInput.value = '';
-        }
-        
-        // Clear any uploaded SVG data
-        this.uploadedSvgData = null;
-    }
-    
-    // Initialize Graphics Panel
-    initGraphicsPanel() {
-        // File upload area click handler
-        if (this.dom.fileUploadArea) {
-            this.dom.fileUploadArea.addEventListener('click', () => {
-                if (this.dom.svgFileInput) {
-                    this.dom.svgFileInput.click();
-                }
-            });
-            
-            // Drag and drop handlers
-            this.dom.fileUploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.dom.fileUploadArea.classList.add('dragover');
-            });
-            
-            this.dom.fileUploadArea.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.dom.fileUploadArea.classList.remove('dragover');
-            });
-            
-            this.dom.fileUploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.dom.fileUploadArea.classList.remove('dragover');
-                
-                const files = e.dataTransfer.files;
-                if (files.length > 0 && files[0].type === 'image/svg+xml') {
-                    this.handleSvgFile(files[0]);
-                }
-            });
-        }
-        
-        // File input change handler
-        if (this.dom.svgFileInput) {
-            this.dom.svgFileInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    this.handleSvgFile(e.target.files[0]);
-                }
-            });
-        }
-        
-        // Apply button handler
-        if (this.dom.graphicsApplyBtn) {
-            this.dom.graphicsApplyBtn.addEventListener('click', () => {
-                if (this.uploadedSvgData) {
-                    const x = parseInt(this.dom.graphicsXInput?.value || 1);
-                    const row = parseInt(this.dom.graphicsRowInput?.value || 1) - 1;
-                    const baseline = parseInt(this.dom.graphicsBaselineInput?.value || 1) - 1;
-                    const height = parseFloat(this.dom.graphicsHeightInput?.value || 3);
-                    
-                    // Add graphics block
-                    this.addGraphicsBlock(
-                        this.uploadedSvgData.content,
-                        this.uploadedSvgData.name,
-                        this.uploadedSvgData.width,
-                        this.uploadedSvgData.height
-                    );
-                    
-                    // Update the new block position
-                    const newBlock = this.graphicsBlocks[this.graphicsBlocks.length - 1];
-                    newBlock.x = x;
-                    newBlock.row = row;
-                    newBlock.baselineOffset = baseline % this.settings.rowHeight;
-                    newBlock.heightInModules = height;
-                    
-                    this.updateGrid();
-                    this.closeGraphicsPanel();
-                }
-            });
-        }
-        
-        // Close button handler
-        if (this.dom.graphicsCloseBtn) {
-            this.dom.graphicsCloseBtn.addEventListener('click', () => {
-                this.closeGraphicsPanel();
-            });
-        }
-    }
-    
-    // Handle SVG file upload
-    handleSvgFile(file) {
-        const reader = new FileReader();
-        
-        reader.onload = (e) => {
-            const svgContent = e.target.result;
-            const parser = new DOMParser();
-            const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
-            const svgElement = svgDoc.querySelector('svg');
-            
-            if (svgElement) {
-                // Extract viewBox or width/height
-                const viewBox = svgElement.getAttribute('viewBox');
-                let width, height;
-                
-                if (viewBox) {
-                    const [, , w, h] = viewBox.split(' ').map(parseFloat);
-                    width = w;
-                    height = h;
-                } else {
-                    width = parseFloat(svgElement.getAttribute('width')) || 100;
-                    height = parseFloat(svgElement.getAttribute('height')) || 100;
-                }
-                
-                // Store uploaded SVG data
-                this.uploadedSvgData = {
-                    content: svgContent,
-                    name: file.name.replace('.svg', ''),
-                    width: width,
-                    height: height
-                };
-                
-                // Update UI to show file is loaded
-                const placeholder = this.dom.fileUploadArea.querySelector('.upload-placeholder p');
-                if (placeholder) {
-                    placeholder.textContent = `✓ ${file.name}`;
-                }
-            }
-        };
-        
-        reader.readAsText(file);
     }
     
     // Color conversion methods
@@ -2355,37 +2134,17 @@ class GridGenerator {
         let xOffset = 0;
         let yOffset = 0;
         
-        // Bring panel to front on any click
+        // Prevent dragging from interactive elements
         panel.addEventListener('mousedown', (e) => {
             const target = e.target;
-            
             // Don't interfere with input elements (sliders, text inputs, buttons, checkboxes)
             if (target.tagName === 'INPUT' || 
                 target.tagName === 'BUTTON' || 
                 target.tagName === 'TEXTAREA' ||
                 target.tagName === 'SELECT') {
                 e.stopPropagation();
-                // Still bring to front even for interactive elements
-                const allPanels = document.querySelectorAll('.controls-panel');
-                allPanels.forEach(p => {
-                    if (p === panel) {
-                        p.style.zIndex = '1000';
-                    } else {
-                        p.style.zIndex = '999';
-                    }
-                });
                 return;
             }
-            
-            // Bring panel to front on any click
-            const allPanels = document.querySelectorAll('.controls-panel');
-            allPanels.forEach(p => {
-                if (p === panel) {
-                    p.style.zIndex = '1000';
-                } else {
-                    p.style.zIndex = '999';
-                }
-            });
         }, true); // Use capture phase
         
         header.addEventListener('mousedown', dragStart);
@@ -3409,175 +3168,6 @@ class GridGenerator {
         this.attachIconsBlockHandlers(iconsGroup, block, frontX, frontY, scale);
     }
     
-    // Draw graphics block on canvas
-    drawGraphicsBlock(container, block, frontX, frontY, frontWidth, frontHeight, scale) {
-        if (!block.svgContent) return;
-        
-        const gridColor = this.getContrastColor();
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        
-        // Calculate dimensions
-        const heightInMm = module * block.heightInModules;
-        const aspectRatio = block.originalWidth / block.originalHeight;
-        const widthInMm = heightInMm * aspectRatio;
-        
-        // Calculate position
-        const columnWidth = (frontWidth / scale - module * margins * 2 - module * (this.settings.columnCount - 1)) / this.settings.columnCount;
-        const gutter = module;
-        const topMargin = module * margins * scale;
-        
-        const yInBaseline = this.getBlockY({
-            row: block.row,
-            baselineOffset: block.baselineOffset
-        });
-        
-        const graphicsX = frontX + module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale);
-        const graphicsY = frontY + yInBaseline * (module * scale) + topMargin;
-        
-        // Scale dimensions
-        const scaledWidth = widthInMm * scale;
-        const scaledHeight = heightInMm * scale;
-        
-        // Create group for graphics
-        const graphicsGroup = this.createSVGElement('g', {
-            id: `graphics-group-${block.id}`,
-            style: 'cursor: move;',
-            'data-block-id': block.id
-        }, container);
-        
-        // Create bounds rectangle (initially hidden)
-        const boundsRect = this.createSVGElement('rect', {
-            x: graphicsX,
-            y: graphicsY,
-            width: scaledWidth,
-            height: scaledHeight,
-            fill: gridColor,
-            'fill-opacity': '0',
-            stroke: gridColor,
-            'stroke-width': scale === 1 ? '0.5' : '1',
-            'stroke-opacity': '0',
-            'stroke-dasharray': '4,4',
-            style: 'pointer-events: none; transition: opacity 0.2s;',
-            'data-block-id': block.id
-        }, graphicsGroup);
-        
-        // Store bounds element reference for hover effect
-        graphicsGroup.boundsElement = boundsRect;
-        
-        // Create nested SVG for graphics with correct viewBox
-        const nestedSvg = this.createSVGElement('svg', {
-            x: graphicsX,
-            y: graphicsY,
-            width: scaledWidth,
-            height: scaledHeight,
-            viewBox: `0 0 ${block.originalWidth} ${block.originalHeight}`,
-            preserveAspectRatio: 'xMinYMin meet',
-            style: `color: ${gridColor}; overflow: visible;`
-        }, graphicsGroup);
-        
-        // Add SVG content
-        nestedSvg.innerHTML = block.svgContent;
-        
-        // Attach event handlers
-        this.attachGraphicsBlockHandlers(graphicsGroup, block, frontX, frontY, scale);
-    }
-    
-    // Attach event handlers for graphics block (click, hover)
-    attachGraphicsBlockHandlers(graphicsGroup, block, frontX, frontY, scale) {
-        let mouseDownTime = 0;
-        
-        // Click handler - открыть панель настроек
-        graphicsGroup.addEventListener('click', (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            
-            const clickDuration = Date.now() - mouseDownTime;
-            if (clickDuration < 300) {
-                this.showGraphicsEditPanel(block.id);
-            }
-        });
-        
-        graphicsGroup.addEventListener('mousedown', (e) => {
-            if (e.button === 0) {
-                mouseDownTime = Date.now();
-            }
-        });
-        
-        // Hover handlers - показать/скрыть границы
-        graphicsGroup.addEventListener('mouseenter', () => {
-            if (graphicsGroup.boundsElement) {
-                graphicsGroup.boundsElement.setAttribute('stroke-opacity', '0.5');
-                graphicsGroup.boundsElement.setAttribute('fill-opacity', '0.05');
-            }
-        });
-        
-        graphicsGroup.addEventListener('mouseleave', () => {
-            if (graphicsGroup.boundsElement) {
-                graphicsGroup.boundsElement.setAttribute('stroke-opacity', '0');
-                graphicsGroup.boundsElement.setAttribute('fill-opacity', '0');
-            }
-        });
-    }
-    
-    // Show Graphics Edit Panel for existing graphics
-    showGraphicsEditPanel(blockId) {
-        const block = this.graphicsBlocks?.find(b => b.id === blockId);
-        if (!block) return;
-        
-        // Set panel title
-        if (this.dom.graphicsPanelTitle) {
-            let displayName = block.name || 'Graphic';
-            if (displayName.length > 24) {
-                displayName = displayName.substring(0, 24) + '...';
-            }
-            this.dom.graphicsPanelTitle.textContent = displayName;
-        }
-        
-        // Fill panel fields
-        if (this.dom.graphicsXInput) {
-            this.dom.graphicsXInput.value = block.x;
-        }
-        if (this.dom.graphicsRowInput) {
-            this.dom.graphicsRowInput.value = block.row + 1;
-        }
-        if (this.dom.graphicsBaselineInput) {
-            const globalBaseline = block.row * this.settings.rowHeight + block.baselineOffset;
-            this.dom.graphicsBaselineInput.value = globalBaseline + 1;
-        }
-        if (this.dom.graphicsHeightInput) {
-            this.dom.graphicsHeightInput.value = block.heightInModules.toFixed(2);
-        }
-        
-        // Hide file upload area, show only settings
-        if (this.dom.fileUploadArea) {
-            this.dom.fileUploadArea.style.display = 'none';
-        }
-        
-        // Change button text to Update
-        if (this.dom.graphicsApplyBtn) {
-            this.dom.graphicsApplyBtn.textContent = 'Update';
-        }
-        
-        // Center and show panel
-        if (this.dom.graphicsPanel) {
-            this.dom.graphicsPanel.style.display = 'flex';
-            const rect = this.dom.graphicsPanel.getBoundingClientRect();
-            
-            const centerX = (window.innerWidth - rect.width) / 2;
-            const centerY = (window.innerHeight - rect.height) / 2;
-            
-            this.dom.graphicsPanel.style.left = `${centerX}px`;
-            this.dom.graphicsPanel.style.top = `${centerY}px`;
-            this.dom.graphicsPanel.style.transform = 'none';
-            
-            this.dom.graphicsPanel.classList.add('active');
-        }
-        
-        // Store current editing block ID
-        this.currentEditingGraphicsId = blockId;
-    }
-    
     // Draw claim block on canvas
     drawClaimBlock(container, frontX, frontY, frontWidth, frontHeight, scale) {
         const gridColor = this.getContrastColor();
@@ -4231,20 +3821,6 @@ class GridGenerator {
     // Initialize Elements Navigator
     initElementsNavigator() {
         this.updateElementsNavigator();
-        
-        // Add Text button handler
-        if (this.dom.addTextBtn) {
-            this.dom.addTextBtn.addEventListener('click', () => {
-                this.addTextBlock();
-            });
-        }
-        
-        // Add Graphics button handler
-        if (this.dom.addGraphicsBtn) {
-            this.dom.addGraphicsBtn.addEventListener('click', () => {
-                this.showGraphicsPanel();
-            });
-        }
     }
     
     // Update Elements Navigator with current elements
@@ -4256,350 +3832,78 @@ class GridGenerator {
         
         // Add text blocks
         this.textBlocks.forEach(block => {
-            // Пропускаем скрытые блоки (через toggle visibility)
-            if (block.visible === false) return;
+            const styleName = this.getStyleDisplayName(block.styleRef);
+            const blockNumber = this.getBlockNumber(block.id);
+            const formattedNumber = blockNumber.toString().padStart(2, '0');
+            const name = `${styleName} ${formattedNumber}`;
             
-            // Получаем имя из первых символов контента
-            let displayName = block.content.trim().substring(0, 15);
-            if (block.content.trim().length > 15) {
-                displayName = displayName + '...';
-            }
-            // Если текст пустой, используем стандартное имя
-            if (!displayName) {
-                const styleName = this.getStyleDisplayName(block.styleRef);
-                const blockNumber = this.getBlockNumber(block.id);
-                const formattedNumber = blockNumber.toString().padStart(2, '0');
-                displayName = `${styleName} ${formattedNumber}`;
-            }
+            const button = document.createElement('button');
+            button.className = 'element-item';
+            button.textContent = name;
+            button.dataset.elementType = 'text';
+            button.dataset.elementId = block.id;
             
-            // Создаем элемент (с особым оформлением, если deleting)
-            this.createElementItem(displayName, 'text', block.id, true, block.deleting);
-        });
-        
-        // Add graphics blocks
-        if (this.graphicsBlocks) {
-            this.graphicsBlocks.forEach(block => {
-                // Пропускаем скрытые блоки (через toggle visibility)
-                if (block.visible === false) return;
-                
-                const displayName = block.name || 'Graphic';
-                this.createElementItem(displayName, 'graphics', block.id, true, block.deleting);
-            });
-        }
-        
-        // Add icons block
-        if (this.iconsBlock && this.iconsBlock.visible !== false) {
-            this.createElementItem('Icons', 'icons', null, true, this.iconsBlock.deleting);
-        }
-        
-        // Add claim block
-        if (this.claimBlock && this.claimBlock.visible !== false) {
-            this.createElementItem('Claim', 'claim', null, true, this.claimBlock.deleting);
-        }
-    }
-    
-    // Create element item with actions (visibility and delete)
-    createElementItem(name, type, blockId, isVisible, isDeleting = false) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'element-item-wrapper';
-        
-        // Если элемент в состоянии удаления, добавляем класс и особое оформление
-        if (isDeleting) {
-            wrapper.classList.add('deleting');
-        }
-            
-        const button = document.createElement('button');
-        button.className = 'element-item';
-        button.dataset.elementType = type;
-        if (blockId) button.dataset.elementId = blockId;
-        
-        // Text span
-        const textSpan = document.createElement('span');
-        textSpan.className = 'element-item-text';
-        textSpan.textContent = isDeleting ? 'Undo' : name;
-        button.appendChild(textSpan);
-        
-        // Если в режиме удаления, добавляем обработчик для Undo
-        if (isDeleting) {
-            button.addEventListener('click', (e) => {
-                e.stopPropagation();
-                // Снимаем флаг удаления
-                if (type === 'text' && blockId) {
-                    const block = this.textBlocks.find(b => b.id === blockId);
-                    if (block) {
-                        delete block.deleting;
-                    }
-                } else if (type === 'graphics' && blockId) {
-                    const block = this.graphicsBlocks?.find(b => b.id === blockId);
-                    if (block) {
-                        delete block.deleting;
-                    }
-                } else if (type === 'icons') {
-                    if (this.iconsBlock) {
-                        delete this.iconsBlock.deleting;
-                    }
-                } else if (type === 'claim') {
-                    if (this.claimBlock) {
-                        delete this.claimBlock.deleting;
-                    }
-                }
-                // Обновляем UI
-                this.updateGrid();
-            });
-        }
-        
-        // Если НЕ в режиме удаления, показываем иконки действий
-        if (!isDeleting) {
-            // Actions container
-            const actionsDiv = document.createElement('div');
-            actionsDiv.className = 'element-actions';
-            
-            // Visibility toggle button
-            const visibilityBtn = document.createElement('button');
-            visibilityBtn.className = 'element-action-btn';
-            const visIcon = document.createElement('span');
-            visIcon.className = 'element-action-icon';
-            visIcon.textContent = isVisible ? '👁' : '👁‍🗨';
-            visibilityBtn.appendChild(visIcon);
-            visibilityBtn.title = isVisible ? 'Hide' : 'Show';
-            visibilityBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.toggleElementVisibility(type, blockId);
+            button.addEventListener('click', () => {
+                this.selectElement('text', block.id);
             });
             
-            // Delete button
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'element-action-btn';
-            const delIcon = document.createElement('span');
-            delIcon.className = 'element-action-icon';
-            delIcon.textContent = '×';
-            deleteBtn.appendChild(delIcon);
-            deleteBtn.title = 'Delete';
-            deleteBtn.dataset.elementType = type;
-            if (blockId) deleteBtn.dataset.elementId = blockId;
-            deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.startDeleteElement(deleteBtn, type, blockId, name);
-            });
-            
-            actionsDiv.appendChild(visibilityBtn);
-            actionsDiv.appendChild(deleteBtn);
-            button.appendChild(actionsDiv);
-            
-            // Click handler for the main button (только если НЕ в режиме удаления)
-            button.addEventListener('click', (e) => {
-                // Не срабатывать при клике на иконки действий
-                if (e.target.closest('.element-action-btn')) {
-                    return;
-                }
-                this.selectElement(type, blockId);
-            });
-            
-            // Hover handlers (только если НЕ в режиме удаления)
+            // Hover handlers
             button.addEventListener('mouseenter', () => {
-                this.showElementBounds(type, blockId);
+                this.showElementBounds('text', block.id);
             });
             
             button.addEventListener('mouseleave', () => {
-                this.hideElementBounds(type, blockId);
+                this.hideElementBounds('text', block.id);
             });
-        }
-        
-        wrapper.appendChild(button);
-        this.dom.elementsList.appendChild(wrapper);
-    }
-    
-    // Toggle element visibility
-    toggleElementVisibility(type, blockId) {
-        if (type === 'text' && blockId) {
-            const block = this.textBlocks.find(b => b.id === blockId);
-            if (block) {
-                block.visible = block.visible === false ? true : false;
-                this.updateElementsNavigator();
-                this.updateGrid();
-            }
-        } else if (type === 'graphics' && blockId) {
-            const block = this.graphicsBlocks?.find(b => b.id === blockId);
-            if (block) {
-                block.visible = block.visible === false ? true : false;
-                this.updateElementsNavigator();
-                this.updateGrid();
-            }
-        } else if (type === 'icons') {
-            this.iconsBlock.visible = this.iconsBlock.visible === false ? true : false;
-            this.updateElementsNavigator();
-            this.updateGrid();
-        } else if (type === 'claim') {
-            this.claimBlock.visible = this.claimBlock.visible === false ? true : false;
-            this.updateElementsNavigator();
-            this.updateGrid();
-        }
-    }
-    
-    // Start delete element with progress bar
-    startDeleteElement(button, type, blockId, name) {
-        // ПОМЕЧАЕМ ОБЪЕКТ КАК "УДАЛЯЮЩИЙСЯ" (не скрываем полностью)
-        if (type === 'text' && blockId) {
-            const block = this.textBlocks.find(b => b.id === blockId);
-            if (block) {
-                block.deleting = true;
-            }
-            // Закрываем панель настроек, если она была открыта
-            if (this.currentEditingBlock && this.currentEditingBlock.id === blockId) {
-                this.closeParagraphPanel();
-            }
-        } else if (type === 'graphics' && blockId) {
-            const block = this.graphicsBlocks?.find(b => b.id === blockId);
-            if (block) {
-                block.deleting = true;
-            }
-            // Закрываем панель настроек графики, если она была открыта
-            if (this.currentEditingGraphicsId === blockId) {
-                this.closeGraphicsPanel();
-            }
-        } else if (type === 'icons') {
-            if (this.iconsBlock) {
-                this.iconsBlock.deleting = true;
-            }
-            // Закрываем панель настроек иконок
-            this.closeIconsPanel();
-        } else if (type === 'claim') {
-            if (this.claimBlock) {
-                this.claimBlock.deleting = true;
-            }
-            // Закрываем панель настроек claim
-            this.closeClaimPanel();
-        }
-        
-        // Обновляем сетку (объект скрыт с флагом deleting)
-        this.updateGrid();
-        
-        // Таймер для окончательного удаления (3 секунды)
-        setTimeout(() => {
-            // Проверяем, что объект все еще помечен как deleting
-            // (если пользователь нажал Undo, флаг будет удален)
-            let stillDeleting = false;
             
-            if (type === 'text' && blockId) {
-                const block = this.textBlocks.find(b => b.id === blockId);
-                stillDeleting = block?.deleting === true;
-            } else if (type === 'graphics' && blockId) {
-                const block = this.graphicsBlocks?.find(b => b.id === blockId);
-                stillDeleting = block?.deleting === true;
-            } else if (type === 'icons') {
-                stillDeleting = this.iconsBlock?.deleting === true;
-            } else if (type === 'claim') {
-                stillDeleting = this.claimBlock?.deleting === true;
-            }
+            this.dom.elementsList.appendChild(button);
+        });
+        
+        // Add icons block
+        if (this.iconsBlock) {
+            const button = document.createElement('button');
+            button.className = 'element-item';
+            button.textContent = 'Icons';
+            button.dataset.elementType = 'icons';
             
-            // Если флаг все еще установлен, окончательно удаляем
-            if (stillDeleting) {
-                if (type === 'text' && blockId) {
-                    const index = this.textBlocks.findIndex(b => b.id === blockId);
-                    if (index !== -1) {
-                        this.textBlocks.splice(index, 1);
-                    }
-                } else if (type === 'graphics' && blockId) {
-                    if (this.graphicsBlocks) {
-                        const index = this.graphicsBlocks.findIndex(b => b.id === blockId);
-                        if (index !== -1) {
-                            this.graphicsBlocks.splice(index, 1);
-                        }
-                    }
-                } else if (type === 'icons') {
-                    this.iconsBlock = null;
-                } else if (type === 'claim') {
-                    this.claimBlock = null;
-                }
-                
-                // Обновляем UI после окончательного удаления
-                this.updateGrid();
-            }
-        }, 3000);
-    }
-    
-    // Delete element
-    deleteElement(type, blockId) {
-        if (type === 'text' && blockId) {
-            const index = this.textBlocks.findIndex(b => b.id === blockId);
-            if (index !== -1) {
-                this.textBlocks.splice(index, 1);
-                this.updateElementsNavigator();
-                this.updateGrid();
-            }
-        } else if (type === 'graphics' && blockId) {
-            const index = this.graphicsBlocks?.findIndex(b => b.id === blockId);
-            if (index !== -1) {
-                this.graphicsBlocks.splice(index, 1);
-                this.updateElementsNavigator();
-                this.updateGrid();
-            }
-        } else if (type === 'icons') {
-            this.iconsBlock = null;
-            this.updateElementsNavigator();
-            this.updateGrid();
-        } else if (type === 'claim') {
-            this.claimBlock = null;
-            this.updateElementsNavigator();
-            this.updateGrid();
-        }
-    }
-    
-    // Add new text block
-    addTextBlock() {
-        // Создаем новый уникальный ID
-        const newId = 'text-' + Date.now();
-        
-        // Создаем новый текстовый блок с дефолтным текстом
-        const newBlock = {
-            id: newId,
-            content: 'Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.',
-            styleRef: 'text',
-            x: 1,
-            row: 0,
-            baselineOffset: 0,
-            width: 3,
-            showBounds: false,
-            visible: true
-        };
-        
-        this.textBlocks.push(newBlock);
-        this.updateElementsNavigator();
-        this.updateGrid();
-        
-        // Открываем панель редактирования для нового блока
-        setTimeout(() => {
-            this.selectElement('text', newId);
-        }, 100);
-    }
-    
-    // Add new graphics block
-    addGraphicsBlock(svgContent, name, originalWidth, originalHeight) {
-        if (!this.graphicsBlocks) {
-            this.graphicsBlocks = [];
+            button.addEventListener('click', () => {
+                this.selectElement('icons');
+            });
+            
+            // Hover handlers
+            button.addEventListener('mouseenter', () => {
+                this.showElementBounds('icons');
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                this.hideElementBounds('icons');
+            });
+            
+            this.dom.elementsList.appendChild(button);
         }
         
-        // Создаем новый уникальный ID
-        const newId = 'graphics-' + Date.now();
-        
-        // Создаем новый графический блок
-        const newBlock = {
-            id: newId,
-            name: name,
-            svgContent: svgContent,
-            heightInModules: 3,
-            x: 1,
-            row: 0,
-            baselineOffset: 0,
-            showBounds: false,
-            visible: true,
-            originalWidth: originalWidth,
-            originalHeight: originalHeight
-        };
-        
-        this.graphicsBlocks.push(newBlock);
-        this.updateElementsNavigator();
-        this.updateGrid();
+        // Add claim block
+        if (this.claimBlock) {
+            const button = document.createElement('button');
+            button.className = 'element-item';
+            button.textContent = 'Claim';
+            button.dataset.elementType = 'claim';
+            
+            button.addEventListener('click', () => {
+                this.selectElement('claim');
+            });
+            
+            // Hover handlers
+            button.addEventListener('mouseenter', () => {
+                this.showElementBounds('claim');
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                this.hideElementBounds('claim');
+            });
+            
+            this.dom.elementsList.appendChild(button);
+        }
     }
     
     // Select and highlight element
@@ -4614,12 +3918,6 @@ class GridGenerator {
         // Open appropriate settings panel
         if (type === 'text' && blockId) {
             this.showParagraphPanel(blockId);
-            
-            // Set active state on button
-            const button = this.dom.elementsList.querySelector(`[data-element-id="${blockId}"]`);
-            if (button) button.classList.add('active');
-        } else if (type === 'graphics' && blockId) {
-            this.showGraphicsEditPanel(blockId);
             
             // Set active state on button
             const button = this.dom.elementsList.querySelector(`[data-element-id="${blockId}"]`);
@@ -4646,15 +3944,6 @@ class GridGenerator {
             bounds.setAttribute('fill-opacity', '0');
         });
         
-        // Also check for graphics groups
-        const allGraphicsGroups = document.querySelectorAll('[id^="graphics-group-"]');
-        allGraphicsGroups.forEach(group => {
-            if (group.boundsElement) {
-                group.boundsElement.setAttribute('stroke-opacity', '0');
-                group.boundsElement.setAttribute('fill-opacity', '0');
-            }
-        });
-        
         // Highlight selected element
         if (type === 'text' && blockId) {
             const bounds = document.getElementById(`bounds-${blockId}`);
@@ -4666,17 +3955,6 @@ class GridGenerator {
                 setTimeout(() => {
                     bounds.setAttribute('stroke-opacity', '0');
                     bounds.setAttribute('fill-opacity', '0');
-                }, 2000);
-            }
-        } else if (type === 'graphics' && blockId) {
-            const graphicsGroup = document.getElementById(`graphics-group-${blockId}`);
-            if (graphicsGroup && graphicsGroup.boundsElement) {
-                graphicsGroup.boundsElement.setAttribute('stroke-opacity', '0.8');
-                graphicsGroup.boundsElement.setAttribute('fill-opacity', '0.1');
-                
-                setTimeout(() => {
-                    graphicsGroup.boundsElement.setAttribute('stroke-opacity', '0');
-                    graphicsGroup.boundsElement.setAttribute('fill-opacity', '0');
                 }, 2000);
             }
         } else if (type === 'icons') {
@@ -4714,12 +3992,6 @@ class GridGenerator {
                 bounds.setAttribute('stroke-opacity', '0.5');
                 bounds.setAttribute('fill-opacity', '0.05');
             }
-        } else if (type === 'graphics' && blockId) {
-            const graphicsGroup = document.getElementById(`graphics-group-${blockId}`);
-            if (graphicsGroup && graphicsGroup.boundsElement) {
-                graphicsGroup.boundsElement.setAttribute('stroke-opacity', '0.5');
-                graphicsGroup.boundsElement.setAttribute('fill-opacity', '0.05');
-            }
         } else if (type === 'icons') {
             const iconsGroup = document.getElementById('icons-group');
             if (iconsGroup && iconsGroup.boundsElement) {
@@ -4744,12 +4016,6 @@ class GridGenerator {
             if (bounds) {
                 bounds.setAttribute('stroke-opacity', '0');
                 bounds.setAttribute('fill-opacity', '0');
-            }
-        } else if (type === 'graphics' && blockId) {
-            const graphicsGroup = document.getElementById(`graphics-group-${blockId}`);
-            if (graphicsGroup && graphicsGroup.boundsElement) {
-                graphicsGroup.boundsElement.setAttribute('stroke-opacity', '0');
-                graphicsGroup.boundsElement.setAttribute('fill-opacity', '0');
             }
         } else if (type === 'icons') {
             const iconsGroup = document.getElementById('icons-group');
@@ -5128,8 +4394,7 @@ class GridGenerator {
         // Если панель настроек открыта для этого блока, обновляем значения в полях
         if (this.currentEditingBlock && this.currentEditingBlock.id === block.id) {
             if (this.dom.paragraphXInput) {
-                // Column всегда целое число
-                this.dom.paragraphXInput.value = Math.round(block.x);
+                this.dom.paragraphXInput.value = block.x;
             }
             if (this.dom.paragraphRowInput) {
                 this.dom.paragraphRowInput.value = block.row + 1;
@@ -5354,31 +4619,16 @@ class GridGenerator {
         
         // Draw text blocks, icons and claim on front panel (if enabled)
         if (this.settings.showObjects) {
-            // Draw text blocks on front panel (only visible and not deleting)
+            // Draw text blocks on front panel
             this.textBlocks.forEach(block => {
-                if (block.visible !== false && !block.deleting) {
-                    this.drawTextBlock(this.dom.svg, block, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
-                }
+                this.drawTextBlock(this.dom.svg, block, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
             });
             
-            // Draw graphics blocks on front panel (only visible and not deleting)
-            if (this.graphicsBlocks) {
-                this.graphicsBlocks.forEach(block => {
-                    if (block.visible !== false && !block.deleting) {
-                        this.drawGraphicsBlock(this.dom.svg, block, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
-                    }
-                });
-            }
+            // Draw icons block on front panel
+            this.drawIconsBlock(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
             
-            // Draw icons block on front panel (if visible and not deleting)
-            if (this.iconsBlock && this.iconsBlock.visible !== false && !this.iconsBlock.deleting) {
-                this.drawIconsBlock(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
-            }
-            
-            // Draw claim block on front panel (if visible and not deleting)
-            if (this.claimBlock && this.claimBlock.visible !== false && !this.claimBlock.deleting) {
-                this.drawClaimBlock(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
-            }
+            // Draw claim block on front panel
+            this.drawClaimBlock(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
         }
         
         // Update font size displays
@@ -6047,12 +5297,10 @@ class GridGenerator {
         const frontX = thickness;
         const frontY = thickness;
         
-        // Draw columns (in separate group, always export but hide if disabled)
+        // Draw columns if enabled (in separate group)
+        if (this.settings.showColumns) {
             const columnsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             columnsGroup.setAttribute('id', 'columns');
-        if (!this.settings.showColumns) {
-            columnsGroup.setAttribute('visibility', 'hidden');
-        }
             exportSvg.appendChild(columnsGroup);
             this.drawColumns(columnsGroup, frontX, frontY, frontWidth, frontHeight, scale);
             
@@ -6069,23 +5317,21 @@ class GridGenerator {
                 
                 // Bottom panel - horizontal columns (using columns parameters from front)
                 this.drawColumnsTopBottom(columnsGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
+            }
         }
         
-        // Draw rows (in separate group, always export but hide if disabled)
+        // Draw rows if enabled (in separate group)
+        if (this.settings.showRows) {
             const rowsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             rowsGroup.setAttribute('id', 'rows');
-        if (!this.settings.showRows) {
-            rowsGroup.setAttribute('visibility', 'hidden');
-        }
             exportSvg.appendChild(rowsGroup);
             this.drawRows(rowsGroup, frontX, frontY, frontWidth, frontHeight, scale);
+        }
         
-        // Draw baseline (in separate group, always export but hide if disabled)
+        // Draw baseline if enabled (in separate group)
+        if (this.settings.showBaseline) {
             const baselineGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             baselineGroup.setAttribute('id', 'baseline');
-        if (!this.settings.showBaseline) {
-            baselineGroup.setAttribute('visibility', 'hidden');
-        }
             exportSvg.appendChild(baselineGroup);
             
             // Front panel baseline
@@ -6104,6 +5350,7 @@ class GridGenerator {
                 
                 // Bottom panel - horizontal baseline (margin from top where it touches front)
                 this.drawBaselineTopBottom(baselineGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
+            }
         }
         
         // Add dimensions if enabled (in separate group)
@@ -6191,7 +5438,6 @@ class GridGenerator {
         settingsText += `Показывать колонки (Show Columns): ${this.settings.showColumns ? 'Да' : 'Нет'}\n`;
         settingsText += `Показывать строки (Show Rows): ${this.settings.showRows ? 'Да' : 'Нет'}\n`;
         settingsText += `Показывать базовую сетку (Show Baseline): ${this.settings.showBaseline ? 'Да' : 'Нет'}\n`;
-        settingsText += `Показывать объекты (Show Objects): ${this.settings.showObjects ? 'Да' : 'Нет'}\n`;
         settingsText += '\n';
         
         // Раздел 3: Стили текста - Headline
@@ -6226,67 +5472,12 @@ class GridGenerator {
             settingsText += `Baseline смещение внутри строки (Baseline Offset, mod): ${block.baselineOffset}\n`;
             settingsText += `Ширина (Width, columns): ${block.width}\n`;
             settingsText += `Показывать границы (Show Bounds): ${block.showBounds ? 'Да' : 'Нет'}\n`;
-            settingsText += `Видимость (Visible): ${block.visible !== false ? 'Да' : 'Нет'}\n`;
             settingsText += `\nСодержимое текста:\n`;
             settingsText += `${block.content}\n`;
             settingsText += `\n`;
         });
         
-        // Раздел 6: Графические блоки
-        if (this.graphicsBlocks && this.graphicsBlocks.length > 0) {
-            settingsText += '========================================\n';
-            settingsText += 'ГРАФИЧЕСКИЕ БЛОКИ\n';
-            settingsText += '========================================\n\n';
-            
-            this.graphicsBlocks.forEach((block, index) => {
-                const globalBaseline = block.row * this.settings.rowHeight + block.baselineOffset;
-                settingsText += `--- ГРАФИКА ${index + 1}: ${block.name || block.id} ---\n`;
-                settingsText += `ID: ${block.id}\n`;
-                settingsText += `Имя: ${block.name}\n`;
-                settingsText += `Колонка (Column): ${block.x}\n`;
-                settingsText += `Строка (Row): ${block.row}\n`;
-                settingsText += `Baseline (на всей сетке): ${globalBaseline}\n`;
-                settingsText += `Baseline смещение внутри строки (Baseline Offset, mod): ${block.baselineOffset}\n`;
-                settingsText += `Высота (Height, mod): ${block.heightInModules}\n`;
-                settingsText += `Оригинальные размеры (W×H): ${block.originalWidth} × ${block.originalHeight}\n`;
-                settingsText += `Видимость (Visible): ${block.visible !== false ? 'Да' : 'Нет'}\n`;
-                settingsText += `\n`;
-            });
-        }
-        
-        // Раздел 7: Иконки
-        if (this.iconsBlock) {
-            settingsText += '========================================\n';
-            settingsText += 'ИКОНКИ\n';
-            settingsText += '========================================\n\n';
-            const globalBaseline = this.iconsBlock.row * this.settings.rowHeight + this.iconsBlock.baselineOffset;
-            settingsText += `Колонка (Column): ${this.iconsBlock.x}\n`;
-            settingsText += `Строка (Row): ${this.iconsBlock.row}\n`;
-            settingsText += `Baseline (на всей сетке): ${globalBaseline}\n`;
-            settingsText += `Baseline смещение внутри строки (Baseline Offset, mod): ${this.iconsBlock.baselineOffset}\n`;
-            settingsText += `Высота (Height, mod): ${this.iconsBlock.heightInModules}\n`;
-            settingsText += `Оригинальные размеры (W×H): ${this.iconsBlock.originalWidth} × ${this.iconsBlock.originalHeight}\n`;
-            settingsText += `Видимость (Visible): ${this.iconsBlock.visible !== false ? 'Да' : 'Нет'}\n`;
-            settingsText += `\n`;
-        }
-        
-        // Раздел 8: Клейм
-        if (this.claimBlock) {
-            settingsText += '========================================\n';
-            settingsText += 'КЛЕЙМ (CLAIM)\n';
-            settingsText += '========================================\n\n';
-            const globalBaseline = this.claimBlock.row * this.settings.rowHeight + this.claimBlock.baselineOffset;
-            settingsText += `Колонка (Column): ${this.claimBlock.x}\n`;
-            settingsText += `Строка (Row): ${this.claimBlock.row}\n`;
-            settingsText += `Baseline (на всей сетке): ${globalBaseline}\n`;
-            settingsText += `Baseline смещение внутри строки (Baseline Offset, mod): ${this.claimBlock.baselineOffset}\n`;
-            settingsText += `Высота (Height, mod): ${this.claimBlock.heightInModules}\n`;
-            settingsText += `Оригинальные размеры (W×H): ${this.claimBlock.originalWidth} × ${this.claimBlock.originalHeight}\n`;
-            settingsText += `Видимость (Visible): ${this.claimBlock.visible !== false ? 'Да' : 'Нет'}\n`;
-            settingsText += `\n`;
-        }
-        
-        // Раздел 9: Вычисляемые параметры
+        // Раздел 6: Вычисляемые параметры
         settingsText += '========================================\n';
         settingsText += 'ВЫЧИСЛЯЕМЫЕ ПАРАМЕТРЫ\n';
         settingsText += '========================================\n\n';

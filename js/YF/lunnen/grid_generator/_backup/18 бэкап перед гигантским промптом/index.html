@@ -241,13 +241,6 @@
             
             <section class="control-section">
                 <div class="control-group">
-                    <div class="button-group">
-                        <button type="button" class="btn-add-object" id="addTextBtn">Add Text</button>
-                        <button type="button" class="btn-add-object" id="addGraphicsBtn">Add Graphics</button>
-                    </div>
-                </div>
-                
-                <div class="control-group">
                     <label class="checkbox-label">
                         <input type="checkbox" id="showObjects" checked aria-label="Show all objects">
                         <span>Show objects</span>
@@ -274,15 +267,6 @@
                 </h3>
                 
                 <div class="collapsible-content collapsed" id="headlineContent">
-                <div class="control-group">
-                    <label for="headlineStyleDropdown">
-                        <select id="headlineStyleDropdown" class="style-select" aria-label="Select text style">
-                            <option value="headline">Headline</option>
-                            <option value="text">Text</option>
-                        </select>
-                    </label>
-                </div>
-                
                 <div class="control-group">
                     <label for="headlineSizeSlider">
                         <span>Size <span class="unit">mod</span></span>
@@ -313,6 +297,22 @@
                         <span>x-height</span>
                     </label>
                 </div>
+                
+                <div class="control-group">
+                    <label>
+                        <span>Font Weight</span>
+                    </label>
+                    <fieldset>
+                        <legend class="sr-only">Font weight selection</legend>
+                        <div class="segmented-control" role="radiogroup" aria-label="Font weight selection">
+                            <input type="radio" name="headlineFontWeight" value="400" id="headlineFontWeightRegular" aria-label="Regular weight">
+                            <label for="headlineFontWeightRegular">Regular</label>
+                            
+                            <input type="radio" name="headlineFontWeight" value="500" id="headlineFontWeightMedium" checked aria-label="Medium weight">
+                            <label for="headlineFontWeightMedium">Medium</label>
+                        </div>
+                    </fieldset>
+                </div>
                 </div>
             </section>
             
@@ -327,15 +327,6 @@
                 </h3>
                 
                 <div class="collapsible-content collapsed" id="textContent">
-                <div class="control-group">
-                    <label for="textStyleDropdown">
-                        <select id="textStyleDropdown" class="style-select" aria-label="Select text style">
-                            <option value="headline">Headline</option>
-                            <option value="text" selected>Text</option>
-                        </select>
-                    </label>
-                </div>
-                
                 <div class="control-group">
                     <label for="textSizeSlider">
                         <span>Size <span class="unit">mod</span></span>
@@ -366,6 +357,22 @@
                         <span>x-height</span>
                     </label>
                 </div>
+                
+                <div class="control-group">
+                    <label>
+                        <span>Font Weight</span>
+                    </label>
+                    <fieldset>
+                        <legend class="sr-only">Font weight selection</legend>
+                        <div class="segmented-control" role="radiogroup" aria-label="Font weight selection">
+                            <input type="radio" name="textFontWeight" value="400" id="textFontWeightRegular" aria-label="Regular weight">
+                            <label for="textFontWeightRegular">Regular</label>
+                            
+                            <input type="radio" name="textFontWeight" value="500" id="textFontWeightMedium" checked aria-label="Medium weight">
+                            <label for="textFontWeightMedium">Medium</label>
+                        </div>
+                    </fieldset>
+                </div>
                 </div>
             </section>
         </div>
@@ -378,19 +385,6 @@
             <span class="drag-icon" aria-hidden="true">⋮⋮</span>
         </div>
         <div class="panel-content">
-            <section class="control-section">
-                <h3>Text Style</h3>
-                
-                <div class="control-group">
-                    <label for="paragraphStyleSelect">
-                        <select id="paragraphStyleSelect" class="style-select" aria-label="Text style">
-                            <option value="headline">Headline</option>
-                            <option value="text">Text</option>
-                        </select>
-                    </label>
-                </div>
-            </section>
-            
             <section class="control-section">
                 <h3>Position & Size</h3>
                 
@@ -417,7 +411,7 @@
                 
                 <div class="control-group">
                     <label for="paragraphWidthInput">
-                        <span>Width <span class="unit">col</span></span>
+                        <span>Width <span class="unit">columns</span></span>
                         <input type="text" class="value-display" id="paragraphWidthInput" value="6" data-min="0.25" data-max="12" data-step="0.25" aria-label="Width in columns">
                     </label>
                 </div>
@@ -440,54 +434,41 @@
         </div>
     </aside>
 
-    <!-- Graphics Upload Panel -->
-    <aside class="controls-panel paragraph-settings-panel" id="graphicsPanel" style="display: none;" role="complementary" aria-label="Graphics upload">
-        <div class="panel-header" id="graphicsPanelHeader">
-            <span id="graphicsPanelTitle">Add Graphics</span>
+    <!-- Icons Settings Panel -->
+    <aside class="controls-panel paragraph-settings-panel" id="iconsPanel" style="display: none;" role="complementary" aria-label="Icons settings">
+        <div class="panel-header" id="iconsPanelHeader">
+            <span id="iconsPanelTitle">Icons Settings</span>
             <span class="drag-icon" aria-hidden="true">⋮⋮</span>
         </div>
         <div class="panel-content">
             <section class="control-section">
-                <h3>Upload SVG</h3>
-                
-                <div class="control-group">
-                    <div class="file-upload-area" id="fileUploadArea">
-                        <input type="file" id="svgFileInput" accept=".svg" style="display: none;">
-                        <div class="upload-placeholder">
-                            <p>Click or drag & drop SVG file here</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="control-section">
                 <h3>Position & Size</h3>
                 
                 <div class="control-group">
-                    <label for="graphicsXInput">
+                    <label for="iconsXInput">
                         <span>Column</span>
-                        <input type="text" class="value-display" id="graphicsXInput" value="1" data-min="1" data-max="12" aria-label="Column position">
+                        <input type="text" class="value-display" id="iconsXInput" value="1" data-min="1" data-max="12" aria-label="Column position">
                     </label>
                 </div>
                 
                 <div class="control-group">
-                    <label for="graphicsRowInput">
+                    <label for="iconsRowInput">
                         <span>Row</span>
-                        <input type="text" class="value-display" id="graphicsRowInput" value="1" data-min="1" data-max="50" aria-label="Row position">
+                        <input type="text" class="value-display" id="iconsRowInput" value="1" data-min="1" data-max="50" aria-label="Row position">
                     </label>
                 </div>
                 
                 <div class="control-group">
-                    <label for="graphicsBaselineInput">
+                    <label for="iconsBaselineInput">
                         <span>Baseline</span>
-                        <input type="text" class="value-display" id="graphicsBaselineInput" value="1" data-min="1" data-max="500" aria-label="Baseline position on grid">
+                        <input type="text" class="value-display" id="iconsBaselineInput" value="1" data-min="1" data-max="500" aria-label="Baseline position on grid">
                     </label>
                 </div>
                 
                 <div class="control-group">
-                    <label for="graphicsHeightInput">
-                        <span>Height <span class="unit">mod</span></span>
-                        <input type="text" class="value-display" id="graphicsHeightInput" value="3" data-min="1" data-max="20" data-step="0.25" aria-label="Height in modules">
+                    <label for="iconsHeightInput">
+                        <span>Height <span class="unit">modules</span></span>
+                        <input type="text" class="value-display" id="iconsHeightInput" value="3" data-min="1" data-max="20" data-step="0.25" aria-label="Height in modules">
                     </label>
                 </div>
             </section>
@@ -495,8 +476,58 @@
             <section class="control-section">
                 <div class="control-group">
                     <div class="button-group">
-                        <button type="button" class="btn-apply" id="graphicsApplyBtn">Add</button>
-                        <button type="button" class="btn-close" id="graphicsCloseBtn">Close</button>
+                        <button type="button" class="btn-apply" id="iconsApplyBtn">Apply</button>
+                        <button type="button" class="btn-close" id="iconsCloseBtn">Close</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </aside>
+
+    <!-- Claim Settings Panel -->
+    <aside class="controls-panel paragraph-settings-panel" id="claimPanel" style="display: none;" role="complementary" aria-label="Claim settings">
+        <div class="panel-header" id="claimPanelHeader">
+            <span id="claimPanelTitle">Claim Settings</span>
+            <span class="drag-icon" aria-hidden="true">⋮⋮</span>
+        </div>
+        <div class="panel-content">
+            <section class="control-section">
+                <h3>Position & Size</h3>
+                
+                <div class="control-group">
+                    <label for="claimXInput">
+                        <span>Column</span>
+                        <input type="text" class="value-display" id="claimXInput" value="7" data-min="1" data-max="12" aria-label="Column position">
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="claimRowInput">
+                        <span>Row</span>
+                        <input type="text" class="value-display" id="claimRowInput" value="1" data-min="1" data-max="50" aria-label="Row position">
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="claimBaselineInput">
+                        <span>Baseline</span>
+                        <input type="text" class="value-display" id="claimBaselineInput" value="1" data-min="1" data-max="500" aria-label="Baseline position on grid">
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="claimHeightInput">
+                        <span>Height <span class="unit">modules</span></span>
+                        <input type="text" class="value-display" id="claimHeightInput" value="3" data-min="1" data-max="20" data-step="0.25" aria-label="Height in modules">
+                    </label>
+                </div>
+            </section>
+            
+            <section class="control-section">
+                <div class="control-group">
+                    <div class="button-group">
+                        <button type="button" class="btn-apply" id="claimApplyBtn">Apply</button>
+                        <button type="button" class="btn-close" id="claimCloseBtn">Close</button>
                     </div>
                 </div>
             </section>

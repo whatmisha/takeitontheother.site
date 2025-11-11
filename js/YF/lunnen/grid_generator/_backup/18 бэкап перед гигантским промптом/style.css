@@ -935,12 +935,10 @@ textarea::placeholder {
     cursor: pointer;
     transition: all var(--transition-normal);
     font-family: inherit;
-    height: 36px;
 }
 
 .btn-apply:hover {
-    background: #000;
-    color: #fff;
+    opacity: 0.9;
 }
 
 .btn-close {
@@ -954,175 +952,18 @@ textarea::placeholder {
     cursor: pointer;
     transition: all var(--transition-normal);
     font-family: inherit;
-    height: 36px;
 }
 
 .btn-close:hover {
-    background: #000;
-    color: #fff;
-    border-color: #000;
+    background: var(--color-bg-input);
+    color: var(--color-text);
+    border-color: var(--color-text-dim);
 }
 
 .char-counter {
     font-size: 0.75rem;
     color: var(--color-text-dim);
     white-space: nowrap;
-}
-
-/* Add Object Buttons */
-.btn-add-object {
-    flex: 1;
-    padding: var(--spacing-sm) var(--spacing-lg);
-    background: transparent;
-    color: var(--color-text-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-button);
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    font-family: inherit;
-}
-
-.btn-add-object:hover {
-    background: #000;
-    color: #fff;
-    border-color: #000;
-}
-
-/* Style Select Dropdown */
-.style-select {
-    width: 100%;
-    padding: var(--spacing-md);
-    background: var(--color-bg-input);
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-    font-family: inherit;
-    font-size: 0.85rem;
-    border-radius: var(--radius-input);
-    margin-top: var(--spacing-md);
-    cursor: pointer;
-    transition: border-color var(--transition-normal);
-}
-
-.style-select:focus {
-    outline: none;
-    border-color: var(--color-text-dim);
-}
-
-.style-select option {
-    background: var(--color-bg-panel);
-    color: var(--color-text);
-    padding: var(--spacing-md);
-}
-
-/* File Upload Area */
-.file-upload-area {
-    border: 2px dashed var(--color-border);
-    border-radius: var(--radius-input);
-    padding: var(--spacing-4xl);
-    text-align: center;
-    cursor: pointer;
-    transition: border-color var(--transition-normal), background var(--transition-normal);
-    margin-top: var(--spacing-md);
-}
-
-.file-upload-area:hover {
-    border-color: var(--color-text-dim);
-    background: rgba(255, 255, 255, 0.02);
-}
-
-.file-upload-area.dragover {
-    border-color: var(--color-text);
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.upload-placeholder p {
-    margin: 0;
-    color: var(--color-text-secondary);
-    font-size: 0.85rem;
-}
-
-/* Element Item with Actions */
-.element-item-wrapper {
-    display: flex;
-    align-items: stretch;
-    gap: 0;
-    width: 100%;
-}
-
-.element-item {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-right: 4px;
-}
-
-.element-item-text {
-    flex: 1;
-}
-
-.element-actions {
-    display: flex;
-    gap: 2px;
-    margin-left: 8px;
-}
-
-.element-action-btn {
-    width: 18px;
-    height: 18px;
-    padding: 0;
-    background: transparent;
-    border: none;
-    color: var(--color-text-dim);
-    cursor: pointer;
-    font-size: 0.7rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 3px;
-    transition: all var(--transition-fast);
-    flex-shrink: 0;
-}
-
-.element-action-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--color-text);
-}
-
-.element-item-wrapper.deleting {
-    position: relative;
-    overflow: hidden;
-}
-
-.element-item-wrapper.deleting::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 0;
-    height: 100%;
-    background: #444;
-    animation: deleteProgress 3s linear forwards;
-    z-index: 0;
-    border-radius: 6px;
-}
-
-.element-item-wrapper.deleting .element-item {
-    position: relative;
-    z-index: 1;
-    justify-content: center;
-    color: var(--color-text);
-}
-
-@keyframes deleteProgress {
-    from {
-        width: 0;
-    }
-    to {
-        width: 100%;
-    }
 }
 
 .row-presets {
@@ -1602,10 +1443,6 @@ legend {
     color: var(--color-text);
     background: #2a2a2a;
     border-color: var(--color-text-dim);
-}
-
-.element-item-wrapper.deleting .element-item:hover {
-    background: transparent;
 }
 
 .element-item.active {
