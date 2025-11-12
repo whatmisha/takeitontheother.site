@@ -189,7 +189,6 @@ class GridGenerator {
             // Grid settings
             gridModule: 3.3076,  // mm - base unit for gutter and baseline (387mm / 117 modules: 4 margins + 95 row content + 18 gutters)
             margins: 2,  // in modules - margin from edges
-            marginsUnit: 'mod',  // 'mod' or 'mm' - unit for margins display
             columnCount: 12,
             rowCount: 19,  // will be calculated after DOM is ready
             rowHeight: 5,  // in modules (5 baseline per row)
@@ -361,7 +360,6 @@ class GridGenerator {
         
         // Initialize
         this.initEventListeners();
-        this.updateMarginsSliderHandler();  // Setup margins slider with correct unit handling
         this.initPanelDrag('controlsPanel', 'panelHeader');
         this.initPanelDrag('gridPanel', 'gridPanelHeader');
         this.initPanelDrag('textPanel', 'textPanelHeader');
@@ -455,8 +453,6 @@ class GridGenerator {
             gridModuleValue: document.getElementById('gridModuleValue'),
             marginsSlider: document.getElementById('marginsSlider'),
             marginsValue: document.getElementById('marginsValue'),
-            marginsUnitMod: document.getElementById('marginsUnitMod'),
-            marginsUnitMm: document.getElementById('marginsUnitMm'),
             columnCountSlider: document.getElementById('columnCountSlider'),
             columnCountValue: document.getElementById('columnCountValue'),
             rowCountSlider: document.getElementById('rowCountSlider'),
@@ -660,43 +656,10 @@ class GridGenerator {
             this.updateGrid();
         });
         
-        // Margins unit buttons
-        if (this.dom.marginsUnitMod) {
-            this.dom.marginsUnitMod.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (this.settings.marginsUnit !== 'mod') {
-                    this.switchMarginsUnit('mod');
-                }
-            });
-        }
-        if (this.dom.marginsUnitMm) {
-            this.dom.marginsUnitMm.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (this.settings.marginsUnit !== 'mm') {
-                    this.switchMarginsUnit('mm');
-                }
-            });
-        }
-        
-        // Style dropdowns в панели Text Styles - изменяют начертание (font-weight)
+        // Style dropdowns в панели Text Styles (пока без функционала, для будущего расширения)
         const headlineStyleDropdown = document.getElementById('headlineStyleDropdown');
         const textStyleDropdown = document.getElementById('textStyleDropdown');
-        
-        if (headlineStyleDropdown) {
-            headlineStyleDropdown.addEventListener('change', (e) => {
-                this.settings.headlineFontWeight = parseInt(e.target.value);
-                this.updateElementsNavigator();
-                this.updateGrid();
-            });
-        }
-        
-        if (textStyleDropdown) {
-            textStyleDropdown.addEventListener('change', (e) => {
-                this.settings.textFontWeight = parseInt(e.target.value);
-                this.updateElementsNavigator();
-                this.updateGrid();
-            });
-        }
+        // Дропдауны готовы для добавления новых стилей в будущем
         
         // Color preview button - toggle HSB picker
         this.dom.colorPreview.addEventListener('click', () => {
@@ -1009,18 +972,6 @@ class GridGenerator {
                 });
             }
         });
-        
-        // Initialize font weight dropdowns in Text Styles panel
-        const headlineStyleDropdown = document.getElementById('headlineStyleDropdown');
-        const textStyleDropdown = document.getElementById('textStyleDropdown');
-        
-        if (headlineStyleDropdown) {
-            headlineStyleDropdown.value = this.settings.headlineFontWeight.toString();
-        }
-        
-        if (textStyleDropdown) {
-            textStyleDropdown.value = this.settings.textFontWeight.toString();
-        }
     }
     
     updateDropdownSelection(dropdown, currentValue) {
@@ -3019,93 +2970,6 @@ class GridGenerator {
         config.onUpdate();
     }
     
-    // Switch margins unit between mod and mm
-    switchMarginsUnit(newUnit) {
-        // Margins are always stored in modules internally
-        const currentMarginsInMod = this.settings.margins;
-        const currentModule = this.settings.gridModule;
-        
-        // Update unit setting
-        this.settings.marginsUnit = newUnit;
-        
-        // Update active state of buttons
-        if (this.dom.marginsUnitMod && this.dom.marginsUnitMm) {
-            if (newUnit === 'mod') {
-                this.dom.marginsUnitMod.classList.add('active');
-                this.dom.marginsUnitMm.classList.remove('active');
-            } else {
-                this.dom.marginsUnitMm.classList.add('active');
-                this.dom.marginsUnitMod.classList.remove('active');
-            }
-        }
-        
-        // Update slider and value display based on new unit
-        const slider = this.dom.marginsSlider;
-        const valueDisplay = this.dom.marginsValue;
-        
-        if (newUnit === 'mm') {
-            // Display in mm (convert from modules using current module value)
-            const marginsInMm = currentMarginsInMod * currentModule;
-            const maxMarginsInMm = 10 * currentModule; // max 10 modules in mm
-            
-            // Update slider range for mm
-            slider.min = '0';
-            slider.max = maxMarginsInMm.toFixed(2);
-            slider.step = (currentModule * 0.01).toFixed(4); // Keep same precision
-            slider.value = marginsInMm.toFixed(2);
-            valueDisplay.value = marginsInMm.toFixed(2);
-            valueDisplay.dataset.min = '0';
-            valueDisplay.dataset.max = maxMarginsInMm.toFixed(2);
-        } else {
-            // Display in modules
-            const marginsInMod = currentMarginsInMod;
-            
-            // Restore slider range for modules
-            slider.min = '0';
-            slider.max = '10';
-            slider.step = '0.01';
-            slider.value = marginsInMod.toFixed(2);
-            valueDisplay.value = marginsInMod.toFixed(2);
-            valueDisplay.dataset.min = '0';
-            valueDisplay.dataset.max = '10';
-        }
-        
-        // Update SLIDER_CONFIG for margins to use correct conversion
-        this.updateMarginsSliderHandler();
-    }
-    
-    // Update margins slider handler to work with current unit
-    updateMarginsSliderHandler() {
-        const slider = this.dom.marginsSlider;
-        const valueDisplay = this.dom.marginsValue;
-        
-        // Remove old handlers by cloning the element
-        const newSlider = slider.cloneNode(true);
-        slider.parentNode.replaceChild(newSlider, slider);
-        this.dom.marginsSlider = newSlider;
-        
-        const handler = (e) => {
-            const value = parseFloat(e.target.value);
-            
-            if (this.settings.marginsUnit === 'mm') {
-                // Convert mm to modules for internal storage
-                const marginsInMod = value / this.settings.gridModule;
-                this.settings.margins = parseFloat(marginsInMod.toFixed(2));
-                valueDisplay.value = value.toFixed(2);
-            } else {
-                // Direct module value
-                this.settings.margins = parseFloat(value.toFixed(2));
-                valueDisplay.value = value.toFixed(2);
-            }
-            
-            this.updateGrid();
-        };
-        
-        newSlider.addEventListener('input', handler);
-        newSlider.addEventListener('change', handler);
-        newSlider.addEventListener('keyup', handler);
-    }
-    
     initValueInputs() {
         const valueInputs = document.querySelectorAll('.value-display');
         
@@ -3500,16 +3364,6 @@ class GridGenerator {
         return styleRef.charAt(0).toUpperCase() + styleRef.slice(1);
     }
     
-    getStyleFontWeight(styleRef) {
-        // Возвращаем начертание (Medium или Regular) вместо стиля
-        if (styleRef === 'headline') {
-            return this.settings.headlineFontWeight === 500 ? 'Medium' : 'Regular';
-        } else if (styleRef === 'text') {
-            return this.settings.textFontWeight === 500 ? 'Medium' : 'Regular';
-        }
-        return 'Medium';
-    }
-    
     // Конвертировать Row + BaselineOffset в Y (позиция в baseline модулях)
     rowBaselineToY(row, baselineOffset) {
         const rowHeight = this.settings.rowHeight;
@@ -3897,6 +3751,7 @@ class GridGenerator {
                 fill: 'rgba(255, 255, 255, 0.05)',
                 stroke: gridColor,
                 'stroke-width': '1',
+                'stroke-dasharray': '4,4',
                 'stroke-opacity': '0',
                 'fill-opacity': '0',
                 style: 'pointer-events: none; transition: opacity 0.2s;',
@@ -4090,6 +3945,7 @@ class GridGenerator {
             stroke: gridColor,
             'stroke-width': scale === 1 ? '0.5' : '1',
             'stroke-opacity': '0',
+            'stroke-dasharray': '4,4',
             style: 'pointer-events: all; transition: opacity 0.2s;',
             'data-block-id': block.id
         }, graphicsGroup);
@@ -5045,14 +4901,17 @@ class GridGenerator {
         
         // Add text blocks
         this.textBlocks.forEach(block => {
-            // Получаем имя из контента без ограничения (обрезка будет в CSS)
-            let displayName = block.content.trim();
-            // Если текст пустой, используем стандартное имя с начертанием
+            // Получаем имя из первых символов контента
+            let displayName = block.content.trim().substring(0, 15);
+            if (block.content.trim().length > 15) {
+                displayName = displayName + '...';
+            }
+            // Если текст пустой, используем стандартное имя
             if (!displayName) {
-                const fontWeight = this.getStyleFontWeight(block.styleRef);
+                const styleName = this.getStyleDisplayName(block.styleRef);
                 const blockNumber = this.getBlockNumber(block.id);
                 const formattedNumber = blockNumber.toString().padStart(2, '0');
-                displayName = `${fontWeight} ${formattedNumber}`;
+                displayName = `${styleName} ${formattedNumber}`;
             }
             
             // Создаем элемент (передаем реальное состояние видимости)
@@ -5147,10 +5006,7 @@ class GridGenerator {
             visibilityBtn.className = 'element-action-btn';
             const visIcon = document.createElement('span');
             visIcon.className = 'element-action-icon';
-            // SVG eye icon
-            visIcon.innerHTML = isVisible 
-                ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>'
-                : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1l14 14M6.5 6.5C6.2 6.9 6 7.4 6 8c0 1.1.9 2 2 2 .6 0 1.1-.2 1.5-.5m3-2C12.8 6.6 13 5.8 13 5c0-.7-1.3-2-5-2-1.2 0-2.3.3-3.2.7m6.7 6.8C10.7 11.3 9.5 12 8 12c-3.5 0-6.3-2.6-7-5 .3-1 1-2.2 2.2-3.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+            visIcon.textContent = isVisible ? '👁' : '👁‍🗨';
             visibilityBtn.appendChild(visIcon);
             visibilityBtn.title = isVisible ? 'Hide' : 'Show';
             visibilityBtn.addEventListener('click', (e) => {
@@ -5686,7 +5542,8 @@ class GridGenerator {
                 height: lineHeightInMm * wrappedLines.length,
                 fill: 'rgba(255, 0, 0, 0.1)',
                 stroke: 'red',
-                'stroke-width': scale === 1 ? '0.5' : '1'
+                'stroke-width': scale === 1 ? '0.5' : '1',
+                'stroke-dasharray': '4,4'
             }, container);
         }
     }
@@ -5800,7 +5657,8 @@ class GridGenerator {
                 height: lineHeightInMm * wrappedLines.length,
                 fill: 'rgba(0, 0, 255, 0.1)',
                 stroke: 'blue',
-                'stroke-width': scale === 1 ? '0.5' : '1'
+                'stroke-width': scale === 1 ? '0.5' : '1',
+                'stroke-dasharray': '4,4'
             }, container);
         }
     }

@@ -38,12 +38,7 @@
                         
                         <div class="control-group">
                             <label for="marginsSlider">
-                                <span>Margins 
-                                    <span class="unit-buttons">
-                                        <button type="button" class="unit-btn active" data-unit="mod" id="marginsUnitMod">mod</button>
-                                        <button type="button" class="unit-btn" data-unit="mm" id="marginsUnitMm">mm</button>
-                                    </span>
-                                </span>
+                                <span>Margins <span class="unit">mod</span></span>
                                 <input type="text" class="value-display" id="marginsValue" value="2.00" data-min="0" data-max="10" aria-label="Margins in modules">
                             </label>
                             <input type="range" id="marginsSlider" min="0" max="10" step="0.01" value="2" aria-label="Margins slider">
@@ -281,9 +276,9 @@
                 <div class="collapsible-content collapsed" id="headlineContent">
                 <div class="control-group">
                     <label for="headlineStyleDropdown">
-                        <select id="headlineStyleDropdown" class="style-select" aria-label="Select font weight">
-                            <option value="500">Medium</option>
-                            <option value="400">Regular</option>
+                        <select id="headlineStyleDropdown" class="style-select" aria-label="Select text style">
+                            <option value="headline">Headline</option>
+                            <option value="text">Text</option>
                         </select>
                     </label>
                 </div>
@@ -334,9 +329,9 @@
                 <div class="collapsible-content collapsed" id="textContent">
                 <div class="control-group">
                     <label for="textStyleDropdown">
-                        <select id="textStyleDropdown" class="style-select" aria-label="Select font weight">
-                            <option value="500" selected>Medium</option>
-                            <option value="400">Regular</option>
+                        <select id="textStyleDropdown" class="style-select" aria-label="Select text style">
+                            <option value="headline">Headline</option>
+                            <option value="text" selected>Text</option>
                         </select>
                     </label>
                 </div>
