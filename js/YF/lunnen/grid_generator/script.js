@@ -1083,21 +1083,25 @@ class GridGenerator {
                     const textBlockHeightInModules = this.getTextBlockHeightInModules(this.currentEditingBlock);
                     const maxY = maxYInBaseline - textBlockHeightInModules;
                     
-                    // Calculate Y position from row
+                    // Calculate Y position from row (baselineOffset всегда сбрасывается в 0)
                     const rowHeight = this.settings.rowHeight;
-                    const yPos = newRow * (rowHeight + 1) + this.currentEditingBlock.baselineOffset;
+                    const yPos = newRow * (rowHeight + 1);
                     
-                    // Constrain Y and convert back to row
+                    // Constrain Y
                     const constrainedY = Math.max(0, Math.min(yPos, maxY));
-                    const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
                     
-                    this.currentEditingBlock.row = Math.max(0, row);
-                    this.currentEditingBlock.baselineOffset = baselineOffset;
+                    // При изменении Row всегда ставим объект на первый baseline новой row
+                    // Поэтому вычисляем только row из constrainedY, а baselineOffset = 0
+                    const rowWithGutter = rowHeight + 1;
+                    const finalRow = Math.floor(constrainedY / rowWithGutter);
+                    
+                    this.currentEditingBlock.row = Math.max(0, finalRow);
+                    this.currentEditingBlock.baselineOffset = 0; // Всегда на первый baseline в row
                     this.dom.paragraphRowInput.value = this.currentEditingBlock.row + 1;
                     
                     // Update baseline input if needed
                     if (this.dom.paragraphBaselineInput) {
-                        const globalBaseline = this.currentEditingBlock.row * rowHeight + this.currentEditingBlock.baselineOffset;
+                        const globalBaseline = this.rowBaselineToY(this.currentEditingBlock.row, this.currentEditingBlock.baselineOffset);
                         this.dom.paragraphBaselineInput.value = globalBaseline + 1;
                     }
                     
@@ -1316,21 +1320,25 @@ class GridGenerator {
                 const iconHeightModules = this.iconsBlock.heightInModules;
                 const maxY = maxYInBaseline - iconHeightModules;
                 
-                // Convert row to Y position
+                // Convert row to Y position (baselineOffset сбрасывается в 0)
                 const rowHeight = this.settings.rowHeight;
-                const yPos = newRow * (rowHeight + 1) + this.iconsBlock.baselineOffset;
+                const yPos = newRow * (rowHeight + 1);
                 
                 // Constrain Y
                 const constrainedY = Math.max(0, Math.min(yPos, maxY));
-                const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
                 
-                this.iconsBlock.row = Math.max(0, row);
-                this.iconsBlock.baselineOffset = baselineOffset;
+                // При изменении Row всегда ставим объект на первый baseline новой row
+                // Поэтому вычисляем только row из constrainedY, а baselineOffset = 0
+                const rowWithGutter = rowHeight + 1;
+                const finalRow = Math.floor(constrainedY / rowWithGutter);
+                
+                this.iconsBlock.row = Math.max(0, finalRow);
+                this.iconsBlock.baselineOffset = 0; // Всегда на первый baseline в row
                 this.dom.iconsRowInput.value = this.iconsBlock.row + 1;
                 
                 // Update baseline input
                 if (this.dom.iconsBaselineInput) {
-                    const globalBaseline = this.iconsBlock.row * rowHeight + this.iconsBlock.baselineOffset;
+                    const globalBaseline = this.rowBaselineToY(this.iconsBlock.row, this.iconsBlock.baselineOffset);
                     this.dom.iconsBaselineInput.value = globalBaseline + 1;
                 }
                 
@@ -1471,7 +1479,7 @@ class GridGenerator {
                     // Update baselineOffset if needed
                     this.iconsBlock.baselineOffset = baselineOffset;
                     if (this.dom.iconsBaselineInput) {
-                        const globalBaseline = row * rowHeight + baselineOffset;
+                        const globalBaseline = this.rowBaselineToY(row, baselineOffset);
                         this.dom.iconsBaselineInput.value = globalBaseline + 1;
                     }
                     
@@ -1583,7 +1591,7 @@ class GridGenerator {
                     let currentValue = parseFloat(input.value);
                     if (isNaN(currentValue)) {
                         currentValue = property === 'baseline' 
-                            ? (this.iconsBlock.row * this.settings.rowHeight + this.iconsBlock.baselineOffset)
+                            ? this.rowBaselineToY(this.iconsBlock.row, this.iconsBlock.baselineOffset)
                             : this.iconsBlock[property];
                     }
                     
@@ -1629,8 +1637,37 @@ class GridGenerator {
         if (this.dom.claimRowInput) {
             this.dom.claimRowInput.addEventListener('change', () => {
                 const newRow = parseInt(this.dom.claimRowInput.value) - 1;
-                this.claimBlock.row = Math.max(0, newRow);
+                const module = this.settings.gridModule;
+                const margins = this.settings.margins;
+                
+                // Calculate max Y position
+                const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+                const maxYInBaseline = Math.floor(contentHeightMm / module);
+                const claimHeightModules = this.claimBlock.heightInModules;
+                const maxY = maxYInBaseline - claimHeightModules;
+                
+                // Convert row to Y position (baselineOffset сбрасывается в 0)
+                const rowHeight = this.settings.rowHeight;
+                const yPos = newRow * (rowHeight + 1);
+                
+                // Constrain Y
+                const constrainedY = Math.max(0, Math.min(yPos, maxY));
+                
+                // При изменении Row всегда ставим объект на первый baseline новой row
+                // Поэтому вычисляем только row из constrainedY, а baselineOffset = 0
+                const rowWithGutter = rowHeight + 1;
+                const finalRow = Math.floor(constrainedY / rowWithGutter);
+                
+                this.claimBlock.row = Math.max(0, finalRow);
+                this.claimBlock.baselineOffset = 0; // Всегда на первый baseline в row
                 this.dom.claimRowInput.value = this.claimBlock.row + 1;
+                
+                // Update baseline input
+                if (this.dom.claimBaselineInput) {
+                    const globalBaseline = this.rowBaselineToY(this.claimBlock.row, this.claimBlock.baselineOffset);
+                    this.dom.claimBaselineInput.value = globalBaseline + 1;
+                }
+                
                 this.updateGrid();
             });
         }
@@ -1842,7 +1879,7 @@ class GridGenerator {
                     let currentValue = parseFloat(input.value);
                     if (isNaN(currentValue)) {
                         currentValue = property === 'baseline' 
-                            ? (this.claimBlock.row * this.settings.rowHeight + this.claimBlock.baselineOffset)
+                            ? this.rowBaselineToY(this.claimBlock.row, this.claimBlock.baselineOffset)
                             : this.claimBlock[property];
                     }
                     
@@ -1923,19 +1960,23 @@ class GridGenerator {
                         const maxY = maxYInBaseline - graphicsHeightModules;
                         
                         const rowHeight = this.settings.rowHeight;
-                        const yPos = row0based * (rowHeight + 1) + block.baselineOffset;
+                        const yPos = row0based * (rowHeight + 1); // baselineOffset сбрасывается в 0
                         const constrainedY = Math.max(0, Math.min(yPos, maxY));
-                        const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
                         
-                        // Update baselineOffset if needed
-                        block.baselineOffset = baselineOffset;
+                        // При изменении Row всегда ставим объект на первый baseline новой row
+                        // Поэтому вычисляем только row из constrainedY, а baselineOffset = 0
+                        const rowWithGutter = rowHeight + 1;
+                        const finalRow = Math.floor(constrainedY / rowWithGutter);
+                        
+                        // Сбрасываем baselineOffset в 0 при изменении row
+                        block.baselineOffset = 0;
                         if (this.dom.graphicsBaselineInput) {
-                            const globalBaseline = this.rowBaselineToY(row, baselineOffset);
+                            const globalBaseline = this.rowBaselineToY(finalRow, 0);
                             this.dom.graphicsBaselineInput.value = globalBaseline + 1;
                         }
                         
                         // Return 1-based value for display
-                        return Math.max(0, row) + 1;
+                        return Math.max(0, finalRow) + 1;
                     }
                 },
                 { 
@@ -2073,7 +2114,7 @@ class GridGenerator {
                         let currentValue = parseFloat(newInput.value);
                         if (isNaN(currentValue)) {
                             currentValue = property === 'baseline' 
-                                ? (block.row * this.settings.rowHeight + block.baselineOffset + 1)
+                                ? (this.rowBaselineToY(block.row, block.baselineOffset) + 1)
                                 : block[property];
                         }
                         
@@ -2145,21 +2186,25 @@ class GridGenerator {
             const textBlockHeightInModules = this.getTextBlockHeightInModules(this.currentEditingBlock);
             const maxY = maxYInBaseline - textBlockHeightInModules;
             
-            // Calculate Y position from row
+            // Calculate Y position from row (baselineOffset всегда сбрасывается в 0)
             const rowHeight = this.settings.rowHeight;
-            const yPos = newValue * (rowHeight + 1) + this.currentEditingBlock.baselineOffset;
+            const yPos = newValue * (rowHeight + 1);
             
-            // Constrain Y and convert back to row
+            // Constrain Y
             const constrainedY = Math.max(0, Math.min(yPos, maxY));
-            const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
             
-            this.currentEditingBlock.row = Math.max(0, row);
-            this.currentEditingBlock.baselineOffset = baselineOffset;
+            // При изменении Row всегда ставим объект на первый baseline новой row
+            // Поэтому вычисляем только row из constrainedY, а baselineOffset = 0
+            const rowWithGutter = rowHeight + 1;
+            const finalRow = Math.floor(constrainedY / rowWithGutter);
+            
+            this.currentEditingBlock.row = Math.max(0, finalRow);
+            this.currentEditingBlock.baselineOffset = 0; // Всегда на первый baseline в row
             this.dom[inputId].value = this.currentEditingBlock.row + 1;
             
             // Update baseline input if needed
             if (this.dom.paragraphBaselineInput) {
-                const globalBaseline = this.currentEditingBlock.row * rowHeight + this.currentEditingBlock.baselineOffset;
+                const globalBaseline = this.rowBaselineToY(this.currentEditingBlock.row, this.currentEditingBlock.baselineOffset);
                 this.dom.paragraphBaselineInput.value = globalBaseline + 1;
             }
         } else if (property === 'width') {
@@ -2238,8 +2283,8 @@ class GridGenerator {
             this.dom.paragraphRowInput.value = block.row + 1;
         }
         if (this.dom.paragraphBaselineInput) {
-            // Показываем глобальный номер baseline на всей сетке
-            const globalBaseline = block.row * this.settings.rowHeight + block.baselineOffset;
+            // Показываем глобальный номер baseline на всей сетке (с учетом гутеров между rows)
+            const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
             this.dom.paragraphBaselineInput.value = globalBaseline + 1;
         }
         if (this.dom.paragraphWidthInput) {
@@ -6053,8 +6098,8 @@ class GridGenerator {
                 this.dom.paragraphRowInput.value = block.row + 1;
             }
             if (this.dom.paragraphBaselineInput) {
-                // Показываем глобальный номер baseline на всей сетке
-                const globalBaseline = block.row * this.settings.rowHeight + block.baselineOffset;
+                // Показываем глобальный номер baseline на всей сетке (с учетом гутеров)
+                const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
                 this.dom.paragraphBaselineInput.value = globalBaseline + 1;
             }
         }
@@ -7134,7 +7179,7 @@ class GridGenerator {
         settingsText += '========================================\n\n';
         
         this.textBlocks.forEach((block, index) => {
-            const globalBaseline = block.row * this.settings.rowHeight + block.baselineOffset;
+            const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
             settingsText += `--- БЛОК ${index + 1}: ${block.id.toUpperCase()} ---\n`;
             settingsText += `ID: ${block.id}\n`;
             settingsText += `Стиль (Style Reference): ${block.styleRef}\n`;
@@ -7157,7 +7202,7 @@ class GridGenerator {
             settingsText += '========================================\n\n';
             
             this.graphicsBlocks.forEach((block, index) => {
-                const globalBaseline = block.row * this.settings.rowHeight + block.baselineOffset;
+                const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
                 settingsText += `--- ГРАФИКА ${index + 1}: ${block.name || block.id} ---\n`;
                 settingsText += `ID: ${block.id}\n`;
                 settingsText += `Имя: ${block.name}\n`;
@@ -7177,7 +7222,7 @@ class GridGenerator {
             settingsText += '========================================\n';
             settingsText += 'ИКОНКИ\n';
             settingsText += '========================================\n\n';
-            const globalBaseline = this.iconsBlock.row * this.settings.rowHeight + this.iconsBlock.baselineOffset;
+            const globalBaseline = this.rowBaselineToY(this.iconsBlock.row, this.iconsBlock.baselineOffset);
             settingsText += `Колонка (Column): ${this.iconsBlock.x}\n`;
             settingsText += `Строка (Row): ${this.iconsBlock.row}\n`;
             settingsText += `Baseline (на всей сетке): ${globalBaseline}\n`;
@@ -7193,7 +7238,7 @@ class GridGenerator {
             settingsText += '========================================\n';
             settingsText += 'КЛЕЙМ (CLAIM)\n';
             settingsText += '========================================\n\n';
-            const globalBaseline = this.claimBlock.row * this.settings.rowHeight + this.claimBlock.baselineOffset;
+            const globalBaseline = this.rowBaselineToY(this.claimBlock.row, this.claimBlock.baselineOffset);
             settingsText += `Колонка (Column): ${this.claimBlock.x}\n`;
             settingsText += `Строка (Row): ${this.claimBlock.row}\n`;
             settingsText += `Baseline (на всей сетке): ${globalBaseline}\n`;
