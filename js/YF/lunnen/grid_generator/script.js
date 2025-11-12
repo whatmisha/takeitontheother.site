@@ -1141,14 +1141,14 @@ class GridGenerator {
                     const constrainedBaseline = Math.max(0, Math.min(globalBaseline, maxY));
                     
                     // Преобразуем глобальный номер baseline в row и baselineOffset
-                    const newRow = Math.floor(constrainedBaseline / rowHeight);
-                    const newBaselineOffset = constrainedBaseline % rowHeight;
+                    // Используем yToRowBaseline для правильного учета gutter между rows
+                    const { row: newRow, baselineOffset: newBaselineOffset } = this.yToRowBaseline(constrainedBaseline);
                     
                     this.currentEditingBlock.row = Math.max(0, newRow);
                     this.currentEditingBlock.baselineOffset = newBaselineOffset;
                     
                     // Обновляем отображение (на случай коррекции)
-                    const correctedGlobalBaseline = this.currentEditingBlock.row * rowHeight + this.currentEditingBlock.baselineOffset;
+                    const correctedGlobalBaseline = this.rowBaselineToY(this.currentEditingBlock.row, this.currentEditingBlock.baselineOffset);
                     this.dom.paragraphBaselineInput.value = correctedGlobalBaseline + 1;
                     this.dom.paragraphRowInput.value = this.currentEditingBlock.row + 1;
                     
@@ -1174,11 +1174,14 @@ class GridGenerator {
                     
                     newGlobalBaseline = Math.max(0, Math.min(newGlobalBaseline, maxY));
                     
-                    const rowHeight = this.settings.rowHeight;
-                    this.currentEditingBlock.row = Math.floor(newGlobalBaseline / rowHeight);
-                    this.currentEditingBlock.baselineOffset = newGlobalBaseline % rowHeight;
+                    // Используем yToRowBaseline для правильного учета gutter между rows
+                    const { row: newRow, baselineOffset: newBaselineOffset } = this.yToRowBaseline(newGlobalBaseline);
+                    this.currentEditingBlock.row = Math.max(0, newRow);
+                    this.currentEditingBlock.baselineOffset = newBaselineOffset;
                     
-                    this.dom.paragraphBaselineInput.value = newGlobalBaseline + 1;
+                    // Обновляем отображение с правильным значением
+                    const correctedGlobalBaseline = this.rowBaselineToY(this.currentEditingBlock.row, this.currentEditingBlock.baselineOffset);
+                    this.dom.paragraphBaselineInput.value = correctedGlobalBaseline + 1;
                     this.dom.paragraphRowInput.value = this.currentEditingBlock.row + 1;
                     this.updateGrid();
                 }
@@ -1356,7 +1359,7 @@ class GridGenerator {
                 this.iconsBlock.row = Math.max(0, row);
                 this.iconsBlock.baselineOffset = baselineOffset;
                 
-                const correctedGlobalBaseline = this.iconsBlock.row * rowHeight + this.iconsBlock.baselineOffset;
+                const correctedGlobalBaseline = this.rowBaselineToY(this.iconsBlock.row, this.iconsBlock.baselineOffset);
                 this.dom.iconsBaselineInput.value = correctedGlobalBaseline + 1;
                 this.dom.iconsRowInput.value = this.iconsBlock.row + 1;
                 this.updateGrid();
@@ -1650,7 +1653,7 @@ class GridGenerator {
                 }
                 
                 // Update Baseline input with actual value
-                const actualBaseline = this.claimBlock.row * rowHeight + this.claimBlock.baselineOffset;
+                const actualBaseline = this.rowBaselineToY(this.claimBlock.row, this.claimBlock.baselineOffset);
                 this.dom.claimBaselineInput.value = actualBaseline + 1;
                 
                 this.updateGrid();
@@ -1927,7 +1930,7 @@ class GridGenerator {
                         // Update baselineOffset if needed
                         block.baselineOffset = baselineOffset;
                         if (this.dom.graphicsBaselineInput) {
-                            const globalBaseline = row * rowHeight + baselineOffset;
+                            const globalBaseline = this.rowBaselineToY(row, baselineOffset);
                             this.dom.graphicsBaselineInput.value = globalBaseline + 1;
                         }
                         
@@ -1993,7 +1996,7 @@ class GridGenerator {
                             
                             if (this.dom.graphicsRowInput) this.dom.graphicsRowInput.value = row + 1;
                             if (this.dom.graphicsBaselineInput) {
-                                const globalBaseline = row * this.settings.rowHeight + baselineOffset;
+                                const globalBaseline = this.rowBaselineToY(row, baselineOffset);
                                 this.dom.graphicsBaselineInput.value = globalBaseline + 1;
                             }
                         }
@@ -2021,7 +2024,7 @@ class GridGenerator {
                     let value = parseFloat(newInput.value);
                     if (isNaN(value)) {
                         value = property === 'baseline' 
-                            ? (block.row * this.settings.rowHeight + block.baselineOffset + 1)
+                            ? (this.rowBaselineToY(block.row, block.baselineOffset) + 1)
                             : block[property];
                     }
                     
@@ -3683,7 +3686,7 @@ class GridGenerator {
     }
     
     // Измерить ширину текста в SVG точно
-    measureTextWidth(text, fontSize, scale) {
+    measureTextWidth(text, fontSize, scale, tracking = 0) {
         // Используем Canvas для точного измерения текста
         if (!this._measurementCanvas) {
             this._measurementCanvas = document.createElement('canvas');
@@ -3703,7 +3706,7 @@ class GridGenerator {
         // Учитываем трекинг (letter-spacing)
         // Трекинг применяется к каждому символу, кроме последнего
         if (text.length > 1) {
-            const trackingPx = this.settings.tracking * scaledFontSize;
+            const trackingPx = tracking * scaledFontSize;
             width += trackingPx * (text.length - 1);
         }
         
@@ -3711,14 +3714,14 @@ class GridGenerator {
     }
     
     // Разбить текст на строки с учетом ширины блока
-    wrapText(text, maxWidth, fontSize, scale) {
+    wrapText(text, maxWidth, fontSize, scale, tracking = 0) {
         const words = text.split(' ');
         const lines = [];
         let currentLine = '';
         
         words.forEach(word => {
             const testLine = currentLine ? `${currentLine} ${word}` : word;
-            const testWidth = this.measureTextWidth(testLine, fontSize, scale);
+            const testWidth = this.measureTextWidth(testLine, fontSize, scale, tracking);
             
             if (testWidth > maxWidth && currentLine !== '') {
                 lines.push(currentLine);
@@ -3743,6 +3746,7 @@ class GridGenerator {
         const isHeadline = block.styleRef === 'headline';
         const fontSize = isHeadline ? this.calculateFontSize() : this.calculateTextStyleFontSize();
         const lineHeightSetting = isHeadline ? this.settings.lineHeight : this.settings.textLineHeight;
+        const trackingSetting = isHeadline ? this.settings.tracking : this.settings.textTracking;
         
         // Get text content
         const inputLines = block.content.split('\n').filter(line => line.trim() !== '');
@@ -3756,7 +3760,7 @@ class GridGenerator {
         // Wrap text lines to fit width
         const wrappedLines = [];
         inputLines.forEach(line => {
-            const wrapped = this.wrapText(line, textBlockWidth, fontSize, 1);
+            const wrapped = this.wrapText(line, textBlockWidth, fontSize, 1, trackingSetting);
             wrappedLines.push(...wrapped);
         });
         
@@ -3816,7 +3820,7 @@ class GridGenerator {
         // Wrap text lines to fit width
         const wrappedLines = [];
         inputLines.forEach(line => {
-            const wrapped = this.wrapText(line, scaledTextWidth, fontSize, scale);
+            const wrapped = this.wrapText(line, scaledTextWidth, fontSize, scale, trackingSetting);
             wrappedLines.push(...wrapped);
         });
         
@@ -3888,6 +3892,20 @@ class GridGenerator {
         
         // Create bounds rectangle only for canvas (not for export)
         if (scale !== 1) {
+            // Create invisible hover area for the entire block
+            const hoverArea = this.createSVGElement('rect', {
+                id: `hover-area-${block.id}`,
+                x: textX,
+                y: frontY + position.y + topMargin,
+                width: scaledTextWidth,
+                height: lineHeightInMm * wrappedLines.length,
+                fill: 'transparent',
+                'fill-opacity': '0',
+                stroke: 'none',
+                style: 'pointer-events: all; cursor: move;',
+                'data-block-id': block.id
+            }, container);
+            
             const boundsRect = this.createSVGElement('rect', {
                 id: `bounds-${block.id}`,
                 x: textX,
@@ -3903,11 +3921,55 @@ class GridGenerator {
                 'data-block-id': block.id
             }, container);
             
-            // Store bounds element reference for hover effect
+            // Store bounds element reference
             textGroup.boundsElement = boundsRect;
+            textGroup.hoverArea = hoverArea;
             
-            // Attach event handlers
-            this.attachTextBlockHandlers(textGroup, block, frontX, frontY, scale);
+            // Attach event handlers to hoverArea instead of textGroup
+            this.attachTextBlockHandlers(hoverArea, block, frontX, frontY, scale);
+            
+            // Create resize handle on the right edge (after textGroup to be on top)
+            const handleWidth = 8 * scale;
+            const handleHeight = lineHeightInMm * wrappedLines.length;
+            const resizeHandle = this.createSVGElement('rect', {
+                id: `resize-handle-${block.id}`,
+                x: textX + scaledTextWidth - handleWidth / 2,
+                y: frontY + position.y + topMargin,
+                width: handleWidth,
+                height: handleHeight,
+                fill: gridColor,
+                'fill-opacity': '0',
+                stroke: 'none',
+                style: 'cursor: ew-resize; pointer-events: all; transition: opacity 0.2s;',
+                'data-block-id': block.id
+            }, container);
+            
+            // Store resize handle reference
+            textGroup.resizeHandle = resizeHandle;
+            
+            // Attach resize handler
+            this.attachResizeHandle(resizeHandle, block, frontX, frontY, scale);
+            
+            // Add hover handlers to show/hide bounds and handle
+            hoverArea.addEventListener('mouseenter', () => {
+                if (boundsRect && !this.textDragState.isDragging) {
+                    boundsRect.setAttribute('stroke-opacity', '0.5');
+                    boundsRect.setAttribute('fill-opacity', '0.05');
+                }
+                if (resizeHandle) {
+                    resizeHandle.setAttribute('fill-opacity', '0.2');
+                }
+            });
+            
+            hoverArea.addEventListener('mouseleave', () => {
+                if (boundsRect && !this.textDragState.isDragging) {
+                    boundsRect.setAttribute('stroke-opacity', '0');
+                    boundsRect.setAttribute('fill-opacity', '0');
+                }
+                if (resizeHandle) {
+                    resizeHandle.setAttribute('fill-opacity', '0');
+                }
+            });
         }
     }
     
@@ -3960,19 +4022,84 @@ class GridGenerator {
             document.addEventListener('mousemove', mouseMoveHandler);
             document.addEventListener('mouseup', mouseUpHandler);
         });
+    }
+    
+    // Attach resize handle for text block width
+    attachResizeHandle(handle, block, frontX, frontY, scale) {
+        let isResizing = false;
+        let startX = 0;
+        let startWidth = 0;
         
-        // Hover handlers для показа границ
-        textGroup.addEventListener('mouseenter', () => {
-            if (textGroup.boundsElement && !this.textDragState.isDragging) {
-                textGroup.boundsElement.setAttribute('stroke-opacity', '0.5');
-                textGroup.boundsElement.setAttribute('fill-opacity', '0.05');
+        handle.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            e.stopPropagation();
+            e.preventDefault();
+            
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = block.width || 1;
+            
+            // Show handle during resize
+            handle.setAttribute('fill-opacity', '0.3');
+            
+            const mouseMoveHandler = (moveEvent) => {
+                if (!isResizing) return;
+                
+                moveEvent.stopPropagation();
+                moveEvent.preventDefault();
+                
+                const dx = moveEvent.clientX - startX;
+                const module = this.settings.gridModule;
+                const margins = this.settings.margins;
+                const columnCount = this.settings.columnCount;
+                const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
+                const gutter = module;
+                
+                // Convert pixel movement to columns
+                const columnWithGutter = (columnWidth + gutter) * scale;
+                const deltaColumns = dx / columnWithGutter;
+                
+                // Calculate new width in columns
+                let newWidth = startWidth + deltaColumns;
+                
+                // Constrain to valid range (0.25 to remaining columns)
+                const minWidth = 0.25;
+                const maxWidth = columnCount - block.x + 1;
+                newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+                
+                // Round to nearest 0.25 column
+                const roundedWidth = Math.round(newWidth * 4) / 4;
+                
+                // Update block width only if changed significantly
+                if (Math.abs(roundedWidth - (block.width || 1)) >= 0.25) {
+                    block.width = roundedWidth;
+                    this.updateGrid();
+                }
+            };
+            
+            const mouseUpHandler = () => {
+                isResizing = false;
+                handle.setAttribute('fill-opacity', '0');
+                document.removeEventListener('mousemove', mouseMoveHandler);
+                document.removeEventListener('mouseup', mouseUpHandler);
+            };
+            
+            document.addEventListener('mousemove', mouseMoveHandler);
+            document.addEventListener('mouseup', mouseUpHandler);
+        });
+        
+        // Show handle on hover (higher opacity to override hoverArea)
+        handle.addEventListener('mouseenter', (e) => {
+            e.stopPropagation();
+            if (!isResizing) {
+                handle.setAttribute('fill-opacity', '0.5');
             }
         });
         
-        textGroup.addEventListener('mouseleave', () => {
-            if (textGroup.boundsElement && !this.textDragState.isDragging) {
-                textGroup.boundsElement.setAttribute('stroke-opacity', '0');
-                textGroup.boundsElement.setAttribute('fill-opacity', '0');
+        handle.addEventListener('mouseleave', (e) => {
+            e.stopPropagation();
+            if (!isResizing) {
+                handle.setAttribute('fill-opacity', '0.2');
             }
         });
     }
@@ -4183,9 +4310,7 @@ class GridGenerator {
                 block.x = Math.max(minX, Math.min(maxX, newX));
                 
                 // Convert Y from baseline grid to row and baseline offset
-                const rowHeight = this.settings.rowHeight;
-                const row = Math.floor(newY / rowHeight);
-                const baselineOffset = newY % rowHeight;
+                const { row, baselineOffset } = this.yToRowBaseline(newY);
                 
                 block.row = Math.max(0, row);
                 block.baselineOffset = Math.max(0, baselineOffset);
@@ -4195,7 +4320,7 @@ class GridGenerator {
                     if (this.dom.graphicsXInput) this.dom.graphicsXInput.value = block.x;
                     if (this.dom.graphicsRowInput) this.dom.graphicsRowInput.value = block.row + 1;
                     if (this.dom.graphicsBaselineInput) {
-                        const globalBaseline = block.row * this.settings.rowHeight + block.baselineOffset;
+                        const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
                         this.dom.graphicsBaselineInput.value = globalBaseline + 1;
                     }
                 }
@@ -4271,7 +4396,7 @@ class GridGenerator {
             this.dom.graphicsRowInput.value = block.row + 1;
         }
         if (this.dom.graphicsBaselineInput) {
-            const globalBaseline = block.row * this.settings.rowHeight + block.baselineOffset;
+            const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
             this.dom.graphicsBaselineInput.value = globalBaseline + 1;
         }
         if (this.dom.graphicsHeightInput) {
@@ -4547,7 +4672,7 @@ class GridGenerator {
                     if (this.dom.iconsXInput) this.dom.iconsXInput.value = block.x;
                     if (this.dom.iconsRowInput) this.dom.iconsRowInput.value = block.row + 1;
                     if (this.dom.iconsBaselineInput) {
-                        const globalBaseline = block.row * this.settings.rowHeight + block.baselineOffset;
+                        const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
                         this.dom.iconsBaselineInput.value = globalBaseline + 1;
                     }
                 }
@@ -4694,7 +4819,7 @@ class GridGenerator {
                     if (this.dom.claimXInput) this.dom.claimXInput.value = block.x;
                     if (this.dom.claimRowInput) this.dom.claimRowInput.value = block.row + 1;
                     if (this.dom.claimBaselineInput) {
-                        const globalBaseline = block.row * this.settings.rowHeight + block.baselineOffset;
+                        const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
                         this.dom.claimBaselineInput.value = globalBaseline + 1;
                     }
                 }
@@ -4886,7 +5011,7 @@ class GridGenerator {
             this.dom.iconsRowInput.value = block.row + 1;
         }
         if (this.dom.iconsBaselineInput) {
-            const globalBaseline = block.row * this.settings.rowHeight + block.baselineOffset;
+            const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
             this.dom.iconsBaselineInput.value = globalBaseline + 1;
         }
         if (this.dom.iconsHeightInput) {
@@ -4977,7 +5102,7 @@ class GridGenerator {
             this.dom.claimRowInput.value = block.row + 1;
         }
         if (this.dom.claimBaselineInput) {
-            const globalBaseline = block.row * this.settings.rowHeight + block.baselineOffset;
+            const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
             this.dom.claimBaselineInput.value = globalBaseline + 1;
         }
         if (this.dom.claimHeightInput) {
@@ -5606,7 +5731,7 @@ class GridGenerator {
         // Wrap text lines to fit width
         const wrappedLines = [];
         inputLines.forEach(line => {
-            const wrapped = this.wrapText(line, scaledTextWidth, fontSize, scale);
+            const wrapped = this.wrapText(line, scaledTextWidth, fontSize, scale, this.settings.tracking);
             wrappedLines.push(...wrapped);
         });
         
@@ -5717,7 +5842,7 @@ class GridGenerator {
         // Wrap text lines to fit width
         const wrappedLines = [];
         inputLines.forEach(line => {
-            const wrapped = this.wrapText(line, scaledTextWidth, fontSize, scale);
+            const wrapped = this.wrapText(line, scaledTextWidth, fontSize, scale, this.settings.textTracking);
             wrappedLines.push(...wrapped);
         });
         
