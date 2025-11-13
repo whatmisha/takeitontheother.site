@@ -288,10 +288,11 @@ export class SVGUtils {
         // Вставляем контент как innerHTML
         group.innerHTML = svgContent;
         
-        // Масштабируем если нужно
-        if (width || height) {
-            const viewBox = `0 0 ${width} ${height}`;
-            group.setAttribute('viewBox', viewBox);
+        if (typeof width === 'number' && !Number.isNaN(width)) {
+            group.dataset.originalWidth = String(width);
+        }
+        if (typeof height === 'number' && !Number.isNaN(height)) {
+            group.dataset.originalHeight = String(height);
         }
         
         return group;

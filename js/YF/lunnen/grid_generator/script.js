@@ -1,3 +1,47 @@
+import { DEFAULTS } from './src/core/Constants.js';
+import { GridCalculator } from './src/grid/GridCalculator.js';
+import { GridRenderer } from './src/grid/GridRenderer.js';
+import { GridPresets } from './src/grid/GridPresets.js';
+import { SVGExporter } from './src/svg/SVGExporter.js';
+import { ColorUtils } from './src/utils/ColorUtils.js';
+
+class LegacySettingsAdapter {
+    constructor(settings) {
+        this.settings = settings;
+    }
+
+    get(key) {
+        return this.settings[key];
+    }
+
+    set(key, value) {
+        this.settings[key] = value;
+    }
+
+    setMultiple(updates) {
+        Object.entries(updates).forEach(([key, value]) => {
+            this.set(key, value);
+        });
+    }
+
+    subscribe() {
+        return () => {};
+    }
+
+    toJSON() {
+        return JSON.stringify(this.settings, null, 2);
+    }
+
+    fromJSON(json) {
+        try {
+            const imported = JSON.parse(json);
+            this.setMultiple(imported);
+        } catch (error) {
+            console.error('Failed to parse settings JSON', error);
+        }
+    }
+}
+
 class GridGenerator {
     constructor() {
         // Slider configuration - defines behavior for each slider
@@ -179,37 +223,43 @@ class GridGenerator {
         
         // Settings
         this.settings = {
-            frontWidth: 382,  // mm
-            frontHeight: 387, // mm
-            thickness: 39,      // mm
-            showDimensions: false,
-            showLabels: false,
-            showSidePanels: true,
-            boxColor: '#dadde6',
+            frontWidth: DEFAULTS.FRONT_WIDTH,  // mm
+            frontHeight: DEFAULTS.FRONT_HEIGHT, // mm
+            thickness: DEFAULTS.THICKNESS,      // mm
+            showDimensions: DEFAULTS.SHOW_DIMENSIONS,
+            showLabels: DEFAULTS.SHOW_LABELS,
+            showSidePanels: DEFAULTS.SHOW_SIDE_PANELS,
+            boxColor: DEFAULTS.BOX_COLOR,
             // Grid settings
-            gridModule: 3.3076,  // mm - base unit for gutter and baseline (387mm / 117 modules: 4 margins + 95 row content + 18 gutters)
-            margins: 2,  // in modules - margin from edges
-            marginsUnit: 'mod',  // 'mod' or 'mm' - unit for margins display
-            columnCount: 12,
-            rowCount: 19,  // will be calculated after DOM is ready
-            rowHeight: 5,  // in modules (5 baseline per row)
-            linkMode: 'module',  // 'off', 'rows-height', or 'module'
-            showColumns: true,
-            showRows: true,
-            showBaseline: true,
-            showObjects: true,
+            gridModule: DEFAULTS.GRID_MODULE,  // mm - base unit for gutter and baseline
+            margins: DEFAULTS.MARGINS,  // in modules - margin from edges
+            marginsUnit: DEFAULTS.MARGINS_UNIT,  // 'mod' or 'mm' - unit for margins display
+            columnCount: DEFAULTS.COLUMN_COUNT,
+            rowCount: DEFAULTS.ROW_COUNT,  // will be recalculated after DOM is ready
+            rowHeight: DEFAULTS.ROW_HEIGHT,  // in modules (5 baseline per row)
+            linkMode: DEFAULTS.LINK_MODE,  // 'off', 'rows-height', or 'module'
+            showColumns: DEFAULTS.SHOW_COLUMNS,
+            showRows: DEFAULTS.SHOW_ROWS,
+            showBaseline: DEFAULTS.SHOW_BASELINE,
+            showObjects: DEFAULTS.SHOW_OBJECTS,
             // Text styles - только типографические параметры
-            headlineSize: 1.5,  // in modules
-            lineHeight: 2.0,    // in modules - интерлиньяж
-            tracking: -0.015,   // in em - межбуквенный интервал
-            useXHeight: false,   // false = cap height, true = x-height
-            headlineFontWeight: 500,  // 400 = Regular, 500 = Medium
-            textSize: 0.5,     // in modules
-            textLineHeight: 1.0,    // in modules - интерлиньяж
-            textTracking: 0,    // in em - межбуквенный интервал
-            useXHeight2: false,   // false = cap height, true = x-height
-            textFontWeight: 500  // 400 = Regular, 500 = Medium
+            headlineSize: DEFAULTS.HEADLINE_SIZE,  // in modules
+            lineHeight: DEFAULTS.LINE_HEIGHT,    // in modules - интерлиньяж
+            tracking: DEFAULTS.TRACKING,   // in em - межбуквенный интервал
+            useXHeight: DEFAULTS.USE_X_HEIGHT,   // false = cap height, true = x-height
+            headlineFontWeight: DEFAULTS.HEADLINE_FONT_WEIGHT,  // 400 = Regular, 500 = Medium
+            textSize: DEFAULTS.TEXT_SIZE,     // in modules
+            textLineHeight: DEFAULTS.TEXT_LINE_HEIGHT,    // in modules - интерлиньяж
+            textTracking: DEFAULTS.TEXT_TRACKING,    // in em - межбуквенный интервал
+            useXHeight2: DEFAULTS.USE_X_HEIGHT_2,   // false = cap height, true = x-height
+            textFontWeight: DEFAULTS.TEXT_FONT_WEIGHT  // 400 = Regular, 500 = Medium
         };
+        
+        this.settingsAdapter = new LegacySettingsAdapter(this.settings);
+        this.gridCalculator = new GridCalculator(this.settingsAdapter);
+        this.gridRenderer = new GridRenderer(this.settingsAdapter, this.gridCalculator);
+        this.gridPresets = new GridPresets(this.settingsAdapter, this.gridCalculator);
+        this.svgExporter = new SVGExporter(this.settingsAdapter);
         
         // Graphics blocks - UNIFIED array for all graphics (built-in and custom)
         // Initialize if not exists (for backward compatibility)
@@ -2765,82 +2815,21 @@ class GridGenerator {
     
     // Color conversion methods
     hexToRgb(hex) {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16)
-        } : null;
+        return ColorUtils.hexToRgb(hex);
     }
     
     rgbToHex(r, g, b) {
-        return '#' + [r, g, b].map(x => {
-            const hex = Math.round(x).toString(16);
-            return hex.length === 1 ? '0' + hex : hex;
-        }).join('');
+        return ColorUtils.rgbToHex(r, g, b);
     }
     
     rgbToHsb(r, g, b) {
-        r /= 255;
-        g /= 255;
-        b /= 255;
-        
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        const delta = max - min;
-        
-        let h = 0;
-        let s = max === 0 ? 0 : delta / max;
-        let v = max;
-        
-        if (delta !== 0) {
-            if (max === r) {
-                h = ((g - b) / delta + (g < b ? 6 : 0)) / 6;
-            } else if (max === g) {
-                h = ((b - r) / delta + 2) / 6;
-            } else {
-                h = ((r - g) / delta + 4) / 6;
-            }
-        }
-        
-        return {
-            h: Math.round(h * 360),
-            s: Math.round(s * 100),
-            b: Math.round(v * 100)
-        };
+        const { h, s, b: brightness } = ColorUtils.rgbToHsb(r, g, b);
+        return { h, s, b: brightness };
     }
     
     hsbToRgb(h, s, b) {
-        h = h / 360;
-        s = s / 100;
-        b = b / 100;
-        
-        let r, g, bl;
-        
-        if (s === 0) {
-            r = g = bl = b;
-        } else {
-            const i = Math.floor(h * 6);
-            const f = h * 6 - i;
-            const p = b * (1 - s);
-            const q = b * (1 - f * s);
-            const t = b * (1 - (1 - f) * s);
-            
-            switch (i % 6) {
-                case 0: r = b; g = t; bl = p; break;
-                case 1: r = q; g = b; bl = p; break;
-                case 2: r = p; g = b; bl = t; break;
-                case 3: r = p; g = q; bl = b; break;
-                case 4: r = t; g = p; bl = b; break;
-                case 5: r = b; g = p; bl = q; break;
-            }
-        }
-        
-        return {
-            r: r * 255,
-            g: g * 255,
-            b: bl * 255
-        };
+        const { r, g, b: blue } = ColorUtils.hsbToRgb(h, s, b);
+        return { r, g, b: blue };
     }
     
     updateHSBFromHex(hex) {
@@ -3279,23 +3268,8 @@ class GridGenerator {
     }
     
     calculateRowCount() {
-        // Calculate how many rows fit in the front height
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const rowHeightInModules = this.settings.rowHeight;
-        
-        // Available height = frontHeight - top and bottom margins
-        const topMargin = module * margins;
-        const bottomMargin = module * margins;
-        const availableHeight = this.settings.frontHeight - topMargin - bottomMargin;
-        
-        // Height of one row with gutter
-        const rowWithGutter = module * rowHeightInModules + module;
-        
-        // Calculate how many rows fit
-        const rowCount = Math.floor((availableHeight + module) / rowWithGutter);
-        
-        this.settings.rowCount = Math.max(1, rowCount);
+        const rowCount = this.gridCalculator.calculateRowCount();
+        this.settings.rowCount = rowCount;
         
         // Update UI
         if (this.dom.rowCountValue) {
@@ -3307,22 +3281,8 @@ class GridGenerator {
     }
     
     calculateRowHeight() {
-        // Calculate row height based on desired row count
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const rowCount = this.settings.rowCount;
-        
-        // Available height = frontHeight - top and bottom margins
-        const topMargin = module * margins;
-        const bottomMargin = module * margins;
-        const availableHeight = this.settings.frontHeight - topMargin - bottomMargin;
-        
-        // Formula: rowCount × rowHeight × module + (rowCount - 1) × module ≤ availableHeight
-        // Solve for rowHeight: rowHeight ≤ (availableHeight / module - rowCount + 1) / rowCount
-        const availableModules = availableHeight / module;
-        const rowHeight = Math.floor((availableModules - rowCount + 1) / rowCount);
-        
-        this.settings.rowHeight = Math.max(1, rowHeight);
+        const rowHeight = this.gridCalculator.calculateRowHeight();
+        this.settings.rowHeight = rowHeight;
         
         // Update UI
         if (this.dom.rowHeightValue) {
@@ -3334,19 +3294,7 @@ class GridGenerator {
     }
     
     calculateModule() {
-        // Calculate module size to fit rows perfectly with given row count and row height
-        const frontHeight = this.settings.frontHeight;
-        const margins = this.settings.margins;
-        const rowCount = this.settings.rowCount;
-        const rowHeight = this.settings.rowHeight;
-        
-        // Formula: 2×margins + rowCount×rowHeight + (rowCount-1)×1 = total modules
-        // Module = frontHeight / totalModules
-        const totalModules = 2 * margins + rowCount * rowHeight + (rowCount - 1);
-        const calculatedModule = frontHeight / totalModules;
-        
-        // Round down to 4 decimal places to ensure it fits
-        this.settings.gridModule = Math.floor(calculatedModule * 10000) / 10000;
+        this.settings.gridModule = this.gridCalculator.calculateModule();
         
         // Update UI
         if (this.dom.gridModuleValue) {
@@ -3358,97 +3306,47 @@ class GridGenerator {
     }
     
     findPerfectRowCombinations() {
-        // Find all combinations of rows and row height that fill the format perfectly
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const topMargin = module * margins;
-        const bottomMargin = module * margins;
-        const availableHeight = this.settings.frontHeight - topMargin - bottomMargin;
-        const availableModules = availableHeight / module;
-        
-        const combinations = [];
-        
-        // Try different row heights from 1 to 20
-        for (let rowHeight = 1; rowHeight <= 20; rowHeight++) {
-            // Calculate how many rows fit with this height
-            const rowWithGutter = rowHeight + 1; // row height + gutter (1 module)
-            const rowCount = Math.floor((availableModules + 1) / rowWithGutter);
-            
-            if (rowCount < 1) continue;
-            
-            // Check if this combination fills the format perfectly (or very close)
-            const totalUsed = rowCount * rowHeight + (rowCount - 1);
-            const remaining = availableModules - totalUsed;
-            
-            // Only include if remaining space is less than 1 module (perfect fit)
-            if (remaining >= 0 && remaining < 1) {
-                combinations.push({ rowCount, rowHeight, remaining });
-            }
-        }
-        
-        // Sort by row count (descending)
-        combinations.sort((a, b) => b.rowCount - a.rowCount);
-        
-        return combinations;
+        return this.gridCalculator.findPerfectRowCombinations();
     }
     
     generateRowPresets() {
         const container = document.getElementById('rowPresetsContainer');
         if (!container) return;
         
-        const combinations = this.findPerfectRowCombinations();
-        
-        // Clear existing buttons
-        container.innerHTML = '';
-        
-        // Create buttons for each combination
-        combinations.forEach(combo => {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'row-preset-btn';
-            button.textContent = `${combo.rowCount}:${combo.rowHeight}`;
-            button.setAttribute('aria-label', `Set ${combo.rowCount} rows with height ${combo.rowHeight}`);
+        this.gridPresets.setContainer(container);
+        this.gridPresets.generate((combo) => {
+            this.settings.rowCount = combo.rowCount;
+            this.settings.rowHeight = combo.rowHeight;
             
-            button.addEventListener('click', () => {
-                this.settings.rowCount = combo.rowCount;
-                this.settings.rowHeight = combo.rowHeight;
-                
-                // Enable rows-height link mode if it was disabled
-                if (this.settings.linkMode === 'off') {
-                    this.settings.linkMode = 'rows-height';
+            if (this.settings.linkMode === 'off') {
+                this.settings.linkMode = 'rows-height';
+                if (this.dom.linkModeRowsHeight) {
                     this.dom.linkModeRowsHeight.checked = true;
-                    this.updateLinkedControlsVisual();
                 }
-                
-                // Update UI
-                this.dom.rowCountValue.value = combo.rowCount;
-                this.dom.rowCountSlider.value = combo.rowCount;
-                this.dom.rowHeightValue.value = combo.rowHeight;
-                this.dom.rowHeightSlider.value = combo.rowHeight;
-                
-                this.updateGrid();
-                this.updatePresetButtons();
-            });
+                this.updateLinkedControlsVisual();
+            }
             
-            container.appendChild(button);
+            if (this.dom.rowCountValue) {
+                this.dom.rowCountValue.value = combo.rowCount;
+            }
+            if (this.dom.rowCountSlider) {
+                this.dom.rowCountSlider.value = combo.rowCount;
+            }
+            if (this.dom.rowHeightValue) {
+                this.dom.rowHeightValue.value = combo.rowHeight;
+            }
+            if (this.dom.rowHeightSlider) {
+                this.dom.rowHeightSlider.value = combo.rowHeight;
+            }
+            
+            this.updateGrid();
+            this.updatePresetButtons();
         });
-        
-        this.updatePresetButtons();
     }
     
     updatePresetButtons() {
-        const container = document.getElementById('rowPresetsContainer');
-        if (!container) return;
-        
-        const buttons = container.querySelectorAll('.row-preset-btn');
-        buttons.forEach(button => {
-            const [rowCount, rowHeight] = button.textContent.split(':').map(n => parseInt(n));
-            if (rowCount === this.settings.rowCount && rowHeight === this.settings.rowHeight) {
-                button.classList.add('active');
-            } else {
-                button.classList.remove('active');
-            }
-        });
+        if (!this.gridPresets) return;
+        this.gridPresets.updateActive();
     }
     
     // Функция для ограничения всех объектов в пределах сетки
@@ -3586,21 +3484,12 @@ class GridGenerator {
     
     // Конвертировать Row + BaselineOffset в Y (позиция в baseline модулях)
     rowBaselineToY(row, baselineOffset) {
-        const rowHeight = this.settings.rowHeight;
-        // Формула: row * (rowHeight + 1) + baselineOffset
-        // +1 это gutter между rows (1 модуль baseline)
-        return row * (rowHeight + 1) + baselineOffset;
+        return this.gridCalculator.rowBaselineToY(row, baselineOffset);
     }
     
     // Конвертировать Y (позиция в baseline модулях) в Row + BaselineOffset
     yToRowBaseline(y) {
-        const rowHeight = this.settings.rowHeight;
-        const rowWithGutter = rowHeight + 1;
-        
-        const row = Math.floor(y / rowWithGutter);
-        const baselineOffset = y % rowWithGutter;
-        
-        return { row, baselineOffset };
+        return this.gridCalculator.yToRowBaseline(y);
     }
     
     // Получить Y позицию блока в baseline модулях
@@ -6586,253 +6475,34 @@ class GridGenerator {
     }
     
     getContrastColor() {
-        // Calculate luminance of background color
-        const hex = this.settings.boxColor.replace('#', '');
-        const r = parseInt(hex.substr(0, 2), 16) / 255;
-        const g = parseInt(hex.substr(2, 2), 16) / 255;
-        const b = parseInt(hex.substr(4, 2), 16) / 255;
-        
-        // Convert to linear RGB
-        const toLinear = (c) => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-        const rLinear = toLinear(r);
-        const gLinear = toLinear(g);
-        const bLinear = toLinear(b);
-        
-        // Calculate relative luminance
-        let luminance = 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
-        
-        // Clamp luminance to avoid extreme values at pure black/white
-        // This prevents harsh contrast jumps at #000000 and #ffffff
-        const minLuminance = 0.02;
-        const maxLuminance = 0.98;
-        luminance = Math.max(minLuminance, Math.min(maxLuminance, luminance));
-        
-        // Store clamped luminance for opacity calculation
-        this.currentLuminance = luminance;
-        
-        // Return black for light backgrounds, white for dark backgrounds
-        // Use original luminance for color decision to keep accurate contrast
-        const originalLuminance = 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
-        return originalLuminance > 0.5 ? '#000000' : '#ffffff';
+        const bgColor = this.settings.boxColor;
+        this.currentLuminance = ColorUtils.getLuminance(bgColor);
+        return ColorUtils.getContrastColor(bgColor);
     }
     
     getGridOpacity(baseOpacity) {
-        // Calculate opacity based on luminance
-        // Maximum opacity when luminance is around 0.5 (medium brightness)
-        // Reduced opacity when luminance is close to extremes (very dark or very light)
-        
-        const luminance = this.currentLuminance || 0.5;
-        
-        // Use a parabolic curve: maximum at 0.5, minimum at edges
-        // Formula: 1 - (2 * luminance - 1)^2
-        // luminance is already clamped in getContrastColor()
-        const factor = 1 - Math.pow(2 * luminance - 1, 2);
-        
-        // Define opacity range
-        const minOpacity = baseOpacity * 0.3; // 30% of base opacity at extremes
-        const maxOpacity = baseOpacity;       // 100% of base opacity at medium
-        
-        // Calculate final opacity
-        const opacity = minOpacity + (maxOpacity - minOpacity) * factor;
-        
-        return opacity;
+        const luminance = this.currentLuminance ?? 0.5;
+        return ColorUtils.getGridOpacity(luminance, baseOpacity);
     }
     
     drawColumns(container, x, y, width, height, scale) {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const n = this.settings.columnCount;
-        const gridColor = this.getContrastColor();
-        const opacity = this.getGridOpacity(0.1);
-        
-        // Calculate column width based on available space
-        // Formula: columnWidth = (frontWidth - module × margins × 2 - module × (n - 1)) / n
-        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (n - 1)) / n;
-        
-        const margin = module * margins * scale;
-        const scaledColumnWidth = columnWidth * scale;
-        const gutter = module * scale;
-        
-        let currentX = x + margin;
-        
-        for (let i = 0; i < n; i++) {
-            this.createSVGElement('rect', {
-                x: currentX,
-                y: y + margin,
-                width: scaledColumnWidth,
-                height: height - 2 * margin,
-                fill: gridColor,
-                'fill-opacity': opacity,
-                stroke: 'none'
-            }, container);
-            
-            currentX += scaledColumnWidth + gutter;
-        }
+        this.gridRenderer.drawColumns(container, x, y, width, height, scale);
     }
     
     drawRows(container, x, y, width, height, scale) {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const n = this.settings.rowCount;
-        const rowHeightInModules = this.settings.rowHeight;
-        const gridColor = this.getContrastColor();
-        const opacity = this.getGridOpacity(0.1);
-        
-        const topMargin = module * margins * scale;
-        const sideMargin = module * margins * scale;
-        const rowHeight = module * rowHeightInModules * scale;
-        const rowWidth = width - 2 * sideMargin;
-        const gutter = module * scale;
-        
-        let currentY = y + topMargin;
-        
-        // Draw rows starting from top with fixed top margin
-        // Bottom margin will be whatever remains
-        for (let i = 0; i < n; i++) {
-            // Check if there's enough space for this row
-            if (currentY + rowHeight > y + height) {
-                break; // Stop if we exceed the available height
-            }
-            
-            this.createSVGElement('rect', {
-                x: x + sideMargin,
-                y: currentY,
-                width: rowWidth,
-                height: rowHeight,
-                fill: gridColor,
-                'fill-opacity': opacity,
-                stroke: 'none'
-            }, container);
-            
-            currentY += rowHeight + gutter;
-        }
+        this.gridRenderer.drawRows(container, x, y, width, height, scale);
     }
     
     drawBaseline(container, x, y, width, height, scale) {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const gridColor = this.getContrastColor();
-        const opacity = this.getGridOpacity(0.3);
-        const margin = module * margins * scale;
-        const baselineHeight = module * scale;
-        const baselineWidth = width - 2 * margin;
-        // For export: 0.25pt = 25.4/72*0.25 = 0.088194444... mm (since viewBox is in mm)
-        const strokeWidth = scale === 1 ? '0.088194444' : '0.5';
-        
-        let currentY = y + margin;
-        const maxY = y + height - margin;
-        
-        while (currentY + baselineHeight <= maxY) {
-            this.createSVGElement('rect', {
-                x: x + margin,
-                y: currentY,
-                width: baselineWidth,
-                height: baselineHeight,
-                fill: 'none',
-                stroke: gridColor,
-                'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
-            }, container);
-            
-            currentY += baselineHeight;
-        }
+        this.gridRenderer.drawBaseline(container, x, y, width, height, scale);
     }
     
     drawColumnsVerticalLeftRight(container, x, y, width, height, scale, side) {
-        // Left and right panels use rows parameters from front (rotated 90°)
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const n = this.settings.rowCount;
-        const rowHeightInModules = this.settings.rowHeight;
-        const gridColor = this.getContrastColor();
-        const opacity = this.getGridOpacity(0.1);
-        
-        // Calculate "column" height (which is row height from front panel)
-        let columnHeight = module * rowHeightInModules * scale;
-        const margin = module * margins * scale;
-        const gutter = module * scale;
-        
-        // Width with margins (same as front panel height logic)
-        let columnWidth = width - 2 * margin;
-        
-        // Ensure minimum column width and center if needed
-        const minColumnWidth = module * scale;
-        let columnX = x + margin;
-        if (columnWidth < minColumnWidth) {
-            columnWidth = minColumnWidth;
-            columnX = x + (width - columnWidth) / 2;
-        }
-        
-        // Ensure minimum column height
-        const minColumnHeight = module * scale;
-        if (columnHeight < minColumnHeight) {
-            columnHeight = minColumnHeight;
-        }
-        
-        let currentY = y + margin;
-        
-        // Draw n "columns" vertically (using row parameters)
-        for (let i = 0; i < n; i++) {
-            // Check if there's enough space for this column
-            if (currentY + columnHeight > y + height - margin) {
-                break;
-            }
-            
-            this.createSVGElement('rect', {
-                x: columnX,
-                y: currentY,
-                width: columnWidth,
-                height: columnHeight,
-                fill: gridColor,
-                'fill-opacity': opacity,
-                stroke: 'none'
-            }, container);
-            
-            currentY += columnHeight + gutter;
-        }
+        this.gridRenderer.drawColumnsVerticalLeftRight(container, x, y, width, height, scale, side);
     }
     
     drawColumnsTopBottom(container, x, y, width, height, scale, side) {
-        // Top and bottom panels use the same columns parameters as front
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const n = this.settings.columnCount;
-        const gridColor = this.getContrastColor();
-        const opacity = this.getGridOpacity(0.1);
-        
-        // Calculate column width (same as front panel)
-        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (n - 1)) / n;
-        
-        const margin = module * margins * scale;
-        const scaledColumnWidth = columnWidth * scale;
-        const gutter = module * scale;
-        
-        // Height with margins
-        let columnHeight = height - 2 * margin;
-        
-        // Ensure minimum column height and center if needed
-        const minColumnHeight = module * scale;
-        let columnY = y + margin;
-        if (columnHeight < minColumnHeight) {
-            columnHeight = minColumnHeight;
-            columnY = y + (height - columnHeight) / 2;
-        }
-        
-        let currentX = x + margin;
-        
-        for (let i = 0; i < n; i++) {
-            this.createSVGElement('rect', {
-                x: currentX,
-                y: columnY,
-                width: scaledColumnWidth,
-                height: columnHeight,
-                fill: gridColor,
-                'fill-opacity': opacity,
-                stroke: 'none'
-            }, container);
-            
-            currentX += scaledColumnWidth + gutter;
-        }
+        this.gridRenderer.drawColumnsTopBottom(container, x, y, width, height, scale, side);
     }
     
     drawBaselineVerticalLeftRight(container, x, y, width, height, scale, side) {
@@ -7162,22 +6832,8 @@ class GridGenerator {
         exportSvg.appendChild(claimGroup);
         this.drawClaimBlockForExport(claimGroup, frontX, frontY, frontWidth, frontHeight, scale);
         
-        // Convert to string
-        const serializer = new XMLSerializer();
-        const svgString = serializer.serializeToString(exportSvg);
-        
-        // Create blob and download
-        const blob = new Blob([svgString], { type: 'image/svg+xml' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `grid_width${frontWidth}_height${frontHeight}_thickness${thickness}_module${gridModule.toFixed(2)}_margins${margins.toFixed(2)}_columns${columnCount}_rows${rowCount}_rowheight${rowHeight}.svg`;
-        link.href = url;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        setTimeout(() => URL.revokeObjectURL(url), 100);
+        const filename = `grid_width${frontWidth}_height${frontHeight}_thickness${thickness}_module${gridModule.toFixed(2)}_margins${margins.toFixed(2)}_columns${columnCount}_rows${rowCount}_rowheight${rowHeight}.svg`;
+        this.svgExporter.exportToFile(exportSvg, filename);
     }
     
     exportSettings() {

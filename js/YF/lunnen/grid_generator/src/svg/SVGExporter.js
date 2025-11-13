@@ -46,8 +46,52 @@ export class SVGExporter {
      * @returns {string}
      */
     createExportSVG(content, width, height, viewBox) {
+        const hasValue = (value) => typeof value === 'string' && value.trim().length > 0;
+        const stripUnit = (value) => {
+            if (!hasValue(value)) return NaN;
+            const parsed = parseFloat(value);
+            return Number.isFinite(parsed) ? parsed : NaN;
+        };
+        const fallbackDimension = (primaryKey) => {
+            if (this.settings && typeof this.settings.get === 'function') {
+                const primary = this.settings.get(primaryKey);
+                const thickness = this.settings.get('thickness');
+                if (typeof primary === 'number') {
+                    const extra = typeof thickness === 'number' ? thickness * 2 : 0;
+                    return primary + extra;
+                }
+            }
+            return 100;
+        };
+        
+        const fallbackWidth = fallbackDimension('frontWidth');
+        const fallbackHeight = fallbackDimension('frontHeight');
+        
+        let resolvedViewBox = hasValue(viewBox) ? viewBox.trim() : '';
+        if (!resolvedViewBox) {
+            const numericWidth = stripUnit(width);
+            const numericHeight = stripUnit(height);
+            const vbWidth = Number.isFinite(numericWidth) ? numericWidth : fallbackWidth;
+            const vbHeight = Number.isFinite(numericHeight) ? numericHeight : fallbackHeight;
+            resolvedViewBox = `0 0 ${vbWidth} ${vbHeight}`;
+        }
+        
+        const viewBoxParts = resolvedViewBox.split(/\s+/);
+        const vbWidth = parseFloat(viewBoxParts[2]) || fallbackWidth;
+        const vbHeight = parseFloat(viewBoxParts[3]) || fallbackHeight;
+        
+        const normalizeDimension = (dimension, fallback) => {
+            if (hasValue(dimension)) {
+                return dimension.trim();
+            }
+            return `${fallback}mm`;
+        };
+        
+        const resolvedWidth = normalizeDimension(width, vbWidth);
+        const resolvedHeight = normalizeDimension(height, vbHeight);
+        
         return `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="${width}" height="${height}" viewBox="${viewBox}" 
+<svg width="${resolvedWidth}" height="${resolvedHeight}" viewBox="${resolvedViewBox}" 
      xmlns="http://www.w3.org/2000/svg" 
      xmlns:xlink="http://www.w3.org/1999/xlink">
     <title>Grid Generator Export</title>
