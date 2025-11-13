@@ -220,6 +220,13 @@ class GridGenerator {
         // Storage for deletion timers to allow cancellation
         this.deletionTimers = {};
         
+        // Undo/Redo history
+        this.history = [];
+        this.historyIndex = 0;
+        this.maxHistorySize = 50; // Maximum number of undo steps
+        this.isRestoringState = false; // Flag to prevent saving state during undo/redo
+        this.saveStateTimer = null; // Timer for debounced save
+        
         // SVG content will be loaded from graphics/icons.svg in initializeBuiltInGraphics()
         // Initialize built-in graphics blocks (Icons and Claim)
         // Icons block  
@@ -371,6 +378,9 @@ class GridGenerator {
         this.initPanelDrag('paragraphPanel', 'paragraphPanelHeader');
         this.initPanelDrag('iconsPanel', 'iconsPanelHeader');
         this.initPanelDrag('claimPanel', 'claimPanelHeader');
+        
+        // Save initial state for undo
+        this.saveState();
         this.initPanelDrag('graphicsPanel', 'graphicsPanelHeader');
         this.initPanelDrag('elementsNavigator', 'elementsNavigatorHeader');
         this.initValueInputs();
@@ -787,10 +797,17 @@ class GridGenerator {
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
+            // Cmd+E / Ctrl+E - Export SVG
             if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
                 e.preventDefault();
                 this.exportSVG();
             }
+            // Cmd+Z / Ctrl+Z - Undo
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                this.undo();
+            }
+            // Escape - Close modal
             if (e.key === 'Escape') {
                 if (this.dom.modalOverlay && this.dom.modalOverlay.classList.contains('active')) {
                     this.closeModal();
@@ -3068,6 +3085,11 @@ class GridGenerator {
         
         // Run update callback
         config.onUpdate();
+        
+        // Save state after making changes (only on user interaction, not during restore)
+        if (!this.isRestoringState) {
+            this.debounceSaveState();
+        }
     }
     
     // Switch margins unit between mod and mm
@@ -5438,17 +5460,17 @@ class GridGenerator {
     
     // Start delete element with progress bar
     startDeleteElement(button, type, blockId, name) {
+        // Save state before starting deletion
+        this.saveState();
+        
         // Создаем уникальный ключ для этого объекта
         const timerKey = `${type}-${blockId}`;
         
         // Если для этого объекта уже есть таймер удаления, отменяем его
         if (this.deletionTimers[timerKey]) {
-            console.log(`[DELETE] Cancelling existing timer for ${timerKey}`);
             clearTimeout(this.deletionTimers[timerKey]);
             delete this.deletionTimers[timerKey];
         }
-        
-        console.log(`[DELETE] Starting new delete timer for ${timerKey}`);
         
         // ПОМЕЧАЕМ ОБЪЕКТ КАК "УДАЛЯЮЩИЙСЯ" (не скрываем полностью)
         if (type === 'text' && blockId) {
@@ -5569,6 +5591,9 @@ class GridGenerator {
     
     // Add new text block
     addTextBlock() {
+        // Save state before adding
+        this.saveState();
+        
         // Создаем новый уникальный ID
         const newId = 'text-' + Date.now();
         
@@ -5597,6 +5622,9 @@ class GridGenerator {
     
     // Add new graphics block
     addGraphicsBlock(svgContent, name, originalWidth, originalHeight) {
+        // Save state before adding
+        this.saveState();
+        
         if (!this.graphicsBlocks) {
             this.graphicsBlocks = [];
         }
@@ -7344,6 +7372,176 @@ class GridGenerator {
         document.body.removeChild(link);
         
         setTimeout(() => URL.revokeObjectURL(url), 100);
+    }
+    
+    // Debounced save state - saves after user stops interacting for 300ms
+    debounceSaveState() {
+        if (this.saveStateTimer) {
+            clearTimeout(this.saveStateTimer);
+        }
+        this.saveStateTimer = setTimeout(() => {
+            this.saveState();
+        }, 300);
+    }
+    
+    // Save current state to history
+    saveState() {
+        // Don't save state if we're currently restoring from history
+        if (this.isRestoringState) {
+            return;
+        }
+        
+        // Create a deep copy of current state
+        const state = {
+            settings: JSON.parse(JSON.stringify(this.settings)),
+            textBlocks: JSON.parse(JSON.stringify(this.textBlocks)),
+            graphicsBlocks: JSON.parse(JSON.stringify(this.graphicsBlocks))
+        };
+        
+        // Check if state is different from the last saved state
+        if (this.history.length > 0) {
+            const lastState = this.history[this.historyIndex];
+            if (JSON.stringify(lastState) === JSON.stringify(state)) {
+                // State hasn't changed, don't save
+                return;
+            }
+        }
+        
+        // Remove any items after current index (when undoing and then making new changes)
+        this.history = this.history.slice(0, this.historyIndex + 1);
+        
+        // Add new state
+        this.history.push(state);
+        this.historyIndex = this.history.length - 1;
+        
+        // Limit history size
+        if (this.history.length > this.maxHistorySize) {
+            this.history.shift();
+            this.historyIndex--;
+        }
+        
+        console.log(`[UNDO] State saved. History size: ${this.history.length}, Index: ${this.historyIndex}`);
+    }
+    
+    // Undo last action
+    undo() {
+        console.log(`[UNDO] Current index: ${this.historyIndex}, History length: ${this.history.length}`);
+        
+        if (this.history.length < 2 || this.historyIndex <= 0) {
+            console.log('[UNDO] Nothing to undo');
+            return;
+        }
+        
+        this.historyIndex--;
+        console.log(`[UNDO] Moving to index: ${this.historyIndex}`);
+        this.restoreState(this.history[this.historyIndex]);
+    }
+    
+    // Restore state from history
+    restoreState(state) {
+        this.isRestoringState = true;
+        
+        try {
+            // Restore settings
+            Object.assign(this.settings, state.settings);
+            
+            // Restore text blocks
+            this.textBlocks = JSON.parse(JSON.stringify(state.textBlocks));
+            
+            // Restore graphics blocks
+            this.graphicsBlocks = JSON.parse(JSON.stringify(state.graphicsBlocks));
+            
+            // Update all UI elements to reflect restored state
+            this.updateAllSliders();
+            this.updateElementsNavigator();
+            this.calculateRowCount();
+            this.generateRowPresets();
+            this.updateGrid();
+            
+            // Close any open panels
+            this.closeParagraphPanel();
+            this.closeGraphicsPanel();
+            
+        } finally {
+            this.isRestoringState = false;
+        }
+    }
+    
+    // Update all sliders to reflect current settings
+    updateAllSliders() {
+        // Update dimension sliders
+        if (this.dom.frontWidthSlider) {
+            this.dom.frontWidthSlider.value = this.settings.frontWidth;
+            this.dom.frontWidthValue.value = this.settings.frontWidth.toFixed(1);
+        }
+        if (this.dom.frontHeightSlider) {
+            this.dom.frontHeightSlider.value = this.settings.frontHeight;
+            this.dom.frontHeightValue.value = this.settings.frontHeight.toFixed(1);
+        }
+        if (this.dom.thicknessSlider) {
+            this.dom.thicknessSlider.value = this.settings.thickness;
+            this.dom.thicknessValue.value = this.settings.thickness.toFixed(1);
+        }
+        
+        // Update grid sliders
+        if (this.dom.gridModuleSlider) {
+            this.dom.gridModuleSlider.value = this.settings.gridModule;
+            this.dom.gridModuleValue.value = this.settings.gridModule.toFixed(4);
+        }
+        if (this.dom.marginsSlider) {
+            if (this.settings.marginsUnit === 'mm') {
+                const marginsInMm = this.settings.margins * this.settings.gridModule;
+                this.dom.marginsSlider.value = marginsInMm.toFixed(2);
+                this.dom.marginsValue.value = marginsInMm.toFixed(2);
+            } else {
+                this.dom.marginsSlider.value = this.settings.margins;
+                this.dom.marginsValue.value = this.settings.margins.toFixed(2);
+            }
+        }
+        if (this.dom.columnCountSlider) {
+            this.dom.columnCountSlider.value = this.settings.columnCount;
+            this.dom.columnCountValue.value = this.settings.columnCount;
+        }
+        if (this.dom.rowCountSlider) {
+            this.dom.rowCountSlider.value = this.settings.rowCount;
+            this.dom.rowCountValue.value = this.settings.rowCount;
+        }
+        if (this.dom.rowHeightSlider) {
+            this.dom.rowHeightSlider.value = this.settings.rowHeight;
+            this.dom.rowHeightValue.value = this.settings.rowHeight;
+        }
+        
+        // Update checkboxes
+        if (this.dom.showColumns) this.dom.showColumns.checked = this.settings.showColumns;
+        if (this.dom.showRows) this.dom.showRows.checked = this.settings.showRows;
+        if (this.dom.showBaseline) this.dom.showBaseline.checked = this.settings.showBaseline;
+        if (this.dom.showDimensions) this.dom.showDimensions.checked = this.settings.showDimensions;
+        if (this.dom.showSidePanels) this.dom.showSidePanels.checked = this.settings.showSidePanels;
+        if (this.dom.showObjects) this.dom.showObjects.checked = this.settings.showObjects;
+        
+        // Update color
+        if (this.dom.hexColorInput) {
+            this.dom.hexColorInput.value = this.settings.boxColor;
+            this.updateColorPreview();
+            this.updateHSBFromHex(this.settings.boxColor);
+        }
+        
+        // Update link mode radio buttons
+        const linkModeRadios = document.querySelectorAll('input[name="linkMode"]');
+        linkModeRadios.forEach(radio => {
+            radio.checked = radio.value === this.settings.linkMode;
+        });
+        
+        // Update margins unit buttons
+        if (this.dom.marginsUnitMod && this.dom.marginsUnitMm) {
+            if (this.settings.marginsUnit === 'mod') {
+                this.dom.marginsUnitMod.classList.add('active');
+                this.dom.marginsUnitMm.classList.remove('active');
+            } else {
+                this.dom.marginsUnitMm.classList.add('active');
+                this.dom.marginsUnitMod.classList.remove('active');
+            }
+        }
     }
 }
 
