@@ -176,7 +176,7 @@ body {
     width: 300px;
     background: var(--color-bg-panel);
     border-radius: var(--radius);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
     border: none;
     padding: 0;
     overflow: hidden;
@@ -844,7 +844,7 @@ body {
     background: var(--color-bg-panel);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-input);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
     padding: 4px;
     min-width: 60px;
     max-height: 200px;
@@ -1425,7 +1425,7 @@ legend {
 .btn-fixed {
     background: var(--color-text);
     color: var(--color-bg);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
 }
 
 .btn-fixed:hover {
@@ -1477,7 +1477,7 @@ legend {
     border: 1px solid var(--color-text) !important;
     color: var(--color-text);
     transition: all var(--transition-slow);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
     width: 40px;
     height: 40px;
     min-width: 40px;
