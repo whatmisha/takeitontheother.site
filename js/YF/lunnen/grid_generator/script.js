@@ -217,6 +217,9 @@ class GridGenerator {
             this.graphicsBlocks = [];
         }
         
+        // Storage for deletion timers to allow cancellation
+        this.deletionTimers = {};
+        
         // SVG content will be loaded from graphics/icons.svg in initializeBuiltInGraphics()
         // Initialize built-in graphics blocks (Icons and Claim)
         // Icons block  
@@ -3072,6 +3075,24 @@ class GridGenerator {
         // Margins are always stored in modules internally
         const currentMarginsInMod = this.settings.margins;
         const currentModule = this.settings.gridModule;
+        const oldUnit = this.settings.marginsUnit;
+        
+        // Update slider and value display based on new unit
+        const slider = this.dom.marginsSlider;
+        const valueDisplay = this.dom.marginsValue;
+        
+        // Get current value from slider (in current unit)
+        const currentSliderValue = parseFloat(slider.value);
+        
+        // Calculate the actual margins in mm (physical size that should stay the same)
+        let actualMarginsInMm;
+        if (oldUnit === 'mm') {
+            // Already in mm, use current slider value
+            actualMarginsInMm = currentSliderValue;
+        } else {
+            // Convert from modules to mm
+            actualMarginsInMm = currentMarginsInMod * currentModule;
+        }
         
         // Update unit setting
         this.settings.marginsUnit = newUnit;
@@ -3087,26 +3108,24 @@ class GridGenerator {
             }
         }
         
-        // Update slider and value display based on new unit
-        const slider = this.dom.marginsSlider;
-        const valueDisplay = this.dom.marginsValue;
-        
         if (newUnit === 'mm') {
-            // Display in mm (convert from modules using current module value)
-            const marginsInMm = currentMarginsInMod * currentModule;
+            // Display in mm
             const maxMarginsInMm = 10 * currentModule; // max 10 modules in mm
             
             // Update slider range for mm
             slider.min = '0';
             slider.max = maxMarginsInMm.toFixed(2);
             slider.step = (currentModule * 0.01).toFixed(4); // Keep same precision
-            slider.value = marginsInMm.toFixed(2);
-            valueDisplay.value = marginsInMm.toFixed(2);
+            slider.value = actualMarginsInMm.toFixed(2);
+            valueDisplay.value = actualMarginsInMm.toFixed(2);
             valueDisplay.dataset.min = '0';
             valueDisplay.dataset.max = maxMarginsInMm.toFixed(2);
         } else {
-            // Display in modules
-            const marginsInMod = currentMarginsInMod;
+            // Display in modules - convert from mm to modules
+            const marginsInMod = actualMarginsInMm / currentModule;
+            
+            // Update internal storage
+            this.settings.margins = parseFloat(marginsInMod.toFixed(2));
             
             // Restore slider range for modules
             slider.min = '0';
@@ -3146,6 +3165,13 @@ class GridGenerator {
                 valueDisplay.value = value.toFixed(2);
             }
             
+            if (this.settings.linkMode === 'module') {
+                this.calculateModule();
+            } else {
+                this.calculateRowCount();
+            }
+            this.constrainAllObjectsToGrid();
+            this.generateRowPresets();
             this.updateGrid();
         };
         
@@ -5281,6 +5307,15 @@ class GridGenerator {
         if (isDeleting) {
             button.addEventListener('click', (e) => {
                 e.stopPropagation();
+                
+                // Отменяем таймер удаления
+                const timerKey = `${type}-${blockId}`;
+                if (this.deletionTimers[timerKey]) {
+                    console.log(`[UNDO] Cancelling timer for ${timerKey}`);
+                    clearTimeout(this.deletionTimers[timerKey]);
+                    delete this.deletionTimers[timerKey];
+                }
+                
                 // Снимаем флаг удаления
                 if (type === 'text' && blockId) {
                     const block = this.textBlocks.find(b => b.id === blockId);
@@ -5403,6 +5438,18 @@ class GridGenerator {
     
     // Start delete element with progress bar
     startDeleteElement(button, type, blockId, name) {
+        // Создаем уникальный ключ для этого объекта
+        const timerKey = `${type}-${blockId}`;
+        
+        // Если для этого объекта уже есть таймер удаления, отменяем его
+        if (this.deletionTimers[timerKey]) {
+            console.log(`[DELETE] Cancelling existing timer for ${timerKey}`);
+            clearTimeout(this.deletionTimers[timerKey]);
+            delete this.deletionTimers[timerKey];
+        }
+        
+        console.log(`[DELETE] Starting new delete timer for ${timerKey}`);
+        
         // ПОМЕЧАЕМ ОБЪЕКТ КАК "УДАЛЯЮЩИЙСЯ" (не скрываем полностью)
         if (type === 'text' && blockId) {
             const block = this.textBlocks.find(b => b.id === blockId);
@@ -5440,7 +5487,8 @@ class GridGenerator {
         this.updateGrid();
         
         // Таймер для окончательного удаления (3 секунды)
-        setTimeout(() => {
+        const timerId = setTimeout(() => {
+            console.log(`[DELETE] Timer expired for ${timerKey}, checking if still deleting...`);
             // Проверяем, что объект все еще помечен как deleting
             // (если пользователь нажал Undo, флаг будет удален)
             let stillDeleting = false;
@@ -5459,6 +5507,7 @@ class GridGenerator {
             
             // Если флаг все еще установлен, окончательно удаляем
             if (stillDeleting) {
+                console.log(`[DELETE] Object ${timerKey} is still deleting, removing permanently`);
                 if (type === 'text' && blockId) {
                     const index = this.textBlocks.findIndex(b => b.id === blockId);
                     if (index !== -1) {
@@ -5479,8 +5528,16 @@ class GridGenerator {
                 
                 // Обновляем UI после окончательного удаления
                 this.updateGrid();
+            } else {
+                console.log(`[DELETE] Object ${timerKey} was restored, not deleting`);
             }
+            
+            // Удаляем таймер из хранилища
+            delete this.deletionTimers[timerKey];
         }, 3000);
+        
+        // Сохраняем таймер для возможности отмены
+        this.deletionTimers[timerKey] = timerId;
     }
     
     // Delete element
