@@ -5159,8 +5159,15 @@ class GridGenerator {
         if (!this.dom.elementsList) return;
         
         // ============================================
-        // Итерация 6: Временно используем старый код
-        // ElementsNavigator будет доработан позже для полной интеграции
+        // Итерация 6: Используем ElementsNavigator если доступен
+        // ============================================
+        if (this.elementsNavigator) {
+            this.elementsNavigator.render(this.dom.elementsList);
+            return;
+        }
+        
+        // ============================================
+        // Старый код (для обратной совместимости)
         // ============================================
         // Clear existing items
         this.dom.elementsList.innerHTML = '';
@@ -6320,35 +6327,56 @@ class GridGenerator {
         // Draw text blocks, icons and claim on front panel (if enabled)
         if (this.settings.showObjects) {
             // ============================================
-            // Итерация 6: Временно используем старый код для browser view
-            // Рендереры будут использоваться для экспорта в будущем
-            // TODO: Доработать TextRenderer и GraphicsRenderer для полной поддержки интерактивности
+            // Итерация 6: Используем рендереры если доступны
             // ============================================
-            
-            // Draw text blocks on front panel (only visible and not deleting)
-            this.textBlocks.forEach(block => {
-                if (block.visible !== false && !block.deleting) {
-                    this.drawTextBlock(this.dom.svg, block, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
-                }
-            });
-            
-            // Draw graphics blocks on front panel (only visible and not deleting)
-            if (this.graphicsBlocks) {
-                this.graphicsBlocks.forEach(block => {
+            if (this.textRenderer && this.textBlockManager) {
+                // Создаем группу с трансформацией для правильного позиционирования
+                const frontGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                frontGroup.setAttribute('transform', `translate(${frontX}, ${frontY})`);
+                this.dom.svg.appendChild(frontGroup);
+                
+                // Получаем видимые блоки без deleting флага
+                const visibleTextBlocks = this.textBlockManager.getVisibleBlocks()
+                    .filter(block => !block.deleting);
+                this.textRenderer.renderAll(frontGroup, visibleTextBlocks, scale);
+            } else {
+                // Старый код для обратной совместимости
+                this.textBlocks.forEach(block => {
                     if (block.visible !== false && !block.deleting) {
-                        this.drawGraphicsBlock(this.dom.svg, block, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
+                        this.drawTextBlock(this.dom.svg, block, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
                     }
                 });
             }
             
-            // Draw icons block on front panel (if visible and not deleting)
-            if (this.iconsBlock && this.iconsBlock.visible !== false && !this.iconsBlock.deleting) {
-                this.drawIconsBlock(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
-            }
-            
-            // Draw claim block on front panel (if visible and not deleting)
-            if (this.claimBlock && this.claimBlock.visible !== false && !this.claimBlock.deleting) {
-                this.drawClaimBlock(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
+            if (this.graphicsRenderer && this.graphicsManager) {
+                // Создаем группу с трансформацией для правильного позиционирования
+                const frontGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                frontGroup.setAttribute('transform', `translate(${frontX}, ${frontY})`);
+                this.dom.svg.appendChild(frontGroup);
+                
+                // Получаем видимые блоки без deleting флага
+                const visibleGraphicsBlocks = this.graphicsManager.getVisibleBlocks()
+                    .filter(block => !block.deleting);
+                this.graphicsRenderer.renderAll(frontGroup, visibleGraphicsBlocks, scale);
+            } else {
+                // Старый код для обратной совместимости
+                if (this.graphicsBlocks) {
+                    this.graphicsBlocks.forEach(block => {
+                        if (block.visible !== false && !block.deleting) {
+                            this.drawGraphicsBlock(this.dom.svg, block, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
+                        }
+                    });
+                }
+                
+                // Draw icons block on front panel (if visible and not deleting)
+                if (this.iconsBlock && this.iconsBlock.visible !== false && !this.iconsBlock.deleting) {
+                    this.drawIconsBlock(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
+                }
+                
+                // Draw claim block on front panel (if visible and not deleting)
+                if (this.claimBlock && this.claimBlock.visible !== false && !this.claimBlock.deleting) {
+                    this.drawClaimBlock(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
+                }
             }
         }
         
@@ -7454,20 +7482,60 @@ class GridGenerator {
     // Elements initialization (Итерация 6)
     // ============================================
     initElementsManagers() {
-        // Менеджеры временно отключены - используем старый код
-        // TODO: Доработать рендереры для полной поддержки интерактивности и baseline snap
-        // После доработки можно будет включить менеджеры обратно
-        
-        // Создаём менеджеры элементов (для будущего использования)
+        // Создаём менеджеры элементов
         this.textBlockManager = new TextBlockManager(this.settingsModule, this.gridCalculator);
         this.textRenderer = new TextRenderer(this.settingsModule, this.gridCalculator);
+        
+        // Миграция данных из this.textBlocks в TextBlockManager
+        if (this.textBlocks && this.textBlocks.length > 0) {
+            this.textBlocks.forEach(block => {
+                this.textBlockManager.createBlock(block);
+            });
+            console.log(`✅ Migrated ${this.textBlocks.length} text blocks to TextBlockManager`);
+        }
+        
         this.graphicsManager = new GraphicsManager(this.settingsModule, this.gridCalculator);
         this.graphicsRenderer = new GraphicsRenderer(this.settingsModule, this.gridCalculator);
         
-        // Миграция данных НЕ выполняется - используем старые массивы this.textBlocks и this.graphicsBlocks
-        // ElementsNavigator также не инициализируется - используется старая логика updateElementsNavigator()
+        // Миграция данных из this.graphicsBlocks в GraphicsManager
+        if (this.graphicsBlocks && this.graphicsBlocks.length > 0) {
+            this.graphicsBlocks.forEach(block => {
+                // Конвертируем isBuiltIn в type: 'builtin' для совместимости
+                const migratedBlock = {
+                    ...block,
+                    type: block.isBuiltIn ? 'builtin' : 'custom'
+                };
+                delete migratedBlock.isBuiltIn; // Удаляем старое поле
+                
+                this.graphicsManager.createBlock(migratedBlock);
+            });
+            console.log(`✅ Migrated ${this.graphicsBlocks.length} graphics blocks to GraphicsManager`);
+        }
         
-        console.log('✅ Elements managers created (not active yet - using legacy code)');
+        // ElementsNavigator - управление списком элементов в UI
+        this.elementsNavigator = new ElementsNavigator(
+            this.textBlockManager,
+            this.graphicsManager,
+            {
+                onSelect: (type, id) => this.onElementSelect(type, id),
+                onDelete: (type, id) => this.onElementDelete(type, id),
+                onToggleVisibility: (type, id) => {
+                    if (type === 'text') {
+                        const block = this.textBlockManager.getBlock(id);
+                        if (block) {
+                            this.textBlockManager.updateBlock(id, { visible: !block.visible });
+                        }
+                    } else if (type === 'graphics') {
+                        const block = this.graphicsManager.getBlock(id);
+                        if (block) {
+                            this.graphicsManager.updateBlock(id, { visible: !block.visible });
+                        }
+                    }
+                    this.updateGrid();
+                },
+                onUpdate: () => this.updateGrid()
+            }
+        );
     }
 }
 

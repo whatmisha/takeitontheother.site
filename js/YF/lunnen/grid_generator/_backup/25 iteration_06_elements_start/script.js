@@ -4922,12 +4922,6 @@ class GridGenerator {
         // Update positions after dimensions are loaded (or use existing)
         this.updateBuiltInGraphicsPositions();
         
-        // ============================================
-        // Итерация 6: Инициализация Elements менеджеров
-        // ============================================
-        // Инициализируем менеджеры после загрузки встроенной графики
-        this.initElementsManagers();
-        
         // Update navigator and redraw grid
         this.updateElementsNavigator();
         this.updateGrid();
@@ -5158,10 +5152,6 @@ class GridGenerator {
     updateElementsNavigator() {
         if (!this.dom.elementsList) return;
         
-        // ============================================
-        // Итерация 6: Временно используем старый код
-        // ElementsNavigator будет доработан позже для полной интеграции
-        // ============================================
         // Clear existing items
         this.dom.elementsList.innerHTML = '';
         
@@ -5491,19 +5481,6 @@ class GridGenerator {
             this.updateElementsNavigator();
             this.updateGrid();
         }
-    }
-    
-    // ============================================
-    // Callbacks для ElementsNavigator (Итерация 6)
-    // ============================================
-    onElementSelect(type, id) {
-        // Вызываем существующий метод selectElement
-        this.selectElement(type, id);
-    }
-    
-    onElementDelete(type, id) {
-        // Вызываем существующий метод deleteElement
-        this.deleteElement(type, id);
     }
     
     // Add new text block
@@ -6319,12 +6296,6 @@ class GridGenerator {
         
         // Draw text blocks, icons and claim on front panel (if enabled)
         if (this.settings.showObjects) {
-            // ============================================
-            // Итерация 6: Временно используем старый код для browser view
-            // Рендереры будут использоваться для экспорта в будущем
-            // TODO: Доработать TextRenderer и GraphicsRenderer для полной поддержки интерактивности
-            // ============================================
-            
             // Draw text blocks on front panel (only visible and not deleting)
             this.textBlocks.forEach(block => {
                 if (block.visible !== false && !block.deleting) {
@@ -7454,20 +7425,17 @@ class GridGenerator {
     // Elements initialization (Итерация 6)
     // ============================================
     initElementsManagers() {
-        // Менеджеры временно отключены - используем старый код
-        // TODO: Доработать рендереры для полной поддержки интерактивности и baseline snap
-        // После доработки можно будет включить менеджеры обратно
+        // Создаём менеджеры элементов
+        // TODO: Полная миграция this.textBlocks → TextBlockManager
+        // TODO: Полная миграция this.graphicsBlocks → GraphicsManager
         
-        // Создаём менеджеры элементов (для будущего использования)
-        this.textBlockManager = new TextBlockManager(this.settingsModule, this.gridCalculator);
-        this.textRenderer = new TextRenderer(this.settingsModule, this.gridCalculator);
-        this.graphicsManager = new GraphicsManager(this.settingsModule, this.gridCalculator);
-        this.graphicsRenderer = new GraphicsRenderer(this.settingsModule, this.gridCalculator);
+        // this.textBlockManager = new TextBlockManager(this.settingsModule, this.gridCalculator);
+        // this.textRenderer = new TextRenderer(this.settingsModule, this.gridCalculator);
+        // this.graphicsManager = new GraphicsManager(this.settingsModule, this.gridCalculator);
+        // this.graphicsRenderer = new GraphicsRenderer(this.settingsModule, this.gridCalculator);
+        // this.elementsNavigator = new ElementsNavigator(...);
         
-        // Миграция данных НЕ выполняется - используем старые массивы this.textBlocks и this.graphicsBlocks
-        // ElementsNavigator также не инициализируется - используется старая логика updateElementsNavigator()
-        
-        console.log('✅ Elements managers created (not active yet - using legacy code)');
+        // Пока продолжаем использовать старую систему this.textBlocks и this.graphicsBlocks
     }
 }
 
