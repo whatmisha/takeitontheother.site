@@ -55,38 +55,40 @@
 ## 🎯 Следующий шаг: Итерация 7 (SVG Export)
 
 **Сложность:** Низкая (~3 часа)  
+**Статус:** 📋 Готов к старту  
 **Описание:** Интеграция SVGExporter для упрощения экспорта SVG и настроек
 
-**Что нужно сделать:**
+### 📚 Документация подготовлена:
 
-1. **Добавить импорт:**
-```javascript
-import { SVGExporter } from './src/svg/SVGExporter.js';
-```
+1. **`ITERATION_07_PLAN.md`** — Подробный план с инструкциями
+2. **`ITERATION_07_CHECKLIST.md`** — Чек-лист для отслеживания прогресса
+3. **Модуль готов:** `src/svg/SVGExporter.js` ✅
 
-2. **Создать экземпляр:**
-```javascript
-this.svgExporter = new SVGExporter(this.settingsModule);
-```
+### 🚀 Быстрый старт:
 
-3. **Заменить метод exportSVG():**
-```javascript
-exportSVG() {
-    const svg = document.getElementById('gridSvg');
-    this.svgExporter.exportToFile(svg, 'grid-layout.svg');
-}
-```
-
-4. **Протестировать:**
-   - Экспорт SVG работает?
-   - Размеры корректны?
-   - Экспорт настроек работает?
-
-5. **Создать бэкап:**
 ```bash
-mkdir -p _backup/iteration_07_export
-cp script.js _backup/iteration_07_export/
+# 1. Сделать бэкап
+mkdir -p _backup/29_iteration_07_start
+cp script.js _backup/29_iteration_07_start/
+
+# 2. Открыть документы
+open ITERATION_07_PLAN.md
+open ITERATION_07_CHECKLIST.md
+
+# 3. Запустить сервер
+python3 -m http.server 8000
 ```
+
+### 📋 Основные шаги:
+
+1. Добавить импорт `SVGExporter`
+2. Инициализировать в конструкторе
+3. Создать метод `createExportSVG()`
+4. Заменить метод `exportSVG()`
+5. Добавить экспорт/импорт настроек
+6. Тестирование
+
+**Подробности:** См. `ITERATION_07_PLAN.md`
 
 ---
 
