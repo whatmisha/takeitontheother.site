@@ -462,5 +462,133 @@ export class GridRenderer {
             }, container);
         }
     }
+
+    /**
+     * Главный метод отрисовки - рендерит всю сетку
+     * @param {SVGElement} svg - SVG элемент для отрисовки
+     */
+    render(svg) {
+        if (!svg) return;
+
+        const frontWidth = this.settings.get('frontWidth');
+        const frontHeight = this.settings.get('frontHeight');
+        const thickness = this.settings.get('thickness');
+        const showSidePanels = this.settings.get('showSidePanels');
+        const showColumns = this.settings.get('showColumns');
+        const showRows = this.settings.get('showRows');
+        const showBaseline = this.settings.get('showBaseline');
+
+        // Устанавливаем размеры SVG
+        const totalWidth = frontWidth + (showSidePanels ? 2 * thickness : 0);
+        const totalHeight = frontHeight + (showSidePanels ? 2 * thickness : 0);
+        
+        svg.setAttribute('width', totalWidth);
+        svg.setAttribute('height', totalHeight);
+        svg.setAttribute('viewBox', `0 0 ${totalWidth} ${totalHeight}`);
+
+        // Координаты основной (фронтальной) панели
+        const frontX = showSidePanels ? thickness : 0;
+        const frontY = showSidePanels ? thickness : 0;
+
+        // Отрисовка фронтальной панели
+        this.drawFrontPanel(svg, frontX, frontY, frontWidth, frontHeight);
+
+        // Отрисовка колонок
+        if (showColumns) {
+            this.drawColumns(svg, frontX, frontY, frontWidth, frontHeight, 1);
+        }
+
+        // Отрисовка строк
+        if (showRows) {
+            this.drawRows(svg, frontX, frontY, frontWidth, frontHeight, 1);
+        }
+
+        // Отрисовка baseline
+        if (showBaseline) {
+            this.drawBaseline(svg, frontX, frontY, frontWidth, frontHeight, 1);
+        }
+
+        // Отрисовка боковых панелей если включено
+        if (showSidePanels) {
+            this.drawSidePanels(svg, frontX, frontY, frontWidth, frontHeight, thickness);
+        }
+    }
+
+    /**
+     * Отрисовка фронтальной панели (фон)
+     */
+    drawFrontPanel(container, x, y, width, height) {
+        const bgColor = this.settings.get('boxColor');
+        
+        DOMUtils.createSVGElement('rect', {
+            x: x,
+            y: y,
+            width: width,
+            height: height,
+            fill: bgColor,
+            stroke: 'none'
+        }, container);
+    }
+
+    /**
+     * Отрисовка всех боковых панелей
+     */
+    drawSidePanels(container, frontX, frontY, frontWidth, frontHeight, thickness) {
+        const bgColor = this.settings.get('boxColor');
+        const gridColor = this.getGridColor();
+        const opacity = this.getGridOpacity(0.1);
+        const showBaseline = this.settings.get('showBaseline');
+
+        // Левая панель
+        DOMUtils.createSVGElement('rect', {
+            x: 0,
+            y: frontY,
+            width: thickness,
+            height: frontHeight,
+            fill: bgColor,
+            stroke: gridColor,
+            'stroke-width': 1,
+            'stroke-opacity': opacity
+        }, container);
+
+        // Правая панель
+        DOMUtils.createSVGElement('rect', {
+            x: frontX + frontWidth,
+            y: frontY,
+            width: thickness,
+            height: frontHeight,
+            fill: bgColor,
+            stroke: gridColor,
+            'stroke-width': 1,
+            'stroke-opacity': opacity
+        }, container);
+
+        // Верхняя панель
+        DOMUtils.createSVGElement('rect', {
+            x: frontX,
+            y: 0,
+            width: frontWidth,
+            height: thickness,
+            fill: bgColor,
+            stroke: gridColor,
+            'stroke-width': 1,
+            'stroke-opacity': opacity
+        }, container);
+
+        // Нижняя панель
+        DOMUtils.createSVGElement('rect', {
+            x: frontX,
+            y: frontY + frontHeight,
+            width: frontWidth,
+            height: thickness,
+            fill: bgColor,
+            stroke: gridColor,
+            'stroke-width': 1,
+            'stroke-opacity': opacity
+        }, container);
+
+        // TODO: Отрисовка baseline на боковых панелях
+        // Можно добавить позже если нужно
+    }
 }
 

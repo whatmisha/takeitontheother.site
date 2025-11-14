@@ -18,33 +18,19 @@ import { SliderController } from './src/ui/SliderController.js';
 import { ColorPicker } from './src/ui/ColorPicker.js';
 import { PanelManager } from './src/ui/PanelManager.js';
 
-// Итерация 6: Elements
-import { TextBlockManager } from './src/elements/TextBlockManager.js';
-import { TextRenderer } from './src/elements/TextRenderer.js';
-import { GraphicsManager } from './src/elements/GraphicsManager.js';
-import { GraphicsRenderer } from './src/elements/GraphicsRenderer.js';
-import { ElementsNavigator } from './src/elements/ElementsNavigator.js';
-
 class GridGenerator {
     constructor() {
         // Slider configuration - defines behavior for each slider
-        // Дополнено min, max и valueId для использования с SliderController
         this.SLIDER_CONFIG = {
             frontWidthSlider: {
-                valueId: 'frontWidthValue',
                 setting: 'frontWidth',
-                min: 50,
-                max: 1000,
                 decimals: 1,
                 baseStep: 0.5,
                 shiftStep: 10,
                 onUpdate: () => this.updateGrid()
             },
             frontHeightSlider: {
-                valueId: 'frontHeightValue',
                 setting: 'frontHeight',
-                min: 50,
-                max: 1000,
                 decimals: 1,
                 baseStep: 0.5,
                 shiftStep: 10,
@@ -60,20 +46,14 @@ class GridGenerator {
                 }
             },
             thicknessSlider: {
-                valueId: 'thicknessValue',
                 setting: 'thickness',
-                min: 5,
-                max: 200,
                 decimals: 1,
                 baseStep: 0.5,
                 shiftStep: 10,
                 onUpdate: () => this.updateGrid()
             },
             gridModuleSlider: {
-                valueId: 'gridModuleValue',
                 setting: 'gridModule',
-                min: 0.5,
-                max: 20,
                 decimals: 4,
                 baseStep: 0.0001,
                 shiftStep: 0.1,
@@ -85,10 +65,7 @@ class GridGenerator {
                 }
             },
             marginsSlider: {
-                valueId: 'marginsValue',
                 setting: 'margins',
-                min: 0,
-                max: 10,
                 decimals: 2,
                 baseStep: 0.01,
                 shiftStep: 0.1,
@@ -104,10 +81,7 @@ class GridGenerator {
                 }
             },
             columnCountSlider: {
-                valueId: 'columnCountValue',
                 setting: 'columnCount',
-                min: 1,
-                max: 24,
                 decimals: 0,
                 baseStep: 1,
                 shiftStep: 10,
@@ -117,10 +91,7 @@ class GridGenerator {
                 }
             },
             rowCountSlider: {
-                valueId: 'rowCountValue',
                 setting: 'rowCount',
-                min: 1,
-                max: 50,
                 decimals: 0,
                 baseStep: 1,
                 shiftStep: 10,
@@ -136,10 +107,7 @@ class GridGenerator {
                 }
             },
             rowHeightSlider: {
-                valueId: 'rowHeightValue',
                 setting: 'rowHeight',
-                min: 1,
-                max: 20,
                 decimals: 0,
                 baseStep: 1,
                 shiftStep: 10,
@@ -155,10 +123,7 @@ class GridGenerator {
                 }
             },
             hueSlider: {
-                valueId: 'hueValue',
-                setting: null, // Handled specially by ColorPicker
-                min: 0,
-                max: 360,
+                setting: null, // Handled specially
                 decimals: 0,
                 baseStep: 1,
                 shiftStep: 10,
@@ -169,10 +134,7 @@ class GridGenerator {
                 }
             },
             saturationSlider: {
-                valueId: 'saturationValue',
-                setting: null, // Handled specially by ColorPicker
-                min: 0,
-                max: 100,
+                setting: null, // Handled specially
                 decimals: 0,
                 baseStep: 1,
                 shiftStep: 10,
@@ -182,10 +144,7 @@ class GridGenerator {
                 }
             },
             brightnessSlider: {
-                valueId: 'brightnessValue',
-                setting: null, // Handled specially by ColorPicker
-                min: 0,
-                max: 100,
+                setting: null, // Handled specially
                 decimals: 0,
                 baseStep: 1,
                 shiftStep: 10,
@@ -195,60 +154,42 @@ class GridGenerator {
                 }
             },
             headlineSizeSlider: {
-                valueId: 'headlineSizeValue',
                 setting: 'headlineSize',
-                min: 0.25,
-                max: 10,
                 decimals: 2,
                 baseStep: 0.25,
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
             lineHeightSlider: {
-                valueId: 'lineHeightValue',
                 setting: 'lineHeight',
-                min: 0.25,
-                max: 10,
                 decimals: 2,
                 baseStep: 0.25,
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
             trackingSlider: {
-                valueId: 'trackingValue',
                 setting: 'tracking',
-                min: -0.05,
-                max: 0.05,
                 decimals: 3,
                 baseStep: 0.005,
                 shiftStep: 0.05,
                 onUpdate: () => this.updateGrid()
             },
             textSizeSlider: {
-                valueId: 'textSizeValue',
                 setting: 'textSize',
-                min: 0.25,
-                max: 10,
                 decimals: 2,
                 baseStep: 0.25,
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
             textLineHeightSlider: {
-                valueId: 'textLineHeightValue',
                 setting: 'textLineHeight',
-                min: 0.25,
-                max: 10,
                 decimals: 2,
                 baseStep: 0.25,
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
             textTrackingSlider: {
-                valueId: 'textTrackingValue',
                 setting: 'textTracking',
-                min: -0.05,
-                max: 0.05,
                 decimals: 2,
                 baseStep: 0.01,
                 shiftStep: 0.05,
@@ -319,17 +260,6 @@ class GridGenerator {
         this.sliderController = null;
         this.colorPicker = null;
         this.panelManager = null;
-        
-        // ============================================
-        // Elements Managers (Итерация 6)
-        // ============================================
-        // Пока используем старую систему (this.textBlocks, this.graphicsBlocks)
-        // Полная миграция в TextBlockManager/GraphicsManager - следующий шаг
-        this.textBlockManager = null;
-        this.textRenderer = null;
-        this.graphicsManager = null;
-        this.graphicsRenderer = null;
-        this.elementsNavigator = null;
         
         // Graphics blocks - UNIFIED array for all graphics (built-in and custom)
         // Initialize if not exists (for backward compatibility)
@@ -497,20 +427,17 @@ class GridGenerator {
         // Initialize
         this.initEventListeners();
         this.updateMarginsSliderHandler();  // Setup margins slider with correct unit handling
-        
-        // ============================================
-        // Initialize UI Controllers (Итерация 5.2 & 5.3)
-        // ============================================
-        // ColorPicker - ВРЕМЕННО ОТКЛЮЧЕНО
-        // this.colorPicker.init();
-        // console.log('✅ ColorPicker initialized');
-        
-        // PanelManager - регистрация всех панелей
-        this.initPanels();
-        console.log('✅ PanelManager initialized with all panels');
+        this.initPanelDrag('controlsPanel', 'panelHeader');
+        this.initPanelDrag('gridPanel', 'gridPanelHeader');
+        this.initPanelDrag('textPanel', 'textPanelHeader');
+        this.initPanelDrag('paragraphPanel', 'paragraphPanelHeader');
+        this.initPanelDrag('iconsPanel', 'iconsPanelHeader');
+        this.initPanelDrag('claimPanel', 'claimPanelHeader');
         
         // Save initial state for undo
         this.saveState();
+        this.initPanelDrag('graphicsPanel', 'graphicsPanelHeader');
+        this.initPanelDrag('elementsNavigator', 'elementsNavigatorHeader');
         this.initValueInputs();
         this.initSizeInputsWithArrows();
         this.initCollapsibleSections();
@@ -702,16 +629,40 @@ class GridGenerator {
         };
     }
     
-    // ============================================
-    // OLD SLIDER LOGIC - REPLACED BY SliderController (Итерация 5)
-    // ============================================
-    // Старый метод initSlider больше не используется
-    // Все слайдеры теперь управляются через SliderController в initUIControllers()
+    // Universal slider initialization method
+    initSlider(sliderId) {
+        const slider = this.dom[sliderId];
+        const valueId = sliderId.replace('Slider', 'Value');
+        const valueDisplay = this.dom[valueId];
+        const config = this.SLIDER_CONFIG[sliderId];
+        
+        if (!slider || !valueDisplay || !config) return;
+        
+        const handler = (e) => {
+            const value = parseFloat(e.target.value);
+            valueDisplay.value = config.decimals === 0 
+                ? value 
+                : value.toFixed(config.decimals);
+            
+            if (config.setting) {
+                this.settings[config.setting] = config.decimals === 0 
+                    ? Math.round(value) 
+                    : parseFloat(value.toFixed(config.decimals));
+            }
+            
+            config.onUpdate();
+        };
+        
+        slider.addEventListener('input', handler);
+        slider.addEventListener('change', handler);
+        slider.addEventListener('keyup', handler);
+    }
     
     initEventListeners() {
-        // ============================================
-        // NOTE: Slider initialization moved to initUIControllers()
-        // ============================================
+        // Initialize all sliders using configuration
+        Object.keys(this.SLIDER_CONFIG).forEach(sliderId => {
+            this.initSlider(sliderId);
+        });
         
         // Show dimensions checkbox
         this.dom.showDimensions.addEventListener('change', (e) => {
@@ -827,9 +778,7 @@ class GridGenerator {
         // Lunnen Blue preset
         this.dom.lunnenBlue.addEventListener('click', () => {
             const lunnenBlueColor = '#2353DB';
-            // Обновляем через оба способа для совместимости
             this.settings.boxColor = lunnenBlueColor;
-            this.settingsModule.set('boxColor', lunnenBlueColor);
             this.dom.hexColorInput.value = lunnenBlueColor;
             this.dom.colorPreview.style.backgroundColor = lunnenBlueColor;
             this.updateHSBFromHex(lunnenBlueColor);
@@ -856,9 +805,7 @@ class GridGenerator {
                     hexValue = `#${r}${r}${g}${g}${b}${b}`;
                 }
                 
-                // Обновляем через оба способа для совместимости
                 this.settings.boxColor = hexValue;
-                this.settingsModule.set('boxColor', hexValue);
                 this.dom.colorPreview.style.backgroundColor = hexValue;
                 this.updateHSBFromHex(hexValue);
                 this.updateGrid();
@@ -870,14 +817,11 @@ class GridGenerator {
             let hexValue = e.target.value;
             
             if (!hexValue.match(/^#[0-9A-Fa-f]{6}$/)) {
-                // Если некорректный, берем текущий цвет из настроек вместо дефолтного
-                hexValue = this.settingsModule.get('boxColor') || '#dadde6';
+                hexValue = '#dadde6';
             }
             
             e.target.value = hexValue;
-            // Обновляем через оба способа для совместимости
             this.settings.boxColor = hexValue;
-            this.settingsModule.set('boxColor', hexValue);
             this.dom.colorPreview.style.backgroundColor = hexValue;
             this.updateHSBFromHex(hexValue);
             this.updateGrid();
@@ -2933,9 +2877,7 @@ class GridGenerator {
         const rgb = this.hsbToRgb(h, s, b);
         const hex = this.rgbToHex(rgb.r, rgb.g, rgb.b);
         
-        // Обновляем через оба способа для совместимости
         this.settings.boxColor = hex;
-        this.settingsModule.set('boxColor', hex);
         this.dom.hexColorInput.value = hex;
         this.dom.colorPreview.style.backgroundColor = hex;
         this.updateGrid();
@@ -2997,16 +2939,116 @@ class GridGenerator {
         document.head.appendChild(style);
     }
     
-    // ============================================
-    // OLD PANEL DRAG LOGIC - REPLACED BY PanelManager (Итерация 5.3)
-    // ============================================
-    // Старый метод initPanelDrag больше не используется
-    // Все панели теперь управляются через PanelManager в initPanels()
-    /*
     initPanelDrag(panelId, headerId) {
-        // ... старый код закомментирован ...
+        const panel = document.getElementById(panelId);
+        const header = document.getElementById(headerId);
+        
+        if (!panel || !header) return;
+        
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+        
+        // Bring panel to front on any click
+        panel.addEventListener('mousedown', (e) => {
+            const target = e.target;
+            
+            // Don't interfere with input elements (sliders, text inputs, buttons, checkboxes)
+            if (target.tagName === 'INPUT' || 
+                target.tagName === 'BUTTON' || 
+                target.tagName === 'TEXTAREA' ||
+                target.tagName === 'SELECT') {
+                e.stopPropagation();
+                // Still bring to front even for interactive elements
+                const allPanels = document.querySelectorAll('.controls-panel');
+                allPanels.forEach(p => {
+                    if (p === panel) {
+                        p.style.zIndex = '1000';
+                    } else {
+                        p.style.zIndex = '999';
+                    }
+                });
+                return;
+            }
+            
+            // Bring panel to front on any click
+            const allPanels = document.querySelectorAll('.controls-panel');
+            allPanels.forEach(p => {
+                if (p === panel) {
+                    p.style.zIndex = '1000';
+                } else {
+                    p.style.zIndex = '999';
+                }
+            });
+        }, true); // Use capture phase
+        
+        header.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+        
+        function dragStart(e) {
+            // Only start dragging if clicking directly on header, not on interactive elements
+            if (e.target.tagName === 'INPUT' || 
+                e.target.tagName === 'BUTTON' || 
+                e.target.tagName === 'TEXTAREA' ||
+                e.target.tagName === 'SELECT') {
+                return;
+            }
+            
+            // Recalculate offset based on CURRENT panel position (handles dynamic height changes)
+            const rect = panel.getBoundingClientRect();
+            xOffset = rect.left;
+            yOffset = rect.top;
+            
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+            
+            if (e.target === header || header.contains(e.target)) {
+                isDragging = true;
+                panel.style.transition = 'none';
+                
+                // Bring this panel to front
+                const allPanels = document.querySelectorAll('.controls-panel');
+                allPanels.forEach(p => {
+                    if (p === panel) {
+                        p.style.zIndex = '1000';
+                    } else {
+                        p.style.zIndex = '999';
+                    }
+                });
+            }
+        }
+        
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+                xOffset = currentX;
+                yOffset = currentY;
+                setTranslate(currentX, currentY, panel);
+            }
+        }
+        
+        function dragEnd(e) {
+            if (isDragging) {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+            }
+        }
+        
+        function setTranslate(xPos, yPos, el) {
+            el.style.left = xPos + 'px';
+            el.style.top = yPos + 'px';
+            el.style.right = 'auto';
+            el.style.bottom = 'auto';
+        }
     }
-    */
     
     // Universal method to update slider value based on configuration
     updateSliderValue(sliderId, newValue) {
@@ -7357,85 +7399,12 @@ class GridGenerator {
     // UI Controllers initialization (Итерация 5)
     // ============================================
     initUIControllers() {
-        // ============================================
-        // Шаг 5.1: SliderController
-        // ============================================
         // Создаем SliderController
         this.sliderController = new SliderController(this.settingsModule);
         
         // Инициализируем все слайдеры из SLIDER_CONFIG
-        // Все слайдеры, включая HSB, управляются через SliderController
-        Object.keys(this.SLIDER_CONFIG).forEach(sliderId => {
-            const config = this.SLIDER_CONFIG[sliderId];
-            this.sliderController.initSlider(sliderId, config);
-        });
-        
-        console.log('✅ SliderController initialized with', this.sliderController.sliders.size, 'sliders');
-        
-        // ============================================
-        // Шаг 5.2: ColorPicker
-        // ============================================
-        // ВРЕМЕННО ОТКЛЮЧЕНО - ColorPicker вызывает проблемы при инициализации
-        // this.colorPicker = new ColorPicker(this.settingsModule, {
-        //     onChange: (color) => {
-        //         this.settingsModule.set('boxColor', color);
-        //         this.updateGrid();
-        //     }
-        // });
-        
-        // Инициализация ColorPicker (вызывается после того как DOM готов)
-        // Перенесено в init() так как требуется готовый DOM
-        
-        console.log('✅ ColorPicker created');
-        
-        // ============================================
-        // Шаг 5.3: PanelManager
-        // ============================================
-        this.panelManager = new PanelManager();
-        
-        // Регистрация панелей (вызывается после того как DOM готов)
-        // Перенесено в init() так как требуется готовый DOM
-        
-        console.log('✅ PanelManager created');
-    }
-    
-    // ============================================
-    // Panel registration (Итерация 5.3)
-    // ============================================
-    initPanels() {
-        // Регистрируем все панели через PanelManager
-        const panels = [
-            { id: 'controlsPanel', headerId: 'panelHeader', draggable: true },
-            { id: 'gridPanel', headerId: 'gridPanelHeader', draggable: true },
-            { id: 'textPanel', headerId: 'textPanelHeader', draggable: true },
-            { id: 'paragraphPanel', headerId: 'paragraphPanelHeader', draggable: true },
-            { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true },
-            { id: 'elementsNavigator', headerId: 'elementsNavigatorHeader', draggable: true }
-        ];
-        
-        panels.forEach(panel => {
-            this.panelManager.registerPanel(panel.id, {
-                headerId: panel.headerId,
-                draggable: panel.draggable
-            });
-        });
-    }
-    
-    // ============================================
-    // Elements initialization (Итерация 6)
-    // ============================================
-    initElementsManagers() {
-        // Создаём менеджеры элементов
-        // TODO: Полная миграция this.textBlocks → TextBlockManager
-        // TODO: Полная миграция this.graphicsBlocks → GraphicsManager
-        
-        // this.textBlockManager = new TextBlockManager(this.settingsModule, this.gridCalculator);
-        // this.textRenderer = new TextRenderer(this.settingsModule, this.gridCalculator);
-        // this.graphicsManager = new GraphicsManager(this.settingsModule, this.gridCalculator);
-        // this.graphicsRenderer = new GraphicsRenderer(this.settingsModule, this.gridCalculator);
-        // this.elementsNavigator = new ElementsNavigator(...);
-        
-        // Пока продолжаем использовать старую систему this.textBlocks и this.graphicsBlocks
+        // Пока реализуем только основные слайдеры, остальные - в следующих итерациях
+        // TODO: ColorPicker и PanelManager будут добавлены далее
     }
 }
 

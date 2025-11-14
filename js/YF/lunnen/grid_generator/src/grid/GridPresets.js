@@ -20,6 +20,20 @@ export class GridPresets {
     }
 
     /**
+     * Сгенерировать кнопки пресетов (алиас для generate)
+     * @param {HTMLElement} container
+     * @param {Function} onPresetClick - колбэк при клике на пресет (rowCount, rowHeight)
+     */
+    generatePresetButtons(container, onPresetClick) {
+        this.setContainer(container);
+        this.generate((combo) => {
+            if (onPresetClick) {
+                onPresetClick(combo.rowCount, combo.rowHeight);
+            }
+        });
+    }
+
+    /**
      * Сгенерировать кнопки пресетов
      * @param {Function} onPresetClick - колбэк при клике на пресет
      */
@@ -73,6 +87,13 @@ export class GridPresets {
                 DOMUtils.removeClass(button, 'active');
             }
         });
+    }
+
+    /**
+     * Обновить состояние кнопок (алиас для updateActive)
+     */
+    updateButtonStates() {
+        this.updateActive();
     }
 
     /**

@@ -501,9 +501,9 @@ class GridGenerator {
         // ============================================
         // Initialize UI Controllers (Итерация 5.2 & 5.3)
         // ============================================
-        // ColorPicker - ВРЕМЕННО ОТКЛЮЧЕНО
-        // this.colorPicker.init();
-        // console.log('✅ ColorPicker initialized');
+        // ColorPicker - инициализация после создания DOM
+        this.colorPicker.init();
+        console.log('✅ ColorPicker initialized');
         
         // PanelManager - регистрация всех панелей
         this.initPanels();
@@ -827,9 +827,7 @@ class GridGenerator {
         // Lunnen Blue preset
         this.dom.lunnenBlue.addEventListener('click', () => {
             const lunnenBlueColor = '#2353DB';
-            // Обновляем через оба способа для совместимости
             this.settings.boxColor = lunnenBlueColor;
-            this.settingsModule.set('boxColor', lunnenBlueColor);
             this.dom.hexColorInput.value = lunnenBlueColor;
             this.dom.colorPreview.style.backgroundColor = lunnenBlueColor;
             this.updateHSBFromHex(lunnenBlueColor);
@@ -856,9 +854,7 @@ class GridGenerator {
                     hexValue = `#${r}${r}${g}${g}${b}${b}`;
                 }
                 
-                // Обновляем через оба способа для совместимости
                 this.settings.boxColor = hexValue;
-                this.settingsModule.set('boxColor', hexValue);
                 this.dom.colorPreview.style.backgroundColor = hexValue;
                 this.updateHSBFromHex(hexValue);
                 this.updateGrid();
@@ -870,14 +866,11 @@ class GridGenerator {
             let hexValue = e.target.value;
             
             if (!hexValue.match(/^#[0-9A-Fa-f]{6}$/)) {
-                // Если некорректный, берем текущий цвет из настроек вместо дефолтного
-                hexValue = this.settingsModule.get('boxColor') || '#dadde6';
+                hexValue = '#dadde6';
             }
             
             e.target.value = hexValue;
-            // Обновляем через оба способа для совместимости
             this.settings.boxColor = hexValue;
-            this.settingsModule.set('boxColor', hexValue);
             this.dom.colorPreview.style.backgroundColor = hexValue;
             this.updateHSBFromHex(hexValue);
             this.updateGrid();
@@ -2933,9 +2926,7 @@ class GridGenerator {
         const rgb = this.hsbToRgb(h, s, b);
         const hex = this.rgbToHex(rgb.r, rgb.g, rgb.b);
         
-        // Обновляем через оба способа для совместимости
         this.settings.boxColor = hex;
-        this.settingsModule.set('boxColor', hex);
         this.dom.hexColorInput.value = hex;
         this.dom.colorPreview.style.backgroundColor = hex;
         this.updateGrid();
@@ -7364,9 +7355,13 @@ class GridGenerator {
         this.sliderController = new SliderController(this.settingsModule);
         
         // Инициализируем все слайдеры из SLIDER_CONFIG
-        // Все слайдеры, включая HSB, управляются через SliderController
+        // Слайдеры hue/saturation/brightness будут управляться через ColorPicker
         Object.keys(this.SLIDER_CONFIG).forEach(sliderId => {
             const config = this.SLIDER_CONFIG[sliderId];
+            // Пропускаем HSB слайдеры - они управляются через ColorPicker
+            if (sliderId === 'hueSlider' || sliderId === 'saturationSlider' || sliderId === 'brightnessSlider') {
+                return;
+            }
             this.sliderController.initSlider(sliderId, config);
         });
         
@@ -7375,13 +7370,13 @@ class GridGenerator {
         // ============================================
         // Шаг 5.2: ColorPicker
         // ============================================
-        // ВРЕМЕННО ОТКЛЮЧЕНО - ColorPicker вызывает проблемы при инициализации
-        // this.colorPicker = new ColorPicker(this.settingsModule, {
-        //     onChange: (color) => {
-        //         this.settingsModule.set('boxColor', color);
-        //         this.updateGrid();
-        //     }
-        // });
+        this.colorPicker = new ColorPicker(this.settingsModule, {
+            onChange: (color) => {
+                // Когда цвет меняется, обновляем настройки и сетку
+                this.settingsModule.set('boxColor', color);
+                this.updateGrid();
+            }
+        });
         
         // Инициализация ColorPicker (вызывается после того как DOM готов)
         // Перенесено в init() так как требуется готовый DOM
@@ -7409,6 +7404,8 @@ class GridGenerator {
             { id: 'gridPanel', headerId: 'gridPanelHeader', draggable: true },
             { id: 'textPanel', headerId: 'textPanelHeader', draggable: true },
             { id: 'paragraphPanel', headerId: 'paragraphPanelHeader', draggable: true },
+            { id: 'iconsPanel', headerId: 'iconsPanelHeader', draggable: true },
+            { id: 'claimPanel', headerId: 'claimPanelHeader', draggable: true },
             { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true },
             { id: 'elementsNavigator', headerId: 'elementsNavigatorHeader', draggable: true }
         ];

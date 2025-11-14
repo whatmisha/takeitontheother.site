@@ -210,5 +210,132 @@ export class GridCalculator {
         const contentHeightMm = frontHeight - 2 * margins * module;
         return Math.floor(contentHeightMm / module);
     }
+
+    /**
+     * Получить общее количество baseline линий
+     * @returns {number}
+     */
+    getTotalBaselines() {
+        return this.getMaxYInBaseline();
+    }
+
+    /**
+     * Получить ширину одной колонки в pt
+     * @returns {number}
+     */
+    getColumnWidth() {
+        const module = this.settings.get('gridModule');
+        const margins = this.settings.get('margins');
+        const frontWidth = this.settings.get('frontWidth');
+        const columnCount = this.settings.get('columnCount');
+        
+        const contentWidth = frontWidth - 2 * margins * module;
+        const gutterWidth = module;
+        
+        return (contentWidth - (columnCount - 1) * gutterWidth) / columnCount;
+    }
+
+    /**
+     * Получить размер отступа между колонками (gutter) в pt
+     * @returns {number}
+     */
+    getGutterSize() {
+        return this.settings.get('gridModule');
+    }
+
+    /**
+     * Конвертировать позицию сетки (колонка, строка, baseline) в координаты XY
+     * @param {number} column - Номер колонки (1-based)
+     * @param {number} row - Номер строки (0-based)
+     * @param {number} baselineOffset - Смещение в baseline модулях внутри строки
+     * @returns {{x: number, y: number}}
+     */
+    gridPositionToXY(column, row, baselineOffset) {
+        const module = this.settings.get('gridModule');
+        const margins = this.settings.get('margins');
+        const rowHeight = this.settings.get('rowHeight');
+        
+        // X координата
+        const columnWidth = this.getColumnWidth();
+        const gutterSize = this.getGutterSize();
+        const marginX = margins * module;
+        const x = marginX + (column - 1) * (columnWidth + gutterSize);
+        
+        // Y координата
+        const marginY = margins * module;
+        const rowHeightMm = rowHeight * module;
+        const baselineOffsetMm = baselineOffset * module;
+        const y = marginY + row * (rowHeightMm + module) + baselineOffsetMm;
+        
+        return { x, y };
+    }
+
+    /**
+     * Конвертировать координаты XY в позицию сетки
+     * @param {number} x
+     * @param {number} y
+     * @returns {{column: number, row: number, baseline: number}}
+     */
+    xyToGridPosition(x, y) {
+        const module = this.settings.get('gridModule');
+        const margins = this.settings.get('margins');
+        const rowHeight = this.settings.get('rowHeight');
+        
+        // Вычисляем колонку
+        const columnWidth = this.getColumnWidth();
+        const gutterSize = this.getGutterSize();
+        const marginX = margins * module;
+        const xInContent = x - marginX;
+        const column = Math.max(1, Math.round(xInContent / (columnWidth + gutterSize)) + 1);
+        
+        // Вычисляем строку и baseline
+        const marginY = margins * module;
+        const yInContent = y - marginY;
+        const rowHeightMm = rowHeight * module;
+        const rowWithGutter = rowHeightMm + module;
+        const row = Math.max(0, Math.floor(yInContent / rowWithGutter));
+        const baselineInRow = yInContent - row * rowWithGutter;
+        const baseline = Math.max(0, Math.round(baselineInRow / module));
+        
+        return { column, row, baseline };
+    }
+
+    /**
+     * Расчет модуля из высоты и количества строк (для link mode)
+     * @returns {number}
+     */
+    calculateModuleFromHeight() {
+        const frontHeight = this.settings.get('frontHeight');
+        const margins = this.settings.get('margins');
+        const rowCount = this.settings.get('rowCount');
+        const rowHeight = this.settings.get('rowHeight');
+        
+        // Высота контента = frontHeight - 2 * margins * module
+        // Высота контента = rowCount * rowHeight * module + (rowCount - 1) * module
+        // Решаем для module:
+        // frontHeight - 2 * margins * module = (rowCount * rowHeight + rowCount - 1) * module
+        // frontHeight = module * (2 * margins + rowCount * rowHeight + rowCount - 1)
+        // module = frontHeight / (2 * margins + rowCount * rowHeight + rowCount - 1)
+        
+        const totalModules = 2 * margins + rowCount * rowHeight + (rowCount - 1);
+        return frontHeight / totalModules;
+    }
+
+    /**
+     * Получить все параметры сетки для отладки
+     * @returns {Object}
+     */
+    getGridInfo() {
+        return {
+            module: this.settings.get('gridModule'),
+            margins: this.settings.get('margins'),
+            columnCount: this.settings.get('columnCount'),
+            rowCount: this.settings.get('rowCount'),
+            rowHeight: this.settings.get('rowHeight'),
+            columnWidth: this.getColumnWidth(),
+            gutterSize: this.getGutterSize(),
+            totalBaselines: this.getTotalBaselines()
+        };
+    }
 }
 

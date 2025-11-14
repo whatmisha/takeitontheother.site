@@ -827,9 +827,7 @@ class GridGenerator {
         // Lunnen Blue preset
         this.dom.lunnenBlue.addEventListener('click', () => {
             const lunnenBlueColor = '#2353DB';
-            // Обновляем через оба способа для совместимости
             this.settings.boxColor = lunnenBlueColor;
-            this.settingsModule.set('boxColor', lunnenBlueColor);
             this.dom.hexColorInput.value = lunnenBlueColor;
             this.dom.colorPreview.style.backgroundColor = lunnenBlueColor;
             this.updateHSBFromHex(lunnenBlueColor);
@@ -856,9 +854,7 @@ class GridGenerator {
                     hexValue = `#${r}${r}${g}${g}${b}${b}`;
                 }
                 
-                // Обновляем через оба способа для совместимости
                 this.settings.boxColor = hexValue;
-                this.settingsModule.set('boxColor', hexValue);
                 this.dom.colorPreview.style.backgroundColor = hexValue;
                 this.updateHSBFromHex(hexValue);
                 this.updateGrid();
@@ -870,14 +866,11 @@ class GridGenerator {
             let hexValue = e.target.value;
             
             if (!hexValue.match(/^#[0-9A-Fa-f]{6}$/)) {
-                // Если некорректный, берем текущий цвет из настроек вместо дефолтного
-                hexValue = this.settingsModule.get('boxColor') || '#dadde6';
+                hexValue = '#dadde6';
             }
             
             e.target.value = hexValue;
-            // Обновляем через оба способа для совместимости
             this.settings.boxColor = hexValue;
-            this.settingsModule.set('boxColor', hexValue);
             this.dom.colorPreview.style.backgroundColor = hexValue;
             this.updateHSBFromHex(hexValue);
             this.updateGrid();
@@ -2933,9 +2926,7 @@ class GridGenerator {
         const rgb = this.hsbToRgb(h, s, b);
         const hex = this.rgbToHex(rgb.r, rgb.g, rgb.b);
         
-        // Обновляем через оба способа для совместимости
         this.settings.boxColor = hex;
-        this.settingsModule.set('boxColor', hex);
         this.dom.hexColorInput.value = hex;
         this.dom.colorPreview.style.backgroundColor = hex;
         this.updateGrid();

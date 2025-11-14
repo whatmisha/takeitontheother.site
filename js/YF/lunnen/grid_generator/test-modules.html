@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Module Test</title>
+</head>
+<body>
+    <h1>Testing Modules...</h1>
+    <div id="output"></div>
+    
+    <script type="module">
+        const output = document.getElementById('output');
+        
+        try {
+            // Test imports
+            const { GridRenderer } = await import('./src/grid/GridRenderer.js');
+            const { GridPresets } = await import('./src/grid/GridPresets.js');
+            const { Settings } = await import('./src/core/Settings.js');
+            const { GridCalculator } = await import('./src/grid/GridCalculator.js');
+            
+            output.innerHTML += '<p>✅ All imports successful!</p>';
+            
+            // Test instantiation
+            const settings = new Settings();
+            output.innerHTML += '<p>✅ Settings created</p>';
+            
+            const calculator = new GridCalculator(settings);
+            output.innerHTML += '<p>✅ GridCalculator created</p>';
+            
+            const renderer = new GridRenderer(settings, calculator);
+            output.innerHTML += '<p>✅ GridRenderer created</p>';
+            
+            // Test methods
+            if (typeof renderer.render === 'function') {
+                output.innerHTML += '<p>✅ GridRenderer.render exists!</p>';
+            } else {
+                output.innerHTML += '<p>❌ GridRenderer.render is missing!</p>';
+            }
+            
+            const presets = new GridPresets(settings, calculator);
+            output.innerHTML += '<p>✅ GridPresets created</p>';
+            
+            if (typeof presets.generatePresetButtons === 'function') {
+                output.innerHTML += '<p>✅ GridPresets.generatePresetButtons exists!</p>';
+            } else {
+                output.innerHTML += '<p>❌ GridPresets.generatePresetButtons is missing!</p>';
+            }
+            
+        } catch (error) {
+            output.innerHTML += `<p style="color: red;">❌ Error: ${error.message}</p>`;
+            console.error(error);
+        }
+    </script>
+</body>
+</html>
+
