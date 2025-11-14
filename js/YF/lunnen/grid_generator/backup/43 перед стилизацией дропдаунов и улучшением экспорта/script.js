@@ -7021,18 +7021,13 @@ class GridGenerator {
         const frontX = thickness;
         const frontY = thickness;
         
-        // Create main grid group to hold all grid elements
-        const gridGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        gridGroup.setAttribute('id', 'grid');
-        exportSvg.appendChild(gridGroup);
-        
         // Draw columns (in separate group, always export but hide if disabled)
         const columnsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         columnsGroup.setAttribute('id', 'columns');
         if (!this.settings.showColumns) {
             columnsGroup.setAttribute('visibility', 'hidden');
         }
-        gridGroup.appendChild(columnsGroup);
+        exportSvg.appendChild(columnsGroup);
         this.gridRenderer.drawColumns(columnsGroup, frontX, frontY, frontWidth, frontHeight, scale);
         
         // Draw columns on side panels if enabled
@@ -7056,7 +7051,7 @@ class GridGenerator {
         if (!this.settings.showRows) {
             rowsGroup.setAttribute('visibility', 'hidden');
         }
-        gridGroup.appendChild(rowsGroup);
+        exportSvg.appendChild(rowsGroup);
         this.gridRenderer.drawRows(rowsGroup, frontX, frontY, frontWidth, frontHeight, scale);
         
         // Draw baseline (in separate group, always export but hide if disabled)
@@ -7065,7 +7060,7 @@ class GridGenerator {
         if (!this.settings.showBaseline) {
             baselineGroup.setAttribute('visibility', 'hidden');
         }
-        gridGroup.appendChild(baselineGroup);
+        exportSvg.appendChild(baselineGroup);
         
         // Front panel baseline
         this.gridRenderer.drawBaseline(baselineGroup, frontX, frontY, frontWidth, frontHeight, scale);

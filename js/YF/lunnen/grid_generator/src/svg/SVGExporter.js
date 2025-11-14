@@ -100,12 +100,16 @@ export class SVGExporter {
     }
 
     /**
-     * Экспортировать настройки в JSON файл
+     * Экспортировать настройки в JSON файл с удобной структурой для копирайтера
      * @param {Object} data - Данные для экспорта
      * @param {string} filename
      */
     exportSettings(data, filename = 'grid-settings.json') {
-        const jsonString = JSON.stringify(data, null, 2);
+        // Реорганизуем данные для удобства редактирования
+        const organizedData = this.organizeSettingsForExport(data);
+        
+        // Используем кастомный stringify для красивого форматирования
+        const jsonString = this.beautifyJSON(organizedData);
         
         const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' });
         const url = URL.createObjectURL(blob);
@@ -121,6 +125,160 @@ export class SVGExporter {
     }
 
     /**
+     * Организовать настройки в понятную структуру
+     * @param {Object} data - Исходные данные
+     * @returns {Object} - Организованные данные
+     */
+    organizeSettingsForExport(data) {
+        const settings = data.settings || {};
+        const textBlocks = data.textBlocks || [];
+        const graphicsBlocks = data.graphicsBlocks || [];
+        
+        // Извлекаем iconsBlock и claimBlock из graphicsBlocks (они там встроенные)
+        const iconsBlock = graphicsBlocks.find(b => b.id === 'icons');
+        const claimBlock = graphicsBlocks.find(b => b.id === 'claim');
+
+        // Генерируем название пресета на основе параметров
+        const presetName = this.generatePresetName(settings);
+
+        return {
+            // 1. Мета-информация и название пресета
+            presetName: presetName,
+            version: data.version || '1.0',
+            timestamp: data.timestamp,
+            
+            // 2. Размеры макета
+            dimensions: {
+                width: settings.frontWidth,
+                height: settings.frontHeight,
+                thickness: settings.thickness,
+                unit: 'mm'
+            },
+            
+            // 3. Все текстовые блоки (удобно для копирайтера)
+            texts: textBlocks.map((block, index) => ({
+                id: block.id || `text_${index + 1}`,
+                content: block.content || '',
+                style: block.styleRef || 'headline',
+                position: {
+                    column: block.x || 1,
+                    row: block.row || 0,
+                    baseline: block.baselineOffset || 0
+                },
+                width: block.width || 3
+            })),
+            
+            // 4. Настройки сетки
+            grid: {
+                module: settings.gridModule,
+                margins: settings.margins,
+                marginsUnit: settings.marginsUnit || 'mod',
+                columns: settings.columnCount,
+                rows: settings.rowCount,
+                rowHeight: settings.rowHeight,
+                linkMode: settings.linkMode,
+                visibility: {
+                    columns: settings.showColumns,
+                    rows: settings.showRows,
+                    baseline: settings.showBaseline
+                }
+            },
+            
+            // 5. Настройки цвета
+            colors: {
+                background: settings.boxColor
+            },
+            
+            // 6. Настройки типографики
+            typography: {
+                headline: {
+                    size: settings.headlineSize,
+                    lineHeight: settings.lineHeight,
+                    tracking: settings.tracking,
+                    useXHeight: settings.useXHeight,
+                    fontWeight: settings.headlineFontWeight
+                },
+                text: {
+                    size: settings.textSize,
+                    lineHeight: settings.textLineHeight,
+                    tracking: settings.textTracking,
+                    useXHeight: settings.useXHeight2,
+                    fontWeight: settings.textFontWeight
+                }
+            },
+            
+            // 7. Настройки отображения
+            display: {
+                dimensions: settings.showDimensions,
+                labels: settings.showLabels,
+                sidePanels: settings.showSidePanels,
+                objects: settings.showObjects
+            },
+            
+            // 8. Графика (в конце, чтобы не мешать редактированию)
+            graphics: {
+                blocks: graphicsBlocks
+                    .filter(block => !block.isBuiltIn) // Исключаем встроенные (icons, claim)
+                    .map((block, index) => ({
+                        id: block.id || `graphic_${index + 1}`,
+                        name: block.name || `Graphic ${index + 1}`,
+                        position: {
+                            column: block.x || 1,
+                            row: block.row || 0,
+                            baseline: block.baselineOffset || 0
+                        },
+                        height: block.heightInModules || 3,
+                        originalWidth: block.originalWidth,
+                        originalHeight: block.originalHeight,
+                        // SVG код в самом конце
+                        svg: block.svgContent || ''
+                    })),
+                icons: iconsBlock ? {
+                    position: {
+                        column: iconsBlock.x || 1,
+                        row: iconsBlock.row || 0,
+                        baseline: iconsBlock.baselineOffset || 0
+                    },
+                    height: iconsBlock.heightInModules || 3,
+                    svg: iconsBlock.svgContent || ''
+                } : null,
+                claim: claimBlock ? {
+                    position: {
+                        column: claimBlock.x || 7,
+                        row: claimBlock.row || 0,
+                        baseline: claimBlock.baselineOffset || 0
+                    },
+                    height: claimBlock.heightInModules || 3,
+                    svg: claimBlock.svgContent || ''
+                } : null
+            }
+        };
+    }
+
+    /**
+     * Сгенерировать название пресета на основе параметров
+     * @param {Object} settings
+     * @returns {string}
+     */
+    generatePresetName(settings) {
+        const width = settings.frontWidth || 0;
+        const height = settings.frontHeight || 0;
+        const module = (settings.gridModule || 0).toFixed(2);
+        const date = new Date().toLocaleDateString('ru-RU');
+        
+        return `Packaging ${width}×${height}mm, Module ${module}mm — ${date}`;
+    }
+
+    /**
+     * Красиво форматировать JSON для удобства чтения
+     * @param {Object} data
+     * @returns {string}
+     */
+    beautifyJSON(data) {
+        return JSON.stringify(data, null, 2);
+    }
+
+    /**
      * Импортировать настройки из JSON
      * @param {File} file
      * @returns {Promise<Object>} - Промис с данными из файла
@@ -133,7 +291,10 @@ export class SVGExporter {
                 try {
                     const jsonString = e.target.result;
                     const data = JSON.parse(jsonString);
-                    resolve(data);
+                    
+                    // Конвертируем новую структуру в старую для обратной совместимости
+                    const normalizedData = this.normalizeImportedData(data);
+                    resolve(normalizedData);
                 } catch (error) {
                     reject(error);
                 }
@@ -142,6 +303,149 @@ export class SVGExporter {
             reader.onerror = () => reject(new Error('Failed to read file'));
             reader.readAsText(file);
         });
+    }
+
+    /**
+     * Нормализовать импортированные данные (поддержка старого и нового формата)
+     * @param {Object} data - Импортированные данные
+     * @returns {Object} - Данные в старом формате для совместимости
+     */
+    normalizeImportedData(data) {
+        // Если это новый формат (с организованной структурой)
+        if (data.dimensions && data.grid && data.typography) {
+            return this.convertNewFormatToOld(data);
+        }
+        
+        // Если это старый формат - возвращаем как есть
+        return data;
+    }
+
+    /**
+     * Конвертировать новый формат в старый для обратной совместимости
+     * @param {Object} newData - Данные в новом формате
+     * @returns {Object} - Данные в старом формате
+     */
+    convertNewFormatToOld(newData) {
+        const settings = {
+            // Размеры
+            frontWidth: newData.dimensions?.width,
+            frontHeight: newData.dimensions?.height,
+            thickness: newData.dimensions?.thickness,
+            
+            // Сетка
+            gridModule: newData.grid?.module,
+            margins: newData.grid?.margins,
+            marginsUnit: newData.grid?.marginsUnit,
+            columnCount: newData.grid?.columns,
+            rowCount: newData.grid?.rows,
+            rowHeight: newData.grid?.rowHeight,
+            linkMode: newData.grid?.linkMode,
+            showColumns: newData.grid?.visibility?.columns,
+            showRows: newData.grid?.visibility?.rows,
+            showBaseline: newData.grid?.visibility?.baseline,
+            
+            // Цвета
+            boxColor: newData.colors?.background,
+            
+            // Типографика - Headline
+            headlineSize: newData.typography?.headline?.size,
+            lineHeight: newData.typography?.headline?.lineHeight,
+            tracking: newData.typography?.headline?.tracking,
+            useXHeight: newData.typography?.headline?.useXHeight,
+            headlineFontWeight: newData.typography?.headline?.fontWeight,
+            
+            // Типографика - Text
+            textSize: newData.typography?.text?.size,
+            textLineHeight: newData.typography?.text?.lineHeight,
+            textTracking: newData.typography?.text?.tracking,
+            useXHeight2: newData.typography?.text?.useXHeight,
+            textFontWeight: newData.typography?.text?.fontWeight,
+            
+            // Отображение
+            showDimensions: newData.display?.dimensions,
+            showLabels: newData.display?.labels,
+            showSidePanels: newData.display?.sidePanels,
+            showObjects: newData.display?.objects
+        };
+
+        // Текстовые блоки (маппинг полей для внутренней структуры приложения)
+        const textBlocks = (newData.texts || []).map(text => ({
+            id: text.id || 'text_' + Date.now(),
+            content: text.content,
+            styleRef: text.style,
+            x: text.position?.column || 1,
+            row: text.position?.row || 0,
+            baselineOffset: text.position?.baseline || 0,
+            width: text.width || 3,
+            showBounds: false,
+            visible: true
+        }));
+
+        // Графические блоки (маппинг полей для внутренней структуры приложения)
+        const graphicsBlocks = [];
+        
+        // Добавляем пользовательские графические блоки
+        (newData.graphics?.blocks || []).forEach(graphic => {
+            graphicsBlocks.push({
+                id: graphic.id || 'graphic_' + Date.now(),
+                name: graphic.name || 'Graphic',
+                isBuiltIn: false,
+                svgContent: graphic.svg || '',
+                heightInModules: graphic.height || 3,
+                x: graphic.position?.column || 1,
+                row: graphic.position?.row || 0,
+                baselineOffset: graphic.position?.baseline || 0,
+                showBounds: false,
+                visible: true,
+                originalWidth: graphic.originalWidth || 100,
+                originalHeight: graphic.originalHeight || 100
+            });
+        });
+
+        // Добавляем Icons (встроенный блок)
+        if (newData.graphics?.icons) {
+            graphicsBlocks.push({
+                id: 'icons',
+                name: 'Icons',
+                isBuiltIn: true,
+                svgContent: newData.graphics.icons.svg || '',
+                heightInModules: newData.graphics.icons.height || 3,
+                x: newData.graphics.icons.position?.column || 1,
+                row: newData.graphics.icons.position?.row || 0,
+                baselineOffset: newData.graphics.icons.position?.baseline || 0,
+                showBounds: false,
+                visible: true,
+                originalWidth: 204.0944882,
+                originalHeight: 28.3464567
+            });
+        }
+
+        // Добавляем Claim (встроенный блок)
+        if (newData.graphics?.claim) {
+            graphicsBlocks.push({
+                id: 'claim',
+                name: 'Claim',
+                isBuiltIn: true,
+                svgContent: newData.graphics.claim.svg || '',
+                heightInModules: newData.graphics.claim.height || 3,
+                x: newData.graphics.claim.position?.column || 7,
+                row: newData.graphics.claim.position?.row || 0,
+                baselineOffset: newData.graphics.claim.position?.baseline || 0,
+                showBounds: false,
+                visible: true,
+                originalWidth: 186.2242584,
+                originalHeight: 28.3464565
+            });
+        }
+
+        return {
+            version: newData.version,
+            timestamp: newData.timestamp,
+            presetName: newData.presetName,
+            settings: settings,
+            textBlocks: textBlocks,
+            graphicsBlocks: graphicsBlocks
+        };
     }
 }
 
