@@ -25,9 +25,6 @@ import { GraphicsManager } from './src/elements/GraphicsManager.js';
 import { GraphicsRenderer } from './src/elements/GraphicsRenderer.js';
 import { ElementsNavigator } from './src/elements/ElementsNavigator.js';
 
-// Итерация 7: SVG Export
-import { SVGExporter } from './src/svg/SVGExporter.js';
-
 class GridGenerator {
     constructor() {
         // Slider configuration - defines behavior for each slider
@@ -491,11 +488,6 @@ class GridGenerator {
         // ============================================
         this.initUIControllers();
         
-        // ============================================
-        // SVG Exporter (Итерация 7)
-        // ============================================
-        this.svgExporter = new SVGExporter(this.settingsModule);
-        
         // Calculate initial row count to fill the format (after DOM is ready)
         this.calculateRowCount();
         
@@ -631,7 +623,6 @@ class GridGenerator {
             // Buttons
             exportBtn: document.getElementById('exportBtn'),
             exportSettingsBtn: document.getElementById('exportSettingsBtn'),
-            importSettingsBtn: document.getElementById('importSettingsBtn'),
             helpButton: document.getElementById('helpButton'),
             modalOverlay: document.getElementById('modalOverlay'),
             modalClose: document.getElementById('modalClose'),
@@ -897,22 +888,6 @@ class GridGenerator {
         
         // Export Settings button
         this.dom.exportSettingsBtn.addEventListener('click', () => this.exportSettings());
-        
-        // Import Settings button (Итерация 7)
-        if (this.dom.importSettingsBtn) {
-            this.dom.importSettingsBtn.addEventListener('click', () => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = '.json';
-                input.onchange = (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        this.importSettings(file);
-                    }
-                };
-                input.click();
-            });
-        }
         
         // Help button and modal
         if (this.dom.helpButton) {
@@ -4511,57 +4486,9 @@ class GridGenerator {
         this.attachClaimBlockHandlers(claimGroup, block, frontX, frontY, scale);
     }
     
-    // Draw graphics block for export (without event handlers)
-    drawGraphicsBlockForExport(container, block, frontX, frontY, frontWidth, frontHeight, scale) {
-        if (!block.svgContent) return;
-        
-        const gridColor = this.getContrastColor(); // Color depends on background
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        
-        // Calculate dimensions
-        const heightInMm = module * block.heightInModules;
-        const aspectRatio = block.originalWidth / block.originalHeight;
-        const widthInMm = heightInMm * aspectRatio;
-        
-        // Calculate position
-        const columnWidth = (frontWidth / scale - module * margins * 2 - module * (this.settings.columnCount - 1)) / this.settings.columnCount;
-        const gutter = module;
-        const topMargin = module * margins * scale;
-        
-        const yInBaseline = this.getBlockY({
-            row: block.row,
-            baselineOffset: block.baselineOffset
-        });
-        
-        const graphicsX = frontX + module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale);
-        const graphicsY = frontY + yInBaseline * (module * scale) + topMargin;
-        
-        // Scale dimensions
-        const scaledWidth = widthInMm * scale;
-        const scaledHeight = heightInMm * scale;
-        
-        // Create nested SVG for graphics with correct viewBox
-        const nestedSvg = this.createSVGElement('svg', {
-            x: graphicsX,
-            y: graphicsY,
-            width: scaledWidth,
-            height: scaledHeight,
-            viewBox: `0 0 ${block.originalWidth} ${block.originalHeight}`,
-            preserveAspectRatio: 'xMinYMin meet',
-            style: `color: ${gridColor}; overflow: visible;`
-        }, container);
-        
-        // Add SVG content
-        nestedSvg.innerHTML = block.svgContent;
-        
-        // Apply color to all elements with fill/stroke in the SVG
-        this.applyColorToSVGElements(nestedSvg, gridColor);
-    }
-    
     // Draw icons block for export (without event handlers)
     drawIconsBlockForExport(container, frontX, frontY, frontWidth, frontHeight, scale) {
-        const gridColor = this.getContrastColor(); // Color depends on background
+        const gridColor = '#000000'; // Black for export
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         
@@ -4597,14 +4524,11 @@ class GridGenerator {
         
         // Add SVG content (loaded from graphics/icons.svg)
         nestedSvg.innerHTML = block.svgContent || '';
-        
-        // Apply color to all elements with fill/stroke in the SVG
-        this.applyColorToSVGElements(nestedSvg, gridColor);
     }
     
     // Draw claim block for export (without event handlers)
     drawClaimBlockForExport(container, frontX, frontY, frontWidth, frontHeight, scale) {
-        const gridColor = this.getContrastColor(); // Color depends on background
+        const gridColor = '#000000'; // Black for export
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         
@@ -4640,61 +4564,6 @@ class GridGenerator {
         
         // Add SVG content (loaded from graphics/yf_claim.svg)
         nestedSvg.innerHTML = block.svgContent || '';
-        
-        // Apply color to all elements with fill/stroke in the SVG
-        this.applyColorToSVGElements(nestedSvg, gridColor);
-    }
-    
-    // Apply color to SVG elements (for export)
-    // Replaces fill/stroke colors in SVG elements to match background contrast
-    applyColorToSVGElements(svgElement, color) {
-        // First, update style elements to replace CSS color definitions
-        const styleElements = svgElement.querySelectorAll('style');
-        styleElements.forEach(styleEl => {
-            let styleText = styleEl.textContent || styleEl.innerHTML;
-            // Replace fill colors in CSS rules (handles .st0 { fill: #fff; } etc.)
-            styleText = styleText.replace(/fill:\s*#fff(fff)?/gi, `fill: ${color}`);
-            styleText = styleText.replace(/fill:\s*white/gi, `fill: ${color}`);
-            styleText = styleText.replace(/fill:\s*#000(000)?/gi, `fill: ${color}`);
-            styleText = styleText.replace(/fill:\s*black/gi, `fill: ${color}`);
-            // Replace stroke colors in CSS rules
-            styleText = styleText.replace(/stroke:\s*#fff(fff)?/gi, `stroke: ${color}`);
-            styleText = styleText.replace(/stroke:\s*white/gi, `stroke: ${color}`);
-            styleText = styleText.replace(/stroke:\s*#000(000)?/gi, `stroke: ${color}`);
-            styleText = styleText.replace(/stroke:\s*black/gi, `stroke: ${color}`);
-            
-            if (styleEl.textContent !== undefined) {
-                styleEl.textContent = styleText;
-            } else {
-                styleEl.innerHTML = styleText;
-            }
-        });
-        
-        // Then, update all elements with fill or stroke attributes
-        const allElements = svgElement.querySelectorAll('*');
-        
-        allElements.forEach(element => {
-            // Check if element has fill attribute
-            const fill = element.getAttribute('fill');
-            if (fill && fill !== 'none' && fill !== 'transparent') {
-                // Replace white (#fff, #ffffff, white) or black (#000, #000000, black) with contrast color
-                const fillLower = fill.toLowerCase().trim();
-                if (fillLower === '#fff' || fillLower === '#ffffff' || fillLower === 'white' ||
-                    fillLower === '#000' || fillLower === '#000000' || fillLower === 'black') {
-                    element.setAttribute('fill', color);
-                }
-            }
-            
-            // Check if element has stroke attribute
-            const stroke = element.getAttribute('stroke');
-            if (stroke && stroke !== 'none' && stroke !== 'transparent') {
-                const strokeLower = stroke.toLowerCase().trim();
-                if (strokeLower === '#fff' || strokeLower === '#ffffff' || strokeLower === 'white' ||
-                    strokeLower === '#000' || strokeLower === '#000000' || strokeLower === 'black') {
-                    element.setAttribute('stroke', color);
-                }
-            }
-        });
     }
     
     // Attach event handlers for icons block (click, hover, drag)
@@ -7037,26 +6906,8 @@ class GridGenerator {
         }
     }
     
-    // Итерация 7: Упрощенный экспорт SVG через SVGExporter
     exportSVG() {
         const { frontWidth, frontHeight, thickness, gridModule, margins, columnCount, rowCount, rowHeight } = this.settings;
-        
-        // Создаем SVG для экспорта (scale = 1 для точных размеров)
-        const exportSvg = this.createExportSVG();
-        
-        // Генерируем имя файла с параметрами
-        const filename = `grid_width${frontWidth}_height${frontHeight}_thickness${thickness}_module${gridModule.toFixed(2)}_margins${margins.toFixed(2)}_columns${columnCount}_rows${rowCount}_rowheight${rowHeight}.svg`;
-        
-        // Экспортируем через модуль
-        this.svgExporter.exportToFile(exportSvg, filename, {
-            removeInteractive: true,
-            optimizeSize: true
-        });
-    }
-    
-    // Итерация 7: Создание SVG для экспорта (без интерактивных элементов)
-    createExportSVG() {
-        const { frontWidth, frontHeight, thickness } = this.settings;
         
         // Create a new SVG for export with actual mm dimensions
         const totalWidth = frontWidth + 2 * thickness;
@@ -7083,62 +6934,62 @@ class GridGenerator {
         const frontY = thickness;
         
         // Draw columns (in separate group, always export but hide if disabled)
-        const columnsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        columnsGroup.setAttribute('id', 'columns');
+            const columnsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            columnsGroup.setAttribute('id', 'columns');
         if (!this.settings.showColumns) {
             columnsGroup.setAttribute('visibility', 'hidden');
         }
-        exportSvg.appendChild(columnsGroup);
-        this.drawColumns(columnsGroup, frontX, frontY, frontWidth, frontHeight, scale);
-        
-        // Draw columns on side panels if enabled
-        if (this.settings.showSidePanels) {
-            // Left panel - vertical columns (using rows parameters from front)
-            this.drawColumnsVerticalLeftRight(columnsGroup, 0, frontY, thickness, frontHeight, scale, 'left');
+            exportSvg.appendChild(columnsGroup);
+            this.drawColumns(columnsGroup, frontX, frontY, frontWidth, frontHeight, scale);
             
-            // Right panel - vertical columns (using rows parameters from front)
-            this.drawColumnsVerticalLeftRight(columnsGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
-            
-            // Top panel - horizontal columns (using columns parameters from front)
-            this.drawColumnsTopBottom(columnsGroup, frontX, 0, frontWidth, thickness, scale, 'top');
-            
-            // Bottom panel - horizontal columns (using columns parameters from front)
-            this.drawColumnsTopBottom(columnsGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
+            // Draw columns on side panels if enabled
+            if (this.settings.showSidePanels) {
+                // Left panel - vertical columns (using rows parameters from front)
+                this.drawColumnsVerticalLeftRight(columnsGroup, 0, frontY, thickness, frontHeight, scale, 'left');
+                
+                // Right panel - vertical columns (using rows parameters from front)
+                this.drawColumnsVerticalLeftRight(columnsGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
+                
+                // Top panel - horizontal columns (using columns parameters from front)
+                this.drawColumnsTopBottom(columnsGroup, frontX, 0, frontWidth, thickness, scale, 'top');
+                
+                // Bottom panel - horizontal columns (using columns parameters from front)
+                this.drawColumnsTopBottom(columnsGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
         }
         
         // Draw rows (in separate group, always export but hide if disabled)
-        const rowsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        rowsGroup.setAttribute('id', 'rows');
+            const rowsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            rowsGroup.setAttribute('id', 'rows');
         if (!this.settings.showRows) {
             rowsGroup.setAttribute('visibility', 'hidden');
         }
-        exportSvg.appendChild(rowsGroup);
-        this.drawRows(rowsGroup, frontX, frontY, frontWidth, frontHeight, scale);
+            exportSvg.appendChild(rowsGroup);
+            this.drawRows(rowsGroup, frontX, frontY, frontWidth, frontHeight, scale);
         
         // Draw baseline (in separate group, always export but hide if disabled)
-        const baselineGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        baselineGroup.setAttribute('id', 'baseline');
+            const baselineGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            baselineGroup.setAttribute('id', 'baseline');
         if (!this.settings.showBaseline) {
             baselineGroup.setAttribute('visibility', 'hidden');
         }
-        exportSvg.appendChild(baselineGroup);
-        
-        // Front panel baseline
-        this.drawBaseline(baselineGroup, frontX, frontY, frontWidth, frontHeight, scale);
-        
-        // Side panels baseline if enabled
-        if (this.settings.showSidePanels) {
-            // Left panel - vertical baseline (margin from right side where it touches front)
-            this.drawBaselineVerticalLeftRight(baselineGroup, 0, frontY, thickness, frontHeight, scale, 'left');
+            exportSvg.appendChild(baselineGroup);
             
-            // Right panel - vertical baseline (margin from left side where it touches front)
-            this.drawBaselineVerticalLeftRight(baselineGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
+            // Front panel baseline
+            this.drawBaseline(baselineGroup, frontX, frontY, frontWidth, frontHeight, scale);
             
-            // Top panel - horizontal baseline (margin from bottom where it touches front)
-            this.drawBaselineTopBottom(baselineGroup, frontX, 0, frontWidth, thickness, scale, 'top');
-            
-            // Bottom panel - horizontal baseline (margin from top where it touches front)
-            this.drawBaselineTopBottom(baselineGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
+            // Side panels baseline if enabled
+            if (this.settings.showSidePanels) {
+                // Left panel - vertical baseline (margin from right side where it touches front)
+                this.drawBaselineVerticalLeftRight(baselineGroup, 0, frontY, thickness, frontHeight, scale, 'left');
+                
+                // Right panel - vertical baseline (margin from left side where it touches front)
+                this.drawBaselineVerticalLeftRight(baselineGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
+                
+                // Top panel - horizontal baseline (margin from bottom where it touches front)
+                this.drawBaselineTopBottom(baselineGroup, frontX, 0, frontWidth, thickness, scale, 'top');
+                
+                // Bottom panel - horizontal baseline (margin from top where it touches front)
+                this.drawBaselineTopBottom(baselineGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
         }
         
         // Add dimensions if enabled (in separate group)
@@ -7165,20 +7016,6 @@ class GridGenerator {
             this.drawTextBlock(textGroup, block, frontX, frontY, frontWidth, frontHeight, scale);
         });
         
-        // Add graphics blocks (in separate groups)
-        if (this.graphicsBlocks) {
-            this.graphicsBlocks.forEach(block => {
-                if (block.visible !== false && block.svgContent) {
-                    const graphicsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                    graphicsGroup.setAttribute('id', `graphics-${block.id}`);
-                    exportSvg.appendChild(graphicsGroup);
-                    
-                    // Draw graphics block
-                    this.drawGraphicsBlockForExport(graphicsGroup, block, frontX, frontY, frontWidth, frontHeight, scale);
-                }
-            });
-        }
-        
         // Add icons block (in separate group)
         const iconsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         iconsGroup.setAttribute('id', 'icons');
@@ -7191,62 +7028,188 @@ class GridGenerator {
         exportSvg.appendChild(claimGroup);
         this.drawClaimBlockForExport(claimGroup, frontX, frontY, frontWidth, frontHeight, scale);
         
-        return exportSvg;
-    }
-    
-    // Итерация 7: Экспорт настроек в JSON через SVGExporter
-    exportSettings() {
-        const data = {
-            version: '1.0',
-            timestamp: new Date().toISOString(),
-            settings: this.settingsModule.getAll(),
-            textBlocks: this.textBlocks,
-            graphicsBlocks: this.graphicsBlocks || [],
-            iconsBlock: this.iconsBlock || null,
-            claimBlock: this.claimBlock || null
-        };
+        // Convert to string
+        const serializer = new XMLSerializer();
+        const svgString = serializer.serializeToString(exportSvg);
         
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-        this.svgExporter.exportSettings(data, `grid-settings_${timestamp}.json`);
+        // Create blob and download
+        const blob = new Blob([svgString], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `grid_width${frontWidth}_height${frontHeight}_thickness${thickness}_module${gridModule.toFixed(2)}_margins${margins.toFixed(2)}_columns${columnCount}_rows${rowCount}_rowheight${rowHeight}.svg`;
+        link.href = url;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        setTimeout(() => URL.revokeObjectURL(url), 100);
     }
     
-    // Итерация 7: Импорт настроек из JSON
-    async importSettings(file) {
-        try {
-            const data = await this.svgExporter.importSettings(file);
+    exportSettings() {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        let settingsText = '';
+        
+        // Заголовок файла
+        settingsText += '========================================\n';
+        settingsText += 'GRID GENERATOR - НАСТРОЙКИ МАКЕТА\n';
+        settingsText += `Экспорт: ${new Date().toLocaleString('ru-RU')}\n`;
+        settingsText += '========================================\n\n';
+        
+        // Раздел 1: Размеры упаковки
+        settingsText += '--- РАЗМЕРЫ УПАКОВКИ (mm) ---\n';
+        settingsText += `Ширина (Width): ${this.settings.frontWidth}\n`;
+        settingsText += `Высота (Height): ${this.settings.frontHeight}\n`;
+        settingsText += `Толщина (Thickness): ${this.settings.thickness}\n`;
+        settingsText += `Цвет фона (Background Color): ${this.settings.boxColor}\n`;
+        settingsText += `Показывать размеры (Show Dimensions): ${this.settings.showDimensions ? 'Да' : 'Нет'}\n`;
+        settingsText += `Показывать боковые панели (Show Side Panels): ${this.settings.showSidePanels ? 'Да' : 'Нет'}\n`;
+        settingsText += '\n';
+        
+        // Раздел 2: Настройки сетки
+        settingsText += '--- НАСТРОЙКИ СЕТКИ ---\n';
+        settingsText += `Модуль (Module, mm): ${this.settings.gridModule}\n`;
+        settingsText += `Поля (Margins, mod): ${this.settings.margins}\n`;
+        settingsText += `Количество колонок (Columns): ${this.settings.columnCount}\n`;
+        settingsText += `Количество строк (Rows): ${this.settings.rowCount}\n`;
+        settingsText += `Высота строки (Row Height, mod): ${this.settings.rowHeight}\n`;
+        settingsText += `Режим связи (Link Mode): ${this.settings.linkMode === 'off' ? 'Отключен' : this.settings.linkMode === 'rows-height' ? 'R⇄RH' : 'RRH⇄Mod'}\n`;
+        settingsText += `Показывать колонки (Show Columns): ${this.settings.showColumns ? 'Да' : 'Нет'}\n`;
+        settingsText += `Показывать строки (Show Rows): ${this.settings.showRows ? 'Да' : 'Нет'}\n`;
+        settingsText += `Показывать базовую сетку (Show Baseline): ${this.settings.showBaseline ? 'Да' : 'Нет'}\n`;
+        settingsText += `Показывать объекты (Show Objects): ${this.settings.showObjects ? 'Да' : 'Нет'}\n`;
+        settingsText += '\n';
+        
+        // Раздел 3: Стили текста - Headline
+        settingsText += '--- СТИЛЬ ТЕКСТА: HEADLINE ---\n';
+        settingsText += `Размер (Size, mod): ${this.settings.headlineSize}\n`;
+        settingsText += `Интерлиньяж (Line Height, mod): ${this.settings.lineHeight}\n`;
+        settingsText += `Трекинг (Tracking, em): ${this.settings.tracking}\n`;
+        settingsText += `Использовать x-height: ${this.settings.useXHeight ? 'Да' : 'Нет'}\n`;
+        settingsText += '\n';
+        
+        // Раздел 4: Стили текста - Text
+        settingsText += '--- СТИЛЬ ТЕКСТА: TEXT ---\n';
+        settingsText += `Размер (Size, mod): ${this.settings.textSize}\n`;
+        settingsText += `Интерлиньяж (Line Height, mod): ${this.settings.textLineHeight}\n`;
+        settingsText += `Трекинг (Tracking, em): ${this.settings.textTracking}\n`;
+        settingsText += `Использовать x-height: ${this.settings.useXHeight2 ? 'Да' : 'Нет'}\n`;
+        settingsText += '\n';
+        
+        // Раздел 5: Текстовые блоки
+        settingsText += '========================================\n';
+        settingsText += 'ТЕКСТОВЫЕ БЛОКИ\n';
+        settingsText += '========================================\n\n';
+        
+        this.textBlocks.forEach((block, index) => {
+            const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
+            settingsText += `--- БЛОК ${index + 1}: ${block.id.toUpperCase()} ---\n`;
+            settingsText += `ID: ${block.id}\n`;
+            settingsText += `Стиль (Style Reference): ${block.styleRef}\n`;
+            settingsText += `Колонка (Column): ${block.x}\n`;
+            settingsText += `Строка (Row): ${block.row}\n`;
+            settingsText += `Baseline (на всей сетке): ${globalBaseline}\n`;
+            settingsText += `Baseline смещение внутри строки (Baseline Offset, mod): ${block.baselineOffset}\n`;
+            settingsText += `Ширина (Width, columns): ${block.width}\n`;
+            settingsText += `Показывать границы (Show Bounds): ${block.showBounds ? 'Да' : 'Нет'}\n`;
+            settingsText += `Видимость (Visible): ${block.visible !== false ? 'Да' : 'Нет'}\n`;
+            settingsText += `\nСодержимое текста:\n`;
+            settingsText += `${block.content}\n`;
+            settingsText += `\n`;
+        });
+        
+        // Раздел 6: Графические блоки
+        if (this.graphicsBlocks && this.graphicsBlocks.length > 0) {
+            settingsText += '========================================\n';
+            settingsText += 'ГРАФИЧЕСКИЕ БЛОКИ\n';
+            settingsText += '========================================\n\n';
             
-            if (data.settings) {
-                // Применяем настройки
-                Object.entries(data.settings).forEach(([key, value]) => {
-                    this.settingsModule.set(key, value);
-                });
-            }
-            
-            if (data.textBlocks) {
-                this.textBlocks = data.textBlocks;
-            }
-            
-            if (data.graphicsBlocks) {
-                this.graphicsBlocks = data.graphicsBlocks;
-            }
-            
-            if (data.iconsBlock) {
-                this.iconsBlock = data.iconsBlock;
-            }
-            
-            if (data.claimBlock) {
-                this.claimBlock = data.claimBlock;
-            }
-            
-            // Обновляем UI
-            this.updateGrid();
-            this.updateElementsNavigator();
-            
-            console.log('✅ Settings imported successfully');
-        } catch (error) {
-            console.error('❌ Failed to import settings:', error);
-            alert('Ошибка при импорте настроек: ' + error.message);
+            this.graphicsBlocks.forEach((block, index) => {
+                const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
+                settingsText += `--- ГРАФИКА ${index + 1}: ${block.name || block.id} ---\n`;
+                settingsText += `ID: ${block.id}\n`;
+                settingsText += `Имя: ${block.name}\n`;
+                settingsText += `Колонка (Column): ${block.x}\n`;
+                settingsText += `Строка (Row): ${block.row}\n`;
+                settingsText += `Baseline (на всей сетке): ${globalBaseline}\n`;
+                settingsText += `Baseline смещение внутри строки (Baseline Offset, mod): ${block.baselineOffset}\n`;
+                settingsText += `Высота (Height, mod): ${block.heightInModules}\n`;
+                settingsText += `Оригинальные размеры (W×H): ${block.originalWidth} × ${block.originalHeight}\n`;
+                settingsText += `Видимость (Visible): ${block.visible !== false ? 'Да' : 'Нет'}\n`;
+                settingsText += `\n`;
+            });
         }
+        
+        // Раздел 7: Иконки
+        if (this.iconsBlock) {
+            settingsText += '========================================\n';
+            settingsText += 'ИКОНКИ\n';
+            settingsText += '========================================\n\n';
+            const globalBaseline = this.rowBaselineToY(this.iconsBlock.row, this.iconsBlock.baselineOffset);
+            settingsText += `Колонка (Column): ${this.iconsBlock.x}\n`;
+            settingsText += `Строка (Row): ${this.iconsBlock.row}\n`;
+            settingsText += `Baseline (на всей сетке): ${globalBaseline}\n`;
+            settingsText += `Baseline смещение внутри строки (Baseline Offset, mod): ${this.iconsBlock.baselineOffset}\n`;
+            settingsText += `Высота (Height, mod): ${this.iconsBlock.heightInModules}\n`;
+            settingsText += `Оригинальные размеры (W×H): ${this.iconsBlock.originalWidth} × ${this.iconsBlock.originalHeight}\n`;
+            settingsText += `Видимость (Visible): ${this.iconsBlock.visible !== false ? 'Да' : 'Нет'}\n`;
+            settingsText += `\n`;
+        }
+        
+        // Раздел 8: Клейм
+        if (this.claimBlock) {
+            settingsText += '========================================\n';
+            settingsText += 'КЛЕЙМ (CLAIM)\n';
+            settingsText += '========================================\n\n';
+            const globalBaseline = this.rowBaselineToY(this.claimBlock.row, this.claimBlock.baselineOffset);
+            settingsText += `Колонка (Column): ${this.claimBlock.x}\n`;
+            settingsText += `Строка (Row): ${this.claimBlock.row}\n`;
+            settingsText += `Baseline (на всей сетке): ${globalBaseline}\n`;
+            settingsText += `Baseline смещение внутри строки (Baseline Offset, mod): ${this.claimBlock.baselineOffset}\n`;
+            settingsText += `Высота (Height, mod): ${this.claimBlock.heightInModules}\n`;
+            settingsText += `Оригинальные размеры (W×H): ${this.claimBlock.originalWidth} × ${this.claimBlock.originalHeight}\n`;
+            settingsText += `Видимость (Visible): ${this.claimBlock.visible !== false ? 'Да' : 'Нет'}\n`;
+            settingsText += `\n`;
+        }
+        
+        // Раздел 9: Вычисляемые параметры
+        settingsText += '========================================\n';
+        settingsText += 'ВЫЧИСЛЯЕМЫЕ ПАРАМЕТРЫ\n';
+        settingsText += '========================================\n\n';
+        
+        const contentWidth = this.settings.frontWidth - 2 * this.settings.margins * this.settings.gridModule;
+        const contentHeight = this.settings.frontHeight - 2 * this.settings.margins * this.settings.gridModule;
+        const gutterWidth = this.settings.gridModule;
+        const columnWidth = (contentWidth - (this.settings.columnCount - 1) * gutterWidth) / this.settings.columnCount;
+        const rowHeightMm = this.settings.rowHeight * this.settings.gridModule;
+        const totalRows = this.settings.rowCount;
+        const totalHeight = totalRows * rowHeightMm + (totalRows - 1) * this.settings.gridModule;
+        
+        settingsText += `Ширина контента (без полей, mm): ${contentWidth.toFixed(2)}\n`;
+        settingsText += `Высота контента (без полей, mm): ${contentHeight.toFixed(2)}\n`;
+        settingsText += `Ширина желоба (Gutter Width, mm): ${gutterWidth.toFixed(4)}\n`;
+        settingsText += `Ширина колонки (Column Width, mm): ${columnWidth.toFixed(2)}\n`;
+        settingsText += `Высота строки (Row Height, mm): ${rowHeightMm.toFixed(2)}\n`;
+        settingsText += `Общая высота всех строк с желобами (mm): ${totalHeight.toFixed(2)}\n`;
+        settingsText += '\n';
+        
+        // Конец файла
+        settingsText += '========================================\n';
+        settingsText += 'КОНЕЦ ФАЙЛА НАСТРОЕК\n';
+        settingsText += '========================================\n';
+        
+        // Создание и скачивание файла
+        const blob = new Blob([settingsText], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `grid-settings_${timestamp}.txt`;
+        link.href = url;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        setTimeout(() => URL.revokeObjectURL(url), 100);
     }
     
     // Debounced save state - saves after user stops interacting for 300ms

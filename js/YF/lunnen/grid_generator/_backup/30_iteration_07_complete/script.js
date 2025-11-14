@@ -631,7 +631,6 @@ class GridGenerator {
             // Buttons
             exportBtn: document.getElementById('exportBtn'),
             exportSettingsBtn: document.getElementById('exportSettingsBtn'),
-            importSettingsBtn: document.getElementById('importSettingsBtn'),
             helpButton: document.getElementById('helpButton'),
             modalOverlay: document.getElementById('modalOverlay'),
             modalClose: document.getElementById('modalClose'),
@@ -4511,57 +4510,9 @@ class GridGenerator {
         this.attachClaimBlockHandlers(claimGroup, block, frontX, frontY, scale);
     }
     
-    // Draw graphics block for export (without event handlers)
-    drawGraphicsBlockForExport(container, block, frontX, frontY, frontWidth, frontHeight, scale) {
-        if (!block.svgContent) return;
-        
-        const gridColor = this.getContrastColor(); // Color depends on background
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        
-        // Calculate dimensions
-        const heightInMm = module * block.heightInModules;
-        const aspectRatio = block.originalWidth / block.originalHeight;
-        const widthInMm = heightInMm * aspectRatio;
-        
-        // Calculate position
-        const columnWidth = (frontWidth / scale - module * margins * 2 - module * (this.settings.columnCount - 1)) / this.settings.columnCount;
-        const gutter = module;
-        const topMargin = module * margins * scale;
-        
-        const yInBaseline = this.getBlockY({
-            row: block.row,
-            baselineOffset: block.baselineOffset
-        });
-        
-        const graphicsX = frontX + module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale);
-        const graphicsY = frontY + yInBaseline * (module * scale) + topMargin;
-        
-        // Scale dimensions
-        const scaledWidth = widthInMm * scale;
-        const scaledHeight = heightInMm * scale;
-        
-        // Create nested SVG for graphics with correct viewBox
-        const nestedSvg = this.createSVGElement('svg', {
-            x: graphicsX,
-            y: graphicsY,
-            width: scaledWidth,
-            height: scaledHeight,
-            viewBox: `0 0 ${block.originalWidth} ${block.originalHeight}`,
-            preserveAspectRatio: 'xMinYMin meet',
-            style: `color: ${gridColor}; overflow: visible;`
-        }, container);
-        
-        // Add SVG content
-        nestedSvg.innerHTML = block.svgContent;
-        
-        // Apply color to all elements with fill/stroke in the SVG
-        this.applyColorToSVGElements(nestedSvg, gridColor);
-    }
-    
     // Draw icons block for export (without event handlers)
     drawIconsBlockForExport(container, frontX, frontY, frontWidth, frontHeight, scale) {
-        const gridColor = this.getContrastColor(); // Color depends on background
+        const gridColor = '#000000'; // Black for export
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         
@@ -4597,14 +4548,11 @@ class GridGenerator {
         
         // Add SVG content (loaded from graphics/icons.svg)
         nestedSvg.innerHTML = block.svgContent || '';
-        
-        // Apply color to all elements with fill/stroke in the SVG
-        this.applyColorToSVGElements(nestedSvg, gridColor);
     }
     
     // Draw claim block for export (without event handlers)
     drawClaimBlockForExport(container, frontX, frontY, frontWidth, frontHeight, scale) {
-        const gridColor = this.getContrastColor(); // Color depends on background
+        const gridColor = '#000000'; // Black for export
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         
@@ -4640,61 +4588,6 @@ class GridGenerator {
         
         // Add SVG content (loaded from graphics/yf_claim.svg)
         nestedSvg.innerHTML = block.svgContent || '';
-        
-        // Apply color to all elements with fill/stroke in the SVG
-        this.applyColorToSVGElements(nestedSvg, gridColor);
-    }
-    
-    // Apply color to SVG elements (for export)
-    // Replaces fill/stroke colors in SVG elements to match background contrast
-    applyColorToSVGElements(svgElement, color) {
-        // First, update style elements to replace CSS color definitions
-        const styleElements = svgElement.querySelectorAll('style');
-        styleElements.forEach(styleEl => {
-            let styleText = styleEl.textContent || styleEl.innerHTML;
-            // Replace fill colors in CSS rules (handles .st0 { fill: #fff; } etc.)
-            styleText = styleText.replace(/fill:\s*#fff(fff)?/gi, `fill: ${color}`);
-            styleText = styleText.replace(/fill:\s*white/gi, `fill: ${color}`);
-            styleText = styleText.replace(/fill:\s*#000(000)?/gi, `fill: ${color}`);
-            styleText = styleText.replace(/fill:\s*black/gi, `fill: ${color}`);
-            // Replace stroke colors in CSS rules
-            styleText = styleText.replace(/stroke:\s*#fff(fff)?/gi, `stroke: ${color}`);
-            styleText = styleText.replace(/stroke:\s*white/gi, `stroke: ${color}`);
-            styleText = styleText.replace(/stroke:\s*#000(000)?/gi, `stroke: ${color}`);
-            styleText = styleText.replace(/stroke:\s*black/gi, `stroke: ${color}`);
-            
-            if (styleEl.textContent !== undefined) {
-                styleEl.textContent = styleText;
-            } else {
-                styleEl.innerHTML = styleText;
-            }
-        });
-        
-        // Then, update all elements with fill or stroke attributes
-        const allElements = svgElement.querySelectorAll('*');
-        
-        allElements.forEach(element => {
-            // Check if element has fill attribute
-            const fill = element.getAttribute('fill');
-            if (fill && fill !== 'none' && fill !== 'transparent') {
-                // Replace white (#fff, #ffffff, white) or black (#000, #000000, black) with contrast color
-                const fillLower = fill.toLowerCase().trim();
-                if (fillLower === '#fff' || fillLower === '#ffffff' || fillLower === 'white' ||
-                    fillLower === '#000' || fillLower === '#000000' || fillLower === 'black') {
-                    element.setAttribute('fill', color);
-                }
-            }
-            
-            // Check if element has stroke attribute
-            const stroke = element.getAttribute('stroke');
-            if (stroke && stroke !== 'none' && stroke !== 'transparent') {
-                const strokeLower = stroke.toLowerCase().trim();
-                if (strokeLower === '#fff' || strokeLower === '#ffffff' || strokeLower === 'white' ||
-                    strokeLower === '#000' || strokeLower === '#000000' || strokeLower === 'black') {
-                    element.setAttribute('stroke', color);
-                }
-            }
-        });
     }
     
     // Attach event handlers for icons block (click, hover, drag)
@@ -7164,20 +7057,6 @@ class GridGenerator {
             exportSvg.appendChild(textGroup);
             this.drawTextBlock(textGroup, block, frontX, frontY, frontWidth, frontHeight, scale);
         });
-        
-        // Add graphics blocks (in separate groups)
-        if (this.graphicsBlocks) {
-            this.graphicsBlocks.forEach(block => {
-                if (block.visible !== false && block.svgContent) {
-                    const graphicsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                    graphicsGroup.setAttribute('id', `graphics-${block.id}`);
-                    exportSvg.appendChild(graphicsGroup);
-                    
-                    // Draw graphics block
-                    this.drawGraphicsBlockForExport(graphicsGroup, block, frontX, frontY, frontWidth, frontHeight, scale);
-                }
-            });
-        }
         
         // Add icons block (in separate group)
         const iconsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');

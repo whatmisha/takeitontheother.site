@@ -1173,6 +1173,8 @@ textarea::placeholder {
     z-index: 1;
     justify-content: center;
     color: var(--color-text);
+    min-height: 30px; /* Та же высота, что и обычная кнопка с actions (2px padding + 1px border + 24px content + 1px border + 2px padding) */
+    height: auto;
 }
 
 @keyframes deleteProgress {
@@ -1452,6 +1454,16 @@ legend {
     color: var(--color-bg);
 }
 
+.btn-import-settings {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.btn-import-settings:hover {
+    background: var(--color-text);
+    color: var(--color-bg);
+}
+
 /* Scrollbar styling */
 .panel-content::-webkit-scrollbar {
     width: var(--spacing-md);
@@ -1478,16 +1490,16 @@ legend {
     color: var(--color-text);
     transition: all var(--transition-slow);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
     border-radius: 50%;
     padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 600;
 }
 
@@ -1653,6 +1665,8 @@ legend {
 
 .element-item-wrapper.deleting .element-item {
     justify-content: center;
+    min-height: 30px; /* Та же высота, что и обычная кнопка с actions */
+    height: auto;
 }
 
 .element-item-wrapper.deleting .element-item:hover {
