@@ -1,16 +1,53 @@
+// ============================================
+// Импорты модулей
+// ============================================
+// Итерация 1: Утилиты
+import { ColorUtils } from './src/utils/ColorUtils.js';
+import { MathUtils } from './src/utils/MathUtils.js';
+import { DOMUtils } from './src/utils/DOMUtils.js';
+
+// Итерация 2: Core
+import { Settings } from './src/core/Settings.js';
+
+// Итерация 3: Grid
+import { GridCalculator } from './src/grid/GridCalculator.js';
+import { GridRenderer } from './src/grid/GridRenderer.js';
+
+// Итерация 5: UI Controllers
+import { SliderController } from './src/ui/SliderController.js';
+import { ColorPicker } from './src/ui/ColorPicker.js';
+import { PanelManager } from './src/ui/PanelManager.js';
+
+// Итерация 6: Elements
+import { TextBlockManager } from './src/elements/TextBlockManager.js';
+import { TextRenderer } from './src/elements/TextRenderer.js';
+import { GraphicsManager } from './src/elements/GraphicsManager.js';
+import { GraphicsRenderer } from './src/elements/GraphicsRenderer.js';
+import { ElementsNavigator } from './src/elements/ElementsNavigator.js';
+
+// Итерация 7: SVG Export
+import { SVGExporter } from './src/svg/SVGExporter.js';
+
 class GridGenerator {
     constructor() {
         // Slider configuration - defines behavior for each slider
+        // Дополнено min, max и valueId для использования с SliderController
         this.SLIDER_CONFIG = {
             frontWidthSlider: {
+                valueId: 'frontWidthValue',
                 setting: 'frontWidth',
+                min: 50,
+                max: 1000,
                 decimals: 1,
                 baseStep: 0.5,
                 shiftStep: 10,
                 onUpdate: () => this.updateGrid()
             },
             frontHeightSlider: {
+                valueId: 'frontHeightValue',
                 setting: 'frontHeight',
+                min: 50,
+                max: 1000,
                 decimals: 1,
                 baseStep: 0.5,
                 shiftStep: 10,
@@ -26,14 +63,20 @@ class GridGenerator {
                 }
             },
             thicknessSlider: {
+                valueId: 'thicknessValue',
                 setting: 'thickness',
+                min: 5,
+                max: 200,
                 decimals: 1,
                 baseStep: 0.5,
                 shiftStep: 10,
                 onUpdate: () => this.updateGrid()
             },
             gridModuleSlider: {
+                valueId: 'gridModuleValue',
                 setting: 'gridModule',
+                min: 0.5,
+                max: 20,
                 decimals: 4,
                 baseStep: 0.0001,
                 shiftStep: 0.1,
@@ -45,7 +88,10 @@ class GridGenerator {
                 }
             },
             marginsSlider: {
+                valueId: 'marginsValue',
                 setting: 'margins',
+                min: 0,
+                max: 10,
                 decimals: 2,
                 baseStep: 0.01,
                 shiftStep: 0.1,
@@ -61,7 +107,10 @@ class GridGenerator {
                 }
             },
             columnCountSlider: {
+                valueId: 'columnCountValue',
                 setting: 'columnCount',
+                min: 1,
+                max: 24,
                 decimals: 0,
                 baseStep: 1,
                 shiftStep: 10,
@@ -71,7 +120,10 @@ class GridGenerator {
                 }
             },
             rowCountSlider: {
+                valueId: 'rowCountValue',
                 setting: 'rowCount',
+                min: 1,
+                max: 50,
                 decimals: 0,
                 baseStep: 1,
                 shiftStep: 10,
@@ -87,7 +139,10 @@ class GridGenerator {
                 }
             },
             rowHeightSlider: {
+                valueId: 'rowHeightValue',
                 setting: 'rowHeight',
+                min: 1,
+                max: 20,
                 decimals: 0,
                 baseStep: 1,
                 shiftStep: 10,
@@ -103,7 +158,10 @@ class GridGenerator {
                 }
             },
             hueSlider: {
-                setting: null, // Handled specially
+                valueId: 'hueValue',
+                setting: null, // Handled specially by ColorPicker
+                min: 0,
+                max: 360,
                 decimals: 0,
                 baseStep: 1,
                 shiftStep: 10,
@@ -114,7 +172,10 @@ class GridGenerator {
                 }
             },
             saturationSlider: {
-                setting: null, // Handled specially
+                valueId: 'saturationValue',
+                setting: null, // Handled specially by ColorPicker
+                min: 0,
+                max: 100,
                 decimals: 0,
                 baseStep: 1,
                 shiftStep: 10,
@@ -124,7 +185,10 @@ class GridGenerator {
                 }
             },
             brightnessSlider: {
-                setting: null, // Handled specially
+                valueId: 'brightnessValue',
+                setting: null, // Handled specially by ColorPicker
+                min: 0,
+                max: 100,
                 decimals: 0,
                 baseStep: 1,
                 shiftStep: 10,
@@ -134,42 +198,60 @@ class GridGenerator {
                 }
             },
             headlineSizeSlider: {
+                valueId: 'headlineSizeValue',
                 setting: 'headlineSize',
+                min: 0.25,
+                max: 10,
                 decimals: 2,
                 baseStep: 0.25,
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
             lineHeightSlider: {
+                valueId: 'lineHeightValue',
                 setting: 'lineHeight',
+                min: 0.25,
+                max: 10,
                 decimals: 2,
                 baseStep: 0.25,
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
             trackingSlider: {
+                valueId: 'trackingValue',
                 setting: 'tracking',
+                min: -0.05,
+                max: 0.05,
                 decimals: 3,
                 baseStep: 0.005,
                 shiftStep: 0.05,
                 onUpdate: () => this.updateGrid()
             },
             textSizeSlider: {
+                valueId: 'textSizeValue',
                 setting: 'textSize',
+                min: 0.25,
+                max: 10,
                 decimals: 2,
                 baseStep: 0.25,
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
             textLineHeightSlider: {
+                valueId: 'textLineHeightValue',
                 setting: 'textLineHeight',
+                min: 0.25,
+                max: 10,
                 decimals: 2,
                 baseStep: 0.25,
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
             textTrackingSlider: {
+                valueId: 'textTrackingValue',
                 setting: 'textTracking',
+                min: -0.05,
+                max: 0.05,
                 decimals: 2,
                 baseStep: 0.01,
                 shiftStep: 0.05,
@@ -177,45 +259,96 @@ class GridGenerator {
             }
         };
         
-        // Settings
-        this.settings = {
-            frontWidth: 382,  // mm
-            frontHeight: 387, // mm
-            thickness: 39,      // mm
+        // ============================================
+        // Settings (Итерация 2: используем Settings модуль)
+        // ============================================
+        this.settingsModule = new Settings({
+            frontWidth: 382,
+            frontHeight: 387,
+            thickness: 39,
             showDimensions: false,
             showLabels: false,
             showSidePanels: true,
             boxColor: '#dadde6',
-            // Grid settings
-            gridModule: 3.3076,  // mm - base unit for gutter and baseline (387mm / 117 modules: 4 margins + 95 row content + 18 gutters)
-            margins: 2,  // in modules - margin from edges
-            marginsUnit: 'mod',  // 'mod' or 'mm' - unit for margins display
+            gridModule: 3.3076,
+            margins: 2,
+            marginsUnit: 'mod',
             columnCount: 12,
-            rowCount: 19,  // will be calculated after DOM is ready
-            rowHeight: 5,  // in modules (5 baseline per row)
-            linkMode: 'module',  // 'off', 'rows-height', or 'module'
+            rowCount: 19,
+            rowHeight: 5,
+            linkMode: 'module',
             showColumns: true,
             showRows: true,
             showBaseline: true,
             showObjects: true,
-            // Text styles - только типографические параметры
-            headlineSize: 1.5,  // in modules
-            lineHeight: 2.0,    // in modules - интерлиньяж
-            tracking: -0.015,   // in em - межбуквенный интервал
-            useXHeight: false,   // false = cap height, true = x-height
-            headlineFontWeight: 500,  // 400 = Regular, 500 = Medium
-            textSize: 0.5,     // in modules
-            textLineHeight: 1.0,    // in modules - интерлиньяж
-            textTracking: 0,    // in em - межбуквенный интервал
-            useXHeight2: false,   // false = cap height, true = x-height
-            textFontWeight: 500  // 400 = Regular, 500 = Medium
-        };
+            headlineSize: 1.5,
+            lineHeight: 2.0,
+            tracking: -0.015,
+            useXHeight: false,
+            headlineFontWeight: 500,
+            textSize: 0.5,
+            textLineHeight: 1.0,
+            textTracking: 0,
+            useXHeight2: false,
+            textFontWeight: 500
+        });
+        
+        // Для обратной совместимости: создаем Proxy который перенаправляет обращения к settingsModule
+        // Это КРИТИЧЕСКИ ВАЖНО! Без Proxy старый код будет читать устаревшую копию данных
+        this.settings = new Proxy({}, {
+            get: (target, prop) => {
+                return this.settingsModule.get(prop);
+            },
+            set: (target, prop, value) => {
+                this.settingsModule.set(prop, value);
+                return true;
+            }
+        });
+        
+        // ============================================
+        // Grid Calculator (Итерация 3)
+        // ============================================
+        this.gridCalculator = new GridCalculator(this.settingsModule);
+        
+        // ============================================
+        // Grid Renderer (Итерация 4)
+        // ============================================
+        this.gridRenderer = new GridRenderer(this.settingsModule, this.gridCalculator);
+        
+        // ============================================
+        // UI Controllers (Итерация 5)
+        // ============================================
+        // Инициализируем после cacheDOMElements()
+        this.sliderController = null;
+        this.colorPicker = null;
+        this.panelManager = null;
+        
+        // ============================================
+        // Elements Managers (Итерация 6)
+        // ============================================
+        // Пока используем старую систему (this.textBlocks, this.graphicsBlocks)
+        // Полная миграция в TextBlockManager/GraphicsManager - следующий шаг
+        this.textBlockManager = null;
+        this.textRenderer = null;
+        this.graphicsManager = null;
+        this.graphicsRenderer = null;
+        this.elementsNavigator = null;
         
         // Graphics blocks - UNIFIED array for all graphics (built-in and custom)
         // Initialize if not exists (for backward compatibility)
         if (!this.graphicsBlocks) {
             this.graphicsBlocks = [];
         }
+        
+        // Storage for deletion timers to allow cancellation
+        this.deletionTimers = {};
+        
+        // Undo/Redo history
+        this.history = [];
+        this.historyIndex = 0;
+        this.maxHistorySize = 50; // Maximum number of undo steps
+        this.isRestoringState = false; // Flag to prevent saving state during undo/redo
+        this.saveStateTimer = null; // Timer for debounced save
         
         // SVG content will be loaded from graphics/icons.svg in initializeBuiltInGraphics()
         // Initialize built-in graphics blocks (Icons and Claim)
@@ -353,6 +486,16 @@ class GridGenerator {
         // Cache DOM elements
         this.dom = this.cacheDOMElements();
         
+        // ============================================
+        // Initialize UI Controllers (Итерация 5)
+        // ============================================
+        this.initUIControllers();
+        
+        // ============================================
+        // SVG Exporter (Итерация 7)
+        // ============================================
+        this.svgExporter = new SVGExporter(this.settingsModule);
+        
         // Calculate initial row count to fill the format (after DOM is ready)
         this.calculateRowCount();
         
@@ -362,14 +505,20 @@ class GridGenerator {
         // Initialize
         this.initEventListeners();
         this.updateMarginsSliderHandler();  // Setup margins slider with correct unit handling
-        this.initPanelDrag('controlsPanel', 'panelHeader');
-        this.initPanelDrag('gridPanel', 'gridPanelHeader');
-        this.initPanelDrag('textPanel', 'textPanelHeader');
-        this.initPanelDrag('paragraphPanel', 'paragraphPanelHeader');
-        this.initPanelDrag('iconsPanel', 'iconsPanelHeader');
-        this.initPanelDrag('claimPanel', 'claimPanelHeader');
-        this.initPanelDrag('graphicsPanel', 'graphicsPanelHeader');
-        this.initPanelDrag('elementsNavigator', 'elementsNavigatorHeader');
+        
+        // ============================================
+        // Initialize UI Controllers (Итерация 5.2 & 5.3)
+        // ============================================
+        // ColorPicker - ВРЕМЕННО ОТКЛЮЧЕНО
+        // this.colorPicker.init();
+        // console.log('✅ ColorPicker initialized');
+        
+        // PanelManager - регистрация всех панелей
+        this.initPanels();
+        console.log('✅ PanelManager initialized with all panels');
+        
+        // Save initial state for undo
+        this.saveState();
         this.initValueInputs();
         this.initSizeInputsWithArrows();
         this.initCollapsibleSections();
@@ -482,6 +631,7 @@ class GridGenerator {
             // Buttons
             exportBtn: document.getElementById('exportBtn'),
             exportSettingsBtn: document.getElementById('exportSettingsBtn'),
+            importSettingsBtn: document.getElementById('importSettingsBtn'),
             helpButton: document.getElementById('helpButton'),
             modalOverlay: document.getElementById('modalOverlay'),
             modalClose: document.getElementById('modalClose'),
@@ -561,40 +711,16 @@ class GridGenerator {
         };
     }
     
-    // Universal slider initialization method
-    initSlider(sliderId) {
-        const slider = this.dom[sliderId];
-        const valueId = sliderId.replace('Slider', 'Value');
-        const valueDisplay = this.dom[valueId];
-        const config = this.SLIDER_CONFIG[sliderId];
-        
-        if (!slider || !valueDisplay || !config) return;
-        
-        const handler = (e) => {
-            const value = parseFloat(e.target.value);
-            valueDisplay.value = config.decimals === 0 
-                ? value 
-                : value.toFixed(config.decimals);
-            
-            if (config.setting) {
-                this.settings[config.setting] = config.decimals === 0 
-                    ? Math.round(value) 
-                    : parseFloat(value.toFixed(config.decimals));
-            }
-            
-            config.onUpdate();
-        };
-        
-        slider.addEventListener('input', handler);
-        slider.addEventListener('change', handler);
-        slider.addEventListener('keyup', handler);
-    }
+    // ============================================
+    // OLD SLIDER LOGIC - REPLACED BY SliderController (Итерация 5)
+    // ============================================
+    // Старый метод initSlider больше не используется
+    // Все слайдеры теперь управляются через SliderController в initUIControllers()
     
     initEventListeners() {
-        // Initialize all sliders using configuration
-        Object.keys(this.SLIDER_CONFIG).forEach(sliderId => {
-            this.initSlider(sliderId);
-        });
+        // ============================================
+        // NOTE: Slider initialization moved to initUIControllers()
+        // ============================================
         
         // Show dimensions checkbox
         this.dom.showDimensions.addEventListener('change', (e) => {
@@ -710,7 +836,9 @@ class GridGenerator {
         // Lunnen Blue preset
         this.dom.lunnenBlue.addEventListener('click', () => {
             const lunnenBlueColor = '#2353DB';
+            // Обновляем через оба способа для совместимости
             this.settings.boxColor = lunnenBlueColor;
+            this.settingsModule.set('boxColor', lunnenBlueColor);
             this.dom.hexColorInput.value = lunnenBlueColor;
             this.dom.colorPreview.style.backgroundColor = lunnenBlueColor;
             this.updateHSBFromHex(lunnenBlueColor);
@@ -737,7 +865,9 @@ class GridGenerator {
                     hexValue = `#${r}${r}${g}${g}${b}${b}`;
                 }
                 
+                // Обновляем через оба способа для совместимости
                 this.settings.boxColor = hexValue;
+                this.settingsModule.set('boxColor', hexValue);
                 this.dom.colorPreview.style.backgroundColor = hexValue;
                 this.updateHSBFromHex(hexValue);
                 this.updateGrid();
@@ -749,11 +879,14 @@ class GridGenerator {
             let hexValue = e.target.value;
             
             if (!hexValue.match(/^#[0-9A-Fa-f]{6}$/)) {
-                hexValue = '#dadde6';
+                // Если некорректный, берем текущий цвет из настроек вместо дефолтного
+                hexValue = this.settingsModule.get('boxColor') || '#dadde6';
             }
             
             e.target.value = hexValue;
+            // Обновляем через оба способа для совместимости
             this.settings.boxColor = hexValue;
+            this.settingsModule.set('boxColor', hexValue);
             this.dom.colorPreview.style.backgroundColor = hexValue;
             this.updateHSBFromHex(hexValue);
             this.updateGrid();
@@ -764,6 +897,22 @@ class GridGenerator {
         
         // Export Settings button
         this.dom.exportSettingsBtn.addEventListener('click', () => this.exportSettings());
+        
+        // Import Settings button (Итерация 7)
+        if (this.dom.importSettingsBtn) {
+            this.dom.importSettingsBtn.addEventListener('click', () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        this.importSettings(file);
+                    }
+                };
+                input.click();
+            });
+        }
         
         // Help button and modal
         if (this.dom.helpButton) {
@@ -784,10 +933,17 @@ class GridGenerator {
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
+            // Cmd+E / Ctrl+E - Export SVG
             if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
                 e.preventDefault();
                 this.exportSVG();
             }
+            // Cmd+Z / Ctrl+Z - Undo
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                this.undo();
+            }
+            // Escape - Close modal
             if (e.key === 'Escape') {
                 if (this.dom.modalOverlay && this.dom.modalOverlay.classList.contains('active')) {
                     this.closeModal();
@@ -2760,84 +2916,23 @@ class GridGenerator {
         reader.readAsText(file);
     }
     
-    // Color conversion methods
+    // ============================================
+    // Color conversion methods (Итерация 1: используем ColorUtils)
+    // ============================================
     hexToRgb(hex) {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16)
-        } : null;
+        return ColorUtils.hexToRgb(hex);
     }
     
     rgbToHex(r, g, b) {
-        return '#' + [r, g, b].map(x => {
-            const hex = Math.round(x).toString(16);
-            return hex.length === 1 ? '0' + hex : hex;
-        }).join('');
+        return ColorUtils.rgbToHex(r, g, b);
     }
     
     rgbToHsb(r, g, b) {
-        r /= 255;
-        g /= 255;
-        b /= 255;
-        
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        const delta = max - min;
-        
-        let h = 0;
-        let s = max === 0 ? 0 : delta / max;
-        let v = max;
-        
-        if (delta !== 0) {
-            if (max === r) {
-                h = ((g - b) / delta + (g < b ? 6 : 0)) / 6;
-            } else if (max === g) {
-                h = ((b - r) / delta + 2) / 6;
-            } else {
-                h = ((r - g) / delta + 4) / 6;
-            }
-        }
-        
-        return {
-            h: Math.round(h * 360),
-            s: Math.round(s * 100),
-            b: Math.round(v * 100)
-        };
+        return ColorUtils.rgbToHsb(r, g, b);
     }
     
     hsbToRgb(h, s, b) {
-        h = h / 360;
-        s = s / 100;
-        b = b / 100;
-        
-        let r, g, bl;
-        
-        if (s === 0) {
-            r = g = bl = b;
-        } else {
-            const i = Math.floor(h * 6);
-            const f = h * 6 - i;
-            const p = b * (1 - s);
-            const q = b * (1 - f * s);
-            const t = b * (1 - (1 - f) * s);
-            
-            switch (i % 6) {
-                case 0: r = b; g = t; bl = p; break;
-                case 1: r = q; g = b; bl = p; break;
-                case 2: r = p; g = b; bl = t; break;
-                case 3: r = p; g = q; bl = b; break;
-                case 4: r = t; g = p; bl = b; break;
-                case 5: r = b; g = p; bl = q; break;
-            }
-        }
-        
-        return {
-            r: r * 255,
-            g: g * 255,
-            b: bl * 255
-        };
+        return ColorUtils.hsbToRgb(h, s, b);
     }
     
     updateHSBFromHex(hex) {
@@ -2863,7 +2958,9 @@ class GridGenerator {
         const rgb = this.hsbToRgb(h, s, b);
         const hex = this.rgbToHex(rgb.r, rgb.g, rgb.b);
         
+        // Обновляем через оба способа для совместимости
         this.settings.boxColor = hex;
+        this.settingsModule.set('boxColor', hex);
         this.dom.hexColorInput.value = hex;
         this.dom.colorPreview.style.backgroundColor = hex;
         this.updateGrid();
@@ -2925,116 +3022,16 @@ class GridGenerator {
         document.head.appendChild(style);
     }
     
+    // ============================================
+    // OLD PANEL DRAG LOGIC - REPLACED BY PanelManager (Итерация 5.3)
+    // ============================================
+    // Старый метод initPanelDrag больше не используется
+    // Все панели теперь управляются через PanelManager в initPanels()
+    /*
     initPanelDrag(panelId, headerId) {
-        const panel = document.getElementById(panelId);
-        const header = document.getElementById(headerId);
-        
-        if (!panel || !header) return;
-        
-        let isDragging = false;
-        let currentX;
-        let currentY;
-        let initialX;
-        let initialY;
-        let xOffset = 0;
-        let yOffset = 0;
-        
-        // Bring panel to front on any click
-        panel.addEventListener('mousedown', (e) => {
-            const target = e.target;
-            
-            // Don't interfere with input elements (sliders, text inputs, buttons, checkboxes)
-            if (target.tagName === 'INPUT' || 
-                target.tagName === 'BUTTON' || 
-                target.tagName === 'TEXTAREA' ||
-                target.tagName === 'SELECT') {
-                e.stopPropagation();
-                // Still bring to front even for interactive elements
-                const allPanels = document.querySelectorAll('.controls-panel');
-                allPanels.forEach(p => {
-                    if (p === panel) {
-                        p.style.zIndex = '1000';
-                    } else {
-                        p.style.zIndex = '999';
-                    }
-                });
-                return;
-            }
-            
-            // Bring panel to front on any click
-            const allPanels = document.querySelectorAll('.controls-panel');
-            allPanels.forEach(p => {
-                if (p === panel) {
-                    p.style.zIndex = '1000';
-                } else {
-                    p.style.zIndex = '999';
-                }
-            });
-        }, true); // Use capture phase
-        
-        header.addEventListener('mousedown', dragStart);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', dragEnd);
-        
-        function dragStart(e) {
-            // Only start dragging if clicking directly on header, not on interactive elements
-            if (e.target.tagName === 'INPUT' || 
-                e.target.tagName === 'BUTTON' || 
-                e.target.tagName === 'TEXTAREA' ||
-                e.target.tagName === 'SELECT') {
-                return;
-            }
-            
-            // Recalculate offset based on CURRENT panel position (handles dynamic height changes)
-            const rect = panel.getBoundingClientRect();
-            xOffset = rect.left;
-            yOffset = rect.top;
-            
-            initialX = e.clientX - xOffset;
-            initialY = e.clientY - yOffset;
-            
-            if (e.target === header || header.contains(e.target)) {
-                isDragging = true;
-                panel.style.transition = 'none';
-                
-                // Bring this panel to front
-                const allPanels = document.querySelectorAll('.controls-panel');
-                allPanels.forEach(p => {
-                    if (p === panel) {
-                        p.style.zIndex = '1000';
-                    } else {
-                        p.style.zIndex = '999';
-                    }
-                });
-            }
-        }
-        
-        function drag(e) {
-            if (isDragging) {
-                e.preventDefault();
-                currentX = e.clientX - initialX;
-                currentY = e.clientY - initialY;
-                xOffset = currentX;
-                yOffset = currentY;
-                setTranslate(currentX, currentY, panel);
-            }
-        }
-        
-        function dragEnd(e) {
-            if (isDragging) {
-                initialX = currentX;
-                initialY = currentY;
-                isDragging = false;
-            }
-        }
-        
-        function setTranslate(xPos, yPos, el) {
-            el.style.left = xPos + 'px';
-            el.style.top = yPos + 'px';
-            el.style.right = 'auto';
-            el.style.bottom = 'auto';
-        }
+        // ... старый код закомментирован ...
     }
+    */
     
     // Universal method to update slider value based on configuration
     updateSliderValue(sliderId, newValue) {
@@ -3065,6 +3062,11 @@ class GridGenerator {
         
         // Run update callback
         config.onUpdate();
+        
+        // Save state after making changes (only on user interaction, not during restore)
+        if (!this.isRestoringState) {
+            this.debounceSaveState();
+        }
     }
     
     // Switch margins unit between mod and mm
@@ -3072,6 +3074,24 @@ class GridGenerator {
         // Margins are always stored in modules internally
         const currentMarginsInMod = this.settings.margins;
         const currentModule = this.settings.gridModule;
+        const oldUnit = this.settings.marginsUnit;
+        
+        // Update slider and value display based on new unit
+        const slider = this.dom.marginsSlider;
+        const valueDisplay = this.dom.marginsValue;
+        
+        // Get current value from slider (in current unit)
+        const currentSliderValue = parseFloat(slider.value);
+        
+        // Calculate the actual margins in mm (physical size that should stay the same)
+        let actualMarginsInMm;
+        if (oldUnit === 'mm') {
+            // Already in mm, use current slider value
+            actualMarginsInMm = currentSliderValue;
+        } else {
+            // Convert from modules to mm
+            actualMarginsInMm = currentMarginsInMod * currentModule;
+        }
         
         // Update unit setting
         this.settings.marginsUnit = newUnit;
@@ -3087,26 +3107,24 @@ class GridGenerator {
             }
         }
         
-        // Update slider and value display based on new unit
-        const slider = this.dom.marginsSlider;
-        const valueDisplay = this.dom.marginsValue;
-        
         if (newUnit === 'mm') {
-            // Display in mm (convert from modules using current module value)
-            const marginsInMm = currentMarginsInMod * currentModule;
+            // Display in mm
             const maxMarginsInMm = 10 * currentModule; // max 10 modules in mm
             
             // Update slider range for mm
             slider.min = '0';
             slider.max = maxMarginsInMm.toFixed(2);
             slider.step = (currentModule * 0.01).toFixed(4); // Keep same precision
-            slider.value = marginsInMm.toFixed(2);
-            valueDisplay.value = marginsInMm.toFixed(2);
+            slider.value = actualMarginsInMm.toFixed(2);
+            valueDisplay.value = actualMarginsInMm.toFixed(2);
             valueDisplay.dataset.min = '0';
             valueDisplay.dataset.max = maxMarginsInMm.toFixed(2);
         } else {
-            // Display in modules
-            const marginsInMod = currentMarginsInMod;
+            // Display in modules - convert from mm to modules
+            const marginsInMod = actualMarginsInMm / currentModule;
+            
+            // Update internal storage
+            this.settings.margins = parseFloat(marginsInMod.toFixed(2));
             
             // Restore slider range for modules
             slider.min = '0';
@@ -3146,6 +3164,13 @@ class GridGenerator {
                 valueDisplay.value = value.toFixed(2);
             }
             
+            if (this.settings.linkMode === 'module') {
+                this.calculateModule();
+            } else {
+                this.calculateRowCount();
+            }
+            this.constrainAllObjectsToGrid();
+            this.generateRowPresets();
             this.updateGrid();
         };
         
@@ -3253,23 +3278,11 @@ class GridGenerator {
     }
     
     calculateRowCount() {
-        // Calculate how many rows fit in the front height
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const rowHeightInModules = this.settings.rowHeight;
+        // Итерация 3: используем GridCalculator
+        const rowCount = this.gridCalculator.calculateRowCount();
         
-        // Available height = frontHeight - top and bottom margins
-        const topMargin = module * margins;
-        const bottomMargin = module * margins;
-        const availableHeight = this.settings.frontHeight - topMargin - bottomMargin;
-        
-        // Height of one row with gutter
-        const rowWithGutter = module * rowHeightInModules + module;
-        
-        // Calculate how many rows fit
-        const rowCount = Math.floor((availableHeight + module) / rowWithGutter);
-        
-        this.settings.rowCount = Math.max(1, rowCount);
+        // Обновляем настройки (this.settings теперь Proxy)
+        this.settings.rowCount = rowCount;
         
         // Update UI
         if (this.dom.rowCountValue) {
@@ -3281,22 +3294,11 @@ class GridGenerator {
     }
     
     calculateRowHeight() {
-        // Calculate row height based on desired row count
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const rowCount = this.settings.rowCount;
+        // Итерация 3: используем GridCalculator
+        const rowHeight = this.gridCalculator.calculateRowHeight();
         
-        // Available height = frontHeight - top and bottom margins
-        const topMargin = module * margins;
-        const bottomMargin = module * margins;
-        const availableHeight = this.settings.frontHeight - topMargin - bottomMargin;
-        
-        // Formula: rowCount × rowHeight × module + (rowCount - 1) × module ≤ availableHeight
-        // Solve for rowHeight: rowHeight ≤ (availableHeight / module - rowCount + 1) / rowCount
-        const availableModules = availableHeight / module;
-        const rowHeight = Math.floor((availableModules - rowCount + 1) / rowCount);
-        
-        this.settings.rowHeight = Math.max(1, rowHeight);
+        // Обновляем настройки (this.settings теперь Proxy)
+        this.settings.rowHeight = rowHeight;
         
         // Update UI
         if (this.dom.rowHeightValue) {
@@ -3308,19 +3310,12 @@ class GridGenerator {
     }
     
     calculateModule() {
-        // Calculate module size to fit rows perfectly with given row count and row height
-        const frontHeight = this.settings.frontHeight;
-        const margins = this.settings.margins;
-        const rowCount = this.settings.rowCount;
-        const rowHeight = this.settings.rowHeight;
+        // Итерация 3: используем GridCalculator
+        // ВАЖНО: используем calculateModule() с округлением, а не calculateModuleFromHeight()
+        const calculatedModule = this.gridCalculator.calculateModule();
         
-        // Formula: 2×margins + rowCount×rowHeight + (rowCount-1)×1 = total modules
-        // Module = frontHeight / totalModules
-        const totalModules = 2 * margins + rowCount * rowHeight + (rowCount - 1);
-        const calculatedModule = frontHeight / totalModules;
-        
-        // Round down to 4 decimal places to ensure it fits
-        this.settings.gridModule = Math.floor(calculatedModule * 10000) / 10000;
+        // Обновляем настройки (this.settings теперь Proxy, запись идёт напрямую в settingsModule)
+        this.settings.gridModule = calculatedModule;
         
         // Update UI
         if (this.dom.gridModuleValue) {
@@ -3332,38 +3327,8 @@ class GridGenerator {
     }
     
     findPerfectRowCombinations() {
-        // Find all combinations of rows and row height that fill the format perfectly
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const topMargin = module * margins;
-        const bottomMargin = module * margins;
-        const availableHeight = this.settings.frontHeight - topMargin - bottomMargin;
-        const availableModules = availableHeight / module;
-        
-        const combinations = [];
-        
-        // Try different row heights from 1 to 20
-        for (let rowHeight = 1; rowHeight <= 20; rowHeight++) {
-            // Calculate how many rows fit with this height
-            const rowWithGutter = rowHeight + 1; // row height + gutter (1 module)
-            const rowCount = Math.floor((availableModules + 1) / rowWithGutter);
-            
-            if (rowCount < 1) continue;
-            
-            // Check if this combination fills the format perfectly (or very close)
-            const totalUsed = rowCount * rowHeight + (rowCount - 1);
-            const remaining = availableModules - totalUsed;
-            
-            // Only include if remaining space is less than 1 module (perfect fit)
-            if (remaining >= 0 && remaining < 1) {
-                combinations.push({ rowCount, rowHeight, remaining });
-            }
-        }
-        
-        // Sort by row count (descending)
-        combinations.sort((a, b) => b.rowCount - a.rowCount);
-        
-        return combinations;
+        // Итерация 3: используем GridCalculator
+        return this.gridCalculator.findPerfectRowCombinations();
     }
     
     generateRowPresets() {
@@ -3620,9 +3585,11 @@ class GridGenerator {
         return fontSize; // in mm
     }
     
-    // Convert mm to pt (points)
+    // ============================================
+    // Convert mm to pt (Итерация 1: используем MathUtils)
+    // ============================================
     mmToPt(mm) {
-        return mm * 2.83465;
+        return MathUtils.mmToPt(mm);
     }
     
     // Get font size in pt for Headline
@@ -4544,9 +4511,57 @@ class GridGenerator {
         this.attachClaimBlockHandlers(claimGroup, block, frontX, frontY, scale);
     }
     
+    // Draw graphics block for export (without event handlers)
+    drawGraphicsBlockForExport(container, block, frontX, frontY, frontWidth, frontHeight, scale) {
+        if (!block.svgContent) return;
+        
+        const gridColor = this.getContrastColor(); // Color depends on background
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        
+        // Calculate dimensions
+        const heightInMm = module * block.heightInModules;
+        const aspectRatio = block.originalWidth / block.originalHeight;
+        const widthInMm = heightInMm * aspectRatio;
+        
+        // Calculate position
+        const columnWidth = (frontWidth / scale - module * margins * 2 - module * (this.settings.columnCount - 1)) / this.settings.columnCount;
+        const gutter = module;
+        const topMargin = module * margins * scale;
+        
+        const yInBaseline = this.getBlockY({
+            row: block.row,
+            baselineOffset: block.baselineOffset
+        });
+        
+        const graphicsX = frontX + module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale);
+        const graphicsY = frontY + yInBaseline * (module * scale) + topMargin;
+        
+        // Scale dimensions
+        const scaledWidth = widthInMm * scale;
+        const scaledHeight = heightInMm * scale;
+        
+        // Create nested SVG for graphics with correct viewBox
+        const nestedSvg = this.createSVGElement('svg', {
+            x: graphicsX,
+            y: graphicsY,
+            width: scaledWidth,
+            height: scaledHeight,
+            viewBox: `0 0 ${block.originalWidth} ${block.originalHeight}`,
+            preserveAspectRatio: 'xMinYMin meet',
+            style: `color: ${gridColor}; overflow: visible;`
+        }, container);
+        
+        // Add SVG content
+        nestedSvg.innerHTML = block.svgContent;
+        
+        // Apply color to all elements with fill/stroke in the SVG
+        this.applyColorToSVGElements(nestedSvg, gridColor);
+    }
+    
     // Draw icons block for export (without event handlers)
     drawIconsBlockForExport(container, frontX, frontY, frontWidth, frontHeight, scale) {
-        const gridColor = '#000000'; // Black for export
+        const gridColor = this.getContrastColor(); // Color depends on background
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         
@@ -4582,11 +4597,14 @@ class GridGenerator {
         
         // Add SVG content (loaded from graphics/icons.svg)
         nestedSvg.innerHTML = block.svgContent || '';
+        
+        // Apply color to all elements with fill/stroke in the SVG
+        this.applyColorToSVGElements(nestedSvg, gridColor);
     }
     
     // Draw claim block for export (without event handlers)
     drawClaimBlockForExport(container, frontX, frontY, frontWidth, frontHeight, scale) {
-        const gridColor = '#000000'; // Black for export
+        const gridColor = this.getContrastColor(); // Color depends on background
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         
@@ -4622,6 +4640,61 @@ class GridGenerator {
         
         // Add SVG content (loaded from graphics/yf_claim.svg)
         nestedSvg.innerHTML = block.svgContent || '';
+        
+        // Apply color to all elements with fill/stroke in the SVG
+        this.applyColorToSVGElements(nestedSvg, gridColor);
+    }
+    
+    // Apply color to SVG elements (for export)
+    // Replaces fill/stroke colors in SVG elements to match background contrast
+    applyColorToSVGElements(svgElement, color) {
+        // First, update style elements to replace CSS color definitions
+        const styleElements = svgElement.querySelectorAll('style');
+        styleElements.forEach(styleEl => {
+            let styleText = styleEl.textContent || styleEl.innerHTML;
+            // Replace fill colors in CSS rules (handles .st0 { fill: #fff; } etc.)
+            styleText = styleText.replace(/fill:\s*#fff(fff)?/gi, `fill: ${color}`);
+            styleText = styleText.replace(/fill:\s*white/gi, `fill: ${color}`);
+            styleText = styleText.replace(/fill:\s*#000(000)?/gi, `fill: ${color}`);
+            styleText = styleText.replace(/fill:\s*black/gi, `fill: ${color}`);
+            // Replace stroke colors in CSS rules
+            styleText = styleText.replace(/stroke:\s*#fff(fff)?/gi, `stroke: ${color}`);
+            styleText = styleText.replace(/stroke:\s*white/gi, `stroke: ${color}`);
+            styleText = styleText.replace(/stroke:\s*#000(000)?/gi, `stroke: ${color}`);
+            styleText = styleText.replace(/stroke:\s*black/gi, `stroke: ${color}`);
+            
+            if (styleEl.textContent !== undefined) {
+                styleEl.textContent = styleText;
+            } else {
+                styleEl.innerHTML = styleText;
+            }
+        });
+        
+        // Then, update all elements with fill or stroke attributes
+        const allElements = svgElement.querySelectorAll('*');
+        
+        allElements.forEach(element => {
+            // Check if element has fill attribute
+            const fill = element.getAttribute('fill');
+            if (fill && fill !== 'none' && fill !== 'transparent') {
+                // Replace white (#fff, #ffffff, white) or black (#000, #000000, black) with contrast color
+                const fillLower = fill.toLowerCase().trim();
+                if (fillLower === '#fff' || fillLower === '#ffffff' || fillLower === 'white' ||
+                    fillLower === '#000' || fillLower === '#000000' || fillLower === 'black') {
+                    element.setAttribute('fill', color);
+                }
+            }
+            
+            // Check if element has stroke attribute
+            const stroke = element.getAttribute('stroke');
+            if (stroke && stroke !== 'none' && stroke !== 'transparent') {
+                const strokeLower = stroke.toLowerCase().trim();
+                if (strokeLower === '#fff' || strokeLower === '#ffffff' || strokeLower === 'white' ||
+                    strokeLower === '#000' || strokeLower === '#000000' || strokeLower === 'black') {
+                    element.setAttribute('stroke', color);
+                }
+            }
+        });
     }
     
     // Attach event handlers for icons block (click, hover, drag)
@@ -4980,6 +5053,12 @@ class GridGenerator {
         // Update positions after dimensions are loaded (or use existing)
         this.updateBuiltInGraphicsPositions();
         
+        // ============================================
+        // Итерация 6: Инициализация Elements менеджеров
+        // ============================================
+        // Инициализируем менеджеры после загрузки встроенной графики
+        this.initElementsManagers();
+        
         // Update navigator and redraw grid
         this.updateElementsNavigator();
         this.updateGrid();
@@ -5210,6 +5289,10 @@ class GridGenerator {
     updateElementsNavigator() {
         if (!this.dom.elementsList) return;
         
+        // ============================================
+        // Итерация 6: Временно используем старый код
+        // ElementsNavigator будет доработан позже для полной интеграции
+        // ============================================
         // Clear existing items
         this.dom.elementsList.innerHTML = '';
         
@@ -5281,6 +5364,15 @@ class GridGenerator {
         if (isDeleting) {
             button.addEventListener('click', (e) => {
                 e.stopPropagation();
+                
+                // Отменяем таймер удаления
+                const timerKey = `${type}-${blockId}`;
+                if (this.deletionTimers[timerKey]) {
+                    console.log(`[UNDO] Cancelling timer for ${timerKey}`);
+                    clearTimeout(this.deletionTimers[timerKey]);
+                    delete this.deletionTimers[timerKey];
+                }
+                
                 // Снимаем флаг удаления
                 if (type === 'text' && blockId) {
                     const block = this.textBlocks.find(b => b.id === blockId);
@@ -5403,6 +5495,18 @@ class GridGenerator {
     
     // Start delete element with progress bar
     startDeleteElement(button, type, blockId, name) {
+        // Save state before starting deletion
+        this.saveState();
+        
+        // Создаем уникальный ключ для этого объекта
+        const timerKey = `${type}-${blockId}`;
+        
+        // Если для этого объекта уже есть таймер удаления, отменяем его
+        if (this.deletionTimers[timerKey]) {
+            clearTimeout(this.deletionTimers[timerKey]);
+            delete this.deletionTimers[timerKey];
+        }
+        
         // ПОМЕЧАЕМ ОБЪЕКТ КАК "УДАЛЯЮЩИЙСЯ" (не скрываем полностью)
         if (type === 'text' && blockId) {
             const block = this.textBlocks.find(b => b.id === blockId);
@@ -5440,7 +5544,8 @@ class GridGenerator {
         this.updateGrid();
         
         // Таймер для окончательного удаления (3 секунды)
-        setTimeout(() => {
+        const timerId = setTimeout(() => {
+            console.log(`[DELETE] Timer expired for ${timerKey}, checking if still deleting...`);
             // Проверяем, что объект все еще помечен как deleting
             // (если пользователь нажал Undo, флаг будет удален)
             let stillDeleting = false;
@@ -5459,6 +5564,7 @@ class GridGenerator {
             
             // Если флаг все еще установлен, окончательно удаляем
             if (stillDeleting) {
+                console.log(`[DELETE] Object ${timerKey} is still deleting, removing permanently`);
                 if (type === 'text' && blockId) {
                     const index = this.textBlocks.findIndex(b => b.id === blockId);
                     if (index !== -1) {
@@ -5479,8 +5585,16 @@ class GridGenerator {
                 
                 // Обновляем UI после окончательного удаления
                 this.updateGrid();
+            } else {
+                console.log(`[DELETE] Object ${timerKey} was restored, not deleting`);
             }
+            
+            // Удаляем таймер из хранилища
+            delete this.deletionTimers[timerKey];
         }, 3000);
+        
+        // Сохраняем таймер для возможности отмены
+        this.deletionTimers[timerKey] = timerId;
     }
     
     // Delete element
@@ -5510,8 +5624,24 @@ class GridGenerator {
         }
     }
     
+    // ============================================
+    // Callbacks для ElementsNavigator (Итерация 6)
+    // ============================================
+    onElementSelect(type, id) {
+        // Вызываем существующий метод selectElement
+        this.selectElement(type, id);
+    }
+    
+    onElementDelete(type, id) {
+        // Вызываем существующий метод deleteElement
+        this.deleteElement(type, id);
+    }
+    
     // Add new text block
     addTextBlock() {
+        // Save state before adding
+        this.saveState();
+        
         // Создаем новый уникальный ID
         const newId = 'text-' + Date.now();
         
@@ -5540,6 +5670,9 @@ class GridGenerator {
     
     // Add new graphics block
     addGraphicsBlock(svgContent, name, originalWidth, originalHeight) {
+        // Save state before adding
+        this.saveState();
+        
         if (!this.graphicsBlocks) {
             this.graphicsBlocks = [];
         }
@@ -6317,6 +6450,12 @@ class GridGenerator {
         
         // Draw text blocks, icons and claim on front panel (if enabled)
         if (this.settings.showObjects) {
+            // ============================================
+            // Итерация 6: Временно используем старый код для browser view
+            // Рендереры будут использоваться для экспорта в будущем
+            // TODO: Доработать TextRenderer и GraphicsRenderer для полной поддержки интерактивности
+            // ============================================
+            
             // Draw text blocks on front panel (only visible and not deleting)
             this.textBlocks.forEach(block => {
                 if (block.visible !== false && !block.deleting) {
@@ -6582,103 +6721,18 @@ class GridGenerator {
     }
     
     drawColumns(container, x, y, width, height, scale) {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const n = this.settings.columnCount;
-        const gridColor = this.getContrastColor();
-        const opacity = this.getGridOpacity(0.1);
-        
-        // Calculate column width based on available space
-        // Formula: columnWidth = (frontWidth - module × margins × 2 - module × (n - 1)) / n
-        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (n - 1)) / n;
-        
-        const margin = module * margins * scale;
-        const scaledColumnWidth = columnWidth * scale;
-        const gutter = module * scale;
-        
-        let currentX = x + margin;
-        
-        for (let i = 0; i < n; i++) {
-            this.createSVGElement('rect', {
-                x: currentX,
-                y: y + margin,
-                width: scaledColumnWidth,
-                height: height - 2 * margin,
-                fill: gridColor,
-                'fill-opacity': opacity,
-                stroke: 'none'
-            }, container);
-            
-            currentX += scaledColumnWidth + gutter;
-        }
+        // Итерация 4: используем GridRenderer
+        this.gridRenderer.drawColumns(container, x, y, width, height, scale);
     }
     
     drawRows(container, x, y, width, height, scale) {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const n = this.settings.rowCount;
-        const rowHeightInModules = this.settings.rowHeight;
-        const gridColor = this.getContrastColor();
-        const opacity = this.getGridOpacity(0.1);
-        
-        const topMargin = module * margins * scale;
-        const sideMargin = module * margins * scale;
-        const rowHeight = module * rowHeightInModules * scale;
-        const rowWidth = width - 2 * sideMargin;
-        const gutter = module * scale;
-        
-        let currentY = y + topMargin;
-        
-        // Draw rows starting from top with fixed top margin
-        // Bottom margin will be whatever remains
-        for (let i = 0; i < n; i++) {
-            // Check if there's enough space for this row
-            if (currentY + rowHeight > y + height) {
-                break; // Stop if we exceed the available height
-            }
-            
-            this.createSVGElement('rect', {
-                x: x + sideMargin,
-                y: currentY,
-                width: rowWidth,
-                height: rowHeight,
-                fill: gridColor,
-                'fill-opacity': opacity,
-                stroke: 'none'
-            }, container);
-            
-            currentY += rowHeight + gutter;
-        }
+        // Итерация 4: используем GridRenderer
+        this.gridRenderer.drawRows(container, x, y, width, height, scale);
     }
     
     drawBaseline(container, x, y, width, height, scale) {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const gridColor = this.getContrastColor();
-        const opacity = this.getGridOpacity(0.3);
-        const margin = module * margins * scale;
-        const baselineHeight = module * scale;
-        const baselineWidth = width - 2 * margin;
-        // For export: 0.25pt = 25.4/72*0.25 = 0.088194444... mm (since viewBox is in mm)
-        const strokeWidth = scale === 1 ? '0.088194444' : '0.5';
-        
-        let currentY = y + margin;
-        const maxY = y + height - margin;
-        
-        while (currentY + baselineHeight <= maxY) {
-            this.createSVGElement('rect', {
-                x: x + margin,
-                y: currentY,
-                width: baselineWidth,
-                height: baselineHeight,
-                fill: 'none',
-                stroke: gridColor,
-                'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
-            }, container);
-            
-            currentY += baselineHeight;
-        }
+        // Итерация 4: используем GridRenderer
+        this.gridRenderer.drawBaseline(container, x, y, width, height, scale);
     }
     
     drawColumnsVerticalLeftRight(container, x, y, width, height, scale, side) {
@@ -6983,8 +7037,26 @@ class GridGenerator {
         }
     }
     
+    // Итерация 7: Упрощенный экспорт SVG через SVGExporter
     exportSVG() {
         const { frontWidth, frontHeight, thickness, gridModule, margins, columnCount, rowCount, rowHeight } = this.settings;
+        
+        // Создаем SVG для экспорта (scale = 1 для точных размеров)
+        const exportSvg = this.createExportSVG();
+        
+        // Генерируем имя файла с параметрами
+        const filename = `grid_width${frontWidth}_height${frontHeight}_thickness${thickness}_module${gridModule.toFixed(2)}_margins${margins.toFixed(2)}_columns${columnCount}_rows${rowCount}_rowheight${rowHeight}.svg`;
+        
+        // Экспортируем через модуль
+        this.svgExporter.exportToFile(exportSvg, filename, {
+            removeInteractive: true,
+            optimizeSize: true
+        });
+    }
+    
+    // Итерация 7: Создание SVG для экспорта (без интерактивных элементов)
+    createExportSVG() {
+        const { frontWidth, frontHeight, thickness } = this.settings;
         
         // Create a new SVG for export with actual mm dimensions
         const totalWidth = frontWidth + 2 * thickness;
@@ -7011,62 +7083,62 @@ class GridGenerator {
         const frontY = thickness;
         
         // Draw columns (in separate group, always export but hide if disabled)
-            const columnsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            columnsGroup.setAttribute('id', 'columns');
+        const columnsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        columnsGroup.setAttribute('id', 'columns');
         if (!this.settings.showColumns) {
             columnsGroup.setAttribute('visibility', 'hidden');
         }
-            exportSvg.appendChild(columnsGroup);
-            this.drawColumns(columnsGroup, frontX, frontY, frontWidth, frontHeight, scale);
+        exportSvg.appendChild(columnsGroup);
+        this.drawColumns(columnsGroup, frontX, frontY, frontWidth, frontHeight, scale);
+        
+        // Draw columns on side panels if enabled
+        if (this.settings.showSidePanels) {
+            // Left panel - vertical columns (using rows parameters from front)
+            this.drawColumnsVerticalLeftRight(columnsGroup, 0, frontY, thickness, frontHeight, scale, 'left');
             
-            // Draw columns on side panels if enabled
-            if (this.settings.showSidePanels) {
-                // Left panel - vertical columns (using rows parameters from front)
-                this.drawColumnsVerticalLeftRight(columnsGroup, 0, frontY, thickness, frontHeight, scale, 'left');
-                
-                // Right panel - vertical columns (using rows parameters from front)
-                this.drawColumnsVerticalLeftRight(columnsGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
-                
-                // Top panel - horizontal columns (using columns parameters from front)
-                this.drawColumnsTopBottom(columnsGroup, frontX, 0, frontWidth, thickness, scale, 'top');
-                
-                // Bottom panel - horizontal columns (using columns parameters from front)
-                this.drawColumnsTopBottom(columnsGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
+            // Right panel - vertical columns (using rows parameters from front)
+            this.drawColumnsVerticalLeftRight(columnsGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
+            
+            // Top panel - horizontal columns (using columns parameters from front)
+            this.drawColumnsTopBottom(columnsGroup, frontX, 0, frontWidth, thickness, scale, 'top');
+            
+            // Bottom panel - horizontal columns (using columns parameters from front)
+            this.drawColumnsTopBottom(columnsGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
         }
         
         // Draw rows (in separate group, always export but hide if disabled)
-            const rowsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            rowsGroup.setAttribute('id', 'rows');
+        const rowsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        rowsGroup.setAttribute('id', 'rows');
         if (!this.settings.showRows) {
             rowsGroup.setAttribute('visibility', 'hidden');
         }
-            exportSvg.appendChild(rowsGroup);
-            this.drawRows(rowsGroup, frontX, frontY, frontWidth, frontHeight, scale);
+        exportSvg.appendChild(rowsGroup);
+        this.drawRows(rowsGroup, frontX, frontY, frontWidth, frontHeight, scale);
         
         // Draw baseline (in separate group, always export but hide if disabled)
-            const baselineGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            baselineGroup.setAttribute('id', 'baseline');
+        const baselineGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        baselineGroup.setAttribute('id', 'baseline');
         if (!this.settings.showBaseline) {
             baselineGroup.setAttribute('visibility', 'hidden');
         }
-            exportSvg.appendChild(baselineGroup);
+        exportSvg.appendChild(baselineGroup);
+        
+        // Front panel baseline
+        this.drawBaseline(baselineGroup, frontX, frontY, frontWidth, frontHeight, scale);
+        
+        // Side panels baseline if enabled
+        if (this.settings.showSidePanels) {
+            // Left panel - vertical baseline (margin from right side where it touches front)
+            this.drawBaselineVerticalLeftRight(baselineGroup, 0, frontY, thickness, frontHeight, scale, 'left');
             
-            // Front panel baseline
-            this.drawBaseline(baselineGroup, frontX, frontY, frontWidth, frontHeight, scale);
+            // Right panel - vertical baseline (margin from left side where it touches front)
+            this.drawBaselineVerticalLeftRight(baselineGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
             
-            // Side panels baseline if enabled
-            if (this.settings.showSidePanels) {
-                // Left panel - vertical baseline (margin from right side where it touches front)
-                this.drawBaselineVerticalLeftRight(baselineGroup, 0, frontY, thickness, frontHeight, scale, 'left');
-                
-                // Right panel - vertical baseline (margin from left side where it touches front)
-                this.drawBaselineVerticalLeftRight(baselineGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
-                
-                // Top panel - horizontal baseline (margin from bottom where it touches front)
-                this.drawBaselineTopBottom(baselineGroup, frontX, 0, frontWidth, thickness, scale, 'top');
-                
-                // Bottom panel - horizontal baseline (margin from top where it touches front)
-                this.drawBaselineTopBottom(baselineGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
+            // Top panel - horizontal baseline (margin from bottom where it touches front)
+            this.drawBaselineTopBottom(baselineGroup, frontX, 0, frontWidth, thickness, scale, 'top');
+            
+            // Bottom panel - horizontal baseline (margin from top where it touches front)
+            this.drawBaselineTopBottom(baselineGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
         }
         
         // Add dimensions if enabled (in separate group)
@@ -7093,6 +7165,20 @@ class GridGenerator {
             this.drawTextBlock(textGroup, block, frontX, frontY, frontWidth, frontHeight, scale);
         });
         
+        // Add graphics blocks (in separate groups)
+        if (this.graphicsBlocks) {
+            this.graphicsBlocks.forEach(block => {
+                if (block.visible !== false && block.svgContent) {
+                    const graphicsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                    graphicsGroup.setAttribute('id', `graphics-${block.id}`);
+                    exportSvg.appendChild(graphicsGroup);
+                    
+                    // Draw graphics block
+                    this.drawGraphicsBlockForExport(graphicsGroup, block, frontX, frontY, frontWidth, frontHeight, scale);
+                }
+            });
+        }
+        
         // Add icons block (in separate group)
         const iconsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         iconsGroup.setAttribute('id', 'icons');
@@ -7105,188 +7191,320 @@ class GridGenerator {
         exportSvg.appendChild(claimGroup);
         this.drawClaimBlockForExport(claimGroup, frontX, frontY, frontWidth, frontHeight, scale);
         
-        // Convert to string
-        const serializer = new XMLSerializer();
-        const svgString = serializer.serializeToString(exportSvg);
-        
-        // Create blob and download
-        const blob = new Blob([svgString], { type: 'image/svg+xml' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `grid_width${frontWidth}_height${frontHeight}_thickness${thickness}_module${gridModule.toFixed(2)}_margins${margins.toFixed(2)}_columns${columnCount}_rows${rowCount}_rowheight${rowHeight}.svg`;
-        link.href = url;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        setTimeout(() => URL.revokeObjectURL(url), 100);
+        return exportSvg;
     }
     
+    // Итерация 7: Экспорт настроек в JSON через SVGExporter
     exportSettings() {
+        const data = {
+            version: '1.0',
+            timestamp: new Date().toISOString(),
+            settings: this.settingsModule.getAll(),
+            textBlocks: this.textBlocks,
+            graphicsBlocks: this.graphicsBlocks || [],
+            iconsBlock: this.iconsBlock || null,
+            claimBlock: this.claimBlock || null
+        };
+        
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-        let settingsText = '';
+        this.svgExporter.exportSettings(data, `grid-settings_${timestamp}.json`);
+    }
+    
+    // Итерация 7: Импорт настроек из JSON
+    async importSettings(file) {
+        try {
+            const data = await this.svgExporter.importSettings(file);
+            
+            if (data.settings) {
+                // Применяем настройки
+                Object.entries(data.settings).forEach(([key, value]) => {
+                    this.settingsModule.set(key, value);
+                });
+            }
+            
+            if (data.textBlocks) {
+                this.textBlocks = data.textBlocks;
+            }
+            
+            if (data.graphicsBlocks) {
+                this.graphicsBlocks = data.graphicsBlocks;
+            }
+            
+            if (data.iconsBlock) {
+                this.iconsBlock = data.iconsBlock;
+            }
+            
+            if (data.claimBlock) {
+                this.claimBlock = data.claimBlock;
+            }
+            
+            // Обновляем UI
+            this.updateGrid();
+            this.updateElementsNavigator();
+            
+            console.log('✅ Settings imported successfully');
+        } catch (error) {
+            console.error('❌ Failed to import settings:', error);
+            alert('Ошибка при импорте настроек: ' + error.message);
+        }
+    }
+    
+    // Debounced save state - saves after user stops interacting for 300ms
+    debounceSaveState() {
+        if (this.saveStateTimer) {
+            clearTimeout(this.saveStateTimer);
+        }
+        this.saveStateTimer = setTimeout(() => {
+            this.saveState();
+        }, 300);
+    }
+    
+    // Save current state to history
+    saveState() {
+        // Don't save state if we're currently restoring from history
+        if (this.isRestoringState) {
+            return;
+        }
         
-        // Заголовок файла
-        settingsText += '========================================\n';
-        settingsText += 'GRID GENERATOR - НАСТРОЙКИ МАКЕТА\n';
-        settingsText += `Экспорт: ${new Date().toLocaleString('ru-RU')}\n`;
-        settingsText += '========================================\n\n';
+        // Create a deep copy of current state
+        const state = {
+            settings: JSON.parse(JSON.stringify(this.settings)),
+            textBlocks: JSON.parse(JSON.stringify(this.textBlocks)),
+            graphicsBlocks: JSON.parse(JSON.stringify(this.graphicsBlocks))
+        };
         
-        // Раздел 1: Размеры упаковки
-        settingsText += '--- РАЗМЕРЫ УПАКОВКИ (mm) ---\n';
-        settingsText += `Ширина (Width): ${this.settings.frontWidth}\n`;
-        settingsText += `Высота (Height): ${this.settings.frontHeight}\n`;
-        settingsText += `Толщина (Thickness): ${this.settings.thickness}\n`;
-        settingsText += `Цвет фона (Background Color): ${this.settings.boxColor}\n`;
-        settingsText += `Показывать размеры (Show Dimensions): ${this.settings.showDimensions ? 'Да' : 'Нет'}\n`;
-        settingsText += `Показывать боковые панели (Show Side Panels): ${this.settings.showSidePanels ? 'Да' : 'Нет'}\n`;
-        settingsText += '\n';
+        // Check if state is different from the last saved state
+        if (this.history.length > 0) {
+            const lastState = this.history[this.historyIndex];
+            if (JSON.stringify(lastState) === JSON.stringify(state)) {
+                // State hasn't changed, don't save
+                return;
+            }
+        }
         
-        // Раздел 2: Настройки сетки
-        settingsText += '--- НАСТРОЙКИ СЕТКИ ---\n';
-        settingsText += `Модуль (Module, mm): ${this.settings.gridModule}\n`;
-        settingsText += `Поля (Margins, mod): ${this.settings.margins}\n`;
-        settingsText += `Количество колонок (Columns): ${this.settings.columnCount}\n`;
-        settingsText += `Количество строк (Rows): ${this.settings.rowCount}\n`;
-        settingsText += `Высота строки (Row Height, mod): ${this.settings.rowHeight}\n`;
-        settingsText += `Режим связи (Link Mode): ${this.settings.linkMode === 'off' ? 'Отключен' : this.settings.linkMode === 'rows-height' ? 'R⇄RH' : 'RRH⇄Mod'}\n`;
-        settingsText += `Показывать колонки (Show Columns): ${this.settings.showColumns ? 'Да' : 'Нет'}\n`;
-        settingsText += `Показывать строки (Show Rows): ${this.settings.showRows ? 'Да' : 'Нет'}\n`;
-        settingsText += `Показывать базовую сетку (Show Baseline): ${this.settings.showBaseline ? 'Да' : 'Нет'}\n`;
-        settingsText += `Показывать объекты (Show Objects): ${this.settings.showObjects ? 'Да' : 'Нет'}\n`;
-        settingsText += '\n';
+        // Remove any items after current index (when undoing and then making new changes)
+        this.history = this.history.slice(0, this.historyIndex + 1);
         
-        // Раздел 3: Стили текста - Headline
-        settingsText += '--- СТИЛЬ ТЕКСТА: HEADLINE ---\n';
-        settingsText += `Размер (Size, mod): ${this.settings.headlineSize}\n`;
-        settingsText += `Интерлиньяж (Line Height, mod): ${this.settings.lineHeight}\n`;
-        settingsText += `Трекинг (Tracking, em): ${this.settings.tracking}\n`;
-        settingsText += `Использовать x-height: ${this.settings.useXHeight ? 'Да' : 'Нет'}\n`;
-        settingsText += '\n';
+        // Add new state
+        this.history.push(state);
+        this.historyIndex = this.history.length - 1;
         
-        // Раздел 4: Стили текста - Text
-        settingsText += '--- СТИЛЬ ТЕКСТА: TEXT ---\n';
-        settingsText += `Размер (Size, mod): ${this.settings.textSize}\n`;
-        settingsText += `Интерлиньяж (Line Height, mod): ${this.settings.textLineHeight}\n`;
-        settingsText += `Трекинг (Tracking, em): ${this.settings.textTracking}\n`;
-        settingsText += `Использовать x-height: ${this.settings.useXHeight2 ? 'Да' : 'Нет'}\n`;
-        settingsText += '\n';
+        // Limit history size
+        if (this.history.length > this.maxHistorySize) {
+            this.history.shift();
+            this.historyIndex--;
+        }
         
-        // Раздел 5: Текстовые блоки
-        settingsText += '========================================\n';
-        settingsText += 'ТЕКСТОВЫЕ БЛОКИ\n';
-        settingsText += '========================================\n\n';
+        console.log(`[UNDO] State saved. History size: ${this.history.length}, Index: ${this.historyIndex}`);
+    }
+    
+    // Undo last action
+    undo() {
+        console.log(`[UNDO] Current index: ${this.historyIndex}, History length: ${this.history.length}`);
         
-        this.textBlocks.forEach((block, index) => {
-            const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
-            settingsText += `--- БЛОК ${index + 1}: ${block.id.toUpperCase()} ---\n`;
-            settingsText += `ID: ${block.id}\n`;
-            settingsText += `Стиль (Style Reference): ${block.styleRef}\n`;
-            settingsText += `Колонка (Column): ${block.x}\n`;
-            settingsText += `Строка (Row): ${block.row}\n`;
-            settingsText += `Baseline (на всей сетке): ${globalBaseline}\n`;
-            settingsText += `Baseline смещение внутри строки (Baseline Offset, mod): ${block.baselineOffset}\n`;
-            settingsText += `Ширина (Width, columns): ${block.width}\n`;
-            settingsText += `Показывать границы (Show Bounds): ${block.showBounds ? 'Да' : 'Нет'}\n`;
-            settingsText += `Видимость (Visible): ${block.visible !== false ? 'Да' : 'Нет'}\n`;
-            settingsText += `\nСодержимое текста:\n`;
-            settingsText += `${block.content}\n`;
-            settingsText += `\n`;
+        if (this.history.length < 2 || this.historyIndex <= 0) {
+            console.log('[UNDO] Nothing to undo');
+            return;
+        }
+        
+        this.historyIndex--;
+        console.log(`[UNDO] Moving to index: ${this.historyIndex}`);
+        this.restoreState(this.history[this.historyIndex]);
+    }
+    
+    // Restore state from history
+    restoreState(state) {
+        this.isRestoringState = true;
+        
+        try {
+            // Restore settings
+            Object.assign(this.settings, state.settings);
+            
+            // Restore text blocks
+            this.textBlocks = JSON.parse(JSON.stringify(state.textBlocks));
+            
+            // Restore graphics blocks
+            this.graphicsBlocks = JSON.parse(JSON.stringify(state.graphicsBlocks));
+            
+            // Update all UI elements to reflect restored state
+            this.updateAllSliders();
+            this.updateElementsNavigator();
+            this.calculateRowCount();
+            this.generateRowPresets();
+            this.updateGrid();
+            
+            // Close any open panels
+            this.closeParagraphPanel();
+            this.closeGraphicsPanel();
+            
+        } finally {
+            this.isRestoringState = false;
+        }
+    }
+    
+    // Update all sliders to reflect current settings
+    updateAllSliders() {
+        // Update dimension sliders
+        if (this.dom.frontWidthSlider) {
+            this.dom.frontWidthSlider.value = this.settings.frontWidth;
+            this.dom.frontWidthValue.value = this.settings.frontWidth.toFixed(1);
+        }
+        if (this.dom.frontHeightSlider) {
+            this.dom.frontHeightSlider.value = this.settings.frontHeight;
+            this.dom.frontHeightValue.value = this.settings.frontHeight.toFixed(1);
+        }
+        if (this.dom.thicknessSlider) {
+            this.dom.thicknessSlider.value = this.settings.thickness;
+            this.dom.thicknessValue.value = this.settings.thickness.toFixed(1);
+        }
+        
+        // Update grid sliders
+        if (this.dom.gridModuleSlider) {
+            this.dom.gridModuleSlider.value = this.settings.gridModule;
+            this.dom.gridModuleValue.value = this.settings.gridModule.toFixed(4);
+        }
+        if (this.dom.marginsSlider) {
+            if (this.settings.marginsUnit === 'mm') {
+                const marginsInMm = this.settings.margins * this.settings.gridModule;
+                this.dom.marginsSlider.value = marginsInMm.toFixed(2);
+                this.dom.marginsValue.value = marginsInMm.toFixed(2);
+            } else {
+                this.dom.marginsSlider.value = this.settings.margins;
+                this.dom.marginsValue.value = this.settings.margins.toFixed(2);
+            }
+        }
+        if (this.dom.columnCountSlider) {
+            this.dom.columnCountSlider.value = this.settings.columnCount;
+            this.dom.columnCountValue.value = this.settings.columnCount;
+        }
+        if (this.dom.rowCountSlider) {
+            this.dom.rowCountSlider.value = this.settings.rowCount;
+            this.dom.rowCountValue.value = this.settings.rowCount;
+        }
+        if (this.dom.rowHeightSlider) {
+            this.dom.rowHeightSlider.value = this.settings.rowHeight;
+            this.dom.rowHeightValue.value = this.settings.rowHeight;
+        }
+        
+        // Update checkboxes
+        if (this.dom.showColumns) this.dom.showColumns.checked = this.settings.showColumns;
+        if (this.dom.showRows) this.dom.showRows.checked = this.settings.showRows;
+        if (this.dom.showBaseline) this.dom.showBaseline.checked = this.settings.showBaseline;
+        if (this.dom.showDimensions) this.dom.showDimensions.checked = this.settings.showDimensions;
+        if (this.dom.showSidePanels) this.dom.showSidePanels.checked = this.settings.showSidePanels;
+        if (this.dom.showObjects) this.dom.showObjects.checked = this.settings.showObjects;
+        
+        // Update color
+        if (this.dom.hexColorInput) {
+            this.dom.hexColorInput.value = this.settings.boxColor;
+            this.updateColorPreview();
+            this.updateHSBFromHex(this.settings.boxColor);
+        }
+        
+        // Update link mode radio buttons
+        const linkModeRadios = document.querySelectorAll('input[name="linkMode"]');
+        linkModeRadios.forEach(radio => {
+            radio.checked = radio.value === this.settings.linkMode;
         });
         
-        // Раздел 6: Графические блоки
-        if (this.graphicsBlocks && this.graphicsBlocks.length > 0) {
-            settingsText += '========================================\n';
-            settingsText += 'ГРАФИЧЕСКИЕ БЛОКИ\n';
-            settingsText += '========================================\n\n';
-            
-            this.graphicsBlocks.forEach((block, index) => {
-                const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
-                settingsText += `--- ГРАФИКА ${index + 1}: ${block.name || block.id} ---\n`;
-                settingsText += `ID: ${block.id}\n`;
-                settingsText += `Имя: ${block.name}\n`;
-                settingsText += `Колонка (Column): ${block.x}\n`;
-                settingsText += `Строка (Row): ${block.row}\n`;
-                settingsText += `Baseline (на всей сетке): ${globalBaseline}\n`;
-                settingsText += `Baseline смещение внутри строки (Baseline Offset, mod): ${block.baselineOffset}\n`;
-                settingsText += `Высота (Height, mod): ${block.heightInModules}\n`;
-                settingsText += `Оригинальные размеры (W×H): ${block.originalWidth} × ${block.originalHeight}\n`;
-                settingsText += `Видимость (Visible): ${block.visible !== false ? 'Да' : 'Нет'}\n`;
-                settingsText += `\n`;
+        // Update margins unit buttons
+        if (this.dom.marginsUnitMod && this.dom.marginsUnitMm) {
+            if (this.settings.marginsUnit === 'mod') {
+                this.dom.marginsUnitMod.classList.add('active');
+                this.dom.marginsUnitMm.classList.remove('active');
+            } else {
+                this.dom.marginsUnitMm.classList.add('active');
+                this.dom.marginsUnitMod.classList.remove('active');
+            }
+        }
+    }
+    
+    // ============================================
+    // UI Controllers initialization (Итерация 5)
+    // ============================================
+    initUIControllers() {
+        // ============================================
+        // Шаг 5.1: SliderController
+        // ============================================
+        // Создаем SliderController
+        this.sliderController = new SliderController(this.settingsModule);
+        
+        // Инициализируем все слайдеры из SLIDER_CONFIG
+        // Все слайдеры, включая HSB, управляются через SliderController
+        Object.keys(this.SLIDER_CONFIG).forEach(sliderId => {
+            const config = this.SLIDER_CONFIG[sliderId];
+            this.sliderController.initSlider(sliderId, config);
+        });
+        
+        console.log('✅ SliderController initialized with', this.sliderController.sliders.size, 'sliders');
+        
+        // ============================================
+        // Шаг 5.2: ColorPicker
+        // ============================================
+        // ВРЕМЕННО ОТКЛЮЧЕНО - ColorPicker вызывает проблемы при инициализации
+        // this.colorPicker = new ColorPicker(this.settingsModule, {
+        //     onChange: (color) => {
+        //         this.settingsModule.set('boxColor', color);
+        //         this.updateGrid();
+        //     }
+        // });
+        
+        // Инициализация ColorPicker (вызывается после того как DOM готов)
+        // Перенесено в init() так как требуется готовый DOM
+        
+        console.log('✅ ColorPicker created');
+        
+        // ============================================
+        // Шаг 5.3: PanelManager
+        // ============================================
+        this.panelManager = new PanelManager();
+        
+        // Регистрация панелей (вызывается после того как DOM готов)
+        // Перенесено в init() так как требуется готовый DOM
+        
+        console.log('✅ PanelManager created');
+    }
+    
+    // ============================================
+    // Panel registration (Итерация 5.3)
+    // ============================================
+    initPanels() {
+        // Регистрируем все панели через PanelManager
+        const panels = [
+            { id: 'controlsPanel', headerId: 'panelHeader', draggable: true },
+            { id: 'gridPanel', headerId: 'gridPanelHeader', draggable: true },
+            { id: 'textPanel', headerId: 'textPanelHeader', draggable: true },
+            { id: 'paragraphPanel', headerId: 'paragraphPanelHeader', draggable: true },
+            { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true },
+            { id: 'elementsNavigator', headerId: 'elementsNavigatorHeader', draggable: true }
+        ];
+        
+        panels.forEach(panel => {
+            this.panelManager.registerPanel(panel.id, {
+                headerId: panel.headerId,
+                draggable: panel.draggable
             });
-        }
+        });
+    }
+    
+    // ============================================
+    // Elements initialization (Итерация 6)
+    // ============================================
+    initElementsManagers() {
+        // Менеджеры временно отключены - используем старый код
+        // TODO: Доработать рендереры для полной поддержки интерактивности и baseline snap
+        // После доработки можно будет включить менеджеры обратно
         
-        // Раздел 7: Иконки
-        if (this.iconsBlock) {
-            settingsText += '========================================\n';
-            settingsText += 'ИКОНКИ\n';
-            settingsText += '========================================\n\n';
-            const globalBaseline = this.rowBaselineToY(this.iconsBlock.row, this.iconsBlock.baselineOffset);
-            settingsText += `Колонка (Column): ${this.iconsBlock.x}\n`;
-            settingsText += `Строка (Row): ${this.iconsBlock.row}\n`;
-            settingsText += `Baseline (на всей сетке): ${globalBaseline}\n`;
-            settingsText += `Baseline смещение внутри строки (Baseline Offset, mod): ${this.iconsBlock.baselineOffset}\n`;
-            settingsText += `Высота (Height, mod): ${this.iconsBlock.heightInModules}\n`;
-            settingsText += `Оригинальные размеры (W×H): ${this.iconsBlock.originalWidth} × ${this.iconsBlock.originalHeight}\n`;
-            settingsText += `Видимость (Visible): ${this.iconsBlock.visible !== false ? 'Да' : 'Нет'}\n`;
-            settingsText += `\n`;
-        }
+        // Создаём менеджеры элементов (для будущего использования)
+        this.textBlockManager = new TextBlockManager(this.settingsModule, this.gridCalculator);
+        this.textRenderer = new TextRenderer(this.settingsModule, this.gridCalculator);
+        this.graphicsManager = new GraphicsManager(this.settingsModule, this.gridCalculator);
+        this.graphicsRenderer = new GraphicsRenderer(this.settingsModule, this.gridCalculator);
         
-        // Раздел 8: Клейм
-        if (this.claimBlock) {
-            settingsText += '========================================\n';
-            settingsText += 'КЛЕЙМ (CLAIM)\n';
-            settingsText += '========================================\n\n';
-            const globalBaseline = this.rowBaselineToY(this.claimBlock.row, this.claimBlock.baselineOffset);
-            settingsText += `Колонка (Column): ${this.claimBlock.x}\n`;
-            settingsText += `Строка (Row): ${this.claimBlock.row}\n`;
-            settingsText += `Baseline (на всей сетке): ${globalBaseline}\n`;
-            settingsText += `Baseline смещение внутри строки (Baseline Offset, mod): ${this.claimBlock.baselineOffset}\n`;
-            settingsText += `Высота (Height, mod): ${this.claimBlock.heightInModules}\n`;
-            settingsText += `Оригинальные размеры (W×H): ${this.claimBlock.originalWidth} × ${this.claimBlock.originalHeight}\n`;
-            settingsText += `Видимость (Visible): ${this.claimBlock.visible !== false ? 'Да' : 'Нет'}\n`;
-            settingsText += `\n`;
-        }
+        // Миграция данных НЕ выполняется - используем старые массивы this.textBlocks и this.graphicsBlocks
+        // ElementsNavigator также не инициализируется - используется старая логика updateElementsNavigator()
         
-        // Раздел 9: Вычисляемые параметры
-        settingsText += '========================================\n';
-        settingsText += 'ВЫЧИСЛЯЕМЫЕ ПАРАМЕТРЫ\n';
-        settingsText += '========================================\n\n';
-        
-        const contentWidth = this.settings.frontWidth - 2 * this.settings.margins * this.settings.gridModule;
-        const contentHeight = this.settings.frontHeight - 2 * this.settings.margins * this.settings.gridModule;
-        const gutterWidth = this.settings.gridModule;
-        const columnWidth = (contentWidth - (this.settings.columnCount - 1) * gutterWidth) / this.settings.columnCount;
-        const rowHeightMm = this.settings.rowHeight * this.settings.gridModule;
-        const totalRows = this.settings.rowCount;
-        const totalHeight = totalRows * rowHeightMm + (totalRows - 1) * this.settings.gridModule;
-        
-        settingsText += `Ширина контента (без полей, mm): ${contentWidth.toFixed(2)}\n`;
-        settingsText += `Высота контента (без полей, mm): ${contentHeight.toFixed(2)}\n`;
-        settingsText += `Ширина желоба (Gutter Width, mm): ${gutterWidth.toFixed(4)}\n`;
-        settingsText += `Ширина колонки (Column Width, mm): ${columnWidth.toFixed(2)}\n`;
-        settingsText += `Высота строки (Row Height, mm): ${rowHeightMm.toFixed(2)}\n`;
-        settingsText += `Общая высота всех строк с желобами (mm): ${totalHeight.toFixed(2)}\n`;
-        settingsText += '\n';
-        
-        // Конец файла
-        settingsText += '========================================\n';
-        settingsText += 'КОНЕЦ ФАЙЛА НАСТРОЕК\n';
-        settingsText += '========================================\n';
-        
-        // Создание и скачивание файла
-        const blob = new Blob([settingsText], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `grid-settings_${timestamp}.txt`;
-        link.href = url;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        setTimeout(() => URL.revokeObjectURL(url), 100);
+        console.log('✅ Elements managers created (not active yet - using legacy code)');
     }
 }
 

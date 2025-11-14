@@ -2917,28 +2917,13 @@ class GridGenerator {
     }
     
     // ============================================
-    // Color conversion methods (Итерация 1: используем ColorUtils)
+    // Color methods (Итерация 8: обертки удалены, используем ColorUtils напрямую)
     // ============================================
-    hexToRgb(hex) {
-        return ColorUtils.hexToRgb(hex);
-    }
-    
-    rgbToHex(r, g, b) {
-        return ColorUtils.rgbToHex(r, g, b);
-    }
-    
-    rgbToHsb(r, g, b) {
-        return ColorUtils.rgbToHsb(r, g, b);
-    }
-    
-    hsbToRgb(h, s, b) {
-        return ColorUtils.hsbToRgb(h, s, b);
-    }
     
     updateHSBFromHex(hex) {
-        const rgb = this.hexToRgb(hex);
+        const rgb = ColorUtils.hexToRgb(hex);
         if (rgb) {
-            const hsb = this.rgbToHsb(rgb.r, rgb.g, rgb.b);
+            const hsb = ColorUtils.rgbToHsb(rgb.r, rgb.g, rgb.b);
             this.dom.hueSlider.value = hsb.h;
             this.dom.saturationSlider.value = hsb.s;
             this.dom.brightnessSlider.value = hsb.b;
@@ -2955,8 +2940,8 @@ class GridGenerator {
         const s = parseInt(this.dom.saturationSlider.value);
         const b = parseInt(this.dom.brightnessSlider.value);
         
-        const rgb = this.hsbToRgb(h, s, b);
-        const hex = this.rgbToHex(rgb.r, rgb.g, rgb.b);
+        const rgb = ColorUtils.hsbToRgb(h, s, b);
+        const hex = ColorUtils.rgbToHex(rgb.r, rgb.g, rgb.b);
         
         // Обновляем через оба способа для совместимости
         this.settings.boxColor = hex;
@@ -2970,11 +2955,11 @@ class GridGenerator {
         const h = parseInt(this.dom.hueSlider.value);
         const b = parseInt(this.dom.brightnessSlider.value);
         
-        const leftColor = this.hsbToRgb(h, 0, b);
-        const rightColor = this.hsbToRgb(h, 100, b);
+        const leftColor = ColorUtils.hsbToRgb(h, 0, b);
+        const rightColor = ColorUtils.hsbToRgb(h, 100, b);
         
-        const leftHex = this.rgbToHex(leftColor.r, leftColor.g, leftColor.b);
-        const rightHex = this.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
+        const leftHex = ColorUtils.rgbToHex(leftColor.r, leftColor.g, leftColor.b);
+        const rightHex = ColorUtils.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
         
         const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
         this.dom.saturationSlider.style.background = gradient;
@@ -2987,11 +2972,11 @@ class GridGenerator {
         const h = parseInt(this.dom.hueSlider.value);
         const s = parseInt(this.dom.saturationSlider.value);
         
-        const leftColor = this.hsbToRgb(h, s, 0);
-        const rightColor = this.hsbToRgb(h, s, 100);
+        const leftColor = ColorUtils.hsbToRgb(h, s, 0);
+        const rightColor = ColorUtils.hsbToRgb(h, s, 100);
         
-        const leftHex = this.rgbToHex(leftColor.r, leftColor.g, leftColor.b);
-        const rightHex = this.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
+        const leftHex = ColorUtils.rgbToHex(leftColor.r, leftColor.g, leftColor.b);
+        const rightHex = ColorUtils.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
         
         const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
         this.dom.brightnessSlider.style.background = gradient;
@@ -3586,16 +3571,13 @@ class GridGenerator {
     }
     
     // ============================================
-    // Convert mm to pt (Итерация 1: используем MathUtils)
+    // Math utilities (Итерация 8: обертки удалены, используем MathUtils напрямую)
     // ============================================
-    mmToPt(mm) {
-        return MathUtils.mmToPt(mm);
-    }
     
     // Get font size in pt for Headline
     getHeadlineFontSizePt() {
         const fontSizeMm = this.calculateFontSize();
-        return Math.round(this.mmToPt(fontSizeMm) * 10) / 10;
+        return Math.round(MathUtils.mmToPt(fontSizeMm) * 10) / 10;
     }
     
     // Get line height in pt for Headline
@@ -3603,13 +3585,13 @@ class GridGenerator {
         const module = this.settings.gridModule;
         const lineHeightInModules = this.settings.lineHeight;
         const lineHeightMm = module * lineHeightInModules;
-        return Math.round(this.mmToPt(lineHeightMm) * 10) / 10;
+        return Math.round(MathUtils.mmToPt(lineHeightMm) * 10) / 10;
     }
     
     // Get font size in pt for Text
     getTextFontSizePt() {
         const fontSizeMm = this.calculateTextStyleFontSize();
-        return Math.round(this.mmToPt(fontSizeMm) * 10) / 10;
+        return Math.round(MathUtils.mmToPt(fontSizeMm) * 10) / 10;
     }
     
     // Get line height in pt for Text
@@ -3617,7 +3599,7 @@ class GridGenerator {
         const module = this.settings.gridModule;
         const lineHeightInModules = this.settings.textLineHeight;
         const lineHeightMm = module * lineHeightInModules;
-        return Math.round(this.mmToPt(lineHeightMm) * 10) / 10;
+        return Math.round(MathUtils.mmToPt(lineHeightMm) * 10) / 10;
     }
     
     // Update font size displays in UI
