@@ -683,9 +683,6 @@ class GridGenerator {
             paragraphApplyBtn: document.getElementById('paragraphApplyBtn'),
             paragraphCloseBtn: document.getElementById('paragraphCloseBtn'),
             charCounter: document.getElementById('charCounter'),
-            // Alignment mode radio buttons
-            alignmentModeBaseline: document.getElementById('alignmentModeBaseline'),
-            alignmentModeXHeight: document.getElementById('alignmentModeXHeight'),
             // Font size displays
             headlineFontSize: document.getElementById('headlineFontSize'),
             textFontSize: document.getElementById('textFontSize'),
@@ -1446,25 +1443,6 @@ class GridGenerator {
         if (this.dom.paragraphCloseBtn) {
             this.dom.paragraphCloseBtn.addEventListener('click', () => {
                 this.cancelParagraphChanges();
-            });
-        }
-        
-        // Обработчики для режима выравнивания (Alignment Mode)
-        if (this.dom.alignmentModeBaseline) {
-            this.dom.alignmentModeBaseline.addEventListener('change', () => {
-                if (this.currentEditingBlock && this.dom.alignmentModeBaseline.checked) {
-                    this.currentEditingBlock.alignmentMode = 'baseline';
-                    this.updateGrid();
-                }
-            });
-        }
-        
-        if (this.dom.alignmentModeXHeight) {
-            this.dom.alignmentModeXHeight.addEventListener('change', () => {
-                if (this.currentEditingBlock && this.dom.alignmentModeXHeight.checked) {
-                    this.currentEditingBlock.alignmentMode = 'x-height';
-                    this.updateGrid();
-                }
             });
         }
     }
@@ -2494,18 +2472,6 @@ class GridGenerator {
             this.dom.paragraphTextArea.value = block.content;
         }
         
-        // Устанавливаем режим выравнивания (по умолчанию baseline)
-        const alignmentMode = block.alignmentMode || 'baseline';
-        if (this.dom.alignmentModeBaseline && this.dom.alignmentModeXHeight) {
-            if (alignmentMode === 'x-height') {
-                this.dom.alignmentModeXHeight.checked = true;
-                this.dom.alignmentModeBaseline.checked = false;
-            } else {
-                this.dom.alignmentModeBaseline.checked = true;
-                this.dom.alignmentModeXHeight.checked = false;
-            }
-        }
-        
         // Обновляем счетчик символов
         this.updateCharCounter();
         
@@ -2523,8 +2489,7 @@ class GridGenerator {
             row: block.row,
             baselineOffset: block.baselineOffset,
             width: block.width,
-            content: block.content,
-            alignmentMode: block.alignmentMode || 'baseline'
+            content: block.content
         };
     }
     
@@ -2537,7 +2502,6 @@ class GridGenerator {
             this.currentEditingBlock.baselineOffset = this.initialBlockState.baselineOffset;
             this.currentEditingBlock.width = this.initialBlockState.width;
             this.currentEditingBlock.content = this.initialBlockState.content;
-            this.currentEditingBlock.alignmentMode = this.initialBlockState.alignmentMode;
             
             // Обновляем сетку с восстановленными значениями
             this.updateGrid();
@@ -3636,7 +3600,7 @@ class GridGenerator {
     
     // Snap position to nearest baseline grid line (relative to front panel)
     // isFirstLine - если true, привязываем к целому модулю, иначе к четверти модуля
-    snapToBaseline(y, frontY, scale, isFirstLine = false, alignmentMode = 'baseline') {
+    snapToBaseline(y, frontY, scale, isFirstLine = false) {
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         const topMargin = module * margins * scale;
@@ -3646,11 +3610,7 @@ class GridGenerator {
         
         let nearestBaseline;
         if (isFirstLine) {
-            // Для x-height режима первая строка НЕ привязывается к baseline - возвращаем как есть
-            if (alignmentMode === 'x-height') {
-                return y; // Возвращаем исходную позицию без округления
-            }
-            // Первая строка в baseline режиме - привязываем к целому модулю (baseline сетка)
+            // Первая строка - привязываем к целому модулю (baseline сетка)
             const fullModule = module * scale;
             nearestBaseline = Math.round(relativeY / fullModule) * fullModule;
         } else {
@@ -3856,24 +3816,12 @@ class GridGenerator {
         
         const topMargin = module * margins * scale;
         
-        // Рассчитываем firstLineY в зависимости от режима выравнивания
+        // Рассчитываем firstLineY
         // Элементы baseline сетки - это прямоугольники высотой = module
         // position.y указывает на ВЕРХ элемента baseline
+        // Baseline текста выравнивается по НИЗУ элемента baseline
         const baselineElementHeight = module * scale;
-        let firstLineY;
-        
-        // Используем alignmentMode блока (по умолчанию 'baseline')
-        const alignmentMode = block.alignmentMode || 'baseline';
-        
-        if (alignmentMode === 'x-height') {
-            // X-Height режим: верх строчных букв выравнивается по ВЕРХУ элемента baseline
-            // baseline текста должен быть ниже на величину x-height
-            firstLineY = frontY + position.y + topMargin + actualXHeight;
-        } else {
-            // Baseline режим (по умолчанию): baseline текста выравнивается по НИЗУ элемента baseline
-            firstLineY = frontY + position.y + topMargin + baselineElementHeight;
-        }
-        
+        const firstLineY = frontY + position.y + topMargin + baselineElementHeight;
         const lineHeightInMm = module * lineHeightSetting * scale;
         
         // Create group for text block with hover
@@ -3901,7 +3849,7 @@ class GridGenerator {
             
             if (index === 0) {
                 const lineApproxY = firstLineY;
-                lineBaselineY = this.snapToBaseline(lineApproxY, frontY, scale, true, alignmentMode);
+                lineBaselineY = this.snapToBaseline(lineApproxY, frontY, scale, true);
                 previousBaselineY = lineBaselineY;
             } else {
                 const lineApproxY = previousBaselineY + lineHeightInMm;
@@ -5502,8 +5450,7 @@ class GridGenerator {
             baselineOffset: 0,
             width: 3,
             showBounds: false,
-            visible: true,
-            alignmentMode: 'baseline' // Default alignment mode
+            visible: true
         };
         
         this.textBlocks.push(newBlock);
