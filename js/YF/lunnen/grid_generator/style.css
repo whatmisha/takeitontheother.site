@@ -1025,7 +1025,7 @@ textarea::placeholder {
 /* Style Select Dropdown */
 .style-select {
     width: 100%;
-    padding: 12px 16px;
+    padding: 6px 12px;
     background: #2a2a2a;
     border: none;
     color: var(--color-text);
@@ -1035,7 +1035,7 @@ textarea::placeholder {
     margin-top: var(--spacing-md);
     cursor: pointer;
     transition: background var(--transition-normal);
-    height: 40px;
+    height: 32px;
 }
 
 .style-select:hover {
