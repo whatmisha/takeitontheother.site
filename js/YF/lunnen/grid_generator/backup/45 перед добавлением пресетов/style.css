@@ -48,22 +48,10 @@
     --transition-normal: 0.2s ease;
     --transition-slow: 0.3s ease;
     
-    /* Premium Easing Functions */
-    --easing-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
-    --easing-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
-    --easing-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
-    --easing-sharp: cubic-bezier(0.4, 0.0, 0.6, 1);
-    
-    /* Animation Durations */
-    --duration-collapse: 0.35s;
-    --duration-expand: 0.35s;
-    --duration-fade: 0.25s;
-    
     /* Sizes */
     --slider-thumb-size: 10px;
     --checkbox-size: 14px;
     --handle-size: 8px;
-    --button-height: 36px;
 }
 
 * {
@@ -114,7 +102,6 @@ body {
     display: flex;
     gap: var(--spacing-lg);
     z-index: 10000;
-    align-items: center;
 }
 
 /* YF Tools Link */
@@ -129,9 +116,6 @@ body {
     text-decoration: none;
     cursor: pointer;
     transition: all var(--transition-slow);
-    height: var(--button-height);
-    display: inline-flex;
-    align-items: center;
 }
 
 .yf-tools-link:hover {
@@ -156,141 +140,6 @@ body {
 .pizza-boxer-link:hover {
     background: var(--color-bg);
     color: var(--color-text);
-}
-
-/* Custom Preset Dropdown */
-.preset-dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-.preset-dropdown-toggle {
-    padding: var(--spacing-md) var(--spacing-3xl);
-    background: var(--color-bg-panel);
-    color: var(--color-text);
-    border: none;
-    border-radius: var(--radius-button);
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    white-space: nowrap;
-    width: auto;
-    min-width: fit-content;
-    height: var(--button-height);
-    transition: width var(--duration-expand) var(--easing-standard),
-                background-color var(--transition-slow);
-}
-
-.preset-dropdown-toggle:hover {
-    background-color: #2a2a2a;
-}
-
-.preset-dropdown-toggle:focus {
-    outline: none;
-    background-color: #2a2a2a;
-}
-
-.preset-dropdown-text {
-    flex: 0 0 auto;
-    min-width: 0;
-}
-
-.preset-dropdown-arrow {
-    color: var(--color-text);
-    transition: transform var(--duration-collapse) var(--easing-standard);
-    flex-shrink: 0;
-    width: 12px;
-    height: 8px;
-}
-
-.preset-dropdown-toggle[aria-expanded="true"] .preset-dropdown-arrow {
-    transform: rotate(180deg);
-}
-
-.preset-dropdown-menu {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
-    min-width: 100%;
-    width: max-content;
-    background: var(--color-bg-panel);
-    border-radius: var(--radius-sm);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
-    border: 1px solid var(--color-border);
-    padding: 4px;
-    margin: 0;
-    list-style: none;
-    z-index: 10001;
-    max-height: 400px;
-    overflow-y: auto;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-8px) scale(0.98);
-    transform-origin: top left;
-    transition: opacity var(--duration-fade) var(--easing-standard), 
-                transform var(--duration-expand) var(--easing-standard),
-                visibility 0s var(--duration-fade);
-}
-
-.preset-dropdown-menu.active {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0) scale(1);
-    transition: opacity var(--duration-fade) var(--easing-decelerate), 
-                transform var(--duration-expand) var(--easing-decelerate),
-                visibility 0s 0s;
-}
-
-.preset-dropdown-item {
-    padding: var(--spacing-lg) var(--spacing-xl);
-    color: var(--color-text-secondary);
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all var(--transition-fast);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 2px;
-}
-
-.preset-dropdown-item:last-child {
-    margin-bottom: 0;
-}
-
-.preset-dropdown-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--color-text);
-}
-
-.preset-dropdown-item.selected {
-    background: rgba(255, 255, 255, 0.12);
-    color: var(--color-text);
-    font-weight: 600;
-}
-
-/* Scrollbar для dropdown menu */
-.preset-dropdown-menu::-webkit-scrollbar {
-    width: 6px;
-}
-
-.preset-dropdown-menu::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.preset-dropdown-menu::-webkit-scrollbar-thumb {
-    background: var(--color-border);
-    border-radius: 3px;
-}
-
-.preset-dropdown-menu::-webkit-scrollbar-thumb:hover {
-    background: var(--color-text-dim);
 }
 
 .main-content {
@@ -337,25 +186,6 @@ body {
     flex-direction: column;
 }
 
-.panel-content {
-    transition: max-height var(--duration-expand) var(--easing-standard), 
-                opacity var(--duration-fade) var(--easing-decelerate),
-                padding-top var(--duration-expand) var(--easing-standard),
-                padding-bottom var(--duration-expand) var(--easing-standard);
-}
-
-.controls-panel.panel-collapsed .panel-content {
-    max-height: 0;
-    opacity: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    overflow: hidden;
-    transition: max-height var(--duration-collapse) var(--easing-standard), 
-                opacity var(--duration-fade) var(--easing-accelerate),
-                padding-top var(--duration-collapse) var(--easing-standard),
-                padding-bottom var(--duration-collapse) var(--easing-standard);
-}
-
 .controls-panel-left {
     left: var(--spacing-3xl);
     right: auto;
@@ -380,7 +210,7 @@ body {
 
 .panel-header {
     background: var(--color-bg-panel);
-    padding: var(--spacing-2xl) var(--spacing-3xl);
+    padding: var(--spacing-3xl) var(--spacing-3xl) 0;
     border-radius: var(--radius);
     cursor: move;
     user-select: none;
@@ -389,7 +219,6 @@ body {
     justify-content: space-between;
     border-bottom: none;
     flex-shrink: 0;
-    min-height: var(--button-height);
 }
 
 .panel-header:active {
@@ -402,35 +231,14 @@ body {
     line-height: 1;
 }
 
-.collapse-icon {
-    color: var(--color-text-muted);
-    cursor: pointer;
-    transition: transform var(--duration-collapse) var(--easing-standard),
-                color var(--transition-normal);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-}
-
-.collapse-icon:hover {
-    color: var(--color-text);
-}
-
-.collapse-icon.collapsed {
-    transform: rotate(-90deg);
-}
-
 .panel-header span:first-child {
     font-weight: 500;
     font-size: 0.85rem;
-    color: var(--color-text);
+    color: var(--color-text-dim);
 }
 
 .panel-header .unit {
     opacity: 0.4;
-    color: var(--color-text-secondary);
 }
 
 .panel-close-btn {
@@ -455,10 +263,7 @@ body {
 }
 
 .panel-content {
-    padding-left: var(--spacing-3xl);
-    padding-right: var(--spacing-3xl);
-    padding-top: var(--spacing-3xl);
-    padding-bottom: var(--spacing-3xl);
+    padding: var(--spacing-3xl) var(--spacing-3xl);
     overflow-y: auto;
     overflow-x: hidden;
     flex: 1;
@@ -540,19 +345,6 @@ body {
     margin-left: 6px;
 }
 
-.panel-params {
-    opacity: 0;
-    white-space: nowrap;
-    margin-left: 6px;
-    font-weight: 400 !important;
-    color: var(--color-text-secondary);
-    transition: opacity var(--duration-fade) var(--easing-standard);
-}
-
-.controls-panel.panel-collapsed .panel-params {
-    opacity: 0.4;
-}
-
 .collapse-toggle {
     background: transparent;
     border: none;
@@ -570,7 +362,7 @@ body {
 }
 
 .collapse-toggle svg {
-    transition: transform var(--duration-collapse) var(--easing-standard);
+    transition: transform var(--transition-normal);
 }
 
 .collapse-toggle[aria-expanded="false"] svg {
@@ -584,9 +376,7 @@ body {
     opacity: 1;
     padding-top: var(--spacing-2xl);
     padding-bottom: var(--spacing-2xl);
-    transition: max-height var(--duration-expand) var(--easing-standard), 
-                opacity var(--duration-fade) var(--easing-decelerate),
-                padding var(--duration-expand) var(--easing-standard);
+    transition: max-height var(--transition-slow), opacity var(--transition-normal);
 }
 
 .collapsible-content.collapsed {
@@ -594,9 +384,6 @@ body {
     opacity: 0;
     padding-top: 0;
     padding-bottom: 0;
-    transition: max-height var(--duration-collapse) var(--easing-standard), 
-                opacity var(--duration-fade) var(--easing-accelerate),
-                padding var(--duration-collapse) var(--easing-standard);
 }
 
 .control-group {
@@ -1741,7 +1528,7 @@ legend {
     z-index: 20000;
     opacity: 0;
     pointer-events: none;
-    transition: opacity var(--duration-fade) var(--easing-standard);
+    transition: opacity var(--transition-normal);
 }
 
 .modal-overlay.active {
@@ -1760,8 +1547,8 @@ legend {
     overflow-y: auto;
     padding: var(--spacing-4xl);
     position: relative;
-    transform: scale(0.95);
-    transition: transform var(--duration-expand) var(--easing-decelerate);
+    transform: scale(0.9);
+    transition: transform var(--transition-normal);
 }
 
 .modal-overlay.active .modal-content {
@@ -1937,10 +1724,7 @@ legend {
     }
     
     .panel-content {
-        padding-left: 16px;
-        padding-right: 16px;
-        padding-top: var(--spacing-xl);
-        padding-bottom: var(--spacing-xl);
+        padding: var(--spacing-xl) 16px;
     }
     
     .bottom-buttons {
