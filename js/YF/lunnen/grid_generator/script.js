@@ -7204,16 +7204,16 @@ class GridGenerator {
             // Draw baseline on side panels if they are visible
             if (this.settings.showSidePanels) {
                 // Left panel - vertical baseline (margin from right side where it touches front)
-                this.drawBaselineVerticalLeftRight(this.dom.svg, startX, frontY, scaledThickness, scaledFrontHeight, scale, 'left');
+                this.gridRenderer.drawBaselineVerticalLeftRight(this.dom.svg, startX, frontY, scaledThickness, scaledFrontHeight, scale, 'left');
                 
                 // Right panel - vertical baseline (margin from left side where it touches front)
-                this.drawBaselineVerticalLeftRight(this.dom.svg, startX + scaledThickness + scaledFrontWidth, frontY, scaledThickness, scaledFrontHeight, scale, 'right');
+                this.gridRenderer.drawBaselineVerticalLeftRight(this.dom.svg, startX + scaledThickness + scaledFrontWidth, frontY, scaledThickness, scaledFrontHeight, scale, 'right');
                 
                 // Top panel - horizontal baseline (margin from bottom where it touches front)
-                this.drawBaselineTopBottom(this.dom.svg, frontX, startY, scaledFrontWidth, scaledThickness, scale, 'top');
+                this.gridRenderer.drawBaselineTopBottom(this.dom.svg, frontX, startY, scaledFrontWidth, scaledThickness, scale, 'top');
                 
                 // Bottom panel - horizontal baseline (margin from top where it touches front)
-                this.drawBaselineTopBottom(this.dom.svg, frontX, startY + scaledThickness + scaledFrontHeight, scaledFrontWidth, scaledThickness, scale, 'bottom');
+                this.gridRenderer.drawBaselineTopBottom(this.dom.svg, frontX, startY + scaledThickness + scaledFrontHeight, scaledFrontWidth, scaledThickness, scale, 'bottom');
             }
         }
         
@@ -7612,211 +7612,6 @@ class GridGenerator {
         }
     }
     
-    drawBaselineVerticalLeftRight(container, x, y, width, height, scale, side) {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const gridColor = this.getContrastColor();
-        const opacity = this.getGridOpacity(0.3);
-        const margin = module * margins * scale;
-        const baselineWidth = module * scale;
-        // For export: 0.25pt = 25.4/72*0.25 = 0.088194444... mm (since viewBox is in mm)
-        const strokeWidth = scale === 1 ? '0.088194444' : '0.5';
-        
-        // Height with margins top and bottom
-        const baselineHeight = height - 2 * margin;
-        
-        // Calculate how many full-width elements can fit
-        const availableWidth = width - 2 * margin;
-        const numFullElements = Math.floor(availableWidth / baselineWidth);
-        
-        // If no elements fit, draw a line at the center of the panel
-        if (numFullElements <= 0) {
-            const centerX = x + width / 2;
-            this.createSVGElement('line', {
-                x1: centerX,
-                y1: y + margin,
-                x2: centerX,
-                y2: y + height - margin,
-                stroke: gridColor,
-                'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
-            }, container);
-            return;
-        }
-        
-        // Left panel: start from right edge (touching front) with margin, go left
-        // Right panel: start from left edge (touching front) with margin, go right
-        let currentX;
-        
-        if (side === 'left') {
-            // Start from right edge with margin
-            currentX = x + width - margin;
-            
-            // Draw elements from right to left (only full-width elements)
-            for (let i = 0; i < numFullElements; i++) {
-                const elementWidth = baselineWidth;
-                const elementX = currentX - elementWidth;
-                
-                this.createSVGElement('rect', {
-                    x: elementX,
-                    y: y + margin,
-                    width: elementWidth,
-                    height: baselineHeight,
-                    fill: 'none',
-                    stroke: gridColor,
-                    'stroke-width': strokeWidth,
-                    'stroke-opacity': opacity
-                }, container);
-                
-                currentX -= elementWidth;
-            }
-            
-            // Draw a vertical line at the left margin
-            this.createSVGElement('line', {
-                x1: x + margin,
-                y1: y + margin,
-                x2: x + margin,
-                y2: y + height - margin,
-                stroke: gridColor,
-                'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
-            }, container);
-            
-        } else { // right
-            // Start from left edge + margin, go right
-            currentX = x + margin;
-            
-            // Draw elements from left to right (only full-width elements)
-            for (let i = 0; i < numFullElements; i++) {
-                this.createSVGElement('rect', {
-                    x: currentX,
-                    y: y + margin,
-                    width: baselineWidth,
-                    height: baselineHeight,
-                    fill: 'none',
-                    stroke: gridColor,
-                    'stroke-width': strokeWidth,
-                    'stroke-opacity': opacity
-                }, container);
-                
-                currentX += baselineWidth;
-            }
-            
-            // Draw a vertical line at the right margin
-            this.createSVGElement('line', {
-                x1: x + width - margin,
-                y1: y + margin,
-                x2: x + width - margin,
-                y2: y + height - margin,
-                stroke: gridColor,
-                'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
-            }, container);
-        }
-    }
-    
-    drawBaselineTopBottom(container, x, y, width, height, scale, side) {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const gridColor = this.getContrastColor();
-        const opacity = this.getGridOpacity(0.3);
-        const margin = module * margins * scale;
-        const baselineHeight = module * scale;
-        // For export: 0.25pt = 25.4/72*0.25 = 0.088194444... mm (since viewBox is in mm)
-        const strokeWidth = scale === 1 ? '0.088194444' : '0.5';
-        
-        // Width with margins left and right
-        const baselineWidth = width - 2 * margin;
-        
-        // Calculate how many full-height elements can fit
-        const availableHeight = height - 2 * margin;
-        const numFullElements = Math.floor(availableHeight / baselineHeight);
-        
-        // If no elements fit, draw a line at the center of the panel
-        if (numFullElements <= 0) {
-            const centerY = y + height / 2;
-            this.createSVGElement('line', {
-                x1: x + margin,
-                y1: centerY,
-                x2: x + width - margin,
-                y2: centerY,
-                stroke: gridColor,
-                'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
-            }, container);
-            return;
-        }
-        
-        // Top panel: start from bottom edge (touching front) with margin, go up
-        // Bottom panel: start from top edge (touching front) with margin, go down
-        let currentY;
-        
-        if (side === 'top') {
-            // Start from bottom edge with margin
-            currentY = y + height - margin;
-            
-            // Draw only full-height elements from bottom to top
-            for (let i = 0; i < numFullElements; i++) {
-                const elementY = currentY - baselineHeight;
-                
-                this.createSVGElement('rect', {
-                    x: x + margin,
-                    y: elementY,
-                    width: baselineWidth,
-                    height: baselineHeight,
-                    fill: 'none',
-                    stroke: gridColor,
-                    'stroke-width': strokeWidth,
-                    'stroke-opacity': opacity
-                }, container);
-                
-                currentY -= baselineHeight;
-            }
-            
-            // Draw a horizontal line at the top margin
-            this.createSVGElement('line', {
-                x1: x + margin,
-                y1: y + margin,
-                x2: x + width - margin,
-                y2: y + margin,
-                stroke: gridColor,
-                'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
-            }, container);
-            
-        } else { // bottom
-            // Start from top edge + margin, go down
-            currentY = y + margin;
-            
-            // Draw only full-height elements from top to bottom
-            for (let i = 0; i < numFullElements; i++) {
-                this.createSVGElement('rect', {
-                    x: x + margin,
-                    y: currentY,
-                    width: baselineWidth,
-                    height: baselineHeight,
-                    fill: 'none',
-                    stroke: gridColor,
-                    'stroke-width': strokeWidth,
-                    'stroke-opacity': opacity
-                }, container);
-                
-                currentY += baselineHeight;
-            }
-            
-            // Draw a horizontal line at the bottom margin
-            this.createSVGElement('line', {
-                x1: x + margin,
-                y1: y + height - margin,
-                x2: x + width - margin,
-                y2: y + height - margin,
-                stroke: gridColor,
-                'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
-            }, container);
-        }
-    }
-    
     // Итерация 7: Упрощенный экспорт SVG через SVGExporter
     exportSVG() {
         const { frontWidth, frontHeight, thickness, gridModule, margins, columnCount, rowCount, rowHeight } = this.settings;
@@ -7914,16 +7709,16 @@ class GridGenerator {
         // Side panels baseline if enabled
         if (this.settings.showSidePanels) {
             // Left panel - vertical baseline (margin from right side where it touches front)
-            this.drawBaselineVerticalLeftRight(baselineGroup, 0, frontY, thickness, frontHeight, scale, 'left');
+            this.gridRenderer.drawBaselineVerticalLeftRight(baselineGroup, 0, frontY, thickness, frontHeight, scale, 'left');
             
             // Right panel - vertical baseline (margin from left side where it touches front)
-            this.drawBaselineVerticalLeftRight(baselineGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
+            this.gridRenderer.drawBaselineVerticalLeftRight(baselineGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
             
             // Top panel - horizontal baseline (margin from bottom where it touches front)
-            this.drawBaselineTopBottom(baselineGroup, frontX, 0, frontWidth, thickness, scale, 'top');
+            this.gridRenderer.drawBaselineTopBottom(baselineGroup, frontX, 0, frontWidth, thickness, scale, 'top');
             
             // Bottom panel - horizontal baseline (margin from top where it touches front)
-            this.drawBaselineTopBottom(baselineGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
+            this.gridRenderer.drawBaselineTopBottom(baselineGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
         }
         
         // Add labels if enabled (in separate group)
