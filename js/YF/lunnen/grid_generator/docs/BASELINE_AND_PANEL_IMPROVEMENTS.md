@@ -145,3 +145,4 @@ SVG атрибут `vector-effect="non-scaling-stroke"` указывает бр�
 2. `src/grid/GridRenderer.js` - добавлен vector-effect для всех baseline элементов
 3. `BASELINE_AND_PANEL_IMPROVEMENTS.md` - эта документация
 
+

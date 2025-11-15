@@ -58,3 +58,4 @@ svg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
 
 Протестируйте и убедитесь сами!
 
+

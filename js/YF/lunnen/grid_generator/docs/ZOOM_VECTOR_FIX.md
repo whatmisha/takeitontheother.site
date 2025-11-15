@@ -123,3 +123,4 @@ svg.style.textRendering = 'geometricPrecision';
 
 Производительность не пострадала, так как браузеры оптимизированы для работы с SVG viewBox.
 
+

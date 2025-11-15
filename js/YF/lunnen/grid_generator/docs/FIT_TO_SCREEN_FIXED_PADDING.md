@@ -124,3 +124,4 @@ const availableHeight = Math.max(100, containerRect.height - paddingVertical * 2
 ✅ Не влияет на существующую функциональность
 ✅ Canvas остается fullscreen
 
+

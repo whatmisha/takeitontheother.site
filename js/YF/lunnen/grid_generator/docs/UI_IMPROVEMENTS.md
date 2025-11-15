@@ -71,3 +71,4 @@ border: none;
 1. `src/ui/ZoomPanManager.js` - увеличены вертикальные отступы
 2. `style.css` - убрана обводка и улучшен hover стиль кнопок
 
+

@@ -82,3 +82,4 @@ height: 100%; /* на всю высоту */
 - `.main-content`
 - `.canvas-container`
 
+

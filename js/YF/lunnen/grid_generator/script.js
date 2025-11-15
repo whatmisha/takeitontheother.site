@@ -763,11 +763,7 @@ class GridGenerator {
             paragraphStyleSelect: document.getElementById('paragraphStyleSelect'),
             // Zoom controls
             canvasContainer: document.getElementById('canvasContainer'),
-            zoomDisplay: document.getElementById('zoomDisplay'),
-            zoomInBtn: document.getElementById('zoomInBtn'),
-            zoomOutBtn: document.getElementById('zoomOutBtn'),
-            fitToScreenBtn: document.getElementById('fitToScreenBtn'),
-            resetZoomBtn: document.getElementById('resetZoomBtn')
+            zoomIndicator: document.getElementById('zoomIndicator')
         };
     }
     
@@ -4678,7 +4674,8 @@ class GridGenerator {
             this.attachTextBlockHandlers(hoverArea, block, frontX, frontY, scale);
             
             // Create resize handle on the right edge (after textGroup to be on top)
-            const handleWidth = 8 * scale;
+            // Фиксированная ширина хэндла независимо от зума (как у бейслайна)
+            const handleWidth = 4;
             const handleHeight = lineHeightInMm * wrappedLines.length;
             const resizeHandle = this.createSVGElement('rect', {
                 id: `resize-handle-${block.id}`,
@@ -4690,7 +4687,8 @@ class GridGenerator {
                 'fill-opacity': '0',
                 stroke: 'none',
                 style: 'cursor: ew-resize; pointer-events: all; transition: opacity 0.2s;',
-                'data-block-id': block.id
+                'data-block-id': block.id,
+                'vector-effect': 'non-scaling-size'
             }, container);
             
             // Store resize handle reference
@@ -7066,6 +7064,16 @@ class GridGenerator {
         // Constrain elements to grid bounds if lockPosition is enabled
         this.constrainElementsToBounds();
         
+        // Сохраняем текущее состояние зума ПЕРЕД изменением SVG
+        let savedZoom = null;
+        let savedPanX = null;
+        let savedPanY = null;
+        if (this.zoomPanManager) {
+            savedZoom = this.zoomPanManager.zoom;
+            savedPanX = this.zoomPanManager.panX;
+            savedPanY = this.zoomPanManager.panY;
+        }
+        
         const { frontWidth, frontHeight, thickness } = this.settings;
         
         // Calculate total dimensions in mm
@@ -7085,7 +7093,13 @@ class GridGenerator {
         const svgSize = this.DISPLAY_SIZE;
         this.dom.svg.setAttribute('width', svgSize);
         this.dom.svg.setAttribute('height', svgSize);
-        this.dom.svg.setAttribute('viewBox', `0 0 ${svgSize} ${svgSize}`);
+        // НЕ устанавливаем viewBox напрямую - это управляется ZoomPanManager
+        // this.dom.svg.setAttribute('viewBox', `0 0 ${svgSize} ${svgSize}`);
+        
+        // Обновляем размеры в ZoomPanManager
+        if (this.zoomPanManager) {
+            this.zoomPanManager.reinitializeSVGDimensions();
+        }
         
         // Clear existing content
         this.dom.svg.innerHTML = '';
@@ -7198,6 +7212,14 @@ class GridGenerator {
         
         // Update elements navigator (which also updates panel params)
         this.updateElementsNavigator();
+        
+        // Восстанавливаем зум ПОСЛЕ обновления SVG
+        if (this.zoomPanManager && savedZoom !== null) {
+            this.zoomPanManager.zoom = savedZoom;
+            this.zoomPanManager.panX = savedPanX;
+            this.zoomPanManager.panY = savedPanY;
+            this.zoomPanManager.updateTransform();
+        }
     }
     
     // Universal method for creating SVG elements
@@ -8167,28 +8189,32 @@ class GridGenerator {
         
         // Обработчик изменения зума для обновления UI
         this.dom.canvasContainer.addEventListener('zoomchange', (e) => {
-            this.dom.zoomDisplay.textContent = `${e.detail.percent}%`;
+            // Сохраняем текущий процент зума
+            this.currentZoomPercent = e.detail.percent;
+            // Обновляем текст если не наведена мышь
+            if (!this.zoomIndicatorHovered) {
+                this.dom.zoomIndicator.textContent = `${e.detail.percent}%`;
+            }
         });
         
-        // Привязываем кнопки зума
-        this.dom.zoomInBtn.addEventListener('click', () => {
-            this.zoomPanManager.zoomIn();
+        // Флаг для отслеживания наведения на индикатор зума
+        this.zoomIndicatorHovered = false;
+        this.currentZoomPercent = 100;
+        
+        // Обработчик наведения на индикатор зума - меняет текст на "Fit"
+        this.dom.zoomIndicator.addEventListener('mouseenter', () => {
+            this.zoomIndicatorHovered = true;
+            this.dom.zoomIndicator.textContent = 'Fit';
         });
         
-        this.dom.zoomOutBtn.addEventListener('click', () => {
-            this.zoomPanManager.zoomOut();
+        // Обработчик ухода мыши - возвращает процент зума
+        this.dom.zoomIndicator.addEventListener('mouseleave', () => {
+            this.zoomIndicatorHovered = false;
+            this.dom.zoomIndicator.textContent = `${this.currentZoomPercent}%`;
         });
         
-        this.dom.fitToScreenBtn.addEventListener('click', () => {
-            this.zoomPanManager.fitToScreen();
-        });
-        
-        this.dom.resetZoomBtn.addEventListener('click', () => {
-            this.zoomPanManager.resetZoom();
-        });
-        
-        // Двойной клик на индикатор зума для сброса в 100%
-        this.dom.zoomDisplay.addEventListener('dblclick', () => {
+        // Клик на индикатор зума - сброс в 100%
+        this.dom.zoomIndicator.addEventListener('click', () => {
             this.zoomPanManager.resetZoom();
         });
         

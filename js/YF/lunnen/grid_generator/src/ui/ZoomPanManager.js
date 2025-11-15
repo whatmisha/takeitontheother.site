@@ -18,7 +18,7 @@ export class ZoomPanManager {
         // Состояние трансформации
         this.zoom = 1;
         this.baseZoom = 1; // Базовый зум (fit to screen), считается за 100%
-        this.minZoom = 0.1;
+        this.minZoom = 1.0; // Минимальный зум 100% (не позволяем зумить меньше)
         this.maxZoom = 10;
         this.panX = 0;
         this.panY = 0;
@@ -49,22 +49,31 @@ export class ZoomPanManager {
         // Ждем следующий фрейм, чтобы SVG был отрисован
         requestAnimationFrame(() => {
             try {
-                // Сохраняем исходные размеры
-                const bbox = this.svg.getBBox();
-                this.originalWidth = bbox.width || 1000;
-                this.originalHeight = bbox.height || 1000;
+                // Получаем размеры из атрибутов SVG, если они установлены
+                const width = parseFloat(this.svg.getAttribute('width')) || 0;
+                const height = parseFloat(this.svg.getAttribute('height')) || 0;
                 
-                // Устанавливаем начальный viewBox (с небольшим отступом)
-                this.svg.setAttribute('viewBox', `${bbox.x - 50} ${bbox.y - 50} ${this.originalWidth + 100} ${this.originalHeight + 100}`);
+                if (width > 0 && height > 0) {
+                    // Используем размеры из атрибутов
+                    this.originalWidth = width;
+                    this.originalHeight = height;
+                } else {
+                    // Fallback: используем getBBox
+                    const bbox = this.svg.getBBox();
+                    this.originalWidth = bbox.width || 1000;
+                    this.originalHeight = bbox.height || 1000;
+                }
                 
-                // Обновляем размеры с учетом отступа
-                this.originalWidth = this.originalWidth + 100;
-                this.originalHeight = this.originalHeight + 100;
-                this.panX = bbox.x - 50;
-                this.panY = bbox.y - 50;
+                // Устанавливаем начальный viewBox (полный размер, зум 100%)
+                const viewBoxWidth = this.originalWidth / this.zoom;
+                const viewBoxHeight = this.originalHeight / this.zoom;
+                this.panX = 0;
+                this.panY = 0;
+                
+                this.svg.setAttribute('viewBox', `${this.panX} ${this.panY} ${viewBoxWidth} ${viewBoxHeight}`);
             } catch (e) {
                 // Fallback если getBBox не работает
-                console.warn('Could not get SVG bbox, using fallback dimensions');
+                console.warn('Could not get SVG dimensions, using fallback');
                 this.originalWidth = 1000;
                 this.originalHeight = 1000;
                 this.svg.setAttribute('viewBox', `0 0 ${this.originalWidth} ${this.originalHeight}`);
@@ -328,17 +337,31 @@ export class ZoomPanManager {
     }
     
     /**
-     * Сброс зума в 100% (возврат к baseZoom)
+     * Сброс зума в 100% (возврат к baseZoom) с центрированием и отступами
      */
     resetZoom() {
-        const rect = this.container.getBoundingClientRect();
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        this.zoomTo(this.baseZoom, centerX, centerY);
+        // При зуме 100% (baseZoom = 1.0) центрируем макет с отступами
+        this.zoom = 1.0;
+        this.baseZoom = 1.0;
+        
+        // Получаем размеры содержимого SVG
+        const bbox = this.svg.getBBox();
+        
+        // Вычисляем размеры viewBox для зума 100%
+        const viewBoxWidth = this.originalWidth / this.zoom;
+        const viewBoxHeight = this.originalHeight / this.zoom;
+        
+        // Центрируем содержимое
+        this.panX = bbox.x - (viewBoxWidth - bbox.width) / 2;
+        this.panY = bbox.y - (viewBoxHeight - bbox.height) / 2;
+        
+        this.updateTransform();
+        this.notifyZoomChange();
     }
     
     /**
      * Fit to screen - масштабирует содержимое по размеру контейнера с фиксированными отступами
+     * Минимальный зум ограничен 100%
      */
     fitToScreen() {
         // Получаем размеры содержимого SVG
@@ -358,11 +381,18 @@ export class ZoomPanManager {
         const scaleY = availableHeight / bbox.height;
         const scale = Math.min(scaleX, scaleY);
         
-        // Ограничиваем зум
+        // Ограничиваем зум (минимум 100%, то есть 1.0)
         this.zoom = Math.max(this.minZoom, Math.min(this.maxZoom, scale));
         
-        // Сохраняем этот зум как базовый (будет считаться за 100%)
-        this.baseZoom = this.zoom;
+        // Если зум получился меньше 1.0 (что теперь невозможно из-за minZoom),
+        // или равен 1.0, то это будет базовый зум 100%
+        if (this.zoom <= 1.0) {
+            this.zoom = 1.0;
+            this.baseZoom = 1.0;
+        } else {
+            // Сохраняем этот зум как базовый (будет считаться за 100%)
+            this.baseZoom = this.zoom;
+        }
         
         // Вычисляем размеры viewBox
         const viewBoxWidth = this.originalWidth / this.zoom;
@@ -394,6 +424,25 @@ export class ZoomPanManager {
             } 
         });
         this.container.dispatchEvent(event);
+    }
+    
+    /**
+     * Переинициализирует размеры SVG после изменения содержимого
+     * Вызывается после updateGrid() для обновления originalWidth/Height
+     */
+    reinitializeSVGDimensions() {
+        try {
+            // Получаем размеры из атрибутов SVG
+            const width = parseFloat(this.svg.getAttribute('width')) || this.originalWidth;
+            const height = parseFloat(this.svg.getAttribute('height')) || this.originalHeight;
+            
+            if (width > 0 && height > 0) {
+                this.originalWidth = width;
+                this.originalHeight = height;
+            }
+        } catch (e) {
+            console.warn('Could not reinitialize SVG dimensions', e);
+        }
     }
     
     /**

@@ -26,6 +26,7 @@
                     <!-- Options will be populated by JavaScript -->
                 </ul>
             </div>
+            <button class="zoom-indicator" id="zoomIndicator" aria-label="Reset zoom to 100%">100%</button>
         </div>
         <div class="main-content">
             <div class="canvas-container" id="canvasContainer">
@@ -238,32 +239,6 @@
         <button class="btn-fixed btn-import-settings" id="importSettingsBtn" aria-label="Import Settings">
             Import Settings
         </button>
-        
-        <!-- Zoom Controls (integrated) -->
-        <div class="zoom-controls zoom-controls-inline" role="toolbar" aria-label="Zoom controls">
-            <button class="zoom-btn" id="zoomOutBtn" aria-label="Zoom out (Cmd/Ctrl + -)">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 8H12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-            </button>
-            <div class="zoom-display" id="zoomDisplay" aria-live="polite">100%</div>
-            <button class="zoom-btn" id="zoomInBtn" aria-label="Zoom in (Cmd/Ctrl + +)">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 4V12M4 8H12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-            </button>
-            <button class="zoom-btn" id="fitToScreenBtn" aria-label="Fit to screen (Cmd/Ctrl + 0)">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="2" y="2" width="12" height="12" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/>
-                    <path d="M5 5L11 11M11 5L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-            </button>
-            <button class="zoom-btn" id="resetZoomBtn" aria-label="Reset zoom to 100% (Cmd/Ctrl + 1)">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <text x="8" y="12" text-anchor="middle" fill="currentColor" font-size="10" font-weight="500">1:1</text>
-                </svg>
-            </button>
-        </div>
         
         <button class="btn-fixed btn-help" id="helpButton" aria-label="Show instructions">
             ?
