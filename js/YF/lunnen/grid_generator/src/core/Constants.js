@@ -26,8 +26,8 @@ export const DISPLAY = {
 export const SVG = {
     // Толщина линии для экспорта в мм (0.25pt = 0.088194444 mm)
     EXPORT_STROKE_WIDTH: '0.088194444',
-    // Толщина линии для отображения
-    DISPLAY_STROKE_WIDTH: '0.5'
+    // Толщина линии для отображения (в пикселях экрана с vector-effect="non-scaling-stroke")
+    DISPLAY_STROKE_WIDTH: '1'
 };
 
 // Диапазоны значений для контролов

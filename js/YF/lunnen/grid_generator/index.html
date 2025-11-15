@@ -216,19 +216,10 @@
                     </section>
 
                     <section class="control-section">
-                        <h3>Show</h3>
-                        
                         <div class="control-group">
                             <label class="checkbox-label">
-                                <input type="checkbox" id="showDimensions" aria-label="Show dimensions">
-                                <span>Dimensions</span>
-                            </label>
-                        </div>
-                        
-                        <div class="control-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="showSidePanels" checked aria-label="Show side panels">
-                                <span>Side Panels</span>
+                                <input type="checkbox" id="showSidePanels" checked aria-label="Show sides">
+                                <span>Show sides</span>
                             </label>
                         </div>
                     </section>
@@ -247,6 +238,33 @@
         <button class="btn-fixed btn-import-settings" id="importSettingsBtn" aria-label="Import Settings">
             Import Settings
         </button>
+        
+        <!-- Zoom Controls (integrated) -->
+        <div class="zoom-controls zoom-controls-inline" role="toolbar" aria-label="Zoom controls">
+            <button class="zoom-btn" id="zoomOutBtn" aria-label="Zoom out (Cmd/Ctrl + -)">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 8H12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <div class="zoom-display" id="zoomDisplay" aria-live="polite">100%</div>
+            <button class="zoom-btn" id="zoomInBtn" aria-label="Zoom in (Cmd/Ctrl + +)">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 4V12M4 8H12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <button class="zoom-btn" id="fitToScreenBtn" aria-label="Fit to screen (Cmd/Ctrl + 0)">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="2" width="12" height="12" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/>
+                    <path d="M5 5L11 11M11 5L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <button class="zoom-btn" id="resetZoomBtn" aria-label="Reset zoom to 100% (Cmd/Ctrl + 1)">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <text x="8" y="12" text-anchor="middle" fill="currentColor" font-size="10" font-weight="500">1:1</text>
+                </svg>
+            </button>
+        </div>
+        
         <button class="btn-fixed btn-help" id="helpButton" aria-label="Show instructions">
             ?
         </button>
@@ -616,6 +634,19 @@
                 
                 <h3>Import Settings</h3>
                 <p>Click <strong>Import Settings</strong> to load a previously saved JSON file. This restores the complete state including all objects and parameters.</p>
+                
+                <h3>Zoom and Pan</h3>
+                <p>Navigate the canvas like in Figma (optimized for Apple Magic Mouse):</p>
+                <ul>
+                    <li><strong>Scroll/Swipe</strong> — Pan the canvas (horizontal and vertical)</li>
+                    <li><strong>Cmd/Ctrl + Scroll</strong> — Zoom in/out (centered on cursor)</li>
+                    <li><strong>Space + drag</strong> — Alternative pan method</li>
+                    <li><strong>Middle mouse button + drag</strong> — Alternative pan method</li>
+                    <li><strong>Cmd/Ctrl + 0</strong> — Fit to screen</li>
+                    <li><strong>Cmd/Ctrl + 1</strong> — Reset zoom to 100%</li>
+                    <li><strong>Cmd/Ctrl + Plus</strong> — Zoom in</li>
+                    <li><strong>Cmd/Ctrl + Minus</strong> — Zoom out</li>
+                </ul>
                 
                 <h3>Keyboard Shortcuts</h3>
                 <ul>

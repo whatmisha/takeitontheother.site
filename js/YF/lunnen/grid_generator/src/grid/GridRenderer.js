@@ -145,7 +145,8 @@ export class GridRenderer {
                 fill: 'none',
                 stroke: gridColor,
                 'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
+                'stroke-opacity': opacity,
+                'vector-effect': 'non-scaling-stroke'
             }, container);
             
             currentY += baselineHeight;
@@ -288,7 +289,8 @@ export class GridRenderer {
                 y2: y + height - margin,
                 stroke: gridColor,
                 'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
+                'stroke-opacity': opacity,
+                'vector-effect': 'non-scaling-stroke'
             }, container);
             return;
         }
@@ -310,7 +312,8 @@ export class GridRenderer {
                     fill: 'none',
                     stroke: gridColor,
                     'stroke-width': strokeWidth,
-                    'stroke-opacity': opacity
+                    'stroke-opacity': opacity,
+                    'vector-effect': 'non-scaling-stroke'
                 }, container);
                 
                 currentX -= baselineWidth;
@@ -324,7 +327,8 @@ export class GridRenderer {
                 y2: y + height - margin,
                 stroke: gridColor,
                 'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
+                'stroke-opacity': opacity,
+                'vector-effect': 'non-scaling-stroke'
             }, container);
             
         } else { // right
@@ -340,7 +344,8 @@ export class GridRenderer {
                     fill: 'none',
                     stroke: gridColor,
                     'stroke-width': strokeWidth,
-                    'stroke-opacity': opacity
+                    'stroke-opacity': opacity,
+                    'vector-effect': 'non-scaling-stroke'
                 }, container);
                 
                 currentX += baselineWidth;
@@ -354,7 +359,8 @@ export class GridRenderer {
                 y2: y + height - margin,
                 stroke: gridColor,
                 'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
+                'stroke-opacity': opacity,
+                'vector-effect': 'non-scaling-stroke'
             }, container);
         }
     }
@@ -392,7 +398,8 @@ export class GridRenderer {
                 y2: centerY,
                 stroke: gridColor,
                 'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
+                'stroke-opacity': opacity,
+                'vector-effect': 'non-scaling-stroke'
             }, container);
             return;
         }
@@ -414,7 +421,8 @@ export class GridRenderer {
                     fill: 'none',
                     stroke: gridColor,
                     'stroke-width': strokeWidth,
-                    'stroke-opacity': opacity
+                    'stroke-opacity': opacity,
+                    'vector-effect': 'non-scaling-stroke'
                 }, container);
                 
                 currentY -= baselineHeight;
@@ -428,7 +436,8 @@ export class GridRenderer {
                 y2: y + margin,
                 stroke: gridColor,
                 'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
+                'stroke-opacity': opacity,
+                'vector-effect': 'non-scaling-stroke'
             }, container);
             
         } else { // bottom
@@ -444,7 +453,8 @@ export class GridRenderer {
                     fill: 'none',
                     stroke: gridColor,
                     'stroke-width': strokeWidth,
-                    'stroke-opacity': opacity
+                    'stroke-opacity': opacity,
+                    'vector-effect': 'non-scaling-stroke'
                 }, container);
                 
                 currentY += baselineHeight;
@@ -458,7 +468,8 @@ export class GridRenderer {
                 y2: y + height - margin,
                 stroke: gridColor,
                 'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
+                'stroke-opacity': opacity,
+                'vector-effect': 'non-scaling-stroke'
             }, container);
         }
     }

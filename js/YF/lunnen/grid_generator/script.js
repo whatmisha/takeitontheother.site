@@ -17,6 +17,7 @@ import { GridRenderer } from './src/grid/GridRenderer.js';
 import { SliderController } from './src/ui/SliderController.js';
 import { ColorPicker } from './src/ui/ColorPicker.js';
 import { PanelManager } from './src/ui/PanelManager.js';
+import { ZoomPanManager } from './src/ui/ZoomPanManager.js';
 
 // Итерация 6: Elements
 import { TextBlockManager } from './src/elements/TextBlockManager.js';
@@ -284,7 +285,6 @@ class GridGenerator {
             frontWidth: 382,
             frontHeight: 387,
             thickness: 39,
-            showDimensions: false,
             showLabels: false,
             showSidePanels: true,
             boxColor: '#dadde6',
@@ -340,6 +340,7 @@ class GridGenerator {
         this.sliderController = null;
         this.colorPicker = null;
         this.panelManager = null;
+        this.zoomPanManager = null;
         
         // ============================================
         // Elements Managers (Итерация 6)
@@ -570,6 +571,15 @@ class GridGenerator {
         this.updateCanvasSize();
         this.updateGrid();
         
+        // Автоматический fit to screen при загрузке (с задержкой для отрисовки SVG)
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                if (this.zoomPanManager) {
+                    this.zoomPanManager.fitToScreen();
+                }
+            }, 100);
+        });
+        
         // Update canvas size on window resize
         window.addEventListener('resize', () => {
             this.updateCanvasSize();
@@ -621,7 +631,6 @@ class GridGenerator {
             thicknessValue: document.getElementById('thicknessValue'),
             
             // Checkboxes
-            showDimensions: document.getElementById('showDimensions'),
             showSidePanels: document.getElementById('showSidePanels'),
             showColumns: document.getElementById('showColumns'),
             showRows: document.getElementById('showRows'),
@@ -751,7 +760,14 @@ class GridGenerator {
             fileUploadArea: document.getElementById('fileUploadArea'),
             svgFileInput: document.getElementById('svgFileInput'),
             // Paragraph style select
-            paragraphStyleSelect: document.getElementById('paragraphStyleSelect')
+            paragraphStyleSelect: document.getElementById('paragraphStyleSelect'),
+            // Zoom controls
+            canvasContainer: document.getElementById('canvasContainer'),
+            zoomDisplay: document.getElementById('zoomDisplay'),
+            zoomInBtn: document.getElementById('zoomInBtn'),
+            zoomOutBtn: document.getElementById('zoomOutBtn'),
+            fitToScreenBtn: document.getElementById('fitToScreenBtn'),
+            resetZoomBtn: document.getElementById('resetZoomBtn')
         };
     }
     
@@ -765,12 +781,6 @@ class GridGenerator {
         // ============================================
         // NOTE: Slider initialization moved to initUIControllers()
         // ============================================
-        
-        // Show dimensions checkbox
-        this.dom.showDimensions.addEventListener('change', (e) => {
-            this.settings.showDimensions = e.target.checked;
-            this.updateGrid();
-        });
         
         // Show side panels checkbox
         this.dom.showSidePanels.addEventListener('change', (e) => {
@@ -1153,9 +1163,10 @@ class GridGenerator {
         // Grid panel
         const gridParams = document.getElementById('gridParams');
         if (gridParams) {
+            const mod = this.settings.gridModule.toFixed(2);
             const col = this.settings.columnCount;
             const row = this.settings.rowCount;
-            gridParams.textContent = `Col ${col}  •  Row ${row}`;
+            gridParams.textContent = `Mod ${mod}  •  Col ${col}  •  Row ${row}`;
         }
         
         // Dimensions panel
@@ -1631,7 +1642,6 @@ class GridGenerator {
         });
         
         // Update checkboxes
-        if (this.dom.showDimensions) this.dom.showDimensions.checked = settings.showDimensions || false;
         if (this.dom.showSidePanels) this.dom.showSidePanels.checked = settings.showSidePanels !== false;
         if (this.dom.showColumns) this.dom.showColumns.checked = settings.showColumns !== false;
         if (this.dom.showRows) this.dom.showRows.checked = settings.showRows !== false;
@@ -6003,6 +6013,38 @@ class GridGenerator {
         this.updatePanelParams();
     }
     
+    // Add hover handlers for objects to highlight corresponding buttons in Objects panel
+    addObjectHoverHandlers() {
+        // Find all SVG groups that represent objects (text blocks, graphics, icons, claim)
+        const svg = this.dom.svg;
+        if (!svg) return;
+        
+        // Find all elements with data-block-id attribute
+        const objectElements = svg.querySelectorAll('[data-block-id]');
+        
+        objectElements.forEach(element => {
+            const blockId = element.getAttribute('data-block-id');
+            
+            // Add mouseenter handler
+            element.addEventListener('mouseenter', () => {
+                // Find corresponding button in Objects panel
+                const button = this.dom.elementsList?.querySelector(`[data-element-id="${blockId}"]`);
+                if (button) {
+                    button.classList.add('hover-from-canvas');
+                }
+            });
+            
+            // Add mouseleave handler
+            element.addEventListener('mouseleave', () => {
+                // Remove hover class from button
+                const button = this.dom.elementsList?.querySelector(`[data-element-id="${blockId}"]`);
+                if (button) {
+                    button.classList.remove('hover-from-canvas');
+                }
+            });
+        });
+    }
+    
     // Create element item with actions (visibility and delete)
     createElementItem(name, type, blockId, isVisible, isDeleting = false) {
         const wrapper = document.createElement('div');
@@ -7059,11 +7101,6 @@ class GridGenerator {
         // Draw rectangles
         this.drawRectangles(this.dom.svg, startX, startY, scaledFrontWidth, scaledFrontHeight, scaledThickness, scale);
         
-        // Draw dimensions if enabled
-        if (this.settings.showDimensions) {
-            this.drawDimensions(this.dom.svg, startX, startY, scaledFrontWidth, scaledFrontHeight, scaledThickness, scale);
-        }
-        
         // Draw labels if enabled (but default is false now)
         if (this.settings.showLabels) {
             this.drawLabels(this.dom.svg, startX, startY, scaledFrontWidth, scaledFrontHeight, scaledThickness);
@@ -7152,6 +7189,9 @@ class GridGenerator {
                 this.drawClaimBlock(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
             }
         }
+        
+        // Add hover handlers for objects to highlight corresponding buttons in Objects panel
+        this.addObjectHoverHandlers();
         
         // Update font size displays
         this.updateFontSizeDisplays();
@@ -7801,14 +7841,6 @@ class GridGenerator {
             this.drawBaselineTopBottom(baselineGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
         }
         
-        // Add dimensions if enabled (in separate group)
-        if (this.settings.showDimensions) {
-            const dimensionsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            dimensionsGroup.setAttribute('id', 'dimensions');
-            exportSvg.appendChild(dimensionsGroup);
-            this.drawDimensions(dimensionsGroup, 0, 0, frontWidth, frontHeight, thickness, scale);
-        }
-        
         // Add labels if enabled (in separate group)
         if (this.settings.showLabels) {
             const labelsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -8052,7 +8084,6 @@ class GridGenerator {
         if (this.dom.showColumns) this.dom.showColumns.checked = this.settings.showColumns;
         if (this.dom.showRows) this.dom.showRows.checked = this.settings.showRows;
         if (this.dom.showBaseline) this.dom.showBaseline.checked = this.settings.showBaseline;
-        if (this.dom.showDimensions) this.dom.showDimensions.checked = this.settings.showDimensions;
         if (this.dom.showSidePanels) this.dom.showSidePanels.checked = this.settings.showSidePanels;
         if (this.dom.showObjects) this.dom.showObjects.checked = this.settings.showObjects;
         
@@ -8125,6 +8156,43 @@ class GridGenerator {
         // Перенесено в init() так как требуется готовый DOM
         
         console.log('✅ PanelManager created');
+        
+        // ============================================
+        // Шаг 5.4: ZoomPanManager
+        // ============================================
+        this.zoomPanManager = new ZoomPanManager(
+            this.dom.canvasContainer,
+            this.dom.svg
+        );
+        
+        // Обработчик изменения зума для обновления UI
+        this.dom.canvasContainer.addEventListener('zoomchange', (e) => {
+            this.dom.zoomDisplay.textContent = `${e.detail.percent}%`;
+        });
+        
+        // Привязываем кнопки зума
+        this.dom.zoomInBtn.addEventListener('click', () => {
+            this.zoomPanManager.zoomIn();
+        });
+        
+        this.dom.zoomOutBtn.addEventListener('click', () => {
+            this.zoomPanManager.zoomOut();
+        });
+        
+        this.dom.fitToScreenBtn.addEventListener('click', () => {
+            this.zoomPanManager.fitToScreen();
+        });
+        
+        this.dom.resetZoomBtn.addEventListener('click', () => {
+            this.zoomPanManager.resetZoom();
+        });
+        
+        // Двойной клик на индикатор зума для сброса в 100%
+        this.dom.zoomDisplay.addEventListener('dblclick', () => {
+            this.zoomPanManager.resetZoom();
+        });
+        
+        console.log('✅ ZoomPanManager initialized');
         
     }
     
