@@ -1256,27 +1256,28 @@ class GridGenerator {
     
     async loadPresetsFromDirectoryListing(applyImmediately = true) {
         try {
+            // Сначала пробуем обычный directory listing
             const listingResponse = await fetch(`presets/?ts=${Date.now()}`, {
                 cache: 'no-store'
             });
             
             if (!listingResponse.ok) {
-                console.warn('Presets directory listing request failed with status', listingResponse.status);
-                return applyImmediately ? false : null;
+                console.warn('Presets directory listing request failed, trying GitHub API...');
+                return await this.loadPresetsFromGitHubAPI(applyImmediately);
             }
             
             const contentType = listingResponse.headers.get('content-type') || '';
             if (!contentType.includes('text') && !contentType.includes('html')) {
-                console.warn('Presets directory listing returned unsupported content type:', contentType);
-                return applyImmediately ? false : null;
+                console.warn('Presets directory listing returned unsupported content type, trying GitHub API...');
+                return await this.loadPresetsFromGitHubAPI(applyImmediately);
             }
             
             const listingHtml = await listingResponse.text();
             const files = this.extractJsonFilenamesFromListing(listingHtml);
             
             if (files.length === 0) {
-                console.warn('Presets directory listing does not contain any JSON files');
-                return applyImmediately ? false : null;
+                console.warn('No JSON files in directory listing, trying GitHub API...');
+                return await this.loadPresetsFromGitHubAPI(applyImmediately);
             }
             
             const presets = [];
@@ -1288,8 +1289,8 @@ class GridGenerator {
             }
             
             if (presets.length === 0) {
-                console.warn('Could not read any presets from directory listing');
-                return applyImmediately ? false : null;
+                console.warn('Could not read any presets, trying GitHub API...');
+                return await this.loadPresetsFromGitHubAPI(applyImmediately);
             }
             
             const sortedPresets = presets.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
@@ -1302,7 +1303,69 @@ class GridGenerator {
             
             return sortedPresets;
         } catch (error) {
-            console.warn('Failed to scan presets directory:', error);
+            console.warn('Failed to scan presets directory, trying GitHub API:', error);
+            return await this.loadPresetsFromGitHubAPI(applyImmediately);
+        }
+    }
+    
+    async loadPresetsFromGitHubAPI(applyImmediately = true) {
+        try {
+            // GitHub API endpoint для получения списка файлов в папке
+            const apiUrl = 'https://api.github.com/repos/mishaivanov/takeitontheother.site/contents/js/YF/lunnen/grid_generator/presets';
+            
+            const response = await fetch(apiUrl, {
+                cache: 'no-store',
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!response.ok) {
+                console.warn('GitHub API request failed with status', response.status);
+                return applyImmediately ? false : null;
+            }
+            
+            const files = await response.json();
+            
+            // Фильтруем только .json файлы, кроме manifest.json
+            const presetFiles = files.filter(file => 
+                file.type === 'file' && 
+                file.name.endsWith('.json') && 
+                file.name !== 'manifest.json'
+            );
+            
+            if (presetFiles.length === 0) {
+                console.warn('No preset files found via GitHub API');
+                return applyImmediately ? false : null;
+            }
+            
+            console.log(`📦 Found ${presetFiles.length} preset(s) via GitHub API`);
+            
+            const presets = [];
+            for (const file of presetFiles) {
+                const presetMeta = await this.fetchPresetMetadataFromFile(file.name);
+                if (presetMeta) {
+                    presets.push(presetMeta);
+                }
+            }
+            
+            if (presets.length === 0) {
+                console.warn('Could not read any presets via GitHub API');
+                return applyImmediately ? false : null;
+            }
+            
+            const sortedPresets = presets.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+            
+            if (applyImmediately) {
+                this.availablePresets = sortedPresets;
+                this.initializePresets();
+                console.log('✅ Presets loaded via GitHub API');
+                return true;
+            }
+            
+            return sortedPresets;
+        } catch (error) {
+            console.warn('Failed to load presets via GitHub API:', error);
             return applyImmediately ? false : null;
         }
     }
