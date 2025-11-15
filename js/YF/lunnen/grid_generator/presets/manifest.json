@@ -1,8 +1,8 @@
 {
   "presets": [
     {
-      "name": "New",
-      "file": "New.json"
+      "name": "+ New",
+      "file": "+New.json"
     },
     {
       "name": "Outer 16\" Back",
