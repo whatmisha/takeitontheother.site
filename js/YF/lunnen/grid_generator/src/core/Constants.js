@@ -48,18 +48,18 @@ export const RANGES = {
     TEXT_TRACKING: { min: -0.05, max: 0.05, step: 0.01 }
 };
 
-// Значения по умолчанию
+// Значения по умолчанию (взяты из пресета "+New")
 export const DEFAULTS = {
-    FRONT_WIDTH: 382,      // mm
-    FRONT_HEIGHT: 387,     // mm
-    THICKNESS: 39,         // mm
-    BOX_COLOR: '#dadde6',
-    GRID_MODULE: 3.3076,   // mm
+    FRONT_WIDTH: 500,      // mm
+    FRONT_HEIGHT: 500,     // mm
+    THICKNESS: 50,         // mm
+    BOX_COLOR: '#808080',  // Серый фон
+    GRID_MODULE: 5.0505,   // mm
     MARGINS: 2,            // в модулях
     MARGINS_UNIT: 'mod',   // 'mod' или 'mm'
     COLUMN_COUNT: 12,
-    ROW_COUNT: 19,
-    ROW_HEIGHT: 5,         // в модулях
+    ROW_COUNT: 12,
+    ROW_HEIGHT: 7,         // в модулях
     LINK_MODE: 'module',   // 'off', 'rows-height', или 'module'
     
     // Стили текста
