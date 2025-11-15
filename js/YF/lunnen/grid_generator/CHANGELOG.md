@@ -1,5 +1,61 @@
 # Changelog
 
+## [Iteration 11] - 2025-11-14 (Updated)
+
+### 🔍 Added - Zoom & Pan Functionality
+
+#### New Features
+- **Figma-like Zoom** - Cmd/Ctrl + Scroll to zoom in/out, with zoom point following cursor position
+  - Comfortable speed: 5% per scroll step (2x slower than initial)
+  - Range: 100% to 1000% (cannot zoom below 100%)
+  - Auto-centers when reaching 100%
+- **Zoom Indicator** - Displays current zoom percentage next to preset dropdown
+  - Hover effect: Shows "Fit" text on hover as a hint
+  - Click to reset to 100% with smooth centering
+- **Smart Centering** - Canvas auto-centers when zooming out to 100%
+- **Smooth Panning** - Regular scroll (without modifier) for navigating the canvas at any zoom level
+  - Vertical scrollbar hidden for cleaner UI (functionality preserved)
+  - Horizontal scrollbar visible when needed
+- **Apple Magic Mouse Support** - Native smooth scrolling support for seamless panning
+
+#### Technical Implementation
+- **New ZoomController Module** - `src/ui/ZoomController.js`
+  - Manages zoom state (100% to 1000%, step 5%)
+  - Handles wheel events with modifier detection
+  - Calculates zoom origin relative to cursor position
+  - Smooth scroll positioning with requestAnimationFrame
+  - Auto-centering method when zoom reaches 100%
+- **Canvas Structure Update** - Added `canvas-container-inner` wrapper for transform isolation
+- **Enhanced Scrollbars** - Custom styled scrollbars matching app theme
+  - Vertical scrollbar hidden (width: 0)
+  - Horizontal scrollbar visible and styled
+  - Scrollbar functionality preserved for both axes
+
+#### Files Added
+- `src/ui/ZoomController.js` - Zoom and pan controller module
+- `backup/48 перед добавлением зума/` - Backup before zoom implementation
+
+#### Files Modified
+- `index.html` - Added zoom indicator button and canvas-inner wrapper
+- `style.css` - Added zoom indicator styles, improved canvas container scrolling
+- `script.js` - Integrated ZoomController into initialization flow
+
+#### User Benefits
+- 🎯 Precise zoom to cursor position (just like Figma)
+- 🖱️ Natural scrolling for navigation
+- 📊 Always see current zoom level
+- ⚡ Fast reset to default view
+- 🎨 Work comfortably at any scale
+
+#### Bug Fix (same iteration)
+- **Fixed:** Layout cut off at bottom on page load
+- **Solution:** Dynamic overflow switching
+  - At 100%: `overflow: visible` (no scrollbars, flexbox centering)
+  - At zoom > 100%: `overflow: auto` (scrollbars for panning)
+- **Result:** Layout always fits perfectly at 100% without scrolling
+
+---
+
 ## [Iteration 10] - 2025-11-14
 
 ### 🎨 Added - Preset Configurations Feature

@@ -305,14 +305,13 @@ body {
     border-radius: var(--radius);
     box-shadow: none;
     border: none;
-    overflow: hidden;
+    overflow: visible;
     position: relative;
     min-height: 400px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto;
-    width: 100%;
 }
 
 #gridSvg {
@@ -603,59 +602,6 @@ body {
 .control-group {
     margin-bottom: var(--spacing-lg);
     padding-top: 6px;
-}
-
-.show-toggle-chip-group {
-    padding-top: 0;
-    margin-bottom: var(--spacing-md);
-}
-
-.toggle-chip-group {
-    display: flex;
-    gap: var(--spacing-sm);
-    flex-wrap: nowrap;
-}
-
-.toggle-chip {
-    position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-button);
-    background: rgba(255, 255, 255, 0.03);
-    transition: border-color var(--transition-normal), 
-                background var(--transition-normal), 
-                color var(--transition-normal);
-}
-
-.toggle-chip input {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    pointer-events: none;
-}
-
-.toggle-chip span {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--spacing-sm) var(--spacing-xl);
-    font-size: 0.85rem;
-    color: var(--color-text-secondary);
-    white-space: nowrap;
-}
-
-.toggle-chip:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.toggle-chip input:checked + span {
-    background: var(--color-text);
-    color: var(--color-bg);
-    border-radius: var(--radius-button);
-}
-
-.toggle-chip input:focus-visible + span {
-    outline: 2px solid rgba(255, 255, 255, 0.5);
-    outline-offset: 2px;
 }
 
 .control-group label {
@@ -1716,14 +1662,21 @@ legend {
     color: var(--color-bg);
 }
 
-.btn-export-settings,
-.btn-import-settings {
-    background: var(--color-bg-panel);
+.btn-export-settings {
+    background: var(--color-bg);
     color: var(--color-text);
-    border: none;
 }
 
-.btn-export-settings:hover,
+.btn-export-settings:hover {
+    background: var(--color-text);
+    color: var(--color-bg);
+}
+
+.btn-import-settings {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
 .btn-import-settings:hover {
     background: var(--color-text);
     color: var(--color-bg);
@@ -1750,8 +1703,8 @@ legend {
 
 /* Help Button */
 .btn-help {
-    background: var(--color-bg-panel) !important;
-    border: none !important;
+    background: var(--color-bg) !important;
+    border: 1px solid var(--color-text) !important;
     color: var(--color-text);
     transition: all var(--transition-slow);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
@@ -1771,6 +1724,7 @@ legend {
 .btn-help:hover {
     background: var(--color-text) !important;
     color: var(--color-bg);
+    border-color: var(--color-text) !important;
 }
 
 /* Modal Overlay */

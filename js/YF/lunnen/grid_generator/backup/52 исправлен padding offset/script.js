@@ -17,6 +17,7 @@ import { GridRenderer } from './src/grid/GridRenderer.js';
 import { SliderController } from './src/ui/SliderController.js';
 import { ColorPicker } from './src/ui/ColorPicker.js';
 import { PanelManager } from './src/ui/PanelManager.js';
+import { ZoomController } from './src/ui/ZoomController.js';
 
 // Итерация 6: Elements
 import { TextBlockManager } from './src/elements/TextBlockManager.js';
@@ -550,6 +551,10 @@ class GridGenerator {
         // PanelManager - регистрация всех панелей
         this.initPanels();
         console.log('✅ PanelManager initialized with all panels');
+        
+        // ZoomController - инициализация зума и панорамирования
+        this.initZoomController();
+        console.log('✅ ZoomController initialized');
         
         // Save initial state for undo
         this.saveState();
@@ -1174,27 +1179,6 @@ class GridGenerator {
             const graphicsCount = this.graphicsBlocks.length;
             objectsParams.textContent = `Txt ${textCount}  •  Obj ${graphicsCount}`;
         }
-        
-        // Text styles panel
-        const textStylesParams = document.getElementById('textStylesParams');
-        if (textStylesParams) {
-            const stylesCount = this.getTextStylesCount();
-            textStylesParams.textContent = `${stylesCount} styles`;
-        }
-    }
-    
-    getTextStylesCount() {
-        if (!Array.isArray(this.textBlocks)) return 0;
-        
-        const uniqueStyles = new Set();
-        
-        this.textBlocks.forEach(block => {
-            if (block.styleRef) {
-                uniqueStyles.add(block.styleRef);
-            }
-        });
-        
-        return uniqueStyles.size;
     }
     
     // ============================================
@@ -3010,6 +2994,22 @@ class GridGenerator {
             this.dom.paragraphPanelTitle.textContent = displayName;
         }
         
+        // Если панель открывается впервые или была закрыта, центрируем её
+        if (this.dom.paragraphPanel && !this.dom.paragraphPanel.classList.contains('active')) {
+            // Временно показываем панель для получения размеров
+            this.dom.paragraphPanel.style.display = 'flex';
+            const rect = this.dom.paragraphPanel.getBoundingClientRect();
+            
+            // Вычисляем центральную позицию
+            const centerX = (window.innerWidth - rect.width) / 2;
+            const centerY = (window.innerHeight - rect.height) / 2;
+            
+            // Устанавливаем позицию напрямую через left/top, убирая transform
+            this.dom.paragraphPanel.style.left = `${centerX}px`;
+            this.dom.paragraphPanel.style.top = `${centerY}px`;
+            this.dom.paragraphPanel.style.transform = 'none';
+        }
+        
         // Заполняем поля панели
         if (this.dom.paragraphStyleSelect) {
             // Дропдаун управляет стилем текста (headline/text)
@@ -3054,11 +3054,10 @@ class GridGenerator {
         // Обновляем счетчик символов
         this.updateCharCounter();
         
-        // Показываем панель и позиционируем рядом с элементом
+        // Показываем панель
         if (this.dom.paragraphPanel) {
-            this.dom.paragraphPanel.style.display = 'flex';
             this.dom.paragraphPanel.classList.add('active');
-            this.positionPanelNextToBlock(this.dom.paragraphPanel, blockId, 'text');
+            this.dom.paragraphPanel.style.display = 'flex';
         }
     }
     
@@ -3125,8 +3124,16 @@ class GridGenerator {
         // Center panel
         if (this.dom.graphicsPanel) {
             this.dom.graphicsPanel.style.display = 'flex';
+            const rect = this.dom.graphicsPanel.getBoundingClientRect();
+            
+            const centerX = (window.innerWidth - rect.width) / 2;
+            const centerY = (window.innerHeight - rect.height) / 2;
+            
+            this.dom.graphicsPanel.style.left = `${centerX}px`;
+            this.dom.graphicsPanel.style.top = `${centerY}px`;
+            this.dom.graphicsPanel.style.transform = 'none';
+            
             this.dom.graphicsPanel.classList.add('active');
-            this.centerPanel(this.dom.graphicsPanel);
         }
     }
     
@@ -4628,7 +4635,8 @@ class GridGenerator {
                 const gutter = module;
                 
                 // Convert pixel movement to columns
-                const effectiveScale = scale;
+                const zoom = this.zoomController ? this.zoomController.getZoom() : 1.0;
+                const effectiveScale = scale * zoom;
                 const columnWithGutter = (columnWidth + gutter) * effectiveScale;
                 const deltaColumns = dx / columnWithGutter;
                 
@@ -4865,7 +4873,9 @@ class GridGenerator {
                 const gutter = module;
                 
                 // Convert pixel movement to grid units
-                const effectiveScale = scale;
+                // Учитываем зум: при увеличении зума визуальные размеры больше, поэтому scale нужно умножить на zoom
+                const zoom = this.zoomController ? this.zoomController.getZoom() : 1.0;
+                const effectiveScale = scale * zoom;
                 const columnWithGutter = (columnWidth + gutter) * effectiveScale;
                 const moduleScaled = module * effectiveScale;
                 
@@ -4997,8 +5007,16 @@ class GridGenerator {
         // Center and show panel
         if (this.dom.graphicsPanel) {
             this.dom.graphicsPanel.style.display = 'flex';
+            const rect = this.dom.graphicsPanel.getBoundingClientRect();
+            
+            const centerX = (window.innerWidth - rect.width) / 2;
+            const centerY = (window.innerHeight - rect.height) / 2;
+            
+            this.dom.graphicsPanel.style.left = `${centerX}px`;
+            this.dom.graphicsPanel.style.top = `${centerY}px`;
+            this.dom.graphicsPanel.style.transform = 'none';
+            
             this.dom.graphicsPanel.classList.add('active');
-            this.positionPanelNextToBlock(this.dom.graphicsPanel, blockId, 'graphics');
         }
         
         // Store current editing block ID
@@ -5006,109 +5024,6 @@ class GridGenerator {
         
         // Initialize input handlers with arrow key support
         this.initGraphicsInputsWithArrows();
-    }
-
-    centerPanel(panelElement) {
-        if (!panelElement) return;
-        
-        const padding = 16;
-        const panelRect = panelElement.getBoundingClientRect();
-        const panelWidth = panelRect.width || panelElement.offsetWidth || 0;
-        const panelHeight = panelRect.height || panelElement.offsetHeight || 0;
-        
-        const availableWidth = window.innerWidth - panelWidth - padding;
-        const availableHeight = window.innerHeight - panelHeight - padding;
-        
-        const left = Math.max(
-            padding,
-            Math.min((window.innerWidth - panelWidth) / 2, availableWidth)
-        );
-        const top = Math.max(
-            padding,
-            Math.min((window.innerHeight - panelHeight) / 2, availableHeight)
-        );
-        
-        panelElement.style.left = `${Math.round(left)}px`;
-        panelElement.style.top = `${Math.round(top)}px`;
-        panelElement.style.transform = 'none';
-    }
-    
-    positionPanelNextToBlock(panelElement, blockId, type = 'graphics') {
-        if (!panelElement) return;
-        
-        const targetRect = this.getBlockViewportRect(blockId, type);
-        if (!targetRect) {
-            this.centerPanel(panelElement);
-            return;
-        }
-        
-        const padding = 16;
-        const offset = 24;
-        const panelRect = panelElement.getBoundingClientRect();
-        const panelWidth = panelRect.width || panelElement.offsetWidth || 0;
-        const panelHeight = panelRect.height || panelElement.offsetHeight || 0;
-        
-        const maxLeft = window.innerWidth - panelWidth - padding;
-        const maxTop = window.innerHeight - panelHeight - padding;
-        
-        let left = targetRect.right + offset;
-        let top = targetRect.top;
-        
-        if (left > maxLeft) {
-            left = targetRect.left - panelWidth - offset;
-        }
-        
-        left = Math.max(padding, Math.min(left, maxLeft));
-        top = Math.max(padding, Math.min(top, maxTop));
-        
-        panelElement.style.left = `${Math.round(left)}px`;
-        panelElement.style.top = `${Math.round(top)}px`;
-        panelElement.style.transform = 'none';
-    }
-    
-    getBlockViewportRect(blockId, type = 'graphics') {
-        if (!blockId) return null;
-        
-        if (type === 'text') {
-            const bounds = document.getElementById(`bounds-${blockId}`);
-            if (bounds) return bounds.getBoundingClientRect();
-            
-            const hoverArea = document.getElementById(`hover-area-${blockId}`);
-            if (hoverArea) return hoverArea.getBoundingClientRect();
-            
-            return null;
-        }
-        
-        const specialGroups = {
-            icons: 'icons-group',
-            claim: 'claim-group'
-        };
-        
-        const specialGroupId = specialGroups[blockId];
-        if (specialGroupId) {
-            const specialGroup = document.getElementById(specialGroupId);
-            if (specialGroup?.boundsElement) {
-                return specialGroup.boundsElement.getBoundingClientRect();
-            }
-            if (specialGroup) {
-                return specialGroup.getBoundingClientRect();
-            }
-        }
-        
-        const graphicsGroup = document.getElementById(`graphics-group-${blockId}`);
-        if (graphicsGroup?.boundsElement) {
-            return graphicsGroup.boundsElement.getBoundingClientRect();
-        }
-        if (graphicsGroup) {
-            return graphicsGroup.getBoundingClientRect();
-        }
-        
-        const fallback = document.querySelector(`[data-block-id="${blockId}"]`);
-        if (fallback) {
-            return fallback.getBoundingClientRect();
-        }
-        
-        return null;
     }
     
     // Draw claim block on canvas
@@ -5404,7 +5319,8 @@ class GridGenerator {
                 const gutter = module;
                 
                 // Convert pixel movement to grid units
-                const effectiveScale = scale;
+                const zoom = this.zoomController ? this.zoomController.getZoom() : 1.0;
+                const effectiveScale = scale * zoom;
                 const columnWithGutter = (columnWidth + gutter) * effectiveScale;
                 const moduleScaled = module * effectiveScale;
                 
@@ -5552,7 +5468,8 @@ class GridGenerator {
                 const gutter = module;
                 
                 // Convert pixel movement to grid units
-                const effectiveScale = scale;
+                const zoom = this.zoomController ? this.zoomController.getZoom() : 1.0;
+                const effectiveScale = scale * zoom;
                 const columnWithGutter = (columnWidth + gutter) * effectiveScale;
                 const moduleScaled = module * effectiveScale;
                 
@@ -6684,7 +6601,9 @@ class GridGenerator {
         const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
         const gutter = module;
         
-        const effectiveScale = scale;
+        // Учитываем зум: при увеличении зума визуальные размеры больше
+        const zoom = this.zoomController ? this.zoomController.getZoom() : 1.0;
+        const effectiveScale = scale * zoom;
         const columnWithGutter = (columnWidth + gutter) * effectiveScale;
         const baselineUnit = module * effectiveScale;
         
@@ -7959,6 +7878,10 @@ class GridGenerator {
         
         console.log('✅ PanelManager created');
         
+        // ============================================
+        // Шаг 5.4: ZoomController
+        // ============================================
+        // Инициализация ZoomController будет в init() после готовности DOM
     }
     
     // ============================================
@@ -7981,6 +7904,22 @@ class GridGenerator {
                 draggable: panel.draggable
             });
         });
+    }
+    
+    // ============================================
+    // Zoom Controller initialization
+    // ============================================
+    initZoomController() {
+        const canvasContainer = document.getElementById('canvasContainer');
+        const canvasInner = document.getElementById('canvasInner');
+        const zoomIndicator = document.getElementById('zoomIndicator');
+        
+        if (!canvasContainer || !canvasInner || !zoomIndicator) {
+            console.error('❌ Cannot initialize ZoomController: required elements not found');
+            return;
+        }
+        
+        this.zoomController = new ZoomController(canvasContainer, canvasInner, zoomIndicator);
     }
     
     // ============================================

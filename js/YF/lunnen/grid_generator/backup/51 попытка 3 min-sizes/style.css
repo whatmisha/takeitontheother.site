@@ -117,6 +117,47 @@ body {
     align-items: center;
 }
 
+/* Zoom Indicator */
+.zoom-indicator {
+    padding: var(--spacing-md) var(--spacing-2xl);
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color var(--transition-normal);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    height: var(--button-height);
+    display: inline-flex;
+    align-items: center;
+    min-width: 60px;
+    justify-content: center;
+    position: relative;
+}
+
+/* Hover text replacement - show "Fit" instead of percentage */
+.zoom-indicator::before {
+    content: 'Fit';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal);
+    color: var(--color-text);
+}
+
+.zoom-indicator:hover {
+    color: transparent;
+}
+
+.zoom-indicator:hover::before {
+    opacity: 1;
+}
+
 /* YF Tools Link */
 .yf-tools-link {
     padding: var(--spacing-md) var(--spacing-2xl);
@@ -305,7 +346,7 @@ body {
     border-radius: var(--radius);
     box-shadow: none;
     border: none;
-    overflow: hidden;
+    overflow: visible;
     position: relative;
     min-height: 400px;
     display: flex;
@@ -315,10 +356,47 @@ body {
     width: 100%;
 }
 
+/* При зуме > 100% добавляем padding для доступа ко всем краям */
+.canvas-container[data-zoomed="true"] {
+    padding: 150vh 150vw;
+    overflow: auto;
+    display: block;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.canvas-container-inner {
+    transform-origin: 0 0;
+    transition: none;
+}
+
 #gridSvg {
     display: block;
     width: auto;
     height: auto;
+}
+
+/* Scrollbar styling for canvas (when overflow is auto at zoom > 100%) */
+.canvas-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.canvas-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.canvas-container::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 4px;
+}
+
+.canvas-container::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-dim);
+}
+
+.canvas-container::-webkit-scrollbar-corner {
+    background: transparent;
 }
 
 .controls-panel {
@@ -603,59 +681,6 @@ body {
 .control-group {
     margin-bottom: var(--spacing-lg);
     padding-top: 6px;
-}
-
-.show-toggle-chip-group {
-    padding-top: 0;
-    margin-bottom: var(--spacing-md);
-}
-
-.toggle-chip-group {
-    display: flex;
-    gap: var(--spacing-sm);
-    flex-wrap: nowrap;
-}
-
-.toggle-chip {
-    position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-button);
-    background: rgba(255, 255, 255, 0.03);
-    transition: border-color var(--transition-normal), 
-                background var(--transition-normal), 
-                color var(--transition-normal);
-}
-
-.toggle-chip input {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    pointer-events: none;
-}
-
-.toggle-chip span {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--spacing-sm) var(--spacing-xl);
-    font-size: 0.85rem;
-    color: var(--color-text-secondary);
-    white-space: nowrap;
-}
-
-.toggle-chip:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.toggle-chip input:checked + span {
-    background: var(--color-text);
-    color: var(--color-bg);
-    border-radius: var(--radius-button);
-}
-
-.toggle-chip input:focus-visible + span {
-    outline: 2px solid rgba(255, 255, 255, 0.5);
-    outline-offset: 2px;
 }
 
 .control-group label {
@@ -1716,14 +1741,21 @@ legend {
     color: var(--color-bg);
 }
 
-.btn-export-settings,
-.btn-import-settings {
-    background: var(--color-bg-panel);
+.btn-export-settings {
+    background: var(--color-bg);
     color: var(--color-text);
-    border: none;
 }
 
-.btn-export-settings:hover,
+.btn-export-settings:hover {
+    background: var(--color-text);
+    color: var(--color-bg);
+}
+
+.btn-import-settings {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
 .btn-import-settings:hover {
     background: var(--color-text);
     color: var(--color-bg);
@@ -1750,8 +1782,8 @@ legend {
 
 /* Help Button */
 .btn-help {
-    background: var(--color-bg-panel) !important;
-    border: none !important;
+    background: var(--color-bg) !important;
+    border: 1px solid var(--color-text) !important;
     color: var(--color-text);
     transition: all var(--transition-slow);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
@@ -1771,6 +1803,7 @@ legend {
 .btn-help:hover {
     background: var(--color-text) !important;
     color: var(--color-bg);
+    border-color: var(--color-text) !important;
 }
 
 /* Modal Overlay */
