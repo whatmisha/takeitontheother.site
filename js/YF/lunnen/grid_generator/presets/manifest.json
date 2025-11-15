@@ -1,14 +1,6 @@
 {
   "presets": [
     {
-      "name": "Black",
-      "file": "Black.json"
-    },
-    {
-      "name": "Brutal",
-      "file": "Brutal.json"
-    },
-    {
       "name": "New",
       "file": "New.json"
     },
@@ -21,6 +13,6 @@
       "file": "Yellowish.json"
     }
   ],
-  "generated": "2025-11-15T05:59:36.172874",
-  "count": 5
+  "generated": "2025-11-15T06:08:12.219349",
+  "count": 3
 }
