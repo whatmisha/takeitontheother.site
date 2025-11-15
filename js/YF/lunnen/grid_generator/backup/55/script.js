@@ -2195,6 +2195,49 @@ class GridGenerator {
             });
         }
         
+        // Обработчик для кнопки Hide
+        const paragraphHideBtn = document.getElementById('paragraphHideBtn');
+        if (paragraphHideBtn) {
+            paragraphHideBtn.addEventListener('click', () => {
+                if (this.currentEditingBlock) {
+                    this.toggleElementVisibility('text', this.currentEditingBlock.id);
+                    // Update button text based on visibility
+                    const block = this.textBlocks.find(b => b.id === this.currentEditingBlock.id);
+                    if (block) {
+                        paragraphHideBtn.innerHTML = block.visible 
+                            ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Hide'
+                            : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>Show';
+                    }
+                }
+            });
+        }
+        
+        // Обработчик для кнопки Delete
+        const paragraphDeleteBtn = document.getElementById('paragraphDeleteBtn');
+        if (paragraphDeleteBtn) {
+            paragraphDeleteBtn.addEventListener('click', () => {
+                if (this.currentEditingBlock) {
+                    const blockId = this.currentEditingBlock.id;
+                    const block = this.textBlocks.find(b => b.id === blockId);
+                    if (block) {
+                        const name = block.content.substring(0, 30) + (block.content.length > 30 ? '...' : '');
+                        
+                        // Close panel first
+                        this.closeParagraphPanel();
+                        
+                        // Find the delete button in elements list and trigger delete
+                        const elementButton = this.dom.elementsList.querySelector(`[data-element-id="${blockId}"]`);
+                        if (elementButton) {
+                            const deleteBtn = elementButton.parentElement.querySelector('.element-action-btn:last-child');
+                            if (deleteBtn) {
+                                this.startDeleteElement(deleteBtn, 'text', blockId, name);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
         // Обработчики для режима выравнивания (Alignment Mode)
         if (this.dom.alignmentModeBaseline) {
             this.dom.alignmentModeBaseline.addEventListener('change', () => {
@@ -3514,6 +3557,49 @@ class GridGenerator {
         if (this.dom.graphicsCloseBtn) {
             this.dom.graphicsCloseBtn.addEventListener('click', () => {
                 this.closeGraphicsPanel();
+            });
+        }
+        
+        // Hide button handler
+        const graphicsHideBtn = document.getElementById('graphicsHideBtn');
+        if (graphicsHideBtn) {
+            graphicsHideBtn.addEventListener('click', () => {
+                if (this.currentEditingGraphicsId) {
+                    this.toggleElementVisibility('graphics', this.currentEditingGraphicsId);
+                    // Update button text based on visibility
+                    const block = this.graphicsBlocks?.find(b => b.id === this.currentEditingGraphicsId);
+                    if (block) {
+                        graphicsHideBtn.innerHTML = block.visible 
+                            ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Hide'
+                            : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>Show';
+                    }
+                }
+            });
+        }
+        
+        // Delete button handler
+        const graphicsDeleteBtn = document.getElementById('graphicsDeleteBtn');
+        if (graphicsDeleteBtn) {
+            graphicsDeleteBtn.addEventListener('click', () => {
+                if (this.currentEditingGraphicsId) {
+                    const blockId = this.currentEditingGraphicsId;
+                    const block = this.graphicsBlocks?.find(b => b.id === blockId);
+                    if (block && block.type === 'custom') {
+                        const name = block.name || 'Graphic';
+                        
+                        // Close panel first
+                        this.closeGraphicsPanel();
+                        
+                        // Find the delete button in elements list and trigger delete
+                        const elementButton = this.dom.elementsList.querySelector(`[data-element-id="${blockId}"]`);
+                        if (elementButton) {
+                            const deleteBtn = elementButton.parentElement.querySelector('.element-action-btn:last-child');
+                            if (deleteBtn) {
+                                this.startDeleteElement(deleteBtn, 'graphics', blockId, name);
+                            }
+                        }
+                    }
+                }
             });
         }
     }
@@ -5232,6 +5318,25 @@ class GridGenerator {
             this.dom.graphicsApplyBtn.textContent = 'Update';
         }
         
+        // Show/hide action buttons based on whether it's a custom graphics or built-in (icons/claim)
+        const graphicsHideBtn = document.getElementById('graphicsHideBtn');
+        const graphicsDeleteBtn = document.getElementById('graphicsDeleteBtn');
+        if (graphicsHideBtn) {
+            graphicsHideBtn.style.display = 'flex';
+            // Update button text based on visibility
+            graphicsHideBtn.innerHTML = block.visible 
+                ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Hide'
+                : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>Show';
+        }
+        if (graphicsDeleteBtn) {
+            // Only show delete button for custom graphics (not icons or claim)
+            if (block.type === 'custom') {
+                graphicsDeleteBtn.style.display = 'flex';
+            } else {
+                graphicsDeleteBtn.style.display = 'none';
+            }
+        }
+        
         // Center and show panel
         if (this.dom.graphicsPanel) {
             this.dom.graphicsPanel.style.display = 'flex';
@@ -6121,6 +6226,11 @@ class GridGenerator {
         button.dataset.elementType = type;
         if (blockId) button.dataset.elementId = blockId;
         
+        // Add hidden class if element is not visible
+        if (!isDeleting && !isVisible) {
+            button.classList.add('hidden');
+        }
+        
         // Text span
         const textSpan = document.createElement('span');
         textSpan.className = 'element-item-text';
@@ -6235,14 +6345,58 @@ class GridGenerator {
             const block = this.textBlocks.find(b => b.id === blockId);
             if (block) {
                 block.visible = block.visible === false ? true : false;
-                this.updateElementsNavigator();
+                
+                // Update UI element
+                const button = this.dom.elementsList.querySelector(`[data-element-id="${blockId}"]`);
+                if (button) {
+                    if (block.visible) {
+                        button.classList.remove('hidden');
+                    } else {
+                        button.classList.add('hidden');
+                    }
+                    
+                    // Update visibility button icon
+                    const visibilityBtn = button.querySelector('.element-action-btn');
+                    if (visibilityBtn) {
+                        const visIcon = visibilityBtn.querySelector('.element-action-icon');
+                        if (visIcon) {
+                            visIcon.innerHTML = block.visible 
+                                ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>'
+                                : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+                        }
+                        visibilityBtn.title = block.visible ? 'Hide' : 'Show';
+                    }
+                }
+                
                 this.updateGrid();
             }
         } else if (type === 'graphics' && blockId) {
             const block = this.graphicsBlocks?.find(b => b.id === blockId);
             if (block) {
                 block.visible = block.visible === false ? true : false;
-                this.updateElementsNavigator();
+                
+                // Update UI element
+                const button = this.dom.elementsList.querySelector(`[data-element-id="${blockId}"]`);
+                if (button) {
+                    if (block.visible) {
+                        button.classList.remove('hidden');
+                    } else {
+                        button.classList.add('hidden');
+                    }
+                    
+                    // Update visibility button icon
+                    const visibilityBtn = button.querySelector('.element-action-btn');
+                    if (visibilityBtn) {
+                        const visIcon = visibilityBtn.querySelector('.element-action-icon');
+                        if (visIcon) {
+                            visIcon.innerHTML = block.visible 
+                                ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>'
+                                : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+                        }
+                        visibilityBtn.title = block.visible ? 'Hide' : 'Show';
+                    }
+                }
+                
                 this.updateGrid();
             }
         } else if (type === 'icons' && blockId === 'icons') {
