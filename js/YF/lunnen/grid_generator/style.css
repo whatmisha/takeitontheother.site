@@ -132,7 +132,7 @@ body {
     height: var(--button-height);
     display: inline-flex;
     align-items: center;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .yf-tools-link:hover {
@@ -184,7 +184,7 @@ body {
     height: var(--button-height);
     transition: width var(--duration-expand) var(--easing-standard),
                 background-color var(--transition-slow);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .preset-dropdown-toggle:hover {
@@ -221,7 +221,7 @@ body {
     width: max-content;
     background: var(--color-bg-panel);
     border-radius: var(--radius-sm);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     border: 1px solid var(--color-border);
     padding: 4px;
     margin: 0;
@@ -312,7 +312,7 @@ body {
     align-items: center;
     justify-content: center;
     width: 65px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .zoom-indicator:hover {
@@ -355,7 +355,7 @@ body {
     width: 300px;
     background: var(--color-bg-panel);
     border-radius: var(--radius);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     border: none;
     padding: 0;
     overflow: hidden;
@@ -1391,6 +1391,7 @@ textarea::placeholder {
     width: 100%;
     max-width: 100%;
     overflow: hidden;
+    min-height: 28px;
 }
 
 .element-item {
@@ -1398,11 +1399,11 @@ textarea::placeholder {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 2px 4px 2px 8px;
+    padding: 4px 6px 4px 10px;
     width: 100%;
     min-width: 0;
     max-width: 100%;
-    border-radius: 4px;
+    border-radius: 6px;
     transition: all var(--transition-normal);
     background: transparent;
     border: none;
@@ -1478,6 +1479,8 @@ textarea::placeholder {
 .element-item-wrapper.deleting {
     position: relative;
     overflow: hidden;
+    min-height: 28px;
+    height: 28px;
 }
 
 .element-item-wrapper.deleting::before {
@@ -1498,8 +1501,9 @@ textarea::placeholder {
     z-index: 1;
     justify-content: center;
     color: var(--color-text);
-    min-height: 24px; /* 2px padding + 20px content + 2px padding */
-    height: auto;
+    min-height: 28px;
+    height: 28px;
+    padding: 4px 10px;
 }
 
 @keyframes deleteProgress {
@@ -1756,7 +1760,7 @@ legend {
 .btn-fixed {
     background: var(--color-text);
     color: var(--color-bg);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .btn-fixed:hover {
@@ -1816,7 +1820,7 @@ legend {
     border: none !important;
     color: var(--color-text);
     transition: all var(--transition-slow);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     width: 36px;
     height: 36px;
     min-width: 36px;
@@ -1989,12 +1993,6 @@ legend {
     background: rgba(255, 255, 255, 0.05);
 }
 
-.element-item-wrapper.deleting .element-item {
-    justify-content: center;
-    min-height: 24px; /* 2px padding + 20px content + 2px padding */
-    height: auto;
-}
-
 .element-item-wrapper.deleting .element-item:hover {
     background: transparent;
 }
@@ -2002,6 +2000,14 @@ legend {
 .element-item.active {
     color: var(--color-text);
     background: rgba(255, 255, 255, 0.1);
+}
+
+.element-item.hidden {
+    opacity: 0.4;
+}
+
+.element-item.hidden .element-item-text {
+    text-decoration: line-through;
 }
 
 /* SVG Grid Styles */
