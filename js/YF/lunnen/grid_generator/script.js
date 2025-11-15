@@ -1164,7 +1164,7 @@ class GridGenerator {
             const w = Math.round(this.settings.frontWidth);
             const h = Math.round(this.settings.frontHeight);
             const t = Math.round(this.settings.thickness);
-            dimensionsParams.textContent = `${w}\u2009×\u2009${h}\u2009×\u2009${t}`;
+            dimensionsParams.textContent = `${w}\u2009×\u2009${h}\u2009×\u2009${t} mm`;
         }
         
         // Objects panel
@@ -1219,25 +1219,20 @@ class GridGenerator {
             }
             
             const manifest = await response.json();
-            const presetsFromManifest = Array.isArray(manifest.presets) ? manifest.presets : [];
+            const manifestEntries = Array.isArray(manifest.presets) ? manifest.presets : [];
+            const resolvedPresets = await this.resolvePresetsFromEntries(manifestEntries);
             
-            let hasManifestPresets = presetsFromManifest.length > 0;
-            let mergedPresets = presetsFromManifest;
-            
-            const directoryPresets = await this.loadPresetsFromDirectoryListing(false);
-            if (Array.isArray(directoryPresets) && directoryPresets.length > 0) {
-                mergedPresets = this.mergePresetLists(presetsFromManifest, directoryPresets);
-                hasManifestPresets = mergedPresets.length > 0;
-            }
-            
-            if (!hasManifestPresets) {
-                console.warn('No presets available in manifest or directory listing');
-                this.updateDropdownText('No presets available');
+            if (resolvedPresets.length > 0) {
+                this.availablePresets = resolvedPresets;
+                this.initializePresets();
                 return;
             }
             
-            this.availablePresets = mergedPresets;
-            this.initializePresets();
+            console.warn('Presets manifest is empty, trying direct folder scan');
+            const fallbackLoaded = await this.loadPresetsFromDirectoryListing();
+            if (!fallbackLoaded) {
+                this.updateDropdownText('No presets available');
+            }
         } catch (error) {
             console.warn('Failed to load presets manifest, attempting fallback:', error);
             const fallbackLoaded = await this.loadPresetsFromDirectoryListing();
@@ -1247,7 +1242,7 @@ class GridGenerator {
         }
     }
     
-    async loadPresetsFromDirectoryListing(applyImmediately = true) {
+    async loadPresetsFromDirectoryListing() {
         try {
             const listingResponse = await fetch(`presets/?ts=${Date.now()}`, {
                 cache: 'no-store'
@@ -1255,13 +1250,13 @@ class GridGenerator {
             
             if (!listingResponse.ok) {
                 console.warn('Presets directory listing request failed with status', listingResponse.status);
-                return applyImmediately ? false : null;
+                return false;
             }
             
             const contentType = listingResponse.headers.get('content-type') || '';
             if (!contentType.includes('text') && !contentType.includes('html')) {
                 console.warn('Presets directory listing returned unsupported content type:', contentType);
-                return applyImmediately ? false : null;
+                return false;
             }
             
             const listingHtml = await listingResponse.text();
@@ -1269,53 +1264,22 @@ class GridGenerator {
             
             if (files.length === 0) {
                 console.warn('Presets directory listing does not contain any JSON files');
-                return applyImmediately ? false : null;
+                return false;
             }
             
-            const presets = [];
-            for (const file of files) {
-                const presetMeta = await this.fetchPresetMetadataFromFile(file);
-                if (presetMeta) {
-                    presets.push(presetMeta);
-                }
-            }
-            
+            const presets = await this.resolvePresetsFromEntries(files);
             if (presets.length === 0) {
                 console.warn('Could not read any presets from directory listing');
-                return applyImmediately ? false : null;
+                return false;
             }
             
-            const sortedPresets = presets.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
-            
-            if (applyImmediately) {
-                this.availablePresets = sortedPresets;
-                this.initializePresets();
-                return true;
-            }
-            
-            return sortedPresets;
+            this.availablePresets = presets;
+            this.initializePresets();
+            return true;
         } catch (error) {
             console.warn('Failed to scan presets directory:', error);
-            return applyImmediately ? false : null;
+            return false;
         }
-    }
-    
-    mergePresetLists(primaryList = [], secondaryList = []) {
-        const merged = [];
-        const seenFiles = new Set();
-        
-        const addPreset = (preset) => {
-            if (!preset || !preset.file) return;
-            const normalizedFile = preset.file.toLowerCase();
-            if (seenFiles.has(normalizedFile)) return;
-            seenFiles.add(normalizedFile);
-            merged.push(preset);
-        };
-        
-        primaryList.forEach(addPreset);
-        secondaryList.forEach(addPreset);
-        
-        return merged.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
     }
     
     extractJsonFilenamesFromListing(listingHtml) {
@@ -1381,6 +1345,26 @@ class GridGenerator {
     getPresetDisplayNameFromFilename(fileName) {
         const base = fileName.replace(/^.*\//, '').replace(/\.json$/i, '');
         return base.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim() || base || 'Preset';
+    }
+    
+    async resolvePresetsFromEntries(entries = []) {
+        const presetsMap = new Map();
+        
+        for (const entry of entries) {
+            const fileName = typeof entry === 'string'
+                ? entry
+                : (entry && entry.file) ? entry.file : null;
+            
+            if (!fileName) continue;
+            
+            const presetMeta = await this.fetchPresetMetadataFromFile(fileName);
+            if (presetMeta && presetMeta.file) {
+                presetsMap.set(presetMeta.file.toLowerCase(), presetMeta);
+            }
+        }
+        
+        return Array.from(presetsMap.values())
+            .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
     }
     
     initializePresets() {
