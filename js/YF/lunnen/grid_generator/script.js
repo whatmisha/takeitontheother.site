@@ -1202,21 +1202,185 @@ class GridGenerator {
     // ============================================
     
     async loadPresetsManifest() {
+        const manifestUrl = `presets/manifest.json?ts=${Date.now()}`;
+        
         try {
-            const response = await fetch('presets/manifest.json');
+            const response = await fetch(manifestUrl, {
+                cache: 'no-store'
+            });
+            
             if (!response.ok) {
-                console.warn('No presets manifest found');
-                this.updateDropdownText('No presets available');
+                console.warn('No presets manifest found, trying direct folder scan');
+                const fallbackLoaded = await this.loadPresetsFromDirectoryListing();
+                if (!fallbackLoaded) {
+                    this.updateDropdownText('No presets available');
+                }
                 return;
             }
             
             const manifest = await response.json();
-            this.availablePresets = manifest.presets || [];
+            const presetsFromManifest = Array.isArray(manifest.presets) ? manifest.presets : [];
+            
+            let hasManifestPresets = presetsFromManifest.length > 0;
+            let mergedPresets = presetsFromManifest;
+            
+            const directoryPresets = await this.loadPresetsFromDirectoryListing(false);
+            if (Array.isArray(directoryPresets) && directoryPresets.length > 0) {
+                mergedPresets = this.mergePresetLists(presetsFromManifest, directoryPresets);
+                hasManifestPresets = mergedPresets.length > 0;
+            }
+            
+            if (!hasManifestPresets) {
+                console.warn('No presets available in manifest or directory listing');
+                this.updateDropdownText('No presets available');
+                return;
+            }
+            
+            this.availablePresets = mergedPresets;
             this.initializePresets();
         } catch (error) {
-            console.error('Failed to load presets manifest:', error);
-            this.updateDropdownText('Error loading presets');
+            console.warn('Failed to load presets manifest, attempting fallback:', error);
+            const fallbackLoaded = await this.loadPresetsFromDirectoryListing();
+            if (!fallbackLoaded) {
+                this.updateDropdownText('Error loading presets');
+            }
         }
+    }
+    
+    async loadPresetsFromDirectoryListing(applyImmediately = true) {
+        try {
+            const listingResponse = await fetch(`presets/?ts=${Date.now()}`, {
+                cache: 'no-store'
+            });
+            
+            if (!listingResponse.ok) {
+                console.warn('Presets directory listing request failed with status', listingResponse.status);
+                return applyImmediately ? false : null;
+            }
+            
+            const contentType = listingResponse.headers.get('content-type') || '';
+            if (!contentType.includes('text') && !contentType.includes('html')) {
+                console.warn('Presets directory listing returned unsupported content type:', contentType);
+                return applyImmediately ? false : null;
+            }
+            
+            const listingHtml = await listingResponse.text();
+            const files = this.extractJsonFilenamesFromListing(listingHtml);
+            
+            if (files.length === 0) {
+                console.warn('Presets directory listing does not contain any JSON files');
+                return applyImmediately ? false : null;
+            }
+            
+            const presets = [];
+            for (const file of files) {
+                const presetMeta = await this.fetchPresetMetadataFromFile(file);
+                if (presetMeta) {
+                    presets.push(presetMeta);
+                }
+            }
+            
+            if (presets.length === 0) {
+                console.warn('Could not read any presets from directory listing');
+                return applyImmediately ? false : null;
+            }
+            
+            const sortedPresets = presets.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+            
+            if (applyImmediately) {
+                this.availablePresets = sortedPresets;
+                this.initializePresets();
+                return true;
+            }
+            
+            return sortedPresets;
+        } catch (error) {
+            console.warn('Failed to scan presets directory:', error);
+            return applyImmediately ? false : null;
+        }
+    }
+    
+    mergePresetLists(primaryList = [], secondaryList = []) {
+        const merged = [];
+        const seenFiles = new Set();
+        
+        const addPreset = (preset) => {
+            if (!preset || !preset.file) return;
+            const normalizedFile = preset.file.toLowerCase();
+            if (seenFiles.has(normalizedFile)) return;
+            seenFiles.add(normalizedFile);
+            merged.push(preset);
+        };
+        
+        primaryList.forEach(addPreset);
+        secondaryList.forEach(addPreset);
+        
+        return merged.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+    }
+    
+    extractJsonFilenamesFromListing(listingHtml) {
+        const files = new Set();
+        const regex = /href="([^"]+\.json)"/gi;
+        let match;
+        
+        while ((match = regex.exec(listingHtml)) !== null) {
+            const rawPath = match[1];
+            const normalized = this.normalizePresetFilename(rawPath);
+            if (
+                normalized &&
+                !/manifest\.json$/i.test(normalized) &&
+                !/readme\.json$/i.test(normalized)
+            ) {
+                files.add(normalized);
+            }
+        }
+        
+        return Array.from(files);
+    }
+    
+    normalizePresetFilename(filePath) {
+        if (!filePath) return null;
+        const decoded = decodeURIComponent(filePath)
+            .replace(/\\/g, '/')
+            .replace(/^\.?\//, '')
+            .replace(/^presets\//i, '');
+        return decoded.trim();
+    }
+    
+    async fetchPresetMetadataFromFile(fileName) {
+        if (!fileName) return null;
+        
+        const encodedName = encodeURI(fileName);
+        const url = `presets/${encodedName}?ts=${Date.now()}`;
+        const fallbackName = this.getPresetDisplayNameFromFilename(fileName);
+        
+        try {
+            const response = await fetch(url, { cache: 'no-store' });
+            if (!response.ok) {
+                console.warn(`Failed to fetch preset ${fileName}:`, response.status);
+                return {
+                    name: fallbackName,
+                    file: fileName
+                };
+            }
+            
+            const presetData = await response.json();
+            return {
+                name: presetData.presetName || fallbackName,
+                file: fileName
+            };
+        } catch (error) {
+            console.warn(`Failed to parse preset ${fileName}:`, error);
+            return {
+                name: fallbackName,
+                file: fileName
+            };
+        }
+    }
+    
+    getPresetDisplayNameFromFilename(fileName) {
+        const base = fileName.replace(/^.*\//, '').replace(/\.json$/i, '');
+        return base.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim() || base || 'Preset';
     }
     
     initializePresets() {
