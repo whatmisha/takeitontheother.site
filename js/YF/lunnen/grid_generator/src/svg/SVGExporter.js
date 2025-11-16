@@ -2,8 +2,9 @@
  * Экспорт SVG в файл
  */
 export class SVGExporter {
-    constructor(settings) {
+    constructor(settings, textToPath = null) {
         this.settings = settings;
+        this.textToPath = textToPath;
     }
 
     /**
@@ -13,14 +14,25 @@ export class SVGExporter {
      * @param {Object} options - Опции экспорта
      * @param {boolean} options.removeInteractive - Удалить интерактивные элементы
      * @param {boolean} options.optimizeSize - Оптимизировать размер
+     * @param {boolean} options.convertTextToOutlines - Конвертировать текст в кривые
      */
-    exportToFile(svgElement, filename = 'grid.svg', options = {}) {
+    async exportToFile(svgElement, filename = 'grid.svg', options = {}) {
         // Клонируем SVG для экспорта
         const clonedSvg = svgElement.cloneNode(true);
         
         // Удаляем интерактивные элементы если нужно
         if (options.removeInteractive) {
             this.removeInteractiveElements(clonedSvg);
+        }
+        
+        // Конвертируем текст в кривые если нужно
+        if (options.convertTextToOutlines && this.textToPath) {
+            try {
+                await this.textToPath.convertAllTextToPaths(clonedSvg);
+            } catch (error) {
+                console.error('Error converting text to paths:', error);
+                // Продолжаем экспорт даже если конвертация не удалась
+            }
         }
         
         // Сериализуем SVG в строку

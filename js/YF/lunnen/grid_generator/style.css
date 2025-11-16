@@ -1847,6 +1847,36 @@ legend {
     color: var(--color-bg);
 }
 
+/* Export group */
+.export-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.export-option {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    user-select: none;
+    transition: color var(--transition-fast);
+}
+
+.export-option:hover {
+    color: var(--color-text);
+}
+
+.export-option input[type="checkbox"] {
+    width: var(--checkbox-size);
+    height: var(--checkbox-size);
+    cursor: pointer;
+    accent-color: var(--color-text);
+}
+
 /* Scrollbar styling */
 .panel-content::-webkit-scrollbar {
     width: var(--spacing-md);

@@ -230,9 +230,15 @@
     </div>
 
     <nav class="bottom-buttons" role="toolbar" aria-label="Main actions">
-        <button class="btn-fixed btn-export" id="exportBtn" aria-label="Export SVG (Command/Control + E)">
-            Export SVG ⌘E
-        </button>
+        <div class="export-group">
+            <button class="btn-fixed btn-export" id="exportBtn" aria-label="Export SVG (Command/Control + E)">
+                Export SVG ⌘E
+            </button>
+            <label class="export-option">
+                <input type="checkbox" id="convertToOutlinesCheckbox" aria-label="Convert text to outlines">
+                <span>Convert text to outlines</span>
+            </label>
+        </div>
         <button class="btn-fixed btn-export-settings" id="exportSettingsBtn" aria-label="Export Setup">
             Export Setup
         </button>

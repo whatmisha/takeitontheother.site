@@ -5,6 +5,7 @@
 import { ColorUtils } from './src/utils/ColorUtils.js';
 import { MathUtils } from './src/utils/MathUtils.js';
 import { DOMUtils } from './src/utils/DOMUtils.js';
+import { TextToPath } from './src/utils/TextToPath.js';
 
 // Итерация 2: Core
 import { Settings } from './src/core/Settings.js';
@@ -608,7 +609,8 @@ class GridGenerator {
         // ============================================
         // SVG Exporter (Итерация 7)
         // ============================================
-        this.svgExporter = new SVGExporter(this.settingsModule);
+        this.textToPath = new TextToPath();
+        this.svgExporter = new SVGExporter(this.settingsModule, this.textToPath);
         
         // ============================================
         // Presets (Итерация 10)
@@ -762,6 +764,7 @@ class GridGenerator {
             
             // Buttons
             exportBtn: document.getElementById('exportBtn'),
+            convertToOutlinesCheckbox: document.getElementById('convertToOutlinesCheckbox'),
             exportSettingsBtn: document.getElementById('exportSettingsBtn'),
             importSettingsBtn: document.getElementById('importSettingsBtn'),
             helpButton: document.getElementById('helpButton'),
@@ -8788,7 +8791,7 @@ class GridGenerator {
     }
     
     // Итерация 7: Упрощенный экспорт SVG через SVGExporter
-    exportSVG() {
+    async exportSVG() {
         const { frontWidth, frontHeight, thickness, gridModule, margins, columnCount, rowCount, rowHeight } = this.settings;
         
         // Создаем SVG для экспорта (scale = 1 для точных размеров)
@@ -8797,10 +8800,14 @@ class GridGenerator {
         // Генерируем имя файла с параметрами
         const filename = `grid_width${frontWidth}_height${frontHeight}_thickness${thickness}_module${gridModule.toFixed(2)}_margins${margins.toFixed(2)}_columns${columnCount}_rows${rowCount}_rowheight${rowHeight}.svg`;
         
+        // Получаем значение чекбокса "Convert text to outlines"
+        const convertToOutlines = this.dom.convertToOutlinesCheckbox ? this.dom.convertToOutlinesCheckbox.checked : false;
+        
         // Экспортируем через модуль
-        this.svgExporter.exportToFile(exportSvg, filename, {
+        await this.svgExporter.exportToFile(exportSvg, filename, {
             removeInteractive: true,
-            optimizeSize: true
+            optimizeSize: true,
+            convertTextToOutlines: convertToOutlines
         });
     }
     
