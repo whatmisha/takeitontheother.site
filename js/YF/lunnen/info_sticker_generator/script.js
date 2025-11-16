@@ -122,7 +122,8 @@ class StickerGenerator {
         this.settingsModule = new Settings({
             width: 120,
             height: 25,
-            backgroundColor: '#ffffff',
+            boxColor: '#ffffff',  // ColorPicker использует boxColor
+            backgroundColor: '#ffffff',  // Для обратной совместимости
             gridModule: 4.1667,  // 25mm / 6 baseline modules
             margins: 3,
             columnCount: 3,
@@ -236,24 +237,21 @@ class StickerGenerator {
     }
     
     initializeColorPicker() {
-        this.colorPicker = new ColorPicker({
-            hexInput: this.hexColorInput,
-            colorPreview: this.colorPreview,
-            hsbPicker: this.hsbPicker,
-            hueSlider: document.getElementById('hueSlider'),
-            saturationSlider: document.getElementById('saturationSlider'),
-            brightnessSlider: document.getElementById('brightnessSlider'),
-            hueValue: document.getElementById('hueValue'),
-            saturationValue: document.getElementById('saturationValue'),
-            brightnessValue: document.getElementById('brightnessValue'),
-            onColorChange: (color) => {
+        this.colorPicker = new ColorPicker(this.settingsModule, {
+            onChange: (color) => {
+                // Обновляем обе настройки для совместимости
+                this.settings.boxColor = color;
                 this.settings.backgroundColor = color;
                 this.updateGrid();
             }
         });
         
-        // Set initial color
-        this.colorPicker.setColor(this.settings.backgroundColor);
+        // Initialize color picker
+        this.colorPicker.init();
+        
+        // Set initial color from hex
+        const initialColor = this.settings.boxColor || '#ffffff';
+        this.colorPicker.setColorFromHex(initialColor);
     }
     
     initializePanels() {
@@ -314,6 +312,7 @@ class StickerGenerator {
         const hex = ColorUtils.hsbToHex(hue, saturation, brightness);
         this.hexColorInput.value = hex;
         this.colorPreview.style.backgroundColor = hex;
+        this.settings.boxColor = hex;
         this.settings.backgroundColor = hex;
         this.updateGrid();
     }

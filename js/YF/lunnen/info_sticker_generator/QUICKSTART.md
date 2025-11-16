@@ -118,3 +118,4 @@ http://localhost:[PORT]/js/YF/lunnen/info_sticker_generator/
 
 При возникновении проблем создайте issue в репозитории или свяжитесь с командой YF Tools.
 
+

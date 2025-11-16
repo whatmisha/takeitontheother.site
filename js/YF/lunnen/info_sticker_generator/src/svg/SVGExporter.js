@@ -461,8 +461,8 @@ export class SVGExporter {
         this.removeInteractiveElements(clonedSvg);
         
         // Добавляем метаданные для Adobe Illustrator
-        const width = this.settings.get('width');
-        const height = this.settings.get('height');
+        const width = this.settings.get('width') || 120;
+        const height = this.settings.get('height') || 25;
         
         clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
         clonedSvg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');

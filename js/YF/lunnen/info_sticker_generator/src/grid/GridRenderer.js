@@ -611,7 +611,7 @@ export class GridRenderer {
         const height = this.settings.get('height');
         const showColumns = this.settings.get('showColumns');
         const showBaseline = this.settings.get('showBaseline');
-        const bgColor = this.settings.get('backgroundColor') || '#ffffff';
+        const bgColor = this.settings.get('boxColor') || this.settings.get('backgroundColor') || '#ffffff';
 
         // Очистка SVG
         DOMUtils.clearElement(svg);
@@ -652,8 +652,9 @@ export class GridRenderer {
         const module = this.settings.get('gridModule');
         const margins = this.settings.get('margins');
         const columnCount = this.settings.get('columnCount');
-        const gridColor = ColorUtils.getContrastColor(this.settings.get('backgroundColor'));
-        const luminance = ColorUtils.getLuminance(this.settings.get('backgroundColor'));
+        const bgColor = this.settings.get('boxColor') || '#ffffff';
+        const gridColor = ColorUtils.getContrastColor(bgColor);
+        const luminance = ColorUtils.getLuminance(bgColor);
         const opacity = ColorUtils.getGridOpacity(luminance, 0.1);
 
         // Рассчитываем ширину колонки
@@ -684,8 +685,9 @@ export class GridRenderer {
     drawStickerBaseline(container, width, height) {
         const module = this.settings.get('gridModule');
         const margins = this.settings.get('margins');
-        const gridColor = ColorUtils.getContrastColor(this.settings.get('backgroundColor'));
-        const luminance = ColorUtils.getLuminance(this.settings.get('backgroundColor'));
+        const bgColor = this.settings.get('boxColor') || '#ffffff';
+        const gridColor = ColorUtils.getContrastColor(bgColor);
+        const luminance = ColorUtils.getLuminance(bgColor);
         const opacity = ColorUtils.getGridOpacity(luminance, 0.05);
 
         const startY = margins;
@@ -714,8 +716,9 @@ export class GridRenderer {
      * Отрисовка рамки стикера
      */
     drawStickerBorder(container, width, height) {
-        const gridColor = ColorUtils.getContrastColor(this.settings.get('backgroundColor'));
-        const luminance = ColorUtils.getLuminance(this.settings.get('backgroundColor'));
+        const bgColor = this.settings.get('boxColor') || '#ffffff';
+        const gridColor = ColorUtils.getContrastColor(bgColor);
+        const luminance = ColorUtils.getLuminance(bgColor);
         const opacity = ColorUtils.getGridOpacity(luminance, 0.2);
 
         DOMUtils.createSVGElement('rect', {
