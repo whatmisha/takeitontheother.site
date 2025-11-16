@@ -1,82 +1,33 @@
 /**
- * Утилиты для работы с SVG
+ * Утилиты для работы с SVG в генераторе стикеров
  */
 import { DOMUtils } from '../utils/DOMUtils.js';
 import { SVG } from '../core/Constants.js';
 
 export class SVGUtils {
     /**
-     * Отрисовать прямоугольники развертки коробки
+     * Отрисовать прямоугольник макета
      * @param {SVGElement} container
      * @param {number} x
      * @param {number} y
      * @param {number} frontW
      * @param {number} frontH
-     * @param {number} thickness
      * @param {number} scale
      * @param {string} fillColor
-     * @param {boolean} showSidePanels
      */
-    static drawBoxRectangles(container, x, y, frontW, frontH, thickness, scale, fillColor, showSidePanels) {
+    static drawBoxRectangles(container, x, y, frontW, frontH, scale, fillColor) {
         const strokeWidth = scale === 1 ? SVG.EXPORT_STROKE_WIDTH : SVG.DISPLAY_STROKE_WIDTH;
         
         // Основная панель (центр) - всегда видна
         DOMUtils.createSVGElement('rect', {
-            x: x + thickness,
-            y: y + thickness,
+            x,
+            y,
             width: frontW,
             height: frontH,
             fill: fillColor,
             stroke: '#000000',
             'stroke-width': strokeWidth
         }, container);
-        
-        // Боковые панели - только если включены
-        if (showSidePanels) {
-            // Левая
-            DOMUtils.createSVGElement('rect', {
-                x: x,
-                y: y + thickness,
-                width: thickness,
-                height: frontH,
-                fill: fillColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
-            
-            // Правая
-            DOMUtils.createSVGElement('rect', {
-                x: x + thickness + frontW,
-                y: y + thickness,
-                width: thickness,
-                height: frontH,
-                fill: fillColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
-            
-            // Верхняя
-            DOMUtils.createSVGElement('rect', {
-                x: x + thickness,
-                y: y,
-                width: frontW,
-                height: thickness,
-                fill: fillColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
-            
-            // Нижняя
-            DOMUtils.createSVGElement('rect', {
-                x: x + thickness,
-                y: y + thickness + frontH,
-                width: frontW,
-                height: thickness,
-                fill: fillColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
-        }
     }
 
     /**
@@ -86,19 +37,18 @@ export class SVGUtils {
      * @param {number} y
      * @param {number} frontW
      * @param {number} frontH
-     * @param {number} thickness
      * @param {number} scale
-     * @param {Object} dimensions - {frontWidth, frontHeight, thickness}
+     * @param {Object} dimensions - {frontWidth, frontHeight}
      */
-    static drawDimensions(container, x, y, frontW, frontH, thickness, scale, dimensions) {
+    static drawDimensions(container, x, y, frontW, frontH, scale, dimensions) {
         const offset = scale === 1 ? 5 : 15;
         const fontSize = scale === 1 ? '3' : null;
         
         // Ширина основной панели (внизу)
         SVGUtils.createDimensionText(
             container,
-            x + thickness + frontW / 2,
-            y + thickness + frontH + offset,
+            x + frontW / 2,
+            y + frontH + offset,
             `${dimensions.frontWidth.toFixed(1)} mm`,
             'middle',
             fontSize
@@ -107,19 +57,9 @@ export class SVGUtils {
         // Высота основной панели (справа)
         SVGUtils.createDimensionText(
             container,
-            x + thickness + frontW + offset,
-            y + thickness + frontH / 2,
+            x + frontW + offset,
+            y + frontH / 2,
             `${dimensions.frontHeight.toFixed(1)} mm`,
-            'middle',
-            fontSize
-        );
-        
-        // Толщина (справа от правой панели)
-        SVGUtils.createDimensionText(
-            container,
-            x + thickness + frontW + thickness + offset,
-            y + thickness + frontH / 2,
-            `${dimensions.thickness.toFixed(1)} mm`,
             'middle',
             fontSize
         );
@@ -157,23 +97,18 @@ export class SVGUtils {
     }
 
     /**
-     * Отрисовать метки панелей
+     * Отрисовать метки
      * @param {SVGElement} container
      * @param {number} x
      * @param {number} y
      * @param {number} frontW
      * @param {number} frontH
-     * @param {number} thickness
      * @param {number} scale
      */
-    static drawLabels(container, x, y, frontW, frontH, thickness, scale) {
+    static drawLabels(container, x, y, frontW, frontH, scale) {
         const fontSize = scale === 1 ? '4' : null;
         
-        SVGUtils.createLabel(container, x + thickness + frontW / 2, y + thickness + frontH / 2, 'FRONT', false, fontSize);
-        SVGUtils.createLabel(container, x + thickness / 2, y + thickness + frontH / 2, 'LEFT', true, fontSize);
-        SVGUtils.createLabel(container, x + thickness + frontW + thickness / 2, y + thickness + frontH / 2, 'RIGHT', true, fontSize);
-        SVGUtils.createLabel(container, x + thickness + frontW / 2, y + thickness / 2, 'TOP', false, fontSize);
-        SVGUtils.createLabel(container, x + thickness + frontW / 2, y + thickness + frontH + thickness / 2, 'BOTTOM', false, fontSize);
+        SVGUtils.createLabel(container, x + frontW / 2, y + frontH / 2, 'FRONT', false, fontSize);
     }
 
     /**

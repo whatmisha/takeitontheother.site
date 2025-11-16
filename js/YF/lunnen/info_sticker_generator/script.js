@@ -37,7 +37,7 @@ class GridGenerator {
             frontWidthSlider: {
                 valueId: 'frontWidthValue',
                 setting: 'frontWidth',
-                min: 50,
+                min: 10,
                 max: 1000,
                 decimals: 1,
                 baseStep: 0.5,
@@ -47,7 +47,7 @@ class GridGenerator {
             frontHeightSlider: {
                 valueId: 'frontHeightValue',
                 setting: 'frontHeight',
-                min: 50,
+                min: 10,
                 max: 1000,
                 decimals: 1,
                 baseStep: 0.5,
@@ -66,16 +66,6 @@ class GridGenerator {
                     this.generateRowPresets();
                     this.updateGrid();
                 }
-            },
-            thicknessSlider: {
-                valueId: 'thicknessValue',
-                setting: 'thickness',
-                min: 5,
-                max: 200,
-                decimals: 1,
-                baseStep: 0.5,
-                shiftStep: 10,
-                onUpdate: () => this.updateGrid()
             },
             gridModuleSlider: {
                 valueId: 'gridModuleValue',
@@ -89,29 +79,6 @@ class GridGenerator {
                     const rowCount = this.gridCalculator.calculateRowCount();
                     this.settings.rowCount = rowCount;
                     this.sliderController.setValue('rowCountSlider', rowCount, false);
-                    this.constrainAllObjectsToGrid();
-                    this.generateRowPresets();
-                    this.updateGrid();
-                }
-            },
-            marginsSlider: {
-                valueId: 'marginsValue',
-                setting: 'margins',
-                min: 0,
-                max: 10,
-                decimals: 2,
-                baseStep: 0.01,
-                shiftStep: 0.1,
-                onUpdate: () => {
-                    if (this.settings.linkMode === 'module') {
-                        const module = this.gridCalculator.calculateModule();
-                        this.settings.gridModule = module;
-                        this.sliderController.setValue('gridModuleSlider', module, false);
-                    } else {
-                        const rowCount = this.gridCalculator.calculateRowCount();
-                        this.settings.rowCount = rowCount;
-                        this.sliderController.setValue('rowCountSlider', rowCount, false);
-                    }
                     this.constrainAllObjectsToGrid();
                     this.generateRowPresets();
                     this.updateGrid();
@@ -282,18 +249,16 @@ class GridGenerator {
         // Settings (Итерация 2: используем Settings модуль)
         // ============================================
         this.settingsModule = new Settings({
-            frontWidth: 500,
-            frontHeight: 500,
-            thickness: 50,
+            frontWidth: 120,
+            frontHeight: 25,
             showLabels: false,
-            showSidePanels: true,
-            boxColor: '#808080',
-            gridModule: 5.0505,
-            margins: 2,
-            marginsUnit: 'mod',
-            columnCount: 12,
-            rowCount: 12,
-            rowHeight: 7,
+            boxColor: '#ffffff',
+            gridModule: 0.7037,
+            margins: 4.2632,
+            marginsUnit: 'mm',
+            columnCount: 3,
+            rowCount: 4,
+            rowHeight: 6,
             linkMode: 'module',
             showColumns: true,
             showRows: true,
@@ -412,69 +377,25 @@ class GridGenerator {
         this.textBlocks = [
             {
                 id: 'headline',
-                content: 'Ноутбук\nLunnen Outer 16"',
-                styleRef: 'headline',  // ссылка на стиль в settings
-                x: 1,  // позиция в колонках от левого края (1 = first column after margin)
-                row: 0,  // номер строки Row (0 = первый row)
-                baselineOffset: 0,  // смещение в модулях baseline внутри row (0 = первый baseline в row)
-                width: 3,  // ширина в колонках
-                showBounds: false,  // показывать ли границы (toggle on hover)
-                lockPosition: true  // Constrain to grid bounds by default
-            },
-            {
-                id: 'text',
-                content: 'Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.',
-                styleRef: 'text',  // ссылка на стиль в settings
-                x: 7,  // позиция в колонках от левого края (7-я колонка)
-                row: 0,  // номер строки Row
-                baselineOffset: 0,  // смещение в модулях baseline внутри row
-                width: 2.0,  // ширина в колонках
-                showBounds: false,
-                lockPosition: true  // Constrain to grid bounds by default
-            },
-            {
-                id: 'text2',
-                content: 'Lunnen Outer — продвинутая линейка техники. Производительный процессор и эффективное охлаждение для задач повышенной сложности.',
-                styleRef: 'text',  // ссылка на стиль в settings
-                x: 10,  // позиция в колонках от левого края (10-я колонка)
-                row: 0,  // номер строки Row
-                baselineOffset: 0,  // смещение в модулях baseline внутри row
-                width: 2.0,  // ширина в колонках
-                showBounds: false,
-                lockPosition: true  // Constrain to grid bounds by default
-            },
-            {
-                id: 'manufacturer',
-                content: 'Изготовитель: ООО Харбинская Импортно-Экспортная Торговая Компания «Цзиньдинсинь», Китай. Адрес местонахождения: Китай, г. Харбин, р-н Даоли, микрорайон Цюньли, ул. 4-я, д. 399, бизнес-центр Хучжи, восточный корпус, эт. 12, ком. 1204.',
-                styleRef: 'text',
+                content: 'Информационный стикер Lunnen',
+                styleRef: 'headline',
                 x: 1,
-                row: 9,  // row 10 в пользовательском интерфейсе (0-based индекс = 9)
+                row: 0,
                 baselineOffset: 0,
                 width: 3,
                 showBounds: false,
-                lockPosition: true  // Constrain to grid bounds by default
+                lockPosition: true
             },
             {
-                id: 'importer',
-                content: 'Импортер: ООО «Маркет. Трейд». Адрес местонахождения: 121099, Россия, г. Москва, Новинский бульвар, 8.',
+                id: 'details',
+                content: 'Заполните поля макета и экспортируйте сетку в SVG.',
                 styleRef: 'text',
-                x: 7,
-                row: 9,  // row 10 в пользовательском интерфейсе
+                x: 1,
+                row: 1,
                 baselineOffset: 0,
-                width: 2,
+                width: 3,
                 showBounds: false,
-                lockPosition: true  // Constrain to grid bounds by default
-            },
-            {
-                id: 'origin',
-                content: 'Произведено в Китае. info@lunnen.pro',
-                styleRef: 'text',
-                x: 10,
-                row: 9,  // row 10 в пользовательском интерфейсе
-                baselineOffset: 0,
-                width: 2,
-                showBounds: false,
-                lockPosition: true  // Constrain to grid bounds by default
+                lockPosition: true
             }
         ];
         
@@ -539,7 +460,11 @@ class GridGenerator {
         
         // Initialize
         this.initEventListeners();
-        this.updateMarginsSliderHandler();  // Setup margins slider with correct unit handling
+        if (this.settings.marginsUnit === 'mm') {
+            this.switchMarginsUnit('mm');
+        } else {
+            this.updateMarginsSliderHandler();  // Setup margins slider with correct unit handling
+        }
         
         // ============================================
         // Initialize UI Controllers (Итерация 5.2 & 5.3)
@@ -623,15 +548,12 @@ class GridGenerator {
             // Sliders
             frontWidthSlider: document.getElementById('frontWidthSlider'),
             frontHeightSlider: document.getElementById('frontHeightSlider'),
-            thicknessSlider: document.getElementById('thicknessSlider'),
             
             // Value displays
             frontWidthValue: document.getElementById('frontWidthValue'),
             frontHeightValue: document.getElementById('frontHeightValue'),
-            thicknessValue: document.getElementById('thicknessValue'),
             
             // Checkboxes
-            showSidePanels: document.getElementById('showSidePanels'),
             showColumns: document.getElementById('showColumns'),
             showRows: document.getElementById('showRows'),
             showBaseline: document.getElementById('showBaseline'),
@@ -777,12 +699,6 @@ class GridGenerator {
         // ============================================
         // NOTE: Slider initialization moved to initUIControllers()
         // ============================================
-        
-        // Show side panels checkbox
-        this.dom.showSidePanels.addEventListener('change', (e) => {
-            this.settings.showSidePanels = e.target.checked;
-            this.updateGrid();
-        });
         
         // Link mode radio buttons
         const linkModeHandler = (e) => {
@@ -1170,8 +1086,7 @@ class GridGenerator {
         if (dimensionsParams) {
             const w = Math.round(this.settings.frontWidth);
             const h = Math.round(this.settings.frontHeight);
-            const t = Math.round(this.settings.thickness);
-            dimensionsParams.textContent = `${w}\u2009×\u2009${h}\u2009×\u2009${t} mm`;
+            dimensionsParams.textContent = `${w}\u2009×\u2009${h} mm`;
         }
         
         // Objects panel
@@ -1701,7 +1616,6 @@ class GridGenerator {
         });
         
         // Update checkboxes
-        if (this.dom.showSidePanels) this.dom.showSidePanels.checked = settings.showSidePanels !== false;
         if (this.dom.showColumns) this.dom.showColumns.checked = settings.showColumns !== false;
         if (this.dom.showRows) this.dom.showRows.checked = settings.showRows !== false;
         if (this.dom.showBaseline) this.dom.showBaseline.checked = settings.showBaseline !== false;
@@ -7291,11 +7205,11 @@ class GridGenerator {
             savedPanY = this.zoomPanManager.panY;
         }
         
-        const { frontWidth, frontHeight, thickness } = this.settings;
+        const { frontWidth, frontHeight } = this.settings;
         
         // Calculate total dimensions in mm
-        const totalWidth = frontWidth + 2 * thickness;
-        const totalHeight = frontHeight + 2 * thickness;
+        const totalWidth = frontWidth;
+        const totalHeight = frontHeight;
         
         // Calculate scale to fit in display area with extra space for dimensions
         const maxDimension = Math.max(totalWidth, totalHeight);
@@ -7327,19 +7241,18 @@ class GridGenerator {
         
         const scaledFrontWidth = frontWidth * scale;
         const scaledFrontHeight = frontHeight * scale;
-        const scaledThickness = thickness * scale;
         
         // Draw rectangles
-        this.drawRectangles(this.dom.svg, startX, startY, scaledFrontWidth, scaledFrontHeight, scaledThickness, scale);
+        this.drawRectangles(this.dom.svg, startX, startY, scaledFrontWidth, scaledFrontHeight, scale);
         
         // Draw labels if enabled (but default is false now)
         if (this.settings.showLabels) {
-            this.drawLabels(this.dom.svg, startX, startY, scaledFrontWidth, scaledFrontHeight, scaledThickness);
+            this.drawLabels(this.dom.svg, startX, startY, scaledFrontWidth, scaledFrontHeight);
         }
         
         // Draw grid elements on front panel
-        const frontX = startX + scaledThickness;
-        const frontY = startY + scaledThickness;
+        const frontX = startX;
+        const frontY = startY;
         
         // Draw columns if enabled
         if (this.settings.showColumns) {
@@ -7354,36 +7267,6 @@ class GridGenerator {
         // Draw baseline if enabled
         if (this.settings.showBaseline) {
             this.gridRenderer.drawBaseline(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
-            
-            // Draw baseline on side panels if they are visible
-            if (this.settings.showSidePanels) {
-                // Left panel - vertical baseline (margin from right side where it touches front)
-                this.drawBaselineVerticalLeftRight(this.dom.svg, startX, frontY, scaledThickness, scaledFrontHeight, scale, 'left');
-                
-                // Right panel - vertical baseline (margin from left side where it touches front)
-                this.drawBaselineVerticalLeftRight(this.dom.svg, startX + scaledThickness + scaledFrontWidth, frontY, scaledThickness, scaledFrontHeight, scale, 'right');
-                
-                // Top panel - horizontal baseline (margin from bottom where it touches front)
-                this.drawBaselineTopBottom(this.dom.svg, frontX, startY, scaledFrontWidth, scaledThickness, scale, 'top');
-                
-                // Bottom panel - horizontal baseline (margin from top where it touches front)
-                this.drawBaselineTopBottom(this.dom.svg, frontX, startY + scaledThickness + scaledFrontHeight, scaledFrontWidth, scaledThickness, scale, 'bottom');
-            }
-        }
-        
-        // Draw columns on side panels if they are visible and columns are enabled
-        if (this.settings.showColumns && this.settings.showSidePanels) {
-            // Left panel - vertical columns (using rows parameters from front)
-            this.drawColumnsVerticalLeftRight(this.dom.svg, startX, frontY, scaledThickness, scaledFrontHeight, scale, 'left');
-            
-            // Right panel - vertical columns (using rows parameters from front)
-            this.drawColumnsVerticalLeftRight(this.dom.svg, startX + scaledThickness + scaledFrontWidth, frontY, scaledThickness, scaledFrontHeight, scale, 'right');
-            
-            // Top panel - horizontal columns (using columns parameters from front)
-            this.drawColumnsTopBottom(this.dom.svg, frontX, startY, scaledFrontWidth, scaledThickness, scale, 'top');
-            
-            // Bottom panel - horizontal columns (using columns parameters from front)
-            this.drawColumnsTopBottom(this.dom.svg, frontX, startY + scaledThickness + scaledFrontHeight, scaledFrontWidth, scaledThickness, scale, 'bottom');
         }
         
         // Draw text blocks, icons and claim on front panel (if enabled)
@@ -7449,79 +7332,32 @@ class GridGenerator {
         return element;
     }
     
-    drawRectangles(container, x, y, frontW, frontH, thickness, scale = 1) {
+    drawRectangles(container, x, y, frontW, frontH, scale = 1) {
         // For export: 0.25pt = 25.4/72*0.25 = 0.088194444... mm (since viewBox is in mm)
         const strokeWidth = scale === 1 ? '0.088194444' : '0.5';
         
         // Front (center) - always visible
         this.createSVGElement('rect', {
-            x: x + thickness,
-            y: y + thickness,
+            x,
+            y,
             width: frontW,
             height: frontH,
             fill: this.settings.boxColor,
             stroke: '#000000',
             'stroke-width': strokeWidth
         }, container);
-        
-        // Side panels - only if showSidePanels is enabled
-        if (this.settings.showSidePanels) {
-            // Left
-            this.createSVGElement('rect', {
-                x: x,
-                y: y + thickness,
-                width: thickness,
-                height: frontH,
-                fill: this.settings.boxColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
-            
-            // Right
-            this.createSVGElement('rect', {
-                x: x + thickness + frontW,
-                y: y + thickness,
-                width: thickness,
-                height: frontH,
-                fill: this.settings.boxColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
-            
-            // Top
-            this.createSVGElement('rect', {
-                x: x + thickness,
-                y: y,
-                width: frontW,
-                height: thickness,
-                fill: this.settings.boxColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
-            
-            // Bottom
-            this.createSVGElement('rect', {
-                x: x + thickness,
-                y: y + thickness + frontH,
-                width: frontW,
-                height: thickness,
-                fill: this.settings.boxColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
-        }
     }
     
-    drawDimensions(container, x, y, frontW, frontH, thickness, scale = 1) {
-        const { frontWidth, frontHeight, thickness: thicknessMm } = this.settings;
+    drawDimensions(container, x, y, frontW, frontH, scale = 1) {
+        const { frontWidth, frontHeight } = this.settings;
         const offset = scale === 1 ? 5 : 15; // smaller offset in mm for export
         const fontSize = scale === 1 ? '3' : null; // fontSize only for export
         
         // Front width dimension (below front panel)
         this.createDimensionText(
             container,
-            x + thickness + frontW / 2,
-            y + thickness + frontH + offset,
+            x + frontW / 2,
+            y + frontH + offset,
             `${frontWidth.toFixed(1)} mm`,
             'middle',
             fontSize
@@ -7530,19 +7366,9 @@ class GridGenerator {
         // Front height dimension (right of front panel)
         this.createDimensionText(
             container,
-            x + thickness + frontW + offset,
-            y + thickness + frontH / 2,
+            x + frontW + offset,
+            y + frontH / 2,
             `${frontHeight.toFixed(1)} mm`,
-            'middle',
-            fontSize
-        );
-        
-        // Thickness dimension (right of right panel)
-        this.createDimensionText(
-            container,
-            x + thickness + frontW + thickness + offset,
-            y + thickness + frontH / 2,
-            `${thicknessMm.toFixed(1)} mm`,
             'middle',
             fontSize
         );
@@ -7570,23 +7396,11 @@ class GridGenerator {
         textElement.textContent = text;
     }
     
-    drawLabels(container, x, y, frontW, frontH, thickness, scale = 1) {
+    drawLabels(container, x, y, frontW, frontH, scale = 1) {
         const fontSize = scale === 1 ? '4' : null;
         
         // Front label
-        this.createLabel(container, x + thickness + frontW / 2, y + thickness + frontH / 2, 'FRONT', false, fontSize);
-        
-        // Left label
-        this.createLabel(container, x + thickness / 2, y + thickness + frontH / 2, 'LEFT', true, fontSize);
-        
-        // Right label
-        this.createLabel(container, x + thickness + frontW + thickness / 2, y + thickness + frontH / 2, 'RIGHT', true, fontSize);
-        
-        // Top label
-        this.createLabel(container, x + thickness + frontW / 2, y + thickness / 2, 'TOP', false, fontSize);
-        
-        // Bottom label
-        this.createLabel(container, x + thickness + frontW / 2, y + thickness + frontH + thickness / 2, 'BOTTOM', false, fontSize);
+        this.createLabel(container, x + frontW / 2, y + frontH / 2, 'FRONT', false, fontSize);
     }
     
     createLabel(container, x, y, text, rotate = false, fontSize = null) {
@@ -7669,317 +7483,15 @@ class GridGenerator {
         return opacity;
     }
     
-    drawColumnsVerticalLeftRight(container, x, y, width, height, scale, side) {
-        // Left and right panels use rows parameters from front (rotated 90°)
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const n = this.settings.rowCount;
-        const rowHeightInModules = this.settings.rowHeight;
-        const gridColor = this.getContrastColor();
-        const opacity = this.getGridOpacity(0.1);
-        
-        // Calculate "column" height (which is row height from front panel)
-        let columnHeight = module * rowHeightInModules * scale;
-        const margin = module * margins * scale;
-        const gutter = module * scale;
-        
-        // Width with margins (same as front panel height logic)
-        let columnWidth = width - 2 * margin;
-        
-        // Ensure minimum column width and center if needed
-        const minColumnWidth = module * scale;
-        let columnX = x + margin;
-        if (columnWidth < minColumnWidth) {
-            columnWidth = minColumnWidth;
-            columnX = x + (width - columnWidth) / 2;
-        }
-        
-        // Ensure minimum column height
-        const minColumnHeight = module * scale;
-        if (columnHeight < minColumnHeight) {
-            columnHeight = minColumnHeight;
-        }
-        
-        let currentY = y + margin;
-        
-        // Draw n "columns" vertically (using row parameters)
-        for (let i = 0; i < n; i++) {
-            // Check if there's enough space for this column
-            if (currentY + columnHeight > y + height - margin) {
-                break;
-            }
-            
-            this.createSVGElement('rect', {
-                x: columnX,
-                y: currentY,
-                width: columnWidth,
-                height: columnHeight,
-                fill: gridColor,
-                'fill-opacity': opacity,
-                stroke: 'none'
-            }, container);
-            
-            currentY += columnHeight + gutter;
-        }
-    }
-    
-    drawColumnsTopBottom(container, x, y, width, height, scale, side) {
-        // Top and bottom panels use the same columns parameters as front
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const n = this.settings.columnCount;
-        const gridColor = this.getContrastColor();
-        const opacity = this.getGridOpacity(0.1);
-        
-        // Calculate column width (same as front panel)
-        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (n - 1)) / n;
-        
-        const margin = module * margins * scale;
-        const scaledColumnWidth = columnWidth * scale;
-        const gutter = module * scale;
-        
-        // Height with margins
-        let columnHeight = height - 2 * margin;
-        
-        // Ensure minimum column height and center if needed
-        const minColumnHeight = module * scale;
-        let columnY = y + margin;
-        if (columnHeight < minColumnHeight) {
-            columnHeight = minColumnHeight;
-            columnY = y + (height - columnHeight) / 2;
-        }
-        
-        let currentX = x + margin;
-        
-        for (let i = 0; i < n; i++) {
-            this.createSVGElement('rect', {
-                x: currentX,
-                y: columnY,
-                width: scaledColumnWidth,
-                height: columnHeight,
-                fill: gridColor,
-                'fill-opacity': opacity,
-                stroke: 'none'
-            }, container);
-            
-            currentX += scaledColumnWidth + gutter;
-        }
-    }
-    
-    drawBaselineVerticalLeftRight(container, x, y, width, height, scale, side) {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const gridColor = this.getContrastColor();
-        const opacity = this.getGridOpacity(0.3);
-        const margin = module * margins * scale;
-        const baselineWidth = module * scale;
-        // For export: 0.25pt = 25.4/72*0.25 = 0.088194444... mm (since viewBox is in mm)
-        const strokeWidth = scale === 1 ? '0.088194444' : '0.5';
-        
-        // Height with margins top and bottom
-        const baselineHeight = height - 2 * margin;
-        
-        // Calculate how many full-width elements can fit
-        const availableWidth = width - 2 * margin;
-        const numFullElements = Math.floor(availableWidth / baselineWidth);
-        
-        // If no elements fit, draw a line at the center of the panel
-        if (numFullElements <= 0) {
-            const centerX = x + width / 2;
-            this.createSVGElement('line', {
-                x1: centerX,
-                y1: y + margin,
-                x2: centerX,
-                y2: y + height - margin,
-                stroke: gridColor,
-                'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
-            }, container);
-            return;
-        }
-        
-        // Left panel: start from right edge (touching front) with margin, go left
-        // Right panel: start from left edge (touching front) with margin, go right
-        let currentX;
-        
-        if (side === 'left') {
-            // Start from right edge with margin
-            currentX = x + width - margin;
-            
-            // Draw elements from right to left (only full-width elements)
-            for (let i = 0; i < numFullElements; i++) {
-                const elementWidth = baselineWidth;
-                const elementX = currentX - elementWidth;
-                
-                this.createSVGElement('rect', {
-                    x: elementX,
-                    y: y + margin,
-                    width: elementWidth,
-                    height: baselineHeight,
-                    fill: 'none',
-                    stroke: gridColor,
-                    'stroke-width': strokeWidth,
-                    'stroke-opacity': opacity
-                }, container);
-                
-                currentX -= elementWidth;
-            }
-            
-            // Draw a vertical line at the left margin
-            this.createSVGElement('line', {
-                x1: x + margin,
-                y1: y + margin,
-                x2: x + margin,
-                y2: y + height - margin,
-                stroke: gridColor,
-                'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
-            }, container);
-            
-        } else { // right
-            // Start from left edge + margin, go right
-            currentX = x + margin;
-            
-            // Draw elements from left to right (only full-width elements)
-            for (let i = 0; i < numFullElements; i++) {
-                this.createSVGElement('rect', {
-                    x: currentX,
-                    y: y + margin,
-                    width: baselineWidth,
-                    height: baselineHeight,
-                    fill: 'none',
-                    stroke: gridColor,
-                    'stroke-width': strokeWidth,
-                    'stroke-opacity': opacity
-                }, container);
-                
-                currentX += baselineWidth;
-            }
-            
-            // Draw a vertical line at the right margin
-            this.createSVGElement('line', {
-                x1: x + width - margin,
-                y1: y + margin,
-                x2: x + width - margin,
-                y2: y + height - margin,
-                stroke: gridColor,
-                'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
-            }, container);
-        }
-    }
-    
-    drawBaselineTopBottom(container, x, y, width, height, scale, side) {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const gridColor = this.getContrastColor();
-        const opacity = this.getGridOpacity(0.3);
-        const margin = module * margins * scale;
-        const baselineHeight = module * scale;
-        // For export: 0.25pt = 25.4/72*0.25 = 0.088194444... mm (since viewBox is in mm)
-        const strokeWidth = scale === 1 ? '0.088194444' : '0.5';
-        
-        // Width with margins left and right
-        const baselineWidth = width - 2 * margin;
-        
-        // Calculate how many full-height elements can fit
-        const availableHeight = height - 2 * margin;
-        const numFullElements = Math.floor(availableHeight / baselineHeight);
-        
-        // If no elements fit, draw a line at the center of the panel
-        if (numFullElements <= 0) {
-            const centerY = y + height / 2;
-            this.createSVGElement('line', {
-                x1: x + margin,
-                y1: centerY,
-                x2: x + width - margin,
-                y2: centerY,
-                stroke: gridColor,
-                'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
-            }, container);
-            return;
-        }
-        
-        // Top panel: start from bottom edge (touching front) with margin, go up
-        // Bottom panel: start from top edge (touching front) with margin, go down
-        let currentY;
-        
-        if (side === 'top') {
-            // Start from bottom edge with margin
-            currentY = y + height - margin;
-            
-            // Draw only full-height elements from bottom to top
-            for (let i = 0; i < numFullElements; i++) {
-                const elementY = currentY - baselineHeight;
-                
-                this.createSVGElement('rect', {
-                    x: x + margin,
-                    y: elementY,
-                    width: baselineWidth,
-                    height: baselineHeight,
-                    fill: 'none',
-                    stroke: gridColor,
-                    'stroke-width': strokeWidth,
-                    'stroke-opacity': opacity
-                }, container);
-                
-                currentY -= baselineHeight;
-            }
-            
-            // Draw a horizontal line at the top margin
-            this.createSVGElement('line', {
-                x1: x + margin,
-                y1: y + margin,
-                x2: x + width - margin,
-                y2: y + margin,
-                stroke: gridColor,
-                'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
-            }, container);
-            
-        } else { // bottom
-            // Start from top edge + margin, go down
-            currentY = y + margin;
-            
-            // Draw only full-height elements from top to bottom
-            for (let i = 0; i < numFullElements; i++) {
-                this.createSVGElement('rect', {
-                    x: x + margin,
-                    y: currentY,
-                    width: baselineWidth,
-                    height: baselineHeight,
-                    fill: 'none',
-                    stroke: gridColor,
-                    'stroke-width': strokeWidth,
-                    'stroke-opacity': opacity
-                }, container);
-                
-                currentY += baselineHeight;
-            }
-            
-            // Draw a horizontal line at the bottom margin
-            this.createSVGElement('line', {
-                x1: x + margin,
-                y1: y + height - margin,
-                x2: x + width - margin,
-                y2: y + height - margin,
-                stroke: gridColor,
-                'stroke-width': strokeWidth,
-                'stroke-opacity': opacity
-            }, container);
-        }
-    }
-    
     // Итерация 7: Упрощенный экспорт SVG через SVGExporter
     exportSVG() {
-        const { frontWidth, frontHeight, thickness, gridModule, margins, columnCount, rowCount, rowHeight } = this.settings;
+        const { frontWidth, frontHeight, gridModule, margins, columnCount, rowCount, rowHeight } = this.settings;
         
         // Создаем SVG для экспорта (scale = 1 для точных размеров)
         const exportSvg = this.createExportSVG();
         
         // Генерируем имя файла с параметрами
-        const filename = `grid_width${frontWidth}_height${frontHeight}_thickness${thickness}_module${gridModule.toFixed(2)}_margins${margins.toFixed(2)}_columns${columnCount}_rows${rowCount}_rowheight${rowHeight}.svg`;
+        const filename = `grid_width${frontWidth}_height${frontHeight}_module${gridModule.toFixed(2)}_margins${margins.toFixed(2)}_columns${columnCount}_rows${rowCount}_rowheight${rowHeight}.svg`;
         
         // Экспортируем через модуль
         this.svgExporter.exportToFile(exportSvg, filename, {
@@ -7990,11 +7502,11 @@ class GridGenerator {
     
     // Итерация 7: Создание SVG для экспорта (без интерактивных элементов)
     createExportSVG() {
-        const { frontWidth, frontHeight, thickness } = this.settings;
+        const { frontWidth, frontHeight } = this.settings;
         
         // Create a new SVG for export with actual mm dimensions
-        const totalWidth = frontWidth + 2 * thickness;
-        const totalHeight = frontHeight + 2 * thickness;
+        const totalWidth = frontWidth;
+        const totalHeight = frontHeight;
         const scale = 1; // Export uses scale = 1 (actual mm)
         
         // Create SVG with mm units
@@ -8010,11 +7522,11 @@ class GridGenerator {
         exportSvg.appendChild(boxGroup);
         
         // Draw rectangles at actual mm scale
-        this.drawRectangles(boxGroup, 0, 0, frontWidth, frontHeight, thickness, scale);
+        this.drawRectangles(boxGroup, 0, 0, frontWidth, frontHeight, scale);
         
         // Draw grid elements on front panel (in mm)
-        const frontX = thickness;
-        const frontY = thickness;
+        const frontX = 0;
+        const frontY = 0;
         
         // Create main grid group to hold all grid elements
         const gridGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -8029,21 +7541,6 @@ class GridGenerator {
         }
         gridGroup.appendChild(columnsGroup);
         this.gridRenderer.drawColumns(columnsGroup, frontX, frontY, frontWidth, frontHeight, scale);
-        
-        // Draw columns on side panels if enabled
-        if (this.settings.showSidePanels) {
-            // Left panel - vertical columns (using rows parameters from front)
-            this.drawColumnsVerticalLeftRight(columnsGroup, 0, frontY, thickness, frontHeight, scale, 'left');
-            
-            // Right panel - vertical columns (using rows parameters from front)
-            this.drawColumnsVerticalLeftRight(columnsGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
-            
-            // Top panel - horizontal columns (using columns parameters from front)
-            this.drawColumnsTopBottom(columnsGroup, frontX, 0, frontWidth, thickness, scale, 'top');
-            
-            // Bottom panel - horizontal columns (using columns parameters from front)
-            this.drawColumnsTopBottom(columnsGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
-        }
         
         // Draw rows (in separate group, always export but hide if disabled)
         const rowsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -8065,27 +7562,12 @@ class GridGenerator {
         // Front panel baseline
         this.gridRenderer.drawBaseline(baselineGroup, frontX, frontY, frontWidth, frontHeight, scale);
         
-        // Side panels baseline if enabled
-        if (this.settings.showSidePanels) {
-            // Left panel - vertical baseline (margin from right side where it touches front)
-            this.drawBaselineVerticalLeftRight(baselineGroup, 0, frontY, thickness, frontHeight, scale, 'left');
-            
-            // Right panel - vertical baseline (margin from left side where it touches front)
-            this.drawBaselineVerticalLeftRight(baselineGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
-            
-            // Top panel - horizontal baseline (margin from bottom where it touches front)
-            this.drawBaselineTopBottom(baselineGroup, frontX, 0, frontWidth, thickness, scale, 'top');
-            
-            // Bottom panel - horizontal baseline (margin from top where it touches front)
-            this.drawBaselineTopBottom(baselineGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
-        }
-        
         // Add labels if enabled (in separate group)
         if (this.settings.showLabels) {
             const labelsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             labelsGroup.setAttribute('id', 'labels');
             exportSvg.appendChild(labelsGroup);
-            this.drawLabels(labelsGroup, 0, 0, frontWidth, frontHeight, thickness, scale);
+            this.drawLabels(labelsGroup, 0, 0, frontWidth, frontHeight, scale);
         }
         
         // Add text blocks (in separate groups)
@@ -8286,10 +7768,6 @@ class GridGenerator {
             this.dom.frontHeightSlider.value = this.settings.frontHeight;
             this.dom.frontHeightValue.value = this.settings.frontHeight.toFixed(1);
         }
-        if (this.dom.thicknessSlider) {
-            this.dom.thicknessSlider.value = this.settings.thickness;
-            this.dom.thicknessValue.value = this.settings.thickness.toFixed(1);
-        }
         
         // Update grid sliders
         if (this.dom.gridModuleSlider) {
@@ -8323,7 +7801,6 @@ class GridGenerator {
         if (this.dom.showColumns) this.dom.showColumns.checked = this.settings.showColumns;
         if (this.dom.showRows) this.dom.showRows.checked = this.settings.showRows;
         if (this.dom.showBaseline) this.dom.showBaseline.checked = this.settings.showBaseline;
-        if (this.dom.showSidePanels) this.dom.showSidePanels.checked = this.settings.showSidePanels;
         if (this.dom.showObjects) this.dom.showObjects.checked = this.settings.showObjects;
         
         // Update color

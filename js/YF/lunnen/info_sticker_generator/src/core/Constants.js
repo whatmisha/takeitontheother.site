@@ -37,9 +37,8 @@ export const RANGES = {
     COLUMNS: { min: 1, max: 24, step: 1 },
     ROWS: { min: 1, max: 50, step: 1 },
     ROW_HEIGHT: { min: 1, max: 20, step: 1 },
-    WIDTH: { min: 50, max: 1000, step: 0.5 },
-    HEIGHT: { min: 50, max: 1000, step: 0.5 },
-    THICKNESS: { min: 5, max: 200, step: 0.5 },
+    WIDTH: { min: 10, max: 1000, step: 0.5 },
+    HEIGHT: { min: 10, max: 1000, step: 0.5 },
     HEADLINE_SIZE: { min: 0.25, max: 10, step: 0.25 },
     LINE_HEIGHT: { min: 0.25, max: 10, step: 0.25 },
     TRACKING: { min: -0.05, max: 0.05, step: 0.005 },
@@ -50,16 +49,15 @@ export const RANGES = {
 
 // Значения по умолчанию (взяты из пресета "+New")
 export const DEFAULTS = {
-    FRONT_WIDTH: 500,      // mm
-    FRONT_HEIGHT: 500,     // mm
-    THICKNESS: 50,         // mm
-    BOX_COLOR: '#808080',  // Серый фон
-    GRID_MODULE: 5.0505,   // mm
-    MARGINS: 2,            // в модулях
-    MARGINS_UNIT: 'mod',   // 'mod' или 'mm'
-    COLUMN_COUNT: 12,
-    ROW_COUNT: 12,
-    ROW_HEIGHT: 7,         // в модулях
+    FRONT_WIDTH: 120,      // mm
+    FRONT_HEIGHT: 25,      // mm
+    BOX_COLOR: '#ffffff',  // Белый фон
+    GRID_MODULE: 0.7037,   // mm
+    MARGINS: 4.2632,       // в модулях (≈3 мм)
+    MARGINS_UNIT: 'mm',    // 'mod' или 'mm'
+    COLUMN_COUNT: 3,
+    ROW_COUNT: 4,
+    ROW_HEIGHT: 6,         // в модулях
     LINK_MODE: 'module',   // 'off', 'rows-height', или 'module'
     
     // Стили текста
@@ -78,7 +76,6 @@ export const DEFAULTS = {
     // Видимость элементов
     SHOW_DIMENSIONS: false,
     SHOW_LABELS: false,
-    SHOW_SIDE_PANELS: true,
     SHOW_COLUMNS: true,
     SHOW_ROWS: true,
     SHOW_BASELINE: true,
@@ -89,9 +86,7 @@ export const DEFAULTS = {
 export const SLIDER_STEPS = {
     frontWidthSlider: { base: 0.5, shift: 10 },
     frontHeightSlider: { base: 0.5, shift: 10 },
-    thicknessSlider: { base: 0.5, shift: 10 },
     gridModuleSlider: { base: 0.0001, shift: 0.1 },
-    marginsSlider: { base: 0.01, shift: 0.1 },
     columnCountSlider: { base: 1, shift: 10 },
     rowCountSlider: { base: 1, shift: 10 },
     rowHeightSlider: { base: 1, shift: 10 },

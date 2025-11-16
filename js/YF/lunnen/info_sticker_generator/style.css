@@ -140,25 +140,6 @@ body {
     color: var(--color-text);
 }
 
-/* Pizza Boxer Link */
-.pizza-boxer-link {
-    padding: var(--spacing-md) var(--spacing-2xl);
-    background: var(--color-text);
-    color: var(--color-bg);
-    border: none;
-    border-radius: var(--radius-button);
-    font-size: 0.9rem;
-    font-weight: 600;
-    text-decoration: none;
-    cursor: pointer;
-    transition: all var(--transition-slow);
-}
-
-.pizza-boxer-link:hover {
-    background: var(--color-bg);
-    color: var(--color-text);
-}
-
 /* Custom Preset Dropdown */
 .preset-dropdown {
     position: relative;
