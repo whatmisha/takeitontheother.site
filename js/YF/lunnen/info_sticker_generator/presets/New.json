@@ -1,17 +1,17 @@
 {
-  "presetName": "Packaging 120×24mm, Module 3.00mm — 16.11.2025",
+  "presetName": "Laptop Sticker 120×25mm, Module 3.00mm",
   "version": "1.0",
-  "timestamp": "2025-11-16T22:32:36.592Z",
+  "timestamp": "2025-11-16T22:26:06.548Z",
   "dimensions": {
     "width": 120,
-    "height": 24,
-    "thickness": 0,
+    "height": 25,
+    "thickness": 5,
     "unit": "mm"
   },
   "texts": [
     {
       "id": "text",
-      "content": "Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.",
+      "content": "Lunnen — бренд компьютерной техники и электроники, придуманный в Яндекс Фабрике. Сопровождает в исследованиях, работе и развлечениях.",
       "style": "text",
       "position": {
         "column": 2,
@@ -20,7 +20,7 @@
       },
       "width": 1,
       "alignment": "left",
-      "alignmentMode": "baseline",
+      "alignmentMode": "x-height",
       "surface": "front",
       "showBounds": false
     }
@@ -30,7 +30,7 @@
     "margins": 1,
     "marginsUnit": "mod",
     "columns": 3,
-    "rows": 1,
+    "rows": 2,
     "rowHeight": 6,
     "linkMode": "module",
     "visibility": {

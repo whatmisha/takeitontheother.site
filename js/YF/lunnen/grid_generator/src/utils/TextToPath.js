@@ -95,11 +95,14 @@ export class TextToPath {
             const fontSize = parseFloat(textElement.getAttribute('font-size') || '12');
             const x = parseFloat(textElement.getAttribute('x') || '0');
             const y = parseFloat(textElement.getAttribute('y') || '0');
-            const letterSpacing = parseFloat(textElement.getAttribute('letter-spacing') || '0');
+            const letterSpacingAttr = textElement.getAttribute('letter-spacing') || '0';
             const fill = textElement.getAttribute('fill') || '#000000';
             const text = textElement.textContent;
 
             if (!text) return null;
+
+            // Парсим letter-spacing (в em)
+            const letterSpacingEm = parseFloat(letterSpacingAttr);
 
             // Создаем ключ для шрифта
             const fontKey = `${fontFamily}-${fontWeight}`;
@@ -107,15 +110,39 @@ export class TextToPath {
             // Загружаем шрифт
             const font = await this.loadFont(fontKey);
 
-            // Создаем path из текста
-            const path = font.getPath(text, x, y, fontSize, {
-                kerning: true,
-                letterSpacing: letterSpacing * fontSize // letterSpacing в em, конвертируем в пиксели
-            });
+            // Отрисовываем текст посимвольно для правильного учета letter-spacing
+            let currentX = x;
+            let pathData = '';
+            
+            const scale = fontSize / font.unitsPerEm;
+            
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const glyph = font.charToGlyph(char);
+                
+                // Получаем path для глифа
+                const glyphPath = glyph.getPath(currentX, y, fontSize);
+                pathData += glyphPath.toPathData() + ' ';
+                
+                // Вычисляем продвижение (advance) с учетом letter-spacing
+                let advance = glyph.advanceWidth * scale;
+                
+                // Добавляем кернинг если это не последний символ
+                if (i < text.length - 1) {
+                    const nextGlyph = font.charToGlyph(text[i + 1]);
+                    const kerning = font.getKerningValue(glyph, nextGlyph);
+                    advance += kerning * scale;
+                }
+                
+                // Добавляем letter-spacing (в em, относительно fontSize)
+                advance += letterSpacingEm * fontSize;
+                
+                currentX += advance;
+            }
 
             // Создаем SVG path элемент
             const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            pathElement.setAttribute('d', path.toPathData());
+            pathElement.setAttribute('d', pathData.trim());
             pathElement.setAttribute('fill', fill);
             
             // Копируем другие атрибуты

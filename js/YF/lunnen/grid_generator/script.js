@@ -767,9 +767,6 @@ class GridGenerator {
             convertToOutlinesCheckbox: document.getElementById('convertToOutlinesCheckbox'),
             exportSettingsBtn: document.getElementById('exportSettingsBtn'),
             importSettingsBtn: document.getElementById('importSettingsBtn'),
-            helpButton: document.getElementById('helpButton'),
-            modalOverlay: document.getElementById('modalOverlay'),
-            modalClose: document.getElementById('modalClose'),
             presetDropdown: document.getElementById('presetDropdown'),
             presetDropdownToggle: document.getElementById('presetDropdownToggle'),
             presetDropdownMenu: document.getElementById('presetDropdownMenu'),
@@ -1100,22 +1097,7 @@ class GridGenerator {
             });
         }
         
-        // Help button and modal
-        if (this.dom.helpButton) {
-            this.dom.helpButton.addEventListener('click', () => this.openModal());
-        }
-        
-        if (this.dom.modalClose) {
-            this.dom.modalClose.addEventListener('click', () => this.closeModal());
-        }
-        
-        if (this.dom.modalOverlay) {
-            this.dom.modalOverlay.addEventListener('click', (e) => {
-                if (e.target === this.dom.modalOverlay) {
-                    this.closeModal();
-                }
-            });
-        }
+        // Help button removed
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -1129,33 +1111,12 @@ class GridGenerator {
                 e.preventDefault();
                 this.undo();
             }
-            // Escape - Close modal
-            if (e.key === 'Escape') {
-                if (this.dom.modalOverlay && this.dom.modalOverlay.classList.contains('active')) {
-                    this.closeModal();
-                }
-            }
         });
         
         // Initialize panel collapse functionality
         this.initPanelCollapse();
     }
     
-    openModal() {
-        if (this.dom.modalOverlay) {
-            this.dom.modalOverlay.classList.add('active');
-            this.dom.modalOverlay.setAttribute('aria-hidden', 'false');
-            document.body.style.overflow = 'hidden';
-        }
-    }
-    
-    closeModal() {
-        if (this.dom.modalOverlay) {
-            this.dom.modalOverlay.classList.remove('active');
-            this.dom.modalOverlay.setAttribute('aria-hidden', 'true');
-            document.body.style.overflow = '';
-        }
-    }
     
     // ============================================
     // Panel Collapse Functionality
@@ -1634,6 +1595,7 @@ class GridGenerator {
         
         // Current selected preset
         this.currentPreset = null;
+        this.currentPresetName = 'Custom';
         
         // Track widths for animation
         this.presetWidths = {};
@@ -1846,11 +1808,14 @@ class GridGenerator {
             // Update all UI elements to reflect new settings
             this.syncUIWithSettings();
             
+            // Store preset name for export
+            this.currentPresetName = data.presetName || filename.replace('.json', '');
+            
             // Update UI and grid
             this.updateGrid();
             this.updateElementsNavigator();
             
-            console.log(`✅ Preset "${data.presetName || filename}" loaded successfully`);
+            console.log(`✅ Preset "${this.currentPresetName}" loaded successfully`);
         } catch (error) {
             console.error('Failed to load preset:', error);
             alert(`Failed to load preset: ${error.message}`);
@@ -8792,15 +8757,25 @@ class GridGenerator {
     
     // Итерация 7: Упрощенный экспорт SVG через SVGExporter
     async exportSVG() {
-        const { frontWidth, frontHeight, thickness, gridModule, margins, columnCount, rowCount, rowHeight } = this.settings;
+        const { frontWidth, frontHeight, gridModule, columnCount, rowCount } = this.settings;
         
         // Создаем SVG для экспорта (scale = 1 для точных размеров)
         const exportSvg = this.createExportSVG();
         
-        // Генерируем имя файла с параметрами
-        const filename = `grid_width${frontWidth}_height${frontHeight}_thickness${thickness}_module${gridModule.toFixed(2)}_margins${margins.toFixed(2)}_columns${columnCount}_rows${rowCount}_rowheight${rowHeight}.svg`;
+        // Генерируем timestamp с точностью до минуты
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
         
-        // Получаем значение чекбокса "Convert text to outlines"
+        // Генерируем имя файла: "размер колонки строки модуль timestamp.svg"
+        // Например: "500×500mm 12col 12rows 5.05mm 20251116_1430.svg"
+        const size = `${frontWidth}×${frontHeight}mm`;
+        const cols = `${columnCount}col`;
+        const rows = `${rowCount}rows`;
+        const module = `${gridModule.toFixed(2)}mm`;
+        
+        const filename = `${size} ${cols} ${rows} ${module} ${timestamp}.svg`;
+        
+        // Получаем значение тогла "Outline fonts"
         const convertToOutlines = this.dom.convertToOutlinesCheckbox ? this.dom.convertToOutlinesCheckbox.checked : false;
         
         // Экспортируем через модуль
@@ -8950,6 +8925,8 @@ class GridGenerator {
     
     // Итерация 7: Экспорт настроек в JSON через SVGExporter
     exportSettings() {
+        const { frontWidth, frontHeight, gridModule, columnCount, rowCount } = this.settings;
+        
         const data = {
             version: '1.0',
             timestamp: new Date().toISOString(),
@@ -8960,8 +8937,20 @@ class GridGenerator {
             claimBlock: this.claimBlock || null
         };
         
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-        this.svgExporter.exportSettings(data, `grid-settings_${timestamp}.json`);
+        // Генерируем timestamp с точностью до минуты
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+        
+        // Генерируем имя файла: "размер колонки строки модуль timestamp.json"
+        // Например: "500×500mm 12col 12rows 5.05mm 20251116_1430.json"
+        const size = `${frontWidth}×${frontHeight}mm`;
+        const cols = `${columnCount}col`;
+        const rows = `${rowCount}rows`;
+        const module = `${gridModule.toFixed(2)}mm`;
+        
+        const filename = `${size} ${cols} ${rows} ${module} ${timestamp}.json`;
+        
+        this.svgExporter.exportSettings(data, filename);
     }
     
     // Итерация 7: Импорт настроек из JSON
