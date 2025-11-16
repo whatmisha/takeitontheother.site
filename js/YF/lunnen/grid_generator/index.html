@@ -398,16 +398,23 @@
     <aside class="controls-panel paragraph-settings-panel" id="paragraphPanel" style="display: none;" role="complementary" aria-label="Paragraph settings">
         <div class="panel-header" id="paragraphPanelHeader">
             <span id="paragraphPanelTitle">Paragraph Settings</span>
-            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
-                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </span>
+            <div class="panel-header-actions">
+                <button type="button" class="panel-action-btn" id="paragraphHideBtn" aria-label="Hide paragraph">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <button type="button" class="panel-action-btn" id="paragraphDeleteBtn" aria-label="Delete paragraph">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1m2 0v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h10z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
         </div>
         <div class="panel-content">
             <section class="control-section">
-                <h3>Text Style</h3>
-                
                 <div class="control-group">
                     <label for="paragraphStyleSelect">
                         <select id="paragraphStyleSelect" class="style-select" aria-label="Text style">
@@ -416,10 +423,6 @@
                         </select>
                     </label>
                 </div>
-            </section>
-            
-            <section class="control-section">
-                <h3>Position & Size</h3>
                 
                 <div class="control-group">
                     <label for="paragraphXInput">
@@ -455,7 +458,7 @@
                     </label>
                     <fieldset>
                         <legend class="sr-only">Text alignment mode</legend>
-                        <div class="segmented-control" role="radiogroup" aria-label="Alignment mode selection">
+                        <div class="segmented-control segmented-control-compact" role="radiogroup" aria-label="Alignment mode selection">
                             <input type="radio" name="alignmentMode" value="baseline" id="alignmentModeBaseline" checked aria-label="Baseline alignment">
                             <label for="alignmentModeBaseline">Baseline</label>
                             
@@ -471,43 +474,23 @@
                         <span>Constrain to Grid</span>
                     </label>
                 </div>
-            </section>
-            
-            <section class="control-section">
-                <h3>Actions</h3>
                 
                 <div class="control-group">
-                    <div class="button-group">
-                        <button type="button" class="btn-add-object" id="paragraphHideBtn" aria-label="Hide paragraph">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
-                                <path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
-                                <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                            </svg>
-                            Hide
-                        </button>
-                        <button type="button" class="btn-add-object" id="paragraphDeleteBtn" aria-label="Delete paragraph">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
-                                <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1m2 0v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h10z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            Delete
-                        </button>
-                    </div>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="paragraphAlignRightToggle" aria-label="Align to right edge">
+                        <span>Align Right</span>
+                    </label>
                 </div>
             </section>
             
             <section class="control-section">
-                <h3>Text Content</h3>
+                <h3>
+                    Text
+                    <span class="char-counter" id="charCounter">0 characters</span>
+                </h3>
                 
                 <div class="control-group">
                     <textarea id="paragraphTextArea" placeholder="Enter text here..." rows="7" aria-label="Paragraph text"></textarea>
-                    <div class="textarea-footer">
-                        <div class="button-group">
-                            <button type="button" class="btn-apply" id="paragraphApplyBtn">Apply</button>
-                            <button type="button" class="btn-close" id="paragraphCloseBtn">Close</button>
-                        </div>
-                        <span class="char-counter" id="charCounter">0 characters</span>
-                    </div>
                 </div>
             </section>
         </div>
@@ -517,16 +500,23 @@
     <aside class="controls-panel paragraph-settings-panel" id="graphicsPanel" style="display: none;" role="complementary" aria-label="Graphics upload">
         <div class="panel-header" id="graphicsPanelHeader">
             <span id="graphicsPanelTitle">Add Graphics</span>
-            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
-                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </span>
+            <div class="panel-header-actions">
+                <button type="button" class="panel-action-btn" id="graphicsHideBtn" aria-label="Hide graphics">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <button type="button" class="panel-action-btn" id="graphicsDeleteBtn" aria-label="Delete graphics">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1m2 0v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h10z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
         </div>
         <div class="panel-content">
             <section class="control-section">
-                <h3>Upload SVG</h3>
-                
                 <div class="control-group">
                     <div class="file-upload-area" id="fileUploadArea">
                         <input type="file" id="svgFileInput" accept=".svg" style="display: none;">
@@ -535,10 +525,6 @@
                         </div>
                     </div>
                 </div>
-            </section>
-            
-            <section class="control-section">
-                <h3>Position & Size</h3>
                 
                 <div class="control-group">
                     <label for="graphicsXInput">
@@ -562,9 +548,15 @@
                 </div>
                 
                 <div class="control-group">
-                    <label for="graphicsHeightInput">
-                        <span>Height <span class="unit">mod</span></span>
-                        <input type="text" class="value-display" id="graphicsHeightInput" value="3" data-min="1" data-max="20" data-step="0.25" aria-label="Height in modules">
+                    <label for="graphicsSizeInput">
+                        <span>Size 
+                            <span class="unit-buttons">
+                                <button type="button" class="unit-btn active" data-unit="height" id="graphicsSizeUnitHeight">H</button>
+                                <button type="button" class="unit-btn" data-unit="width" id="graphicsSizeUnitWidth">W</button>
+                            </span>
+                            <span class="unit">mod</span>
+                        </span>
+                        <input type="text" class="value-display" id="graphicsSizeInput" value="3" data-min="1" data-max="20" data-step="0.25" aria-label="Size in modules">
                     </label>
                 </div>
                 
@@ -574,37 +566,12 @@
                         <span>Constrain to Grid</span>
                     </label>
                 </div>
-            </section>
-            
-            <section class="control-section">
-                <h3>Actions</h3>
                 
                 <div class="control-group">
-                    <div class="button-group">
-                        <button type="button" class="btn-add-object" id="graphicsHideBtn" aria-label="Hide graphics" style="display: none;">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
-                                <path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
-                                <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                            </svg>
-                            Hide
-                        </button>
-                        <button type="button" class="btn-add-object" id="graphicsDeleteBtn" aria-label="Delete graphics" style="display: none;">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
-                                <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1m2 0v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h10z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="control-section">
-                <div class="control-group">
-                    <div class="button-group">
-                        <button type="button" class="btn-apply" id="graphicsApplyBtn">Add</button>
-                        <button type="button" class="btn-close" id="graphicsCloseBtn">Close</button>
-                    </div>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="graphicsAlignRightToggle" aria-label="Align to right edge">
+                        <span>Align Right</span>
+                    </label>
                 </div>
             </section>
         </div>

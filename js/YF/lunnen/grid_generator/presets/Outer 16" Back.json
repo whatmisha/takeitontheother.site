@@ -1,7 +1,7 @@
 {
-  "presetName": "Outer 16\" Back",
+  "presetName": "Packaging 382×387mm, Module 3.31mm — 16.11.2025",
   "version": "1.0",
-  "timestamp": "2025-11-14T21:45:05.912Z",
+  "timestamp": "2025-11-16T16:38:46.418Z",
   "dimensions": {
     "width": 382,
     "height": 387,
@@ -18,62 +18,71 @@
         "row": 0,
         "baseline": 0
       },
-      "width": 3
+      "width": 3,
+      "alignment": "left",
+      "alignmentMode": "baseline",
+      "surface": "front",
+      "showBounds": false
     },
     {
       "id": "text",
-      "content": "Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.",
+      "content": "Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.",
       "style": "text",
       "position": {
         "column": 7,
         "row": 0,
         "baseline": 0
       },
-      "width": 2
+      "width": 3,
+      "alignment": "left",
+      "alignmentMode": "x-height",
+      "surface": "front",
+      "showBounds": false
     },
     {
       "id": "text2",
-      "content": "Lunnen Outer — продвинутая линейка техники. Производительный процессор и эффективное охлаждение для задач повышенной сложности.",
+      "content": "Lunnen Outer — продвинутая линейка техники. Производительный процессор и эффективное \nохлаждение для задач повышенной сложности.",
       "style": "text",
       "position": {
         "column": 10,
         "row": 0,
         "baseline": 0
       },
-      "width": 2
-    },
-    {
-      "id": "manufacturer",
-      "content": "Изготовитель: ООО Харбинская Импортно-Экспортная Торговая Компания «Цзиньдинсинь», Китай. Адрес местонахождения: Китай, г. Харбин, р-н Даоли, микрорайон Цюньли, ул. 4-я, д. 399, бизнес-центр Хучжи, восточный корпус, эт. 12, ком. 1204.",
-      "style": "text",
-      "position": {
-        "column": 1,
-        "row": 9,
-        "baseline": 0
-      },
-      "width": 3
+      "width": 3,
+      "alignment": "left",
+      "alignmentMode": "x-height",
+      "surface": "front",
+      "showBounds": false
     },
     {
       "id": "importer",
-      "content": "Импортер: ООО «Маркет. Трейд». Адрес местонахождения: 121099, Россия, г. Москва, Новинский бульвар, 8.",
+      "content": "Изготовитель: Винд Мобилити Текнолоджи (Пекин) Лимитед\nОфис 11605, 13 этаж, корпус 1, дом 2, переулок Наньчжугань, район Дунчэн, Пекин, Китай. Сделано в Китае",
       "style": "text",
       "position": {
         "column": 7,
         "row": 9,
         "baseline": 0
       },
-      "width": 2
+      "width": 3,
+      "alignment": "left",
+      "alignmentMode": "x-height",
+      "surface": "front",
+      "showBounds": false
     },
     {
       "id": "origin",
-      "content": "Произведено в Китае. info@lunnen.pro",
+      "content": "Импортёр/Организация, принимающая \nпретензии на территории РФ: ООО «Маркет.Трейд»\n121099, Россия, Москва, Новинский б-р, д. 8\n",
       "style": "text",
       "position": {
         "column": 10,
         "row": 9,
         "baseline": 0
       },
-      "width": 2
+      "width": 3,
+      "alignment": "left",
+      "alignmentMode": "x-height",
+      "surface": "front",
+      "showBounds": false
     }
   ],
   "grid": {
@@ -102,8 +111,8 @@
       "fontWeight": 500
     },
     "text": {
-      "size": 0.5,
-      "lineHeight": 1,
+      "size": 0.67,
+      "lineHeight": 1.2,
       "tracking": 0,
       "useXHeight": false,
       "fontWeight": 500

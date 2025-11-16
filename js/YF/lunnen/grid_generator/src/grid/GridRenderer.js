@@ -46,7 +46,7 @@ export class GridRenderer {
         const margins = this.settings.get('margins');
         const n = this.settings.get('columnCount');
         const gridColor = this.getGridColor();
-        const opacity = this.getGridOpacity(0.1);
+        const opacity = this.getGridOpacity(0.08);
         
         const columnWidth = this.calculator.calculateColumnWidth();
         const margin = module * margins * scale;
@@ -85,7 +85,7 @@ export class GridRenderer {
         const n = this.settings.get('rowCount');
         const rowHeightInModules = this.settings.get('rowHeight');
         const gridColor = this.getGridColor();
-        const opacity = this.getGridOpacity(0.1);
+        const opacity = this.getGridOpacity(0.08);
         
         const topMargin = module * margins * scale;
         const sideMargin = module * margins * scale;
@@ -127,7 +127,7 @@ export class GridRenderer {
         const module = this.settings.get('gridModule');
         const margins = this.settings.get('margins');
         const gridColor = this.getGridColor();
-        const opacity = this.getGridOpacity(0.3);
+        const opacity = this.getGridOpacity(0.15);
         const margin = module * margins * scale;
         const baselineHeight = module * scale;
         const baselineWidth = width - 2 * margin;
@@ -169,7 +169,7 @@ export class GridRenderer {
         const n = this.settings.get('rowCount');
         const rowHeightInModules = this.settings.get('rowHeight');
         const gridColor = this.getGridColor();
-        const opacity = this.getGridOpacity(0.1);
+        const opacity = this.getGridOpacity(0.08);
         
         let columnHeight = module * rowHeightInModules * scale;
         const margin = module * margins * scale;
@@ -224,7 +224,7 @@ export class GridRenderer {
         const margins = this.settings.get('margins');
         const n = this.settings.get('columnCount');
         const gridColor = this.getGridColor();
-        const opacity = this.getGridOpacity(0.1);
+        const opacity = this.getGridOpacity(0.08);
         
         const columnWidth = this.calculator.calculateColumnWidth();
         const margin = module * margins * scale;
@@ -270,7 +270,7 @@ export class GridRenderer {
         const module = this.settings.get('gridModule');
         const margins = this.settings.get('margins');
         const gridColor = this.getGridColor();
-        const opacity = this.getGridOpacity(0.3);
+        const opacity = this.getGridOpacity(0.15);
         const margin = module * margins * scale;
         const baselineWidth = module * scale;
         const strokeWidth = scale === 1 ? SVG.EXPORT_STROKE_WIDTH : SVG.DISPLAY_STROKE_WIDTH;
@@ -379,7 +379,7 @@ export class GridRenderer {
         const module = this.settings.get('gridModule');
         const margins = this.settings.get('margins');
         const gridColor = this.getGridColor();
-        const opacity = this.getGridOpacity(0.3);
+        const opacity = this.getGridOpacity(0.15);
         const margin = module * margins * scale;
         const baselineHeight = module * scale;
         const strokeWidth = scale === 1 ? SVG.EXPORT_STROKE_WIDTH : SVG.DISPLAY_STROKE_WIDTH;

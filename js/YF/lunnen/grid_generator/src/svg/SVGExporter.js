@@ -165,7 +165,11 @@ export class SVGExporter {
                     row: block.row || 0,
                     baseline: block.baselineOffset || 0
                 },
-                width: block.width || 3
+                width: block.width || 3,
+                alignment: block.alignment || 'left',
+                alignmentMode: block.alignmentMode || 'baseline',
+                surface: block.surface || 'front',
+                showBounds: block.showBounds || false
             })),
             
             // 4. Настройки сетки
@@ -230,6 +234,8 @@ export class SVGExporter {
                         height: block.heightInModules || 3,
                         originalWidth: block.originalWidth,
                         originalHeight: block.originalHeight,
+                        alignment: block.alignment || 'left',
+                        surface: block.surface || 'front',
                         // SVG код в самом конце
                         svg: block.svgContent || ''
                     })),
@@ -377,7 +383,10 @@ export class SVGExporter {
             row: text.position?.row || 0,
             baselineOffset: text.position?.baseline || 0,
             width: text.width || 3,
-            showBounds: false,
+            alignment: text.alignment || 'left',
+            alignmentMode: text.alignmentMode || 'baseline',
+            surface: text.surface || 'front',
+            showBounds: text.showBounds || false,
             visible: true
         }));
 
@@ -395,6 +404,8 @@ export class SVGExporter {
                 x: graphic.position?.column || 1,
                 row: graphic.position?.row || 0,
                 baselineOffset: graphic.position?.baseline || 0,
+                alignment: graphic.alignment || 'left',
+                surface: graphic.surface || 'front',
                 showBounds: false,
                 visible: true,
                 originalWidth: graphic.originalWidth || 100,

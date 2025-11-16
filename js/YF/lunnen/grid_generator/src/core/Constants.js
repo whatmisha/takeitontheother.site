@@ -121,6 +121,89 @@ export const ELEMENT_TYPES = {
     CLAIM: 'claim'
 };
 
+// Типы поверхностей (торцов)
+export const SURFACE_TYPES = {
+    FRONT: 'front',
+    LEFT: 'left',
+    RIGHT: 'right',
+    TOP: 'top',
+    BOTTOM: 'bottom'
+};
+
+// Конфигурация поверхностей
+// Функция возвращает конфиг с актуальными размерами
+export function getSurfaceConfig(frontWidth, frontHeight, thickness) {
+    const config = {
+        [SURFACE_TYPES.FRONT]: {
+            id: 'front',
+            name: 'Front',
+            rotation: 0,
+            origin: { x: thickness, y: thickness },
+            dimensions: { width: frontWidth, height: frontHeight },
+            gridOrientation: 'horizontal',
+            // Какие параметры сетки использовать
+            gridMapping: {
+                columns: 'columns',  // используем columnCount
+                rows: 'rows'         // используем rowCount
+            }
+        },
+        [SURFACE_TYPES.BOTTOM]: {
+            id: 'bottom',
+            name: 'Bottom',
+            rotation: 0,
+            origin: { x: thickness, y: thickness + frontHeight },
+            dimensions: { width: frontWidth, height: thickness },
+            gridOrientation: 'horizontal',
+            gridMapping: {
+                columns: 'columns',  // используем columnCount
+                rows: 'thickness'    // ограничены толщиной
+            }
+        },
+        [SURFACE_TYPES.LEFT]: {
+            id: 'left',
+            name: 'Left',
+            rotation: 90,  // по часовой
+            origin: { x: 0, y: thickness },
+            dimensions: { width: thickness, height: frontHeight },
+            gridOrientation: 'vertical',
+            gridMapping: {
+                columns: 'rows',      // "колонки" = строки фронта
+                rows: 'thickness'     // ограничены толщиной
+            },
+            // Для левого торца координаты инвертированы
+            coordinateTransform: 'leftRotation'
+        },
+        [SURFACE_TYPES.RIGHT]: {
+            id: 'right',
+            name: 'Right',
+            rotation: 270, // против часовой (или -90)
+            origin: { x: thickness + frontWidth, y: thickness },
+            dimensions: { width: thickness, height: frontHeight },
+            gridOrientation: 'vertical',
+            gridMapping: {
+                columns: 'rows',
+                rows: 'thickness'
+            },
+            coordinateTransform: 'rightRotation'
+        },
+        [SURFACE_TYPES.TOP]: {
+            id: 'top',
+            name: 'Top',
+            rotation: 180,
+            origin: { x: thickness, y: 0 },
+            dimensions: { width: frontWidth, height: thickness },
+            gridOrientation: 'horizontal',
+            gridMapping: {
+                columns: 'columns',
+                rows: 'thickness'
+            },
+            coordinateTransform: 'topRotation'
+        }
+    };
+    
+    return config;
+}
+
 // Клавиатурные сокращения
 export const KEYBOARD_SHORTCUTS = {
     EXPORT: 'e',

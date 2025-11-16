@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Info Sticker Generator — Генератор информационных стикеров">
+    <meta name="keywords" content="grid generator, sticker, packaging, print design, SVG">
+    
+    <title>Info Sticker Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="top-links">
+            <a href="/js/YF/" class="yf-tools-link" aria-label="Back to YF Tools">
+                ←YF Tools
+            </a>
+            <div class="tool-title">Info Sticker Generator</div>
+        </div>
+        <div class="main-content">
+            <div class="canvas-container" id="canvasContainer">
+                <svg id="gridSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+
+            <!-- Grid Panel (Right) -->
+            <aside class="controls-panel" id="gridPanel" role="complementary" aria-label="Grid settings">
+                <div class="panel-header" id="gridPanelHeader">
+                    <span>Grid <span class="panel-params" id="gridParams">4.17 mm</span></span>
+                    <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="gridModuleSlider">
+                                <span>Module <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="gridModuleValue" value="4.1667" data-min="0.5" data-max="10" aria-label="Grid module">
+                            </label>
+                            <input type="range" id="gridModuleSlider" min="0.5" max="10" step="0.0001" value="4.1667" aria-label="Grid module slider">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="marginsSlider">
+                                <span>Margins <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="marginsValue" value="3.00" data-min="0" data-max="20" aria-label="Margins in millimeters">
+                            </label>
+                            <input type="range" id="marginsSlider" min="0" max="20" step="0.1" value="3" aria-label="Margins slider">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="columnCountSlider">
+                                <span>Columns</span>
+                                <input type="text" class="value-display" id="columnCountValue" value="3" data-min="1" data-max="12" aria-label="Column count">
+                            </label>
+                            <input type="range" id="columnCountSlider" min="1" max="12" step="1" value="3" aria-label="Column count slider">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="baselineModulesSlider">
+                                <span>Baseline Modules</span>
+                                <input type="text" class="value-display" id="baselineModulesValue" value="6" data-min="1" data-max="20" aria-label="Baseline modules count">
+                            </label>
+                            <input type="range" id="baselineModulesSlider" min="1" max="20" step="1" value="6" aria-label="Baseline modules slider">
+                        </div>
+                    </section>
+                    
+                    <section class="control-section">
+                        <h3>Show</h3>
+                        <div class="control-group show-toggle-chip-group">
+                            <div class="toggle-chip-group" role="group" aria-label="Show grid options">
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="showColumns" checked aria-label="Show columns">
+                                    <span>Columns</span>
+                                </label>
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="showBaseline" checked aria-label="Show baseline grid">
+                                    <span>Baseline</span>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <!-- Dimensions Panel (Left) -->
+            <aside class="controls-panel controls-panel-left" id="controlsPanel" role="complementary" aria-label="Dimensions settings">
+                <div class="panel-header" id="panelHeader">
+                    <span>Dimensions <span class="panel-params" id="dimensionsParams">120×25 mm</span></span>
+                    <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="widthSlider">
+                                <span>Width <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="widthValue" value="120" data-min="50" data-max="300" aria-label="Width value">
+                            </label>
+                            <input type="range" id="widthSlider" min="50" max="300" step="0.5" value="120" aria-label="Width slider">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="heightSlider">
+                                <span>Height <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="heightValue" value="25" data-min="10" data-max="100" aria-label="Height value">
+                            </label>
+                            <input type="range" id="heightSlider" min="10" max="100" step="0.5" value="25" aria-label="Height slider">
+                        </div>
+                    </section>
+
+                    <section class="control-section" aria-labelledby="color-heading">
+                        <h3 id="color-heading">Background Color</h3>
+                        <div class="control-group">
+                            <div class="color-input-group">
+                                <button type="button" class="color-preview" id="colorPreview" aria-label="Open color picker"></button>
+                                <input type="text" id="hexColorInput" value="#ffffff" placeholder="#ffffff" maxlength="7" aria-label="Hex color code input">
+                            </div>
+                        </div>
+                        
+                        <!-- Custom HSB Color Picker -->
+                        <div class="hsb-picker" id="hsbPicker" style="display: none;">
+                            <div class="hsb-controls">
+                                <div class="hsb-control-group">
+                                    <label for="hueSlider">
+                                        <span>Hue</span>
+                                        <input type="text" class="value-display hsb-value" id="hueValue" value="0" data-min="0" data-max="360" data-suffix="°" aria-label="Hue value">
+                                    </label>
+                                    <input type="range" id="hueSlider" min="0" max="360" step="1" value="0">
+                                </div>
+                                
+                                <div class="hsb-control-group">
+                                    <label for="saturationSlider">
+                                        <span>Saturation</span>
+                                        <input type="text" class="value-display hsb-value" id="saturationValue" value="0" data-min="0" data-max="100" data-suffix="%" aria-label="Saturation value">
+                                    </label>
+                                    <input type="range" id="saturationSlider" min="0" max="100" step="1" value="0">
+                                </div>
+                                
+                                <div class="hsb-control-group">
+                                    <label for="brightnessSlider">
+                                        <span>Brightness</span>
+                                        <input type="text" class="value-display hsb-value" id="brightnessValue" value="100" data-min="0" data-max="100" data-suffix="%" aria-label="Brightness value">
+                                    </label>
+                                    <input type="range" id="brightnessSlider" min="0" max="100" step="1" value="100">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <nav class="bottom-buttons" role="toolbar" aria-label="Main actions">
+        <button class="btn-fixed btn-export" id="exportBtn" aria-label="Export SVG (Command/Control + E)">
+            Export SVG ⌘E
+        </button>
+        <button class="btn-fixed btn-help" id="helpButton" aria-label="Show instructions">
+            ?
+        </button>
+    </nav>
+
+    <!-- Instructions Modal -->
+    <div class="modal-overlay" id="modalOverlay" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
+            <button class="modal-close" id="modalClose" aria-label="Close instructions">&times;</button>
+            <h2 id="modalTitle">Info Sticker Generator</h2>
+            <div class="modal-body">
+                <p>Генератор информационных стикеров на основе модульной сетки Lunnen.</p>
+                
+                <h3>Размеры</h3>
+                <p><strong>Width</strong> и <strong>Height</strong> задают размеры стикера в миллиметрах.</p>
+                
+                <h3>Модульная сетка</h3>
+                <p><strong>Module</strong> (в мм) — базовая единица сетки. Управляет:</p>
+                <ul>
+                    <li><strong>Baseline Grid</strong> — минимальный шаг сетки</li>
+                    <li><strong>Spacing</strong> — отступы между колонками</li>
+                    <li><strong>Margins</strong> — отступы от краёв</li>
+                </ul>
+                
+                <h3>Колонки и бейслайн</h3>
+                <p><strong>Columns</strong> — вертикальные деления с отступами между ними.</p>
+                <p><strong>Baseline</strong> — сетка для выравнивания по вертикали.</p>
+                
+                <h3>Экспорт SVG</h3>
+                <p>Нажмите <strong>Export SVG</strong> для загрузки сетки. Файл открывается в Adobe Illustrator с точными размерами в миллиметрах.</p>
+                
+                <h3>Горячие клавиши</h3>
+                <ul>
+                    <li><strong>Cmd/Ctrl + E</strong> — Экспорт SVG</li>
+                    <li><strong>Arrow keys</strong> — Изменение значений слайдеров</li>
+                    <li><strong>Shift + Arrow keys</strong> — Изменение с большим шагом</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
+

@@ -132,77 +132,34 @@ export class ColorUtils {
     }
 
     /**
-     * Получить контрастный цвет для сетки с плавным переходом
+     * Получить контрастный цвет для сетки
      * @param {string} bgColor - цвет фона в формате #RRGGBB
-     * @returns {string} - цвет от белого через серый к черному
+     * @returns {string} - черный или белый цвет для максимального контраста
      */
     static getContrastColor(bgColor) {
         const luminance = this.getLuminance(bgColor);
         
-        // Плавный переход от белого к черному через серые тона
-        // Расширенная зона перехода: luminance 0.25 - 0.75
-        const transitionStart = 0.25;
-        const transitionEnd = 0.75;
-        
-        if (luminance < transitionStart) {
-            // Темный фон → белая сетка
-            return '#ffffff';
-        } else if (luminance > transitionEnd) {
-            // Светлый фон → черная сетка
+        // For medium gray backgrounds (around 0.4-0.6), use darker color for better visibility
+        // This ensures grid is visible on medium gray backgrounds like #adadad
+        if (luminance >= 0.4 && luminance <= 0.6) {
+            // Medium gray - use black for better contrast
             return '#000000';
-        } else {
-            // Переходная зона → серая сетка
-            // Плавно меняем от белого (255) к черному (0)
-            const progress = (luminance - transitionStart) / (transitionEnd - transitionStart);
-            const grayValue = Math.round(255 * (1 - progress));
-            return this.rgbToHex(grayValue, grayValue, grayValue);
         }
+        
+        // Return black for light backgrounds, white for dark backgrounds
+        return luminance > 0.5 ? '#000000' : '#ffffff';
     }
 
     /**
-     * Вычислить прозрачность для сетки в зависимости от яркости фона
-     * @param {number} luminance - светимость фона (0-1)
+     * Вычислить прозрачность для сетки
+     * @param {number} luminance - светимость фона (0-1) - не используется, оставлен для совместимости
      * @param {number} baseOpacity - базовая прозрачность
-     * @returns {number} - итоговая прозрачность
+     * @returns {number} - всегда возвращает базовую прозрачность
      */
     static getGridOpacity(luminance, baseOpacity) {
-        // Нормализуем светимость в диапазон от -1 до 1 с центром в 0.5
-        const normalized = 2 * luminance - 1; // -1 (черный) до 1 (белый)
-        
-        // Используем степень 6 для очень агрессивного снижения прозрачности на краях
-        // При luminance = 0.5 (средняя яркость) → factor = 1 (максимум)
-        // При luminance близко к 0 или 1 → factor быстро стремится к 0
-        // 
-        // Примеры:
-        // - #ffffff (luminance = 1.0) → normalized = 1 → factor = 0 → минимум
-        // - #cccccc (luminance ≈ 0.6) → normalized ≈ 0.2 → factor ≈ 0.9999
-        // - #808080 (luminance ≈ 0.5) → normalized = 0 → factor = 1 → максимум
-        // - #1c1c1c (luminance ≈ 0.02) → normalized ≈ -0.96 → factor ≈ 0.18
-        // - #000000 (luminance = 0.0) → normalized = -1 → factor = 0 → минимум
-        let factor = 1 - Math.pow(Math.abs(normalized), 6);
-        
-        // Дополнительное снижение прозрачности в расширенной зоне перехода цвета (0.25-0.75)
-        // где сетка становится серой на сером фоне
-        const transitionStart = 0.25;
-        const transitionEnd = 0.75;
-        
-        if (luminance >= transitionStart && luminance <= transitionEnd) {
-            // В зоне перехода снижаем прозрачность дополнительно
-            // Максимальное снижение в центре (luminance = 0.5)
-            const transitionMid = 0.5;
-            const distanceFromMid = Math.abs(luminance - transitionMid) / ((transitionEnd - transitionStart) / 2);
-            
-            // Используем степень 2 для более агрессивного снижения в центре
-            const transitionPenalty = Math.pow(1 - distanceFromMid, 2); // 1 в центре, 0 на краях зоны
-            
-            // Снижаем до 18% в центре зоны перехода (было 25%)
-            factor *= (1 - transitionPenalty * 0.82);
-        }
-        
-        const minOpacity = baseOpacity * 0.2; // 20% от базовой на краях
-        const maxOpacity = baseOpacity;       // 100% от базовой в центре
-        
-        return minOpacity + (maxOpacity - minOpacity) * factor;
+        // Always use the same opacity regardless of background brightness
+        // Color switching (light/dark) is handled by getContrastColor()
+        return baseOpacity;
     }
 }
 
