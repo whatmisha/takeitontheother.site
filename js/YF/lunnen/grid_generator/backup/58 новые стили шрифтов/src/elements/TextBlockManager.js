@@ -24,7 +24,18 @@ export class TextBlockManager {
             baselineOffset: config.baselineOffset !== undefined ? config.baselineOffset : 0,
             width: config.width !== undefined ? config.width : 3, // Ширина в колонках
             showBounds: config.showBounds || false,
-            visible: config.visible !== undefined ? config.visible : true
+            visible: config.visible !== undefined ? config.visible : true,
+            // OpenType features для Lunnen Display
+            fontFeatures: config.fontFeatures !== undefined ? config.fontFeatures : {
+                salt: false,
+                aalt: false,
+                ss01: false,
+                ss02: false,
+                tnum: false,
+                dlig: false
+            },
+            // Вариативность шрифта (для Lunnen Display)
+            fontWeight: config.fontWeight !== undefined ? config.fontWeight : 400
         };
 
         // Валидация

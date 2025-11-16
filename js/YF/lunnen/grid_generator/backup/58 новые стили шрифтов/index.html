@@ -592,6 +592,49 @@
                     <textarea id="paragraphTextArea" placeholder="Enter text here..." rows="7" aria-label="Paragraph text"></textarea>
                 </div>
             </section>
+            
+            <section class="control-section" id="lunnenDisplayFeaturesSection" style="display: none;">
+                <h3>Lunnen Display</h3>
+                
+                <div class="control-group">
+                    <label for="lunnenDisplayWeightSlider">
+                        <span>Weight</span>
+                        <input type="text" class="value-display" id="lunnenDisplayWeightValue" value="400" data-min="100" data-max="400" aria-label="Font weight">
+                    </label>
+                    <input type="range" id="lunnenDisplayWeightSlider" min="100" max="400" step="1" value="400" aria-label="Font weight slider">
+                </div>
+                
+                <div class="control-group">
+                    <h4 style="margin: 0 0 8px 0; font-size: 12px; font-weight: 500; color: rgba(0, 0, 0, 0.6);">OpenType Features</h4>
+                    
+                    <div class="toggle-chip-group" role="group" aria-label="OpenType features">
+                        <label class="toggle-chip">
+                            <input type="checkbox" id="featureSalt" aria-label="Enable salt feature">
+                            <span>salt</span>
+                        </label>
+                        <label class="toggle-chip">
+                            <input type="checkbox" id="featureAalt" aria-label="Enable aalt feature">
+                            <span>aalt</span>
+                        </label>
+                        <label class="toggle-chip">
+                            <input type="checkbox" id="featureSs01" aria-label="Enable ss01 feature">
+                            <span>ss01</span>
+                        </label>
+                        <label class="toggle-chip">
+                            <input type="checkbox" id="featureSs02" aria-label="Enable ss02 feature">
+                            <span>ss02</span>
+                        </label>
+                        <label class="toggle-chip">
+                            <input type="checkbox" id="featureTnum" aria-label="Enable tnum feature">
+                            <span>tnum</span>
+                        </label>
+                        <label class="toggle-chip">
+                            <input type="checkbox" id="featureDlig" aria-label="Enable dlig feature">
+                            <span>dlig</span>
+                        </label>
+                    </div>
+                </div>
+            </section>
         </div>
     </aside>
 

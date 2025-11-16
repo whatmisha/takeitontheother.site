@@ -5490,12 +5490,13 @@ class GridGenerator {
                 const lineApproxY = firstLineY;
                 lineBaselineY = this.snapToBaseline(lineApproxY, frontY, scale, true, alignmentMode);
                 previousBaselineY = lineBaselineY;
-            } else if (index === 1 && alignmentMode === 'x-height') {
-                // Для второй строки в режиме x-height НЕ привязываем к сетке
-                // Используем точное расстояние от первой строки
+            } else if (alignmentMode === 'x-height') {
+                // В режиме x-height все строки после первой НЕ привязываем к сетке
+                // Используем точное расстояние согласно интерлиньяжу
                 lineBaselineY = previousBaselineY + lineHeightInMm;
                 previousBaselineY = lineBaselineY;
             } else {
+                // В режиме baseline остальные строки привязываются к сетке
                 const lineApproxY = previousBaselineY + lineHeightInMm;
                 lineBaselineY = this.snapToBaseline(lineApproxY, frontY, scale, false);
                 previousBaselineY = lineBaselineY;
