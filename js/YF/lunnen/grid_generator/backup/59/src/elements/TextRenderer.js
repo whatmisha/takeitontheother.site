@@ -10,11 +10,18 @@ export class TextRenderer {
         this.settings = settings;
         this.gridCalculator = gridCalculator;
         
-        // Метрики шрифта TT Commons (используем те же, что и в старом коде)
+        // Метрики шрифтов (используем те же, что и в старом коде)
         this.fontMetrics = {
-            capHeight: 630,
-            xHeight: 447,
-            unitsPerEm: 1000
+            'TT Commons Classic': {
+                capHeight: 630,
+                xHeight: 447,
+                unitsPerEm: 1000
+            },
+            'Lunnen Display': {
+                capHeight: 630,
+                xHeight: 447,
+                unitsPerEm: 1000
+            }
         };
     }
 
@@ -185,9 +192,12 @@ export class TextRenderer {
         // Получаем цвет сетки для текста (как в старом коде)
         const gridColor = this.getContrastColor();
         
+        // Получаем имя шрифта для стиля
+        const fontFamily = style.fontFamily || 'TT Commons Classic';
+        
         const textElement = DOMUtils.createSVGElement('text', {
             class: `text-${style.styleRef}`,
-            'font-family': 'TT Commons Classic, -apple-system, BlinkMacSystemFont, sans-serif',
+            'font-family': `${fontFamily}, -apple-system, BlinkMacSystemFont, sans-serif`,
             'font-weight': style.fontWeight.toString(),
             'font-size': `${scaledFontSize}`, // без единиц - SVG user-units (mm в нашем viewBox)
             'text-anchor': 'start', // Always left-align text inside the block
@@ -231,14 +241,18 @@ export class TextRenderer {
         const sizeInModules = style.size;
         const targetSize = module * sizeInModules; // size in mm
         
+        // Получаем метрики шрифта для данного стиля
+        const fontFamily = style.fontFamily || 'TT Commons Classic';
+        const metrics = this.fontMetrics[fontFamily] || this.fontMetrics['TT Commons Classic'];
+        
         // Calculate font size based on whether we're using cap height or x-height
         let fontSize;
         if (style.useXHeight) {
             // x-height should equal targetSize
-            fontSize = targetSize * (this.fontMetrics.unitsPerEm / this.fontMetrics.xHeight);
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.xHeight);
         } else {
             // cap height should equal targetSize
-            fontSize = targetSize * (this.fontMetrics.unitsPerEm / this.fontMetrics.capHeight);
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.capHeight);
         }
         
         return fontSize; // in mm
@@ -296,7 +310,7 @@ export class TextRenderer {
         const styles = {
             'headline': {
                 styleRef: 'headline',
-                fontFamily: 'TT Commons, sans-serif',
+                fontFamily: 'TT Commons Classic',
                 fontWeight: this.settings.get('headlineFontWeight') || 500,
                 size: this.settings.get('headlineSize') || 1,
                 lineHeight: this.settings.get('lineHeight') || 2,
@@ -305,12 +319,21 @@ export class TextRenderer {
             },
             'text': {
                 styleRef: 'text',
-                fontFamily: 'TT Commons, sans-serif',
+                fontFamily: 'TT Commons Classic',
                 fontWeight: this.settings.get('textFontWeight') || 500,
                 size: this.settings.get('textSize') || 1,
                 lineHeight: this.settings.get('textLineHeight') || 2,
                 tracking: this.settings.get('textTracking') || 0,
                 useXHeight: this.settings.get('useXHeight2') !== false
+            },
+            'lunnenDisplay': {
+                styleRef: 'lunnenDisplay',
+                fontFamily: 'Lunnen Display',
+                fontWeight: 400,
+                size: this.settings.get('lunnenDisplaySize') || 3,
+                lineHeight: this.settings.get('lunnenDisplayLineHeight') || 4,
+                tracking: this.settings.get('lunnenDisplayTracking') || 0,
+                useXHeight: false // Lunnen Display всегда использует capHeight (нет строчных букв)
             }
         };
 

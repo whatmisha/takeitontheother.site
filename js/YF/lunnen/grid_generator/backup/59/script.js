@@ -587,7 +587,7 @@ class GridGenerator {
                 unitsPerEm: 1000
             },
             // Lunnen Display metrics (x-height similar to TT Commons)
-            'Lunnen Display 251106': {
+            'Lunnen Display': {
                 capHeight: 630,
                 xHeight: 447,
                 unitsPerEm: 1000
@@ -4960,7 +4960,7 @@ class GridGenerator {
     // Get font family for a specific style
     getFontFamilyForStyle(styleRef) {
         if (styleRef === 'lunnenDisplay') {
-            return 'Lunnen Display 251106';
+            return 'Lunnen Display';
         }
         return 'TT Commons Classic';
     }

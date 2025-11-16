@@ -14,9 +14,9 @@
 }
 
 @font-face {
-    font-family: 'Lunnen Display 251106';
-    src: url('fonts/LunnenDisplay.woff2') format('woff2'),
-         url('fonts/LunnenDisplay.ttf') format('truetype');
+    font-family: 'Lunnen Display';
+    src: url('fonts/LunnenDisplay-VariableVF.woff2') format('woff2'),
+         url('fonts/LunnenDisplay-VariableVF.ttf') format('truetype');
     font-weight: 100 400;
     font-style: normal;
     font-display: swap;
