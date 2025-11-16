@@ -447,37 +447,5 @@ export class SVGExporter {
             graphicsBlocks: graphicsBlocks
         };
     }
-
-    /**
-     * Экспорт SVG для стикера
-     * @param {SVGElement} svgElement
-     * @returns {string} - Строка с SVG контентом
-     */
-    exportStickerSVG(svgElement) {
-        // Клонируем SVG элемент
-        const clonedSvg = svgElement.cloneNode(true);
-        
-        // Удаляем интерактивные элементы
-        this.removeInteractiveElements(clonedSvg);
-        
-        // Добавляем метаданные для Adobe Illustrator
-        const width = this.settings.get('width') || 120;
-        const height = this.settings.get('height') || 25;
-        
-        clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-        clonedSvg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-        clonedSvg.setAttribute('width', `${width}mm`);
-        clonedSvg.setAttribute('height', `${height}mm`);
-        clonedSvg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-        
-        // Сериализуем SVG в строку
-        const serializer = new XMLSerializer();
-        let svgString = serializer.serializeToString(clonedSvg);
-        
-        // Добавляем XML declaration и DOCTYPE
-        svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgString;
-        
-        return svgString;
-    }
 }
 

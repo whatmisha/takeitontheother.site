@@ -3169,11 +3169,14 @@ class GridGenerator {
                 });
                 
                 newInput.addEventListener('change', () => {
+                    // Resolve property name if it's a function
+                    const propName = typeof property === 'function' ? property(block) : property;
+                    
                     let value = parseFloat(newInput.value);
                     if (isNaN(value)) {
-                        value = property === 'baseline' 
+                        value = propName === 'baseline' 
                             ? (this.rowBaselineToY(block.row, block.baselineOffset) + 1)
-                            : block[property];
+                            : block[propName];
                     }
                     
                     // Apply constraints
@@ -3182,10 +3185,10 @@ class GridGenerator {
                     }
                     
                     // Update the block property
-                    if (property === 'baseline') {
+                    if (propName === 'baseline') {
                         // Already handled in applyConstraints
                     } else {
-                        block[property] = value;
+                        block[propName] = value;
                     }
                     
                     // Update input display
@@ -3195,6 +3198,9 @@ class GridGenerator {
                 });
                 
                 newInput.addEventListener('keydown', (e) => {
+                    // Resolve property name if it's a function
+                    const propName = typeof property === 'function' ? property(block) : property;
+                    
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         newInput.blur();
@@ -3204,13 +3210,13 @@ class GridGenerator {
                         
                         // Restore original value
                         const originalValue = parseFloat(newInput.dataset.originalValue);
-                        if (property === 'baseline') {
+                        if (propName === 'baseline') {
                             const rowHeight = this.settings.rowHeight;
                             const { row, baselineOffset } = this.yToRowBaseline(originalValue - 1);
                             block.row = row;
                             block.baselineOffset = baselineOffset;
                         } else {
-                            block[property] = originalValue;
+                            block[propName] = originalValue;
                         }
                         
                         newInput.blur();
@@ -3220,9 +3226,9 @@ class GridGenerator {
                         
                         let currentValue = parseFloat(newInput.value);
                         if (isNaN(currentValue)) {
-                            currentValue = property === 'baseline' 
+                            currentValue = propName === 'baseline' 
                                 ? (this.rowBaselineToY(block.row, block.baselineOffset) + 1)
-                                : block[property];
+                                : block[propName];
                         }
                         
                         const step = e.shiftKey ? shiftStep : baseStep;
@@ -3235,10 +3241,10 @@ class GridGenerator {
                         }
                         
                         // Update the block property
-                        if (property === 'baseline') {
+                        if (propName === 'baseline') {
                             // Already handled in applyConstraints
                         } else {
-                            block[property] = newValue;
+                            block[propName] = newValue;
                         }
                         
                         // Update input display
@@ -3623,7 +3629,7 @@ class GridGenerator {
                 if (this.currentEditingGraphicsId) {
                     const blockId = this.currentEditingGraphicsId;
                     const block = this.getGraphicsBlock(blockId);
-                    if (block && !block.isBuiltIn) {
+                    if (block) {
                         const name = block.name || 'Graphic';
                         
                         // Close panel first
@@ -3922,8 +3928,8 @@ class GridGenerator {
                 // If editing existing graphics block, update it immediately
                 if (this.currentEditingGraphicsId) {
                     const block = this.getGraphicsBlock(this.currentEditingGraphicsId);
-                    if (block && !block.isBuiltIn) {
-                        // Update the block with new SVG data
+                    if (block) {
+                        // Update the block with new SVG data (works for all graphics including built-in)
                         block.svgContent = processedContent;
                         block.name = this.uploadedSvgData.name;
                         block.originalWidth = width;
@@ -5582,12 +5588,8 @@ class GridGenerator {
         }
         
         if (graphicsDeleteBtn) {
-            // Only show delete button for custom graphics (not built-in like icons or claim)
-            if (!block.isBuiltIn) {
-                graphicsDeleteBtn.style.display = 'flex';
-            } else {
-                graphicsDeleteBtn.style.display = 'none';
-            }
+            // Show delete button for all graphics (including built-in)
+            graphicsDeleteBtn.style.display = 'flex';
         }
         
         // Также показываем/скрываем кнопку скрытия (она работает для всех типов)
@@ -6752,13 +6754,8 @@ class GridGenerator {
                     if (this.graphicsBlocks) {
                         const index = this.graphicsBlocks.findIndex(b => b.id === blockId);
                         if (index !== -1) {
-                            // Нельзя удалять встроенные блоки (icons, claim)
-                            const block = this.graphicsBlocks[index];
-                            if (!block.isBuiltIn) {
-                                this.graphicsBlocks.splice(index, 1);
-                            } else {
-                                console.warn(`[DELETE] Cannot delete built-in graphics: ${blockId}`);
-                            }
+                            // Allow deletion of all graphics blocks (including built-in)
+                            this.graphicsBlocks.splice(index, 1);
                         }
                     }
                 }
@@ -6790,15 +6787,10 @@ class GridGenerator {
             // Unified handling for all graphics types
             const index = this.graphicsBlocks?.findIndex(b => b.id === blockId);
             if (index !== -1) {
-                const block = this.graphicsBlocks[index];
-                // Нельзя удалять встроенные блоки (icons, claim)
-                if (!block.isBuiltIn) {
-                    this.graphicsBlocks.splice(index, 1);
-                    this.updateElementsNavigator();
-                    this.updateGrid();
-                } else {
-                    console.warn(`[DELETE] Cannot delete built-in graphics: ${blockId}`);
-                }
+                // Allow deletion of all graphics blocks (including built-in)
+                this.graphicsBlocks.splice(index, 1);
+                this.updateElementsNavigator();
+                this.updateGrid();
             }
         }
     }

@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Info Sticker Generator — Генератор информационных стикеров">
-    <meta name="keywords" content="grid generator, sticker, packaging, print design, SVG">
+    <meta name="description" content="Pizza Boxer — Packaging Layout Tool">
+    <meta name="keywords" content="grid generator, packaging, print design, Adobe Illustrator, SVG">
     
-    <title>Info Sticker Generator</title>
+    <title>Pizza Boxer — Packaging Layout Tool</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,17 +15,27 @@
             <a href="/js/YF/" class="yf-tools-link" aria-label="Back to YF Tools">
                 ←YF Tools
             </a>
-            <div class="tool-title">Info Sticker Generator</div>
+            <div class="preset-dropdown" id="presetDropdown">
+                <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="preset-dropdown-text">Loading presets...</span>
+                    <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox">
+                    <!-- Options will be populated by JavaScript -->
+                </ul>
+            </div>
+            <button class="zoom-indicator" id="zoomIndicator" aria-label="Reset zoom to 100%">100%</button>
         </div>
         <div class="main-content">
             <div class="canvas-container" id="canvasContainer">
                 <svg id="gridSvg" xmlns="http://www.w3.org/2000/svg"></svg>
             </div>
 
-            <!-- Grid Panel (Right) -->
             <aside class="controls-panel" id="gridPanel" role="complementary" aria-label="Grid settings">
                 <div class="panel-header" id="gridPanelHeader">
-                    <span>Grid <span class="panel-params" id="gridParams">4.17 mm</span></span>
+                    <span>Grid <span class="panel-params" id="gridParams">5.05 mm</span></span>
                     <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
                         <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -37,33 +47,71 @@
                         <div class="control-group">
                             <label for="gridModuleSlider">
                                 <span>Module <span class="unit">mm</span></span>
-                                <input type="text" class="value-display" id="gridModuleValue" value="4.1667" data-min="0.5" data-max="10" aria-label="Grid module">
+                                <input type="text" class="value-display" id="gridModuleValue" value="5.0505" data-min="0.5" data-max="20" aria-label="Grid module">
                             </label>
-                            <input type="range" id="gridModuleSlider" min="0.5" max="10" step="0.0001" value="4.1667" aria-label="Grid module slider">
+                            <input type="range" id="gridModuleSlider" min="0.5" max="20" step="0.0001" value="5.0505" aria-label="Grid module slider">
                         </div>
                         
                         <div class="control-group">
                             <label for="marginsSlider">
-                                <span>Margins <span class="unit">mm</span></span>
-                                <input type="text" class="value-display" id="marginsValue" value="3.00" data-min="0" data-max="20" aria-label="Margins in millimeters">
+                                <span>Margins 
+                                    <span class="unit-buttons">
+                                        <button type="button" class="unit-btn active" data-unit="mod" id="marginsUnitMod">mod</button>
+                                        <button type="button" class="unit-btn" data-unit="mm" id="marginsUnitMm">mm</button>
+                                    </span>
+                                </span>
+                                <input type="text" class="value-display" id="marginsValue" value="2.00" data-min="0" data-max="10" aria-label="Margins in modules">
                             </label>
-                            <input type="range" id="marginsSlider" min="0" max="20" step="0.1" value="3" aria-label="Margins slider">
+                            <input type="range" id="marginsSlider" min="0" max="10" step="0.01" value="2" aria-label="Margins slider">
                         </div>
                         
                         <div class="control-group">
                             <label for="columnCountSlider">
                                 <span>Columns</span>
-                                <input type="text" class="value-display" id="columnCountValue" value="3" data-min="1" data-max="12" aria-label="Column count">
+                                <input type="text" class="value-display" id="columnCountValue" value="12" data-min="1" data-max="24" aria-label="Column count">
                             </label>
-                            <input type="range" id="columnCountSlider" min="1" max="12" step="1" value="3" aria-label="Column count slider">
+                            <input type="range" id="columnCountSlider" min="1" max="24" step="1" value="12" aria-label="Column count slider">
                         </div>
                         
-                        <div class="control-group">
-                            <label for="baselineModulesSlider">
-                                <span>Baseline Modules</span>
-                                <input type="text" class="value-display" id="baselineModulesValue" value="6" data-min="1" data-max="20" aria-label="Baseline modules count">
-                            </label>
-                            <input type="range" id="baselineModulesSlider" min="1" max="20" step="1" value="6" aria-label="Baseline modules slider">
+                        <div id="linkedControlsContainer">
+                            <div class="control-group">
+                                <label for="rowCountSlider">
+                                    <span>Rows</span>
+                                    <input type="text" class="value-display" id="rowCountValue" value="12" data-min="1" data-max="50" aria-label="Row count">
+                                </label>
+                                <input type="range" id="rowCountSlider" min="1" max="50" step="1" value="12" aria-label="Row count slider">
+                            </div>
+                            
+                            <div class="control-group">
+                                <label for="rowHeightSlider">
+                                    <span>Row Height <span class="unit">mod</span></span>
+                                    <input type="text" class="value-display" id="rowHeightValue" value="7" data-min="1" data-max="20" aria-label="Row height in modules">
+                                </label>
+                                <input type="range" id="rowHeightSlider" min="1" max="20" step="1" value="7" aria-label="Row height slider">
+                            </div>
+                            
+                            <div class="control-group">
+                                <div id="rowPresetsContainer" class="row-presets"></div>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label>
+                                    <span>Link Mode</span>
+                                </label>
+                                <fieldset>
+                                    <legend class="sr-only">Link mode selection</legend>
+                                    <div class="segmented-control" role="radiogroup" aria-label="Link mode selection">
+                                        <input type="radio" name="linkMode" value="off" id="linkModeOff" aria-label="No linking">
+                                        <label for="linkModeOff">Off</label>
+                                        
+                                        <input type="radio" name="linkMode" value="rows-height" id="linkModeRowsHeight" aria-label="Link rows and row height">
+                                        <label for="linkModeRowsHeight">R⇄RH</label>
+                                        
+                                        <input type="radio" name="linkMode" value="module" id="linkModeModule" checked aria-label="Link rows, row height and module">
+                                        <label for="linkModeModule">RRH⇄Mod</label>
+                                    </div>
+                                </fieldset>
+                            </div>
                         </div>
                     </section>
                     
@@ -76,6 +124,10 @@
                                     <span>Columns</span>
                                 </label>
                                 <label class="toggle-chip">
+                                    <input type="checkbox" id="showRows" checked aria-label="Show rows">
+                                    <span>Rows</span>
+                                </label>
+                                <label class="toggle-chip">
                                     <input type="checkbox" id="showBaseline" checked aria-label="Show baseline grid">
                                     <span>Baseline</span>
                                 </label>
@@ -85,10 +137,9 @@
                 </div>
             </aside>
 
-            <!-- Dimensions Panel (Left) -->
             <aside class="controls-panel controls-panel-left" id="controlsPanel" role="complementary" aria-label="Dimensions settings">
                 <div class="panel-header" id="panelHeader">
-                    <span>Dimensions <span class="panel-params" id="dimensionsParams">120×25 mm</span></span>
+                    <span>Dimensions <span class="panel-params" id="dimensionsParams"></span></span>
                     <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
                         <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -98,28 +149,40 @@
                 <div class="panel-content">
                     <section class="control-section">
                         <div class="control-group">
-                            <label for="widthSlider">
-                                <span>Width <span class="unit">mm</span></span>
-                                <input type="text" class="value-display" id="widthValue" value="120" data-min="50" data-max="300" aria-label="Width value">
+                            <label for="frontWidthSlider">
+                                <span>Width</span>
+                                <input type="text" class="value-display" id="frontWidthValue" value="500" data-min="50" data-max="1000" aria-label="Front width value">
                             </label>
-                            <input type="range" id="widthSlider" min="50" max="300" step="0.5" value="120" aria-label="Width slider">
+                            <input type="range" id="frontWidthSlider" min="50" max="1000" step="0.5" value="500" aria-label="Front width slider" aria-valuemin="50" aria-valuemax="1000" aria-valuenow="500">
                         </div>
                         
                         <div class="control-group">
-                            <label for="heightSlider">
-                                <span>Height <span class="unit">mm</span></span>
-                                <input type="text" class="value-display" id="heightValue" value="25" data-min="10" data-max="100" aria-label="Height value">
+                            <label for="frontHeightSlider">
+                                <span>Height</span>
+                                <input type="text" class="value-display" id="frontHeightValue" value="500" data-min="50" data-max="1000" aria-label="Front height value">
                             </label>
-                            <input type="range" id="heightSlider" min="10" max="100" step="0.5" value="25" aria-label="Height slider">
+                            <input type="range" id="frontHeightSlider" min="50" max="1000" step="0.5" value="500" aria-label="Front height slider" aria-valuemin="50" aria-valuemax="1000" aria-valuenow="500">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="thicknessSlider">
+                                <span>Thickness</span>
+                                <input type="text" class="value-display" id="thicknessValue" value="50" data-min="5" data-max="200" aria-label="Thickness value">
+                            </label>
+                            <input type="range" id="thicknessSlider" min="5" max="200" step="0.5" value="50" aria-label="Thickness slider" aria-valuemin="5" aria-valuemax="200" aria-valuenow="50">
                         </div>
                     </section>
 
                     <section class="control-section" aria-labelledby="color-heading">
-                        <h3 id="color-heading">Background Color</h3>
+                        <h3 id="color-heading" class="sr-only">Color Settings</h3>
                         <div class="control-group">
+                            <div class="control-group-header">
+                                <span class="control-label">Background Color</span>
+                                <button type="button" class="color-preset" id="lunnenBlue" aria-label="Apply Lunnen Blue preset color">Lunnen Blue</button>
+                            </div>
                             <div class="color-input-group">
                                 <button type="button" class="color-preview" id="colorPreview" aria-label="Open color picker"></button>
-                                <input type="text" id="hexColorInput" value="#ffffff" placeholder="#ffffff" maxlength="7" aria-label="Hex color code input">
+                                <input type="text" id="hexColorInput" value="#808080" placeholder="#808080" maxlength="7" aria-label="Hex color code input">
                             </div>
                         </div>
                         
@@ -145,11 +208,20 @@
                                 <div class="hsb-control-group">
                                     <label for="brightnessSlider">
                                         <span>Brightness</span>
-                                        <input type="text" class="value-display hsb-value" id="brightnessValue" value="100" data-min="0" data-max="100" data-suffix="%" aria-label="Brightness value">
+                                        <input type="text" class="value-display hsb-value" id="brightnessValue" value="0" data-min="0" data-max="100" data-suffix="%" aria-label="Brightness value">
                                     </label>
-                                    <input type="range" id="brightnessSlider" min="0" max="100" step="1" value="100">
+                                    <input type="range" id="brightnessSlider" min="0" max="100" step="1" value="0">
                                 </div>
                             </div>
+                        </div>
+                    </section>
+
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showSidePanels" checked aria-label="Show sides">
+                                <span>Show sides</span>
+                            </label>
                         </div>
                     </section>
                 </div>
@@ -161,42 +233,447 @@
         <button class="btn-fixed btn-export" id="exportBtn" aria-label="Export SVG (Command/Control + E)">
             Export SVG ⌘E
         </button>
+        <button class="btn-fixed btn-export-settings" id="exportSettingsBtn" aria-label="Export Settings">
+            Export Settings
+        </button>
+        <button class="btn-fixed btn-import-settings" id="importSettingsBtn" aria-label="Import Settings">
+            Import Settings
+        </button>
+        
         <button class="btn-fixed btn-help" id="helpButton" aria-label="Show instructions">
             ?
         </button>
     </nav>
 
+    <!-- Elements Navigator Panel -->
+    <aside class="controls-panel elements-navigator" id="elementsNavigator" role="complementary" aria-label="Elements navigator">
+        <div class="panel-header" id="elementsNavigatorHeader">
+            <span>Objects <span class="panel-params" id="objectsParams"></span></span>
+            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
+                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+        </div>
+        <div class="panel-content">
+            <div class="elements-list" id="elementsList"></div>
+            
+            <section class="control-section">
+                <div class="control-group">
+                    <div class="button-group">
+                        <button type="button" class="btn-add-object" id="addTextBtn">Add Text</button>
+                        <button type="button" class="btn-add-object" id="addGraphicsBtn">Add Graphics</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="showObjects" checked aria-label="Show all objects">
+                        <span>Show objects</span>
+                    </label>
+                </div>
+            </section>
+        </div>
+    </aside>
+
+    <aside class="controls-panel controls-panel-text" id="textPanel" role="complementary" aria-label="Text styles settings">
+        <div class="panel-header" id="textPanelHeader">
+            <span>Text Styles <span class="panel-params" id="textStylesParams"></span></span>
+            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
+                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+        </div>
+        <div class="panel-content">
+            <section class="control-section">
+                <h3 class="collapsible-header" id="headlineHeader">
+                    <span>Headline <span class="font-size-display" id="headlineFontSize">0/0 pt</span></span>
+                    <button type="button" class="collapse-toggle" aria-label="Toggle headline settings" aria-expanded="false">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </h3>
+                
+                <div class="collapsible-content collapsed" id="headlineContent">
+                <div class="control-group">
+                    <label for="headlineStyleDropdown">
+                        <select id="headlineStyleDropdown" class="style-select" aria-label="Select font weight">
+                            <option value="500">Medium</option>
+                            <option value="400">Regular</option>
+                        </select>
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="headlineSizeSlider">
+                        <span>Size <span class="unit">mod</span></span>
+                            <input type="text" class="value-display" id="headlineSizeValue" value="1.00" data-min="0.25" data-max="10" aria-label="Headline size in modules">
+                    </label>
+                    <input type="range" id="headlineSizeSlider" min="0.25" max="10" step="0.25" value="1" aria-label="Headline size slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="lineHeightSlider">
+                        <span>Line Height <span class="unit">mod</span></span>
+                        <input type="text" class="value-display" id="lineHeightValue" value="2.00" data-min="0.25" data-max="10" aria-label="Line height in modules">
+                    </label>
+                    <input type="range" id="lineHeightSlider" min="0.25" max="10" step="0.25" value="2" aria-label="Line height slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="trackingSlider">
+                        <span>Tracking <span class="unit">em</span></span>
+                        <input type="text" class="value-display" id="trackingValue" value="-0.015" data-min="-0.05" data-max="0.05" aria-label="Tracking in em units">
+                    </label>
+                    <input type="range" id="trackingSlider" min="-0.05" max="0.05" step="0.005" value="-0.015" aria-label="Tracking slider">
+                </div>
+                
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="useXHeight" checked aria-label="Use x-height for measurement">
+                        <span>x-height</span>
+                    </label>
+                </div>
+                </div>
+            </section>
+            
+            <section class="control-section">
+                <h3 class="collapsible-header" id="textHeader">
+                    <span>Text <span class="font-size-display" id="textFontSize">0/0 pt</span></span>
+                    <button type="button" class="collapse-toggle" aria-label="Toggle text settings" aria-expanded="false">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </h3>
+                
+                <div class="collapsible-content collapsed" id="textContent">
+                <div class="control-group">
+                    <label for="textStyleDropdown">
+                        <select id="textStyleDropdown" class="style-select" aria-label="Select font weight">
+                            <option value="500" selected>Medium</option>
+                            <option value="400">Regular</option>
+                        </select>
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="textSizeSlider">
+                        <span>Size <span class="unit">mod</span></span>
+                            <input type="text" class="value-display" id="textSizeValue" value="1.00" data-min="0.25" data-max="10" aria-label="Text size in modules">
+                    </label>
+                    <input type="range" id="textSizeSlider" min="0.25" max="10" step="0.25" value="1" aria-label="Text size slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="textLineHeightSlider">
+                        <span>Line Height <span class="unit">mod</span></span>
+                        <input type="text" class="value-display" id="textLineHeightValue" value="2.00" data-min="0.25" data-max="10" aria-label="Text line height in modules">
+                    </label>
+                    <input type="range" id="textLineHeightSlider" min="0.25" max="10" step="0.25" value="2" aria-label="Text line height slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="textTrackingSlider">
+                        <span>Tracking <span class="unit">em</span></span>
+                        <input type="text" class="value-display" id="textTrackingValue" value="0.00" data-min="-0.05" data-max="0.05" aria-label="Text tracking in em units">
+                    </label>
+                    <input type="range" id="textTrackingSlider" min="-0.05" max="0.05" step="0.01" value="0" aria-label="Text tracking slider">
+                </div>
+                
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="useXHeight2" aria-label="Use x-height for measurement">
+                        <span>x-height</span>
+                    </label>
+                </div>
+                </div>
+            </section>
+        </div>
+    </aside>
+
+    <!-- Paragraph Settings Panel -->
+    <aside class="controls-panel paragraph-settings-panel" id="paragraphPanel" style="display: none;" role="complementary" aria-label="Paragraph settings">
+        <div class="panel-header" id="paragraphPanelHeader">
+            <span id="paragraphPanelTitle">Paragraph Settings</span>
+            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
+                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+        </div>
+        <div class="panel-content">
+            <section class="control-section">
+                <h3>Text Style</h3>
+                
+                <div class="control-group">
+                    <label for="paragraphStyleSelect">
+                        <select id="paragraphStyleSelect" class="style-select" aria-label="Text style">
+                            <option value="headline">Headline</option>
+                            <option value="text">Text</option>
+                        </select>
+                    </label>
+                </div>
+            </section>
+            
+            <section class="control-section">
+                <h3>Position & Size</h3>
+                
+                <div class="control-group">
+                    <label for="paragraphXInput">
+                        <span>Column</span>
+                        <input type="text" class="value-display" id="paragraphXInput" value="1" data-min="1" data-max="12" aria-label="Column position">
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="paragraphRowInput">
+                        <span>Row</span>
+                        <input type="text" class="value-display" id="paragraphRowInput" value="1" data-min="1" data-max="50" aria-label="Row position">
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="paragraphBaselineInput">
+                        <span>Baseline</span>
+                        <input type="text" class="value-display" id="paragraphBaselineInput" value="1" data-min="1" data-max="500" aria-label="Baseline position on grid">
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="paragraphWidthInput">
+                        <span>Width <span class="unit">col</span></span>
+                        <input type="text" class="value-display" id="paragraphWidthInput" value="6" data-min="0.25" data-max="12" data-step="0.25" aria-label="Width in columns">
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label>
+                        <span>Alignment Mode</span>
+                    </label>
+                    <fieldset>
+                        <legend class="sr-only">Text alignment mode</legend>
+                        <div class="segmented-control" role="radiogroup" aria-label="Alignment mode selection">
+                            <input type="radio" name="alignmentMode" value="baseline" id="alignmentModeBaseline" checked aria-label="Baseline alignment">
+                            <label for="alignmentModeBaseline">Baseline</label>
+                            
+                            <input type="radio" name="alignmentMode" value="x-height" id="alignmentModeXHeight" aria-label="X-height alignment">
+                            <label for="alignmentModeXHeight">X-Height</label>
+                        </div>
+                    </fieldset>
+                </div>
+                
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="paragraphLockPositionToggle" aria-label="Constrain to grid">
+                        <span>Constrain to Grid</span>
+                    </label>
+                </div>
+            </section>
+            
+            <section class="control-section">
+                <h3>Actions</h3>
+                
+                <div class="control-group">
+                    <div class="button-group">
+                        <button type="button" class="btn-add-object" id="paragraphHideBtn" aria-label="Hide paragraph">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
+                                <path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+                                <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                            Hide
+                        </button>
+                        <button type="button" class="btn-add-object" id="paragraphDeleteBtn" aria-label="Delete paragraph">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
+                                <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1m2 0v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h10z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="control-section">
+                <h3>Text Content</h3>
+                
+                <div class="control-group">
+                    <textarea id="paragraphTextArea" placeholder="Enter text here..." rows="7" aria-label="Paragraph text"></textarea>
+                    <div class="textarea-footer">
+                        <div class="button-group">
+                            <button type="button" class="btn-apply" id="paragraphApplyBtn">Apply</button>
+                            <button type="button" class="btn-close" id="paragraphCloseBtn">Close</button>
+                        </div>
+                        <span class="char-counter" id="charCounter">0 characters</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </aside>
+
+    <!-- Graphics Upload Panel -->
+    <aside class="controls-panel paragraph-settings-panel" id="graphicsPanel" style="display: none;" role="complementary" aria-label="Graphics upload">
+        <div class="panel-header" id="graphicsPanelHeader">
+            <span id="graphicsPanelTitle">Add Graphics</span>
+            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
+                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+        </div>
+        <div class="panel-content">
+            <section class="control-section">
+                <h3>Upload SVG</h3>
+                
+                <div class="control-group">
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <input type="file" id="svgFileInput" accept=".svg" style="display: none;">
+                        <div class="upload-placeholder">
+                            <p>Click or drag & drop SVG file here</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="control-section">
+                <h3>Position & Size</h3>
+                
+                <div class="control-group">
+                    <label for="graphicsXInput">
+                        <span>Column</span>
+                        <input type="text" class="value-display" id="graphicsXInput" value="1" data-min="1" data-max="12" aria-label="Column position">
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="graphicsRowInput">
+                        <span>Row</span>
+                        <input type="text" class="value-display" id="graphicsRowInput" value="1" data-min="1" data-max="50" aria-label="Row position">
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="graphicsBaselineInput">
+                        <span>Baseline</span>
+                        <input type="text" class="value-display" id="graphicsBaselineInput" value="1" data-min="1" data-max="500" aria-label="Baseline position on grid">
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="graphicsHeightInput">
+                        <span>Height <span class="unit">mod</span></span>
+                        <input type="text" class="value-display" id="graphicsHeightInput" value="3" data-min="1" data-max="20" data-step="0.25" aria-label="Height in modules">
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="graphicsLockPositionToggle" aria-label="Constrain to grid">
+                        <span>Constrain to Grid</span>
+                    </label>
+                </div>
+            </section>
+            
+            <section class="control-section">
+                <h3>Actions</h3>
+                
+                <div class="control-group">
+                    <div class="button-group">
+                        <button type="button" class="btn-add-object" id="graphicsHideBtn" aria-label="Hide graphics" style="display: none;">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
+                                <path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+                                <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                            Hide
+                        </button>
+                        <button type="button" class="btn-add-object" id="graphicsDeleteBtn" aria-label="Delete graphics" style="display: none;">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
+                                <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1m2 0v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h10z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="control-section">
+                <div class="control-group">
+                    <div class="button-group">
+                        <button type="button" class="btn-apply" id="graphicsApplyBtn">Add</button>
+                        <button type="button" class="btn-close" id="graphicsCloseBtn">Close</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </aside>
+
     <!-- Instructions Modal -->
     <div class="modal-overlay" id="modalOverlay" aria-hidden="true">
         <div class="modal-content" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
             <button class="modal-close" id="modalClose" aria-label="Close instructions">&times;</button>
-            <h2 id="modalTitle">Info Sticker Generator</h2>
+            <h2 id="modalTitle">🍕🥊 Pizza Boxer</h2>
             <div class="modal-body">
-                <p>Генератор информационных стикеров на основе модульной сетки Lunnen.</p>
+                <p>Modular grid generator for packaging design based on the Lunnen system.</p>
                 
-                <h3>Размеры</h3>
-                <p><strong>Width</strong> и <strong>Height</strong> задают размеры стикера в миллиметрах.</p>
+                <h3>Canvas Dimensions</h3>
+                <p><strong>Front Width</strong> and <strong>Front Height</strong> define the working area dimensions in millimeters.</p>
+                <p><strong>Thickness</strong> sets the depth of side panels.</p>
                 
-                <h3>Модульная сетка</h3>
-                <p><strong>Module</strong> (в мм) — базовая единица сетки. Управляет:</p>
+                <h3>Grid Module</h3>
+                <p>The <strong>Module</strong> (in mm) is the base unit of the grid system. It controls:</p>
                 <ul>
-                    <li><strong>Baseline Grid</strong> — минимальный шаг сетки</li>
-                    <li><strong>Spacing</strong> — отступы между колонками</li>
-                    <li><strong>Margins</strong> — отступы от краёв</li>
+                    <li><strong>Baseline Grid</strong> — Minimum grid step</li>
+                    <li><strong>Spacing</strong> — Gaps between columns and rows</li>
+                    <li><strong>Margins</strong> — Distance from edges</li>
+                    <li><strong>Row Height</strong> — Height of each row in modules</li>
                 </ul>
                 
-                <h3>Колонки и бейслайн</h3>
-                <p><strong>Columns</strong> — вертикальные деления с отступами между ними.</p>
-                <p><strong>Baseline</strong> — сетка для выравнивания по вертикали.</p>
+                <h3>Rows and Columns</h3>
+                <p><strong>Columns</strong> — Vertical divisions with gutters between them.</p>
+                <p><strong>Rows</strong> — Horizontal divisions based on the module and row height.</p>
+                <p><strong>Baseline</strong> — Fine grid for aligning text to a vertical rhythm.</p>
                 
-                <h3>Экспорт SVG</h3>
-                <p>Нажмите <strong>Export SVG</strong> для загрузки сетки. Файл открывается в Adobe Illustrator с точными размерами в миллиметрах.</p>
-                
-                <h3>Горячие клавиши</h3>
+                <h3>Link Modes</h3>
+                <p>Control how parameters relate to each other:</p>
                 <ul>
-                    <li><strong>Cmd/Ctrl + E</strong> — Экспорт SVG</li>
-                    <li><strong>Arrow keys</strong> — Изменение значений слайдеров</li>
-                    <li><strong>Shift + Arrow keys</strong> — Изменение с большим шагом</li>
+                    <li><strong>Off</strong> — All parameters are independent</li>
+                    <li><strong>Rows × Height</strong> — Row count and row height are linked. Changing one recalculates the other to fit the canvas height</li>
+                    <li><strong>Module</strong> — Module is automatically calculated from canvas height, row count, and row height</li>
+                </ul>
+                
+                <h3>Row Presets</h3>
+                <p>When link mode is enabled, the interface displays combinations where rows fit the canvas height with exact module alignment.</p>
+                
+                <h3>Export SVG</h3>
+                <p>Click <strong>Export SVG</strong> to download the grid. The file opens in Adobe Illustrator with accurate millimeter dimensions. Grid elements (columns, rows, baseline) are grouped separately and can be shown/hidden as needed.</p>
+                
+                <h3>Export Settings</h3>
+                <p>Click <strong>Export Settings</strong> to save current configuration as a JSON file. The file includes all parameters, text blocks, and graphic elements.</p>
+                
+                <h3>Import Settings</h3>
+                <p>Click <strong>Import Settings</strong> to load a previously saved JSON file. This restores the complete state including all objects and parameters.</p>
+                
+                <h3>Zoom and Pan</h3>
+                <p>Navigate the canvas like in Figma (optimized for Apple Magic Mouse):</p>
+                <ul>
+                    <li><strong>Scroll/Swipe</strong> — Pan the canvas (horizontal and vertical)</li>
+                    <li><strong>Cmd/Ctrl + Scroll</strong> — Zoom in/out (centered on cursor)</li>
+                    <li><strong>Space + drag</strong> — Alternative pan method</li>
+                    <li><strong>Middle mouse button + drag</strong> — Alternative pan method</li>
+                    <li><strong>Cmd/Ctrl + 0</strong> — Fit to screen</li>
+                    <li><strong>Cmd/Ctrl + 1</strong> — Reset zoom to 100%</li>
+                    <li><strong>Cmd/Ctrl + Plus</strong> — Zoom in</li>
+                    <li><strong>Cmd/Ctrl + Minus</strong> — Zoom out</li>
+                </ul>
+                
+                <h3>Keyboard Shortcuts</h3>
+                <ul>
+                    <li><strong>Cmd/Ctrl + E</strong> — Export SVG</li>
+                    <li><strong>Arrow keys</strong> — Adjust slider values</li>
+                    <li><strong>Shift + Arrow keys</strong> — Adjust with larger step</li>
                 </ul>
             </div>
         </div>
@@ -205,5 +682,4 @@
     <script type="module" src="script.js"></script>
 </body>
 </html>
-
 
