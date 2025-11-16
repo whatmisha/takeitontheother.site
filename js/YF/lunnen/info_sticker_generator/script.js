@@ -540,6 +540,7 @@ class GridGenerator {
         // ============================================
         // Presets (Итерация 10)
         // ============================================
+        this.defaultPresetFile = 'New.json';
         this.availablePresets = [];
         this.loadPresetsManifest();
         
@@ -2004,9 +2005,14 @@ class GridGenerator {
             }
         });
         
-        // Load first preset by default
+        // Load default preset (New.json) or fallback to the first available
         if (this.availablePresets.length > 0) {
-            this.selectPreset(this.availablePresets[0].file, this.availablePresets[0].name);
+            const desiredFile = (this.defaultPresetFile || '').toLowerCase();
+            const defaultPreset = this.availablePresets.find((preset) => {
+                return preset.file && preset.file.toLowerCase() === desiredFile;
+            });
+            const presetToLoad = defaultPreset || this.availablePresets[0];
+            this.selectPreset(presetToLoad.file, presetToLoad.name);
         }
     }
     

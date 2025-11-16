@@ -1,17 +1,17 @@
 {
-  "presetName": "Packaging 120×50mm, Module 3.00mm — 16.11.2025",
+  "presetName": "Packaging 120×24mm, Module 3.00mm — 16.11.2025",
   "version": "1.0",
-  "timestamp": "2025-11-16T22:26:06.548Z",
+  "timestamp": "2025-11-16T22:32:36.592Z",
   "dimensions": {
     "width": 120,
-    "height": 50,
-    "thickness": 5,
+    "height": 24,
+    "thickness": 0,
     "unit": "mm"
   },
   "texts": [
     {
       "id": "text",
-      "content": "Lunnen — бренд компьютерной техники и электроники, придуманный в Яндекс Фабрике. Сопровождает в исследованиях, работе и развлечениях.",
+      "content": "Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.",
       "style": "text",
       "position": {
         "column": 2,
@@ -20,7 +20,7 @@
       },
       "width": 1,
       "alignment": "left",
-      "alignmentMode": "x-height",
+      "alignmentMode": "baseline",
       "surface": "front",
       "showBounds": false
     }
@@ -30,7 +30,7 @@
     "margins": 1,
     "marginsUnit": "mod",
     "columns": 3,
-    "rows": 2,
+    "rows": 1,
     "rowHeight": 6,
     "linkMode": "module",
     "visibility": {
