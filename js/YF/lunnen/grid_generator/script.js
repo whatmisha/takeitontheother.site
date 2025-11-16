@@ -2357,6 +2357,17 @@ class GridGenerator {
             this.dom.paragraphStyleSelect.addEventListener('change', () => {
                 if (this.currentEditingBlock) {
                     this.currentEditingBlock.styleRef = this.dom.paragraphStyleSelect.value;
+                    
+                    // Показываем/скрываем секцию настроек Lunnen Display
+                    const lunnenDisplayFeaturesSection = document.getElementById('lunnenDisplayFeaturesSection');
+                    if (lunnenDisplayFeaturesSection) {
+                        if (this.dom.paragraphStyleSelect.value === 'lunnenDisplay') {
+                            lunnenDisplayFeaturesSection.style.display = 'block';
+                        } else {
+                            lunnenDisplayFeaturesSection.style.display = 'none';
+                        }
+                    }
+                    
                     this.updateElementsNavigator();
                     this.updateGrid();
                 }
@@ -2492,6 +2503,65 @@ class GridGenerator {
                 }
             });
         }
+        
+        // Обработчик для weight slider (Lunnen Display)
+        const lunnenDisplayWeightSlider = document.getElementById('lunnenDisplayWeightSlider');
+        const lunnenDisplayWeightValue = document.getElementById('lunnenDisplayWeightValue');
+        if (lunnenDisplayWeightSlider && lunnenDisplayWeightValue) {
+            // Обновление значения при изменении слайдера
+            lunnenDisplayWeightSlider.addEventListener('input', () => {
+                if (this.currentEditingBlock) {
+                    const weight = parseInt(lunnenDisplayWeightSlider.value);
+                    lunnenDisplayWeightValue.value = weight;
+                    this.currentEditingBlock.fontWeight = weight;
+                    this.updateGrid();
+                }
+            });
+            
+            // Обновление слайдера при изменении текстового поля
+            lunnenDisplayWeightValue.addEventListener('change', () => {
+                if (this.currentEditingBlock) {
+                    let weight = parseInt(lunnenDisplayWeightValue.value);
+                    weight = Math.max(100, Math.min(400, weight));
+                    lunnenDisplayWeightValue.value = weight;
+                    lunnenDisplayWeightSlider.value = weight;
+                    this.currentEditingBlock.fontWeight = weight;
+                    this.updateGrid();
+                }
+            });
+        }
+        
+        // Обработчики для OpenType features checkboxes
+        const featureCheckboxes = [
+            { id: 'featureSalt', key: 'salt' },
+            { id: 'featureAalt', key: 'aalt' },
+            { id: 'featureSs01', key: 'ss01' },
+            { id: 'featureSs02', key: 'ss02' },
+            { id: 'featureTnum', key: 'tnum' },
+            { id: 'featureDlig', key: 'dlig' }
+        ];
+        
+        featureCheckboxes.forEach(({ id, key }) => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) {
+                checkbox.addEventListener('change', () => {
+                    if (this.currentEditingBlock) {
+                        if (!this.currentEditingBlock.fontFeatures) {
+                            this.currentEditingBlock.fontFeatures = {
+                                salt: false,
+                                aalt: false,
+                                ss01: false,
+                                ss02: false,
+                                tnum: false,
+                                dlig: false
+                            };
+                        }
+                        this.currentEditingBlock.fontFeatures[key] = checkbox.checked;
+                        this.updateGrid();
+                    }
+                });
+            }
+        });
         
         // Graphics Size Mode переключатели (Height/Width)
         if (this.dom.graphicsSizeUnitHeight) {
@@ -3629,6 +3699,42 @@ class GridGenerator {
         
         // Обновляем счетчик символов
         this.updateCharCounter();
+        
+        // Показываем/скрываем секцию настроек Lunnen Display в зависимости от выбранного стиля
+        const lunnenDisplayFeaturesSection = document.getElementById('lunnenDisplayFeaturesSection');
+        if (lunnenDisplayFeaturesSection) {
+            if (block.styleRef === 'lunnenDisplay') {
+                lunnenDisplayFeaturesSection.style.display = 'block';
+                
+                // Устанавливаем значения для weight slider
+                const weightSlider = document.getElementById('lunnenDisplayWeightSlider');
+                const weightValue = document.getElementById('lunnenDisplayWeightValue');
+                if (weightSlider && weightValue) {
+                    const weight = block.fontWeight || 400;
+                    weightSlider.value = weight;
+                    weightValue.value = weight;
+                }
+                
+                // Устанавливаем значения для OpenType features checkboxes
+                const features = block.fontFeatures || {
+                    salt: false,
+                    aalt: false,
+                    ss01: false,
+                    ss02: false,
+                    tnum: false,
+                    dlig: false
+                };
+                
+                document.getElementById('featureSalt').checked = features.salt || false;
+                document.getElementById('featureAalt').checked = features.aalt || false;
+                document.getElementById('featureSs01').checked = features.ss01 || false;
+                document.getElementById('featureSs02').checked = features.ss02 || false;
+                document.getElementById('featureTnum').checked = features.tnum || false;
+                document.getElementById('featureDlig').checked = features.dlig || false;
+            } else {
+                lunnenDisplayFeaturesSection.style.display = 'none';
+            }
+        }
         
         // Устанавливаем правильную иконку для кнопки Hide/Show
         const paragraphHideBtn = document.getElementById('paragraphHideBtn');
@@ -5347,13 +5453,33 @@ class GridGenerator {
         // Create text elements
         const textAttrs = {
             'font-family': `${fontFamily}, -apple-system, BlinkMacSystemFont, sans-serif`,
-            'font-weight': fontWeight.toString(),
+            'font-weight': (block.styleRef === 'lunnenDisplay' && block.fontWeight) ? block.fontWeight.toString() : fontWeight.toString(),
             'font-size': `${scaledFontSize}`,
             'text-anchor': 'start', // Always left-align text inside the block
             'fill': gridColor,
             'fill-opacity': '1',
             'letter-spacing': `${trackingSetting}em`
         };
+        
+        // Добавляем font-variation-settings для Lunnen Display
+        if (block.styleRef === 'lunnenDisplay' && block.fontWeight) {
+            textAttrs['font-variation-settings'] = `'wght' ${block.fontWeight}`;
+        }
+        
+        // Добавляем font-feature-settings для OpenType features
+        if (block.styleRef === 'lunnenDisplay' && block.fontFeatures) {
+            const features = [];
+            if (block.fontFeatures.salt) features.push('"salt" 1');
+            if (block.fontFeatures.aalt) features.push('"aalt" 1');
+            if (block.fontFeatures.ss01) features.push('"ss01" 1');
+            if (block.fontFeatures.ss02) features.push('"ss02" 1');
+            if (block.fontFeatures.tnum) features.push('"tnum" 1');
+            if (block.fontFeatures.dlig) features.push('"dlig" 1');
+            
+            if (features.length > 0) {
+                textAttrs['font-feature-settings'] = features.join(', ');
+            }
+        }
         
         // Draw each line
         let previousBaselineY = null;
@@ -8803,7 +8929,25 @@ class GridGenerator {
             }
             
             if (data.textBlocks) {
-                this.textBlocks = data.textBlocks;
+                // Инициализируем новые поля для совместимости со старыми настройками
+                this.textBlocks = data.textBlocks.map(block => {
+                    // Добавляем fontFeatures если их нет
+                    if (!block.fontFeatures) {
+                        block.fontFeatures = {
+                            salt: false,
+                            aalt: false,
+                            ss01: false,
+                            ss02: false,
+                            tnum: false,
+                            dlig: false
+                        };
+                    }
+                    // Добавляем fontWeight если его нет (для Lunnen Display по умолчанию 400)
+                    if (block.fontWeight === undefined) {
+                        block.fontWeight = 400;
+                    }
+                    return block;
+                });
             }
             
             if (data.graphicsBlocks) {
