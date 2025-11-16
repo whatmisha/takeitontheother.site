@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Info Sticker Generator — инструмент для макетов информационных стикеров Lunnen">
-    <meta name="keywords" content="sticker generator, modular grid, packaging, print design, SVG">
+    <meta name="description" content="Pizza Boxer — Packaging Layout Tool">
+    <meta name="keywords" content="grid generator, packaging, print design, Adobe Illustrator, SVG">
     
-    <title>Info Sticker Generator — Lunnen</title>
+    <title>Pizza Boxer — Packaging Layout Tool</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -35,7 +35,7 @@
 
             <aside class="controls-panel" id="gridPanel" role="complementary" aria-label="Grid settings">
                 <div class="panel-header" id="gridPanelHeader">
-                    <span>Grid <span class="panel-params" id="gridParams">0.70 mm</span></span>
+                    <span>Grid <span class="panel-params" id="gridParams">5.05 mm</span></span>
                     <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
                         <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -47,47 +47,47 @@
                         <div class="control-group">
                             <label for="gridModuleSlider">
                                 <span>Module <span class="unit">mm</span></span>
-                                <input type="text" class="value-display" id="gridModuleValue" value="0.7037" data-min="0.5" data-max="20" aria-label="Grid module">
+                                <input type="text" class="value-display" id="gridModuleValue" value="5.0505" data-min="0.5" data-max="20" aria-label="Grid module">
                             </label>
-                            <input type="range" id="gridModuleSlider" min="0.5" max="20" step="0.0001" value="0.7037" aria-label="Grid module slider">
+                            <input type="range" id="gridModuleSlider" min="0.5" max="20" step="0.0001" value="5.0505" aria-label="Grid module slider">
                         </div>
                         
                         <div class="control-group">
                             <label for="marginsSlider">
                                 <span>Margins 
                                     <span class="unit-buttons">
-                                        <button type="button" class="unit-btn" data-unit="mod" id="marginsUnitMod">mod</button>
-                                        <button type="button" class="unit-btn active" data-unit="mm" id="marginsUnitMm">mm</button>
+                                        <button type="button" class="unit-btn active" data-unit="mod" id="marginsUnitMod">mod</button>
+                                        <button type="button" class="unit-btn" data-unit="mm" id="marginsUnitMm">mm</button>
                                     </span>
                                 </span>
-                                <input type="text" class="value-display" id="marginsValue" value="3.00" data-min="0" data-max="10" aria-label="Margins in millimeters">
+                                <input type="text" class="value-display" id="marginsValue" value="2.00" data-min="0" data-max="10" aria-label="Margins in modules">
                             </label>
-                            <input type="range" id="marginsSlider" min="0" max="10" step="0.01" value="3" aria-label="Margins slider">
+                            <input type="range" id="marginsSlider" min="0" max="10" step="0.01" value="2" aria-label="Margins slider">
                         </div>
                         
                         <div class="control-group">
                             <label for="columnCountSlider">
                                 <span>Columns</span>
-                                <input type="text" class="value-display" id="columnCountValue" value="3" data-min="1" data-max="24" aria-label="Column count">
+                                <input type="text" class="value-display" id="columnCountValue" value="12" data-min="1" data-max="24" aria-label="Column count">
                             </label>
-                            <input type="range" id="columnCountSlider" min="1" max="24" step="1" value="3" aria-label="Column count slider">
+                            <input type="range" id="columnCountSlider" min="1" max="24" step="1" value="12" aria-label="Column count slider">
                         </div>
                         
                         <div id="linkedControlsContainer">
                             <div class="control-group">
                                 <label for="rowCountSlider">
                                     <span>Rows</span>
-                                    <input type="text" class="value-display" id="rowCountValue" value="4" data-min="1" data-max="50" aria-label="Row count">
+                                    <input type="text" class="value-display" id="rowCountValue" value="12" data-min="1" data-max="50" aria-label="Row count">
                                 </label>
-                                <input type="range" id="rowCountSlider" min="1" max="50" step="1" value="4" aria-label="Row count slider">
+                                <input type="range" id="rowCountSlider" min="1" max="50" step="1" value="12" aria-label="Row count slider">
                             </div>
                             
                             <div class="control-group">
                                 <label for="rowHeightSlider">
                                     <span>Row Height <span class="unit">mod</span></span>
-                                    <input type="text" class="value-display" id="rowHeightValue" value="6" data-min="1" data-max="20" aria-label="Row height in modules">
+                                    <input type="text" class="value-display" id="rowHeightValue" value="7" data-min="1" data-max="20" aria-label="Row height in modules">
                                 </label>
-                                <input type="range" id="rowHeightSlider" min="1" max="20" step="1" value="6" aria-label="Row height slider">
+                                <input type="range" id="rowHeightSlider" min="1" max="20" step="1" value="7" aria-label="Row height slider">
                             </div>
                             
                             <div class="control-group">
@@ -151,17 +151,25 @@
                         <div class="control-group">
                             <label for="frontWidthSlider">
                                 <span>Width</span>
-                                <input type="text" class="value-display" id="frontWidthValue" value="120" data-min="10" data-max="1000" aria-label="Front width value">
+                                <input type="text" class="value-display" id="frontWidthValue" value="500" data-min="50" data-max="1000" aria-label="Front width value">
                             </label>
-                            <input type="range" id="frontWidthSlider" min="10" max="1000" step="0.5" value="120" aria-label="Front width slider" aria-valuemin="10" aria-valuemax="1000" aria-valuenow="120">
+                            <input type="range" id="frontWidthSlider" min="50" max="1000" step="0.5" value="500" aria-label="Front width slider" aria-valuemin="50" aria-valuemax="1000" aria-valuenow="500">
                         </div>
                         
                         <div class="control-group">
                             <label for="frontHeightSlider">
                                 <span>Height</span>
-                                <input type="text" class="value-display" id="frontHeightValue" value="25" data-min="10" data-max="1000" aria-label="Front height value">
+                                <input type="text" class="value-display" id="frontHeightValue" value="500" data-min="50" data-max="1000" aria-label="Front height value">
                             </label>
-                            <input type="range" id="frontHeightSlider" min="10" max="1000" step="0.5" value="25" aria-label="Front height slider" aria-valuemin="10" aria-valuemax="1000" aria-valuenow="25">
+                            <input type="range" id="frontHeightSlider" min="50" max="1000" step="0.5" value="500" aria-label="Front height slider" aria-valuemin="50" aria-valuemax="1000" aria-valuenow="500">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="thicknessSlider">
+                                <span>Thickness</span>
+                                <input type="text" class="value-display" id="thicknessValue" value="50" data-min="5" data-max="200" aria-label="Thickness value">
+                            </label>
+                            <input type="range" id="thicknessSlider" min="5" max="200" step="0.5" value="50" aria-label="Thickness slider" aria-valuemin="5" aria-valuemax="200" aria-valuenow="50">
                         </div>
                     </section>
 
@@ -174,7 +182,7 @@
                             </div>
                             <div class="color-input-group">
                                 <button type="button" class="color-preview" id="colorPreview" aria-label="Open color picker"></button>
-                                <input type="text" id="hexColorInput" value="#ffffff" placeholder="#ffffff" maxlength="7" aria-label="Hex color code input">
+                                <input type="text" id="hexColorInput" value="#808080" placeholder="#808080" maxlength="7" aria-label="Hex color code input">
                             </div>
                         </div>
                         
@@ -208,6 +216,14 @@
                         </div>
                     </section>
 
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showSidePanels" checked aria-label="Show sides">
+                                <span>Show sides</span>
+                            </label>
+                        </div>
+                    </section>
                 </div>
             </aside>
         </div>
@@ -382,16 +398,23 @@
     <aside class="controls-panel paragraph-settings-panel" id="paragraphPanel" style="display: none;" role="complementary" aria-label="Paragraph settings">
         <div class="panel-header" id="paragraphPanelHeader">
             <span id="paragraphPanelTitle">Paragraph Settings</span>
-            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
-                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </span>
+            <div class="panel-header-actions">
+                <button type="button" class="panel-action-btn" id="paragraphHideBtn" aria-label="Hide paragraph">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <button type="button" class="panel-action-btn" id="paragraphDeleteBtn" aria-label="Delete paragraph">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1m2 0v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h10z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
         </div>
         <div class="panel-content">
             <section class="control-section">
-                <h3>Text Style</h3>
-                
                 <div class="control-group">
                     <label for="paragraphStyleSelect">
                         <select id="paragraphStyleSelect" class="style-select" aria-label="Text style">
@@ -400,10 +423,6 @@
                         </select>
                     </label>
                 </div>
-            </section>
-            
-            <section class="control-section">
-                <h3>Position & Size</h3>
                 
                 <div class="control-group">
                     <label for="paragraphXInput">
@@ -439,7 +458,7 @@
                     </label>
                     <fieldset>
                         <legend class="sr-only">Text alignment mode</legend>
-                        <div class="segmented-control" role="radiogroup" aria-label="Alignment mode selection">
+                        <div class="segmented-control segmented-control-compact" role="radiogroup" aria-label="Alignment mode selection">
                             <input type="radio" name="alignmentMode" value="baseline" id="alignmentModeBaseline" checked aria-label="Baseline alignment">
                             <label for="alignmentModeBaseline">Baseline</label>
                             
@@ -455,43 +474,23 @@
                         <span>Constrain to Grid</span>
                     </label>
                 </div>
-            </section>
-            
-            <section class="control-section">
-                <h3>Actions</h3>
                 
                 <div class="control-group">
-                    <div class="button-group">
-                        <button type="button" class="btn-add-object" id="paragraphHideBtn" aria-label="Hide paragraph">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
-                                <path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
-                                <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                            </svg>
-                            Hide
-                        </button>
-                        <button type="button" class="btn-add-object" id="paragraphDeleteBtn" aria-label="Delete paragraph">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
-                                <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1m2 0v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h10z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            Delete
-                        </button>
-                    </div>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="paragraphAlignRightToggle" aria-label="Align to right edge">
+                        <span>Align Right</span>
+                    </label>
                 </div>
             </section>
             
             <section class="control-section">
-                <h3>Text Content</h3>
+                <h3>
+                    Text
+                    <span class="char-counter" id="charCounter">0 characters</span>
+                </h3>
                 
                 <div class="control-group">
                     <textarea id="paragraphTextArea" placeholder="Enter text here..." rows="7" aria-label="Paragraph text"></textarea>
-                    <div class="textarea-footer">
-                        <div class="button-group">
-                            <button type="button" class="btn-apply" id="paragraphApplyBtn">Apply</button>
-                            <button type="button" class="btn-close" id="paragraphCloseBtn">Close</button>
-                        </div>
-                        <span class="char-counter" id="charCounter">0 characters</span>
-                    </div>
                 </div>
             </section>
         </div>
@@ -501,16 +500,23 @@
     <aside class="controls-panel paragraph-settings-panel" id="graphicsPanel" style="display: none;" role="complementary" aria-label="Graphics upload">
         <div class="panel-header" id="graphicsPanelHeader">
             <span id="graphicsPanelTitle">Add Graphics</span>
-            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
-                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </span>
+            <div class="panel-header-actions">
+                <button type="button" class="panel-action-btn" id="graphicsHideBtn" aria-label="Hide graphics">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <button type="button" class="panel-action-btn" id="graphicsDeleteBtn" aria-label="Delete graphics">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1m2 0v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h10z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
         </div>
         <div class="panel-content">
             <section class="control-section">
-                <h3>Upload SVG</h3>
-                
                 <div class="control-group">
                     <div class="file-upload-area" id="fileUploadArea">
                         <input type="file" id="svgFileInput" accept=".svg" style="display: none;">
@@ -519,10 +525,6 @@
                         </div>
                     </div>
                 </div>
-            </section>
-            
-            <section class="control-section">
-                <h3>Position & Size</h3>
                 
                 <div class="control-group">
                     <label for="graphicsXInput">
@@ -546,9 +548,15 @@
                 </div>
                 
                 <div class="control-group">
-                    <label for="graphicsHeightInput">
-                        <span>Height <span class="unit">mod</span></span>
-                        <input type="text" class="value-display" id="graphicsHeightInput" value="3" data-min="1" data-max="20" data-step="0.25" aria-label="Height in modules">
+                    <label for="graphicsSizeInput">
+                        <span>Size 
+                            <span class="unit-buttons">
+                                <button type="button" class="unit-btn active" data-unit="height" id="graphicsSizeUnitHeight">H</button>
+                                <button type="button" class="unit-btn" data-unit="width" id="graphicsSizeUnitWidth">W</button>
+                            </span>
+                            <span class="unit">mod</span>
+                        </span>
+                        <input type="text" class="value-display" id="graphicsSizeInput" value="3" data-min="1" data-max="20" data-step="0.25" aria-label="Size in modules">
                     </label>
                 </div>
                 
@@ -558,37 +566,12 @@
                         <span>Constrain to Grid</span>
                     </label>
                 </div>
-            </section>
-            
-            <section class="control-section">
-                <h3>Actions</h3>
                 
                 <div class="control-group">
-                    <div class="button-group">
-                        <button type="button" class="btn-add-object" id="graphicsHideBtn" aria-label="Hide graphics" style="display: none;">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
-                                <path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
-                                <line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                            </svg>
-                            Hide
-                        </button>
-                        <button type="button" class="btn-add-object" id="graphicsDeleteBtn" aria-label="Delete graphics" style="display: none;">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
-                                <path d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1m2 0v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h10z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="control-section">
-                <div class="control-group">
-                    <div class="button-group">
-                        <button type="button" class="btn-apply" id="graphicsApplyBtn">Add</button>
-                        <button type="button" class="btn-close" id="graphicsCloseBtn">Close</button>
-                    </div>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="graphicsAlignRightToggle" aria-label="Align to right edge">
+                        <span>Align Right</span>
+                    </label>
                 </div>
             </section>
         </div>
@@ -598,13 +581,13 @@
     <div class="modal-overlay" id="modalOverlay" aria-hidden="true">
         <div class="modal-content" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
             <button class="modal-close" id="modalClose" aria-label="Close instructions">&times;</button>
-            <h2 id="modalTitle">🧾 Info Sticker Generator</h2>
+            <h2 id="modalTitle">🍕🥊 Pizza Boxer</h2>
             <div class="modal-body">
-                <p>Modular grid generator for Lunnen sticker layouts that preserves every control panel from the Pizza Boxer tool.</p>
+                <p>Modular grid generator for packaging design based on the Lunnen system.</p>
                 
-                <h3>Sticker Canvas</h3>
-                <p><strong>Width</strong> and <strong>Height</strong> define the sticker front in millimeters. The default canvas is a 120 × 25 mm white rectangle.</p>
-                <p>This generator has no side panels — we work only with the front face of the sticker. Margins are locked to <strong>3 mm</strong> by default so the layout always keeps clean edges.</p>
+                <h3>Canvas Dimensions</h3>
+                <p><strong>Front Width</strong> and <strong>Front Height</strong> define the working area dimensions in millimeters.</p>
+                <p><strong>Thickness</strong> sets the depth of side panels.</p>
                 
                 <h3>Grid Module</h3>
                 <p>The <strong>Module</strong> (in mm) is the base unit of the grid system. It controls:</p>
@@ -617,7 +600,7 @@
                 
                 <h3>Rows and Columns</h3>
                 <p><strong>Columns</strong> — Vertical divisions with gutters between them.</p>
-                <p><strong>Rows</strong> — Horizontal divisions based on the module and row height. For stickers we start with 3 columns and rows built on 6 baseline modules.</p>
+                <p><strong>Rows</strong> — Horizontal divisions based on the module and row height.</p>
                 <p><strong>Baseline</strong> — Fine grid for aligning text to a vertical rhythm.</p>
                 
                 <h3>Link Modes</h3>
@@ -632,7 +615,7 @@
                 <p>When link mode is enabled, the interface displays combinations where rows fit the canvas height with exact module alignment.</p>
                 
                 <h3>Export SVG</h3>
-                <p>Click <strong>Export SVG</strong> to download the sticker grid. The file opens in Adobe Illustrator with accurate millimeter dimensions. Grid elements (columns, rows, baseline) are grouped separately and can be shown/hidden as needed.</p>
+                <p>Click <strong>Export SVG</strong> to download the grid. The file opens in Adobe Illustrator with accurate millimeter dimensions. Grid elements (columns, rows, baseline) are grouped separately and can be shown/hidden as needed.</p>
                 
                 <h3>Export Settings</h3>
                 <p>Click <strong>Export Settings</strong> to save current configuration as a JSON file. The file includes all parameters, text blocks, and graphic elements.</p>
@@ -666,6 +649,4 @@
     <script type="module" src="script.js"></script>
 </body>
 </html>
-
-
 

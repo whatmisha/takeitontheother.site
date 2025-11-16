@@ -37,7 +37,7 @@ class GridGenerator {
             frontWidthSlider: {
                 valueId: 'frontWidthValue',
                 setting: 'frontWidth',
-                min: 10,
+                min: 50,
                 max: 1000,
                 decimals: 1,
                 baseStep: 0.5,
@@ -47,7 +47,7 @@ class GridGenerator {
             frontHeightSlider: {
                 valueId: 'frontHeightValue',
                 setting: 'frontHeight',
-                min: 10,
+                min: 50,
                 max: 1000,
                 decimals: 1,
                 baseStep: 0.5,
@@ -67,6 +67,16 @@ class GridGenerator {
                     this.updateGrid();
                 }
             },
+            thicknessSlider: {
+                valueId: 'thicknessValue',
+                setting: 'thickness',
+                min: 5,
+                max: 200,
+                decimals: 1,
+                baseStep: 0.5,
+                shiftStep: 10,
+                onUpdate: () => this.updateGrid()
+            },
             gridModuleSlider: {
                 valueId: 'gridModuleValue',
                 setting: 'gridModule',
@@ -79,6 +89,29 @@ class GridGenerator {
                     const rowCount = this.gridCalculator.calculateRowCount();
                     this.settings.rowCount = rowCount;
                     this.sliderController.setValue('rowCountSlider', rowCount, false);
+                    this.constrainAllObjectsToGrid();
+                    this.generateRowPresets();
+                    this.updateGrid();
+                }
+            },
+            marginsSlider: {
+                valueId: 'marginsValue',
+                setting: 'margins',
+                min: 0,
+                max: 10,
+                decimals: 2,
+                baseStep: 0.01,
+                shiftStep: 0.1,
+                onUpdate: () => {
+                    if (this.settings.linkMode === 'module') {
+                        const module = this.gridCalculator.calculateModule();
+                        this.settings.gridModule = module;
+                        this.sliderController.setValue('gridModuleSlider', module, false);
+                    } else {
+                        const rowCount = this.gridCalculator.calculateRowCount();
+                        this.settings.rowCount = rowCount;
+                        this.sliderController.setValue('rowCountSlider', rowCount, false);
+                    }
                     this.constrainAllObjectsToGrid();
                     this.generateRowPresets();
                     this.updateGrid();
@@ -249,16 +282,18 @@ class GridGenerator {
         // Settings (Итерация 2: используем Settings модуль)
         // ============================================
         this.settingsModule = new Settings({
-            frontWidth: 120,
-            frontHeight: 25,
+            frontWidth: 500,
+            frontHeight: 500,
+            thickness: 50,
             showLabels: false,
-            boxColor: '#ffffff',
-            gridModule: 0.7037,
-            margins: 4.2632,
-            marginsUnit: 'mm',
-            columnCount: 3,
-            rowCount: 4,
-            rowHeight: 6,
+            showSidePanels: true,
+            boxColor: '#808080',
+            gridModule: 5.0505,
+            margins: 2,
+            marginsUnit: 'mod',
+            columnCount: 12,
+            rowCount: 12,
+            rowHeight: 7,
             linkMode: 'module',
             showColumns: true,
             showRows: true,
@@ -343,6 +378,9 @@ class GridGenerator {
             isBuiltIn: true,  // Flag to identify built-in graphics
             svgContent: '',  // Will be loaded from graphics/icons.svg
             heightInModules: 3,
+            widthInModules: null,  // Calculated from aspect ratio
+            sizeMode: 'height',  // 'height' or 'width'
+            alignment: 'left',  // 'left' or 'right'
             x: 1,
             row: 0,  // Will be calculated
             baselineOffset: 0,  // Will be calculated
@@ -360,6 +398,9 @@ class GridGenerator {
             isBuiltIn: true,  // Flag to identify built-in graphics
             svgContent: '',  // Will be loaded from graphics/yf_claim.svg
             heightInModules: 3,
+            widthInModules: null,  // Calculated from aspect ratio
+            sizeMode: 'height',  // 'height' or 'width'
+            alignment: 'left',  // 'left' or 'right'
             x: 7,
             row: 0,  // Will be calculated
             baselineOffset: 0,  // Will be calculated
@@ -377,25 +418,71 @@ class GridGenerator {
         this.textBlocks = [
             {
                 id: 'headline',
-                content: 'Информационный стикер Lunnen',
-                styleRef: 'headline',
-                x: 1,
-                row: 0,
-                baselineOffset: 0,
-                width: 3,
-                showBounds: false,
-                lockPosition: true
+                content: 'Ноутбук\nLunnen Outer 16"',
+                styleRef: 'headline',  // ссылка на стиль в settings
+                x: 1,  // позиция в колонках от левого края (1 = first column after margin)
+                row: 0,  // номер строки Row (0 = первый row)
+                baselineOffset: 0,  // смещение в модулях baseline внутри row (0 = первый baseline в row)
+                width: 3,  // ширина в колонках
+                alignment: 'left',  // 'left' or 'right'
+                showBounds: false,  // показывать ли границы (toggle on hover)
+                lockPosition: true  // Constrain to grid bounds by default
             },
             {
-                id: 'details',
-                content: 'Заполните поля макета и экспортируйте сетку в SVG.',
+                id: 'text',
+                content: 'Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.',
+                styleRef: 'text',  // ссылка на стиль в settings
+                alignment: 'left',  // 'left' or 'right'
+                x: 7,  // позиция в колонках от левого края (7-я колонка)
+                row: 0,  // номер строки Row
+                baselineOffset: 0,  // смещение в модулях baseline внутри row
+                width: 2.0,  // ширина в колонках
+                showBounds: false,
+                lockPosition: true  // Constrain to grid bounds by default
+            },
+            {
+                id: 'text2',
+                content: 'Lunnen Outer — продвинутая линейка техники. Производительный процессор и эффективное охлаждение для задач повышенной сложности.',
+                styleRef: 'text',  // ссылка на стиль в settings
+                x: 10,  // позиция в колонках от левого края (10-я колонка)
+                row: 0,  // номер строки Row
+                baselineOffset: 0,  // смещение в модулях baseline внутри row
+                width: 2.0,  // ширина в колонках
+                showBounds: false,
+                lockPosition: true  // Constrain to grid bounds by default
+            },
+            {
+                id: 'manufacturer',
+                content: 'Изготовитель: ООО Харбинская Импортно-Экспортная Торговая Компания «Цзиньдинсинь», Китай. Адрес местонахождения: Китай, г. Харбин, р-н Даоли, микрорайон Цюньли, ул. 4-я, д. 399, бизнес-центр Хучжи, восточный корпус, эт. 12, ком. 1204.',
                 styleRef: 'text',
                 x: 1,
-                row: 1,
+                row: 9,  // row 10 в пользовательском интерфейсе (0-based индекс = 9)
                 baselineOffset: 0,
                 width: 3,
                 showBounds: false,
-                lockPosition: true
+                lockPosition: true  // Constrain to grid bounds by default
+            },
+            {
+                id: 'importer',
+                content: 'Импортер: ООО «Маркет. Трейд». Адрес местонахождения: 121099, Россия, г. Москва, Новинский бульвар, 8.',
+                styleRef: 'text',
+                x: 7,
+                row: 9,  // row 10 в пользовательском интерфейсе
+                baselineOffset: 0,
+                width: 2,
+                showBounds: false,
+                lockPosition: true  // Constrain to grid bounds by default
+            },
+            {
+                id: 'origin',
+                content: 'Произведено в Китае. info@lunnen.pro',
+                styleRef: 'text',
+                x: 10,
+                row: 9,  // row 10 в пользовательском интерфейсе
+                baselineOffset: 0,
+                width: 2,
+                showBounds: false,
+                lockPosition: true  // Constrain to grid bounds by default
             }
         ];
         
@@ -460,11 +547,7 @@ class GridGenerator {
         
         // Initialize
         this.initEventListeners();
-        if (this.settings.marginsUnit === 'mm') {
-            this.switchMarginsUnit('mm');
-        } else {
-            this.updateMarginsSliderHandler();  // Setup margins slider with correct unit handling
-        }
+        this.updateMarginsSliderHandler();  // Setup margins slider with correct unit handling
         
         // ============================================
         // Initialize UI Controllers (Итерация 5.2 & 5.3)
@@ -484,12 +567,13 @@ class GridGenerator {
         this.initCollapsibleSections();
         this.initDropdowns();
         this.initParagraphPanel();
-        this.initIconsPanel();
-        this.initIconsInputsWithArrows();
-        this.initClaimPanel();
-        this.initClaimInputsWithArrows();
+        // DEPRECATED: Icons and Claim now use unified graphics system
+        // this.initIconsPanel();
+        // this.initIconsInputsWithArrows();
+        // this.initClaimPanel();
+        // this.initClaimInputsWithArrows();
         this.initGraphicsPanel();
-        this.initPanelClickOutsideHandler();  // Закрытие панелей кликом вне их области
+        this.initPanelClickOutsideHandler();
         this.initElementsNavigator();
         this.updateLinkedControlsVisual();
         this.initColorPreview();
@@ -549,12 +633,15 @@ class GridGenerator {
             // Sliders
             frontWidthSlider: document.getElementById('frontWidthSlider'),
             frontHeightSlider: document.getElementById('frontHeightSlider'),
+            thicknessSlider: document.getElementById('thicknessSlider'),
             
             // Value displays
             frontWidthValue: document.getElementById('frontWidthValue'),
             frontHeightValue: document.getElementById('frontHeightValue'),
+            thicknessValue: document.getElementById('thicknessValue'),
             
             // Checkboxes
+            showSidePanels: document.getElementById('showSidePanels'),
             showColumns: document.getElementById('showColumns'),
             showRows: document.getElementById('showRows'),
             showBaseline: document.getElementById('showBaseline'),
@@ -630,14 +717,14 @@ class GridGenerator {
             paragraphBaselineInput: document.getElementById('paragraphBaselineInput'),
             paragraphWidthInput: document.getElementById('paragraphWidthInput'),
             paragraphTextArea: document.getElementById('paragraphTextArea'),
-            paragraphApplyBtn: document.getElementById('paragraphApplyBtn'),
-            paragraphCloseBtn: document.getElementById('paragraphCloseBtn'),
             charCounter: document.getElementById('charCounter'),
             // Alignment mode radio buttons
             alignmentModeBaseline: document.getElementById('alignmentModeBaseline'),
             alignmentModeXHeight: document.getElementById('alignmentModeXHeight'),
             // Lock position toggle
             paragraphLockPositionToggle: document.getElementById('paragraphLockPositionToggle'),
+            // Align right toggle
+            paragraphAlignRightToggle: document.getElementById('paragraphAlignRightToggle'),
             // Font size displays
             headlineFontSize: document.getElementById('headlineFontSize'),
             textFontSize: document.getElementById('textFontSize'),
@@ -676,14 +763,19 @@ class GridGenerator {
             graphicsXInput: document.getElementById('graphicsXInput'),
             graphicsRowInput: document.getElementById('graphicsRowInput'),
             graphicsBaselineInput: document.getElementById('graphicsBaselineInput'),
-            graphicsHeightInput: document.getElementById('graphicsHeightInput'),
+            graphicsSizeInput: document.getElementById('graphicsSizeInput'),
+            graphicsSizeUnitHeight: document.getElementById('graphicsSizeUnitHeight'),
+            graphicsSizeUnitWidth: document.getElementById('graphicsSizeUnitWidth'),
+            graphicsHeightInput: document.getElementById('graphicsHeightInput'), // Keep for backward compatibility
             graphicsLockPositionToggle: document.getElementById('graphicsLockPositionToggle'),
-            graphicsApplyBtn: document.getElementById('graphicsApplyBtn'),
-            graphicsCloseBtn: document.getElementById('graphicsCloseBtn'),
+            graphicsAlignRightToggle: document.getElementById('graphicsAlignRightToggle'),
             fileUploadArea: document.getElementById('fileUploadArea'),
             svgFileInput: document.getElementById('svgFileInput'),
             // Paragraph style select
             paragraphStyleSelect: document.getElementById('paragraphStyleSelect'),
+            paragraphSurfaceSelect: document.getElementById('paragraphSurfaceSelect'),
+            // Graphics surface select
+            graphicsSurfaceSelect: document.getElementById('graphicsSurfaceSelect'),
             // Zoom controls
             canvasContainer: document.getElementById('canvasContainer'),
             zoomIndicator: document.getElementById('zoomIndicator')
@@ -700,6 +792,12 @@ class GridGenerator {
         // ============================================
         // NOTE: Slider initialization moved to initUIControllers()
         // ============================================
+        
+        // Show side panels checkbox
+        this.dom.showSidePanels.addEventListener('change', (e) => {
+            this.settings.showSidePanels = e.target.checked;
+            this.updateGrid();
+        });
         
         // Link mode radio buttons
         const linkModeHandler = (e) => {
@@ -1087,7 +1185,8 @@ class GridGenerator {
         if (dimensionsParams) {
             const w = Math.round(this.settings.frontWidth);
             const h = Math.round(this.settings.frontHeight);
-            dimensionsParams.textContent = `${w}\u2009×\u2009${h} mm`;
+            const t = Math.round(this.settings.thickness);
+            dimensionsParams.textContent = `${w}\u2009×\u2009${h}\u2009×\u2009${t} mm`;
         }
         
         // Objects panel
@@ -1617,6 +1716,7 @@ class GridGenerator {
         });
         
         // Update checkboxes
+        if (this.dom.showSidePanels) this.dom.showSidePanels.checked = settings.showSidePanels !== false;
         if (this.dom.showColumns) this.dom.showColumns.checked = settings.showColumns !== false;
         if (this.dom.showRows) this.dom.showRows.checked = settings.showRows !== false;
         if (this.dom.showBaseline) this.dom.showBaseline.checked = settings.showBaseline !== false;
@@ -1888,17 +1988,34 @@ class GridGenerator {
                 if (this.currentEditingBlock) {
                     let newX = parseInt(this.dom.paragraphXInput.value);
                     
-                    // Ограничиваем X: минимум 1, максимум columnCount
-                    newX = Math.max(1, Math.min(newX, this.settings.columnCount));
+                    // Ограничиваем X в зависимости от alignment
+                    const alignment = this.currentEditingBlock.alignment || 'left';
+                    if (alignment === 'right') {
+                        // For right-aligned: минимум = ceil(width), максимум = columnCount
+                        const minX = Math.ceil(this.currentEditingBlock.width);
+                        newX = Math.max(minX, Math.min(newX, this.settings.columnCount));
+                    } else {
+                        // For left-aligned: минимум = 1, максимум зависит от ширины
+                        newX = Math.max(1, Math.min(newX, this.settings.columnCount));
+                    }
                     
                     // Устанавливаем новое значение X
                     this.currentEditingBlock.x = newX;
                     
                     // Корректируем width если блок выходит за пределы
-                    // x начинается с 1, поэтому последняя занятая колонка = x + width - 1
-                    if (this.currentEditingBlock.x + this.currentEditingBlock.width - 1 > this.settings.columnCount) {
-                        this.currentEditingBlock.width = Math.max(0.25, this.settings.columnCount - this.currentEditingBlock.x + 1);
-                        this.dom.paragraphWidthInput.value = this.currentEditingBlock.width.toFixed(2);
+                    if (alignment === 'right') {
+                        // For right-aligned: block grows left, so max width = x
+                        if (this.currentEditingBlock.width > this.currentEditingBlock.x) {
+                            this.currentEditingBlock.width = Math.max(0.25, this.currentEditingBlock.x);
+                            this.dom.paragraphWidthInput.value = this.currentEditingBlock.width.toFixed(2);
+                        }
+                    } else {
+                        // For left-aligned: block grows right
+                        // x начинается с 1, поэтому последняя занятая колонка = x + width - 1
+                        if (this.currentEditingBlock.x + this.currentEditingBlock.width - 1 > this.settings.columnCount) {
+                            this.currentEditingBlock.width = Math.max(0.25, this.settings.columnCount - this.currentEditingBlock.x + 1);
+                            this.dom.paragraphWidthInput.value = this.currentEditingBlock.width.toFixed(2);
+                        }
                     }
                     
                     // Обновляем отображение X (на случай коррекции), округляем до целого
@@ -2038,21 +2155,23 @@ class GridGenerator {
             this.dom.paragraphWidthInput.addEventListener('change', () => {
                 if (this.currentEditingBlock) {
                     const newWidth = parseFloat(this.dom.paragraphWidthInput.value);
-                    const maxWidth = this.settings.columnCount;
+                    const alignment = this.currentEditingBlock.alignment || 'left';
+                    
                     // Округляем до ближайшего кратного 0.25
                     const roundedWidth = Math.round(newWidth * 4) / 4;
+                    
+                    // Max width depends on alignment
+                    let maxWidth;
+                    if (alignment === 'right') {
+                        // For right-aligned: max width = x (block grows left from column x)
+                        maxWidth = this.currentEditingBlock.x;
+                    } else {
+                        // For left-aligned: max width = columns available to the right
+                        maxWidth = this.settings.columnCount - this.currentEditingBlock.x + 1;
+                    }
+                    
                     this.currentEditingBlock.width = Math.max(0.25, Math.min(roundedWidth, maxWidth));
                     this.dom.paragraphWidthInput.value = this.currentEditingBlock.width.toFixed(2);
-                    
-                    // Корректируем X если блок вышел за пределы
-                    // X всегда целое число (текст привязывается к левому краю колонки)
-                    const maxX = this.settings.columnCount - this.currentEditingBlock.width;
-                    if (this.currentEditingBlock.x > maxX) {
-                        this.currentEditingBlock.x = Math.max(1, Math.floor(maxX + 1));
-                    }
-                    // Округляем X до целого числа
-                    this.currentEditingBlock.x = Math.round(this.currentEditingBlock.x);
-                    this.dom.paragraphXInput.value = this.currentEditingBlock.x;
                     
                     this.updateGrid();
                 }
@@ -2085,28 +2204,14 @@ class GridGenerator {
             });
         }
         
-        // Кнопка Apply and Close (изменения применяются автоматически, кнопка закрывает панель)
-        if (this.dom.paragraphApplyBtn) {
-            this.dom.paragraphApplyBtn.addEventListener('click', () => {
-                // Обновляем начальное состояние, чтобы текущие изменения стали базовыми
+        // Обработчик для дропдауна выбора поверхности (текст)
+        if (this.dom.paragraphSurfaceSelect) {
+            this.dom.paragraphSurfaceSelect.addEventListener('change', () => {
                 if (this.currentEditingBlock) {
-                    this.saveInitialBlockState(this.currentEditingBlock);
+                    this.currentEditingBlock.surface = this.dom.paragraphSurfaceSelect.value;
+                    this.updateElementsNavigator();
+                    this.updateGrid();
                 }
-                
-                // Показываем визуальный фидбек и закрываем панель
-                const originalText = this.dom.paragraphApplyBtn.textContent;
-                this.dom.paragraphApplyBtn.textContent = 'Applied!';
-                setTimeout(() => {
-                    this.dom.paragraphApplyBtn.textContent = originalText;
-                    this.closeParagraphPanel();
-                }, 500);
-            });
-        }
-        
-        // Обработчик для кнопки Close
-        if (this.dom.paragraphCloseBtn) {
-            this.dom.paragraphCloseBtn.addEventListener('click', () => {
-                this.cancelParagraphChanges();
             });
         }
         
@@ -2116,12 +2221,19 @@ class GridGenerator {
             paragraphHideBtn.addEventListener('click', () => {
                 if (this.currentEditingBlock) {
                     this.toggleElementVisibility('text', this.currentEditingBlock.id);
-                    // Update button text based on visibility
+                    // Update button icon based on visibility
                     const block = this.textBlocks.find(b => b.id === this.currentEditingBlock.id);
                     if (block) {
-                        paragraphHideBtn.innerHTML = block.visible 
-                            ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Hide'
-                            : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>Show';
+                        const svg = paragraphHideBtn.querySelector('svg');
+                        if (svg) {
+                            if (block.visible) {
+                                // Show hide icon (eye with slash)
+                                svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>';
+                            } else {
+                                // Show visible icon (eye without slash)
+                                svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>';
+                            }
+                        }
                     }
                 }
             });
@@ -2177,6 +2289,82 @@ class GridGenerator {
             this.dom.paragraphLockPositionToggle.addEventListener('change', () => {
                 if (this.currentEditingBlock) {
                     this.currentEditingBlock.lockPosition = this.dom.paragraphLockPositionToggle.checked;
+                    this.updateGrid();
+                }
+            });
+        }
+        
+        // Обработчик для Align Right toggle
+        if (this.dom.paragraphAlignRightToggle) {
+            this.dom.paragraphAlignRightToggle.addEventListener('change', () => {
+                if (this.currentEditingBlock) {
+                    const wasRight = this.currentEditingBlock.alignment === 'right';
+                    const nowRight = this.dom.paragraphAlignRightToggle.checked;
+                    
+                    // Adjust X position to keep block visually in the same place
+                    if (nowRight && !wasRight) {
+                        // Switching from left to right alignment
+                        // X should move right by (width - 1) columns
+                        // Example: X=7, width=3, left → X=9, width=3, right (occupies columns 7,8,9 in both cases)
+                        const widthInColumns = Math.ceil(this.currentEditingBlock.width);
+                        this.currentEditingBlock.x += (widthInColumns - 1);
+                        
+                        // Update input display
+                        if (this.dom.paragraphXInput) {
+                            this.dom.paragraphXInput.value = this.currentEditingBlock.x;
+                        }
+                    } else if (!nowRight && wasRight) {
+                        // Switching from right to left alignment
+                        // X should move left by (width - 1) columns
+                        const widthInColumns = Math.ceil(this.currentEditingBlock.width);
+                        this.currentEditingBlock.x -= (widthInColumns - 1);
+                        
+                        // Ensure X doesn't go below 1
+                        this.currentEditingBlock.x = Math.max(1, this.currentEditingBlock.x);
+                        
+                        // Update input display
+                        if (this.dom.paragraphXInput) {
+                            this.dom.paragraphXInput.value = this.currentEditingBlock.x;
+                        }
+                    }
+                    
+                    this.currentEditingBlock.alignment = nowRight ? 'right' : 'left';
+                    this.updateGrid();
+                }
+            });
+        }
+        
+        // Graphics Size Mode переключатели (Height/Width)
+        if (this.dom.graphicsSizeUnitHeight) {
+            this.dom.graphicsSizeUnitHeight.addEventListener('click', (e) => {
+                e.preventDefault();
+                const block = this.graphicsBlocks?.find(b => b.id === this.currentEditingGraphicsId);
+                if (block && block.sizeMode !== 'height') {
+                    this.switchGraphicsSizeMode(block, 'height');
+                }
+            });
+        }
+        if (this.dom.graphicsSizeUnitWidth) {
+            this.dom.graphicsSizeUnitWidth.addEventListener('click', (e) => {
+                e.preventDefault();
+                const block = this.graphicsBlocks?.find(b => b.id === this.currentEditingGraphicsId);
+                if (block && block.sizeMode !== 'width') {
+                    this.switchGraphicsSizeMode(block, 'width');
+                }
+            });
+        }
+        
+        // Graphics Align Right toggle
+        if (this.dom.graphicsAlignRightToggle) {
+            this.dom.graphicsAlignRightToggle.addEventListener('change', () => {
+                const block = this.graphicsBlocks?.find(b => b.id === this.currentEditingGraphicsId);
+                if (block) {
+                    const wasRight = block.alignment === 'right';
+                    const nowRight = this.dom.graphicsAlignRightToggle.checked;
+                    
+                    // Don't adjust X position - just change alignment mode
+                    // The rendering code will handle positioning correctly based on alignment
+                    block.alignment = nowRight ? 'right' : 'left';
                     this.updateGrid();
                 }
             });
@@ -2963,32 +3151,52 @@ class GridGenerator {
                     }
                 },
                 { 
-                    id: 'graphicsHeightInput', 
-                    property: 'heightInModules',
+                    id: 'graphicsSizeInput', 
+                    property: (block) => {
+                        // Determine which property to update based on sizeMode
+                        const sizeMode = block.sizeMode || 'height';
+                        return sizeMode === 'height' ? 'heightInModules' : 'widthInModules';
+                    },
                     baseStep: 0.25,
                     shiftStep: 1,
                     decimals: 2,
                     applyConstraints: (value) => {
-                        const constrainedValue = Math.max(0.25, Math.min(value, 20));
-                        
-                        // After changing height, recheck vertical position constraints
+                        const sizeMode = block.sizeMode || 'height';
                         const module = this.settings.gridModule;
                         const margins = this.settings.margins;
-                        const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                        const maxYInBaseline = Math.floor(contentHeightMm / module);
-                        const maxY = maxYInBaseline - constrainedValue;
+                        const aspectRatio = block.originalWidth / block.originalHeight;
                         
-                        const currentY = this.getBlockY(block);
-                        if (currentY > maxY) {
-                            const adjustedY = Math.max(0, maxY);
-                            const { row, baselineOffset } = this.yToRowBaseline(adjustedY);
-                            block.row = row;
-                            block.baselineOffset = baselineOffset;
+                        // Different max values for height and width modes
+                        const maxValue = sizeMode === 'height' ? 20 : 100;
+                        const constrainedValue = Math.max(0.25, Math.min(value, maxValue));
+                        
+                        if (sizeMode === 'height') {
+                            // After changing height, recheck vertical position constraints
+                            const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+                            const maxYInBaseline = Math.floor(contentHeightMm / module);
+                            const maxY = maxYInBaseline - constrainedValue;
                             
-                            if (this.dom.graphicsRowInput) this.dom.graphicsRowInput.value = row + 1;
-                            if (this.dom.graphicsBaselineInput) {
-                                const globalBaseline = this.rowBaselineToY(row, baselineOffset);
-                                this.dom.graphicsBaselineInput.value = globalBaseline + 1;
+                            const currentY = this.getBlockY(block);
+                            if (currentY > maxY) {
+                                const adjustedY = Math.max(0, maxY);
+                                const { row, baselineOffset } = this.yToRowBaseline(adjustedY);
+                                block.row = row;
+                                block.baselineOffset = baselineOffset;
+                                
+                                if (this.dom.graphicsRowInput) this.dom.graphicsRowInput.value = row + 1;
+                                if (this.dom.graphicsBaselineInput) {
+                                    const globalBaseline = this.rowBaselineToY(row, baselineOffset);
+                                    this.dom.graphicsBaselineInput.value = globalBaseline + 1;
+                                }
+                            }
+                        } else {
+                            // sizeMode === 'width': check horizontal constraints
+                            const widthInMm = constrainedValue * module;
+                            const contentWidthMm = this.settings.frontWidth - 2 * margins * module;
+                            
+                            // Ensure graphics fits within content area
+                            if (widthInMm > contentWidthMm) {
+                                return Math.floor(contentWidthMm / module * 4) / 4; // Round down to 0.25
                             }
                         }
                         
@@ -3012,11 +3220,14 @@ class GridGenerator {
                 });
                 
                 newInput.addEventListener('change', () => {
+                    // Resolve property name if it's a function
+                    const propName = typeof property === 'function' ? property(block) : property;
+                    
                     let value = parseFloat(newInput.value);
                     if (isNaN(value)) {
-                        value = property === 'baseline' 
+                        value = propName === 'baseline' 
                             ? (this.rowBaselineToY(block.row, block.baselineOffset) + 1)
-                            : block[property];
+                            : block[propName];
                     }
                     
                     // Apply constraints
@@ -3025,10 +3236,10 @@ class GridGenerator {
                     }
                     
                     // Update the block property
-                    if (property === 'baseline') {
+                    if (propName === 'baseline') {
                         // Already handled in applyConstraints
                     } else {
-                        block[property] = value;
+                        block[propName] = value;
                     }
                     
                     // Update input display
@@ -3038,6 +3249,9 @@ class GridGenerator {
                 });
                 
                 newInput.addEventListener('keydown', (e) => {
+                    // Resolve property name if it's a function
+                    const propName = typeof property === 'function' ? property(block) : property;
+                    
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         newInput.blur();
@@ -3047,13 +3261,13 @@ class GridGenerator {
                         
                         // Restore original value
                         const originalValue = parseFloat(newInput.dataset.originalValue);
-                        if (property === 'baseline') {
+                        if (propName === 'baseline') {
                             const rowHeight = this.settings.rowHeight;
                             const { row, baselineOffset } = this.yToRowBaseline(originalValue - 1);
                             block.row = row;
                             block.baselineOffset = baselineOffset;
                         } else {
-                            block[property] = originalValue;
+                            block[propName] = originalValue;
                         }
                         
                         newInput.blur();
@@ -3063,9 +3277,9 @@ class GridGenerator {
                         
                         let currentValue = parseFloat(newInput.value);
                         if (isNaN(currentValue)) {
-                            currentValue = property === 'baseline' 
+                            currentValue = propName === 'baseline' 
                                 ? (this.rowBaselineToY(block.row, block.baselineOffset) + 1)
-                                : block[property];
+                                : block[propName];
                         }
                         
                         const step = e.shiftKey ? shiftStep : baseStep;
@@ -3078,10 +3292,10 @@ class GridGenerator {
                         }
                         
                         // Update the block property
-                        if (property === 'baseline') {
+                        if (propName === 'baseline') {
                             // Already handled in applyConstraints
                         } else {
-                            block[property] = newValue;
+                            block[propName] = newValue;
                         }
                         
                         // Update input display
@@ -3209,6 +3423,10 @@ class GridGenerator {
             // Дропдаун управляет стилем текста (headline/text)
             this.dom.paragraphStyleSelect.value = block.styleRef || 'text';
         }
+        if (this.dom.paragraphSurfaceSelect) {
+            // Дропдаун управляет выбором поверхности
+            this.dom.paragraphSurfaceSelect.value = block.surface || 'front';
+        }
         if (this.dom.paragraphXInput) {
             // Column всегда целое число - текст привязывается к левому краю колонки
             this.dom.paragraphXInput.value = Math.round(block.x);
@@ -3245,8 +3463,28 @@ class GridGenerator {
             this.dom.paragraphLockPositionToggle.checked = block.lockPosition || false;
         }
         
+        // Устанавливаем состояние Align Right toggle
+        if (this.dom.paragraphAlignRightToggle) {
+            this.dom.paragraphAlignRightToggle.checked = block.alignment === 'right';
+        }
+        
         // Обновляем счетчик символов
         this.updateCharCounter();
+        
+        // Устанавливаем правильную иконку для кнопки Hide/Show
+        const paragraphHideBtn = document.getElementById('paragraphHideBtn');
+        if (paragraphHideBtn) {
+            const svg = paragraphHideBtn.querySelector('svg');
+            if (svg) {
+                if (block.visible) {
+                    // Show hide icon (eye with slash)
+                    svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>';
+                } else {
+                    // Show visible icon (eye without slash)
+                    svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>';
+                }
+            }
+        }
         
         // Показываем панель и позиционируем рядом с элементом
         if (this.dom.paragraphPanel) {
@@ -3316,6 +3554,16 @@ class GridGenerator {
             this.dom.graphicsLockPositionToggle.checked = false;
         }
         
+        // Hide action buttons for new graphics (nothing to hide/delete yet)
+        const graphicsHideBtn = document.getElementById('graphicsHideBtn');
+        const graphicsDeleteBtn = document.getElementById('graphicsDeleteBtn');
+        if (graphicsHideBtn) {
+            graphicsHideBtn.style.display = 'none';
+        }
+        if (graphicsDeleteBtn) {
+            graphicsDeleteBtn.style.display = 'none';
+        }
+        
         // Center panel
         if (this.dom.graphicsPanel) {
             this.dom.graphicsPanel.style.display = 'flex';
@@ -3342,11 +3590,7 @@ class GridGenerator {
         // Reset editing state
         this.currentEditingGraphicsId = null;
         
-        // Reset button text and show file upload area
-        if (this.dom.graphicsApplyBtn) {
-            this.dom.graphicsApplyBtn.textContent = 'Add';
-        }
-        
+        // Reset file upload area
         if (this.dom.fileUploadArea) {
             this.dom.fileUploadArea.style.display = 'block';
             const placeholder = this.dom.fileUploadArea.querySelector('.upload-placeholder p');
@@ -3405,88 +3649,25 @@ class GridGenerator {
             });
         }
         
-        // Apply button handler
-        if (this.dom.graphicsApplyBtn) {
-            this.dom.graphicsApplyBtn.addEventListener('click', () => {
-                // Check if we are editing existing graphics or adding new one
-                if (this.currentEditingGraphicsId) {
-                    // Update existing graphics block
-                    const block = this.graphicsBlocks?.find(b => b.id === this.currentEditingGraphicsId);
-                    if (block) {
-                        const x = parseInt(this.dom.graphicsXInput?.value || 1);
-                        const row = parseInt(this.dom.graphicsRowInput?.value || 1) - 1;
-                        const baseline = parseInt(this.dom.graphicsBaselineInput?.value || 1) - 1;
-                        const height = parseFloat(this.dom.graphicsHeightInput?.value || 3);
-                        const lockPosition = this.dom.graphicsLockPositionToggle?.checked || false;
-                        
-                        block.x = x;
-                        block.row = row;
-                        block.baselineOffset = baseline % this.settings.rowHeight;
-                        block.heightInModules = height;
-                        block.lockPosition = lockPosition;
-                        
-                        // If new SVG was uploaded, update SVG content
-                        if (this.uploadedSvgData) {
-                            block.svgContent = this.uploadedSvgData.content;
-                            block.name = this.uploadedSvgData.name;
-                            block.originalWidth = this.uploadedSvgData.width;
-                            block.originalHeight = this.uploadedSvgData.height;
-                        }
-                        
-                        this.updateGrid();
-                        this.updateElementsNavigator(); // Update navigator to show new name
-                        this.closeGraphicsPanel();
-                        this.currentEditingGraphicsId = null;
-                    }
-                } else if (this.uploadedSvgData) {
-                    // Add new graphics block
-                    const x = parseInt(this.dom.graphicsXInput?.value || 1);
-                    const row = parseInt(this.dom.graphicsRowInput?.value || 1) - 1;
-                    const baseline = parseInt(this.dom.graphicsBaselineInput?.value || 1) - 1;
-                    const height = parseFloat(this.dom.graphicsHeightInput?.value || 3);
-                    const lockPosition = this.dom.graphicsLockPositionToggle?.checked || false;
-                    
-                    // Add graphics block
-                    this.addGraphicsBlock(
-                        this.uploadedSvgData.content,
-                        this.uploadedSvgData.name,
-                        this.uploadedSvgData.width,
-                        this.uploadedSvgData.height
-                    );
-                    
-                    // Update the new block position
-                    const newBlock = this.graphicsBlocks[this.graphicsBlocks.length - 1];
-                    newBlock.x = x;
-                    newBlock.row = row;
-                    newBlock.baselineOffset = baseline % this.settings.rowHeight;
-                    newBlock.heightInModules = height;
-                    newBlock.lockPosition = lockPosition;
-                    
-                    this.updateGrid();
-                    this.closeGraphicsPanel();
-                }
-            });
-        }
-        
-        // Close button handler
-        if (this.dom.graphicsCloseBtn) {
-            this.dom.graphicsCloseBtn.addEventListener('click', () => {
-                this.closeGraphicsPanel();
-            });
-        }
-        
         // Hide button handler
         const graphicsHideBtn = document.getElementById('graphicsHideBtn');
         if (graphicsHideBtn) {
             graphicsHideBtn.addEventListener('click', () => {
                 if (this.currentEditingGraphicsId) {
                     this.toggleElementVisibility('graphics', this.currentEditingGraphicsId);
-                    // Update button text based on visibility
+                    // Update button icon based on visibility
                     const block = this.graphicsBlocks?.find(b => b.id === this.currentEditingGraphicsId);
                     if (block) {
-                        graphicsHideBtn.innerHTML = block.visible 
-                            ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Hide'
-                            : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>Show';
+                        const svg = graphicsHideBtn.querySelector('svg');
+                        if (svg) {
+                            if (block.visible) {
+                                // Show hide icon (eye with slash)
+                                svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>';
+                            } else {
+                                // Show visible icon (eye without slash)
+                                svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>';
+                            }
+                        }
                     }
                 }
             });
@@ -3498,8 +3679,8 @@ class GridGenerator {
             graphicsDeleteBtn.addEventListener('click', () => {
                 if (this.currentEditingGraphicsId) {
                     const blockId = this.currentEditingGraphicsId;
-                    const block = this.graphicsBlocks?.find(b => b.id === blockId);
-                    if (block && block.type === 'custom') {
+                    const block = this.getGraphicsBlock(blockId);
+                    if (block) {
                         const name = block.name || 'Graphic';
                         
                         // Close panel first
@@ -3517,6 +3698,41 @@ class GridGenerator {
                 }
             });
         }
+    }
+    
+    // Initialize click outside handler for closing panels
+    initPanelClickOutsideHandler() {
+        document.addEventListener('click', (e) => {
+            // Check if paragraph panel is open
+            if (this.dom.paragraphPanel && 
+                this.dom.paragraphPanel.classList.contains('active')) {
+                
+                // Check if click was outside the panel
+                if (!this.dom.paragraphPanel.contains(e.target)) {
+                    // Check if click was not on a text block (which opens the panel) or in elements navigator
+                    const isTextBlockClick = e.target.closest('[data-block-id], [data-element-type="text"], .element-button');
+                    
+                    if (!isTextBlockClick) {
+                        this.closeParagraphPanel();
+                    }
+                }
+            }
+            
+            // Check if graphics panel is open
+            if (this.dom.graphicsPanel && 
+                this.dom.graphicsPanel.classList.contains('active')) {
+                
+                // Check if click was outside the panel
+                if (!this.dom.graphicsPanel.contains(e.target)) {
+                    // Check if click was not on a graphics block, add button, or in elements navigator
+                    const isGraphicsBlockClick = e.target.closest('[data-block-id], [data-element-type="graphics"], #addGraphicsBtn, .element-button');
+                    
+                    if (!isGraphicsBlockClick) {
+                        this.closeGraphicsPanel();
+                    }
+                }
+            }
+        });
     }
     
     // Load and process SVG file (same as handleSvgFile but for file paths)
@@ -3759,6 +3975,52 @@ class GridGenerator {
                 if (placeholder) {
                     placeholder.textContent = `✓ ${file.name}`;
                 }
+                
+                // If editing existing graphics block, update it immediately
+                if (this.currentEditingGraphicsId) {
+                    const block = this.getGraphicsBlock(this.currentEditingGraphicsId);
+                    if (block) {
+                        // Update the block with new SVG data (works for all graphics including built-in)
+                        block.svgContent = processedContent;
+                        block.name = this.uploadedSvgData.name;
+                        block.originalWidth = width;
+                        block.originalHeight = height;
+                        
+                        // Update panel title
+                        if (this.dom.graphicsPanelTitle) {
+                            let displayName = block.name || 'Graphic';
+                            if (displayName.length > 24) {
+                                displayName = displayName.substring(0, 24) + '...';
+                            }
+                            this.dom.graphicsPanelTitle.textContent = displayName;
+                        }
+                        
+                        // Update placeholder text
+                        if (placeholder) {
+                            placeholder.textContent = `Current: ${block.name || 'Graphic'} — Upload new SVG to replace`;
+                        }
+                        
+                        // Update elements list
+                        this.updateElementsNavigator();
+                        
+                        // Render updated graphics
+                        this.updateGrid();
+                        
+                        console.log('Graphics block updated with new SVG');
+                    }
+                } else {
+                    // Creating NEW graphics block - automatically create it
+                    console.log('Creating new graphics block from uploaded SVG');
+                    this.addGraphicsBlock(
+                        processedContent,
+                        this.uploadedSvgData.name,
+                        width,
+                        height
+                    );
+                    
+                    // Close the panel after creating
+                    this.closeGraphicsPanel();
+                }
             }
         };
         
@@ -3904,6 +4166,59 @@ class GridGenerator {
     }
     
     // Switch margins unit between mod and mm
+    switchGraphicsSizeMode(block, newMode) {
+        if (!block) return;
+        
+        const oldMode = block.sizeMode || 'height';
+        const aspectRatio = block.originalWidth / block.originalHeight;
+        const module = this.settings.gridModule;
+        
+        // Calculate the actual size in mm (physical size that should stay the same)
+        let actualHeightInMm, actualWidthInMm;
+        if (oldMode === 'height') {
+            actualHeightInMm = (block.heightInModules || 3) * module;
+            actualWidthInMm = actualHeightInMm * aspectRatio;
+        } else {
+            // oldMode === 'width'
+            actualWidthInMm = (block.widthInModules || 3) * module;
+            actualHeightInMm = actualWidthInMm / aspectRatio;
+        }
+        
+        // Update block's size mode
+        block.sizeMode = newMode;
+        
+        // Update active state of buttons
+        if (this.dom.graphicsSizeUnitHeight && this.dom.graphicsSizeUnitWidth) {
+            if (newMode === 'height') {
+                this.dom.graphicsSizeUnitHeight.classList.add('active');
+                this.dom.graphicsSizeUnitWidth.classList.remove('active');
+            } else {
+                this.dom.graphicsSizeUnitWidth.classList.add('active');
+                this.dom.graphicsSizeUnitHeight.classList.remove('active');
+            }
+        }
+        
+        // Update the input value
+        if (newMode === 'height') {
+            // Show height in modules
+            const heightInModules = actualHeightInMm / module;
+            block.heightInModules = parseFloat(heightInModules.toFixed(2));
+            if (this.dom.graphicsSizeInput) {
+                this.dom.graphicsSizeInput.value = heightInModules.toFixed(2);
+            }
+        } else {
+            // Show width in modules
+            const widthInModules = actualWidthInMm / module;
+            block.widthInModules = parseFloat(widthInModules.toFixed(2));
+            if (this.dom.graphicsSizeInput) {
+                this.dom.graphicsSizeInput.value = widthInModules.toFixed(2);
+            }
+        }
+        
+        // Update grid to reflect new size
+        this.updateGrid();
+    }
+    
     switchMarginsUnit(newUnit) {
         // Margins are always stored in modules internally
         const currentMarginsInMod = this.settings.margins;
@@ -4215,58 +4530,36 @@ class GridGenerator {
             }
         });
         
-        // Ограничение иконок
-        if (this.iconsBlock) {
-            const iconHeightModules = this.iconsBlock.heightInModules;
-            const maxY = maxYInBaseline - iconHeightModules;
-            const currentY = this.getBlockY(this.iconsBlock);
-            
-            if (currentY > maxY) {
-                const constrainedY = Math.max(0, maxY);
-                const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
-                this.iconsBlock.row = Math.max(0, row);
-                this.iconsBlock.baselineOffset = baselineOffset;
-            }
-            
-            // Проверяем горизонтальное положение иконок
-            const heightInMm = module * this.iconsBlock.heightInModules;
-            const aspectRatio = this.iconsBlock.originalWidth / this.iconsBlock.originalHeight;
-            const widthInMm = heightInMm * aspectRatio;
-            const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (maxColumns - 1)) / maxColumns;
-            const gutter = module;
-            const iconsWidthInColumns = Math.ceil(widthInMm / (columnWidth + gutter));
-            const maxX = Math.max(1, maxColumns - iconsWidthInColumns + 1);
-            
-            if (this.iconsBlock.x > maxX) {
-                this.iconsBlock.x = maxX;
-            }
-        }
-        
-        // Ограничение claim
-        if (this.claimBlock) {
-            const claimHeightModules = this.claimBlock.heightInModules;
-            const maxY = maxYInBaseline - claimHeightModules;
-            const currentY = this.getBlockY(this.claimBlock);
-            
-            if (currentY > maxY) {
-                const constrainedY = Math.max(0, maxY);
-                const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
-                this.claimBlock.row = Math.max(0, row);
-                this.claimBlock.baselineOffset = baselineOffset;
-            }
-            
-            // Проверяем горизонтальное положение claim
-            const heightInMm = module * this.claimBlock.heightInModules;
-            const aspectRatio = this.claimBlock.originalWidth / this.claimBlock.originalHeight;
-            const widthInMm = heightInMm * aspectRatio;
-            const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (maxColumns - 1)) / maxColumns;
-            const gutter = module;
-            const claimWidthInColumns = Math.ceil(widthInMm / (columnWidth + gutter));
-            const maxX = Math.max(1, maxColumns - claimWidthInColumns + 1);
-            
-            if (this.claimBlock.x > maxX) {
-                this.claimBlock.x = maxX;
-            }
+        // Ограничение графических блоков (icons, claim, custom graphics)
+        if (this.graphicsBlocks) {
+            this.graphicsBlocks.forEach(block => {
+                // Вертикальные ограничения
+                const graphicsHeightModules = block.heightInModules || 3;
+                const maxY = maxYInBaseline - graphicsHeightModules;
+                const currentY = this.getBlockY(block);
+                
+                if (currentY > maxY) {
+                    const constrainedY = Math.max(0, maxY);
+                    const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
+                    block.row = Math.max(0, row);
+                    block.baselineOffset = baselineOffset;
+                }
+                
+                // Горизонтальные ограничения
+                const heightInMm = module * graphicsHeightModules;
+                const aspectRatio = (block.originalWidth && block.originalHeight) 
+                    ? block.originalWidth / block.originalHeight 
+                    : 1;
+                const widthInMm = heightInMm * aspectRatio;
+                const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (maxColumns - 1)) / maxColumns;
+                const gutter = module;
+                const widthInColumns = Math.ceil(widthInMm / (columnWidth + gutter));
+                const maxX = Math.max(1, maxColumns - widthInColumns + 1);
+                
+                if (block.x > maxX) {
+                    block.x = maxX;
+                }
+            });
         }
     }
     
@@ -4305,6 +4598,39 @@ class GridGenerator {
             return this.settings.textFontWeight === 500 ? 'Medium' : 'Regular';
         }
         return 'Medium';
+    }
+    
+    // ============================================
+    // Graphics Helpers (Path 3 Refactoring)
+    // ============================================
+    
+    // Получить графический блок по ID
+    getGraphicsBlock(id) {
+        return this.graphicsBlocks?.find(b => b.id === id);
+    }
+    
+    // Получить все встроенные графические блоки
+    getBuiltInGraphicsBlocks() {
+        return this.graphicsBlocks?.filter(b => b.isBuiltIn) || [];
+    }
+    
+    // Получить все кастомные графические блоки
+    getCustomGraphicsBlocks() {
+        return this.graphicsBlocks?.filter(b => !b.isBuiltIn) || [];
+    }
+    
+    // Получить все видимые графические блоки
+    getVisibleGraphicsBlocks() {
+        return this.graphicsBlocks?.filter(b => b.visible !== false) || [];
+    }
+    
+    // Проверить, является ли блок встроенным
+    isBuiltInGraphics(blockIdOrBlock) {
+        if (typeof blockIdOrBlock === 'string') {
+            const block = this.getGraphicsBlock(blockIdOrBlock);
+            return block ? block.isBuiltIn === true : false;
+        }
+        return blockIdOrBlock?.isBuiltIn === true;
     }
     
     // Конвертировать Row + BaselineOffset в Y (позиция в baseline модулях)
@@ -4471,9 +4797,23 @@ class GridGenerator {
         const gutter = module;
         
         // Position based on column and row
-        // x включает левый margin, так как колонки считаются внутри margin
-        // Вычитаем 1, т.к. отсчет колонок начинается с 1
-        const x = module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale);
+        let x;
+        
+        // Check alignment (default to 'left' for backward compatibility)
+        const alignment = block.alignment || 'left';
+        
+        if (alignment === 'right') {
+            // For right alignment: return the RIGHT edge of the column
+            // x включает левый margin, так как колонки считаются внутри margin
+            // Правый край колонки = левый край + ширина колонки
+            x = module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale) + columnWidth * scale;
+        } else {
+            // Left alignment (default): return the LEFT edge of the column
+            // x включает левый margin, так как колонки считаются внутри margin
+            // Вычитаем 1, т.к. отсчет колонок начинается с 1
+            x = module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale);
+        }
+        
         // y НЕ включает topMargin - он добавляется при отрисовке
         // Получаем Y позицию в baseline модулях из row + baselineOffset
         const yInBaseline = this.getBlockY(block);
@@ -4570,6 +4910,7 @@ class GridGenerator {
         const gridColor = this.getContrastColor();
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
+        const alignment = block.alignment || 'left';
         
         // Get style settings based on block's styleRef
         const isHeadline = block.styleRef === 'headline';
@@ -4623,7 +4964,11 @@ class GridGenerator {
         
         // Calculate position
         const position = this.calculateBlockPosition(block, scale);
-        const textX = frontX + position.x;
+        // For right-aligned blocks, shift left by block width so the right edge aligns with the column
+        // But text inside is still left-aligned within the block
+        const textX = alignment === 'right' 
+            ? frontX + position.x - scaledTextWidth 
+            : frontX + position.x;
         
         // Calculate cap height and x-height for positioning
         let actualCapHeight, actualXHeight;
@@ -4670,7 +5015,7 @@ class GridGenerator {
             'font-family': 'TT Commons Classic, -apple-system, BlinkMacSystemFont, sans-serif',
             'font-weight': fontWeight.toString(),
             'font-size': `${scaledFontSize}`,
-            'text-anchor': 'start',
+            'text-anchor': 'start', // Always left-align text inside the block
             'fill': gridColor,
             'fill-opacity': '1',
             'letter-spacing': `${trackingSetting}em`
@@ -4701,10 +5046,15 @@ class GridGenerator {
         
         // Create bounds rectangle only for canvas (not for export)
         if (scale !== 1) {
+            // For right-aligned blocks, bounds are shifted left by block width
+            const boundsX = alignment === 'right' 
+                ? frontX + position.x - scaledTextWidth  // Left edge of right-aligned block
+                : frontX + position.x;                    // Left edge of left-aligned block
+            
             // Create invisible hover area for the entire block
             const hoverArea = this.createSVGElement('rect', {
                 id: `hover-area-${block.id}`,
-                x: textX,
+                x: boundsX,
                 y: frontY + position.y + topMargin,
                 width: scaledTextWidth,
                 height: lineHeightInMm * wrappedLines.length,
@@ -4717,7 +5067,7 @@ class GridGenerator {
             
             const boundsRect = this.createSVGElement('rect', {
                 id: `bounds-${block.id}`,
-                x: textX,
+                x: boundsX,
                 y: frontY + position.y + topMargin,
                 width: scaledTextWidth,
                 height: lineHeightInMm * wrappedLines.length,
@@ -4737,13 +5087,16 @@ class GridGenerator {
             // Attach event handlers to hoverArea instead of textGroup
             this.attachTextBlockHandlers(hoverArea, block, frontX, frontY, scale);
             
-            // Create resize handle on the right edge (after textGroup to be on top)
+            // Create resize handle (on the left for right-aligned blocks, on the right for left-aligned)
             // Фиксированная ширина хэндла независимо от зума (как у бейслайна)
             const handleWidth = 4;
             const handleHeight = lineHeightInMm * wrappedLines.length;
+            const handleX = alignment === 'right' 
+                ? boundsX - handleWidth / 2                                  // Left edge for right-aligned blocks
+                : frontX + position.x + scaledTextWidth - handleWidth / 2;   // Right edge for left-aligned blocks
             const resizeHandle = this.createSVGElement('rect', {
                 id: `resize-handle-${block.id}`,
-                x: textX + scaledTextWidth - handleWidth / 2,
+                x: handleX,
                 y: frontY + position.y + topMargin,
                 width: handleWidth,
                 height: handleHeight,
@@ -4869,14 +5222,19 @@ class GridGenerator {
                 // Convert pixel movement to columns
                 const effectiveScale = scale;
                 const columnWithGutter = (columnWidth + gutter) * effectiveScale;
-                const deltaColumns = dx / columnWithGutter;
+                
+                // For right-aligned text, handle is on the left, so invert the delta
+                const alignment = block.alignment || 'left';
+                const deltaColumns = alignment === 'right' ? -dx / columnWithGutter : dx / columnWithGutter;
                 
                 // Calculate new width in columns
                 let newWidth = startWidth + deltaColumns;
                 
                 // Constrain to valid range (0.25 to remaining columns)
                 const minWidth = 0.25;
-                const maxWidth = columnCount - block.x + 1;
+                // For right-aligned: max width is the column position (grows left from right edge)
+                // For left-aligned: max width is remaining columns to the right
+                const maxWidth = alignment === 'right' ? block.x : columnCount - block.x + 1;
                 newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
                 
                 // Round to nearest 0.25 column
@@ -4884,6 +5242,8 @@ class GridGenerator {
                 
                 // Update block width only if changed significantly
                 if (Math.abs(roundedWidth - (block.width || 1)) >= 0.25) {
+                    // For right-aligned blocks, width changes but position (block.x) stays the same
+                    // The right edge remains anchored to the column
                     block.width = roundedWidth;
                     this.updateGrid();
                 }
@@ -4988,10 +5348,19 @@ class GridGenerator {
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         
-        // Calculate dimensions
-        const heightInMm = module * block.heightInModules;
+        // Calculate dimensions based on sizeMode
+        const sizeMode = block.sizeMode || 'height';
         const aspectRatio = block.originalWidth / block.originalHeight;
-        const widthInMm = heightInMm * aspectRatio;
+        let heightInMm, widthInMm;
+        
+        if (sizeMode === 'height') {
+            heightInMm = module * (block.heightInModules || 3);
+            widthInMm = heightInMm * aspectRatio;
+        } else {
+            // sizeMode === 'width'
+            widthInMm = module * (block.widthInModules || 3);
+            heightInMm = widthInMm / aspectRatio;
+        }
         
         // Calculate position
         const columnWidth = (frontWidth / scale - module * margins * 2 - module * (this.settings.columnCount - 1)) / this.settings.columnCount;
@@ -5003,7 +5372,25 @@ class GridGenerator {
             baselineOffset: block.baselineOffset
         });
         
-        const graphicsX = frontX + module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale);
+        // Calculate X position based on alignment
+        const alignment = block.alignment || 'left';
+        let graphicsX;
+        
+        // Calculate how many columns the graphic occupies
+        const graphicsWidthInColumns = Math.ceil(widthInMm / (columnWidth + gutter));
+        
+        if (alignment === 'right') {
+            // For right alignment: X indicates the left column of the area
+            // Calculate the right edge of the rightmost column that graphic would occupy
+            // Then offset left by graphic width to align the graphic's right edge with that column's right edge
+            const areaRightColumn = block.x + graphicsWidthInColumns - 1; // Last column of the area
+            const areaRightEdge = frontX + module * margins * scale + (areaRightColumn - 1) * (columnWidth * scale + gutter * scale) + columnWidth * scale;
+            graphicsX = areaRightEdge - widthInMm * scale;
+        } else {
+            // Left alignment (default): position at the LEFT edge of the column
+            graphicsX = frontX + module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale);
+        }
+        
         const graphicsY = frontY + yInBaseline * (module * scale) + topMargin;
         
         // Scale dimensions
@@ -5215,8 +5602,31 @@ class GridGenerator {
         if (this.dom.graphicsHeightInput) {
             this.dom.graphicsHeightInput.value = block.heightInModules.toFixed(2);
         }
+        
+        // Set size mode and value
+        const sizeMode = block.sizeMode || 'height';
+        if (this.dom.graphicsSizeUnitHeight && this.dom.graphicsSizeUnitWidth) {
+            if (sizeMode === 'height') {
+                this.dom.graphicsSizeUnitHeight.classList.add('active');
+                this.dom.graphicsSizeUnitWidth.classList.remove('active');
+                if (this.dom.graphicsSizeInput) {
+                    this.dom.graphicsSizeInput.value = (block.heightInModules || 3).toFixed(2);
+                }
+            } else {
+                this.dom.graphicsSizeUnitWidth.classList.add('active');
+                this.dom.graphicsSizeUnitHeight.classList.remove('active');
+                if (this.dom.graphicsSizeInput) {
+                    this.dom.graphicsSizeInput.value = (block.widthInModules || 3).toFixed(2);
+                }
+            }
+        }
+        
         if (this.dom.graphicsLockPositionToggle) {
             this.dom.graphicsLockPositionToggle.checked = block.lockPosition || false;
+        }
+        
+        if (this.dom.graphicsAlignRightToggle) {
+            this.dom.graphicsAlignRightToggle.checked = block.alignment === 'right';
         }
         
         // Show file upload area with updated placeholder
@@ -5228,28 +5638,32 @@ class GridGenerator {
             }
         }
         
-        // Change button text to Update
-        if (this.dom.graphicsApplyBtn) {
-            this.dom.graphicsApplyBtn.textContent = 'Update';
-        }
-        
-        // Show/hide action buttons based on whether it's a custom graphics or built-in (icons/claim)
+        // Update action button icons and visibility
         const graphicsHideBtn = document.getElementById('graphicsHideBtn');
         const graphicsDeleteBtn = document.getElementById('graphicsDeleteBtn');
+        
+        if (graphicsHideBtn) {
+            // Update hide icon based on visibility
+            const svg = graphicsHideBtn.querySelector('svg');
+            if (svg) {
+                if (block.visible) {
+                    // Show hide icon (eye with slash)
+                    svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>';
+                } else {
+                    // Show visible icon (eye without slash)
+                    svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>';
+                }
+            }
+        }
+        
+        if (graphicsDeleteBtn) {
+            // Show delete button for all graphics (including built-in)
+            graphicsDeleteBtn.style.display = 'flex';
+        }
+        
+        // Также показываем/скрываем кнопку скрытия (она работает для всех типов)
         if (graphicsHideBtn) {
             graphicsHideBtn.style.display = 'flex';
-            // Update button text based on visibility
-            graphicsHideBtn.innerHTML = block.visible 
-                ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Hide'
-                : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>Show';
-        }
-        if (graphicsDeleteBtn) {
-            // Only show delete button for custom graphics (not icons or claim)
-            if (block.type === 'custom') {
-                graphicsDeleteBtn.style.display = 'flex';
-            } else {
-                graphicsDeleteBtn.style.display = 'none';
-            }
         }
         
         // Center and show panel
@@ -5302,6 +5716,7 @@ class GridGenerator {
         
         const padding = 16;
         const offset = 24;
+        const bottomMargin = 80; // Минимальный отступ от нижнего края окна
         const panelRect = panelElement.getBoundingClientRect();
         const panelWidth = panelRect.width || panelElement.offsetWidth || 0;
         const panelHeight = panelRect.height || panelElement.offsetHeight || 0;
@@ -5312,12 +5727,25 @@ class GridGenerator {
         let left = targetRect.right + offset;
         let top = targetRect.top;
         
+        // Проверка горизонтального позиционирования
         if (left > maxLeft) {
             left = targetRect.left - panelWidth - offset;
         }
         
         left = Math.max(padding, Math.min(left, maxLeft));
+        
+        // Проверка вертикального позиционирования с учетом bottomMargin
+        // Вычисляем максимальную позицию top так, чтобы нижняя граница панели
+        // не опускалась ниже bottomMargin от нижнего края окна
+        const maxBottomTop = window.innerHeight - panelHeight - bottomMargin;
+        
+        // Сначала применяем стандартное ограничение
         top = Math.max(padding, Math.min(top, maxTop));
+        
+        // Затем применяем ограничение по bottomMargin (только если оно строже)
+        if (top > maxBottomTop) {
+            top = Math.max(padding, maxBottomTop);
+        }
         
         panelElement.style.left = `${Math.round(left)}px`;
         panelElement.style.top = `${Math.round(top)}px`;
@@ -5441,10 +5869,19 @@ class GridGenerator {
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         
-        // Calculate dimensions
-        const heightInMm = module * block.heightInModules;
+        // Calculate dimensions based on sizeMode
+        const sizeMode = block.sizeMode || 'height';
         const aspectRatio = block.originalWidth / block.originalHeight;
-        const widthInMm = heightInMm * aspectRatio;
+        let heightInMm, widthInMm;
+        
+        if (sizeMode === 'height') {
+            heightInMm = module * (block.heightInModules || 3);
+            widthInMm = heightInMm * aspectRatio;
+        } else {
+            // sizeMode === 'width'
+            widthInMm = module * (block.widthInModules || 3);
+            heightInMm = widthInMm / aspectRatio;
+        }
         
         // Calculate position
         const columnWidth = (frontWidth / scale - module * margins * 2 - module * (this.settings.columnCount - 1)) / this.settings.columnCount;
@@ -5456,7 +5893,25 @@ class GridGenerator {
             baselineOffset: block.baselineOffset
         });
         
-        const graphicsX = frontX + module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale);
+        // Calculate X position based on alignment
+        const alignment = block.alignment || 'left';
+        let graphicsX;
+        
+        // Calculate how many columns the graphic occupies
+        const graphicsWidthInColumns = Math.ceil(widthInMm / (columnWidth + gutter));
+        
+        if (alignment === 'right') {
+            // For right alignment: X indicates the left column of the area
+            // Calculate the right edge of the rightmost column that graphic would occupy
+            // Then offset left by graphic width to align the graphic's right edge with that column's right edge
+            const areaRightColumn = block.x + graphicsWidthInColumns - 1; // Last column of the area
+            const areaRightEdge = frontX + module * margins * scale + (areaRightColumn - 1) * (columnWidth * scale + gutter * scale) + columnWidth * scale;
+            graphicsX = areaRightEdge - widthInMm * scale;
+        } else {
+            // Left alignment (default): position at the LEFT edge of the column
+            graphicsX = frontX + module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale);
+        }
+        
         const graphicsY = frontY + yInBaseline * (module * scale) + topMargin;
         
         // Scale dimensions
@@ -6065,29 +6520,23 @@ class GridGenerator {
             this.createElementItem(displayName, 'text', block.id, isVisible, block.deleting);
         });
         
-        // Add graphics blocks (excluding built-in blocks which are added separately)
+        // Add ALL graphics blocks (both custom and built-in)
         if (this.graphicsBlocks) {
             this.graphicsBlocks.forEach(block => {
-                // Skip built-in blocks (icons and claim) - they are added separately
-                if (block.isBuiltIn) return;
-                
                 const displayName = block.name || 'Graphic';
                 // Создаем элемент (передаем реальное состояние видимости)
                 const isVisible = block.visible !== false;
-                this.createElementItem(displayName, 'graphics', block.id, isVisible, block.deleting);
+                
+                // Используем правильный тип для встроенных блоков
+                // 'icons' для icons, 'claim' для claim, 'graphics' для кастомных
+                let elementType = 'graphics';
+                if (block.isBuiltIn) {
+                    if (block.id === 'icons') elementType = 'icons';
+                    else if (block.id === 'claim') elementType = 'claim';
+                }
+                
+                this.createElementItem(displayName, elementType, block.id, isVisible, block.deleting);
             });
-        }
-        
-        // Add icons block
-        if (this.iconsBlock) {
-            const isVisible = this.iconsBlock.visible !== false;
-            this.createElementItem('Icons', 'icons', 'icons', isVisible, this.iconsBlock.deleting);
-        }
-        
-        // Add claim block
-        if (this.claimBlock) {
-            const isVisible = this.claimBlock.visible !== false;
-            this.createElementItem('Claim', 'claim', 'claim', isVisible, this.claimBlock.deleting);
         }
         
         // Update panel params (for Objects count)
@@ -6171,18 +6620,10 @@ class GridGenerator {
                     if (block) {
                         delete block.deleting;
                     }
-                } else if (type === 'graphics' && blockId) {
-                    const block = this.graphicsBlocks?.find(b => b.id === blockId);
+                } else if ((type === 'graphics' || type === 'icons' || type === 'claim') && blockId) {
+                    const block = this.getGraphicsBlock(blockId);
                     if (block) {
                         delete block.deleting;
-                    }
-                } else if (type === 'icons' && blockId === 'icons') {
-                    if (this.iconsBlock) {
-                        delete this.iconsBlock.deleting;
-                    }
-                } else if (type === 'claim' && blockId === 'claim') {
-                    if (this.claimBlock) {
-                        delete this.claimBlock.deleting;
                     }
                 }
                 // Обновляем UI
@@ -6285,8 +6726,9 @@ class GridGenerator {
                 
                 this.updateGrid();
             }
-        } else if (type === 'graphics' && blockId) {
-            const block = this.graphicsBlocks?.find(b => b.id === blockId);
+        } else if ((type === 'graphics' || type === 'icons' || type === 'claim') && blockId) {
+            // Unified handling for all graphics types (custom, icons, claim)
+            const block = this.getGraphicsBlock(blockId);
             if (block) {
                 block.visible = block.visible === false ? true : false;
                 
@@ -6312,19 +6754,23 @@ class GridGenerator {
                     }
                 }
                 
+                // Update grid to reflect visibility change
                 this.updateGrid();
-            }
-        } else if (type === 'icons' && blockId === 'icons') {
-            if (this.iconsBlock) {
-                this.iconsBlock.visible = this.iconsBlock.visible === false ? true : false;
-                this.updateElementsNavigator();
-                this.updateGrid();
-            }
-        } else if (type === 'claim' && blockId === 'claim') {
-            if (this.claimBlock) {
-                this.claimBlock.visible = this.claimBlock.visible === false ? true : false;
-                this.updateElementsNavigator();
-                this.updateGrid();
+                
+                // Update panel icon if this block's edit panel is open
+                if (this.currentEditingGraphicsId === blockId) {
+                    const panelHideBtn = document.getElementById('graphicsHideBtn');
+                    if (panelHideBtn) {
+                        const svg = panelHideBtn.querySelector('svg');
+                        if (svg) {
+                            if (block.visible) {
+                                svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>';
+                            } else {
+                                svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>';
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -6353,8 +6799,9 @@ class GridGenerator {
             if (this.currentEditingBlock && this.currentEditingBlock.id === blockId) {
                 this.closeParagraphPanel();
             }
-        } else if (type === 'graphics' && blockId) {
-            const block = this.graphicsBlocks?.find(b => b.id === blockId);
+        } else if ((type === 'graphics' || type === 'icons' || type === 'claim') && blockId) {
+            // Unified handling for all graphics types
+            const block = this.getGraphicsBlock(blockId);
             if (block) {
                 block.deleting = true;
             }
@@ -6362,18 +6809,6 @@ class GridGenerator {
             if (this.currentEditingGraphicsId === blockId) {
                 this.closeGraphicsPanel();
             }
-        } else if (type === 'icons' && blockId === 'icons') {
-            if (this.iconsBlock) {
-                this.iconsBlock.deleting = true;
-            }
-            // Закрываем панель настроек иконок
-            this.closeIconsPanel();
-        } else if (type === 'claim' && blockId === 'claim') {
-            if (this.claimBlock) {
-                this.claimBlock.deleting = true;
-            }
-            // Закрываем панель настроек claim
-            this.closeClaimPanel();
         }
         
         // Обновляем сетку (объект скрыт с флагом deleting)
@@ -6389,13 +6824,9 @@ class GridGenerator {
             if (type === 'text' && blockId) {
                 const block = this.textBlocks.find(b => b.id === blockId);
                 stillDeleting = block?.deleting === true;
-            } else if (type === 'graphics' && blockId) {
-                const block = this.graphicsBlocks?.find(b => b.id === blockId);
+            } else if ((type === 'graphics' || type === 'icons' || type === 'claim') && blockId) {
+                const block = this.getGraphicsBlock(blockId);
                 stillDeleting = block?.deleting === true;
-            } else if (type === 'icons' && blockId === 'icons') {
-                stillDeleting = this.iconsBlock?.deleting === true;
-            } else if (type === 'claim' && blockId === 'claim') {
-                stillDeleting = this.claimBlock?.deleting === true;
             }
             
             // Если флаг все еще установлен, окончательно удаляем
@@ -6406,17 +6837,14 @@ class GridGenerator {
                     if (index !== -1) {
                         this.textBlocks.splice(index, 1);
                     }
-                } else if (type === 'graphics' && blockId) {
+                } else if ((type === 'graphics' || type === 'icons' || type === 'claim') && blockId) {
                     if (this.graphicsBlocks) {
                         const index = this.graphicsBlocks.findIndex(b => b.id === blockId);
                         if (index !== -1) {
+                            // Allow deletion of all graphics blocks (including built-in)
                             this.graphicsBlocks.splice(index, 1);
                         }
                     }
-                } else if (type === 'icons' && blockId === 'icons') {
-                    this.iconsBlock = null;
-                } else if (type === 'claim' && blockId === 'claim') {
-                    this.claimBlock = null;
                 }
                 
                 // Обновляем UI после окончательного удаления
@@ -6442,21 +6870,15 @@ class GridGenerator {
                 this.updateElementsNavigator();
                 this.updateGrid();
             }
-        } else if (type === 'graphics' && blockId) {
+        } else if ((type === 'graphics' || type === 'icons' || type === 'claim') && blockId) {
+            // Unified handling for all graphics types
             const index = this.graphicsBlocks?.findIndex(b => b.id === blockId);
             if (index !== -1) {
+                // Allow deletion of all graphics blocks (including built-in)
                 this.graphicsBlocks.splice(index, 1);
                 this.updateElementsNavigator();
                 this.updateGrid();
             }
-        } else if (type === 'icons') {
-            this.iconsBlock = null;
-            this.updateElementsNavigator();
-            this.updateGrid();
-        } else if (type === 'claim') {
-            this.claimBlock = null;
-            this.updateElementsNavigator();
-            this.updateGrid();
         }
     }
     
@@ -6490,6 +6912,7 @@ class GridGenerator {
             row: 0,
             baselineOffset: 0,
             width: 3,
+            alignment: 'left',
             showBounds: false,
             visible: true,
             alignmentMode: 'baseline' // Default alignment mode
@@ -6521,15 +6944,20 @@ class GridGenerator {
         const newBlock = {
             id: newId,
             name: name,
+            isBuiltIn: false,  // Explicitly mark as custom (not built-in)
             svgContent: svgContent,
             heightInModules: 3,
+            widthInModules: null,
+            sizeMode: 'height',
+            alignment: 'left',
             x: 1,
             row: 0,
             baselineOffset: 0,
             showBounds: false,
             visible: true,
             originalWidth: originalWidth,
-            originalHeight: originalHeight
+            originalHeight: originalHeight,
+            lockPosition: true  // Default to constrain to grid
         };
         
         this.graphicsBlocks.push(newBlock);
@@ -7037,8 +7465,17 @@ class GridGenerator {
         
         // Ограничиваем позицию, чтобы блок не выходил за пределы margins
         // Ограничение по X (колонки), x начинается с 1
-        // Последняя занятая колонка = x + width - 1, должна быть <= columnCount
-        newX = Math.max(1, Math.min(newX, columnCount - block.width + 1));
+        const alignment = block.alignment || 'left';
+        if (alignment === 'right') {
+            // For right-aligned: x is the column where right edge is anchored
+            // Min: ceil(block.width) (block can't extend left beyond column 1)
+            // Max: columnCount (right edge can be on any column)
+            newX = Math.max(Math.ceil(block.width), Math.min(newX, columnCount));
+        } else {
+            // For left-aligned: x is the column where left edge is anchored
+            // Последняя занятая колонка = x + width - 1, должна быть <= columnCount
+            newX = Math.max(1, Math.min(newX, columnCount - block.width + 1));
+        }
         
         // Ограничиваем Y: минимум 0 (не выходим за верхний margin)
         // Максимум - высота контента в baseline модулях минус высота текстового блока
@@ -7206,11 +7643,11 @@ class GridGenerator {
             savedPanY = this.zoomPanManager.panY;
         }
         
-        const { frontWidth, frontHeight } = this.settings;
+        const { frontWidth, frontHeight, thickness } = this.settings;
         
         // Calculate total dimensions in mm
-        const totalWidth = frontWidth;
-        const totalHeight = frontHeight;
+        const totalWidth = frontWidth + 2 * thickness;
+        const totalHeight = frontHeight + 2 * thickness;
         
         // Calculate scale to fit in display area with extra space for dimensions
         const maxDimension = Math.max(totalWidth, totalHeight);
@@ -7242,18 +7679,19 @@ class GridGenerator {
         
         const scaledFrontWidth = frontWidth * scale;
         const scaledFrontHeight = frontHeight * scale;
+        const scaledThickness = thickness * scale;
         
         // Draw rectangles
-        this.drawRectangles(this.dom.svg, startX, startY, scaledFrontWidth, scaledFrontHeight, scale);
+        this.drawRectangles(this.dom.svg, startX, startY, scaledFrontWidth, scaledFrontHeight, scaledThickness, scale);
         
         // Draw labels if enabled (but default is false now)
         if (this.settings.showLabels) {
-            this.drawLabels(this.dom.svg, startX, startY, scaledFrontWidth, scaledFrontHeight);
+            this.drawLabels(this.dom.svg, startX, startY, scaledFrontWidth, scaledFrontHeight, scaledThickness);
         }
         
         // Draw grid elements on front panel
-        const frontX = startX;
-        const frontY = startY;
+        const frontX = startX + scaledThickness;
+        const frontY = startY + scaledThickness;
         
         // Draw columns if enabled
         if (this.settings.showColumns) {
@@ -7268,6 +7706,36 @@ class GridGenerator {
         // Draw baseline if enabled
         if (this.settings.showBaseline) {
             this.gridRenderer.drawBaseline(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
+            
+            // Draw baseline on side panels if they are visible
+            if (this.settings.showSidePanels) {
+                // Left panel - vertical baseline (margin from right side where it touches front)
+                this.drawBaselineVerticalLeftRight(this.dom.svg, startX, frontY, scaledThickness, scaledFrontHeight, scale, 'left');
+                
+                // Right panel - vertical baseline (margin from left side where it touches front)
+                this.drawBaselineVerticalLeftRight(this.dom.svg, startX + scaledThickness + scaledFrontWidth, frontY, scaledThickness, scaledFrontHeight, scale, 'right');
+                
+                // Top panel - horizontal baseline (margin from bottom where it touches front)
+                this.drawBaselineTopBottom(this.dom.svg, frontX, startY, scaledFrontWidth, scaledThickness, scale, 'top');
+                
+                // Bottom panel - horizontal baseline (margin from top where it touches front)
+                this.drawBaselineTopBottom(this.dom.svg, frontX, startY + scaledThickness + scaledFrontHeight, scaledFrontWidth, scaledThickness, scale, 'bottom');
+            }
+        }
+        
+        // Draw columns on side panels if they are visible and columns are enabled
+        if (this.settings.showColumns && this.settings.showSidePanels) {
+            // Left panel - vertical columns (using rows parameters from front)
+            this.drawColumnsVerticalLeftRight(this.dom.svg, startX, frontY, scaledThickness, scaledFrontHeight, scale, 'left');
+            
+            // Right panel - vertical columns (using rows parameters from front)
+            this.drawColumnsVerticalLeftRight(this.dom.svg, startX + scaledThickness + scaledFrontWidth, frontY, scaledThickness, scaledFrontHeight, scale, 'right');
+            
+            // Top panel - horizontal columns (using columns parameters from front)
+            this.drawColumnsTopBottom(this.dom.svg, frontX, startY, scaledFrontWidth, scaledThickness, scale, 'top');
+            
+            // Bottom panel - horizontal columns (using columns parameters from front)
+            this.drawColumnsTopBottom(this.dom.svg, frontX, startY + scaledThickness + scaledFrontHeight, scaledFrontWidth, scaledThickness, scale, 'bottom');
         }
         
         // Draw text blocks, icons and claim on front panel (if enabled)
@@ -7285,23 +7753,14 @@ class GridGenerator {
                 }
             });
             
-            // Draw graphics blocks on front panel (only visible and not deleting)
+            // Draw ALL graphics blocks (icons, claim, custom) on front panel
             if (this.graphicsBlocks) {
                 this.graphicsBlocks.forEach(block => {
+                    // Only draw if visible and not being deleted
                     if (block.visible !== false && !block.deleting) {
                         this.drawGraphicsBlock(this.dom.svg, block, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
                     }
                 });
-            }
-            
-            // Draw icons block on front panel (if visible and not deleting)
-            if (this.iconsBlock && this.iconsBlock.visible !== false && !this.iconsBlock.deleting) {
-                this.drawIconsBlock(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
-            }
-            
-            // Draw claim block on front panel (if visible and not deleting)
-            if (this.claimBlock && this.claimBlock.visible !== false && !this.claimBlock.deleting) {
-                this.drawClaimBlock(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
             }
         }
         
@@ -7333,32 +7792,79 @@ class GridGenerator {
         return element;
     }
     
-    drawRectangles(container, x, y, frontW, frontH, scale = 1) {
+    drawRectangles(container, x, y, frontW, frontH, thickness, scale = 1) {
         // For export: 0.25pt = 25.4/72*0.25 = 0.088194444... mm (since viewBox is in mm)
         const strokeWidth = scale === 1 ? '0.088194444' : '0.5';
         
         // Front (center) - always visible
         this.createSVGElement('rect', {
-            x,
-            y,
+            x: x + thickness,
+            y: y + thickness,
             width: frontW,
             height: frontH,
             fill: this.settings.boxColor,
             stroke: '#000000',
             'stroke-width': strokeWidth
         }, container);
+        
+        // Side panels - only if showSidePanels is enabled
+        if (this.settings.showSidePanels) {
+            // Left
+            this.createSVGElement('rect', {
+                x: x,
+                y: y + thickness,
+                width: thickness,
+                height: frontH,
+                fill: this.settings.boxColor,
+                stroke: '#000000',
+                'stroke-width': strokeWidth
+            }, container);
+            
+            // Right
+            this.createSVGElement('rect', {
+                x: x + thickness + frontW,
+                y: y + thickness,
+                width: thickness,
+                height: frontH,
+                fill: this.settings.boxColor,
+                stroke: '#000000',
+                'stroke-width': strokeWidth
+            }, container);
+            
+            // Top
+            this.createSVGElement('rect', {
+                x: x + thickness,
+                y: y,
+                width: frontW,
+                height: thickness,
+                fill: this.settings.boxColor,
+                stroke: '#000000',
+                'stroke-width': strokeWidth
+            }, container);
+            
+            // Bottom
+            this.createSVGElement('rect', {
+                x: x + thickness,
+                y: y + thickness + frontH,
+                width: frontW,
+                height: thickness,
+                fill: this.settings.boxColor,
+                stroke: '#000000',
+                'stroke-width': strokeWidth
+            }, container);
+        }
     }
     
-    drawDimensions(container, x, y, frontW, frontH, scale = 1) {
-        const { frontWidth, frontHeight } = this.settings;
+    drawDimensions(container, x, y, frontW, frontH, thickness, scale = 1) {
+        const { frontWidth, frontHeight, thickness: thicknessMm } = this.settings;
         const offset = scale === 1 ? 5 : 15; // smaller offset in mm for export
         const fontSize = scale === 1 ? '3' : null; // fontSize only for export
         
         // Front width dimension (below front panel)
         this.createDimensionText(
             container,
-            x + frontW / 2,
-            y + frontH + offset,
+            x + thickness + frontW / 2,
+            y + thickness + frontH + offset,
             `${frontWidth.toFixed(1)} mm`,
             'middle',
             fontSize
@@ -7367,9 +7873,19 @@ class GridGenerator {
         // Front height dimension (right of front panel)
         this.createDimensionText(
             container,
-            x + frontW + offset,
-            y + frontH / 2,
+            x + thickness + frontW + offset,
+            y + thickness + frontH / 2,
             `${frontHeight.toFixed(1)} mm`,
+            'middle',
+            fontSize
+        );
+        
+        // Thickness dimension (right of right panel)
+        this.createDimensionText(
+            container,
+            x + thickness + frontW + thickness + offset,
+            y + thickness + frontH / 2,
+            `${thicknessMm.toFixed(1)} mm`,
             'middle',
             fontSize
         );
@@ -7397,11 +7913,23 @@ class GridGenerator {
         textElement.textContent = text;
     }
     
-    drawLabels(container, x, y, frontW, frontH, scale = 1) {
+    drawLabels(container, x, y, frontW, frontH, thickness, scale = 1) {
         const fontSize = scale === 1 ? '4' : null;
         
         // Front label
-        this.createLabel(container, x + frontW / 2, y + frontH / 2, 'FRONT', false, fontSize);
+        this.createLabel(container, x + thickness + frontW / 2, y + thickness + frontH / 2, 'FRONT', false, fontSize);
+        
+        // Left label
+        this.createLabel(container, x + thickness / 2, y + thickness + frontH / 2, 'LEFT', true, fontSize);
+        
+        // Right label
+        this.createLabel(container, x + thickness + frontW + thickness / 2, y + thickness + frontH / 2, 'RIGHT', true, fontSize);
+        
+        // Top label
+        this.createLabel(container, x + thickness + frontW / 2, y + thickness / 2, 'TOP', false, fontSize);
+        
+        // Bottom label
+        this.createLabel(container, x + thickness + frontW / 2, y + thickness + frontH + thickness / 2, 'BOTTOM', false, fontSize);
     }
     
     createLabel(container, x, y, text, rotate = false, fontSize = null) {
@@ -7432,67 +7960,341 @@ class GridGenerator {
     }
     
     getContrastColor() {
-        // Calculate luminance of background color
-        const hex = this.settings.boxColor.replace('#', '');
-        const r = parseInt(hex.substr(0, 2), 16) / 255;
-        const g = parseInt(hex.substr(2, 2), 16) / 255;
-        const b = parseInt(hex.substr(4, 2), 16) / 255;
+        // Use ColorUtils for consistency with GridRenderer
+        const bgColor = this.settings.boxColor;
+        const luminance = ColorUtils.getLuminance(bgColor);
         
-        // Convert to linear RGB
-        const toLinear = (c) => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-        const rLinear = toLinear(r);
-        const gLinear = toLinear(g);
-        const bLinear = toLinear(b);
-        
-        // Calculate relative luminance
-        let luminance = 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
-        
-        // Clamp luminance to avoid extreme values at pure black/white
-        // This prevents harsh contrast jumps at #000000 and #ffffff
-        const minLuminance = 0.02;
-        const maxLuminance = 0.98;
-        luminance = Math.max(minLuminance, Math.min(maxLuminance, luminance));
-        
-        // Store clamped luminance for opacity calculation
+        // Store luminance for opacity calculation (if needed in future)
         this.currentLuminance = luminance;
         
-        // Return black for light backgrounds, white for dark backgrounds
-        // Use original luminance for color decision to keep accurate contrast
-        const originalLuminance = 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
-        return originalLuminance > 0.5 ? '#000000' : '#ffffff';
+        return ColorUtils.getContrastColor(bgColor);
     }
     
     getGridOpacity(baseOpacity) {
-        // Calculate opacity based on luminance
-        // Maximum opacity when luminance is around 0.5 (medium brightness)
-        // Reduced opacity when luminance is close to extremes (very dark or very light)
+        // Always use the same opacity regardless of background brightness
+        // Color switching (light/dark) is handled by getContrastColor()
+        return baseOpacity;
+    }
+    
+    drawColumnsVerticalLeftRight(container, x, y, width, height, scale, side) {
+        // Left and right panels use rows parameters from front (rotated 90°)
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const n = this.settings.rowCount;
+        const rowHeightInModules = this.settings.rowHeight;
+        const gridColor = this.getContrastColor();
+        const opacity = this.getGridOpacity(0.08);
         
-        const luminance = this.currentLuminance || 0.5;
+        // Calculate "column" height (which is row height from front panel)
+        let columnHeight = module * rowHeightInModules * scale;
+        const margin = module * margins * scale;
+        const gutter = module * scale;
         
-        // Use a parabolic curve: maximum at 0.5, minimum at edges
-        // Formula: 1 - (2 * luminance - 1)^2
-        // luminance is already clamped in getContrastColor()
-        const factor = 1 - Math.pow(2 * luminance - 1, 2);
+        // Width with margins (same as front panel height logic)
+        let columnWidth = width - 2 * margin;
         
-        // Define opacity range
-        const minOpacity = baseOpacity * 0.3; // 30% of base opacity at extremes
-        const maxOpacity = baseOpacity;       // 100% of base opacity at medium
+        // Ensure minimum column width and center if needed
+        const minColumnWidth = module * scale;
+        let columnX = x + margin;
+        if (columnWidth < minColumnWidth) {
+            columnWidth = minColumnWidth;
+            columnX = x + (width - columnWidth) / 2;
+        }
         
-        // Calculate final opacity
-        const opacity = minOpacity + (maxOpacity - minOpacity) * factor;
+        // Ensure minimum column height
+        const minColumnHeight = module * scale;
+        if (columnHeight < minColumnHeight) {
+            columnHeight = minColumnHeight;
+        }
         
-        return opacity;
+        let currentY = y + margin;
+        
+        // Draw n "columns" vertically (using row parameters)
+        for (let i = 0; i < n; i++) {
+            // Check if there's enough space for this column
+            if (currentY + columnHeight > y + height - margin) {
+                break;
+            }
+            
+            this.createSVGElement('rect', {
+                x: columnX,
+                y: currentY,
+                width: columnWidth,
+                height: columnHeight,
+                fill: gridColor,
+                'fill-opacity': opacity,
+                stroke: 'none'
+            }, container);
+            
+            currentY += columnHeight + gutter;
+        }
+    }
+    
+    drawColumnsTopBottom(container, x, y, width, height, scale, side) {
+        // Top and bottom panels use the same columns parameters as front
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const n = this.settings.columnCount;
+        const gridColor = this.getContrastColor();
+        const opacity = this.getGridOpacity(0.08);
+        
+        // Calculate column width (same as front panel)
+        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (n - 1)) / n;
+        
+        const margin = module * margins * scale;
+        const scaledColumnWidth = columnWidth * scale;
+        const gutter = module * scale;
+        
+        // Height with margins
+        let columnHeight = height - 2 * margin;
+        
+        // Ensure minimum column height and center if needed
+        const minColumnHeight = module * scale;
+        let columnY = y + margin;
+        if (columnHeight < minColumnHeight) {
+            columnHeight = minColumnHeight;
+            columnY = y + (height - columnHeight) / 2;
+        }
+        
+        let currentX = x + margin;
+        
+        for (let i = 0; i < n; i++) {
+            this.createSVGElement('rect', {
+                x: currentX,
+                y: columnY,
+                width: scaledColumnWidth,
+                height: columnHeight,
+                fill: gridColor,
+                'fill-opacity': opacity,
+                stroke: 'none'
+            }, container);
+            
+            currentX += scaledColumnWidth + gutter;
+        }
+    }
+    
+    drawBaselineVerticalLeftRight(container, x, y, width, height, scale, side) {
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const gridColor = this.getContrastColor();
+        const opacity = this.getGridOpacity(0.15);
+        const margin = module * margins * scale;
+        const baselineWidth = module * scale;
+        // For export: 0.25pt = 25.4/72*0.25 = 0.088194444... mm (since viewBox is in mm)
+        const strokeWidth = scale === 1 ? '0.088194444' : '0.5';
+        
+        // Height with margins top and bottom
+        const baselineHeight = height - 2 * margin;
+        
+        // Calculate how many full-width elements can fit
+        const availableWidth = width - 2 * margin;
+        const numFullElements = Math.floor(availableWidth / baselineWidth);
+        
+        // If no elements fit, draw a line at the center of the panel
+        if (numFullElements <= 0) {
+            const centerX = x + width / 2;
+            this.createSVGElement('line', {
+                x1: centerX,
+                y1: y + margin,
+                x2: centerX,
+                y2: y + height - margin,
+                stroke: gridColor,
+                'stroke-width': strokeWidth,
+                'stroke-opacity': opacity,
+                'vector-effect': 'non-scaling-stroke'
+            }, container);
+            return;
+        }
+        
+        // Left panel: start from right edge (touching front) with margin, go left
+        // Right panel: start from left edge (touching front) with margin, go right
+        let currentX;
+        
+        if (side === 'left') {
+            // Start from right edge with margin
+            currentX = x + width - margin;
+            
+            // Draw elements from right to left (only full-width elements)
+            for (let i = 0; i < numFullElements; i++) {
+                const elementWidth = baselineWidth;
+                const elementX = currentX - elementWidth;
+                
+                this.createSVGElement('rect', {
+                    x: elementX,
+                    y: y + margin,
+                    width: elementWidth,
+                    height: baselineHeight,
+                    fill: 'none',
+                    stroke: gridColor,
+                    'stroke-width': strokeWidth,
+                    'stroke-opacity': opacity,
+                    'vector-effect': 'non-scaling-stroke'
+                }, container);
+                
+                currentX -= elementWidth;
+            }
+            
+            // Draw a vertical line at the left margin
+            this.createSVGElement('line', {
+                x1: x + margin,
+                y1: y + margin,
+                x2: x + margin,
+                y2: y + height - margin,
+                stroke: gridColor,
+                'stroke-width': strokeWidth,
+                'stroke-opacity': opacity,
+                'vector-effect': 'non-scaling-stroke'
+            }, container);
+            
+        } else { // right
+            // Start from left edge + margin, go right
+            currentX = x + margin;
+            
+            // Draw elements from left to right (only full-width elements)
+            for (let i = 0; i < numFullElements; i++) {
+                this.createSVGElement('rect', {
+                    x: currentX,
+                    y: y + margin,
+                    width: baselineWidth,
+                    height: baselineHeight,
+                    fill: 'none',
+                    stroke: gridColor,
+                    'stroke-width': strokeWidth,
+                    'stroke-opacity': opacity,
+                    'vector-effect': 'non-scaling-stroke'
+                }, container);
+                
+                currentX += baselineWidth;
+            }
+            
+            // Draw a vertical line at the right margin
+            this.createSVGElement('line', {
+                x1: x + width - margin,
+                y1: y + margin,
+                x2: x + width - margin,
+                y2: y + height - margin,
+                stroke: gridColor,
+                'stroke-width': strokeWidth,
+                'stroke-opacity': opacity,
+                'vector-effect': 'non-scaling-stroke'
+            }, container);
+        }
+    }
+    
+    drawBaselineTopBottom(container, x, y, width, height, scale, side) {
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const gridColor = this.getContrastColor();
+        const opacity = this.getGridOpacity(0.15);
+        const margin = module * margins * scale;
+        const baselineHeight = module * scale;
+        // For export: 0.25pt = 25.4/72*0.25 = 0.088194444... mm (since viewBox is in mm)
+        const strokeWidth = scale === 1 ? '0.088194444' : '0.5';
+        
+        // Width with margins left and right
+        const baselineWidth = width - 2 * margin;
+        
+        // Calculate how many full-height elements can fit
+        const availableHeight = height - 2 * margin;
+        const numFullElements = Math.floor(availableHeight / baselineHeight);
+        
+        // If no elements fit, draw a line at the center of the panel
+        if (numFullElements <= 0) {
+            const centerY = y + height / 2;
+            this.createSVGElement('line', {
+                x1: x + margin,
+                y1: centerY,
+                x2: x + width - margin,
+                y2: centerY,
+                stroke: gridColor,
+                'stroke-width': strokeWidth,
+                'stroke-opacity': opacity,
+                'vector-effect': 'non-scaling-stroke'
+            }, container);
+            return;
+        }
+        
+        // Top panel: start from bottom edge (touching front) with margin, go up
+        // Bottom panel: start from top edge (touching front) with margin, go down
+        let currentY;
+        
+        if (side === 'top') {
+            // Start from bottom edge with margin
+            currentY = y + height - margin;
+            
+            // Draw only full-height elements from bottom to top
+            for (let i = 0; i < numFullElements; i++) {
+                const elementY = currentY - baselineHeight;
+                
+                this.createSVGElement('rect', {
+                    x: x + margin,
+                    y: elementY,
+                    width: baselineWidth,
+                    height: baselineHeight,
+                    fill: 'none',
+                    stroke: gridColor,
+                    'stroke-width': strokeWidth,
+                    'stroke-opacity': opacity,
+                    'vector-effect': 'non-scaling-stroke'
+                }, container);
+                
+                currentY -= baselineHeight;
+            }
+            
+            // Draw a horizontal line at the top margin
+            this.createSVGElement('line', {
+                x1: x + margin,
+                y1: y + margin,
+                x2: x + width - margin,
+                y2: y + margin,
+                stroke: gridColor,
+                'stroke-width': strokeWidth,
+                'stroke-opacity': opacity,
+                'vector-effect': 'non-scaling-stroke'
+            }, container);
+            
+        } else { // bottom
+            // Start from top edge + margin, go down
+            currentY = y + margin;
+            
+            // Draw only full-height elements from top to bottom
+            for (let i = 0; i < numFullElements; i++) {
+                this.createSVGElement('rect', {
+                    x: x + margin,
+                    y: currentY,
+                    width: baselineWidth,
+                    height: baselineHeight,
+                    fill: 'none',
+                    stroke: gridColor,
+                    'stroke-width': strokeWidth,
+                    'stroke-opacity': opacity
+                }, container);
+                
+                currentY += baselineHeight;
+            }
+            
+            // Draw a horizontal line at the bottom margin
+            this.createSVGElement('line', {
+                x1: x + margin,
+                y1: y + height - margin,
+                x2: x + width - margin,
+                y2: y + height - margin,
+                stroke: gridColor,
+                'stroke-width': strokeWidth,
+                'stroke-opacity': opacity
+            }, container);
+        }
     }
     
     // Итерация 7: Упрощенный экспорт SVG через SVGExporter
     exportSVG() {
-        const { frontWidth, frontHeight, gridModule, margins, columnCount, rowCount, rowHeight } = this.settings;
+        const { frontWidth, frontHeight, thickness, gridModule, margins, columnCount, rowCount, rowHeight } = this.settings;
         
         // Создаем SVG для экспорта (scale = 1 для точных размеров)
         const exportSvg = this.createExportSVG();
         
         // Генерируем имя файла с параметрами
-        const filename = `grid_width${frontWidth}_height${frontHeight}_module${gridModule.toFixed(2)}_margins${margins.toFixed(2)}_columns${columnCount}_rows${rowCount}_rowheight${rowHeight}.svg`;
+        const filename = `grid_width${frontWidth}_height${frontHeight}_thickness${thickness}_module${gridModule.toFixed(2)}_margins${margins.toFixed(2)}_columns${columnCount}_rows${rowCount}_rowheight${rowHeight}.svg`;
         
         // Экспортируем через модуль
         this.svgExporter.exportToFile(exportSvg, filename, {
@@ -7503,11 +8305,11 @@ class GridGenerator {
     
     // Итерация 7: Создание SVG для экспорта (без интерактивных элементов)
     createExportSVG() {
-        const { frontWidth, frontHeight } = this.settings;
+        const { frontWidth, frontHeight, thickness } = this.settings;
         
         // Create a new SVG for export with actual mm dimensions
-        const totalWidth = frontWidth;
-        const totalHeight = frontHeight;
+        const totalWidth = frontWidth + 2 * thickness;
+        const totalHeight = frontHeight + 2 * thickness;
         const scale = 1; // Export uses scale = 1 (actual mm)
         
         // Create SVG with mm units
@@ -7523,11 +8325,11 @@ class GridGenerator {
         exportSvg.appendChild(boxGroup);
         
         // Draw rectangles at actual mm scale
-        this.drawRectangles(boxGroup, 0, 0, frontWidth, frontHeight, scale);
+        this.drawRectangles(boxGroup, 0, 0, frontWidth, frontHeight, thickness, scale);
         
         // Draw grid elements on front panel (in mm)
-        const frontX = 0;
-        const frontY = 0;
+        const frontX = thickness;
+        const frontY = thickness;
         
         // Create main grid group to hold all grid elements
         const gridGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -7542,6 +8344,21 @@ class GridGenerator {
         }
         gridGroup.appendChild(columnsGroup);
         this.gridRenderer.drawColumns(columnsGroup, frontX, frontY, frontWidth, frontHeight, scale);
+        
+        // Draw columns on side panels if enabled
+        if (this.settings.showSidePanels) {
+            // Left panel - vertical columns (using rows parameters from front)
+            this.drawColumnsVerticalLeftRight(columnsGroup, 0, frontY, thickness, frontHeight, scale, 'left');
+            
+            // Right panel - vertical columns (using rows parameters from front)
+            this.drawColumnsVerticalLeftRight(columnsGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
+            
+            // Top panel - horizontal columns (using columns parameters from front)
+            this.drawColumnsTopBottom(columnsGroup, frontX, 0, frontWidth, thickness, scale, 'top');
+            
+            // Bottom panel - horizontal columns (using columns parameters from front)
+            this.drawColumnsTopBottom(columnsGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
+        }
         
         // Draw rows (in separate group, always export but hide if disabled)
         const rowsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -7563,12 +8380,27 @@ class GridGenerator {
         // Front panel baseline
         this.gridRenderer.drawBaseline(baselineGroup, frontX, frontY, frontWidth, frontHeight, scale);
         
+        // Side panels baseline if enabled
+        if (this.settings.showSidePanels) {
+            // Left panel - vertical baseline (margin from right side where it touches front)
+            this.drawBaselineVerticalLeftRight(baselineGroup, 0, frontY, thickness, frontHeight, scale, 'left');
+            
+            // Right panel - vertical baseline (margin from left side where it touches front)
+            this.drawBaselineVerticalLeftRight(baselineGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
+            
+            // Top panel - horizontal baseline (margin from bottom where it touches front)
+            this.drawBaselineTopBottom(baselineGroup, frontX, 0, frontWidth, thickness, scale, 'top');
+            
+            // Bottom panel - horizontal baseline (margin from top where it touches front)
+            this.drawBaselineTopBottom(baselineGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
+        }
+        
         // Add labels if enabled (in separate group)
         if (this.settings.showLabels) {
             const labelsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             labelsGroup.setAttribute('id', 'labels');
             exportSvg.appendChild(labelsGroup);
-            this.drawLabels(labelsGroup, 0, 0, frontWidth, frontHeight, scale);
+            this.drawLabels(labelsGroup, 0, 0, frontWidth, frontHeight, thickness, scale);
         }
         
         // Add text blocks (in separate groups)
@@ -7769,6 +8601,10 @@ class GridGenerator {
             this.dom.frontHeightSlider.value = this.settings.frontHeight;
             this.dom.frontHeightValue.value = this.settings.frontHeight.toFixed(1);
         }
+        if (this.dom.thicknessSlider) {
+            this.dom.thicknessSlider.value = this.settings.thickness;
+            this.dom.thicknessValue.value = this.settings.thickness.toFixed(1);
+        }
         
         // Update grid sliders
         if (this.dom.gridModuleSlider) {
@@ -7802,6 +8638,7 @@ class GridGenerator {
         if (this.dom.showColumns) this.dom.showColumns.checked = this.settings.showColumns;
         if (this.dom.showRows) this.dom.showRows.checked = this.settings.showRows;
         if (this.dom.showBaseline) this.dom.showBaseline.checked = this.settings.showBaseline;
+        if (this.dom.showSidePanels) this.dom.showSidePanels.checked = this.settings.showSidePanels;
         if (this.dom.showObjects) this.dom.showObjects.checked = this.settings.showObjects;
         
         // Update color
@@ -7923,19 +8760,18 @@ class GridGenerator {
     initPanels() {
         // Регистрируем все панели через PanelManager
         const panels = [
-            { id: 'controlsPanel', headerId: 'panelHeader', draggable: true, persistent: true },  // Постоянная панель
-            { id: 'gridPanel', headerId: 'gridPanelHeader', draggable: true, persistent: true },  // Постоянная панель
-            { id: 'textPanel', headerId: 'textPanelHeader', draggable: true, persistent: true },  // Постоянная панель
-            { id: 'paragraphPanel', headerId: 'paragraphPanelHeader', draggable: true, persistent: false },  // Закрывается при клике вне
-            { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true, persistent: false },  // Закрывается при клике вне
-            { id: 'elementsNavigator', headerId: 'elementsNavigatorHeader', draggable: true, persistent: true }  // Постоянная панель
+            { id: 'controlsPanel', headerId: 'panelHeader', draggable: true },
+            { id: 'gridPanel', headerId: 'gridPanelHeader', draggable: true },
+            { id: 'textPanel', headerId: 'textPanelHeader', draggable: true },
+            { id: 'paragraphPanel', headerId: 'paragraphPanelHeader', draggable: true },
+            { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true },
+            { id: 'elementsNavigator', headerId: 'elementsNavigatorHeader', draggable: true }
         ];
         
         panels.forEach(panel => {
             this.panelManager.registerPanel(panel.id, {
                 headerId: panel.headerId,
-                draggable: panel.draggable,
-                persistent: panel.persistent
+                draggable: panel.draggable
             });
         });
     }
@@ -7958,43 +8794,6 @@ class GridGenerator {
         // ElementsNavigator также не инициализируется - используется старая логика updateElementsNavigator()
         
         console.log('✅ Elements managers created (not active yet - using legacy code)');
-    }
-    
-    // ============================================
-    // Panel Click Outside Handler - Закрытие панелей кликом вне их области
-    // ============================================
-    initPanelClickOutsideHandler() {
-        document.addEventListener('click', (e) => {
-            // Check if paragraph panel is open
-            if (this.dom.paragraphPanel && 
-                this.dom.paragraphPanel.classList.contains('active')) {
-                
-                // Check if click was outside the panel
-                if (!this.dom.paragraphPanel.contains(e.target)) {
-                    // Check if click was not on a text block (which opens the panel) or in elements navigator
-                    const isTextBlockClick = e.target.closest('[data-block-id], [data-element-type="text"], .element-button');
-                    
-                    if (!isTextBlockClick) {
-                        this.closeParagraphPanel();
-                    }
-                }
-            }
-            
-            // Check if graphics panel is open
-            if (this.dom.graphicsPanel && 
-                this.dom.graphicsPanel.classList.contains('active')) {
-                
-                // Check if click was outside the panel
-                if (!this.dom.graphicsPanel.contains(e.target)) {
-                    // Check if click was not on a graphics block, add button, or in elements navigator
-                    const isGraphicsBlockClick = e.target.closest('[data-block-id], [data-element-type="graphics"], #addGraphicsBtn, .element-button');
-                    
-                    if (!isGraphicsBlockClick) {
-                        this.closeGraphicsPanel();
-                    }
-                }
-            }
-        });
     }
 }
 

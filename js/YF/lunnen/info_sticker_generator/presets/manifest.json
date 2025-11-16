@@ -2,7 +2,7 @@
   "presets": [
     {
       "name": "+ New",
-      "file": "+New.json"
+      "file": "New.json"
     },
     {
       "name": "Outer 16\" Back",
