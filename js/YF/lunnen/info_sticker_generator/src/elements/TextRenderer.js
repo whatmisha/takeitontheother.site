@@ -56,13 +56,18 @@ export class TextRenderer {
         // Вычисляем ширину в пикселях
         const width = this.calculateWidth(block);
 
+        // Получаем угол поворота для поверхности
+        const surface = block.surface || 'front';
+        const rotation = this.getSurfaceRotation(surface);
+
         // Создаем группу для блока
         const blockGroup = DOMUtils.createSVGElement('g', {
             id: block.id,
-            class: 'text-block',
+            class: `text-block surface-${surface}`,
             'data-block-id': block.id,
             'data-style': block.styleRef,
-            transform: `translate(${position.x * scale}, ${position.y * scale})`
+            'data-surface': surface,
+            transform: this.buildTransform(position, rotation, scale)
         });
 
         // Рендерим текст с переносами
@@ -84,6 +89,29 @@ export class TextRenderer {
         }
 
         return blockGroup;
+    }
+
+    /**
+     * Получить угол поворота для поверхности
+     */
+    getSurfaceRotation(surface) {
+        const surfaceConfig = this.gridCalculator.getSurfaceConfig(surface);
+        return surfaceConfig.rotation || 0;
+    }
+
+    /**
+     * Построить строку трансформации с учетом позиции и поворота
+     */
+    buildTransform(position, rotation, scale) {
+        let transform = `translate(${position.x * scale}, ${position.y * scale})`;
+        
+        if (rotation !== 0) {
+            // Применяем поворот для торцов
+            // Важно: поворот применяется в точке, где находится текст
+            transform += ` rotate(${rotation})`;
+        }
+        
+        return transform;
     }
 
     /**
@@ -149,7 +177,7 @@ export class TextRenderer {
     /**
      * Создание SVG text элемента
      */
-    createTextElement(content, style, scale) {
+    createTextElement(content, style, scale, alignment = 'left') {
         // Вычисляем размер шрифта (в mm, как в старом коде)
         const fontSize = this.calculateFontSize(style);
         const scaledFontSize = fontSize * scale;
@@ -162,7 +190,7 @@ export class TextRenderer {
             'font-family': 'TT Commons Classic, -apple-system, BlinkMacSystemFont, sans-serif',
             'font-weight': style.fontWeight.toString(),
             'font-size': `${scaledFontSize}`, // без единиц - SVG user-units (mm в нашем viewBox)
-            'text-anchor': 'start',
+            'text-anchor': 'start', // Always left-align text inside the block
             'letter-spacing': `${style.tracking}em`,
             'fill': gridColor,
             'fill-opacity': '1',
@@ -241,11 +269,12 @@ export class TextRenderer {
      * Расчет позиции блока на сетке
      */
     calculatePosition(block) {
-        // Конвертируем позицию сетки в координаты
+        // Конвертируем позицию сетки в координаты с учетом поверхности
         return this.gridCalculator.gridPositionToXY(
             block.x,
             block.row,
-            block.baselineOffset
+            block.baselineOffset,
+            block.surface || 'front'
         );
     }
 

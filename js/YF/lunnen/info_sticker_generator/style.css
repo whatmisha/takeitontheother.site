@@ -132,10 +132,29 @@ body {
     height: var(--button-height);
     display: inline-flex;
     align-items: center;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
 }
 
 .yf-tools-link:hover {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+/* Pizza Boxer Link */
+.pizza-boxer-link {
+    padding: var(--spacing-md) var(--spacing-2xl);
+    background: var(--color-text);
+    color: var(--color-bg);
+    border: none;
+    border-radius: var(--radius-button);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--transition-slow);
+}
+
+.pizza-boxer-link:hover {
     background: var(--color-bg);
     color: var(--color-text);
 }
@@ -165,7 +184,7 @@ body {
     height: var(--button-height);
     transition: width var(--duration-expand) var(--easing-standard),
                 background-color var(--transition-slow);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
 }
 
 .preset-dropdown-toggle:hover {
@@ -202,7 +221,7 @@ body {
     width: max-content;
     background: var(--color-bg-panel);
     border-radius: var(--radius-sm);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
     border: 1px solid var(--color-border);
     padding: 4px;
     margin: 0;
@@ -293,7 +312,7 @@ body {
     align-items: center;
     justify-content: center;
     width: 65px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
 }
 
 .zoom-indicator:hover {
@@ -336,7 +355,7 @@ body {
     width: 300px;
     background: var(--color-bg-panel);
     border-radius: var(--radius);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
     border: none;
     padding: 0;
     overflow: hidden;
@@ -405,6 +424,35 @@ body {
     cursor: grabbing;
 }
 
+.panel-header-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.panel-action-btn {
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--transition-fast);
+    border-radius: 4px;
+}
+
+.panel-action-btn:hover {
+    color: var(--color-text);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.panel-action-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
 .drag-icon {
     color: var(--color-text-subtle);
     font-size: 1rem;
@@ -466,7 +514,7 @@ body {
 .panel-content {
     padding-left: var(--spacing-3xl);
     padding-right: var(--spacing-3xl);
-    padding-top: var(--spacing-md);
+    padding-top: var(--spacing-sm);
     padding-bottom: var(--spacing-3xl);
     overflow-y: auto;
     overflow-x: hidden;
@@ -481,6 +529,10 @@ body {
 }
 
 .control-section:last-child {
+    margin-bottom: 0;
+}
+
+.control-section:last-child .control-group:last-child {
     margin-bottom: 0;
 }
 
@@ -510,6 +562,9 @@ body {
     color: var(--color-text);
     font-weight: 600;
     letter-spacing: 0.5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 /* Collapsible header styles - override h3 defaults */
@@ -1119,7 +1174,7 @@ body {
     background: var(--color-bg-panel);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-input);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.9);
     padding: 4px;
     min-width: 60px;
     max-height: 200px;
@@ -1281,8 +1336,10 @@ textarea::placeholder {
 
 .char-counter {
     font-size: 0.75rem;
+    font-weight: normal;
     color: var(--color-text-dim);
     white-space: nowrap;
+    letter-spacing: 0;
 }
 
 /* Add Object Buttons */
@@ -1613,6 +1670,11 @@ legend {
     outline-offset: 2px;
 }
 
+/* Compact Segmented Control - меньшая высота для Alignment Mode */
+.segmented-control-compact label {
+    padding: 6px var(--spacing-lg);
+}
+
 /* Toggle switch styles */
 .control-group input[type="checkbox"] {
     position: absolute;
@@ -1741,7 +1803,7 @@ legend {
 .btn-fixed {
     background: var(--color-text);
     color: var(--color-bg);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
 }
 
 .btn-fixed:hover {
@@ -1813,6 +1875,7 @@ legend {
     justify-content: center;
     font-size: 1rem;
     font-weight: 600;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
 }
 
 .btn-help:hover {

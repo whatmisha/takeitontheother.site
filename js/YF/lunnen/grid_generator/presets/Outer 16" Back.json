@@ -1,7 +1,7 @@
 {
   "presetName": "Packaging 382×387mm, Module 3.31mm — 16.11.2025",
   "version": "1.0",
-  "timestamp": "2025-11-16T18:41:35.440Z",
+  "timestamp": "2025-11-16T18:55:28.324Z",
   "dimensions": {
     "width": 382,
     "height": 387,
@@ -95,8 +95,8 @@
     "linkMode": "module",
     "visibility": {
       "columns": true,
-      "rows": false,
-      "baseline": false
+      "rows": true,
+      "baseline": true
     }
   },
   "colors": {

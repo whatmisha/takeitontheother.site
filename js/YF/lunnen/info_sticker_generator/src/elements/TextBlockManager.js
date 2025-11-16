@@ -18,6 +18,7 @@ export class TextBlockManager {
             id: config.id || `text-${Date.now()}`,
             content: config.content || 'Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.',
             styleRef: config.styleRef || 'text',
+            surface: config.surface || 'front', // Поверхность: front, left, right, top, bottom
             x: config.x !== undefined ? config.x : 1, // Колонка
             row: config.row !== undefined ? config.row : 0,
             baselineOffset: config.baselineOffset !== undefined ? config.baselineOffset : 0,

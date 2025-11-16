@@ -10,6 +10,7 @@ export class Settings {
             // Размеры коробки
             frontWidth: DEFAULTS.FRONT_WIDTH,
             frontHeight: DEFAULTS.FRONT_HEIGHT,
+            thickness: DEFAULTS.THICKNESS,
             boxColor: DEFAULTS.BOX_COLOR,
             
             // Параметры сетки
@@ -38,6 +39,7 @@ export class Settings {
             // Видимость элементов
             showDimensions: DEFAULTS.SHOW_DIMENSIONS,
             showLabels: DEFAULTS.SHOW_LABELS,
+            showSidePanels: DEFAULTS.SHOW_SIDE_PANELS,
             showColumns: DEFAULTS.SHOW_COLUMNS,
             showRows: DEFAULTS.SHOW_ROWS,
             showBaseline: DEFAULTS.SHOW_BASELINE,
@@ -140,6 +142,7 @@ export class Settings {
         this.data = {
             frontWidth: DEFAULTS.FRONT_WIDTH,
             frontHeight: DEFAULTS.FRONT_HEIGHT,
+            thickness: DEFAULTS.THICKNESS,
             boxColor: DEFAULTS.BOX_COLOR,
             gridModule: DEFAULTS.GRID_MODULE,
             margins: DEFAULTS.MARGINS,
@@ -160,6 +163,7 @@ export class Settings {
             textFontWeight: DEFAULTS.TEXT_FONT_WEIGHT,
             showDimensions: DEFAULTS.SHOW_DIMENSIONS,
             showLabels: DEFAULTS.SHOW_LABELS,
+            showSidePanels: DEFAULTS.SHOW_SIDE_PANELS,
             showColumns: DEFAULTS.SHOW_COLUMNS,
             showRows: DEFAULTS.SHOW_ROWS,
             showBaseline: DEFAULTS.SHOW_BASELINE,

@@ -489,6 +489,7 @@ class GridGenerator {
         this.initClaimPanel();
         this.initClaimInputsWithArrows();
         this.initGraphicsPanel();
+        this.initPanelClickOutsideHandler();  // Закрытие панелей кликом вне их области
         this.initElementsNavigator();
         this.updateLinkedControlsVisual();
         this.initColorPreview();
@@ -7922,18 +7923,19 @@ class GridGenerator {
     initPanels() {
         // Регистрируем все панели через PanelManager
         const panels = [
-            { id: 'controlsPanel', headerId: 'panelHeader', draggable: true },
-            { id: 'gridPanel', headerId: 'gridPanelHeader', draggable: true },
-            { id: 'textPanel', headerId: 'textPanelHeader', draggable: true },
-            { id: 'paragraphPanel', headerId: 'paragraphPanelHeader', draggable: true },
-            { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true },
-            { id: 'elementsNavigator', headerId: 'elementsNavigatorHeader', draggable: true }
+            { id: 'controlsPanel', headerId: 'panelHeader', draggable: true, persistent: true },  // Постоянная панель
+            { id: 'gridPanel', headerId: 'gridPanelHeader', draggable: true, persistent: true },  // Постоянная панель
+            { id: 'textPanel', headerId: 'textPanelHeader', draggable: true, persistent: true },  // Постоянная панель
+            { id: 'paragraphPanel', headerId: 'paragraphPanelHeader', draggable: true, persistent: false },  // Закрывается при клике вне
+            { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true, persistent: false },  // Закрывается при клике вне
+            { id: 'elementsNavigator', headerId: 'elementsNavigatorHeader', draggable: true, persistent: true }  // Постоянная панель
         ];
         
         panels.forEach(panel => {
             this.panelManager.registerPanel(panel.id, {
                 headerId: panel.headerId,
-                draggable: panel.draggable
+                draggable: panel.draggable,
+                persistent: panel.persistent
             });
         });
     }
@@ -7956,6 +7958,43 @@ class GridGenerator {
         // ElementsNavigator также не инициализируется - используется старая логика updateElementsNavigator()
         
         console.log('✅ Elements managers created (not active yet - using legacy code)');
+    }
+    
+    // ============================================
+    // Panel Click Outside Handler - Закрытие панелей кликом вне их области
+    // ============================================
+    initPanelClickOutsideHandler() {
+        document.addEventListener('click', (e) => {
+            // Check if paragraph panel is open
+            if (this.dom.paragraphPanel && 
+                this.dom.paragraphPanel.classList.contains('active')) {
+                
+                // Check if click was outside the panel
+                if (!this.dom.paragraphPanel.contains(e.target)) {
+                    // Check if click was not on a text block (which opens the panel) or in elements navigator
+                    const isTextBlockClick = e.target.closest('[data-block-id], [data-element-type="text"], .element-button');
+                    
+                    if (!isTextBlockClick) {
+                        this.closeParagraphPanel();
+                    }
+                }
+            }
+            
+            // Check if graphics panel is open
+            if (this.dom.graphicsPanel && 
+                this.dom.graphicsPanel.classList.contains('active')) {
+                
+                // Check if click was outside the panel
+                if (!this.dom.graphicsPanel.contains(e.target)) {
+                    // Check if click was not on a graphics block, add button, or in elements navigator
+                    const isGraphicsBlockClick = e.target.closest('[data-block-id], [data-element-type="graphics"], #addGraphicsBtn, .element-button');
+                    
+                    if (!isGraphicsBlockClick) {
+                        this.closeGraphicsPanel();
+                    }
+                }
+            }
+        });
     }
 }
 

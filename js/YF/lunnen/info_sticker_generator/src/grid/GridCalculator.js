@@ -2,9 +2,31 @@
  * Калькулятор параметров сетки
  * Вычисляет количество строк, высоту строк, размер модуля и т.д.
  */
+import { getSurfaceConfig, SURFACE_TYPES } from '../core/Constants.js';
+
 export class GridCalculator {
     constructor(settings) {
         this.settings = settings;
+    }
+
+    /**
+     * Получить конфигурацию поверхности
+     * @param {string} surface - тип поверхности
+     * @returns {Object}
+     */
+    getSurfaceConfig(surface = SURFACE_TYPES.FRONT) {
+        const frontWidth = this.settings.get('frontWidth');
+        const frontHeight = this.settings.get('frontHeight');
+        const thickness = this.settings.get('thickness');
+        const showSidePanels = this.settings.get('showSidePanels');
+        
+        const configs = getSurfaceConfig(
+            frontWidth, 
+            frontHeight, 
+            showSidePanels ? thickness : 0
+        );
+        
+        return configs[surface] || configs[SURFACE_TYPES.FRONT];
     }
 
     /**
@@ -248,26 +270,82 @@ export class GridCalculator {
      * @param {number} column - Номер колонки (1-based)
      * @param {number} row - Номер строки (0-based)
      * @param {number} baselineOffset - Смещение в baseline модулях внутри строки
+     * @param {string} surface - Поверхность (front, left, right, top, bottom)
      * @returns {{x: number, y: number}}
      */
-    gridPositionToXY(column, row, baselineOffset) {
+    gridPositionToXY(column, row, baselineOffset, surface = SURFACE_TYPES.FRONT) {
         const module = this.settings.get('gridModule');
         const margins = this.settings.get('margins');
         const rowHeight = this.settings.get('rowHeight');
         
-        // X координата
+        // Базовый расчет для фронтальной панели
         const columnWidth = this.getColumnWidth();
         const gutterSize = this.getGutterSize();
         const marginX = margins * module;
-        const x = marginX + (column - 1) * (columnWidth + gutterSize);
-        
-        // Y координата
         const marginY = margins * module;
         const rowHeightMm = rowHeight * module;
         const baselineOffsetMm = baselineOffset * module;
-        const y = marginY + row * (rowHeightMm + module) + baselineOffsetMm;
         
-        return { x, y };
+        // Локальные координаты (относительно поверхности)
+        let localX = marginX + (column - 1) * (columnWidth + gutterSize);
+        let localY = marginY + row * (rowHeightMm + module) + baselineOffsetMm;
+        
+        // Если не фронтальная панель, применяем трансформацию
+        if (surface !== SURFACE_TYPES.FRONT) {
+            const config = this.getSurfaceConfig(surface);
+            return this.transformToSurfaceCoordinates(localX, localY, config);
+        }
+        
+        // Для фронтальной панели добавляем смещение origin
+        const frontConfig = this.getSurfaceConfig(SURFACE_TYPES.FRONT);
+        return {
+            x: frontConfig.origin.x + localX,
+            y: frontConfig.origin.y + localY
+        };
+    }
+
+    /**
+     * Трансформировать локальные координаты в глобальные координаты поверхности
+     * @param {number} localX - локальная X координата
+     * @param {number} localY - локальная Y координата
+     * @param {Object} config - конфигурация поверхности
+     * @returns {{x: number, y: number}}
+     */
+    transformToSurfaceCoordinates(localX, localY, config) {
+        const { origin, rotation, dimensions, coordinateTransform } = config;
+        
+        switch (coordinateTransform) {
+            case 'leftRotation':
+                // Левый торец: повернут на 90° по часовой
+                // Текст должен читаться слева направо при повороте коробки на 90° против часовой
+                return {
+                    x: origin.x + localY,
+                    y: origin.y + (dimensions.height - localX)
+                };
+                
+            case 'rightRotation':
+                // Правый торец: повернут на 90° против часовой (270° по часовой)
+                // Текст должен читаться слева направо при повороте коробки на 90° по часовой
+                return {
+                    x: origin.x + (dimensions.width - localY),
+                    y: origin.y + localX
+                };
+                
+            case 'topRotation':
+                // Верхний торец: повернут на 180°
+                // Текст должен читаться слева направо при переворачивании коробки
+                return {
+                    x: origin.x + (dimensions.width - localX),
+                    y: origin.y + (dimensions.height - localY)
+                };
+                
+            default:
+                // Bottom (без трансформации, только смещение origin)
+                return {
+                    x: origin.x + localX,
+                    y: origin.y + localY
+                };
+        }
     }
 
     /**

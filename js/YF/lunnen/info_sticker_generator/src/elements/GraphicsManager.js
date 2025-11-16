@@ -19,6 +19,7 @@ export class GraphicsManager {
                 name: 'Icons',
                 type: 'builtin',
                 svgPath: 'graphics/icons.svg',
+                surface: 'front',
                 heightInModules: 3,
                 x: 1,
                 row: 0,
@@ -31,6 +32,7 @@ export class GraphicsManager {
                 name: 'YF Claim',
                 type: 'builtin',
                 svgPath: 'graphics/yf_claim.svg',
+                surface: 'front',
                 heightInModules: 2,
                 x: 1,
                 row: 0,
@@ -51,6 +53,7 @@ export class GraphicsManager {
             type: config.type || 'custom', // 'custom' | 'builtin'
             svgContent: config.svgContent || null,
             svgPath: config.svgPath || null,
+            surface: config.surface || 'front', // Поверхность: front, left, right, top, bottom
             heightInModules: config.heightInModules !== undefined ? config.heightInModules : 3,
             x: config.x !== undefined ? config.x : 1,
             row: config.row !== undefined ? config.row : 0,
