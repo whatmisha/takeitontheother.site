@@ -1,17 +1,17 @@
 {
-  "presetName": "Laptop Sticker 120×25mm, Module 3.00mm",
+  "presetName": "Sticker120×24mm, Module 3.00mm",
   "version": "1.0",
-  "timestamp": "2025-11-16T22:26:06.548Z",
+  "timestamp": "2025-11-16T23:20:06.983Z",
   "dimensions": {
     "width": 120,
-    "height": 25,
+    "height": 24,
     "thickness": 5,
     "unit": "mm"
   },
   "texts": [
     {
       "id": "text",
-      "content": "Lunnen — бренд компьютерной техники и электроники, придуманный в Яндекс Фабрике. Сопровождает в исследованиях, работе и развлечениях.",
+      "content": "Номинальное напряжение: 20 В \nКласс защиты: III \nНоминальный ток: 3.25 А \nНоминальная мощность: 65 Вт",
       "style": "text",
       "position": {
         "column": 2,
@@ -23,6 +23,51 @@
       "alignmentMode": "x-height",
       "surface": "front",
       "showBounds": false
+    },
+    {
+      "id": "text-1763334866163",
+      "content": "Ноутбук Lunnen Ground 15.6\" \nLL5FAWG03",
+      "style": "headline",
+      "position": {
+        "column": 1,
+        "row": 0,
+        "baseline": 0
+      },
+      "width": 1,
+      "alignment": "left",
+      "alignmentMode": "x-height",
+      "surface": "front",
+      "showBounds": false
+    },
+    {
+      "id": "text-1763335152097",
+      "content": "Серийный номер",
+      "style": "text",
+      "position": {
+        "column": 1,
+        "row": 0,
+        "baseline": 2
+      },
+      "width": 1,
+      "alignment": "left",
+      "alignmentMode": "baseline",
+      "surface": "front",
+      "showBounds": false
+    },
+    {
+      "id": "text-1763335182965",
+      "content": "Дата изготовления: 10.2025",
+      "style": "text",
+      "position": {
+        "column": 2,
+        "row": 0,
+        "baseline": 5
+      },
+      "width": 1,
+      "alignment": "left",
+      "alignmentMode": "baseline",
+      "surface": "front",
+      "showBounds": false
     }
   ],
   "grid": {
@@ -30,7 +75,7 @@
     "margins": 1,
     "marginsUnit": "mod",
     "columns": 3,
-    "rows": 2,
+    "rows": 1,
     "rowHeight": 6,
     "linkMode": "module",
     "visibility": {
@@ -40,19 +85,19 @@
     }
   },
   "colors": {
-    "background": "#808080"
+    "background": "#ffffff"
   },
   "typography": {
     "headline": {
-      "size": 1.5,
-      "lineHeight": 2,
+      "size": 0.6,
+      "lineHeight": 1,
       "tracking": -0.015,
       "useXHeight": false,
       "fontWeight": 500
     },
     "text": {
-      "size": 0.5,
-      "lineHeight": 1,
+      "size": 0.45,
+      "lineHeight": 0.87,
       "tracking": 0,
       "useXHeight": false,
       "fontWeight": 500
