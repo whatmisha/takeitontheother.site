@@ -389,6 +389,103 @@ body {
     right: auto;
 }
 
+.data-panel {
+    max-height: calc(100vh - var(--spacing-3xl) * 2);
+    overflow-y: auto;
+}
+
+.data-panel .panel-content {
+    padding-bottom: var(--spacing-2xl);
+}
+
+.control-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-top: var(--spacing-xs);
+}
+
+.panel-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin: var(--spacing-lg) var(--spacing-3xl) 0;
+    line-height: 1.5;
+}
+
+.input-row {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.input-row input[type="url"],
+.input-row input[type="text"],
+.input-row select {
+    flex: 1;
+}
+
+.panel-status {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.8rem;
+    margin-bottom: var(--spacing-sm);
+    border: 1px solid transparent;
+}
+
+.panel-status.success {
+    color: #51d06d;
+    border-color: rgba(81, 208, 109, 0.3);
+}
+
+.panel-status.error {
+    color: #ff9595;
+    border-color: rgba(255, 149, 149, 0.3);
+}
+
+.panel-status.loading {
+    color: #ffcf66;
+    border-color: rgba(255, 207, 102, 0.3);
+}
+
+.data-preview-wrapper {
+    max-height: 200px;
+    overflow: auto;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.data-preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+
+.data-preview-table th,
+.data-preview-table td {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    white-space: nowrap;
+}
+
+.data-preview-table th {
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+}
+
+.barcode-preview {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-sm);
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
 .controls-panel-text {
     left: var(--spacing-3xl);
     right: auto;

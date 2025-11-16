@@ -275,6 +275,66 @@ class GridGenerator {
                 baseStep: 0.01,
                 shiftStep: 0.05,
                 onUpdate: () => this.updateGrid()
+            },
+            captionSizeSlider: {
+                valueId: 'captionSizeValue',
+                setting: 'captionSize',
+                min: 0.25,
+                max: 10,
+                decimals: 2,
+                baseStep: 0.25,
+                shiftStep: 1,
+                onUpdate: () => this.updateGrid()
+            },
+            captionLineHeightSlider: {
+                valueId: 'captionLineHeightValue',
+                setting: 'captionLineHeight',
+                min: 0.25,
+                max: 10,
+                decimals: 2,
+                baseStep: 0.25,
+                shiftStep: 1,
+                onUpdate: () => this.updateGrid()
+            },
+            captionTrackingSlider: {
+                valueId: 'captionTrackingValue',
+                setting: 'captionTracking',
+                min: -0.05,
+                max: 0.05,
+                decimals: 2,
+                baseStep: 0.01,
+                shiftStep: 0.05,
+                onUpdate: () => this.updateGrid()
+            },
+            lunnenDisplaySizeSlider: {
+                valueId: 'lunnenDisplaySizeValue',
+                setting: 'lunnenDisplaySize',
+                min: 0.25,
+                max: 10,
+                decimals: 2,
+                baseStep: 0.25,
+                shiftStep: 1,
+                onUpdate: () => this.updateGrid()
+            },
+            lunnenDisplayLineHeightSlider: {
+                valueId: 'lunnenDisplayLineHeightValue',
+                setting: 'lunnenDisplayLineHeight',
+                min: 0.25,
+                max: 10,
+                decimals: 2,
+                baseStep: 0.25,
+                shiftStep: 1,
+                onUpdate: () => this.updateGrid()
+            },
+            lunnenDisplayTrackingSlider: {
+                valueId: 'lunnenDisplayTrackingValue',
+                setting: 'lunnenDisplayTracking',
+                min: -0.05,
+                max: 0.05,
+                decimals: 2,
+                baseStep: 0.01,
+                shiftStep: 0.05,
+                onUpdate: () => this.updateGrid()
             }
         };
         
@@ -308,7 +368,18 @@ class GridGenerator {
             textLineHeight: 1.0,
             textTracking: 0,
             useXHeight2: false,
-            textFontWeight: 500
+            textFontWeight: 500,
+            // Caption style
+            captionSize: 0.5,
+            captionLineHeight: 1.0,
+            captionTracking: 0,
+            useXHeightCaption: false,
+            captionFontWeight: 500,
+            // Lunnen Display style
+            lunnenDisplaySize: 3.0,
+            lunnenDisplayLineHeight: 4.0,
+            lunnenDisplayTracking: 0,
+            useXHeightLunnenDisplay: false
         });
         
         // Для обратной совместимости: создаем Proxy который перенаправляет обращения к settingsModule
@@ -510,9 +581,17 @@ class GridGenerator {
         
         // Font metrics for TT Commons Classic (measured in font units, assuming UPM=1000)
         this.fontMetrics = {
-            capHeight: 630,
-            xHeight: 447,
-            unitsPerEm: 1000
+            'TT Commons Classic': {
+                capHeight: 630,
+                xHeight: 447,
+                unitsPerEm: 1000
+            },
+            // Lunnen Display metrics (x-height similar to TT Commons)
+            'Lunnen Display': {
+                capHeight: 630,
+                xHeight: 447,
+                unitsPerEm: 1000
+            }
         };
         
         // Display constants
@@ -709,6 +788,24 @@ class GridGenerator {
             textTrackingSlider: document.getElementById('textTrackingSlider'),
             textTrackingValue: document.getElementById('textTrackingValue'),
             useXHeight2: document.getElementById('useXHeight2'),
+            // Text controls - Caption
+            captionSizeSlider: document.getElementById('captionSizeSlider'),
+            captionSizeValue: document.getElementById('captionSizeValue'),
+            captionLineHeightSlider: document.getElementById('captionLineHeightSlider'),
+            captionLineHeightValue: document.getElementById('captionLineHeightValue'),
+            captionTrackingSlider: document.getElementById('captionTrackingSlider'),
+            captionTrackingValue: document.getElementById('captionTrackingValue'),
+            useXHeightCaption: document.getElementById('useXHeightCaption'),
+            captionFontSize: document.getElementById('captionFontSize'),
+            // Text controls - Lunnen Display
+            lunnenDisplaySizeSlider: document.getElementById('lunnenDisplaySizeSlider'),
+            lunnenDisplaySizeValue: document.getElementById('lunnenDisplaySizeValue'),
+            lunnenDisplayLineHeightSlider: document.getElementById('lunnenDisplayLineHeightSlider'),
+            lunnenDisplayLineHeightValue: document.getElementById('lunnenDisplayLineHeightValue'),
+            lunnenDisplayTrackingSlider: document.getElementById('lunnenDisplayTrackingSlider'),
+            lunnenDisplayTrackingValue: document.getElementById('lunnenDisplayTrackingValue'),
+            useXHeightLunnenDisplay: document.getElementById('useXHeightLunnenDisplay'),
+            lunnenDisplayFontSize: document.getElementById('lunnenDisplayFontSize'),
             // Paragraph settings panel
             paragraphPanel: document.getElementById('paragraphPanel'),
             paragraphPanelTitle: document.getElementById('paragraphPanelTitle'),
@@ -853,6 +950,22 @@ class GridGenerator {
             this.updateGrid();
         });
         
+        // Use x-height Caption checkbox
+        if (this.dom.useXHeightCaption) {
+            this.dom.useXHeightCaption.addEventListener('change', (e) => {
+                this.settings.useXHeightCaption = e.target.checked;
+                this.updateGrid();
+            });
+        }
+        
+        // Use x-height Lunnen Display checkbox
+        if (this.dom.useXHeightLunnenDisplay) {
+            this.dom.useXHeightLunnenDisplay.addEventListener('change', (e) => {
+                this.settings.useXHeightLunnenDisplay = e.target.checked;
+                this.updateGrid();
+            });
+        }
+        
         // Margins unit buttons
         if (this.dom.marginsUnitMod) {
             this.dom.marginsUnitMod.addEventListener('click', (e) => {
@@ -890,6 +1003,17 @@ class GridGenerator {
                 this.updateGrid();
             });
         }
+        
+        const captionStyleDropdown = document.getElementById('captionStyleDropdown');
+        if (captionStyleDropdown) {
+            captionStyleDropdown.addEventListener('change', (e) => {
+                this.settings.captionFontWeight = parseInt(e.target.value);
+                this.updateElementsNavigator();
+                this.updateGrid();
+            });
+        }
+        
+        // Lunnen Display doesn't have font weight dropdown (always Regular)
         
         // Color preview button - toggle HSB picker
         this.dom.colorPreview.addEventListener('click', () => {
@@ -1046,7 +1170,9 @@ class GridGenerator {
         // Storage for text styles state
         this.textStylesState = {
             headline: false, // false = collapsed
-            text: false
+            text: false,
+            caption: false,
+            lunnenDisplay: false
         };
         
         // Find all collapse icons
@@ -1129,9 +1255,11 @@ class GridGenerator {
     }
     
     saveTextStylesState() {
-        // Save current state of headline and text collapsible sections
+        // Save current state of all text style collapsible sections
         const headlineToggle = document.querySelector('#headlineHeader .collapse-toggle');
         const textToggle = document.querySelector('#textHeader .collapse-toggle');
+        const captionToggle = document.querySelector('#captionHeader .collapse-toggle');
+        const lunnenDisplayToggle = document.querySelector('#lunnenDisplayHeader .collapse-toggle');
         
         if (headlineToggle) {
             this.textStylesState.headline = headlineToggle.getAttribute('aria-expanded') === 'true';
@@ -1139,14 +1267,25 @@ class GridGenerator {
         if (textToggle) {
             this.textStylesState.text = textToggle.getAttribute('aria-expanded') === 'true';
         }
+        if (captionToggle) {
+            this.textStylesState.caption = captionToggle.getAttribute('aria-expanded') === 'true';
+        }
+        if (lunnenDisplayToggle) {
+            this.textStylesState.lunnenDisplay = lunnenDisplayToggle.getAttribute('aria-expanded') === 'true';
+        }
     }
     
     restoreTextStylesState() {
-        // Restore saved state of headline and text collapsible sections
+        // Restore saved state of all text style collapsible sections
         const headlineToggle = document.querySelector('#headlineHeader .collapse-toggle');
         const textToggle = document.querySelector('#textHeader .collapse-toggle');
-        const headlineContent = document.getElementById('headlineControls');
-        const textContent = document.getElementById('textControls');
+        const captionToggle = document.querySelector('#captionHeader .collapse-toggle');
+        const lunnenDisplayToggle = document.querySelector('#lunnenDisplayHeader .collapse-toggle');
+        
+        const headlineContent = document.getElementById('headlineContent');
+        const textContent = document.getElementById('textContent');
+        const captionContent = document.getElementById('captionContent');
+        const lunnenDisplayContent = document.getElementById('lunnenDisplayContent');
         
         if (headlineToggle && headlineContent) {
             if (this.textStylesState.headline) {
@@ -1165,6 +1304,26 @@ class GridGenerator {
             } else {
                 textToggle.setAttribute('aria-expanded', 'false');
                 textContent.classList.add('collapsed');
+            }
+        }
+        
+        if (captionToggle && captionContent) {
+            if (this.textStylesState.caption) {
+                captionToggle.setAttribute('aria-expanded', 'true');
+                captionContent.classList.remove('collapsed');
+            } else {
+                captionToggle.setAttribute('aria-expanded', 'false');
+                captionContent.classList.add('collapsed');
+            }
+        }
+        
+        if (lunnenDisplayToggle && lunnenDisplayContent) {
+            if (this.textStylesState.lunnenDisplay) {
+                lunnenDisplayToggle.setAttribute('aria-expanded', 'true');
+                lunnenDisplayContent.classList.remove('collapsed');
+            } else {
+                lunnenDisplayToggle.setAttribute('aria-expanded', 'false');
+                lunnenDisplayContent.classList.add('collapsed');
             }
         }
     }
@@ -4586,18 +4745,34 @@ class GridGenerator {
     
     // Получить название стиля для отображения
     getStyleDisplayName(styleRef) {
-        // Преобразуем 'headline' в 'Headline', 'text' в 'Text'
-        return styleRef.charAt(0).toUpperCase() + styleRef.slice(1);
+        switch(styleRef) {
+            case 'headline':
+                return 'Headline';
+            case 'text':
+                return 'Text';
+            case 'caption':
+                return 'Caption';
+            case 'lunnenDisplay':
+                return 'Lunnen Display';
+            default:
+                return styleRef.charAt(0).toUpperCase() + styleRef.slice(1);
+        }
     }
     
     getStyleFontWeight(styleRef) {
         // Возвращаем начертание (Medium или Regular) вместо стиля
-        if (styleRef === 'headline') {
-            return this.settings.headlineFontWeight === 500 ? 'Medium' : 'Regular';
-        } else if (styleRef === 'text') {
-            return this.settings.textFontWeight === 500 ? 'Medium' : 'Regular';
+        switch(styleRef) {
+            case 'headline':
+                return this.settings.headlineFontWeight === 500 ? 'Medium' : 'Regular';
+            case 'text':
+                return this.settings.textFontWeight === 500 ? 'Medium' : 'Regular';
+            case 'caption':
+                return this.settings.captionFontWeight === 500 ? 'Medium' : 'Regular';
+            case 'lunnenDisplay':
+                return 'Regular'; // Lunnen Display always Regular
+            default:
+                return 'Medium';
         }
-        return 'Medium';
     }
     
     // ============================================
@@ -4657,20 +4832,35 @@ class GridGenerator {
         return this.rowBaselineToY(block.row, block.baselineOffset);
     }
     
+    // Get font metrics for a specific style
+    getFontMetricsForStyle(styleRef) {
+        const fontFamily = this.getFontFamilyForStyle(styleRef);
+        return this.fontMetrics[fontFamily] || this.fontMetrics['TT Commons Classic'];
+    }
+    
+    // Get font family for a specific style
+    getFontFamilyForStyle(styleRef) {
+        if (styleRef === 'lunnenDisplay') {
+            return 'Lunnen Display';
+        }
+        return 'TT Commons Classic';
+    }
+    
     // Calculate font size in mm based on module and height mode
     calculateFontSize() {
         const module = this.settings.gridModule;
         const sizeInModules = this.settings.headlineSize;
         const targetSize = module * sizeInModules; // size in mm
+        const metrics = this.getFontMetricsForStyle('headline');
         
         // Calculate font size based on whether we're using cap height or x-height
         let fontSize;
         if (this.settings.useXHeight) {
             // x-height should equal targetSize
-            fontSize = targetSize * (this.fontMetrics.unitsPerEm / this.fontMetrics.xHeight);
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.xHeight);
         } else {
             // cap height should equal targetSize
-            fontSize = targetSize * (this.fontMetrics.unitsPerEm / this.fontMetrics.capHeight);
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.capHeight);
         }
         
         return fontSize; // in mm
@@ -4681,18 +4871,105 @@ class GridGenerator {
         const module = this.settings.gridModule;
         const sizeInModules = this.settings.textSize;
         const targetSize = module * sizeInModules; // size in mm
+        const metrics = this.getFontMetricsForStyle('text');
         
         // Calculate font size based on whether we're using cap height or x-height
         let fontSize;
         if (this.settings.useXHeight2) {
             // x-height should equal targetSize
-            fontSize = targetSize * (this.fontMetrics.unitsPerEm / this.fontMetrics.xHeight);
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.xHeight);
         } else {
             // cap height should equal targetSize
-            fontSize = targetSize * (this.fontMetrics.unitsPerEm / this.fontMetrics.capHeight);
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.capHeight);
         }
         
         return fontSize; // in mm
+    }
+    
+    // Calculate font size for Caption style
+    calculateCaptionStyleFontSize() {
+        const module = this.settings.gridModule;
+        const sizeInModules = this.settings.captionSize;
+        const targetSize = module * sizeInModules;
+        const metrics = this.getFontMetricsForStyle('caption');
+        
+        let fontSize;
+        if (this.settings.useXHeightCaption) {
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.xHeight);
+        } else {
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.capHeight);
+        }
+        
+        return fontSize;
+    }
+    
+    // Calculate font size for Lunnen Display style
+    calculateLunnenDisplayStyleFontSize() {
+        const module = this.settings.gridModule;
+        const sizeInModules = this.settings.lunnenDisplaySize;
+        const targetSize = module * sizeInModules;
+        const metrics = this.getFontMetricsForStyle('lunnenDisplay');
+        
+        let fontSize;
+        if (this.settings.useXHeightLunnenDisplay) {
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.xHeight);
+        } else {
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.capHeight);
+        }
+        
+        return fontSize;
+    }
+    
+    // Get style settings for any styleRef
+    getStyleSettings(styleRef) {
+        switch(styleRef) {
+            case 'headline':
+                return {
+                    fontSize: this.calculateFontSize(),
+                    lineHeight: this.settings.lineHeight,
+                    tracking: this.settings.tracking,
+                    useXHeight: this.settings.useXHeight,
+                    fontWeight: this.settings.headlineFontWeight,
+                    fontFamily: this.getFontFamilyForStyle('headline')
+                };
+            case 'text':
+                return {
+                    fontSize: this.calculateTextStyleFontSize(),
+                    lineHeight: this.settings.textLineHeight,
+                    tracking: this.settings.textTracking,
+                    useXHeight: this.settings.useXHeight2,
+                    fontWeight: this.settings.textFontWeight,
+                    fontFamily: this.getFontFamilyForStyle('text')
+                };
+            case 'caption':
+                return {
+                    fontSize: this.calculateCaptionStyleFontSize(),
+                    lineHeight: this.settings.captionLineHeight,
+                    tracking: this.settings.captionTracking,
+                    useXHeight: this.settings.useXHeightCaption,
+                    fontWeight: this.settings.captionFontWeight,
+                    fontFamily: this.getFontFamilyForStyle('caption')
+                };
+            case 'lunnenDisplay':
+                return {
+                    fontSize: this.calculateLunnenDisplayStyleFontSize(),
+                    lineHeight: this.settings.lunnenDisplayLineHeight,
+                    tracking: this.settings.lunnenDisplayTracking,
+                    useXHeight: this.settings.useXHeightLunnenDisplay,
+                    fontWeight: 400, // Lunnen Display always 400
+                    fontFamily: this.getFontFamilyForStyle('lunnenDisplay')
+                };
+            default:
+                // Fallback to text style
+                return {
+                    fontSize: this.calculateTextStyleFontSize(),
+                    lineHeight: this.settings.textLineHeight,
+                    tracking: this.settings.textTracking,
+                    useXHeight: this.settings.useXHeight2,
+                    fontWeight: this.settings.textFontWeight,
+                    fontFamily: this.getFontFamilyForStyle('text')
+                };
+        }
     }
     
     // ============================================
@@ -4727,6 +5004,34 @@ class GridGenerator {
         return Math.round(MathUtils.mmToPt(lineHeightMm) * 10) / 10;
     }
     
+    // Get font size in pt for Caption
+    getCaptionFontSizePt() {
+        const fontSizeMm = this.calculateCaptionStyleFontSize();
+        return Math.round(MathUtils.mmToPt(fontSizeMm) * 10) / 10;
+    }
+    
+    // Get line height in pt for Caption
+    getCaptionLineHeightPt() {
+        const module = this.settings.gridModule;
+        const lineHeightInModules = this.settings.captionLineHeight;
+        const lineHeightMm = module * lineHeightInModules;
+        return Math.round(MathUtils.mmToPt(lineHeightMm) * 10) / 10;
+    }
+    
+    // Get font size in pt for Lunnen Display
+    getLunnenDisplayFontSizePt() {
+        const fontSizeMm = this.calculateLunnenDisplayStyleFontSize();
+        return Math.round(MathUtils.mmToPt(fontSizeMm) * 10) / 10;
+    }
+    
+    // Get line height in pt for Lunnen Display
+    getLunnenDisplayLineHeightPt() {
+        const module = this.settings.gridModule;
+        const lineHeightInModules = this.settings.lunnenDisplayLineHeight;
+        const lineHeightMm = module * lineHeightInModules;
+        return Math.round(MathUtils.mmToPt(lineHeightMm) * 10) / 10;
+    }
+    
     // Update font size displays in UI
     updateFontSizeDisplays() {
         if (this.dom.headlineFontSize) {
@@ -4739,6 +5044,18 @@ class GridGenerator {
             const fontSize = this.getTextFontSizePt();
             const lineHeight = this.getTextLineHeightPt();
             this.dom.textFontSize.textContent = `${fontSize}/${lineHeight} pt`;
+        }
+        
+        if (this.dom.captionFontSize) {
+            const fontSize = this.getCaptionFontSizePt();
+            const lineHeight = this.getCaptionLineHeightPt();
+            this.dom.captionFontSize.textContent = `${fontSize}/${lineHeight} pt`;
+        }
+        
+        if (this.dom.lunnenDisplayFontSize) {
+            const fontSize = this.getLunnenDisplayFontSizePt();
+            const lineHeight = this.getLunnenDisplayLineHeightPt();
+            this.dom.lunnenDisplayFontSize.textContent = `${fontSize}/${lineHeight} pt`;
         }
     }
     
@@ -4880,15 +5197,12 @@ class GridGenerator {
         const module = this.settings.gridModule;
         
         // Get style settings based on block's styleRef
-        const isHeadline = block.styleRef === 'headline';
-        const fontSize = isHeadline ? this.calculateFontSize() : this.calculateTextStyleFontSize();
-        const lineHeightSetting = isHeadline ? this.settings.lineHeight : this.settings.textLineHeight;
-        const trackingSetting = isHeadline ? this.settings.tracking : this.settings.textTracking;
+        const style = this.getStyleSettings(block.styleRef || 'text');
         
         // Get text content
         const inputLines = block.content.split('\n').filter(line => line.trim() !== '');
         if (inputLines.length === 0) {
-            return lineHeightSetting; // Return minimum height for empty block
+            return style.lineHeight; // Return minimum height for empty block
         }
         
         // Calculate text block width
@@ -4897,12 +5211,12 @@ class GridGenerator {
         // Wrap text lines to fit width
         const wrappedLines = [];
         inputLines.forEach(line => {
-            const wrapped = this.wrapText(line, textBlockWidth, fontSize, 1, trackingSetting);
+            const wrapped = this.wrapText(line, textBlockWidth, style.fontSize, 1, style.tracking);
             wrappedLines.push(...wrapped);
         });
         
         // Height in modules = lineHeight * number of lines
-        return lineHeightSetting * wrappedLines.length;
+        return style.lineHeight * wrappedLines.length;
     }
     
     // Draw text block on canvas with hover effects and drag handles
@@ -4913,13 +5227,14 @@ class GridGenerator {
         const alignment = block.alignment || 'left';
         
         // Get style settings based on block's styleRef
-        const isHeadline = block.styleRef === 'headline';
-        const fontSize = isHeadline ? this.calculateFontSize() : this.calculateTextStyleFontSize();
+        const style = this.getStyleSettings(block.styleRef || 'text');
+        const fontSize = style.fontSize;
         const scaledFontSize = fontSize * scale;
-        const lineHeightSetting = isHeadline ? this.settings.lineHeight : this.settings.textLineHeight;
-        const trackingSetting = isHeadline ? this.settings.tracking : this.settings.textTracking;
-        const useXHeight = isHeadline ? this.settings.useXHeight : this.settings.useXHeight2;
-        const fontWeight = isHeadline ? this.settings.headlineFontWeight : this.settings.textFontWeight;
+        const lineHeightSetting = style.lineHeight;
+        const trackingSetting = style.tracking;
+        const useXHeight = style.useXHeight;
+        const fontWeight = style.fontWeight;
+        const fontFamily = style.fontFamily;
         
         // Get text content
         const inputLines = block.content.split('\n').filter(line => line.trim() !== '');
@@ -4972,13 +5287,32 @@ class GridGenerator {
         
         // Calculate cap height and x-height for positioning
         let actualCapHeight, actualXHeight;
-        const textSize = isHeadline ? this.settings.headlineSize : this.settings.textSize;
+        const metrics = this.getFontMetricsForStyle(block.styleRef || 'text');
+        // Get size in modules for the current style
+        let textSize;
+        switch(block.styleRef) {
+            case 'headline':
+                textSize = this.settings.headlineSize;
+                break;
+            case 'text':
+                textSize = this.settings.textSize;
+                break;
+            case 'caption':
+                textSize = this.settings.captionSize;
+                break;
+            case 'lunnenDisplay':
+                textSize = this.settings.lunnenDisplaySize;
+                break;
+            default:
+                textSize = this.settings.textSize;
+        }
+        
         if (useXHeight) {
             actualXHeight = module * textSize * scale;
-            actualCapHeight = actualXHeight * (this.fontMetrics.capHeight / this.fontMetrics.xHeight);
+            actualCapHeight = actualXHeight * (metrics.capHeight / metrics.xHeight);
         } else {
             actualCapHeight = module * textSize * scale;
-            actualXHeight = actualCapHeight * (this.fontMetrics.xHeight / this.fontMetrics.capHeight);
+            actualXHeight = actualCapHeight * (metrics.xHeight / metrics.capHeight);
         }
         
         const topMargin = module * margins * scale;
@@ -5012,7 +5346,7 @@ class GridGenerator {
         
         // Create text elements
         const textAttrs = {
-            'font-family': 'TT Commons Classic, -apple-system, BlinkMacSystemFont, sans-serif',
+            'font-family': `${fontFamily}, -apple-system, BlinkMacSystemFont, sans-serif`,
             'font-weight': fontWeight.toString(),
             'font-size': `${scaledFontSize}`,
             'text-anchor': 'start', // Always left-align text inside the block

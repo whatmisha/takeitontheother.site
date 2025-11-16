@@ -391,6 +391,103 @@
                 </div>
                 </div>
             </section>
+            
+            <section class="control-section">
+                <h3 class="collapsible-header" id="captionHeader">
+                    <span>Caption <span class="font-size-display" id="captionFontSize">0/0 pt</span></span>
+                    <button type="button" class="collapse-toggle" aria-label="Toggle caption settings" aria-expanded="false">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </h3>
+                
+                <div class="collapsible-content collapsed" id="captionContent">
+                <div class="control-group">
+                    <label for="captionStyleDropdown">
+                        <select id="captionStyleDropdown" class="style-select" aria-label="Select font weight">
+                            <option value="500" selected>Medium</option>
+                            <option value="400">Regular</option>
+                        </select>
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="captionSizeSlider">
+                        <span>Size <span class="unit">mod</span></span>
+                            <input type="text" class="value-display" id="captionSizeValue" value="0.50" data-min="0.25" data-max="10" aria-label="Caption size in modules">
+                    </label>
+                    <input type="range" id="captionSizeSlider" min="0.25" max="10" step="0.25" value="0.5" aria-label="Caption size slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="captionLineHeightSlider">
+                        <span>Line Height <span class="unit">mod</span></span>
+                        <input type="text" class="value-display" id="captionLineHeightValue" value="1.00" data-min="0.25" data-max="10" aria-label="Caption line height in modules">
+                    </label>
+                    <input type="range" id="captionLineHeightSlider" min="0.25" max="10" step="0.25" value="1" aria-label="Caption line height slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="captionTrackingSlider">
+                        <span>Tracking <span class="unit">em</span></span>
+                        <input type="text" class="value-display" id="captionTrackingValue" value="0.00" data-min="-0.05" data-max="0.05" aria-label="Caption tracking in em units">
+                    </label>
+                    <input type="range" id="captionTrackingSlider" min="-0.05" max="0.05" step="0.01" value="0" aria-label="Caption tracking slider">
+                </div>
+                
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="useXHeightCaption" aria-label="Use x-height for measurement">
+                        <span>x-height</span>
+                    </label>
+                </div>
+                </div>
+            </section>
+            
+            <section class="control-section">
+                <h3 class="collapsible-header" id="lunnenDisplayHeader">
+                    <span>Lunnen Display <span class="font-size-display" id="lunnenDisplayFontSize">0/0 pt</span></span>
+                    <button type="button" class="collapse-toggle" aria-label="Toggle Lunnen Display settings" aria-expanded="false">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </h3>
+                
+                <div class="collapsible-content collapsed" id="lunnenDisplayContent">
+                <div class="control-group">
+                    <label for="lunnenDisplaySizeSlider">
+                        <span>Size <span class="unit">mod</span></span>
+                            <input type="text" class="value-display" id="lunnenDisplaySizeValue" value="3.00" data-min="0.25" data-max="10" aria-label="Lunnen Display size in modules">
+                    </label>
+                    <input type="range" id="lunnenDisplaySizeSlider" min="0.25" max="10" step="0.25" value="3" aria-label="Lunnen Display size slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="lunnenDisplayLineHeightSlider">
+                        <span>Line Height <span class="unit">mod</span></span>
+                        <input type="text" class="value-display" id="lunnenDisplayLineHeightValue" value="4.00" data-min="0.25" data-max="10" aria-label="Lunnen Display line height in modules">
+                    </label>
+                    <input type="range" id="lunnenDisplayLineHeightSlider" min="0.25" max="10" step="0.25" value="4" aria-label="Lunnen Display line height slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="lunnenDisplayTrackingSlider">
+                        <span>Tracking <span class="unit">em</span></span>
+                        <input type="text" class="value-display" id="lunnenDisplayTrackingValue" value="0.00" data-min="-0.05" data-max="0.05" aria-label="Lunnen Display tracking in em units">
+                    </label>
+                    <input type="range" id="lunnenDisplayTrackingSlider" min="-0.05" max="0.05" step="0.01" value="0" aria-label="Lunnen Display tracking slider">
+                </div>
+                
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="useXHeightLunnenDisplay" aria-label="Use x-height for measurement">
+                        <span>x-height</span>
+                    </label>
+                </div>
+                </div>
+            </section>
         </div>
     </aside>
 
@@ -420,6 +517,8 @@
                         <select id="paragraphStyleSelect" class="style-select" aria-label="Text style">
                             <option value="headline">Headline</option>
                             <option value="text">Text</option>
+                            <option value="caption">Caption</option>
+                            <option value="lunnenDisplay">Lunnen Display</option>
                         </select>
                     </label>
                 </div>

@@ -33,7 +33,7 @@
                 <svg id="gridSvg" xmlns="http://www.w3.org/2000/svg"></svg>
             </div>
 
-            <aside class="controls-panel" id="gridPanel" role="complementary" aria-label="Grid settings">
+            <aside class="controls-panel panel-collapsed" id="gridPanel" role="complementary" aria-label="Grid settings">
                 <div class="panel-header" id="gridPanelHeader">
                     <span>Grid <span class="panel-params" id="gridParams">5.05 mm</span></span>
                     <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
@@ -137,7 +137,7 @@
                 </div>
             </aside>
 
-            <aside class="controls-panel controls-panel-left" id="controlsPanel" role="complementary" aria-label="Dimensions settings">
+            <aside class="controls-panel controls-panel-left panel-collapsed" id="controlsPanel" role="complementary" aria-label="Dimensions settings">
                 <div class="panel-header" id="panelHeader">
                     <span>Dimensions <span class="panel-params" id="dimensionsParams"></span></span>
                     <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
@@ -151,26 +151,19 @@
                         <div class="control-group">
                             <label for="frontWidthSlider">
                                 <span>Width</span>
-                                <input type="text" class="value-display" id="frontWidthValue" value="500" data-min="50" data-max="1000" aria-label="Front width value">
+                                <input type="text" class="value-display" id="frontWidthValue" value="80" data-min="10" data-max="1000" aria-label="Front width value">
                             </label>
-                            <input type="range" id="frontWidthSlider" min="50" max="1000" step="0.5" value="500" aria-label="Front width slider" aria-valuemin="50" aria-valuemax="1000" aria-valuenow="500">
+                            <input type="range" id="frontWidthSlider" min="10" max="1000" step="0.5" value="80" aria-label="Front width slider" aria-valuemin="10" aria-valuemax="1000" aria-valuenow="80">
                         </div>
                         
                         <div class="control-group">
                             <label for="frontHeightSlider">
                                 <span>Height</span>
-                                <input type="text" class="value-display" id="frontHeightValue" value="500" data-min="50" data-max="1000" aria-label="Front height value">
+                                <input type="text" class="value-display" id="frontHeightValue" value="80" data-min="10" data-max="1000" aria-label="Front height value">
                             </label>
-                            <input type="range" id="frontHeightSlider" min="50" max="1000" step="0.5" value="500" aria-label="Front height slider" aria-valuemin="50" aria-valuemax="1000" aria-valuenow="500">
+                            <input type="range" id="frontHeightSlider" min="10" max="1000" step="0.5" value="80" aria-label="Front height slider" aria-valuemin="10" aria-valuemax="1000" aria-valuenow="80">
                         </div>
-                        
-                        <div class="control-group">
-                            <label for="thicknessSlider">
-                                <span>Thickness</span>
-                                <input type="text" class="value-display" id="thicknessValue" value="50" data-min="5" data-max="200" aria-label="Thickness value">
-                            </label>
-                            <input type="range" id="thicknessSlider" min="5" max="200" step="0.5" value="50" aria-label="Thickness slider" aria-valuemin="5" aria-valuemax="200" aria-valuenow="50">
-                        </div>
+                        <p class="control-hint">Минимальный размер макета — 10×10&nbsp;мм</p>
                     </section>
 
                     <section class="control-section" aria-labelledby="color-heading">
@@ -216,14 +209,67 @@
                         </div>
                     </section>
 
+                </div>
+            </aside>
+
+            <aside class="controls-panel data-panel" id="dataPanel" role="complementary" aria-label="Sticker data">
+                <div class="panel-header" id="dataPanelHeader">
+                    <span>Sticker Data <span class="panel-params" id="dataPanelParams">0 строк</span></span>
+                    <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
                     <section class="control-section">
+                        <h3>Источник</h3>
                         <div class="control-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="showSidePanels" checked aria-label="Show sides">
-                                <span>Show sides</span>
-                            </label>
+                            <label for="googleSheetInput">Ссылка на Google Sheets</label>
+                            <div class="input-row">
+                                <input type="url" id="googleSheetInput" placeholder="https://docs.google.com/..." autocomplete="off">
+                                <button type="button" class="btn-secondary" id="loadGoogleSheetBtn">Загрузить</button>
+                            </div>
+                            <p class="control-hint">Используй ссылку с правом просмотра</p>
+                        </div>
+                        <div class="control-group">
+                            <label for="excelFileInput">Excel / CSV файл</label>
+                            <div class="input-row">
+                                <input type="file" id="excelFileInput" accept=".xlsx,.xlsm,.xls,.csv" hidden>
+                                <button type="button" class="btn-secondary" id="excelUploadBtn">Выбрать файл</button>
+                            </div>
+                            <p class="control-hint">Поддерживаются .xlsx, .xls и .csv</p>
                         </div>
                     </section>
+
+                    <section class="control-section">
+                        <h3>Предпросмотр</h3>
+                        <div class="panel-status" id="dataStatus">Нет подключений</div>
+                        <div class="data-preview-wrapper">
+                            <table class="data-preview-table" id="dataPreviewTable" aria-live="polite"></table>
+                        </div>
+                        <div class="control-group">
+                            <label for="dataRowSelect">Строка из таблицы</label>
+                            <select id="dataRowSelect" disabled></select>
+                        </div>
+                        <button type="button" class="btn-primary" id="applyRowBtn" disabled>Применить к макету</button>
+                    </section>
+
+                    <section class="control-section">
+                        <h3>Штрихкод</h3>
+                        <div class="control-group">
+                            <label for="barcodeColumnSelect">Колонка для номера</label>
+                            <select id="barcodeColumnSelect" disabled></select>
+                        </div>
+                        <div class="control-group">
+                            <label for="manualBarcodeInput">Значение</label>
+                            <input type="text" id="manualBarcodeInput" placeholder="Например, 4601234567890" autocomplete="off">
+                        </div>
+                        <button type="button" class="btn-secondary" id="generateBarcodeBtn" disabled>Построить штрихкод</button>
+                        <div class="barcode-preview" id="barcodePreview" aria-live="polite"></div>
+                    </section>
+
+                    <p class="panel-hint">Используй {{название колонки}} в тексте, чтобы подставлять данные из таблицы.</p>
                 </div>
             </aside>
         </div>
@@ -246,7 +292,7 @@
     </nav>
 
     <!-- Elements Navigator Panel -->
-    <aside class="controls-panel elements-navigator" id="elementsNavigator" role="complementary" aria-label="Elements navigator">
+    <aside class="controls-panel elements-navigator panel-collapsed" id="elementsNavigator" role="complementary" aria-label="Elements navigator">
         <div class="panel-header" id="elementsNavigatorHeader">
             <span>Objects <span class="panel-params" id="objectsParams"></span></span>
             <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
@@ -276,7 +322,7 @@
         </div>
     </aside>
 
-    <aside class="controls-panel controls-panel-text" id="textPanel" role="complementary" aria-label="Text styles settings">
+    <aside class="controls-panel controls-panel-text panel-collapsed" id="textPanel" role="complementary" aria-label="Text styles settings">
         <div class="panel-header" id="textPanelHeader">
             <span>Text Styles <span class="panel-params" id="textStylesParams"></span></span>
             <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">

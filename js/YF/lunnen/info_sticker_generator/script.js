@@ -29,6 +29,10 @@ import { ElementsNavigator } from './src/elements/ElementsNavigator.js';
 // Итерация 7: SVG Export
 import { SVGExporter } from './src/svg/SVGExporter.js';
 
+// Данные для стикеров
+import { DataImporter } from './src/data/DataImporter.js';
+import { BarcodeGenerator } from './src/data/BarcodeGenerator.js';
+
 class GridGenerator {
     constructor() {
         // Slider configuration - defines behavior for each slider
@@ -37,7 +41,7 @@ class GridGenerator {
             frontWidthSlider: {
                 valueId: 'frontWidthValue',
                 setting: 'frontWidth',
-                min: 50,
+                min: 10,
                 max: 1000,
                 decimals: 1,
                 baseStep: 0.5,
@@ -47,7 +51,7 @@ class GridGenerator {
             frontHeightSlider: {
                 valueId: 'frontHeightValue',
                 setting: 'frontHeight',
-                min: 50,
+                min: 10,
                 max: 1000,
                 decimals: 1,
                 baseStep: 0.5,
@@ -66,16 +70,6 @@ class GridGenerator {
                     this.generateRowPresets();
                     this.updateGrid();
                 }
-            },
-            thicknessSlider: {
-                valueId: 'thicknessValue',
-                setting: 'thickness',
-                min: 5,
-                max: 200,
-                decimals: 1,
-                baseStep: 0.5,
-                shiftStep: 10,
-                onUpdate: () => this.updateGrid()
             },
             gridModuleSlider: {
                 valueId: 'gridModuleValue',
@@ -282,11 +276,11 @@ class GridGenerator {
         // Settings (Итерация 2: используем Settings модуль)
         // ============================================
         this.settingsModule = new Settings({
-            frontWidth: 500,
-            frontHeight: 500,
-            thickness: 50,
+            frontWidth: 80,
+            frontHeight: 80,
+            thickness: 0,
             showLabels: false,
-            showSidePanels: true,
+            showSidePanels: false,
             boxColor: '#808080',
             gridModule: 5.0505,
             margins: 2,
@@ -358,6 +352,17 @@ class GridGenerator {
         if (!this.graphicsBlocks) {
             this.graphicsBlocks = [];
         }
+
+        this.BARCODE_BLOCK_ID = 'sticker-barcode';
+        this.stickerData = {
+            rows: [],
+            columns: [],
+            activeRowIndex: null,
+            barcodeColumn: null,
+            source: null,
+            lastUpdated: null
+        };
+        this.currentBarcodeValue = '';
         
         // Storage for deletion timers to allow cancellation
         this.deletionTimers = {};
@@ -485,6 +490,7 @@ class GridGenerator {
                 lockPosition: true  // Constrain to grid bounds by default
             }
         ];
+        this.ensureTextBlockTemplates();
         
         // Состояние для drag & drop текстовых блоков
         this.textDragState = {
@@ -544,6 +550,7 @@ class GridGenerator {
         
         // Generate row presets
         this.generateRowPresets();
+        this.enforceStickerConstraints();
         
         // Initialize
         this.initEventListeners();
@@ -573,6 +580,7 @@ class GridGenerator {
         // this.initClaimPanel();
         // this.initClaimInputsWithArrows();
         this.initGraphicsPanel();
+        this.initDataPanel();
         this.initPanelClickOutsideHandler();
         this.initElementsNavigator();
         this.updateLinkedControlsVisual();
@@ -595,6 +603,429 @@ class GridGenerator {
             this.updateCanvasSize();
             this.updateGrid();
         });
+    }
+    
+    // ============================================
+    // Sticker Data Integration
+    // ============================================
+    initDataPanel() {
+        this.updateDataStatus('Нет подключений');
+        this.renderDataPreview();
+        this.updateRowSelectOptions();
+        this.updateBarcodeColumnSelect();
+        this.updateManualBarcodeInput();
+        this.updateBarcodeButtonState();
+        this.syncBarcodePreviewFromBlock();
+        
+        if (this.dom.loadGoogleSheetBtn) {
+            this.dom.loadGoogleSheetBtn.addEventListener('click', () => this.handleGoogleSheetLoad());
+        }
+        
+        if (this.dom.googleSheetInput) {
+            this.dom.googleSheetInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.handleGoogleSheetLoad();
+                }
+            });
+        }
+        
+        if (this.dom.excelUploadBtn && this.dom.excelFileInput) {
+            this.dom.excelUploadBtn.addEventListener('click', () => this.dom.excelFileInput.click());
+            this.dom.excelFileInput.addEventListener('change', (e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                    this.handleExcelUpload(file);
+                    e.target.value = '';
+                }
+            });
+        }
+        
+        if (this.dom.applyRowBtn) {
+            this.dom.applyRowBtn.addEventListener('click', async () => {
+                const index = parseInt(this.dom.dataRowSelect?.value ?? '-1', 10);
+                await this.applyDataRow(index);
+            });
+        }
+        
+        if (this.dom.dataRowSelect) {
+            this.dom.dataRowSelect.addEventListener('change', () => {
+                const index = parseInt(this.dom.dataRowSelect.value, 10);
+                if (!Number.isNaN(index)) {
+                    this.stickerData.activeRowIndex = index;
+                    this.updateManualBarcodeInput();
+                }
+            });
+        }
+        
+        if (this.dom.barcodeColumnSelect) {
+            this.dom.barcodeColumnSelect.addEventListener('change', () => {
+                const value = this.dom.barcodeColumnSelect.value;
+                this.stickerData.barcodeColumn = value || null;
+                this.updateManualBarcodeInput();
+            });
+        }
+        
+        if (this.dom.manualBarcodeInput) {
+            this.dom.manualBarcodeInput.addEventListener('input', () => this.updateBarcodeButtonState());
+        }
+        
+        if (this.dom.generateBarcodeBtn) {
+            this.dom.generateBarcodeBtn.addEventListener('click', async () => {
+                const value = this.dom.manualBarcodeInput?.value.trim();
+                if (value) {
+                    await this.updateBarcodeGraphic(value);
+                }
+            });
+        }
+    }
+    
+    async handleGoogleSheetLoad() {
+        const url = this.dom.googleSheetInput?.value.trim();
+        if (!url) {
+            this.updateDataStatus('Добавь ссылку на Google Sheets', 'error');
+            return;
+        }
+        
+        try {
+            this.updateDataStatus('Загружаю данные…', 'loading');
+            const data = await DataImporter.fromGoogleSheet(url);
+            this.setStickerData(data, 'Google Sheets');
+            this.updateDataStatus(`Загружено ${data.rows.length} строк`, 'success');
+        } catch (error) {
+            console.error('Google Sheets import failed', error);
+            this.updateDataStatus(error.message || 'Не удалось загрузить Google Sheets', 'error');
+        }
+    }
+    
+    async handleExcelUpload(file) {
+        try {
+            this.updateDataStatus(`Читаю файл ${file.name}…`, 'loading');
+            const data = await DataImporter.fromFile(file);
+            this.setStickerData(data, file.name);
+            this.updateDataStatus(`Импортировано ${data.rows.length} строк`, 'success');
+        } catch (error) {
+            console.error('Excel import failed', error);
+            this.updateDataStatus(error.message || 'Не удалось прочитать файл', 'error');
+        }
+    }
+    
+    setStickerData(data, source = null) {
+        this.stickerData.rows = Array.isArray(data.rows) ? data.rows : [];
+        this.stickerData.columns = Array.isArray(data.columns) ? data.columns : [];
+        this.stickerData.activeRowIndex = this.stickerData.rows.length ? 0 : null;
+        this.stickerData.barcodeColumn = this.detectBarcodeColumn(this.stickerData.columns);
+        this.stickerData.source = source;
+        this.stickerData.lastUpdated = new Date().toISOString();
+        
+        this.renderDataPreview();
+        this.updateRowSelectOptions();
+        this.updateBarcodeColumnSelect();
+        this.updateManualBarcodeInput();
+        this.updateBarcodeButtonState();
+        this.updatePanelParams();
+        this.syncBarcodePreviewFromBlock();
+    }
+
+    restoreStickerData(data = {}) {
+        this.stickerData.rows = Array.isArray(data.rows) ? data.rows : [];
+        this.stickerData.columns = Array.isArray(data.columns) ? data.columns : [];
+        if (typeof data.activeRowIndex === 'number') {
+            this.stickerData.activeRowIndex = data.activeRowIndex;
+        } else {
+            this.stickerData.activeRowIndex = this.stickerData.rows.length ? 0 : null;
+        }
+        this.stickerData.barcodeColumn = data.barcodeColumn || null;
+        this.stickerData.source = data.source || null;
+        this.stickerData.lastUpdated = data.lastUpdated || null;
+        this.currentBarcodeValue = data.currentBarcodeValue || '';
+        
+        this.renderDataPreview();
+        this.updateRowSelectOptions();
+        this.updateBarcodeColumnSelect();
+        this.updateManualBarcodeInput();
+        this.updateBarcodeButtonState();
+        this.updatePanelParams();
+    }
+    
+    resetStickerData() {
+        this.stickerData = {
+            rows: [],
+            columns: [],
+            activeRowIndex: null,
+            barcodeColumn: null,
+            source: null,
+            lastUpdated: null
+        };
+        this.currentBarcodeValue = '';
+        this.renderDataPreview();
+        this.updateRowSelectOptions();
+        this.updateBarcodeColumnSelect();
+        this.updateManualBarcodeInput();
+        this.updateBarcodeButtonState();
+        this.updateBarcodePreview();
+        this.updatePanelParams();
+        this.updateDataStatus('Нет подключений');
+    }
+    
+    renderDataPreview() {
+        const table = this.dom.dataPreviewTable;
+        if (!table) return;
+        
+        const columns = this.stickerData.columns.slice(0, 5);
+        const rows = this.stickerData.rows.slice(0, 5);
+        
+        if (!columns.length) {
+            table.innerHTML = '<tbody><tr><td>Данные не загружены</td></tr></tbody>';
+            return;
+        }
+        
+        let thead = '<thead><tr>';
+        columns.forEach(col => {
+            thead += `<th>${this.escapeTableValue(col)}</th>`;
+        });
+        thead += '</tr></thead>';
+        
+        let tbody = '<tbody>';
+        if (!rows.length) {
+            tbody += `<tr><td colspan="${columns.length}">Нет строк</td></tr>`;
+        } else {
+            rows.forEach(row => {
+                tbody += '<tr>';
+                columns.forEach(col => {
+                    tbody += `<td>${this.escapeTableValue(row[col])}</td>`;
+                });
+                tbody += '</tr>';
+            });
+        }
+        tbody += '</tbody>';
+        
+        table.innerHTML = thead + tbody;
+    }
+    
+    escapeTableValue(value) {
+        if (value === null || value === undefined) return '';
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+    
+    updateRowSelectOptions() {
+        const select = this.dom.dataRowSelect;
+        if (!select) return;
+        
+        select.innerHTML = '';
+        const rows = this.stickerData.rows;
+        
+        if (!rows.length) {
+            select.disabled = true;
+            if (this.dom.applyRowBtn) {
+                this.dom.applyRowBtn.disabled = true;
+            }
+            return;
+        }
+        
+        rows.forEach((row, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            const previewColumns = this.stickerData.columns.slice(0, 2);
+            const inlinePreview = previewColumns
+                .map(col => row[col])
+                .filter(Boolean)
+                .map(value => String(value).trim())
+                .join(' • ');
+            option.textContent = inlinePreview || `Строка ${index + 1}`;
+            select.appendChild(option);
+        });
+        
+        select.disabled = false;
+        const activeIndex = typeof this.stickerData.activeRowIndex === 'number'
+            ? this.stickerData.activeRowIndex
+            : 0;
+        this.stickerData.activeRowIndex = activeIndex;
+        select.value = String(activeIndex);
+        
+        if (this.dom.applyRowBtn) {
+            this.dom.applyRowBtn.disabled = false;
+        }
+    }
+    
+    updateBarcodeColumnSelect() {
+        const select = this.dom.barcodeColumnSelect;
+        if (!select) return;
+        
+        select.innerHTML = '';
+        
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Не выбрано';
+        select.appendChild(placeholder);
+        
+        this.stickerData.columns.forEach(column => {
+            const option = document.createElement('option');
+            option.value = column;
+            option.textContent = column;
+            select.appendChild(option);
+        });
+        
+        select.disabled = this.stickerData.columns.length === 0;
+        if (this.stickerData.barcodeColumn) {
+            select.value = this.stickerData.barcodeColumn;
+        }
+    }
+    
+    updateManualBarcodeInput() {
+        if (!this.dom.manualBarcodeInput) return;
+        
+        const row = this.stickerData.rows[this.stickerData.activeRowIndex ?? -1];
+        if (!row || !this.stickerData.barcodeColumn) {
+            return;
+        }
+        const value = row[this.stickerData.barcodeColumn] ?? '';
+        this.dom.manualBarcodeInput.value = value;
+        this.updateBarcodeButtonState();
+    }
+    
+    updateBarcodeButtonState() {
+        if (!this.dom.generateBarcodeBtn) return;
+        const hasValue = Boolean(this.dom.manualBarcodeInput?.value.trim());
+        this.dom.generateBarcodeBtn.disabled = !hasValue;
+    }
+    
+    updateBarcodePreview(svgString = null) {
+        if (!this.dom.barcodePreview) return;
+        
+        if (svgString) {
+            this.dom.barcodePreview.innerHTML = svgString;
+            return;
+        }
+        
+        const block = this.graphicsBlocks?.find(b => b.id === this.BARCODE_BLOCK_ID);
+        if (block?.svgContent) {
+            this.dom.barcodePreview.innerHTML = block.svgContent;
+        } else {
+            this.dom.barcodePreview.textContent = 'Штрихкод не создан';
+        }
+    }
+    
+    syncBarcodePreviewFromBlock() {
+        this.updateBarcodePreview();
+    }
+    
+    updateDataStatus(message, type = 'info') {
+        if (!this.dom.dataStatus) return;
+        this.dom.dataStatus.textContent = message;
+        this.dom.dataStatus.classList.remove('success', 'error', 'loading');
+        if (type !== 'info') {
+            this.dom.dataStatus.classList.add(type);
+        }
+    }
+    
+    detectBarcodeColumn(columns = []) {
+        const keywords = ['barcode', 'штрих', 'ean', 'ean13', 'sku', 'код'];
+        return columns.find(col => {
+            const lower = col.toLowerCase();
+            return keywords.some(keyword => lower.includes(keyword));
+        }) || null;
+    }
+    
+    fillTemplateWithRow(template, row = {}) {
+        if (!template) return '';
+        return template.replace(/{{\s*([^}]+)\s*}}/g, (_, key) => {
+            const columnName = key.trim();
+            const value = row[columnName];
+            return value !== undefined ? value : '';
+        });
+    }
+    
+    async applyDataRow(index, options = {}) {
+        if (!Array.isArray(this.stickerData.rows) || !this.stickerData.rows.length) {
+            this.updateDataStatus('Нет данных для применения', 'error');
+            return;
+        }
+        
+        if (Number.isNaN(index) || index < 0 || index >= this.stickerData.rows.length) {
+            this.updateDataStatus('Выбери строку из таблицы', 'error');
+            return;
+        }
+        
+        this.saveState();
+        const row = this.stickerData.rows[index];
+        this.stickerData.activeRowIndex = index;
+        if (this.dom.dataRowSelect) {
+            this.dom.dataRowSelect.value = String(index);
+        }
+        
+        this.textBlocks.forEach(block => {
+            const baseTemplate = block.template || block.content || '';
+            const filled = this.fillTemplateWithRow(baseTemplate, row);
+            block.content = filled;
+        });
+        
+        this.updateElementsNavigator();
+        this.updateGrid();
+        this.updateDataStatus(`Строка ${index + 1} применена`, 'success');
+        
+        if (options.autoBarcode !== false && this.stickerData.barcodeColumn) {
+            const barcodeValue = row[this.stickerData.barcodeColumn];
+            if (barcodeValue) {
+                if (this.dom.manualBarcodeInput) {
+                    this.dom.manualBarcodeInput.value = barcodeValue;
+                }
+                await this.updateBarcodeGraphic(String(barcodeValue));
+            }
+        }
+    }
+    
+    async updateBarcodeGraphic(value) {
+        if (!value) return;
+        try {
+            this.updateDataStatus('Генерирую штрихкод…', 'loading');
+            const result = await BarcodeGenerator.generate(value);
+            if (!Array.isArray(this.graphicsBlocks)) {
+                this.graphicsBlocks = [];
+            }
+            let block = this.graphicsBlocks.find(b => b.id === this.BARCODE_BLOCK_ID);
+            
+            this.saveState();
+            
+            if (!block) {
+                block = {
+                    id: this.BARCODE_BLOCK_ID,
+                    name: 'Barcode',
+                    isBuiltIn: false,
+                    svgContent: result.svg,
+                    heightInModules: 2,
+                    widthInModules: 4,
+                    sizeMode: 'width',
+                    alignment: 'left',
+                    x: 1,
+                    row: 0,
+                    baselineOffset: 0,
+                    showBounds: false,
+                    visible: true,
+                    originalWidth: result.width,
+                    originalHeight: result.height,
+                    lockPosition: true
+                };
+                this.graphicsBlocks.push(block);
+            } else {
+                block.svgContent = result.svg;
+                block.originalWidth = result.width;
+                block.originalHeight = result.height;
+                block.visible = true;
+            }
+            
+            this.currentBarcodeValue = value;
+            this.updateElementsNavigator();
+            this.updateGrid();
+            this.updateBarcodePreview(result.svg);
+            this.updateDataStatus('Штрихкод обновлён', 'success');
+        } catch (error) {
+            console.error('Barcode generation failed', error);
+            this.updateDataStatus('Не удалось построить штрихкод', 'error');
+        }
     }
     
     // Getters for backward compatibility with existing code
@@ -633,12 +1064,10 @@ class GridGenerator {
             // Sliders
             frontWidthSlider: document.getElementById('frontWidthSlider'),
             frontHeightSlider: document.getElementById('frontHeightSlider'),
-            thicknessSlider: document.getElementById('thicknessSlider'),
             
             // Value displays
             frontWidthValue: document.getElementById('frontWidthValue'),
             frontHeightValue: document.getElementById('frontHeightValue'),
-            thicknessValue: document.getElementById('thicknessValue'),
             
             // Checkboxes
             showSidePanels: document.getElementById('showSidePanels'),
@@ -778,7 +1207,23 @@ class GridGenerator {
             graphicsSurfaceSelect: document.getElementById('graphicsSurfaceSelect'),
             // Zoom controls
             canvasContainer: document.getElementById('canvasContainer'),
-            zoomIndicator: document.getElementById('zoomIndicator')
+            zoomIndicator: document.getElementById('zoomIndicator'),
+            // Data panel
+            dataPanel: document.getElementById('dataPanel'),
+            dataPanelHeader: document.getElementById('dataPanelHeader'),
+            googleSheetInput: document.getElementById('googleSheetInput'),
+            loadGoogleSheetBtn: document.getElementById('loadGoogleSheetBtn'),
+            excelUploadBtn: document.getElementById('excelUploadBtn'),
+            excelFileInput: document.getElementById('excelFileInput'),
+            dataStatus: document.getElementById('dataStatus'),
+            dataPreviewTable: document.getElementById('dataPreviewTable'),
+            dataPanelParams: document.getElementById('dataPanelParams'),
+            dataRowSelect: document.getElementById('dataRowSelect'),
+            applyRowBtn: document.getElementById('applyRowBtn'),
+            barcodeColumnSelect: document.getElementById('barcodeColumnSelect'),
+            manualBarcodeInput: document.getElementById('manualBarcodeInput'),
+            generateBarcodeBtn: document.getElementById('generateBarcodeBtn'),
+            barcodePreview: document.getElementById('barcodePreview')
         };
     }
     
@@ -793,11 +1238,13 @@ class GridGenerator {
         // NOTE: Slider initialization moved to initUIControllers()
         // ============================================
         
-        // Show side panels checkbox
-        this.dom.showSidePanels.addEventListener('change', (e) => {
-            this.settings.showSidePanels = e.target.checked;
-            this.updateGrid();
-        });
+        // Show side panels checkbox (может отсутствовать в режиме стикеров)
+        if (this.dom.showSidePanels) {
+            this.dom.showSidePanels.addEventListener('change', (e) => {
+                this.settings.showSidePanels = e.target.checked;
+                this.updateGrid();
+            });
+        }
         
         // Link mode radio buttons
         const linkModeHandler = (e) => {
@@ -1073,6 +1520,14 @@ class GridGenerator {
                 const rect = panel.getBoundingClientRect();
                 panel.dataset.originalTop = rect.top;
             }
+
+            if (panel.classList.contains('panel-collapsed')) {
+                icon.classList.add('collapsed');
+                icon.setAttribute('aria-label', 'Expand panel');
+            } else {
+                icon.classList.remove('collapsed');
+                icon.setAttribute('aria-label', 'Collapse panel');
+            }
             
             // Click handler
             const toggleCollapse = (e) => {
@@ -1185,15 +1640,14 @@ class GridGenerator {
         if (dimensionsParams) {
             const w = Math.round(this.settings.frontWidth);
             const h = Math.round(this.settings.frontHeight);
-            const t = Math.round(this.settings.thickness);
-            dimensionsParams.textContent = `${w}\u2009×\u2009${h}\u2009×\u2009${t} mm`;
+            dimensionsParams.textContent = `${w}\u2009×\u2009${h} mm`;
         }
         
         // Objects panel
         const objectsParams = document.getElementById('objectsParams');
         if (objectsParams) {
             const textCount = this.textBlocks.length;
-            const graphicsCount = this.graphicsBlocks.length;
+            const graphicsCount = this.graphicsBlocks?.length || 0;
             objectsParams.textContent = `Txt ${textCount}  •  Obj ${graphicsCount}`;
         }
         
@@ -1202,6 +1656,12 @@ class GridGenerator {
         if (textStylesParams) {
             const stylesCount = this.getTextStylesCount();
             textStylesParams.textContent = `${stylesCount} styles`;
+        }
+
+        // Data panel
+        if (this.dom.dataPanelParams) {
+            const rows = this.stickerData.rows.length;
+            this.dom.dataPanelParams.textContent = rows ? `${rows} строк` : '0 строк';
         }
     }
     
@@ -1217,6 +1677,27 @@ class GridGenerator {
         });
         
         return uniqueStyles.size;
+    }
+
+    ensureTextBlockTemplates() {
+        if (!Array.isArray(this.textBlocks)) return;
+        this.textBlocks.forEach(block => {
+            if (typeof block.template !== 'string') {
+                block.template = block.content || '';
+            }
+        });
+    }
+
+    enforceStickerConstraints() {
+        if (this.settings.thickness !== 0) {
+            this.settings.thickness = 0;
+        }
+        if (this.settings.showSidePanels !== false) {
+            this.settings.showSidePanels = false;
+            if (this.dom.showSidePanels) {
+                this.dom.showSidePanels.checked = false;
+            }
+        }
     }
     
     // ============================================
@@ -2187,6 +2668,7 @@ class GridGenerator {
             this.dom.paragraphTextArea.addEventListener('input', () => {
                 if (this.currentEditingBlock) {
                     this.currentEditingBlock.content = this.dom.paragraphTextArea.value;
+                    this.currentEditingBlock.template = this.dom.paragraphTextArea.value;
                     this.updateCharCounter();
                     this.updateGrid();
                 }
@@ -6907,6 +7389,7 @@ class GridGenerator {
         const newBlock = {
             id: newId,
             content: 'Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.',
+            template: 'Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.',
             styleRef: 'text',
             x: 1,
             row: 0,
@@ -8449,7 +8932,11 @@ class GridGenerator {
             textBlocks: this.textBlocks,
             graphicsBlocks: this.graphicsBlocks || [],
             iconsBlock: this.iconsBlock || null,
-            claimBlock: this.claimBlock || null
+            claimBlock: this.claimBlock || null,
+            stickerData: {
+                ...this.stickerData,
+                currentBarcodeValue: this.currentBarcodeValue
+            }
         };
         
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
@@ -8471,6 +8958,7 @@ class GridGenerator {
             if (data.textBlocks) {
                 this.textBlocks = data.textBlocks;
             }
+            this.ensureTextBlockTemplates();
             
             if (data.graphicsBlocks) {
                 this.graphicsBlocks = data.graphicsBlocks;
@@ -8483,6 +8971,14 @@ class GridGenerator {
             if (data.claimBlock) {
                 this.claimBlock = data.claimBlock;
             }
+
+            if (data.stickerData) {
+                this.restoreStickerData(data.stickerData);
+            } else {
+                this.resetStickerData();
+            }
+            this.enforceStickerConstraints();
+            this.syncBarcodePreviewFromBlock();
             
             // Обновляем UI
             this.updateGrid();
@@ -8601,11 +9097,6 @@ class GridGenerator {
             this.dom.frontHeightSlider.value = this.settings.frontHeight;
             this.dom.frontHeightValue.value = this.settings.frontHeight.toFixed(1);
         }
-        if (this.dom.thicknessSlider) {
-            this.dom.thicknessSlider.value = this.settings.thickness;
-            this.dom.thicknessValue.value = this.settings.thickness.toFixed(1);
-        }
-        
         // Update grid sliders
         if (this.dom.gridModuleSlider) {
             this.dom.gridModuleSlider.value = this.settings.gridModule;
@@ -8762,6 +9253,7 @@ class GridGenerator {
         const panels = [
             { id: 'controlsPanel', headerId: 'panelHeader', draggable: true },
             { id: 'gridPanel', headerId: 'gridPanelHeader', draggable: true },
+            { id: 'dataPanel', headerId: 'dataPanelHeader', draggable: true },
             { id: 'textPanel', headerId: 'textPanelHeader', draggable: true },
             { id: 'paragraphPanel', headerId: 'paragraphPanelHeader', draggable: true },
             { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true },
