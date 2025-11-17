@@ -8757,18 +8757,18 @@ class GridGenerator {
     
     // Итерация 7: Упрощенный экспорт SVG через SVGExporter
     async exportSVG() {
-        const { frontWidth, frontHeight, gridModule, columnCount, rowCount } = this.settings;
+        const { frontWidth, frontHeight, thickness, gridModule, columnCount, rowCount } = this.settings;
         
         // Создаем SVG для экспорта (scale = 1 для точных размеров)
-        const exportSvg = this.createExportSVG();
+        const exportSvg = await this.createExportSVG();
         
         // Генерируем timestamp с точностью до минуты
         const now = new Date();
         const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
         
-        // Генерируем имя файла: "размер колонки строки модуль timestamp.svg"
-        // Например: "500×500mm 12col 12rows 5.05mm 20251116_1430.svg"
-        const size = `${frontWidth}×${frontHeight}mm`;
+        // Генерируем имя файла: "размер с боковинами колонки строки модуль timestamp.svg"
+        // Например: "500×500×50mm 12col 12rows 5.05mm 20251116_1430.svg"
+        const size = `${frontWidth}×${frontHeight}×${thickness}mm`;
         const cols = `${columnCount}col`;
         const rows = `${rowCount}rows`;
         const module = `${gridModule.toFixed(2)}mm`;
@@ -8787,7 +8787,7 @@ class GridGenerator {
     }
     
     // Итерация 7: Создание SVG для экспорта (без интерактивных элементов)
-    createExportSVG() {
+    async createExportSVG() {
         const { frontWidth, frontHeight, thickness } = this.settings;
         
         // Create a new SVG for export with actual mm dimensions
@@ -8899,7 +8899,8 @@ class GridGenerator {
             this.graphicsBlocks.forEach(block => {
                 if (block.visible !== false && block.svgContent) {
                     const graphicsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                    graphicsGroup.setAttribute('id', `graphics-${block.id}`);
+                    // Use simple id for built-in blocks (icons, claim) without prefix
+                    graphicsGroup.setAttribute('id', block.isBuiltIn ? block.id : `graphics-${block.id}`);
                     exportSvg.appendChild(graphicsGroup);
                     
                     // Draw graphics block
@@ -8908,24 +8909,286 @@ class GridGenerator {
             });
         }
         
-        // Add icons block (in separate group)
-        const iconsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        iconsGroup.setAttribute('id', 'icons');
-        exportSvg.appendChild(iconsGroup);
-        this.drawIconsBlockForExport(iconsGroup, frontX, frontY, frontWidth, frontHeight, scale);
+        // Add text styles summary outside artboard (for reference in editor)
+        this.addTextStylesSummary(exportSvg, totalWidth, scale);
         
-        // Add claim block (in separate group)
-        const claimGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        claimGroup.setAttribute('id', 'claim');
-        exportSvg.appendChild(claimGroup);
-        this.drawClaimBlockForExport(claimGroup, frontX, frontY, frontWidth, frontHeight, scale);
+        // Add design kit (logo and graphic elements) in multiple sizes outside artboard (for reference in editor)
+        await this.addLunnenLogoReference(exportSvg, totalWidth, scale);
         
         return exportSvg;
     }
     
+    /**
+     * Добавить справку по текстовым стилям за пределами артборда
+     */
+    addTextStylesSummary(svg, artboardWidth, scale = 1) {
+        // Позиция справа от артборда с отступом 20mm
+        const summaryX = artboardWidth + 20;
+        const summaryY = 10;
+        const lineHeight = 5; // mm между строками
+        
+        // Создаем группу для справки
+        const summaryGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        summaryGroup.setAttribute('id', 'text-styles-reference');
+        summaryGroup.setAttribute('opacity', '0.7');
+        
+        // Получаем контрастный цвет для текста
+        const textColor = this.getContrastColor();
+        
+        // Функция для создания строки текста
+        const createTextLine = (content, x, y, fontSize = 3, fontWeight = 400) => {
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', x * scale);
+            text.setAttribute('y', y * scale);
+            text.setAttribute('font-family', 'TT Commons Classic, -apple-system, sans-serif');
+            text.setAttribute('font-size', fontSize * scale);
+            text.setAttribute('font-weight', fontWeight);
+            text.setAttribute('fill', textColor);
+            text.textContent = content;
+            return text;
+        };
+        
+        // Заголовок
+        summaryGroup.appendChild(createTextLine('Text Styles', summaryX, summaryY, 4, 500));
+        
+        let currentY = summaryY + lineHeight * 1.5;
+        
+        // Получаем все текстовые стили и их параметры
+        const styles = this.getTextStylesInfo();
+        
+        styles.forEach(style => {
+            const line = `${style.name}  ${style.fontSize}/${style.lineHeight} pt`;
+            summaryGroup.appendChild(createTextLine(line, summaryX, currentY, 3, 400));
+            currentY += lineHeight;
+        });
+        
+        svg.appendChild(summaryGroup);
+    }
+    
+    /**
+     * Получить информацию о всех текстовых стилях
+     */
+    getTextStylesInfo() {
+        const { gridModule } = this.settings;
+        const mmToPt = 2.83465; // 1mm = 2.83465pt
+        
+        const styles = [];
+        
+        // Headline
+        const headlineSize = this.settings.headlineSize || 1;
+        const headlineLineHeight = this.settings.lineHeight || 2;
+        const headlineFontSize = this.calculateActualFontSize('headline', headlineSize);
+        const headlineLineHeightPt = (headlineLineHeight * gridModule * mmToPt).toFixed(1);
+        
+        styles.push({
+            name: 'Headline',
+            fontSize: (headlineFontSize * mmToPt).toFixed(1),
+            lineHeight: headlineLineHeightPt
+        });
+        
+        // Text
+        const textSize = this.settings.textSize || 1;
+        const textLineHeight = this.settings.textLineHeight || 2;
+        const textFontSize = this.calculateActualFontSize('text', textSize);
+        const textLineHeightPt = (textLineHeight * gridModule * mmToPt).toFixed(1);
+        
+        styles.push({
+            name: 'Text',
+            fontSize: (textFontSize * mmToPt).toFixed(1),
+            lineHeight: textLineHeightPt
+        });
+        
+        // Caption
+        const captionSize = this.settings.captionSize || 0.5;
+        const captionLineHeight = this.settings.captionLineHeight || 1;
+        const captionFontSize = this.calculateActualFontSize('caption', captionSize);
+        const captionLineHeightPt = (captionLineHeight * gridModule * mmToPt).toFixed(1);
+        
+        styles.push({
+            name: 'Caption',
+            fontSize: (captionFontSize * mmToPt).toFixed(1),
+            lineHeight: captionLineHeightPt
+        });
+        
+        // Lunnen Display
+        const lunnenSize = this.settings.lunnenDisplaySize || 3;
+        const lunnenLineHeight = this.settings.lunnenDisplayLineHeight || 4;
+        const lunnenFontSize = this.calculateActualFontSize('lunnenDisplay', lunnenSize);
+        const lunnenLineHeightPt = (lunnenLineHeight * gridModule * mmToPt).toFixed(1);
+        
+        styles.push({
+            name: 'Lunnen Display',
+            fontSize: (lunnenFontSize * mmToPt).toFixed(1),
+            lineHeight: lunnenLineHeightPt
+        });
+        
+        return styles;
+    }
+    
+    /**
+     * Рассчитать реальный размер шрифта с учетом cap-height/x-height
+     */
+    calculateActualFontSize(styleRef, sizeInModules) {
+        const { gridModule } = this.settings;
+        const targetSize = gridModule * sizeInModules; // size in mm
+        
+        // Метрики шрифтов
+        const fontMetrics = {
+            capHeight: 630,
+            xHeight: 447,
+            unitsPerEm: 1000
+        };
+        
+        // Определяем, какой стиль использует x-height
+        let useXHeight = false;
+        if (styleRef === 'headline') {
+            useXHeight = this.settings.useXHeight !== false;
+        } else if (styleRef === 'text') {
+            useXHeight = this.settings.useXHeight2 !== false;
+        } else if (styleRef === 'caption') {
+            useXHeight = this.settings.useXHeightCaption !== false;
+        }
+        // Lunnen Display всегда использует cap-height
+        
+        // Calculate font size based on whether we're using cap height or x-height
+        let fontSize;
+        if (useXHeight) {
+            fontSize = targetSize * (fontMetrics.unitsPerEm / fontMetrics.xHeight);
+        } else {
+            fontSize = targetSize * (fontMetrics.unitsPerEm / fontMetrics.capHeight);
+        }
+        
+        return fontSize; // in mm
+    }
+    
+    /**
+     * Добавить дизайн-кит (логотип и графические элементы) в нескольких размерах за пределами артборда
+     */
+    async addLunnenLogoReference(svg, artboardWidth, scale = 1) {
+        try {
+            const { gridModule } = this.settings;
+            
+            // Список всех графических элементов для дизайн-кита
+            const graphicElements = [
+                { file: 'lunnen_logo.svg', name: 'Lunnen Logo' },
+                { file: '1.svg', name: '1' },
+                { file: '2.svg', name: '2' },
+                { file: '3.svg', name: '3' },
+                { file: 'icons.svg', name: 'Icons' },
+                { file: 'l_sign.svg', name: 'L Sign' },
+                { file: 'qr_lunnen.pro.svg', name: 'QR' },
+                { file: 'yf_claim.svg', name: 'YF Claim' }
+            ];
+            
+            // Позиция под справкой по текстовым стилям
+            const startX = artboardWidth + 20;
+            let currentY = 40; // Под Text Styles
+            const verticalGap = 3; // mm между элементами
+            const sectionGap = 10; // mm между разными графическими элементами
+            
+            // Размеры в модулях (от большего к меньшему)
+            const sizes = [6, 5, 4, 3, 2, 1];
+            
+            // Создаем группу для всего дизайн-кита
+            const designKitGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            designKitGroup.setAttribute('id', 'design-kit-reference');
+            designKitGroup.setAttribute('opacity', '0.7');
+            
+            // Получаем контрастный цвет для текста
+            const textColor = this.getContrastColor();
+            
+            // Проходим по каждому графическому элементу
+            for (const element of graphicElements) {
+                // Загружаем SVG элемента
+                const response = await fetch(`graphics/${element.file}`);
+                if (!response.ok) {
+                    console.warn(`Failed to load ${element.file}`);
+                    continue;
+                }
+                
+                const svgText = await response.text();
+                
+                // Парсим SVG
+                const parser = new DOMParser();
+                const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+                const svgElement = svgDoc.querySelector('svg');
+                
+                if (!svgElement) {
+                    console.warn(`Invalid SVG structure for ${element.file}`);
+                    continue;
+                }
+                
+                // Получаем оригинальные размеры из viewBox
+                const viewBox = svgElement.getAttribute('viewBox');
+                const [, , originalWidth, originalHeight] = viewBox.split(' ').map(Number);
+                const aspectRatio = originalWidth / originalHeight;
+                
+                // Добавляем заголовок секции
+                const sectionTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                sectionTitle.setAttribute('x', startX * scale);
+                sectionTitle.setAttribute('y', currentY * scale);
+                sectionTitle.setAttribute('font-family', 'TT Commons Classic, -apple-system, sans-serif');
+                sectionTitle.setAttribute('font-size', 4 * scale);
+                sectionTitle.setAttribute('font-weight', 500);
+                sectionTitle.setAttribute('fill', textColor);
+                sectionTitle.setAttribute('dominant-baseline', 'hanging');
+                sectionTitle.textContent = element.name;
+                
+                designKitGroup.appendChild(sectionTitle);
+                
+                currentY += 6; // Отступ после заголовка
+                
+                // Рендерим элемент в разных размерах
+                sizes.forEach(heightInModules => {
+                    // Вычисляем размеры
+                    const heightInMm = gridModule * heightInModules;
+                    const widthInMm = heightInMm * aspectRatio;
+                    
+                    // Создаем группу для этого экземпляра
+                    const instanceGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                    instanceGroup.setAttribute('transform', `translate(${startX * scale}, ${currentY * scale}) scale(${(heightInMm / originalHeight) * scale})`);
+                    
+                    // Копируем все содержимое SVG (включая defs, если есть)
+                    Array.from(svgElement.children).forEach(child => {
+                        const clonedChild = child.cloneNode(true);
+                        instanceGroup.appendChild(clonedChild);
+                    });
+                    
+                    designKitGroup.appendChild(instanceGroup);
+                    
+                    // Добавляем подпись с размером справа от элемента
+                    const labelX = startX + widthInMm + 5; // 5mm отступ справа
+                    const labelY = currentY + (heightInMm / 2); // По центру высоты
+                    
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    label.setAttribute('x', labelX * scale);
+                    label.setAttribute('y', labelY * scale);
+                    label.setAttribute('font-family', 'TT Commons Classic, -apple-system, sans-serif');
+                    label.setAttribute('font-size', 3 * scale);
+                    label.setAttribute('font-weight', 400);
+                    label.setAttribute('fill', textColor);
+                    label.setAttribute('dominant-baseline', 'middle');
+                    label.textContent = `${heightInModules} mod`;
+                    
+                    designKitGroup.appendChild(label);
+                    
+                    // Обновляем позицию для следующего экземпляра
+                    currentY += heightInMm + verticalGap;
+                });
+                
+                // Добавляем отступ между секциями
+                currentY += sectionGap;
+            }
+            
+            svg.appendChild(designKitGroup);
+        } catch (error) {
+            console.error('Error adding design kit reference:', error);
+        }
+    }
+    
     // Итерация 7: Экспорт настроек в JSON через SVGExporter
     exportSettings() {
-        const { frontWidth, frontHeight, gridModule, columnCount, rowCount } = this.settings;
+        const { frontWidth, frontHeight, thickness, gridModule, columnCount, rowCount } = this.settings;
         
         const data = {
             version: '1.0',
@@ -8941,9 +9204,9 @@ class GridGenerator {
         const now = new Date();
         const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
         
-        // Генерируем имя файла: "размер колонки строки модуль timestamp.json"
-        // Например: "500×500mm 12col 12rows 5.05mm 20251116_1430.json"
-        const size = `${frontWidth}×${frontHeight}mm`;
+        // Генерируем имя файла: "размер с боковинами колонки строки модуль timestamp.json"
+        // Например: "500×500×50mm 12col 12rows 5.05mm 20251116_1430.json"
+        const size = `${frontWidth}×${frontHeight}×${thickness}mm`;
         const cols = `${columnCount}col`;
         const rows = `${rowCount}rows`;
         const module = `${gridModule.toFixed(2)}mm`;
