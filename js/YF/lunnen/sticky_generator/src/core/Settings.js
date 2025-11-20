@@ -11,6 +11,7 @@ export class Settings {
             frontWidth: DEFAULTS.FRONT_WIDTH,
             frontHeight: DEFAULTS.FRONT_HEIGHT,
             boxColor: DEFAULTS.BOX_COLOR,
+            cornerRadius: DEFAULTS.CORNER_RADIUS,
             
             // Параметры сетки
             gridModule: DEFAULTS.GRID_MODULE,
@@ -141,6 +142,7 @@ export class Settings {
             frontWidth: DEFAULTS.FRONT_WIDTH,
             frontHeight: DEFAULTS.FRONT_HEIGHT,
             boxColor: DEFAULTS.BOX_COLOR,
+            cornerRadius: DEFAULTS.CORNER_RADIUS,
             gridModule: DEFAULTS.GRID_MODULE,
             margins: DEFAULTS.MARGINS,
             marginsUnit: DEFAULTS.MARGINS_UNIT,

@@ -520,15 +520,29 @@ export class GridRenderer {
      */
     drawFrontPanel(container, x, y, width, height) {
         const bgColor = this.settings.get('boxColor');
+        const cornerRadius = this.settings.get('cornerRadius') || 0;
         
-        DOMUtils.createSVGElement('rect', {
+        // DEBUG: проверяем значение cornerRadius
+        if (cornerRadius > 0) {
+            console.log('Corner radius applied:', cornerRadius);
+        }
+        
+        const attrs = {
             x: x,
             y: y,
             width: width,
             height: height,
             fill: bgColor,
             stroke: 'none'
-        }, container);
+        };
+        
+        // Добавляем скругление углов, если задано
+        if (cornerRadius > 0) {
+            attrs.rx = cornerRadius;
+            attrs.ry = cornerRadius;
+        }
+        
+        DOMUtils.createSVGElement('rect', attrs, container);
     }
 
 }

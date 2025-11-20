@@ -163,7 +163,8 @@ export class SVGExporter {
             dimensions: {
                 width: settings.frontWidth,
                 height: settings.frontHeight,
-                unit: 'mm'
+                unit: 'mm',
+                cornerRadius: settings.cornerRadius || 0
             },
             
             // 3. Все текстовые блоки (удобно для копирайтера)
@@ -180,7 +181,8 @@ export class SVGExporter {
                 alignment: block.alignment || 'left',
                 alignmentMode: block.alignmentMode || 'baseline',
                 surface: block.surface || 'front',
-                showBounds: block.showBounds || false
+                showBounds: block.showBounds || false,
+                useXHeight: block.useXHeight || false
             })),
             
             // 4. Настройки сетки
@@ -346,6 +348,7 @@ export class SVGExporter {
             // Размеры
             frontWidth: newData.dimensions?.width,
             frontHeight: newData.dimensions?.height,
+            cornerRadius: newData.dimensions?.cornerRadius || 0,
             
             // Сетка
             gridModule: newData.grid?.module,
@@ -395,6 +398,7 @@ export class SVGExporter {
             alignmentMode: text.alignmentMode || 'baseline',
             surface: text.surface || 'front',
             showBounds: text.showBounds || false,
+            useXHeight: text.useXHeight || false,
             visible: true
         }));
 

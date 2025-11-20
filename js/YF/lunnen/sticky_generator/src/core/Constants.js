@@ -44,7 +44,8 @@ export const RANGES = {
     TRACKING: { min: -0.05, max: 0.05, step: 0.005 },
     TEXT_SIZE: { min: 0.25, max: 10, step: 0.25 },
     TEXT_LINE_HEIGHT: { min: 0.25, max: 10, step: 0.25 },
-    TEXT_TRACKING: { min: -0.05, max: 0.05, step: 0.01 }
+    TEXT_TRACKING: { min: -0.05, max: 0.05, step: 0.01 },
+    CORNER_RADIUS: { min: 0, max: 50, step: 0.5 }
 };
 
 // Значения по умолчанию (взяты из пресета "+New")
@@ -52,6 +53,7 @@ export const DEFAULTS = {
     FRONT_WIDTH: 120,      // mm
     FRONT_HEIGHT: 24,      // mm
     BOX_COLOR: '#808080',  // Серый фон
+    CORNER_RADIUS: 0,      // mm, скругление углов
     GRID_MODULE: 5.0505,   // mm
     MARGINS: 2,            // в модулях
     MARGINS_UNIT: 'mod',   // 'mod' или 'mm'
@@ -61,14 +63,14 @@ export const DEFAULTS = {
     LINK_MODE: 'module',   // 'off', 'rows-height', или 'module'
     
     // Стили текста
-    HEADLINE_SIZE: 1.5,         // в модулях
-    LINE_HEIGHT: 2.0,           // в модулях
+    HEADLINE_SIZE: 0.69,        // в модулях
+    LINE_HEIGHT: 1.13,          // в модулях
     TRACKING: -0.015,           // в em
     USE_X_HEIGHT: false,        // false = cap height, true = x-height
     HEADLINE_FONT_WEIGHT: 500,  // 400 = Regular, 500 = Medium
     
-    TEXT_SIZE: 0.5,             // в модулях
-    TEXT_LINE_HEIGHT: 1.0,      // в модулях
+    TEXT_SIZE: 0.59,            // в модулях
+    TEXT_LINE_HEIGHT: 1.20,     // в модулях
     TEXT_TRACKING: 0,           // в em
     USE_X_HEIGHT_2: false,      // false = cap height, true = x-height
     TEXT_FONT_WEIGHT: 500,      // 400 = Regular, 500 = Medium

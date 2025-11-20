@@ -627,7 +627,9 @@ class GridGenerator {
         this.updateCanvasSize();
         
         // Скрываем SVG до загрузки пресета
-        this.dom.gridSvg.style.opacity = '0';
+        if (this.dom.svg) {
+            this.dom.svg.style.opacity = '0';
+        }
         
         this.updateGrid();
         
@@ -1197,6 +1199,25 @@ class GridGenerator {
                     toggleCollapse(e);
                 }
             });
+        });
+        
+        // Collapse all panels except Data Import panel by default
+        const panelsToCollapse = [
+            'controlsPanel',      // Layout settings
+            'elementsNavigator',  // Elements navigator
+            'textPanel',          // Text styles
+        ];
+        
+        panelsToCollapse.forEach(panelId => {
+            const panel = document.getElementById(panelId);
+            if (panel && !panel.classList.contains('panel-collapsed')) {
+                const collapseIcon = panel.querySelector('.collapse-icon');
+                if (collapseIcon) {
+                    panel.classList.add('panel-collapsed');
+                    collapseIcon.classList.add('collapsed');
+                    collapseIcon.setAttribute('aria-label', 'Expand panel');
+                }
+            }
         });
     }
     
@@ -1805,8 +1826,8 @@ class GridGenerator {
             this.updateElementsNavigator();
             
             // Показываем SVG после загрузки пресета
-            if (this.dom.gridSvg) {
-                this.dom.gridSvg.style.opacity = '1';
+            if (this.dom.svg) {
+                this.dom.svg.style.opacity = '1';
             }
             
             console.log(`✅ Preset "${this.currentPresetName}" loaded successfully`);

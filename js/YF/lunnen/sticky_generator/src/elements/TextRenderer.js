@@ -57,6 +57,11 @@ export class TextRenderer {
         const style = this.getTextStyle(block.styleRef);
         if (!style) return null;
 
+        // Если у блока есть собственная настройка useXHeight, используем её
+        if (block.useXHeight !== undefined) {
+            style.useXHeight = block.useXHeight;
+        }
+
         // Вычисляем позицию на сетке
         const position = this.calculatePosition(block);
         
