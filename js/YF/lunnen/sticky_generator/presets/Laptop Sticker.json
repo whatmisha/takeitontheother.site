@@ -5,7 +5,6 @@
   "dimensions": {
     "width": 120,
     "height": 24,
-    "thickness": 5,
     "unit": "mm"
   },
   "texts": [
