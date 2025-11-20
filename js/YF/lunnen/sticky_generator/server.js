@@ -75,7 +75,6 @@ server.listen(PORT, () => {
     console.log(`📁 Обслуживает файлы из: ${path.resolve('.')}`);
     console.log(`\nОткройте в браузере:`);
     console.log(`   http://localhost:${PORT}/index.html`);
-    console.log(`   http://localhost:${PORT}/test-sheets.html`);
     console.log(`\nНажмите Ctrl+C для остановки сервера`);
 });
 
