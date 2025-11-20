@@ -348,7 +348,7 @@ class GridGenerator {
             thickness: 50,
             showLabels: false,
             showSidePanels: true,
-            boxColor: '#808080',
+            boxColor: '#404040',
             gridModule: 5.0505,
             margins: 2,
             marginsUnit: 'mod',
@@ -457,7 +457,7 @@ class GridGenerator {
             row: 0,  // Will be calculated
             baselineOffset: 0,  // Will be calculated
             showBounds: false,
-            visible: true,
+            visible: false,
             originalWidth: 204.0944882,
             originalHeight: 28.3464567,
             lockPosition: true  // Constrain to grid bounds by default
@@ -477,7 +477,7 @@ class GridGenerator {
             row: 0,  // Will be calculated
             baselineOffset: 0,  // Will be calculated
             showBounds: false,
-            visible: true,
+            visible: false,
             originalWidth: 186.2242584,
             originalHeight: 28.3464565,
             lockPosition: true  // Constrain to grid bounds by default
@@ -486,77 +486,8 @@ class GridGenerator {
         // Calculate initial positions for built-in graphics
         this.updateBuiltInGraphicsPositions();
         
-        // Text blocks - параметры конкретных текстовых блоков на канвасе
-        this.textBlocks = [
-            {
-                id: 'headline',
-                content: 'Ноутбук\nLunnen Outer 16"',
-                styleRef: 'headline',  // ссылка на стиль в settings
-                x: 1,  // позиция в колонках от левого края (1 = first column after margin)
-                row: 0,  // номер строки Row (0 = первый row)
-                baselineOffset: 0,  // смещение в модулях baseline внутри row (0 = первый baseline в row)
-                width: 3,  // ширина в колонках
-                alignment: 'left',  // 'left' or 'right'
-                showBounds: false,  // показывать ли границы (toggle on hover)
-                lockPosition: true  // Constrain to grid bounds by default
-            },
-            {
-                id: 'text',
-                content: 'Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.',
-                styleRef: 'text',  // ссылка на стиль в settings
-                alignment: 'left',  // 'left' or 'right'
-                x: 7,  // позиция в колонках от левого края (7-я колонка)
-                row: 0,  // номер строки Row
-                baselineOffset: 0,  // смещение в модулях baseline внутри row
-                width: 2.0,  // ширина в колонках
-                showBounds: false,
-                lockPosition: true  // Constrain to grid bounds by default
-            },
-            {
-                id: 'text2',
-                content: 'Lunnen Outer — продвинутая линейка техники. Производительный процессор и эффективное охлаждение для задач повышенной сложности.',
-                styleRef: 'text',  // ссылка на стиль в settings
-                x: 10,  // позиция в колонках от левого края (10-я колонка)
-                row: 0,  // номер строки Row
-                baselineOffset: 0,  // смещение в модулях baseline внутри row
-                width: 2.0,  // ширина в колонках
-                showBounds: false,
-                lockPosition: true  // Constrain to grid bounds by default
-            },
-            {
-                id: 'manufacturer',
-                content: 'Изготовитель: ООО Харбинская Импортно-Экспортная Торговая Компания «Цзиньдинсинь», Китай. Адрес местонахождения: Китай, г. Харбин, р-н Даоли, микрорайон Цюньли, ул. 4-я, д. 399, бизнес-центр Хучжи, восточный корпус, эт. 12, ком. 1204.',
-                styleRef: 'text',
-                x: 1,
-                row: 9,  // row 10 в пользовательском интерфейсе (0-based индекс = 9)
-                baselineOffset: 0,
-                width: 3,
-                showBounds: false,
-                lockPosition: true  // Constrain to grid bounds by default
-            },
-            {
-                id: 'importer',
-                content: 'Импортер: ООО «Маркет. Трейд». Адрес местонахождения: 121099, Россия, г. Москва, Новинский бульвар, 8.',
-                styleRef: 'text',
-                x: 7,
-                row: 9,  // row 10 в пользовательском интерфейсе
-                baselineOffset: 0,
-                width: 2,
-                showBounds: false,
-                lockPosition: true  // Constrain to grid bounds by default
-            },
-            {
-                id: 'origin',
-                content: 'Произведено в Китае. info@lunnen.pro',
-                styleRef: 'text',
-                x: 10,
-                row: 9,  // row 10 в пользовательском интерфейсе
-                baselineOffset: 0,
-                width: 2,
-                showBounds: false,
-                lockPosition: true  // Constrain to grid bounds by default
-            }
-        ];
+        // Text blocks - пустой массив по умолчанию
+        this.textBlocks = [];
         
         // Состояние для drag & drop текстовых блоков
         this.textDragState = {

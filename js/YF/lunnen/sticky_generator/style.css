@@ -1126,6 +1126,159 @@ body {
     border-radius: var(--radius-input);
 }
 
+/* Number Input Styles */
+.number-input {
+    width: 100%;
+    height: 32px;
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 0 var(--spacing-md);
+    border-radius: var(--radius-input);
+    transition: border-color var(--transition-normal);
+    margin-top: var(--spacing-md);
+}
+
+.number-input:focus {
+    outline: none;
+    border-color: var(--color-text-dim);
+}
+
+.number-input::-webkit-inner-spin-button,
+.number-input::-webkit-outer-spin-button {
+    opacity: 1;
+}
+
+/* Text Input Styles */
+.text-input {
+    width: 100%;
+    height: 32px;
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 0 var(--spacing-md);
+    border-radius: var(--radius-input);
+    transition: border-color var(--transition-normal);
+    margin-top: var(--spacing-md);
+}
+
+.text-input:focus {
+    outline: none;
+    border-color: var(--color-text-dim);
+}
+
+.text-input::placeholder {
+    color: var(--color-text-muted);
+}
+
+/* Control Row - Two columns layout */
+.control-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.control-row .control-group {
+    margin-bottom: 0;
+}
+
+.control-row .control-group label {
+    margin-bottom: var(--spacing-xs);
+}
+
+/* Button for loading data */
+.btn-load-data {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background: var(--color-text);
+    color: var(--color-bg);
+    border: none;
+    border-radius: var(--radius-button);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-family: inherit;
+    height: 36px;
+    margin-top: var(--spacing-md);
+}
+
+.btn-load-data:hover {
+    background: #e0e0e0;
+}
+
+.btn-load-data:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Data status messages */
+.data-status {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-input);
+    font-size: 0.85rem;
+    display: none;
+}
+
+.data-status.loading {
+    background: rgba(100, 149, 237, 0.15);
+    color: #6495ED;
+    display: block;
+}
+
+.data-status.error {
+    background: rgba(220, 38, 38, 0.15);
+    color: #DC2626;
+    display: block;
+}
+
+.data-status.success {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22C55E;
+    display: block;
+}
+
+/* Data preview */
+.data-preview {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    display: none;
+}
+
+.data-preview.active {
+    display: block;
+}
+
+.data-preview:empty {
+    display: none;
+}
+
+.data-item-preview {
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.75rem;
+}
+
+.data-item-preview:last-child {
+    margin-bottom: 0;
+}
+
 /* Value input with dropdown */
 .value-input-with-dropdown {
     position: relative;
@@ -1236,6 +1389,24 @@ body {
 }
 
 .dropdown-menu::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-dim);
+}
+
+/* Scrollbar for data preview */
+.data-preview::-webkit-scrollbar {
+    width: 6px;
+}
+
+.data-preview::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.data-preview::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+}
+
+.data-preview::-webkit-scrollbar-thumb:hover {
     background: var(--color-text-dim);
 }
 
@@ -2106,6 +2277,21 @@ legend {
     bottom: var(--spacing-3xl);
     right: var(--spacing-3xl);
     top: auto;
+}
+
+/* Barcode Panel - positioned below text panel */
+#barcodePanel {
+    left: var(--spacing-3xl);
+    right: auto;
+    bottom: var(--spacing-3xl);
+    top: auto;
+}
+
+/* Data Import Panel - positioned on the right side */
+#dataImportPanel {
+    top: var(--spacing-3xl);
+    right: var(--spacing-3xl);
+    left: auto;
 }
 
 .elements-list {

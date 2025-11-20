@@ -15,7 +15,7 @@ import { GridCalculator } from './src/grid/GridCalculator.js';
 import { GridRenderer } from './src/grid/GridRenderer.js';
 
 // Итерация 5: UI Controllers
-import { SliderController } from './src/ui/SliderController.js';
+import { NumberInputController } from './src/ui/NumberInputController.js';
 import { ColorPicker } from './src/ui/ColorPicker.js';
 import { PanelManager } from './src/ui/PanelManager.js';
 import { ZoomPanManager } from './src/ui/ZoomPanManager.js';
@@ -32,11 +32,9 @@ import { SVGExporter } from './src/svg/SVGExporter.js';
 
 class GridGenerator {
     constructor() {
-        // Slider configuration - defines behavior for each slider
-        // Дополнено min, max и valueId для использования с SliderController
-        this.SLIDER_CONFIG = {
-            frontWidthSlider: {
-                valueId: 'frontWidthValue',
+        // Input configuration - defines behavior for each input
+        this.INPUT_CONFIG = {
+            frontWidthValue: {
                 setting: 'frontWidth',
                 min: 50,
                 max: 1000,
@@ -45,8 +43,7 @@ class GridGenerator {
                 shiftStep: 10,
                 onUpdate: () => this.updateGrid()
             },
-            frontHeightSlider: {
-                valueId: 'frontHeightValue',
+            frontHeightValue: {
                 setting: 'frontHeight',
                 min: 50,
                 max: 1000,
@@ -57,22 +54,18 @@ class GridGenerator {
                     if (this.settings.linkMode === 'module') {
                         const module = this.gridCalculator.calculateModule();
                         this.settings.gridModule = module;
-                        this.sliderController.setValue('gridModuleSlider', module, false);
+                        this.inputController.setValue('gridModuleValue', module, false);
                     } else {
                         const rowCount = this.gridCalculator.calculateRowCount();
                         this.settings.rowCount = rowCount;
-                        this.sliderController.setValue('rowCountSlider', rowCount, false);
+                        this.inputController.setValue('rowCountValue', rowCount, false);
                     }
                     this.constrainAllObjectsToGrid();
                     this.generateRowPresets();
                     this.updateGrid();
                 }
             },
-                shiftStep: 10,
-                onUpdate: () => this.updateGrid()
-            },
-            gridModuleSlider: {
-                valueId: 'gridModuleValue',
+            gridModuleValue: {
                 setting: 'gridModule',
                 min: 0.5,
                 max: 20,
@@ -82,14 +75,13 @@ class GridGenerator {
                 onUpdate: () => {
                     const rowCount = this.gridCalculator.calculateRowCount();
                     this.settings.rowCount = rowCount;
-                    this.sliderController.setValue('rowCountSlider', rowCount, false);
+                    this.inputController.setValue('rowCountValue', rowCount, false);
                     this.constrainAllObjectsToGrid();
                     this.generateRowPresets();
                     this.updateGrid();
                 }
             },
-            marginsSlider: {
-                valueId: 'marginsValue',
+            marginsValue: {
                 setting: 'margins',
                 min: 0,
                 max: 10,
@@ -100,19 +92,18 @@ class GridGenerator {
                     if (this.settings.linkMode === 'module') {
                         const module = this.gridCalculator.calculateModule();
                         this.settings.gridModule = module;
-                        this.sliderController.setValue('gridModuleSlider', module, false);
+                        this.inputController.setValue('gridModuleValue', module, false);
                     } else {
                         const rowCount = this.gridCalculator.calculateRowCount();
                         this.settings.rowCount = rowCount;
-                        this.sliderController.setValue('rowCountSlider', rowCount, false);
+                        this.inputController.setValue('rowCountValue', rowCount, false);
                     }
                     this.constrainAllObjectsToGrid();
                     this.generateRowPresets();
                     this.updateGrid();
                 }
             },
-            columnCountSlider: {
-                valueId: 'columnCountValue',
+            columnCountValue: {
                 setting: 'columnCount',
                 min: 1,
                 max: 24,
@@ -124,8 +115,7 @@ class GridGenerator {
                     this.updateGrid();
                 }
             },
-            rowCountSlider: {
-                valueId: 'rowCountValue',
+            rowCountValue: {
                 setting: 'rowCount',
                 min: 1,
                 max: 50,
@@ -136,19 +126,18 @@ class GridGenerator {
                     if (this.settings.linkMode === 'module') {
                         const module = this.gridCalculator.calculateModule();
                         this.settings.gridModule = module;
-                        this.sliderController.setValue('gridModuleSlider', module, false);
+                        this.inputController.setValue('gridModuleValue', module, false);
                     } else if (this.settings.linkMode === 'rows-height') {
                         const rowHeight = this.gridCalculator.calculateRowHeight();
                         this.settings.rowHeight = rowHeight;
-                        this.sliderController.setValue('rowHeightSlider', rowHeight, false);
+                        this.inputController.setValue('rowHeightValue', rowHeight, false);
                     }
                     this.constrainAllObjectsToGrid();
                     this.updatePresetButtons();
                     this.updateGrid();
                 }
             },
-            rowHeightSlider: {
-                valueId: 'rowHeightValue',
+            rowHeightValue: {
                 setting: 'rowHeight',
                 min: 1,
                 max: 20,
@@ -159,19 +148,18 @@ class GridGenerator {
                     if (this.settings.linkMode === 'module') {
                         const module = this.gridCalculator.calculateModule();
                         this.settings.gridModule = module;
-                        this.sliderController.setValue('gridModuleSlider', module, false);
+                        this.inputController.setValue('gridModuleValue', module, false);
                     } else if (this.settings.linkMode === 'rows-height') {
                         const rowCount = this.gridCalculator.calculateRowCount();
                         this.settings.rowCount = rowCount;
-                        this.sliderController.setValue('rowCountSlider', rowCount, false);
+                        this.inputController.setValue('rowCountValue', rowCount, false);
                     }
                     this.constrainAllObjectsToGrid();
                     this.updatePresetButtons();
                     this.updateGrid();
                 }
             },
-            hueSlider: {
-                valueId: 'hueValue',
+            hueValue: {
                 setting: null, // Handled specially by ColorPicker
                 min: 0,
                 max: 360,
@@ -180,12 +168,9 @@ class GridGenerator {
                 shiftStep: 10,
                 onUpdate: () => {
                     this.updateColorFromHSB();
-                    this.updateSaturationGradient();
-                    this.updateBrightnessGradient();
                 }
             },
-            saturationSlider: {
-                valueId: 'saturationValue',
+            saturationValue: {
                 setting: null, // Handled specially by ColorPicker
                 min: 0,
                 max: 100,
@@ -194,11 +179,9 @@ class GridGenerator {
                 shiftStep: 10,
                 onUpdate: () => {
                     this.updateColorFromHSB();
-                    this.updateBrightnessGradient();
                 }
             },
-            brightnessSlider: {
-                valueId: 'brightnessValue',
+            brightnessValue: {
                 setting: null, // Handled specially by ColorPicker
                 min: 0,
                 max: 100,
@@ -207,11 +190,9 @@ class GridGenerator {
                 shiftStep: 10,
                 onUpdate: () => {
                     this.updateColorFromHSB();
-                    this.updateSaturationGradient();
                 }
             },
-            headlineSizeSlider: {
-                valueId: 'headlineSizeValue',
+            headlineSizeValue: {
                 setting: 'headlineSize',
                 min: 0.25,
                 max: 10,
@@ -220,8 +201,7 @@ class GridGenerator {
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
-            lineHeightSlider: {
-                valueId: 'lineHeightValue',
+            lineHeightValue: {
                 setting: 'lineHeight',
                 min: 0.25,
                 max: 10,
@@ -230,8 +210,7 @@ class GridGenerator {
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
-            trackingSlider: {
-                valueId: 'trackingValue',
+            trackingValue: {
                 setting: 'tracking',
                 min: -0.05,
                 max: 0.05,
@@ -240,8 +219,7 @@ class GridGenerator {
                 shiftStep: 0.05,
                 onUpdate: () => this.updateGrid()
             },
-            textSizeSlider: {
-                valueId: 'textSizeValue',
+            textSizeValue: {
                 setting: 'textSize',
                 min: 0.25,
                 max: 10,
@@ -250,8 +228,7 @@ class GridGenerator {
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
-            textLineHeightSlider: {
-                valueId: 'textLineHeightValue',
+            textLineHeightValue: {
                 setting: 'textLineHeight',
                 min: 0.25,
                 max: 10,
@@ -260,8 +237,7 @@ class GridGenerator {
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
-            textTrackingSlider: {
-                valueId: 'textTrackingValue',
+            textTrackingValue: {
                 setting: 'textTracking',
                 min: -0.05,
                 max: 0.05,
@@ -270,8 +246,7 @@ class GridGenerator {
                 shiftStep: 0.05,
                 onUpdate: () => this.updateGrid()
             },
-            captionSizeSlider: {
-                valueId: 'captionSizeValue',
+            captionSizeValue: {
                 setting: 'captionSize',
                 min: 0.25,
                 max: 10,
@@ -280,8 +255,7 @@ class GridGenerator {
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
-            captionLineHeightSlider: {
-                valueId: 'captionLineHeightValue',
+            captionLineHeightValue: {
                 setting: 'captionLineHeight',
                 min: 0.25,
                 max: 10,
@@ -290,8 +264,7 @@ class GridGenerator {
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
-            captionTrackingSlider: {
-                valueId: 'captionTrackingValue',
+            captionTrackingValue: {
                 setting: 'captionTracking',
                 min: -0.05,
                 max: 0.05,
@@ -300,8 +273,7 @@ class GridGenerator {
                 shiftStep: 0.05,
                 onUpdate: () => this.updateGrid()
             },
-            lunnenDisplaySizeSlider: {
-                valueId: 'lunnenDisplaySizeValue',
+            lunnenDisplaySizeValue: {
                 setting: 'lunnenDisplaySize',
                 min: 0.25,
                 max: 10,
@@ -310,8 +282,7 @@ class GridGenerator {
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
-            lunnenDisplayLineHeightSlider: {
-                valueId: 'lunnenDisplayLineHeightValue',
+            lunnenDisplayLineHeightValue: {
                 setting: 'lunnenDisplayLineHeight',
                 min: 0.25,
                 max: 10,
@@ -320,8 +291,7 @@ class GridGenerator {
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
-            lunnenDisplayTrackingSlider: {
-                valueId: 'lunnenDisplayTrackingValue',
+            lunnenDisplayTrackingValue: {
                 setting: 'lunnenDisplayTracking',
                 min: -0.05,
                 max: 0.05,
@@ -612,7 +582,7 @@ class GridGenerator {
         // Calculate initial row count to fill the format (after DOM is ready)
         const rowCount = this.gridCalculator.calculateRowCount();
         this.settings.rowCount = rowCount;
-        this.sliderController.setValue('rowCountSlider', rowCount, false);
+        this.inputController.setValue('rowCountValue', rowCount, false);
         
         // Generate row presets
         this.generateRowPresets();
@@ -887,7 +857,7 @@ class GridGenerator {
             if (e.target.value === 'module') {
                 const module = this.gridCalculator.calculateModule();
                 this.settings.gridModule = module;
-                this.sliderController.setValue('gridModuleSlider', module, false);
+                this.inputController.setValue('gridModuleValue', module, false);
                 this.updateGrid();
             }
         };
@@ -1808,11 +1778,11 @@ class GridGenerator {
     syncUIWithSettings() {
         const settings = this.settingsModule.getAll();
         
-        // Update sliders via SliderController
-        Object.keys(this.SLIDER_CONFIG).forEach(sliderId => {
-            const config = this.SLIDER_CONFIG[sliderId];
+        // Update inputs via NumberInputController
+        Object.keys(this.INPUT_CONFIG).forEach(inputId => {
+            const config = this.INPUT_CONFIG[inputId];
             if (settings[config.setting] !== undefined) {
-                this.sliderController.setValue(sliderId, settings[config.setting], false);
+                this.inputController.setValue(inputId, settings[config.setting], false);
             }
         });
         
@@ -4543,11 +4513,11 @@ class GridGenerator {
             if (this.settings.linkMode === 'module') {
                 const module = this.gridCalculator.calculateModule();
                 this.settings.gridModule = module;
-                this.sliderController.setValue('gridModuleSlider', module, false);
+                this.inputController.setValue('gridModuleValue', module, false);
             } else {
                 const rowCount = this.gridCalculator.calculateRowCount();
                 this.settings.rowCount = rowCount;
-                this.sliderController.setValue('rowCountSlider', rowCount, false);
+                this.inputController.setValue('rowCountValue', rowCount, false);
             }
             this.constrainAllObjectsToGrid();
             this.generateRowPresets();
@@ -9200,7 +9170,7 @@ class GridGenerator {
             this.updateElementsNavigator();
             const rowCount = this.gridCalculator.calculateRowCount();
             this.settings.rowCount = rowCount;
-            this.sliderController.setValue('rowCountSlider', rowCount, false);
+            this.inputController.setValue('rowCountValue', rowCount, false);
             this.generateRowPresets();
             this.updateGrid();
             
@@ -9292,16 +9262,15 @@ class GridGenerator {
         // Шаг 5.1: SliderController
         // ============================================
         // Создаем SliderController
-        this.sliderController = new SliderController(this.settingsModule);
+        this.inputController = new NumberInputController(this.settingsModule);
         
-        // Инициализируем все слайдеры из SLIDER_CONFIG
-        // Все слайдеры, включая HSB, управляются через SliderController
-        Object.keys(this.SLIDER_CONFIG).forEach(sliderId => {
-            const config = this.SLIDER_CONFIG[sliderId];
-            this.sliderController.initSlider(sliderId, config);
+        // Инициализируем все инпуты из INPUT_CONFIG
+        Object.keys(this.INPUT_CONFIG).forEach(inputId => {
+            const config = this.INPUT_CONFIG[inputId];
+            this.inputController.initInput(inputId, config);
         });
         
-        console.log('✅ SliderController initialized with', this.sliderController.sliders.size, 'sliders');
+        console.log('✅ NumberInputController initialized with', this.inputController.inputs.size, 'inputs');
         
         // ============================================
         // Шаг 5.2: ColorPicker

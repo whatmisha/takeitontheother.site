@@ -272,27 +272,24 @@
                         <div class="hsb-picker" id="hsbPicker" style="display: none;">
                             <div class="hsb-controls">
                                 <div class="hsb-control-group">
-                                    <label for="hueSlider">
-                                        <span>Hue</span>
-                                        <input type="text" class="value-display hsb-value" id="hueValue" value="0" data-min="0" data-max="360" data-suffix="°" aria-label="Hue value">
+                                    <label for="hueValue">
+                                        <span>Hue <span class="unit">°</span></span>
                                     </label>
-                                    <input type="range" id="hueSlider" min="0" max="360" step="1" value="0">
+                                    <input type="number" class="number-input" id="hueValue" value="0" min="0" max="360" step="1" aria-label="Hue value">
                                 </div>
                                 
                                 <div class="hsb-control-group">
-                                    <label for="saturationSlider">
-                                        <span>Saturation</span>
-                                        <input type="text" class="value-display hsb-value" id="saturationValue" value="0" data-min="0" data-max="100" data-suffix="%" aria-label="Saturation value">
+                                    <label for="saturationValue">
+                                        <span>Saturation <span class="unit">%</span></span>
                                     </label>
-                                    <input type="range" id="saturationSlider" min="0" max="100" step="1" value="0">
+                                    <input type="number" class="number-input" id="saturationValue" value="0" min="0" max="100" step="1" aria-label="Saturation value">
                                 </div>
                                 
                                 <div class="hsb-control-group">
-                                    <label for="brightnessSlider">
-                                        <span>Brightness</span>
-                                        <input type="text" class="value-display hsb-value" id="brightnessValue" value="0" data-min="0" data-max="100" data-suffix="%" aria-label="Brightness value">
+                                    <label for="brightnessValue">
+                                        <span>Brightness <span class="unit">%</span></span>
                                     </label>
-                                    <input type="range" id="brightnessSlider" min="0" max="100" step="1" value="0">
+                                    <input type="number" class="number-input" id="brightnessValue" value="0" min="0" max="100" step="1" aria-label="Brightness value">
                                 </div>
                             </div>
                         </div>
@@ -386,28 +383,27 @@
                     </label>
                 </div>
                 
-                <div class="control-group">
-                    <label for="headlineSizeSlider">
-                        <span>Size <span class="unit">mod</span></span>
-                            <input type="text" class="value-display" id="headlineSizeValue" value="1.00" data-min="0.25" data-max="10" aria-label="Headline size in modules">
-                    </label>
-                    <input type="range" id="headlineSizeSlider" min="0.25" max="10" step="0.25" value="1" aria-label="Headline size slider">
+                <div class="control-row">
+                    <div class="control-group">
+                        <label for="headlineSizeValue">
+                            <span>Size <span class="unit">mod</span></span>
+                        </label>
+                        <input type="number" class="number-input" id="headlineSizeValue" value="1.00" min="0.25" max="10" step="0.25" aria-label="Headline size in modules">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="lineHeightValue">
+                            <span>Line Height <span class="unit">mod</span></span>
+                        </label>
+                        <input type="number" class="number-input" id="lineHeightValue" value="2.00" min="0.25" max="10" step="0.25" aria-label="Line height in modules">
+                    </div>
                 </div>
                 
                 <div class="control-group">
-                    <label for="lineHeightSlider">
-                        <span>Line Height <span class="unit">mod</span></span>
-                        <input type="text" class="value-display" id="lineHeightValue" value="2.00" data-min="0.25" data-max="10" aria-label="Line height in modules">
-                    </label>
-                    <input type="range" id="lineHeightSlider" min="0.25" max="10" step="0.25" value="2" aria-label="Line height slider">
-                </div>
-                
-                <div class="control-group">
-                    <label for="trackingSlider">
+                    <label for="trackingValue">
                         <span>Tracking <span class="unit">em</span></span>
-                        <input type="text" class="value-display" id="trackingValue" value="-0.015" data-min="-0.05" data-max="0.05" aria-label="Tracking in em units">
                     </label>
-                    <input type="range" id="trackingSlider" min="-0.05" max="0.05" step="0.005" value="-0.015" aria-label="Tracking slider">
+                    <input type="number" class="number-input" id="trackingValue" value="-0.015" min="-0.05" max="0.05" step="0.005" aria-label="Tracking in em units">
                 </div>
                 
                 <div class="control-group">
@@ -439,28 +435,27 @@
                     </label>
                 </div>
                 
-                <div class="control-group">
-                    <label for="textSizeSlider">
-                        <span>Size <span class="unit">mod</span></span>
-                            <input type="text" class="value-display" id="textSizeValue" value="1.00" data-min="0.25" data-max="10" aria-label="Text size in modules">
-                    </label>
-                    <input type="range" id="textSizeSlider" min="0.25" max="10" step="0.25" value="1" aria-label="Text size slider">
+                <div class="control-row">
+                    <div class="control-group">
+                        <label for="textSizeValue">
+                            <span>Size <span class="unit">mod</span></span>
+                        </label>
+                        <input type="number" class="number-input" id="textSizeValue" value="1.00" min="0.25" max="10" step="0.25" aria-label="Text size in modules">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="textLineHeightValue">
+                            <span>Line Height <span class="unit">mod</span></span>
+                        </label>
+                        <input type="number" class="number-input" id="textLineHeightValue" value="2.00" min="0.25" max="10" step="0.25" aria-label="Text line height in modules">
+                    </div>
                 </div>
                 
                 <div class="control-group">
-                    <label for="textLineHeightSlider">
-                        <span>Line Height <span class="unit">mod</span></span>
-                        <input type="text" class="value-display" id="textLineHeightValue" value="2.00" data-min="0.25" data-max="10" aria-label="Text line height in modules">
-                    </label>
-                    <input type="range" id="textLineHeightSlider" min="0.25" max="10" step="0.25" value="2" aria-label="Text line height slider">
-                </div>
-                
-                <div class="control-group">
-                    <label for="textTrackingSlider">
+                    <label for="textTrackingValue">
                         <span>Tracking <span class="unit">em</span></span>
-                        <input type="text" class="value-display" id="textTrackingValue" value="0.00" data-min="-0.05" data-max="0.05" aria-label="Text tracking in em units">
                     </label>
-                    <input type="range" id="textTrackingSlider" min="-0.05" max="0.05" step="0.01" value="0" aria-label="Text tracking slider">
+                    <input type="number" class="number-input" id="textTrackingValue" value="0.00" min="-0.05" max="0.05" step="0.01" aria-label="Text tracking in em units">
                 </div>
                 
                 <div class="control-group">
@@ -492,28 +487,27 @@
                     </label>
                 </div>
                 
-                <div class="control-group">
-                    <label for="captionSizeSlider">
-                        <span>Size <span class="unit">mod</span></span>
-                            <input type="text" class="value-display" id="captionSizeValue" value="0.50" data-min="0.25" data-max="10" aria-label="Caption size in modules">
-                    </label>
-                    <input type="range" id="captionSizeSlider" min="0.25" max="10" step="0.25" value="0.5" aria-label="Caption size slider">
+                <div class="control-row">
+                    <div class="control-group">
+                        <label for="captionSizeValue">
+                            <span>Size <span class="unit">mod</span></span>
+                        </label>
+                        <input type="number" class="number-input" id="captionSizeValue" value="0.50" min="0.25" max="10" step="0.25" aria-label="Caption size in modules">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="captionLineHeightValue">
+                            <span>Line Height <span class="unit">mod</span></span>
+                        </label>
+                        <input type="number" class="number-input" id="captionLineHeightValue" value="1.00" min="0.25" max="10" step="0.25" aria-label="Caption line height in modules">
+                    </div>
                 </div>
                 
                 <div class="control-group">
-                    <label for="captionLineHeightSlider">
-                        <span>Line Height <span class="unit">mod</span></span>
-                        <input type="text" class="value-display" id="captionLineHeightValue" value="1.00" data-min="0.25" data-max="10" aria-label="Caption line height in modules">
-                    </label>
-                    <input type="range" id="captionLineHeightSlider" min="0.25" max="10" step="0.25" value="1" aria-label="Caption line height slider">
-                </div>
-                
-                <div class="control-group">
-                    <label for="captionTrackingSlider">
+                    <label for="captionTrackingValue">
                         <span>Tracking <span class="unit">em</span></span>
-                        <input type="text" class="value-display" id="captionTrackingValue" value="0.00" data-min="-0.05" data-max="0.05" aria-label="Caption tracking in em units">
                     </label>
-                    <input type="range" id="captionTrackingSlider" min="-0.05" max="0.05" step="0.01" value="0" aria-label="Caption tracking slider">
+                    <input type="number" class="number-input" id="captionTrackingValue" value="0.00" min="-0.05" max="0.05" step="0.01" aria-label="Caption tracking in em units">
                 </div>
                 
                 <div class="control-group">
@@ -536,28 +530,27 @@
                 </h3>
                 
                 <div class="collapsible-content collapsed" id="lunnenDisplayContent">
-                <div class="control-group">
-                    <label for="lunnenDisplaySizeSlider">
-                        <span>Size <span class="unit">mod</span></span>
-                            <input type="text" class="value-display" id="lunnenDisplaySizeValue" value="3.00" data-min="0.25" data-max="10" aria-label="Lunnen Display size in modules">
-                    </label>
-                    <input type="range" id="lunnenDisplaySizeSlider" min="0.25" max="10" step="0.25" value="3" aria-label="Lunnen Display size slider">
+                <div class="control-row">
+                    <div class="control-group">
+                        <label for="lunnenDisplaySizeValue">
+                            <span>Size <span class="unit">mod</span></span>
+                        </label>
+                        <input type="number" class="number-input" id="lunnenDisplaySizeValue" value="3.00" min="0.25" max="10" step="0.25" aria-label="Lunnen Display size in modules">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="lunnenDisplayLineHeightValue">
+                            <span>Line Height <span class="unit">mod</span></span>
+                        </label>
+                        <input type="number" class="number-input" id="lunnenDisplayLineHeightValue" value="4.00" min="0.25" max="10" step="0.25" aria-label="Lunnen Display line height in modules">
+                    </div>
                 </div>
                 
                 <div class="control-group">
-                    <label for="lunnenDisplayLineHeightSlider">
-                        <span>Line Height <span class="unit">mod</span></span>
-                        <input type="text" class="value-display" id="lunnenDisplayLineHeightValue" value="4.00" data-min="0.25" data-max="10" aria-label="Lunnen Display line height in modules">
-                    </label>
-                    <input type="range" id="lunnenDisplayLineHeightSlider" min="0.25" max="10" step="0.25" value="4" aria-label="Lunnen Display line height slider">
-                </div>
-                
-                <div class="control-group">
-                    <label for="lunnenDisplayTrackingSlider">
+                    <label for="lunnenDisplayTrackingValue">
                         <span>Tracking <span class="unit">em</span></span>
-                        <input type="text" class="value-display" id="lunnenDisplayTrackingValue" value="0.00" data-min="-0.05" data-max="0.05" aria-label="Lunnen Display tracking in em units">
                     </label>
-                    <input type="range" id="lunnenDisplayTrackingSlider" min="-0.05" max="0.05" step="0.01" value="0" aria-label="Lunnen Display tracking slider">
+                    <input type="number" class="number-input" id="lunnenDisplayTrackingValue" value="0.00" min="-0.05" max="0.05" step="0.01" aria-label="Lunnen Display tracking in em units">
                 </div>
                 </div>
             </section>
@@ -596,32 +589,36 @@
                     </label>
                 </div>
                 
-                <div class="control-group">
-                    <label for="paragraphXInput">
-                        <span>Column</span>
-                        <input type="text" class="value-display" id="paragraphXInput" value="1" data-min="1" data-max="12" aria-label="Column position">
-                    </label>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label for="paragraphXInput">
+                            <span>Column</span>
+                        </label>
+                        <input type="number" class="number-input" id="paragraphXInput" value="1" min="1" max="12" step="1" aria-label="Column position">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="paragraphRowInput">
+                            <span>Row</span>
+                        </label>
+                        <input type="number" class="number-input" id="paragraphRowInput" value="1" min="1" max="50" step="1" aria-label="Row position">
+                    </div>
                 </div>
                 
-                <div class="control-group">
-                    <label for="paragraphRowInput">
-                        <span>Row</span>
-                        <input type="text" class="value-display" id="paragraphRowInput" value="1" data-min="1" data-max="50" aria-label="Row position">
-                    </label>
-                </div>
-                
-                <div class="control-group">
-                    <label for="paragraphBaselineInput">
-                        <span>Baseline</span>
-                        <input type="text" class="value-display" id="paragraphBaselineInput" value="1" data-min="1" data-max="500" aria-label="Baseline position on grid">
-                    </label>
-                </div>
-                
-                <div class="control-group">
-                    <label for="paragraphWidthInput">
-                        <span>Width <span class="unit">col</span></span>
-                        <input type="text" class="value-display" id="paragraphWidthInput" value="6" data-min="0.25" data-max="12" data-step="0.25" aria-label="Width in columns">
-                    </label>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label for="paragraphBaselineInput">
+                            <span>Baseline</span>
+                        </label>
+                        <input type="number" class="number-input" id="paragraphBaselineInput" value="1" min="1" max="500" step="1" aria-label="Baseline position on grid">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="paragraphWidthInput">
+                            <span>Width <span class="unit">col</span></span>
+                        </label>
+                        <input type="number" class="number-input" id="paragraphWidthInput" value="6" min="0.25" max="12" step="0.25" aria-label="Width in columns">
+                    </div>
                 </div>
                 
                 <div class="control-group">
@@ -670,11 +667,10 @@
                 <h3>Lunnen Display</h3>
                 
                 <div class="control-group">
-                    <label for="lunnenDisplayWeightSlider">
+                    <label for="lunnenDisplayWeightValue">
                         <span>Weight</span>
-                        <input type="text" class="value-display" id="lunnenDisplayWeightValue" value="400" data-min="100" data-max="400" aria-label="Font weight">
                     </label>
-                    <input type="range" id="lunnenDisplayWeightSlider" min="100" max="400" step="1" value="400" aria-label="Font weight slider">
+                    <input type="number" class="number-input" id="lunnenDisplayWeightValue" value="400" min="100" max="400" step="1" aria-label="Font weight">
                 </div>
                 
                 <div class="control-group">
@@ -739,38 +735,42 @@
                     </div>
                 </div>
                 
-                <div class="control-group">
-                    <label for="graphicsXInput">
-                        <span>Column</span>
-                        <input type="text" class="value-display" id="graphicsXInput" value="1" data-min="1" data-max="12" aria-label="Column position">
-                    </label>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label for="graphicsXInput">
+                            <span>Column</span>
+                        </label>
+                        <input type="number" class="number-input" id="graphicsXInput" value="1" min="1" max="12" step="1" aria-label="Column position">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="graphicsRowInput">
+                            <span>Row</span>
+                        </label>
+                        <input type="number" class="number-input" id="graphicsRowInput" value="1" min="1" max="50" step="1" aria-label="Row position">
+                    </div>
                 </div>
                 
-                <div class="control-group">
-                    <label for="graphicsRowInput">
-                        <span>Row</span>
-                        <input type="text" class="value-display" id="graphicsRowInput" value="1" data-min="1" data-max="50" aria-label="Row position">
-                    </label>
-                </div>
-                
-                <div class="control-group">
-                    <label for="graphicsBaselineInput">
-                        <span>Baseline</span>
-                        <input type="text" class="value-display" id="graphicsBaselineInput" value="1" data-min="1" data-max="500" aria-label="Baseline position on grid">
-                    </label>
-                </div>
-                
-                <div class="control-group">
-                    <label for="graphicsSizeInput">
-                        <span>Size 
-                            <span class="unit-buttons">
-                                <button type="button" class="unit-btn active" data-unit="height" id="graphicsSizeUnitHeight">H</button>
-                                <button type="button" class="unit-btn" data-unit="width" id="graphicsSizeUnitWidth">W</button>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label for="graphicsBaselineInput">
+                            <span>Baseline</span>
+                        </label>
+                        <input type="number" class="number-input" id="graphicsBaselineInput" value="1" min="1" max="500" step="1" aria-label="Baseline position on grid">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="graphicsSizeInput">
+                            <span>Size 
+                                <span class="unit-buttons">
+                                    <button type="button" class="unit-btn active" data-unit="height" id="graphicsSizeUnitHeight">H</button>
+                                    <button type="button" class="unit-btn" data-unit="width" id="graphicsSizeUnitWidth">W</button>
+                                </span>
+                                <span class="unit">mod</span>
                             </span>
-                            <span class="unit">mod</span>
-                        </span>
-                        <input type="text" class="value-display" id="graphicsSizeInput" value="3" data-min="1" data-max="20" data-step="0.25" aria-label="Size in modules">
-                    </label>
+                        </label>
+                        <input type="number" class="number-input" id="graphicsSizeInput" value="3" min="1" max="20" step="0.25" aria-label="Size in modules">
+                    </div>
                 </div>
                 
                 <div class="control-group">
