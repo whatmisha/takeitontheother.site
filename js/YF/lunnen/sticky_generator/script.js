@@ -625,6 +625,10 @@ class GridGenerator {
         this.initColorPreview();
         this.updateTextWidthConstraints();
         this.updateCanvasSize();
+        
+        // Скрываем SVG до загрузки пресета
+        this.dom.gridSvg.style.opacity = '0';
+        
         this.updateGrid();
         
         // Автоматический fit to screen при загрузке (с задержкой для отрисовки SVG)
@@ -1799,6 +1803,11 @@ class GridGenerator {
             // Update UI and grid
             this.updateGrid();
             this.updateElementsNavigator();
+            
+            // Показываем SVG после загрузки пресета
+            if (this.dom.gridSvg) {
+                this.dom.gridSvg.style.opacity = '1';
+            }
             
             console.log(`✅ Preset "${this.currentPresetName}" loaded successfully`);
         } catch (error) {

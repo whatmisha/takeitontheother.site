@@ -103,6 +103,11 @@ body {
     overflow: hidden;
 }
 
+/* Grid SVG with smooth fade-in transition */
+#gridSvg {
+    transition: opacity 0.3s ease-in-out;
+}
+
 .container {
     width: 100%;
     margin: 0;
