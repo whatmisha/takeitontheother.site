@@ -8963,56 +8963,81 @@ class GridGenerator {
     }
 
     /**
-     * Обновляет текстовые блоки данными из таблицы
+     * Разбивает многострочное содержимое ячейки на массив строк
+     * @param {string} cellValue - Содержимое ячейки
+     * @returns {Array<string>} - Массив строк (пустые строки тоже включены)
+     */
+    parseMultilineCell(cellValue) {
+        if (!cellValue) {
+            return [];
+        }
+        
+        // Разбиваем по переносам строк (поддерживаем \n и \r\n)
+        return cellValue.split(/\r?\n/);
+    }
+
+    /**
+     * Заменяет плейсхолдеры типа A001, B002 на данные из строки таблицы
+     * @param {string} content - Текст с плейсхолдерами
+     * @param {Array<string>} rowData - Данные строки таблицы (массив ячеек)
+     * @returns {string} - Текст с замененными плейсхолдерами
+     */
+    replacePlaceholders(content, rowData) {
+        if (!content || !rowData) {
+            return content;
+        }
+
+        // Парсим данные строки таблицы в структуру: {A: [line1, line2, ...], B: [...], ...}
+        const columnData = {};
+        const columnNames = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+        
+        rowData.forEach((cellValue, colIndex) => {
+            if (colIndex < columnNames.length) {
+                const columnName = columnNames[colIndex];
+                columnData[columnName] = this.parseMultilineCell(cellValue || '');
+            }
+        });
+
+        // Заменяем все плейсхолдеры типа A001, B002, C003 и т.д.
+        // Паттерн: буква (A-Z) + трехзначное число (001-999)
+        const placeholderRegex = /([A-Z])(\d{3})/g;
+        
+        return content.replace(placeholderRegex, (match, column, lineNumber) => {
+            // Преобразуем номер строки из строки в число (001 -> 1, 002 -> 2)
+            const lineIndex = parseInt(lineNumber, 10) - 1; // 001 -> индекс 0, 002 -> индекс 1
+            
+            // Проверяем, есть ли данные для этой колонки
+            if (!columnData[column]) {
+                console.warn(`⚠️ Колонка ${column} не найдена в данных таблицы`);
+                return match; // Оставляем плейсхолдер без изменений
+            }
+            
+            // Проверяем, есть ли строка с таким индексом
+            if (lineIndex < 0 || lineIndex >= columnData[column].length) {
+                console.warn(`⚠️ Строка ${lineNumber} не найдена в колонке ${column} (всего строк: ${columnData[column].length})`);
+                return match; // Оставляем плейсхолдер без изменений
+            }
+            
+            // Возвращаем значение из нужной строки колонки
+            const value = columnData[column][lineIndex];
+            console.log(`✅ Заменен плейсхолдер ${match} -> "${value}"`);
+            return value;
+        });
+    }
+
+    /**
+     * Обновляет текстовые блоки данными из таблицы (первая строка)
      * @param {Array<Array<string>>} rows - Массив строк данных
      */
     updateTextBlocksFromData(rows) {
         if (!rows || rows.length === 0) {
+            console.warn('⚠️ Нет данных для обновления');
             return;
         }
 
-        // Получаем значение из ячейки A1 (первая строка, первый столбец)
-        const a1Value = rows[0] && rows[0][0] ? rows[0][0].trim() : '';
-        // Получаем значение из ячейки B1 (первая строка, второй столбец)
-        const b1Value = rows[0] && rows[0][1] ? rows[0][1].trim() : '';
-
-        let updated = false;
-
-        // Обновляем блок с заголовком "Ноутбук Lunnen Ground 15.6\"" (id: text-1763334866163)
-        if (a1Value) {
-            const headlineBlock = this.textBlocks.find(block => block.id === 'text-1763334866163');
-            
-            if (headlineBlock) {
-                headlineBlock.content = a1Value;
-                console.log(`✅ Обновлен текстовый блок "${headlineBlock.id}": "${a1Value}"`);
-                updated = true;
-            } else {
-                console.warn('Текстовый блок с id "text-1763334866163" не найден');
-            }
-        } else {
-            console.warn('Ячейка A1 пуста');
-        }
-
-        // Обновляем блок с серийным номером "LL5FAWG03" (id: text-1763608176696)
-        if (b1Value) {
-            const serialBlock = this.textBlocks.find(block => block.id === 'text-1763608176696');
-            
-            if (serialBlock) {
-                serialBlock.content = b1Value;
-                console.log(`✅ Обновлен текстовый блок "${serialBlock.id}": "${b1Value}"`);
-                updated = true;
-            } else {
-                console.warn('Текстовый блок с id "text-1763608176696" не найден');
-            }
-        } else {
-            console.warn('Ячейка B1 пуста');
-        }
-
-        // Обновляем сетку для отображения изменений только если были обновления
-        if (updated) {
-            this.updateGrid();
-            this.updateElementsNavigator();
-        }
+        // Используем первую строку таблицы
+        const firstRow = rows[0];
+        this.updateTextBlocksFromRow(firstRow, 0);
     }
 
     /**
@@ -9108,40 +9133,36 @@ class GridGenerator {
      */
     updateTextBlocksFromRow(row, rowIndex) {
         if (!row || row.length === 0) {
+            console.warn(`⚠️ Строка ${rowIndex + 1}: нет данных`);
             return;
         }
 
-        // Получаем значения из текущей строки
-        // A = столбец 0, B = столбец 1
-        const aValue = row[0] ? row[0].trim() : '';
-        const bValue = row[1] ? row[1].trim() : '';
-
+        console.log(`🔄 Обновление текстовых блоков данными из строки ${rowIndex + 1}`);
+        
         let updated = false;
 
-        // Обновляем блок с заголовком (id: text-1763334866163)
-        if (aValue) {
-            const headlineBlock = this.textBlocks.find(block => block.id === 'text-1763334866163');
+        // Проходим по всем текстовым блокам и заменяем плейсхолдеры
+        this.textBlocks.forEach((block, blockIndex) => {
+            const originalContent = block.content;
             
-            if (headlineBlock) {
-                headlineBlock.content = aValue;
+            // Заменяем плейсхолдеры типа A001, B002 на данные из таблицы
+            const newContent = this.replacePlaceholders(originalContent, row);
+            
+            // Если содержимое изменилось, обновляем блок
+            if (newContent !== originalContent) {
+                block.content = newContent;
+                console.log(`✅ Блок ${blockIndex + 1} (id: ${block.id}) обновлен`);
                 updated = true;
             }
-        }
-
-        // Обновляем блок с серийным номером (id: text-1763608176696)
-        if (bValue) {
-            const serialBlock = this.textBlocks.find(block => block.id === 'text-1763608176696');
-            
-            if (serialBlock) {
-                serialBlock.content = bValue;
-                updated = true;
-            }
-        }
+        });
 
         // Обновляем сетку для отображения изменений
         if (updated) {
+            console.log(`✅ Обновлена сетка для строки ${rowIndex + 1}`);
             this.updateGrid();
             this.updateElementsNavigator();
+        } else {
+            console.log(`ℹ️ Строка ${rowIndex + 1}: плейсхолдеры не найдены или данные не изменились`);
         }
     }
 

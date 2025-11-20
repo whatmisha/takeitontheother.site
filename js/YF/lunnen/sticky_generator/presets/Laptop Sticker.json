@@ -10,7 +10,7 @@
   "texts": [
     {
       "id": "text",
-      "content": "Номинальное напряжение: 20 В \nКласс защиты: III \nНоминальный ток: 3.25 А \nНоминальная мощность: 65 Вт",
+      "content": "C001\nC002\nC003\nC004",
       "style": "text",
       "position": {
         "column": 2,
@@ -25,7 +25,7 @@
     },
     {
       "id": "text-1763334866163",
-      "content": "Ноутбук Lunnen Outer 16\"",
+      "content": "A001",
       "style": "headline",
       "position": {
         "column": 1,
@@ -40,7 +40,7 @@
     },
     {
       "id": "text-1763335152097",
-      "content": "Серийный номер",
+      "content": "Серийный номер: E001",
       "style": "text",
       "position": {
         "column": 1,
@@ -55,7 +55,7 @@
     },
     {
       "id": "text-1763335182965",
-      "content": "Дата изготовления: 10.2025",
+      "content": "Дата изготовления: D001",
       "style": "text",
       "position": {
         "column": 2,
@@ -70,7 +70,7 @@
     },
     {
       "id": "text-1763608176696",
-      "content": "LL5FAWG03",
+      "content": "B001",
       "style": "headline",
       "position": {
         "column": 1,
