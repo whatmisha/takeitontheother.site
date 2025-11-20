@@ -672,11 +672,7 @@ class GridGenerator {
         return {
             svg: document.getElementById('gridSvg'),
             
-            // Sliders
-            frontWidthSlider: document.getElementById('frontWidthSlider'),
-            frontHeightSlider: document.getElementById('frontHeightSlider'),
-            
-            // Value displays
+            // Number inputs
             frontWidthValue: document.getElementById('frontWidthValue'),
             frontHeightValue: document.getElementById('frontHeightValue'),
             
@@ -692,17 +688,12 @@ class GridGenerator {
             linkModeModule: document.getElementById('linkModeModule'),
             
             // Grid controls
-            gridModuleSlider: document.getElementById('gridModuleSlider'),
             gridModuleValue: document.getElementById('gridModuleValue'),
-            marginsSlider: document.getElementById('marginsSlider'),
             marginsValue: document.getElementById('marginsValue'),
             marginsUnitMod: document.getElementById('marginsUnitMod'),
             marginsUnitMm: document.getElementById('marginsUnitMm'),
-            columnCountSlider: document.getElementById('columnCountSlider'),
             columnCountValue: document.getElementById('columnCountValue'),
-            rowCountSlider: document.getElementById('rowCountSlider'),
             rowCountValue: document.getElementById('rowCountValue'),
-            rowHeightSlider: document.getElementById('rowHeightSlider'),
             rowHeightValue: document.getElementById('rowHeightValue'),
             
             // Containers
@@ -713,9 +704,9 @@ class GridGenerator {
             hexColorInput: document.getElementById('hexColorInput'),
             lunnenBlue: document.getElementById('lunnenBlue'),
             hsbPicker: document.getElementById('hsbPicker'),
-            hueSlider: document.getElementById('hueSlider'),
-            saturationSlider: document.getElementById('saturationSlider'),
-            brightnessSlider: document.getElementById('brightnessSlider'),
+            hueValue: document.getElementById('hueValue'),
+            saturationValue: document.getElementById('saturationValue'),
+            brightnessValue: document.getElementById('brightnessValue'),
             hueValue: document.getElementById('hueValue'),
             saturationValue: document.getElementById('saturationValue'),
             brightnessValue: document.getElementById('brightnessValue'),
@@ -4232,9 +4223,9 @@ class GridGenerator {
         const rgb = ColorUtils.hexToRgb(hex);
         if (rgb) {
             const hsb = ColorUtils.rgbToHsb(rgb.r, rgb.g, rgb.b);
-            this.dom.hueSlider.value = hsb.h;
-            this.dom.saturationSlider.value = hsb.s;
-            this.dom.brightnessSlider.value = hsb.b;
+            this.dom.hueValue.value = hsb.h;
+            this.dom.saturationValue.value = hsb.s;
+            this.dom.brightnessValue.value = hsb.b;
             this.dom.hueValue.value = hsb.h;
             this.dom.saturationValue.value = hsb.s;
             this.dom.brightnessValue.value = hsb.b;
@@ -4244,9 +4235,9 @@ class GridGenerator {
     }
     
     updateColorFromHSB() {
-        const h = parseInt(this.dom.hueSlider.value);
-        const s = parseInt(this.dom.saturationSlider.value);
-        const b = parseInt(this.dom.brightnessSlider.value);
+        const h = parseInt(this.dom.hueValue.value);
+        const s = parseInt(this.dom.saturationValue.value);
+        const b = parseInt(this.dom.brightnessValue.value);
         
         const rgb = ColorUtils.hsbToRgb(h, s, b);
         const hex = ColorUtils.rgbToHex(rgb.r, rgb.g, rgb.b);
@@ -4260,8 +4251,8 @@ class GridGenerator {
     }
     
     updateSaturationGradient() {
-        const h = parseInt(this.dom.hueSlider.value);
-        const b = parseInt(this.dom.brightnessSlider.value);
+        const h = parseInt(this.dom.hueValue.value);
+        const b = parseInt(this.dom.brightnessValue.value);
         
         const leftColor = ColorUtils.hsbToRgb(h, 0, b);
         const rightColor = ColorUtils.hsbToRgb(h, 100, b);
@@ -4269,16 +4260,14 @@ class GridGenerator {
         const leftHex = ColorUtils.rgbToHex(leftColor.r, leftColor.g, leftColor.b);
         const rightHex = ColorUtils.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
         
-        const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
-        this.dom.saturationSlider.style.background = gradient;
-        
-        // Update custom CSS for the slider track
-        this.updateSliderTrackGradient('saturationSlider', gradient);
+        // Gradients не нужны для number inputs
+        // const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
+        // this.dom.saturationValue.style.background = gradient;
     }
     
     updateBrightnessGradient() {
-        const h = parseInt(this.dom.hueSlider.value);
-        const s = parseInt(this.dom.saturationSlider.value);
+        const h = parseInt(this.dom.hueValue.value);
+        const s = parseInt(this.dom.saturationValue.value);
         
         const leftColor = ColorUtils.hsbToRgb(h, s, 0);
         const rightColor = ColorUtils.hsbToRgb(h, s, 100);
@@ -4286,11 +4275,9 @@ class GridGenerator {
         const leftHex = ColorUtils.rgbToHex(leftColor.r, leftColor.g, leftColor.b);
         const rightHex = ColorUtils.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
         
-        const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
-        this.dom.brightnessSlider.style.background = gradient;
-        
-        // Update custom CSS for the slider track
-        this.updateSliderTrackGradient('brightnessSlider', gradient);
+        // Gradients не нужны для number inputs
+        // const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
+        // this.dom.brightnessValue.style.background = gradient;
     }
     
     updateSliderTrackGradient(sliderId, gradient) {
@@ -4422,18 +4409,17 @@ class GridGenerator {
         const currentModule = this.settings.gridModule;
         const oldUnit = this.settings.marginsUnit;
         
-        // Update slider and value display based on new unit
-        const slider = this.dom.marginsSlider;
-        const valueDisplay = this.dom.marginsValue;
+        // Update input value display based on new unit
+        const input = this.dom.marginsValue;
         
-        // Get current value from slider (in current unit)
-        const currentSliderValue = parseFloat(slider.value);
+        // Get current value from input (in current unit)
+        const currentInputValue = parseFloat(input.value);
         
         // Calculate the actual margins in mm (physical size that should stay the same)
         let actualMarginsInMm;
         if (oldUnit === 'mm') {
-            // Already in mm, use current slider value
-            actualMarginsInMm = currentSliderValue;
+            // Already in mm, use current input value
+            actualMarginsInMm = currentInputValue;
         } else {
             // Convert from modules to mm
             actualMarginsInMm = currentMarginsInMod * currentModule;
@@ -4457,13 +4443,11 @@ class GridGenerator {
             // Display in mm
             const maxMarginsInMm = 10 * currentModule; // max 10 modules in mm
             
-            // Update slider range for mm
-            slider.min = '0';
-            slider.max = maxMarginsInMm.toFixed(2);
-            slider.step = (currentModule * 0.01).toFixed(4); // Keep same precision
-            slider.value = actualMarginsInMm.toFixed(2);
-            valueDisplay.value = actualMarginsInMm.toFixed(2);
-            valueDisplay.dataset.min = '0';
+            // Update input range for mm
+            input.min = '0';
+            input.max = maxMarginsInMm.toFixed(2);
+            input.step = (currentModule * 0.01).toFixed(4); // Keep same precision
+            input.value = actualMarginsInMm.toFixed(2);
             valueDisplay.dataset.max = maxMarginsInMm.toFixed(2);
         } else {
             // Display in modules - convert from mm to modules
@@ -4472,61 +4456,21 @@ class GridGenerator {
             // Update internal storage
             this.settings.margins = parseFloat(marginsInMod.toFixed(2));
             
-            // Restore slider range for modules
-            slider.min = '0';
-            slider.max = '10';
-            slider.step = '0.01';
-            slider.value = marginsInMod.toFixed(2);
-            valueDisplay.value = marginsInMod.toFixed(2);
-            valueDisplay.dataset.min = '0';
-            valueDisplay.dataset.max = '10';
+            // Restore input range for modules
+            input.min = '0';
+            input.max = '10';
+            input.step = '0.01';
+            input.value = marginsInMod.toFixed(2);
         }
         
-        // Update SLIDER_CONFIG for margins to use correct conversion
+        // Update NumberInputController for margins to use correct conversion
         this.updateMarginsSliderHandler();
     }
     
-    // Update margins slider handler to work with current unit
+    // Update margins input handler to work with current unit
     updateMarginsSliderHandler() {
-        const slider = this.dom.marginsSlider;
-        const valueDisplay = this.dom.marginsValue;
-        
-        // Remove old handlers by cloning the element
-        const newSlider = slider.cloneNode(true);
-        slider.parentNode.replaceChild(newSlider, slider);
-        this.dom.marginsSlider = newSlider;
-        
-        const handler = (e) => {
-            const value = parseFloat(e.target.value);
-            
-            if (this.settings.marginsUnit === 'mm') {
-                // Convert mm to modules for internal storage
-                const marginsInMod = value / this.settings.gridModule;
-                this.settings.margins = parseFloat(marginsInMod.toFixed(2));
-                valueDisplay.value = value.toFixed(2);
-            } else {
-                // Direct module value
-                this.settings.margins = parseFloat(value.toFixed(2));
-                valueDisplay.value = value.toFixed(2);
-            }
-            
-            if (this.settings.linkMode === 'module') {
-                const module = this.gridCalculator.calculateModule();
-                this.settings.gridModule = module;
-                this.inputController.setValue('gridModuleValue', module, false);
-            } else {
-                const rowCount = this.gridCalculator.calculateRowCount();
-                this.settings.rowCount = rowCount;
-                this.inputController.setValue('rowCountValue', rowCount, false);
-            }
-            this.constrainAllObjectsToGrid();
-            this.generateRowPresets();
-            this.updateGrid();
-        };
-        
-        newSlider.addEventListener('input', handler);
-        newSlider.addEventListener('change', handler);
-        newSlider.addEventListener('keyup', handler);
+        // Not needed anymore - NumberInputController handles this
+        // Unit switching will update limits and recalculate values
     }
     
     initValueInputs() {
@@ -4657,9 +4601,7 @@ class GridGenerator {
                 
                 // Update UI
                 this.dom.rowCountValue.value = combo.rowCount;
-                this.dom.rowCountSlider.value = combo.rowCount;
                 this.dom.rowHeightValue.value = combo.rowHeight;
-                this.dom.rowHeightSlider.value = combo.rowHeight;
                 
                 this.updateGrid();
                 this.updatePresetButtons();
@@ -9186,40 +9128,32 @@ class GridGenerator {
     // Update all sliders to reflect current settings
     updateAllSliders() {
         // Update dimension sliders
-        if (this.dom.frontWidthSlider) {
-            this.dom.frontWidthSlider.value = this.settings.frontWidth;
+        if (this.dom.frontWidthValue) {
             this.dom.frontWidthValue.value = this.settings.frontWidth.toFixed(1);
         }
-        if (this.dom.frontHeightSlider) {
-            this.dom.frontHeightSlider.value = this.settings.frontHeight;
+        if (this.dom.frontHeightValue) {
             this.dom.frontHeightValue.value = this.settings.frontHeight.toFixed(1);
         }
         
-        // Update grid sliders
-        if (this.dom.gridModuleSlider) {
-            this.dom.gridModuleSlider.value = this.settings.gridModule;
+        // Update grid inputs
+        if (this.dom.gridModuleValue) {
             this.dom.gridModuleValue.value = this.settings.gridModule.toFixed(4);
         }
-        if (this.dom.marginsSlider) {
+        if (this.dom.marginsValue) {
             if (this.settings.marginsUnit === 'mm') {
                 const marginsInMm = this.settings.margins * this.settings.gridModule;
-                this.dom.marginsSlider.value = marginsInMm.toFixed(2);
                 this.dom.marginsValue.value = marginsInMm.toFixed(2);
             } else {
-                this.dom.marginsSlider.value = this.settings.margins;
                 this.dom.marginsValue.value = this.settings.margins.toFixed(2);
             }
         }
-        if (this.dom.columnCountSlider) {
-            this.dom.columnCountSlider.value = this.settings.columnCount;
+        if (this.dom.columnCountValue) {
             this.dom.columnCountValue.value = this.settings.columnCount;
         }
-        if (this.dom.rowCountSlider) {
-            this.dom.rowCountSlider.value = this.settings.rowCount;
+        if (this.dom.rowCountValue) {
             this.dom.rowCountValue.value = this.settings.rowCount;
         }
-        if (this.dom.rowHeightSlider) {
-            this.dom.rowHeightSlider.value = this.settings.rowHeight;
+        if (this.dom.rowHeightValue) {
             this.dom.rowHeightValue.value = this.settings.rowHeight;
         }
         
