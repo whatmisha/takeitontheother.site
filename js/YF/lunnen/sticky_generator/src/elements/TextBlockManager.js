@@ -16,6 +16,7 @@ export class TextBlockManager {
     createBlock(config = {}) {
         const newBlock = {
             id: config.id || `text-${Date.now()}`,
+            name: config.name || 'Unnamed', // Имя блока для идентификации
             content: config.content || 'Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.',
             styleRef: config.styleRef || 'text',
             surface: config.surface || 'front', // Поверхность: front, left, right, top, bottom
@@ -279,6 +280,15 @@ export class TextBlockManager {
         });
 
         return true;
+    }
+
+    /**
+     * Поиск блока по имени
+     * @param {string} name - Имя блока
+     * @returns {Object|null} - Найденный блок или null
+     */
+    findBlockByName(name) {
+        return this.textBlocks.find(block => block.name === name) || null;
     }
 
     /**

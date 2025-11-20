@@ -1,7 +1,7 @@
 /**
  * Управление настройками приложения
  */
-import { DEFAULTS } from './Constants.js';
+import { DEFAULTS, DATA_MAPPING, DEFAULT_SHEETS_URL } from './Constants.js';
 
 export class Settings {
     constructor(initialSettings = {}) {
@@ -42,6 +42,10 @@ export class Settings {
             showRows: DEFAULTS.SHOW_ROWS,
             showBaseline: DEFAULTS.SHOW_BASELINE,
             showObjects: DEFAULTS.SHOW_OBJECTS,
+            
+            // Конфигурация маппинга данных (не изменяется пользователем)
+            dataMapping: DATA_MAPPING,
+            defaultSheetsUrl: DEFAULT_SHEETS_URL,
             
             ...initialSettings
         };
@@ -163,7 +167,9 @@ export class Settings {
             showColumns: DEFAULTS.SHOW_COLUMNS,
             showRows: DEFAULTS.SHOW_ROWS,
             showBaseline: DEFAULTS.SHOW_BASELINE,
-            showObjects: DEFAULTS.SHOW_OBJECTS
+            showObjects: DEFAULTS.SHOW_OBJECTS,
+            dataMapping: DATA_MAPPING,
+            defaultSheetsUrl: DEFAULT_SHEETS_URL
         };
         
         this.notify('*', this.data, {});

@@ -159,3 +159,26 @@ export const KEYBOARD_SHORTCUTS = {
     ARROW_DOWN: 'ArrowDown'
 };
 
+// Конфигурация маппинга данных из Google Sheets
+export const DATA_MAPPING = {
+    headline: {
+        column: 0,           // Столбец A (индекс 0)
+        blockName: 'Название продукта',
+        description: 'Основное название/заголовок продукта'
+    },
+    serial: {
+        column: 1,           // Столбец B (индекс 1)
+        blockName: 'Серийный номер',
+        description: 'Серийный номер или идентификатор продукта'
+    }
+    // Можно легко добавлять новые маппинги:
+    // description: {
+    //     column: 2,
+    //     blockName: 'Описание',
+    //     description: 'Описание продукта'
+    // }
+};
+
+// URL Google Sheets по умолчанию
+export const DEFAULT_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/1dL6Bx-vI2t5J-dAzrn5XRB1yJvqKxoUhpZCDTNiTIbQ/edit?gid=0#gid=0';
+
