@@ -370,7 +370,7 @@ class GridGenerator {
         // UI Controllers (Итерация 5)
         // ============================================
         // Инициализируем после cacheDOMElements()
-        this.sliderController = null;
+        this.inputController = null;
         this.colorPicker = null;
         this.panelManager = null;
         this.zoomPanManager = null;
@@ -9348,7 +9348,8 @@ class GridGenerator {
         // Регистрируем все панели через PanelManager
         const panels = [
             { id: 'controlsPanel', headerId: 'panelHeader', draggable: true },
-            { id: 'gridPanel', headerId: 'gridPanelHeader', draggable: true },
+            { id: 'dataImportPanel', headerId: 'dataImportPanelHeader', draggable: true },
+            { id: 'barcodePanel', headerId: 'barcodePanelHeader', draggable: true },
             { id: 'textPanel', headerId: 'textPanelHeader', draggable: true },
             { id: 'paragraphPanel', headerId: 'paragraphPanelHeader', draggable: true },
             { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true },
