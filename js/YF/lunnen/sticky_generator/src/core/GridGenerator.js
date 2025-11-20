@@ -148,7 +148,7 @@ export class GridGenerator {
             frontWidthSlider: {
                 valueId: 'frontWidthValue',
                 setting: 'frontWidth',
-                min: 50,
+                min: 10,
                 max: 1000,
                 decimals: 1,
                 baseStep: 0.5,
@@ -158,7 +158,7 @@ export class GridGenerator {
             frontHeightSlider: {
                 valueId: 'frontHeightValue',
                 setting: 'frontHeight',
-                min: 50,
+                min: 10,
                 max: 1000,
                 decimals: 1,
                 baseStep: 0.5,

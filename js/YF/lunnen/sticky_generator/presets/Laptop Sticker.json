@@ -1,5 +1,5 @@
 {
-  "presetName": "Sticker 120×24mm, Module 3.00mm",
+  "presetName": "Laptop Sticker 120×24mm",
   "version": "1.0",
   "timestamp": "2025-11-16T23:23:38.965Z",
   "dimensions": {
@@ -76,7 +76,7 @@
     "marginsUnit": "mod",
     "columns": 3,
     "rows": 1,
-    "rowHeight": 6,
+    "rowHeight": 8,
     "linkMode": "module",
     "visibility": {
       "columns": true,

@@ -36,7 +36,7 @@ class GridGenerator {
         this.INPUT_CONFIG = {
             frontWidthValue: {
                 setting: 'frontWidth',
-                min: 50,
+                min: 10,
                 max: 1000,
                 decimals: 1,
                 baseStep: 0.5,
@@ -45,7 +45,7 @@ class GridGenerator {
             },
             frontHeightValue: {
                 setting: 'frontHeight',
-                min: 50,
+                min: 10,
                 max: 1000,
                 decimals: 1,
                 baseStep: 0.5,
