@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Pizza Boxer — Packaging Layout Tool">
+    <meta name="description" content="Sticky Fingers — Packaging Info Stickers Generator">
     <meta name="keywords" content="grid generator, packaging, print design, Adobe Illustrator, SVG">
     
-    <title>Pizza Boxer — Packaging Layout Tool</title>
+    <title>Sticky Fingers — Packaging Info Stickers Generator</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -45,9 +45,12 @@
                 <div class="panel-content">
                     <section class="control-section">
                         <div class="control-group">
-                            <label for="googleSheetsUrl">
-                                <span>Google Sheets URL</span>
-                            </label>
+                            <div class="control-group-header">
+                                <label for="googleSheetsUrl">
+                                    <span>Google Sheets URL</span>
+                                </label>
+                                <button type="button" class="color-preset" id="defaultSheetsUrl" aria-label="Apply default Google Sheets URL">Default</button>
+                            </div>
                             <input type="text" class="text-input" id="googleSheetsUrl" placeholder="https://docs.google.com/spreadsheets/d/..." aria-label="Google Sheets URL">
                             <button type="button" class="btn-load-data" id="loadDataBtn">Load Data</button>
                         </div>
@@ -792,7 +795,7 @@
     <div class="modal-overlay" id="modalOverlay" aria-hidden="true">
         <div class="modal-content" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
             <button class="modal-close" id="modalClose" aria-label="Close instructions">&times;</button>
-            <h2 id="modalTitle">🍕🥊 Pizza Boxer</h2>
+            <h2 id="modalTitle">Sticky Fingers</h2>
             <div class="modal-body">
                 <p>Modular grid generator for packaging design based on the Lunnen system.</p>
                 

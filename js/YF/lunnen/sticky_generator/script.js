@@ -799,6 +799,7 @@ class GridGenerator {
             // Data Import panel
             googleSheetsUrl: document.getElementById('googleSheetsUrl'),
             loadDataBtn: document.getElementById('loadDataBtn'),
+            defaultSheetsUrl: document.getElementById('defaultSheetsUrl'),
             dataStatus: document.getElementById('dataStatus'),
             dataPreview: document.getElementById('dataPreview'),
             // Elements navigator
@@ -1043,6 +1044,14 @@ class GridGenerator {
                     }
                 };
                 input.click();
+            });
+        }
+        
+        // Default Google Sheets URL preset
+        if (this.dom.defaultSheetsUrl) {
+            this.dom.defaultSheetsUrl.addEventListener('click', () => {
+                const defaultUrl = 'https://docs.google.com/spreadsheets/d/1lIFfcoxXf7s-LLTWBmPgMcNx7KVuuV8iAQPOwbqGdkg/edit?usp=sharing';
+                this.dom.googleSheetsUrl.value = defaultUrl;
             });
         }
         
@@ -9210,25 +9219,45 @@ class GridGenerator {
 
         // Получаем значение из ячейки A1 (первая строка, первый столбец)
         const a1Value = rows[0] && rows[0][0] ? rows[0][0].trim() : '';
+        // Получаем значение из ячейки B1 (первая строка, второй столбец)
+        const b1Value = rows[0] && rows[0][1] ? rows[0][1].trim() : '';
 
-        if (!a1Value) {
+        let updated = false;
+
+        // Обновляем блок с заголовком "Ноутбук Lunnen Ground 15.6\"" (id: text-1763334866163)
+        if (a1Value) {
+            const headlineBlock = this.textBlocks.find(block => block.id === 'text-1763334866163');
+            
+            if (headlineBlock) {
+                headlineBlock.content = a1Value;
+                console.log(`✅ Обновлен текстовый блок "${headlineBlock.id}": "${a1Value}"`);
+                updated = true;
+            } else {
+                console.warn('Текстовый блок с id "text-1763334866163" не найден');
+            }
+        } else {
             console.warn('Ячейка A1 пуста');
-            return;
         }
 
-        // Находим текстовый блок с id "text-1763334866163" (заголовок "Ноутбук Lunnen Ground 15.6\"")
-        const headlineBlock = this.textBlocks.find(block => block.id === 'text-1763334866163');
-        
-        if (headlineBlock) {
-            // Заменяем содержимое на значение из A1
-            headlineBlock.content = a1Value;
-            console.log(`✅ Обновлен текстовый блок "${headlineBlock.id}": "${a1Value}"`);
+        // Обновляем блок с серийным номером "LL5FAWG03" (id: text-1763608176696)
+        if (b1Value) {
+            const serialBlock = this.textBlocks.find(block => block.id === 'text-1763608176696');
             
-            // Обновляем сетку для отображения изменений
+            if (serialBlock) {
+                serialBlock.content = b1Value;
+                console.log(`✅ Обновлен текстовый блок "${serialBlock.id}": "${b1Value}"`);
+                updated = true;
+            } else {
+                console.warn('Текстовый блок с id "text-1763608176696" не найден');
+            }
+        } else {
+            console.warn('Ячейка B1 пуста');
+        }
+
+        // Обновляем сетку для отображения изменений только если были обновления
+        if (updated) {
             this.updateGrid();
             this.updateElementsNavigator();
-        } else {
-            console.warn('Текстовый блок с id "text-1763334866163" не найден');
         }
     }
 

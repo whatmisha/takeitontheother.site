@@ -1,7 +1,7 @@
 {
   "presetName": "Laptop Sticker 120×24mm",
   "version": "1.0",
-  "timestamp": "2025-11-20T03:11:57.850Z",
+  "timestamp": "2025-11-20T03:40:03.908Z",
   "dimensions": {
     "width": 120,
     "height": 24,
@@ -25,7 +25,7 @@
     },
     {
       "id": "text-1763334866163",
-      "content": "Ноутбук Lunnen Ground 15.6\" ",
+      "content": "Ноутбук Lunnen Outer 16\"",
       "style": "headline",
       "position": {
         "column": 1,
@@ -60,7 +60,7 @@
       "position": {
         "column": 2,
         "row": 0,
-        "baseline": 5
+        "baseline": 7
       },
       "width": 1,
       "alignment": "left",
@@ -85,12 +85,12 @@
     }
   ],
   "grid": {
-    "module": 3,
-    "margins": 1,
+    "module": 2.25,
+    "margins": 1.3333,
     "marginsUnit": "mod",
     "columns": 3,
     "rows": 1,
-    "rowHeight": 6,
+    "rowHeight": 8,
     "linkMode": "module",
     "visibility": {
       "columns": true,
@@ -103,7 +103,7 @@
   },
   "typography": {
     "headline": {
-      "size": 0.6,
+      "size": null,
       "lineHeight": 1,
       "tracking": -0.015,
       "useXHeight": false,
