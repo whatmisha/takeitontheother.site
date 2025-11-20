@@ -796,6 +796,11 @@ class GridGenerator {
             claimHeightInput: document.getElementById('claimHeightInput'),
             claimApplyBtn: document.getElementById('claimApplyBtn'),
             claimCloseBtn: document.getElementById('claimCloseBtn'),
+            // Data Import panel
+            googleSheetsUrl: document.getElementById('googleSheetsUrl'),
+            loadDataBtn: document.getElementById('loadDataBtn'),
+            dataStatus: document.getElementById('dataStatus'),
+            dataPreview: document.getElementById('dataPreview'),
             // Elements navigator
             elementsNavigator: document.getElementById('elementsNavigator'),
             elementsNavigatorHeader: document.getElementById('elementsNavigatorHeader'),
@@ -1038,6 +1043,13 @@ class GridGenerator {
                     }
                 };
                 input.click();
+            });
+        }
+        
+        // Data Import button
+        if (this.dom.loadDataBtn) {
+            this.dom.loadDataBtn.addEventListener('click', () => {
+                this.loadDataFromGoogleSheets();
             });
         }
         
@@ -9028,6 +9040,252 @@ class GridGenerator {
             console.error('❌ Failed to import settings:', error);
             alert('Ошибка при импорте настроек: ' + error.message);
         }
+    }
+    
+    // ============================================
+    // Data Import from Google Sheets
+    // ============================================
+    
+    /**
+     * Конвертирует URL Google Sheets в CSV URL
+     * @param {string} url - URL таблицы Google Sheets
+     * @returns {string} - CSV URL
+     */
+    convertSheetUrlToCsv(url) {
+        // Проверяем, является ли URL уже опубликованным CSV
+        if (url.includes('/pub?output=csv') || url.includes('/export?format=csv')) {
+            return url;
+        }
+
+        // Проверяем формат опубликованного URL (без output=csv)
+        const pubMatch = url.match(/\/spreadsheets\/d\/e\/([a-zA-Z0-9-_]+)/);
+        if (pubMatch) {
+            return `https://docs.google.com/spreadsheets/d/e/${pubMatch[1]}/pub?output=csv`;
+        }
+
+        // Извлекаем ID таблицы из обычного URL
+        // Формат: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit...
+        const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+        
+        if (!match) {
+            throw new Error('Неверный формат URL Google Sheets');
+        }
+
+        const sheetId = match[1];
+        
+        // Конвертируем в CSV URL
+        // Используем gid=0 для первого листа
+        return `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+    }
+
+    /**
+     * Парсит CSV текст в массив строк
+     * @param {string} csvText - CSV текст
+     * @returns {Array<Array<string>>} - Массив строк, каждая строка - массив значений
+     */
+    parseCsv(csvText) {
+        const rows = [];
+        let currentRow = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < csvText.length; i++) {
+            const char = csvText[i];
+            const nextChar = csvText[i + 1];
+            
+            if (char === '"') {
+                if (inQuotes && nextChar === '"') {
+                    // Двойные кавычки - экранированная кавычка
+                    current += '"';
+                    i++; // Пропускаем следующую кавычку
+                } else {
+                    // Начало или конец кавычек
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === ',' && !inQuotes) {
+                // Запятая вне кавычек - разделитель колонок
+                currentRow.push(current.trim());
+                current = '';
+            } else if ((char === '\n' || (char === '\r' && nextChar !== '\n')) && !inQuotes) {
+                // Перенос строки вне кавычек - конец строки данных
+                currentRow.push(current.trim());
+                current = '';
+                
+                // Добавляем строку только если она не пустая
+                if (currentRow.some(val => val.trim() !== '')) {
+                    rows.push([...currentRow]);
+                }
+                currentRow = [];
+            } else if (char === '\r' && nextChar === '\n' && !inQuotes) {
+                // Windows-style перенос строки (\r\n) вне кавычек
+                currentRow.push(current.trim());
+                current = '';
+                
+                // Добавляем строку только если она не пустая
+                if (currentRow.some(val => val.trim() !== '')) {
+                    rows.push([...currentRow]);
+                }
+                currentRow = [];
+                i++; // Пропускаем \n
+            } else {
+                // Обычный символ (включая переносы строк внутри кавычек)
+                current += char;
+            }
+        }
+        
+        // Если мы дошли до конца, но еще не добавили последнее значение
+        if (current.trim() || currentRow.length > 0) {
+            currentRow.push(current.trim());
+            if (currentRow.some(val => val.trim() !== '')) {
+                rows.push([...currentRow]);
+            }
+        }
+        
+        return rows;
+    }
+
+    /**
+     * Загружает данные из Google Sheets и обновляет текстовые блоки
+     */
+    async loadDataFromGoogleSheets() {
+        if (!this.dom.googleSheetsUrl || !this.dom.loadDataBtn) {
+            return;
+        }
+
+        const url = this.dom.googleSheetsUrl.value.trim();
+        
+        if (!url) {
+            this.showDataStatus('Пожалуйста, введите ссылку на таблицу', 'error');
+            return;
+        }
+
+        // Отключаем кнопку и показываем статус загрузки
+        this.dom.loadDataBtn.disabled = true;
+        this.showDataStatus('Загрузка данных...', 'loading');
+
+        try {
+            // Конвертируем URL в CSV формат
+            const csvUrl = this.convertSheetUrlToCsv(url);
+            console.log('CSV URL:', csvUrl);
+
+            // Загружаем CSV
+            const response = await fetch(csvUrl);
+            
+            if (!response.ok) {
+                throw new Error(`Ошибка загрузки: ${response.status} ${response.statusText}`);
+            }
+
+            const csvText = await response.text();
+            console.log('CSV данные загружены, длина:', csvText.length);
+
+            // Парсим CSV
+            const rows = this.parseCsv(csvText);
+            console.log('Распарсенные строки:', rows);
+            console.log('Количество строк:', rows.length);
+
+            // Обновляем текстовые блоки данными из таблицы
+            this.updateTextBlocksFromData(rows);
+
+            // Показываем превью данных
+            this.showDataPreview(rows);
+
+            this.showDataStatus('Данные успешно загружены!', 'success');
+
+        } catch (error) {
+            console.error('Ошибка:', error);
+            this.showDataStatus(`Ошибка: ${error.message}. Убедитесь, что таблица опубликована для просмотра.`, 'error');
+        } finally {
+            this.dom.loadDataBtn.disabled = false;
+        }
+    }
+
+    /**
+     * Обновляет текстовые блоки данными из таблицы
+     * @param {Array<Array<string>>} rows - Массив строк данных
+     */
+    updateTextBlocksFromData(rows) {
+        if (!rows || rows.length === 0) {
+            return;
+        }
+
+        // Получаем значение из ячейки A1 (первая строка, первый столбец)
+        const a1Value = rows[0] && rows[0][0] ? rows[0][0].trim() : '';
+
+        if (!a1Value) {
+            console.warn('Ячейка A1 пуста');
+            return;
+        }
+
+        // Находим текстовый блок с id "text-1763334866163" (заголовок "Ноутбук Lunnen Ground 15.6\"")
+        const headlineBlock = this.textBlocks.find(block => block.id === 'text-1763334866163');
+        
+        if (headlineBlock) {
+            // Заменяем содержимое на значение из A1
+            headlineBlock.content = a1Value;
+            console.log(`✅ Обновлен текстовый блок "${headlineBlock.id}": "${a1Value}"`);
+            
+            // Обновляем сетку для отображения изменений
+            this.updateGrid();
+            this.updateElementsNavigator();
+        } else {
+            console.warn('Текстовый блок с id "text-1763334866163" не найден');
+        }
+    }
+
+    /**
+     * Показывает статус загрузки данных
+     * @param {string} message - Сообщение
+     * @param {string} type - Тип: 'loading', 'success', 'error'
+     */
+    showDataStatus(message, type) {
+        if (!this.dom.dataStatus) {
+            return;
+        }
+
+        this.dom.dataStatus.textContent = message;
+        this.dom.dataStatus.className = `data-status ${type}`;
+        this.dom.dataStatus.style.display = 'block';
+    }
+
+    /**
+     * Показывает превью загруженных данных
+     * @param {Array<Array<string>>} rows - Массив строк данных
+     */
+    showDataPreview(rows) {
+        if (!this.dom.dataPreview) {
+            return;
+        }
+
+        if (!rows || rows.length === 0) {
+            this.dom.dataPreview.innerHTML = '<p>Нет данных</p>';
+            return;
+        }
+
+        const columns = ['A', 'B', 'C', 'D', 'E', 'F'];
+        let html = '';
+
+        // Показываем первые 5 строк
+        const maxRows = Math.min(5, rows.length);
+        for (let rowIndex = 0; rowIndex < maxRows; rowIndex++) {
+            const row = rows[rowIndex];
+            html += `<div style="margin-bottom: 8px;"><strong>Строка ${rowIndex + 1}:</strong></div>`;
+            
+            row.forEach((value, colIndex) => {
+                if (colIndex < columns.length) {
+                    html += `<div style="margin-left: 16px; font-family: monospace; font-size: 0.85rem;">
+                        <strong>${columns[colIndex]}:</strong> ${value || '(пусто)'}
+                    </div>`;
+                }
+            });
+        }
+
+        if (rows.length > maxRows) {
+            html += `<div style="margin-top: 8px; color: #888; font-size: 0.85rem;">
+                ... и еще ${rows.length - maxRows} строк(и)
+            </div>`;
+        }
+
+        this.dom.dataPreview.innerHTML = html;
     }
     
     // Debounced save state - saves after user stops interacting for 300ms
