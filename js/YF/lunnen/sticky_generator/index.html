@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Sticky Layouts">
+    <meta name="description" content="Pizza Boxer — Packaging Layout Tool">
     <meta name="keywords" content="grid generator, packaging, print design, Adobe Illustrator, SVG">
     
-    <title>Sticky Layouts</title>
+    <title>Pizza Boxer — Packaging Layout Tool</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -33,9 +33,9 @@
                 <svg id="gridSvg" xmlns="http://www.w3.org/2000/svg"></svg>
             </div>
 
-            <aside class="controls-panel panel-collapsed" id="gridPanel" role="complementary" aria-label="Grid settings">
-                <div class="panel-header" id="gridPanelHeader">
-                    <span>Grid <span class="panel-params" id="gridParams">5.05 mm</span></span>
+            <aside class="controls-panel" id="dataImportPanel" role="complementary" aria-label="Data import">
+                <div class="panel-header" id="dataImportPanelHeader">
+                    <span>Data Import <span class="panel-params" id="dataImportParams"></span></span>
                     <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
                         <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -45,78 +45,198 @@
                 <div class="panel-content">
                     <section class="control-section">
                         <div class="control-group">
-                            <label for="gridModuleSlider">
-                                <span>Module <span class="unit">mm</span></span>
-                                <input type="text" class="value-display" id="gridModuleValue" value="5.0505" data-min="0.5" data-max="20" aria-label="Grid module">
+                            <label for="googleSheetsUrl">
+                                <span>Google Sheets URL</span>
                             </label>
-                            <input type="range" id="gridModuleSlider" min="0.5" max="20" step="0.0001" value="5.0505" aria-label="Grid module slider">
+                            <input type="text" class="text-input" id="googleSheetsUrl" placeholder="https://docs.google.com/spreadsheets/d/..." aria-label="Google Sheets URL">
+                            <button type="button" class="btn-load-data" id="loadDataBtn">Load Data</button>
                         </div>
                         
                         <div class="control-group">
-                            <label for="marginsSlider">
-                                <span>Margins 
-                                    <span class="unit-buttons">
-                                        <button type="button" class="unit-btn active" data-unit="mod" id="marginsUnitMod">mod</button>
-                                        <button type="button" class="unit-btn" data-unit="mm" id="marginsUnitMm">mm</button>
-                                    </span>
-                                </span>
-                                <input type="text" class="value-display" id="marginsValue" value="2.00" data-min="0" data-max="10" aria-label="Margins in modules">
-                            </label>
-                            <input type="range" id="marginsSlider" min="0" max="10" step="0.01" value="2" aria-label="Margins slider">
+                            <div id="dataStatus" class="data-status"></div>
                         </div>
                         
                         <div class="control-group">
-                            <label for="columnCountSlider">
-                                <span>Columns</span>
-                                <input type="text" class="value-display" id="columnCountValue" value="12" data-min="1" data-max="24" aria-label="Column count">
+                            <label>
+                                <span>Data Preview</span>
                             </label>
-                            <input type="range" id="columnCountSlider" min="1" max="24" step="1" value="12" aria-label="Column count slider">
+                            <div id="dataPreview" class="data-preview"></div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+            
+            <!-- Barcode Styles Panel -->
+            <aside class="controls-panel" id="barcodePanel" role="complementary" aria-label="Barcode settings" style="display: none;">
+                <div class="panel-header" id="barcodePanelHeader">
+                    <span>Barcode Styles <span class="panel-params" id="barcodeParams"></span></span>
+                    <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="barcodeType">
+                                <select id="barcodeType" class="style-select" aria-label="Barcode type">
+                                    <option value="code128">Code 128</option>
+                                    <option value="code39">Code 39</option>
+                                    <option value="ean13">EAN-13</option>
+                                    <option value="ean8">EAN-8</option>
+                                    <option value="upc">UPC</option>
+                                    <option value="qrcode">QR Code</option>
+                                    <option value="datamatrix">Data Matrix</option>
+                                </select>
+                            </label>
                         </div>
                         
-                        <div id="linkedControlsContainer">
+                        <div class="control-row">
                             <div class="control-group">
-                                <label for="rowCountSlider">
-                                    <span>Rows</span>
-                                    <input type="text" class="value-display" id="rowCountValue" value="12" data-min="1" data-max="50" aria-label="Row count">
+                                <label for="barcodeWidth">
+                                    <span>Width <span class="unit">mod</span></span>
                                 </label>
-                                <input type="range" id="rowCountSlider" min="1" max="50" step="1" value="12" aria-label="Row count slider">
+                                <input type="number" class="number-input" id="barcodeWidth" value="8" min="1" max="20" step="0.25" aria-label="Barcode width">
                             </div>
                             
                             <div class="control-group">
-                                <label for="rowHeightSlider">
-                                    <span>Row Height <span class="unit">mod</span></span>
-                                    <input type="text" class="value-display" id="rowHeightValue" value="7" data-min="1" data-max="20" aria-label="Row height in modules">
+                                <label for="barcodeHeight">
+                                    <span>Height <span class="unit">mod</span></span>
                                 </label>
-                                <input type="range" id="rowHeightSlider" min="1" max="20" step="1" value="7" aria-label="Row height slider">
+                                <input type="number" class="number-input" id="barcodeHeight" value="4" min="1" max="20" step="0.25" aria-label="Barcode height">
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="barcodeModule">
+                                <span>Module Size <span class="unit">px</span></span>
+                            </label>
+                            <input type="number" class="number-input" id="barcodeModule" value="2" min="1" max="10" step="0.5" aria-label="Barcode module size">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="barcodeShowText" checked aria-label="Show barcode text">
+                                <span>Show Text</span>
+                            </label>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="barcodeFontSize">
+                                <span>Font Size <span class="unit">pt</span></span>
+                            </label>
+                            <input type="number" class="number-input" id="barcodeFontSize" value="10" min="6" max="24" step="1" aria-label="Barcode font size">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="barcodeQuietZone" checked aria-label="Add quiet zone">
+                                <span>Quiet Zone</span>
+                            </label>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <aside class="controls-panel controls-panel-left" id="controlsPanel" role="complementary" aria-label="Layout settings">
+                <div class="panel-header" id="panelHeader">
+                    <span>Layout & Grid <span class="panel-params" id="dimensionsParams"></span></span>
+                    <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <h3>Dimensions</h3>
+                        <div class="control-row">
+                            <div class="control-group">
+                                <label for="frontWidthValue">
+                                    <span>Width <span class="unit">mm</span></span>
+                                </label>
+                                <input type="number" class="number-input" id="frontWidthValue" value="120" min="50" max="1000" step="0.5" aria-label="Front width value">
                             </div>
                             
                             <div class="control-group">
-                                <div id="rowPresetsContainer" class="row-presets"></div>
-                            </div>
-                            
-                            <div class="control-group">
-                                <label>
-                                    <span>Link Mode</span>
+                                <label for="frontHeightValue">
+                                    <span>Height <span class="unit">mm</span></span>
                                 </label>
-                                <fieldset>
-                                    <legend class="sr-only">Link mode selection</legend>
-                                    <div class="segmented-control" role="radiogroup" aria-label="Link mode selection">
-                                        <input type="radio" name="linkMode" value="off" id="linkModeOff" aria-label="No linking">
-                                        <label for="linkModeOff">Off</label>
-                                        
-                                        <input type="radio" name="linkMode" value="rows-height" id="linkModeRowsHeight" aria-label="Link rows and row height">
-                                        <label for="linkModeRowsHeight">R⇄RH</label>
-                                        
-                                        <input type="radio" name="linkMode" value="module" id="linkModeModule" checked aria-label="Link rows, row height and module">
-                                        <label for="linkModeModule">RRH⇄Mod</label>
-                                    </div>
-                                </fieldset>
+                                <input type="number" class="number-input" id="frontHeightValue" value="24" min="50" max="1000" step="0.5" aria-label="Front height value">
                             </div>
                         </div>
                     </section>
                     
                     <section class="control-section">
-                        <h3>Show</h3>
+                        <h3>Grid</h3>
+                        <div class="control-row">
+                            <div class="control-group">
+                                <label for="gridModuleValue">
+                                    <span>Module <span class="unit">mm</span></span>
+                                </label>
+                                <input type="number" class="number-input" id="gridModuleValue" value="5.0505" min="0.5" max="20" step="0.0001" aria-label="Grid module">
+                            </div>
+                            
+                            <div class="control-group">
+                                <label for="marginsValue">
+                                    <span>Margins 
+                                        <span class="unit-buttons">
+                                            <button type="button" class="unit-btn active" data-unit="mod" id="marginsUnitMod">mod</button>
+                                            <button type="button" class="unit-btn" data-unit="mm" id="marginsUnitMm">mm</button>
+                                        </span>
+                                    </span>
+                                </label>
+                                <input type="number" class="number-input" id="marginsValue" value="2.00" min="0" max="10" step="0.01" aria-label="Margins">
+                            </div>
+                        </div>
+                        
+                        <div class="control-row">
+                            <div class="control-group">
+                                <label for="columnCountValue">
+                                    <span>Columns</span>
+                                </label>
+                                <input type="number" class="number-input" id="columnCountValue" value="12" min="1" max="24" step="1" aria-label="Column count">
+                            </div>
+                            
+                            <div class="control-group">
+                                <label for="rowCountValue">
+                                    <span>Rows</span>
+                                </label>
+                                <input type="number" class="number-input" id="rowCountValue" value="12" min="1" max="50" step="1" aria-label="Row count">
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="rowHeightValue">
+                                <span>Row Height <span class="unit">mod</span></span>
+                            </label>
+                            <input type="number" class="number-input" id="rowHeightValue" value="7" min="1" max="20" step="1" aria-label="Row height in modules">
+                        </div>
+                        
+                        <div class="control-group">
+                            <div id="rowPresetsContainer" class="row-presets"></div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>
+                                <span>Link Mode</span>
+                            </label>
+                            <fieldset>
+                                <legend class="sr-only">Link mode selection</legend>
+                                <div class="segmented-control" role="radiogroup" aria-label="Link mode selection">
+                                    <input type="radio" name="linkMode" value="off" id="linkModeOff" aria-label="No linking">
+                                    <label for="linkModeOff">Off</label>
+                                    
+                                    <input type="radio" name="linkMode" value="rows-height" id="linkModeRowsHeight" aria-label="Link rows and row height">
+                                    <label for="linkModeRowsHeight">R⇄RH</label>
+                                    
+                                    <input type="radio" name="linkMode" value="module" id="linkModeModule" checked aria-label="Link rows, row height and module">
+                                    <label for="linkModeModule">RRH⇄Mod</label>
+                                </div>
+                            </fieldset>
+                        </div>
+                        
                         <div class="control-group show-toggle-chip-group">
                             <div class="toggle-chip-group" role="group" aria-label="Show grid options">
                                 <label class="toggle-chip">
@@ -133,37 +253,6 @@
                                 </label>
                             </div>
                         </div>
-                    </section>
-                </div>
-            </aside>
-
-            <aside class="controls-panel controls-panel-left panel-collapsed" id="controlsPanel" role="complementary" aria-label="Dimensions settings">
-                <div class="panel-header" id="panelHeader">
-                    <span>Dimensions <span class="panel-params" id="dimensionsParams"></span></span>
-                    <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
-                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </span>
-                </div>
-                <div class="panel-content">
-                    <section class="control-section">
-                        <div class="control-group">
-                            <label for="frontWidthSlider">
-                                <span>Width</span>
-                                <input type="text" class="value-display" id="frontWidthValue" value="80" data-min="10" data-max="1000" aria-label="Front width value">
-                            </label>
-                            <input type="range" id="frontWidthSlider" min="10" max="1000" step="0.5" value="80" aria-label="Front width slider" aria-valuemin="10" aria-valuemax="1000" aria-valuenow="80">
-                        </div>
-                        
-                        <div class="control-group">
-                            <label for="frontHeightSlider">
-                                <span>Height</span>
-                                <input type="text" class="value-display" id="frontHeightValue" value="80" data-min="10" data-max="1000" aria-label="Front height value">
-                            </label>
-                            <input type="range" id="frontHeightSlider" min="10" max="1000" step="0.5" value="80" aria-label="Front height slider" aria-valuemin="10" aria-valuemax="1000" aria-valuenow="80">
-                        </div>
-                        <p class="control-hint">Минимальный размер макета — 10×10&nbsp;мм</p>
                     </section>
 
                     <section class="control-section" aria-labelledby="color-heading">
@@ -211,88 +300,33 @@
 
                 </div>
             </aside>
-
-            <aside class="controls-panel data-panel" id="dataPanel" role="complementary" aria-label="Sticker data">
-                <div class="panel-header" id="dataPanelHeader">
-                    <span>Sticker Data <span class="panel-params" id="dataPanelParams">0 строк</span></span>
-                    <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
-                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </span>
-                </div>
-                <div class="panel-content">
-                    <section class="control-section">
-                        <h3>Источник</h3>
-                        <div class="control-group">
-                            <label for="googleSheetInput">Ссылка на Google Sheets</label>
-                            <div class="input-row">
-                                <input type="url" id="googleSheetInput" placeholder="https://docs.google.com/..." autocomplete="off">
-                                <button type="button" class="btn-secondary" id="loadGoogleSheetBtn">Загрузить</button>
-                            </div>
-                            <p class="control-hint">Используй ссылку с правом просмотра</p>
-                        </div>
-                        <div class="control-group">
-                            <label for="excelFileInput">Excel / CSV файл</label>
-                            <div class="input-row">
-                                <input type="file" id="excelFileInput" accept=".xlsx,.xlsm,.xls,.csv" hidden>
-                                <button type="button" class="btn-secondary" id="excelUploadBtn">Выбрать файл</button>
-                            </div>
-                            <p class="control-hint">Поддерживаются .xlsx, .xls и .csv</p>
-                        </div>
-                    </section>
-
-                    <section class="control-section">
-                        <h3>Предпросмотр</h3>
-                        <div class="panel-status" id="dataStatus">Нет подключений</div>
-                        <div class="data-preview-wrapper">
-                            <table class="data-preview-table" id="dataPreviewTable" aria-live="polite"></table>
-                        </div>
-                        <div class="control-group">
-                            <label for="dataRowSelect">Строка из таблицы</label>
-                            <select id="dataRowSelect" disabled></select>
-                        </div>
-                        <button type="button" class="btn-primary" id="applyRowBtn" disabled>Применить к макету</button>
-                    </section>
-
-                    <section class="control-section">
-                        <h3>Штрихкод</h3>
-                        <div class="control-group">
-                            <label for="barcodeColumnSelect">Колонка для номера</label>
-                            <select id="barcodeColumnSelect" disabled></select>
-                        </div>
-                        <div class="control-group">
-                            <label for="manualBarcodeInput">Значение</label>
-                            <input type="text" id="manualBarcodeInput" placeholder="Например, 4601234567890" autocomplete="off">
-                        </div>
-                        <button type="button" class="btn-secondary" id="generateBarcodeBtn" disabled>Построить штрихкод</button>
-                        <div class="barcode-preview" id="barcodePreview" aria-live="polite"></div>
-                    </section>
-
-                    <p class="panel-hint">Используй {{название колонки}} в тексте, чтобы подставлять данные из таблицы.</p>
-                </div>
-            </aside>
         </div>
     </div>
 
     <nav class="bottom-buttons" role="toolbar" aria-label="Main actions">
-        <button class="btn-fixed btn-export" id="exportBtn" aria-label="Export SVG (Command/Control + E)">
-            Export SVG ⌘E
+        <button class="btn-fixed btn-export-settings" id="exportSettingsBtn" aria-label="Export Setup">
+            Export Setup
         </button>
-        <button class="btn-fixed btn-export-settings" id="exportSettingsBtn" aria-label="Export Settings">
-            Export Settings
-        </button>
-        <button class="btn-fixed btn-import-settings" id="importSettingsBtn" aria-label="Import Settings">
-            Import Settings
+        <button class="btn-fixed btn-import-settings" id="importSettingsBtn" aria-label="Import Setup">
+            Import Setup
         </button>
         
-        <button class="btn-fixed btn-help" id="helpButton" aria-label="Show instructions">
-            ?
-        </button>
+        <div class="export-group-right">
+            <button class="btn-fixed btn-export" id="exportBtn" aria-label="Export SVG (Command/Control + E)">
+                Export SVG ⌘E
+            </button>
+            <label class="toggle-label">
+                <div class="toggle-switch">
+                    <input type="checkbox" id="convertToOutlinesCheckbox" aria-label="Outline fonts">
+                    <span class="toggle-slider"></span>
+                </div>
+                <span class="toggle-label-text">Outline fonts</span>
+            </label>
+        </div>
     </nav>
 
     <!-- Elements Navigator Panel -->
-    <aside class="controls-panel elements-navigator panel-collapsed" id="elementsNavigator" role="complementary" aria-label="Elements navigator">
+    <aside class="controls-panel elements-navigator" id="elementsNavigator" role="complementary" aria-label="Elements navigator">
         <div class="panel-header" id="elementsNavigatorHeader">
             <span>Objects <span class="panel-params" id="objectsParams"></span></span>
             <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
@@ -322,7 +356,7 @@
         </div>
     </aside>
 
-    <aside class="controls-panel controls-panel-text panel-collapsed" id="textPanel" role="complementary" aria-label="Text styles settings">
+    <aside class="controls-panel controls-panel-text" id="textPanel" role="complementary" aria-label="Text styles settings">
         <div class="panel-header" id="textPanelHeader">
             <span>Text Styles <span class="panel-params" id="textStylesParams"></span></span>
             <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
@@ -437,6 +471,96 @@
                 </div>
                 </div>
             </section>
+            
+            <section class="control-section">
+                <h3 class="collapsible-header" id="captionHeader">
+                    <span>Caption <span class="font-size-display" id="captionFontSize">0/0 pt</span></span>
+                    <button type="button" class="collapse-toggle" aria-label="Toggle caption settings" aria-expanded="false">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </h3>
+                
+                <div class="collapsible-content collapsed" id="captionContent">
+                <div class="control-group">
+                    <label for="captionStyleDropdown">
+                        <select id="captionStyleDropdown" class="style-select" aria-label="Select font weight">
+                            <option value="500" selected>Medium</option>
+                            <option value="400">Regular</option>
+                        </select>
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="captionSizeSlider">
+                        <span>Size <span class="unit">mod</span></span>
+                            <input type="text" class="value-display" id="captionSizeValue" value="0.50" data-min="0.25" data-max="10" aria-label="Caption size in modules">
+                    </label>
+                    <input type="range" id="captionSizeSlider" min="0.25" max="10" step="0.25" value="0.5" aria-label="Caption size slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="captionLineHeightSlider">
+                        <span>Line Height <span class="unit">mod</span></span>
+                        <input type="text" class="value-display" id="captionLineHeightValue" value="1.00" data-min="0.25" data-max="10" aria-label="Caption line height in modules">
+                    </label>
+                    <input type="range" id="captionLineHeightSlider" min="0.25" max="10" step="0.25" value="1" aria-label="Caption line height slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="captionTrackingSlider">
+                        <span>Tracking <span class="unit">em</span></span>
+                        <input type="text" class="value-display" id="captionTrackingValue" value="0.00" data-min="-0.05" data-max="0.05" aria-label="Caption tracking in em units">
+                    </label>
+                    <input type="range" id="captionTrackingSlider" min="-0.05" max="0.05" step="0.01" value="0" aria-label="Caption tracking slider">
+                </div>
+                
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="useXHeightCaption" aria-label="Use x-height for measurement">
+                        <span>x-height</span>
+                    </label>
+                </div>
+                </div>
+            </section>
+            
+            <section class="control-section">
+                <h3 class="collapsible-header" id="lunnenDisplayHeader">
+                    <span>Lunnen Display <span class="font-size-display" id="lunnenDisplayFontSize">0/0 pt</span></span>
+                    <button type="button" class="collapse-toggle" aria-label="Toggle Lunnen Display settings" aria-expanded="false">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </h3>
+                
+                <div class="collapsible-content collapsed" id="lunnenDisplayContent">
+                <div class="control-group">
+                    <label for="lunnenDisplaySizeSlider">
+                        <span>Size <span class="unit">mod</span></span>
+                            <input type="text" class="value-display" id="lunnenDisplaySizeValue" value="3.00" data-min="0.25" data-max="10" aria-label="Lunnen Display size in modules">
+                    </label>
+                    <input type="range" id="lunnenDisplaySizeSlider" min="0.25" max="10" step="0.25" value="3" aria-label="Lunnen Display size slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="lunnenDisplayLineHeightSlider">
+                        <span>Line Height <span class="unit">mod</span></span>
+                        <input type="text" class="value-display" id="lunnenDisplayLineHeightValue" value="4.00" data-min="0.25" data-max="10" aria-label="Lunnen Display line height in modules">
+                    </label>
+                    <input type="range" id="lunnenDisplayLineHeightSlider" min="0.25" max="10" step="0.25" value="4" aria-label="Lunnen Display line height slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="lunnenDisplayTrackingSlider">
+                        <span>Tracking <span class="unit">em</span></span>
+                        <input type="text" class="value-display" id="lunnenDisplayTrackingValue" value="0.00" data-min="-0.05" data-max="0.05" aria-label="Lunnen Display tracking in em units">
+                    </label>
+                    <input type="range" id="lunnenDisplayTrackingSlider" min="-0.05" max="0.05" step="0.01" value="0" aria-label="Lunnen Display tracking slider">
+                </div>
+                </div>
+            </section>
         </div>
     </aside>
 
@@ -466,6 +590,8 @@
                         <select id="paragraphStyleSelect" class="style-select" aria-label="Text style">
                             <option value="headline">Headline</option>
                             <option value="text">Text</option>
+                            <option value="caption">Caption</option>
+                            <option value="lunnenDisplay">Lunnen Display</option>
                         </select>
                     </label>
                 </div>
@@ -537,6 +663,47 @@
                 
                 <div class="control-group">
                     <textarea id="paragraphTextArea" placeholder="Enter text here..." rows="7" aria-label="Paragraph text"></textarea>
+                </div>
+            </section>
+            
+            <section class="control-section" id="lunnenDisplayFeaturesSection" style="display: none;">
+                <h3>Lunnen Display</h3>
+                
+                <div class="control-group">
+                    <label for="lunnenDisplayWeightSlider">
+                        <span>Weight</span>
+                        <input type="text" class="value-display" id="lunnenDisplayWeightValue" value="400" data-min="100" data-max="400" aria-label="Font weight">
+                    </label>
+                    <input type="range" id="lunnenDisplayWeightSlider" min="100" max="400" step="1" value="400" aria-label="Font weight slider">
+                </div>
+                
+                <div class="control-group">
+                    <div class="toggle-chip-group" role="group" aria-label="OpenType features">
+                        <label class="toggle-chip">
+                            <input type="checkbox" id="featureSalt" aria-label="Enable salt feature">
+                            <span>salt</span>
+                        </label>
+                        <label class="toggle-chip">
+                            <input type="checkbox" id="featureAalt" aria-label="Enable aalt feature">
+                            <span>aalt</span>
+                        </label>
+                        <label class="toggle-chip">
+                            <input type="checkbox" id="featureSs01" aria-label="Enable ss01 feature">
+                            <span>ss01</span>
+                        </label>
+                        <label class="toggle-chip">
+                            <input type="checkbox" id="featureSs02" aria-label="Enable ss02 feature">
+                            <span>ss02</span>
+                        </label>
+                        <label class="toggle-chip">
+                            <input type="checkbox" id="featureTnum" aria-label="Enable tnum feature">
+                            <span>tnum</span>
+                        </label>
+                        <label class="toggle-chip">
+                            <input type="checkbox" id="featureDlig" aria-label="Enable dlig feature">
+                            <span>dlig</span>
+                        </label>
+                    </div>
                 </div>
             </section>
         </div>
@@ -632,8 +799,7 @@
                 <p>Modular grid generator for packaging design based on the Lunnen system.</p>
                 
                 <h3>Canvas Dimensions</h3>
-                <p><strong>Front Width</strong> and <strong>Front Height</strong> define the working area dimensions in millimeters.</p>
-                <p><strong>Thickness</strong> sets the depth of side panels.</p>
+                <p><strong>Width</strong> and <strong>Height</strong> define the working area dimensions in millimeters (range: 10-500 mm).</p>
                 
                 <h3>Grid Module</h3>
                 <p>The <strong>Module</strong> (in mm) is the base unit of the grid system. It controls:</p>
@@ -663,11 +829,11 @@
                 <h3>Export SVG</h3>
                 <p>Click <strong>Export SVG</strong> to download the grid. The file opens in Adobe Illustrator with accurate millimeter dimensions. Grid elements (columns, rows, baseline) are grouped separately and can be shown/hidden as needed.</p>
                 
-                <h3>Export Settings</h3>
-                <p>Click <strong>Export Settings</strong> to save current configuration as a JSON file. The file includes all parameters, text blocks, and graphic elements.</p>
+                <h3>Export Setup</h3>
+                <p>Click <strong>Export Setup</strong> to save current configuration as a JSON file. The file includes all parameters, text blocks, and graphic elements.</p>
                 
-                <h3>Import Settings</h3>
-                <p>Click <strong>Import Settings</strong> to load a previously saved JSON file. This restores the complete state including all objects and parameters.</p>
+                <h3>Import Setup</h3>
+                <p>Click <strong>Import Setup</strong> to load a previously saved JSON file. This restores the complete state including all objects and parameters.</p>
                 
                 <h3>Zoom and Pan</h3>
                 <p>Navigate the canvas like in Figma (optimized for Apple Magic Mouse):</p>

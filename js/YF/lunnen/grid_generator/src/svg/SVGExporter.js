@@ -181,7 +181,8 @@ export class SVGExporter {
                 alignment: block.alignment || 'left',
                 alignmentMode: block.alignmentMode || 'baseline',
                 surface: block.surface || 'front',
-                showBounds: block.showBounds || false
+                showBounds: block.showBounds || false,
+                visible: block.visible !== undefined ? block.visible : true
             })),
             
             // 4. Настройки сетки
@@ -248,6 +249,7 @@ export class SVGExporter {
                         originalHeight: block.originalHeight,
                         alignment: block.alignment || 'left',
                         surface: block.surface || 'front',
+                        visible: block.visible !== undefined ? block.visible : true,
                         // SVG код в самом конце
                         svg: block.svgContent || ''
                     })),
@@ -258,6 +260,7 @@ export class SVGExporter {
                         baseline: iconsBlock.baselineOffset || 0
                     },
                     height: iconsBlock.heightInModules || 3,
+                    visible: iconsBlock.visible !== undefined ? iconsBlock.visible : true,
                     svg: iconsBlock.svgContent || ''
                 } : null,
                 claim: claimBlock ? {
@@ -267,6 +270,7 @@ export class SVGExporter {
                         baseline: claimBlock.baselineOffset || 0
                     },
                     height: claimBlock.heightInModules || 3,
+                    visible: claimBlock.visible !== undefined ? claimBlock.visible : true,
                     svg: claimBlock.svgContent || ''
                 } : null
             }
@@ -399,7 +403,7 @@ export class SVGExporter {
             alignmentMode: text.alignmentMode || 'baseline',
             surface: text.surface || 'front',
             showBounds: text.showBounds || false,
-            visible: true
+            visible: text.visible !== undefined ? text.visible : true
         }));
 
         // Графические блоки (маппинг полей для внутренней структуры приложения)
@@ -419,7 +423,7 @@ export class SVGExporter {
                 alignment: graphic.alignment || 'left',
                 surface: graphic.surface || 'front',
                 showBounds: false,
-                visible: true,
+                visible: graphic.visible !== undefined ? graphic.visible : true,
                 originalWidth: graphic.originalWidth || 100,
                 originalHeight: graphic.originalHeight || 100
             });
@@ -437,7 +441,7 @@ export class SVGExporter {
                 row: newData.graphics.icons.position?.row || 0,
                 baselineOffset: newData.graphics.icons.position?.baseline || 0,
                 showBounds: false,
-                visible: true,
+                visible: newData.graphics.icons.visible !== undefined ? newData.graphics.icons.visible : true,
                 originalWidth: 204.0944882,
                 originalHeight: 28.3464567
             });
@@ -455,7 +459,7 @@ export class SVGExporter {
                 row: newData.graphics.claim.position?.row || 0,
                 baselineOffset: newData.graphics.claim.position?.baseline || 0,
                 showBounds: false,
-                visible: true,
+                visible: newData.graphics.claim.visible !== undefined ? newData.graphics.claim.visible : true,
                 originalWidth: 186.2242584,
                 originalHeight: 28.3464565
             });

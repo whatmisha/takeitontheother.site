@@ -141,10 +141,95 @@
             border-radius: 3px;
             font-size: 11px;
         }
+
+        .canvas-section {
+            margin-bottom: 40px;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .canvas-section h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 18px;
+        }
+
+        #previewSvg {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: block;
+            background: white;
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+        }
+
+        #previewSvg text {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 16px;
+            fill: #333;
+        }
+
+        .text-input-group {
+            margin-top: 20px;
+        }
+
+        .text-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .text-input-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: monospace;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .text-input-group textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .text-input-hint {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #888;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="canvas-section">
+            <h2>Предпросмотр макета</h2>
+            <div style="margin-bottom: 15px;">
+                <button type="button" id="exportSvgBtn" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500;">
+                    Экспортировать SVG
+                </button>
+            </div>
+            <svg id="previewSvg" width="600" height="300" xmlns="http://www.w3.org/2000/svg">
+                <!-- Элементы будут добавлены через JavaScript -->
+            </svg>
+            <div class="text-input-group">
+                <label for="textTemplate">Шаблон текста (используйте (A1), (B2) и т.д. для подстановки значений):</label>
+                <textarea id="textTemplate">Ноутбук (A1) произведен (D1)
+Планшет (A2) произведен (D2)
+Клавиатура (A3) произведена (D3)</textarea>
+                <div class="text-input-hint">
+                    Формат: (СтолбецНомерСтроки), например (A1), (B2), (D3)
+                </div>
+            </div>
+        </div>
+
         <h1>Тест подключения Google Sheets</h1>
         
         <div class="input-group">
@@ -169,7 +254,7 @@
         <div id="status"></div>
 
         <div id="dataOutput" class="data-output" style="display: none;">
-            <h2>Первая строка (A-F):</h2>
+            <h2>Данные из таблицы (A-F):</h2>
             <div id="dataList"></div>
         </div>
     </div>
@@ -180,6 +265,11 @@
         const statusDiv = document.getElementById('status');
         const dataOutput = document.getElementById('dataOutput');
         const dataList = document.getElementById('dataList');
+        const previewSvg = document.getElementById('previewSvg');
+        const textTemplate = document.getElementById('textTemplate');
+        const exportSvgBtn = document.getElementById('exportSvgBtn');
+        
+        let tableData = []; // Храним данные таблицы
 
         function showStatus(message, type) {
             statusDiv.textContent = message;
@@ -219,67 +309,210 @@
         }
 
         function parseCsv(csvText) {
-            // Улучшенный CSV парсер, который обрабатывает кавычки и запятые внутри значений
-            function parseCsvLine(line) {
-                const values = [];
-                let current = '';
-                let inQuotes = false;
+            // Улучшенный CSV парсер, который обрабатывает кавычки, запятые и переносы строк внутри значений
+            // Парсит все строки и возвращает массив строк, каждая строка - массив из 6 колонок (A-F)
+            const rows = [];
+            let currentRow = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < csvText.length; i++) {
+                const char = csvText[i];
+                const nextChar = csvText[i + 1];
                 
-                for (let i = 0; i < line.length; i++) {
-                    const char = line[i];
-                    const nextChar = line[i + 1];
-                    
-                    if (char === '"') {
-                        if (inQuotes && nextChar === '"') {
-                            // Двойные кавычки - экранированная кавычка
-                            current += '"';
-                            i++; // Пропускаем следующую кавычку
-                        } else {
-                            // Начало или конец кавычек
-                            inQuotes = !inQuotes;
-                        }
-                    } else if (char === ',' && !inQuotes) {
-                        // Запятая вне кавычек - разделитель
-                        values.push(current.trim());
-                        current = '';
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        // Двойные кавычки - экранированная кавычка
+                        current += '"';
+                        i++; // Пропускаем следующую кавычку
                     } else {
-                        current += char;
+                        // Начало или конец кавычек
+                        // НЕ добавляем кавычки в current, они служат только для обрамления
+                        inQuotes = !inQuotes;
                     }
+                } else if (char === ',' && !inQuotes) {
+                    // Запятая вне кавычек - разделитель колонок
+                    currentRow.push(current.trim());
+                    current = '';
+                    
+                    // Если у нас уже 6 колонок, начинаем новую строку
+                    if (currentRow.length >= 6) {
+                        // Убеждаемся, что у нас ровно 6 значений
+                        while (currentRow.length < 6) {
+                            currentRow.push('');
+                        }
+                        rows.push(currentRow.slice(0, 6));
+                        currentRow = [];
+                    }
+                } else if ((char === '\n' || (char === '\r' && nextChar !== '\n')) && !inQuotes) {
+                    // Перенос строки вне кавычек - конец строки данных
+                    // Добавляем текущее значение
+                    currentRow.push(current.trim());
+                    current = '';
+                    
+                    // Убеждаемся, что у нас ровно 6 значений
+                    while (currentRow.length < 6) {
+                        currentRow.push('');
+                    }
+                    
+                    // Добавляем строку только если она не пустая
+                    if (currentRow.some(val => val.trim() !== '')) {
+                        rows.push(currentRow.slice(0, 6));
+                    }
+                    currentRow = [];
+                } else if (char === '\r' && nextChar === '\n' && !inQuotes) {
+                    // Windows-style перенос строки (\r\n) вне кавычек
+                    currentRow.push(current.trim());
+                    current = '';
+                    
+                    // Убеждаемся, что у нас ровно 6 значений
+                    while (currentRow.length < 6) {
+                        currentRow.push('');
+                    }
+                    
+                    // Добавляем строку только если она не пустая
+                    if (currentRow.some(val => val.trim() !== '')) {
+                        rows.push(currentRow.slice(0, 6));
+                    }
+                    currentRow = [];
+                    i++; // Пропускаем \n
+                } else {
+                    // Обычный символ (включая переносы строк внутри кавычек)
+                    current += char;
                 }
-                
-                // Добавляем последнее значение
-                values.push(current.trim());
-                
-                return values;
-            }
-
-            // Берем первую строку
-            const firstLine = csvText.split('\n')[0];
-            
-            if (!firstLine) {
-                return [];
             }
             
-            // Парсим строку
-            const values = parseCsvLine(firstLine);
+            // Если мы дошли до конца, но еще не добавили последнее значение
+            if (current.trim() || currentRow.length > 0) {
+                currentRow.push(current.trim());
+                while (currentRow.length < 6) {
+                    currentRow.push('');
+                }
+                if (currentRow.some(val => val.trim() !== '')) {
+                    rows.push(currentRow.slice(0, 6));
+                }
+            }
             
-            // Берем только первые 6 колонок (A-F)
-            return values.slice(0, 6);
+            return rows;
         }
 
-        function displayData(values) {
+        function displayData(rows) {
             dataList.innerHTML = '';
             
             const columns = ['A', 'B', 'C', 'D', 'E', 'F'];
             
-            values.forEach((value, index) => {
-                const item = document.createElement('div');
-                item.className = 'data-item';
-                item.innerHTML = `<strong>${columns[index]}:</strong>${value || '(пусто)'}`;
-                dataList.appendChild(item);
+            rows.forEach((row, rowIndex) => {
+                // Добавляем заголовок строки
+                const rowHeader = document.createElement('div');
+                rowHeader.className = 'data-item';
+                rowHeader.style.fontWeight = 'bold';
+                rowHeader.style.borderLeftColor = '#1976d2';
+                rowHeader.style.marginTop = rowIndex > 0 ? '20px' : '0';
+                rowHeader.textContent = `Строка ${rowIndex + 1}:`;
+                dataList.appendChild(rowHeader);
+                
+                // Добавляем колонки этой строки
+                row.forEach((value, colIndex) => {
+                    const item = document.createElement('div');
+                    item.className = 'data-item';
+                    item.innerHTML = `<strong>${columns[colIndex]}:</strong>${value || '(пусто)'}`;
+                    dataList.appendChild(item);
+                });
             });
 
             dataOutput.style.display = 'block';
+            
+            // Сохраняем данные и обновляем канвас
+            tableData = rows;
+            updateCanvas();
+        }
+
+        // Функция для замены ссылок на ячейки (A1, B2 и т.д.) на значения из таблицы
+        function replaceCellReferences(text, rows) {
+            if (!rows || rows.length === 0) {
+                return text;
+            }
+
+            // Регулярное выражение для поиска ссылок типа (A1), (B2), (D3) и т.д.
+            return text.replace(/\(([A-F])(\d+)\)/g, (match, col, rowNum) => {
+                const colIndex = col.charCodeAt(0) - 65; // A=0, B=1, C=2, D=3, E=4, F=5
+                const rowIndex = parseInt(rowNum) - 1; // Строка 1 = индекс 0
+                
+                if (rowIndex >= 0 && rowIndex < rows.length && colIndex >= 0 && colIndex < 6) {
+                    const value = rows[rowIndex][colIndex];
+                    return value || '';
+                }
+                
+                return match; // Если не найдено, возвращаем исходную ссылку
+            });
+        }
+
+        // Функция для отрисовки SVG
+        function updateCanvas() {
+            const width = previewSvg.getAttribute('width');
+            const height = previewSvg.getAttribute('height');
+            
+            // Очищаем SVG
+            previewSvg.innerHTML = '';
+            
+            // Рисуем серый прямоугольник
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x', '20');
+            rect.setAttribute('y', '20');
+            rect.setAttribute('width', width - 40);
+            rect.setAttribute('height', height - 40);
+            rect.setAttribute('fill', '#e0e0e0');
+            previewSvg.appendChild(rect);
+            
+            // Получаем текст из textarea
+            const templateText = textTemplate.value || textTemplate.placeholder;
+            
+            // Заменяем ссылки на ячейки на значения из таблицы
+            const processedText = replaceCellReferences(templateText, tableData);
+            
+            // Разбиваем текст на строки
+            const lines = processedText.split('\n').filter(line => line.trim() !== '');
+            
+            // Отступы
+            const padding = 40;
+            const lineHeight = 24;
+            const startY = padding + 20;
+            
+            // Рисуем каждую строку текста
+            lines.forEach((line, index) => {
+                const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                textElement.setAttribute('x', padding);
+                textElement.setAttribute('y', startY + (index * lineHeight));
+                textElement.setAttribute('font-size', '16');
+                textElement.setAttribute('fill', '#333');
+                textElement.textContent = line;
+                previewSvg.appendChild(textElement);
+            });
+        }
+
+        // Функция для экспорта SVG
+        function exportSvg() {
+            // Клонируем SVG для экспорта
+            const svgClone = previewSvg.cloneNode(true);
+            
+            // Устанавливаем правильные атрибуты для экспорта
+            svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+            
+            // Преобразуем в строку
+            const serializer = new XMLSerializer();
+            const svgString = serializer.serializeToString(svgClone);
+            
+            // Создаем blob и скачиваем
+            const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'layout.svg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
 
         loadBtn.addEventListener('click', async () => {
@@ -307,14 +540,19 @@
                 }
 
                 const csvText = await response.text();
-                console.log('CSV данные:', csvText);
+                console.log('CSV данные (первые 500 символов):', csvText.substring(0, 500));
+                console.log('Длина CSV:', csvText.length);
 
                 // Парсим CSV
-                const values = parseCsv(csvText);
-                console.log('Распарсенные значения:', values);
+                const rows = parseCsv(csvText);
+                console.log('Распарсенные строки:', rows);
+                console.log('Количество строк:', rows.length);
+                rows.forEach((row, rowIdx) => {
+                    console.log(`Строка ${rowIdx + 1}:`, row);
+                });
 
                 // Отображаем данные
-                displayData(values);
+                displayData(rows);
                 showStatus('Данные успешно загружены!', 'success');
 
             } catch (error) {
@@ -325,8 +563,21 @@
             }
         });
 
+        // Обновляем SVG при изменении текста
+        textTemplate.addEventListener('input', () => {
+            updateCanvas();
+        });
+
+        // Обработчик экспорта SVG
+        exportSvgBtn.addEventListener('click', () => {
+            exportSvg();
+        });
+
         // Автозагрузка при загрузке страницы, если URL уже введен
         window.addEventListener('load', () => {
+            // Инициализируем SVG
+            updateCanvas();
+            
             if (sheetUrlInput.value.trim()) {
                 loadBtn.click();
             }

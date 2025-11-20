@@ -2,8 +2,9 @@
  * Экспорт SVG в файл
  */
 export class SVGExporter {
-    constructor(settings) {
+    constructor(settings, textToPath = null) {
         this.settings = settings;
+        this.textToPath = textToPath;
     }
 
     /**
@@ -13,14 +14,25 @@ export class SVGExporter {
      * @param {Object} options - Опции экспорта
      * @param {boolean} options.removeInteractive - Удалить интерактивные элементы
      * @param {boolean} options.optimizeSize - Оптимизировать размер
+     * @param {boolean} options.convertTextToOutlines - Конвертировать текст в кривые
      */
-    exportToFile(svgElement, filename = 'grid.svg', options = {}) {
+    async exportToFile(svgElement, filename = 'grid.svg', options = {}) {
         // Клонируем SVG для экспорта
         const clonedSvg = svgElement.cloneNode(true);
         
         // Удаляем интерактивные элементы если нужно
         if (options.removeInteractive) {
             this.removeInteractiveElements(clonedSvg);
+        }
+        
+        // Конвертируем текст в кривые если нужно
+        if (options.convertTextToOutlines && this.textToPath) {
+            try {
+                await this.textToPath.convertAllTextToPaths(clonedSvg);
+            } catch (error) {
+                console.error('Error converting text to paths:', error);
+                // Продолжаем экспорт даже если конвертация не удалась
+            }
         }
         
         // Сериализуем SVG в строку
@@ -151,7 +163,6 @@ export class SVGExporter {
             dimensions: {
                 width: settings.frontWidth,
                 height: settings.frontHeight,
-                thickness: settings.thickness,
                 unit: 'mm'
             },
             
@@ -215,7 +226,6 @@ export class SVGExporter {
             display: {
                 dimensions: settings.showDimensions,
                 labels: settings.showLabels,
-                sidePanels: settings.showSidePanels,
                 objects: settings.showObjects
             },
             
@@ -336,7 +346,6 @@ export class SVGExporter {
             // Размеры
             frontWidth: newData.dimensions?.width,
             frontHeight: newData.dimensions?.height,
-            thickness: newData.dimensions?.thickness,
             
             // Сетка
             gridModule: newData.grid?.module,
@@ -370,7 +379,6 @@ export class SVGExporter {
             // Отображение
             showDimensions: newData.display?.dimensions,
             showLabels: newData.display?.labels,
-            showSidePanels: newData.display?.sidePanels,
             showObjects: newData.display?.objects
         };
 

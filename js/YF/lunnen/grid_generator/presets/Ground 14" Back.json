@@ -1,11 +1,11 @@
 {
   "presetName": "Ground 14\" Back",
   "version": "1.0",
-  "timestamp": "2025-11-17T04:53:06.268Z",
+  "timestamp": "2025-11-17T04:45:06.647Z",
   "dimensions": {
     "width": 356,
     "height": 369,
-    "thickness": 42,
+    "thickness": 36,
     "unit": "mm"
   },
   "texts": [
@@ -41,14 +41,14 @@
     },
     {
       "id": "text2",
-      "content": "Lunnen Ground — базовая линейка ноутбуков с мощным процессором в тонком корпусе. Легко решают земные задачи, подходят для работы и развлечений.",
+      "content": "Lunnen Ground — базовая линейка ноутбуков с мощным процессором в тонком корпусе. Легко решают земные задачи, подходят для работы и развлечений.",
       "style": "text",
       "position": {
         "column": 10,
         "row": 0,
         "baseline": 0
       },
-      "width": 3,
+      "width": 2,
       "alignment": "left",
       "alignmentMode": "x-height",
       "surface": "front",
@@ -128,7 +128,7 @@
     "text": {
       "size": 0.6,
       "lineHeight": 1.7,
-      "tracking": -0.01,
+      "tracking": 0,
       "useXHeight": true,
       "fontWeight": 500
     }

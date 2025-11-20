@@ -15,68 +15,20 @@ export class SVGUtils {
      * @param {number} thickness
      * @param {number} scale
      * @param {string} fillColor
-     * @param {boolean} showSidePanels
      */
-    static drawBoxRectangles(container, x, y, frontW, frontH, thickness, scale, fillColor, showSidePanels) {
+    static drawBoxRectangles(container, x, y, frontW, frontH, thickness, scale, fillColor) {
         const strokeWidth = scale === 1 ? SVG.EXPORT_STROKE_WIDTH : SVG.DISPLAY_STROKE_WIDTH;
         
-        // Основная панель (центр) - всегда видна
+        // Основная панель
         DOMUtils.createSVGElement('rect', {
-            x: x + thickness,
-            y: y + thickness,
+            x: x,
+            y: y,
             width: frontW,
             height: frontH,
             fill: fillColor,
             stroke: '#000000',
             'stroke-width': strokeWidth
         }, container);
-        
-        // Боковые панели - только если включены
-        if (showSidePanels) {
-            // Левая
-            DOMUtils.createSVGElement('rect', {
-                x: x,
-                y: y + thickness,
-                width: thickness,
-                height: frontH,
-                fill: fillColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
-            
-            // Правая
-            DOMUtils.createSVGElement('rect', {
-                x: x + thickness + frontW,
-                y: y + thickness,
-                width: thickness,
-                height: frontH,
-                fill: fillColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
-            
-            // Верхняя
-            DOMUtils.createSVGElement('rect', {
-                x: x + thickness,
-                y: y,
-                width: frontW,
-                height: thickness,
-                fill: fillColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
-            
-            // Нижняя
-            DOMUtils.createSVGElement('rect', {
-                x: x + thickness,
-                y: y + thickness + frontH,
-                width: frontW,
-                height: thickness,
-                fill: fillColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
-        }
     }
 
     /**

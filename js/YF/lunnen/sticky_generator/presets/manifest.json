@@ -1,10 +1,11 @@
 {
   "presets": [
+
     {
-      "name": "+ New",
-      "file": "New.json"
+      "name": "Laptop Sticker 120×24mm",
+      "file": "Laptop Sticker.json"
     }
   ],
-  "generated": "2025-11-15T06:08:12.219349",
-  "count": 1
+  "generated": "2025-11-17T22:03:17.651Z",
+  "count": 4
 }

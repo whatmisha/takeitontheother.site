@@ -174,9 +174,6 @@ export class GridGenerator {
                     this.updateGrid();
                 }
             },
-            thicknessSlider: {
-                valueId: 'thicknessValue',
-                setting: 'thickness',
                 min: 5,
                 max: 200,
                 decimals: 1,
@@ -391,7 +388,6 @@ export class GridGenerator {
             { id: 'showRows', setting: 'showRows' },
             { id: 'showBaseline', setting: 'showBaseline' },
             { id: 'showDimensions', setting: 'showDimensions' },
-            { id: 'showSidePanels', setting: 'showSidePanels' },
             { id: 'showObjects', setting: 'showObjects' },
             { id: 'useXHeight', setting: 'useXHeight' },
             { id: 'useXHeight2', setting: 'useXHeight2' }

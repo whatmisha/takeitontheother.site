@@ -5,6 +5,7 @@
 import { ColorUtils } from './src/utils/ColorUtils.js';
 import { MathUtils } from './src/utils/MathUtils.js';
 import { DOMUtils } from './src/utils/DOMUtils.js';
+import { TextToPath } from './src/utils/TextToPath.js';
 
 // Итерация 2: Core
 import { Settings } from './src/core/Settings.js';
@@ -29,10 +30,6 @@ import { ElementsNavigator } from './src/elements/ElementsNavigator.js';
 // Итерация 7: SVG Export
 import { SVGExporter } from './src/svg/SVGExporter.js';
 
-// Данные для стикеров
-import { DataImporter } from './src/data/DataImporter.js';
-import { BarcodeGenerator } from './src/data/BarcodeGenerator.js';
-
 class GridGenerator {
     constructor() {
         // Slider configuration - defines behavior for each slider
@@ -41,7 +38,7 @@ class GridGenerator {
             frontWidthSlider: {
                 valueId: 'frontWidthValue',
                 setting: 'frontWidth',
-                min: 10,
+                min: 50,
                 max: 1000,
                 decimals: 1,
                 baseStep: 0.5,
@@ -51,7 +48,7 @@ class GridGenerator {
             frontHeightSlider: {
                 valueId: 'frontHeightValue',
                 setting: 'frontHeight',
-                min: 10,
+                min: 50,
                 max: 1000,
                 decimals: 1,
                 baseStep: 0.5,
@@ -70,6 +67,9 @@ class GridGenerator {
                     this.generateRowPresets();
                     this.updateGrid();
                 }
+            },
+                shiftStep: 10,
+                onUpdate: () => this.updateGrid()
             },
             gridModuleSlider: {
                 valueId: 'gridModuleValue',
@@ -269,6 +269,66 @@ class GridGenerator {
                 baseStep: 0.01,
                 shiftStep: 0.05,
                 onUpdate: () => this.updateGrid()
+            },
+            captionSizeSlider: {
+                valueId: 'captionSizeValue',
+                setting: 'captionSize',
+                min: 0.25,
+                max: 10,
+                decimals: 2,
+                baseStep: 0.25,
+                shiftStep: 1,
+                onUpdate: () => this.updateGrid()
+            },
+            captionLineHeightSlider: {
+                valueId: 'captionLineHeightValue',
+                setting: 'captionLineHeight',
+                min: 0.25,
+                max: 10,
+                decimals: 2,
+                baseStep: 0.25,
+                shiftStep: 1,
+                onUpdate: () => this.updateGrid()
+            },
+            captionTrackingSlider: {
+                valueId: 'captionTrackingValue',
+                setting: 'captionTracking',
+                min: -0.05,
+                max: 0.05,
+                decimals: 2,
+                baseStep: 0.01,
+                shiftStep: 0.05,
+                onUpdate: () => this.updateGrid()
+            },
+            lunnenDisplaySizeSlider: {
+                valueId: 'lunnenDisplaySizeValue',
+                setting: 'lunnenDisplaySize',
+                min: 0.25,
+                max: 10,
+                decimals: 2,
+                baseStep: 0.25,
+                shiftStep: 1,
+                onUpdate: () => this.updateGrid()
+            },
+            lunnenDisplayLineHeightSlider: {
+                valueId: 'lunnenDisplayLineHeightValue',
+                setting: 'lunnenDisplayLineHeight',
+                min: 0.25,
+                max: 10,
+                decimals: 2,
+                baseStep: 0.25,
+                shiftStep: 1,
+                onUpdate: () => this.updateGrid()
+            },
+            lunnenDisplayTrackingSlider: {
+                valueId: 'lunnenDisplayTrackingValue',
+                setting: 'lunnenDisplayTracking',
+                min: -0.05,
+                max: 0.05,
+                decimals: 2,
+                baseStep: 0.01,
+                shiftStep: 0.05,
+                onUpdate: () => this.updateGrid()
             }
         };
         
@@ -276,11 +336,9 @@ class GridGenerator {
         // Settings (Итерация 2: используем Settings модуль)
         // ============================================
         this.settingsModule = new Settings({
-            frontWidth: 80,
-            frontHeight: 80,
-            thickness: 0,
+            frontWidth: 120,
+            frontHeight: 24,
             showLabels: false,
-            showSidePanels: false,
             boxColor: '#808080',
             gridModule: 5.0505,
             margins: 2,
@@ -302,7 +360,18 @@ class GridGenerator {
             textLineHeight: 1.0,
             textTracking: 0,
             useXHeight2: false,
-            textFontWeight: 500
+            textFontWeight: 500,
+            // Caption style
+            captionSize: 0.5,
+            captionLineHeight: 1.0,
+            captionTracking: 0,
+            useXHeightCaption: false,
+            captionFontWeight: 500,
+            // Lunnen Display style
+            lunnenDisplaySize: 3.0,
+            lunnenDisplayLineHeight: 4.0,
+            lunnenDisplayTracking: 0,
+            useXHeightLunnenDisplay: false
         });
         
         // Для обратной совместимости: создаем Proxy который перенаправляет обращения к settingsModule
@@ -352,17 +421,6 @@ class GridGenerator {
         if (!this.graphicsBlocks) {
             this.graphicsBlocks = [];
         }
-
-        this.BARCODE_BLOCK_ID = 'sticker-barcode';
-        this.stickerData = {
-            rows: [],
-            columns: [],
-            activeRowIndex: null,
-            barcodeColumn: null,
-            source: null,
-            lastUpdated: null
-        };
-        this.currentBarcodeValue = '';
         
         // Storage for deletion timers to allow cancellation
         this.deletionTimers = {};
@@ -490,7 +548,6 @@ class GridGenerator {
                 lockPosition: true  // Constrain to grid bounds by default
             }
         ];
-        this.ensureTextBlockTemplates();
         
         // Состояние для drag & drop текстовых блоков
         this.textDragState = {
@@ -516,9 +573,17 @@ class GridGenerator {
         
         // Font metrics for TT Commons Classic (measured in font units, assuming UPM=1000)
         this.fontMetrics = {
-            capHeight: 630,
-            xHeight: 447,
-            unitsPerEm: 1000
+            'TT Commons Classic': {
+                capHeight: 630,
+                xHeight: 447,
+                unitsPerEm: 1000
+            },
+            // Lunnen Display metrics (x-height similar to TT Commons)
+            'Lunnen Display': {
+                capHeight: 630,
+                xHeight: 447,
+                unitsPerEm: 1000
+            }
         };
         
         // Display constants
@@ -535,12 +600,12 @@ class GridGenerator {
         // ============================================
         // SVG Exporter (Итерация 7)
         // ============================================
-        this.svgExporter = new SVGExporter(this.settingsModule);
+        this.textToPath = new TextToPath();
+        this.svgExporter = new SVGExporter(this.settingsModule, this.textToPath);
         
         // ============================================
         // Presets (Итерация 10)
         // ============================================
-        this.defaultPresetFile = 'New.json';
         this.availablePresets = [];
         this.loadPresetsManifest();
         
@@ -551,7 +616,6 @@ class GridGenerator {
         
         // Generate row presets
         this.generateRowPresets();
-        this.enforceStickerConstraints();
         
         // Initialize
         this.initEventListeners();
@@ -581,7 +645,6 @@ class GridGenerator {
         // this.initClaimPanel();
         // this.initClaimInputsWithArrows();
         this.initGraphicsPanel();
-        this.initDataPanel();
         this.initPanelClickOutsideHandler();
         this.initElementsNavigator();
         this.updateLinkedControlsVisual();
@@ -604,429 +667,6 @@ class GridGenerator {
             this.updateCanvasSize();
             this.updateGrid();
         });
-    }
-    
-    // ============================================
-    // Sticker Data Integration
-    // ============================================
-    initDataPanel() {
-        this.updateDataStatus('Нет подключений');
-        this.renderDataPreview();
-        this.updateRowSelectOptions();
-        this.updateBarcodeColumnSelect();
-        this.updateManualBarcodeInput();
-        this.updateBarcodeButtonState();
-        this.syncBarcodePreviewFromBlock();
-        
-        if (this.dom.loadGoogleSheetBtn) {
-            this.dom.loadGoogleSheetBtn.addEventListener('click', () => this.handleGoogleSheetLoad());
-        }
-        
-        if (this.dom.googleSheetInput) {
-            this.dom.googleSheetInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    this.handleGoogleSheetLoad();
-                }
-            });
-        }
-        
-        if (this.dom.excelUploadBtn && this.dom.excelFileInput) {
-            this.dom.excelUploadBtn.addEventListener('click', () => this.dom.excelFileInput.click());
-            this.dom.excelFileInput.addEventListener('change', (e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                    this.handleExcelUpload(file);
-                    e.target.value = '';
-                }
-            });
-        }
-        
-        if (this.dom.applyRowBtn) {
-            this.dom.applyRowBtn.addEventListener('click', async () => {
-                const index = parseInt(this.dom.dataRowSelect?.value ?? '-1', 10);
-                await this.applyDataRow(index);
-            });
-        }
-        
-        if (this.dom.dataRowSelect) {
-            this.dom.dataRowSelect.addEventListener('change', () => {
-                const index = parseInt(this.dom.dataRowSelect.value, 10);
-                if (!Number.isNaN(index)) {
-                    this.stickerData.activeRowIndex = index;
-                    this.updateManualBarcodeInput();
-                }
-            });
-        }
-        
-        if (this.dom.barcodeColumnSelect) {
-            this.dom.barcodeColumnSelect.addEventListener('change', () => {
-                const value = this.dom.barcodeColumnSelect.value;
-                this.stickerData.barcodeColumn = value || null;
-                this.updateManualBarcodeInput();
-            });
-        }
-        
-        if (this.dom.manualBarcodeInput) {
-            this.dom.manualBarcodeInput.addEventListener('input', () => this.updateBarcodeButtonState());
-        }
-        
-        if (this.dom.generateBarcodeBtn) {
-            this.dom.generateBarcodeBtn.addEventListener('click', async () => {
-                const value = this.dom.manualBarcodeInput?.value.trim();
-                if (value) {
-                    await this.updateBarcodeGraphic(value);
-                }
-            });
-        }
-    }
-    
-    async handleGoogleSheetLoad() {
-        const url = this.dom.googleSheetInput?.value.trim();
-        if (!url) {
-            this.updateDataStatus('Добавь ссылку на Google Sheets', 'error');
-            return;
-        }
-        
-        try {
-            this.updateDataStatus('Загружаю данные…', 'loading');
-            const data = await DataImporter.fromGoogleSheet(url);
-            this.setStickerData(data, 'Google Sheets');
-            this.updateDataStatus(`Загружено ${data.rows.length} строк`, 'success');
-        } catch (error) {
-            console.error('Google Sheets import failed', error);
-            this.updateDataStatus(error.message || 'Не удалось загрузить Google Sheets', 'error');
-        }
-    }
-    
-    async handleExcelUpload(file) {
-        try {
-            this.updateDataStatus(`Читаю файл ${file.name}…`, 'loading');
-            const data = await DataImporter.fromFile(file);
-            this.setStickerData(data, file.name);
-            this.updateDataStatus(`Импортировано ${data.rows.length} строк`, 'success');
-        } catch (error) {
-            console.error('Excel import failed', error);
-            this.updateDataStatus(error.message || 'Не удалось прочитать файл', 'error');
-        }
-    }
-    
-    setStickerData(data, source = null) {
-        this.stickerData.rows = Array.isArray(data.rows) ? data.rows : [];
-        this.stickerData.columns = Array.isArray(data.columns) ? data.columns : [];
-        this.stickerData.activeRowIndex = this.stickerData.rows.length ? 0 : null;
-        this.stickerData.barcodeColumn = this.detectBarcodeColumn(this.stickerData.columns);
-        this.stickerData.source = source;
-        this.stickerData.lastUpdated = new Date().toISOString();
-        
-        this.renderDataPreview();
-        this.updateRowSelectOptions();
-        this.updateBarcodeColumnSelect();
-        this.updateManualBarcodeInput();
-        this.updateBarcodeButtonState();
-        this.updatePanelParams();
-        this.syncBarcodePreviewFromBlock();
-    }
-
-    restoreStickerData(data = {}) {
-        this.stickerData.rows = Array.isArray(data.rows) ? data.rows : [];
-        this.stickerData.columns = Array.isArray(data.columns) ? data.columns : [];
-        if (typeof data.activeRowIndex === 'number') {
-            this.stickerData.activeRowIndex = data.activeRowIndex;
-        } else {
-            this.stickerData.activeRowIndex = this.stickerData.rows.length ? 0 : null;
-        }
-        this.stickerData.barcodeColumn = data.barcodeColumn || null;
-        this.stickerData.source = data.source || null;
-        this.stickerData.lastUpdated = data.lastUpdated || null;
-        this.currentBarcodeValue = data.currentBarcodeValue || '';
-        
-        this.renderDataPreview();
-        this.updateRowSelectOptions();
-        this.updateBarcodeColumnSelect();
-        this.updateManualBarcodeInput();
-        this.updateBarcodeButtonState();
-        this.updatePanelParams();
-    }
-    
-    resetStickerData() {
-        this.stickerData = {
-            rows: [],
-            columns: [],
-            activeRowIndex: null,
-            barcodeColumn: null,
-            source: null,
-            lastUpdated: null
-        };
-        this.currentBarcodeValue = '';
-        this.renderDataPreview();
-        this.updateRowSelectOptions();
-        this.updateBarcodeColumnSelect();
-        this.updateManualBarcodeInput();
-        this.updateBarcodeButtonState();
-        this.updateBarcodePreview();
-        this.updatePanelParams();
-        this.updateDataStatus('Нет подключений');
-    }
-    
-    renderDataPreview() {
-        const table = this.dom.dataPreviewTable;
-        if (!table) return;
-        
-        const columns = this.stickerData.columns.slice(0, 5);
-        const rows = this.stickerData.rows.slice(0, 5);
-        
-        if (!columns.length) {
-            table.innerHTML = '<tbody><tr><td>Данные не загружены</td></tr></tbody>';
-            return;
-        }
-        
-        let thead = '<thead><tr>';
-        columns.forEach(col => {
-            thead += `<th>${this.escapeTableValue(col)}</th>`;
-        });
-        thead += '</tr></thead>';
-        
-        let tbody = '<tbody>';
-        if (!rows.length) {
-            tbody += `<tr><td colspan="${columns.length}">Нет строк</td></tr>`;
-        } else {
-            rows.forEach(row => {
-                tbody += '<tr>';
-                columns.forEach(col => {
-                    tbody += `<td>${this.escapeTableValue(row[col])}</td>`;
-                });
-                tbody += '</tr>';
-            });
-        }
-        tbody += '</tbody>';
-        
-        table.innerHTML = thead + tbody;
-    }
-    
-    escapeTableValue(value) {
-        if (value === null || value === undefined) return '';
-        return String(value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-    }
-    
-    updateRowSelectOptions() {
-        const select = this.dom.dataRowSelect;
-        if (!select) return;
-        
-        select.innerHTML = '';
-        const rows = this.stickerData.rows;
-        
-        if (!rows.length) {
-            select.disabled = true;
-            if (this.dom.applyRowBtn) {
-                this.dom.applyRowBtn.disabled = true;
-            }
-            return;
-        }
-        
-        rows.forEach((row, index) => {
-            const option = document.createElement('option');
-            option.value = index;
-            const previewColumns = this.stickerData.columns.slice(0, 2);
-            const inlinePreview = previewColumns
-                .map(col => row[col])
-                .filter(Boolean)
-                .map(value => String(value).trim())
-                .join(' • ');
-            option.textContent = inlinePreview || `Строка ${index + 1}`;
-            select.appendChild(option);
-        });
-        
-        select.disabled = false;
-        const activeIndex = typeof this.stickerData.activeRowIndex === 'number'
-            ? this.stickerData.activeRowIndex
-            : 0;
-        this.stickerData.activeRowIndex = activeIndex;
-        select.value = String(activeIndex);
-        
-        if (this.dom.applyRowBtn) {
-            this.dom.applyRowBtn.disabled = false;
-        }
-    }
-    
-    updateBarcodeColumnSelect() {
-        const select = this.dom.barcodeColumnSelect;
-        if (!select) return;
-        
-        select.innerHTML = '';
-        
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = 'Не выбрано';
-        select.appendChild(placeholder);
-        
-        this.stickerData.columns.forEach(column => {
-            const option = document.createElement('option');
-            option.value = column;
-            option.textContent = column;
-            select.appendChild(option);
-        });
-        
-        select.disabled = this.stickerData.columns.length === 0;
-        if (this.stickerData.barcodeColumn) {
-            select.value = this.stickerData.barcodeColumn;
-        }
-    }
-    
-    updateManualBarcodeInput() {
-        if (!this.dom.manualBarcodeInput) return;
-        
-        const row = this.stickerData.rows[this.stickerData.activeRowIndex ?? -1];
-        if (!row || !this.stickerData.barcodeColumn) {
-            return;
-        }
-        const value = row[this.stickerData.barcodeColumn] ?? '';
-        this.dom.manualBarcodeInput.value = value;
-        this.updateBarcodeButtonState();
-    }
-    
-    updateBarcodeButtonState() {
-        if (!this.dom.generateBarcodeBtn) return;
-        const hasValue = Boolean(this.dom.manualBarcodeInput?.value.trim());
-        this.dom.generateBarcodeBtn.disabled = !hasValue;
-    }
-    
-    updateBarcodePreview(svgString = null) {
-        if (!this.dom.barcodePreview) return;
-        
-        if (svgString) {
-            this.dom.barcodePreview.innerHTML = svgString;
-            return;
-        }
-        
-        const block = this.graphicsBlocks?.find(b => b.id === this.BARCODE_BLOCK_ID);
-        if (block?.svgContent) {
-            this.dom.barcodePreview.innerHTML = block.svgContent;
-        } else {
-            this.dom.barcodePreview.textContent = 'Штрихкод не создан';
-        }
-    }
-    
-    syncBarcodePreviewFromBlock() {
-        this.updateBarcodePreview();
-    }
-    
-    updateDataStatus(message, type = 'info') {
-        if (!this.dom.dataStatus) return;
-        this.dom.dataStatus.textContent = message;
-        this.dom.dataStatus.classList.remove('success', 'error', 'loading');
-        if (type !== 'info') {
-            this.dom.dataStatus.classList.add(type);
-        }
-    }
-    
-    detectBarcodeColumn(columns = []) {
-        const keywords = ['barcode', 'штрих', 'ean', 'ean13', 'sku', 'код'];
-        return columns.find(col => {
-            const lower = col.toLowerCase();
-            return keywords.some(keyword => lower.includes(keyword));
-        }) || null;
-    }
-    
-    fillTemplateWithRow(template, row = {}) {
-        if (!template) return '';
-        return template.replace(/{{\s*([^}]+)\s*}}/g, (_, key) => {
-            const columnName = key.trim();
-            const value = row[columnName];
-            return value !== undefined ? value : '';
-        });
-    }
-    
-    async applyDataRow(index, options = {}) {
-        if (!Array.isArray(this.stickerData.rows) || !this.stickerData.rows.length) {
-            this.updateDataStatus('Нет данных для применения', 'error');
-            return;
-        }
-        
-        if (Number.isNaN(index) || index < 0 || index >= this.stickerData.rows.length) {
-            this.updateDataStatus('Выбери строку из таблицы', 'error');
-            return;
-        }
-        
-        this.saveState();
-        const row = this.stickerData.rows[index];
-        this.stickerData.activeRowIndex = index;
-        if (this.dom.dataRowSelect) {
-            this.dom.dataRowSelect.value = String(index);
-        }
-        
-        this.textBlocks.forEach(block => {
-            const baseTemplate = block.template || block.content || '';
-            const filled = this.fillTemplateWithRow(baseTemplate, row);
-            block.content = filled;
-        });
-        
-        this.updateElementsNavigator();
-        this.updateGrid();
-        this.updateDataStatus(`Строка ${index + 1} применена`, 'success');
-        
-        if (options.autoBarcode !== false && this.stickerData.barcodeColumn) {
-            const barcodeValue = row[this.stickerData.barcodeColumn];
-            if (barcodeValue) {
-                if (this.dom.manualBarcodeInput) {
-                    this.dom.manualBarcodeInput.value = barcodeValue;
-                }
-                await this.updateBarcodeGraphic(String(barcodeValue));
-            }
-        }
-    }
-    
-    async updateBarcodeGraphic(value) {
-        if (!value) return;
-        try {
-            this.updateDataStatus('Генерирую штрихкод…', 'loading');
-            const result = await BarcodeGenerator.generate(value);
-            if (!Array.isArray(this.graphicsBlocks)) {
-                this.graphicsBlocks = [];
-            }
-            let block = this.graphicsBlocks.find(b => b.id === this.BARCODE_BLOCK_ID);
-            
-            this.saveState();
-            
-            if (!block) {
-                block = {
-                    id: this.BARCODE_BLOCK_ID,
-                    name: 'Barcode',
-                    isBuiltIn: false,
-                    svgContent: result.svg,
-                    heightInModules: 2,
-                    widthInModules: 4,
-                    sizeMode: 'width',
-                    alignment: 'left',
-                    x: 1,
-                    row: 0,
-                    baselineOffset: 0,
-                    showBounds: false,
-                    visible: true,
-                    originalWidth: result.width,
-                    originalHeight: result.height,
-                    lockPosition: true
-                };
-                this.graphicsBlocks.push(block);
-            } else {
-                block.svgContent = result.svg;
-                block.originalWidth = result.width;
-                block.originalHeight = result.height;
-                block.visible = true;
-            }
-            
-            this.currentBarcodeValue = value;
-            this.updateElementsNavigator();
-            this.updateGrid();
-            this.updateBarcodePreview(result.svg);
-            this.updateDataStatus('Штрихкод обновлён', 'success');
-        } catch (error) {
-            console.error('Barcode generation failed', error);
-            this.updateDataStatus('Не удалось построить штрихкод', 'error');
-        }
     }
     
     // Getters for backward compatibility with existing code
@@ -1071,7 +711,6 @@ class GridGenerator {
             frontHeightValue: document.getElementById('frontHeightValue'),
             
             // Checkboxes
-            showSidePanels: document.getElementById('showSidePanels'),
             showColumns: document.getElementById('showColumns'),
             showRows: document.getElementById('showRows'),
             showBaseline: document.getElementById('showBaseline'),
@@ -1113,11 +752,9 @@ class GridGenerator {
             
             // Buttons
             exportBtn: document.getElementById('exportBtn'),
+            convertToOutlinesCheckbox: document.getElementById('convertToOutlinesCheckbox'),
             exportSettingsBtn: document.getElementById('exportSettingsBtn'),
             importSettingsBtn: document.getElementById('importSettingsBtn'),
-            helpButton: document.getElementById('helpButton'),
-            modalOverlay: document.getElementById('modalOverlay'),
-            modalClose: document.getElementById('modalClose'),
             presetDropdown: document.getElementById('presetDropdown'),
             presetDropdownToggle: document.getElementById('presetDropdownToggle'),
             presetDropdownMenu: document.getElementById('presetDropdownMenu'),
@@ -1139,6 +776,23 @@ class GridGenerator {
             textTrackingSlider: document.getElementById('textTrackingSlider'),
             textTrackingValue: document.getElementById('textTrackingValue'),
             useXHeight2: document.getElementById('useXHeight2'),
+            // Text controls - Caption
+            captionSizeSlider: document.getElementById('captionSizeSlider'),
+            captionSizeValue: document.getElementById('captionSizeValue'),
+            captionLineHeightSlider: document.getElementById('captionLineHeightSlider'),
+            captionLineHeightValue: document.getElementById('captionLineHeightValue'),
+            captionTrackingSlider: document.getElementById('captionTrackingSlider'),
+            captionTrackingValue: document.getElementById('captionTrackingValue'),
+            useXHeightCaption: document.getElementById('useXHeightCaption'),
+            captionFontSize: document.getElementById('captionFontSize'),
+            // Text controls - Lunnen Display
+            lunnenDisplaySizeSlider: document.getElementById('lunnenDisplaySizeSlider'),
+            lunnenDisplaySizeValue: document.getElementById('lunnenDisplaySizeValue'),
+            lunnenDisplayLineHeightSlider: document.getElementById('lunnenDisplayLineHeightSlider'),
+            lunnenDisplayLineHeightValue: document.getElementById('lunnenDisplayLineHeightValue'),
+            lunnenDisplayTrackingSlider: document.getElementById('lunnenDisplayTrackingSlider'),
+            lunnenDisplayTrackingValue: document.getElementById('lunnenDisplayTrackingValue'),
+            lunnenDisplayFontSize: document.getElementById('lunnenDisplayFontSize'),
             // Paragraph settings panel
             paragraphPanel: document.getElementById('paragraphPanel'),
             paragraphPanelTitle: document.getElementById('paragraphPanelTitle'),
@@ -1208,23 +862,7 @@ class GridGenerator {
             graphicsSurfaceSelect: document.getElementById('graphicsSurfaceSelect'),
             // Zoom controls
             canvasContainer: document.getElementById('canvasContainer'),
-            zoomIndicator: document.getElementById('zoomIndicator'),
-            // Data panel
-            dataPanel: document.getElementById('dataPanel'),
-            dataPanelHeader: document.getElementById('dataPanelHeader'),
-            googleSheetInput: document.getElementById('googleSheetInput'),
-            loadGoogleSheetBtn: document.getElementById('loadGoogleSheetBtn'),
-            excelUploadBtn: document.getElementById('excelUploadBtn'),
-            excelFileInput: document.getElementById('excelFileInput'),
-            dataStatus: document.getElementById('dataStatus'),
-            dataPreviewTable: document.getElementById('dataPreviewTable'),
-            dataPanelParams: document.getElementById('dataPanelParams'),
-            dataRowSelect: document.getElementById('dataRowSelect'),
-            applyRowBtn: document.getElementById('applyRowBtn'),
-            barcodeColumnSelect: document.getElementById('barcodeColumnSelect'),
-            manualBarcodeInput: document.getElementById('manualBarcodeInput'),
-            generateBarcodeBtn: document.getElementById('generateBarcodeBtn'),
-            barcodePreview: document.getElementById('barcodePreview')
+            zoomIndicator: document.getElementById('zoomIndicator')
         };
     }
     
@@ -1239,13 +877,6 @@ class GridGenerator {
         // NOTE: Slider initialization moved to initUIControllers()
         // ============================================
         
-        // Show side panels checkbox (может отсутствовать в режиме стикеров)
-        if (this.dom.showSidePanels) {
-            this.dom.showSidePanels.addEventListener('change', (e) => {
-                this.settings.showSidePanels = e.target.checked;
-                this.updateGrid();
-            });
-        }
         
         // Link mode radio buttons
         const linkModeHandler = (e) => {
@@ -1301,6 +932,15 @@ class GridGenerator {
             this.updateGrid();
         });
         
+        // Use x-height Caption checkbox
+        if (this.dom.useXHeightCaption) {
+            this.dom.useXHeightCaption.addEventListener('change', (e) => {
+                this.settings.useXHeightCaption = e.target.checked;
+                this.updateGrid();
+            });
+        }
+        
+        
         // Margins unit buttons
         if (this.dom.marginsUnitMod) {
             this.dom.marginsUnitMod.addEventListener('click', (e) => {
@@ -1338,6 +978,17 @@ class GridGenerator {
                 this.updateGrid();
             });
         }
+        
+        const captionStyleDropdown = document.getElementById('captionStyleDropdown');
+        if (captionStyleDropdown) {
+            captionStyleDropdown.addEventListener('change', (e) => {
+                this.settings.captionFontWeight = parseInt(e.target.value);
+                this.updateElementsNavigator();
+                this.updateGrid();
+            });
+        }
+        
+        // Lunnen Display doesn't have font weight dropdown (always Regular)
         
         // Color preview button - toggle HSB picker
         this.dom.colorPreview.addEventListener('click', () => {
@@ -1429,22 +1080,7 @@ class GridGenerator {
             });
         }
         
-        // Help button and modal
-        if (this.dom.helpButton) {
-            this.dom.helpButton.addEventListener('click', () => this.openModal());
-        }
-        
-        if (this.dom.modalClose) {
-            this.dom.modalClose.addEventListener('click', () => this.closeModal());
-        }
-        
-        if (this.dom.modalOverlay) {
-            this.dom.modalOverlay.addEventListener('click', (e) => {
-                if (e.target === this.dom.modalOverlay) {
-                    this.closeModal();
-                }
-            });
-        }
+        // Help button removed
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -1458,33 +1094,12 @@ class GridGenerator {
                 e.preventDefault();
                 this.undo();
             }
-            // Escape - Close modal
-            if (e.key === 'Escape') {
-                if (this.dom.modalOverlay && this.dom.modalOverlay.classList.contains('active')) {
-                    this.closeModal();
-                }
-            }
         });
         
         // Initialize panel collapse functionality
         this.initPanelCollapse();
     }
     
-    openModal() {
-        if (this.dom.modalOverlay) {
-            this.dom.modalOverlay.classList.add('active');
-            this.dom.modalOverlay.setAttribute('aria-hidden', 'false');
-            document.body.style.overflow = 'hidden';
-        }
-    }
-    
-    closeModal() {
-        if (this.dom.modalOverlay) {
-            this.dom.modalOverlay.classList.remove('active');
-            this.dom.modalOverlay.setAttribute('aria-hidden', 'true');
-            document.body.style.overflow = '';
-        }
-    }
     
     // ============================================
     // Panel Collapse Functionality
@@ -1494,7 +1109,9 @@ class GridGenerator {
         // Storage for text styles state
         this.textStylesState = {
             headline: false, // false = collapsed
-            text: false
+            text: false,
+            caption: false,
+            lunnenDisplay: false
         };
         
         // Find all collapse icons
@@ -1520,14 +1137,6 @@ class GridGenerator {
                 // Save the initial top position when panel is first loaded
                 const rect = panel.getBoundingClientRect();
                 panel.dataset.originalTop = rect.top;
-            }
-
-            if (panel.classList.contains('panel-collapsed')) {
-                icon.classList.add('collapsed');
-                icon.setAttribute('aria-label', 'Expand panel');
-            } else {
-                icon.classList.remove('collapsed');
-                icon.setAttribute('aria-label', 'Collapse panel');
             }
             
             // Click handler
@@ -1585,9 +1194,11 @@ class GridGenerator {
     }
     
     saveTextStylesState() {
-        // Save current state of headline and text collapsible sections
+        // Save current state of all text style collapsible sections
         const headlineToggle = document.querySelector('#headlineHeader .collapse-toggle');
         const textToggle = document.querySelector('#textHeader .collapse-toggle');
+        const captionToggle = document.querySelector('#captionHeader .collapse-toggle');
+        const lunnenDisplayToggle = document.querySelector('#lunnenDisplayHeader .collapse-toggle');
         
         if (headlineToggle) {
             this.textStylesState.headline = headlineToggle.getAttribute('aria-expanded') === 'true';
@@ -1595,14 +1206,25 @@ class GridGenerator {
         if (textToggle) {
             this.textStylesState.text = textToggle.getAttribute('aria-expanded') === 'true';
         }
+        if (captionToggle) {
+            this.textStylesState.caption = captionToggle.getAttribute('aria-expanded') === 'true';
+        }
+        if (lunnenDisplayToggle) {
+            this.textStylesState.lunnenDisplay = lunnenDisplayToggle.getAttribute('aria-expanded') === 'true';
+        }
     }
     
     restoreTextStylesState() {
-        // Restore saved state of headline and text collapsible sections
+        // Restore saved state of all text style collapsible sections
         const headlineToggle = document.querySelector('#headlineHeader .collapse-toggle');
         const textToggle = document.querySelector('#textHeader .collapse-toggle');
-        const headlineContent = document.getElementById('headlineControls');
-        const textContent = document.getElementById('textControls');
+        const captionToggle = document.querySelector('#captionHeader .collapse-toggle');
+        const lunnenDisplayToggle = document.querySelector('#lunnenDisplayHeader .collapse-toggle');
+        
+        const headlineContent = document.getElementById('headlineContent');
+        const textContent = document.getElementById('textContent');
+        const captionContent = document.getElementById('captionContent');
+        const lunnenDisplayContent = document.getElementById('lunnenDisplayContent');
         
         if (headlineToggle && headlineContent) {
             if (this.textStylesState.headline) {
@@ -1621,6 +1243,26 @@ class GridGenerator {
             } else {
                 textToggle.setAttribute('aria-expanded', 'false');
                 textContent.classList.add('collapsed');
+            }
+        }
+        
+        if (captionToggle && captionContent) {
+            if (this.textStylesState.caption) {
+                captionToggle.setAttribute('aria-expanded', 'true');
+                captionContent.classList.remove('collapsed');
+            } else {
+                captionToggle.setAttribute('aria-expanded', 'false');
+                captionContent.classList.add('collapsed');
+            }
+        }
+        
+        if (lunnenDisplayToggle && lunnenDisplayContent) {
+            if (this.textStylesState.lunnenDisplay) {
+                lunnenDisplayToggle.setAttribute('aria-expanded', 'true');
+                lunnenDisplayContent.classList.remove('collapsed');
+            } else {
+                lunnenDisplayToggle.setAttribute('aria-expanded', 'false');
+                lunnenDisplayContent.classList.add('collapsed');
             }
         }
     }
@@ -1648,7 +1290,7 @@ class GridGenerator {
         const objectsParams = document.getElementById('objectsParams');
         if (objectsParams) {
             const textCount = this.textBlocks.length;
-            const graphicsCount = this.graphicsBlocks?.length || 0;
+            const graphicsCount = this.graphicsBlocks.length;
             objectsParams.textContent = `Txt ${textCount}  •  Obj ${graphicsCount}`;
         }
         
@@ -1657,12 +1299,6 @@ class GridGenerator {
         if (textStylesParams) {
             const stylesCount = this.getTextStylesCount();
             textStylesParams.textContent = `${stylesCount} styles`;
-        }
-
-        // Data panel
-        if (this.dom.dataPanelParams) {
-            const rows = this.stickerData.rows.length;
-            this.dom.dataPanelParams.textContent = rows ? `${rows} строк` : '0 строк';
         }
     }
     
@@ -1678,27 +1314,6 @@ class GridGenerator {
         });
         
         return uniqueStyles.size;
-    }
-
-    ensureTextBlockTemplates() {
-        if (!Array.isArray(this.textBlocks)) return;
-        this.textBlocks.forEach(block => {
-            if (typeof block.template !== 'string') {
-                block.template = block.content || '';
-            }
-        });
-    }
-
-    enforceStickerConstraints() {
-        if (this.settings.thickness !== 0) {
-            this.settings.thickness = 0;
-        }
-        if (this.settings.showSidePanels !== false) {
-            this.settings.showSidePanels = false;
-            if (this.dom.showSidePanels) {
-                this.dom.showSidePanels.checked = false;
-            }
-        }
     }
     
     // ============================================
@@ -1962,6 +1577,7 @@ class GridGenerator {
         
         // Current selected preset
         this.currentPreset = null;
+        this.currentPresetName = 'Custom';
         
         // Track widths for animation
         this.presetWidths = {};
@@ -2005,14 +1621,9 @@ class GridGenerator {
             }
         });
         
-        // Load default preset (New.json) or fallback to the first available
+        // Load first preset by default
         if (this.availablePresets.length > 0) {
-            const desiredFile = (this.defaultPresetFile || '').toLowerCase();
-            const defaultPreset = this.availablePresets.find((preset) => {
-                return preset.file && preset.file.toLowerCase() === desiredFile;
-            });
-            const presetToLoad = defaultPreset || this.availablePresets[0];
-            this.selectPreset(presetToLoad.file, presetToLoad.name);
+            this.selectPreset(this.availablePresets[0].file, this.availablePresets[0].name);
         }
     }
     
@@ -2179,11 +1790,14 @@ class GridGenerator {
             // Update all UI elements to reflect new settings
             this.syncUIWithSettings();
             
+            // Store preset name for export
+            this.currentPresetName = data.presetName || filename.replace('.json', '');
+            
             // Update UI and grid
             this.updateGrid();
             this.updateElementsNavigator();
             
-            console.log(`✅ Preset "${data.presetName || filename}" loaded successfully`);
+            console.log(`✅ Preset "${this.currentPresetName}" loaded successfully`);
         } catch (error) {
             console.error('Failed to load preset:', error);
             alert(`Failed to load preset: ${error.message}`);
@@ -2203,7 +1817,6 @@ class GridGenerator {
         });
         
         // Update checkboxes
-        if (this.dom.showSidePanels) this.dom.showSidePanels.checked = settings.showSidePanels !== false;
         if (this.dom.showColumns) this.dom.showColumns.checked = settings.showColumns !== false;
         if (this.dom.showRows) this.dom.showRows.checked = settings.showRows !== false;
         if (this.dom.showBaseline) this.dom.showBaseline.checked = settings.showBaseline !== false;
@@ -2674,7 +2287,6 @@ class GridGenerator {
             this.dom.paragraphTextArea.addEventListener('input', () => {
                 if (this.currentEditingBlock) {
                     this.currentEditingBlock.content = this.dom.paragraphTextArea.value;
-                    this.currentEditingBlock.template = this.dom.paragraphTextArea.value;
                     this.updateCharCounter();
                     this.updateGrid();
                 }
@@ -2686,6 +2298,27 @@ class GridGenerator {
             this.dom.paragraphStyleSelect.addEventListener('change', () => {
                 if (this.currentEditingBlock) {
                     this.currentEditingBlock.styleRef = this.dom.paragraphStyleSelect.value;
+                    
+                    // Показываем/скрываем секцию настроек Lunnen Display
+                    const lunnenDisplayFeaturesSection = document.getElementById('lunnenDisplayFeaturesSection');
+                    if (lunnenDisplayFeaturesSection) {
+                        if (this.dom.paragraphStyleSelect.value === 'lunnenDisplay') {
+                            lunnenDisplayFeaturesSection.style.display = 'block';
+                        } else {
+                            lunnenDisplayFeaturesSection.style.display = 'none';
+                        }
+                    }
+                    
+                    // Показываем/скрываем Alignment Mode (для Lunnen Display не показываем)
+                    const alignmentModeSection = document.querySelector('#paragraphPanel .control-group:has([name="alignmentMode"])');
+                    if (alignmentModeSection) {
+                        if (this.dom.paragraphStyleSelect.value === 'lunnenDisplay') {
+                            alignmentModeSection.style.display = 'none';
+                        } else {
+                            alignmentModeSection.style.display = 'block';
+                        }
+                    }
+                    
                     this.updateElementsNavigator();
                     this.updateGrid();
                 }
@@ -2821,6 +2454,65 @@ class GridGenerator {
                 }
             });
         }
+        
+        // Обработчик для weight slider (Lunnen Display)
+        const lunnenDisplayWeightSlider = document.getElementById('lunnenDisplayWeightSlider');
+        const lunnenDisplayWeightValue = document.getElementById('lunnenDisplayWeightValue');
+        if (lunnenDisplayWeightSlider && lunnenDisplayWeightValue) {
+            // Обновление значения при изменении слайдера
+            lunnenDisplayWeightSlider.addEventListener('input', () => {
+                if (this.currentEditingBlock) {
+                    const weight = parseInt(lunnenDisplayWeightSlider.value);
+                    lunnenDisplayWeightValue.value = weight;
+                    this.currentEditingBlock.fontWeight = weight;
+                    this.updateGrid();
+                }
+            });
+            
+            // Обновление слайдера при изменении текстового поля
+            lunnenDisplayWeightValue.addEventListener('change', () => {
+                if (this.currentEditingBlock) {
+                    let weight = parseInt(lunnenDisplayWeightValue.value);
+                    weight = Math.max(100, Math.min(400, weight));
+                    lunnenDisplayWeightValue.value = weight;
+                    lunnenDisplayWeightSlider.value = weight;
+                    this.currentEditingBlock.fontWeight = weight;
+                    this.updateGrid();
+                }
+            });
+        }
+        
+        // Обработчики для OpenType features checkboxes
+        const featureCheckboxes = [
+            { id: 'featureSalt', key: 'salt' },
+            { id: 'featureAalt', key: 'aalt' },
+            { id: 'featureSs01', key: 'ss01' },
+            { id: 'featureSs02', key: 'ss02' },
+            { id: 'featureTnum', key: 'tnum' },
+            { id: 'featureDlig', key: 'dlig' }
+        ];
+        
+        featureCheckboxes.forEach(({ id, key }) => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) {
+                checkbox.addEventListener('change', () => {
+                    if (this.currentEditingBlock) {
+                        if (!this.currentEditingBlock.fontFeatures) {
+                            this.currentEditingBlock.fontFeatures = {
+                                salt: false,
+                                aalt: false,
+                                ss01: false,
+                                ss02: false,
+                                tnum: false,
+                                dlig: false
+                            };
+                        }
+                        this.currentEditingBlock.fontFeatures[key] = checkbox.checked;
+                        this.updateGrid();
+                    }
+                });
+            }
+        });
         
         // Graphics Size Mode переключатели (Height/Width)
         if (this.dom.graphicsSizeUnitHeight) {
@@ -3934,15 +3626,26 @@ class GridGenerator {
             this.dom.paragraphTextArea.value = block.content;
         }
         
-        // Устанавливаем режим выравнивания (по умолчанию baseline)
-        const alignmentMode = block.alignmentMode || 'baseline';
-        if (this.dom.alignmentModeBaseline && this.dom.alignmentModeXHeight) {
-            if (alignmentMode === 'x-height') {
-                this.dom.alignmentModeXHeight.checked = true;
-                this.dom.alignmentModeBaseline.checked = false;
+        // Показываем/скрываем Alignment Mode в зависимости от стиля
+        // Для Lunnen Display не показываем (нет строчных букв)
+        const alignmentModeSection = document.querySelector('#paragraphPanel .control-group:has([name="alignmentMode"])');
+        if (alignmentModeSection) {
+            if (block.styleRef === 'lunnenDisplay') {
+                alignmentModeSection.style.display = 'none';
             } else {
-                this.dom.alignmentModeBaseline.checked = true;
-                this.dom.alignmentModeXHeight.checked = false;
+                alignmentModeSection.style.display = 'block';
+                
+                // Устанавливаем режим выравнивания (по умолчанию baseline)
+                const alignmentMode = block.alignmentMode || 'baseline';
+                if (this.dom.alignmentModeBaseline && this.dom.alignmentModeXHeight) {
+                    if (alignmentMode === 'x-height') {
+                        this.dom.alignmentModeXHeight.checked = true;
+                        this.dom.alignmentModeBaseline.checked = false;
+                    } else {
+                        this.dom.alignmentModeBaseline.checked = true;
+                        this.dom.alignmentModeXHeight.checked = false;
+                    }
+                }
             }
         }
         
@@ -3958,6 +3661,42 @@ class GridGenerator {
         
         // Обновляем счетчик символов
         this.updateCharCounter();
+        
+        // Показываем/скрываем секцию настроек Lunnen Display в зависимости от выбранного стиля
+        const lunnenDisplayFeaturesSection = document.getElementById('lunnenDisplayFeaturesSection');
+        if (lunnenDisplayFeaturesSection) {
+            if (block.styleRef === 'lunnenDisplay') {
+                lunnenDisplayFeaturesSection.style.display = 'block';
+                
+                // Устанавливаем значения для weight slider
+                const weightSlider = document.getElementById('lunnenDisplayWeightSlider');
+                const weightValue = document.getElementById('lunnenDisplayWeightValue');
+                if (weightSlider && weightValue) {
+                    const weight = block.fontWeight || 400;
+                    weightSlider.value = weight;
+                    weightValue.value = weight;
+                }
+                
+                // Устанавливаем значения для OpenType features checkboxes
+                const features = block.fontFeatures || {
+                    salt: false,
+                    aalt: false,
+                    ss01: false,
+                    ss02: false,
+                    tnum: false,
+                    dlig: false
+                };
+                
+                document.getElementById('featureSalt').checked = features.salt || false;
+                document.getElementById('featureAalt').checked = features.aalt || false;
+                document.getElementById('featureSs01').checked = features.ss01 || false;
+                document.getElementById('featureSs02').checked = features.ss02 || false;
+                document.getElementById('featureTnum').checked = features.tnum || false;
+                document.getElementById('featureDlig').checked = features.dlig || false;
+            } else {
+                lunnenDisplayFeaturesSection.style.display = 'none';
+            }
+        }
         
         // Устанавливаем правильную иконку для кнопки Hide/Show
         const paragraphHideBtn = document.getElementById('paragraphHideBtn');
@@ -5074,18 +4813,34 @@ class GridGenerator {
     
     // Получить название стиля для отображения
     getStyleDisplayName(styleRef) {
-        // Преобразуем 'headline' в 'Headline', 'text' в 'Text'
-        return styleRef.charAt(0).toUpperCase() + styleRef.slice(1);
+        switch(styleRef) {
+            case 'headline':
+                return 'Headline';
+            case 'text':
+                return 'Text';
+            case 'caption':
+                return 'Caption';
+            case 'lunnenDisplay':
+                return 'Lunnen Display';
+            default:
+                return styleRef.charAt(0).toUpperCase() + styleRef.slice(1);
+        }
     }
     
     getStyleFontWeight(styleRef) {
         // Возвращаем начертание (Medium или Regular) вместо стиля
-        if (styleRef === 'headline') {
-            return this.settings.headlineFontWeight === 500 ? 'Medium' : 'Regular';
-        } else if (styleRef === 'text') {
-            return this.settings.textFontWeight === 500 ? 'Medium' : 'Regular';
+        switch(styleRef) {
+            case 'headline':
+                return this.settings.headlineFontWeight === 500 ? 'Medium' : 'Regular';
+            case 'text':
+                return this.settings.textFontWeight === 500 ? 'Medium' : 'Regular';
+            case 'caption':
+                return this.settings.captionFontWeight === 500 ? 'Medium' : 'Regular';
+            case 'lunnenDisplay':
+                return 'Regular'; // Lunnen Display always Regular
+            default:
+                return 'Medium';
         }
-        return 'Medium';
     }
     
     // ============================================
@@ -5145,20 +4900,35 @@ class GridGenerator {
         return this.rowBaselineToY(block.row, block.baselineOffset);
     }
     
+    // Get font metrics for a specific style
+    getFontMetricsForStyle(styleRef) {
+        const fontFamily = this.getFontFamilyForStyle(styleRef);
+        return this.fontMetrics[fontFamily] || this.fontMetrics['TT Commons Classic'];
+    }
+    
+    // Get font family for a specific style
+    getFontFamilyForStyle(styleRef) {
+        if (styleRef === 'lunnenDisplay') {
+            return 'Lunnen Display';
+        }
+        return 'TT Commons Classic';
+    }
+    
     // Calculate font size in mm based on module and height mode
     calculateFontSize() {
         const module = this.settings.gridModule;
         const sizeInModules = this.settings.headlineSize;
         const targetSize = module * sizeInModules; // size in mm
+        const metrics = this.getFontMetricsForStyle('headline');
         
         // Calculate font size based on whether we're using cap height or x-height
         let fontSize;
         if (this.settings.useXHeight) {
             // x-height should equal targetSize
-            fontSize = targetSize * (this.fontMetrics.unitsPerEm / this.fontMetrics.xHeight);
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.xHeight);
         } else {
             // cap height should equal targetSize
-            fontSize = targetSize * (this.fontMetrics.unitsPerEm / this.fontMetrics.capHeight);
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.capHeight);
         }
         
         return fontSize; // in mm
@@ -5169,18 +4939,105 @@ class GridGenerator {
         const module = this.settings.gridModule;
         const sizeInModules = this.settings.textSize;
         const targetSize = module * sizeInModules; // size in mm
+        const metrics = this.getFontMetricsForStyle('text');
         
         // Calculate font size based on whether we're using cap height or x-height
         let fontSize;
         if (this.settings.useXHeight2) {
             // x-height should equal targetSize
-            fontSize = targetSize * (this.fontMetrics.unitsPerEm / this.fontMetrics.xHeight);
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.xHeight);
         } else {
             // cap height should equal targetSize
-            fontSize = targetSize * (this.fontMetrics.unitsPerEm / this.fontMetrics.capHeight);
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.capHeight);
         }
         
         return fontSize; // in mm
+    }
+    
+    // Calculate font size for Caption style
+    calculateCaptionStyleFontSize() {
+        const module = this.settings.gridModule;
+        const sizeInModules = this.settings.captionSize;
+        const targetSize = module * sizeInModules;
+        const metrics = this.getFontMetricsForStyle('caption');
+        
+        let fontSize;
+        if (this.settings.useXHeightCaption) {
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.xHeight);
+        } else {
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.capHeight);
+        }
+        
+        return fontSize;
+    }
+    
+    // Calculate font size for Lunnen Display style
+    calculateLunnenDisplayStyleFontSize() {
+        const module = this.settings.gridModule;
+        const sizeInModules = this.settings.lunnenDisplaySize;
+        const targetSize = module * sizeInModules;
+        const metrics = this.getFontMetricsForStyle('lunnenDisplay');
+        
+        let fontSize;
+        if (this.settings.useXHeightLunnenDisplay) {
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.xHeight);
+        } else {
+            fontSize = targetSize * (metrics.unitsPerEm / metrics.capHeight);
+        }
+        
+        return fontSize;
+    }
+    
+    // Get style settings for any styleRef
+    getStyleSettings(styleRef) {
+        switch(styleRef) {
+            case 'headline':
+                return {
+                    fontSize: this.calculateFontSize(),
+                    lineHeight: this.settings.lineHeight,
+                    tracking: this.settings.tracking,
+                    useXHeight: this.settings.useXHeight,
+                    fontWeight: this.settings.headlineFontWeight,
+                    fontFamily: this.getFontFamilyForStyle('headline')
+                };
+            case 'text':
+                return {
+                    fontSize: this.calculateTextStyleFontSize(),
+                    lineHeight: this.settings.textLineHeight,
+                    tracking: this.settings.textTracking,
+                    useXHeight: this.settings.useXHeight2,
+                    fontWeight: this.settings.textFontWeight,
+                    fontFamily: this.getFontFamilyForStyle('text')
+                };
+            case 'caption':
+                return {
+                    fontSize: this.calculateCaptionStyleFontSize(),
+                    lineHeight: this.settings.captionLineHeight,
+                    tracking: this.settings.captionTracking,
+                    useXHeight: this.settings.useXHeightCaption,
+                    fontWeight: this.settings.captionFontWeight,
+                    fontFamily: this.getFontFamilyForStyle('caption')
+                };
+            case 'lunnenDisplay':
+                return {
+                    fontSize: this.calculateLunnenDisplayStyleFontSize(),
+                    lineHeight: this.settings.lunnenDisplayLineHeight,
+                    tracking: this.settings.lunnenDisplayTracking,
+                    useXHeight: false, // Lunnen Display всегда использует capHeight (нет строчных букв)
+                    fontWeight: 400, // Lunnen Display always 400
+                    fontFamily: this.getFontFamilyForStyle('lunnenDisplay')
+                };
+            default:
+                // Fallback to text style
+                return {
+                    fontSize: this.calculateTextStyleFontSize(),
+                    lineHeight: this.settings.textLineHeight,
+                    tracking: this.settings.textTracking,
+                    useXHeight: this.settings.useXHeight2,
+                    fontWeight: this.settings.textFontWeight,
+                    fontFamily: this.getFontFamilyForStyle('text')
+                };
+        }
     }
     
     // ============================================
@@ -5215,6 +5072,34 @@ class GridGenerator {
         return Math.round(MathUtils.mmToPt(lineHeightMm) * 10) / 10;
     }
     
+    // Get font size in pt for Caption
+    getCaptionFontSizePt() {
+        const fontSizeMm = this.calculateCaptionStyleFontSize();
+        return Math.round(MathUtils.mmToPt(fontSizeMm) * 10) / 10;
+    }
+    
+    // Get line height in pt for Caption
+    getCaptionLineHeightPt() {
+        const module = this.settings.gridModule;
+        const lineHeightInModules = this.settings.captionLineHeight;
+        const lineHeightMm = module * lineHeightInModules;
+        return Math.round(MathUtils.mmToPt(lineHeightMm) * 10) / 10;
+    }
+    
+    // Get font size in pt for Lunnen Display
+    getLunnenDisplayFontSizePt() {
+        const fontSizeMm = this.calculateLunnenDisplayStyleFontSize();
+        return Math.round(MathUtils.mmToPt(fontSizeMm) * 10) / 10;
+    }
+    
+    // Get line height in pt for Lunnen Display
+    getLunnenDisplayLineHeightPt() {
+        const module = this.settings.gridModule;
+        const lineHeightInModules = this.settings.lunnenDisplayLineHeight;
+        const lineHeightMm = module * lineHeightInModules;
+        return Math.round(MathUtils.mmToPt(lineHeightMm) * 10) / 10;
+    }
+    
     // Update font size displays in UI
     updateFontSizeDisplays() {
         if (this.dom.headlineFontSize) {
@@ -5227,6 +5112,18 @@ class GridGenerator {
             const fontSize = this.getTextFontSizePt();
             const lineHeight = this.getTextLineHeightPt();
             this.dom.textFontSize.textContent = `${fontSize}/${lineHeight} pt`;
+        }
+        
+        if (this.dom.captionFontSize) {
+            const fontSize = this.getCaptionFontSizePt();
+            const lineHeight = this.getCaptionLineHeightPt();
+            this.dom.captionFontSize.textContent = `${fontSize}/${lineHeight} pt`;
+        }
+        
+        if (this.dom.lunnenDisplayFontSize) {
+            const fontSize = this.getLunnenDisplayFontSizePt();
+            const lineHeight = this.getLunnenDisplayLineHeightPt();
+            this.dom.lunnenDisplayFontSize.textContent = `${fontSize}/${lineHeight} pt`;
         }
     }
     
@@ -5368,15 +5265,12 @@ class GridGenerator {
         const module = this.settings.gridModule;
         
         // Get style settings based on block's styleRef
-        const isHeadline = block.styleRef === 'headline';
-        const fontSize = isHeadline ? this.calculateFontSize() : this.calculateTextStyleFontSize();
-        const lineHeightSetting = isHeadline ? this.settings.lineHeight : this.settings.textLineHeight;
-        const trackingSetting = isHeadline ? this.settings.tracking : this.settings.textTracking;
+        const style = this.getStyleSettings(block.styleRef || 'text');
         
         // Get text content
         const inputLines = block.content.split('\n').filter(line => line.trim() !== '');
         if (inputLines.length === 0) {
-            return lineHeightSetting; // Return minimum height for empty block
+            return style.lineHeight; // Return minimum height for empty block
         }
         
         // Calculate text block width
@@ -5385,12 +5279,12 @@ class GridGenerator {
         // Wrap text lines to fit width
         const wrappedLines = [];
         inputLines.forEach(line => {
-            const wrapped = this.wrapText(line, textBlockWidth, fontSize, 1, trackingSetting);
+            const wrapped = this.wrapText(line, textBlockWidth, style.fontSize, 1, style.tracking);
             wrappedLines.push(...wrapped);
         });
         
         // Height in modules = lineHeight * number of lines
-        return lineHeightSetting * wrappedLines.length;
+        return style.lineHeight * wrappedLines.length;
     }
     
     // Draw text block on canvas with hover effects and drag handles
@@ -5401,13 +5295,14 @@ class GridGenerator {
         const alignment = block.alignment || 'left';
         
         // Get style settings based on block's styleRef
-        const isHeadline = block.styleRef === 'headline';
-        const fontSize = isHeadline ? this.calculateFontSize() : this.calculateTextStyleFontSize();
+        const style = this.getStyleSettings(block.styleRef || 'text');
+        const fontSize = style.fontSize;
         const scaledFontSize = fontSize * scale;
-        const lineHeightSetting = isHeadline ? this.settings.lineHeight : this.settings.textLineHeight;
-        const trackingSetting = isHeadline ? this.settings.tracking : this.settings.textTracking;
-        const useXHeight = isHeadline ? this.settings.useXHeight : this.settings.useXHeight2;
-        const fontWeight = isHeadline ? this.settings.headlineFontWeight : this.settings.textFontWeight;
+        const lineHeightSetting = style.lineHeight;
+        const trackingSetting = style.tracking;
+        const useXHeight = style.useXHeight;
+        const fontWeight = style.fontWeight;
+        const fontFamily = style.fontFamily;
         
         // Get text content
         const inputLines = block.content.split('\n').filter(line => line.trim() !== '');
@@ -5460,13 +5355,32 @@ class GridGenerator {
         
         // Calculate cap height and x-height for positioning
         let actualCapHeight, actualXHeight;
-        const textSize = isHeadline ? this.settings.headlineSize : this.settings.textSize;
+        const metrics = this.getFontMetricsForStyle(block.styleRef || 'text');
+        // Get size in modules for the current style
+        let textSize;
+        switch(block.styleRef) {
+            case 'headline':
+                textSize = this.settings.headlineSize;
+                break;
+            case 'text':
+                textSize = this.settings.textSize;
+                break;
+            case 'caption':
+                textSize = this.settings.captionSize;
+                break;
+            case 'lunnenDisplay':
+                textSize = this.settings.lunnenDisplaySize;
+                break;
+            default:
+                textSize = this.settings.textSize;
+        }
+        
         if (useXHeight) {
             actualXHeight = module * textSize * scale;
-            actualCapHeight = actualXHeight * (this.fontMetrics.capHeight / this.fontMetrics.xHeight);
+            actualCapHeight = actualXHeight * (metrics.capHeight / metrics.xHeight);
         } else {
             actualCapHeight = module * textSize * scale;
-            actualXHeight = actualCapHeight * (this.fontMetrics.xHeight / this.fontMetrics.capHeight);
+            actualXHeight = actualCapHeight * (metrics.xHeight / metrics.capHeight);
         }
         
         const topMargin = module * margins * scale;
@@ -5500,14 +5414,48 @@ class GridGenerator {
         
         // Create text elements
         const textAttrs = {
-            'font-family': 'TT Commons Classic, -apple-system, BlinkMacSystemFont, sans-serif',
-            'font-weight': fontWeight.toString(),
+            'font-family': `${fontFamily}, -apple-system, BlinkMacSystemFont, sans-serif`,
+            'font-weight': (block.styleRef === 'lunnenDisplay' && block.fontWeight) ? block.fontWeight.toString() : fontWeight.toString(),
             'font-size': `${scaledFontSize}`,
             'text-anchor': 'start', // Always left-align text inside the block
             'fill': gridColor,
             'fill-opacity': '1',
             'letter-spacing': `${trackingSetting}em`
         };
+        
+        // Добавляем настройки шрифта для Lunnen Display через style (для SVG)
+        if (block.styleRef === 'lunnenDisplay') {
+            const styleAttrs = [];
+            
+            // Font variation settings
+            if (block.fontWeight) {
+                const weightSetting = `'wght' ${block.fontWeight}`;
+                textAttrs['font-variation-settings'] = weightSetting;
+                styleAttrs.push(`font-variation-settings: ${weightSetting}`);
+            }
+            
+            // Font feature settings
+            if (block.fontFeatures) {
+                const features = [];
+                if (block.fontFeatures.salt) features.push("'salt' 1");
+                if (block.fontFeatures.aalt) features.push("'aalt' 1");
+                if (block.fontFeatures.ss01) features.push("'ss01' 1");
+                if (block.fontFeatures.ss02) features.push("'ss02' 1");
+                if (block.fontFeatures.tnum) features.push("'tnum' 1");
+                if (block.fontFeatures.dlig) features.push("'dlig' 1");
+                
+                if (features.length > 0) {
+                    const featureString = features.join(', ');
+                    textAttrs['font-feature-settings'] = featureString;
+                    styleAttrs.push(`font-feature-settings: ${featureString}`);
+                }
+            }
+            
+            // Объединяем все стили в style атрибут
+            if (styleAttrs.length > 0) {
+                textAttrs['style'] = styleAttrs.join('; ') + ';';
+            }
+        }
         
         // Draw each line
         let previousBaselineY = null;
@@ -5518,7 +5466,13 @@ class GridGenerator {
                 const lineApproxY = firstLineY;
                 lineBaselineY = this.snapToBaseline(lineApproxY, frontY, scale, true, alignmentMode);
                 previousBaselineY = lineBaselineY;
+            } else if (alignmentMode === 'x-height') {
+                // В режиме x-height все строки после первой НЕ привязываем к сетке
+                // Используем точное расстояние согласно интерлиньяжу
+                lineBaselineY = previousBaselineY + lineHeightInMm;
+                previousBaselineY = lineBaselineY;
             } else {
+                // В режиме baseline остальные строки привязываются к сетке
                 const lineApproxY = previousBaselineY + lineHeightInMm;
                 lineBaselineY = this.snapToBaseline(lineApproxY, frontY, scale, false);
                 previousBaselineY = lineBaselineY;
@@ -5539,13 +5493,22 @@ class GridGenerator {
                 ? frontX + position.x - scaledTextWidth  // Left edge of right-aligned block
                 : frontX + position.x;                    // Left edge of left-aligned block
             
+            // Calculate Y position of the top of the first line
+            // Text baseline is at firstLineY, so top is at firstLineY - actualCapHeight
+            const firstLineTop = firstLineY - actualCapHeight;
+            
+            // Calculate total height of text block
+            // For multiple lines: first line capHeight + (n-1) * lineHeight + last line descent
+            const descent = actualCapHeight * 0.25; // Approximate descent
+            const totalHeight = actualCapHeight + lineHeightInMm * (wrappedLines.length - 1) + descent;
+            
             // Create invisible hover area for the entire block
             const hoverArea = this.createSVGElement('rect', {
                 id: `hover-area-${block.id}`,
                 x: boundsX,
-                y: frontY + position.y + topMargin,
+                y: firstLineTop,
                 width: scaledTextWidth,
-                height: lineHeightInMm * wrappedLines.length,
+                height: totalHeight,
                 fill: 'transparent',
                 'fill-opacity': '0',
                 stroke: 'none',
@@ -5556,9 +5519,9 @@ class GridGenerator {
             const boundsRect = this.createSVGElement('rect', {
                 id: `bounds-${block.id}`,
                 x: boundsX,
-                y: frontY + position.y + topMargin,
+                y: firstLineTop,
                 width: scaledTextWidth,
-                height: lineHeightInMm * wrappedLines.length,
+                height: totalHeight,
                 fill: 'rgba(255, 255, 255, 0.05)',
                 stroke: gridColor,
                 'stroke-width': '1',
@@ -5578,16 +5541,15 @@ class GridGenerator {
             // Create resize handle (on the left for right-aligned blocks, on the right for left-aligned)
             // Фиксированная ширина хэндла независимо от зума (как у бейслайна)
             const handleWidth = 4;
-            const handleHeight = lineHeightInMm * wrappedLines.length;
             const handleX = alignment === 'right' 
                 ? boundsX - handleWidth / 2                                  // Left edge for right-aligned blocks
                 : frontX + position.x + scaledTextWidth - handleWidth / 2;   // Right edge for left-aligned blocks
             const resizeHandle = this.createSVGElement('rect', {
                 id: `resize-handle-${block.id}`,
                 x: handleX,
-                y: frontY + position.y + topMargin,
+                y: firstLineTop,
                 width: handleWidth,
-                height: handleHeight,
+                height: totalHeight,
                 fill: gridColor,
                 'fill-opacity': '0',
                 stroke: 'none',
@@ -7395,7 +7357,6 @@ class GridGenerator {
         const newBlock = {
             id: newId,
             content: 'Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.',
-            template: 'Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.',
             styleRef: 'text',
             x: 1,
             row: 0,
@@ -8132,20 +8093,12 @@ class GridGenerator {
             savedPanY = this.zoomPanManager.panY;
         }
         
-        const { frontWidth, frontHeight, thickness } = this.settings;
+        const { frontWidth, frontHeight } = this.settings;
         
-        // Calculate total dimensions in mm
-        const totalWidth = frontWidth + 2 * thickness;
-        const totalHeight = frontHeight + 2 * thickness;
-        
-        // Calculate scale to fit in display area with extra space for dimensions
-        const maxDimension = Math.max(totalWidth, totalHeight);
+        // Calculate scale to fit in display area
+        const maxDimension = Math.max(frontWidth, frontHeight);
         const availableSize = this.DISPLAY_SIZE - 2 * this.PADDING;
         const scale = availableSize / maxDimension;
-        
-        // Calculate scaled dimensions
-        const scaledTotalWidth = totalWidth * scale;
-        const scaledTotalHeight = totalHeight * scale;
         
         // Set SVG to fixed size (square, equal to viewport height)
         const svgSize = this.DISPLAY_SIZE;
@@ -8162,25 +8115,25 @@ class GridGenerator {
         // Clear existing content
         this.dom.svg.innerHTML = '';
         
-        // Calculate positions (perfectly centered)
-        const startX = (svgSize - scaledTotalWidth) / 2;
-        const startY = (svgSize - scaledTotalHeight) / 2;
-        
+        // Calculate scaled dimensions
         const scaledFrontWidth = frontWidth * scale;
         const scaledFrontHeight = frontHeight * scale;
-        const scaledThickness = thickness * scale;
+        
+        // Calculate positions (perfectly centered)
+        const startX = (svgSize - scaledFrontWidth) / 2;
+        const startY = (svgSize - scaledFrontHeight) / 2;
         
         // Draw rectangles
-        this.drawRectangles(this.dom.svg, startX, startY, scaledFrontWidth, scaledFrontHeight, scaledThickness, scale);
+        this.drawRectangles(this.dom.svg, startX, startY, scaledFrontWidth, scaledFrontHeight, scale);
         
         // Draw labels if enabled (but default is false now)
         if (this.settings.showLabels) {
-            this.drawLabels(this.dom.svg, startX, startY, scaledFrontWidth, scaledFrontHeight, scaledThickness);
+            this.drawLabels(this.dom.svg, startX, startY, scaledFrontWidth, scaledFrontHeight);
         }
         
         // Draw grid elements on front panel
-        const frontX = startX + scaledThickness;
-        const frontY = startY + scaledThickness;
+        const frontX = startX;
+        const frontY = startY;
         
         // Draw columns if enabled
         if (this.settings.showColumns) {
@@ -8196,36 +8149,8 @@ class GridGenerator {
         if (this.settings.showBaseline) {
             this.gridRenderer.drawBaseline(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
             
-            // Draw baseline on side panels if they are visible
-            if (this.settings.showSidePanels) {
-                // Left panel - vertical baseline (margin from right side where it touches front)
-                this.drawBaselineVerticalLeftRight(this.dom.svg, startX, frontY, scaledThickness, scaledFrontHeight, scale, 'left');
-                
-                // Right panel - vertical baseline (margin from left side where it touches front)
-                this.drawBaselineVerticalLeftRight(this.dom.svg, startX + scaledThickness + scaledFrontWidth, frontY, scaledThickness, scaledFrontHeight, scale, 'right');
-                
-                // Top panel - horizontal baseline (margin from bottom where it touches front)
-                this.drawBaselineTopBottom(this.dom.svg, frontX, startY, scaledFrontWidth, scaledThickness, scale, 'top');
-                
-                // Bottom panel - horizontal baseline (margin from top where it touches front)
-                this.drawBaselineTopBottom(this.dom.svg, frontX, startY + scaledThickness + scaledFrontHeight, scaledFrontWidth, scaledThickness, scale, 'bottom');
-            }
         }
         
-        // Draw columns on side panels if they are visible and columns are enabled
-        if (this.settings.showColumns && this.settings.showSidePanels) {
-            // Left panel - vertical columns (using rows parameters from front)
-            this.drawColumnsVerticalLeftRight(this.dom.svg, startX, frontY, scaledThickness, scaledFrontHeight, scale, 'left');
-            
-            // Right panel - vertical columns (using rows parameters from front)
-            this.drawColumnsVerticalLeftRight(this.dom.svg, startX + scaledThickness + scaledFrontWidth, frontY, scaledThickness, scaledFrontHeight, scale, 'right');
-            
-            // Top panel - horizontal columns (using columns parameters from front)
-            this.drawColumnsTopBottom(this.dom.svg, frontX, startY, scaledFrontWidth, scaledThickness, scale, 'top');
-            
-            // Bottom panel - horizontal columns (using columns parameters from front)
-            this.drawColumnsTopBottom(this.dom.svg, frontX, startY + scaledThickness + scaledFrontHeight, scaledFrontWidth, scaledThickness, scale, 'bottom');
-        }
         
         // Draw text blocks, icons and claim on front panel (if enabled)
         if (this.settings.showObjects) {
@@ -8281,79 +8206,32 @@ class GridGenerator {
         return element;
     }
     
-    drawRectangles(container, x, y, frontW, frontH, thickness, scale = 1) {
+    drawRectangles(container, x, y, frontW, frontH, scale = 1) {
         // For export: 0.25pt = 25.4/72*0.25 = 0.088194444... mm (since viewBox is in mm)
         const strokeWidth = scale === 1 ? '0.088194444' : '0.5';
         
-        // Front (center) - always visible
+        // Front panel
         this.createSVGElement('rect', {
-            x: x + thickness,
-            y: y + thickness,
+            x: x,
+            y: y,
             width: frontW,
             height: frontH,
             fill: this.settings.boxColor,
             stroke: '#000000',
             'stroke-width': strokeWidth
         }, container);
-        
-        // Side panels - only if showSidePanels is enabled
-        if (this.settings.showSidePanels) {
-            // Left
-            this.createSVGElement('rect', {
-                x: x,
-                y: y + thickness,
-                width: thickness,
-                height: frontH,
-                fill: this.settings.boxColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
-            
-            // Right
-            this.createSVGElement('rect', {
-                x: x + thickness + frontW,
-                y: y + thickness,
-                width: thickness,
-                height: frontH,
-                fill: this.settings.boxColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
-            
-            // Top
-            this.createSVGElement('rect', {
-                x: x + thickness,
-                y: y,
-                width: frontW,
-                height: thickness,
-                fill: this.settings.boxColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
-            
-            // Bottom
-            this.createSVGElement('rect', {
-                x: x + thickness,
-                y: y + thickness + frontH,
-                width: frontW,
-                height: thickness,
-                fill: this.settings.boxColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
-        }
     }
     
-    drawDimensions(container, x, y, frontW, frontH, thickness, scale = 1) {
-        const { frontWidth, frontHeight, thickness: thicknessMm } = this.settings;
+    drawDimensions(container, x, y, frontW, frontH, scale = 1) {
+        const { frontWidth, frontHeight } = this.settings;
         const offset = scale === 1 ? 5 : 15; // smaller offset in mm for export
         const fontSize = scale === 1 ? '3' : null; // fontSize only for export
         
         // Front width dimension (below front panel)
         this.createDimensionText(
             container,
-            x + thickness + frontW / 2,
-            y + thickness + frontH + offset,
+            x + frontW / 2,
+            y + frontH + offset,
             `${frontWidth.toFixed(1)} mm`,
             'middle',
             fontSize
@@ -8362,19 +8240,9 @@ class GridGenerator {
         // Front height dimension (right of front panel)
         this.createDimensionText(
             container,
-            x + thickness + frontW + offset,
-            y + thickness + frontH / 2,
+            x + frontW + offset,
+            y + frontH / 2,
             `${frontHeight.toFixed(1)} mm`,
-            'middle',
-            fontSize
-        );
-        
-        // Thickness dimension (right of right panel)
-        this.createDimensionText(
-            container,
-            x + thickness + frontW + thickness + offset,
-            y + thickness + frontH / 2,
-            `${thicknessMm.toFixed(1)} mm`,
             'middle',
             fontSize
         );
@@ -8402,23 +8270,11 @@ class GridGenerator {
         textElement.textContent = text;
     }
     
-    drawLabels(container, x, y, frontW, frontH, thickness, scale = 1) {
+    drawLabels(container, x, y, frontW, frontH, scale = 1) {
         const fontSize = scale === 1 ? '4' : null;
         
         // Front label
-        this.createLabel(container, x + thickness + frontW / 2, y + thickness + frontH / 2, 'FRONT', false, fontSize);
-        
-        // Left label
-        this.createLabel(container, x + thickness / 2, y + thickness + frontH / 2, 'LEFT', true, fontSize);
-        
-        // Right label
-        this.createLabel(container, x + thickness + frontW + thickness / 2, y + thickness + frontH / 2, 'RIGHT', true, fontSize);
-        
-        // Top label
-        this.createLabel(container, x + thickness + frontW / 2, y + thickness / 2, 'TOP', false, fontSize);
-        
-        // Bottom label
-        this.createLabel(container, x + thickness + frontW / 2, y + thickness + frontH + thickness / 2, 'BOTTOM', false, fontSize);
+        this.createLabel(container, x + frontW / 2, y + frontH / 2, 'FRONT', false, fontSize);
     }
     
     createLabel(container, x, y, text, rotate = false, fontSize = null) {
@@ -8776,37 +8632,49 @@ class GridGenerator {
     }
     
     // Итерация 7: Упрощенный экспорт SVG через SVGExporter
-    exportSVG() {
-        const { frontWidth, frontHeight, thickness, gridModule, margins, columnCount, rowCount, rowHeight } = this.settings;
+    async exportSVG() {
+        const { frontWidth, frontHeight, gridModule, columnCount, rowCount } = this.settings;
         
         // Создаем SVG для экспорта (scale = 1 для точных размеров)
-        const exportSvg = this.createExportSVG();
+        const exportSvg = await this.createExportSVG();
         
-        // Генерируем имя файла с параметрами
-        const filename = `grid_width${frontWidth}_height${frontHeight}_thickness${thickness}_module${gridModule.toFixed(2)}_margins${margins.toFixed(2)}_columns${columnCount}_rows${rowCount}_rowheight${rowHeight}.svg`;
+        // Генерируем timestamp с точностью до минуты
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+        
+        // Генерируем имя файла: "размер колонки строки модуль timestamp.svg"
+        // Например: "120×24mm 12col 12rows 5.05mm 20251116_1430.svg"
+        const size = `${frontWidth}×${frontHeight}mm`;
+        const cols = `${columnCount}col`;
+        const rows = `${rowCount}rows`;
+        const module = `${gridModule.toFixed(2)}mm`;
+        
+        const filename = `${size} ${cols} ${rows} ${module} ${timestamp}.svg`;
+        
+        // Получаем значение тогла "Outline fonts"
+        const convertToOutlines = this.dom.convertToOutlinesCheckbox ? this.dom.convertToOutlinesCheckbox.checked : false;
         
         // Экспортируем через модуль
-        this.svgExporter.exportToFile(exportSvg, filename, {
+        await this.svgExporter.exportToFile(exportSvg, filename, {
             removeInteractive: true,
-            optimizeSize: true
+            optimizeSize: true,
+            convertTextToOutlines: convertToOutlines
         });
     }
     
     // Итерация 7: Создание SVG для экспорта (без интерактивных элементов)
-    createExportSVG() {
-        const { frontWidth, frontHeight, thickness } = this.settings;
+    async createExportSVG() {
+        const { frontWidth, frontHeight } = this.settings;
         
         // Create a new SVG for export with actual mm dimensions
-        const totalWidth = frontWidth + 2 * thickness;
-        const totalHeight = frontHeight + 2 * thickness;
         const scale = 1; // Export uses scale = 1 (actual mm)
         
         // Create SVG with mm units
         const exportSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         exportSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-        exportSvg.setAttribute('width', `${totalWidth}mm`);
-        exportSvg.setAttribute('height', `${totalHeight}mm`);
-        exportSvg.setAttribute('viewBox', `0 0 ${totalWidth} ${totalHeight}`);
+        exportSvg.setAttribute('width', `${frontWidth}mm`);
+        exportSvg.setAttribute('height', `${frontHeight}mm`);
+        exportSvg.setAttribute('viewBox', `0 0 ${frontWidth} ${frontHeight}`);
         
         // Create groups for better organization in Figma/Illustrator
         const boxGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -8814,11 +8682,11 @@ class GridGenerator {
         exportSvg.appendChild(boxGroup);
         
         // Draw rectangles at actual mm scale
-        this.drawRectangles(boxGroup, 0, 0, frontWidth, frontHeight, thickness, scale);
+        this.drawRectangles(boxGroup, 0, 0, frontWidth, frontHeight, scale);
         
         // Draw grid elements on front panel (in mm)
-        const frontX = thickness;
-        const frontY = thickness;
+        const frontX = 0;
+        const frontY = 0;
         
         // Create main grid group to hold all grid elements
         const gridGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -8834,20 +8702,6 @@ class GridGenerator {
         gridGroup.appendChild(columnsGroup);
         this.gridRenderer.drawColumns(columnsGroup, frontX, frontY, frontWidth, frontHeight, scale);
         
-        // Draw columns on side panels if enabled
-        if (this.settings.showSidePanels) {
-            // Left panel - vertical columns (using rows parameters from front)
-            this.drawColumnsVerticalLeftRight(columnsGroup, 0, frontY, thickness, frontHeight, scale, 'left');
-            
-            // Right panel - vertical columns (using rows parameters from front)
-            this.drawColumnsVerticalLeftRight(columnsGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
-            
-            // Top panel - horizontal columns (using columns parameters from front)
-            this.drawColumnsTopBottom(columnsGroup, frontX, 0, frontWidth, thickness, scale, 'top');
-            
-            // Bottom panel - horizontal columns (using columns parameters from front)
-            this.drawColumnsTopBottom(columnsGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
-        }
         
         // Draw rows (in separate group, always export but hide if disabled)
         const rowsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -8869,27 +8723,12 @@ class GridGenerator {
         // Front panel baseline
         this.gridRenderer.drawBaseline(baselineGroup, frontX, frontY, frontWidth, frontHeight, scale);
         
-        // Side panels baseline if enabled
-        if (this.settings.showSidePanels) {
-            // Left panel - vertical baseline (margin from right side where it touches front)
-            this.drawBaselineVerticalLeftRight(baselineGroup, 0, frontY, thickness, frontHeight, scale, 'left');
-            
-            // Right panel - vertical baseline (margin from left side where it touches front)
-            this.drawBaselineVerticalLeftRight(baselineGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
-            
-            // Top panel - horizontal baseline (margin from bottom where it touches front)
-            this.drawBaselineTopBottom(baselineGroup, frontX, 0, frontWidth, thickness, scale, 'top');
-            
-            // Bottom panel - horizontal baseline (margin from top where it touches front)
-            this.drawBaselineTopBottom(baselineGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
-        }
-        
         // Add labels if enabled (in separate group)
         if (this.settings.showLabels) {
             const labelsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             labelsGroup.setAttribute('id', 'labels');
             exportSvg.appendChild(labelsGroup);
-            this.drawLabels(labelsGroup, 0, 0, frontWidth, frontHeight, thickness, scale);
+            this.drawLabels(labelsGroup, 0, 0, frontWidth, frontHeight, scale);
         }
         
         // Add text blocks (in separate groups)
@@ -8905,7 +8744,8 @@ class GridGenerator {
             this.graphicsBlocks.forEach(block => {
                 if (block.visible !== false && block.svgContent) {
                     const graphicsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                    graphicsGroup.setAttribute('id', `graphics-${block.id}`);
+                    // Use simple id for built-in blocks (icons, claim) without prefix
+                    graphicsGroup.setAttribute('id', block.isBuiltIn ? block.id : `graphics-${block.id}`);
                     exportSvg.appendChild(graphicsGroup);
                     
                     // Draw graphics block
@@ -8914,23 +8754,287 @@ class GridGenerator {
             });
         }
         
-        // Add icons block (in separate group)
-        const iconsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        iconsGroup.setAttribute('id', 'icons');
-        exportSvg.appendChild(iconsGroup);
-        this.drawIconsBlockForExport(iconsGroup, frontX, frontY, frontWidth, frontHeight, scale);
+        // Add text styles summary outside artboard (for reference in editor)
+        this.addTextStylesSummary(exportSvg, totalWidth, scale);
         
-        // Add claim block (in separate group)
-        const claimGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        claimGroup.setAttribute('id', 'claim');
-        exportSvg.appendChild(claimGroup);
-        this.drawClaimBlockForExport(claimGroup, frontX, frontY, frontWidth, frontHeight, scale);
+        // Add design kit (logo and graphic elements) in multiple sizes outside artboard (for reference in editor)
+        await this.addLunnenLogoReference(exportSvg, totalWidth, scale);
         
         return exportSvg;
     }
     
+    /**
+     * Добавить справку по текстовым стилям за пределами артборда
+     */
+    addTextStylesSummary(svg, artboardWidth, scale = 1) {
+        // Позиция справа от артборда с отступом 20mm
+        const summaryX = artboardWidth + 20;
+        const summaryY = 10;
+        const lineHeight = 5; // mm между строками
+        
+        // Создаем группу для справки
+        const summaryGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        summaryGroup.setAttribute('id', 'text-styles-reference');
+        summaryGroup.setAttribute('opacity', '0.7');
+        
+        // Получаем контрастный цвет для текста
+        const textColor = this.getContrastColor();
+        
+        // Функция для создания строки текста
+        const createTextLine = (content, x, y, fontSize = 3, fontWeight = 400) => {
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', x * scale);
+            text.setAttribute('y', y * scale);
+            text.setAttribute('font-family', 'TT Commons Classic, -apple-system, sans-serif');
+            text.setAttribute('font-size', fontSize * scale);
+            text.setAttribute('font-weight', fontWeight);
+            text.setAttribute('fill', textColor);
+            text.textContent = content;
+            return text;
+        };
+        
+        // Заголовок
+        summaryGroup.appendChild(createTextLine('Text Styles', summaryX, summaryY, 4, 500));
+        
+        let currentY = summaryY + lineHeight * 1.5;
+        
+        // Получаем все текстовые стили и их параметры
+        const styles = this.getTextStylesInfo();
+        
+        styles.forEach(style => {
+            const line = `${style.name}  ${style.fontSize}/${style.lineHeight} pt`;
+            summaryGroup.appendChild(createTextLine(line, summaryX, currentY, 3, 400));
+            currentY += lineHeight;
+        });
+        
+        svg.appendChild(summaryGroup);
+    }
+    
+    /**
+     * Получить информацию о всех текстовых стилях
+     */
+    getTextStylesInfo() {
+        const { gridModule } = this.settings;
+        const mmToPt = 2.83465; // 1mm = 2.83465pt
+        
+        const styles = [];
+        
+        // Headline
+        const headlineSize = this.settings.headlineSize || 1;
+        const headlineLineHeight = this.settings.lineHeight || 2;
+        const headlineFontSize = this.calculateActualFontSize('headline', headlineSize);
+        const headlineLineHeightPt = (headlineLineHeight * gridModule * mmToPt).toFixed(1);
+        
+        styles.push({
+            name: 'Headline',
+            fontSize: (headlineFontSize * mmToPt).toFixed(1),
+            lineHeight: headlineLineHeightPt
+        });
+        
+        // Text
+        const textSize = this.settings.textSize || 1;
+        const textLineHeight = this.settings.textLineHeight || 2;
+        const textFontSize = this.calculateActualFontSize('text', textSize);
+        const textLineHeightPt = (textLineHeight * gridModule * mmToPt).toFixed(1);
+        
+        styles.push({
+            name: 'Text',
+            fontSize: (textFontSize * mmToPt).toFixed(1),
+            lineHeight: textLineHeightPt
+        });
+        
+        // Caption
+        const captionSize = this.settings.captionSize || 0.5;
+        const captionLineHeight = this.settings.captionLineHeight || 1;
+        const captionFontSize = this.calculateActualFontSize('caption', captionSize);
+        const captionLineHeightPt = (captionLineHeight * gridModule * mmToPt).toFixed(1);
+        
+        styles.push({
+            name: 'Caption',
+            fontSize: (captionFontSize * mmToPt).toFixed(1),
+            lineHeight: captionLineHeightPt
+        });
+        
+        // Lunnen Display
+        const lunnenSize = this.settings.lunnenDisplaySize || 3;
+        const lunnenLineHeight = this.settings.lunnenDisplayLineHeight || 4;
+        const lunnenFontSize = this.calculateActualFontSize('lunnenDisplay', lunnenSize);
+        const lunnenLineHeightPt = (lunnenLineHeight * gridModule * mmToPt).toFixed(1);
+        
+        styles.push({
+            name: 'Lunnen Display',
+            fontSize: (lunnenFontSize * mmToPt).toFixed(1),
+            lineHeight: lunnenLineHeightPt
+        });
+        
+        return styles;
+    }
+    
+    /**
+     * Рассчитать реальный размер шрифта с учетом cap-height/x-height
+     */
+    calculateActualFontSize(styleRef, sizeInModules) {
+        const { gridModule } = this.settings;
+        const targetSize = gridModule * sizeInModules; // size in mm
+        
+        // Метрики шрифтов
+        const fontMetrics = {
+            capHeight: 630,
+            xHeight: 447,
+            unitsPerEm: 1000
+        };
+        
+        // Определяем, какой стиль использует x-height
+        let useXHeight = false;
+        if (styleRef === 'headline') {
+            useXHeight = this.settings.useXHeight !== false;
+        } else if (styleRef === 'text') {
+            useXHeight = this.settings.useXHeight2 !== false;
+        } else if (styleRef === 'caption') {
+            useXHeight = this.settings.useXHeightCaption !== false;
+        }
+        // Lunnen Display всегда использует cap-height
+        
+        // Calculate font size based on whether we're using cap height or x-height
+        let fontSize;
+        if (useXHeight) {
+            fontSize = targetSize * (fontMetrics.unitsPerEm / fontMetrics.xHeight);
+        } else {
+            fontSize = targetSize * (fontMetrics.unitsPerEm / fontMetrics.capHeight);
+        }
+        
+        return fontSize; // in mm
+    }
+    
+    /**
+     * Добавить дизайн-кит (логотип и графические элементы) в нескольких размерах за пределами артборда
+     */
+    async addLunnenLogoReference(svg, artboardWidth, scale = 1) {
+        try {
+            const { gridModule } = this.settings;
+            
+            // Список всех графических элементов для дизайн-кита
+            const graphicElements = [
+                { file: 'lunnen_logo.svg', name: 'Lunnen Logo' },
+                { file: '1.svg', name: '1' },
+                { file: '2.svg', name: '2' },
+                { file: '3.svg', name: '3' },
+                { file: 'icons.svg', name: 'Icons' },
+                { file: 'l_sign.svg', name: 'L Sign' },
+                { file: 'qr_lunnen.pro.svg', name: 'QR' },
+                { file: 'yf_claim.svg', name: 'YF Claim' }
+            ];
+            
+            // Позиция под справкой по текстовым стилям
+            const startX = artboardWidth + 20;
+            let currentY = 40; // Под Text Styles
+            const verticalGap = 3; // mm между элементами
+            const sectionGap = 10; // mm между разными графическими элементами
+            
+            // Размеры в модулях (от большего к меньшему)
+            const sizes = [6, 5, 4, 3, 2, 1];
+            
+            // Создаем группу для всего дизайн-кита
+            const designKitGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            designKitGroup.setAttribute('id', 'design-kit-reference');
+            designKitGroup.setAttribute('opacity', '0.7');
+            
+            // Получаем контрастный цвет для текста
+            const textColor = this.getContrastColor();
+            
+            // Проходим по каждому графическому элементу
+            for (const element of graphicElements) {
+                // Загружаем SVG элемента
+                const response = await fetch(`graphics/${element.file}`);
+                if (!response.ok) {
+                    console.warn(`Failed to load ${element.file}`);
+                    continue;
+                }
+                
+                const svgText = await response.text();
+                
+                // Парсим SVG
+                const parser = new DOMParser();
+                const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+                const svgElement = svgDoc.querySelector('svg');
+                
+                if (!svgElement) {
+                    console.warn(`Invalid SVG structure for ${element.file}`);
+                    continue;
+                }
+                
+                // Получаем оригинальные размеры из viewBox
+                const viewBox = svgElement.getAttribute('viewBox');
+                const [, , originalWidth, originalHeight] = viewBox.split(' ').map(Number);
+                const aspectRatio = originalWidth / originalHeight;
+                
+                // Добавляем заголовок секции
+                const sectionTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                sectionTitle.setAttribute('x', startX * scale);
+                sectionTitle.setAttribute('y', currentY * scale);
+                sectionTitle.setAttribute('font-family', 'TT Commons Classic, -apple-system, sans-serif');
+                sectionTitle.setAttribute('font-size', 4 * scale);
+                sectionTitle.setAttribute('font-weight', 500);
+                sectionTitle.setAttribute('fill', textColor);
+                sectionTitle.setAttribute('dominant-baseline', 'hanging');
+                sectionTitle.textContent = element.name;
+                
+                designKitGroup.appendChild(sectionTitle);
+                
+                currentY += 6; // Отступ после заголовка
+                
+                // Рендерим элемент в разных размерах
+                sizes.forEach(heightInModules => {
+                    // Вычисляем размеры
+                    const heightInMm = gridModule * heightInModules;
+                    const widthInMm = heightInMm * aspectRatio;
+                    
+                    // Создаем группу для этого экземпляра
+                    const instanceGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                    instanceGroup.setAttribute('transform', `translate(${startX * scale}, ${currentY * scale}) scale(${(heightInMm / originalHeight) * scale})`);
+                    
+                    // Копируем все содержимое SVG (включая defs, если есть)
+                    Array.from(svgElement.children).forEach(child => {
+                        const clonedChild = child.cloneNode(true);
+                        instanceGroup.appendChild(clonedChild);
+                    });
+                    
+                    designKitGroup.appendChild(instanceGroup);
+                    
+                    // Добавляем подпись с размером справа от элемента
+                    const labelX = startX + widthInMm + 5; // 5mm отступ справа
+                    const labelY = currentY + (heightInMm / 2); // По центру высоты
+                    
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    label.setAttribute('x', labelX * scale);
+                    label.setAttribute('y', labelY * scale);
+                    label.setAttribute('font-family', 'TT Commons Classic, -apple-system, sans-serif');
+                    label.setAttribute('font-size', 3 * scale);
+                    label.setAttribute('font-weight', 400);
+                    label.setAttribute('fill', textColor);
+                    label.setAttribute('dominant-baseline', 'middle');
+                    label.textContent = `${heightInModules} mod`;
+                    
+                    designKitGroup.appendChild(label);
+                    
+                    // Обновляем позицию для следующего экземпляра
+                    currentY += heightInMm + verticalGap;
+                });
+                
+                // Добавляем отступ между секциями
+                currentY += sectionGap;
+            }
+            
+            svg.appendChild(designKitGroup);
+        } catch (error) {
+            console.error('Error adding design kit reference:', error);
+        }
+    }
+    
     // Итерация 7: Экспорт настроек в JSON через SVGExporter
     exportSettings() {
+        const { frontWidth, frontHeight, gridModule, columnCount, rowCount } = this.settings;
+        
         const data = {
             version: '1.0',
             timestamp: new Date().toISOString(),
@@ -8938,15 +9042,23 @@ class GridGenerator {
             textBlocks: this.textBlocks,
             graphicsBlocks: this.graphicsBlocks || [],
             iconsBlock: this.iconsBlock || null,
-            claimBlock: this.claimBlock || null,
-            stickerData: {
-                ...this.stickerData,
-                currentBarcodeValue: this.currentBarcodeValue
-            }
+            claimBlock: this.claimBlock || null
         };
         
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-        this.svgExporter.exportSettings(data, `grid-settings_${timestamp}.json`);
+        // Генерируем timestamp с точностью до минуты
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+        
+        // Генерируем имя файла: "размер колонки строки модуль timestamp.json"
+        // Например: "120×24mm 12col 12rows 5.05mm 20251116_1430.json"
+        const size = `${frontWidth}×${frontHeight}mm`;
+        const cols = `${columnCount}col`;
+        const rows = `${rowCount}rows`;
+        const module = `${gridModule.toFixed(2)}mm`;
+        
+        const filename = `${size} ${cols} ${rows} ${module} ${timestamp}.json`;
+        
+        this.svgExporter.exportSettings(data, filename);
     }
     
     // Итерация 7: Импорт настроек из JSON
@@ -8962,9 +9074,26 @@ class GridGenerator {
             }
             
             if (data.textBlocks) {
-                this.textBlocks = data.textBlocks;
+                // Инициализируем новые поля для совместимости со старыми настройками
+                this.textBlocks = data.textBlocks.map(block => {
+                    // Добавляем fontFeatures если их нет
+                    if (!block.fontFeatures) {
+                        block.fontFeatures = {
+                            salt: false,
+                            aalt: false,
+                            ss01: false,
+                            ss02: false,
+                            tnum: false,
+                            dlig: false
+                        };
+                    }
+                    // Добавляем fontWeight если его нет (для Lunnen Display по умолчанию 400)
+                    if (block.fontWeight === undefined) {
+                        block.fontWeight = 400;
+                    }
+                    return block;
+                });
             }
-            this.ensureTextBlockTemplates();
             
             if (data.graphicsBlocks) {
                 this.graphicsBlocks = data.graphicsBlocks;
@@ -8977,14 +9106,6 @@ class GridGenerator {
             if (data.claimBlock) {
                 this.claimBlock = data.claimBlock;
             }
-
-            if (data.stickerData) {
-                this.restoreStickerData(data.stickerData);
-            } else {
-                this.resetStickerData();
-            }
-            this.enforceStickerConstraints();
-            this.syncBarcodePreviewFromBlock();
             
             // Обновляем UI
             this.updateGrid();
@@ -9103,6 +9224,7 @@ class GridGenerator {
             this.dom.frontHeightSlider.value = this.settings.frontHeight;
             this.dom.frontHeightValue.value = this.settings.frontHeight.toFixed(1);
         }
+        
         // Update grid sliders
         if (this.dom.gridModuleSlider) {
             this.dom.gridModuleSlider.value = this.settings.gridModule;
@@ -9135,7 +9257,6 @@ class GridGenerator {
         if (this.dom.showColumns) this.dom.showColumns.checked = this.settings.showColumns;
         if (this.dom.showRows) this.dom.showRows.checked = this.settings.showRows;
         if (this.dom.showBaseline) this.dom.showBaseline.checked = this.settings.showBaseline;
-        if (this.dom.showSidePanels) this.dom.showSidePanels.checked = this.settings.showSidePanels;
         if (this.dom.showObjects) this.dom.showObjects.checked = this.settings.showObjects;
         
         // Update color
@@ -9259,7 +9380,6 @@ class GridGenerator {
         const panels = [
             { id: 'controlsPanel', headerId: 'panelHeader', draggable: true },
             { id: 'gridPanel', headerId: 'gridPanelHeader', draggable: true },
-            { id: 'dataPanel', headerId: 'dataPanelHeader', draggable: true },
             { id: 'textPanel', headerId: 'textPanelHeader', draggable: true },
             { id: 'paragraphPanel', headerId: 'paragraphPanelHeader', draggable: true },
             { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true },

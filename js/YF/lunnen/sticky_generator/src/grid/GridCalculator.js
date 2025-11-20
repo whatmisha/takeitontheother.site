@@ -17,13 +17,10 @@ export class GridCalculator {
     getSurfaceConfig(surface = SURFACE_TYPES.FRONT) {
         const frontWidth = this.settings.get('frontWidth');
         const frontHeight = this.settings.get('frontHeight');
-        const thickness = this.settings.get('thickness');
-        const showSidePanels = this.settings.get('showSidePanels');
         
         const configs = getSurfaceConfig(
             frontWidth, 
-            frontHeight, 
-            showSidePanels ? thickness : 0
+            frontHeight
         );
         
         return configs[surface] || configs[SURFACE_TYPES.FRONT];
