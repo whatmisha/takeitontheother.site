@@ -388,10 +388,8 @@ class GridGenerator {
         this.elementsNavigator = null;
         
         // Graphics blocks - UNIFIED array for all graphics (built-in and custom)
-        // Initialize if not exists (for backward compatibility)
-        if (!this.graphicsBlocks) {
-            this.graphicsBlocks = [];
-        }
+        // Изначально пустой массив - данные загрузятся из пресета
+        this.graphicsBlocks = [];
         
         // Storage for deletion timers to allow cancellation
         this.deletionTimers = {};
@@ -403,125 +401,12 @@ class GridGenerator {
         this.isRestoringState = false; // Flag to prevent saving state during undo/redo
         this.saveStateTimer = null; // Timer for debounced save
         
-        // SVG content will be loaded from graphics/icons.svg in initializeBuiltInGraphics()
-        // Initialize built-in graphics blocks (Icons and Claim)
-        // Icons block  
-        this.graphicsBlocks.push({
-            id: 'icons',
-            name: 'Icons',
-            isBuiltIn: true,  // Flag to identify built-in graphics
-            svgContent: '',  // Will be loaded from graphics/icons.svg
-            heightInModules: 3,
-            widthInModules: null,  // Calculated from aspect ratio
-            sizeMode: 'height',  // 'height' or 'width'
-            alignment: 'left',  // 'left' or 'right'
-            x: 1,
-            row: 0,  // Will be calculated
-            baselineOffset: 0,  // Will be calculated
-            showBounds: false,
-            visible: true,
-            originalWidth: 204.0944882,
-            originalHeight: 28.3464567,
-            lockPosition: true  // Constrain to grid bounds by default
-        });
-        
-        // Claim block
-        this.graphicsBlocks.push({
-            id: 'claim',
-            name: 'Claim',
-            isBuiltIn: true,  // Flag to identify built-in graphics
-            svgContent: '',  // Will be loaded from graphics/yf_claim.svg
-            heightInModules: 3,
-            widthInModules: null,  // Calculated from aspect ratio
-            sizeMode: 'height',  // 'height' or 'width'
-            alignment: 'left',  // 'left' or 'right'
-            x: 7,
-            row: 0,  // Will be calculated
-            baselineOffset: 0,  // Will be calculated
-            showBounds: false,
-            visible: true,
-            originalWidth: 186.2242584,
-            originalHeight: 28.3464565,
-            lockPosition: true  // Constrain to grid bounds by default
-        });
-        
-        // Calculate initial positions for built-in graphics
-        this.updateBuiltInGraphicsPositions();
-        
         // Сохраняем загруженные данные из таблицы для генерации нескольких стикеров
         this.loadedTableData = null;
         
         // Text blocks - параметры конкретных текстовых блоков на канвасе
-        this.textBlocks = [
-            {
-                id: 'headline',
-                content: 'Ноутбук\nLunnen Outer 16"',
-                styleRef: 'headline',  // ссылка на стиль в settings
-                x: 1,  // позиция в колонках от левого края (1 = first column after margin)
-                row: 0,  // номер строки Row (0 = первый row)
-                baselineOffset: 0,  // смещение в модулях baseline внутри row (0 = первый baseline в row)
-                width: 3,  // ширина в колонках
-                alignment: 'left',  // 'left' or 'right'
-                showBounds: false,  // показывать ли границы (toggle on hover)
-                lockPosition: true  // Constrain to grid bounds by default
-            },
-            {
-                id: 'text',
-                content: 'Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.',
-                styleRef: 'text',  // ссылка на стиль в settings
-                alignment: 'left',  // 'left' or 'right'
-                x: 7,  // позиция в колонках от левого края (7-я колонка)
-                row: 0,  // номер строки Row
-                baselineOffset: 0,  // смещение в модулях baseline внутри row
-                width: 2.0,  // ширина в колонках
-                showBounds: false,
-                lockPosition: true  // Constrain to grid bounds by default
-            },
-            {
-                id: 'text2',
-                content: 'Lunnen Outer — продвинутая линейка техники. Производительный процессор и эффективное охлаждение для задач повышенной сложности.',
-                styleRef: 'text',  // ссылка на стиль в settings
-                x: 10,  // позиция в колонках от левого края (10-я колонка)
-                row: 0,  // номер строки Row
-                baselineOffset: 0,  // смещение в модулях baseline внутри row
-                width: 2.0,  // ширина в колонках
-                showBounds: false,
-                lockPosition: true  // Constrain to grid bounds by default
-            },
-            {
-                id: 'manufacturer',
-                content: 'Изготовитель: ООО Харбинская Импортно-Экспортная Торговая Компания «Цзиньдинсинь», Китай. Адрес местонахождения: Китай, г. Харбин, р-н Даоли, микрорайон Цюньли, ул. 4-я, д. 399, бизнес-центр Хучжи, восточный корпус, эт. 12, ком. 1204.',
-                styleRef: 'text',
-                x: 1,
-                row: 9,  // row 10 в пользовательском интерфейсе (0-based индекс = 9)
-                baselineOffset: 0,
-                width: 3,
-                showBounds: false,
-                lockPosition: true  // Constrain to grid bounds by default
-            },
-            {
-                id: 'importer',
-                content: 'Импортер: ООО «Маркет. Трейд». Адрес местонахождения: 121099, Россия, г. Москва, Новинский бульвар, 8.',
-                styleRef: 'text',
-                x: 7,
-                row: 9,  // row 10 в пользовательском интерфейсе
-                baselineOffset: 0,
-                width: 2,
-                showBounds: false,
-                lockPosition: true  // Constrain to grid bounds by default
-            },
-            {
-                id: 'origin',
-                content: 'Произведено в Китае. info@lunnen.pro',
-                styleRef: 'text',
-                x: 10,
-                row: 9,  // row 10 в пользовательском интерфейсе
-                baselineOffset: 0,
-                width: 2,
-                showBounds: false,
-                lockPosition: true  // Constrain to grid bounds by default
-            }
-        ];
+        // Изначально пустой массив - данные загрузятся из пресета
+        this.textBlocks = [];
         
         // Состояние для drag & drop текстовых блоков
         this.textDragState = {
@@ -9375,9 +9260,9 @@ class GridGenerator {
             return;
         }
 
-        // Обновляем штрихкод с отображением текста
-        BarcodeGenerator.updateBarcodeBlock(barcodeBlock, barcodeData, gridSettings, true);
-        console.log(`✅ Основной штрихкод обновлен: ${barcodeData}`);
+        // Обновляем штрихкод с отображением текста (EAN-13)
+        BarcodeGenerator.updateBarcodeBlock(barcodeBlock, barcodeData, gridSettings, true, 'ean13');
+        console.log(`✅ Основной штрихкод (EAN-13) обновлен: ${barcodeData}`);
     }
 
     /**

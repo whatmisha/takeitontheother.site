@@ -1,5 +1,5 @@
 /**
- * BarcodeGenerator - Генератор штрихкодов Code128 в SVG
+ * BarcodeGenerator - Генератор штрихкодов Code128 и EAN-13 в SVG
  */
 
 export class BarcodeGenerator {
@@ -20,6 +20,64 @@ export class BarcodeGenerator {
         '7': '10011000100',
         '8': '10001100100',
         '9': '11001001000',
+    };
+
+    /**
+     * Таблица кодирования EAN-13
+     * L-коды (левая группа, нечетная паритетность)
+     * R-коды (правая группа)
+     */
+    static EAN13_L_CODES = {
+        '0': '0001101',
+        '1': '0011001',
+        '2': '0010011',
+        '3': '0111101',
+        '4': '0100011',
+        '5': '0110001',
+        '6': '0101111',
+        '7': '0111011',
+        '8': '0110111',
+        '9': '0001011',
+    };
+
+    static EAN13_G_CODES = {
+        '0': '0100111',
+        '1': '0110011',
+        '2': '0011011',
+        '3': '0100001',
+        '4': '0011101',
+        '5': '0111001',
+        '6': '0000101',
+        '7': '0010001',
+        '8': '0001001',
+        '9': '0010111',
+    };
+
+    static EAN13_R_CODES = {
+        '0': '1110010',
+        '1': '1100110',
+        '2': '1101100',
+        '3': '1000010',
+        '4': '1011100',
+        '5': '1001110',
+        '6': '1010000',
+        '7': '1000100',
+        '8': '1001000',
+        '9': '1110100',
+    };
+
+    // Таблица паритетности для первой цифры (определяет какие L/G коды использовать)
+    static EAN13_FIRST_DIGIT_PATTERNS = {
+        '0': 'LLLLLL',
+        '1': 'LLGLGG',
+        '2': 'LLGGLG',
+        '3': 'LLGGGL',
+        '4': 'LGLLGG',
+        '5': 'LGGLLG',
+        '6': 'LGGGLL',
+        '7': 'LGLGLG',
+        '8': 'LGLGGL',
+        '9': 'LGGLGL',
     };
 
     /**
@@ -112,6 +170,180 @@ export class BarcodeGenerator {
     }
 
     /**
+     * Вычисляет контрольную сумму EAN-13
+     * @param {string} digits - 12 цифр
+     * @returns {string} - контрольная сумма (1 цифра)
+     */
+    static calculateEAN13Checksum(digits) {
+        let sum = 0;
+        for (let i = 0; i < 12; i++) {
+            const digit = parseInt(digits[i]);
+            sum += (i % 2 === 0) ? digit : digit * 3;
+        }
+        const checksum = (10 - (sum % 10)) % 10;
+        return checksum.toString();
+    }
+
+    /**
+     * Генерирует SVG штрихкод EAN-13
+     * @param {string} data - 12 или 13 цифр
+     * @param {Object} options - Опции
+     * @param {number} options.width - Ширина штрихкода БЕЗ первой цифры (в мм)
+     * @param {number} options.shortBarHeight - Высота коротких полосок (в мм)
+     * @param {number} options.longBarHeight - Высота длинных полосок (guard bars) (в мм)
+     * @param {number} options.fontSize - Размер шрифта для текста (в мм)
+     * @param {number} options.fontWeight - Вес шрифта
+     * @returns {string} SVG код штрихкода
+     */
+    static generateEAN13SVG(data, options = {}) {
+        const {
+            width = 37.29,  // стандартная ширина EAN-13 без первой цифры
+            shortBarHeight = 15,
+            longBarHeight = 18,
+            fontSize = null,
+            fontWeight = 500,
+        } = options;
+
+        // Преобразуем данные в строку и оставляем только цифры
+        let cleanData = String(data).replace(/[^0-9]/g, '');
+        
+        // EAN-13 требует ровно 13 цифр
+        if (cleanData.length < 12) {
+            // Дополняем нулями слева до 12 цифр
+            cleanData = cleanData.padStart(12, '0');
+        } else if (cleanData.length === 12) {
+            // Вычисляем контрольную сумму
+            cleanData += this.calculateEAN13Checksum(cleanData);
+        } else if (cleanData.length > 13) {
+            // Обрезаем до 13 цифр
+            cleanData = cleanData.substring(0, 13);
+        } else if (cleanData.length === 13) {
+            // Проверяем контрольную сумму
+            const providedChecksum = cleanData[12];
+            const calculatedChecksum = this.calculateEAN13Checksum(cleanData.substring(0, 12));
+            if (providedChecksum !== calculatedChecksum) {
+                console.warn(`EAN-13 checksum mismatch: provided ${providedChecksum}, calculated ${calculatedChecksum}`);
+            }
+        }
+
+        // Разбиваем на части
+        const firstDigit = cleanData[0];
+        const leftGroup = cleanData.substring(1, 7);
+        const rightGroup = cleanData.substring(7, 13);
+
+        // Определяем паттерн L/G кодов для левой группы
+        const pattern = this.EAN13_FIRST_DIGIT_PATTERNS[firstDigit];
+
+        // Генерируем битовую последовательность
+        let bits = '';
+        
+        // Start guard
+        bits += '101';
+        
+        // Левая группа (6 цифр)
+        for (let i = 0; i < 6; i++) {
+            const digit = leftGroup[i];
+            const code = (pattern[i] === 'L') ? this.EAN13_L_CODES[digit] : this.EAN13_G_CODES[digit];
+            bits += code;
+        }
+        
+        // Middle guard
+        bits += '01010';
+        
+        // Правая группа (6 цифр)
+        for (let i = 0; i < 6; i++) {
+            const digit = rightGroup[i];
+            bits += this.EAN13_R_CODES[digit];
+        }
+        
+        // End guard
+        bits += '101';
+
+        // Вычисляем ширину одного модуля (минимальной единицы)
+        const totalModules = bits.length; // 95 модулей
+        const moduleWidth = width / totalModules;
+
+        // Вычисляем размер шрифта
+        const textFontSize = fontSize !== null ? fontSize : 3;
+        
+        // Метрики шрифта для расчета пространства
+        const capHeight = 630;
+        const unitsPerEm = 1000;
+        const capHeightRatio = capHeight / unitsPerEm;
+        const actualCapHeight = textFontSize * capHeightRatio;
+        const textTopPadding = actualCapHeight * 0.2;
+        const textHeight = actualCapHeight + textTopPadding;
+
+        // Вычисляем общие размеры SVG
+        // Первая цифра выходит за пределы основного кода
+        const firstDigitWidth = textFontSize * 0.7; // примерная ширина цифры
+        const firstDigitMargin = textFontSize * 0.3; // отступ от guard bars
+        const totalWidth = firstDigitWidth + firstDigitMargin + width;
+        const totalHeight = longBarHeight + textHeight;
+
+        // Начальная позиция для полосок (с учетом места для первой цифры)
+        const barsStartX = firstDigitWidth + firstDigitMargin;
+
+        // Генерируем SVG
+        let svg = `<svg width="${totalWidth.toFixed(2)}" height="${totalHeight.toFixed(2)}" viewBox="0 0 ${totalWidth.toFixed(2)} ${totalHeight.toFixed(2)}" xmlns="http://www.w3.org/2000/svg">`;
+        
+        // Рисуем полосы
+        let x = barsStartX;
+        let moduleIndex = 0;
+        
+        for (let i = 0; i < bits.length; i++) {
+            const bit = bits[i];
+            
+            // Определяем высоту полоски
+            let barHeight = shortBarHeight;
+            
+            // Guard bars (start, middle, end) - длинные
+            if (i < 3 || // start guard (101)
+                (i >= 45 && i < 50) || // middle guard (01010) - начинается после 3 + 6*7 = 45
+                i >= bits.length - 3) { // end guard (101)
+                barHeight = longBarHeight;
+            }
+            
+            if (bit === '1') {
+                svg += `<rect x="${x.toFixed(3)}" y="0" width="${moduleWidth.toFixed(3)}" height="${barHeight.toFixed(2)}" fill="#000000"/>`;
+            }
+            
+            x += moduleWidth;
+            moduleIndex++;
+        }
+
+        // Добавляем текст
+        const textBaselineY = totalHeight;
+        
+        // Первая цифра слева
+        const firstDigitX = firstDigitWidth / 2;
+        svg += `<text x="${firstDigitX.toFixed(2)}" y="${textBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${firstDigit}</text>`;
+        
+        // Левая группа (6 цифр) - располагаем между start и middle guards
+        const leftGroupStartX = barsStartX + (3 * moduleWidth); // после start guard
+        const leftGroupWidth = 42 * moduleWidth; // 6 цифр * 7 модулей
+        const digitSpacing = leftGroupWidth / 6;
+        
+        for (let i = 0; i < 6; i++) {
+            const digitX = leftGroupStartX + (i + 0.5) * digitSpacing;
+            svg += `<text x="${digitX.toFixed(2)}" y="${textBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${leftGroup[i]}</text>`;
+        }
+        
+        // Правая группа (6 цифр) - располагаем между middle и end guards
+        const rightGroupStartX = barsStartX + (3 + 42 + 5) * moduleWidth; // после start + left + middle guards
+        const rightGroupWidth = 42 * moduleWidth; // 6 цифр * 7 модулей
+        
+        for (let i = 0; i < 6; i++) {
+            const digitX = rightGroupStartX + (i + 0.5) * digitSpacing;
+            svg += `<text x="${digitX.toFixed(2)}" y="${textBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${rightGroup[i]}</text>`;
+        }
+
+        svg += '</svg>';
+        
+        return svg;
+    }
+
+    /**
      * Генерирует пустой штрихкод (placeholder)
      */
     static generateEmptyBarcode(width, height) {
@@ -127,8 +359,9 @@ export class BarcodeGenerator {
      * @param {string} barcodeData - Данные для штрихкода
      * @param {Object} gridSettings - Настройки сетки для вычисления размера
      * @param {boolean} displayValue - Показывать ли текст под штрихкодом (по умолчанию true)
+     * @param {string} barcodeType - Тип штрихкода: 'code128' или 'ean13' (по умолчанию 'code128')
      */
-    static updateBarcodeBlock(block, barcodeData, gridSettings, displayValue = true) {
+    static updateBarcodeBlock(block, barcodeData, gridSettings, displayValue = true, barcodeType = 'code128') {
         const { gridModule, columnCount, frontWidth, margins, marginsUnit, frontHeight } = gridSettings;
         
         // Вычисляем реальные margins в mm
@@ -140,18 +373,6 @@ export class BarcodeGenerator {
         
         // Вычисляем ширину одной колонки
         const columnWidth = (workingWidth - gutters) / columnCount;
-        
-        // Высота штрихкода - берем либо height, либо heightInModules
-        const heightInModules = block.height || block.heightInModules || 8;
-        const barcodeHeight = heightInModules * gridModule;
-        const barcodeWidth = columnWidth;
-        
-        console.log(`📊 Barcode dimensions: ${barcodeWidth.toFixed(2)}×${barcodeHeight.toFixed(2)}mm`);
-        
-        // Генерируем SVG сразу в финальных размерах (мм)
-        // Это устраняет проблему с несоответствием viewBox и width/height при экспорте
-        const finalWidth = barcodeWidth;
-        const finalHeight = barcodeHeight;
         
         // Вычисляем размер шрифта: 1 baseline = 1 модуль = gridModule мм
         const textHeightInModules = 1; // 1 baseline
@@ -166,15 +387,61 @@ export class BarcodeGenerator {
         
         console.log(`🔤 Barcode text fontSize: ${textFontSize.toFixed(2)}mm (for ${textHeightInModules} module height)`);
         
-        // Генерируем новый SVG штрихкода в финальных размерах (мм)
-        const newSvg = this.generateCode128SVG(barcodeData, {
-            width: finalWidth,
-            height: finalHeight,
-            displayValue: displayValue, // Показывать текст или нет
-            quiet: false, // Без quiet zones
-            fontSize: textFontSize, // Размер текста в мм
-            fontWeight: 500, // Medium
-        });
+        let newSvg;
+        let finalWidth;
+        let finalHeight;
+        let heightInModules;
+        
+        if (barcodeType === 'ean13') {
+            // EAN-13: Длинные полоски СТРОГО 18мм, короткие СТРОГО 15мм
+            const shortBarHeight = 15;
+            const longBarHeight = 18;
+            
+            // Ширина = ширина колонки (без учета первой цифры, которая выходит за пределы)
+            finalWidth = columnWidth;
+            
+            // Вычисляем высоту с текстом
+            const textHeight = textFontSize * (capHeight / unitsPerEm) * 1.3;
+            const totalHeightWithText = longBarHeight + textHeight;
+            
+            // КРИТИЧНО: finalHeight должен быть равен totalHeightWithText,
+            // и heightInModules должен быть рассчитан так, чтобы 
+            // heightInModules * gridModule === totalHeightWithText ТОЧНО
+            // Это предотвратит масштабирование в GraphicsRenderer.calculateDimensions()
+            finalHeight = totalHeightWithText;
+            heightInModules = totalHeightWithText / gridModule; // ДРОБНОЕ значение!
+            
+            console.log(`📊 EAN-13 Barcode: longBars=${longBarHeight}mm, shortBars=${shortBarHeight}mm, total=${totalHeightWithText.toFixed(2)}mm (${heightInModules.toFixed(2)} modules)`);
+            
+            // Генерируем EAN-13 штрихкод с фиксированными размерами полосок
+            newSvg = this.generateEAN13SVG(barcodeData, {
+                width: finalWidth, // ширина БЕЗ первой цифры
+                shortBarHeight: shortBarHeight, // СТРОГО 15 мм
+                longBarHeight: longBarHeight,   // СТРОГО 18 мм
+                fontSize: textFontSize,
+                fontWeight: 500, // Medium
+            });
+        } else {
+            // Code128: стандартная логика
+            heightInModules = block.height || block.heightInModules || 8;
+            const barcodeHeight = heightInModules * gridModule;
+            const barcodeWidth = columnWidth;
+            
+            finalWidth = barcodeWidth;
+            finalHeight = barcodeHeight;
+            
+            console.log(`📊 Code128 Barcode dimensions: ${barcodeWidth.toFixed(2)}×${barcodeHeight.toFixed(2)}mm`);
+            
+            // Генерируем Code128 штрихкод
+            newSvg = this.generateCode128SVG(barcodeData, {
+                width: finalWidth,
+                height: finalHeight,
+                displayValue: displayValue,
+                quiet: false,
+                fontSize: textFontSize,
+                fontWeight: 500, // Medium
+            });
+        }
         
         // Обновляем SVG в блоке (svgContent используется для рендеринга)
         block.svgContent = newSvg;
@@ -185,7 +452,10 @@ export class BarcodeGenerator {
         block.originalHeight = finalHeight; // Реальные размеры в мм
         block.sizeMode = 'height'; // Используем высоту как базовый размер
         
-        console.log(`✅ Barcode updated with data: ${barcodeData}`);
+        // Сохраняем тип штрихкода в блоке
+        block.barcodeType = barcodeType;
+        
+        console.log(`✅ ${barcodeType.toUpperCase()} Barcode updated with data: ${barcodeData}`);
     }
 }
 
