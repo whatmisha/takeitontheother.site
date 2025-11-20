@@ -6,7 +6,6 @@ import { ColorUtils } from './src/utils/ColorUtils.js';
 import { MathUtils } from './src/utils/MathUtils.js';
 import { DOMUtils } from './src/utils/DOMUtils.js';
 import { TextToPath } from './src/utils/TextToPath.js';
-import { RenderQueue, Debouncer } from './src/utils/RenderQueue.js';
 
 // Итерация 2: Core
 import { Settings } from './src/core/Settings.js';
@@ -30,10 +29,6 @@ import { ElementsNavigator } from './src/elements/ElementsNavigator.js';
 
 // Итерация 7: SVG Export
 import { SVGExporter } from './src/svg/SVGExporter.js';
-
-// Итерация 8: Services
-import { DataService } from './src/services/DataService.js';
-import { ExportService } from './src/services/ExportService.js';
 
 class GridGenerator {
     constructor() {
@@ -582,22 +577,6 @@ class GridGenerator {
         this.svgExporter = new SVGExporter(this.settingsModule, this.textToPath);
         
         // ============================================
-        // Data Service (Итерация 8)
-        // ============================================
-        this.dataService = new DataService(this.settingsModule);
-        
-        // ============================================
-        // Export Service (Итерация 8)
-        // ============================================
-        this.exportService = new ExportService(this.settingsModule, this.svgExporter);
-        
-        // ============================================
-        // Render Optimization (Итерация 8)
-        // ============================================
-        this.renderQueue = new RenderQueue();
-        this.renderDebouncer = new Debouncer(150); // 150ms для debounce
-        
-        // ============================================
         // Presets (Итерация 10)
         // ============================================
         this.availablePresets = [];
@@ -823,6 +802,7 @@ class GridGenerator {
             // Data Import panel
             googleSheetsUrl: document.getElementById('googleSheetsUrl'),
             loadDataBtn: document.getElementById('loadDataBtn'),
+            exportCurrentStickerBtn: document.getElementById('exportCurrentStickerBtn'),
             generateAllStickersBtn: document.getElementById('generateAllStickersBtn'),
             defaultSheetsUrl: document.getElementById('defaultSheetsUrl'),
             dataStatus: document.getElementById('dataStatus'),
@@ -1084,6 +1064,13 @@ class GridGenerator {
         if (this.dom.loadDataBtn) {
             this.dom.loadDataBtn.addEventListener('click', () => {
                 this.loadDataFromGoogleSheets();
+            });
+        }
+        
+        // Export Current Sticker button
+        if (this.dom.exportCurrentStickerBtn) {
+            this.dom.exportCurrentStickerBtn.addEventListener('click', () => {
+                this.exportSVG();
             });
         }
         
@@ -8044,15 +8031,6 @@ class GridGenerator {
         }, 100);
     }
     
-    /**
-     * Запланировать обновление сетки с батчингом (оптимизация)
-     * Использует requestAnimationFrame для объединения множественных вызовов
-     * @param {Object} params - Дополнительные параметры
-     */
-    scheduleGridUpdate(params = {}) {
-        this.renderQueue.schedule(() => this.updateGrid(), params);
-    }
-    
     updateGrid() {
         // Constrain elements to grid bounds if lockPosition is enabled
         this.constrainElementsToBounds();
@@ -9214,17 +9192,30 @@ class GridGenerator {
         this.showDataStatus('Загрузка данных...', 'loading');
 
         try {
-            // Загружаем данные через DataService
-            const rows = await this.dataService.loadFromGoogleSheets(url);
+            // Конвертируем URL в CSV формат
+            const csvUrl = this.convertSheetUrlToCsv(url);
+            console.log('CSV URL:', csvUrl);
 
-            // Сохраняем загруженные данные для обратной совместимости
+            // Загружаем CSV
+            const response = await fetch(csvUrl);
+            
+            if (!response.ok) {
+                throw new Error(`Ошибка загрузки: ${response.status} ${response.statusText}`);
+            }
+
+            const csvText = await response.text();
+            console.log('CSV данные загружены, длина:', csvText.length);
+
+            // Парсим CSV
+            const rows = this.parseCsv(csvText);
+            console.log('Распарсенные строки:', rows);
+            console.log('Количество строк:', rows.length);
+
+            // Сохраняем загруженные данные
             this.loadedTableData = rows;
 
-            // Обновляем текстовые блоки данными из первой строки
-            if (rows && rows.length > 0) {
-                const mappedData = this.dataService.mapRowToFields(rows[0]);
-                this.updateTextBlocks(mappedData);
-            }
+            // Обновляем текстовые блоки данными из таблицы (первая строка)
+            this.updateTextBlocksFromData(rows);
 
             // Показываем превью данных
             this.showDataPreview(rows);
@@ -9232,55 +9223,15 @@ class GridGenerator {
             this.showDataStatus(`Данные успешно загружены! Найдено строк: ${rows.length}`, 'success');
 
         } catch (error) {
-            console.error('❌ Ошибка:', error);
-            this.showDataStatus(`Ошибка: ${error.message}`, 'error');
+            console.error('Ошибка:', error);
+            this.showDataStatus(`Ошибка: ${error.message}. Убедитесь, что таблица опубликована для просмотра.`, 'error');
         } finally {
             this.dom.loadDataBtn.disabled = false;
         }
     }
 
     /**
-     * Универсальный метод обновления текстовых блоков
-     * @param {Object} dataMapping - { blockName: value }
-     */
-    updateTextBlocks(dataMapping) {
-        if (!dataMapping || typeof dataMapping !== 'object') {
-            console.warn('Invalid data mapping');
-            return;
-        }
-
-        let updated = false;
-
-        for (const [blockName, value] of Object.entries(dataMapping)) {
-            if (!value) {
-                console.warn(`Значение для блока "${blockName}" пустое`);
-                continue;
-            }
-
-            // Ищем блок по имени
-            const block = this.textBlocks.find(b => b.name === blockName);
-
-            if (block) {
-                block.content = value;
-                console.log(`✅ Обновлен текстовый блок "${blockName}": "${value}"`);
-                updated = true;
-            } else {
-                console.warn(`⚠️ Текстовый блок "${blockName}" не найден. Создайте блок с таким именем.`);
-            }
-        }
-
-        // Обновляем сетку для отображения изменений
-        if (updated) {
-            this.updateGrid();
-            this.updateElementsNavigator();
-        }
-
-        return updated;
-    }
-
-    /**
-     * Обновляет текстовые блоки данными из таблицы (устаревший метод - для обратной совместимости)
-     * @deprecated Используйте updateTextBlocks()
+     * Обновляет текстовые блоки данными из таблицы
      * @param {Array<Array<string>>} rows - Массив строк данных
      */
     updateTextBlocksFromData(rows) {
@@ -9288,8 +9239,48 @@ class GridGenerator {
             return;
         }
 
-        const mappedData = this.dataService.mapRowToFields(rows[0]);
-        this.updateTextBlocks(mappedData);
+        // Получаем значение из ячейки A1 (первая строка, первый столбец)
+        const a1Value = rows[0] && rows[0][0] ? rows[0][0].trim() : '';
+        // Получаем значение из ячейки B1 (первая строка, второй столбец)
+        const b1Value = rows[0] && rows[0][1] ? rows[0][1].trim() : '';
+
+        let updated = false;
+
+        // Обновляем блок с заголовком "Ноутбук Lunnen Ground 15.6\"" (id: text-1763334866163)
+        if (a1Value) {
+            const headlineBlock = this.textBlocks.find(block => block.id === 'text-1763334866163');
+            
+            if (headlineBlock) {
+                headlineBlock.content = a1Value;
+                console.log(`✅ Обновлен текстовый блок "${headlineBlock.id}": "${a1Value}"`);
+                updated = true;
+            } else {
+                console.warn('Текстовый блок с id "text-1763334866163" не найден');
+            }
+        } else {
+            console.warn('Ячейка A1 пуста');
+        }
+
+        // Обновляем блок с серийным номером "LL5FAWG03" (id: text-1763608176696)
+        if (b1Value) {
+            const serialBlock = this.textBlocks.find(block => block.id === 'text-1763608176696');
+            
+            if (serialBlock) {
+                serialBlock.content = b1Value;
+                console.log(`✅ Обновлен текстовый блок "${serialBlock.id}": "${b1Value}"`);
+                updated = true;
+            } else {
+                console.warn('Текстовый блок с id "text-1763608176696" не найден');
+            }
+        } else {
+            console.warn('Ячейка B1 пуста');
+        }
+
+        // Обновляем сетку для отображения изменений только если были обновления
+        if (updated) {
+            this.updateGrid();
+            this.updateElementsNavigator();
+        }
     }
 
     /**
@@ -9308,11 +9299,10 @@ class GridGenerator {
     }
 
     /**
-     * Генерирует SVG файлы для всех строк данных из таблицы (ZIP архив)
+     * Генерирует SVG файлы для всех строк данных из таблицы
      */
     async generateAllStickers() {
-        // Проверяем наличие загруженных данных через DataService
-        if (!this.dataService.hasLoadedData()) {
+        if (!this.loadedTableData || this.loadedTableData.length === 0) {
             this.showDataStatus('Сначала загрузите данные из таблицы', 'error');
             return;
         }
@@ -9321,63 +9311,55 @@ class GridGenerator {
             return;
         }
 
-        const rowCount = this.dataService.getRowCount();
-
         // Отключаем кнопку
         this.dom.generateAllStickersBtn.disabled = true;
+        this.showDataStatus(`Генерация ${this.loadedTableData.length} стикеров...`, 'loading');
 
         try {
             // Сохраняем исходное состояние текстовых блоков
             const originalTextBlocks = JSON.parse(JSON.stringify(this.textBlocks));
 
-            const convertToOutlines = this.dom.convertToOutlinesCheckbox ? 
-                this.dom.convertToOutlinesCheckbox.checked : false;
+            const { frontWidth, frontHeight, gridModule, columnCount, rowCount } = this.settings;
+            const convertToOutlines = this.dom.convertToOutlinesCheckbox ? this.dom.convertToOutlinesCheckbox.checked : false;
 
-            // Настраиваем прогресс-бар
-            this.exportService.setProgressCallback((current, total, message) => {
-                const percent = Math.round((current / total) * 100);
-                this.showDataStatus(`${message} (${current}/${total} - ${percent}%)`, 'loading');
-            });
+            // Генерируем timestamp
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+            const size = `${frontWidth}×${frontHeight}mm`;
+            const cols = `${columnCount}col`;
+            const rows = `${rowCount}rows`;
+            const module = `${gridModule.toFixed(2)}mm`;
 
-            // Создаем массив генераторов SVG
-            const generators = [];
-            for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
-                // Создаем функцию-генератор для каждой строки
-                generators.push(async () => {
-                    const row = this.dataService.getRow(rowIndex);
-                    if (!row) return null;
+            // Генерируем SVG для каждой строки
+            for (let rowIndex = 0; rowIndex < this.loadedTableData.length; rowIndex++) {
+                const row = this.loadedTableData[rowIndex];
+                
+                // Обновляем текстовые блоки данными из текущей строки
+                this.updateTextBlocksFromRow(row, rowIndex);
 
-                    // Обновляем текстовые блоки данными из текущей строки
-                    this.updateTextBlocksFromRow(row, rowIndex);
+                // Создаем SVG для экспорта
+                const exportSvg = await this.createExportSVG();
 
-                    // Создаем SVG для экспорта
-                    return await this.createExportSVG();
+                // Генерируем имя файла с номером строки
+                const filename = `${size} ${cols} ${rows} ${module} row${rowIndex + 1} ${timestamp}.svg`;
+
+                // Экспортируем SVG
+                await this.svgExporter.exportToFile(exportSvg, filename, {
+                    removeInteractive: true,
+                    optimizeSize: true,
+                    convertTextToOutlines: convertToOutlines
                 });
+
+                // Небольшая задержка между скачиваниями, чтобы браузер успел обработать
+                await new Promise(resolve => setTimeout(resolve, 300));
             }
-
-            // Экспортируем все стикеры в ZIP
-            const zipBlob = await this.exportService.exportToZip(generators, {
-                removeInteractive: true,
-                optimizeSize: true,
-                convertTextToOutlines: convertToOutlines
-            });
-
-            // Генерируем имя ZIP файла
-            const zipFilename = this.exportService.generateZipFilename(rowCount);
-
-            // Скачиваем ZIP
-            this.exportService.downloadZip(zipBlob, zipFilename);
 
             // Восстанавливаем исходное состояние текстовых блоков
             this.textBlocks = originalTextBlocks;
             this.updateGrid();
             this.updateElementsNavigator();
 
-            const zipSize = (zipBlob.size / 1024 / 1024).toFixed(1);
-            this.showDataStatus(
-                `✅ Готово! ${rowCount} стикеров в архиве (${zipSize} MB)`, 
-                'success'
-            );
+            this.showDataStatus(`✅ Успешно сгенерировано ${this.loadedTableData.length} стикеров!`, 'success');
 
         } catch (error) {
             console.error('Ошибка при генерации стикеров:', error);
@@ -9397,9 +9379,38 @@ class GridGenerator {
             return;
         }
 
-        // Используем DataService для маппинга строки
-        const mappedData = this.dataService.mapRowToFields(row);
-        this.updateTextBlocks(mappedData);
+        // Получаем значения из текущей строки
+        // A = столбец 0, B = столбец 1
+        const aValue = row[0] ? row[0].trim() : '';
+        const bValue = row[1] ? row[1].trim() : '';
+
+        let updated = false;
+
+        // Обновляем блок с заголовком (id: text-1763334866163)
+        if (aValue) {
+            const headlineBlock = this.textBlocks.find(block => block.id === 'text-1763334866163');
+            
+            if (headlineBlock) {
+                headlineBlock.content = aValue;
+                updated = true;
+            }
+        }
+
+        // Обновляем блок с серийным номером (id: text-1763608176696)
+        if (bValue) {
+            const serialBlock = this.textBlocks.find(block => block.id === 'text-1763608176696');
+            
+            if (serialBlock) {
+                serialBlock.content = bValue;
+                updated = true;
+            }
+        }
+
+        // Обновляем сетку для отображения изменений
+        if (updated) {
+            this.updateGrid();
+            this.updateElementsNavigator();
+        }
     }
 
     /**
