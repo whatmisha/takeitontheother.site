@@ -447,6 +447,9 @@ class GridGenerator {
         // Calculate initial positions for built-in graphics
         this.updateBuiltInGraphicsPositions();
         
+        // Сохраняем загруженные данные из таблицы для генерации нескольких стикеров
+        this.loadedTableData = null;
+        
         // Text blocks - параметры конкретных текстовых блоков на канвасе
         this.textBlocks = [
             {
@@ -799,6 +802,7 @@ class GridGenerator {
             // Data Import panel
             googleSheetsUrl: document.getElementById('googleSheetsUrl'),
             loadDataBtn: document.getElementById('loadDataBtn'),
+            generateAllStickersBtn: document.getElementById('generateAllStickersBtn'),
             defaultSheetsUrl: document.getElementById('defaultSheetsUrl'),
             dataStatus: document.getElementById('dataStatus'),
             dataPreview: document.getElementById('dataPreview'),
@@ -1059,6 +1063,13 @@ class GridGenerator {
         if (this.dom.loadDataBtn) {
             this.dom.loadDataBtn.addEventListener('click', () => {
                 this.loadDataFromGoogleSheets();
+            });
+        }
+        
+        // Generate All Stickers button
+        if (this.dom.generateAllStickersBtn) {
+            this.dom.generateAllStickersBtn.addEventListener('click', () => {
+                this.generateAllStickers();
             });
         }
         
@@ -8688,10 +8699,10 @@ class GridGenerator {
         }
         
         // Add text styles summary outside artboard (for reference in editor)
-        this.addTextStylesSummary(exportSvg, totalWidth, scale);
+        this.addTextStylesSummary(exportSvg, frontWidth, scale);
         
         // Add design kit (logo and graphic elements) in multiple sizes outside artboard (for reference in editor)
-        await this.addLunnenLogoReference(exportSvg, totalWidth, scale);
+        await this.addLunnenLogoReference(exportSvg, frontWidth, scale);
         
         return exportSvg;
     }
@@ -9192,13 +9203,16 @@ class GridGenerator {
             console.log('Распарсенные строки:', rows);
             console.log('Количество строк:', rows.length);
 
-            // Обновляем текстовые блоки данными из таблицы
+            // Сохраняем загруженные данные
+            this.loadedTableData = rows;
+
+            // Обновляем текстовые блоки данными из таблицы (первая строка)
             this.updateTextBlocksFromData(rows);
 
             // Показываем превью данных
             this.showDataPreview(rows);
 
-            this.showDataStatus('Данные успешно загружены!', 'success');
+            this.showDataStatus(`Данные успешно загружены! Найдено строк: ${rows.length}`, 'success');
 
         } catch (error) {
             console.error('Ошибка:', error);
@@ -9274,6 +9288,121 @@ class GridGenerator {
         this.dom.dataStatus.textContent = message;
         this.dom.dataStatus.className = `data-status ${type}`;
         this.dom.dataStatus.style.display = 'block';
+    }
+
+    /**
+     * Генерирует SVG файлы для всех строк данных из таблицы
+     */
+    async generateAllStickers() {
+        if (!this.loadedTableData || this.loadedTableData.length === 0) {
+            this.showDataStatus('Сначала загрузите данные из таблицы', 'error');
+            return;
+        }
+
+        if (!this.dom.generateAllStickersBtn) {
+            return;
+        }
+
+        // Отключаем кнопку
+        this.dom.generateAllStickersBtn.disabled = true;
+        this.showDataStatus(`Генерация ${this.loadedTableData.length} стикеров...`, 'loading');
+
+        try {
+            // Сохраняем исходное состояние текстовых блоков
+            const originalTextBlocks = JSON.parse(JSON.stringify(this.textBlocks));
+
+            const { frontWidth, frontHeight, gridModule, columnCount, rowCount } = this.settings;
+            const convertToOutlines = this.dom.convertToOutlinesCheckbox ? this.dom.convertToOutlinesCheckbox.checked : false;
+
+            // Генерируем timestamp
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+            const size = `${frontWidth}×${frontHeight}mm`;
+            const cols = `${columnCount}col`;
+            const rows = `${rowCount}rows`;
+            const module = `${gridModule.toFixed(2)}mm`;
+
+            // Генерируем SVG для каждой строки
+            for (let rowIndex = 0; rowIndex < this.loadedTableData.length; rowIndex++) {
+                const row = this.loadedTableData[rowIndex];
+                
+                // Обновляем текстовые блоки данными из текущей строки
+                this.updateTextBlocksFromRow(row, rowIndex);
+
+                // Создаем SVG для экспорта
+                const exportSvg = await this.createExportSVG();
+
+                // Генерируем имя файла с номером строки
+                const filename = `${size} ${cols} ${rows} ${module} row${rowIndex + 1} ${timestamp}.svg`;
+
+                // Экспортируем SVG
+                await this.svgExporter.exportToFile(exportSvg, filename, {
+                    removeInteractive: true,
+                    optimizeSize: true,
+                    convertTextToOutlines: convertToOutlines
+                });
+
+                // Небольшая задержка между скачиваниями, чтобы браузер успел обработать
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+
+            // Восстанавливаем исходное состояние текстовых блоков
+            this.textBlocks = originalTextBlocks;
+            this.updateGrid();
+            this.updateElementsNavigator();
+
+            this.showDataStatus(`✅ Успешно сгенерировано ${this.loadedTableData.length} стикеров!`, 'success');
+
+        } catch (error) {
+            console.error('Ошибка при генерации стикеров:', error);
+            this.showDataStatus(`Ошибка: ${error.message}`, 'error');
+        } finally {
+            this.dom.generateAllStickersBtn.disabled = false;
+        }
+    }
+
+    /**
+     * Обновляет текстовые блоки данными из конкретной строки таблицы
+     * @param {Array<string>} row - Строка данных (массив значений ячеек)
+     * @param {number} rowIndex - Индекс строки (0-based)
+     */
+    updateTextBlocksFromRow(row, rowIndex) {
+        if (!row || row.length === 0) {
+            return;
+        }
+
+        // Получаем значения из текущей строки
+        // A = столбец 0, B = столбец 1
+        const aValue = row[0] ? row[0].trim() : '';
+        const bValue = row[1] ? row[1].trim() : '';
+
+        let updated = false;
+
+        // Обновляем блок с заголовком (id: text-1763334866163)
+        if (aValue) {
+            const headlineBlock = this.textBlocks.find(block => block.id === 'text-1763334866163');
+            
+            if (headlineBlock) {
+                headlineBlock.content = aValue;
+                updated = true;
+            }
+        }
+
+        // Обновляем блок с серийным номером (id: text-1763608176696)
+        if (bValue) {
+            const serialBlock = this.textBlocks.find(block => block.id === 'text-1763608176696');
+            
+            if (serialBlock) {
+                serialBlock.content = bValue;
+                updated = true;
+            }
+        }
+
+        // Обновляем сетку для отображения изменений
+        if (updated) {
+            this.updateGrid();
+            this.updateElementsNavigator();
+        }
     }
 
     /**

@@ -103,7 +103,7 @@
   },
   "typography": {
     "headline": {
-      "size": null,
+      "size": 0.75,
       "lineHeight": 1,
       "tracking": -0.015,
       "useXHeight": false,
