@@ -76,9 +76,9 @@ export const DEFAULTS = {
     // Видимость элементов
     SHOW_DIMENSIONS: false,
     SHOW_LABELS: false,
-    SHOW_COLUMNS: true,
-    SHOW_ROWS: true,
-    SHOW_BASELINE: true,
+    SHOW_COLUMNS: false,
+    SHOW_ROWS: false,
+    SHOW_BASELINE: false,
     SHOW_OBJECTS: true
 };
 

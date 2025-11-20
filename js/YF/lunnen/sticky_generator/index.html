@@ -53,8 +53,6 @@
                             </div>
                             <input type="text" class="text-input" id="googleSheetsUrl" placeholder="https://docs.google.com/spreadsheets/d/..." aria-label="Google Sheets URL">
                             <button type="button" class="btn-load-data" id="loadDataBtn">Load Data</button>
-                            <button type="button" class="btn-load-data" id="exportCurrentStickerBtn" style="margin-top: 8px;">Export Current Label</button>
-                            <button type="button" class="btn-load-data" id="generateAllStickersBtn" style="margin-top: 8px;">Generate All Labels</button>
                         </div>
                         
                         <div class="control-group">
@@ -308,6 +306,9 @@
         <div class="export-group-right">
             <button class="btn-fixed btn-export" id="exportBtn" aria-label="Export SVG (Command/Control + E)">
                 Export SVG ⌘E
+            </button>
+            <button class="btn-fixed btn-export" id="generateAllStickersBtn" aria-label="Generate All Labels from Table Data" style="display: none;">
+                Generate All Labels
             </button>
             <label class="toggle-label">
                 <div class="toggle-switch">

@@ -6,6 +6,7 @@ import { ColorUtils } from './src/utils/ColorUtils.js';
 import { MathUtils } from './src/utils/MathUtils.js';
 import { DOMUtils } from './src/utils/DOMUtils.js';
 import { TextToPath } from './src/utils/TextToPath.js';
+import { BarcodeGenerator } from './src/utils/BarcodeGenerator.js';
 
 // Итерация 2: Core
 import { Settings } from './src/core/Settings.js';
@@ -5745,7 +5746,7 @@ class GridGenerator {
     
     // Draw graphics block on canvas
     drawGraphicsBlock(container, block, frontX, frontY, frontWidth, frontHeight, scale) {
-        if (!block.svgContent) return;
+        if (!block.svgContent || block.svgContent.trim() === '') return;
         
         const gridColor = this.getContrastColor();
         const module = this.settings.gridModule;
@@ -6266,7 +6267,7 @@ class GridGenerator {
     
     // Draw graphics block for export (without event handlers)
     drawGraphicsBlockForExport(container, block, frontX, frontY, frontWidth, frontHeight, scale) {
-        if (!block.svgContent) return;
+        if (!block.svgContent || block.svgContent.trim() === '') return;
         
         const gridColor = this.getContrastColor(); // Color depends on background
         const module = this.settings.gridModule;
@@ -8915,13 +8916,13 @@ class GridGenerator {
         const url = this.dom.googleSheetsUrl.value.trim();
         
         if (!url) {
-            this.showDataStatus('Пожалуйста, введите ссылку на таблицу', 'error');
+            this.showDataStatus('Please enter a Google Sheets URL', 'error');
             return;
         }
 
         // Отключаем кнопку и показываем статус загрузки
         this.dom.loadDataBtn.disabled = true;
-        this.showDataStatus('Загрузка данных...', 'loading');
+        this.showDataStatus('Loading data...', 'loading');
 
         try {
             // Конвертируем URL в CSV формат
@@ -8952,11 +8953,21 @@ class GridGenerator {
             // Показываем превью данных
             this.showDataPreview(rows);
 
-            this.showDataStatus(`Данные успешно загружены! Найдено строк: ${rows.length}`, 'success');
+            this.showDataStatus(`Data loaded successfully! Found ${rows.length} row(s)`, 'success');
+
+            // Показываем кнопку "Generate All Labels"
+            if (this.dom.generateAllStickersBtn) {
+                this.dom.generateAllStickersBtn.style.display = 'block';
+            }
 
         } catch (error) {
             console.error('Ошибка:', error);
-            this.showDataStatus(`Ошибка: ${error.message}. Убедитесь, что таблица опубликована для просмотра.`, 'error');
+            this.showDataStatus(`Error: ${error.message}. Make sure the spreadsheet is published or shared.`, 'error');
+            
+            // Скрываем кнопку "Generate All Labels" при ошибке
+            if (this.dom.generateAllStickersBtn) {
+                this.dom.generateAllStickersBtn.style.display = 'none';
+            }
         } finally {
             this.dom.loadDataBtn.disabled = false;
         }
@@ -9060,7 +9071,7 @@ class GridGenerator {
      */
     async generateAllStickers() {
         if (!this.loadedTableData || this.loadedTableData.length === 0) {
-            this.showDataStatus('Сначала загрузите данные из таблицы', 'error');
+            this.showDataStatus('Please load data from spreadsheet first', 'error');
             return;
         }
 
@@ -9070,11 +9081,12 @@ class GridGenerator {
 
         // Отключаем кнопку
         this.dom.generateAllStickersBtn.disabled = true;
-        this.showDataStatus(`Генерация ${this.loadedTableData.length} стикеров...`, 'loading');
+        this.showDataStatus(`Generating ${this.loadedTableData.length} label(s)...`, 'loading');
 
         try {
-            // Сохраняем исходное состояние текстовых блоков
+            // Сохраняем исходное состояние текстовых блоков и графики
             const originalTextBlocks = JSON.parse(JSON.stringify(this.textBlocks));
+            const originalGraphicsBlocks = JSON.parse(JSON.stringify(this.graphicsBlocks));
 
             const { frontWidth, frontHeight, gridModule, columnCount, rowCount } = this.settings;
             const convertToOutlines = this.dom.convertToOutlinesCheckbox ? this.dom.convertToOutlinesCheckbox.checked : true;
@@ -9111,16 +9123,17 @@ class GridGenerator {
                 await new Promise(resolve => setTimeout(resolve, 300));
             }
 
-            // Восстанавливаем исходное состояние текстовых блоков
+            // Восстанавливаем исходное состояние текстовых блоков и графики
             this.textBlocks = originalTextBlocks;
+            this.graphicsBlocks = originalGraphicsBlocks;
             this.updateGrid();
             this.updateElementsNavigator();
 
-            this.showDataStatus(`✅ Успешно сгенерировано ${this.loadedTableData.length} стикеров!`, 'success');
+            this.showDataStatus(`✅ Successfully generated ${this.loadedTableData.length} label(s)!`, 'success');
 
         } catch (error) {
             console.error('Ошибка при генерации стикеров:', error);
-            this.showDataStatus(`Ошибка: ${error.message}`, 'error');
+            this.showDataStatus(`Error: ${error.message}`, 'error');
         } finally {
             this.dom.generateAllStickersBtn.disabled = false;
         }
@@ -9138,7 +9151,7 @@ class GridGenerator {
         }
 
         console.log(`🔄 Обновление текстовых блоков данными из строки ${rowIndex + 1}`);
-        
+
         let updated = false;
 
         // Проходим по всем текстовым блокам и заменяем плейсхолдеры
@@ -9156,6 +9169,9 @@ class GridGenerator {
             }
         });
 
+        // Обновляем штрихкод данными из колонки F (индекс 5)
+        this.updateBarcodeFromData(row);
+
         // Обновляем сетку для отображения изменений
         if (updated) {
             console.log(`✅ Обновлена сетка для строки ${rowIndex + 1}`);
@@ -9164,6 +9180,100 @@ class GridGenerator {
         } else {
             console.log(`ℹ️ Строка ${rowIndex + 1}: плейсхолдеры не найдены или данные не изменились`);
         }
+    }
+
+    /**
+     * Обновляет штрихкоды данными из таблицы (колонки E и F)
+     * @param {Array<string>} row - Строка данных (массив значений ячеек)
+     */
+    updateBarcodeFromData(row) {
+        // Получаем настройки сетки (используются для обоих штрихкодов)
+        const gridSettings = {
+            gridModule: this.settings.gridModule,
+            columnCount: this.settings.columnCount,
+            frontWidth: this.settings.frontWidth,
+            frontHeight: this.settings.frontHeight,
+            margins: this.settings.margins,
+            marginsUnit: this.settings.marginsUnit,
+        };
+
+        // Обновляем большой штрихкод из колонки F
+        this.updateMainBarcode(row, gridSettings);
+        
+        // Обновляем маленький штрихкод из колонки E
+        this.updateSmallBarcode(row, gridSettings);
+    }
+
+    /**
+     * Обновляет основной штрихкод из колонки F
+     * @param {Array<string>} row - Строка данных
+     * @param {Object} gridSettings - Настройки сетки
+     */
+    updateMainBarcode(row, gridSettings) {
+        if (!row || row.length < 6) {
+            console.warn('⚠️ Недостаточно данных для обновления основного штрихкода (колонка F отсутствует)');
+            return;
+        }
+
+        // Получаем данные из колонки F (индекс 5)
+        const columnF = row[5] || '';
+        const lines = this.parseMultilineCell(columnF);
+        const barcodeData = lines[0] || '';
+        
+        if (!barcodeData) {
+            console.warn('⚠️ Колонка F пуста, основной штрихкод не обновлен');
+            return;
+        }
+
+        // Ищем блок с основным штрихкодом
+        const barcodeBlock = this.graphicsBlocks.find(block => 
+            block.id === 'sticker-barcode'
+        );
+
+        if (!barcodeBlock) {
+            console.warn('⚠️ Блок с основным штрихкодом не найден');
+            return;
+        }
+
+        // Обновляем штрихкод с отображением текста
+        BarcodeGenerator.updateBarcodeBlock(barcodeBlock, barcodeData, gridSettings, true);
+        console.log(`✅ Основной штрихкод обновлен: ${barcodeData}`);
+    }
+
+    /**
+     * Обновляет маленький штрихкод из колонки E
+     * @param {Array<string>} row - Строка данных
+     * @param {Object} gridSettings - Настройки сетки
+     */
+    updateSmallBarcode(row, gridSettings) {
+        if (!row || row.length < 5) {
+            console.warn('⚠️ Недостаточно данных для обновления маленького штрихкода (колонка E отсутствует)');
+            return;
+        }
+
+        // Получаем данные из колонки E (индекс 4)
+        const columnE = row[4] || '';
+        const lines = this.parseMultilineCell(columnE);
+        const barcodeData = lines[0] || '';
+        
+        if (!barcodeData) {
+            console.warn('⚠️ Колонка E пуста, маленький штрихкод не обновлен');
+            return;
+        }
+
+        // Ищем блок с маленьким штрихкодом
+        const barcodeBlock = this.graphicsBlocks.find(block => 
+            block.id === 'sticker-barcode-small'
+        );
+
+        if (!barcodeBlock) {
+            console.warn('⚠️ Блок с маленьким штрихкодом не найден');
+            return;
+        }
+
+        // Обновляем штрихкод БЕЗ отображения текста
+        BarcodeGenerator.updateBarcodeBlock(barcodeBlock, barcodeData, gridSettings, false);
+        console.log(`✅ Маленький штрихкод обновлен: ${barcodeData}`);
     }
 
     /**
