@@ -157,10 +157,24 @@ export class GraphicsRenderer {
             return svgGroup;
         }
 
-        // Для g-элементов используем старый метод с transform scale
+        // Для g-элементов: конвертируем originalWidth/Height из мм в pt для сравнения
+        // (targetWidth/targetHeight уже в pt)
+        const originalWidthPt = MathUtils.mmToPt(originalWidth);
+        const originalHeightPt = MathUtils.mmToPt(originalHeight);
+        
+        const widthDiff = Math.abs(targetWidth - originalWidthPt);
+        const heightDiff = Math.abs(targetHeight - originalHeightPt);
+        
+        // Если размеры уже совпадают (в пределах 0.5pt), НЕ масштабируем
+        // Это важно для EAN-13 штрихкодов, где размеры должны быть точными
+        if (widthDiff < 0.5 && heightDiff < 0.5) {
+            // Размеры уже совпадают, масштабирование не требуется
+            return svgGroup;
+        }
+
         // Вычисляем масштаб
-        const scaleX = targetWidth / originalWidth;
-        const scaleY = targetHeight / originalHeight;
+        const scaleX = targetWidth / originalWidthPt;
+        const scaleY = targetHeight / originalHeightPt;
         
         // Используем меньший масштаб чтобы сохранить пропорции
         const scale = Math.min(scaleX, scaleY);

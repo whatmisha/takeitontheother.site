@@ -397,25 +397,29 @@ export class BarcodeGenerator {
             const shortBarHeight = 15;
             const longBarHeight = 18;
             
-            // Ширина = ширина колонки (без учета первой цифры, которая выходит за пределы)
-            finalWidth = columnWidth;
+            // Ширина основного кода = ширина колонки (без учета первой цифры)
+            const barcodeWidth = columnWidth;
             
             // Вычисляем высоту с текстом
             const textHeight = textFontSize * (capHeight / unitsPerEm) * 1.3;
             const totalHeightWithText = longBarHeight + textHeight;
             
-            // КРИТИЧНО: finalHeight должен быть равен totalHeightWithText,
-            // и heightInModules должен быть рассчитан так, чтобы 
-            // heightInModules * gridModule === totalHeightWithText ТОЧНО
-            // Это предотвратит масштабирование в GraphicsRenderer.calculateDimensions()
+            // Вычисляем место для первой цифры слева
+            const firstDigitWidth = textFontSize * 0.7; // примерная ширина цифры
+            const firstDigitMargin = textFontSize * 0.3; // отступ от guard bars
+            const totalWidthWithFirstDigit = firstDigitWidth + firstDigitMargin + barcodeWidth;
+            
+            // КРИТИЧНО: finalWidth и finalHeight должны соответствовать реальным размерам SVG
+            // чтобы не было масштабирования в GraphicsRenderer
+            finalWidth = totalWidthWithFirstDigit;
             finalHeight = totalHeightWithText;
             heightInModules = totalHeightWithText / gridModule; // ДРОБНОЕ значение!
             
-            console.log(`📊 EAN-13 Barcode: longBars=${longBarHeight}mm, shortBars=${shortBarHeight}mm, total=${totalHeightWithText.toFixed(2)}mm (${heightInModules.toFixed(2)} modules)`);
+            console.log(`📊 EAN-13 Barcode: ${finalWidth.toFixed(2)}×${finalHeight.toFixed(2)}mm (longBars=${longBarHeight}mm, shortBars=${shortBarHeight}mm, ${heightInModules.toFixed(2)} modules)`);
             
             // Генерируем EAN-13 штрихкод с фиксированными размерами полосок
             newSvg = this.generateEAN13SVG(barcodeData, {
-                width: finalWidth, // ширина БЕЗ первой цифры
+                width: barcodeWidth, // ширина БЕЗ первой цифры
                 shortBarHeight: shortBarHeight, // СТРОГО 15 мм
                 longBarHeight: longBarHeight,   // СТРОГО 18 мм
                 fontSize: textFontSize,
