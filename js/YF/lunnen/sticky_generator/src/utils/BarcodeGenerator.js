@@ -204,6 +204,7 @@ export class BarcodeGenerator {
             fontSize = null,
             fontWeight = 500,
             displayValue = true,
+            baselineOffset = null, // позиция baseline текста от верха штрихкода (в мм)
         } = options;
 
         // Преобразуем данные в строку и оставляем только цифры
@@ -273,16 +274,30 @@ export class BarcodeGenerator {
         const unitsPerEm = 1000;
         const capHeightRatio = capHeight / unitsPerEm;
         const actualCapHeight = textFontSize * capHeightRatio;
-        const textTopPadding = actualCapHeight * 0.2;
-        const textHeight = actualCapHeight + textTopPadding;
+        
+        // Если указан baselineOffset, используем его для позиционирования текста
+        // Иначе используем старую логику (текст под штрихкодом)
+        let totalHeight;
+        let textBaselineY;
+        
+        if (baselineOffset !== null && displayValue) {
+            // Baseline текста на указанном расстоянии от верха штрихкода
+            textBaselineY = baselineOffset;
+            // Общая высота = baseline + высота текста ниже baseline
+            totalHeight = baselineOffset + actualCapHeight;
+        } else {
+            // Старая логика: текст под штрихкодом
+            const textTopPadding = actualCapHeight * 0.2;
+            const textHeight = actualCapHeight + textTopPadding;
+            totalHeight = displayValue ? (longBarHeight + textHeight) : longBarHeight;
+            textBaselineY = totalHeight; // baseline внизу SVG
+        }
 
         // Вычисляем общие размеры SVG
         // Первая цифра выходит за пределы основного кода
         const firstDigitWidth = textFontSize * 0.7; // примерная ширина цифры
         const firstDigitMargin = textFontSize * 0.3; // отступ от guard bars
         const totalWidth = firstDigitWidth + firstDigitMargin + width;
-        // Если не рисуем текст, общая высота = только высота полос
-        const totalHeight = displayValue ? (longBarHeight + textHeight) : longBarHeight;
 
         // Начальная позиция для полосок (с учетом места для первой цифры)
         const barsStartX = firstDigitWidth + firstDigitMargin;
@@ -317,11 +332,12 @@ export class BarcodeGenerator {
 
         // Добавляем текст (если displayValue = true)
         if (displayValue) {
-            const textBaselineY = totalHeight;
+            // Если baselineOffset не указан, используем старую логику (baseline внизу SVG)
+            const finalTextBaselineY = (baselineOffset !== null) ? textBaselineY : totalHeight;
             
             // Первая цифра слева
             const firstDigitX = firstDigitWidth / 2;
-            svg += `<text x="${firstDigitX.toFixed(2)}" y="${textBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${firstDigit}</text>`;
+            svg += `<text x="${firstDigitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${firstDigit}</text>`;
             
             // Левая группа (6 цифр) - располагаем между start и middle guards
             const leftGroupStartX = barsStartX + (3 * moduleWidth); // после start guard
@@ -330,7 +346,7 @@ export class BarcodeGenerator {
             
             for (let i = 0; i < 6; i++) {
                 const digitX = leftGroupStartX + (i + 0.5) * digitSpacing;
-                svg += `<text x="${digitX.toFixed(2)}" y="${textBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${leftGroup[i]}</text>`;
+                svg += `<text x="${digitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${leftGroup[i]}</text>`;
             }
             
             // Правая группа (6 цифр) - располагаем между middle и end guards
@@ -339,7 +355,7 @@ export class BarcodeGenerator {
             
             for (let i = 0; i < 6; i++) {
                 const digitX = rightGroupStartX + (i + 0.5) * digitSpacing;
-                svg += `<text x="${digitX.toFixed(2)}" y="${textBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${rightGroup[i]}</text>`;
+                svg += `<text x="${digitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${rightGroup[i]}</text>`;
             }
         }
 
@@ -405,13 +421,27 @@ export class BarcodeGenerator {
             // Ширина основного кода = ширина колонки (без учета первой цифры)
             const barcodeWidth = columnWidth;
             
-            // Вычисляем высоту с текстом
-            const textHeight = textFontSize * (capHeight / unitsPerEm) * 1.3;
-            const totalHeightWithText = longBarHeight + textHeight;
+            // Размер шрифта: 10 pt = 10 * (25.4/72) = 3.5278 мм
+            const textFontSizePt = 10;
+            const textFontSizeMm = textFontSizePt * (25.4 / 72);
+            
+            // Baseline текста должен быть на уровне 6-го бейслайна от верха штрихкода
+            const baselineOffset = 6 * gridModule; // 6 бейслайнов от верха
+            
+            // Вычисляем общую высоту SVG: длинные полоски + место до baseline текста + высота текста
+            // Метрики TT Commons Classic
+            const capHeight = 630;
+            const unitsPerEm = 1000;
+            const capHeightRatio = capHeight / unitsPerEm;
+            const actualCapHeight = textFontSizeMm * capHeightRatio;
+            
+            // Вычисляем место для текста ниже baseline
+            const textHeightBelowBaseline = actualCapHeight; // высота текста ниже baseline
+            const totalHeightWithText = baselineOffset + textHeightBelowBaseline;
             
             // Вычисляем место для первой цифры слева
-            const firstDigitWidth = textFontSize * 0.7; // примерная ширина цифры
-            const firstDigitMargin = textFontSize * 0.3; // отступ от guard bars
+            const firstDigitWidth = textFontSizeMm * 0.7; // примерная ширина цифры
+            const firstDigitMargin = textFontSizeMm * 0.3; // отступ от guard bars
             const totalWidthWithFirstDigit = firstDigitWidth + firstDigitMargin + barcodeWidth;
             
             // КРИТИЧНО: finalWidth и finalHeight должны соответствовать реальным размерам SVG
@@ -424,16 +454,17 @@ export class BarcodeGenerator {
             block.barsWidthMm = barcodeWidth;
             block.leftPaddingMm = firstDigitWidth + firstDigitMargin;
             
-            console.log(`📊 EAN-13 Barcode: ${finalWidth.toFixed(2)}×${finalHeight.toFixed(2)}mm (longBars=${longBarHeight}mm, shortBars=${shortBarHeight}mm, ${heightInModules.toFixed(2)} modules)`);
+            console.log(`📊 EAN-13 Barcode: ${finalWidth.toFixed(2)}×${finalHeight.toFixed(2)}mm (longBars=${longBarHeight}mm, shortBars=${shortBarHeight}mm, ${heightInModules.toFixed(2)} modules, fontSize=${textFontSizePt}pt)`);
             
             // Генерируем EAN-13 штрихкод с фиксированными размерами полосок
             newSvg = this.generateEAN13SVG(barcodeData, {
                 width: barcodeWidth, // ширина БЕЗ первой цифры
                 shortBarHeight: shortBarHeight, // СТРОГО 15 мм
                 longBarHeight: longBarHeight,   // СТРОГО 18 мм
-                fontSize: textFontSize,
+                fontSize: textFontSizeMm,
                 fontWeight: 500, // Medium
-                displayValue: displayValue
+                displayValue: displayValue,
+                baselineOffset: baselineOffset // позиция baseline текста от верха штрихкода
             });
         } else {
             // Code128: стандартная логика

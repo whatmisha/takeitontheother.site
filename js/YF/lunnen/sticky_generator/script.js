@@ -9291,8 +9291,8 @@ class GridGenerator {
             return;
         }
 
-        // Обновляем штрихкод БЕЗ отображения текста (EAN-13)
-        BarcodeGenerator.updateBarcodeBlock(barcodeBlock, barcodeData, gridSettings, false, 'ean13');
+        // Обновляем штрихкод С отображением текста (EAN-13)
+        BarcodeGenerator.updateBarcodeBlock(barcodeBlock, barcodeData, gridSettings, true, 'ean13');
         console.log(`✅ Основной штрихкод (EAN-13) обновлен: ${barcodeData}`);
     }
 
