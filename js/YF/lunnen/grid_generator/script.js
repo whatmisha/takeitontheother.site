@@ -97,13 +97,43 @@ class GridGenerator {
             },
             marginsSlider: {
                 valueId: 'marginsValue',
-                setting: 'margins',
+                // ВАЖНО: margins всегда храним во ВНУТРЕННЕЙ системе в модулях,
+                // а слайдер показывает либо модули, либо мм в зависимости от marginsUnit.
+                // Поэтому setting здесь не указываем, а записываем в settings.margins
+                // вручную внутри onUpdate с учётом текущей единицы.
+                setting: null,
                 min: 0,
                 max: 10,
                 decimals: 2,
                 baseStep: 0.01,
                 shiftStep: 0.1,
-                onUpdate: () => {
+                onUpdate: (displayValue) => {
+                    // displayValue приходит от SliderController (в текущей единице отображения).
+                    // Если вызвано из старого кода без аргумента, читаем фактическое значение из слайдера.
+                    let value = displayValue;
+                    if (typeof value !== 'number' || Number.isNaN(value)) {
+                        if (this.sliderController) {
+                            const sliderValue = this.sliderController.getValue('marginsSlider');
+                            value = typeof sliderValue === 'number' && !Number.isNaN(sliderValue)
+                                ? sliderValue
+                                : parseFloat(this.dom.marginsSlider?.value || '0');
+                        } else {
+                            value = parseFloat(this.dom.marginsSlider?.value || '0');
+                        }
+                    }
+
+                    // Переводим отображаемое значение в модули и сохраняем во внутренних настройках
+                    let marginsInMod;
+                    const currentModule = this.settings.gridModule;
+                    if (this.settings.marginsUnit === 'mm') {
+                        marginsInMod = currentModule > 0 ? value / currentModule : 0;
+                    } else {
+                        marginsInMod = value;
+                    }
+                    marginsInMod = parseFloat(marginsInMod.toFixed(2));
+                    this.settings.margins = marginsInMod;
+
+                    // Дальше логика как раньше: пересчитываем модуль/кол-во строк и обновляем сетку
                     if (this.settings.linkMode === 'module') {
                         const module = this.gridCalculator.calculateModule();
                         this.settings.gridModule = module;
@@ -559,7 +589,6 @@ class GridGenerator {
         
         // Initialize
         this.initEventListeners();
-        this.updateMarginsSliderHandler();  // Setup margins slider with correct unit handling
         
         // ============================================
         // Initialize UI Controllers (Итерация 5.2 & 5.3)
@@ -4397,32 +4426,17 @@ class GridGenerator {
     }
     
     switchMarginsUnit(newUnit) {
-        // Margins are always stored in modules internally
-        const currentMarginsInMod = this.settings.margins;
+        // Margins ВСЕГДА храним в модулях; при переключении единиц сохраняем физический размер.
         const currentModule = this.settings.gridModule;
-        const oldUnit = this.settings.marginsUnit;
-        
-        // Update slider and value display based on new unit
-        const slider = this.dom.marginsSlider;
-        const valueDisplay = this.dom.marginsValue;
-        
-        // Get current value from slider (in current unit)
-        const currentSliderValue = parseFloat(slider.value);
-        
-        // Calculate the actual margins in mm (physical size that should stay the same)
-        let actualMarginsInMm;
-        if (oldUnit === 'mm') {
-            // Already in mm, use current slider value
-            actualMarginsInMm = currentSliderValue;
-        } else {
-            // Convert from modules to mm
-            actualMarginsInMm = currentMarginsInMod * currentModule;
-        }
-        
-        // Update unit setting
+        const currentMarginsInMod = this.settings.margins;
+
+        // Физический размер полей в мм, который должен остаться неизменным
+        const actualMarginsInMm = currentMarginsInMod * currentModule;
+
+        // Обновляем единицу в настройках
         this.settings.marginsUnit = newUnit;
-        
-        // Update active state of buttons
+
+        // Обновляем активное состояние кнопок
         if (this.dom.marginsUnitMod && this.dom.marginsUnitMm) {
             if (newUnit === 'mod') {
                 this.dom.marginsUnitMod.classList.add('active');
@@ -4432,87 +4446,59 @@ class GridGenerator {
                 this.dom.marginsUnitMod.classList.remove('active');
             }
         }
-        
-        if (newUnit === 'mm') {
-            // Display in mm
-            const maxMarginsInMm = 10 * currentModule; // max 10 modules in mm
-            
-            // Update slider range for mm
-            slider.min = '0';
-            slider.max = maxMarginsInMm.toFixed(2);
-            slider.step = (currentModule * 0.01).toFixed(4); // Keep same precision
-            slider.value = actualMarginsInMm.toFixed(2);
-            valueDisplay.value = actualMarginsInMm.toFixed(2);
-            valueDisplay.dataset.min = '0';
-            valueDisplay.dataset.max = maxMarginsInMm.toFixed(2);
-        } else {
-            // Display in modules - convert from mm to modules
-            const marginsInMod = actualMarginsInMm / currentModule;
-            
-            // Update internal storage
-            this.settings.margins = parseFloat(marginsInMod.toFixed(2));
-            
-            // Restore slider range for modules
-            slider.min = '0';
-            slider.max = '10';
-            slider.step = '0.01';
-            slider.value = marginsInMod.toFixed(2);
-            valueDisplay.value = marginsInMod.toFixed(2);
-            valueDisplay.dataset.min = '0';
-            valueDisplay.dataset.max = '10';
+
+        // Настраиваем диапазоны и отображаемое значение через SliderController
+        if (this.sliderController) {
+            if (newUnit === 'mm') {
+                // Диапазон в мм: 0–(10 модулей в мм)
+                const maxMarginsInMm = 10 * currentModule;
+                this.sliderController.updateLimits('marginsSlider', 0, maxMarginsInMm);
+                this.sliderController.setValue('marginsSlider', parseFloat(actualMarginsInMm.toFixed(2)), false);
+            } else {
+                // Возвращаемся к модулям: приводим обратно к модулям (на случай, если модуль изменился)
+                const marginsInMod = currentModule > 0 ? actualMarginsInMm / currentModule : 0;
+                const roundedMarginsInMod = parseFloat(marginsInMod.toFixed(2));
+                this.settings.margins = roundedMarginsInMod;
+                this.sliderController.updateLimits('marginsSlider', 0, 10);
+                this.sliderController.setValue('marginsSlider', roundedMarginsInMod, false);
+            }
+        } else if (this.dom.marginsSlider && this.dom.marginsValue) {
+            // Fallback на прямую работу с DOM (на случай, если SliderController ещё не инициализирован)
+            const slider = this.dom.marginsSlider;
+            const valueDisplay = this.dom.marginsValue;
+
+            if (newUnit === 'mm') {
+                const maxMarginsInMm = 10 * currentModule;
+                slider.min = '0';
+                slider.max = maxMarginsInMm.toFixed(2);
+                slider.value = actualMarginsInMm.toFixed(2);
+                valueDisplay.value = actualMarginsInMm.toFixed(2);
+                valueDisplay.dataset.min = '0';
+                valueDisplay.dataset.max = maxMarginsInMm.toFixed(2);
+            } else {
+                const marginsInMod = currentModule > 0 ? actualMarginsInMm / currentModule : 0;
+                const roundedMarginsInMod = parseFloat(marginsInMod.toFixed(2));
+                this.settings.margins = roundedMarginsInMod;
+                slider.min = '0';
+                slider.max = '10';
+                slider.value = roundedMarginsInMod.toFixed(2);
+                valueDisplay.value = roundedMarginsInMod.toFixed(2);
+                valueDisplay.dataset.min = '0';
+                valueDisplay.dataset.max = '10';
+            }
         }
-        
-        // Update SLIDER_CONFIG for margins to use correct conversion
-        this.updateMarginsSliderHandler();
-    }
-    
-    // Update margins slider handler to work with current unit
-    updateMarginsSliderHandler() {
-        const slider = this.dom.marginsSlider;
-        const valueDisplay = this.dom.marginsValue;
-        
-        // Remove old handlers by cloning the element
-        const newSlider = slider.cloneNode(true);
-        slider.parentNode.replaceChild(newSlider, slider);
-        this.dom.marginsSlider = newSlider;
-        
-        const handler = (e) => {
-            const value = parseFloat(e.target.value);
-            
-            if (this.settings.marginsUnit === 'mm') {
-                // Convert mm to modules for internal storage
-                const marginsInMod = value / this.settings.gridModule;
-                this.settings.margins = parseFloat(marginsInMod.toFixed(2));
-                valueDisplay.value = value.toFixed(2);
-            } else {
-                // Direct module value
-                this.settings.margins = parseFloat(value.toFixed(2));
-                valueDisplay.value = value.toFixed(2);
-            }
-            
-            if (this.settings.linkMode === 'module') {
-                const module = this.gridCalculator.calculateModule();
-                this.settings.gridModule = module;
-                this.sliderController.setValue('gridModuleSlider', module, false);
-            } else {
-                const rowCount = this.gridCalculator.calculateRowCount();
-                this.settings.rowCount = rowCount;
-                this.sliderController.setValue('rowCountSlider', rowCount, false);
-            }
-            this.constrainAllObjectsToGrid();
-            this.generateRowPresets();
-            this.updateGrid();
-        };
-        
-        newSlider.addEventListener('input', handler);
-        newSlider.addEventListener('change', handler);
-        newSlider.addEventListener('keyup', handler);
     }
     
     initValueInputs() {
         const valueInputs = document.querySelectorAll('.value-display');
         
         valueInputs.forEach(input => {
+            // Margins обрабатываем только через SliderController и switchMarginsUnit,
+            // чтобы не дублировать логику и не путать единицы измерения.
+            if (input.id === 'marginsValue') {
+                return;
+            }
+            
             // Universal naming convention: inputValue -> inputSlider
             const sliderId = input.id.replace('Value', 'Slider');
             const slider = document.getElementById(sliderId);

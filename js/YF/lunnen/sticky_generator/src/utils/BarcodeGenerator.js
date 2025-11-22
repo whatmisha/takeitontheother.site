@@ -193,6 +193,7 @@ export class BarcodeGenerator {
      * @param {number} options.longBarHeight - Высота длинных полосок (guard bars) (в мм)
      * @param {number} options.fontSize - Размер шрифта для текста (в мм)
      * @param {number} options.fontWeight - Вес шрифта
+     * @param {boolean} options.displayValue - Показывать ли цифры под штрихкодом
      * @returns {string} SVG код штрихкода
      */
     static generateEAN13SVG(data, options = {}) {
@@ -202,6 +203,7 @@ export class BarcodeGenerator {
             longBarHeight = 18,
             fontSize = null,
             fontWeight = 500,
+            displayValue = true,
         } = options;
 
         // Преобразуем данные в строку и оставляем только цифры
@@ -266,7 +268,7 @@ export class BarcodeGenerator {
         // Вычисляем размер шрифта
         const textFontSize = fontSize !== null ? fontSize : 3;
         
-        // Метрики шрифта для расчета пространства
+        // Метрики шрифта для расчета пространства (геометрия сохраняется даже если текст не рисуем)
         const capHeight = 630;
         const unitsPerEm = 1000;
         const capHeightRatio = capHeight / unitsPerEm;
@@ -312,30 +314,32 @@ export class BarcodeGenerator {
             moduleIndex++;
         }
 
-        // Добавляем текст
-        const textBaselineY = totalHeight;
-        
-        // Первая цифра слева
-        const firstDigitX = firstDigitWidth / 2;
-        svg += `<text x="${firstDigitX.toFixed(2)}" y="${textBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${firstDigit}</text>`;
-        
-        // Левая группа (6 цифр) - располагаем между start и middle guards
-        const leftGroupStartX = barsStartX + (3 * moduleWidth); // после start guard
-        const leftGroupWidth = 42 * moduleWidth; // 6 цифр * 7 модулей
-        const digitSpacing = leftGroupWidth / 6;
-        
-        for (let i = 0; i < 6; i++) {
-            const digitX = leftGroupStartX + (i + 0.5) * digitSpacing;
-            svg += `<text x="${digitX.toFixed(2)}" y="${textBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${leftGroup[i]}</text>`;
-        }
-        
-        // Правая группа (6 цифр) - располагаем между middle и end guards
-        const rightGroupStartX = barsStartX + (3 + 42 + 5) * moduleWidth; // после start + left + middle guards
-        const rightGroupWidth = 42 * moduleWidth; // 6 цифр * 7 модулей
-        
-        for (let i = 0; i < 6; i++) {
-            const digitX = rightGroupStartX + (i + 0.5) * digitSpacing;
-            svg += `<text x="${digitX.toFixed(2)}" y="${textBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${rightGroup[i]}</text>`;
+        // Добавляем текст (если displayValue = true)
+        if (displayValue) {
+            const textBaselineY = totalHeight;
+            
+            // Первая цифра слева
+            const firstDigitX = firstDigitWidth / 2;
+            svg += `<text x="${firstDigitX.toFixed(2)}" y="${textBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${firstDigit}</text>`;
+            
+            // Левая группа (6 цифр) - располагаем между start и middle guards
+            const leftGroupStartX = barsStartX + (3 * moduleWidth); // после start guard
+            const leftGroupWidth = 42 * moduleWidth; // 6 цифр * 7 модулей
+            const digitSpacing = leftGroupWidth / 6;
+            
+            for (let i = 0; i < 6; i++) {
+                const digitX = leftGroupStartX + (i + 0.5) * digitSpacing;
+                svg += `<text x="${digitX.toFixed(2)}" y="${textBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${leftGroup[i]}</text>`;
+            }
+            
+            // Правая группа (6 цифр) - располагаем между middle и end guards
+            const rightGroupStartX = barsStartX + (3 + 42 + 5) * moduleWidth; // после start + left + middle guards
+            const rightGroupWidth = 42 * moduleWidth; // 6 цифр * 7 модулей
+            
+            for (let i = 0; i < 6; i++) {
+                const digitX = rightGroupStartX + (i + 0.5) * digitSpacing;
+                svg += `<text x="${digitX.toFixed(2)}" y="${textBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${rightGroup[i]}</text>`;
+            }
         }
 
         svg += '</svg>';
@@ -424,6 +428,7 @@ export class BarcodeGenerator {
                 longBarHeight: longBarHeight,   // СТРОГО 18 мм
                 fontSize: textFontSize,
                 fontWeight: 500, // Medium
+                displayValue: displayValue
             });
         } else {
             // Code128: стандартная логика
