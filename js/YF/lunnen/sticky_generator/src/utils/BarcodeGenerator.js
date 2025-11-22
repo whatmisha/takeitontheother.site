@@ -340,21 +340,42 @@ export class BarcodeGenerator {
             svg += `<text x="${firstDigitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${firstDigit}</text>`;
             
             // Левая группа (6 цифр) - располагаем между start и middle guards
-            const leftGroupStartX = barsStartX + (3 * moduleWidth); // после start guard
-            const leftGroupWidth = 42 * moduleWidth; // 6 цифр * 7 модулей
-            const digitSpacing = leftGroupWidth / 6;
+            // Структура: start guard (3 модуля) + левая группа (42 модуля) + center guard (5 модулей)
+            // Все 4 расстояния должны быть равны:
+            // 1. От start guard до первой цифры левой группы
+            // 2. От последней цифры левой группы до center guard
+            // 3. От center guard до первой цифры правой группы
+            // 4. От последней цифры правой группы до end guard
             
+            const startGuardEndX = barsStartX + (3 * moduleWidth); // конец start guard
+            const centerGuardStartX = barsStartX + (3 + 42) * moduleWidth; // начало center guard
+            const centerGuardEndX = barsStartX + (3 + 42 + 5) * moduleWidth; // конец center guard
+            const endGuardStartX = barsStartX + (3 + 42 + 5 + 42) * moduleWidth; // начало end guard
+            
+            // Вычисляем равное расстояние между guard bars и цифрами
+            // Доступное пространство для левой группы: 42 модуля
+            // Нужно разместить 6 цифр с равными отступами от guard bars
+            // Если расстояние от guard до цифры = X, то:
+            // X + (расстояние между цифрами) * 5 + X = 42
+            // Используем фиксированное расстояние между центрами цифр
+            const leftGroupAvailableWidth = 42 * moduleWidth;
+            const digitSpacing = leftGroupAvailableWidth / 7; // 7 интервалов для 6 цифр (5 между + 2 по краям)
+            const guardToDigitDistance = digitSpacing; // расстояние от guard до первой/последней цифры
+            
+            // Позиции цифр левой группы
             for (let i = 0; i < 6; i++) {
-                const digitX = leftGroupStartX + (i + 0.5) * digitSpacing;
+                const digitX = startGuardEndX + guardToDigitDistance + i * digitSpacing;
                 svg += `<text x="${digitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${leftGroup[i]}</text>`;
             }
             
             // Правая группа (6 цифр) - располагаем между middle и end guards
-            const rightGroupStartX = barsStartX + (3 + 42 + 5) * moduleWidth; // после start + left + middle guards
-            const rightGroupWidth = 42 * moduleWidth; // 6 цифр * 7 модулей
+            // Используем то же расстояние от guard bars
+            const rightGroupAvailableWidth = 42 * moduleWidth;
+            const rightDigitSpacing = rightGroupAvailableWidth / 7; // такое же расстояние
             
+            // Позиции цифр правой группы
             for (let i = 0; i < 6; i++) {
-                const digitX = rightGroupStartX + (i + 0.5) * digitSpacing;
+                const digitX = centerGuardEndX + guardToDigitDistance + i * rightDigitSpacing;
                 svg += `<text x="${digitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${rightGroup[i]}</text>`;
             }
         }
