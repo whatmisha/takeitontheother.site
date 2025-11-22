@@ -38,20 +38,20 @@ class GridGenerator {
             frontWidthSlider: {
                 valueId: 'frontWidthValue',
                 setting: 'frontWidth',
-                min: 50,
+                min: 10,
                 max: 1000,
                 decimals: 1,
-                baseStep: 0.5,
+                baseStep: 1,
                 shiftStep: 10,
                 onUpdate: () => this.updateGrid()
             },
             frontHeightSlider: {
                 valueId: 'frontHeightValue',
                 setting: 'frontHeight',
-                min: 50,
+                min: 10,
                 max: 1000,
                 decimals: 1,
-                baseStep: 0.5,
+                baseStep: 1,
                 shiftStep: 10,
                 onUpdate: () => {
                     if (this.settings.linkMode === 'module') {
@@ -71,21 +71,21 @@ class GridGenerator {
             thicknessSlider: {
                 valueId: 'thicknessValue',
                 setting: 'thickness',
-                min: 5,
-                max: 200,
+                min: 10,
+                max: 1000,
                 decimals: 1,
-                baseStep: 0.5,
+                baseStep: 1,
                 shiftStep: 10,
                 onUpdate: () => this.updateGrid()
             },
             gridModuleSlider: {
                 valueId: 'gridModuleValue',
                 setting: 'gridModule',
-                min: 0.5,
-                max: 20,
+                min: 0.1,
+                max: 100,
                 decimals: 4,
-                baseStep: 0.0001,
-                shiftStep: 0.1,
+                baseStep: 0.1,
+                shiftStep: 1,
                 onUpdate: () => {
                     const rowCount = this.gridCalculator.calculateRowCount();
                     this.settings.rowCount = rowCount;
@@ -103,10 +103,10 @@ class GridGenerator {
                 // вручную внутри onUpdate с учётом текущей единицы.
                 setting: null,
                 min: 0,
-                max: 10,
+                max: 50,
                 decimals: 2,
-                baseStep: 0.01,
-                shiftStep: 0.1,
+                baseStep: 0.1,
+                shiftStep: 1,
                 onUpdate: (displayValue) => {
                     // displayValue приходит от SliderController (в текущей единице отображения).
                     // Если вызвано из старого кода без аргумента, читаем фактическое значение из слайдера.
@@ -152,7 +152,7 @@ class GridGenerator {
                 valueId: 'columnCountValue',
                 setting: 'columnCount',
                 min: 1,
-                max: 24,
+                max: 128,
                 decimals: 0,
                 baseStep: 1,
                 shiftStep: 10,
@@ -165,7 +165,7 @@ class GridGenerator {
                 valueId: 'rowCountValue',
                 setting: 'rowCount',
                 min: 1,
-                max: 50,
+                max: 128,
                 decimals: 0,
                 baseStep: 1,
                 shiftStep: 10,
@@ -188,7 +188,7 @@ class GridGenerator {
                 valueId: 'rowHeightValue',
                 setting: 'rowHeight',
                 min: 1,
-                max: 20,
+                max: 64,
                 decimals: 0,
                 baseStep: 1,
                 shiftStep: 10,
@@ -250,121 +250,121 @@ class GridGenerator {
             headlineSizeSlider: {
                 valueId: 'headlineSizeValue',
                 setting: 'headlineSize',
-                min: 0.25,
-                max: 10,
+                min: 0.01,
+                max: 25,
                 decimals: 2,
-                baseStep: 0.25,
+                baseStep: 0.1,
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
             lineHeightSlider: {
                 valueId: 'lineHeightValue',
                 setting: 'lineHeight',
-                min: 0.25,
-                max: 10,
+                min: 0.01,
+                max: 50,
                 decimals: 2,
-                baseStep: 0.25,
+                baseStep: 0.1,
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
             trackingSlider: {
                 valueId: 'trackingValue',
                 setting: 'tracking',
-                min: -0.05,
-                max: 0.05,
+                min: -0.1,
+                max: 0.1,
                 decimals: 3,
-                baseStep: 0.005,
-                shiftStep: 0.05,
+                baseStep: 0.001,
+                shiftStep: 0.01,
                 onUpdate: () => this.updateGrid()
             },
             textSizeSlider: {
                 valueId: 'textSizeValue',
                 setting: 'textSize',
-                min: 0.25,
-                max: 10,
+                min: 0.01,
+                max: 25,
                 decimals: 2,
-                baseStep: 0.25,
+                baseStep: 0.1,
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
             textLineHeightSlider: {
                 valueId: 'textLineHeightValue',
                 setting: 'textLineHeight',
-                min: 0.25,
-                max: 10,
+                min: 0.01,
+                max: 50,
                 decimals: 2,
-                baseStep: 0.25,
+                baseStep: 0.1,
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
             textTrackingSlider: {
                 valueId: 'textTrackingValue',
                 setting: 'textTracking',
-                min: -0.05,
-                max: 0.05,
-                decimals: 2,
-                baseStep: 0.01,
-                shiftStep: 0.05,
+                min: -0.1,
+                max: 0.1,
+                decimals: 3,
+                baseStep: 0.001,
+                shiftStep: 0.01,
                 onUpdate: () => this.updateGrid()
             },
             captionSizeSlider: {
                 valueId: 'captionSizeValue',
                 setting: 'captionSize',
-                min: 0.25,
-                max: 10,
+                min: 0.01,
+                max: 25,
                 decimals: 2,
-                baseStep: 0.25,
+                baseStep: 0.1,
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
             captionLineHeightSlider: {
                 valueId: 'captionLineHeightValue',
                 setting: 'captionLineHeight',
-                min: 0.25,
-                max: 10,
+                min: 0.01,
+                max: 50,
                 decimals: 2,
-                baseStep: 0.25,
+                baseStep: 0.1,
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
             captionTrackingSlider: {
                 valueId: 'captionTrackingValue',
                 setting: 'captionTracking',
-                min: -0.05,
-                max: 0.05,
-                decimals: 2,
-                baseStep: 0.01,
-                shiftStep: 0.05,
+                min: -0.1,
+                max: 0.1,
+                decimals: 3,
+                baseStep: 0.001,
+                shiftStep: 0.01,
                 onUpdate: () => this.updateGrid()
             },
             lunnenDisplaySizeSlider: {
                 valueId: 'lunnenDisplaySizeValue',
                 setting: 'lunnenDisplaySize',
-                min: 0.25,
-                max: 10,
+                min: 0.01,
+                max: 25,
                 decimals: 2,
-                baseStep: 0.25,
+                baseStep: 0.1,
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
             lunnenDisplayLineHeightSlider: {
                 valueId: 'lunnenDisplayLineHeightValue',
                 setting: 'lunnenDisplayLineHeight',
-                min: 0.25,
-                max: 10,
+                min: 0.01,
+                max: 50,
                 decimals: 2,
-                baseStep: 0.25,
+                baseStep: 0.1,
                 shiftStep: 1,
                 onUpdate: () => this.updateGrid()
             },
             lunnenDisplayTrackingSlider: {
                 valueId: 'lunnenDisplayTrackingValue',
                 setting: 'lunnenDisplayTracking',
-                min: -0.05,
-                max: 0.05,
-                decimals: 2,
-                baseStep: 0.01,
-                shiftStep: 0.05,
+                min: -0.1,
+                max: 0.1,
+                decimals: 3,
+                baseStep: 0.001,
+                shiftStep: 0.01,
                 onUpdate: () => this.updateGrid()
             }
         };
@@ -1851,86 +1851,11 @@ class GridGenerator {
     }
     
     // Initialize Size inputs (without sliders) with arrow key support
+    // ПРИМЕЧАНИЕ: headlineSizeValue и textSizeValue теперь обрабатываются через SliderController,
+    // поэтому их не нужно обрабатывать здесь отдельно
     initSizeInputsWithArrows() {
-        const sizeInputs = [
-            { id: 'headlineSizeValue', setting: 'headlineSize' },
-            { id: 'textSizeValue', setting: 'textSize' }
-        ];
-        
-        sizeInputs.forEach(({ id, setting }) => {
-            const input = document.getElementById(id);
-            if (!input) return;
-            
-            const min = parseFloat(input.dataset.min);
-            const max = parseFloat(input.dataset.max);
-            
-            input.addEventListener('focus', () => {
-                input.dataset.originalValue = input.value;
-                input.select();
-            });
-            
-            input.addEventListener('blur', () => {
-                let rawValue = input.value.replace(/[^\d.-]/g, '');
-                let numValue = parseFloat(rawValue);
-                
-                if (isNaN(numValue)) {
-                    numValue = this.settings[setting];
-                }
-                
-                numValue = Math.max(min, Math.min(max, numValue));
-                this.settings[setting] = numValue;
-                input.value = numValue.toFixed(2);
-                this.updateGrid();
-            });
-            
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    input.blur();
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    input.value = input.dataset.originalValue;
-                    input.blur();
-                } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    
-                    let currentValue = parseFloat(input.value);
-                    if (isNaN(currentValue)) {
-                        currentValue = this.settings[setting];
-                    }
-                    
-                    // Шаг 0.25 без Shift, 1 с Shift (всегда кратно 0.25)
-                    const step = e.shiftKey ? 1 : 0.25;
-                    const direction = e.key === 'ArrowUp' ? 1 : -1;
-                    let newValue;
-                    
-                    // Округляем до ближайшего кратного 0.25 в направлении нажатой стрелки
-                    if (direction === 1) {
-                        // Стрелка вверх - округляем вверх до следующего кратного 0.25
-                        newValue = Math.ceil(currentValue / 0.25) * 0.25;
-                        // Если уже кратно 0.25, добавляем шаг
-                        if (Math.abs(newValue - currentValue) < 0.001) {
-                            newValue = currentValue + step;
-                        }
-                    } else {
-                        // Стрелка вниз - округляем вниз до предыдущего кратного 0.25
-                        newValue = Math.floor(currentValue / 0.25) * 0.25;
-                        // Если уже кратно 0.25, вычитаем шаг
-                        if (Math.abs(newValue - currentValue) < 0.001) {
-                            newValue = currentValue - step;
-                        }
-                    }
-                    
-                    // Округляем до сотых
-                    newValue = Math.round(newValue * 100) / 100;
-                    newValue = Math.max(min, Math.min(max, newValue));
-                    
-                    this.settings[setting] = newValue;
-                    input.value = newValue.toFixed(2);
-                    this.updateGrid();
-                }
-            });
-        });
+        // Эта функция оставлена для будущего использования, если появятся инпуты без слайдеров
+        // Сейчас все инпуты размеров шрифта управляются через SliderController
     }
     
     initCollapsibleSections() {
@@ -2893,8 +2818,22 @@ class GridGenerator {
                     }
                     
                     const step = e.shiftKey ? shiftStep : baseStep;
+                    const stepDecimals = step > 0 ? this.getDecimalsFromStep(step) : (decimals || 0);
+                    
+                    // Округляем текущее значение до количества знаков шага перед изменением
+                    const roundedCurrent = stepDecimals > 0 
+                        ? parseFloat(currentValue.toFixed(stepDecimals))
+                        : Math.round(currentValue);
+                    
                     const direction = e.key === 'ArrowUp' ? 1 : -1;
-                    let newValue = currentValue + (step * direction);
+                    let newValue = roundedCurrent + (step * direction);
+                    
+                    // Округляем результат по количеству знаков шага
+                    if (step > 0 && stepDecimals > 0) {
+                        newValue = parseFloat(newValue.toFixed(stepDecimals));
+                    } else if (decimals > 0) {
+                        newValue = parseFloat(newValue.toFixed(decimals));
+                    }
                     
                     // Apply constraints
                     if (applyConstraints) {
@@ -3181,8 +3120,22 @@ class GridGenerator {
                     }
                     
                     const step = e.shiftKey ? shiftStep : baseStep;
+                    const stepDecimals = step > 0 ? this.getDecimalsFromStep(step) : (decimals || 0);
+                    
+                    // Округляем текущее значение до количества знаков шага перед изменением
+                    const roundedCurrent = stepDecimals > 0 
+                        ? parseFloat(currentValue.toFixed(stepDecimals))
+                        : Math.round(currentValue);
+                    
                     const direction = e.key === 'ArrowUp' ? 1 : -1;
-                    let newValue = currentValue + (step * direction);
+                    let newValue = roundedCurrent + (step * direction);
+                    
+                    // Округляем результат по количеству знаков шага
+                    if (step > 0 && stepDecimals > 0) {
+                        newValue = parseFloat(newValue.toFixed(stepDecimals));
+                    } else if (decimals > 0) {
+                        newValue = parseFloat(newValue.toFixed(decimals));
+                    }
                     
                     // Apply constraints
                     if (applyConstraints) {
@@ -3442,8 +3395,22 @@ class GridGenerator {
                         }
                         
                         const step = e.shiftKey ? shiftStep : baseStep;
+                        const stepDecimals = step > 0 ? this.getDecimalsFromStep(step) : (decimals || 0);
+                        
+                        // Округляем текущее значение до количества знаков шага перед изменением
+                        const roundedCurrent = stepDecimals > 0 
+                            ? parseFloat(currentValue.toFixed(stepDecimals))
+                            : Math.round(currentValue);
+                        
                         const direction = e.key === 'ArrowUp' ? 1 : -1;
-                        let newValue = currentValue + (step * direction);
+                        let newValue = roundedCurrent + (step * direction);
+                        
+                        // Округляем результат по количеству знаков шага
+                        if (step > 0 && stepDecimals > 0) {
+                            newValue = parseFloat(newValue.toFixed(stepDecimals));
+                        } else if (decimals > 0) {
+                            newValue = parseFloat(newValue.toFixed(decimals));
+                        }
                         
                         // Apply constraints
                         if (applyConstraints) {
@@ -3480,10 +3447,17 @@ class GridGenerator {
         // Для width используем шаг 0.25
         const baseStep = property === 'width' ? 0.25 : 1;
         const step = e.shiftKey ? (property === 'width' ? 1 : 10) : baseStep;
+        const stepDecimals = step > 0 ? this.getDecimalsFromStep(step) : 0;
         const direction = e.key === 'ArrowUp' ? 1 : -1;
-        const delta = step * direction;
         
-        let newValue = this.currentEditingBlock[property] + delta;
+        // Округляем текущее значение до количества знаков шага перед изменением
+        let currentValue = this.currentEditingBlock[property];
+        const roundedCurrent = stepDecimals > 0 
+            ? parseFloat(currentValue.toFixed(stepDecimals))
+            : Math.round(currentValue);
+        
+        const delta = step * direction;
+        let newValue = roundedCurrent + delta;
         
         // Применяем ограничения в зависимости от поля
         if (property === 'x') {
@@ -4450,8 +4424,8 @@ class GridGenerator {
         // Настраиваем диапазоны и отображаемое значение через SliderController
         if (this.sliderController) {
             if (newUnit === 'mm') {
-                // Диапазон в мм: 0–(10 модулей в мм)
-                const maxMarginsInMm = 10 * currentModule;
+                // Диапазон в мм: 0–250
+                const maxMarginsInMm = 250;
                 this.sliderController.updateLimits('marginsSlider', 0, maxMarginsInMm);
                 this.sliderController.setValue('marginsSlider', parseFloat(actualMarginsInMm.toFixed(2)), false);
             } else {
@@ -4468,7 +4442,7 @@ class GridGenerator {
             const valueDisplay = this.dom.marginsValue;
 
             if (newUnit === 'mm') {
-                const maxMarginsInMm = 10 * currentModule;
+                const maxMarginsInMm = 250;
                 slider.min = '0';
                 slider.max = maxMarginsInMm.toFixed(2);
                 slider.value = actualMarginsInMm.toFixed(2);
@@ -4502,6 +4476,13 @@ class GridGenerator {
             // Universal naming convention: inputValue -> inputSlider
             const sliderId = input.id.replace('Value', 'Slider');
             const slider = document.getElementById(sliderId);
+            const config = this.SLIDER_CONFIG[sliderId];
+            
+            // Если для этого инпута есть конфиг слайдера, все события (включая стрелки)
+            // уже обрабатываются через SliderController, здесь ничего не вешаем.
+            if (config) {
+                return;
+            }
             
             const min = parseFloat(input.dataset.min);
             const max = parseFloat(input.dataset.max);
@@ -4533,6 +4514,37 @@ class GridGenerator {
         });
     }
     
+    /**
+     * Определяет количество знаков после запятой на основе шага
+     * Например: 0.1 -> 1, 0.01 -> 2, 0.001 -> 3, 0.25 -> 2, 1 -> 0
+     */
+    getDecimalsFromStep(step) {
+        if (step >= 1) return 0;
+        
+        // Преобразуем шаг в строку для анализа
+        const stepStr = step.toString();
+        
+        // Если есть научная нотация (например, 1e-4)
+        if (stepStr.includes('e')) {
+            const match = stepStr.match(/e-(\d+)/);
+            if (match) {
+                return parseInt(match[1]);
+            }
+        }
+        
+        // Если есть точка, считаем знаки после неё
+        if (stepStr.includes('.')) {
+            const parts = stepStr.split('.');
+            if (parts.length === 2) {
+                // Возвращаем длину всей части после точки (включая ведущие нули)
+                // Например: "01" -> 2, "1" -> 1, "25" -> 2
+                return parts[1].length;
+            }
+        }
+        
+        return 0;
+    }
+
     handleArrowKey(e, input, slider, min, max) {
         const sliderId = slider.id;
         const config = this.SLIDER_CONFIG[sliderId];
@@ -4546,6 +4558,10 @@ class GridGenerator {
             currentValue = parseFloat(slider.value);
         }
         
+        // Определяем шаг, который будет использоваться
+        const step = e.shiftKey ? config.shiftStep : config.baseStep;
+        const stepDecimals = step > 0 ? this.getDecimalsFromStep(step) : (config.decimals || 0);
+        
         // Determine step based on shift key
         let newValue;
         if (e.shiftKey && config.decimals === 2) {
@@ -4554,8 +4570,19 @@ class GridGenerator {
             const step = (e.key === 'ArrowUp' ? 1 : -1) * config.shiftStep;
             newValue = roundedToTenth + step;
         } else {
-            const step = e.shiftKey ? config.shiftStep : config.baseStep;
-            newValue = e.key === 'ArrowUp' ? currentValue + step : currentValue - step;
+            // Округляем текущее значение до количества знаков шага перед изменением
+            const roundedCurrent = stepDecimals > 0 
+                ? parseFloat(currentValue.toFixed(stepDecimals))
+                : Math.round(currentValue);
+            const stepValue = e.key === 'ArrowUp' ? step : -step;
+            newValue = roundedCurrent + stepValue;
+        }
+        
+        // Округляем результат по количеству знаков шага (если шаг задан)
+        if (step > 0 && stepDecimals > 0) {
+            newValue = parseFloat(newValue.toFixed(stepDecimals));
+        } else if (typeof config.decimals === 'number') {
+            newValue = parseFloat(newValue.toFixed(config.decimals));
         }
         
         // Clamp to min/max

@@ -22,11 +22,31 @@ export class SliderController {
             return;
         }
 
+        // Синхронизируем HTML-атрибуты с конфигом,
+        // чтобы диапазон и шаг ползунка соответствовали настройкам.
+        if (typeof config.min === 'number') {
+            slider.min = String(config.min);
+        }
+        if (typeof config.max === 'number') {
+            slider.max = String(config.max);
+        }
+        if (typeof config.baseStep === 'number' && config.baseStep > 0) {
+            slider.step = String(config.baseStep);
+        }
+
         this.sliders.set(sliderId, {
             element: slider,
             valueInput: valueInput,
             config: config
         });
+
+        // Приводим текущее значение к диапазону и форматируем отображение
+        let initialValue = parseFloat(slider.value);
+        if (!isNaN(initialValue)) {
+            initialValue = this.clamp(initialValue, config.min, config.max);
+            slider.value = initialValue;
+            this.updateValueDisplay(valueInput, initialValue, config);
+        }
 
         // Обработчики событий
         slider.addEventListener('input', (e) => this.handleSliderInput(sliderId, e));
@@ -48,8 +68,16 @@ export class SliderController {
         const { config, valueInput } = sliderData;
         let value = parseFloat(event.target.value);
         
-        // Валидация
-        value = this.clamp(value, config.min, config.max);
+        // Валидация с учетом погрешности округления
+        // Если значение очень близко к границе (в пределах шага), принудительно устанавливаем границу
+        const epsilon = config.baseStep ? config.baseStep * 0.1 : 0.001;
+        if (Math.abs(value - config.max) < epsilon) {
+            value = config.max;
+        } else if (Math.abs(value - config.min) < epsilon) {
+            value = config.min;
+        } else {
+            value = this.clamp(value, config.min, config.max);
+        }
         
         // Обновление отображения
         this.updateValueDisplay(valueInput, value, config);
@@ -97,6 +125,37 @@ export class SliderController {
     }
 
     /**
+     * Определяет количество знаков после запятой на основе шага
+     * Например: 0.1 -> 1, 0.01 -> 2, 0.001 -> 3, 0.25 -> 2, 1 -> 0
+     */
+    getDecimalsFromStep(step) {
+        if (step >= 1) return 0;
+        
+        // Преобразуем шаг в строку для анализа
+        const stepStr = step.toString();
+        
+        // Если есть научная нотация (например, 1e-4)
+        if (stepStr.includes('e')) {
+            const match = stepStr.match(/e-(\d+)/);
+            if (match) {
+                return parseInt(match[1]);
+            }
+        }
+        
+        // Если есть точка, считаем знаки после неё
+        if (stepStr.includes('.')) {
+            const parts = stepStr.split('.');
+            if (parts.length === 2) {
+                // Возвращаем длину всей части после точки (включая ведущие нули)
+                // Например: "01" -> 2, "1" -> 1, "25" -> 2
+                return parts[1].length;
+            }
+        }
+        
+        return 0;
+    }
+
+    /**
      * Обработка нажатий клавиш (Arrow keys, Enter, Escape)
      */
     handleKeyDown(sliderId, event) {
@@ -111,15 +170,60 @@ export class SliderController {
         let newValue = currentValue;
         let handled = false;
 
-        const step = event.shiftKey ? config.shiftStep : config.baseStep;
+        const baseStep = config.baseStep || 0;
+        const shiftStep = config.shiftStep || 0;
+        
+        // Определяем шаг, который будет использоваться
+        const step = event.shiftKey && shiftStep > 0 ? shiftStep : baseStep;
+        const stepDecimals = step > 0 ? this.getDecimalsFromStep(step) : (config.decimals || 0);
 
         switch (event.key) {
             case 'ArrowUp':
-                newValue = currentValue + step;
+                if (event.shiftKey && shiftStep > 0) {
+                    // С Shift: прилипание к ближайшему большому шагу вверх
+                    // Сначала округляем текущее значение до количества знаков шага
+                    const roundedCurrent = stepDecimals > 0 
+                        ? parseFloat(currentValue.toFixed(stepDecimals))
+                        : Math.round(currentValue);
+                    const k = roundedCurrent / shiftStep;
+                    const nearest = Math.round(k);
+                    const isMultiple = Math.abs(k - nearest) < 1e-6;
+                    if (isMultiple) {
+                        newValue = roundedCurrent + shiftStep;
+                    } else {
+                        newValue = Math.ceil(k) * shiftStep;
+                    }
+                } else if (baseStep > 0) {
+                    // Округляем текущее значение до количества знаков шага перед изменением
+                    const roundedCurrent = stepDecimals > 0 
+                        ? parseFloat(currentValue.toFixed(stepDecimals))
+                        : Math.round(currentValue);
+                    newValue = roundedCurrent + baseStep;
+                }
                 handled = true;
                 break;
             case 'ArrowDown':
-                newValue = currentValue - step;
+                if (event.shiftKey && shiftStep > 0) {
+                    // С Shift: прилипание к ближайшему большому шагу вниз
+                    // Сначала округляем текущее значение до количества знаков шага
+                    const roundedCurrent = stepDecimals > 0 
+                        ? parseFloat(currentValue.toFixed(stepDecimals))
+                        : Math.round(currentValue);
+                    const k = roundedCurrent / shiftStep;
+                    const nearest = Math.round(k);
+                    const isMultiple = Math.abs(k - nearest) < 1e-6;
+                    if (isMultiple) {
+                        newValue = roundedCurrent - shiftStep;
+                    } else {
+                        newValue = Math.floor(k) * shiftStep;
+                    }
+                } else if (baseStep > 0) {
+                    // Округляем текущее значение до количества знаков шага перед изменением
+                    const roundedCurrent = stepDecimals > 0 
+                        ? parseFloat(currentValue.toFixed(stepDecimals))
+                        : Math.round(currentValue);
+                    newValue = roundedCurrent - baseStep;
+                }
                 handled = true;
                 break;
             case 'Enter':
@@ -141,7 +245,13 @@ export class SliderController {
         if (handled && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
             event.preventDefault();
             
-            // Валидация
+            // Округляем результат по количеству знаков шага (если шаг задан)
+            // Иначе используем config.decimals
+            if (step > 0 && stepDecimals > 0) {
+                newValue = parseFloat(newValue.toFixed(stepDecimals));
+            } else if (typeof config.decimals === 'number') {
+                newValue = parseFloat(newValue.toFixed(config.decimals));
+            }
             newValue = this.clamp(newValue, config.min, config.max);
             
             // Обновление UI
