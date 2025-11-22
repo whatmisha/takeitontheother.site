@@ -195,20 +195,20 @@ class GridGenerator {
             },
             headlineSizeValue: {
                 setting: 'headlineSize',
-                min: 0.25,
-                max: 10,
-                decimals: 2,
-                baseStep: 0.25,
-                shiftStep: 1,
+                min: 6,
+                max: 144,
+                decimals: 1,
+                baseStep: 0.5,
+                shiftStep: 5,
                 onUpdate: () => this.updateGrid()
             },
             lineHeightValue: {
                 setting: 'lineHeight',
-                min: 0.25,
-                max: 10,
-                decimals: 2,
-                baseStep: 0.25,
-                shiftStep: 1,
+                min: 6,
+                max: 144,
+                decimals: 1,
+                baseStep: 0.5,
+                shiftStep: 5,
                 onUpdate: () => this.updateGrid()
             },
             trackingValue: {
@@ -222,20 +222,20 @@ class GridGenerator {
             },
             textSizeValue: {
                 setting: 'textSize',
-                min: 0.25,
-                max: 10,
-                decimals: 2,
-                baseStep: 0.25,
-                shiftStep: 1,
+                min: 6,
+                max: 144,
+                decimals: 1,
+                baseStep: 0.5,
+                shiftStep: 5,
                 onUpdate: () => this.updateGrid()
             },
             textLineHeightValue: {
                 setting: 'textLineHeight',
-                min: 0.25,
-                max: 10,
-                decimals: 2,
-                baseStep: 0.25,
-                shiftStep: 1,
+                min: 6,
+                max: 144,
+                decimals: 1,
+                baseStep: 0.5,
+                shiftStep: 5,
                 onUpdate: () => this.updateGrid()
             },
             textTrackingValue: {
@@ -249,20 +249,20 @@ class GridGenerator {
             },
             captionSizeValue: {
                 setting: 'captionSize',
-                min: 0.25,
-                max: 10,
-                decimals: 2,
-                baseStep: 0.25,
-                shiftStep: 1,
+                min: 6,
+                max: 144,
+                decimals: 1,
+                baseStep: 0.5,
+                shiftStep: 5,
                 onUpdate: () => this.updateGrid()
             },
             captionLineHeightValue: {
                 setting: 'captionLineHeight',
-                min: 0.25,
-                max: 10,
-                decimals: 2,
-                baseStep: 0.25,
-                shiftStep: 1,
+                min: 6,
+                max: 144,
+                decimals: 1,
+                baseStep: 0.5,
+                shiftStep: 5,
                 onUpdate: () => this.updateGrid()
             },
             captionTrackingValue: {
@@ -276,20 +276,20 @@ class GridGenerator {
             },
             lunnenDisplaySizeValue: {
                 setting: 'lunnenDisplaySize',
-                min: 0.25,
-                max: 10,
-                decimals: 2,
-                baseStep: 0.25,
-                shiftStep: 1,
+                min: 6,
+                max: 144,
+                decimals: 1,
+                baseStep: 0.5,
+                shiftStep: 5,
                 onUpdate: () => this.updateGrid()
             },
             lunnenDisplayLineHeightValue: {
                 setting: 'lunnenDisplayLineHeight',
-                min: 0.25,
-                max: 10,
-                decimals: 2,
-                baseStep: 0.25,
-                shiftStep: 1,
+                min: 6,
+                max: 144,
+                decimals: 1,
+                baseStep: 0.5,
+                shiftStep: 5,
                 onUpdate: () => this.updateGrid()
             },
             lunnenDisplayTrackingValue: {
@@ -322,25 +322,28 @@ class GridGenerator {
             showRows: true,
             showBaseline: true,
             showObjects: true,
-            headlineSize: 1.5,
-            lineHeight: 2.0,
+            // Размеры шрифтов теперь хранятся в пунктах (pt) вместо модулей
+            // Конвертируем из модулей в пункты: module * sizeInModules * (72/25.4) = pt
+            // Для модуля 5.0505: 1.5 mod = 1.5 * 5.0505 * (72/25.4) ≈ 21.5 pt
+            headlineSize: 21.5, // было 1.5 mod, теперь в pt
+            lineHeight: 28.6, // было 2.0 mod, теперь в pt
             tracking: -0.015,
             useXHeight: false,
             headlineFontWeight: 500,
-            textSize: 0.5,
-            textLineHeight: 1.0,
+            textSize: 7.2, // было 0.5 mod, теперь в pt
+            textLineHeight: 14.3, // было 1.0 mod, теперь в pt
             textTracking: 0,
             useXHeight2: false,
             textFontWeight: 500,
             // Caption style
-            captionSize: 0.5,
-            captionLineHeight: 1.0,
+            captionSize: 7.2, // было 0.5 mod, теперь в pt
+            captionLineHeight: 14.3, // было 1.0 mod, теперь в pt
             captionTracking: 0,
             useXHeightCaption: false,
             captionFontWeight: 500,
             // Lunnen Display style
-            lunnenDisplaySize: 3.0,
-            lunnenDisplayLineHeight: 4.0,
+            lunnenDisplaySize: 43.0, // было 3.0 mod, теперь в pt
+            lunnenDisplayLineHeight: 57.3, // было 4.0 mod, теперь в pt
             lunnenDisplayTracking: 0,
             useXHeightLunnenDisplay: false
         });
@@ -1336,8 +1339,8 @@ class GridGenerator {
     
     async loadPresetsFromGitHubAPI(applyImmediately = true) {
         try {
-            // GitHub API endpoint для получения списка файлов в папке
-            const apiUrl = 'https://api.github.com/repos/mishaivanov/takeitontheother.site/contents/js/YF/lunnen/grid_generator/presets';
+            // GitHub API endpoint для получения списка файлов в папке (обновлен под sticky_generator)
+            const apiUrl = 'https://api.github.com/repos/mishaivanov/takeitontheother.site/contents/js/YF/lunnen/sticky_generator/presets';
             
             const response = await fetch(apiUrl, {
                 cache: 'no-store',
@@ -1780,6 +1783,9 @@ class GridGenerator {
         
         // Generate row presets
         this.generateRowPresets();
+        
+        // Update font size displays
+        this.updateFontSizeDisplays();
     }
     
     updateLinkedControlsVisual() {
@@ -1800,85 +1806,37 @@ class GridGenerator {
     }
     
     // Initialize Size inputs (without sliders) with arrow key support
+    // ВНИМАНИЕ: кегль и интерлиньяж теперь полностью управляются через NumberInputController.
+    // Здесь оставляем только вспомогательную логику для остальных value-инпутов, не дублируя запись в Settings.
     initSizeInputsWithArrows() {
         const sizeInputs = [
-            { id: 'headlineSizeValue', setting: 'headlineSize' },
-            { id: 'textSizeValue', setting: 'textSize' }
+            // Headline/Text size хандлятся NumberInputController'ом через INPUT_CONFIG,
+            // поэтому здесь их сознательно НЕ трогаем, чтобы избежать конфликтов blur/keydown.
+            // { id: 'headlineSizeValue', setting: 'headlineSize' },
+            // { id: 'textSizeValue', setting: 'textSize' }
         ];
         
         sizeInputs.forEach(({ id, setting }) => {
             const input = document.getElementById(id);
             if (!input) return;
             
-            const min = parseFloat(input.dataset.min);
-            const max = parseFloat(input.dataset.max);
+            let min = parseFloat(input.dataset.min);
+            let max = parseFloat(input.dataset.max);
+            
+            if (isNaN(min)) {
+                min = input.min !== '' ? parseFloat(input.min) : -Infinity;
+            }
+            if (isNaN(max)) {
+                max = input.max !== '' ? parseFloat(input.max) : Infinity;
+            }
             
             input.addEventListener('focus', () => {
                 input.dataset.originalValue = input.value;
                 input.select();
             });
             
-            input.addEventListener('blur', () => {
-                let rawValue = input.value.replace(/[^\d.-]/g, '');
-                let numValue = parseFloat(rawValue);
-                
-                if (isNaN(numValue)) {
-                    numValue = this.settings[setting];
-                }
-                
-                numValue = Math.max(min, Math.min(max, numValue));
-                this.settings[setting] = numValue;
-                input.value = numValue.toFixed(2);
-                this.updateGrid();
-            });
-            
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    input.blur();
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    input.value = input.dataset.originalValue;
-                    input.blur();
-                } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    
-                    let currentValue = parseFloat(input.value);
-                    if (isNaN(currentValue)) {
-                        currentValue = this.settings[setting];
-                    }
-                    
-                    // Шаг 0.25 без Shift, 1 с Shift (всегда кратно 0.25)
-                    const step = e.shiftKey ? 1 : 0.25;
-                    const direction = e.key === 'ArrowUp' ? 1 : -1;
-                    let newValue;
-                    
-                    // Округляем до ближайшего кратного 0.25 в направлении нажатой стрелки
-                    if (direction === 1) {
-                        // Стрелка вверх - округляем вверх до следующего кратного 0.25
-                        newValue = Math.ceil(currentValue / 0.25) * 0.25;
-                        // Если уже кратно 0.25, добавляем шаг
-                        if (Math.abs(newValue - currentValue) < 0.001) {
-                            newValue = currentValue + step;
-                        }
-                    } else {
-                        // Стрелка вниз - округляем вниз до предыдущего кратного 0.25
-                        newValue = Math.floor(currentValue / 0.25) * 0.25;
-                        // Если уже кратно 0.25, вычитаем шаг
-                        if (Math.abs(newValue - currentValue) < 0.001) {
-                            newValue = currentValue - step;
-                        }
-                    }
-                    
-                    // Округляем до сотых
-                    newValue = Math.round(newValue * 100) / 100;
-                    newValue = Math.max(min, Math.min(max, newValue));
-                    
-                    this.settings[setting] = newValue;
-                    input.value = newValue.toFixed(2);
-                    this.updateGrid();
-                }
-            });
+            // Никакой собственной логики blur/keydown здесь не вешаем для кегля,
+            // чтобы не спорить с NumberInputController.
         });
     }
     
@@ -4793,78 +4751,73 @@ class GridGenerator {
         return 'TT Commons Classic';
     }
     
-    // Calculate font size in mm based on module and height mode
+    // Calculate font size in mm based on EM size in points
     calculateFontSize() {
-        const module = this.settings.gridModule;
-        const sizeInModules = this.settings.headlineSize;
-        const targetSize = module * sizeInModules; // size in mm
-        const metrics = this.getFontMetricsForStyle('headline');
+        // headlineSize теперь трактуется как EM-кегль в пунктах (pt)
+        let fontSizePt = this.settings.headlineSize;
         
-        // Calculate font size based on whether we're using cap height or x-height
-        let fontSize;
-        if (this.settings.useXHeight) {
-            // x-height should equal targetSize
-            fontSize = targetSize * (metrics.unitsPerEm / metrics.xHeight);
-        } else {
-            // cap height should equal targetSize
-            fontSize = targetSize * (metrics.unitsPerEm / metrics.capHeight);
+        // Проверка на валидность значения
+        if (!fontSizePt || isNaN(fontSizePt) || fontSizePt <= 0) {
+            fontSizePt = 16;
         }
         
-        return fontSize; // in mm
+        // Прямой перевод EM-кегля из pt в мм (1 pt = 25.4/72 mm)
+        const fontSizeMm = MathUtils.ptToMm(fontSizePt);
+        
+        return isNaN(fontSizeMm) || !isFinite(fontSizeMm) || fontSizeMm <= 0
+            ? MathUtils.ptToMm(16)
+            : fontSizeMm; // in mm
     }
     
     // Calculate font size for Text style (cap height or x-height)
     calculateTextStyleFontSize() {
-        const module = this.settings.gridModule;
-        const sizeInModules = this.settings.textSize;
-        const targetSize = module * sizeInModules; // size in mm
-        const metrics = this.getFontMetricsForStyle('text');
+        // textSize трактуется как EM-кегль в пунктах (pt)
+        let fontSizePt = this.settings.textSize;
         
-        // Calculate font size based on whether we're using cap height or x-height
-        let fontSize;
-        if (this.settings.useXHeight2) {
-            // x-height should equal targetSize
-            fontSize = targetSize * (metrics.unitsPerEm / metrics.xHeight);
-        } else {
-            // cap height should equal targetSize
-            fontSize = targetSize * (metrics.unitsPerEm / metrics.capHeight);
+        // Проверка на валидность значения
+        if (!fontSizePt || isNaN(fontSizePt) || fontSizePt <= 0) {
+            fontSizePt = 12;
         }
         
-        return fontSize; // in mm
+        const fontSizeMm = MathUtils.ptToMm(fontSizePt);
+        
+        return isNaN(fontSizeMm) || !isFinite(fontSizeMm) || fontSizeMm <= 0
+            ? MathUtils.ptToMm(12)
+            : fontSizeMm; // in mm
     }
     
     // Calculate font size for Caption style
     calculateCaptionStyleFontSize() {
-        const module = this.settings.gridModule;
-        const sizeInModules = this.settings.captionSize;
-        const targetSize = module * sizeInModules;
-        const metrics = this.getFontMetricsForStyle('caption');
+        // captionSize трактуется как EM-кегль в пунктах (pt)
+        let fontSizePt = this.settings.captionSize;
         
-        let fontSize;
-        if (this.settings.useXHeightCaption) {
-            fontSize = targetSize * (metrics.unitsPerEm / metrics.xHeight);
-        } else {
-            fontSize = targetSize * (metrics.unitsPerEm / metrics.capHeight);
+        // Проверка на валидность значения
+        if (!fontSizePt || isNaN(fontSizePt) || fontSizePt <= 0) {
+            fontSizePt = 10;
         }
         
-        return fontSize;
+        const fontSizeMm = MathUtils.ptToMm(fontSizePt);
+        
+        return isNaN(fontSizeMm) || !isFinite(fontSizeMm) || fontSizeMm <= 0
+            ? MathUtils.ptToMm(10)
+            : fontSizeMm; // in mm
     }
     
     // Calculate font size for Lunnen Display style
     calculateLunnenDisplayStyleFontSize() {
-        const module = this.settings.gridModule;
-        const sizeInModules = this.settings.lunnenDisplaySize;
-        const targetSize = module * sizeInModules;
-        const metrics = this.getFontMetricsForStyle('lunnenDisplay');
+        // lunnenDisplaySize трактуется как EM-кегль в пунктах (pt)
+        let fontSizePt = this.settings.lunnenDisplaySize;
         
-        let fontSize;
-        if (this.settings.useXHeightLunnenDisplay) {
-            fontSize = targetSize * (metrics.unitsPerEm / metrics.xHeight);
-        } else {
-            fontSize = targetSize * (metrics.unitsPerEm / metrics.capHeight);
+        // Проверка на валидность значения
+        if (!fontSizePt || isNaN(fontSizePt) || fontSizePt <= 0) {
+            fontSizePt = 32;
         }
         
-        return fontSize;
+        const fontSizeMm = MathUtils.ptToMm(fontSizePt);
+        
+        return isNaN(fontSizeMm) || !isFinite(fontSizeMm) || fontSizeMm <= 0
+            ? MathUtils.ptToMm(32)
+            : fontSizeMm; // in mm
     }
     
     // Get style settings for any styleRef
@@ -4925,58 +4878,50 @@ class GridGenerator {
     
     // Get font size in pt for Headline
     getHeadlineFontSizePt() {
-        const fontSizeMm = this.calculateFontSize();
-        return Math.round(MathUtils.mmToPt(fontSizeMm) * 10) / 10;
+        // headlineSize теперь уже хранится в пунктах
+        return Math.round(this.settings.headlineSize * 10) / 10;
     }
     
     // Get line height in pt for Headline
     getHeadlineLineHeightPt() {
-        const module = this.settings.gridModule;
-        const lineHeightInModules = this.settings.lineHeight;
-        const lineHeightMm = module * lineHeightInModules;
-        return Math.round(MathUtils.mmToPt(lineHeightMm) * 10) / 10;
+        // lineHeight теперь хранится в пунктах
+        return Math.round(this.settings.lineHeight * 10) / 10;
     }
     
     // Get font size in pt for Text
     getTextFontSizePt() {
-        const fontSizeMm = this.calculateTextStyleFontSize();
-        return Math.round(MathUtils.mmToPt(fontSizeMm) * 10) / 10;
+        // textSize теперь уже хранится в пунктах
+        return Math.round(this.settings.textSize * 10) / 10;
     }
     
     // Get line height in pt for Text
     getTextLineHeightPt() {
-        const module = this.settings.gridModule;
-        const lineHeightInModules = this.settings.textLineHeight;
-        const lineHeightMm = module * lineHeightInModules;
-        return Math.round(MathUtils.mmToPt(lineHeightMm) * 10) / 10;
+        // textLineHeight теперь хранится в пунктах
+        return Math.round(this.settings.textLineHeight * 10) / 10;
     }
     
     // Get font size in pt for Caption
     getCaptionFontSizePt() {
-        const fontSizeMm = this.calculateCaptionStyleFontSize();
-        return Math.round(MathUtils.mmToPt(fontSizeMm) * 10) / 10;
+        // captionSize теперь уже хранится в пунктах
+        return Math.round(this.settings.captionSize * 10) / 10;
     }
     
     // Get line height in pt for Caption
     getCaptionLineHeightPt() {
-        const module = this.settings.gridModule;
-        const lineHeightInModules = this.settings.captionLineHeight;
-        const lineHeightMm = module * lineHeightInModules;
-        return Math.round(MathUtils.mmToPt(lineHeightMm) * 10) / 10;
+        // captionLineHeight теперь хранится в пунктах
+        return Math.round(this.settings.captionLineHeight * 10) / 10;
     }
     
     // Get font size in pt for Lunnen Display
     getLunnenDisplayFontSizePt() {
-        const fontSizeMm = this.calculateLunnenDisplayStyleFontSize();
-        return Math.round(MathUtils.mmToPt(fontSizeMm) * 10) / 10;
+        // lunnenDisplaySize теперь уже хранится в пунктах
+        return Math.round(this.settings.lunnenDisplaySize * 10) / 10;
     }
     
     // Get line height in pt for Lunnen Display
     getLunnenDisplayLineHeightPt() {
-        const module = this.settings.gridModule;
-        const lineHeightInModules = this.settings.lunnenDisplayLineHeight;
-        const lineHeightMm = module * lineHeightInModules;
-        return Math.round(MathUtils.mmToPt(lineHeightMm) * 10) / 10;
+        // lunnenDisplayLineHeight теперь хранится в пунктах
+        return Math.round(this.settings.lunnenDisplayLineHeight * 10) / 10;
     }
     
     // Update font size displays in UI
@@ -5146,10 +5091,38 @@ class GridGenerator {
         // Get style settings based on block's styleRef
         const style = this.getStyleSettings(block.styleRef || 'text');
         
+        // Get lineHeight in points for the current style
+        let lineHeightPt;
+        switch(block.styleRef) {
+            case 'headline':
+                lineHeightPt = this.settings.lineHeight;
+                break;
+            case 'text':
+                lineHeightPt = this.settings.textLineHeight;
+                break;
+            case 'caption':
+                lineHeightPt = this.settings.captionLineHeight;
+                break;
+            case 'lunnenDisplay':
+                lineHeightPt = this.settings.lunnenDisplayLineHeight;
+                break;
+            default:
+                lineHeightPt = this.settings.textLineHeight;
+        }
+        
+        // Проверка на валидность значения
+        if (!lineHeightPt || isNaN(lineHeightPt) || lineHeightPt <= 0) {
+            lineHeightPt = 12; // Значение по умолчанию
+        }
+        
+        // Конвертируем пункты в мм, затем в модули
+        const lineHeightMm = MathUtils.ptToMm(lineHeightPt);
+        const lineHeightInModules = lineHeightMm / module;
+        
         // Get text content
         const inputLines = block.content.split('\n').filter(line => line.trim() !== '');
         if (inputLines.length === 0) {
-            return style.lineHeight; // Return minimum height for empty block
+            return lineHeightInModules; // Return minimum height for empty block
         }
         
         // Calculate text block width
@@ -5163,7 +5136,7 @@ class GridGenerator {
         });
         
         // Height in modules = lineHeight * number of lines
-        return style.lineHeight * wrappedLines.length;
+        return lineHeightInModules * wrappedLines.length;
     }
     
     // Draw text block on canvas with hover effects and drag handles
@@ -5177,7 +5150,6 @@ class GridGenerator {
         const style = this.getStyleSettings(block.styleRef || 'text');
         const fontSize = style.fontSize;
         const scaledFontSize = fontSize * scale;
-        const lineHeightSetting = style.lineHeight;
         const trackingSetting = style.tracking;
         const useXHeight = style.useXHeight;
         const fontWeight = style.fontWeight;
@@ -5235,32 +5207,41 @@ class GridGenerator {
         // Calculate cap height and x-height for positioning
         let actualCapHeight, actualXHeight;
         const metrics = this.getFontMetricsForStyle(block.styleRef || 'text');
-        // Get size in modules for the current style
-        let textSize;
+        
+        // Get size in points (pt) for the current style (EM-кегль)
+        let textSizePt;
         switch(block.styleRef) {
             case 'headline':
-                textSize = this.settings.headlineSize;
+                textSizePt = this.settings.headlineSize;
                 break;
             case 'text':
-                textSize = this.settings.textSize;
+                textSizePt = this.settings.textSize;
                 break;
             case 'caption':
-                textSize = this.settings.captionSize;
+                textSizePt = this.settings.captionSize;
                 break;
             case 'lunnenDisplay':
-                textSize = this.settings.lunnenDisplaySize;
+                textSizePt = this.settings.lunnenDisplaySize;
                 break;
             default:
-                textSize = this.settings.textSize;
+                textSizePt = this.settings.textSize;
         }
         
-        if (useXHeight) {
-            actualXHeight = module * textSize * scale;
-            actualCapHeight = actualXHeight * (metrics.capHeight / metrics.xHeight);
-        } else {
-            actualCapHeight = module * textSize * scale;
-            actualXHeight = actualCapHeight * (metrics.xHeight / metrics.capHeight);
+        // Проверка на валидность значения
+        if (!textSizePt || isNaN(textSizePt) || textSizePt <= 0) {
+            textSizePt = 10; // Значение по умолчанию
         }
+        
+        // Конвертируем EM-кегль в мм
+        const emSizeMm = MathUtils.ptToMm(textSizePt);
+        
+        // Фактические размеры capHeight и xHeight в мм при данном EM-кегле
+        actualCapHeight = emSizeMm * (metrics.capHeight / metrics.unitsPerEm) * scale;
+        actualXHeight = emSizeMm * (metrics.xHeight / metrics.unitsPerEm) * scale;
+        
+        // Проверка на NaN
+        if (isNaN(actualCapHeight)) actualCapHeight = 0;
+        if (isNaN(actualXHeight)) actualXHeight = 0;
         
         const topMargin = module * margins * scale;
         
@@ -5282,7 +5263,36 @@ class GridGenerator {
             firstLineY = frontY + position.y + topMargin + baselineElementHeight;
         }
         
-        const lineHeightInMm = module * lineHeightSetting * scale;
+        // lineHeightSetting теперь хранится в пунктах, конвертируем в мм
+        let lineHeightPt;
+        switch(block.styleRef) {
+            case 'headline':
+                lineHeightPt = this.settings.lineHeight;
+                break;
+            case 'text':
+                lineHeightPt = this.settings.textLineHeight;
+                break;
+            case 'caption':
+                lineHeightPt = this.settings.captionLineHeight;
+                break;
+            case 'lunnenDisplay':
+                lineHeightPt = this.settings.lunnenDisplayLineHeight;
+                break;
+            default:
+                lineHeightPt = this.settings.textLineHeight;
+        }
+        
+        // Проверка на валидность значения
+        if (!lineHeightPt || isNaN(lineHeightPt) || lineHeightPt <= 0) {
+            lineHeightPt = 12; // Значение по умолчанию
+        }
+        
+        let lineHeightInMm = MathUtils.ptToMm(lineHeightPt) * scale;
+        
+        // Проверка на NaN
+        if (isNaN(lineHeightInMm)) {
+            lineHeightInMm = MathUtils.ptToMm(12) * scale;
+        }
         
         // Create group for text block with hover
         const textGroup = this.createSVGElement('g', {
@@ -9002,7 +9012,8 @@ class GridGenerator {
     }
 
     /**
-     * Заменяет плейсхолдеры типа A001, B002 на данные из строки таблицы
+     * Заменяет плейсхолдеры типа A1, B2 на данные из строки таблицы
+     * Строки внутри ячейки определяются автоматически по переносам строк (\n)
      * @param {string} content - Текст с плейсхолдерами
      * @param {Array<string>} rowData - Данные строки таблицы (массив ячеек)
      * @returns {string} - Текст с замененными плейсхолдерами
@@ -9012,39 +9023,32 @@ class GridGenerator {
             return content;
         }
 
-        // Парсим данные строки таблицы в структуру: {A: [line1, line2, ...], B: [...], ...}
+        // Создаем маппинг колонок: {A: значение_ячейки_A, B: значение_ячейки_B, ...}
         const columnData = {};
         const columnNames = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
         
         rowData.forEach((cellValue, colIndex) => {
             if (colIndex < columnNames.length) {
                 const columnName = columnNames[colIndex];
-                columnData[columnName] = this.parseMultilineCell(cellValue || '');
+                // Берем содержимое ячейки целиком (со всеми переносами строк)
+                columnData[columnName] = cellValue || '';
             }
         });
 
-        // Заменяем все плейсхолдеры типа A001, B002, C003 и т.д.
-        // Паттерн: буква (A-Z) + трехзначное число (001-999)
-        const placeholderRegex = /([A-Z])(\d{3})/g;
+        // Заменяем все плейсхолдеры типа A1, B2, C3 и т.д.
+        // Паттерн: буква (A-Z) + число (1, 2, 10, 100 и т.д.)
+        // Буква определяет колонку таблицы, число игнорируется (для совместимости с форматом A1, B2)
+        const placeholderRegex = /([A-Z])(\d+)/g;
         
-        return content.replace(placeholderRegex, (match, column, lineNumber) => {
-            // Преобразуем номер строки из строки в число (001 -> 1, 002 -> 2)
-            const lineIndex = parseInt(lineNumber, 10) - 1; // 001 -> индекс 0, 002 -> индекс 1
-            
+        return content.replace(placeholderRegex, (match, column, columnNumber) => {
             // Проверяем, есть ли данные для этой колонки
-            if (!columnData[column]) {
+            if (!(column in columnData)) {
                 console.warn(`⚠️ Колонка ${column} не найдена в данных таблицы`);
                 return match; // Оставляем плейсхолдер без изменений
             }
             
-            // Проверяем, есть ли строка с таким индексом
-            if (lineIndex < 0 || lineIndex >= columnData[column].length) {
-                console.warn(`⚠️ Строка ${lineNumber} не найдена в колонке ${column} (всего строк: ${columnData[column].length})`);
-                return match; // Оставляем плейсхолдер без изменений
-            }
-            
-            // Возвращаем значение из нужной строки колонки
-            const value = columnData[column][lineIndex];
+            // Возвращаем содержимое ячейки целиком (со всеми переносами строк)
+            const value = columnData[column];
             console.log(`✅ Заменен плейсхолдер ${match} -> "${value}"`);
             return value;
         });
@@ -9183,7 +9187,7 @@ class GridGenerator {
         this.textBlocks.forEach((block, blockIndex) => {
             const originalContent = block.content;
             
-            // Заменяем плейсхолдеры типа A001, B002 на данные из таблицы
+            // Заменяем плейсхолдеры типа A1, B2 на данные из таблицы
             const newContent = this.replacePlaceholders(originalContent, row);
             
             // Если содержимое изменилось, обновляем блок
@@ -9260,8 +9264,8 @@ class GridGenerator {
             return;
         }
 
-        // Обновляем штрихкод с отображением текста (EAN-13)
-        BarcodeGenerator.updateBarcodeBlock(barcodeBlock, barcodeData, gridSettings, true, 'ean13');
+        // Обновляем штрихкод БЕЗ отображения текста (EAN-13)
+        BarcodeGenerator.updateBarcodeBlock(barcodeBlock, barcodeData, gridSettings, false, 'ean13');
         console.log(`✅ Основной штрихкод (EAN-13) обновлен: ${barcodeData}`);
     }
 

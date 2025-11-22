@@ -1,0 +1,14 @@
+{
+  "presets": [
+    {
+      "name": "Laptop Box Label 120×24mm",
+      "file": "Laptop Box Label.json"
+    },
+    {
+      "name": "120×24mm 3col 1rows 3.00mm (2025-11-22 02:48)",
+      "file": "120×24mm 3col 1rows 3.00mm 20251122_0248.json"
+    }
+  ],
+  "generated": "2025-11-22T02:48:00.000Z",
+  "count": 2
+}

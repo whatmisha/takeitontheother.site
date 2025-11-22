@@ -11,7 +11,7 @@
   "texts": [
     {
       "id": "text",
-      "content": "C001\nC002\nC003\nC004",
+      "content": "C1",
       "style": "text",
       "position": {
         "column": 2,
@@ -27,7 +27,7 @@
     },
     {
       "id": "text-1763334866163",
-      "content": "A001\nB001",
+      "content": "A1\nB1",
       "style": "headline",
       "position": {
         "column": 1,
@@ -43,7 +43,7 @@
     },
     {
       "id": "text-1763335152097",
-      "content": "Серийный номер: E001",
+      "content": "Серийный номер: E1",
       "style": "text",
       "position": {
         "column": 1,
@@ -58,7 +58,7 @@
     },
     {
       "id": "text-1763335182965",
-      "content": "Дата изготовления: D001",
+      "content": "Дата изготовления: D1",
       "style": "text",
       "position": {
         "column": 2,
@@ -91,15 +91,15 @@
   },
   "typography": {
     "headline": {
-      "size": 0.69,
-      "lineHeight": 1.13,
+      "size": 9.9,
+      "lineHeight": 16.2,
       "tracking": -0.015,
       "useXHeight": false,
       "fontWeight": 500
     },
     "text": {
-      "size": 0.59,
-      "lineHeight": 1.20,
+      "size": 8.5,
+      "lineHeight": 17.3,
       "tracking": 0,
       "useXHeight": false,
       "fontWeight": 500

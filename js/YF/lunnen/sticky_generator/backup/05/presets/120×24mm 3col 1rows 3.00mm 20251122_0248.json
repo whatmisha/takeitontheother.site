@@ -1,0 +1,151 @@
+{
+  "presetName": "Packaging 120×24mm, Module 3.00mm — 22.11.2025",
+  "version": "1.0",
+  "timestamp": "2025-11-22T01:48:05.174Z",
+  "dimensions": {
+    "width": 120,
+    "height": 24,
+    "unit": "mm",
+    "cornerRadius": 2
+  },
+  "texts": [
+    {
+      "id": "text",
+      "content": "Номинальное напряжение: 20 В \nКласс защиты: III \nНоминальный ток: 3.25 А \nНоминальная мощность: 65 Вт",
+      "style": "text",
+      "position": {
+        "column": 2,
+        "row": 0,
+        "baseline": 0
+      },
+      "width": 1,
+      "alignment": "left",
+      "alignmentMode": "x-height",
+      "surface": "front",
+      "showBounds": false,
+      "useXHeight": true
+    },
+    {
+      "id": "text-1763334866163",
+      "content": "Ноутбук Lunnen Outer 16\nLL6FIWG08",
+      "style": "headline",
+      "position": {
+        "column": 1,
+        "row": 0,
+        "baseline": 0
+      },
+      "width": 1,
+      "alignment": "left",
+      "alignmentMode": "x-height",
+      "surface": "front",
+      "showBounds": false,
+      "useXHeight": true
+    },
+    {
+      "id": "text-1763335152097",
+      "content": "Серийный номер: 4630358281880",
+      "style": "text",
+      "position": {
+        "column": 1,
+        "row": 0,
+        "baseline": 2
+      },
+      "width": 1,
+      "alignment": "left",
+      "alignmentMode": "baseline",
+      "surface": "front",
+      "showBounds": false,
+      "useXHeight": false
+    },
+    {
+      "id": "text-1763335182965",
+      "content": "Дата изготовления: 10.2025",
+      "style": "text",
+      "position": {
+        "column": 2,
+        "row": 0,
+        "baseline": 4.8
+      },
+      "width": 1,
+      "alignment": "left",
+      "alignmentMode": "baseline",
+      "surface": "front",
+      "showBounds": false,
+      "useXHeight": false
+    }
+  ],
+  "grid": {
+    "module": 3,
+    "margins": 1,
+    "marginsUnit": "mod",
+    "columns": 3,
+    "rows": 1,
+    "rowHeight": 6,
+    "linkMode": "module",
+    "visibility": {
+      "columns": true,
+      "rows": false,
+      "baseline": true
+    }
+  },
+  "colors": {
+    "background": "#ffffff"
+  },
+  "typography": {
+    "headline": {
+      "size": 7,
+      "lineHeight": 9.5,
+      "tracking": -0.015,
+      "useXHeight": false,
+      "fontWeight": 500
+    },
+    "text": {
+      "size": 6,
+      "lineHeight": 7.5,
+      "tracking": 0,
+      "useXHeight": false,
+      "fontWeight": 500
+    }
+  },
+  "display": {
+    "dimensions": false,
+    "labels": false,
+    "objects": true
+  },
+  "graphics": {
+    "blocks": [
+      {
+        "id": "sticker-barcode",
+        "name": "Barcode",
+        "position": {
+          "column": 3,
+          "row": 0,
+          "baseline": 0
+        },
+        "height": 6.1,
+        "originalWidth": 40.76190476190476,
+        "originalHeight": 21.9,
+        "alignment": "right",
+        "surface": "front",
+        "svg": "<svg width=\"40.76\" height=\"21.60\" viewBox=\"0 0 40.76 21.60\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"4.762\" y=\"0\" width=\"0.379\" height=\"18.00\" fill=\"#000000\"/><rect x=\"5.520\" y=\"0\" width=\"0.379\" height=\"18.00\" fill=\"#000000\"/><rect x=\"6.278\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"7.036\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"7.415\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"7.793\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"8.172\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"8.930\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"10.825\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"12.341\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"12.720\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"13.478\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"14.236\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"14.615\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"14.993\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"15.372\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"16.130\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"16.888\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"17.267\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"17.646\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"18.783\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"20.299\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"21.436\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"22.193\" y=\"0\" width=\"0.379\" height=\"18.00\" fill=\"#000000\"/><rect x=\"22.951\" y=\"0\" width=\"0.379\" height=\"18.00\" fill=\"#000000\"/><rect x=\"23.709\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"24.088\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"24.846\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"25.225\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"26.362\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"27.499\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"29.015\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"29.393\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"30.530\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"30.909\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"31.667\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"32.804\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"34.320\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"35.457\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"36.972\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"38.109\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#000000\"/><rect x=\"39.625\" y=\"0\" width=\"0.379\" height=\"18.00\" fill=\"#000000\"/><rect x=\"40.383\" y=\"0\" width=\"0.379\" height=\"18.00\" fill=\"#000000\"/><text x=\"1.67\" y=\"21.60\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"4.76\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#000000\">4</text><text x=\"7.23\" y=\"21.60\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"4.76\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#000000\">6</text><text x=\"9.88\" y=\"21.60\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"4.76\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#000000\">3</text><text x=\"12.53\" y=\"21.60\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"4.76\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#000000\">0</text><text x=\"15.18\" y=\"21.60\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"4.76\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#000000\">3</text><text x=\"17.84\" y=\"21.60\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"4.76\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#000000\">5</text><text x=\"20.49\" y=\"21.60\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"4.76\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#000000\">8</text><text x=\"25.04\" y=\"21.60\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"4.76\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#000000\">2</text><text x=\"27.69\" y=\"21.60\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"4.76\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#000000\">8</text><text x=\"30.34\" y=\"21.60\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"4.76\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#000000\">1</text><text x=\"32.99\" y=\"21.60\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"4.76\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#000000\">8</text><text x=\"35.65\" y=\"21.60\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"4.76\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#000000\">8</text><text x=\"38.30\" y=\"21.60\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"4.76\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#000000\">8</text></svg>"
+      },
+      {
+        "id": "sticker-barcode-small",
+        "name": "Barcode Small",
+        "position": {
+          "column": 1,
+          "row": 0,
+          "baseline": 4
+        },
+        "height": 3,
+        "originalWidth": 36,
+        "originalHeight": 9,
+        "alignment": "left",
+        "surface": "front",
+        "svg": "<svg width=\"36\" height=\"9\" viewBox=\"0 0 36 9\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0.00\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"0.22\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"0.65\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"1.29\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"2.37\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"3.02\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"3.88\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"4.10\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"4.74\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"5.39\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"5.60\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"6.25\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"7.11\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"7.76\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"8.41\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"8.62\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"9.49\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"9.70\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"10.13\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"10.35\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"10.99\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"11.21\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"11.86\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"12.50\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"13.15\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"13.37\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"14.23\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"15.09\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"15.74\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"15.95\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"16.60\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"17.46\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"17.68\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"18.32\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"18.97\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"19.19\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"19.83\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"20.05\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"20.69\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"20.91\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"21.34\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"22.20\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"22.42\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"23.07\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"23.71\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"23.93\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"24.57\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"24.79\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"25.22\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"25.44\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"26.08\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"26.95\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"27.16\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"27.81\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"28.46\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"29.32\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"29.53\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"30.18\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"30.83\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"31.04\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"31.47\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"31.69\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"32.34\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"32.55\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"33.20\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"33.41\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"34.28\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"34.49\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"34.71\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"35.14\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"35.57\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/><rect x=\"35.78\" y=\"0\" width=\"0.22\" height=\"9\" fill=\"#000000\"/></svg>"
+      }
+    ],
+    "icons": null,
+    "claim": null
+  }
+}
