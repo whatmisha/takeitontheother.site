@@ -1,0 +1,225 @@
+{
+  "presetName": "Tablet Box Label 120×24mm",
+  "version": "1.0",
+  "timestamp": "2025-11-22T00:18:11.410Z",
+  "dimensions": {
+    "width": 120,
+    "height": 24,
+    "unit": "mm",
+    "cornerRadius": 2
+  },
+  "texts": [
+    {
+      "id": "text-1763334866163",
+      "content": "A1\nB1 C1",
+      "style": "headline",
+      "position": {
+        "column": 1,
+        "row": 0,
+        "baseline": 0
+      },
+      "width": 1,
+      "alignment": "left",
+      "alignmentMode": "x-height",
+      "surface": "front",
+      "showBounds": false,
+      "useXHeight": true
+    },
+    {
+      "id": "text-imei1",
+      "content": "IMEI1: H1",
+      "style": "text",
+      "position": {
+        "column": 1,
+        "row": 0,
+        "baseline": 5
+      },
+      "width": 1,
+      "alignment": "left",
+      "alignmentMode": "baseline",
+      "surface": "front",
+      "showBounds": false,
+      "useXHeight": false
+    },
+    {
+      "id": "text-1763335182965",
+      "content": "Дата изготовления: E1",
+      "style": "text",
+      "position": {
+        "column": 1,
+        "row": 0,
+        "baseline": 2
+      },
+      "width": 1,
+      "alignment": "left",
+      "alignmentMode": "baseline",
+      "surface": "front",
+      "showBounds": false,
+      "useXHeight": false
+    },
+    {
+      "id": "text-1763335152097",
+      "content": "Серийный номер: F1",
+      "style": "text",
+      "position": {
+        "column": 2,
+        "row": 0,
+        "baseline": 2
+      },
+      "width": 1,
+      "alignment": "left",
+      "alignmentMode": "baseline",
+      "surface": "front",
+      "showBounds": false,
+      "useXHeight": false
+    },
+    {
+      "id": "text-imei2",
+      "content": "IMEI2: I1",
+      "style": "text",
+      "position": {
+        "column": 2,
+        "row": 0,
+        "baseline": 5
+      },
+      "width": 1,
+      "alignment": "left",
+      "alignmentMode": "baseline",
+      "surface": "front",
+      "showBounds": false,
+      "useXHeight": false
+    }
+  ],
+  "grid": {
+    "module": 3,
+    "margins": 1,
+    "marginsUnit": "mod",
+    "columns": 3,
+    "rows": 1,
+    "rowHeight": 6,
+    "linkMode": "module",
+    "visibility": {
+      "columns": false,
+      "rows": false,
+      "baseline": false
+    }
+  },
+  "colors": {
+    "background": "#ffffff"
+  },
+  "typography": {
+    "headline": {
+      "size": 7,
+      "lineHeight": 9.5,
+      "tracking": -0.015,
+      "useXHeight": false,
+      "fontWeight": 500
+    },
+    "text": {
+      "size": 6,
+      "lineHeight": 7.6,
+      "tracking": 0,
+      "useXHeight": false,
+      "fontWeight": 500
+    }
+  },
+  "display": {
+    "dimensions": false,
+    "labels": false,
+    "objects": true
+  },
+  "graphics": {
+  "blocks": [
+  {
+  "id": "sticker-barcode",
+  "name": "Barcode EAN-13",
+  "position": {
+  "column": 3,
+  "row": 0,
+  "baseline": 0
+  },
+  "height": 2,
+  "originalWidth": 40,
+  "originalHeight": 18,
+  "alignment": "right",
+  "surface": "front",
+  "svg": "",
+  "barcode": {
+  "type": "ean-13",
+  "column": "G"
+  }
+  },
+  {
+  "id": "sticker-barcode-imei1",
+  "name": "Barcode IMEI1",
+  "position": {
+  "column": 1,
+  "row": 0,
+  "baseline": 4
+  },
+  "height": 1,
+  "originalWidth": 40,
+  "originalHeight": 18,
+  "alignment": "left",
+  "surface": "front",
+  "svg": "",
+  "barcode": {
+  "type": "IMEI1",
+  "column": "H"
+  }
+  },
+  {
+  "id": "sticker-barcode-small",
+  "name": "Barcode SN",
+  "position": {
+  "column": 2,
+  "row": 0,
+  "baseline": 0
+  },
+  "height": 2,
+  "originalWidth": 40,
+  "originalHeight": 18,
+  "alignment": "left",
+  "surface": "front",
+  "svg": "",
+  "barcode": {
+  "type": "SN",
+  "column": "F"
+  }
+  },
+  {
+  "id": "sticker-barcode-imei2",
+  "name": "Barcode IMEI2",
+  "position": {
+  "column": 2,
+  "row": 0,
+  "baseline": 4
+  },
+  "height": 1,
+  "originalWidth": 40,
+  "originalHeight": 18,
+  "alignment": "left",
+  "surface": "front",
+  "svg": "",
+  "barcode": {
+  "type": "IMEI2",
+  "column": "I"
+  }
+  }
+  ],
+  "icons": null,
+  "claim": null
+  },
+  "exampleRow": [
+  "Планшет Lunnen Portal 14\"",
+  "BM1312001",
+  "Vantablack",
+  "Номинальное напряжение: 240 В\nКласс защиты: X\nНоминальный ток: 8 А\nНоминальная мощность: 380 Вт",
+  "01.2026",
+  "7770358281777",
+  "4777358281777",
+  "1110358283111",
+  "2220358281222"
+  ]
+  }
+
