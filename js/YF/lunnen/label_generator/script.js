@@ -7,6 +7,7 @@ import { MathUtils } from './src/utils/MathUtils.js';
 import { DOMUtils } from './src/utils/DOMUtils.js';
 import { TextToPath } from './src/utils/TextToPath.js';
 import { BarcodeGenerator } from './src/utils/BarcodeGenerator.js';
+import { ICONS, createSVGIcon } from './src/core/Constants.js';
 
 // Итерация 2: Core
 import { Settings } from './src/core/Settings.js';
@@ -1597,8 +1598,8 @@ class GridGenerator {
         // Get text element
         this.dom.presetDropdownText = this.dom.presetDropdownToggle.querySelector('.preset-dropdown-text');
         
-        // Clear menu
-        this.dom.presetDropdownMenu.innerHTML = '';
+        // Clear menu (используем DOMUtils для лучшей производительности)
+        DOMUtils.clearElement(this.dom.presetDropdownMenu);
         
         // Current selected preset
         this.currentPreset = null;
@@ -2418,13 +2419,9 @@ class GridGenerator {
                     if (block) {
                         const svg = paragraphHideBtn.querySelector('svg');
                         if (svg) {
-                            if (block.visible) {
-                                // Show hide icon (eye with slash)
-                                svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>';
-                            } else {
-                                // Show visible icon (eye without slash)
-                                svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>';
-                            }
+                            // Используем константы из Constants.js вместо дублирования SVG строк
+                            // Логика: если visible === true, показываем иконку "скрыть" (EYE_HIDDEN)
+                            svg.innerHTML = block.visible ? ICONS.EYE_HIDDEN : ICONS.EYE_VISIBLE;
                         }
                     }
                 }
@@ -3156,13 +3153,9 @@ class GridGenerator {
         if (paragraphHideBtn) {
             const svg = paragraphHideBtn.querySelector('svg');
             if (svg) {
-                if (block.visible) {
-                    // Show hide icon (eye with slash)
-                    svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>';
-                } else {
-                    // Show visible icon (eye without slash)
-                    svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>';
-                }
+                // Используем константы из Constants.js вместо дублирования SVG строк
+                // Логика: если visible === true, показываем иконку "скрыть" (EYE_HIDDEN)
+                svg.innerHTML = block.visible ? ICONS.EYE_HIDDEN : ICONS.EYE_VISIBLE;
             }
         }
         
@@ -4335,8 +4328,8 @@ class GridGenerator {
         
         const combinations = this.gridCalculator.findPerfectRowCombinations();
         
-        // Clear existing buttons
-        container.innerHTML = '';
+        // Clear existing buttons (используем DOMUtils для лучшей производительности)
+        DOMUtils.clearElement(container);
         
         // Create buttons for each combination
         combinations.forEach(combo => {
@@ -5922,13 +5915,9 @@ class GridGenerator {
             // Update hide icon based on visibility
             const svg = graphicsHideBtn.querySelector('svg');
             if (svg) {
-                if (block.visible) {
-                    // Show hide icon (eye with slash)
-                    svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>';
-                } else {
-                    // Show visible icon (eye without slash)
-                    svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>';
-                }
+                // Используем константы из Constants.js вместо дублирования SVG строк
+                // Логика: если visible === true, показываем иконку "скрыть" (EYE_HIDDEN)
+                svg.innerHTML = block.visible ? ICONS.EYE_HIDDEN : ICONS.EYE_VISIBLE;
             }
         }
         
@@ -6882,8 +6871,8 @@ class GridGenerator {
         // Итерация 6: Временно используем старый код
         // ElementsNavigator будет доработан позже для полной интеграции
         // ============================================
-        // Clear existing items
-        this.dom.elementsList.innerHTML = '';
+        // Clear existing items (используем DOMUtils для лучшей производительности)
+        DOMUtils.clearElement(this.dom.elementsList);
         
         // Add text blocks
         this.textBlocks.forEach(block => {
@@ -6929,12 +6918,13 @@ class GridGenerator {
     updateDataRowsList() {
         if (!this.dom.dataRowsList) return;
         if (!this.loadedTableData || this.loadedTableData.length === 0) {
-            this.dom.dataRowsList.innerHTML = '';
+            // Clear existing items (используем DOMUtils для лучшей производительности)
+            DOMUtils.clearElement(this.dom.dataRowsList);
             return;
         }
         
-        // Clear existing items
-        this.dom.dataRowsList.innerHTML = '';
+        // Clear existing items (используем DOMUtils для лучшей производительности)
+        DOMUtils.clearElement(this.dom.dataRowsList);
         
         // Add each data row
         this.loadedTableData.forEach((row, index) => {
@@ -7194,10 +7184,9 @@ class GridGenerator {
             visibilityBtn.className = 'element-action-btn';
             const visIcon = document.createElement('span');
             visIcon.className = 'element-action-icon';
-            // SVG eye icon
-            visIcon.innerHTML = isVisible 
-                ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>'
-                : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+            // Используем константы из Constants.js вместо дублирования SVG строк
+            // Логика: если isVisible === true, показываем иконку "видимый" (EYE_VISIBLE)
+            visIcon.innerHTML = createSVGIcon(isVisible ? ICONS.EYE_VISIBLE : ICONS.EYE_HIDDEN);
             visibilityBtn.appendChild(visIcon);
             visibilityBtn.title = isVisible ? 'Hide' : 'Show';
             visibilityBtn.addEventListener('click', (e) => {
@@ -7315,11 +7304,9 @@ class GridGenerator {
                     if (panelHideBtn) {
                         const svg = panelHideBtn.querySelector('svg');
                         if (svg) {
-                            if (block.visible) {
-                                svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>';
-                            } else {
-                                svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>';
-                            }
+                            // Используем константы из Constants.js вместо дублирования SVG строк
+                            // Логика: если visible === true, показываем иконку "скрыть" (EYE_HIDDEN)
+                            svg.innerHTML = block.visible ? ICONS.EYE_HIDDEN : ICONS.EYE_VISIBLE;
                         }
                     }
                 }
@@ -8255,8 +8242,8 @@ class GridGenerator {
         this.dom.svg.setAttribute('height', svgSize);
         this.dom.svg.setAttribute('viewBox', `0 0 ${svgSize} ${svgSize}`);
         
-        // Clear existing content
-        this.dom.svg.innerHTML = '';
+        // Clear existing content (используем DOMUtils для лучшей производительности)
+        DOMUtils.clearElement(this.dom.svg);
         
         // Calculate scaled dimensions
         const scaledFrontWidth = frontWidth * scale;
@@ -8835,42 +8822,8 @@ class GridGenerator {
         // Draw rectangles at actual mm scale
         this.drawRectangles(boxGroup, 0, 0, frontWidth, frontHeight, scale);
         
-        // Draw grid elements on front panel (in mm)
-        const frontX = 0;
-        const frontY = 0;
-        
-        // Сетка всегда скрыта при экспорте (макеты всегда сохраняются без сетки)
-        // Create main grid group to hold all grid elements (всегда скрыта)
-        {
-            const gridGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            gridGroup.setAttribute('id', 'grid');
-            gridGroup.setAttribute('visibility', 'hidden'); // Всегда скрыта при экспорте
-            exportSvg.appendChild(gridGroup);
-            
-            // Draw columns (in separate group, always export but hide if disabled)
-            const columnsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            columnsGroup.setAttribute('id', 'columns');
-            columnsGroup.setAttribute('visibility', 'hidden'); // Всегда скрыта
-            gridGroup.appendChild(columnsGroup);
-            this.gridRenderer.drawColumns(columnsGroup, frontX, frontY, frontWidth, frontHeight, scale);
-            
-            
-            // Draw rows (in separate group, always export but hide if disabled)
-            const rowsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            rowsGroup.setAttribute('id', 'rows');
-            rowsGroup.setAttribute('visibility', 'hidden'); // Всегда скрыта
-            gridGroup.appendChild(rowsGroup);
-            this.gridRenderer.drawRows(rowsGroup, frontX, frontY, frontWidth, frontHeight, scale);
-            
-            // Draw baseline (in separate group, always export but hide if disabled)
-            const baselineGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            baselineGroup.setAttribute('id', 'baseline');
-            baselineGroup.setAttribute('visibility', 'hidden'); // Всегда скрыта
-            gridGroup.appendChild(baselineGroup);
-            
-            // Front panel baseline
-            this.gridRenderer.drawBaseline(baselineGroup, frontX, frontY, frontWidth, frontHeight, scale);
-        }
+        // Сетка не создается при экспорте - макеты всегда сохраняются без сетки
+        // (Удалено создание скрытой сетки для оптимизации - экономия ~100 строк кода и времени выполнения)
         
         // Add labels if enabled (in separate group)
         if (this.settings.showLabels) {

@@ -30,6 +30,19 @@ export const SVG = {
     DISPLAY_STROKE_WIDTH: '1'
 };
 
+// SVG иконки для UI (16x16 viewBox)
+export const ICONS = {
+    // Иконка глаза (видимый элемент) - только содержимое path
+    EYE_VISIBLE: '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>',
+    // Иконка глаза с перечеркиванием (скрытый элемент) - только содержимое path
+    EYE_HIDDEN: '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>'
+};
+
+// Функция-хелпер для создания полного SVG элемента с иконкой
+export function createSVGIcon(iconContent, width = 16, height = 16) {
+    return `<svg width="${width}" height="${height}" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">${iconContent}</svg>`;
+}
+
 // Диапазоны значений для контролов
 export const RANGES = {
     MODULE: { min: 0.5, max: 20, step: 0.0001 },
