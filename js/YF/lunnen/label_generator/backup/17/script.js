@@ -437,10 +437,6 @@ class GridGenerator {
         this.isRestoringState = false; // Flag to prevent saving state during undo/redo
         this.saveStateTimer = null; // Timer for debounced save
         
-        // Grid update debouncing для оптимизации производительности
-        this.updateGridAnimationFrame = null; // requestAnimationFrame ID для debouncing
-        this.updateGridPending = false; // Флаг ожидающего обновления
-        
         // Шаблон текстовых блоков пресета с плейсхолдерами (A1, B1 и т.д.)
         // Используется для применения данных из таблицы и генерации всех стикеров
         this.placeholderTextBlocks = null;
@@ -569,8 +565,7 @@ class GridGenerator {
             this.dom.svg.style.opacity = '0';
         }
         
-        // Используем немедленное обновление при инициализации
-        this.updateGridImmediate();
+        this.updateGrid();
         
         
         // Update canvas size on window resize
@@ -754,18 +749,6 @@ class GridGenerator {
             // Elements navigator
             elementsNavigator: document.getElementById('elementsNavigator'),
             elementsNavigatorHeader: document.getElementById('elementsNavigatorHeader'),
-            
-            // Кэшируем часто используемые селекторы для делегирования событий
-            // Контейнеры для делегирования
-            document: document, // для глобального делегирования
-            body: document.body,
-            
-            // Селекторы для делегирования (будут заполнены после инициализации)
-            _selectors: {
-                collapseIcons: null, // будет заполнено при первом использовании
-                collapsibleHeaders: null,
-                dropdownToggles: null
-            },
             elementsList: document.getElementById('elementsList'),
             addTextBtn: document.getElementById('addTextBtn'),
             addGraphicsBtn: document.getElementById('addGraphicsBtn'),
@@ -1156,14 +1139,10 @@ class GridGenerator {
             lunnenDisplay: false
         };
         
-        // Используем делегирование событий вместо множественных addEventListener
-        // Это оптимизирует производительность и работает с динамически добавленными элементами
+        // Find all collapse icons
+        const collapseIcons = document.querySelectorAll('.collapse-icon');
         
-        // Обработчик для collapse icons через делегирование
-        const handleCollapseIconClick = (e) => {
-            const icon = e.target.closest('.collapse-icon');
-            if (!icon) return;
-            
+        collapseIcons.forEach(icon => {
             const panel = icon.closest('.controls-panel');
             if (!panel) return;
             
@@ -1171,8 +1150,6 @@ class GridGenerator {
             const content = panel.querySelector('.panel-content');
             
             if (!header || !content) return;
-            
-            e.stopPropagation(); // Prevent drag from triggering
             
             // Check if panel is bottom-anchored (like elements-navigator and text panel)
             const isBottomAnchored = panel.classList.contains('elements-navigator') || panel.classList.contains('controls-panel-text');
@@ -1187,66 +1164,58 @@ class GridGenerator {
                 panel.dataset.originalTop = rect.top;
             }
             
-            const isCollapsed = panel.classList.contains('panel-collapsed');
-            
-            if (isCollapsed) {
-                // Expand
-                panel.classList.remove('panel-collapsed');
-                icon.classList.remove('collapsed');
-                icon.setAttribute('aria-label', 'Collapse panel');
+            // Click handler
+            const toggleCollapse = (e) => {
+                e.stopPropagation(); // Prevent drag from triggering
                 
-                // Restore text styles state if this is text panel
-                if (isTextPanel) {
-                    this.restoreTextStylesState();
-                }
-            } else {
-                // Collapse
-                // Save text styles state if this is text panel
-                if (isTextPanel) {
-                    this.saveTextStylesState();
+                const isCollapsed = panel.classList.contains('panel-collapsed');
+                
+                if (isCollapsed) {
+                    // Expand
+                    panel.classList.remove('panel-collapsed');
+                    icon.classList.remove('collapsed');
+                    icon.setAttribute('aria-label', 'Collapse panel');
+                    
+                    // For bottom-anchored panels, keep the top position (don't switch back to bottom)
+                    // This prevents the panel from jumping
+                    
+                    // Restore text styles state if this is text panel
+                    if (isTextPanel) {
+                        this.restoreTextStylesState();
+                    }
+                } else {
+                    // Collapse
+                    // Save text styles state if this is text panel
+                    if (isTextPanel) {
+                        this.saveTextStylesState();
+                    }
+                    
+                    // For bottom-anchored panels, switch to top anchor before collapsing
+                    if (isBottomAnchored) {
+                        const rect = panel.getBoundingClientRect();
+                        panel.style.top = `${rect.top}px`;
+                        panel.style.bottom = 'auto';
+                    }
+                    
+                    panel.classList.add('panel-collapsed');
+                    icon.classList.add('collapsed');
+                    icon.setAttribute('aria-label', 'Expand panel');
                 }
                 
-                // For bottom-anchored panels, switch to top anchor before collapsing
-                if (isBottomAnchored) {
-                    const rect = panel.getBoundingClientRect();
-                    panel.style.top = `${rect.top}px`;
-                    panel.style.bottom = 'auto';
+                // Update panel params display
+                this.updatePanelParams();
+            };
+            
+            icon.addEventListener('click', toggleCollapse);
+            
+            // Keyboard support
+            icon.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleCollapse(e);
                 }
-                
-                panel.classList.add('panel-collapsed');
-                icon.classList.add('collapsed');
-                icon.setAttribute('aria-label', 'Expand panel');
-            }
-            
-            // Update panel params display
-            this.updatePanelParams();
-        };
-        
-        // Обработчик для клавиатуры через делегирование
-        const handleCollapseIconKeydown = (e) => {
-            const icon = e.target.closest('.collapse-icon');
-            if (!icon) return;
-            
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                // Создаем синтетическое событие клика
-                const clickEvent = new MouseEvent('click', {
-                    bubbles: true,
-                    cancelable: true
-                });
-                icon.dispatchEvent(clickEvent);
-            }
-        };
-        
-        // Используем делегирование на document вместо множественных слушателей
-        document.addEventListener('click', handleCollapseIconClick);
-        document.addEventListener('keydown', handleCollapseIconKeydown);
-        
-        // Сохраняем обработчики для возможной очистки в будущем
-        this._panelCollapseHandlers = {
-            click: handleCollapseIconClick,
-            keydown: handleCollapseIconKeydown
-        };
+            });
+        });
         
         // Collapse all panels except Data Import panel by default
         const panelsToCollapse = [
@@ -1910,8 +1879,8 @@ class GridGenerator {
             // Store preset name for export
             this.currentPresetName = data.presetName || filename.replace('.json', '');
             
-            // Update UI and grid (используем немедленное обновление при загрузке пресета)
-            this.updateGridImmediate();
+            // Update UI and grid
+            this.updateGrid();
             this.updateElementsNavigator();
             
             // Показываем SVG после загрузки пресета и центрируем его
@@ -2053,61 +2022,50 @@ class GridGenerator {
     }
     
     initCollapsibleSections() {
-        // Используем делегирование событий для оптимизации
-        // Обработчик для collapsible headers через делегирование
-        const handleCollapsibleHeaderClick = (e) => {
-            const header = e.target.closest('.collapsible-header');
-            if (!header) return;
-            
+        // Initialize collapsible sections (like Headline settings)
+        const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+        
+        collapsibleHeaders.forEach(header => {
             const toggle = header.querySelector('.collapse-toggle');
             const contentId = header.id.replace('Header', 'Content');
             const content = document.getElementById(contentId);
             
             if (!toggle || !content) return;
             
-            e.preventDefault();
-            e.stopPropagation();
+            // Handle click on header or toggle button
+            const handleToggle = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+                const newState = !isExpanded;
+                
+                // Update aria-expanded attribute
+                toggle.setAttribute('aria-expanded', newState);
+                
+                // Toggle collapsed class
+                if (newState) {
+                    content.classList.remove('collapsed');
+                } else {
+                    content.classList.add('collapsed');
+                }
+            };
             
-            const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
-            const newState = !isExpanded;
+            // Click on entire header toggles
+            header.addEventListener('click', handleToggle);
             
-            // Update aria-expanded attribute
-            toggle.setAttribute('aria-expanded', newState);
-            
-            // Toggle collapsed class
-            if (newState) {
-                content.classList.remove('collapsed');
-            } else {
-                content.classList.add('collapsed');
-            }
-        };
-        
-        // Обработчик для предотвращения drag при клике на header
-        const handleCollapsibleHeaderMousedown = (e) => {
-            const header = e.target.closest('.collapsible-header');
-            if (!header) return;
-            
-            e.stopPropagation();
-        };
-        
-        // Используем делегирование на document
-        document.addEventListener('click', handleCollapsibleHeaderClick);
-        document.addEventListener('mousedown', handleCollapsibleHeaderMousedown);
-        
-        // Сохраняем обработчики для возможной очистки
-        this._collapsibleHandlers = {
-            click: handleCollapsibleHeaderClick,
-            mousedown: handleCollapsibleHeaderMousedown
-        };
+            // Prevent dragging when clicking on collapsible header
+            header.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+            });
+        });
     }
     
     initDropdowns() {
-        // Используем делегирование событий для оптимизации
-        // Обработчик для dropdown toggles через делегирование
-        const handleDropdownToggleClick = (e) => {
-            const toggle = e.target.closest('.dropdown-toggle');
-            if (!toggle) return;
-            
+        // Initialize dropdown menus for value inputs
+        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+        
+        dropdownToggles.forEach(toggle => {
             const targetId = toggle.getAttribute('data-target');
             const dropdown = document.getElementById(targetId);
             
@@ -2115,63 +2073,51 @@ class GridGenerator {
             
             // Get the input field (sibling of toggle)
             const container = toggle.closest('.value-input-with-dropdown');
-            const input = container ? container.querySelector('.value-display') : null;
-            const sliderId = input ? input.id.replace('Value', 'Slider') : null;
+            const input = container.querySelector('.value-display');
+            const sliderId = input.id.replace('Value', 'Slider');
             
-            e.stopPropagation();
-            
-            // Close all other dropdowns
-            document.querySelectorAll('.dropdown-menu.active').forEach(menu => {
-                if (menu !== dropdown) {
-                    menu.classList.remove('active');
-                }
+            // Toggle dropdown on button click
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                // Close all other dropdowns
+                document.querySelectorAll('.dropdown-menu.active').forEach(menu => {
+                    if (menu !== dropdown) {
+                        menu.classList.remove('active');
+                    }
+                });
+                
+                // Toggle this dropdown
+                dropdown.classList.toggle('active');
+                
+                // Update selected state
+                this.updateDropdownSelection(dropdown, input.value);
             });
             
-            // Toggle this dropdown
-            dropdown.classList.toggle('active');
-            
-            // Update selected state
-            if (input) {
-                this.updateDropdownSelection(dropdown, input.value);
+            // Handle item selection
+            const items = dropdown.querySelectorAll('.dropdown-item');
+            items.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const value = parseFloat(item.getAttribute('data-value'));
+                    
+                    // Update slider using universal method
+                    this.updateSliderValue(sliderId, value);
+                    
+                    // Close dropdown
+                    dropdown.classList.remove('active');
+                });
+            });
+        });
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.value-input-with-dropdown')) {
+                document.querySelectorAll('.dropdown-menu.active').forEach(menu => {
+                    menu.classList.remove('active');
+                });
             }
-        };
-        
-        // Обработчик для dropdown items через делегирование
-        const handleDropdownItemClick = (e) => {
-            const item = e.target.closest('.dropdown-item');
-            if (!item) return;
-            
-            const dropdown = item.closest('.dropdown-menu');
-            if (!dropdown) return;
-            
-            const container = dropdown.closest('.value-input-with-dropdown');
-            const input = container ? container.querySelector('.value-display') : null;
-            const sliderId = input ? input.id.replace('Value', 'Slider') : null;
-            
-            e.stopPropagation();
-            const value = parseFloat(item.getAttribute('data-value'));
-            
-            // Update slider using universal method
-            if (sliderId) {
-                this.updateSliderValue(sliderId, value);
-            }
-            
-            // Close dropdown
-            dropdown.classList.remove('active');
-        };
-        
-        // Используем делегирование на document
-        document.addEventListener('click', handleDropdownToggleClick);
-        document.addEventListener('click', handleDropdownItemClick);
-        
-        // Сохраняем обработчики для возможной очистки
-        this._dropdownHandlers = {
-            toggle: handleDropdownToggleClick,
-            item: handleDropdownItemClick
-        };
-        
-        // Close dropdowns when clicking outside (уже есть делегирование, оставляем как есть)
-        // Этот обработчик уже использует делегирование, поэтому оставляем его
+        });
         
         // Initialize font weight dropdowns in Text Styles panel
         const headlineStyleDropdown = document.getElementById('headlineStyleDropdown');
@@ -8865,64 +8811,7 @@ class GridGenerator {
         }, 100);
     }
     
-    /**
-     * Планирует обновление сетки с использованием requestAnimationFrame для оптимизации производительности.
-     * Множественные вызовы будут объединены в один кадр анимации.
-     * Используйте updateGridImmediate() если требуется синхронное обновление (например, при экспорте).
-     */
-    scheduleGridUpdate() {
-        // Если обновление уже запланировано, ничего не делаем
-        if (this.updateGridPending) {
-            return;
-        }
-        
-        this.updateGridPending = true;
-        
-        // Отменяем предыдущий запрос, если он был
-        if (this.updateGridAnimationFrame !== null) {
-            cancelAnimationFrame(this.updateGridAnimationFrame);
-        }
-        
-        // Планируем обновление на следующий кадр анимации
-        this.updateGridAnimationFrame = requestAnimationFrame(() => {
-            this._updateGrid();
-            this.updateGridPending = false;
-            this.updateGridAnimationFrame = null;
-        });
-    }
-    
-    /**
-     * Немедленное обновление сетки без debouncing.
-     * Используется в критических случаях, когда требуется синхронное обновление:
-     * - При экспорте SVG
-     * - При загрузке пресета
-     * - При инициализации
-     */
-    updateGridImmediate() {
-        // Отменяем запланированное обновление, если оно есть
-        if (this.updateGridAnimationFrame !== null) {
-            cancelAnimationFrame(this.updateGridAnimationFrame);
-            this.updateGridAnimationFrame = null;
-        }
-        this.updateGridPending = false;
-        
-        // Выполняем обновление немедленно
-        this._updateGrid();
-    }
-    
-    /**
-     * Публичный метод для обратной совместимости.
-     * По умолчанию использует debouncing через scheduleGridUpdate().
-     */
     updateGrid() {
-        this.scheduleGridUpdate();
-    }
-    
-    /**
-     * Внутренний метод, выполняющий фактическое обновление сетки.
-     * @private
-     */
-    _updateGrid() {
         // Constrain elements to grid bounds if lockPosition is enabled
         this.constrainElementsToBounds();
         

@@ -7,66 +7,6 @@ import { getSurfaceConfig, SURFACE_TYPES } from '../core/Constants.js';
 export class GridCalculator {
     constructor(settings) {
         this.settings = settings;
-        
-        // Кэш для результатов вычислений
-        this._cache = new Map();
-        
-        // Версия кэша для инвалидации
-        this._cacheVersion = 0;
-        
-        // Ключ кэша на основе зависимых параметров
-        this._cacheKey = null;
-        
-        // Подписка на изменения настроек для инвалидации кэша
-        this._unsubscribe = settings.subscribe('*', () => {
-            this._invalidateCache();
-        });
-    }
-    
-    /**
-     * Инвалидирует кэш при изменении настроек
-     * @private
-     */
-    _invalidateCache() {
-        this._cacheVersion++;
-        this._cache.clear();
-        this._cacheKey = null;
-    }
-    
-    /**
-     * Генерирует ключ кэша на основе зависимых параметров
-     * @param {Array<string>} dependencies - список ключей настроек, от которых зависит вычисление
-     * @returns {string}
-     * @private
-     */
-    _generateCacheKey(dependencies) {
-        const values = dependencies.map(key => {
-            const value = this.settings.get(key);
-            // Для чисел используем фиксированную точность, чтобы избежать проблем с плавающей точкой
-            return typeof value === 'number' ? value.toFixed(10) : String(value);
-        });
-        return `${this._cacheVersion}_${dependencies.join(',')}_${values.join(',')}`;
-    }
-    
-    /**
-     * Получить значение из кэша или вычислить и сохранить
-     * @param {string} key - ключ кэша
-     * @param {Array<string>} dependencies - зависимости для генерации ключа
-     * @param {Function} computeFn - функция вычисления
-     * @returns {*}
-     * @private
-     */
-    _getCached(key, dependencies, computeFn) {
-        const cacheKey = this._generateCacheKey(dependencies);
-        const fullKey = `${key}_${cacheKey}`;
-        
-        if (this._cache.has(fullKey)) {
-            return this._cache.get(fullKey);
-        }
-        
-        const result = computeFn();
-        this._cache.set(fullKey, result);
-        return result;
     }
 
     /**
@@ -90,81 +30,63 @@ export class GridCalculator {
      * Рассчитать количество строк, которые помещаются в формат
      */
     calculateRowCount() {
-        return this._getCached(
-            'rowCount',
-            ['gridModule', 'margins', 'rowHeight', 'frontHeight'],
-            () => {
-                const module = this.settings.get('gridModule');
-                const margins = this.settings.get('margins');
-                const rowHeightInModules = this.settings.get('rowHeight');
-                const frontHeight = this.settings.get('frontHeight');
-                
-                // Доступная высота = frontHeight - верхнее и нижнее поля
-                const topMargin = module * margins;
-                const bottomMargin = module * margins;
-                const availableHeight = frontHeight - topMargin - bottomMargin;
-                
-                // Высота одной строки с промежутком
-                const rowWithGutter = module * rowHeightInModules + module;
-                
-                // Вычисляем сколько строк поместится
-                const rowCount = Math.floor((availableHeight + module) / rowWithGutter);
-                
-                return Math.max(1, rowCount);
-            }
-        );
+        const module = this.settings.get('gridModule');
+        const margins = this.settings.get('margins');
+        const rowHeightInModules = this.settings.get('rowHeight');
+        const frontHeight = this.settings.get('frontHeight');
+        
+        // Доступная высота = frontHeight - верхнее и нижнее поля
+        const topMargin = module * margins;
+        const bottomMargin = module * margins;
+        const availableHeight = frontHeight - topMargin - bottomMargin;
+        
+        // Высота одной строки с промежутком
+        const rowWithGutter = module * rowHeightInModules + module;
+        
+        // Вычисляем сколько строк поместится
+        const rowCount = Math.floor((availableHeight + module) / rowWithGutter);
+        
+        return Math.max(1, rowCount);
     }
 
     /**
      * Рассчитать высоту строки на основе желаемого количества строк
      */
     calculateRowHeight() {
-        return this._getCached(
-            'rowHeight',
-            ['gridModule', 'margins', 'rowCount', 'frontHeight'],
-            () => {
-                const module = this.settings.get('gridModule');
-                const margins = this.settings.get('margins');
-                const rowCount = this.settings.get('rowCount');
-                const frontHeight = this.settings.get('frontHeight');
-                
-                // Доступная высота = frontHeight - верхнее и нижнее поля
-                const topMargin = module * margins;
-                const bottomMargin = module * margins;
-                const availableHeight = frontHeight - topMargin - bottomMargin;
-                
-                // Формула: rowCount × rowHeight × module + (rowCount - 1) × module ≤ availableHeight
-                // Решаем для rowHeight: rowHeight ≤ (availableHeight / module - rowCount + 1) / rowCount
-                const availableModules = availableHeight / module;
-                const rowHeight = Math.floor((availableModules - rowCount + 1) / rowCount);
-                
-                return Math.max(1, rowHeight);
-            }
-        );
+        const module = this.settings.get('gridModule');
+        const margins = this.settings.get('margins');
+        const rowCount = this.settings.get('rowCount');
+        const frontHeight = this.settings.get('frontHeight');
+        
+        // Доступная высота = frontHeight - верхнее и нижнее поля
+        const topMargin = module * margins;
+        const bottomMargin = module * margins;
+        const availableHeight = frontHeight - topMargin - bottomMargin;
+        
+        // Формула: rowCount × rowHeight × module + (rowCount - 1) × module ≤ availableHeight
+        // Решаем для rowHeight: rowHeight ≤ (availableHeight / module - rowCount + 1) / rowCount
+        const availableModules = availableHeight / module;
+        const rowHeight = Math.floor((availableModules - rowCount + 1) / rowCount);
+        
+        return Math.max(1, rowHeight);
     }
 
     /**
      * Рассчитать размер модуля для идеального заполнения формата
      */
     calculateModule() {
-        return this._getCached(
-            'module',
-            ['frontHeight', 'margins', 'rowCount', 'rowHeight'],
-            () => {
-                const frontHeight = this.settings.get('frontHeight');
-                const margins = this.settings.get('margins');
-                const rowCount = this.settings.get('rowCount');
-                const rowHeight = this.settings.get('rowHeight');
-                
-                // Формула: 2×margins + rowCount×rowHeight + (rowCount-1)×1 = total modules
-                // Module = frontHeight / totalModules
-                const totalModules = 2 * margins + rowCount * rowHeight + (rowCount - 1);
-                const calculatedModule = frontHeight / totalModules;
-                
-                // Округляем вниз до 4 знаков после запятой для точного попадания
-                return Math.floor(calculatedModule * 10000) / 10000;
-            }
-        );
+        const frontHeight = this.settings.get('frontHeight');
+        const margins = this.settings.get('margins');
+        const rowCount = this.settings.get('rowCount');
+        const rowHeight = this.settings.get('rowHeight');
+        
+        // Формула: 2×margins + rowCount×rowHeight + (rowCount-1)×1 = total modules
+        // Module = frontHeight / totalModules
+        const totalModules = 2 * margins + rowCount * rowHeight + (rowCount - 1);
+        const calculatedModule = frontHeight / totalModules;
+        
+        // Округляем вниз до 4 знаков после запятой для точного попадания
+        return Math.floor(calculatedModule * 10000) / 10000;
     }
 
     /**
@@ -212,19 +134,13 @@ export class GridCalculator {
      * @returns {number} - ширина в мм
      */
     calculateColumnWidth() {
-        return this._getCached(
-            'columnWidth',
-            ['gridModule', 'margins', 'columnCount', 'frontWidth'],
-            () => {
-                const module = this.settings.get('gridModule');
-                const margins = this.settings.get('margins');
-                const columnCount = this.settings.get('columnCount');
-                const frontWidth = this.settings.get('frontWidth');
-                
-                // Формула: columnWidth = (frontWidth - module × margins × 2 - module × (n - 1)) / n
-                return (frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
-            }
-        );
+        const module = this.settings.get('gridModule');
+        const margins = this.settings.get('margins');
+        const columnCount = this.settings.get('columnCount');
+        const frontWidth = this.settings.get('frontWidth');
+        
+        // Формула: columnWidth = (frontWidth - module × margins × 2 - module × (n - 1)) / n
+        return (frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
     }
 
     /**
@@ -232,15 +148,9 @@ export class GridCalculator {
      * @returns {number} - высота в мм
      */
     calculateRowHeightInMm() {
-        return this._getCached(
-            'rowHeightInMm',
-            ['gridModule', 'rowHeight'],
-            () => {
-                const module = this.settings.get('gridModule');
-                const rowHeightInModules = this.settings.get('rowHeight');
-                return module * rowHeightInModules;
-            }
-        );
+        const module = this.settings.get('gridModule');
+        const rowHeightInModules = this.settings.get('rowHeight');
+        return module * rowHeightInModules;
     }
 
     /**
@@ -312,18 +222,12 @@ export class GridCalculator {
      * @returns {number}
      */
     getMaxYInBaseline() {
-        return this._getCached(
-            'maxYInBaseline',
-            ['gridModule', 'margins', 'frontHeight'],
-            () => {
-                const module = this.settings.get('gridModule');
-                const margins = this.settings.get('margins');
-                const frontHeight = this.settings.get('frontHeight');
-                
-                const contentHeightMm = frontHeight - 2 * margins * module;
-                return Math.floor(contentHeightMm / module);
-            }
-        );
+        const module = this.settings.get('gridModule');
+        const margins = this.settings.get('margins');
+        const frontHeight = this.settings.get('frontHeight');
+        
+        const contentHeightMm = frontHeight - 2 * margins * module;
+        return Math.floor(contentHeightMm / module);
     }
 
     /**
@@ -339,21 +243,15 @@ export class GridCalculator {
      * @returns {number}
      */
     getColumnWidth() {
-        return this._getCached(
-            'getColumnWidth',
-            ['gridModule', 'margins', 'frontWidth', 'columnCount'],
-            () => {
-                const module = this.settings.get('gridModule');
-                const margins = this.settings.get('margins');
-                const frontWidth = this.settings.get('frontWidth');
-                const columnCount = this.settings.get('columnCount');
-                
-                const contentWidth = frontWidth - 2 * margins * module;
-                const gutterWidth = module;
-                
-                return (contentWidth - (columnCount - 1) * gutterWidth) / columnCount;
-            }
-        );
+        const module = this.settings.get('gridModule');
+        const margins = this.settings.get('margins');
+        const frontWidth = this.settings.get('frontWidth');
+        const columnCount = this.settings.get('columnCount');
+        
+        const contentWidth = frontWidth - 2 * margins * module;
+        const gutterWidth = module;
+        
+        return (contentWidth - (columnCount - 1) * gutterWidth) / columnCount;
     }
 
     /**
@@ -482,26 +380,20 @@ export class GridCalculator {
      * @returns {number}
      */
     calculateModuleFromHeight() {
-        return this._getCached(
-            'moduleFromHeight',
-            ['frontHeight', 'margins', 'rowCount', 'rowHeight'],
-            () => {
-                const frontHeight = this.settings.get('frontHeight');
-                const margins = this.settings.get('margins');
-                const rowCount = this.settings.get('rowCount');
-                const rowHeight = this.settings.get('rowHeight');
-                
-                // Высота контента = frontHeight - 2 * margins * module
-                // Высота контента = rowCount * rowHeight * module + (rowCount - 1) * module
-                // Решаем для module:
-                // frontHeight - 2 * margins * module = (rowCount * rowHeight + rowCount - 1) * module
-                // frontHeight = module * (2 * margins + rowCount * rowHeight + rowCount - 1)
-                // module = frontHeight / (2 * margins + rowCount * rowHeight + rowCount - 1)
-                
-                const totalModules = 2 * margins + rowCount * rowHeight + (rowCount - 1);
-                return frontHeight / totalModules;
-            }
-        );
+        const frontHeight = this.settings.get('frontHeight');
+        const margins = this.settings.get('margins');
+        const rowCount = this.settings.get('rowCount');
+        const rowHeight = this.settings.get('rowHeight');
+        
+        // Высота контента = frontHeight - 2 * margins * module
+        // Высота контента = rowCount * rowHeight * module + (rowCount - 1) * module
+        // Решаем для module:
+        // frontHeight - 2 * margins * module = (rowCount * rowHeight + rowCount - 1) * module
+        // frontHeight = module * (2 * margins + rowCount * rowHeight + rowCount - 1)
+        // module = frontHeight / (2 * margins + rowCount * rowHeight + rowCount - 1)
+        
+        const totalModules = 2 * margins + rowCount * rowHeight + (rowCount - 1);
+        return frontHeight / totalModules;
     }
 
     /**
@@ -519,37 +411,6 @@ export class GridCalculator {
             gutterSize: this.getGutterSize(),
             totalBaselines: this.getTotalBaselines()
         };
-    }
-    
-    /**
-     * Очистить кэш (полезно для тестирования или принудительного пересчета)
-     */
-    clearCache() {
-        this._invalidateCache();
-    }
-    
-    /**
-     * Получить статистику кэша (для отладки)
-     * @returns {Object}
-     */
-    getCacheStats() {
-        return {
-            size: this._cache.size,
-            version: this._cacheVersion,
-            keys: Array.from(this._cache.keys())
-        };
-    }
-    
-    /**
-     * Уничтожить калькулятор и очистить ресурсы
-     */
-    destroy() {
-        if (this._unsubscribe) {
-            this._unsubscribe();
-            this._unsubscribe = null;
-        }
-        this._cache.clear();
-        this._cache = null;
     }
 }
 
