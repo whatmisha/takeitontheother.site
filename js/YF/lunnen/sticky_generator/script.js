@@ -9462,7 +9462,7 @@ class GridGenerator {
     }
 
     /**
-     * Обновляет маленький штрихкод из колонки E
+     * Обновляет маленький штрихкод (SN) из колонки E
      * @param {Array<string>} row - Строка данных
      * @param {Object} gridSettings - Настройки сетки
      */
@@ -9492,9 +9492,9 @@ class GridGenerator {
             return;
         }
 
-        // Обновляем штрихкод БЕЗ отображения текста
+        // Обновляем штрихкод БЕЗ отображения текста (SN)
         BarcodeGenerator.updateBarcodeBlock(barcodeBlock, barcodeData, gridSettings, false);
-        console.log(`✅ Маленький штрихкод обновлен: ${barcodeData}`);
+        console.log(`✅ Маленький штрихкод (SN) обновлен: ${barcodeData}`);
     }
 
     /**

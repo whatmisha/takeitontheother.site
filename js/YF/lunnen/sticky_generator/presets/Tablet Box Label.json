@@ -132,7 +132,7 @@
     "blocks": [
       {
         "id": "sticker-barcode",
-        "name": "Barcode",
+        "name": "Barcode EAN-13",
         "position": {
           "column": 3,
           "row": 0,
@@ -170,7 +170,7 @@
       },
       {
         "id": "sticker-barcode-small",
-        "name": "Barcode Small",
+        "name": "Barcode SN",
         "position": {
           "column": 2,
           "row": 0,
