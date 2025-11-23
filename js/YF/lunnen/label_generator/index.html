@@ -902,9 +902,14 @@
 
     <!-- PDF Export Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/svg2pdf.js@2.0.0/dist/svg2pdf.umd.js"></script>
     <script>
-        // Убеждаемся, что библиотека доступна глобально
+        // Убеждаемся, что библиотеки доступны глобально
         window.jsPDF = window.jspdf?.jsPDF || window.jsPDF;
+        // svg2pdf доступен через window.svg2pdfjs
+        if (window.svg2pdfjs && !window.svg2pdf) {
+            window.svg2pdf = window.svg2pdfjs.svg2pdf;
+        }
     </script>
     
     <script type="module" src="script.js"></script>
