@@ -404,6 +404,14 @@ class GridGenerator {
         this.isRestoringState = false; // Flag to prevent saving state during undo/redo
         this.saveStateTimer = null; // Timer for debounced save
         
+        // Шаблон текстовых блоков пресета с плейсхолдерами (A1, B1 и т.д.)
+        // Используется для применения данных из таблицы и генерации всех стикеров
+        this.placeholderTextBlocks = null;
+        
+        // Пример одной строки данных из пресета (если задана в JSON)
+        // Используется только для превью до загрузки реальных данных из Google Sheets
+        this.presetExampleRow = null;
+        
         // Сохраняем загруженные данные из таблицы для генерации нескольких стикеров
         this.loadedTableData = null;
         this.currentRowIndex = null; // Индекс текущей строки данных
@@ -1700,6 +1708,11 @@ class GridGenerator {
             // Apply text blocks
             if (normalizedData.textBlocks) {
                 this.textBlocks = normalizedData.textBlocks;
+                
+                // Сохраняем шаблонные текстовые блоки с плейсхолдерами,
+                // чтобы позже подставлять реальные данные из таблицы
+                this.placeholderTextBlocks = JSON.parse(JSON.stringify(this.textBlocks));
+                
                 // Ensure lockPosition is set for all blocks (default to true for backward compatibility)
                 this.textBlocks.forEach(block => {
                     if (block.lockPosition === undefined) {
@@ -1717,6 +1730,43 @@ class GridGenerator {
                         block.lockPosition = true;
                     }
                 });
+            }
+
+            // Сохраняем пример строки данных из пресета (если он есть)
+            this.presetExampleRow = Array.isArray(normalizedData.exampleRow)
+                ? [...normalizedData.exampleRow]
+                : null;
+
+            // Если данных из Google Sheets еще нет, применяем примерные данные
+            // только для превью, подставляя их в плейсхолдеры и штрихкоды
+            if (!this.loadedTableData && this.presetExampleRow) {
+                // 1) Тексты: подставляем примерные данные в плейсхолдеры
+                if (this.placeholderTextBlocks) {
+                    try {
+                        // Берем шаблон с плейсхолдерами, чтобы не потерять оригиналы
+                        const templateBlocks = JSON.parse(JSON.stringify(this.placeholderTextBlocks));
+
+                        this.textBlocks = templateBlocks.map(block => {
+                            const originalContent = block.templateContent || block.content || '';
+                            const newContent = this.replacePlaceholders(originalContent, this.presetExampleRow);
+
+                            return {
+                                ...block,
+                                content: newContent
+                            };
+                        });
+                    } catch (e) {
+                        console.warn('Не удалось применить примерные данные пресета к текстам:', e);
+                        // В случае ошибки просто оставляем текстовые блоки как есть (с плейсхолдерами)
+                    }
+                }
+
+                // 2) Штрихкоды: обновляем графические блоки из той же примерной строки
+                try {
+                    this.updateBarcodeFromData(this.presetExampleRow);
+                } catch (e) {
+                    console.warn('Не удалось применить примерные данные пресета к штрихкодам:', e);
+                }
             }
             
             // Update all UI elements to reflect new settings
@@ -5959,10 +6009,18 @@ class GridGenerator {
                 const newX = Math.round((this.textDragState.startBlockX * columnWithGutter + dx) / columnWithGutter);
                 let newY = Math.round((this.textDragState.startBlockY * moduleScaled + dy) / moduleScaled);
                 
-                // Calculate graphics width considering aspect ratio
-                const heightInMm = module * block.heightInModules;
-                const aspectRatio = block.originalWidth / block.originalHeight;
-                const widthInMm = heightInMm * aspectRatio;
+                // Calculate graphics width for drag constraints
+                // Для EAN-13 используем только ширину полос (barsWidthMm),
+                // без левого поля с первой цифрой, чтобы блок вел себя
+                // как «одноколоночный» и не перепрыгивал во вторую колонку.
+                let widthInMm;
+                if (block.barcodeType === 'ean13' && block.barsWidthMm != null) {
+                    widthInMm = block.barsWidthMm;
+                } else {
+                    const heightInMm = module * block.heightInModules;
+                    const aspectRatio = block.originalWidth / block.originalHeight;
+                    widthInMm = heightInMm * aspectRatio;
+                }
                 const widthInColumns = widthInMm / (columnWidth + gutter);
                 
                 // Constrain within grid boundaries
@@ -9265,7 +9323,13 @@ class GridGenerator {
 
             // ВАЖНО: Сохраняем оригинальные текстовые блоки с плейсхолдерами
             // Это нужно для переключения между строками данных
-            this.originalTextBlocks = JSON.parse(JSON.stringify(this.textBlocks));
+            // Если есть отдельный шаблон (placeholderTextBlocks), используем его,
+            // чтобы не зависеть от примерных данных, показанных до загрузки таблицы
+            this.originalTextBlocks = JSON.parse(JSON.stringify(
+                this.placeholderTextBlocks && Array.isArray(this.placeholderTextBlocks)
+                    ? this.placeholderTextBlocks
+                    : this.textBlocks
+            ));
             
             // ВАЖНО: Сохраняем оригинальные графические блоки
             // Это нужно для переключения между строками данных
@@ -9273,7 +9337,16 @@ class GridGenerator {
 
             // Устанавливаем флаг программного обновления при загрузке данных
             this.isProgrammaticUpdate = true;
-            
+
+            // Перед применением первой строки восстанавливаем шаблон с плейсхолдерами,
+            // чтобы гарантированно подставлять данные в A1, B1 и т.д., а не в примерный текст
+            if (this.originalTextBlocks) {
+                this.textBlocks = JSON.parse(JSON.stringify(this.originalTextBlocks));
+            }
+            if (this.originalGraphicsBlocks) {
+                this.graphicsBlocks = JSON.parse(JSON.stringify(this.originalGraphicsBlocks));
+            }
+
             // Обновляем текстовые блоки данными из таблицы (первая строка)
             this.updateTextBlocksFromData(rows);
 

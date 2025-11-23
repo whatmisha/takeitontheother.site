@@ -463,7 +463,10 @@ export class SVGExporter {
             surface: text.surface || 'front',
             showBounds: text.showBounds || false,
             useXHeight: text.useXHeight || false,
-            visible: true
+            visible: true,
+            // Дополнительное поле: шаблонное содержимое с плейсхолдерами
+            // Если в JSON указано templateContent, используем его, иначе дублируем content
+            templateContent: text.templateContent || text.content
         }));
 
         // Графические блоки (маппинг полей для внутренней структуры приложения)
@@ -536,7 +539,10 @@ export class SVGExporter {
             presetName: newData.presetName,
             settings: settings,
             textBlocks: textBlocks,
-            graphicsBlocks: graphicsBlocks
+            graphicsBlocks: graphicsBlocks,
+            // Пример одной строки данных для превью (опционально)
+            // Массив значений ячеек A, B, C, ... (0‑й элемент — колонка A)
+            exampleRow: Array.isArray(newData.exampleRow) ? [...newData.exampleRow] : null
         };
     }
 }

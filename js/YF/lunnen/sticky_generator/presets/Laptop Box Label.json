@@ -108,9 +108,9 @@
     }
   },
   "display": {
-    "dimensions": false,
-    "labels": false,
-    "objects": true
+  "dimensions": false,
+  "labels": false,
+  "objects": true
   },
   "graphics": {
     "blocks": [
@@ -155,5 +155,14 @@
     ],
     "icons": null,
     "claim": null
-  }
+  },
+  "exampleRow": [
+    "Ноутбук Lunnen Falcon 24\"",
+    "SH1312001",
+    "Appollo White",
+    "Номинальное напряжение: 240 В\nКласс защиты: X\nНоминальный ток: 8 А\nНоминальная мощность: 380 Вт",
+    "01.2026",
+    "7770358281777",
+    "4777358281777"
+  ]
 }
