@@ -273,7 +273,7 @@
                             </div>
                         </div>
                         
-                        <!-- Custom HSB Color Picker -->
+                        <!-- Custom HSB Color Picker for Background -->
                         <div class="hsb-picker" id="hsbPicker" style="display: none;">
                             <div class="hsb-controls">
                                 <div class="hsb-control-group">
@@ -298,6 +298,42 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <div class="control-group">
+                            <div class="control-group-header">
+                                <span class="control-label">Content Color</span>
+                            </div>
+                            <div class="color-input-group">
+                                <button type="button" class="color-preview" id="contentColorPreview" aria-label="Open content color picker"></button>
+                                <input type="text" id="contentHexColorInput" value="#17264E" placeholder="#17264E" maxlength="7" aria-label="Content hex color code input">
+                            </div>
+                        </div>
+                        
+                        <!-- Custom HSB Color Picker for Content -->
+                        <div class="hsb-picker" id="contentHsbPicker" style="display: none;">
+                            <div class="hsb-controls">
+                                <div class="hsb-control-group">
+                                    <label for="contentHueValue">
+                                        <span>Hue <span class="unit">°</span></span>
+                                    </label>
+                                    <input type="number" class="number-input" id="contentHueValue" value="0" min="0" max="360" step="1" aria-label="Content hue value">
+                                </div>
+                                
+                                <div class="hsb-control-group">
+                                    <label for="contentSaturationValue">
+                                        <span>Saturation <span class="unit">%</span></span>
+                                    </label>
+                                    <input type="number" class="number-input" id="contentSaturationValue" value="0" min="0" max="100" step="1" aria-label="Content saturation value">
+                                </div>
+                                
+                                <div class="hsb-control-group">
+                                    <label for="contentBrightnessValue">
+                                        <span>Brightness <span class="unit">%</span></span>
+                                    </label>
+                                    <input type="number" class="number-input" id="contentBrightnessValue" value="0" min="0" max="100" step="1" aria-label="Content brightness value">
+                                </div>
+                            </div>
+                        </div>
                     </section>
 
                 </div>
@@ -318,7 +354,7 @@
                 ↓ Current Label
             </button>
             <button class="btn-fixed btn-export" id="generateAllStickersBtn" aria-label="Generate All Labels from Table Data" style="display: none;">
-                ↓ All Labels
+                ↓ All Labels ⌘E
             </button>
             <label class="toggle-label edit-mode-only">
                 <div class="toggle-switch">

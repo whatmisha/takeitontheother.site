@@ -205,8 +205,8 @@ export class TextRenderer {
         const fontSize = this.calculateFontSize(style);
         const scaledFontSize = fontSize * scale;
         
-        // Получаем цвет сетки для текста (как в старом коде)
-        const gridColor = this.getContrastColor();
+        // Получаем цвет контента из настроек
+        const contentColor = this.settings.get('contentColor') || '#17264E';
         
         // Получаем имя шрифта для стиля
         const fontFamily = style.fontFamily || 'TT Commons Classic';
@@ -218,7 +218,7 @@ export class TextRenderer {
             'font-size': `${scaledFontSize}`, // без единиц - SVG user-units (mm в нашем viewBox)
             'text-anchor': 'start', // Always left-align text inside the block
             'letter-spacing': `${style.tracking}em`,
-            'fill': gridColor,
+            'fill': contentColor,
             'fill-opacity': '1',
             'xml:space': 'preserve'
         });
@@ -226,26 +226,6 @@ export class TextRenderer {
         textElement.textContent = content;
         
         return textElement;
-    }
-    
-    /**
-     * Получение контрастного цвета для сетки
-     * (из старого кода)
-     */
-    getContrastColor() {
-        const boxColor = this.settings.get('boxColor');
-        
-        // Convert hex to RGB
-        const hex = boxColor.replace('#', '');
-        const r = parseInt(hex.substr(0, 2), 16) / 255;
-        const g = parseInt(hex.substr(2, 2), 16) / 255;
-        const b = parseInt(hex.substr(4, 2), 16) / 255;
-        
-        // Calculate luminance
-        const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        
-        // Return black or white depending on background luminance
-        return luminance > 0.5 ? '#000000' : '#FFFFFF';
     }
 
     /**

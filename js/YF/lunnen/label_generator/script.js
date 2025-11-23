@@ -192,6 +192,39 @@ class GridGenerator {
                     this.updateColorFromHSB();
                 }
             },
+            contentHueValue: {
+                setting: null, // Handled specially by ColorPicker
+                min: 0,
+                max: 360,
+                decimals: 0,
+                baseStep: 1,
+                shiftStep: 10,
+                onUpdate: () => {
+                    this.updateContentColorFromHSB();
+                }
+            },
+            contentSaturationValue: {
+                setting: null, // Handled specially by ColorPicker
+                min: 0,
+                max: 100,
+                decimals: 0,
+                baseStep: 1,
+                shiftStep: 10,
+                onUpdate: () => {
+                    this.updateContentColorFromHSB();
+                }
+            },
+            contentBrightnessValue: {
+                setting: null, // Handled specially by ColorPicker
+                min: 0,
+                max: 100,
+                decimals: 0,
+                baseStep: 1,
+                shiftStep: 10,
+                onUpdate: () => {
+                    this.updateContentColorFromHSB();
+                }
+            },
             headlineSizeValue: {
                 setting: 'headlineSize',
                 min: 6,
@@ -310,6 +343,7 @@ class GridGenerator {
             frontHeight: 24,
             showLabels: false,
             boxColor: '#808080',
+            contentColor: '#17264E',
             gridModule: 5.0505,
             margins: 2,
             marginsUnit: 'mod',
@@ -601,7 +635,7 @@ class GridGenerator {
             // Containers
             linkedControlsContainer: document.getElementById('linkedControlsContainer'),
             
-            // Color controls
+            // Color controls - Background
             colorPreview: document.getElementById('colorPreview'),
             hexColorInput: document.getElementById('hexColorInput'),
             lunnenBlue: document.getElementById('lunnenBlue'),
@@ -609,9 +643,13 @@ class GridGenerator {
             hueValue: document.getElementById('hueValue'),
             saturationValue: document.getElementById('saturationValue'),
             brightnessValue: document.getElementById('brightnessValue'),
-            hueValue: document.getElementById('hueValue'),
-            saturationValue: document.getElementById('saturationValue'),
-            brightnessValue: document.getElementById('brightnessValue'),
+            // Color controls - Content
+            contentColorPreview: document.getElementById('contentColorPreview'),
+            contentHexColorInput: document.getElementById('contentHexColorInput'),
+            contentHsbPicker: document.getElementById('contentHsbPicker'),
+            contentHueValue: document.getElementById('contentHueValue'),
+            contentSaturationValue: document.getElementById('contentSaturationValue'),
+            contentBrightnessValue: document.getElementById('contentBrightnessValue'),
             
             // Buttons
             exportBtn: document.getElementById('exportBtn'),
@@ -938,6 +976,70 @@ class GridGenerator {
             this.updateGrid();
         });
         
+        // Content Color preview button - toggle HSB picker
+        this.dom.contentColorPreview.addEventListener('click', () => {
+            const isVisible = this.dom.contentHsbPicker.style.display !== 'none';
+            this.dom.contentHsbPicker.style.display = isVisible ? 'none' : 'block';
+            if (!isVisible) {
+                this.updateContentHSBFromHex(this.settings.contentColor || '#17264E');
+            }
+        });
+        
+        // Content Hex color input
+        this.dom.contentHexColorInput.addEventListener('input', (e) => {
+            let hexValue = e.target.value;
+            
+            // Remove all # symbols and add one at the start
+            hexValue = hexValue.replace(/#/g, '');
+            if (hexValue) {
+                hexValue = '#' + hexValue;
+                e.target.value = hexValue;
+            }
+            
+            const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+            if (hexRegex.test(hexValue)) {
+                if (hexValue.length === 4) {
+                    const r = hexValue[1];
+                    const g = hexValue[2];
+                    const b = hexValue[3];
+                    hexValue = `#${r}${r}${g}${g}${b}${b}`;
+                }
+                
+                // Обновляем через оба способа для совместимости
+                this.settings.contentColor = hexValue;
+                this.settingsModule.set('contentColor', hexValue);
+                this.dom.contentColorPreview.style.backgroundColor = hexValue;
+                this.updateContentHSBFromHex(hexValue);
+                
+                // Обновляем цвет всех штрихкодов
+                this.updateAllBarcodesColor(hexValue);
+                
+                this.updateGrid();
+            }
+        });
+        
+        // Validate content hex input when focus is lost
+        this.dom.contentHexColorInput.addEventListener('blur', (e) => {
+            let hexValue = e.target.value;
+            
+            if (!hexValue.match(/^#[0-9A-Fa-f]{6}$/)) {
+                // Если некорректный, берем текущий цвет из настроек вместо дефолтного
+                hexValue = this.settingsModule.get('contentColor') || '#17264E';
+            }
+            
+            e.target.value = hexValue;
+            // Обновляем через оба способа для совместимости
+            this.settings.contentColor = hexValue;
+            this.settingsModule.set('contentColor', hexValue);
+            this.dom.contentColorPreview.style.backgroundColor = hexValue;
+            this.updateContentHSBFromHex(hexValue);
+            
+            // Обновляем цвет всех штрихкодов
+            this.updateAllBarcodesColor(hexValue);
+            
+            this.updateGrid();
+        });
+        
         // Export button
         this.dom.exportBtn.addEventListener('click', () => this.exportSVG());
         
@@ -1001,10 +1103,16 @@ class GridGenerator {
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
-            // Cmd+E / Ctrl+E - Export SVG
+            // Cmd+E / Ctrl+E - Generate All Labels
             if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
                 e.preventDefault();
-                this.exportSVG();
+                // Проверяем, видна ли кнопка All Labels, и если да - вызываем generateAllStickers
+                if (this.dom.generateAllStickersBtn && this.dom.generateAllStickersBtn.style.display !== 'none') {
+                    this.generateAllStickers();
+                } else {
+                    // Если кнопка не видна, используем старое поведение - экспорт текущего
+                    this.exportSVG();
+                }
             }
             // Cmd+Z / Ctrl+Z - Undo
             if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
@@ -1827,11 +1935,26 @@ class GridGenerator {
             if (this.dom.marginsUnitMm) this.dom.marginsUnitMm.classList.remove('active');
         }
         
-        // Update color
+        // Update background color
         if (settings.boxColor) {
             if (this.dom.colorPreview) this.dom.colorPreview.style.backgroundColor = settings.boxColor;
             if (this.dom.hexColorInput) this.dom.hexColorInput.value = settings.boxColor;
             this.updateHSBFromHex(settings.boxColor);
+        }
+        
+        // Update content color
+        if (settings.contentColor) {
+            if (this.dom.contentColorPreview) this.dom.contentColorPreview.style.backgroundColor = settings.contentColor;
+            if (this.dom.contentHexColorInput) this.dom.contentHexColorInput.value = settings.contentColor;
+            this.updateContentHSBFromHex(settings.contentColor);
+        } else {
+            // Set default if not present
+            const defaultContentColor = '#17264E';
+            this.settings.contentColor = defaultContentColor;
+            this.settingsModule.set('contentColor', defaultContentColor);
+            if (this.dom.contentColorPreview) this.dom.contentColorPreview.style.backgroundColor = defaultContentColor;
+            if (this.dom.contentHexColorInput) this.dom.contentHexColorInput.value = defaultContentColor;
+            this.updateContentHSBFromHex(defaultContentColor);
         }
         
         // Generate row presets
@@ -1853,9 +1976,14 @@ class GridGenerator {
     }
     
     initColorPreview() {
-        // Set initial color preview
+        // Set initial background color preview
         this.dom.colorPreview.style.backgroundColor = this.settings.boxColor;
         this.updateHSBFromHex(this.settings.boxColor);
+        
+        // Set initial content color preview
+        const contentColor = this.settings.contentColor || '#17264E';
+        this.dom.contentColorPreview.style.backgroundColor = contentColor;
+        this.updateContentHSBFromHex(contentColor);
     }
     
     // Initialize Size inputs (without sliders) with arrow key support
@@ -4353,12 +4481,14 @@ class GridGenerator {
         };
         
         // Generate new barcode
+        const contentColor = this.settings.contentColor || '#17264E';
         BarcodeGenerator.updateBarcodeBlock(
             block,
             cleanData,
             gridSettings,
             barcodeInfo.displayValue,
-            barcodeInfo.barcodeType
+            barcodeInfo.type || 'code128',
+            contentColor
         );
         
         // Save barcode data in block for future reference
@@ -4403,6 +4533,105 @@ class GridGenerator {
         this.dom.hexColorInput.value = hex;
         this.dom.colorPreview.style.backgroundColor = hex;
         this.updateGrid();
+    }
+    
+    updateContentHSBFromHex(hex) {
+        const rgb = ColorUtils.hexToRgb(hex);
+        if (rgb) {
+            const hsb = ColorUtils.rgbToHsb(rgb.r, rgb.g, rgb.b);
+            this.dom.contentHueValue.value = hsb.h;
+            this.dom.contentSaturationValue.value = hsb.s;
+            this.dom.contentBrightnessValue.value = hsb.b;
+        }
+    }
+    
+    updateContentColorFromHSB() {
+        const h = parseInt(this.dom.contentHueValue.value);
+        const s = parseInt(this.dom.contentSaturationValue.value);
+        const b = parseInt(this.dom.contentBrightnessValue.value);
+        
+        const rgb = ColorUtils.hsbToRgb(h, s, b);
+        const hex = ColorUtils.rgbToHex(rgb.r, rgb.g, rgb.b);
+        
+        // Обновляем через оба способа для совместимости
+        this.settings.contentColor = hex;
+        this.settingsModule.set('contentColor', hex);
+        this.dom.contentHexColorInput.value = hex;
+        this.dom.contentColorPreview.style.backgroundColor = hex;
+        
+        // Обновляем цвет всех штрихкодов
+        this.updateAllBarcodesColor(hex);
+        
+        this.updateGrid();
+    }
+    
+    /**
+     * Обновляет цвет всех существующих штрихкодов
+     * @param {string} color - Новый цвет контента
+     */
+    updateAllBarcodesColor(color) {
+        const gridSettings = {
+            gridModule: this.settings.gridModule,
+            columnCount: this.settings.columnCount,
+            frontWidth: this.settings.frontWidth,
+            frontHeight: this.settings.frontHeight,
+            margins: this.settings.margins,
+            marginsUnit: this.settings.marginsUnit,
+        };
+        
+        const graphicsBlocks = this.graphicsBlocks || [];
+        
+        // Обновляем все блоки со штрихкодами
+        graphicsBlocks.forEach(block => {
+            if (!block || !block.barcodeData) return;
+            
+            // Определяем тип штрихкода и параметры отображения
+            let barcodeType = 'code128';
+            let displayValue = false;
+            
+            if (block.barcode) {
+                // Новый способ: конфигурация из пресета
+                const config = block.barcode;
+                switch (config.type?.toLowerCase()) {
+                    case 'ean-13':
+                    case 'ean13':
+                        barcodeType = 'ean13';
+                        displayValue = true;
+                        break;
+                    case 'sn':
+                    case 'imei1':
+                    case 'imei2':
+                        barcodeType = 'code128';
+                        displayValue = false;
+                        break;
+                }
+            } else {
+                // Старый способ: определяем по ID блока
+                if (block.id === 'sticker-barcode') {
+                    barcodeType = 'ean13';
+                    displayValue = true;
+                } else if (block.id === 'sticker-barcode-small' || 
+                          block.id === 'sticker-barcode-imei1' || 
+                          block.id === 'sticker-barcode-imei2') {
+                    barcodeType = 'code128';
+                    displayValue = false;
+                } else if (block.barcodeType) {
+                    // Используем сохраненный тип штрихкода
+                    barcodeType = block.barcodeType;
+                    displayValue = block.barcodeData ? true : false;
+                }
+            }
+            
+            // Перегенерируем штрихкод с новым цветом
+            BarcodeGenerator.updateBarcodeBlock(
+                block,
+                block.barcodeData,
+                gridSettings,
+                displayValue,
+                barcodeType,
+                color
+            );
+        });
     }
     
     updateSaturationGradient() {
@@ -8782,19 +9011,11 @@ class GridGenerator {
     }
     
     getContrastColor() {
-        // Use ColorUtils for consistency with GridRenderer
-        const bgColor = this.settings.boxColor;
-        const luminance = ColorUtils.getLuminance(bgColor);
-        
-        // Store luminance for opacity calculation (if needed in future)
-        this.currentLuminance = luminance;
-        
-        return ColorUtils.getContrastColor(bgColor);
+        // Используем цвет контента вместо вычисления контраста
+        return this.settings.contentColor || '#17264E';
     }
     
     getGridOpacity(baseOpacity) {
-        // Always use the same opacity regardless of background brightness
-        // Color switching (light/dark) is handled by getContrastColor()
         return baseOpacity;
     }
     
@@ -9910,7 +10131,8 @@ class GridGenerator {
                 displayValue = false;
         }
         
-        BarcodeGenerator.updateBarcodeBlock(block, barcodeData, gridSettings, displayValue, barcodeType);
+        const contentColor = this.settings.contentColor || '#17264E';
+        BarcodeGenerator.updateBarcodeBlock(block, barcodeData, gridSettings, displayValue, barcodeType, contentColor);
         // Save barcode data in block for future reference
         block.barcodeData = barcodeData;
         console.log(`✅ Штрихкод "${block.id}" (${config.type || barcodeType}) обновлен из колонки ${columnLetter}: ${barcodeData}`);
@@ -9993,7 +10215,8 @@ class GridGenerator {
         }
 
         // Обновляем штрихкод С отображением текста (EAN-13)
-        BarcodeGenerator.updateBarcodeBlock(barcodeBlock, barcodeData, gridSettings, true, 'ean13');
+        const contentColor = this.settings.contentColor || '#17264E';
+        BarcodeGenerator.updateBarcodeBlock(barcodeBlock, barcodeData, gridSettings, true, 'ean13', contentColor);
         barcodeBlock.barcodeData = barcodeData;
         console.log(`✅ Основной штрихкод (EAN-13) обновлен: ${barcodeData}`);
     }
@@ -10030,7 +10253,8 @@ class GridGenerator {
         }
 
         // Обновляем штрихкод БЕЗ отображения текста (SN)
-        BarcodeGenerator.updateBarcodeBlock(barcodeBlock, barcodeData, gridSettings, false);
+        const contentColor = this.settings.contentColor || '#17264E';
+        BarcodeGenerator.updateBarcodeBlock(barcodeBlock, barcodeData, gridSettings, false, 'code128', contentColor);
         barcodeBlock.barcodeData = barcodeData;
         console.log(`✅ Маленький штрихкод (SN) обновлен: ${barcodeData}`);
     }

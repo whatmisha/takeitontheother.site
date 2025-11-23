@@ -3,24 +3,20 @@
  * Отвечает за отрисовку колонок, строк, baseline и других элементов сетки
  */
 import { DOMUtils } from '../utils/DOMUtils.js';
-import { ColorUtils } from '../utils/ColorUtils.js';
 import { SVG } from '../core/Constants.js';
 
 export class GridRenderer {
     constructor(settings, calculator) {
         this.settings = settings;
         this.calculator = calculator;
-        this.currentLuminance = 0.5; // Кэш для светимости
     }
 
     /**
-     * Получить контрастный цвет для сетки
+     * Получить цвет для сетки (использует цвет контента)
      * @returns {string}
      */
     getGridColor() {
-        const bgColor = this.settings.get('boxColor');
-        this.currentLuminance = ColorUtils.getLuminance(bgColor);
-        return ColorUtils.getContrastColor(bgColor);
+        return this.settings.get('contentColor') || '#17264E';
     }
 
     /**
@@ -29,7 +25,7 @@ export class GridRenderer {
      * @returns {number}
      */
     getGridOpacity(baseOpacity) {
-        return ColorUtils.getGridOpacity(this.currentLuminance, baseOpacity);
+        return baseOpacity;
     }
 
     /**

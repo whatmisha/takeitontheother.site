@@ -100,6 +100,7 @@ export class BarcodeGenerator {
             quiet = false,
             fontSize = null,
             fontWeight = 400,
+            color = '#17264E', // Цвет контента
         } = options;
 
         // Преобразуем данные в строку и оставляем только цифры
@@ -151,7 +152,7 @@ export class BarcodeGenerator {
         for (let i = 0; i < pattern.length; i++) {
             const bit = pattern[i];
             if (bit === '1') {
-                svg += `<rect x="${x.toFixed(2)}" y="0" width="${barWidth.toFixed(2)}" height="${barcodeHeight}" fill="#000000"/>`;
+                svg += `<rect x="${x.toFixed(2)}" y="0" width="${barWidth.toFixed(2)}" height="${barcodeHeight}" fill="${color}"/>`;
             }
             x += barWidth;
         }
@@ -161,7 +162,7 @@ export class BarcodeGenerator {
             // Позиционируем baseline текста так, чтобы cap-height заканчивался на нижней границе
             const textBaselineY = height;
             const textX = width / 2;
-            svg += `<text x="${textX.toFixed(2)}" y="${textBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${cleanData}</text>`;
+            svg += `<text x="${textX.toFixed(2)}" y="${textBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="${color}">${cleanData}</text>`;
         }
 
         svg += '</svg>';
@@ -205,6 +206,7 @@ export class BarcodeGenerator {
             fontWeight = 500,
             displayValue = true,
             baselineOffset = null, // позиция baseline текста от верха штрихкода (в мм)
+            color = '#17264E', // Цвет контента
         } = options;
 
         // Преобразуем данные в строку и оставляем только цифры
@@ -299,7 +301,7 @@ export class BarcodeGenerator {
         // Вычисляем общие размеры SVG
         // Первая цифра выходит за пределы основного кода
         const firstDigitWidth = textFontSize * 0.7; // примерная ширина цифры
-        const firstDigitMargin = textFontSize * 0.3; // отступ от guard bars
+        const firstDigitMargin = textFontSize * 0.2; // отступ от guard bars (умеренно уменьшен)
         const totalWidth = firstDigitWidth + firstDigitMargin + width;
 
         // Начальная позиция для полосок (с учетом места для первой цифры)
@@ -326,7 +328,7 @@ export class BarcodeGenerator {
             }
             
             if (bit === '1') {
-                svg += `<rect x="${x.toFixed(3)}" y="0" width="${moduleWidth.toFixed(3)}" height="${barHeight.toFixed(2)}" fill="#000000"/>`;
+                svg += `<rect x="${x.toFixed(3)}" y="0" width="${moduleWidth.toFixed(3)}" height="${barHeight.toFixed(2)}" fill="${color}"/>`;
             }
             
             x += moduleWidth;
@@ -338,9 +340,9 @@ export class BarcodeGenerator {
             // Если baselineOffset не указан, используем старую логику (baseline внизу SVG)
             const finalTextBaselineY = (baselineOffset !== null) ? textBaselineY : totalHeight;
             
-            // Первая цифра слева
-            const firstDigitX = firstDigitWidth / 2;
-            svg += `<text x="${firstDigitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${firstDigit}</text>`;
+            // Первая цифра слева - слегка сдвинута правее
+            const firstDigitX = firstDigitWidth * 0.65;
+            svg += `<text x="${firstDigitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="${color}">${firstDigit}</text>`;
             
             // Левая группа (6 цифр) - располагаем между start и middle guards
             // Структура: start guard (3 модуля) + левая группа (42 модуля) + center guard (5 модулей)
@@ -368,7 +370,7 @@ export class BarcodeGenerator {
             // Позиции цифр левой группы
             for (let i = 0; i < 6; i++) {
                 const digitX = startGuardEndX + guardToDigitDistance + i * digitSpacing;
-                svg += `<text x="${digitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${leftGroup[i]}</text>`;
+                svg += `<text x="${digitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="${color}">${leftGroup[i]}</text>`;
             }
             
             // Правая группа (6 цифр) - располагаем между middle и end guards
@@ -379,7 +381,7 @@ export class BarcodeGenerator {
             // Позиции цифр правой группы
             for (let i = 0; i < 6; i++) {
                 const digitX = centerGuardEndX + guardToDigitDistance + i * rightDigitSpacing;
-                svg += `<text x="${digitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="#000000">${rightGroup[i]}</text>`;
+                svg += `<text x="${digitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="${color}">${rightGroup[i]}</text>`;
             }
         }
 
@@ -405,8 +407,9 @@ export class BarcodeGenerator {
      * @param {Object} gridSettings - Настройки сетки для вычисления размера
      * @param {boolean} displayValue - Показывать ли текст под штрихкодом (по умолчанию true)
      * @param {string} barcodeType - Тип штрихкода: 'code128' или 'ean13' (по умолчанию 'code128')
+     * @param {string} color - Цвет контента (по умолчанию '#17264E')
      */
-    static updateBarcodeBlock(block, barcodeData, gridSettings, displayValue = true, barcodeType = 'code128') {
+    static updateBarcodeBlock(block, barcodeData, gridSettings, displayValue = true, barcodeType = 'code128', color = '#17264E') {
         const { gridModule, columnCount, frontWidth, margins, marginsUnit, frontHeight } = gridSettings;
         
         // Вычисляем реальные margins в mm
@@ -456,7 +459,7 @@ export class BarcodeGenerator {
             
             // Вычисляем место для первой цифры слева
             const firstDigitWidth = textFontSizeMm * 0.7; // примерная ширина цифры
-            const firstDigitMargin = textFontSizeMm * 0.3; // отступ от guard bars
+            const firstDigitMargin = textFontSizeMm * 0.2; // отступ от guard bars (умеренно уменьшен)
             const totalWidthWithFirstDigit = firstDigitWidth + firstDigitMargin + barcodeWidth;
             
             // КРИТИЧНО: finalWidth и finalHeight должны соответствовать реальным размерам SVG
@@ -480,7 +483,8 @@ export class BarcodeGenerator {
                 fontSize: textFontSizeMm,
                 fontWeight: 500, // Medium
                 displayValue: displayValue,
-                baselineOffset: baselineOffset // позиция baseline текста от верха штрихкода
+                baselineOffset: baselineOffset, // позиция baseline текста от верха штрихкода
+                color: color // цвет контента
             });
         } else {
             // Code128: стандартная логика
@@ -501,6 +505,7 @@ export class BarcodeGenerator {
                 quiet: false,
                 fontSize: textFontSize,
                 fontWeight: 500, // Medium
+                color: color // цвет контента
             });
         }
         
