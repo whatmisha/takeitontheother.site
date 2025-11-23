@@ -430,6 +430,10 @@ class GridGenerator {
         // Изначально пустой массив - данные загрузятся из пресета
         this.graphicsBlocks = [];
         
+        // Индексы для быстрого поиска блоков по ID (O(1) вместо O(n))
+        this.textBlocksById = new Map();
+        this.graphicsBlocksById = new Map();
+        
         // Storage for deletion timers to allow cancellation
         this.deletionTimers = {};
         
@@ -1795,6 +1799,9 @@ class GridGenerator {
             if (normalizedData.textBlocks) {
                 this.textBlocks = normalizedData.textBlocks;
                 
+                // Синхронизируем индекс для быстрого поиска
+                this._syncTextBlocksIndex();
+                
                 // Сохраняем шаблонные текстовые блоки с плейсхолдерами,
                 // чтобы позже подставлять реальные данные из таблицы
                 this.placeholderTextBlocks = JSON.parse(JSON.stringify(this.textBlocks));
@@ -1810,6 +1817,10 @@ class GridGenerator {
             // Apply graphics blocks
             if (normalizedData.graphicsBlocks) {
                 this.graphicsBlocks = normalizedData.graphicsBlocks;
+                
+                // Синхронизируем индекс для быстрого поиска
+                this._syncGraphicsBlocksIndex();
+                
                 // Ensure lockPosition is set for all blocks (default to true for backward compatibility)
                 this.graphicsBlocks.forEach(block => {
                     if (block.lockPosition === undefined) {
@@ -1841,6 +1852,9 @@ class GridGenerator {
                                 content: newContent
                             };
                         });
+                        
+                        // Синхронизируем индекс после изменения массива
+                        this._syncTextBlocksIndex();
                     } catch (e) {
                         console.warn('Не удалось применить примерные данные пресета к текстам:', e);
                         // В случае ошибки просто оставляем текстовые блоки как есть (с плейсхолдерами)
@@ -1873,8 +1887,10 @@ class GridGenerator {
             
             console.log(`✅ Preset "${this.currentPresetName}" loaded successfully`);
         } catch (error) {
-            console.error('Failed to load preset:', error);
-            alert(`Failed to load preset: ${error.message}`);
+            console.error('Ошибка при загрузке пресета:', error);
+            const errorMessage = error.message || 'Неизвестная ошибка';
+            alert(`Не удалось загрузить пресет "${filename}": ${errorMessage}`);
+            throw error; // Пробрасываем ошибку дальше для обработки на верхнем уровне
         }
     }
     
@@ -4459,8 +4475,31 @@ class GridGenerator {
     }
     
     // Получить текстовый блок по ID
+    // Синхронизировать индекс textBlocksById с массивом textBlocks
+    _syncTextBlocksIndex() {
+        this.textBlocksById.clear();
+        this.textBlocks.forEach(block => {
+            if (block.id) {
+                this.textBlocksById.set(block.id, block);
+            }
+        });
+    }
+    
+    // Синхронизировать индекс graphicsBlocksById с массивом graphicsBlocks
+    _syncGraphicsBlocksIndex() {
+        this.graphicsBlocksById.clear();
+        if (this.graphicsBlocks) {
+            this.graphicsBlocks.forEach(block => {
+                if (block.id) {
+                    this.graphicsBlocksById.set(block.id, block);
+                }
+            });
+        }
+    }
+    
     getTextBlock(id) {
-        return this.textBlocks.find(block => block.id === id);
+        // Используем Map для быстрого поиска O(1) вместо O(n) с find()
+        return this.textBlocksById.get(id) || null;
     }
     
     // Получить номер блока (для отображения в UI)
@@ -4512,7 +4551,8 @@ class GridGenerator {
     
     // Получить графический блок по ID
     getGraphicsBlock(id) {
-        return this.graphicsBlocks?.find(b => b.id === id);
+        // Используем Map для быстрого поиска O(1) вместо O(n) с find()
+        return this.graphicsBlocksById.get(id) || null;
     }
     
     // Получить все встроенные графические блоки
@@ -7373,6 +7413,8 @@ class GridGenerator {
                     const index = this.textBlocks.findIndex(b => b.id === blockId);
                     if (index !== -1) {
                         this.textBlocks.splice(index, 1);
+                        // Обновляем индекс после удаления
+                        this._syncTextBlocksIndex();
                     }
                 } else if ((type === 'graphics' || type === 'icons' || type === 'claim') && blockId) {
                     if (this.graphicsBlocks) {
@@ -7380,6 +7422,8 @@ class GridGenerator {
                         if (index !== -1) {
                             // Allow deletion of all graphics blocks (including built-in)
                             this.graphicsBlocks.splice(index, 1);
+                            // Обновляем индекс после удаления
+                            this._syncGraphicsBlocksIndex();
                         }
                     }
                 }
@@ -7404,6 +7448,8 @@ class GridGenerator {
             const index = this.textBlocks.findIndex(b => b.id === blockId);
             if (index !== -1) {
                 this.textBlocks.splice(index, 1);
+                // Обновляем индекс после удаления
+                this._syncTextBlocksIndex();
                 this.updateElementsNavigator();
                 this.updateGrid();
             }
@@ -7456,6 +7502,8 @@ class GridGenerator {
         };
         
         this.textBlocks.push(newBlock);
+        // Обновляем индекс после добавления
+        this.textBlocksById.set(newId, newBlock);
         this.updateElementsNavigator();
         this.updateGrid();
         
@@ -7498,6 +7546,8 @@ class GridGenerator {
         };
         
         this.graphicsBlocks.push(newBlock);
+        // Обновляем индекс после добавления
+        this.graphicsBlocksById.set(newId, newBlock);
         this.updateElementsNavigator();
         this.updateGrid();
     }
@@ -8757,104 +8807,119 @@ class GridGenerator {
 
     // Итерация 7: Упрощенный экспорт SVG через SVGExporter
     async exportSVG() {
-        const { frontWidth, frontHeight, gridModule, columnCount, rowCount } = this.settings;
-        
-        // Создаем SVG для экспорта (scale = 1 для точных размеров)
-        const exportSvg = await this.createExportSVG();
-        
-        // Генерируем timestamp с точностью до минуты
-        const now = new Date();
-        const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
-        
-        // Генерируем имя файла: "размер колонки строки модуль timestamp.svg"
-        // Формируем имя файла: "(значение из ячейки B)_[device]_label_120×24mm.svg"
-        // Получаем значение из ячейки B текущей строки данных
-        let cellBValue = '';
-        if (this.loadedTableData && 
-            this.currentRowIndex !== null && 
-            this.currentRowIndex !== undefined &&
-            this.currentRowIndex >= 0 && 
-            this.currentRowIndex < this.loadedTableData.length) {
-            const currentRow = this.loadedTableData[this.currentRowIndex];
-            if (currentRow && currentRow.length > 1) {
-                cellBValue = currentRow[1] || ''; // Ячейка B (индекс 1)
+        try {
+            const { frontWidth, frontHeight, gridModule, columnCount, rowCount } = this.settings;
+            
+            // Создаем SVG для экспорта (scale = 1 для точных размеров)
+            const exportSvg = await this.createExportSVG();
+            
+            // Генерируем timestamp с точностью до минуты
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            // Генерируем имя файла: "размер колонки строки модуль timestamp.svg"
+            // Формируем имя файла: "(значение из ячейки B)_[device]_label_120×24mm.svg"
+            // Получаем значение из ячейки B текущей строки данных
+            let cellBValue = '';
+            if (this.loadedTableData && 
+                this.currentRowIndex !== null && 
+                this.currentRowIndex !== undefined &&
+                this.currentRowIndex >= 0 && 
+                this.currentRowIndex < this.loadedTableData.length) {
+                const currentRow = this.loadedTableData[this.currentRowIndex];
+                if (currentRow && currentRow.length > 1) {
+                    cellBValue = currentRow[1] || ''; // Ячейка B (индекс 1)
+                }
             }
+            
+            // Очищаем значение от недопустимых символов для имени файла
+            const sanitizedValue = cellBValue.replace(/[^a-zA-Z0-9а-яА-ЯёЁ\s\-_]/g, '').trim() || 'label';
+            const size = `${frontWidth}×${frontHeight}mm`;
+            const deviceType = this.getDeviceType();
+            const filename = `${sanitizedValue}_${deviceType}_label_${size}.svg`;
+            
+            // Получаем значение тогла "Outline fonts" (по умолчанию true)
+            const convertToOutlines = this.dom.convertToOutlinesCheckbox ? this.dom.convertToOutlinesCheckbox.checked : true;
+            
+            // Экспортируем через модуль
+            await this.svgExporter.exportToFile(exportSvg, filename, {
+                removeInteractive: true,
+                optimizeSize: true,
+                convertTextToOutlines: convertToOutlines
+            });
+        } catch (error) {
+            console.error('Ошибка при экспорте SVG:', error);
+            alert(`Не удалось экспортировать SVG: ${error.message || 'Неизвестная ошибка'}`);
+            throw error;
         }
-        
-        // Очищаем значение от недопустимых символов для имени файла
-        const sanitizedValue = cellBValue.replace(/[^a-zA-Z0-9а-яА-ЯёЁ\s\-_]/g, '').trim() || 'label';
-        const size = `${frontWidth}×${frontHeight}mm`;
-        const deviceType = this.getDeviceType();
-        const filename = `${sanitizedValue}_${deviceType}_label_${size}.svg`;
-        
-        // Получаем значение тогла "Outline fonts" (по умолчанию true)
-        const convertToOutlines = this.dom.convertToOutlinesCheckbox ? this.dom.convertToOutlinesCheckbox.checked : true;
-        
-        // Экспортируем через модуль
-        await this.svgExporter.exportToFile(exportSvg, filename, {
-            removeInteractive: true,
-            optimizeSize: true,
-            convertTextToOutlines: convertToOutlines
-        });
     }
     
     // Итерация 7: Создание SVG для экспорта (без интерактивных элементов)
     async createExportSVG() {
-        const { frontWidth, frontHeight } = this.settings;
-        
-        // Create a new SVG for export with actual mm dimensions
-        const scale = 1; // Export uses scale = 1 (actual mm)
-        
-        // Create SVG with mm units
-        const exportSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        exportSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-        exportSvg.setAttribute('width', `${frontWidth}mm`);
-        exportSvg.setAttribute('height', `${frontHeight}mm`);
-        exportSvg.setAttribute('viewBox', `0 0 ${frontWidth} ${frontHeight}`);
-        
-        // Create groups for better organization in Figma/Illustrator
-        const boxGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        boxGroup.setAttribute('id', 'box');
-        exportSvg.appendChild(boxGroup);
-        
-        // Draw rectangles at actual mm scale
-        this.drawRectangles(boxGroup, 0, 0, frontWidth, frontHeight, scale);
-        
-        // Сетка не создается при экспорте - макеты всегда сохраняются без сетки
-        // (Удалено создание скрытой сетки для оптимизации - экономия ~100 строк кода и времени выполнения)
-        
-        // Add labels if enabled (in separate group)
-        if (this.settings.showLabels) {
-            const labelsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            labelsGroup.setAttribute('id', 'labels');
-            exportSvg.appendChild(labelsGroup);
-            this.drawLabels(labelsGroup, 0, 0, frontWidth, frontHeight, scale);
-        }
-        
-        // Add text blocks (in separate groups)
-        this.textBlocks.forEach(block => {
-            const textGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            textGroup.setAttribute('id', `text-${block.id}`);
-            exportSvg.appendChild(textGroup);
-            this.drawTextBlock(textGroup, block, frontX, frontY, frontWidth, frontHeight, scale);
-        });
-        
-        // Add graphics blocks (in separate groups)
-        if (this.graphicsBlocks) {
-            this.graphicsBlocks.forEach(block => {
-                if (block.visible !== false && block.svgContent) {
-                    const graphicsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                    // Use simple id for built-in blocks (icons, claim) without prefix
-                    graphicsGroup.setAttribute('id', block.isBuiltIn ? block.id : `graphics-${block.id}`);
-                    exportSvg.appendChild(graphicsGroup);
-                    
-                    // Draw graphics block
-                    this.drawGraphicsBlockForExport(graphicsGroup, block, frontX, frontY, frontWidth, frontHeight, scale);
-                }
+        try {
+            const { frontWidth, frontHeight } = this.settings;
+            
+            // Create a new SVG for export with actual mm dimensions
+            const scale = 1; // Export uses scale = 1 (actual mm)
+            
+            // Create SVG with mm units
+            const exportSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            exportSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            exportSvg.setAttribute('width', `${frontWidth}mm`);
+            exportSvg.setAttribute('height', `${frontHeight}mm`);
+            exportSvg.setAttribute('viewBox', `0 0 ${frontWidth} ${frontHeight}`);
+            
+            // Create groups for better organization in Figma/Illustrator
+            const boxGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            boxGroup.setAttribute('id', 'box');
+            exportSvg.appendChild(boxGroup);
+            
+            // Draw rectangles at actual mm scale
+            this.drawRectangles(boxGroup, 0, 0, frontWidth, frontHeight, scale);
+            
+            // Сетка не создается при экспорте - макеты всегда сохраняются без сетки
+            // (Удалено создание скрытой сетки для оптимизации - экономия ~100 строк кода и времени выполнения)
+            
+            // Draw grid elements on front panel (in mm)
+            const frontX = 0;
+            const frontY = 0;
+            
+            // Add labels if enabled (in separate group)
+            if (this.settings.showLabels) {
+                const labelsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                labelsGroup.setAttribute('id', 'labels');
+                exportSvg.appendChild(labelsGroup);
+                this.drawLabels(labelsGroup, 0, 0, frontWidth, frontHeight, scale);
+            }
+            
+            // Add text blocks (in separate groups)
+            this.textBlocks.forEach(block => {
+                const textGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                textGroup.setAttribute('id', `text-${block.id}`);
+                exportSvg.appendChild(textGroup);
+                this.drawTextBlock(textGroup, block, frontX, frontY, frontWidth, frontHeight, scale);
             });
+            
+            // Add graphics blocks (in separate groups)
+            if (this.graphicsBlocks) {
+                this.graphicsBlocks.forEach(block => {
+                    if (block.visible !== false && block.svgContent) {
+                        const graphicsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                        // Use simple id for built-in blocks (icons, claim) without prefix
+                        graphicsGroup.setAttribute('id', block.isBuiltIn ? block.id : `graphics-${block.id}`);
+                        exportSvg.appendChild(graphicsGroup);
+                        
+                        // Draw graphics block
+                        this.drawGraphicsBlockForExport(graphicsGroup, block, frontX, frontY, frontWidth, frontHeight, scale);
+                    }
+                });
+            }
+            
+            return exportSvg;
+        } catch (error) {
+            console.error('Ошибка при создании SVG для экспорта:', error);
+            throw new Error(`Не удалось создать SVG для экспорта: ${error.message || 'Неизвестная ошибка'}`);
         }
-        
-        return exportSvg;
     }
     
     // Итерация 7: Экспорт настроек в JSON через SVGExporter
