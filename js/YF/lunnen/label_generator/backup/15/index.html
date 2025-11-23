@@ -26,13 +26,7 @@
                     <!-- Options will be populated by JavaScript -->
                 </ul>
             </div>
-            <label class="toggle-label">
-                <div class="toggle-switch">
-                    <input type="checkbox" id="editModeToggle" aria-label="Toggle edit mode">
-                    <span class="toggle-slider"></span>
-                </div>
-                <span class="toggle-label-text">Edit Mode</span>
-            </label>
+            <button class="zoom-indicator" id="zoomIndicator" aria-label="Reset zoom to 100%">100%</button>
         </div>
         <div class="main-content">
             <div class="canvas-container" id="canvasContainer">
@@ -74,7 +68,7 @@
             </aside>
             
             <!-- Barcode Styles Panel -->
-            <aside class="controls-panel edit-mode-only" id="barcodePanel" role="complementary" aria-label="Barcode settings" style="display: none;">
+            <aside class="controls-panel" id="barcodePanel" role="complementary" aria-label="Barcode settings" style="display: none;">
                 <div class="panel-header" id="barcodePanelHeader">
                     <span>Barcode Styles <span class="panel-params" id="barcodeParams"></span></span>
                     <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
@@ -146,7 +140,7 @@
                 </div>
             </aside>
 
-            <aside class="controls-panel controls-panel-left edit-mode-only" id="controlsPanel" role="complementary" aria-label="Layout settings">
+            <aside class="controls-panel controls-panel-left" id="controlsPanel" role="complementary" aria-label="Layout settings">
                 <div class="panel-header" id="panelHeader">
                     <span>Layout & Grid <span class="panel-params" id="dimensionsParams"></span></span>
                     <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
@@ -306,10 +300,10 @@
     </div>
 
     <nav class="bottom-buttons" role="toolbar" aria-label="Main actions">
-        <button class="btn-fixed btn-export-settings edit-mode-only" id="exportSettingsBtn" aria-label="Export Setup">
+        <button class="btn-fixed btn-export-settings" id="exportSettingsBtn" aria-label="Export Setup">
             Export Setup
         </button>
-        <button class="btn-fixed btn-import-settings edit-mode-only" id="importSettingsBtn" aria-label="Import Setup">
+        <button class="btn-fixed btn-import-settings" id="importSettingsBtn" aria-label="Import Setup">
             Import Setup
         </button>
         
@@ -320,7 +314,7 @@
             <button class="btn-fixed btn-export" id="generateAllStickersBtn" aria-label="Generate All Labels from Table Data" style="display: none;">
                 ↓ All Labels
             </button>
-            <label class="toggle-label edit-mode-only">
+            <label class="toggle-label">
                 <div class="toggle-switch">
                     <input type="checkbox" id="convertToOutlinesCheckbox" checked aria-label="Outline">
                     <span class="toggle-slider"></span>
@@ -331,7 +325,7 @@
     </nav>
 
     <!-- Elements Navigator Panel -->
-    <aside class="controls-panel elements-navigator edit-mode-only" id="elementsNavigator" role="complementary" aria-label="Elements navigator">
+    <aside class="controls-panel elements-navigator" id="elementsNavigator" role="complementary" aria-label="Elements navigator">
         <div class="panel-header" id="elementsNavigatorHeader">
             <span>Objects <span class="panel-params" id="objectsParams"></span></span>
             <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
@@ -361,7 +355,7 @@
         </div>
     </aside>
 
-    <aside class="controls-panel controls-panel-text edit-mode-only" id="textPanel" role="complementary" aria-label="Text styles settings">
+    <aside class="controls-panel controls-panel-text" id="textPanel" role="complementary" aria-label="Text styles settings">
         <div class="panel-header" id="textPanelHeader">
             <span>Text Styles <span class="panel-params" id="textStylesParams"></span></span>
             <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
@@ -849,6 +843,19 @@
                 
                 <h3>Import Setup</h3>
                 <p>Click <strong>Import Setup</strong> to load a previously saved JSON file. This restores the complete state including all objects and parameters.</p>
+                
+                <h3>Zoom and Pan</h3>
+                <p>Navigate the canvas like in Figma (optimized for Apple Magic Mouse):</p>
+                <ul>
+                    <li><strong>Scroll/Swipe</strong> — Pan the canvas (horizontal and vertical)</li>
+                    <li><strong>Cmd/Ctrl + Scroll</strong> — Zoom in/out (centered on cursor)</li>
+                    <li><strong>Space + drag</strong> — Alternative pan method</li>
+                    <li><strong>Middle mouse button + drag</strong> — Alternative pan method</li>
+                    <li><strong>Cmd/Ctrl + 0</strong> — Fit to screen</li>
+                    <li><strong>Cmd/Ctrl + 1</strong> — Reset zoom to 100%</li>
+                    <li><strong>Cmd/Ctrl + Plus</strong> — Zoom in</li>
+                    <li><strong>Cmd/Ctrl + Minus</strong> — Zoom out</li>
+                </ul>
                 
                 <h3>Keyboard Shortcuts</h3>
                 <ul>

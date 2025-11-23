@@ -19,6 +19,7 @@ import { GridRenderer } from './src/grid/GridRenderer.js';
 import { NumberInputController } from './src/ui/NumberInputController.js';
 import { ColorPicker } from './src/ui/ColorPicker.js';
 import { PanelManager } from './src/ui/PanelManager.js';
+import { ZoomPanManager } from './src/ui/ZoomPanManager.js';
 
 // Итерация 6: Elements
 import { TextBlockManager } from './src/elements/TextBlockManager.js';
@@ -376,7 +377,7 @@ class GridGenerator {
         this.inputController = null;
         this.colorPicker = null;
         this.panelManager = null;
-        this.editModeActive = false;
+        this.zoomPanManager = null;
         
         // ============================================
         // Elements Managers (Итерация 6)
@@ -533,6 +534,14 @@ class GridGenerator {
         
         this.updateGrid();
         
+        // Автоматический fit to screen при загрузке (с задержкой для отрисовки SVG)
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                if (this.zoomPanManager) {
+                    this.zoomPanManager.fitToScreen();
+                }
+            }, 100);
+        });
         
         // Update canvas size on window resize
         window.addEventListener('resize', () => {
@@ -735,7 +744,9 @@ class GridGenerator {
             paragraphSurfaceSelect: document.getElementById('paragraphSurfaceSelect'),
             // Graphics surface select
             graphicsSurfaceSelect: document.getElementById('graphicsSurfaceSelect'),
-            canvasContainer: document.getElementById('canvasContainer')
+            // Zoom controls
+            canvasContainer: document.getElementById('canvasContainer'),
+            zoomIndicator: document.getElementById('zoomIndicator')
         };
     }
     
@@ -750,13 +761,6 @@ class GridGenerator {
         // NOTE: Slider initialization moved to initUIControllers()
         // ============================================
         
-        // Edit mode toggle
-        const editModeToggle = document.getElementById('editModeToggle');
-        if (editModeToggle) {
-            editModeToggle.addEventListener('change', (e) => {
-                this.setEditMode(e.target.checked);
-            });
-        }
         
         // Link mode radio buttons
         const linkModeHandler = (e) => {
@@ -1780,6 +1784,14 @@ class GridGenerator {
                 this.dom.svg.style.opacity = '1';
             }
             
+            // Центрируем макет после загрузки пресета
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    if (this.zoomPanManager) {
+                        this.zoomPanManager.fitToScreen();
+                    }
+                }, 100);
+            });
             
             console.log(`✅ Preset "${this.currentPresetName}" loaded successfully`);
         } catch (error) {
@@ -3669,39 +3681,6 @@ class GridGenerator {
             this.dom.paragraphPanel.style.display = 'flex';
             this.dom.paragraphPanel.classList.add('active');
             this.positionPanelNextToBlock(this.dom.paragraphPanel, blockId, 'text');
-            
-            // Вне режима редактирования скрываем все элементы кроме текстового поля
-            if (!this.editModeActive) {
-                const allSections = this.dom.paragraphPanel.querySelectorAll('.control-section');
-                allSections.forEach((section, index) => {
-                    // Первая секция с настройками - скрываем
-                    // Вторая секция с текстом - показываем
-                    if (index === 0) {
-                        section.style.display = 'none';
-                    } else if (index === 1) {
-                        section.style.display = 'block';
-                    } else {
-                        section.style.display = 'none';
-                    }
-                });
-                
-                // Скрываем кнопки действий в заголовке
-                const headerActions = this.dom.paragraphPanel.querySelector('.panel-header-actions');
-                if (headerActions) {
-                    headerActions.style.display = 'none';
-                }
-            } else {
-                // В режиме редактирования показываем все элементы
-                const allSections = this.dom.paragraphPanel.querySelectorAll('.control-section');
-                allSections.forEach(section => {
-                    section.style.display = '';
-                });
-                
-                const headerActions = this.dom.paragraphPanel.querySelector('.panel-header-actions');
-                if (headerActions) {
-                    headerActions.style.display = '';
-                }
-            }
         }
     }
     
@@ -4267,54 +4246,6 @@ class GridGenerator {
     }
     
     /**
-     * Определяет тип штрихкода из блока (универсально для всех пресетов)
-     * Проверяет сначала block.barcodeType, затем block.barcode (конфигурацию из пресета)
-     * @param {Object} block - Графический блок
-     * @returns {Object} { barcodeType: string, displayValue: boolean } или null, если это не штрихкод
-     */
-    getBarcodeTypeFromBlock(block) {
-        if (!block) {
-            return null;
-        }
-        
-        // Если есть явный barcodeType, используем его
-        if (block.barcodeType && (block.barcodeType === 'code128' || block.barcodeType === 'ean13')) {
-            return {
-                barcodeType: block.barcodeType,
-                displayValue: block.barcodeType === 'ean13'
-            };
-        }
-        
-        // Если есть конфигурация из пресета (block.barcode), определяем тип из неё
-        if (block.barcode && block.barcode.type) {
-            const logicalType = (block.barcode.type || '').toString().toLowerCase();
-            let barcodeType = 'code128';
-            let displayValue = false;
-            
-            switch (logicalType) {
-                case 'ean-13':
-                case 'ean13':
-                    barcodeType = 'ean13';
-                    displayValue = true;
-                    break;
-                case 'sn':
-                case 'imei1':
-                case 'imei2':
-                    barcodeType = 'code128';
-                    displayValue = false;
-                    break;
-                default:
-                    barcodeType = 'code128';
-                    displayValue = false;
-            }
-            
-            return { barcodeType, displayValue };
-        }
-        
-        return null;
-    }
-    
-    /**
      * Handle barcode data input change - generate new barcode
      * @param {string} barcodeData - New barcode data (digits only)
      */
@@ -4324,13 +4255,7 @@ class GridGenerator {
         }
         
         const block = this.graphicsBlocks?.find(b => b.id === this.currentEditingGraphicsId);
-        if (!block) {
-            return;
-        }
-        
-        // Универсальная проверка: используем вспомогательную функцию
-        const barcodeInfo = this.getBarcodeTypeFromBlock(block);
-        if (!barcodeInfo) {
+        if (!block || !block.barcodeType) {
             return;
         }
         
@@ -4352,13 +4277,17 @@ class GridGenerator {
             marginsUnit: this.settings.marginsUnit,
         };
         
+        // Determine display value based on barcode type
+        // EAN-13 typically shows value, Code128 typically doesn't
+        const displayValue = block.barcodeType === 'ean13';
+        
         // Generate new barcode
         BarcodeGenerator.updateBarcodeBlock(
             block,
             cleanData,
             gridSettings,
-            barcodeInfo.displayValue,
-            barcodeInfo.barcodeType
+            displayValue,
+            block.barcodeType
         );
         
         // Save barcode data in block for future reference
@@ -5391,7 +5320,7 @@ class GridGenerator {
             // Show placeholder
             const placeholderGroup = this.createSVGElement('g', {
                 id: `text-group-${block.id}`,
-                style: this.editModeActive ? 'cursor: move;' : 'cursor: default;',
+                style: 'cursor: move;',
                 'data-block-id': block.id
             }, container);
             
@@ -5407,7 +5336,7 @@ class GridGenerator {
                 'font-size': `${14 * scale}`,
                 'fill': gridColor,
                 'fill-opacity': '0.3',
-                style: this.editModeActive ? 'cursor: move;' : 'cursor: default;'
+                style: 'cursor: move;'
             }, placeholderGroup);
             placeholder.textContent = 'Click to add text';
             
@@ -5527,7 +5456,7 @@ class GridGenerator {
         // Create group for text block with hover
         const textGroup = this.createSVGElement('g', {
             id: `text-group-${block.id}`,
-            style: this.editModeActive ? 'cursor: move;' : 'cursor: default;',
+            style: 'cursor: move;',
             'data-block-id': block.id
         }, container);
         
@@ -5631,7 +5560,7 @@ class GridGenerator {
                 fill: 'transparent',
                 'fill-opacity': '0',
                 stroke: 'none',
-                style: `pointer-events: all; cursor: ${this.editModeActive ? 'move' : 'default'};`,
+                style: 'pointer-events: all; cursor: move;',
                 'data-block-id': block.id
             }, container);
             
@@ -5732,12 +5661,9 @@ class GridGenerator {
                 const deltaY = Math.abs(moveEvent.clientY - mouseDownY);
                 
                 // Если мышь сдвинулась больше чем на 3 пикселя, начинаем drag
-                // Но только если режим редактирования включен
                 if (!hasMoved && (deltaX > 3 || deltaY > 3)) {
-                    if (this.editModeActive) {
-                        hasMoved = true;
-                        this.startTextBlockDrag(block.id, mouseDownX, mouseDownY, frontX, frontY, scale);
-                    }
+                    hasMoved = true;
+                    this.startTextBlockDrag(block.id, mouseDownX, mouseDownY, frontX, frontY, scale);
                 }
             };
             
@@ -5746,7 +5672,6 @@ class GridGenerator {
                 document.removeEventListener('mouseup', mouseUpHandler);
                 
                 // Если не было движения, обрабатываем как клик для открытия панели настроек
-                // Клики работают всегда, не только в режиме редактирования
                 if (!hasMoved) {
                     const clickDuration = Date.now() - mouseDownTime;
                     // Короткий клик открывает панель настроек параграфа
@@ -5771,11 +5696,6 @@ class GridGenerator {
             if (e.button !== 0) return;
             e.stopPropagation();
             e.preventDefault();
-            
-            // Отключаем изменение размера, если режим редактирования выключен
-            if (!this.editModeActive) {
-                return;
-            }
             
             isResizing = true;
             startX = e.clientX;
@@ -5882,7 +5802,7 @@ class GridGenerator {
         // Create group for icons
         const iconsGroup = this.createSVGElement('g', {
             id: 'icons-group',
-            style: this.editModeActive ? 'cursor: move;' : 'cursor: default;',
+            style: 'cursor: move;',
             'data-block-id': 'icons'
         }, container);
         
@@ -5991,7 +5911,7 @@ class GridGenerator {
         // Create group for graphics
         const graphicsGroup = this.createSVGElement('g', {
             id: `graphics-group-${block.id}`,
-            style: this.editModeActive ? 'cursor: move;' : 'cursor: default;',
+            style: 'cursor: move;',
             'data-block-id': block.id
         }, container);
         
@@ -6049,37 +5969,25 @@ class GridGenerator {
             mouseDownTime = Date.now();
             mouseDownX = e.clientX;
             mouseDownY = e.clientY;
-            let hasMoved = false;
+            
+            // Start dragging
+            this.textDragState.isDragging = true;
+            this.textDragState.blockId = block.id;
+            this.textDragState.startMouseX = e.clientX;
+            this.textDragState.startMouseY = e.clientY;
+            this.textDragState.startBlockX = block.x;
+            this.textDragState.startBlockY = this.getBlockY(block);
+            this.textDragState.frontX = frontX;
+            this.textDragState.frontY = frontY;
+            this.textDragState.scale = scale;
+            
+            // Show bounds during drag
+            if (graphicsGroup.boundsElement) {
+                graphicsGroup.boundsElement.setAttribute('stroke-opacity', '0.5');
+                graphicsGroup.boundsElement.setAttribute('fill-opacity', '0.05');
+            }
             
             const mouseMoveHandler = (e) => {
-                const deltaX = Math.abs(e.clientX - mouseDownX);
-                const deltaY = Math.abs(e.clientY - mouseDownY);
-                
-                // Если мышь сдвинулась больше чем на 3 пикселя, начинаем drag
-                // Но только если режим редактирования включен
-                if (!hasMoved && (deltaX > 3 || deltaY > 3)) {
-                    if (this.editModeActive) {
-                        hasMoved = true;
-                        
-                        // Start dragging
-                        this.textDragState.isDragging = true;
-                        this.textDragState.blockId = block.id;
-                        this.textDragState.startMouseX = mouseDownX;
-                        this.textDragState.startMouseY = mouseDownY;
-                        this.textDragState.startBlockX = block.x;
-                        this.textDragState.startBlockY = this.getBlockY(block);
-                        this.textDragState.frontX = frontX;
-                        this.textDragState.frontY = frontY;
-                        this.textDragState.scale = scale;
-                        
-                        // Show bounds during drag
-                        if (graphicsGroup.boundsElement) {
-                            graphicsGroup.boundsElement.setAttribute('stroke-opacity', '0.5');
-                            graphicsGroup.boundsElement.setAttribute('fill-opacity', '0.05');
-                        }
-                    }
-                }
-                
                 if (!this.textDragState.isDragging) return;
                 
                 const dx = e.clientX - this.textDragState.startMouseX;
@@ -6139,28 +6047,24 @@ class GridGenerator {
                 this.updateGrid();
             };
             
-            const mouseUpHandler = (upEvent) => {
-                const wasDragging = this.textDragState.isDragging;
+            const mouseUpHandler = () => {
                 this.textDragState.isDragging = false;
                 
                 // Check if it was a click (not a drag)
-                // Клики работают всегда, не только в режиме редактирования
-                if (!hasMoved) {
-                    const timeDiff = Date.now() - mouseDownTime;
-                    const distance = Math.sqrt(
-                        Math.pow(upEvent.clientX - mouseDownX, 2) + 
-                        Math.pow(upEvent.clientY - mouseDownY, 2)
-                    );
-                    
-                    // Более щедрые условия для клика: 300мс и 10px
-                    if (timeDiff < 300 && distance < 10) {
-                        // It's a click - open settings panel
-                        this.showGraphicsEditPanel(block.id);
-                    }
+                const timeDiff = Date.now() - mouseDownTime;
+                const distance = Math.sqrt(
+                    Math.pow(e.clientX - mouseDownX, 2) + 
+                    Math.pow(e.clientY - mouseDownY, 2)
+                );
+                
+                // Более щедрые условия для клика: 300мс и 10px
+                if (timeDiff < 300 && distance < 10) {
+                    // It's a click - open settings panel
+                    this.showGraphicsEditPanel(block.id);
                 }
                 
                 // Hide bounds after drag
-                if (graphicsGroup.boundsElement && wasDragging) {
+                if (graphicsGroup.boundsElement) {
                     graphicsGroup.boundsElement.setAttribute('stroke-opacity', '0');
                     graphicsGroup.boundsElement.setAttribute('fill-opacity', '0');
                 }
@@ -6193,15 +6097,6 @@ class GridGenerator {
     showGraphicsEditPanel(blockId) {
         const block = this.graphicsBlocks?.find(b => b.id === blockId);
         if (!block) return;
-        
-        // Отладка: проверяем, что блок имеет нужные свойства для штрихкода
-        console.log('🔍 showGraphicsEditPanel для блока:', blockId, {
-            hasBarcodeType: !!block.barcodeType,
-            barcodeType: block.barcodeType,
-            hasBarcode: !!block.barcode,
-            barcode: block.barcode,
-            editModeActive: this.editModeActive
-        });
         
         // Set panel title
         if (this.dom.graphicsPanelTitle) {
@@ -6253,17 +6148,8 @@ class GridGenerator {
             this.dom.graphicsAlignRightToggle.checked = block.alignment === 'right';
         }
         
-        // Check if this is a barcode block (универсально для всех пресетов)
-        const barcodeInfo = this.getBarcodeTypeFromBlock(block);
-        const isBarcode = barcodeInfo !== null;
-        
-        // Отладка
-        console.log('🔍 Проверка штрихкода:', {
-            blockId: blockId,
-            isBarcode,
-            barcodeInfo,
-            editModeActive: this.editModeActive
-        });
+        // Check if this is a barcode block
+        const isBarcode = block.barcodeType && (block.barcodeType === 'code128' || block.barcodeType === 'ean13');
         
         if (isBarcode) {
             // Show barcode input area, hide file upload area
@@ -6284,8 +6170,7 @@ class GridGenerator {
                     const textElements = svgDoc.querySelectorAll('text');
                     if (textElements.length > 0) {
                         // For EAN-13, combine all text elements; for Code128, use the single text element
-                        // Используем barcodeInfo для определения типа (универсально для всех пресетов)
-                        if (barcodeInfo.barcodeType === 'ean13') {
+                        if (block.barcodeType === 'ean13') {
                             // EAN-13 has multiple text elements (first digit + left group + right group)
                             const texts = Array.from(textElements).map(el => el.textContent.trim()).join('');
                             currentData = texts;
@@ -6344,70 +6229,6 @@ class GridGenerator {
             this.dom.graphicsPanel.style.display = 'flex';
             this.dom.graphicsPanel.classList.add('active');
             this.positionPanelNextToBlock(this.dom.graphicsPanel, blockId, 'graphics');
-            
-            // Вне режима редактирования для штрихкодов показываем только поле ввода кода
-            if (!this.editModeActive && isBarcode) {
-                // Показываем секцию
-                const allSections = this.dom.graphicsPanel.querySelectorAll('.control-section');
-                allSections.forEach(section => {
-                    section.style.display = 'block';
-                });
-                
-                // Скрываем fileUploadArea, если он есть
-                if (this.dom.fileUploadArea) {
-                    this.dom.fileUploadArea.style.display = 'none';
-                }
-                
-                // Скрываем все control-group и control-row, кроме родительского элемента barcodeInputArea
-                const allGroups = this.dom.graphicsPanel.querySelectorAll('.control-group, .control-row');
-                allGroups.forEach(group => {
-                    // Не скрываем barcodeInputArea и его родительский control-group
-                    if (group.id !== 'barcodeInputArea' && !group.contains(this.dom.barcodeInputArea)) {
-                        group.style.display = 'none';
-                    }
-                });
-                
-                // Показываем родительский control-group, который содержит barcodeInputArea
-                if (this.dom.barcodeInputArea && this.dom.barcodeInputArea.parentElement) {
-                    const parentGroup = this.dom.barcodeInputArea.parentElement.closest('.control-group');
-                    if (parentGroup) {
-                        parentGroup.style.display = 'block';
-                    }
-                }
-                
-                // Показываем только поле ввода штрихкода (на случай, если оно было скрыто)
-                if (this.dom.barcodeInputArea) {
-                    this.dom.barcodeInputArea.style.display = 'block';
-                }
-                
-                // Скрываем кнопки действий в заголовке
-                const headerActions = this.dom.graphicsPanel.querySelector('.panel-header-actions');
-                if (headerActions) {
-                    headerActions.style.display = 'none';
-                }
-            } else if (!this.editModeActive) {
-                // Для не-штрихкодов вне режима редактирования скрываем панель
-                this.dom.graphicsPanel.style.display = 'none';
-                this.dom.graphicsPanel.classList.remove('active');
-                return;
-            } else {
-                // В режиме редактирования показываем все элементы
-                const allSections = this.dom.graphicsPanel.querySelectorAll('.control-section');
-                allSections.forEach(section => {
-                    section.style.display = '';
-                });
-                
-                // Показываем все группы внутри секций
-                const allGroups = this.dom.graphicsPanel.querySelectorAll('.control-group, .control-row');
-                allGroups.forEach(group => {
-                    group.style.display = '';
-                });
-                
-                const headerActions = this.dom.graphicsPanel.querySelector('.panel-header-actions');
-                if (headerActions) {
-                    headerActions.style.display = '';
-                }
-            }
         }
         
         // Store current editing block ID
@@ -6562,7 +6383,7 @@ class GridGenerator {
         // Create group for claim
         const claimGroup = this.createSVGElement('g', {
             id: 'claim-group',
-            style: this.editModeActive ? 'cursor: move;' : 'cursor: default;',
+            style: 'cursor: move;',
             'data-block-id': 'claim'
         }, container);
         
@@ -6820,46 +6641,28 @@ class GridGenerator {
         let mouseDownY = 0;
         
         iconsGroup.addEventListener('mousedown', (e) => {
-            // Только левая кнопка мыши
-            if (e.button !== 0) return;
-            
-            e.stopPropagation();
-            e.preventDefault();
-            
             mouseDownTime = Date.now();
             mouseDownX = e.clientX;
             mouseDownY = e.clientY;
-            let hasMoved = false;
+            
+            // Start dragging
+            this.textDragState.isDragging = true;
+            this.textDragState.blockId = block.id;
+            this.textDragState.startMouseX = e.clientX;
+            this.textDragState.startMouseY = e.clientY;
+            this.textDragState.startBlockX = block.x;
+            this.textDragState.startBlockY = this.getBlockY(block);
+            this.textDragState.frontX = frontX;
+            this.textDragState.frontY = frontY;
+            this.textDragState.scale = scale;
+            
+            // Show bounds during drag
+            if (iconsGroup.boundsElement) {
+                iconsGroup.boundsElement.setAttribute('stroke-opacity', '0.5');
+                iconsGroup.boundsElement.setAttribute('fill-opacity', '0.05');
+            }
             
             const mouseMoveHandler = (e) => {
-                const deltaX = Math.abs(e.clientX - mouseDownX);
-                const deltaY = Math.abs(e.clientY - mouseDownY);
-                
-                // Если мышь сдвинулась больше чем на 3 пикселя, начинаем drag
-                // Но только если режим редактирования включен
-                if (!hasMoved && (deltaX > 3 || deltaY > 3)) {
-                    if (this.editModeActive) {
-                        hasMoved = true;
-                        
-                        // Start dragging
-                        this.textDragState.isDragging = true;
-                        this.textDragState.blockId = block.id;
-                        this.textDragState.startMouseX = mouseDownX;
-                        this.textDragState.startMouseY = mouseDownY;
-                        this.textDragState.startBlockX = block.x;
-                        this.textDragState.startBlockY = this.getBlockY(block);
-                        this.textDragState.frontX = frontX;
-                        this.textDragState.frontY = frontY;
-                        this.textDragState.scale = scale;
-                        
-                        // Show bounds during drag
-                        if (iconsGroup.boundsElement) {
-                            iconsGroup.boundsElement.setAttribute('stroke-opacity', '0.5');
-                            iconsGroup.boundsElement.setAttribute('fill-opacity', '0.05');
-                        }
-                    }
-                }
-                
                 if (!this.textDragState.isDragging) return;
                 
                 const dx = e.clientX - this.textDragState.startMouseX;
@@ -6933,28 +6736,24 @@ class GridGenerator {
                 this.updateGrid();
             };
             
-            const mouseUpHandler = (upEvent) => {
-                const wasDragging = this.textDragState.isDragging;
+            const mouseUpHandler = () => {
                 this.textDragState.isDragging = false;
                 
                 // Check if it was a click (not a drag)
-                // Клики работают всегда, не только в режиме редактирования
-                if (!hasMoved) {
-                    const timeDiff = Date.now() - mouseDownTime;
-                    const distance = Math.sqrt(
-                        Math.pow(upEvent.clientX - mouseDownX, 2) + 
-                        Math.pow(upEvent.clientY - mouseDownY, 2)
-                    );
-                    
-                    // Более щедрые условия для клика: 300мс и 10px
-                    if (timeDiff < 300 && distance < 10) {
-                        // It's a click - open settings panel (same as user graphics)
-                        this.showGraphicsEditPanel('icons');
-                    }
+                const timeDiff = Date.now() - mouseDownTime;
+                const distance = Math.sqrt(
+                    Math.pow(e.clientX - mouseDownX, 2) + 
+                    Math.pow(e.clientY - mouseDownY, 2)
+                );
+                
+                // Более щедрые условия для клика: 300мс и 10px
+                if (timeDiff < 300 && distance < 10) {
+                    // It's a click - open settings panel (same as user graphics)
+                    this.showGraphicsEditPanel('icons');
                 }
                 
                 // Hide bounds after drag
-                if (iconsGroup.boundsElement && wasDragging) {
+                if (iconsGroup.boundsElement) {
                     iconsGroup.boundsElement.setAttribute('stroke-opacity', '0');
                     iconsGroup.boundsElement.setAttribute('fill-opacity', '0');
                 }
@@ -6990,46 +6789,28 @@ class GridGenerator {
         let mouseDownY = 0;
         
         claimGroup.addEventListener('mousedown', (e) => {
-            // Только левая кнопка мыши
-            if (e.button !== 0) return;
-            
-            e.stopPropagation();
-            e.preventDefault();
-            
             mouseDownTime = Date.now();
             mouseDownX = e.clientX;
             mouseDownY = e.clientY;
-            let hasMoved = false;
+            
+            // Start dragging
+            this.textDragState.isDragging = true;
+            this.textDragState.blockId = block.id;
+            this.textDragState.startMouseX = e.clientX;
+            this.textDragState.startMouseY = e.clientY;
+            this.textDragState.startBlockX = block.x;
+            this.textDragState.startBlockY = this.getBlockY(block);
+            this.textDragState.frontX = frontX;
+            this.textDragState.frontY = frontY;
+            this.textDragState.scale = scale;
+            
+            // Show bounds during drag
+            if (claimGroup.boundsElement) {
+                claimGroup.boundsElement.setAttribute('stroke-opacity', '0.5');
+                claimGroup.boundsElement.setAttribute('fill-opacity', '0.05');
+            }
             
             const mouseMoveHandler = (e) => {
-                const deltaX = Math.abs(e.clientX - mouseDownX);
-                const deltaY = Math.abs(e.clientY - mouseDownY);
-                
-                // Если мышь сдвинулась больше чем на 3 пикселя, начинаем drag
-                // Но только если режим редактирования включен
-                if (!hasMoved && (deltaX > 3 || deltaY > 3)) {
-                    if (this.editModeActive) {
-                        hasMoved = true;
-                        
-                        // Start dragging
-                        this.textDragState.isDragging = true;
-                        this.textDragState.blockId = block.id;
-                        this.textDragState.startMouseX = mouseDownX;
-                        this.textDragState.startMouseY = mouseDownY;
-                        this.textDragState.startBlockX = block.x;
-                        this.textDragState.startBlockY = this.getBlockY(block);
-                        this.textDragState.frontX = frontX;
-                        this.textDragState.frontY = frontY;
-                        this.textDragState.scale = scale;
-                        
-                        // Show bounds during drag
-                        if (claimGroup.boundsElement) {
-                            claimGroup.boundsElement.setAttribute('stroke-opacity', '0.5');
-                            claimGroup.boundsElement.setAttribute('fill-opacity', '0.05');
-                        }
-                    }
-                }
-                
                 if (!this.textDragState.isDragging) return;
                 
                 const dx = e.clientX - this.textDragState.startMouseX;
@@ -7103,28 +6884,24 @@ class GridGenerator {
                 this.updateGrid();
             };
             
-            const mouseUpHandler = (upEvent) => {
-                const wasDragging = this.textDragState.isDragging;
+            const mouseUpHandler = (e) => {
                 this.textDragState.isDragging = false;
                 
                 // Check if it was a click (not a drag)
-                // Клики работают всегда, не только в режиме редактирования
-                if (!hasMoved) {
-                    const timeDiff = Date.now() - mouseDownTime;
-                    const distance = Math.sqrt(
-                        Math.pow(upEvent.clientX - mouseDownX, 2) + 
-                        Math.pow(upEvent.clientY - mouseDownY, 2)
-                    );
-                    
-                    // Более щедрые условия для клика: 300мс и 10px
-                    if (timeDiff < 300 && distance < 10) {
-                        // It's a click - open settings panel (same as user graphics)
-                        this.showGraphicsEditPanel('claim');
-                    }
+                const timeDiff = Date.now() - mouseDownTime;
+                const distance = Math.sqrt(
+                    Math.pow(e.clientX - mouseDownX, 2) + 
+                    Math.pow(e.clientY - mouseDownY, 2)
+                );
+                
+                // Более щедрые условия для клика: 300мс и 10px
+                if (timeDiff < 300 && distance < 10) {
+                    // It's a click - open settings panel (same as user graphics)
+                    this.showGraphicsEditPanel('claim');
                 }
                 
                 // Hide bounds after drag
-                if (claimGroup.boundsElement && wasDragging) {
+                if (claimGroup.boundsElement) {
                     claimGroup.boundsElement.setAttribute('stroke-opacity', '0');
                     claimGroup.boundsElement.setAttribute('fill-opacity', '0');
                 }
@@ -8586,6 +8363,16 @@ class GridGenerator {
         // Constrain elements to grid bounds if lockPosition is enabled
         this.constrainElementsToBounds();
         
+        // Сохраняем текущее состояние зума ПЕРЕД изменением SVG
+        let savedZoom = null;
+        let savedPanX = null;
+        let savedPanY = null;
+        if (this.zoomPanManager) {
+            savedZoom = this.zoomPanManager.zoom;
+            savedPanX = this.zoomPanManager.panX;
+            savedPanY = this.zoomPanManager.panY;
+        }
+        
         const { frontWidth, frontHeight } = this.settings;
         
         // Calculate scale to fit in display area
@@ -8597,7 +8384,13 @@ class GridGenerator {
         const svgSize = this.DISPLAY_SIZE;
         this.dom.svg.setAttribute('width', svgSize);
         this.dom.svg.setAttribute('height', svgSize);
-        this.dom.svg.setAttribute('viewBox', `0 0 ${svgSize} ${svgSize}`);
+        // НЕ устанавливаем viewBox напрямую - это управляется ZoomPanManager
+        // this.dom.svg.setAttribute('viewBox', `0 0 ${svgSize} ${svgSize}`);
+        
+        // Обновляем размеры в ZoomPanManager
+        if (this.zoomPanManager) {
+            this.zoomPanManager.reinitializeSVGDimensions();
+        }
         
         // Clear existing content
         this.dom.svg.innerHTML = '';
@@ -8673,6 +8466,14 @@ class GridGenerator {
         
         // Update elements navigator (which also updates panel params)
         this.updateElementsNavigator();
+        
+        // Восстанавливаем зум ПОСЛЕ обновления SVG
+        if (this.zoomPanManager && savedZoom !== null) {
+            this.zoomPanManager.zoom = savedZoom;
+            this.zoomPanManager.panX = savedPanX;
+            this.zoomPanManager.panY = savedPanY;
+            this.zoomPanManager.updateTransform();
+        }
         
         // Сохраняем состояние макета после изменений (если данные загружены из таблицы)
         this.markCurrentRowAsModifiedIfNeeded();
@@ -10352,6 +10153,47 @@ class GridGenerator {
         
         console.log('✅ PanelManager created');
         
+        // ============================================
+        // Шаг 5.4: ZoomPanManager
+        // ============================================
+        this.zoomPanManager = new ZoomPanManager(
+            this.dom.canvasContainer,
+            this.dom.svg
+        );
+        
+        // Обработчик изменения зума для обновления UI
+        this.dom.canvasContainer.addEventListener('zoomchange', (e) => {
+            // Сохраняем текущий процент зума
+            this.currentZoomPercent = e.detail.percent;
+            // Обновляем текст если не наведена мышь
+            if (!this.zoomIndicatorHovered) {
+                this.dom.zoomIndicator.textContent = `${e.detail.percent}%`;
+            }
+        });
+        
+        // Флаг для отслеживания наведения на индикатор зума
+        this.zoomIndicatorHovered = false;
+        this.currentZoomPercent = 100;
+        
+        // Обработчик наведения на индикатор зума - меняет текст на "Fit"
+        this.dom.zoomIndicator.addEventListener('mouseenter', () => {
+            this.zoomIndicatorHovered = true;
+            this.dom.zoomIndicator.textContent = 'Fit';
+        });
+        
+        // Обработчик ухода мыши - возвращает процент зума
+        this.dom.zoomIndicator.addEventListener('mouseleave', () => {
+            this.zoomIndicatorHovered = false;
+            this.dom.zoomIndicator.textContent = `${this.currentZoomPercent}%`;
+        });
+        
+        // Клик на индикатор зума - сброс в 100%
+        this.dom.zoomIndicator.addEventListener('click', () => {
+            this.zoomPanManager.resetZoom();
+        });
+        
+        console.log('✅ ZoomPanManager initialized');
+        
     }
     
     // ============================================
@@ -10395,64 +10237,6 @@ class GridGenerator {
         // ElementsNavigator также не инициализируется - используется старая логика updateElementsNavigator()
         
         console.log('✅ Elements managers created (not active yet - using legacy code)');
-    }
-    
-    // ============================================
-    // Edit Mode Toggle
-    // ============================================
-    setEditMode(active) {
-        this.editModeActive = active;
-        document.body.classList.toggle('edit-mode-active', this.editModeActive);
-        
-        // При включении режима редактирования разворачиваем все панели
-        if (active) {
-            this.expandAllEditModePanels();
-        }
-        
-        // Обновляем сетку для изменения курсора на объектах
-        this.updateGrid();
-    }
-    
-    /**
-     * Разворачивает все панели режима редактирования
-     */
-    expandAllEditModePanels() {
-        // Находим все панели с классом edit-mode-only
-        const editModePanels = document.querySelectorAll('.edit-mode-only.controls-panel');
-        
-        editModePanels.forEach(panel => {
-            // Убираем класс panel-collapsed если он есть
-            if (panel.classList.contains('panel-collapsed')) {
-                panel.classList.remove('panel-collapsed');
-                
-                // Обновляем иконку сворачивания
-                const collapseIcon = panel.querySelector('.collapse-icon');
-                if (collapseIcon) {
-                    collapseIcon.classList.remove('collapsed');
-                    collapseIcon.setAttribute('aria-label', 'Collapse panel');
-                }
-            }
-            
-            // Для панели текстовых стилей не разворачиваем внутренние секции
-            const isTextPanel = panel.id === 'textPanel';
-            
-            if (!isTextPanel) {
-                // Разворачиваем все внутренние collapsible секции
-                const collapsibleContents = panel.querySelectorAll('.collapsible-content.collapsed');
-                collapsibleContents.forEach(content => {
-                    content.classList.remove('collapsed');
-                    
-                    // Обновляем соответствующий toggle
-                    const header = content.previousElementSibling;
-                    if (header) {
-                        const toggle = header.querySelector('.collapse-toggle');
-                        if (toggle) {
-                            toggle.setAttribute('aria-expanded', 'true');
-                        }
-                    }
-                });
-            }
-        });
     }
 }
 
