@@ -21,11 +21,12 @@ import { ColorPicker } from './src/ui/ColorPicker.js';
 import { PanelManager } from './src/ui/PanelManager.js';
 
 // Итерация 6: Elements
-import { TextBlockManager } from './src/elements/TextBlockManager.js';
-import { TextRenderer } from './src/elements/TextRenderer.js';
-import { GraphicsManager } from './src/elements/GraphicsManager.js';
-import { GraphicsRenderer } from './src/elements/GraphicsRenderer.js';
-import { ElementsNavigator } from './src/elements/ElementsNavigator.js';
+// DEPRECATED: Менеджеры и рендереры временно отключены - используется старый код
+// import { TextBlockManager } from './src/elements/TextBlockManager.js';
+// import { TextRenderer } from './src/elements/TextRenderer.js';
+// import { GraphicsManager } from './src/elements/GraphicsManager.js';
+// import { GraphicsRenderer } from './src/elements/GraphicsRenderer.js';
+// import { ElementsNavigator } from './src/elements/ElementsNavigator.js';
 
 // Итерация 7: SVG Export
 import { SVGExporter } from './src/svg/SVGExporter.js';
@@ -421,7 +422,8 @@ class GridGenerator {
         this.textRenderer = null;
         this.graphicsManager = null;
         this.graphicsRenderer = null;
-        this.elementsNavigator = null;
+        // DEPRECATED: ElementsNavigator не используется - используется старая логика updateElementsNavigator()
+        // this.elementsNavigator = null;
         
         // Graphics blocks - UNIFIED array for all graphics (built-in and custom)
         // Изначально пустой массив - данные загрузятся из пресета
@@ -551,11 +553,6 @@ class GridGenerator {
         this.initCollapsibleSections();
         this.initDropdowns();
         this.initParagraphPanel();
-        // DEPRECATED: Icons and Claim now use unified graphics system
-        // this.initIconsPanel();
-        // this.initIconsInputsWithArrows();
-        // this.initClaimPanel();
-        // this.initClaimInputsWithArrows();
         this.initGraphicsPanel();
         this.initPanelClickOutsideHandler();
         this.initElementsNavigator();
@@ -578,35 +575,6 @@ class GridGenerator {
             this.updateCanvasSize();
             this.updateGrid();
         });
-    }
-    
-    // Getters for backward compatibility with existing code
-    get iconsBlock() {
-        return this.graphicsBlocks.find(b => b.id === 'icons');
-    }
-    
-    set iconsBlock(value) {
-        // Setter for backward compatibility (used when setting to null)
-        if (value === null) {
-            const index = this.graphicsBlocks.findIndex(b => b.id === 'icons');
-            if (index !== -1) {
-                this.graphicsBlocks.splice(index, 1);
-            }
-        }
-    }
-    
-    get claimBlock() {
-        return this.graphicsBlocks.find(b => b.id === 'claim');
-    }
-    
-    set claimBlock(value) {
-        // Setter for backward compatibility (used when setting to null)
-        if (value === null) {
-            const index = this.graphicsBlocks.findIndex(b => b.id === 'claim');
-            if (index !== -1) {
-                this.graphicsBlocks.splice(index, 1);
-            }
-        }
     }
     
     cacheDOMElements() {
@@ -723,24 +691,6 @@ class GridGenerator {
             headlineFontWeightMedium: document.getElementById('headlineFontWeightMedium'),
             textFontWeightRegular: document.getElementById('textFontWeightRegular'),
             textFontWeightMedium: document.getElementById('textFontWeightMedium'),
-            // Icons settings panel
-            iconsPanel: document.getElementById('iconsPanel'),
-            iconsPanelTitle: document.getElementById('iconsPanelTitle'),
-            iconsXInput: document.getElementById('iconsXInput'),
-            iconsRowInput: document.getElementById('iconsRowInput'),
-            iconsBaselineInput: document.getElementById('iconsBaselineInput'),
-            iconsHeightInput: document.getElementById('iconsHeightInput'),
-            iconsApplyBtn: document.getElementById('iconsApplyBtn'),
-            iconsCloseBtn: document.getElementById('iconsCloseBtn'),
-            // Claim settings panel
-            claimPanel: document.getElementById('claimPanel'),
-            claimPanelTitle: document.getElementById('claimPanelTitle'),
-            claimXInput: document.getElementById('claimXInput'),
-            claimRowInput: document.getElementById('claimRowInput'),
-            claimBaselineInput: document.getElementById('claimBaselineInput'),
-            claimHeightInput: document.getElementById('claimHeightInput'),
-            claimApplyBtn: document.getElementById('claimApplyBtn'),
-            claimCloseBtn: document.getElementById('claimCloseBtn'),
             // Data Import panel
             googleSheetsUrl: document.getElementById('googleSheetsUrl'),
             loadDataBtn: document.getElementById('loadDataBtn'),
@@ -2714,636 +2664,6 @@ class GridGenerator {
                 const rowHeight = this.settings.rowHeight;
                 block.baselineOffset = Math.max(0, Math.min(rowHeight, block.baselineOffset));
             }
-        });
-    }
-    
-    // Инициализация панели настроек иконок
-    initIconsPanel() {
-        // Обработчик для Column
-        if (this.dom.iconsXInput) {
-            this.dom.iconsXInput.addEventListener('change', () => {
-                const newX = parseInt(this.dom.iconsXInput.value);
-                const maxColumns = this.settings.columnCount;
-                
-                // Calculate icon width and check right boundary
-                const module = this.settings.gridModule;
-                const margins = this.settings.margins;
-                const heightInMm = module * this.iconsBlock.heightInModules;
-                const aspectRatio = this.iconsBlock.originalWidth / this.iconsBlock.originalHeight;
-                const widthInMm = heightInMm * aspectRatio;
-                
-                // Calculate column width
-                const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (maxColumns - 1)) / maxColumns;
-                const gutter = module;
-                
-                // Calculate how many columns the icon takes
-                const iconsWidthInColumns = Math.ceil(widthInMm / (columnWidth + gutter));
-                const maxX = Math.max(1, maxColumns - iconsWidthInColumns + 1);
-                
-                this.iconsBlock.x = Math.max(1, Math.min(newX, maxX));
-                this.dom.iconsXInput.value = this.iconsBlock.x;
-                this.updateGrid();
-            });
-        }
-        
-        // Обработчик для Row
-        if (this.dom.iconsRowInput) {
-            this.dom.iconsRowInput.addEventListener('change', () => {
-                const newRow = parseInt(this.dom.iconsRowInput.value) - 1;
-                const module = this.settings.gridModule;
-                const margins = this.settings.margins;
-                
-                // Calculate max Y position
-                const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                const maxYInBaseline = Math.floor(contentHeightMm / module);
-                const iconHeightModules = this.iconsBlock.heightInModules;
-                const maxY = maxYInBaseline - iconHeightModules;
-                
-                // Convert row to Y position (baselineOffset сбрасывается в 0)
-                const rowHeight = this.settings.rowHeight;
-                const yPos = newRow * (rowHeight + 1);
-                
-                // Constrain Y
-                const constrainedY = Math.max(0, Math.min(yPos, maxY));
-                
-                // При изменении Row всегда ставим объект на первый baseline новой row
-                // Поэтому вычисляем только row из constrainedY, а baselineOffset = 0
-                const rowWithGutter = rowHeight + 1;
-                const finalRow = Math.floor(constrainedY / rowWithGutter);
-                
-                this.iconsBlock.row = Math.max(0, finalRow);
-                this.iconsBlock.baselineOffset = 0; // Всегда на первый baseline в row
-                this.dom.iconsRowInput.value = this.iconsBlock.row + 1;
-                
-                // Update baseline input
-                if (this.dom.iconsBaselineInput) {
-                    const globalBaseline = this.rowBaselineToY(this.iconsBlock.row, this.iconsBlock.baselineOffset);
-                    this.dom.iconsBaselineInput.value = globalBaseline + 1;
-                }
-                
-                this.updateGrid();
-            });
-        }
-        
-        // Обработчик для Baseline
-        if (this.dom.iconsBaselineInput) {
-            this.dom.iconsBaselineInput.addEventListener('change', () => {
-                const globalBaseline = parseInt(this.dom.iconsBaselineInput.value) - 1;
-                const rowHeight = this.settings.rowHeight;
-                const module = this.settings.gridModule;
-                const margins = this.settings.margins;
-                
-                // Calculate max Y position
-                const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                const maxYInBaseline = Math.floor(contentHeightMm / module);
-                const iconHeightModules = this.iconsBlock.heightInModules;
-                const maxY = maxYInBaseline - iconHeightModules;
-                
-                // Constrain Y
-                const constrainedY = Math.max(0, Math.min(globalBaseline, maxY));
-                const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
-                
-                this.iconsBlock.row = Math.max(0, row);
-                this.iconsBlock.baselineOffset = baselineOffset;
-                
-                const correctedGlobalBaseline = this.rowBaselineToY(this.iconsBlock.row, this.iconsBlock.baselineOffset);
-                this.dom.iconsBaselineInput.value = correctedGlobalBaseline + 1;
-                this.dom.iconsRowInput.value = this.iconsBlock.row + 1;
-                this.updateGrid();
-            });
-        }
-        
-        // Обработчик для Height
-        if (this.dom.iconsHeightInput) {
-            this.dom.iconsHeightInput.addEventListener('change', () => {
-                const newHeight = parseFloat(this.dom.iconsHeightInput.value);
-                const roundedHeight = Math.round(newHeight * 4) / 4;
-                this.iconsBlock.heightInModules = Math.max(0.25, Math.min(roundedHeight, 20));
-                this.dom.iconsHeightInput.value = this.iconsBlock.heightInModules.toFixed(2);
-                
-                // After changing height, recheck vertical position constraints
-                const module = this.settings.gridModule;
-                const margins = this.settings.margins;
-                const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                const maxYInBaseline = Math.floor(contentHeightMm / module);
-                const maxY = maxYInBaseline - this.iconsBlock.heightInModules;
-                
-                // Get current Y position
-                const currentY = this.getBlockY(this.iconsBlock);
-                if (currentY > maxY) {
-                    // Adjust position if icon is now too low
-                    const constrainedY = Math.max(0, maxY);
-                    const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
-                    this.iconsBlock.row = row;
-                    this.iconsBlock.baselineOffset = baselineOffset;
-                    
-                    if (this.dom.iconsRowInput) this.dom.iconsRowInput.value = row + 1;
-                    if (this.dom.iconsBaselineInput) {
-                        const globalBaseline = row * this.settings.rowHeight + baselineOffset;
-                        this.dom.iconsBaselineInput.value = globalBaseline + 1;
-                    }
-                }
-                
-                this.updateGrid();
-            });
-        }
-        
-        // Кнопка Apply
-        if (this.dom.iconsApplyBtn) {
-            this.dom.iconsApplyBtn.addEventListener('click', () => {
-                const originalText = this.dom.iconsApplyBtn.textContent;
-                this.dom.iconsApplyBtn.textContent = 'Applied!';
-                setTimeout(() => {
-                    this.dom.iconsApplyBtn.textContent = originalText;
-                    this.closeIconsPanel();
-                }, 500);
-            });
-        }
-        
-        // Кнопка Close
-        if (this.dom.iconsCloseBtn) {
-            this.dom.iconsCloseBtn.addEventListener('click', () => {
-                this.closeIconsPanel();
-            });
-        }
-    }
-    
-    // Инициализация управления стрелками клавиатуры для полей иконок
-    initIconsInputsWithArrows() {
-        const iconsInputs = [
-            { 
-                id: 'iconsXInput', 
-                property: 'x',
-                baseStep: 1,
-                shiftStep: 5,
-                decimals: 0,
-                applyConstraints: (value) => {
-                    const maxColumns = this.settings.columnCount;
-                    const module = this.settings.gridModule;
-                    const margins = this.settings.margins;
-                    const heightInMm = module * this.iconsBlock.heightInModules;
-                    const aspectRatio = this.iconsBlock.originalWidth / this.iconsBlock.originalHeight;
-                    const widthInMm = heightInMm * aspectRatio;
-                    
-                    const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (maxColumns - 1)) / maxColumns;
-                    const gutter = module;
-                    const iconsWidthInColumns = Math.ceil(widthInMm / (columnWidth + gutter));
-                    const maxX = Math.max(1, maxColumns - iconsWidthInColumns + 1);
-                    
-                    return Math.max(1, Math.min(value, maxX));
-                }
-            },
-            { 
-                id: 'iconsRowInput', 
-                property: 'row',
-                baseStep: 1,
-                shiftStep: 5,
-                decimals: 0,
-                applyConstraints: (value) => {
-                    // Convert from 1-based display value to 0-based internal value
-                    const row0based = value - 1;
-                    
-                    const module = this.settings.gridModule;
-                    const margins = this.settings.margins;
-                    const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module);
-                    const iconHeightModules = this.iconsBlock.heightInModules;
-                    const maxY = maxYInBaseline - iconHeightModules;
-                    
-                    const rowHeight = this.settings.rowHeight;
-                    const yPos = row0based * (rowHeight + 1) + this.iconsBlock.baselineOffset;
-                    const constrainedY = Math.max(0, Math.min(yPos, maxY));
-                    const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
-                    
-                    // Update baselineOffset if needed
-                    this.iconsBlock.baselineOffset = baselineOffset;
-                    if (this.dom.iconsBaselineInput) {
-                        const globalBaseline = this.rowBaselineToY(row, baselineOffset);
-                        this.dom.iconsBaselineInput.value = globalBaseline + 1;
-                    }
-                    
-                    // Return 1-based value for display
-                    return Math.max(0, row) + 1;
-                }
-            },
-            { 
-                id: 'iconsBaselineInput', 
-                property: 'baseline',
-                baseStep: 1,
-                shiftStep: 5,
-                decimals: 0,
-                applyConstraints: (value) => {
-                    // Convert from 1-based display value to 0-based internal value
-                    const baseline0based = value - 1;
-                    
-                    const module = this.settings.gridModule;
-                    const margins = this.settings.margins;
-                    const rowHeight = this.settings.rowHeight;
-                    const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module);
-                    const iconHeightModules = this.iconsBlock.heightInModules;
-                    const maxY = maxYInBaseline - iconHeightModules;
-                    
-                    // Constrain the value directly
-                    const constrainedY = Math.max(0, Math.min(Math.round(baseline0based), maxY));
-                    const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
-                    
-                    // Update row and baselineOffset
-                    this.iconsBlock.row = Math.max(0, row);
-                    this.iconsBlock.baselineOffset = baselineOffset;
-                    if (this.dom.iconsRowInput) {
-                        this.dom.iconsRowInput.value = this.iconsBlock.row + 1;
-                    }
-                    
-                    // Return the constrained baseline value (1-based for display)
-                    return constrainedY + 1;
-                }
-            },
-            { 
-                id: 'iconsHeightInput', 
-                property: 'heightInModules',
-                baseStep: 0.25,
-                shiftStep: 1,
-                decimals: 2,
-                applyConstraints: (value) => {
-                    const constrainedValue = Math.max(0.25, Math.min(value, 20));
-                    
-                    // After changing height, recheck vertical position constraints
-                    const module = this.settings.gridModule;
-                    const margins = this.settings.margins;
-                    const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module);
-                    const maxY = maxYInBaseline - constrainedValue;
-                    
-                    const currentY = this.getBlockY(this.iconsBlock);
-                    if (currentY > maxY) {
-                        const adjustedY = Math.max(0, maxY);
-                        const { row, baselineOffset } = this.yToRowBaseline(adjustedY);
-                        this.iconsBlock.row = row;
-                        this.iconsBlock.baselineOffset = baselineOffset;
-                        
-                        if (this.dom.iconsRowInput) this.dom.iconsRowInput.value = row + 1;
-                        if (this.dom.iconsBaselineInput) {
-                            const globalBaseline = row * this.settings.rowHeight + baselineOffset;
-                            this.dom.iconsBaselineInput.value = globalBaseline + 1;
-                        }
-                    }
-                    
-                    return constrainedValue;
-                }
-            }
-        ];
-        
-        iconsInputs.forEach(({ id, property, baseStep, shiftStep, decimals, applyConstraints }) => {
-            const input = this.dom[id];
-            if (!input) return;
-            
-            input.addEventListener('focus', () => {
-                input.dataset.originalValue = input.value;
-                input.select();
-            });
-            
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    input.blur();
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    input.value = input.dataset.originalValue;
-                    
-                    // Restore original value
-                    const originalValue = parseFloat(input.dataset.originalValue);
-                    if (property === 'baseline') {
-                        const rowHeight = this.settings.rowHeight;
-                        const { row, baselineOffset } = this.yToRowBaseline(originalValue);
-                        this.iconsBlock.row = row;
-                        this.iconsBlock.baselineOffset = baselineOffset;
-                    } else {
-                        this.iconsBlock[property] = originalValue;
-                    }
-                    
-                    input.blur();
-                    this.updateGrid();
-                } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    
-                    let currentValue = parseFloat(input.value);
-                    if (isNaN(currentValue)) {
-                        currentValue = property === 'baseline' 
-                            ? this.rowBaselineToY(this.iconsBlock.row, this.iconsBlock.baselineOffset)
-                            : this.iconsBlock[property];
-                    }
-                    
-                    const step = e.shiftKey ? shiftStep : baseStep;
-                    const direction = e.key === 'ArrowUp' ? 1 : -1;
-                    let newValue = currentValue + (step * direction);
-                    
-                    // Apply constraints
-                    if (applyConstraints) {
-                        newValue = applyConstraints(newValue);
-                    }
-                    
-                    // Update the block property
-                    if (property === 'baseline') {
-                        // Already handled in applyConstraints
-                    } else {
-                        this.iconsBlock[property] = newValue;
-                    }
-                    
-                    // Update input display
-                    input.value = decimals > 0 ? newValue.toFixed(decimals) : Math.round(newValue);
-                    
-                    this.updateGrid();
-                }
-            });
-        });
-    }
-    
-    // Инициализация панели настроек claim
-    initClaimPanel() {
-        // Обработчик для Column
-        if (this.dom.claimXInput) {
-            this.dom.claimXInput.addEventListener('change', () => {
-                const newX = parseInt(this.dom.claimXInput.value);
-                const maxColumns = this.settings.columnCount;
-                this.claimBlock.x = Math.max(1, Math.min(newX, maxColumns));
-                this.dom.claimXInput.value = this.claimBlock.x;
-                this.updateGrid();
-            });
-        }
-        
-        // Обработчик для Row
-        if (this.dom.claimRowInput) {
-            this.dom.claimRowInput.addEventListener('change', () => {
-                const newRow = parseInt(this.dom.claimRowInput.value) - 1;
-                const module = this.settings.gridModule;
-                const margins = this.settings.margins;
-                
-                // Calculate max Y position
-                const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                const maxYInBaseline = Math.floor(contentHeightMm / module);
-                const claimHeightModules = this.claimBlock.heightInModules;
-                const maxY = maxYInBaseline - claimHeightModules;
-                
-                // Convert row to Y position (baselineOffset сбрасывается в 0)
-                const rowHeight = this.settings.rowHeight;
-                const yPos = newRow * (rowHeight + 1);
-                
-                // Constrain Y
-                const constrainedY = Math.max(0, Math.min(yPos, maxY));
-                
-                // При изменении Row всегда ставим объект на первый baseline новой row
-                // Поэтому вычисляем только row из constrainedY, а baselineOffset = 0
-                const rowWithGutter = rowHeight + 1;
-                const finalRow = Math.floor(constrainedY / rowWithGutter);
-                
-                this.claimBlock.row = Math.max(0, finalRow);
-                this.claimBlock.baselineOffset = 0; // Всегда на первый baseline в row
-                this.dom.claimRowInput.value = this.claimBlock.row + 1;
-                
-                // Update baseline input
-                if (this.dom.claimBaselineInput) {
-                    const globalBaseline = this.rowBaselineToY(this.claimBlock.row, this.claimBlock.baselineOffset);
-                    this.dom.claimBaselineInput.value = globalBaseline + 1;
-                }
-                
-                this.updateGrid();
-            });
-        }
-        
-        // Обработчик для Baseline
-        if (this.dom.claimBaselineInput) {
-            this.dom.claimBaselineInput.addEventListener('change', () => {
-                const globalBaseline = parseInt(this.dom.claimBaselineInput.value) - 1;
-                const rowHeight = this.settings.rowHeight;
-                
-                // Convert global baseline to row and offset
-                const { row, baselineOffset } = this.yToRowBaseline(globalBaseline);
-                
-                this.claimBlock.row = Math.max(0, row);
-                this.claimBlock.baselineOffset = Math.max(0, baselineOffset);
-                
-                // Update Row input
-                if (this.dom.claimRowInput) {
-                    this.dom.claimRowInput.value = this.claimBlock.row + 1;
-                }
-                
-                // Update Baseline input with actual value
-                const actualBaseline = this.rowBaselineToY(this.claimBlock.row, this.claimBlock.baselineOffset);
-                this.dom.claimBaselineInput.value = actualBaseline + 1;
-                
-                this.updateGrid();
-            });
-        }
-        
-        // Обработчик для Height
-        if (this.dom.claimHeightInput) {
-            this.dom.claimHeightInput.addEventListener('change', () => {
-                const newHeight = parseFloat(this.dom.claimHeightInput.value);
-                const constrainedHeight = Math.max(0.5, Math.min(newHeight, 20));
-                this.claimBlock.heightInModules = constrainedHeight;
-                this.dom.claimHeightInput.value = constrainedHeight.toFixed(2);
-                
-                // After changing height, recheck vertical position constraints
-                const module = this.settings.gridModule;
-                const margins = this.settings.margins;
-                const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                const maxYInBaseline = Math.floor(contentHeightMm / module);
-                const maxY = maxYInBaseline - constrainedHeight;
-                
-                const currentY = this.getBlockY(this.claimBlock);
-                if (currentY > maxY) {
-                    const adjustedY = Math.max(0, maxY);
-                    const { row, baselineOffset } = this.yToRowBaseline(adjustedY);
-                    this.claimBlock.row = row;
-                    this.claimBlock.baselineOffset = baselineOffset;
-                    
-                    if (this.dom.claimRowInput) this.dom.claimRowInput.value = row + 1;
-                    if (this.dom.claimBaselineInput) {
-                        const globalBaseline = row * this.settings.rowHeight + baselineOffset;
-                        this.dom.claimBaselineInput.value = globalBaseline + 1;
-                    }
-                }
-                
-                this.updateGrid();
-            });
-        }
-        
-        // Кнопка Apply
-        if (this.dom.claimApplyBtn) {
-            this.dom.claimApplyBtn.addEventListener('click', () => {
-                const originalText = this.dom.claimApplyBtn.textContent;
-                this.dom.claimApplyBtn.textContent = 'Applied!';
-                setTimeout(() => {
-                    this.dom.claimApplyBtn.textContent = originalText;
-                    this.closeClaimPanel();
-                }, 500);
-            });
-        }
-        
-        // Кнопка Close
-        if (this.dom.claimCloseBtn) {
-            this.dom.claimCloseBtn.addEventListener('click', () => {
-                this.closeClaimPanel();
-            });
-        }
-    }
-    
-    // Инициализация управления стрелками клавиатуры для полей claim
-    initClaimInputsWithArrows() {
-        const claimInputs = [
-            { 
-                id: 'claimXInput', 
-                property: 'x',
-                baseStep: 1,
-                shiftStep: 5,
-                decimals: 0,
-                applyConstraints: (value) => {
-                    const maxColumns = this.settings.columnCount;
-                    return Math.max(1, Math.min(Math.round(value), maxColumns));
-                }
-            },
-            { 
-                id: 'claimRowInput', 
-                property: 'row',
-                baseStep: 1,
-                shiftStep: 5,
-                decimals: 0,
-                applyConstraints: (value) => {
-                    return Math.max(0, Math.round(value));
-                }
-            },
-            { 
-                id: 'claimBaselineInput', 
-                property: 'baseline',
-                baseStep: 1,
-                shiftStep: 5,
-                decimals: 0,
-                applyConstraints: (value) => {
-                    // Convert from 1-based display value to 0-based internal value
-                    const baseline0based = value - 1;
-                    
-                    const module = this.settings.gridModule;
-                    const margins = this.settings.margins;
-                    const rowHeight = this.settings.rowHeight;
-                    const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module);
-                    const claimHeightModules = this.claimBlock.heightInModules;
-                    const maxY = maxYInBaseline - claimHeightModules;
-                    
-                    const constrainedY = Math.max(0, Math.min(Math.round(baseline0based), maxY));
-                    
-                    // Convert to row and baseline offset
-                    const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
-                    this.claimBlock.row = row;
-                    this.claimBlock.baselineOffset = baselineOffset;
-                    
-                    // Update Row input
-                    if (this.dom.claimRowInput) {
-                        this.dom.claimRowInput.value = row + 1;
-                    }
-                    
-                    // Return 1-based value for display
-                    return constrainedY + 1;
-                }
-            },
-            { 
-                id: 'claimHeightInput', 
-                property: 'heightInModules',
-                baseStep: 0.25,
-                shiftStep: 1,
-                decimals: 2,
-                applyConstraints: (value) => {
-                    const constrainedValue = Math.max(0.5, Math.min(value, 20));
-                    
-                    // After changing height, recheck vertical position constraints
-                    const module = this.settings.gridModule;
-                    const margins = this.settings.margins;
-                    const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module);
-                    const maxY = maxYInBaseline - constrainedValue;
-                    
-                    const currentY = this.getBlockY(this.claimBlock);
-                    if (currentY > maxY) {
-                        const adjustedY = Math.max(0, maxY);
-                        const { row, baselineOffset } = this.yToRowBaseline(adjustedY);
-                        this.claimBlock.row = row;
-                        this.claimBlock.baselineOffset = baselineOffset;
-                        
-                        if (this.dom.claimRowInput) this.dom.claimRowInput.value = row + 1;
-                        if (this.dom.claimBaselineInput) {
-                            const globalBaseline = row * this.settings.rowHeight + baselineOffset;
-                            this.dom.claimBaselineInput.value = globalBaseline + 1;
-                        }
-                    }
-                    
-                    return constrainedValue;
-                }
-            }
-        ];
-        
-        claimInputs.forEach(({ id, property, baseStep, shiftStep, decimals, applyConstraints }) => {
-            const input = this.dom[id];
-            if (!input) return;
-            
-            input.addEventListener('focus', () => {
-                input.dataset.originalValue = input.value;
-                input.select();
-            });
-            
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    input.blur();
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    input.value = input.dataset.originalValue;
-                    
-                    // Restore original value
-                    const originalValue = parseFloat(input.dataset.originalValue);
-                    if (property === 'baseline') {
-                        const rowHeight = this.settings.rowHeight;
-                        const { row, baselineOffset } = this.yToRowBaseline(originalValue);
-                        this.claimBlock.row = row;
-                        this.claimBlock.baselineOffset = baselineOffset;
-                    } else {
-                        this.claimBlock[property] = originalValue;
-                    }
-                    
-                    input.blur();
-                    this.updateGrid();
-                } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    
-                    let currentValue = parseFloat(input.value);
-                    if (isNaN(currentValue)) {
-                        currentValue = property === 'baseline' 
-                            ? this.rowBaselineToY(this.claimBlock.row, this.claimBlock.baselineOffset)
-                            : this.claimBlock[property];
-                    }
-                    
-                    const step = e.shiftKey ? shiftStep : baseStep;
-                    const direction = e.key === 'ArrowUp' ? 1 : -1;
-                    let newValue = currentValue + (step * direction);
-                    
-                    // Apply constraints
-                    if (applyConstraints) {
-                        newValue = applyConstraints(newValue);
-                    }
-                    
-                    // Update the block property
-                    if (property === 'baseline') {
-                        // Already handled in applyConstraints
-                    } else {
-                        this.claimBlock[property] = newValue;
-                    }
-                    
-                    // Update input display
-                    input.value = decimals > 0 ? newValue.toFixed(decimals) : Math.round(newValue);
-                    
-                    this.updateGrid();
-                }
-            });
         });
     }
     
@@ -7535,10 +6855,6 @@ class GridGenerator {
         });
     }
     
-    // УДАЛЕНО: showIconsPanel, closeIconsPanel, showClaimPanel, closeClaimPanel
-    // Icons и Claim теперь используют единую функцию showGraphicsEditPanel()
-    // и хранятся в общем массиве graphicsBlocks с флагом isBuiltIn: true
-    
     // Initialize Elements Navigator
     initElementsNavigator() {
         this.updateElementsNavigator();
@@ -8982,7 +8298,7 @@ class GridGenerator {
         // Draw text blocks, icons and claim on front panel (if enabled)
         if (this.settings.showObjects) {
             // ============================================
-            // Итерация 6: Временно используем старый код для browser view
+            // Итерация 6: Используем старый код для browser view
             // Рендереры будут использоваться для экспорта в будущем
             // TODO: Доработать TextRenderer и GraphicsRenderer для полной поддержки интерактивности
             // ============================================
@@ -10715,21 +10031,19 @@ class GridGenerator {
     // ============================================
     // Elements initialization (Итерация 6)
     // ============================================
+    // DEPRECATED: Метод временно отключен - менеджеры и рендереры не используются
+    // TODO: Доработать рендереры для полной поддержки интерактивности и baseline snap
+    // После доработки можно будет включить менеджеры обратно
     initElementsManagers() {
         // Менеджеры временно отключены - используем старый код
-        // TODO: Доработать рендереры для полной поддержки интерактивности и baseline snap
-        // После доработки можно будет включить менеджеры обратно
-        
-        // Создаём менеджеры элементов (для будущего использования)
-        this.textBlockManager = new TextBlockManager(this.settingsModule, this.gridCalculator);
-        this.textRenderer = new TextRenderer(this.settingsModule, this.gridCalculator);
-        this.graphicsManager = new GraphicsManager(this.settingsModule, this.gridCalculator);
-        this.graphicsRenderer = new GraphicsRenderer(this.settingsModule, this.gridCalculator);
+        // После доработки раскомментировать:
+        // this.textBlockManager = new TextBlockManager(this.settingsModule, this.gridCalculator);
+        // this.textRenderer = new TextRenderer(this.settingsModule, this.gridCalculator);
+        // this.graphicsManager = new GraphicsManager(this.settingsModule, this.gridCalculator);
+        // this.graphicsRenderer = new GraphicsRenderer(this.settingsModule, this.gridCalculator);
         
         // Миграция данных НЕ выполняется - используем старые массивы this.textBlocks и this.graphicsBlocks
         // ElementsNavigator также не инициализируется - используется старая логика updateElementsNavigator()
-        
-        console.log('✅ Elements managers created (not active yet - using legacy code)');
     }
     
     // ============================================

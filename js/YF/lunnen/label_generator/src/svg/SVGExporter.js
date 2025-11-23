@@ -145,10 +145,6 @@ export class SVGExporter {
         const settings = data.settings || {};
         const textBlocks = data.textBlocks || [];
         const graphicsBlocks = data.graphicsBlocks || [];
-        
-        // Извлекаем iconsBlock и claimBlock из graphicsBlocks (они там встроенные)
-        const iconsBlock = graphicsBlocks.find(b => b.id === 'icons');
-        const claimBlock = graphicsBlocks.find(b => b.id === 'claim');
 
         // Генерируем название пресета на основе параметров
         const presetName = this.generatePresetName(settings);
@@ -250,25 +246,7 @@ export class SVGExporter {
                         surface: block.surface || 'front',
                         // SVG код в самом конце
                         svg: block.svgContent || ''
-                    })),
-                icons: iconsBlock ? {
-                    position: {
-                        column: iconsBlock.x || 1,
-                        row: iconsBlock.row || 0,
-                        baseline: iconsBlock.baselineOffset || 0
-                    },
-                    height: iconsBlock.heightInModules || 3,
-                    svg: iconsBlock.svgContent || ''
-                } : null,
-                claim: claimBlock ? {
-                    position: {
-                        column: claimBlock.x || 7,
-                        row: claimBlock.row || 0,
-                        baseline: claimBlock.baselineOffset || 0
-                    },
-                    height: claimBlock.heightInModules || 3,
-                    svg: claimBlock.svgContent || ''
-                } : null
+                    }))
             }
         };
     }
@@ -497,7 +475,9 @@ export class SVGExporter {
             });
         });
 
-        // Добавляем Icons (встроенный блок)
+        // DEPRECATED: Обработка icons и claim для обратной совместимости со старыми пресетами
+        // В новых пресетах icons и claim хранятся в graphicsBlocks с isBuiltIn: true
+        // Добавляем Icons (встроенный блок) - только для импорта старых пресетов
         if (newData.graphics?.icons) {
             graphicsBlocks.push({
                 id: 'icons',
@@ -515,7 +495,7 @@ export class SVGExporter {
             });
         }
 
-        // Добавляем Claim (встроенный блок)
+        // Добавляем Claim (встроенный блок) - только для импорта старых пресетов
         if (newData.graphics?.claim) {
             graphicsBlocks.push({
                 id: 'claim',
