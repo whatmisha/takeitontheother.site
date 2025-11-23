@@ -624,7 +624,6 @@ class GridGenerator {
             
             // Buttons
             exportBtn: document.getElementById('exportBtn'),
-            exportPdfBtn: document.getElementById('exportPdfBtn'),
             convertToOutlinesCheckbox: document.getElementById('convertToOutlinesCheckbox'),
             exportSettingsBtn: document.getElementById('exportSettingsBtn'),
             importSettingsBtn: document.getElementById('importSettingsBtn'),
@@ -945,11 +944,6 @@ class GridGenerator {
         
         // Export button
         this.dom.exportBtn.addEventListener('click', () => this.exportSVG());
-        
-        // Export PDF button
-        if (this.dom.exportPdfBtn) {
-            this.dom.exportPdfBtn.addEventListener('click', () => this.exportPDF());
-        }
         
         // Export Settings button
         this.dom.exportSettingsBtn.addEventListener('click', () => this.exportSettings());
@@ -8970,85 +8964,6 @@ class GridGenerator {
             optimizeSize: true,
             convertTextToOutlines: convertToOutlines
         });
-    }
-    
-    /**
-     * Экспорт текущего лейбла в PDF через сервер
-     * PDF генерируется на основе того же SVG, что и для обычного экспорта.
-     * Цвета остаются в RGB (ограничение SVG → PDF пайплайна),
-     * но файл готов к дальнейшей конвертации в строгий CMYK на стороне препресса.
-     */
-    async exportPDF() {
-        const { frontWidth, frontHeight } = this.settings;
-        
-        // Создаем SVG для экспорта (scale = 1 для точных размеров)
-        const exportSvg = await this.createExportSVG();
-        
-        // По возможности конвертируем текст в кривые, как при SVG-экспорте
-        const convertToOutlines = this.dom.convertToOutlinesCheckbox ? this.dom.convertToOutlinesCheckbox.checked : true;
-        if (convertToOutlines && this.textToPath) {
-            try {
-                await this.textToPath.convertAllTextToPaths(exportSvg);
-            } catch (error) {
-                console.error('Error converting text to paths for PDF:', error);
-            }
-        }
-        
-        // Сериализуем SVG в строку
-        const serializer = new XMLSerializer();
-        const svgString = serializer.serializeToString(exportSvg);
-        
-        // Генерируем имя файла на основе текущей строки данных, как для SVG
-        let cellBValue = '';
-        if (this.loadedTableData && 
-            this.currentRowIndex !== null && 
-            this.currentRowIndex !== undefined &&
-            this.currentRowIndex >= 0 && 
-            this.currentRowIndex < this.loadedTableData.length) {
-            const currentRow = this.loadedTableData[this.currentRowIndex];
-            if (currentRow && currentRow.length > 1) {
-                cellBValue = currentRow[1] || ''; // Ячейка B (индекс 1)
-            }
-        }
-        
-        const sanitizedValue = cellBValue.replace(/[^a-zA-Z0-9а-яА-ЯёЁ\s\-_]/g, '').trim() || 'label';
-        const size = `${frontWidth}×${frontHeight}mm`;
-        const deviceType = this.getDeviceType();
-        const filename = `${sanitizedValue}_${deviceType}_label_${size}.pdf`;
-        
-        try {
-            const response = await fetch('/api/export-pdf', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    svg: svgString,
-                    widthMm: frontWidth,
-                    heightMm: frontHeight,
-                    filename
-                })
-            });
-            
-            if (!response.ok) {
-                console.error('PDF export failed with status:', response.status, response.statusText);
-                return;
-            }
-            
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            setTimeout(() => URL.revokeObjectURL(url), 100);
-        } catch (error) {
-            console.error('PDF export error:', error);
-        }
     }
     
     // Итерация 7: Создание SVG для экспорта (без интерактивных элементов)

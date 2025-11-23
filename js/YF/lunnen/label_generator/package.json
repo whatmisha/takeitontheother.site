@@ -8,10 +8,6 @@
     "presets": "node generate-presets-manifest.js",
     "update-presets": "node generate-presets-manifest.js"
   },
-  "dependencies": {
-    "pdfkit": "^0.13.0",
-    "svg-to-pdfkit": "^0.1.8"
-  },
   "keywords": [
     "grid",
     "packaging",
