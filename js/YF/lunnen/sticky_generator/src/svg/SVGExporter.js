@@ -485,7 +485,12 @@ export class SVGExporter {
                 showBounds: false,
                 visible: true,
                 originalWidth: graphic.originalWidth || 100,
-                originalHeight: graphic.originalHeight || 100
+                originalHeight: graphic.originalHeight || 100,
+                // Дополнительная мета-информация для штрихкодов (новый формат пресета)
+                // Позволяет указывать тип логического штрихкода и колонку с данными
+                // Пример:
+                // barcode: { type: 'ean-13' | 'SN' | 'IMEI1' | 'IMEI2', column: 'F' }
+                barcode: graphic.barcode ? { ...graphic.barcode } : undefined
             });
         });
 

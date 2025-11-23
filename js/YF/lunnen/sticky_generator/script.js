@@ -9103,7 +9103,9 @@ class GridGenerator {
         // Заменяем все плейсхолдеры типа A1, B2, C3 и т.д.
         // Паттерн: буква (A-Z) + число (1, 2, 10, 100 и т.д.)
         // Буква определяет колонку таблицы, число игнорируется (для совместимости с форматом A1, B2)
-        const placeholderRegex = /([A-Z])(\d+)/g;
+        // Используем negative lookbehind и lookahead, чтобы не заменять плейсхолдеры внутри слов
+        // Например, "I1" в "IMEI1" не будет заменен
+        const placeholderRegex = /(?<![A-Za-z0-9])([A-Z])(\d+)(?![A-Za-z0-9])/g;
         
         return content.replace(placeholderRegex, (match, column, columnNumber) => {
             // Проверяем, есть ли данные для этой колонки
@@ -9283,7 +9285,106 @@ class GridGenerator {
     }
 
     /**
-     * Обновляет штрихкоды данными из таблицы (колонки E и F)
+     * Преобразует букву колонки (A, B, C, ..., Z, AA, AB, ...) в индекс массива (0-based)
+     * @param {string} letter - Обозначение колонки, например "A" или "F"
+     * @returns {number} Индекс колонки (0-based) или -1, если буква некорректна
+     */
+    getColumnIndexFromLetter(letter) {
+        if (!letter) return -1;
+        
+        const col = String(letter).trim().toUpperCase();
+        if (!col) return -1;
+        
+        // Поддержка A..Z, AA..ZZ и т.п.
+        let index = 0;
+        for (let i = 0; i < col.length; i++) {
+            const code = col.charCodeAt(i);
+            if (code < 65 || code > 90) {
+                return -1;
+            }
+            index = index * 26 + (code - 64);
+        }
+        
+        // Преобразуем из 1-based в 0-based
+        return index - 1;
+    }
+    
+    /**
+     * Обновляет один штрихкод на основе конфигурации, заданной в пресете
+     * Конфигурация хранится в самом графическом блоке: block.barcode = { type, column }
+     * type: 'ean-13' | 'SN' | 'IMEI1' | 'IMEI2'
+     * column: буква колонки в Google Sheets (например, 'F', 'G', 'H', 'I')
+     * @param {Object} block - Графический блок со штрихкодом
+     * @param {Array<string>} row - Строка данных
+     * @param {Object} gridSettings - Настройки сетки
+     */
+    updateBarcodeFromConfig(block, row, gridSettings) {
+        if (!block || !block.barcode) {
+            return;
+        }
+        
+        const config = block.barcode;
+        const columnLetter = config.column;
+        const logicalType = (config.type || '').toString().toLowerCase();
+        
+        if (!columnLetter) {
+            console.warn(`⚠️ Для блока штрихкода "${block.id}" не указана колонка в пресете`);
+            return;
+        }
+        
+        const columnIndex = this.getColumnIndexFromLetter(columnLetter);
+        if (columnIndex < 0) {
+            console.warn(`⚠️ Некорректное обозначение колонки "${columnLetter}" для блока штрихкода "${block.id}"`);
+            return;
+        }
+        
+        if (!row || row.length <= columnIndex) {
+            console.warn(`⚠️ Недостаточно данных в строке для обновления штрихкода "${block.id}" (колонка ${columnLetter} отсутствует)`);
+            return;
+        }
+        
+        const cellValue = row[columnIndex] || '';
+        const lines = this.parseMultilineCell(cellValue);
+        const barcodeData = lines[0] || '';
+        
+        if (!barcodeData) {
+            console.warn(`⚠️ Колонка ${columnLetter} пуста, штрихкод "${block.id}" не обновлен`);
+            return;
+        }
+        
+        // Маппинг логических типов на реальные типы штрихкода и режим отображения текста
+        let barcodeType = 'code128';
+        let displayValue = false;
+        
+        switch (logicalType) {
+            case 'ean-13':
+            case 'ean13':
+                barcodeType = 'ean13';
+                displayValue = true; // как и раньше для основного EAN-13
+                break;
+            case 'sn':
+            case 'imei1':
+            case 'imei2':
+                // Все эти типы кодируются через Code128 без подписи
+                barcodeType = 'code128';
+                displayValue = false;
+                break;
+            default:
+                // По умолчанию — Code128 без текста, но даём знать в консоль
+                console.warn(`⚠️ Неизвестный логический тип штрихкода "${config.type}" для блока "${block.id}", используется Code128 без текста`);
+                barcodeType = 'code128';
+                displayValue = false;
+        }
+        
+        BarcodeGenerator.updateBarcodeBlock(block, barcodeData, gridSettings, displayValue, barcodeType);
+        console.log(`✅ Штрихкод "${block.id}" (${config.type || barcodeType}) обновлен из колонки ${columnLetter}: ${barcodeData}`);
+    }
+    
+    /**
+     * Обновляет штрихкоды данными из таблицы.
+     * Если в пресете для графических блоков заданы конфигурации штрихкодов (block.barcode),
+     * используется именно эта конфигурация (тип + колонка).
+     * В противном случае используется старая жёстко прописанная логика (колонки E–H).
      * @param {Array<string>} row - Строка данных (массив значений ячеек)
      */
     updateBarcodeFromData(row) {
@@ -9296,18 +9397,32 @@ class GridGenerator {
             margins: this.settings.margins,
             marginsUnit: this.settings.marginsUnit,
         };
-
-        // Обновляем большой штрихкод из колонки F
-        this.updateMainBarcode(row, gridSettings);
         
-        // Обновляем маленький штрихкод из колонки E
-        this.updateSmallBarcode(row, gridSettings);
+        // Ищем конфигурации штрихкодов в графических блоках (новый способ через пресет)
+        const graphicsBlocks = this.graphicsBlocks || [];
+        const configuredBarcodeBlocks = graphicsBlocks.filter(block => block && block.barcode && block.barcode.column);
         
-        // Обновляем штрихкод IMEI1 из колонки G
-        this.updateImei1Barcode(row, gridSettings);
-        
-        // Обновляем штрихкод IMEI2 из колонки H
-        this.updateImei2Barcode(row, gridSettings);
+        if (configuredBarcodeBlocks.length > 0) {
+            // Новый путь: все штрихкоды описаны в пресете
+            configuredBarcodeBlocks.forEach(block => {
+                this.updateBarcodeFromConfig(block, row, gridSettings);
+            });
+        } else {
+            // Fallback: старая логика на фиксированных колонках (E, F, G, H)
+            console.warn('ℹ️ Конфигурации штрихкодов в пресете не найдены, используется старая логика колонок E–H');
+            
+            // Обновляем большой штрихкод из колонки F
+            this.updateMainBarcode(row, gridSettings);
+            
+            // Обновляем маленький штрихкод из колонки E
+            this.updateSmallBarcode(row, gridSettings);
+            
+            // Обновляем штрихкод IMEI1 из колонки G
+            this.updateImei1Barcode(row, gridSettings);
+            
+            // Обновляем штрихкод IMEI2 из колонки H
+            this.updateImei2Barcode(row, gridSettings);
+        }
     }
 
     /**

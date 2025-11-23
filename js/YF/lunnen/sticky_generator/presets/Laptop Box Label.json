@@ -11,7 +11,7 @@
   "texts": [
     {
       "id": "text",
-      "content": "C1",
+      "content": "D1",
       "style": "text",
       "position": {
         "column": 2,
@@ -27,7 +27,7 @@
     },
     {
       "id": "text-1763334866163",
-      "content": "A1\nB1",
+      "content": "A1\nB1 C1",
       "style": "headline",
       "position": {
         "column": 1,
@@ -43,7 +43,7 @@
     },
     {
       "id": "text-1763335152097",
-      "content": "Серийный номер: E1",
+      "content": "Серийный номер: F1",
       "style": "text",
       "position": {
         "column": 1,
@@ -59,7 +59,7 @@
     },
     {
       "id": "text-1763335182965",
-      "content": "Дата изготовления: D1",
+      "content": "Дата изготовления: E1",
       "style": "text",
       "position": {
         "column": 2,
@@ -127,7 +127,11 @@
         "originalHeight": 18,
         "alignment": "right",
         "surface": "front",
-        "svg": ""
+        "svg": "",
+        "barcode": {
+          "type": "ean-13",
+          "column": "G"
+        }
       },
       {
         "id": "sticker-barcode-small",
@@ -142,7 +146,11 @@
         "originalHeight": 18,
         "alignment": "left",
         "surface": "front",
-        "svg": ""
+        "svg": "",
+        "barcode": {
+          "type": "SN",
+          "column": "F"
+        }
       }
     ],
     "icons": null,
