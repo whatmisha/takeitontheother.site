@@ -1,10 +1,67 @@
 /**
- * Экспорт SVG в PDF
+ * Экспорт SVG в PDF через Canvas
  */
 export class PDFExporter {
     constructor(settings, textToPath = null) {
         this.settings = settings;
         this.textToPath = textToPath;
+    }
+
+    /**
+     * Конвертировать SVG в Canvas
+     * @param {SVGElement} svgElement - SVG элемент
+     * @returns {Promise<HTMLCanvasElement>} - Canvas элемент
+     */
+    async svgToCanvas(svgElement) {
+        return new Promise((resolve, reject) => {
+            try {
+                // Клонируем SVG для безопасности
+                const clonedSvg = svgElement.cloneNode(true);
+                
+                // Получаем размеры SVG
+                const svgWidth = parseFloat(clonedSvg.getAttribute('width')) || parseFloat(clonedSvg.viewBox.baseVal.width);
+                const svgHeight = parseFloat(clonedSvg.getAttribute('height')) || parseFloat(clonedSvg.viewBox.baseVal.height);
+                
+                // Создаем canvas
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Устанавливаем размеры canvas в пикселях (высокое разрешение для качества)
+                const scale = 2; // Увеличиваем разрешение для лучшего качества
+                canvas.width = svgWidth * scale;
+                canvas.height = svgHeight * scale;
+                
+                // Масштабируем контекст
+                ctx.scale(scale, scale);
+                
+                // Сериализуем SVG в строку
+                const serializer = new XMLSerializer();
+                const svgString = serializer.serializeToString(clonedSvg);
+                
+                // Создаем blob URL
+                const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                
+                // Создаем изображение
+                const img = new Image();
+                
+                img.onload = () => {
+                    // Рисуем изображение на canvas
+                    ctx.drawImage(img, 0, 0, svgWidth, svgHeight);
+                    URL.revokeObjectURL(url);
+                    resolve(canvas);
+                };
+                
+                img.onerror = (error) => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error('Failed to load SVG as image: ' + error));
+                };
+                
+                img.src = url;
+            } catch (error) {
+                reject(error);
+            }
+        });
     }
 
     /**
@@ -14,18 +71,14 @@ export class PDFExporter {
      * @param {Object} options - Опции экспорта
      * @param {boolean} options.removeInteractive - Удалить интерактивные элементы
      * @param {boolean} options.convertTextToOutlines - Конвертировать текст в кривые
-     * @param {string} options.format - Формат страницы: 'a4', 'letter', или размеры в мм [width, height]
+     * @param {string|Array} options.format - Формат страницы: 'a4', 'letter', или размеры в мм [width, height]
      */
     async exportToFile(svgElement, filename = 'grid.pdf', options = {}) {
-        // Проверяем наличие библиотек (проверяем разные варианты имен)
+        // Проверяем наличие библиотеки jsPDF
         const jsPDF = window.jsPDF || window.jspdf?.jsPDF || (typeof jspdf !== 'undefined' ? jspdf.jsPDF : null);
-        const svg2pdf = window.svg2pdf || window.svg2pdfjs?.svg2pdf || (typeof svg2pdfjs !== 'undefined' ? svg2pdfjs.svg2pdf : null);
         
         if (!jsPDF) {
             throw new Error('jsPDF library is not loaded. Please include jsPDF from CDN.');
-        }
-        if (!svg2pdf) {
-            throw new Error('svg2pdf library is not loaded. Please include svg2pdf from CDN.');
         }
 
         // Клонируем SVG для экспорта
@@ -69,6 +122,9 @@ export class PDFExporter {
             pageHeight = svgHeight;
         }
 
+        // Конвертируем SVG в Canvas
+        const canvas = await this.svgToCanvas(clonedSvg);
+
         // Создаем PDF документ
         const pdf = new jsPDF({
             orientation: pageWidth > pageHeight ? 'landscape' : 'portrait',
@@ -76,18 +132,9 @@ export class PDFExporter {
             format: [pageWidth, pageHeight]
         });
 
-        // Конвертируем SVG в PDF
-        try {
-            await svg2pdf(clonedSvg, pdf, {
-                xOffset: 0,
-                yOffset: 0,
-                width: svgWidth,
-                height: svgHeight
-            });
-        } catch (error) {
-            console.error('Error converting SVG to PDF:', error);
-            throw new Error('Failed to convert SVG to PDF: ' + error.message);
-        }
+        // Добавляем изображение с canvas в PDF
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', 0, 0, svgWidth, svgHeight, undefined, 'FAST');
 
         // Сохраняем PDF
         pdf.save(filename);
@@ -129,13 +176,9 @@ export class PDFExporter {
      */
     async exportMultipleToFile(svgElements, filename = 'labels.pdf', options = {}) {
         const jsPDF = window.jsPDF || window.jspdf?.jsPDF || (typeof jspdf !== 'undefined' ? jspdf.jsPDF : null);
-        const svg2pdf = window.svg2pdf || window.svg2pdfjs?.svg2pdf || (typeof svg2pdfjs !== 'undefined' ? svg2pdfjs.svg2pdf : null);
         
         if (!jsPDF) {
             throw new Error('jsPDF library is not loaded. Please include jsPDF from CDN.');
-        }
-        if (!svg2pdf) {
-            throw new Error('svg2pdf library is not loaded. Please include svg2pdf from CDN.');
         }
 
         if (!svgElements || svgElements.length === 0) {
@@ -197,12 +240,10 @@ export class PDFExporter {
             const height = parseFloat(svg.getAttribute('height')) || parseFloat(svg.viewBox.baseVal.height);
 
             try {
-                await svg2pdf(svg, pdf, {
-                    xOffset: 0,
-                    yOffset: 0,
-                    width: width,
-                    height: height
-                });
+                // Конвертируем SVG в Canvas
+                const canvas = await this.svgToCanvas(svg);
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', 0, 0, width, height, undefined, 'FAST');
             } catch (error) {
                 console.error(`Error converting SVG ${i + 1} to PDF:`, error);
             }
@@ -212,4 +253,3 @@ export class PDFExporter {
         pdf.save(filename);
     }
 }
-
