@@ -7257,9 +7257,8 @@ class GridGenerator {
                     if (visibilityBtn) {
                         const visIcon = visibilityBtn.querySelector('.element-action-icon');
                         if (visIcon) {
-                            visIcon.innerHTML = block.visible 
-                                ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>'
-                                : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+                            // Используем константы из Constants.js вместо дублирования SVG строк
+                            visIcon.innerHTML = createSVGIcon(block.visible ? ICONS.EYE_VISIBLE : ICONS.EYE_HIDDEN);
                         }
                         visibilityBtn.title = block.visible ? 'Hide' : 'Show';
                     }
@@ -7287,9 +7286,8 @@ class GridGenerator {
                     if (visibilityBtn) {
                         const visIcon = visibilityBtn.querySelector('.element-action-icon');
                         if (visIcon) {
-                            visIcon.innerHTML = block.visible 
-                                ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>'
-                                : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+                            // Используем константы из Constants.js вместо дублирования SVG строк
+                            visIcon.innerHTML = createSVGIcon(block.visible ? ICONS.EYE_VISIBLE : ICONS.EYE_HIDDEN);
                         }
                         visibilityBtn.title = block.visible ? 'Hide' : 'Show';
                     }
