@@ -19,18 +19,19 @@ export class PDFExporter {
     async exportToFile(svgElement, filename = 'grid.pdf', options = {}) {
         // Проверяем наличие библиотек
         const jsPDF = window.jsPDF || window.jspdf?.jsPDF || (typeof jspdf !== 'undefined' ? jspdf.jsPDF : null);
-        // svg2pdf может быть доступен через разные пути
-        let svg2pdf = window.svg2pdf || window.svg2pdfjs?.svg2pdf;
-        if (!svg2pdf && typeof svg2pdfjs !== 'undefined') {
-            svg2pdf = svg2pdfjs.svg2pdf;
-        }
         
         if (!jsPDF) {
             throw new Error('jsPDF library is not loaded. Please include jsPDF from CDN.');
         }
-        if (!svg2pdf) {
+        
+        // Проверяем, доступен ли метод svg() (добавляется плагином svg2pdf.js)
+        // Создаем временный PDF для проверки
+        const testPdf = new jsPDF({ unit: 'mm', format: [100, 100] });
+        const hasSvgMethod = typeof testPdf.svg === 'function';
+        
+        if (!hasSvgMethod) {
             // Fallback: используем canvas (растровый, но работает)
-            console.warn('svg2pdf not available, falling back to raster export');
+            console.warn('svg2pdf plugin not available, falling back to raster export');
             return this.exportToFileRaster(svgElement, filename, options);
         }
 
@@ -82,11 +83,11 @@ export class PDFExporter {
             format: [pageWidth, pageHeight]
         });
 
-        // Конвертируем SVG в векторный PDF
+        // Конвертируем SVG в векторный PDF используя метод svg() из jsPDF
         try {
-            await svg2pdf(clonedSvg, pdf, {
-                xOffset: 0,
-                yOffset: 0,
+            await pdf.svg(clonedSvg, {
+                x: 0,
+                y: 0,
                 width: svgWidth,
                 height: svgHeight
             });
@@ -232,10 +233,6 @@ export class PDFExporter {
      */
     async exportMultipleToFile(svgElements, filename = 'labels.pdf', options = {}) {
         const jsPDF = window.jsPDF || window.jspdf?.jsPDF || (typeof jspdf !== 'undefined' ? jspdf.jsPDF : null);
-        let svg2pdf = window.svg2pdf || window.svg2pdfjs?.svg2pdf;
-        if (!svg2pdf && typeof svg2pdfjs !== 'undefined') {
-            svg2pdf = svg2pdfjs.svg2pdf;
-        }
         
         if (!jsPDF) {
             throw new Error('jsPDF library is not loaded.');
@@ -272,7 +269,9 @@ export class PDFExporter {
             format: [pageWidth, pageHeight]
         });
 
-        const useVector = !!svg2pdf;
+        // Проверяем доступность метода svg()
+        const testPdf = new jsPDF({ unit: 'mm', format: [100, 100] });
+        const useVector = typeof testPdf.svg === 'function';
 
         for (let i = 0; i < svgElements.length; i++) {
             if (i > 0) {
@@ -298,9 +297,9 @@ export class PDFExporter {
 
             try {
                 if (useVector) {
-                    await svg2pdf(svg, pdf, {
-                        xOffset: 0,
-                        yOffset: 0,
+                    await pdf.svg(svg, {
+                        x: 0,
+                        y: 0,
                         width: width,
                         height: height
                     });
@@ -311,6 +310,16 @@ export class PDFExporter {
                 }
             } catch (error) {
                 console.error(`Error converting SVG ${i + 1} to PDF:`, error);
+                // Если векторный экспорт не удался, пробуем растровый
+                if (useVector) {
+                    try {
+                        const canvas = await this.svgToCanvas(svg);
+                        const imgData = canvas.toDataURL('image/png');
+                        pdf.addImage(imgData, 'PNG', 0, 0, width, height, undefined, 'FAST');
+                    } catch (rasterError) {
+                        console.error(`Error with raster fallback for SVG ${i + 1}:`, rasterError);
+                    }
+                }
             }
         }
 

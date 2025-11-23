@@ -632,7 +632,6 @@ class GridGenerator {
             contentBrightnessValue: document.getElementById('contentBrightnessValue'),
             
             // Buttons
-            exportBtn: document.getElementById('exportBtn'),
             exportPdfBtn: document.getElementById('exportPdfBtn'),
             convertToOutlinesCheckbox: document.getElementById('convertToOutlinesCheckbox'),
             exportSettingsBtn: document.getElementById('exportSettingsBtn'),
@@ -1016,9 +1015,6 @@ class GridGenerator {
             this.updateGrid();
         });
         
-        // Export button
-        this.dom.exportBtn.addEventListener('click', () => this.exportSVG());
-        
         // Export PDF button
         if (this.dom.exportPdfBtn) {
             this.dom.exportPdfBtn.addEventListener('click', () => this.exportPDF());
@@ -1066,10 +1062,10 @@ class GridGenerator {
             });
         }
         
-        // Export Current Sticker button
+        // Export Current Sticker button (теперь экспортирует PDF)
         if (this.dom.exportCurrentStickerBtn) {
             this.dom.exportCurrentStickerBtn.addEventListener('click', () => {
-                this.exportSVG();
+                this.exportPDF();
             });
         }
         
@@ -1084,15 +1080,15 @@ class GridGenerator {
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
-            // Cmd+E / Ctrl+E - Generate All Labels
+            // Cmd+E / Ctrl+E - Generate All Labels PDF
             if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
                 e.preventDefault();
                 // Проверяем, видна ли кнопка All Labels, и если да - вызываем generateAllStickers
                 if (this.dom.generateAllStickersBtn && this.dom.generateAllStickersBtn.style.display !== 'none') {
                     this.generateAllStickers();
                 } else {
-                    // Если кнопка не видна, используем старое поведение - экспорт текущего
-                    this.exportSVG();
+                    // Если кнопка не видна, экспортируем текущий макет в PDF
+                    this.exportPDF();
                 }
             }
             // Cmd+Z / Ctrl+Z - Undo
@@ -9501,20 +9497,20 @@ class GridGenerator {
                 // Создаем SVG для экспорта
                 const exportSvg = await this.createExportSVG();
 
-                // Генерируем имя файла: "(значение из ячейки B)_[device]_label_120×24mm.svg"
+                // Генерируем имя файла: "(значение из ячейки B)_[device]_label_120×24mm.pdf"
                 let cellBValue = '';
                 if (row && row.length > 1) {
                     cellBValue = row[1] || ''; // Ячейка B (индекс 1)
                 }
                 const sanitizedValue = cellBValue.replace(/[^a-zA-Z0-9а-яА-ЯёЁ\s\-_]/g, '').trim() || `row${rowIndex + 1}`;
                 const deviceType = this.getDeviceType();
-                const filename = `${sanitizedValue}_${deviceType}_label_${size}.svg`;
+                const filename = `${sanitizedValue}_${deviceType}_label_${size}.pdf`;
 
-                // Экспортируем SVG
-                await this.svgExporter.exportToFile(exportSvg, filename, {
+                // Экспортируем PDF
+                await this.pdfExporter.exportToFile(exportSvg, filename, {
                     removeInteractive: true,
-                    optimizeSize: true,
-                    convertTextToOutlines: convertToOutlines
+                    convertTextToOutlines: convertToOutlines,
+                    format: [frontWidth, frontHeight]
                 });
 
                 // Небольшая задержка между скачиваниями, чтобы браузер успел обработать
