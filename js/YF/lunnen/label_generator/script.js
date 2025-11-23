@@ -31,6 +31,7 @@ import { PanelManager } from './src/ui/PanelManager.js';
 
 // Итерация 7: SVG Export
 import { SVGExporter } from './src/svg/SVGExporter.js';
+import { PDFExporter } from './src/svg/PDFExporter.js';
 
 class GridGenerator {
     constructor() {
@@ -521,6 +522,7 @@ class GridGenerator {
         // ============================================
         this.textToPath = new TextToPath();
         this.svgExporter = new SVGExporter(this.settingsModule, this.textToPath);
+        this.pdfExporter = new PDFExporter(this.settingsModule, this.textToPath);
         
         // ============================================
         // Presets (Итерация 10)
@@ -631,6 +633,7 @@ class GridGenerator {
             
             // Buttons
             exportBtn: document.getElementById('exportBtn'),
+            exportPdfBtn: document.getElementById('exportPdfBtn'),
             convertToOutlinesCheckbox: document.getElementById('convertToOutlinesCheckbox'),
             exportSettingsBtn: document.getElementById('exportSettingsBtn'),
             importSettingsBtn: document.getElementById('importSettingsBtn'),
@@ -1015,6 +1018,11 @@ class GridGenerator {
         
         // Export button
         this.dom.exportBtn.addEventListener('click', () => this.exportSVG());
+        
+        // Export PDF button
+        if (this.dom.exportPdfBtn) {
+            this.dom.exportPdfBtn.addEventListener('click', () => this.exportPDF());
+        }
         
         // Export Settings button
         this.dom.exportSettingsBtn.addEventListener('click', () => this.exportSettings());
@@ -8893,6 +8901,56 @@ class GridGenerator {
         } catch (error) {
             console.error('Ошибка при экспорте SVG:', error);
             alert(`Не удалось экспортировать SVG: ${error.message || 'Неизвестная ошибка'}`);
+            throw error;
+        }
+    }
+    
+    async exportPDF() {
+        try {
+            const { frontWidth, frontHeight, gridModule, columnCount, rowCount } = this.settings;
+            
+            // Создаем SVG для экспорта (scale = 1 для точных размеров)
+            const exportSvg = await this.createExportSVG();
+            
+            // Генерируем timestamp с точностью до минуты
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            // Генерируем имя файла аналогично SVG экспорту
+            let cellBValue = '';
+            if (this.loadedTableData && 
+                this.currentRowIndex !== null && 
+                this.currentRowIndex !== undefined &&
+                this.currentRowIndex >= 0 && 
+                this.currentRowIndex < this.loadedTableData.length) {
+                const currentRow = this.loadedTableData[this.currentRowIndex];
+                if (currentRow && currentRow.length > 1) {
+                    cellBValue = currentRow[1] || ''; // Ячейка B (индекс 1)
+                }
+            }
+            
+            // Очищаем значение от недопустимых символов для имени файла
+            const sanitizedValue = cellBValue.replace(/[^a-zA-Z0-9а-яА-ЯёЁ\s\-_]/g, '').trim() || 'label';
+            const size = `${frontWidth}×${frontHeight}mm`;
+            const deviceType = this.getDeviceType();
+            const filename = `${sanitizedValue}_${deviceType}_label_${size}.pdf`;
+            
+            // Получаем значение тогла "Outline fonts" (по умолчанию true)
+            const convertToOutlines = this.dom.convertToOutlinesCheckbox ? this.dom.convertToOutlinesCheckbox.checked : true;
+            
+            // Используем размеры SVG для формата страницы
+            const svgWidth = parseFloat(exportSvg.getAttribute('width')) || parseFloat(exportSvg.viewBox.baseVal.width);
+            const svgHeight = parseFloat(exportSvg.getAttribute('height')) || parseFloat(exportSvg.viewBox.baseVal.height);
+            
+            // Экспортируем через модуль PDFExporter
+            await this.pdfExporter.exportToFile(exportSvg, filename, {
+                removeInteractive: true,
+                convertTextToOutlines: convertToOutlines,
+                format: [svgWidth, svgHeight] // Используем размеры SVG как формат страницы
+            });
+        } catch (error) {
+            console.error('Ошибка при экспорте PDF:', error);
+            alert(`Не удалось экспортировать PDF: ${error.message || 'Неизвестная ошибка'}`);
             throw error;
         }
     }

@@ -351,7 +351,10 @@
         
         <div class="export-group-right">
             <button class="btn-fixed btn-export" id="exportBtn" aria-label="Export SVG (Command/Control + E)">
-                ↓ Current Label
+                ↓ Current Label SVG
+            </button>
+            <button class="btn-fixed btn-export" id="exportPdfBtn" aria-label="Export PDF">
+                ↓ Current Label PDF
             </button>
             <button class="btn-fixed btn-export" id="generateAllStickersBtn" aria-label="Generate All Labels from Table Data" style="display: none;">
                 ↓ All Labels ⌘E
@@ -897,6 +900,15 @@
         </div>
     </div>
 
+    <!-- PDF Export Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/svg2pdf.js/2.0.0/svg2pdf.umd.min.js"></script>
+    <script>
+        // Убеждаемся, что библиотеки доступны глобально
+        window.jsPDF = window.jspdf?.jsPDF || window.jsPDF;
+        window.svg2pdf = window.svg2pdf || window.svg2pdfjs?.svg2pdf;
+    </script>
+    
     <script type="module" src="script.js"></script>
 </body>
 </html>

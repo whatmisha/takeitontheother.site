@@ -740,6 +740,7 @@ class GridGenerator {
             svgFileInput: document.getElementById('svgFileInput'),
             barcodeInputArea: document.getElementById('barcodeInputArea'),
             barcodeDataInput: document.getElementById('barcodeDataInput'),
+            barcodeCharCounter: document.getElementById('barcodeCharCounter'),
             // Paragraph style select
             paragraphStyleSelect: document.getElementById('paragraphStyleSelect'),
             paragraphSurfaceSelect: document.getElementById('paragraphSurfaceSelect'),
@@ -2644,6 +2645,15 @@ class GridGenerator {
         }
     }
     
+    // Обновить счетчик символов для штрихкода
+    updateBarcodeCharCounter() {
+        if (this.dom.barcodeCharCounter && this.dom.barcodeDataInput) {
+            const count = this.dom.barcodeDataInput.value.length;
+            const plural = count === 1 ? 'character' : 'characters';
+            this.dom.barcodeCharCounter.textContent = `${count} ${plural}`;
+        }
+    }
+    
     // Ограничить позиции элементов в пределах сетки
     constrainElementsToBounds() {
         const totalColumns = this.settings.columnCount;
@@ -3327,6 +3337,8 @@ class GridGenerator {
         }
         if (this.dom.barcodeDataInput) {
             this.dom.barcodeDataInput.value = '';
+            // Обновляем счетчик символов при очистке
+            this.updateBarcodeCharCounter();
         }
         
         // Reset panel title
@@ -3383,6 +3395,9 @@ class GridGenerator {
         if (this.dom.barcodeDataInput) {
             let barcodeInputTimeout = null;
             this.dom.barcodeDataInput.addEventListener('input', (e) => {
+                // Обновляем счетчик символов сразу при вводе
+                this.updateBarcodeCharCounter();
+                
                 // Debounce input to avoid generating barcode on every keystroke
                 clearTimeout(barcodeInputTimeout);
                 barcodeInputTimeout = setTimeout(() => {
@@ -3788,7 +3803,7 @@ class GridGenerator {
             return null;
         }
         
-        // Если есть явный barcodeType, используем его
+        // Если есть явный barcodeType, используем его (приоритет 1)
         if (block.barcodeType && (block.barcodeType === 'code128' || block.barcodeType === 'ean13')) {
             return {
                 barcodeType: block.barcodeType,
@@ -3796,7 +3811,7 @@ class GridGenerator {
             };
         }
         
-        // Если есть конфигурация из пресета (block.barcode), определяем тип из неё
+        // Если есть конфигурация из пресета (block.barcode), определяем тип из неё (приоритет 2)
         if (block.barcode && block.barcode.type) {
             const logicalType = (block.barcode.type || '').toString().toLowerCase();
             let barcodeType = 'code128';
@@ -3822,6 +3837,21 @@ class GridGenerator {
             return { barcodeType, displayValue };
         }
         
+        // Fallback: определяем по ID блока для обратной совместимости (приоритет 3)
+        if (block.id === 'sticker-barcode') {
+            return {
+                barcodeType: 'ean13',
+                displayValue: true
+            };
+        } else if (block.id === 'sticker-barcode-small' || 
+                  block.id === 'sticker-barcode-imei1' || 
+                  block.id === 'sticker-barcode-imei2') {
+            return {
+                barcodeType: 'code128',
+                displayValue: false
+            };
+        }
+        
         return null;
     }
     
@@ -3834,7 +3864,8 @@ class GridGenerator {
             return;
         }
         
-        const block = this.graphicsBlocks?.find(b => b.id === this.currentEditingGraphicsId);
+        // Используем getGraphicsBlock для консистентности и производительности
+        const block = this.getGraphicsBlock(this.currentEditingGraphicsId);
         if (!block) {
             return;
         }
@@ -3865,12 +3896,14 @@ class GridGenerator {
         
         // Generate new barcode
         const contentColor = this.settings.contentColor || '#17264E';
+        // Используем barcodeType из barcodeInfo (не type!)
+        const barcodeType = barcodeInfo.barcodeType || 'code128';
         BarcodeGenerator.updateBarcodeBlock(
             block,
             cleanData,
             gridSettings,
             barcodeInfo.displayValue,
-            barcodeInfo.type || 'code128',
+            barcodeType,
             contentColor
         );
         
@@ -5933,6 +5966,8 @@ class GridGenerator {
                     }
                 }
                 this.dom.barcodeDataInput.value = currentData;
+                // Обновляем счетчик символов при открытии панели редактирования
+                this.updateBarcodeCharCounter();
             }
         } else {
             // Show file upload area, hide barcode input area
