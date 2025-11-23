@@ -282,9 +282,12 @@ export class BarcodeGenerator {
         
         if (baselineOffset !== null && displayValue) {
             // Baseline текста на указанном расстоянии от верха штрихкода
+            // ВАЖНО: общую высоту SVG ограничиваем значением baselineOffset,
+            // чтобы не добавлять лишнее пустое поле снизу.
+            // Цифры располагаются ВЫШЕ базовой линии, поэтому они полностью
+            // помещаются в высоту baselineOffset.
             textBaselineY = baselineOffset;
-            // Общая высота = baseline + высота текста ниже baseline
-            totalHeight = baselineOffset + actualCapHeight;
+            totalHeight = baselineOffset;
         } else {
             // Старая логика: текст под штрихкодом
             const textTopPadding = actualCapHeight * 0.2;
@@ -446,19 +449,10 @@ export class BarcodeGenerator {
             const textFontSizePt = 10;
             const textFontSizeMm = textFontSizePt * (25.4 / 72);
             
-            // Baseline текста должен быть на уровне 6-го бейслайна от верха штрихкода
+            // Baseline текста должен быть на уровне 6-го бейслайна от верха штрихкода.
+            // При этом сам объект должен считаться ровно 6 модулей по высоте,
+            // без дополнительного "пустого" поля снизу.
             const baselineOffset = 6 * gridModule; // 6 бейслайнов от верха
-            
-            // Вычисляем общую высоту SVG: длинные полоски + место до baseline текста + высота текста
-            // Метрики TT Commons Classic
-            const capHeight = 630;
-            const unitsPerEm = 1000;
-            const capHeightRatio = capHeight / unitsPerEm;
-            const actualCapHeight = textFontSizeMm * capHeightRatio;
-            
-            // Вычисляем место для текста ниже baseline
-            const textHeightBelowBaseline = actualCapHeight; // высота текста ниже baseline
-            const totalHeightWithText = baselineOffset + textHeightBelowBaseline;
             
             // Вычисляем место для первой цифры слева
             const firstDigitWidth = textFontSizeMm * 0.7; // примерная ширина цифры
@@ -466,9 +460,10 @@ export class BarcodeGenerator {
             const totalWidthWithFirstDigit = firstDigitWidth + firstDigitMargin + barcodeWidth;
             
             // КРИТИЧНО: finalWidth и finalHeight должны соответствовать реальным размерам SVG
-            // чтобы не было масштабирования в GraphicsRenderer
+            // чтобы не было масштабирования в GraphicsRenderer.
+            // Высота: ровно baselineOffset (6 модулей), без лишнего запаса.
             finalWidth = totalWidthWithFirstDigit;
-            finalHeight = displayValue ? totalHeightWithText : longBarHeight;
+            finalHeight = displayValue ? baselineOffset : longBarHeight;
             heightInModules = finalHeight / gridModule;
             
             // Сохраняем размеры графической части и левого отступа (для подсветки на канвасе)
