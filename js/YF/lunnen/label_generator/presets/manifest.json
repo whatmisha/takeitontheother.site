@@ -11,8 +11,12 @@
     {
       "name": "Test DC Glyph 120×24mm",
       "file": "Test DC Glyph.json"
+    },
+    {
+      "name": "Monitor Box Label 93×25mm",
+      "file": "Monitor Box Label.json"
     }
   ],
   "generated": "2025-11-22T03:00:00.000Z",
-  "count": 3
+  "count": 4
 }
