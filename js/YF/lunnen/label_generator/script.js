@@ -435,6 +435,9 @@ class GridGenerator {
         this.textBlocksById = new Map();
         this.graphicsBlocksById = new Map();
         
+        // SVG содержимое для символа переменного тока (⎓)
+        this.dcGlyphSVGContent = null;
+        
         // Storage for deletion timers to allow cancellation
         this.deletionTimers = {};
         
@@ -576,6 +579,8 @@ class GridGenerator {
         // Используем немедленное обновление при инициализации
         this.updateGridImmediate();
         
+        // Загружаем SVG символ переменного тока
+        this.loadDCGlyphSVG();
         
         // Update canvas size on window resize
         window.addEventListener('resize', () => {
@@ -636,6 +641,8 @@ class GridGenerator {
             convertToOutlinesCheckbox: document.getElementById('convertToOutlinesCheckbox'),
             exportSettingsBtn: document.getElementById('exportSettingsBtn'),
             importSettingsBtn: document.getElementById('importSettingsBtn'),
+            exportCurrentSvgBtn: document.getElementById('exportCurrentSvgBtn'),
+            exportAllSvgBtn: document.getElementById('exportAllSvgBtn'),
             presetDropdown: document.getElementById('presetDropdown'),
             presetDropdownToggle: document.getElementById('presetDropdownToggle'),
             presetDropdownMenu: document.getElementById('presetDropdownMenu'),
@@ -1018,6 +1025,16 @@ class GridGenerator {
         // Export PDF button
         if (this.dom.exportPdfBtn) {
             this.dom.exportPdfBtn.addEventListener('click', () => this.exportPDF());
+        }
+        
+        // Export Current Label SVG button
+        if (this.dom.exportCurrentSvgBtn) {
+            this.dom.exportCurrentSvgBtn.addEventListener('click', () => this.exportCurrentLabelSVG());
+        }
+        
+        // Export All Labels SVG button
+        if (this.dom.exportAllSvgBtn) {
+            this.dom.exportAllSvgBtn.addEventListener('click', () => this.exportAllLabelsSVG());
         }
         
         // Export Settings button
@@ -5270,12 +5287,14 @@ class GridGenerator {
                 previousBaselineY = lineBaselineY;
             }
             
-            const textElement = this.createSVGElement('text', {
+            // Добавляем data-style для функции renderTextWithDCGlyph
+            const textAttrsWithStyle = {
                 ...textAttrs,
-                x: textX,
-                y: lineBaselineY
-            }, textGroup);
-            textElement.textContent = line;
+                'data-style': block.styleRef || 'text'
+            };
+            
+            // Используем функцию замены символа ⎓ на SVG
+            this.renderTextWithDCGlyph(line, textAttrsWithStyle, textX, lineBaselineY, textGroup, scale);
         });
         
         // Create bounds rectangle only for canvas (not for export)
@@ -7867,13 +7886,14 @@ class GridGenerator {
                 previousBaselineY = lineBaselineY;
             }
             
-            // Create text element
-            const textElement = this.createSVGElement('text', {
+            // Добавляем data-style для функции renderTextWithDCGlyph
+            const textAttrsWithStyle = {
                 ...textAttrs,
-                x: textX,
-                y: lineBaselineY
-            }, textGroup);
-            textElement.textContent = line;
+                'data-style': 'headline'
+            };
+            
+            // Используем функцию замены символа ⎓ на SVG
+            this.renderTextWithDCGlyph(line, textAttrsWithStyle, textX, lineBaselineY, textGroup, scale);
         });
         
         // Attach click handler for editing
@@ -7981,13 +8001,14 @@ class GridGenerator {
                 previousBaselineY = lineBaselineY;
             }
             
-            // Create text element
-            const textElement = this.createSVGElement('text', {
+            // Добавляем data-style для функции renderTextWithDCGlyph
+            const textAttrsWithStyle = {
                 ...textAttrs,
-                x: textX,
-                y: lineBaselineY
-            }, textGroup);
-            textElement.textContent = line;
+                'data-style': 'text'
+            };
+            
+            // Используем функцию замены символа ⎓ на SVG
+            this.renderTextWithDCGlyph(line, textAttrsWithStyle, textX, lineBaselineY, textGroup, scale);
         });
         
         // Attach click handler for editing
@@ -8424,6 +8445,171 @@ class GridGenerator {
         });
         container.appendChild(element);
         return element;
+    }
+    
+    /**
+     * Заменяет символ ⎓ (U+2393) на SVG элемент dc_m_glyph.svg
+     * Создает группу с text/tspan элементами для текста и SVG для символа
+     * Использует предзагруженный SVG из this.dcGlyphSVGContent
+     */
+    renderTextWithDCGlyph(text, textAttrs, x, y, container, scale = 1) {
+        const dcGlyphChar = '\u2393'; // Символ ⎓
+        
+        // Если символа нет в тексте, просто создаем обычный text элемент
+        if (!text.includes(dcGlyphChar) || !this.dcGlyphSVGContent) {
+            const textElement = this.createSVGElement('text', {
+                ...textAttrs,
+                x: x,
+                y: y
+            }, container);
+            textElement.textContent = text;
+            return textElement;
+        }
+        
+        // Создаем группу для строки с текстом и SVG элементами
+        const lineGroup = this.createSVGElement('g', {
+            class: 'text-line-with-glyph'
+        }, container);
+        
+        // Разбиваем строку на части
+        const parts = text.split(dcGlyphChar);
+        let currentX = x;
+        
+        // Получаем размер шрифта для расчета ширины символа
+        const fontSize = parseFloat(textAttrs['font-size']) || 10;
+        const styleRef = textAttrs['data-style'] || 'text';
+        const metrics = this.getFontMetricsForStyle(styleRef);
+        const capHeight = fontSize * (metrics.capHeight / metrics.unitsPerEm);
+        
+        // Читаем viewBox из SVG динамически
+        let glyphViewBoxWidth = 56.6929134; // значения по умолчанию
+        let glyphViewBoxHeight = 28.3464565;
+        
+        if (this.dcGlyphSVGContent) {
+            const parser = new DOMParser();
+            const svgDoc = parser.parseFromString(this.dcGlyphSVGContent, 'image/svg+xml');
+            const svgElement = svgDoc.querySelector('svg');
+            if (svgElement) {
+                const viewBox = svgElement.getAttribute('viewBox');
+                if (viewBox) {
+                    const viewBoxParts = viewBox.split(/\s+/);
+                    if (viewBoxParts.length >= 4) {
+                        glyphViewBoxWidth = parseFloat(viewBoxParts[2]) || glyphViewBoxWidth;
+                        glyphViewBoxHeight = parseFloat(viewBoxParts[3]) || glyphViewBoxHeight;
+                    }
+                }
+            }
+        }
+        
+        // Высота символа должна быть равна capHeight
+        const glyphAspectRatio = glyphViewBoxWidth / glyphViewBoxHeight;
+        const glyphHeight = capHeight;
+        const glyphWidth = glyphHeight * glyphAspectRatio;
+        
+        // Рендерим каждую часть
+        parts.forEach((part, index) => {
+            // Добавляем текстовую часть
+            if (part) {
+                const textElement = this.createSVGElement('text', {
+                    ...textAttrs,
+                    x: currentX,
+                    y: y
+                }, lineGroup);
+                textElement.textContent = part;
+                
+                // Вычисляем ширину текста для позиционирования следующего элемента
+                const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                tempSvg.style.position = 'absolute';
+                tempSvg.style.visibility = 'hidden';
+                document.body.appendChild(tempSvg);
+                const tempText = this.createSVGElement('text', textAttrs, tempSvg);
+                tempText.textContent = part;
+                const bbox = tempText.getBBox();
+                document.body.removeChild(tempSvg);
+                currentX += bbox.width;
+            }
+            
+            // Добавляем SVG символ после текстовой части (кроме последней)
+            if (index < parts.length - 1) {
+                // Создаем use элемент или встраиваем SVG
+                const glyphGroup = this.createSVGElement('g', {
+                    transform: `translate(${currentX}, ${y - capHeight})`
+                }, lineGroup);
+                
+                // Создаем SVG элемент из предзагруженного содержимого
+                const parser = new DOMParser();
+                const svgDoc = parser.parseFromString(this.dcGlyphSVGContent, 'image/svg+xml');
+                const svgElement = svgDoc.querySelector('svg');
+                
+                if (svgElement) {
+                    // Получаем viewBox из исходного SVG (если не был прочитан ранее)
+                    let viewBoxWidth = glyphViewBoxWidth;
+                    let viewBoxHeight = glyphViewBoxHeight;
+                    const originalViewBox = svgElement.getAttribute('viewBox');
+                    if (originalViewBox) {
+                        const viewBoxParts = originalViewBox.split(/\s+/);
+                        if (viewBoxParts.length >= 4) {
+                            viewBoxWidth = parseFloat(viewBoxParts[2]) || viewBoxWidth;
+                            viewBoxHeight = parseFloat(viewBoxParts[3]) || viewBoxHeight;
+                        }
+                    }
+                    
+                    // Пересчитываем пропорции на основе актуального viewBox
+                    const aspectRatio = viewBoxWidth / viewBoxHeight;
+                    const actualGlyphHeight = capHeight;
+                    const actualGlyphWidth = actualGlyphHeight * aspectRatio;
+                    
+                    // Клонируем SVG элемент и масштабируем его
+                    const glyphClone = svgElement.cloneNode(true);
+                    glyphClone.setAttribute('width', actualGlyphWidth);
+                    glyphClone.setAttribute('height', actualGlyphHeight);
+                    glyphClone.setAttribute('viewBox', `0 0 ${viewBoxWidth} ${viewBoxHeight}`);
+                    glyphClone.setAttribute('preserveAspectRatio', 'xMinYMin meet');
+                    
+                    // Устанавливаем цвет заливки из textAttrs (цвет текста)
+                    const fillColor = textAttrs.fill || '#000000';
+                    const fillOpacity = textAttrs['fill-opacity'] || '1';
+                    
+                    // Удаляем стили из defs, чтобы они не переопределяли fill
+                    const defs = glyphClone.querySelector('defs');
+                    if (defs) {
+                        defs.remove();
+                    }
+                    
+                    // Устанавливаем цвет заливки на все path элементы
+                    const paths = glyphClone.querySelectorAll('path');
+                    paths.forEach(path => {
+                        // Удаляем класс, чтобы стиль из класса не переопределял fill
+                        path.removeAttribute('class');
+                        path.setAttribute('fill', fillColor);
+                        path.setAttribute('fill-opacity', fillOpacity);
+                    });
+                    
+                    glyphGroup.appendChild(glyphClone);
+                    
+                    // Сдвигаем текущую позицию на ширину символа
+                    currentX += actualGlyphWidth;
+                }
+            }
+        });
+        
+        return lineGroup;
+    }
+    
+    /**
+     * Загружает SVG файл dc_m_glyph.svg и сохраняет его содержимое
+     */
+    async loadDCGlyphSVG() {
+        try {
+            const response = await fetch('graphics/dc_m_glyph.svg');
+            if (response.ok) {
+                this.dcGlyphSVGContent = await response.text();
+            } else {
+                console.warn('Не удалось загрузить dc_m_glyph.svg');
+            }
+        } catch (error) {
+            console.warn('Ошибка при загрузке dc_m_glyph.svg:', error);
+        }
     }
     
     drawRectangles(container, x, y, frontW, frontH, scale = 1) {
@@ -8951,6 +9137,110 @@ class GridGenerator {
         }
     }
     
+    async exportCurrentLabelSVG() {
+        try {
+            // Используем существующую функцию exportSVG
+            await this.exportSVG();
+        } catch (error) {
+            console.error('Ошибка при экспорте текущего лейбла SVG:', error);
+            alert(`Не удалось экспортировать SVG: ${error.message || 'Неизвестная ошибка'}`);
+            throw error;
+        }
+    }
+    
+    async exportAllLabelsSVG() {
+        if (!this.loadedTableData || this.loadedTableData.length === 0) {
+            this.showDataStatus('Please load data from spreadsheet first', 'error');
+            return;
+        }
+
+        if (!this.dom.exportAllSvgBtn) {
+            return;
+        }
+
+        // Отключаем кнопку
+        this.dom.exportAllSvgBtn.disabled = true;
+        this.showDataStatus(`Generating ${this.loadedTableData.length} SVG file(s)...`, 'loading');
+
+        try {
+            // Сохраняем исходное состояние текстовых блоков с плейсхолдерами
+            const templateTextBlocks = this.originalTextBlocks ? 
+                JSON.parse(JSON.stringify(this.originalTextBlocks)) : 
+                JSON.parse(JSON.stringify(this.textBlocks));
+            const originalGraphicsBlocks = JSON.parse(JSON.stringify(this.graphicsBlocks));
+
+            const { frontWidth, frontHeight, gridModule, columnCount, rowCount } = this.settings;
+            const convertToOutlines = this.dom.convertToOutlinesCheckbox ? this.dom.convertToOutlinesCheckbox.checked : true;
+
+            // Генерируем timestamp
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+            const size = `${frontWidth}×${frontHeight}mm`;
+
+            // Генерируем SVG для каждой строки
+            for (let rowIndex = 0; rowIndex < this.loadedTableData.length; rowIndex++) {
+                const row = this.loadedTableData[rowIndex];
+                
+                // Проверяем, есть ли сохраненные изменения для этого макета
+                if (this.modifiedRowsData[rowIndex]) {
+                    // Используем сохраненные изменения
+                    const savedData = this.modifiedRowsData[rowIndex];
+                    if (savedData.textBlocks) {
+                        this.textBlocks = JSON.parse(JSON.stringify(savedData.textBlocks));
+                    }
+                    if (savedData.graphicsBlocks) {
+                        this.graphicsBlocks = JSON.parse(JSON.stringify(savedData.graphicsBlocks));
+                    }
+                } else {
+                    // Восстанавливаем шаблон с плейсхолдерами перед каждой строкой
+                    this.textBlocks = JSON.parse(JSON.stringify(templateTextBlocks));
+                    
+                    // Обновляем текстовые блоки данными из текущей строки
+                    this.updateTextBlocksFromRow(row, rowIndex);
+                }
+
+                // Создаем SVG для экспорта
+                const exportSvg = await this.createExportSVG();
+
+                // Генерируем имя файла: "(значение из ячейки B)_[device]_label_120×24mm.svg"
+                let cellBValue = '';
+                if (row && row.length > 1) {
+                    cellBValue = row[1] || ''; // Ячейка B (индекс 1)
+                }
+                const sanitizedValue = cellBValue.replace(/[^a-zA-Z0-9а-яА-ЯёЁ\s\-_]/g, '').trim() || `row${rowIndex + 1}`;
+                const deviceType = this.getDeviceType();
+                const filename = `${sanitizedValue}_${deviceType}_label_${size}.svg`;
+
+                // Экспортируем SVG
+                await this.svgExporter.exportToFile(exportSvg, filename, {
+                    removeInteractive: true,
+                    optimizeSize: true,
+                    convertTextToOutlines: convertToOutlines
+                });
+
+                // Небольшая задержка между скачиваниями, чтобы браузер успел обработать
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+
+            // Восстанавливаем состояние текущего макета (с учетом сохраненных изменений)
+            if (this.currentRowIndex !== null) {
+                this.updateSingleSticker(this.currentRowIndex);
+            } else {
+                // Если нет текущего макета, восстанавливаем первую строку
+                this.currentRowIndex = 0;
+                this.updateSingleSticker(0);
+            }
+
+            this.showDataStatus(`Successfully exported ${this.loadedTableData.length} SVG file(s)`, 'success');
+        } catch (error) {
+            console.error('Ошибка при экспорте всех SVG:', error);
+            this.showDataStatus(`Error: ${error.message || 'Неизвестная ошибка'}`, 'error');
+        } finally {
+            // Включаем кнопку обратно
+            this.dom.exportAllSvgBtn.disabled = false;
+        }
+    }
+    
     // Итерация 7: Создание SVG для экспорта (без интерактивных элементов)
     async createExportSVG() {
         try {
@@ -9334,6 +9624,11 @@ class GridGenerator {
             if (this.dom.generateAllStickersBtn) {
                 this.dom.generateAllStickersBtn.style.display = 'block';
             }
+            
+            // Показываем кнопку "Export All Labels SVG"
+            if (this.dom.exportAllSvgBtn) {
+                this.dom.exportAllSvgBtn.style.display = 'block';
+            }
 
         } catch (error) {
             console.error('Ошибка:', error);
@@ -9342,6 +9637,11 @@ class GridGenerator {
             // Скрываем кнопку "Generate All Labels" при ошибке
             if (this.dom.generateAllStickersBtn) {
                 this.dom.generateAllStickersBtn.style.display = 'none';
+            }
+            
+            // Скрываем кнопку "Export All Labels SVG" при ошибке
+            if (this.dom.exportAllSvgBtn) {
+                this.dom.exportAllSvgBtn.style.display = 'none';
             }
         } finally {
             this.dom.loadDataBtn.disabled = false;

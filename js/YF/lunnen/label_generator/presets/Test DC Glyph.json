@@ -1,0 +1,74 @@
+{
+  "presetName": "Test DC Glyph 120×24mm",
+  "version": "1.0",
+  "timestamp": "2025-01-27T00:00:00.000Z",
+  "dimensions": {
+    "width": 120,
+    "height": 24,
+    "unit": "mm",
+    "cornerRadius": 2
+  },
+  "texts": [
+    {
+      "id": "text-dc-test",
+      "content": "20V⎓5A",
+      "style": "headline",
+      "position": {
+        "column": 1,
+        "row": 0,
+        "baseline": 0
+      },
+      "width": 2,
+      "alignment": "left",
+      "alignmentMode": "baseline",
+      "surface": "front",
+      "showBounds": false,
+      "useXHeight": false
+    }
+  ],
+  "grid": {
+    "module": 3,
+    "margins": 1,
+    "marginsUnit": "mod",
+    "columns": 3,
+    "rows": 1,
+    "rowHeight": 6,
+    "linkMode": "module",
+    "visibility": {
+      "columns": false,
+      "rows": false,
+      "baseline": false
+    }
+  },
+  "colors": {
+    "background": "#ffffff"
+  },
+  "typography": {
+    "headline": {
+      "size": 7,
+      "lineHeight": 9.5,
+      "tracking": -0.015,
+      "useXHeight": false,
+      "fontWeight": 500
+    },
+    "text": {
+      "size": 6,
+      "lineHeight": 7.6,
+      "tracking": 0,
+      "useXHeight": false,
+      "fontWeight": 500
+    }
+  },
+  "display": {
+    "dimensions": false,
+    "labels": false,
+    "objects": true
+  },
+  "graphics": {
+    "blocks": []
+  },
+  "exampleRow": [
+    "20V⎓5A"
+  ]
+}
+
