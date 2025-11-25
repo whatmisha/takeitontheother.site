@@ -67,9 +67,9 @@
       "rowHeight": 6,
       "linkMode": "rows-height",
       "visibility": {
-        "columns": true,
+        "columns": false,
         "rows": false,
-        "baseline": true
+        "baseline": false
       }
     },
     "colors": {
