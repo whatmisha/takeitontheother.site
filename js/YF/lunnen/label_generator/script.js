@@ -5708,6 +5708,9 @@ class GridGenerator {
         
         // Create nested SVG for graphics with correct viewBox
         // Disable pointer events on nested SVG so bounds rectangle handles all interactions
+        // Use contentColor for graphics blocks (except barcodes which use gridColor)
+        const contentColor = this.settings.contentColor || '#17264E';
+        const svgColor = block.barcodeType ? gridColor : contentColor;
         const nestedSvg = this.createSVGElement('svg', {
             x: graphicsX,
             y: graphicsY,
@@ -5715,7 +5718,7 @@ class GridGenerator {
             height: scaledHeight,
             viewBox: `0 0 ${block.originalWidth} ${block.originalHeight}`,
             preserveAspectRatio: 'xMinYMin meet',
-            style: `color: ${gridColor}; overflow: visible; pointer-events: none;`
+            style: `color: ${svgColor}; overflow: visible; pointer-events: none;`
         }, graphicsGroup);
         
         // Add SVG content
