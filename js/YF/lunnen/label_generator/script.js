@@ -8458,6 +8458,9 @@ class GridGenerator {
     renderTextWithDCGlyph(text, textAttrs, x, y, container, scale = 1) {
         const dcGlyphChar = '\u2393'; // Символ ⎓
         
+        // Заменяем "==" на символ ⎓
+        text = text.replace(/==/g, dcGlyphChar);
+        
         // Если символа нет в тексте, просто создаем обычный text элемент
         if (!text.includes(dcGlyphChar) || !this.dcGlyphSVGContent) {
             const textElement = this.createSVGElement('text', {
