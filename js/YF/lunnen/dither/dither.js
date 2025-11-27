@@ -107,6 +107,7 @@ class DitheringTool {
             exportWithAlpha: true,
             export2x: false,
             export4x: false,
+            export8x: false,
             backgroundColor: '#000000'
         };
         
@@ -160,6 +161,7 @@ class DitheringTool {
             exportWithAlpha: document.getElementById('exportWithAlpha'),
             export2x: document.getElementById('export2x'),
             export4x: document.getElementById('export4x'),
+            export8x: document.getElementById('export8x'),
             hexColorInput: document.getElementById('hexColorInput'),
             lunnenBlue: document.getElementById('lunnenBlue'),
             resetTransform: document.getElementById('resetTransform'),
@@ -490,25 +492,42 @@ class DitheringTool {
             this.settings.exportWithAlpha = e.target.checked;
         });
         
-        // Export x2 checkbox (mutually exclusive with x4)
+        // Export x2 checkbox (mutually exclusive with x4 and x8)
         this.dom.export2x.addEventListener('change', (e) => {
             if (e.target.checked) {
                 this.settings.export2x = true;
                 this.settings.export4x = false;
+                this.settings.export8x = false;
                 this.dom.export4x.checked = false;
+                this.dom.export8x.checked = false;
             } else {
                 this.settings.export2x = false;
             }
         });
         
-        // Export x4 checkbox (mutually exclusive with x2)
+        // Export x4 checkbox (mutually exclusive with x2 and x8)
         this.dom.export4x.addEventListener('change', (e) => {
             if (e.target.checked) {
                 this.settings.export4x = true;
                 this.settings.export2x = false;
+                this.settings.export8x = false;
                 this.dom.export2x.checked = false;
+                this.dom.export8x.checked = false;
             } else {
                 this.settings.export4x = false;
+            }
+        });
+        
+        // Export x8 checkbox (mutually exclusive with x2 and x4)
+        this.dom.export8x.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                this.settings.export8x = true;
+                this.settings.export2x = false;
+                this.settings.export4x = false;
+                this.dom.export2x.checked = false;
+                this.dom.export4x.checked = false;
+            } else {
+                this.settings.export8x = false;
             }
         });
         
@@ -2309,9 +2328,11 @@ class DitheringTool {
     exportImage() {
         if (!this.originalImage) return;
         
-        // Determine export scale: 2x, 4x, or 1x (default)
+        // Determine export scale: 8x, 4x, 2x, or 1x (default)
         let exportScale = 1;
-        if (this.settings.export4x) {
+        if (this.settings.export8x) {
+            exportScale = 8;
+        } else if (this.settings.export4x) {
             exportScale = 4;
         } else if (this.settings.export2x) {
             exportScale = 2;
