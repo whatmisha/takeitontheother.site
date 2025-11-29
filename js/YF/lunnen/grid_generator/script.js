@@ -1689,156 +1689,28 @@ class GridGenerator {
             });
             
             if (!response.ok) {
-                console.warn('No presets manifest found, trying direct folder scan');
-                const fallbackLoaded = await this.loadPresetsFromDirectoryListing();
-                if (!fallbackLoaded) {
-                    this.updateDropdownText('No presets available');
-                }
+                console.warn('No presets manifest found');
+                this.updateDropdownText('No presets available');
                 return;
             }
             
             const manifest = await response.json();
             const presetsFromManifest = Array.isArray(manifest.presets) ? manifest.presets : [];
             
-            let hasManifestPresets = presetsFromManifest.length > 0;
-            let mergedPresets = presetsFromManifest;
-            
-            const directoryPresets = await this.loadPresetsFromDirectoryListing(false);
-            if (Array.isArray(directoryPresets) && directoryPresets.length > 0) {
-                mergedPresets = this.mergePresetLists(presetsFromManifest, directoryPresets);
-                hasManifestPresets = mergedPresets.length > 0;
-            }
-            
-            if (!hasManifestPresets) {
-                console.warn('No presets available in manifest or directory listing');
+            if (presetsFromManifest.length === 0) {
+                console.warn('No presets available in manifest');
                 this.updateDropdownText('No presets available');
                 return;
             }
             
-            this.availablePresets = mergedPresets;
+            // Sort presets using custom logic
+            const sortedPresets = presetsFromManifest.sort((a, b) => this.sortPresets(a, b));
+            
+            this.availablePresets = sortedPresets;
             this.initializePresets();
         } catch (error) {
-            console.warn('Failed to load presets manifest, attempting fallback:', error);
-            const fallbackLoaded = await this.loadPresetsFromDirectoryListing();
-            if (!fallbackLoaded) {
-                this.updateDropdownText('Error loading presets');
-            }
-        }
-    }
-    
-    async loadPresetsFromDirectoryListing(applyImmediately = true) {
-        try {
-            // Сначала пробуем обычный directory listing
-            const listingResponse = await fetch(`presets/?ts=${Date.now()}`, {
-                cache: 'no-store'
-            });
-            
-            if (!listingResponse.ok) {
-                console.warn('Presets directory listing request failed, trying GitHub API...');
-                return await this.loadPresetsFromGitHubAPI(applyImmediately);
-            }
-            
-            const contentType = listingResponse.headers.get('content-type') || '';
-            if (!contentType.includes('text') && !contentType.includes('html')) {
-                console.warn('Presets directory listing returned unsupported content type, trying GitHub API...');
-                return await this.loadPresetsFromGitHubAPI(applyImmediately);
-            }
-            
-            const listingHtml = await listingResponse.text();
-            const files = this.extractJsonFilenamesFromListing(listingHtml);
-            
-            if (files.length === 0) {
-                console.warn('No JSON files in directory listing, trying GitHub API...');
-                return await this.loadPresetsFromGitHubAPI(applyImmediately);
-            }
-            
-            const presets = [];
-            for (const file of files) {
-                const presetMeta = await this.fetchPresetMetadataFromFile(file);
-                if (presetMeta) {
-                    presets.push(presetMeta);
-                }
-            }
-            
-            if (presets.length === 0) {
-                console.warn('Could not read any presets, trying GitHub API...');
-                return await this.loadPresetsFromGitHubAPI(applyImmediately);
-            }
-            
-            const sortedPresets = presets.sort((a, b) => this.sortPresets(a, b));
-            
-            if (applyImmediately) {
-                this.availablePresets = sortedPresets;
-                this.initializePresets();
-                return true;
-            }
-            
-            return sortedPresets;
-        } catch (error) {
-            console.warn('Failed to scan presets directory, trying GitHub API:', error);
-            return await this.loadPresetsFromGitHubAPI(applyImmediately);
-        }
-    }
-    
-    async loadPresetsFromGitHubAPI(applyImmediately = true) {
-        try {
-            // GitHub API endpoint для получения списка файлов в папке
-            const apiUrl = 'https://api.github.com/repos/mishaivanov/takeitontheother.site/contents/js/YF/lunnen/grid_generator/presets';
-            
-            const response = await fetch(apiUrl, {
-                cache: 'no-store',
-                headers: {
-                    'Accept': 'application/vnd.github.v3+json'
-                }
-            });
-            
-            if (!response.ok) {
-                console.warn('GitHub API request failed with status', response.status);
-                return applyImmediately ? false : null;
-            }
-            
-            const files = await response.json();
-            
-            // Фильтруем только .json файлы, кроме manifest.json
-            const presetFiles = files.filter(file => 
-                file.type === 'file' && 
-                file.name.endsWith('.json') && 
-                file.name !== 'manifest.json'
-            );
-            
-            if (presetFiles.length === 0) {
-                console.warn('No preset files found via GitHub API');
-                return applyImmediately ? false : null;
-            }
-            
-            console.log(`📦 Found ${presetFiles.length} preset(s) via GitHub API`);
-            
-            const presets = [];
-            for (const file of presetFiles) {
-                const presetMeta = await this.fetchPresetMetadataFromFile(file.name);
-                if (presetMeta) {
-                    presets.push(presetMeta);
-                }
-            }
-            
-            if (presets.length === 0) {
-                console.warn('Could not read any presets via GitHub API');
-                return applyImmediately ? false : null;
-            }
-            
-            const sortedPresets = presets.sort((a, b) => this.sortPresets(a, b));
-            
-            if (applyImmediately) {
-                this.availablePresets = sortedPresets;
-                this.initializePresets();
-                console.log('✅ Presets loaded via GitHub API');
-                return true;
-            }
-            
-            return sortedPresets;
-        } catch (error) {
-            console.warn('Failed to load presets via GitHub API:', error);
-            return applyImmediately ? false : null;
+            console.warn('Failed to load presets manifest:', error);
+            this.updateDropdownText('Error loading presets');
         }
     }
     
@@ -1881,85 +1753,6 @@ class GridGenerator {
         
         // Within same group, sort by size descending (larger to smaller)
         return sizeB - sizeA;
-    }
-    
-    mergePresetLists(primaryList = [], secondaryList = []) {
-        const merged = [];
-        const seenFiles = new Set();
-        
-        const addPreset = (preset) => {
-            if (!preset || !preset.file) return;
-            const normalizedFile = preset.file.toLowerCase();
-            if (seenFiles.has(normalizedFile)) return;
-            seenFiles.add(normalizedFile);
-            merged.push(preset);
-        };
-        
-        primaryList.forEach(addPreset);
-        secondaryList.forEach(addPreset);
-        
-        return merged.sort((a, b) => this.sortPresets(a, b));
-    }
-    
-    extractJsonFilenamesFromListing(listingHtml) {
-        const files = new Set();
-        const regex = /href="([^"]+\.json)"/gi;
-        let match;
-        
-        while ((match = regex.exec(listingHtml)) !== null) {
-            const rawPath = match[1];
-            const normalized = this.normalizePresetFilename(rawPath);
-            if (
-                normalized &&
-                !/manifest\.json$/i.test(normalized) &&
-                !/readme\.json$/i.test(normalized)
-            ) {
-                files.add(normalized);
-            }
-        }
-        
-        return Array.from(files);
-    }
-    
-    normalizePresetFilename(filePath) {
-        if (!filePath) return null;
-        const decoded = decodeURIComponent(filePath)
-            .replace(/\\/g, '/')
-            .replace(/^\.?\//, '')
-            .replace(/^presets\//i, '');
-        return decoded.trim();
-    }
-    
-    async fetchPresetMetadataFromFile(fileName) {
-        if (!fileName) return null;
-        
-        // Use encodeURIComponent for proper encoding of special characters like quotes
-        const encodedName = encodeURIComponent(fileName);
-        const url = `presets/${encodedName}?ts=${Date.now()}`;
-        const fallbackName = this.getPresetDisplayNameFromFilename(fileName);
-        
-        try {
-            const response = await fetch(url, { cache: 'no-store' });
-            if (!response.ok) {
-                console.warn(`Failed to fetch preset ${fileName}:`, response.status);
-                return {
-                    name: fallbackName,
-                    file: fileName
-                };
-            }
-            
-            const presetData = await response.json();
-            return {
-                name: presetData.presetName || fallbackName,
-                file: fileName
-            };
-        } catch (error) {
-            console.warn(`Failed to parse preset ${fileName}:`, error);
-            return {
-                name: fallbackName,
-                file: fileName
-            };
-        }
     }
     
     getPresetDisplayNameFromFilename(fileName) {
