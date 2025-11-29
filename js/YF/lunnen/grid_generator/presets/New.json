@@ -81,7 +81,7 @@
     "columns": 12,
     "rows": 12,
     "rowHeight": 7,
-    "linkMode": "rows-height",
+    "linkMode": "module",
     "visibility": {
       "columns": true,
       "rows": true,
@@ -89,7 +89,7 @@
     }
   },
   "colors": {
-    "background": "#808080"
+    "background": "#82A9D9"
   },
   "typography": {
     "headline": {

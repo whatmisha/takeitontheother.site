@@ -92,6 +92,13 @@ class GridGenerator {
                     this.sliderController.setValue('rowCountSlider', rowCount, false);
                     this.constrainAllObjectsToGrid();
                     this.generateRowPresets();
+                    // При изменении модуля принудительно переключаем единицы в mod, если они были в pt
+                    if (this.settings.fontSizeUnit === 'pt') {
+                        this.switchFontSizeUnit('headline', 'size', 'mod');
+                    }
+                    if (this.settings.lineHeightUnit === 'pt') {
+                        this.switchFontSizeUnit('headline', 'lineHeight', 'mod');
+                    }
                     this.updateGrid();
                 }
             },
@@ -249,23 +256,79 @@ class GridGenerator {
             },
             headlineSizeSlider: {
                 valueId: 'headlineSizeValue',
-                setting: 'headlineSize',
+                // ВАЖНО: headlineSize всегда храним во ВНУТРЕННЕЙ системе в модулях,
+                // а слайдер показывает либо модули, либо пункты в зависимости от fontSizeUnit.
+                setting: null,
                 min: 0.01,
                 max: 25,
                 decimals: 2,
                 baseStep: 0.1,
                 shiftStep: 1,
-                onUpdate: () => this.updateGrid()
+                onUpdate: (displayValue) => {
+                    let value = displayValue;
+                    if (typeof value !== 'number' || Number.isNaN(value)) {
+                        if (this.sliderController) {
+                            const sliderValue = this.sliderController.getValue('headlineSizeSlider');
+                            value = typeof sliderValue === 'number' && !Number.isNaN(sliderValue)
+                                ? sliderValue
+                                : parseFloat(this.dom.headlineSizeSlider?.value || '0');
+                        } else {
+                            value = parseFloat(this.dom.headlineSizeSlider?.value || '0');
+                        }
+                    }
+                    
+                    // Переводим отображаемое значение в модули и сохраняем во внутренних настройках
+                    let sizeInMod;
+                    const currentModule = this.settings.gridModule;
+                    if (this.settings.fontSizeUnit === 'pt') {
+                        // Конвертируем из пунктов в мм, затем в модули с учетом метрик шрифта
+                        const sizeInMm = MathUtils.ptToMm(value);
+                        sizeInMod = this.fontSizeMmToModules(sizeInMm, 'headline');
+                    } else {
+                        sizeInMod = value;
+                    }
+                    sizeInMod = parseFloat(sizeInMod.toFixed(2));
+                    this.settings.headlineSize = sizeInMod;
+                    this.updateGrid();
+                }
             },
             lineHeightSlider: {
                 valueId: 'lineHeightValue',
-                setting: 'lineHeight',
+                // ВАЖНО: lineHeight всегда храним во ВНУТРЕННЕЙ системе в модулях,
+                // а слайдер показывает либо модули, либо пункты в зависимости от lineHeightUnit.
+                setting: null,
                 min: 0.01,
                 max: 50,
                 decimals: 2,
                 baseStep: 0.1,
                 shiftStep: 1,
-                onUpdate: () => this.updateGrid()
+                onUpdate: (displayValue) => {
+                    let value = displayValue;
+                    if (typeof value !== 'number' || Number.isNaN(value)) {
+                        if (this.sliderController) {
+                            const sliderValue = this.sliderController.getValue('lineHeightSlider');
+                            value = typeof sliderValue === 'number' && !Number.isNaN(sliderValue)
+                                ? sliderValue
+                                : parseFloat(this.dom.lineHeightSlider?.value || '0');
+                        } else {
+                            value = parseFloat(this.dom.lineHeightSlider?.value || '0');
+                        }
+                    }
+                    
+                    // Переводим отображаемое значение в модули и сохраняем во внутренних настройках
+                    let lineHeightInMod;
+                    const currentModule = this.settings.gridModule;
+                    if (this.settings.lineHeightUnit === 'pt') {
+                        // Конвертируем из пунктов в мм, затем в модули
+                        const lineHeightInMm = MathUtils.ptToMm(value);
+                        lineHeightInMod = currentModule > 0 ? lineHeightInMm / currentModule : 0;
+                    } else {
+                        lineHeightInMod = value;
+                    }
+                    lineHeightInMod = parseFloat(lineHeightInMod.toFixed(2));
+                    this.settings.lineHeight = lineHeightInMod;
+                    this.updateGrid();
+                }
             },
             trackingSlider: {
                 valueId: 'trackingValue',
@@ -279,23 +342,72 @@ class GridGenerator {
             },
             textSizeSlider: {
                 valueId: 'textSizeValue',
-                setting: 'textSize',
+                setting: null,
                 min: 0.01,
                 max: 25,
                 decimals: 2,
                 baseStep: 0.1,
                 shiftStep: 1,
-                onUpdate: () => this.updateGrid()
+                onUpdate: (displayValue) => {
+                    let value = displayValue;
+                    if (typeof value !== 'number' || Number.isNaN(value)) {
+                        if (this.sliderController) {
+                            const sliderValue = this.sliderController.getValue('textSizeSlider');
+                            value = typeof sliderValue === 'number' && !Number.isNaN(sliderValue)
+                                ? sliderValue
+                                : parseFloat(this.dom.textSizeSlider?.value || '0');
+                        } else {
+                            value = parseFloat(this.dom.textSizeSlider?.value || '0');
+                        }
+                    }
+                    
+                    let sizeInMod;
+                    const currentModule = this.settings.gridModule;
+                    if (this.settings.fontSizeUnit === 'pt') {
+                        // Конвертируем из пунктов в мм, затем в модули с учетом метрик шрифта
+                        const sizeInMm = MathUtils.ptToMm(value);
+                        sizeInMod = this.fontSizeMmToModules(sizeInMm, 'text');
+                    } else {
+                        sizeInMod = value;
+                    }
+                    sizeInMod = parseFloat(sizeInMod.toFixed(2));
+                    this.settings.textSize = sizeInMod;
+                    this.updateGrid();
+                }
             },
             textLineHeightSlider: {
                 valueId: 'textLineHeightValue',
-                setting: 'textLineHeight',
+                setting: null,
                 min: 0.01,
                 max: 50,
                 decimals: 2,
                 baseStep: 0.1,
                 shiftStep: 1,
-                onUpdate: () => this.updateGrid()
+                onUpdate: (displayValue) => {
+                    let value = displayValue;
+                    if (typeof value !== 'number' || Number.isNaN(value)) {
+                        if (this.sliderController) {
+                            const sliderValue = this.sliderController.getValue('textLineHeightSlider');
+                            value = typeof sliderValue === 'number' && !Number.isNaN(sliderValue)
+                                ? sliderValue
+                                : parseFloat(this.dom.textLineHeightSlider?.value || '0');
+                        } else {
+                            value = parseFloat(this.dom.textLineHeightSlider?.value || '0');
+                        }
+                    }
+                    
+                    let lineHeightInMod;
+                    const currentModule = this.settings.gridModule;
+                    if (this.settings.lineHeightUnit === 'pt') {
+                        const lineHeightInMm = MathUtils.ptToMm(value);
+                        lineHeightInMod = currentModule > 0 ? lineHeightInMm / currentModule : 0;
+                    } else {
+                        lineHeightInMod = value;
+                    }
+                    lineHeightInMod = parseFloat(lineHeightInMod.toFixed(2));
+                    this.settings.textLineHeight = lineHeightInMod;
+                    this.updateGrid();
+                }
             },
             textTrackingSlider: {
                 valueId: 'textTrackingValue',
@@ -309,23 +421,72 @@ class GridGenerator {
             },
             captionSizeSlider: {
                 valueId: 'captionSizeValue',
-                setting: 'captionSize',
+                setting: null,
                 min: 0.01,
                 max: 25,
                 decimals: 2,
                 baseStep: 0.1,
                 shiftStep: 1,
-                onUpdate: () => this.updateGrid()
+                onUpdate: (displayValue) => {
+                    let value = displayValue;
+                    if (typeof value !== 'number' || Number.isNaN(value)) {
+                        if (this.sliderController) {
+                            const sliderValue = this.sliderController.getValue('captionSizeSlider');
+                            value = typeof sliderValue === 'number' && !Number.isNaN(sliderValue)
+                                ? sliderValue
+                                : parseFloat(this.dom.captionSizeSlider?.value || '0');
+                        } else {
+                            value = parseFloat(this.dom.captionSizeSlider?.value || '0');
+                        }
+                    }
+                    
+                    let sizeInMod;
+                    const currentModule = this.settings.gridModule;
+                    if (this.settings.fontSizeUnit === 'pt') {
+                        // Конвертируем из пунктов в мм, затем в модули с учетом метрик шрифта
+                        const sizeInMm = MathUtils.ptToMm(value);
+                        sizeInMod = this.fontSizeMmToModules(sizeInMm, 'caption');
+                    } else {
+                        sizeInMod = value;
+                    }
+                    sizeInMod = parseFloat(sizeInMod.toFixed(2));
+                    this.settings.captionSize = sizeInMod;
+                    this.updateGrid();
+                }
             },
             captionLineHeightSlider: {
                 valueId: 'captionLineHeightValue',
-                setting: 'captionLineHeight',
+                setting: null,
                 min: 0.01,
                 max: 50,
                 decimals: 2,
                 baseStep: 0.1,
                 shiftStep: 1,
-                onUpdate: () => this.updateGrid()
+                onUpdate: (displayValue) => {
+                    let value = displayValue;
+                    if (typeof value !== 'number' || Number.isNaN(value)) {
+                        if (this.sliderController) {
+                            const sliderValue = this.sliderController.getValue('captionLineHeightSlider');
+                            value = typeof sliderValue === 'number' && !Number.isNaN(sliderValue)
+                                ? sliderValue
+                                : parseFloat(this.dom.captionLineHeightSlider?.value || '0');
+                        } else {
+                            value = parseFloat(this.dom.captionLineHeightSlider?.value || '0');
+                        }
+                    }
+                    
+                    let lineHeightInMod;
+                    const currentModule = this.settings.gridModule;
+                    if (this.settings.lineHeightUnit === 'pt') {
+                        const lineHeightInMm = MathUtils.ptToMm(value);
+                        lineHeightInMod = currentModule > 0 ? lineHeightInMm / currentModule : 0;
+                    } else {
+                        lineHeightInMod = value;
+                    }
+                    lineHeightInMod = parseFloat(lineHeightInMod.toFixed(2));
+                    this.settings.captionLineHeight = lineHeightInMod;
+                    this.updateGrid();
+                }
             },
             captionTrackingSlider: {
                 valueId: 'captionTrackingValue',
@@ -339,23 +500,72 @@ class GridGenerator {
             },
             lunnenDisplaySizeSlider: {
                 valueId: 'lunnenDisplaySizeValue',
-                setting: 'lunnenDisplaySize',
+                setting: null,
                 min: 0.01,
                 max: 25,
                 decimals: 2,
                 baseStep: 0.1,
                 shiftStep: 1,
-                onUpdate: () => this.updateGrid()
+                onUpdate: (displayValue) => {
+                    let value = displayValue;
+                    if (typeof value !== 'number' || Number.isNaN(value)) {
+                        if (this.sliderController) {
+                            const sliderValue = this.sliderController.getValue('lunnenDisplaySizeSlider');
+                            value = typeof sliderValue === 'number' && !Number.isNaN(sliderValue)
+                                ? sliderValue
+                                : parseFloat(this.dom.lunnenDisplaySizeSlider?.value || '0');
+                        } else {
+                            value = parseFloat(this.dom.lunnenDisplaySizeSlider?.value || '0');
+                        }
+                    }
+                    
+                    let sizeInMod;
+                    const currentModule = this.settings.gridModule;
+                    if (this.settings.fontSizeUnit === 'pt') {
+                        // Конвертируем из пунктов в мм, затем в модули с учетом метрик шрифта
+                        const sizeInMm = MathUtils.ptToMm(value);
+                        sizeInMod = this.fontSizeMmToModules(sizeInMm, 'lunnenDisplay');
+                    } else {
+                        sizeInMod = value;
+                    }
+                    sizeInMod = parseFloat(sizeInMod.toFixed(2));
+                    this.settings.lunnenDisplaySize = sizeInMod;
+                    this.updateGrid();
+                }
             },
             lunnenDisplayLineHeightSlider: {
                 valueId: 'lunnenDisplayLineHeightValue',
-                setting: 'lunnenDisplayLineHeight',
+                setting: null,
                 min: 0.01,
                 max: 50,
                 decimals: 2,
                 baseStep: 0.1,
                 shiftStep: 1,
-                onUpdate: () => this.updateGrid()
+                onUpdate: (displayValue) => {
+                    let value = displayValue;
+                    if (typeof value !== 'number' || Number.isNaN(value)) {
+                        if (this.sliderController) {
+                            const sliderValue = this.sliderController.getValue('lunnenDisplayLineHeightSlider');
+                            value = typeof sliderValue === 'number' && !Number.isNaN(sliderValue)
+                                ? sliderValue
+                                : parseFloat(this.dom.lunnenDisplayLineHeightSlider?.value || '0');
+                        } else {
+                            value = parseFloat(this.dom.lunnenDisplayLineHeightSlider?.value || '0');
+                        }
+                    }
+                    
+                    let lineHeightInMod;
+                    const currentModule = this.settings.gridModule;
+                    if (this.settings.lineHeightUnit === 'pt') {
+                        const lineHeightInMm = MathUtils.ptToMm(value);
+                        lineHeightInMod = currentModule > 0 ? lineHeightInMm / currentModule : 0;
+                    } else {
+                        lineHeightInMod = value;
+                    }
+                    lineHeightInMod = parseFloat(lineHeightInMod.toFixed(2));
+                    this.settings.lunnenDisplayLineHeight = lineHeightInMod;
+                    this.updateGrid();
+                }
             },
             lunnenDisplayTrackingSlider: {
                 valueId: 'lunnenDisplayTrackingValue',
@@ -382,6 +592,8 @@ class GridGenerator {
             gridModule: 5.0505,
             margins: 2,
             marginsUnit: 'mod',
+            fontSizeUnit: 'mod',  // 'mod' или 'pt' для кегля
+            lineHeightUnit: 'mod',  // 'mod' или 'pt' для интерлиньяжа (независимо от fontSizeUnit)
             columnCount: 12,
             rowCount: 12,
             rowHeight: 7,
@@ -606,6 +818,9 @@ class GridGenerator {
         this.initValueInputs();
         this.initSizeInputsWithArrows();
         this.initCollapsibleSections();
+        
+        // Initialize font size unit buttons state
+        this.initFontSizeUnitButtons();
         this.initDropdowns();
         this.initParagraphPanel();
         // DEPRECATED: Icons and Claim now use unified graphics system
@@ -735,24 +950,36 @@ class GridGenerator {
             // Text controls - Headline
             headlineSizeSlider: document.getElementById('headlineSizeSlider'),
             headlineSizeValue: document.getElementById('headlineSizeValue'),
+            headlineSizeUnitMod: document.getElementById('headlineSizeUnitMod'),
+            headlineSizeUnitPt: document.getElementById('headlineSizeUnitPt'),
             lineHeightSlider: document.getElementById('lineHeightSlider'),
             lineHeightValue: document.getElementById('lineHeightValue'),
+            headlineLineHeightUnitMod: document.getElementById('headlineLineHeightUnitMod'),
+            headlineLineHeightUnitPt: document.getElementById('headlineLineHeightUnitPt'),
             trackingSlider: document.getElementById('trackingSlider'),
             trackingValue: document.getElementById('trackingValue'),
             useXHeight: document.getElementById('useXHeight'),
             // Text controls - Text
             textSizeSlider: document.getElementById('textSizeSlider'),
             textSizeValue: document.getElementById('textSizeValue'),
+            textSizeUnitMod: document.getElementById('textSizeUnitMod'),
+            textSizeUnitPt: document.getElementById('textSizeUnitPt'),
             textLineHeightSlider: document.getElementById('textLineHeightSlider'),
             textLineHeightValue: document.getElementById('textLineHeightValue'),
+            textLineHeightUnitMod: document.getElementById('textLineHeightUnitMod'),
+            textLineHeightUnitPt: document.getElementById('textLineHeightUnitPt'),
             textTrackingSlider: document.getElementById('textTrackingSlider'),
             textTrackingValue: document.getElementById('textTrackingValue'),
             useXHeight2: document.getElementById('useXHeight2'),
             // Text controls - Caption
             captionSizeSlider: document.getElementById('captionSizeSlider'),
             captionSizeValue: document.getElementById('captionSizeValue'),
+            captionSizeUnitMod: document.getElementById('captionSizeUnitMod'),
+            captionSizeUnitPt: document.getElementById('captionSizeUnitPt'),
             captionLineHeightSlider: document.getElementById('captionLineHeightSlider'),
             captionLineHeightValue: document.getElementById('captionLineHeightValue'),
+            captionLineHeightUnitMod: document.getElementById('captionLineHeightUnitMod'),
+            captionLineHeightUnitPt: document.getElementById('captionLineHeightUnitPt'),
             captionTrackingSlider: document.getElementById('captionTrackingSlider'),
             captionTrackingValue: document.getElementById('captionTrackingValue'),
             useXHeightCaption: document.getElementById('useXHeightCaption'),
@@ -760,8 +987,12 @@ class GridGenerator {
             // Text controls - Lunnen Display
             lunnenDisplaySizeSlider: document.getElementById('lunnenDisplaySizeSlider'),
             lunnenDisplaySizeValue: document.getElementById('lunnenDisplaySizeValue'),
+            lunnenDisplaySizeUnitMod: document.getElementById('lunnenDisplaySizeUnitMod'),
+            lunnenDisplaySizeUnitPt: document.getElementById('lunnenDisplaySizeUnitPt'),
             lunnenDisplayLineHeightSlider: document.getElementById('lunnenDisplayLineHeightSlider'),
             lunnenDisplayLineHeightValue: document.getElementById('lunnenDisplayLineHeightValue'),
+            lunnenDisplayLineHeightUnitMod: document.getElementById('lunnenDisplayLineHeightUnitMod'),
+            lunnenDisplayLineHeightUnitPt: document.getElementById('lunnenDisplayLineHeightUnitPt'),
             lunnenDisplayTrackingSlider: document.getElementById('lunnenDisplayTrackingSlider'),
             lunnenDisplayTrackingValue: document.getElementById('lunnenDisplayTrackingValue'),
             lunnenDisplayFontSize: document.getElementById('lunnenDisplayFontSize'),
@@ -777,6 +1008,7 @@ class GridGenerator {
             // Alignment mode radio buttons
             alignmentModeBaseline: document.getElementById('alignmentModeBaseline'),
             alignmentModeXHeight: document.getElementById('alignmentModeXHeight'),
+            alignmentModeCapHeight: document.getElementById('alignmentModeCapHeight'),
             // Lock position toggle
             paragraphLockPositionToggle: document.getElementById('paragraphLockPositionToggle'),
             // Align right toggle
@@ -932,6 +1164,142 @@ class GridGenerator {
                 e.preventDefault();
                 if (this.settings.marginsUnit !== 'mm') {
                     this.switchMarginsUnit('mm');
+                }
+            });
+        }
+        
+        // Font size unit buttons - Headline
+        if (this.dom.headlineSizeUnitMod) {
+            this.dom.headlineSizeUnitMod.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.settings.fontSizeUnit !== 'mod') {
+                    this.switchFontSizeUnit('headline', 'size', 'mod');
+                }
+            });
+        }
+        if (this.dom.headlineSizeUnitPt) {
+            this.dom.headlineSizeUnitPt.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.settings.fontSizeUnit !== 'pt') {
+                    this.switchFontSizeUnit('headline', 'size', 'pt');
+                }
+            });
+        }
+        if (this.dom.headlineLineHeightUnitMod) {
+            this.dom.headlineLineHeightUnitMod.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.settings.lineHeightUnit !== 'mod') {
+                    this.switchFontSizeUnit('headline', 'lineHeight', 'mod');
+                }
+            });
+        }
+        if (this.dom.headlineLineHeightUnitPt) {
+            this.dom.headlineLineHeightUnitPt.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.settings.lineHeightUnit !== 'pt') {
+                    this.switchFontSizeUnit('headline', 'lineHeight', 'pt');
+                }
+            });
+        }
+        
+        // Font size unit buttons - Text
+        if (this.dom.textSizeUnitMod) {
+            this.dom.textSizeUnitMod.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.settings.fontSizeUnit !== 'mod') {
+                    this.switchFontSizeUnit('text', 'size', 'mod');
+                }
+            });
+        }
+        if (this.dom.textSizeUnitPt) {
+            this.dom.textSizeUnitPt.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.settings.fontSizeUnit !== 'pt') {
+                    this.switchFontSizeUnit('text', 'size', 'pt');
+                }
+            });
+        }
+        if (this.dom.textLineHeightUnitMod) {
+            this.dom.textLineHeightUnitMod.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.settings.lineHeightUnit !== 'mod') {
+                    this.switchFontSizeUnit('text', 'lineHeight', 'mod');
+                }
+            });
+        }
+        if (this.dom.textLineHeightUnitPt) {
+            this.dom.textLineHeightUnitPt.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.settings.lineHeightUnit !== 'pt') {
+                    this.switchFontSizeUnit('text', 'lineHeight', 'pt');
+                }
+            });
+        }
+        
+        // Font size unit buttons - Caption
+        if (this.dom.captionSizeUnitMod) {
+            this.dom.captionSizeUnitMod.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.settings.fontSizeUnit !== 'mod') {
+                    this.switchFontSizeUnit('caption', 'size', 'mod');
+                }
+            });
+        }
+        if (this.dom.captionSizeUnitPt) {
+            this.dom.captionSizeUnitPt.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.settings.fontSizeUnit !== 'pt') {
+                    this.switchFontSizeUnit('caption', 'size', 'pt');
+                }
+            });
+        }
+        if (this.dom.captionLineHeightUnitMod) {
+            this.dom.captionLineHeightUnitMod.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.settings.lineHeightUnit !== 'mod') {
+                    this.switchFontSizeUnit('caption', 'lineHeight', 'mod');
+                }
+            });
+        }
+        if (this.dom.captionLineHeightUnitPt) {
+            this.dom.captionLineHeightUnitPt.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.settings.lineHeightUnit !== 'pt') {
+                    this.switchFontSizeUnit('caption', 'lineHeight', 'pt');
+                }
+            });
+        }
+        
+        // Font size unit buttons - Lunnen Display
+        if (this.dom.lunnenDisplaySizeUnitMod) {
+            this.dom.lunnenDisplaySizeUnitMod.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.settings.fontSizeUnit !== 'mod') {
+                    this.switchFontSizeUnit('lunnenDisplay', 'size', 'mod');
+                }
+            });
+        }
+        if (this.dom.lunnenDisplaySizeUnitPt) {
+            this.dom.lunnenDisplaySizeUnitPt.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.settings.fontSizeUnit !== 'pt') {
+                    this.switchFontSizeUnit('lunnenDisplay', 'size', 'pt');
+                }
+            });
+        }
+        if (this.dom.lunnenDisplayLineHeightUnitMod) {
+            this.dom.lunnenDisplayLineHeightUnitMod.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.settings.lineHeightUnit !== 'mod') {
+                    this.switchFontSizeUnit('lunnenDisplay', 'lineHeight', 'mod');
+                }
+            });
+        }
+        if (this.dom.lunnenDisplayLineHeightUnitPt) {
+            this.dom.lunnenDisplayLineHeightUnitPt.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.settings.lineHeightUnit !== 'pt') {
+                    this.switchFontSizeUnit('lunnenDisplay', 'lineHeight', 'pt');
                 }
             });
         }
@@ -1741,6 +2109,10 @@ class GridGenerator {
                 Object.entries(normalizedData.settings).forEach(([key, value]) => {
                     this.settingsModule.set(key, value);
                 });
+                // Для обратной совместимости: если lineHeightUnit отсутствует, устанавливаем 'mod'
+                if (!normalizedData.settings.hasOwnProperty('lineHeightUnit')) {
+                    this.settingsModule.set('lineHeightUnit', 'mod');
+                }
             }
             
             // Apply text blocks
@@ -1789,7 +2161,74 @@ class GridGenerator {
         // Update sliders via SliderController
         Object.keys(this.SLIDER_CONFIG).forEach(sliderId => {
             const config = this.SLIDER_CONFIG[sliderId];
-            if (settings[config.setting] !== undefined) {
+            
+            // Для слайдеров с setting: null нужно обновить вручную
+            if (config.setting === null) {
+                // Определяем настройку по имени слайдера
+                const settingMap = {
+                    headlineSizeSlider: 'headlineSize',
+                    lineHeightSlider: 'lineHeight',
+                    textSizeSlider: 'textSize',
+                    textLineHeightSlider: 'textLineHeight',
+                    captionSizeSlider: 'captionSize',
+                    captionLineHeightSlider: 'captionLineHeight',
+                    lunnenDisplaySizeSlider: 'lunnenDisplaySize',
+                    lunnenDisplayLineHeightSlider: 'lunnenDisplayLineHeight',
+                    marginsSlider: 'margins'
+                };
+                
+                const settingKey = settingMap[sliderId];
+                if (settingKey && settings[settingKey] !== undefined) {
+                    // Проверяем текущую единицу измерения
+                    if (sliderId === 'marginsSlider') {
+                        // Для margins проверяем marginsUnit
+                        if (settings.marginsUnit === 'mm') {
+                            const marginsInMm = settings.margins * settings.gridModule;
+                            this.sliderController.setValue(sliderId, parseFloat(marginsInMm.toFixed(2)), false);
+                        } else {
+                            this.sliderController.setValue(sliderId, settings[settingKey], false);
+                        }
+                    } else {
+                        // Для размера шрифта и интерлиньяжа проверяем соответствующие единицы
+                        const valueInMod = settings[settingKey];
+                        const isSize = settingKey.includes('Size');
+                        
+                        // Определяем единицу для этого слайдера
+                        const unit = isSize ? (settings.fontSizeUnit || 'mod') : (settings.lineHeightUnit || 'mod');
+                        
+                        if (unit === 'pt') {
+                            // Конвертируем в пункты
+                            let valueInMm;
+                            if (isSize) {
+                                // Для размера шрифта используем функцию расчета
+                                const styleMap = {
+                                    headlineSize: 'headline',
+                                    textSize: 'text',
+                                    captionSize: 'caption',
+                                    lunnenDisplaySize: 'lunnenDisplay'
+                                };
+                                const style = styleMap[settingKey];
+                                const calculateFunctions = {
+                                    headline: () => this.calculateFontSize(),
+                                    text: () => this.calculateTextStyleFontSize(),
+                                    caption: () => this.calculateCaptionStyleFontSize(),
+                                    lunnenDisplay: () => this.calculateLunnenDisplayStyleFontSize()
+                                };
+                                valueInMm = calculateFunctions[style]?.() || (valueInMod * settings.gridModule);
+                            } else {
+                                // Для интерлиньяжа просто умножаем на модуль
+                                valueInMm = valueInMod * settings.gridModule;
+                            }
+                            
+                            const valueInPt = MathUtils.mmToPt(valueInMm);
+                            this.sliderController.setValue(sliderId, parseFloat(valueInPt.toFixed(2)), false);
+                        } else {
+                            // В модулях - просто используем значение из настроек
+                            this.sliderController.setValue(sliderId, settings[settingKey], false);
+                        }
+                    }
+                }
+            } else if (settings[config.setting] !== undefined) {
                 this.sliderController.setValue(sliderId, settings[config.setting], false);
             }
         });
@@ -1812,6 +2251,63 @@ class GridGenerator {
             if (this.dom.linkModeModule) this.dom.linkModeModule.checked = true;
         }
         this.updateLinkedControlsVisual();
+        
+        // Update margins unit buttons
+        if (settings.marginsUnit) {
+            if (this.dom.marginsUnitMod && this.dom.marginsUnitMm) {
+                if (settings.marginsUnit === 'mod') {
+                    this.dom.marginsUnitMod.classList.add('active');
+                    this.dom.marginsUnitMm.classList.remove('active');
+                } else {
+                    this.dom.marginsUnitMm.classList.add('active');
+                    this.dom.marginsUnitMod.classList.remove('active');
+                }
+            }
+        }
+        
+        // Update font size unit buttons
+        const fontSizeUnit = settings.fontSizeUnit || 'mod';
+        const lineHeightUnit = settings.lineHeightUnit || 'mod';
+        
+        // Update size buttons
+        const sizeButtons = [
+            { mod: this.dom.headlineSizeUnitMod, pt: this.dom.headlineSizeUnitPt },
+            { mod: this.dom.textSizeUnitMod, pt: this.dom.textSizeUnitPt },
+            { mod: this.dom.captionSizeUnitMod, pt: this.dom.captionSizeUnitPt },
+            { mod: this.dom.lunnenDisplaySizeUnitMod, pt: this.dom.lunnenDisplaySizeUnitPt }
+        ];
+        
+        sizeButtons.forEach(buttons => {
+            if (buttons.mod && buttons.pt) {
+                if (fontSizeUnit === 'mod') {
+                    buttons.mod.classList.add('active');
+                    buttons.pt.classList.remove('active');
+                } else {
+                    buttons.pt.classList.add('active');
+                    buttons.mod.classList.remove('active');
+                }
+            }
+        });
+        
+        // Update line height buttons
+        const lineHeightButtons = [
+            { mod: this.dom.headlineLineHeightUnitMod, pt: this.dom.headlineLineHeightUnitPt },
+            { mod: this.dom.textLineHeightUnitMod, pt: this.dom.textLineHeightUnitPt },
+            { mod: this.dom.captionLineHeightUnitMod, pt: this.dom.captionLineHeightUnitPt },
+            { mod: this.dom.lunnenDisplayLineHeightUnitMod, pt: this.dom.lunnenDisplayLineHeightUnitPt }
+        ];
+        
+        lineHeightButtons.forEach(buttons => {
+            if (buttons.mod && buttons.pt) {
+                if (lineHeightUnit === 'mod') {
+                    buttons.mod.classList.add('active');
+                    buttons.pt.classList.remove('active');
+                } else {
+                    buttons.pt.classList.add('active');
+                    buttons.mod.classList.remove('active');
+                }
+            }
+        });
         
         // Update margins unit buttons
         if (settings.marginsUnit === 'mm') {
@@ -2304,6 +2800,15 @@ class GridGenerator {
             this.dom.alignmentModeXHeight.addEventListener('change', () => {
                 if (this.currentEditingBlock && this.dom.alignmentModeXHeight.checked) {
                     this.currentEditingBlock.alignmentMode = 'x-height';
+                    this.updateGrid();
+                }
+            });
+        }
+        
+        if (this.dom.alignmentModeCapHeight) {
+            this.dom.alignmentModeCapHeight.addEventListener('change', () => {
+                if (this.currentEditingBlock && this.dom.alignmentModeCapHeight.checked) {
+                    this.currentEditingBlock.alignmentMode = 'cap-height';
                     this.updateGrid();
                 }
             });
@@ -3278,11 +3783,11 @@ class GridGenerator {
                         const margins = this.settings.margins;
                         const aspectRatio = block.originalWidth / block.originalHeight;
                         
-                        // Different max values for height and width modes
-                        const maxValue = sizeMode === 'height' ? 20 : 100;
-                        const constrainedValue = Math.max(0.25, Math.min(value, maxValue));
-                        
                         if (sizeMode === 'height') {
+                            // Max height: 20 modules
+                            const maxValue = 20;
+                            const constrainedValue = Math.max(0.25, Math.min(value, maxValue));
+                            
                             // After changing height, recheck vertical position constraints
                             const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
                             const maxYInBaseline = Math.floor(contentHeightMm / module);
@@ -3301,18 +3806,18 @@ class GridGenerator {
                                     this.dom.graphicsBaselineInput.value = globalBaseline + 1;
                                 }
                             }
-                        } else {
-                            // sizeMode === 'width': check horizontal constraints
-                            const widthInMm = constrainedValue * module;
-                            const contentWidthMm = this.settings.frontWidth - 2 * margins * module;
                             
-                            // Ensure graphics fits within content area
-                            if (widthInMm > contentWidthMm) {
-                                return Math.floor(contentWidthMm / module * 4) / 4; // Round down to 0.25
-                            }
+                            return constrainedValue;
+                        } else {
+                            // sizeMode === 'width': calculate max width dynamically
+                            const contentWidthMm = this.settings.frontWidth - 2 * margins * module;
+                            const maxWidthInModules = contentWidthMm / module;
+                            
+                            // Constrain to available width
+                            const constrainedValue = Math.max(0.25, Math.min(value, maxWidthInModules));
+                            
+                            return constrainedValue;
                         }
-                        
-                        return constrainedValue;
                     }
                 }
             ];
@@ -3590,13 +4095,19 @@ class GridGenerator {
                 
                 // Устанавливаем режим выравнивания (по умолчанию baseline)
                 const alignmentMode = block.alignmentMode || 'baseline';
-                if (this.dom.alignmentModeBaseline && this.dom.alignmentModeXHeight) {
+                if (this.dom.alignmentModeBaseline && this.dom.alignmentModeXHeight && this.dom.alignmentModeCapHeight) {
                     if (alignmentMode === 'x-height') {
                         this.dom.alignmentModeXHeight.checked = true;
                         this.dom.alignmentModeBaseline.checked = false;
+                        this.dom.alignmentModeCapHeight.checked = false;
+                    } else if (alignmentMode === 'cap-height') {
+                        this.dom.alignmentModeCapHeight.checked = true;
+                        this.dom.alignmentModeBaseline.checked = false;
+                        this.dom.alignmentModeXHeight.checked = false;
                     } else {
                         this.dom.alignmentModeBaseline.checked = true;
                         this.dom.alignmentModeXHeight.checked = false;
+                        this.dom.alignmentModeCapHeight.checked = false;
                     }
                 }
             }
@@ -4378,13 +4889,14 @@ class GridGenerator {
             }
         }
         
-        // Update the input value
+        // Update the input value and max attribute
         if (newMode === 'height') {
             // Show height in modules
             const heightInModules = actualHeightInMm / module;
             block.heightInModules = parseFloat(heightInModules.toFixed(2));
             if (this.dom.graphicsSizeInput) {
                 this.dom.graphicsSizeInput.value = heightInModules.toFixed(2);
+                this.dom.graphicsSizeInput.dataset.max = '20'; // Max height: 20 modules
             }
         } else {
             // Show width in modules
@@ -4392,6 +4904,11 @@ class GridGenerator {
             block.widthInModules = parseFloat(widthInModules.toFixed(2));
             if (this.dom.graphicsSizeInput) {
                 this.dom.graphicsSizeInput.value = widthInModules.toFixed(2);
+                // Calculate max width dynamically: content width / module
+                const margins = this.settings.margins;
+                const contentWidthMm = this.settings.frontWidth - 2 * margins * module;
+                const maxWidthInModules = contentWidthMm / module;
+                this.dom.graphicsSizeInput.dataset.max = maxWidthInModules.toFixed(2);
             }
         }
         
@@ -4460,6 +4977,267 @@ class GridGenerator {
                 valueDisplay.dataset.min = '0';
                 valueDisplay.dataset.max = '10';
             }
+        }
+    }
+    
+    // Switch font size and line height unit between mod and pt
+    // style: 'headline', 'text', 'caption', 'lunnenDisplay'
+    // property: 'size' or 'lineHeight'
+    switchFontSizeUnit(style, property, newUnit) {
+        // Значения ВСЕГДА храним в модулях; при переключении единиц сохраняем физический размер.
+        const currentModule = this.settings.gridModule;
+        
+        // Определяем настройку для текущего стиля и свойства
+        const settingMap = {
+            headline: { size: 'headlineSize', lineHeight: 'lineHeight' },
+            text: { size: 'textSize', lineHeight: 'textLineHeight' },
+            caption: { size: 'captionSize', lineHeight: 'captionLineHeight' },
+            lunnenDisplay: { size: 'lunnenDisplaySize', lineHeight: 'lunnenDisplayLineHeight' }
+        };
+        
+        const settingKey = settingMap[style]?.[property];
+        if (!settingKey) return;
+        
+        const currentValueInMod = this.settings[settingKey];
+        
+        // Для размера шрифта нужно получить фактический размер в мм
+        let actualSizeInMm;
+        if (property === 'size') {
+            // Используем функцию расчета размера шрифта для каждого стиля
+            const calculateFunctions = {
+                headline: () => this.calculateFontSize(),
+                text: () => this.calculateTextStyleFontSize(),
+                caption: () => this.calculateCaptionStyleFontSize(),
+                lunnenDisplay: () => this.calculateLunnenDisplayStyleFontSize()
+            };
+            actualSizeInMm = calculateFunctions[style]?.() || (currentValueInMod * currentModule);
+        } else {
+            // Для интерлиньяжа просто умножаем на модуль
+            actualSizeInMm = currentValueInMod * currentModule;
+        }
+        
+        // Физический размер в пунктах, который должен остаться неизменным
+        const actualSizeInPt = MathUtils.mmToPt(actualSizeInMm);
+        
+        // Обновляем единицу в настройках независимо для размера и интерлиньяжа
+        if (property === 'size') {
+            this.settings.fontSizeUnit = newUnit;
+        } else {
+            this.settings.lineHeightUnit = newUnit;
+        }
+        
+        // Обновляем кнопки переключения единиц только для соответствующего свойства
+        const buttonMap = {
+            headline: {
+                size: { mod: this.dom.headlineSizeUnitMod, pt: this.dom.headlineSizeUnitPt },
+                lineHeight: { mod: this.dom.headlineLineHeightUnitMod, pt: this.dom.headlineLineHeightUnitPt }
+            },
+            text: {
+                size: { mod: this.dom.textSizeUnitMod, pt: this.dom.textSizeUnitPt },
+                lineHeight: { mod: this.dom.textLineHeightUnitMod, pt: this.dom.textLineHeightUnitPt }
+            },
+            caption: {
+                size: { mod: this.dom.captionSizeUnitMod, pt: this.dom.captionSizeUnitPt },
+                lineHeight: { mod: this.dom.captionLineHeightUnitMod, pt: this.dom.captionLineHeightUnitPt }
+            },
+            lunnenDisplay: {
+                size: { mod: this.dom.lunnenDisplaySizeUnitMod, pt: this.dom.lunnenDisplaySizeUnitPt },
+                lineHeight: { mod: this.dom.lunnenDisplayLineHeightUnitMod, pt: this.dom.lunnenDisplayLineHeightUnitPt }
+            }
+        };
+        
+        const buttons = buttonMap[style]?.[property];
+        if (buttons && buttons.mod && buttons.pt) {
+            if (newUnit === 'mod') {
+                buttons.mod.classList.add('active');
+                buttons.pt.classList.remove('active');
+            } else {
+                buttons.pt.classList.add('active');
+                buttons.mod.classList.remove('active');
+            }
+        }
+        
+        // Обновляем слайдер только для текущего стиля и свойства
+        const sliderMap = {
+            headline: {
+                size: { id: 'headlineSizeSlider', setting: 'headlineSize' },
+                lineHeight: { id: 'lineHeightSlider', setting: 'lineHeight' }
+            },
+            text: {
+                size: { id: 'textSizeSlider', setting: 'textSize' },
+                lineHeight: { id: 'textLineHeightSlider', setting: 'textLineHeight' }
+            },
+            caption: {
+                size: { id: 'captionSizeSlider', setting: 'captionSize' },
+                lineHeight: { id: 'captionLineHeightSlider', setting: 'captionLineHeight' }
+            },
+            lunnenDisplay: {
+                size: { id: 'lunnenDisplaySizeSlider', setting: 'lunnenDisplaySize' },
+                lineHeight: { id: 'lunnenDisplayLineHeightSlider', setting: 'lunnenDisplayLineHeight' }
+            }
+        };
+        
+        const sliderInfo = sliderMap[style]?.[property];
+        if (sliderInfo && this.sliderController) {
+            if (newUnit === 'pt') {
+                // Диапазон в пунктах: 0–500 (примерно 0–176 мм)
+                const maxSizeInPt = 500;
+                const actualSizeInPt = MathUtils.mmToPt(actualSizeInMm);
+                this.sliderController.updateLimits(sliderInfo.id, 0, maxSizeInPt);
+                this.sliderController.setValue(sliderInfo.id, parseFloat(actualSizeInPt.toFixed(2)), false);
+            } else {
+                // Возвращаемся к модулям
+                const config = this.SLIDER_CONFIG[sliderInfo.id];
+                if (config) {
+                    this.sliderController.updateLimits(sliderInfo.id, config.min, config.max);
+                    this.sliderController.setValue(sliderInfo.id, parseFloat(currentValueInMod.toFixed(2)), false);
+                }
+            }
+        }
+        
+        // Обновляем все остальные слайдеры того же типа (размер или интерлиньяж) для синхронизации отображения
+        const allSliders = [
+            { id: 'headlineSizeSlider', setting: 'headlineSize', property: 'size', style: 'headline' },
+            { id: 'lineHeightSlider', setting: 'lineHeight', property: 'lineHeight', style: 'headline' },
+            { id: 'textSizeSlider', setting: 'textSize', property: 'size', style: 'text' },
+            { id: 'textLineHeightSlider', setting: 'textLineHeight', property: 'lineHeight', style: 'text' },
+            { id: 'captionSizeSlider', setting: 'captionSize', property: 'size', style: 'caption' },
+            { id: 'captionLineHeightSlider', setting: 'captionLineHeight', property: 'lineHeight', style: 'caption' },
+            { id: 'lunnenDisplaySizeSlider', setting: 'lunnenDisplaySize', property: 'size', style: 'lunnenDisplay' },
+            { id: 'lunnenDisplayLineHeightSlider', setting: 'lunnenDisplayLineHeight', property: 'lineHeight', style: 'lunnenDisplay' }
+        ];
+        
+        if (this.sliderController) {
+            allSliders.forEach(slider => {
+                // Обновляем только слайдеры того же типа (size или lineHeight)
+                if (slider.property === property) {
+                    const currentValueInMod = this.settings[slider.setting];
+                    
+                    // Получаем фактический размер в мм
+                    let actualSizeInMm;
+                    if (slider.property === 'size') {
+                        const calculateFunctions = {
+                            headline: () => this.calculateFontSize(),
+                            text: () => this.calculateTextStyleFontSize(),
+                            caption: () => this.calculateCaptionStyleFontSize(),
+                            lunnenDisplay: () => this.calculateLunnenDisplayStyleFontSize()
+                        };
+                        actualSizeInMm = calculateFunctions[slider.style]?.() || (currentValueInMod * currentModule);
+                    } else {
+                        actualSizeInMm = currentValueInMod * currentModule;
+                    }
+                    
+                    // Определяем единицу для этого слайдера
+                    const unit = slider.property === 'size' ? this.settings.fontSizeUnit : this.settings.lineHeightUnit;
+                    
+                    if (unit === 'pt') {
+                        const maxSizeInPt = 500;
+                        const actualSizeInPt = MathUtils.mmToPt(actualSizeInMm);
+                        this.sliderController.updateLimits(slider.id, 0, maxSizeInPt);
+                        this.sliderController.setValue(slider.id, parseFloat(actualSizeInPt.toFixed(2)), false);
+                    } else {
+                        const config = this.SLIDER_CONFIG[slider.id];
+                        if (config) {
+                            this.sliderController.updateLimits(slider.id, config.min, config.max);
+                            this.sliderController.setValue(slider.id, parseFloat(currentValueInMod.toFixed(2)), false);
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    // Initialize font size unit buttons state and update slider values
+    initFontSizeUnitButtons() {
+        const fontSizeUnit = this.settings.fontSizeUnit || 'mod';
+        const lineHeightUnit = this.settings.lineHeightUnit || 'mod';
+        
+        // Update size buttons state
+        const sizeButtons = [
+            { mod: this.dom.headlineSizeUnitMod, pt: this.dom.headlineSizeUnitPt },
+            { mod: this.dom.textSizeUnitMod, pt: this.dom.textSizeUnitPt },
+            { mod: this.dom.captionSizeUnitMod, pt: this.dom.captionSizeUnitPt },
+            { mod: this.dom.lunnenDisplaySizeUnitMod, pt: this.dom.lunnenDisplaySizeUnitPt }
+        ];
+        
+        sizeButtons.forEach(buttons => {
+            if (buttons.mod && buttons.pt) {
+                if (fontSizeUnit === 'mod') {
+                    buttons.mod.classList.add('active');
+                    buttons.pt.classList.remove('active');
+                } else {
+                    buttons.pt.classList.add('active');
+                    buttons.mod.classList.remove('active');
+                }
+            }
+        });
+        
+        // Update line height buttons state
+        const lineHeightButtons = [
+            { mod: this.dom.headlineLineHeightUnitMod, pt: this.dom.headlineLineHeightUnitPt },
+            { mod: this.dom.textLineHeightUnitMod, pt: this.dom.textLineHeightUnitPt },
+            { mod: this.dom.captionLineHeightUnitMod, pt: this.dom.captionLineHeightUnitPt },
+            { mod: this.dom.lunnenDisplayLineHeightUnitMod, pt: this.dom.lunnenDisplayLineHeightUnitPt }
+        ];
+        
+        lineHeightButtons.forEach(buttons => {
+            if (buttons.mod && buttons.pt) {
+                if (lineHeightUnit === 'mod') {
+                    buttons.mod.classList.add('active');
+                    buttons.pt.classList.remove('active');
+                } else {
+                    buttons.pt.classList.add('active');
+                    buttons.mod.classList.remove('active');
+                }
+            }
+        });
+        
+        // Update slider values based on current units
+        if (this.sliderController) {
+            const currentModule = this.settings.gridModule;
+            const allSliders = [
+                { id: 'headlineSizeSlider', setting: 'headlineSize', property: 'size', style: 'headline' },
+                { id: 'lineHeightSlider', setting: 'lineHeight', property: 'lineHeight', style: 'headline' },
+                { id: 'textSizeSlider', setting: 'textSize', property: 'size', style: 'text' },
+                { id: 'textLineHeightSlider', setting: 'textLineHeight', property: 'lineHeight', style: 'text' },
+                { id: 'captionSizeSlider', setting: 'captionSize', property: 'size', style: 'caption' },
+                { id: 'captionLineHeightSlider', setting: 'captionLineHeight', property: 'lineHeight', style: 'caption' },
+                { id: 'lunnenDisplaySizeSlider', setting: 'lunnenDisplaySize', property: 'size', style: 'lunnenDisplay' },
+                { id: 'lunnenDisplayLineHeightSlider', setting: 'lunnenDisplayLineHeight', property: 'lineHeight', style: 'lunnenDisplay' }
+            ];
+            
+            allSliders.forEach(sliderInfo => {
+                const currentValueInMod = this.settings[sliderInfo.setting];
+                
+                // Определяем единицу для этого слайдера
+                const unit = sliderInfo.property === 'size' ? fontSizeUnit : lineHeightUnit;
+                
+                let actualSizeInMm;
+                if (sliderInfo.property === 'size') {
+                    const calculateFunctions = {
+                        headline: () => this.calculateFontSize(),
+                        text: () => this.calculateTextStyleFontSize(),
+                        caption: () => this.calculateCaptionStyleFontSize(),
+                        lunnenDisplay: () => this.calculateLunnenDisplayStyleFontSize()
+                    };
+                    actualSizeInMm = calculateFunctions[sliderInfo.style]?.() || (currentValueInMod * currentModule);
+                } else {
+                    actualSizeInMm = currentValueInMod * currentModule;
+                }
+                
+                if (unit === 'pt') {
+                    const actualSizeInPt = MathUtils.mmToPt(actualSizeInMm);
+                    const maxSizeInPt = 500;
+                    this.sliderController.updateLimits(sliderInfo.id, 0, maxSizeInPt);
+                    this.sliderController.setValue(sliderInfo.id, parseFloat(actualSizeInPt.toFixed(2)), false);
+                } else {
+                    const config = this.SLIDER_CONFIG[sliderInfo.id];
+                    if (config) {
+                        this.sliderController.updateLimits(sliderInfo.id, config.min, config.max);
+                        this.sliderController.setValue(sliderInfo.id, parseFloat(currentValueInMod.toFixed(2)), false);
+                    }
+                }
+            });
         }
     }
     
@@ -4951,6 +5729,46 @@ class GridGenerator {
         return fontSize;
     }
     
+    // Convert font size from mm back to modules (inverse of calculateFontSize)
+    // For headline style
+    fontSizeMmToModules(fontSizeMm, styleRef) {
+        const module = this.settings.gridModule;
+        const metrics = this.getFontMetricsForStyle(styleRef);
+        
+        let targetSize;
+        if (styleRef === 'headline') {
+            if (this.settings.useXHeight) {
+                targetSize = fontSizeMm * (metrics.xHeight / metrics.unitsPerEm);
+            } else {
+                targetSize = fontSizeMm * (metrics.capHeight / metrics.unitsPerEm);
+            }
+        } else if (styleRef === 'text') {
+            if (this.settings.useXHeight2) {
+                targetSize = fontSizeMm * (metrics.xHeight / metrics.unitsPerEm);
+            } else {
+                targetSize = fontSizeMm * (metrics.capHeight / metrics.unitsPerEm);
+            }
+        } else if (styleRef === 'caption') {
+            if (this.settings.useXHeightCaption) {
+                targetSize = fontSizeMm * (metrics.xHeight / metrics.unitsPerEm);
+            } else {
+                targetSize = fontSizeMm * (metrics.capHeight / metrics.unitsPerEm);
+            }
+        } else if (styleRef === 'lunnenDisplay') {
+            if (this.settings.useXHeightLunnenDisplay) {
+                targetSize = fontSizeMm * (metrics.xHeight / metrics.unitsPerEm);
+            } else {
+                targetSize = fontSizeMm * (metrics.capHeight / metrics.unitsPerEm);
+            }
+        } else {
+            // Fallback: simple division
+            targetSize = fontSizeMm;
+        }
+        
+        const sizeInModules = module > 0 ? targetSize / module : 0;
+        return sizeInModules;
+    }
+    
     // Get style settings for any styleRef
     getStyleSettings(styleRef) {
         switch(styleRef) {
@@ -5102,8 +5920,8 @@ class GridGenerator {
         
         let nearestBaseline;
         if (isFirstLine) {
-            // Для x-height режима первая строка НЕ привязывается к baseline - возвращаем как есть
-            if (alignmentMode === 'x-height') {
+            // Для x-height и cap-height режимов первая строка НЕ привязывается к baseline - возвращаем как есть
+            if (alignmentMode === 'x-height' || alignmentMode === 'cap-height') {
                 return y; // Возвращаем исходную позицию без округления
             }
             // Первая строка в baseline режиме - привязываем к целому модулю (baseline сетка)
@@ -5361,6 +6179,10 @@ class GridGenerator {
             // X-Height режим: верх строчных букв выравнивается по ВЕРХУ элемента baseline
             // baseline текста должен быть ниже на величину x-height
             firstLineY = frontY + position.y + topMargin + actualXHeight;
+        } else if (alignmentMode === 'cap-height') {
+            // Cap-Height режим: верх заглавных букв выравнивается по ВЕРХУ элемента baseline
+            // baseline текста должен быть ниже на величину cap height
+            firstLineY = frontY + position.y + topMargin + actualCapHeight;
         } else {
             // Baseline режим (по умолчанию): baseline текста выравнивается по НИЗУ элемента baseline
             firstLineY = frontY + position.y + topMargin + baselineElementHeight;
@@ -5429,8 +6251,8 @@ class GridGenerator {
                 const lineApproxY = firstLineY;
                 lineBaselineY = this.snapToBaseline(lineApproxY, frontY, scale, true, alignmentMode);
                 previousBaselineY = lineBaselineY;
-            } else if (alignmentMode === 'x-height') {
-                // В режиме x-height все строки после первой НЕ привязываем к сетке
+            } else if (alignmentMode === 'x-height' || alignmentMode === 'cap-height') {
+                // В режиме x-height и cap-height все строки после первой НЕ привязываем к сетке
                 // Используем точное расстояние согласно интерлиньяжу
                 lineBaselineY = previousBaselineY + lineHeightInMm;
                 previousBaselineY = lineBaselineY;
@@ -6024,12 +6846,19 @@ class GridGenerator {
                 this.dom.graphicsSizeUnitWidth.classList.remove('active');
                 if (this.dom.graphicsSizeInput) {
                     this.dom.graphicsSizeInput.value = (block.heightInModules || 3).toFixed(2);
+                    this.dom.graphicsSizeInput.dataset.max = '20'; // Max height: 20 modules
                 }
             } else {
                 this.dom.graphicsSizeUnitWidth.classList.add('active');
                 this.dom.graphicsSizeUnitHeight.classList.remove('active');
                 if (this.dom.graphicsSizeInput) {
                     this.dom.graphicsSizeInput.value = (block.widthInModules || 3).toFixed(2);
+                    // Calculate max width dynamically: content width / module
+                    const module = this.settings.gridModule;
+                    const margins = this.settings.margins;
+                    const contentWidthMm = this.settings.frontWidth - 2 * margins * module;
+                    const maxWidthInModules = contentWidthMm / module;
+                    this.dom.graphicsSizeInput.dataset.max = maxWidthInModules.toFixed(2);
                 }
             }
         }

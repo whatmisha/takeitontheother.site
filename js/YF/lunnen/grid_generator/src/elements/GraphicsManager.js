@@ -55,6 +55,8 @@ export class GraphicsManager {
             svgPath: config.svgPath || null,
             surface: config.surface || 'front', // Поверхность: front, left, right, top, bottom
             heightInModules: config.heightInModules !== undefined ? config.heightInModules : 3,
+            widthInModules: config.widthInModules !== undefined ? config.widthInModules : null,
+            sizeMode: config.sizeMode || 'height', // 'height' | 'width'
             x: config.x !== undefined ? config.x : 1,
             row: config.row !== undefined ? config.row : 0,
             baselineOffset: config.baselineOffset !== undefined ? config.baselineOffset : 0,
@@ -394,12 +396,23 @@ export class GraphicsManager {
         );
 
         const module = this.settings.get('gridModule');
-        const heightInMm = block.heightInModules * module;
-        const heightInPt = MathUtils.mmToPt(heightInMm);
-
-        // Вычисляем ширину пропорционально
         const aspectRatio = block.originalWidth / block.originalHeight;
-        const widthInPt = heightInPt * aspectRatio;
+        
+        let widthInPt, heightInPt;
+        
+        // Если задана ширина в модулях, используем её для расчета
+        if (block.widthInModules !== null && block.widthInModules !== undefined && block.sizeMode === 'width') {
+            const widthInMm = block.widthInModules * module;
+            widthInPt = MathUtils.mmToPt(widthInMm);
+            // Вычисляем высоту пропорционально
+            heightInPt = widthInPt / aspectRatio;
+        } else {
+            // Иначе используем высоту для расчета (по умолчанию)
+            const heightInMm = block.heightInModules * module;
+            heightInPt = MathUtils.mmToPt(heightInMm);
+            // Вычисляем ширину пропорционально
+            widthInPt = heightInPt * aspectRatio;
+        }
 
         return {
             x: position.x,

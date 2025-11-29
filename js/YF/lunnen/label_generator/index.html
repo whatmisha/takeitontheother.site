@@ -438,14 +438,14 @@
                         <label for="headlineSizeValue">
                             <span>Size <span class="unit">pt</span></span>
                         </label>
-                        <input type="number" class="number-input" id="headlineSizeValue" value="21.5" min="6" max="144" step="0.5" aria-label="Headline size in points">
+                        <input type="number" class="number-input" id="headlineSizeValue" value="21.5" min="6" max="144" step="0.01" aria-label="Headline size in points">
                     </div>
                     
                     <div class="control-group">
                         <label for="lineHeightValue">
                             <span>Line Height <span class="unit">pt</span></span>
                         </label>
-                        <input type="number" class="number-input" id="lineHeightValue" value="28.6" min="6" max="144" step="0.5" aria-label="Line height in points">
+                        <input type="number" class="number-input" id="lineHeightValue" value="28.6" min="6" max="144" step="0.01" aria-label="Line height in points">
                     </div>
                 </div>
                 
@@ -490,14 +490,14 @@
                         <label for="textSizeValue">
                             <span>Size <span class="unit">pt</span></span>
                         </label>
-                        <input type="number" class="number-input" id="textSizeValue" value="7.2" min="6" max="144" step="0.5" aria-label="Text size in points">
+                        <input type="number" class="number-input" id="textSizeValue" value="7.2" min="6" max="144" step="0.01" aria-label="Text size in points">
                     </div>
                     
                     <div class="control-group">
                         <label for="textLineHeightValue">
                             <span>Line Height <span class="unit">pt</span></span>
                         </label>
-                        <input type="number" class="number-input" id="textLineHeightValue" value="14.3" min="6" max="144" step="0.5" aria-label="Text line height in points">
+                        <input type="number" class="number-input" id="textLineHeightValue" value="14.3" min="6" max="144" step="0.01" aria-label="Text line height in points">
                     </div>
                 </div>
                 
@@ -542,14 +542,14 @@
                         <label for="captionSizeValue">
                             <span>Size <span class="unit">pt</span></span>
                         </label>
-                        <input type="number" class="number-input" id="captionSizeValue" value="7.2" min="6" max="144" step="0.5" aria-label="Caption size in points">
+                        <input type="number" class="number-input" id="captionSizeValue" value="7.2" min="6" max="144" step="0.01" aria-label="Caption size in points">
                     </div>
                     
                     <div class="control-group">
                         <label for="captionLineHeightValue">
                             <span>Line Height <span class="unit">pt</span></span>
                         </label>
-                        <input type="number" class="number-input" id="captionLineHeightValue" value="14.3" min="6" max="144" step="0.5" aria-label="Caption line height in points">
+                        <input type="number" class="number-input" id="captionLineHeightValue" value="14.3" min="6" max="144" step="0.01" aria-label="Caption line height in points">
                     </div>
                 </div>
                 
@@ -585,14 +585,14 @@
                         <label for="lunnenDisplaySizeValue">
                             <span>Size <span class="unit">pt</span></span>
                         </label>
-                        <input type="number" class="number-input" id="lunnenDisplaySizeValue" value="43.0" min="6" max="144" step="0.5" aria-label="Lunnen Display size in points">
+                        <input type="number" class="number-input" id="lunnenDisplaySizeValue" value="43.0" min="6" max="144" step="0.01" aria-label="Lunnen Display size in points">
                     </div>
                     
                     <div class="control-group">
                         <label for="lunnenDisplayLineHeightValue">
                             <span>Line Height <span class="unit">pt</span></span>
                         </label>
-                        <input type="number" class="number-input" id="lunnenDisplayLineHeightValue" value="57.3" min="6" max="144" step="0.5" aria-label="Lunnen Display line height in points">
+                        <input type="number" class="number-input" id="lunnenDisplayLineHeightValue" value="57.3" min="6" max="144" step="0.01" aria-label="Lunnen Display line height in points">
                     </div>
                 </div>
                 
@@ -683,6 +683,9 @@
                             
                             <input type="radio" name="alignmentMode" value="x-height" id="alignmentModeXHeight" aria-label="X-height alignment">
                             <label for="alignmentModeXHeight">X-Height</label>
+                            
+                            <input type="radio" name="alignmentMode" value="cap-height" id="alignmentModeCapHeight" aria-label="Cap height alignment">
+                            <label for="alignmentModeCapHeight">Cap Height</label>
                         </div>
                     </fieldset>
                 </div>

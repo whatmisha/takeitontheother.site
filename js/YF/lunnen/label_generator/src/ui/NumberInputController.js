@@ -86,15 +86,20 @@ export class NumberInputController {
         let newValue = currentValue;
         let handled = false;
 
-        const step = event.shiftKey ? config.shiftStep : config.baseStep;
-
         switch (event.key) {
             case 'ArrowUp':
-                newValue = currentValue + step;
-                handled = true;
-                break;
             case 'ArrowDown':
-                newValue = currentValue - step;
+                // Determine step based on shift key
+                if (event.shiftKey && config.decimals === 2) {
+                    // For fields with decimals === 2 (font sizes, line heights): 
+                    // round to tenths first, then add/subtract shiftStep
+                    const roundedToTenth = Math.round(currentValue * 10) / 10;
+                    const step = (event.key === 'ArrowUp' ? 1 : -1) * config.shiftStep;
+                    newValue = roundedToTenth + step;
+                } else {
+                    const step = event.shiftKey ? config.shiftStep : config.baseStep;
+                    newValue = event.key === 'ArrowUp' ? currentValue + step : currentValue - step;
+                }
                 handled = true;
                 break;
             case 'Enter':

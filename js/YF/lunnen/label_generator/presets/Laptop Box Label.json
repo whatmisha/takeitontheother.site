@@ -20,7 +20,7 @@
       },
       "width": 1,
       "alignment": "left",
-      "alignmentMode": "x-height",
+      "alignmentMode": "cap-height",
       "surface": "front",
       "showBounds": false,
       "useXHeight": true
@@ -36,7 +36,7 @@
       },
       "width": 1,
       "alignment": "left",
-      "alignmentMode": "x-height",
+      "alignmentMode": "cap-height",
       "surface": "front",
       "showBounds": false,
       "useXHeight": true
@@ -94,14 +94,14 @@
   "typography": {
     "headline": {
       "size": 7,
-      "lineHeight": 9.5,
+      "lineHeight": 8.5,
       "tracking": -0.015,
       "useXHeight": false,
       "fontWeight": 500
     },
     "text": {
       "size": 6,
-      "lineHeight": 7.6,
+      "lineHeight": 7.25,
       "tracking": 0,
       "useXHeight": false,
       "fontWeight": 500

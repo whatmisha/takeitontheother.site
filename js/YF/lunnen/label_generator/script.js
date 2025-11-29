@@ -232,18 +232,18 @@ class GridGenerator {
                 setting: 'headlineSize',
                 min: 6,
                 max: 144,
-                decimals: 1,
-                baseStep: 0.5,
-                shiftStep: 5,
+                decimals: 2,
+                baseStep: 0.01,
+                shiftStep: 0.1,
                 onUpdate: () => this.updateGrid()
             },
             lineHeightValue: {
                 setting: 'lineHeight',
                 min: 6,
                 max: 144,
-                decimals: 1,
-                baseStep: 0.5,
-                shiftStep: 5,
+                decimals: 2,
+                baseStep: 0.01,
+                shiftStep: 0.1,
                 onUpdate: () => this.updateGrid()
             },
             trackingValue: {
@@ -259,18 +259,18 @@ class GridGenerator {
                 setting: 'textSize',
                 min: 6,
                 max: 144,
-                decimals: 1,
-                baseStep: 0.5,
-                shiftStep: 5,
+                decimals: 2,
+                baseStep: 0.01,
+                shiftStep: 0.1,
                 onUpdate: () => this.updateGrid()
             },
             textLineHeightValue: {
                 setting: 'textLineHeight',
                 min: 6,
                 max: 144,
-                decimals: 1,
-                baseStep: 0.5,
-                shiftStep: 5,
+                decimals: 2,
+                baseStep: 0.01,
+                shiftStep: 0.1,
                 onUpdate: () => this.updateGrid()
             },
             textTrackingValue: {
@@ -286,18 +286,18 @@ class GridGenerator {
                 setting: 'captionSize',
                 min: 6,
                 max: 144,
-                decimals: 1,
-                baseStep: 0.5,
-                shiftStep: 5,
+                decimals: 2,
+                baseStep: 0.01,
+                shiftStep: 0.1,
                 onUpdate: () => this.updateGrid()
             },
             captionLineHeightValue: {
                 setting: 'captionLineHeight',
                 min: 6,
                 max: 144,
-                decimals: 1,
-                baseStep: 0.5,
-                shiftStep: 5,
+                decimals: 2,
+                baseStep: 0.01,
+                shiftStep: 0.1,
                 onUpdate: () => this.updateGrid()
             },
             captionTrackingValue: {
@@ -313,18 +313,18 @@ class GridGenerator {
                 setting: 'lunnenDisplaySize',
                 min: 6,
                 max: 144,
-                decimals: 1,
-                baseStep: 0.5,
-                shiftStep: 5,
+                decimals: 2,
+                baseStep: 0.01,
+                shiftStep: 0.1,
                 onUpdate: () => this.updateGrid()
             },
             lunnenDisplayLineHeightValue: {
                 setting: 'lunnenDisplayLineHeight',
                 min: 6,
                 max: 144,
-                decimals: 1,
-                baseStep: 0.5,
-                shiftStep: 5,
+                decimals: 2,
+                baseStep: 0.01,
+                shiftStep: 0.1,
                 onUpdate: () => this.updateGrid()
             },
             lunnenDisplayTrackingValue: {
@@ -693,6 +693,7 @@ class GridGenerator {
             // Alignment mode radio buttons
             alignmentModeBaseline: document.getElementById('alignmentModeBaseline'),
             alignmentModeXHeight: document.getElementById('alignmentModeXHeight'),
+            alignmentModeCapHeight: document.getElementById('alignmentModeCapHeight'),
             // Lock position toggle
             paragraphLockPositionToggle: document.getElementById('paragraphLockPositionToggle'),
             // Align right toggle
@@ -2511,6 +2512,15 @@ class GridGenerator {
             });
         }
         
+        if (this.dom.alignmentModeCapHeight) {
+            this.dom.alignmentModeCapHeight.addEventListener('change', () => {
+                if (this.currentEditingBlock && this.dom.alignmentModeCapHeight.checked) {
+                    this.currentEditingBlock.alignmentMode = 'cap-height';
+                    this.updateGrid();
+                }
+            });
+        }
+        
         // Обработчик для Constrain to Grid toggle
         if (this.dom.paragraphLockPositionToggle) {
             this.dom.paragraphLockPositionToggle.addEventListener('change', () => {
@@ -3134,13 +3144,19 @@ class GridGenerator {
                 
                 // Устанавливаем режим выравнивания (по умолчанию baseline)
                 const alignmentMode = block.alignmentMode || 'baseline';
-                if (this.dom.alignmentModeBaseline && this.dom.alignmentModeXHeight) {
+                if (this.dom.alignmentModeBaseline && this.dom.alignmentModeXHeight && this.dom.alignmentModeCapHeight) {
                     if (alignmentMode === 'x-height') {
                         this.dom.alignmentModeXHeight.checked = true;
                         this.dom.alignmentModeBaseline.checked = false;
+                        this.dom.alignmentModeCapHeight.checked = false;
+                    } else if (alignmentMode === 'cap-height') {
+                        this.dom.alignmentModeCapHeight.checked = true;
+                        this.dom.alignmentModeBaseline.checked = false;
+                        this.dom.alignmentModeXHeight.checked = false;
                     } else {
                         this.dom.alignmentModeBaseline.checked = true;
                         this.dom.alignmentModeXHeight.checked = false;
+                        this.dom.alignmentModeCapHeight.checked = false;
                     }
                 }
             }
@@ -4348,7 +4364,8 @@ class GridGenerator {
         // Determine step based on shift key
         let newValue;
         if (e.shiftKey && config.decimals === 2) {
-            // For Module and Margins with Shift: round to tenths first, then add/subtract 0.1
+            // For fields with decimals === 2 (Module, Margins, font sizes, line heights): 
+            // round to tenths first, then add/subtract shiftStep
             const roundedToTenth = Math.round(currentValue * 10) / 10;
             const step = (e.key === 'ArrowUp' ? 1 : -1) * config.shiftStep;
             newValue = roundedToTenth + step;
@@ -4883,8 +4900,8 @@ class GridGenerator {
         
         let nearestBaseline;
         if (isFirstLine) {
-            // Для x-height режима первая строка НЕ привязывается к baseline - возвращаем как есть
-            if (alignmentMode === 'x-height') {
+            // Для x-height и cap-height режимов первая строка НЕ привязывается к baseline
+            if (alignmentMode === 'x-height' || alignmentMode === 'cap-height') {
                 return y; // Возвращаем исходную позицию без округления
             }
             // Первая строка в baseline режиме - привязываем к целому модулю (baseline сетка)
@@ -5178,6 +5195,10 @@ class GridGenerator {
             // X-Height режим: верх строчных букв выравнивается по ВЕРХУ элемента baseline
             // baseline текста должен быть ниже на величину x-height
             firstLineY = frontY + position.y + topMargin + actualXHeight;
+        } else if (alignmentMode === 'cap-height') {
+            // Cap-Height режим: верх заглавных букв выравнивается по ВЕРХУ элемента baseline
+            // baseline текста должен быть ниже на величину cap height
+            firstLineY = frontY + position.y + topMargin + actualCapHeight;
         } else {
             // Baseline режим (по умолчанию): baseline текста выравнивается по НИЗУ элемента baseline
             firstLineY = frontY + position.y + topMargin + baselineElementHeight;
@@ -5275,8 +5296,8 @@ class GridGenerator {
                 const lineApproxY = firstLineY;
                 lineBaselineY = this.snapToBaseline(lineApproxY, frontY, scale, true, alignmentMode);
                 previousBaselineY = lineBaselineY;
-            } else if (alignmentMode === 'x-height') {
-                // В режиме x-height все строки после первой НЕ привязываем к сетке
+            } else if (alignmentMode === 'x-height' || alignmentMode === 'cap-height') {
+                // В режиме x-height и cap-height все строки после первой НЕ привязываем к сетке
                 // Используем точное расстояние согласно интерлиньяжу
                 lineBaselineY = previousBaselineY + lineHeightInMm;
                 previousBaselineY = lineBaselineY;
