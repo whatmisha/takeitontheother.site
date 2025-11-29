@@ -1,0 +1,44 @@
+name: Auto-generate Presets Manifest
+
+# Автоматически запускается при пуше в main и при изменении файлов в presets/
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'js/YF/lunnen/grid_generator/presets/**'
+      - 'js/YF/lunnen/grid_generator/generate-presets-manifest.js'
+  workflow_dispatch:  # Можно запустить вручную
+
+jobs:
+  generate-manifest:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. Клонируем репозиторий
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      # 2. Устанавливаем Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      # 3. Генерируем manifest.json
+      - name: Generate presets manifest
+        run: |
+          cd js/YF/lunnen/grid_generator
+          node generate-presets-manifest.js
+      
+      # 4. Коммитим изменения (если manifest.json изменился)
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git add js/YF/lunnen/grid_generator/presets/manifest.json
+          git diff --staged --quiet || git commit -m "Автообновление manifest.json"
+          git push
+
