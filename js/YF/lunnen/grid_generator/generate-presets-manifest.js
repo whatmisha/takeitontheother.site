@@ -67,50 +67,6 @@ function generateManifest() {
         }
     }
     
-    // Custom sort function for presets
-    function sortPresets(a, b) {
-        const nameA = a.name;
-        const nameB = b.name;
-        
-        // "+New" always comes first
-        if (nameA.startsWith('+New')) return -1;
-        if (nameB.startsWith('+New')) return 1;
-        
-        // Extract first word (product line name) and size
-        const extractGroupAndSize = (name) => {
-            // Remove quotes and split by spaces
-            const parts = name.replace(/"/g, '').split(/\s+/);
-            const firstWord = parts[0] || '';
-            
-            // Find the first number (can be integer or decimal)
-            let size = null;
-            for (let i = 1; i < parts.length; i++) {
-                const numMatch = parts[i].match(/^(\d+\.?\d*)/);
-                if (numMatch) {
-                    size = parseFloat(numMatch[1]);
-                    break;
-                }
-            }
-            
-            return { group: firstWord, size: size !== null ? size : 0 };
-        };
-        
-        const { group: groupA, size: sizeA } = extractGroupAndSize(nameA);
-        const { group: groupB, size: sizeB } = extractGroupAndSize(nameB);
-        
-        // First sort by group (product line)
-        const groupCompare = groupA.localeCompare(groupB);
-        if (groupCompare !== 0) {
-            return groupCompare;
-        }
-        
-        // Within same group, sort by size descending (larger to smaller)
-        return sizeB - sizeA;
-    }
-    
-    // Sort presets using custom logic
-    presets.sort(sortPresets);
-    
     // Create manifest object
     const manifest = {
         presets: presets,
