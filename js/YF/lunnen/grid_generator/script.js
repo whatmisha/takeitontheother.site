@@ -1765,7 +1765,7 @@ class GridGenerator {
                 return await this.loadPresetsFromGitHubAPI(applyImmediately);
             }
             
-            const sortedPresets = presets.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+            const sortedPresets = presets.sort((a, b) => this.sortPresets(a, b));
             
             if (applyImmediately) {
                 this.availablePresets = sortedPresets;
@@ -1826,7 +1826,7 @@ class GridGenerator {
                 return applyImmediately ? false : null;
             }
             
-            const sortedPresets = presets.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+            const sortedPresets = presets.sort((a, b) => this.sortPresets(a, b));
             
             if (applyImmediately) {
                 this.availablePresets = sortedPresets;
@@ -1840,6 +1840,47 @@ class GridGenerator {
             console.warn('Failed to load presets via GitHub API:', error);
             return applyImmediately ? false : null;
         }
+    }
+    
+    // Custom sort function for presets
+    sortPresets(a, b) {
+        const nameA = a.name;
+        const nameB = b.name;
+        
+        // "+New" always comes first
+        if (nameA.startsWith('+New')) return -1;
+        if (nameB.startsWith('+New')) return 1;
+        
+        // Extract first word (product line name) and size
+        const extractGroupAndSize = (name) => {
+            // Remove quotes and split by spaces
+            const parts = name.replace(/"/g, '').split(/\s+/);
+            const firstWord = parts[0] || '';
+            
+            // Find the first number (can be integer or decimal)
+            let size = null;
+            for (let i = 1; i < parts.length; i++) {
+                const numMatch = parts[i].match(/^(\d+\.?\d*)/);
+                if (numMatch) {
+                    size = parseFloat(numMatch[1]);
+                    break;
+                }
+            }
+            
+            return { group: firstWord, size: size !== null ? size : 0 };
+        };
+        
+        const { group: groupA, size: sizeA } = extractGroupAndSize(nameA);
+        const { group: groupB, size: sizeB } = extractGroupAndSize(nameB);
+        
+        // First sort by group (product line)
+        const groupCompare = groupA.localeCompare(groupB, undefined, { sensitivity: 'base' });
+        if (groupCompare !== 0) {
+            return groupCompare;
+        }
+        
+        // Within same group, sort by size descending (larger to smaller)
+        return sizeB - sizeA;
     }
     
     mergePresetLists(primaryList = [], secondaryList = []) {
@@ -1857,7 +1898,7 @@ class GridGenerator {
         primaryList.forEach(addPreset);
         secondaryList.forEach(addPreset);
         
-        return merged.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+        return merged.sort((a, b) => this.sortPresets(a, b));
     }
     
     extractJsonFilenamesFromListing(listingHtml) {
