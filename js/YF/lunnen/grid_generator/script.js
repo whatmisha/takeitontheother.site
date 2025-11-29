@@ -841,6 +841,7 @@ class GridGenerator {
         this.initColorPreview();
         this.updateTextWidthConstraints();
         this.updateCanvasSize();
+        this.initEyeIcons();
         this.updateGrid();
         
         // Автоматический fit to screen при загрузке (с задержкой для отрисовки SVG)
@@ -1092,6 +1093,7 @@ class GridGenerator {
         // Show side panels checkbox
         this.dom.showSidePanels.addEventListener('change', (e) => {
             this.settings.showSidePanels = e.target.checked;
+            this.updateEyeIcon(e.target);
             this.updateGrid();
         });
         
@@ -1116,24 +1118,28 @@ class GridGenerator {
         // Show columns checkbox
         this.dom.showColumns.addEventListener('change', (e) => {
             this.settings.showColumns = e.target.checked;
+            this.updateEyeIcon(e.target);
             this.updateGrid();
         });
         
         // Show rows checkbox
         this.dom.showRows.addEventListener('change', (e) => {
             this.settings.showRows = e.target.checked;
+            this.updateEyeIcon(e.target);
             this.updateGrid();
         });
         
         // Show baseline checkbox
         this.dom.showBaseline.addEventListener('change', (e) => {
             this.settings.showBaseline = e.target.checked;
+            this.updateEyeIcon(e.target);
             this.updateGrid();
         });
         
         // Show objects checkbox
         this.dom.showObjects.addEventListener('change', (e) => {
             this.settings.showObjects = e.target.checked;
+            this.updateEyeIcon(e.target);
             this.updateGrid();
         });
         
@@ -2112,7 +2118,7 @@ class GridGenerator {
                 new Blob([JSON.stringify(data)], { type: 'application/json' })
             );
             
-            // Apply settings
+            // Apply settings FIRST (before normalizing graphics blocks)
             if (normalizedData.settings) {
                 Object.entries(normalizedData.settings).forEach(([key, value]) => {
                     this.settingsModule.set(key, value);
@@ -2141,6 +2147,37 @@ class GridGenerator {
                 this.graphicsBlocks.forEach(block => {
                     if (block.lockPosition === undefined) {
                         block.lockPosition = true;
+                    }
+                    
+                    // Нормализация widthInColumns для графических блоков
+                    // Приоритет: widthInColumns из пресета > widthInModules (для обратной совместимости) > вычисление из высоты
+                    if (block.widthInColumns === undefined || block.widthInColumns === null) {
+                        // Если widthInColumns отсутствует, проверяем widthInModules (для обратной совместимости)
+                        if (block.widthInModules !== undefined && block.widthInModules !== null) {
+                            const module = this.settings.gridModule;
+                            const widthInMm = block.widthInModules * module;
+                            const widthInColumns = this.mmToColumns(widthInMm);
+                            
+                            // Проверяем, что значение разумное (не больше количества колонок)
+                            const maxColumns = this.settings.columnCount;
+                            if (widthInColumns > 0 && widthInColumns <= maxColumns * 2) {
+                                // Значение выглядит разумным
+                                block.widthInColumns = parseFloat(widthInColumns.toFixed(2));
+                            } else {
+                                // Значение некорректно, вычисляем из высоты
+                                this.recalculateGraphicsWidthFromHeight(block);
+                            }
+                        } else {
+                            // Нет ни widthInColumns, ни widthInModules - вычисляем из высоты
+                            this.recalculateGraphicsWidthFromHeight(block);
+                        }
+                    } else {
+                        // widthInColumns есть из пресета - используем его, но проверяем корректность
+                        const maxColumns = this.settings.columnCount;
+                        if (block.widthInColumns > maxColumns * 2 || block.widthInColumns <= 0) {
+                            // Значение некорректно, пересчитываем из высоты
+                            this.recalculateGraphicsWidthFromHeight(block);
+                        }
                     }
                 });
             }
@@ -6012,6 +6049,39 @@ class GridGenerator {
         return textWidth;
     }
     
+    // Конвертировать колонки в мм
+    columnsToMm(columns) {
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (this.settings.columnCount - 1)) / this.settings.columnCount;
+        const gutter = module;
+        return columnWidth * columns + gutter * (columns - 1);
+    }
+    
+    // Конвертировать мм в колонки
+    mmToColumns(widthMm) {
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (this.settings.columnCount - 1)) / this.settings.columnCount;
+        const gutter = module;
+        return widthMm / (columnWidth + gutter);
+    }
+    
+    // Пересчитать ширину графического блока из высоты (для нормализации при загрузке пресетов)
+    recalculateGraphicsWidthFromHeight(block) {
+        if (!block.originalWidth || !block.originalHeight) {
+            // Если нет оригинальных размеров, используем дефолтное значение
+            block.widthInColumns = 4;
+            return;
+        }
+        
+        const module = this.settings.gridModule;
+        const aspectRatio = block.originalWidth / block.originalHeight;
+        const heightInMm = module * (block.heightInModules || 3);
+        const widthInMm = heightInMm * aspectRatio;
+        block.widthInColumns = parseFloat(this.mmToColumns(widthInMm).toFixed(2));
+    }
+    
     // Calculate text block position in mm
     calculateBlockPosition(block, scale = 1) {
         const module = this.settings.gridModule;
@@ -8067,6 +8137,39 @@ class GridGenerator {
                 }
             }
         }
+    }
+    
+    // Update eye icon for toggle-chip and checkbox-label elements
+    updateEyeIcon(checkbox) {
+        const label = checkbox.closest('label');
+        if (!label) return;
+        
+        const isChecked = checkbox.checked;
+        
+        // Add/remove class for checked state (for CSS compatibility)
+        if (isChecked) {
+            label.classList.add('toggle-chip-checked');
+        } else {
+            label.classList.remove('toggle-chip-checked');
+        }
+    }
+    
+    // Initialize eye icons on page load
+    initEyeIcons() {
+        // Initialize all toggle-chip and checkbox-label eye icons
+        const checkboxes = [
+            this.dom.showColumns,
+            this.dom.showRows,
+            this.dom.showBaseline,
+            this.dom.showSidePanels,
+            this.dom.showObjects
+        ];
+        
+        checkboxes.forEach(checkbox => {
+            if (checkbox) {
+                this.updateEyeIcon(checkbox);
+            }
+        });
     }
     
     // Start delete element with progress bar

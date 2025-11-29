@@ -245,7 +245,7 @@ export class SVGExporter {
                             baseline: block.baselineOffset || 0
                         },
                         height: block.heightInModules || 3,
-                        widthInModules: block.widthInModules !== undefined ? block.widthInModules : undefined,
+                        widthInColumns: block.widthInColumns !== undefined ? block.widthInColumns : undefined,
                         sizeMode: block.sizeMode || 'height',
                         originalWidth: block.originalWidth,
                         originalHeight: block.originalHeight,
@@ -419,7 +419,8 @@ export class SVGExporter {
                 isBuiltIn: false,
                 svgContent: graphic.svg || '',
                 heightInModules: graphic.height || 3,
-                widthInModules: graphic.widthInModules !== undefined ? graphic.widthInModules : null,
+                widthInColumns: graphic.widthInColumns !== undefined ? graphic.widthInColumns : null,
+                widthInModules: graphic.widthInModules !== undefined ? graphic.widthInModules : null, // Для обратной совместимости
                 sizeMode: graphic.sizeMode || 'height',
                 x: graphic.position?.column || 1,
                 row: graphic.position?.row || 0,
