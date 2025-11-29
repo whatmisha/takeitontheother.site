@@ -6,9 +6,13 @@ on:
     branches:
       - main
     paths:
-      - 'js/YF/lunnen/grid_generator/presets/**'
+      - 'js/YF/lunnen/grid_generator/presets/*.json'
       - 'js/YF/lunnen/grid_generator/generate-presets-manifest.js'
   workflow_dispatch:  # Можно запустить вручную
+
+# ВАЖНО: Даем workflow права на запись
+permissions:
+  contents: write
 
 jobs:
   generate-manifest:
@@ -17,13 +21,14 @@ jobs:
     steps:
       # 1. Клонируем репозиторий
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
       
       # 2. Устанавливаем Node.js
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
       
@@ -36,9 +41,12 @@ jobs:
       # 4. Коммитим изменения (если manifest.json изменился)
       - name: Commit and push if changed
         run: |
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'actions@github.com'
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add js/YF/lunnen/grid_generator/presets/manifest.json
-          git diff --staged --quiet || git commit -m "Автообновление manifest.json"
-          git push
-
+          if git diff --staged --quiet; then
+            echo "No changes to manifest.json"
+          else
+            git commit -m "🤖 Автообновление manifest.json [skip ci]"
+            git push
+          fi
