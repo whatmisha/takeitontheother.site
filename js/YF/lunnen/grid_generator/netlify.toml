@@ -1,0 +1,31 @@
+# Конфигурация для Netlify
+# Этот файл указывает Netlify, как собирать и публиковать проект
+
+[build]
+  # Команда, которая выполняется перед публикацией
+  # Генерирует manifest.json из всех пресетов в папке presets/
+  command = "node generate-presets-manifest.js"
+  
+  # Папка, которая будет опубликована в интернет
+  # Точка (.) означает корневую папку проекта
+  publish = "."
+
+# Настройки для Node.js
+[build.environment]
+  # Версия Node.js (необязательно, но рекомендуется)
+  NODE_VERSION = "18"
+
+# Настройки для обработки файлов
+[[headers]]
+  # Применяется ко всем JSON файлам
+  for = "/*.json"
+  [headers.values]
+    # Указываем правильный Content-Type для JSON
+    Content-Type = "application/json; charset=utf-8"
+
+[[headers]]
+  # Применяется ко всем JSON файлам в папке presets
+  for = "/presets/*.json"
+  [headers.values]
+    Content-Type = "application/json; charset=utf-8"
+
