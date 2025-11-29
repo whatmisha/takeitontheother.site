@@ -1,16 +1,8 @@
 {
   "presets": [
     {
-      "name": "BBB",
-      "file": "BBB.json"
-    },
-    {
-      "name": "GGG",
-      "file": "G_G.json"
-    },
-    {
-      "name": "GREEN",
-      "file": "GREEN.json"
+      "name": "+New",
+      "file": "New.json"
     },
     {
       "name": "Ground 10.4\" Back",
@@ -35,12 +27,8 @@
     {
       "name": "RED",
       "file": "RED.json"
-    },
-    {
-      "name": "Template 500×500×50mm, Module 5mm",
-      "file": "New.json"
     }
   ],
-  "generated": "2025-11-29T08:42:48.825Z",
-  "count": 10
+  "generated": "2025-11-29T08:49:58.313Z",
+  "count": 7
 }
