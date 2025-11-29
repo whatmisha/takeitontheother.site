@@ -1475,7 +1475,7 @@ class GridGenerator {
             this.updateGrid();
         });
         
-        // Hex color input
+        // Hex color input - только форматирование при вводе, без применения изменений
         this.dom.hexColorInput.addEventListener('input', (e) => {
             let hexValue = e.target.value;
             
@@ -1485,22 +1485,13 @@ class GridGenerator {
                 hexValue = '#' + hexValue;
                 e.target.value = hexValue;
             }
-            
-            const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-            if (hexRegex.test(hexValue)) {
-                if (hexValue.length === 4) {
-                    const r = hexValue[1];
-                    const g = hexValue[2];
-                    const b = hexValue[3];
-                    hexValue = `#${r}${r}${g}${g}${b}${b}`;
-                }
-                
-                // Обновляем через оба способа для совместимости
-                this.settings.boxColor = hexValue;
-                this.settingsModule.set('boxColor', hexValue);
-                this.dom.colorPreview.style.backgroundColor = hexValue;
-                this.updateHSBFromHex(hexValue);
-                this.updateGrid();
+        });
+        
+        // Обработка Enter для hexColorInput
+        this.dom.hexColorInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.dom.hexColorInput.blur();
             }
         });
         
@@ -2734,9 +2725,18 @@ class GridGenerator {
             });
         }
         
-        // Обработчик для текстового поля
+        // Обработчик для текстового поля - изменения применяются только при blur или Enter
         if (this.dom.paragraphTextArea) {
-            this.dom.paragraphTextArea.addEventListener('input', () => {
+            // Обработка Enter
+            this.dom.paragraphTextArea.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.dom.paragraphTextArea.blur();
+                }
+            });
+            
+            // Применение изменений при потере фокуса
+            this.dom.paragraphTextArea.addEventListener('blur', () => {
                 if (this.currentEditingBlock) {
                     this.currentEditingBlock.content = this.dom.paragraphTextArea.value;
                     this.updateCharCounter();
@@ -2968,8 +2968,15 @@ class GridGenerator {
                 }
             });
             
-            // Обновление слайдера при изменении текстового поля
-            lunnenDisplayWeightValue.addEventListener('change', () => {
+            // Обновление слайдера при изменении текстового поля - применяется при blur или Enter
+            lunnenDisplayWeightValue.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    lunnenDisplayWeightValue.blur();
+                }
+            });
+            
+            lunnenDisplayWeightValue.addEventListener('blur', () => {
                 if (this.currentEditingBlock) {
                     let weight = parseInt(lunnenDisplayWeightValue.value);
                     weight = Math.max(100, Math.min(400, weight));

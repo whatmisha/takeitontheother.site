@@ -50,7 +50,7 @@ export class SliderController {
 
         // Обработчики событий
         slider.addEventListener('input', (e) => this.handleSliderInput(sliderId, e));
-        valueInput.addEventListener('input', (e) => this.handleValueInput(sliderId, e));
+        // Убрали обработчик input для valueInput - изменения применяются только при blur или Enter
         valueInput.addEventListener('keydown', (e) => this.handleKeyDown(sliderId, e));
         valueInput.addEventListener('focus', (e) => e.target.select());
         valueInput.addEventListener('blur', (e) => this.handleValueBlur(sliderId, e));
@@ -273,9 +273,11 @@ export class SliderController {
     }
 
     /**
-     * Обработка потери фокуса - валидация и форматирование
+     * Обработка потери фокуса - валидация, форматирование и применение изменений
      */
     handleValueBlur(sliderId, event) {
+        if (this.isUpdating) return;
+        
         const sliderData = this.sliders.get(sliderId);
         if (!sliderData) return;
 
@@ -293,6 +295,16 @@ export class SliderController {
         // Обновление UI с правильным форматированием
         this.updateValueDisplay(valueInput, value, config);
         element.value = value;
+        
+        // Обновление настроек
+        if (config.setting) {
+            this.settings.set(config.setting, value);
+        }
+        
+        // Вызов коллбэка для применения изменений
+        if (config.onUpdate) {
+            config.onUpdate(value);
+        }
     }
 
     /**
