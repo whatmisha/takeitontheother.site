@@ -1700,12 +1700,25 @@ class GridGenerator {
             const manifest = await response.json();
             const presetsFromManifest = Array.isArray(manifest.presets) ? manifest.presets : [];
             
-            let hasManifestPresets = presetsFromManifest.length > 0;
-            let mergedPresets = presetsFromManifest;
+            // Проверяем существование файлов перед добавлением в список
+            const validPresetsFromManifest = [];
+            for (const preset of presetsFromManifest) {
+                if (preset && preset.file) {
+                    const fileExists = await this.checkPresetFileExists(preset.file);
+                    if (fileExists) {
+                        validPresetsFromManifest.push(preset);
+                    } else {
+                        console.warn(`Preset file ${preset.file} from manifest does not exist, skipping`);
+                    }
+                }
+            }
+            
+            let hasManifestPresets = validPresetsFromManifest.length > 0;
+            let mergedPresets = validPresetsFromManifest;
             
             const directoryPresets = await this.loadPresetsFromDirectoryListing(false);
             if (Array.isArray(directoryPresets) && directoryPresets.length > 0) {
-                mergedPresets = this.mergePresetLists(presetsFromManifest, directoryPresets);
+                mergedPresets = this.mergePresetLists(validPresetsFromManifest, directoryPresets);
                 hasManifestPresets = mergedPresets.length > 0;
             }
             
@@ -1889,6 +1902,29 @@ class GridGenerator {
         return decoded.trim();
     }
     
+    async checkPresetFileExists(fileName) {
+        if (!fileName) return false;
+        
+        try {
+            const encodedName = encodeURIComponent(fileName);
+            const url = `presets/${encodedName}?ts=${Date.now()}`;
+            // Используем HEAD запрос для проверки существования без загрузки содержимого
+            // Если HEAD не поддерживается, fallback на GET с проверкой только статуса
+            const response = await fetch(url, { 
+                cache: 'no-store',
+                method: 'HEAD'
+            }).catch(() => {
+                // Если HEAD не поддерживается, пробуем GET, но проверяем только статус
+                return fetch(url, { cache: 'no-store', method: 'GET' });
+            });
+            
+            return response.ok && response.status !== 404;
+        } catch (error) {
+            console.warn(`Error checking preset file ${fileName}:`, error);
+            return false;
+        }
+    }
+    
     async fetchPresetMetadataFromFile(fileName) {
         if (!fileName) return null;
         
@@ -1901,10 +1937,7 @@ class GridGenerator {
             const response = await fetch(url, { cache: 'no-store' });
             if (!response.ok) {
                 console.warn(`Failed to fetch preset ${fileName}:`, response.status);
-                return {
-                    name: fallbackName,
-                    file: fileName
-                };
+                return null; // Возвращаем null вместо объекта с fallback именем, чтобы не показывать несуществующие файлы
             }
             
             const presetData = await response.json();
@@ -1914,10 +1947,7 @@ class GridGenerator {
             };
         } catch (error) {
             console.warn(`Failed to parse preset ${fileName}:`, error);
-            return {
-                name: fallbackName,
-                file: fileName
-            };
+            return null; // Возвращаем null вместо объекта с fallback именем
         }
     }
     
