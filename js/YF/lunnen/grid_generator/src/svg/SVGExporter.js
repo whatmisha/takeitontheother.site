@@ -179,6 +179,7 @@ export class SVGExporter {
                 },
                 width: block.width || 3,
                 alignment: block.alignment || 'left',
+                textAlign: block.textAlign || 'left', // Выравнивание текста внутри абзаца: 'left', 'center', 'right'
                 alignmentMode: block.alignmentMode || 'baseline',
                 surface: block.surface || 'front',
                 showBounds: block.showBounds || false,
@@ -402,6 +403,7 @@ export class SVGExporter {
             baselineOffset: text.position?.baseline || 0,
             width: text.width || 3,
             alignment: text.alignment || 'left',
+            textAlign: text.textAlign || text.alignment || 'left', // Выравнивание текста внутри абзаца
             alignmentMode: text.alignmentMode || 'baseline',
             surface: text.surface || 'front',
             showBounds: text.showBounds || false,
