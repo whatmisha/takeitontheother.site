@@ -1,7 +1,7 @@
 {
   "presetName": "Outer 16\" Front",
   "version": "1.0",
-  "timestamp": "2025-11-30T13:43:50.290Z",
+  "timestamp": "2025-11-30T20:38:43.697Z",
   "dimensions": {
     "width": 390.5,
     "height": 395.5,
@@ -110,7 +110,7 @@
       "content": "Ноутбук Lunnen Outer",
       "style": "text",
       "position": {
-        "column": 9,
+        "column": 12,
         "row": 15,
         "baseline": 5
       },
@@ -124,7 +124,7 @@
   ],
   "grid": {
     "module": 2.8455,
-    "margins": 3.4960,
+    "margins": 3.496,
     "marginsUnit": "mm",
     "columns": 12,
     "rows": 19,
