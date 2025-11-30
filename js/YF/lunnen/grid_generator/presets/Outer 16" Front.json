@@ -115,7 +115,7 @@
         "baseline": 5
       },
       "width": 4,
-      "alignment": "left",
+      "alignment": "right",
       "alignmentMode": "cap-height",
       "surface": "front",
       "showBounds": false,
