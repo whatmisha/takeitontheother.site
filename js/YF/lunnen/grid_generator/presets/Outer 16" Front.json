@@ -1,7 +1,7 @@
 {
   "presetName": "Outer 16\" Front",
   "version": "1.0",
-  "timestamp": "2025-11-29T07:15:49.766Z",
+  "timestamp": "2025-11-30T13:43:50.290Z",
   "dimensions": {
     "width": 390.5,
     "height": 395.5,
@@ -72,20 +72,68 @@
       "surface": "front",
       "showBounds": false,
       "visible": true
+    },
+    {
+      "id": "text-1764510054499",
+      "content": "Ноутбук Lunnen Outer",
+      "style": "text",
+      "position": {
+        "column": 1,
+        "row": 15,
+        "baseline": 5
+      },
+      "width": 4,
+      "alignment": "left",
+      "alignmentMode": "cap-height",
+      "surface": "front",
+      "showBounds": false,
+      "visible": true
+    },
+    {
+      "id": "text-1764510072952",
+      "content": "Ноутбук Lunnen Outer",
+      "style": "text",
+      "position": {
+        "column": 5,
+        "row": 15,
+        "baseline": 5
+      },
+      "width": 4,
+      "alignment": "left",
+      "alignmentMode": "cap-height",
+      "surface": "front",
+      "showBounds": false,
+      "visible": true
+    },
+    {
+      "id": "text-1764510076965",
+      "content": "Ноутбук Lunnen Outer",
+      "style": "text",
+      "position": {
+        "column": 9,
+        "row": 15,
+        "baseline": 5
+      },
+      "width": 4,
+      "alignment": "left",
+      "alignmentMode": "cap-height",
+      "surface": "front",
+      "showBounds": false,
+      "visible": true
     }
   ],
   "grid": {
     "module": 2.8455,
-    "margins": 3.5,
-    "marginsUnit": "mod",
+    "margins": 3.4960,
+    "marginsUnit": "mm",
     "columns": 12,
     "rows": 19,
     "rowHeight": 6,
     "linkMode": "module",
     "visibility": {
-      "columns": true,
-      "rows": true,
-      "baseline": true
+      "columns": false,
+      "rows": false,
+      "baseline": false
     }
   },
   "colors": {
@@ -110,7 +158,7 @@
   "display": {
     "dimensions": false,
     "labels": false,
-    "sidePanels": false,
+    "sidePanels": true,
     "objects": true
   },
   "graphics": {

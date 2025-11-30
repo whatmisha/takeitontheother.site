@@ -33,7 +33,7 @@ export const SVG = {
 // Диапазоны значений для контролов
 export const RANGES = {
     MODULE: { min: 0.5, max: 20, step: 0.0001 },
-    MARGINS: { min: 0, max: 10, step: 0.01 },
+    MARGINS: { min: 0, max: 10, step: 0.0001 },
     COLUMNS: { min: 1, max: 24, step: 1 },
     ROWS: { min: 1, max: 50, step: 1 },
     ROW_HEIGHT: { min: 1, max: 20, step: 1 },
@@ -97,7 +97,7 @@ export const SLIDER_STEPS = {
     frontHeightSlider: { base: 0.5, shift: 10 },
     thicknessSlider: { base: 0.5, shift: 10 },
     gridModuleSlider: { base: 0.0001, shift: 0.1 },
-    marginsSlider: { base: 0.01, shift: 0.1 },
+    marginsSlider: { base: 0.0001, shift: 0.1 },
     columnCountSlider: { base: 1, shift: 10 },
     rowCountSlider: { base: 1, shift: 10 },
     rowHeightSlider: { base: 1, shift: 10 },

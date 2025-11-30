@@ -109,9 +109,9 @@
     "rowHeight": 6,
     "linkMode": "module",
     "visibility": {
-      "columns": true,
-      "rows": true,
-      "baseline": true
+      "columns": false,
+      "rows": false,
+      "baseline": false
     }
   },
   "colors": {

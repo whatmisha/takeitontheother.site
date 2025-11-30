@@ -114,7 +114,7 @@ class GridGenerator {
                         this.settings.margins = parseFloat(marginsInMod.toFixed(4));
                         
                         // Обновляем отображение полей (они в мм)
-                        this.sliderController.setValue('marginsSlider', parseFloat(marginsInMm.toFixed(2)), false);
+                        this.sliderController.setValue('marginsSlider', parseFloat(marginsInMm.toFixed(4)), false);
                     }
                     
                     // Стандартная логика
@@ -142,9 +142,9 @@ class GridGenerator {
                 setting: null,
                 min: 0,
                 max: 50,
-                decimals: 2,
-                baseStep: 0.1,
-                shiftStep: 1,
+                decimals: 4,
+                baseStep: 0.0001,
+                shiftStep: 0.1,
                 onUpdate: (displayValue) => {
                     // displayValue приходит от SliderController (в текущей единице отображения).
                     // Если вызвано из старого кода без аргумента, читаем фактическое значение из слайдера.
@@ -188,7 +188,7 @@ class GridGenerator {
                     } else {
                         marginsInMod = value;
                     }
-                    marginsInMod = parseFloat(marginsInMod.toFixed(2));
+                    marginsInMod = parseFloat(marginsInMod.toFixed(4));
                     this.settings.margins = marginsInMod;
 
                     // Дальше логика как раньше: пересчитываем модуль/кол-во строк и обновляем сетку
@@ -2227,7 +2227,7 @@ class GridGenerator {
                         // Для margins проверяем marginsUnit
                         if (settings.marginsUnit === 'mm') {
                             const marginsInMm = settings.margins * settings.gridModule;
-                            this.sliderController.setValue(sliderId, parseFloat(marginsInMm.toFixed(2)), false);
+                            this.sliderController.setValue(sliderId, parseFloat(marginsInMm.toFixed(4)), false);
                         } else {
                             this.sliderController.setValue(sliderId, settings[settingKey], false);
                         }
@@ -5108,11 +5108,11 @@ class GridGenerator {
                 // Диапазон в мм: 0–250
                 const maxMarginsInMm = 250;
                 this.sliderController.updateLimits('marginsSlider', 0, maxMarginsInMm);
-                this.sliderController.setValue('marginsSlider', parseFloat(actualMarginsInMm.toFixed(2)), false);
+                this.sliderController.setValue('marginsSlider', parseFloat(actualMarginsInMm.toFixed(4)), false);
             } else {
                 // Возвращаемся к модулям: приводим обратно к модулям (на случай, если модуль изменился)
                 const marginsInMod = currentModule > 0 ? actualMarginsInMm / currentModule : 0;
-                const roundedMarginsInMod = parseFloat(marginsInMod.toFixed(2));
+                const roundedMarginsInMod = parseFloat(marginsInMod.toFixed(4));
                 this.settings.margins = roundedMarginsInMod;
                 this.sliderController.updateLimits('marginsSlider', 0, 10);
                 this.sliderController.setValue('marginsSlider', roundedMarginsInMod, false);
@@ -5125,19 +5125,19 @@ class GridGenerator {
             if (newUnit === 'mm') {
                 const maxMarginsInMm = 250;
                 slider.min = '0';
-                slider.max = maxMarginsInMm.toFixed(2);
-                slider.value = actualMarginsInMm.toFixed(2);
-                valueDisplay.value = actualMarginsInMm.toFixed(2);
+                slider.max = maxMarginsInMm.toFixed(4);
+                slider.value = actualMarginsInMm.toFixed(4);
+                valueDisplay.value = actualMarginsInMm.toFixed(4);
                 valueDisplay.dataset.min = '0';
-                valueDisplay.dataset.max = maxMarginsInMm.toFixed(2);
+                valueDisplay.dataset.max = maxMarginsInMm.toFixed(4);
             } else {
                 const marginsInMod = currentModule > 0 ? actualMarginsInMm / currentModule : 0;
-                const roundedMarginsInMod = parseFloat(marginsInMod.toFixed(2));
+                const roundedMarginsInMod = parseFloat(marginsInMod.toFixed(4));
                 this.settings.margins = roundedMarginsInMod;
                 slider.min = '0';
                 slider.max = '10';
-                slider.value = roundedMarginsInMod.toFixed(2);
-                valueDisplay.value = roundedMarginsInMod.toFixed(2);
+                slider.value = roundedMarginsInMod.toFixed(4);
+                valueDisplay.value = roundedMarginsInMod.toFixed(4);
                 valueDisplay.dataset.min = '0';
                 valueDisplay.dataset.max = '10';
             }
@@ -5266,9 +5266,9 @@ class GridGenerator {
         // Обновляем отображение полей
         if (this.settings.marginsUnit === 'mm') {
             const marginsInMm = marginsInMod * this.settings.gridModule;
-            this.sliderController.setValue('marginsSlider', parseFloat(marginsInMm.toFixed(2)), false);
+            this.sliderController.setValue('marginsSlider', parseFloat(marginsInMm.toFixed(4)), false);
         } else {
-            this.sliderController.setValue('marginsSlider', parseFloat(marginsInMod.toFixed(2)), false);
+            this.sliderController.setValue('marginsSlider', parseFloat(marginsInMod.toFixed(4)), false);
         }
     }
     
@@ -5290,7 +5290,7 @@ class GridGenerator {
         this.settings.margins = parseFloat(marginsInMod.toFixed(4));
         
         // Обновляем отображение полей (они остаются в мм)
-        this.sliderController.setValue('marginsSlider', parseFloat(this.settings.lockedMarginsValue.toFixed(2)), false);
+        this.sliderController.setValue('marginsSlider', parseFloat(this.settings.lockedMarginsValue.toFixed(4)), false);
     }
     
     /**
@@ -10874,11 +10874,11 @@ class GridGenerator {
         if (this.dom.marginsSlider) {
             if (this.settings.marginsUnit === 'mm') {
                 const marginsInMm = this.settings.margins * this.settings.gridModule;
-                this.dom.marginsSlider.value = marginsInMm.toFixed(2);
-                this.dom.marginsValue.value = marginsInMm.toFixed(2);
+                this.dom.marginsSlider.value = marginsInMm.toFixed(4);
+                this.dom.marginsValue.value = marginsInMm.toFixed(4);
             } else {
                 this.dom.marginsSlider.value = this.settings.margins;
-                this.dom.marginsValue.value = this.settings.margins.toFixed(2);
+                this.dom.marginsValue.value = this.settings.margins.toFixed(4);
             }
         }
         if (this.dom.columnCountSlider) {
