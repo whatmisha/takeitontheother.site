@@ -43,7 +43,10 @@ class GridGenerator {
                 decimals: 1,
                 baseStep: 1,
                 shiftStep: 10,
-                onUpdate: () => this.updateGrid()
+                onUpdate: () => {
+                    this.markAsChanged();
+                    this.updateGrid();
+                }
             },
             frontHeightSlider: {
                 valueId: 'frontHeightValue',
@@ -54,6 +57,7 @@ class GridGenerator {
                 baseStep: 1,
                 shiftStep: 10,
                 onUpdate: () => {
+                    this.markAsChanged();
                     // Проверяем блокировки
                     if (this.settings.lockedModule) {
                         // Если модуль заблокирован, пересчитываем поля
@@ -86,7 +90,10 @@ class GridGenerator {
                 decimals: 1,
                 baseStep: 1,
                 shiftStep: 10,
-                onUpdate: () => this.updateGrid()
+                onUpdate: () => {
+                    this.markAsChanged();
+                    this.updateGrid();
+                }
             },
             gridModuleSlider: {
                 valueId: 'gridModuleValue',
@@ -97,6 +104,7 @@ class GridGenerator {
                 baseStep: 0.1,
                 shiftStep: 1,
                 onUpdate: () => {
+                    this.markAsChanged();
                     // Если модуль заблокирован, не позволяем изменять его через слайдер
                     if (this.settings.lockedModule) {
                         // Восстанавливаем заблокированное значение
@@ -146,6 +154,7 @@ class GridGenerator {
                 baseStep: 0.0001,
                 shiftStep: 0.1,
                 onUpdate: (displayValue) => {
+                    this.markAsChanged();
                     // displayValue приходит от SliderController (в текущей единице отображения).
                     // Если вызвано из старого кода без аргумента, читаем фактическое значение из слайдера.
                     let value = displayValue;
@@ -215,6 +224,7 @@ class GridGenerator {
                 baseStep: 1,
                 shiftStep: 10,
                 onUpdate: () => {
+                    this.markAsChanged();
                     // Пересчитываем размеры графики в режиме 'width'
                     // При изменении количества колонок, графика с sizeMode='width' должна сохранить
                     // количество колонок, но изменить физический размер
@@ -234,6 +244,7 @@ class GridGenerator {
                 baseStep: 1,
                 shiftStep: 10,
                 onUpdate: () => {
+                    this.markAsChanged();
                     // Проверяем блокировки
                     if (this.settings.lockedModule) {
                         // Если модуль заблокирован, пересчитываем поля
@@ -415,7 +426,10 @@ class GridGenerator {
                 decimals: 3,
                 baseStep: 0.001,
                 shiftStep: 0.01,
-                onUpdate: () => this.updateGrid()
+                onUpdate: () => {
+                    this.markAsChanged();
+                    this.updateGrid();
+                }
             },
             textSizeSlider: {
                 valueId: 'textSizeValue',
@@ -494,7 +508,10 @@ class GridGenerator {
                 decimals: 3,
                 baseStep: 0.001,
                 shiftStep: 0.01,
-                onUpdate: () => this.updateGrid()
+                onUpdate: () => {
+                    this.markAsChanged();
+                    this.updateGrid();
+                }
             },
             captionSizeSlider: {
                 valueId: 'captionSizeValue',
@@ -573,7 +590,10 @@ class GridGenerator {
                 decimals: 3,
                 baseStep: 0.001,
                 shiftStep: 0.01,
-                onUpdate: () => this.updateGrid()
+                onUpdate: () => {
+                    this.markAsChanged();
+                    this.updateGrid();
+                }
             },
             lunnenDisplaySizeSlider: {
                 valueId: 'lunnenDisplaySizeValue',
@@ -652,7 +672,10 @@ class GridGenerator {
                 decimals: 3,
                 baseStep: 0.001,
                 shiftStep: 0.01,
-                onUpdate: () => this.updateGrid()
+                onUpdate: () => {
+                    this.markAsChanged();
+                    this.updateGrid();
+                }
             }
         };
         
@@ -866,7 +889,19 @@ class GridGenerator {
         // Presets (Итерация 10)
         // ============================================
         this.availablePresets = [];
+        this.importedPresets = []; // Хранилище импортированных пресетов
+        this.hasUnsavedChanges = false; // Флаг наличия несохраненных изменений
         this.loadPresetsManifest();
+        
+        // Предупреждение при закрытии вкладки с несохраненными изменениями
+        window.addEventListener('beforeunload', (e) => {
+            if (this.hasUnsavedChanges) {
+                // Стандартный диалог браузера
+                e.preventDefault();
+                e.returnValue = ''; // Для Chrome
+                return ''; // Для других браузеров
+            }
+        });
         
         // Calculate initial row count to fill the format (after DOM is ready)
         const rowCount = this.gridCalculator.calculateRowCount();
@@ -932,6 +967,16 @@ class GridGenerator {
             this.updateCanvasSize();
             this.updateGrid();
         });
+    }
+    
+    // Отметить, что были внесены изменения
+    markAsChanged() {
+        this.hasUnsavedChanges = true;
+    }
+    
+    // Сбросить флаг изменений (при загрузке пресета, импорте и т.д.)
+    resetChangesFlag() {
+        this.hasUnsavedChanges = false;
     }
     
     // Getters for backward compatibility with existing code
@@ -1022,6 +1067,7 @@ class GridGenerator {
             
             // Buttons
             exportBtn: document.getElementById('exportBtn'),
+            exportPDFBtn: document.getElementById('exportPDFBtn'),
             convertToOutlinesCheckbox: document.getElementById('convertToOutlinesCheckbox'),
             exportSettingsBtn: document.getElementById('exportSettingsBtn'),
             importSettingsBtn: document.getElementById('importSettingsBtn'),
@@ -1172,6 +1218,7 @@ class GridGenerator {
         
         // Show side panels checkbox
         this.dom.showSidePanels.addEventListener('change', (e) => {
+            this.markAsChanged();
             this.settings.showSidePanels = e.target.checked;
             this.updateEyeIcon(e.target);
             this.updateGrid();
@@ -1179,6 +1226,7 @@ class GridGenerator {
         
         // Link mode radio buttons
         const linkModeHandler = (e) => {
+            this.markAsChanged();
             this.settings.linkMode = e.target.value;
             this.updateLinkedControlsVisual();
             
@@ -1207,6 +1255,7 @@ class GridGenerator {
         
         // Show columns checkbox
         this.dom.showColumns.addEventListener('change', (e) => {
+            this.markAsChanged();
             this.settings.showColumns = e.target.checked;
             this.updateEyeIcon(e.target);
             this.updateGrid();
@@ -1214,6 +1263,7 @@ class GridGenerator {
         
         // Show rows checkbox
         this.dom.showRows.addEventListener('change', (e) => {
+            this.markAsChanged();
             this.settings.showRows = e.target.checked;
             this.updateEyeIcon(e.target);
             this.updateGrid();
@@ -1221,6 +1271,7 @@ class GridGenerator {
         
         // Show baseline checkbox
         this.dom.showBaseline.addEventListener('change', (e) => {
+            this.markAsChanged();
             this.settings.showBaseline = e.target.checked;
             this.updateEyeIcon(e.target);
             this.updateGrid();
@@ -1228,6 +1279,7 @@ class GridGenerator {
         
         // Show objects checkbox
         this.dom.showObjects.addEventListener('change', (e) => {
+            this.markAsChanged();
             this.settings.showObjects = e.target.checked;
             this.updateEyeIcon(e.target);
             this.updateGrid();
@@ -1235,12 +1287,14 @@ class GridGenerator {
         
         // Use x-height checkbox
         this.dom.useXHeight.addEventListener('change', (e) => {
+            this.markAsChanged();
             this.settings.useXHeight = e.target.checked;
             this.updateGrid();
         });
         
         // Use x-height 2 checkbox
         this.dom.useXHeight2.addEventListener('change', (e) => {
+            this.markAsChanged();
             this.settings.useXHeight2 = e.target.checked;
             this.updateGrid();
         });
@@ -1248,6 +1302,7 @@ class GridGenerator {
         // Use x-height Caption checkbox
         if (this.dom.useXHeightCaption) {
             this.dom.useXHeightCaption.addEventListener('change', (e) => {
+                this.markAsChanged();
                 this.settings.useXHeightCaption = e.target.checked;
                 this.updateGrid();
             });
@@ -1465,6 +1520,7 @@ class GridGenerator {
         
         // Lunnen Blue preset
         this.dom.lunnenBlue.addEventListener('click', () => {
+            this.markAsChanged();
             const lunnenBlueColor = '#2353DB';
             // Обновляем через оба способа для совместимости
             this.settings.boxColor = lunnenBlueColor;
@@ -1504,6 +1560,12 @@ class GridGenerator {
                 hexValue = this.settingsModule.get('boxColor') || '#dadde6';
             }
             
+            // Проверяем, изменился ли цвет
+            const currentColor = this.settingsModule.get('boxColor');
+            if (hexValue !== currentColor) {
+                this.markAsChanged();
+            }
+            
             e.target.value = hexValue;
             // Обновляем через оба способа для совместимости
             this.settings.boxColor = hexValue;
@@ -1515,6 +1577,11 @@ class GridGenerator {
         
         // Export button
         this.dom.exportBtn.addEventListener('click', () => this.exportSVG());
+        
+        // Export PDF button
+        if (this.dom.exportPDFBtn) {
+            this.dom.exportPDFBtn.addEventListener('click', () => this.exportPDF());
+        }
         
         // Export Settings button
         this.dom.exportSettingsBtn.addEventListener('click', () => this.exportSettings());
@@ -1943,6 +2010,11 @@ class GridGenerator {
             this.dom.presetDropdownMenu.appendChild(item);
         });
         
+        // Add imported presets to dropdown (if any exist)
+        this.importedPresets.forEach(preset => {
+            this.addImportedPresetToDropdown(preset);
+        });
+        
         // Calculate widths after items are added to DOM
         this.calculatePresetWidths();
         
@@ -1979,8 +2051,54 @@ class GridGenerator {
             this.presetWidths[preset.file] = width;
         });
         
+        // Calculate width for imported presets
+        this.importedPresets.forEach(preset => {
+            const width = this.measureTextWidth(preset.displayName);
+            this.presetWidths[preset.id] = width;
+        });
+        
         // Find max width
         this.maxPresetWidth = Math.max(...Object.values(this.presetWidths));
+    }
+    
+    // Add imported preset to dropdown
+    addImportedPresetToDropdown(preset) {
+        if (!this.dom.presetDropdownMenu) return;
+        
+        // Check if preset already exists in dropdown
+        const existingItem = this.dom.presetDropdownMenu.querySelector(`[data-file="${preset.id}"]`);
+        if (existingItem) {
+            // Update existing item text in case display name changed
+            existingItem.textContent = preset.displayName;
+            return;
+        }
+        
+        const item = document.createElement('li');
+        item.className = 'preset-dropdown-item';
+        item.textContent = preset.displayName;
+        item.dataset.file = preset.id;
+        item.setAttribute('role', 'option');
+        
+        item.addEventListener('click', () => {
+            this.selectPreset(preset.id, preset.displayName);
+            this.closeDropdown();
+        });
+        
+        // Insert imported presets at the beginning (after separator if exists)
+        const separator = this.dom.presetDropdownMenu.querySelector('.preset-dropdown-separator');
+        if (separator) {
+            this.dom.presetDropdownMenu.insertBefore(item, separator.nextSibling);
+        } else {
+            // Add separator before imported presets if it doesn't exist
+            const sep = document.createElement('li');
+            sep.className = 'preset-dropdown-separator';
+            sep.style.cssText = 'height: 1px; background: rgba(255,255,255,0.1); margin: 8px 0;';
+            this.dom.presetDropdownMenu.insertBefore(sep, this.dom.presetDropdownMenu.firstChild);
+            this.dom.presetDropdownMenu.insertBefore(item, sep.nextSibling);
+        }
+        
+        // Recalculate widths
+        this.calculatePresetWidths();
     }
     
     measureTextWidth(text) {
@@ -2080,8 +2198,13 @@ class GridGenerator {
             }
         }
         
-        // Load preset
-        this.loadPreset(file);
+        // Check if this is an imported preset
+        if (file.startsWith('imported-')) {
+            this.loadImportedPreset(file);
+        } else {
+            // Load preset from file
+            this.loadPreset(file);
+        }
     }
     
     async loadPreset(filename) {
@@ -2103,6 +2226,32 @@ class GridGenerator {
                 new Blob([JSON.stringify(data)], { type: 'application/json' })
             );
             
+            // Apply preset data
+            await this.applyPresetData(normalizedData, data.presetName || filename.replace('.json', ''));
+        } catch (error) {
+            console.error('Failed to load preset:', error);
+            alert(`Failed to load preset: ${error.message}`);
+        }
+    }
+    
+    // Load imported preset from memory
+    async loadImportedPreset(presetId) {
+        const importedPreset = this.importedPresets.find(p => p.id === presetId);
+        if (!importedPreset) {
+            console.error(`Imported preset not found: ${presetId}`);
+            alert(`Импортированный пресет не найден: ${presetId}`);
+            return;
+        }
+        
+        console.log(`Loading imported preset: ${presetId}`);
+        
+        // Data is already normalized, apply directly
+        await this.applyPresetData(importedPreset.data, importedPreset.displayName);
+    }
+    
+    // Apply preset data (common logic for both file and imported presets)
+    async applyPresetData(normalizedData, presetName) {
+        try {
             // Apply settings FIRST (before normalizing graphics blocks)
             if (normalizedData.settings) {
                 Object.entries(normalizedData.settings).forEach(([key, value]) => {
@@ -2170,11 +2319,21 @@ class GridGenerator {
                 });
             }
             
+            // Apply icons block
+            if (normalizedData.iconsBlock) {
+                this.iconsBlock = normalizedData.iconsBlock;
+            }
+            
+            // Apply claim block
+            if (normalizedData.claimBlock) {
+                this.claimBlock = normalizedData.claimBlock;
+            }
+            
             // Update all UI elements to reflect new settings
             this.syncUIWithSettings();
             
             // Store preset name for export
-            this.currentPresetName = data.presetName || filename.replace('.json', '');
+            this.currentPresetName = presetName;
             
             // Update lock buttons state
             this.updateLockButtons();
@@ -2190,10 +2349,13 @@ class GridGenerator {
             this.updateGrid();
             this.updateElementsNavigator();
             
+            // Сбрасываем флаг изменений после загрузки пресета
+            this.resetChangesFlag();
+            
             console.log(`✅ Preset "${this.currentPresetName}" loaded successfully`);
         } catch (error) {
-            console.error('Failed to load preset:', error);
-            alert(`Failed to load preset: ${error.message}`);
+            console.error('Failed to apply preset data:', error);
+            alert(`Ошибка при применении данных пресета: ${error.message}`);
         }
     }
     
@@ -2529,6 +2691,7 @@ class GridGenerator {
         if (this.dom.paragraphXInput) {
             this.dom.paragraphXInput.addEventListener('change', () => {
                 if (this.currentEditingBlock) {
+                    this.markAsChanged();
                     let newX = parseInt(this.dom.paragraphXInput.value);
                     
                     // Ограничиваем X в зависимости от alignment
@@ -2575,6 +2738,7 @@ class GridGenerator {
         if (this.dom.paragraphRowInput) {
             this.dom.paragraphRowInput.addEventListener('change', () => {
                 if (this.currentEditingBlock) {
+                    this.markAsChanged();
                     const newRow = parseInt(this.dom.paragraphRowInput.value) - 1;
                     
                     // Calculate max allowed row based on content height and text block height
@@ -2620,6 +2784,7 @@ class GridGenerator {
         if (this.dom.paragraphXInput) {
             this.dom.paragraphXInput.addEventListener('change', () => {
                 if (this.currentEditingBlock) {
+                    this.markAsChanged();
                     const newX = parseFloat(this.dom.paragraphXInput.value);
                     // Column всегда целое число
                     this.currentEditingBlock.x = Math.max(1, Math.round(newX));
@@ -2632,6 +2797,7 @@ class GridGenerator {
         if (this.dom.paragraphBaselineInput) {
             this.dom.paragraphBaselineInput.addEventListener('change', () => {
                 if (this.currentEditingBlock) {
+                    this.markAsChanged();
                     const globalBaseline = parseInt(this.dom.paragraphBaselineInput.value) - 1;
                     const rowHeight = this.settings.rowHeight;
                     
@@ -2696,6 +2862,7 @@ class GridGenerator {
         
         if (this.dom.paragraphWidthInput) {
             this.dom.paragraphWidthInput.addEventListener('change', () => {
+                this.markAsChanged();
                 if (this.currentEditingBlock) {
                     const newWidth = parseFloat(this.dom.paragraphWidthInput.value);
                     const alignment = this.currentEditingBlock.alignment || 'left';
@@ -4962,6 +5129,7 @@ class GridGenerator {
     }
     
     updateColorFromHSB() {
+        this.markAsChanged();
         const h = parseInt(this.dom.hueSlider.value);
         const s = parseInt(this.dom.saturationSlider.value);
         const b = parseInt(this.dom.brightnessSlider.value);
@@ -4988,10 +5156,8 @@ class GridGenerator {
         const rightHex = ColorUtils.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
         
         const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
-        this.dom.saturationSlider.style.background = gradient;
-        
-        // Update custom CSS for the slider track
-        this.updateSliderTrackGradient('saturationSlider', gradient);
+        // Применяем градиент к широким дорожкам через динамические стили для псевдоэлементов
+        this.updateSliderWideTrackGradient('saturationSlider', gradient);
     }
     
     updateBrightnessGradient() {
@@ -5005,29 +5171,40 @@ class GridGenerator {
         const rightHex = ColorUtils.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
         
         const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
-        this.dom.brightnessSlider.style.background = gradient;
-        
-        // Update custom CSS for the slider track
-        this.updateSliderTrackGradient('brightnessSlider', gradient);
+        // Применяем градиент к широким дорожкам через динамические стили для псевдоэлементов
+        this.updateSliderWideTrackGradient('brightnessSlider', gradient);
     }
     
-    updateSliderTrackGradient(sliderId, gradient) {
+    updateSliderWideTrackGradient(sliderId, gradient) {
         // Remove existing style if present
-        let styleId = `${sliderId}-track-style`;
+        let styleId = `${sliderId}-wide-track-style`;
         let existingStyle = document.getElementById(styleId);
         if (existingStyle) {
             existingStyle.remove();
         }
         
-        // Create new style element
+        // Create new style element для широких дорожек (высота 10px вместо 1px)
+        // Центрируем ползунок: (10px - 8px) / 2 = 1px
+        // Используем конкретное значение 8px вместо CSS переменной для надежности
         const style = document.createElement('style');
         style.id = styleId;
         style.textContent = `
             #${sliderId}::-webkit-slider-runnable-track {
-                background: ${gradient};
+                background: ${gradient} !important;
+                height: 10px !important;
             }
             #${sliderId}::-moz-range-track {
-                background: ${gradient};
+                background: ${gradient} !important;
+                height: 10px !important;
+            }
+            #${sliderId}::-webkit-slider-thumb {
+                width: 8px !important;
+                height: 8px !important;
+                margin-top: 1px !important;
+            }
+            #${sliderId}::-moz-range-thumb {
+                width: 8px !important;
+                height: 8px !important;
             }
         `;
         document.head.appendChild(style);
@@ -5081,6 +5258,7 @@ class GridGenerator {
     }
     
     switchMarginsUnit(newUnit) {
+        this.markAsChanged();
         // Margins ВСЕГДА храним в модулях; при переключении единиц сохраняем физический размер.
         const currentModule = this.settings.gridModule;
         const currentMarginsInMod = this.settings.margins;
@@ -5336,6 +5514,7 @@ class GridGenerator {
     // style: 'headline', 'text', 'caption', 'lunnenDisplay'
     // property: 'size' or 'lineHeight'
     switchFontSizeUnit(style, property, newUnit) {
+        this.markAsChanged();
         // Значения ВСЕГДА храним в модулях; при переключении единиц сохраняем физический размер.
         const currentModule = this.settings.gridModule;
         
@@ -9493,6 +9672,11 @@ class GridGenerator {
             boundsElement.setAttribute('fill-opacity', '0');
         }
         
+        // Отмечаем изменения при перетаскивании блока
+        if (this.textDragState.isDragging && blockId) {
+            this.markAsChanged();
+        }
+        
         // Не сохраняем начальное состояние автоматически при перетаскивании
         // Изменения будут применены только при нажатии кнопки Apply
         
@@ -10253,23 +10437,52 @@ class GridGenerator {
     
     // Итерация 7: Упрощенный экспорт SVG через SVGExporter
     async exportSVG() {
-        const { frontWidth, frontHeight, thickness, gridModule, columnCount, rowCount } = this.settings;
+        const { frontWidth, frontHeight, thickness, gridModule, columnCount, rowCount, margins, marginsUnit, showSidePanels } = this.settings;
         
         // Создаем SVG для экспорта (scale = 1 для точных размеров)
         const exportSvg = await this.createExportSVG();
         
-        // Генерируем timestamp с точностью до минуты
+        // Генерируем timestamp в формате 251101_2200 (год месяц день_час минуты)
         const now = new Date();
-        const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+        const year = String(now.getFullYear()).slice(-2); // Последние 2 цифры года
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const timestamp = `${year}${month}${day}_${hours}${minutes}`;
         
-        // Генерируем имя файла: "размер с боковинами колонки строки модуль timestamp.svg"
-        // Например: "500×500×50mm 12col 12rows 5.05mm 20251116_1430.svg"
-        const size = `${frontWidth}×${frontHeight}×${thickness}mm`;
-        const cols = `${columnCount}col`;
-        const rows = `${rowCount}rows`;
-        const module = `${gridModule.toFixed(2)}mm`;
+        // Формируем части имени файла
+        const filenameParts = [];
         
-        const filename = `${size} ${cols} ${rows} ${module} ${timestamp}.svg`;
+        // 1. Название пресета (если не "+New")
+        const presetName = this.currentPresetName || 'Custom';
+        // Проверяем, что пресет не начинается с "+New" и не равен "Custom"
+        if (!presetName.startsWith('+New') && presetName !== 'Custom') {
+            // Заменяем пробелы на подчеркивания
+            const sanitizedPresetName = presetName.replace(/\s+/g, '_');
+            filenameParts.push(sanitizedPresetName);
+        }
+        
+        // 2. Размеры макета
+        if (showSidePanels) {
+            filenameParts.push(`${frontWidth}×${frontHeight}×${thickness}`);
+        } else {
+            filenameParts.push(`${frontWidth}×${frontHeight}`);
+        }
+        
+        // 3. Параметры сетки: 12col_19rows_module_2.71mm_margins_2mm
+        // ВАЖНО: margins всегда хранится в модулях во внутренней системе,
+        // поэтому всегда пересчитываем в миллиметры для имени файла
+        const marginsInMm = margins * gridModule;
+        
+        const gridParams = `${columnCount}col_${rowCount}rows_module_${gridModule.toFixed(2)}mm_margins_${marginsInMm.toFixed(2)}mm`;
+        filenameParts.push(gridParams);
+        
+        // 4. Дата и время
+        filenameParts.push(timestamp);
+        
+        // Собираем имя файла
+        const filename = `${filenameParts.join('_')}.svg`;
         
         // Получаем значение тогла "Outline fonts"
         const convertToOutlines = this.dom.convertToOutlinesCheckbox ? this.dom.convertToOutlinesCheckbox.checked : false;
@@ -10281,9 +10494,75 @@ class GridGenerator {
             convertTextToOutlines: convertToOutlines
         });
     }
+
+    // Экспорт в PDF
+    async exportPDF() {
+        const { frontWidth, frontHeight, thickness, gridModule, columnCount, rowCount, margins, marginsUnit, showSidePanels } = this.settings;
+        
+        // Создаем SVG для экспорта (scale = 1 для точных размеров)
+        // Для PDF не включаем справочные элементы за пределами артборда
+        const exportSvg = await this.createExportSVG(false);
+        
+        // Генерируем timestamp в формате 251101_2200 (год месяц день_час минуты)
+        const now = new Date();
+        const year = String(now.getFullYear()).slice(-2); // Последние 2 цифры года
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const timestamp = `${year}${month}${day}_${hours}${minutes}`;
+        
+        // Формируем части имени файла
+        const filenameParts = [];
+        
+        // 1. Название пресета (если не "+New")
+        const presetName = this.currentPresetName || 'Custom';
+        // Проверяем, что пресет не начинается с "+New" и не равен "Custom"
+        if (!presetName.startsWith('+New') && presetName !== 'Custom') {
+            // Заменяем пробелы на подчеркивания
+            const sanitizedPresetName = presetName.replace(/\s+/g, '_');
+            filenameParts.push(sanitizedPresetName);
+        }
+        
+        // 2. Размеры макета
+        if (showSidePanels) {
+            filenameParts.push(`${frontWidth}×${frontHeight}×${thickness}`);
+        } else {
+            filenameParts.push(`${frontWidth}×${frontHeight}`);
+        }
+        
+        // 3. Параметры сетки: 12col_19rows_module_2.71mm_margins_2mm
+        // ВАЖНО: margins всегда хранится в модулях во внутренней системе,
+        // поэтому всегда пересчитываем в миллиметры для имени файла
+        const marginsInMm = margins * gridModule;
+        
+        const gridParams = `${columnCount}col_${rowCount}rows_module_${gridModule.toFixed(2)}mm_margins_${marginsInMm.toFixed(2)}mm`;
+        filenameParts.push(gridParams);
+        
+        // 4. Дата и время
+        filenameParts.push(timestamp);
+        
+        // Собираем имя файла
+        const filename = `${filenameParts.join('_')}.pdf`;
+        
+        // Для PDF экспорта текст ВСЕГДА конвертируется в кривые (независимо от чекбокса)
+        // Это необходимо для правильного отображения кириллицы в PDF
+        try {
+            // Экспортируем через модуль
+            // convertTextToOutlines игнорируется для PDF - конвертация всегда выполняется
+            await this.svgExporter.exportToPDF(exportSvg, filename, {
+                removeInteractive: true,
+                convertTextToOutlines: true, // Всегда true для PDF
+                unit: 'mm'
+            });
+        } catch (error) {
+            console.error('Error exporting PDF:', error);
+            alert('Ошибка при экспорте PDF: ' + error.message);
+        }
+    }
     
     // Итерация 7: Создание SVG для экспорта (без интерактивных элементов)
-    async createExportSVG() {
+    async createExportSVG(includeReferenceElements = true) {
         const { frontWidth, frontHeight, thickness } = this.settings;
         
         // Create a new SVG for export with actual mm dimensions
@@ -10404,11 +10683,14 @@ class GridGenerator {
             });
         }
         
-        // Add text styles summary outside artboard (for reference in editor)
-        this.addTextStylesSummary(exportSvg, totalWidth, scale);
-        
-        // Add design kit (logo and graphic elements) in multiple sizes outside artboard (for reference in editor)
-        await this.addLunnenLogoReference(exportSvg, totalWidth, scale);
+        // Add text styles summary and design kit outside artboard (only for SVG export, not for PDF)
+        if (includeReferenceElements) {
+            // Add text styles summary outside artboard (for reference in editor)
+            this.addTextStylesSummary(exportSvg, totalWidth, scale);
+            
+            // Add design kit (logo and graphic elements) in multiple sizes outside artboard (for reference in editor)
+            await this.addLunnenLogoReference(exportSvg, totalWidth, scale);
+        }
         
         return exportSvg;
     }
@@ -10683,7 +10965,7 @@ class GridGenerator {
     
     // Итерация 7: Экспорт настроек в JSON через SVGExporter
     exportSettings() {
-        const { frontWidth, frontHeight, thickness, gridModule, columnCount, rowCount } = this.settings;
+        const { frontWidth, frontHeight, thickness, gridModule, columnCount, rowCount, margins, marginsUnit, showSidePanels } = this.settings;
         
         const data = {
             version: '1.0',
@@ -10692,21 +10974,51 @@ class GridGenerator {
             textBlocks: this.textBlocks,
             graphicsBlocks: this.graphicsBlocks || [],
             iconsBlock: this.iconsBlock || null,
-            claimBlock: this.claimBlock || null
+            claimBlock: this.claimBlock || null,
+            currentPresetName: this.currentPresetName || 'Custom'
         };
         
-        // Генерируем timestamp с точностью до минуты
+        // Генерируем timestamp в формате 251101_2200 (год месяц день_час минуты)
         const now = new Date();
-        const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+        const year = String(now.getFullYear()).slice(-2); // Последние 2 цифры года
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const timestamp = `${year}${month}${day}_${hours}${minutes}`;
         
-        // Генерируем имя файла: "размер с боковинами колонки строки модуль timestamp.json"
-        // Например: "500×500×50mm 12col 12rows 5.05mm 20251116_1430.json"
-        const size = `${frontWidth}×${frontHeight}×${thickness}mm`;
-        const cols = `${columnCount}col`;
-        const rows = `${rowCount}rows`;
-        const module = `${gridModule.toFixed(2)}mm`;
+        // Формируем части имени файла (тот же принцип, что и для SVG/PDF)
+        const filenameParts = [];
         
-        const filename = `${size} ${cols} ${rows} ${module} ${timestamp}.json`;
+        // 1. Название пресета (если не "+New")
+        const presetName = this.currentPresetName || 'Custom';
+        // Проверяем, что пресет не начинается с "+New" и не равен "Custom"
+        if (!presetName.startsWith('+New') && presetName !== 'Custom') {
+            // Заменяем пробелы на подчеркивания
+            const sanitizedPresetName = presetName.replace(/\s+/g, '_');
+            filenameParts.push(sanitizedPresetName);
+        }
+        
+        // 2. Размеры макета
+        if (showSidePanels) {
+            filenameParts.push(`${frontWidth}×${frontHeight}×${thickness}`);
+        } else {
+            filenameParts.push(`${frontWidth}×${frontHeight}`);
+        }
+        
+        // 3. Параметры сетки: 12col_19rows_module_2.71mm_margins_2mm
+        // ВАЖНО: margins всегда хранится в модулях во внутренней системе,
+        // поэтому всегда пересчитываем в миллиметры для имени файла
+        const marginsInMm = margins * gridModule;
+        
+        const gridParams = `${columnCount}col_${rowCount}rows_module_${gridModule.toFixed(2)}mm_margins_${marginsInMm.toFixed(2)}mm`;
+        filenameParts.push(gridParams);
+        
+        // 4. Дата и время
+        filenameParts.push(timestamp);
+        
+        // Собираем имя файла
+        const filename = `${filenameParts.join('_')}.json`;
         
         this.svgExporter.exportSettings(data, filename);
     }
@@ -10721,6 +11033,10 @@ class GridGenerator {
                 Object.entries(data.settings).forEach(([key, value]) => {
                     this.settingsModule.set(key, value);
                 });
+                // Для обратной совместимости: если lineHeightUnit отсутствует, устанавливаем 'mod'
+                if (!data.settings.hasOwnProperty('lineHeightUnit')) {
+                    this.settingsModule.set('lineHeightUnit', 'mod');
+                }
             }
             
             if (data.textBlocks) {
@@ -10757,9 +11073,80 @@ class GridGenerator {
                 this.claimBlock = data.claimBlock;
             }
             
+            // Get preset name from imported data or use "Custom"
+            // Try to get presetName from various possible locations
+            let presetName = 'Custom';
+            if (data.currentPresetName) {
+                presetName = data.currentPresetName;
+            } else if (data.presetName) {
+                presetName = data.presetName;
+            } else if (data.settings && data.settings.presetName) {
+                presetName = data.settings.presetName;
+            }
+            
+            const displayName = `Custom — ${presetName}`;
+            
+            // Create imported preset object
+            // Store the original data (before normalization) so we can reload it properly
+            const importedPresetId = `imported-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const importedPreset = {
+                id: importedPresetId,
+                presetName: presetName,
+                displayName: displayName,
+                data: JSON.parse(JSON.stringify(data)), // Deep copy of original data
+                timestamp: Date.now()
+            };
+            
+            // Add to imported presets array
+            this.importedPresets.push(importedPreset);
+            
+            // Add to dropdown
+            this.addImportedPresetToDropdown(importedPreset);
+            
+            // Set current preset
+            this.currentPresetName = displayName;
+            this.currentPreset = importedPresetId;
+            this.updateDropdownText(displayName);
+            
+            // Update selected state in menu
+            const items = this.dom.presetDropdownMenu?.querySelectorAll('.preset-dropdown-item');
+            if (items) {
+                items.forEach(item => {
+                    if (item.dataset.file === importedPresetId) {
+                        item.classList.add('selected');
+                    } else {
+                        item.classList.remove('selected');
+                    }
+                });
+            }
+            
+            // Set button width
+            if (this.presetWidths[importedPresetId]) {
+                const isOpen = this.dom.presetDropdownToggle?.getAttribute('aria-expanded') === 'true';
+                if (!isOpen && this.dom.presetDropdownToggle) {
+                    this.dom.presetDropdownToggle.style.width = `${this.presetWidths[importedPresetId]}px`;
+                }
+            }
+            
+            // Update all UI elements to reflect new settings
+            this.syncUIWithSettings();
+            
+            // Update lock buttons state
+            this.updateLockButtons();
+            
+            // Пересчитываем с учетом блокировок
+            if (this.settings.lockedModule) {
+                this.recalculateWithLockedModule();
+            } else if (this.settings.lockedMargins) {
+                this.recalculateWithLockedMargins();
+            }
+            
             // Обновляем UI
             this.updateGrid();
             this.updateElementsNavigator();
+            
+            // Сбрасываем флаг изменений после импорта
+            this.resetChangesFlag();
             
             console.log('✅ Settings imported successfully');
         } catch (error) {
