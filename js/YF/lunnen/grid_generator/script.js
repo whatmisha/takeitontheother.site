@@ -6692,8 +6692,8 @@ class GridGenerator {
             // Calculate X position for this line based on text alignment
             // For center and right alignment, we need to measure the line width
             let lineX = baseTextX;
-            if (textAlign === 'center' || textAlign === 'right') {
-                // Measure the actual width of this line
+            if (textAlign === 'center') {
+                // Measure the actual width of this line for center alignment
                 const tempText = this.createSVGElement('text', {
                     'font-family': textAttrs['font-family'],
                     'font-weight': textAttrs['font-weight'],
@@ -6706,11 +6706,11 @@ class GridGenerator {
                 const lineWidth = tempText.getBBox().width;
                 textGroup.removeChild(tempText);
                 
-                if (textAlign === 'center') {
-                    lineX = blockLeftX + scaledTextWidth / 2;
-                } else { // right
-                    lineX = blockLeftX + scaledTextWidth;
-                }
+                lineX = blockLeftX + scaledTextWidth / 2;
+            } else if (textAlign === 'right') {
+                // For right alignment, use baseTextX which is already correctly calculated
+                // as the right edge of the block (which aligns with the right edge of the column)
+                lineX = baseTextX;
             }
             
             const textElement = this.createSVGElement('text', {
