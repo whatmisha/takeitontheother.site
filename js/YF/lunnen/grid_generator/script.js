@@ -7036,7 +7036,29 @@ class GridGenerator {
         const margins = this.settings.margins;
         
         // Calculate dimensions using GraphicsRenderer to respect sizeMode
-        const dimensions = this.graphicsRenderer.calculateDimensions(block);
+        // Fallback to direct calculation if graphicsRenderer is not yet initialized
+        let dimensions;
+        if (this.graphicsRenderer) {
+            dimensions = this.graphicsRenderer.calculateDimensions(block);
+        } else {
+            // Fallback calculation when graphicsRenderer is not yet initialized
+            const aspectRatio = block.originalWidth / block.originalHeight;
+            let widthInPt, heightInPt;
+            
+            if (block.sizeMode === 'width') {
+                const contentWidth = this.settings.frontWidth - 2 * margins * module;
+                const columnWidth = (contentWidth - (this.settings.columnCount - 1) * module) / this.settings.columnCount;
+                const widthInMm = block.widthInColumns * columnWidth + (block.widthInColumns - 1) * module;
+                widthInPt = MathUtils.mmToPt(widthInMm);
+                heightInPt = widthInPt / aspectRatio;
+            } else {
+                const heightInMm = block.heightInModules * module;
+                heightInPt = MathUtils.mmToPt(heightInMm);
+                widthInPt = heightInPt * aspectRatio;
+            }
+            
+            dimensions = { width: widthInPt, height: heightInPt };
+        }
         const heightInMm = MathUtils.ptToMm(dimensions.height);
         const widthInMm = MathUtils.ptToMm(dimensions.width);
         
