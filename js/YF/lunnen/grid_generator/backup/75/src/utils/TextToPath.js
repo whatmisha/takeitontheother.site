@@ -93,11 +93,10 @@ export class TextToPath {
             const fontFamily = textElement.getAttribute('font-family')?.split(',')[0]?.trim() || 'TT Commons Classic';
             const fontWeight = textElement.getAttribute('font-weight') || '400';
             const fontSize = parseFloat(textElement.getAttribute('font-size') || '12');
-            let x = parseFloat(textElement.getAttribute('x') || '0');
+            const x = parseFloat(textElement.getAttribute('x') || '0');
             const y = parseFloat(textElement.getAttribute('y') || '0');
             const letterSpacingAttr = textElement.getAttribute('letter-spacing') || '0';
             const fill = textElement.getAttribute('fill') || '#000000';
-            const textAnchor = textElement.getAttribute('text-anchor') || 'start';
             const text = textElement.textContent;
 
             if (!text) return null;
@@ -111,48 +110,11 @@ export class TextToPath {
             // Загружаем шрифт
             const font = await this.loadFont(fontKey);
 
-            const scale = fontSize / font.unitsPerEm;
-
-            // Вычисляем ширину текста для корректировки координаты x при выравнивании
-            let textWidth = 0;
-            for (let i = 0; i < text.length; i++) {
-                const char = text[i];
-                const glyph = font.charToGlyph(char);
-                if (glyph && glyph.index !== 0) {
-                    let advance = glyph.advanceWidth * scale;
-                    // Добавляем кернинг если это не последний символ
-                    if (i < text.length - 1) {
-                        const nextChar = text[i + 1];
-                        const nextGlyph = font.charToGlyph(nextChar);
-                        if (nextGlyph && nextGlyph.index !== 0) {
-                            const kerning = font.getKerningValue(glyph, nextGlyph);
-                            advance += kerning * scale;
-                        }
-                    }
-                    // Добавляем letter-spacing
-                    advance += letterSpacingEm * fontSize;
-                    textWidth += advance;
-                } else {
-                    // Fallback для отсутствующих символов
-                    textWidth += fontSize * 0.3 + letterSpacingEm * fontSize;
-                }
-            }
-
-            // Корректируем координату x в зависимости от text-anchor
-            if (textAnchor === 'end') {
-                // Для выравнивания по правому краю: x указывает на правый край текста
-                // При конвертации в кривые мы начинаем с левого края, поэтому вычитаем ширину
-                x = x - textWidth;
-            } else if (textAnchor === 'middle') {
-                // Для выравнивания по центру: x указывает на центр текста
-                // При конвертации в кривые мы начинаем с левого края, поэтому вычитаем половину ширины
-                x = x - textWidth / 2;
-            }
-            // Для 'start' (выравнивание по левому краю) координата x не меняется
-
             // Отрисовываем текст посимвольно для правильного учета letter-spacing
             let currentX = x;
             let pathData = '';
+            
+            const scale = fontSize / font.unitsPerEm;
             
             for (let i = 0; i < text.length; i++) {
                 const char = text[i];

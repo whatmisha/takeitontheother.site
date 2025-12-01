@@ -78,13 +78,11 @@ export class TextRenderer {
         });
 
         // Рендерим текст с переносами
-        const textAlign = block.textAlign || block.alignment || 'left';
         const textElement = this.renderWrappedText(
             block.content,
             width * scale,
             style,
-            scale,
-            textAlign
+            scale
         );
 
         if (textElement) {
@@ -126,7 +124,7 @@ export class TextRenderer {
     /**
      * Отрисовка текста с переносами строк
      */
-    renderWrappedText(text, maxWidth, style, scale, textAlign = 'left') {
+    renderWrappedText(text, maxWidth, style, scale) {
         const textGroup = DOMUtils.createSVGElement('g', {
             class: 'text-content'
         });
@@ -140,7 +138,7 @@ export class TextRenderer {
         tempSvg.style.visibility = 'hidden';
         document.body.appendChild(tempSvg);
 
-        const tempText = this.createTextElement('', style, scale, textAlign);
+        const tempText = this.createTextElement('', style, scale);
         tempSvg.appendChild(tempText);
 
         // Собираем строки
@@ -170,54 +168,15 @@ export class TextRenderer {
         // Очистка
         document.body.removeChild(tempSvg);
 
-        // Определяем text-anchor в зависимости от выравнивания
-        let textAnchor;
-        if (textAlign === 'center') {
-            textAnchor = 'middle';
-        } else if (textAlign === 'right') {
-            textAnchor = 'end';
-        } else {
-            textAnchor = 'start';
-        }
-
         // Создаем SVG text элементы для каждой строки
         const lineHeight = style.lineHeight * this.settings.get('gridModule') * MathUtils.mmToPt(1);
         
-        // Временный SVG для измерения ширины строк
-        const measureSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        measureSvg.style.position = 'absolute';
-        measureSvg.style.visibility = 'hidden';
-        document.body.appendChild(measureSvg);
-        
-        const measureText = this.createTextElement('', style, scale, textAlign);
-        measureSvg.appendChild(measureText);
-        
         lines.forEach((line, index) => {
             const y = index * lineHeight * scale;
-            const lineElement = this.createTextElement(line, style, scale, textAlign);
-            
-            // Вычисляем координату x для этой строки в зависимости от выравнивания
-            let lineX;
-            if (textAlign === 'center') {
-                // Измеряем ширину этой конкретной строки
-                measureText.textContent = line;
-                const lineWidth = measureText.getBBox().width;
-                lineX = maxWidth / 2;
-            } else if (textAlign === 'right') {
-                // Для правого выравнивания x указывает на правый край блока
-                lineX = maxWidth;
-            } else {
-                // Для левого выравнивания x = 0
-                lineX = 0;
-            }
-            
-            lineElement.setAttribute('x', lineX);
+            const lineElement = this.createTextElement(line, style, scale);
             lineElement.setAttribute('y', y);
             textGroup.appendChild(lineElement);
         });
-        
-        // Очистка
-        document.body.removeChild(measureSvg);
 
         return textGroup;
     }
@@ -225,7 +184,7 @@ export class TextRenderer {
     /**
      * Создание SVG text элемента
      */
-    createTextElement(content, style, scale, textAlign = 'left') {
+    createTextElement(content, style, scale, alignment = 'left') {
         // Вычисляем размер шрифта (в mm, как в старом коде)
         const fontSize = this.calculateFontSize(style);
         const scaledFontSize = fontSize * scale;
@@ -236,22 +195,12 @@ export class TextRenderer {
         // Получаем имя шрифта для стиля
         const fontFamily = style.fontFamily || 'TT Commons Classic';
         
-        // Определяем text-anchor в зависимости от выравнивания
-        let textAnchor;
-        if (textAlign === 'center') {
-            textAnchor = 'middle';
-        } else if (textAlign === 'right') {
-            textAnchor = 'end';
-        } else {
-            textAnchor = 'start';
-        }
-        
         const textElement = DOMUtils.createSVGElement('text', {
             class: `text-${style.styleRef}`,
             'font-family': `${fontFamily}, -apple-system, BlinkMacSystemFont, sans-serif`,
             'font-weight': style.fontWeight.toString(),
             'font-size': `${scaledFontSize}`, // без единиц - SVG user-units (mm в нашем viewBox)
-            'text-anchor': textAnchor,
+            'text-anchor': 'start', // Always left-align text inside the block
             'letter-spacing': `${style.tracking}em`,
             'fill': gridColor,
             'fill-opacity': '1',
