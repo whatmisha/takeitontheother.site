@@ -1,7 +1,7 @@
 {
   "presetName": "Ground 14\" Front",
   "version": "1.0",
-  "timestamp": "2025-12-03T01:38:52.934Z",
+  "timestamp": "2025-12-03T02:24:11.758Z",
   "dimensions": {
     "width": 364.5,
     "height": 377.5,
@@ -15,10 +15,10 @@
       "style": "text",
       "position": {
         "column": 12,
-        "row": 17,
-        "baseline": 5.299999999999997
+        "row": 18,
+        "baseline": 5.300000000000011
       },
-      "width": 3,
+      "width": 1,
       "alignment": "right",
       "textAlign": "right",
       "alignmentMode": "baseline",
@@ -28,11 +28,11 @@
     }
   ],
   "grid": {
-    "module": 2.801,
-    "margins": 4.8862,
+    "module": 2.648,
+    "margins": 5.2781,
     "marginsUnit": "mm",
     "columns": 12,
-    "rows": 18,
+    "rows": 19,
     "rowHeight": 6,
     "linkMode": "module",
     "visibility": {
@@ -91,7 +91,7 @@
     "claim": {
       "position": {
         "column": 1,
-        "row": 17,
+        "row": 18,
         "baseline": 2
       },
       "height": 4,
