@@ -1,7 +1,7 @@
 {
   "presetName": "Outer 16\" Front",
   "version": "1.0",
-  "timestamp": "2025-12-01T15:56:59.355Z",
+  "timestamp": "2025-12-03T02:02:21.414Z",
   "dimensions": {
     "width": 390.5,
     "height": 395.5,
@@ -18,7 +18,7 @@
         "row": 18,
         "baseline": 5
       },
-      "width": 3,
+      "width": 1,
       "alignment": "right",
       "textAlign": "right",
       "alignmentMode": "baseline",
@@ -28,8 +28,8 @@
     }
   ],
   "grid": {
-    "module": 2.8454,
-    "margins": 3.4961,
+    "module": 2.7883,
+    "margins": 4.9202,
     "marginsUnit": "mm",
     "columns": 12,
     "rows": 19,
