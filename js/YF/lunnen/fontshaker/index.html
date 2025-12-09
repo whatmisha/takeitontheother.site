@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Font Shaker - YF Tools</title>
+    <meta name="description" content="Интерактивный инструмент для визуализации и анимации вариативных шрифтов">
+    <link rel="stylesheet" href="css/yf-styles.css">
+    <!-- opentype.js for font parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"></script>
+    <style>
+        /* Шрифт для инструмента */
+        @font-face {
+            font-family: 'LunnenDisplay';
+            src: url('fonts/LunnenDisplay-VariableVF.woff2') format('woff2-variations');
+            font-weight: 1 999;
+            font-stretch: 1% 999%;
+        }
+
+        /* Canvas фон */
+        #mainSvg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Текст для preview */
+        .preview-text {
+            font-family: 'LunnenDisplay', sans-serif;
+            font-size: 200px;
+            transition: all 0.1s ease-out;
+        }
+
+        /* Контуры и точки */
+        .glyph-outline {
+            fill: none;
+            stroke: #fff;
+            stroke-width: 1;
+        }
+
+        .anchor-point {
+            fill: #ff0000;
+        }
+
+        .handle-point {
+            fill: #00ff00;
+        }
+
+        .handle-line {
+            stroke: #00ff00;
+            stroke-width: 1;
+        }
+
+        /* Панель Text Settings */
+        .textarea-tall {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        /* Point shape buttons */
+        .shape-buttons {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .shape-btn {
+            flex: 1;
+            padding: 6px 12px;
+            background: var(--color-bg-input);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-input);
+            color: var(--color-text);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .shape-btn:hover {
+            background: var(--color-bg-panel);
+            border-color: var(--color-text-muted);
+        }
+
+        .shape-btn.active {
+            background: var(--color-text);
+            color: var(--color-bg);
+            border-color: var(--color-text);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Top Navigation -->
+        <div class="top-links">
+            <a href="/js/YF/" class="yf-tools-link">←YF Tools</a>
+            <a href="guide.html" style="margin-left: 20px; color: var(--color-text-secondary); text-decoration: none;">Quick Guide</a>
+            <button class="zoom-indicator" id="zoomIndicator">100%</button>
+        </div>
+
+        <div class="main-content">
+            <!-- Main Canvas/Content Area -->
+            <div class="canvas-container" id="canvasContainer">
+                <svg id="mainSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 1000">
+                    <!-- Background -->
+                    <rect id="bgRect" x="0" y="0" width="2000" height="1000" fill="#000000"/>
+                    
+                    <!-- Text группа -->
+                    <g id="textGroup">
+                        <!-- Сюда будет рендериться текст -->
+                    </g>
+                    
+                    <!-- Outline группа -->
+                    <g id="outlineGroup">
+                        <!-- Сюда будут рендериться контуры и точки -->
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Panel 1: Text & Font -->
+            <aside class="controls-panel" id="textPanel">
+                <div class="panel-header" id="textPanelHeader">
+                    <span>Text & Font</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <!-- Text Settings Section -->
+                    <section class="control-section">
+                        <h3>Text Settings</h3>
+                        
+                        <div class="control-group">
+                            <label for="textInput">Text</label>
+                            <textarea id="textInput" class="textarea-tall" placeholder="Enter text to display...">Lunnen</textarea>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="fontSizeSlider">
+                                <span>Font Size <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="fontSizeValue" value="200">
+                            </label>
+                            <input type="range" id="fontSizeSlider" min="50" max="1000" value="200">
+                        </div>
+                    </section>
+
+                    <!-- Variable Font Axes Section -->
+                    <section class="control-section">
+                        <h3>Variable Font Axes</h3>
+                        <div id="axesContainer">
+                            <!-- Динамически генерируемые слайдеры для осей -->
+                        </div>
+                    </section>
+
+                    <!-- OpenType Features Section -->
+                    <section class="control-section">
+                        <h3>OpenType Features</h3>
+                        
+                        <div id="featuresContainer">
+                            <div class="control-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="featureLiga" checked>
+                                    <span>Ligatures (liga)</span>
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="featureDlig" checked>
+                                    <span>Discretionary Ligatures (dlig)</span>
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="featureSalt">
+                                    <span>Stylistic Alternates (salt)</span>
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="featureCalt" checked>
+                                    <span>Contextual Alternates (calt)</span>
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="featureKern" checked>
+                                    <span>Kerning (kern)</span>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <!-- Panel 2: Visualization -->
+            <aside class="controls-panel controls-panel-left" id="visualizationPanel">
+                <div class="panel-header" id="visualizationPanelHeader">
+                    <span>Visualization</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <!-- Appearance Section -->
+                    <section class="control-section">
+                        <h3>Appearance</h3>
+                        
+                        <!-- Background Color -->
+                        <div class="control-group">
+                            <div class="control-group-header">
+                                <span class="control-label">Background</span>
+                            </div>
+                            <div class="color-input-group">
+                                <button class="color-preview" id="bgColorPreview"></button>
+                                <input type="text" id="bgColorInput" value="#000000" maxlength="7">
+                            </div>
+                        </div>
+
+                        <!-- Text Fill Color -->
+                        <div class="control-group">
+                            <div class="control-group-header">
+                                <span class="control-label">Text Fill</span>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="showFill" checked>
+                                    <span>Show</span>
+                                </label>
+                            </div>
+                            <div class="color-input-group">
+                                <button class="color-preview" id="fillColorPreview"></button>
+                                <input type="text" id="fillColorInput" value="#ffffff" maxlength="7">
+                            </div>
+                        </div>
+
+                        <!-- Outline -->
+                        <div class="control-group">
+                            <div class="control-group-header">
+                                <span class="control-label">Outline</span>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="showOutline" checked>
+                                    <span>Show</span>
+                                </label>
+                            </div>
+                            <div class="color-input-group">
+                                <button class="color-preview" id="outlineColorPreview"></button>
+                                <input type="text" id="outlineColorInput" value="#00ffff" maxlength="7">
+                            </div>
+                            <label for="outlineWidthSlider">
+                                <span>Width <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="outlineWidthValue" value="1.0">
+                            </label>
+                            <input type="range" id="outlineWidthSlider" min="0.5" max="10" step="0.5" value="1">
+                        </div>
+
+                        <!-- Anchor Points -->
+                        <div class="control-group">
+                            <div class="control-group-header">
+                                <span class="control-label">Anchor Points</span>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="showAnchors" checked>
+                                    <span>Show</span>
+                                </label>
+                            </div>
+                            <div class="color-input-group">
+                                <button class="color-preview" id="anchorColorPreview"></button>
+                                <input type="text" id="anchorColorInput" value="#ff0000" maxlength="7">
+                            </div>
+                            <label for="anchorSizeSlider">
+                                <span>Size <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="anchorSizeValue" value="4.0">
+                            </label>
+                            <input type="range" id="anchorSizeSlider" min="2" max="20" step="1" value="4">
+                            <div class="shape-buttons">
+                                <button class="shape-btn active" data-shape="circle" data-target="anchor">●</button>
+                                <button class="shape-btn" data-shape="square" data-target="anchor">■</button>
+                                <button class="shape-btn" data-shape="cross" data-target="anchor">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Handle Points -->
+                        <div class="control-group">
+                            <div class="control-group-header">
+                                <span class="control-label">Handle Points</span>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="showHandles" checked>
+                                    <span>Show</span>
+                                </label>
+                            </div>
+                            <div class="color-input-group">
+                                <button class="color-preview" id="handleColorPreview"></button>
+                                <input type="text" id="handleColorInput" value="#00ff00" maxlength="7">
+                            </div>
+                            <label for="handleSizeSlider">
+                                <span>Size <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="handleSizeValue" value="3.0">
+                            </label>
+                            <input type="range" id="handleSizeSlider" min="1" max="15" step="1" value="3">
+                            <div class="shape-buttons">
+                                <button class="shape-btn active" data-shape="circle" data-target="handle">●</button>
+                                <button class="shape-btn" data-shape="square" data-target="handle">■</button>
+                                <button class="shape-btn" data-shape="diamond" data-target="handle">◆</button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <!-- Panel 3: Animation -->
+            <aside class="controls-panel controls-panel-left" id="animationPanel">
+                <div class="panel-header" id="animationPanelHeader">
+                    <span>Animation</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <!-- Animation Section -->
+                    <section class="control-section">
+                        <h3>Animation</h3>
+                        
+                        <div class="control-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="enableAnimation">
+                                <span>Enable Animation</span>
+                            </label>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="animationAxis">Animate Axis</label>
+                            <select id="animationAxis" class="style-select">
+                                <option value="">Select axis...</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="animationSpeedSlider">
+                                <span>Speed</span>
+                                <input type="text" class="value-display" id="animationSpeedValue" value="2.0">
+                            </label>
+                            <input type="range" id="animationSpeedSlider" min="0.5" max="10" step="0.5" value="2">
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Bottom Action Buttons -->
+    <nav class="bottom-buttons">
+        <button class="btn-fixed btn-export" id="exportBtn">Export SVG</button>
+    </nav>
+
+    <script type="module">
+        // Import framework modules
+        import { SliderController } from './js/ui/SliderController.js';
+        import { PanelManager } from './js/ui/PanelManager.js';
+        import { ZoomPanManager } from './js/ui/ZoomPanManager.js';
+        import { ColorUtils } from './js/utils/ColorUtils.js';
+
+        // Settings storage
+        const settings = {
+            values: {
+                text: 'Lunnen',
+                fontSize: 200,
+                bgColor: '#000000',
+                fillColor: '#ffffff',
+                showFill: true,
+                outlineColor: '#00ffff',
+                outlineWidth: 1,
+                showOutline: true,
+                anchorColor: '#ff0000',
+                anchorSize: 4,
+                anchorShape: 'circle',
+                showAnchors: true,
+                handleColor: '#00ff00',
+                handleSize: 3,
+                handleShape: 'circle',
+                showHandles: true,
+                enableAnimation: false,
+                animationAxis: '',
+                animationSpeed: 2,
+                axes: {},
+                features: {
+                    liga: true,
+                    dlig: true,
+                    salt: false,
+                    calt: true,
+                    kern: true
+                }
+            },
+            get(key) { return this.values[key]; },
+            set(key, value) { 
+                this.values[key] = value;
+            }
+        };
+
+        // Font и canvas элементы
+        let fontData = null;
+        let fontAxes = [];
+        let animationFrameId = null;
+        let animationTime = 0;
+
+        const elements = {
+            svg: document.getElementById('mainSvg'),
+            bgRect: document.getElementById('bgRect'),
+            textGroup: document.getElementById('textGroup'),
+            outlineGroup: document.getElementById('outlineGroup'),
+            textInput: document.getElementById('textInput'),
+            axesContainer: document.getElementById('axesContainer'),
+            animationAxis: document.getElementById('animationAxis')
+        };
+
+        // Initialize SliderController
+        const sliderController = new SliderController(settings);
+
+        // Font Size slider
+        sliderController.initSlider('fontSizeSlider', {
+            valueId: 'fontSizeValue',
+            setting: 'fontSize',
+            min: 50,
+            max: 1000,
+            decimals: 0,
+            baseStep: 10,
+            shiftStep: 50,
+            onUpdate: (value) => {
+                updateVisualization();
+            }
+        });
+
+        // Outline Width slider
+        sliderController.initSlider('outlineWidthSlider', {
+            valueId: 'outlineWidthValue',
+            setting: 'outlineWidth',
+            min: 0.5,
+            max: 10,
+            decimals: 1,
+            baseStep: 0.5,
+            shiftStep: 2,
+            onUpdate: (value) => {
+                updateVisualization();
+            }
+        });
+
+        // Anchor Size slider
+        sliderController.initSlider('anchorSizeSlider', {
+            valueId: 'anchorSizeValue',
+            setting: 'anchorSize',
+            min: 2,
+            max: 20,
+            decimals: 0,
+            baseStep: 1,
+            shiftStep: 5,
+            onUpdate: (value) => {
+                updateVisualization();
+            }
+        });
+
+        // Handle Size slider
+        sliderController.initSlider('handleSizeSlider', {
+            valueId: 'handleSizeValue',
+            setting: 'handleSize',
+            min: 1,
+            max: 15,
+            decimals: 0,
+            baseStep: 1,
+            shiftStep: 3,
+            onUpdate: (value) => {
+                updateVisualization();
+            }
+        });
+
+        // Animation Speed slider
+        sliderController.initSlider('animationSpeedSlider', {
+            valueId: 'animationSpeedValue',
+            setting: 'animationSpeed',
+            min: 0.5,
+            max: 10,
+            decimals: 1,
+            baseStep: 0.5,
+            shiftStep: 2,
+            onUpdate: (value) => {
+                // Скорость меняется динамически
+            }
+        });
+
+        // Initialize PanelManager
+        const panelManager = new PanelManager();
+        
+        // Register Text & Font panel
+        panelManager.registerPanel('textPanel', {
+            headerId: 'textPanelHeader',
+            draggable: true,
+            persistent: true
+        });
+        
+        // Register Visualization panel
+        panelManager.registerPanel('visualizationPanel', {
+            headerId: 'visualizationPanelHeader',
+            draggable: true,
+            persistent: true
+        });
+        
+        // Register Animation panel
+        panelManager.registerPanel('animationPanel', {
+            headerId: 'animationPanelHeader',
+            draggable: true,
+            persistent: true
+        });
+
+        // Set initial positions for left panels (only if not saved in localStorage)
+        setTimeout(() => {
+            // Visualization panel - top left
+            const visualizationPanel = document.getElementById('visualizationPanel');
+            const vizSavedPos = localStorage.getItem('visualizationPanel_position');
+            if (visualizationPanel && !vizSavedPos) {
+                visualizationPanel.style.position = 'fixed';
+                visualizationPanel.style.top = '20px';
+                visualizationPanel.style.left = '20px';
+                visualizationPanel.style.right = 'auto';
+                visualizationPanel.style.bottom = 'auto';
+                visualizationPanel.style.width = '320px'; // Same width as right panel
+            }
+
+            // Animation panel - bottom left
+            const animationPanel = document.getElementById('animationPanel');
+            const animSavedPos = localStorage.getItem('animationPanel_position');
+            if (animationPanel && !animSavedPos) {
+                animationPanel.style.position = 'fixed';
+                animationPanel.style.top = 'auto';
+                animationPanel.style.left = '20px';
+                animationPanel.style.right = 'auto';
+                animationPanel.style.bottom = '20px';
+                animationPanel.style.width = '320px'; // Same width as right panel
+            }
+        }, 100);
+
+        // Initialize ZoomPanManager
+        const zoomPanManager = new ZoomPanManager(
+            document.getElementById('canvasContainer'),
+            document.getElementById('mainSvg')
+        );
+
+        // Update zoom indicator
+        document.getElementById('canvasContainer').addEventListener('zoomchange', (e) => {
+            document.getElementById('zoomIndicator').textContent = e.detail.percent + '%';
+        });
+
+        // Reset zoom on click
+        document.getElementById('zoomIndicator').addEventListener('click', () => {
+            zoomPanManager.resetZoom();
+        });
+
+        // Color inputs
+        function setupColorInput(inputId, previewId, settingKey) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            
+            input.addEventListener('input', (e) => {
+                let value = e.target.value;
+                if (!value.startsWith('#')) value = '#' + value;
+                if (value.length === 7) {
+                    settings.set(settingKey, value);
+                    preview.style.backgroundColor = value;
+                    updateVisualization();
+                }
+            });
+            
+            preview.addEventListener('click', () => {
+                input.focus();
+            });
+            
+            // Initialize
+            preview.style.backgroundColor = settings.get(settingKey);
+        }
+
+        setupColorInput('bgColorInput', 'bgColorPreview', 'bgColor');
+        setupColorInput('fillColorInput', 'fillColorPreview', 'fillColor');
+        setupColorInput('outlineColorInput', 'outlineColorPreview', 'outlineColor');
+        setupColorInput('anchorColorInput', 'anchorColorPreview', 'anchorColor');
+        setupColorInput('handleColorInput', 'handleColorPreview', 'handleColor');
+
+        // Checkboxes
+        function setupCheckbox(id, settingKey) {
+            const checkbox = document.getElementById(id);
+            checkbox.addEventListener('change', (e) => {
+                settings.set(settingKey, e.target.checked);
+                updateVisualization();
+            });
+        }
+
+        setupCheckbox('showFill', 'showFill');
+        setupCheckbox('showOutline', 'showOutline');
+        setupCheckbox('showAnchors', 'showAnchors');
+        setupCheckbox('showHandles', 'showHandles');
+        setupCheckbox('enableAnimation', 'enableAnimation');
+
+        // OpenType features checkboxes
+        function setupFeatureCheckbox(id, feature) {
+            const checkbox = document.getElementById(id);
+            if (checkbox) {
+                checkbox.addEventListener('change', (e) => {
+                    settings.values.features[feature] = e.target.checked;
+                    updateVisualization();
+                });
+            }
+        }
+
+        setupFeatureCheckbox('featureLiga', 'liga');
+        setupFeatureCheckbox('featureDlig', 'dlig');
+        setupFeatureCheckbox('featureSalt', 'salt');
+        setupFeatureCheckbox('featureCalt', 'calt');
+        setupFeatureCheckbox('featureKern', 'kern');
+
+        // Shape buttons
+        document.querySelectorAll('.shape-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const shape = this.getAttribute('data-shape');
+                const target = this.getAttribute('data-target');
+                
+                // Update active state
+                this.parentElement.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update settings
+                if (target === 'anchor') {
+                    settings.set('anchorShape', shape);
+                } else if (target === 'handle') {
+                    settings.set('handleShape', shape);
+                }
+                
+                updateVisualization();
+            });
+        });
+
+        // Text input
+        elements.textInput.addEventListener('input', (e) => {
+            settings.set('text', e.target.value);
+            updateVisualization();
+        });
+
+        // Animation axis select
+        elements.animationAxis.addEventListener('change', (e) => {
+            settings.set('animationAxis', e.target.value);
+            if (settings.get('enableAnimation')) {
+                startAnimation();
+            }
+        });
+
+        // Load variable font and extract axes
+        async function loadFont() {
+            try {
+                // opentype.js не поддерживает WOFF2, используем TTF для парсинга
+                const fontUrl = 'fonts/LunnenDisplay-VariableVF.ttf';
+                const response = await fetch(fontUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to load font: ${response.status}`);
+                }
+                
+                const buffer = await response.arrayBuffer();
+                
+                // Parse font using opentype.js (поддерживает TTF, но не WOFF2)
+                fontData = opentype.parse(buffer);
+                console.log('Font loaded:', fontData);
+                
+                // Extract variable font axes from fvar table
+                if (fontData.tables.fvar && fontData.tables.fvar.axes) {
+                    fontAxes = fontData.tables.fvar.axes.map(axis => ({
+                        tag: axis.tag,
+                        name: axis.name ? axis.name.en : axis.tag,
+                        min: axis.minValue,
+                        max: axis.maxValue,
+                        default: axis.defaultValue
+                    }));
+                } else {
+                    // Fallback - стандартные оси для вариативных шрифтов
+                    console.warn('No fvar table found, using default axes');
+                    fontAxes = [
+                        { tag: 'wght', name: 'Weight', min: 100, max: 900, default: 400 },
+                        { tag: 'wdth', name: 'Width', min: 75, max: 125, default: 100 }
+                    ];
+                }
+                
+                console.log('Font axes:', fontAxes);
+                createAxisSliders();
+                updateVisualization();
+            } catch (error) {
+                console.error('Error loading font:', error);
+                // Fallback - создаем стандартные оси
+                fontAxes = [
+                    { tag: 'wght', name: 'Weight', min: 100, max: 900, default: 400 },
+                    { tag: 'wdth', name: 'Width', min: 75, max: 125, default: 100 }
+                ];
+                createAxisSliders();
+                updateVisualization();
+            }
+        }
+
+        // Create sliders for font axes
+        function createAxisSliders() {
+            elements.axesContainer.innerHTML = '';
+            elements.animationAxis.innerHTML = '<option value="">Select axis...</option>';
+            
+            fontAxes.forEach(axis => {
+                // Initialize axis value
+                if (!settings.values.axes[axis.tag]) {
+                    settings.values.axes[axis.tag] = axis.default;
+                }
+                
+                // Create slider HTML
+                const group = document.createElement('div');
+                group.className = 'control-group';
+                group.innerHTML = `
+                    <label for="${axis.tag}Slider">
+                        <span>${axis.name} (${axis.tag})</span>
+                        <input type="text" class="value-display" id="${axis.tag}Value" value="${axis.default}">
+                    </label>
+                    <input type="range" id="${axis.tag}Slider" 
+                        min="${axis.min}" max="${axis.max}" value="${axis.default}">
+                `;
+                elements.axesContainer.appendChild(group);
+                
+                // Initialize slider with SliderController
+                sliderController.initSlider(`${axis.tag}Slider`, {
+                    valueId: `${axis.tag}Value`,
+                    setting: `axes.${axis.tag}`,
+                    min: axis.min,
+                    max: axis.max,
+                    decimals: 0,
+                    baseStep: 1,
+                    shiftStep: 10,
+                    onUpdate: (value) => {
+                        settings.values.axes[axis.tag] = value;
+                        updateVisualization();
+                    }
+                });
+                
+                // Add to animation select
+                const option = document.createElement('option');
+                option.value = axis.tag;
+                option.textContent = `${axis.name} (${axis.tag})`;
+                elements.animationAxis.appendChild(option);
+            });
+        }
+
+        // Update visualization
+        function updateVisualization() {
+            // Update background
+            elements.bgRect.setAttribute('fill', settings.get('bgColor'));
+            
+            // Update text
+            const text = settings.get('text');
+            const fontSize = settings.get('fontSize');
+            
+            // Clear previous content
+            elements.textGroup.innerHTML = '';
+            elements.outlineGroup.innerHTML = '';
+            
+            if (!text) return;
+            
+            // Build font-variation-settings
+            let variationSettings = '';
+            Object.keys(settings.values.axes).forEach(tag => {
+                variationSettings += `'${tag}' ${settings.values.axes[tag]}, `;
+            });
+            variationSettings = variationSettings.slice(0, -2); // Remove trailing comma
+            
+            // Create text element
+            const textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            textEl.setAttribute('x', '1000');
+            textEl.setAttribute('y', '600');
+            textEl.setAttribute('font-family', 'LunnenDisplay');
+            textEl.setAttribute('font-size', fontSize);
+            textEl.setAttribute('text-anchor', 'middle');
+            textEl.setAttribute('dominant-baseline', 'middle');
+            
+            if (variationSettings) {
+                textEl.style.fontVariationSettings = variationSettings;
+            }
+            
+            // Apply OpenType features
+            let featureSettings = '';
+            Object.keys(settings.values.features).forEach(feat => {
+                const enabled = settings.values.features[feat];
+                featureSettings += `'${feat}' ${enabled ? 'on' : 'off'}, `;
+            });
+            if (featureSettings) {
+                featureSettings = featureSettings.slice(0, -2); // Remove trailing comma
+                textEl.style.fontFeatureSettings = featureSettings;
+            }
+            
+            // Apply fill
+            if (settings.get('showFill')) {
+                textEl.setAttribute('fill', settings.get('fillColor'));
+            } else {
+                textEl.setAttribute('fill', 'none');
+            }
+            
+            // Apply stroke (outline)
+            if (settings.get('showOutline')) {
+                textEl.setAttribute('stroke', settings.get('outlineColor'));
+                textEl.setAttribute('stroke-width', settings.get('outlineWidth'));
+            } else {
+                textEl.setAttribute('stroke', 'none');
+            }
+            
+            textEl.textContent = text;
+            elements.textGroup.appendChild(textEl);
+            
+            // Render outline details (anchor points and handles)
+            // Для полноценной визуализации нужна библиотека opentype.js
+            // Здесь сделаем упрощенную версию - покажем bbox и примерные точки
+            if (settings.get('showAnchors') || settings.get('showHandles')) {
+                renderGlyphDetails(textEl);
+            }
+        }
+
+        // Create point element based on shape
+        function createPoint(x, y, size, color, shape) {
+            if (shape === 'circle') {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', x);
+                circle.setAttribute('cy', y);
+                circle.setAttribute('r', size);
+                circle.setAttribute('fill', color);
+                return circle;
+            } else if (shape === 'square') {
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', x - size);
+                rect.setAttribute('y', y - size);
+                rect.setAttribute('width', size * 2);
+                rect.setAttribute('height', size * 2);
+                rect.setAttribute('fill', color);
+                return rect;
+            } else if (shape === 'diamond') {
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const d = `M ${x},${y - size} L ${x + size},${y} L ${x},${y + size} L ${x - size},${y} Z`;
+                path.setAttribute('d', d);
+                path.setAttribute('fill', color);
+                return path;
+            } else if (shape === 'cross') {
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line1.setAttribute('x1', x - size);
+                line1.setAttribute('y1', y);
+                line1.setAttribute('x2', x + size);
+                line1.setAttribute('y2', y);
+                line1.setAttribute('stroke', color);
+                line1.setAttribute('stroke-width', size / 2);
+                line1.setAttribute('stroke-linecap', 'round');
+                const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line2.setAttribute('x1', x);
+                line2.setAttribute('y1', y - size);
+                line2.setAttribute('x2', x);
+                line2.setAttribute('y2', y + size);
+                line2.setAttribute('stroke', color);
+                line2.setAttribute('stroke-width', size / 2);
+                line2.setAttribute('stroke-linecap', 'round');
+                g.appendChild(line1);
+                g.appendChild(line2);
+                return g;
+            }
+            // Default to circle
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', x);
+            circle.setAttribute('cy', y);
+            circle.setAttribute('r', size);
+            circle.setAttribute('fill', color);
+            return circle;
+        }
+
+        // Render glyph details using opentype.js
+        // NOTE: opentype.js не поддерживает вариативные шрифты
+        // Поэтому мы масштабируем точки по bbox вариативного текста
+        function renderGlyphDetails(textElement) {
+            if (!fontData) {
+                console.warn('Font data not loaded');
+                return;
+            }
+            
+            // Получаем bbox вариативного текста
+            let textBbox;
+            try {
+                textBbox = textElement.getBBox();
+            } catch (e) {
+                console.error('Could not get text bbox:', e);
+                return;
+            }
+            
+            const text = settings.get('text');
+            const fontSize = settings.get('fontSize');
+            
+            // Get glyphs for the text из opentype.js (статичные)
+            const glyphs = fontData.stringToGlyphs(text);
+            
+            // Calculate базовые размеры из opentype.js
+            let opentypeWidth = 0;
+            glyphs.forEach(glyph => {
+                opentypeWidth += glyph.advanceWidth || 0;
+            });
+            const opentypeScale = fontSize / fontData.unitsPerEm;
+            opentypeWidth *= opentypeScale;
+            
+            // Вычисляем коэффициент масштабирования между opentype и вариативным текстом
+            const scaleX = textBbox.width / opentypeWidth;
+            const scaleY = textBbox.height / (fontSize * 0.7); // ~0.7 - типичная высота cap height
+            
+            // Начальная позиция для opentype контуров
+            let opentypeX = 0;
+            const opentypeY = 0;
+            
+            glyphs.forEach((glyph, index) => {
+                // Get glyph path из opentype.js
+                const path = glyph.getPath(opentypeX, opentypeY, fontSize);
+                
+                // Debug для первого глифа
+                if (index === 0) {
+                    console.log('Glyph:', glyph);
+                    console.log('Path:', path);
+                    console.log('Path commands:', path.commands);
+                }
+                
+                // НЕ рисуем отдельный контур - используем контур на text элементе
+                // Только извлекаем точки
+                
+                // Draw anchor points and handles - масштабируем по bbox
+                if (settings.get('showAnchors') || settings.get('showHandles')) {
+                    if (path && path.commands && Array.isArray(path.commands) && path.commands.length > 0) {
+                        // Получаем bbox opentype контура
+                        const pathBbox = path.getBoundingBox();
+                        const opentypeWidth = pathBbox.x2 - pathBbox.x1;
+                        const opentypeHeight = pathBbox.y2 - pathBbox.y1;
+                        
+                        // Вычисляем масштаб и смещение для выравнивания с вариативным текстом
+                        const glyphBboxWidth = textBbox.width / glyphs.length; // Примерная ширина одного глифа
+                        const glyphBboxX = textBbox.x + (glyphBboxWidth * index);
+                        
+                        const transformX = (ptX) => {
+                            // Нормализуем координату из opentype space
+                            const normalized = (ptX - pathBbox.x1) / opentypeWidth;
+                            // Применяем к bbox вариативного текста
+                            return glyphBboxX + (normalized * glyphBboxWidth);
+                        };
+                        
+                        const transformY = (ptY) => {
+                            // Нормализуем координату из opentype space
+                            const normalized = (ptY - pathBbox.y1) / opentypeHeight;
+                            // Применяем к bbox вариативного текста
+                            return textBbox.y + (normalized * textBbox.height);
+                        };
+                        
+                        let currentX = 0;
+                        let currentY = 0;
+                        
+                        path.commands.forEach((cmd) => {
+                            if (cmd.type === 'M') {
+                                currentX = cmd.x;
+                                currentY = cmd.y;
+                                if (settings.get('showAnchors')) {
+                                    const point = createPoint(
+                                        transformX(currentX), 
+                                        transformY(currentY), 
+                                        settings.get('anchorSize'),
+                                        settings.get('anchorColor'),
+                                        settings.get('anchorShape')
+                                    );
+                                    elements.outlineGroup.appendChild(point);
+                                }
+                            } else if (cmd.type === 'L') {
+                                currentX = cmd.x;
+                                currentY = cmd.y;
+                                if (settings.get('showAnchors')) {
+                                    const point = createPoint(
+                                        transformX(currentX), 
+                                        transformY(currentY), 
+                                        settings.get('anchorSize'),
+                                        settings.get('anchorColor'),
+                                        settings.get('anchorShape')
+                                    );
+                                    elements.outlineGroup.appendChild(point);
+                                }
+                            } else if (cmd.type === 'Q') {
+                                if (settings.get('showAnchors')) {
+                                    const point = createPoint(
+                                        transformX(cmd.x), 
+                                        transformY(cmd.y), 
+                                        settings.get('anchorSize'),
+                                        settings.get('anchorColor'),
+                                        settings.get('anchorShape')
+                                    );
+                                    elements.outlineGroup.appendChild(point);
+                                }
+                                
+                                if (settings.get('showHandles')) {
+                                    const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                                    line1.setAttribute('x1', transformX(currentX));
+                                    line1.setAttribute('y1', transformY(currentY));
+                                    line1.setAttribute('x2', transformX(cmd.x1));
+                                    line1.setAttribute('y2', transformY(cmd.y1));
+                                    line1.setAttribute('stroke', settings.get('handleColor'));
+                                    line1.setAttribute('stroke-width', '1');
+                                    line1.setAttribute('opacity', '0.5');
+                                    elements.outlineGroup.appendChild(line1);
+                                    
+                                    const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                                    line2.setAttribute('x1', transformX(cmd.x1));
+                                    line2.setAttribute('y1', transformY(cmd.y1));
+                                    line2.setAttribute('x2', transformX(cmd.x));
+                                    line2.setAttribute('y2', transformY(cmd.y));
+                                    line2.setAttribute('stroke', settings.get('handleColor'));
+                                    line2.setAttribute('stroke-width', '1');
+                                    line2.setAttribute('opacity', '0.5');
+                                    elements.outlineGroup.appendChild(line2);
+                                    
+                                    const point = createPoint(
+                                        transformX(cmd.x1), 
+                                        transformY(cmd.y1), 
+                                        settings.get('handleSize'),
+                                        settings.get('handleColor'),
+                                        settings.get('handleShape')
+                                    );
+                                    elements.outlineGroup.appendChild(point);
+                                }
+                                
+                                currentX = cmd.x;
+                                currentY = cmd.y;
+                            } else if (cmd.type === 'C') {
+                                if (settings.get('showAnchors')) {
+                                    const point = createPoint(
+                                        transformX(cmd.x), 
+                                        transformY(cmd.y), 
+                                        settings.get('anchorSize'),
+                                        settings.get('anchorColor'),
+                                        settings.get('anchorShape')
+                                    );
+                                    elements.outlineGroup.appendChild(point);
+                                }
+                                
+                                if (settings.get('showHandles')) {
+                                    const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                                    line1.setAttribute('x1', transformX(currentX));
+                                    line1.setAttribute('y1', transformY(currentY));
+                                    line1.setAttribute('x2', transformX(cmd.x1));
+                                    line1.setAttribute('y2', transformY(cmd.y1));
+                                    line1.setAttribute('stroke', settings.get('handleColor'));
+                                    line1.setAttribute('stroke-width', '1');
+                                    line1.setAttribute('opacity', '0.5');
+                                    elements.outlineGroup.appendChild(line1);
+                                    
+                                    const point1 = createPoint(
+                                        transformX(cmd.x1), 
+                                        transformY(cmd.y1), 
+                                        settings.get('handleSize'),
+                                        settings.get('handleColor'),
+                                        settings.get('handleShape')
+                                    );
+                                    elements.outlineGroup.appendChild(point1);
+                                    
+                                    const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                                    line2.setAttribute('x1', transformX(cmd.x2));
+                                    line2.setAttribute('y1', transformY(cmd.y2));
+                                    line2.setAttribute('x2', transformX(cmd.x));
+                                    line2.setAttribute('y2', transformY(cmd.y));
+                                    line2.setAttribute('stroke', settings.get('handleColor'));
+                                    line2.setAttribute('stroke-width', '1');
+                                    line2.setAttribute('opacity', '0.5');
+                                    elements.outlineGroup.appendChild(line2);
+                                    
+                                    const point2 = createPoint(
+                                        transformX(cmd.x2), 
+                                        transformY(cmd.y2), 
+                                        settings.get('handleSize'),
+                                        settings.get('handleColor'),
+                                        settings.get('handleShape')
+                                    );
+                                    elements.outlineGroup.appendChild(point2);
+                                }
+                                
+                                currentX = cmd.x;
+                                currentY = cmd.y;
+                            }
+                        });
+                    } else {
+                        // Commands недоступны
+                        if (index === 0) {
+                            console.error('Path commands not available or empty');
+                            console.log('Path structure:', Object.keys(path));
+                        }
+                    }
+                }
+                
+                // Move to next glyph position (для opentype координат)
+                opentypeX += (glyph.advanceWidth || 0) * opentypeScale;
+            });
+        }
+
+        // Animation
+        document.getElementById('enableAnimation').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                startAnimation();
+            } else {
+                stopAnimation();
+            }
+        });
+
+        function startAnimation() {
+            if (!settings.get('enableAnimation') || !settings.get('animationAxis')) {
+                return;
+            }
+            
+            stopAnimation(); // Stop previous animation
+            animationTime = 0;
+            
+            const axis = fontAxes.find(a => a.tag === settings.get('animationAxis'));
+            if (!axis) return;
+            
+            function animate() {
+                animationTime += 0.016 * settings.get('animationSpeed'); // ~60fps
+                
+                // Sine wave animation between min and max
+                const range = axis.max - axis.min;
+                const mid = axis.min + range / 2;
+                const amplitude = range / 2;
+                const value = mid + Math.sin(animationTime) * amplitude;
+                
+                settings.values.axes[axis.tag] = Math.round(value);
+                
+                // Update slider
+                const slider = document.getElementById(`${axis.tag}Slider`);
+                const valueDisplay = document.getElementById(`${axis.tag}Value`);
+                if (slider && valueDisplay) {
+                    slider.value = Math.round(value);
+                    valueDisplay.value = Math.round(value);
+                }
+                
+                updateVisualization();
+                
+                if (settings.get('enableAnimation')) {
+                    animationFrameId = requestAnimationFrame(animate);
+                }
+            }
+            
+            animate();
+        }
+
+        function stopAnimation() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+        }
+
+        // Export functionality
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const svgElement = elements.svg.cloneNode(true);
+            
+            // Clean up
+            svgElement.removeAttribute('id');
+            
+            // Serialize
+            const serializer = new XMLSerializer();
+            let svgString = serializer.serializeToString(svgElement);
+            
+            // Add XML declaration
+            svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgString;
+            
+            // Create blob and download
+            const blob = new Blob([svgString], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `fontshaker-${Date.now()}.svg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Panel collapse handlers
+        document.querySelectorAll('.collapse-icon').forEach(icon => {
+            icon.addEventListener('click', function() {
+                this.closest('.controls-panel').classList.toggle('panel-collapsed');
+                this.classList.toggle('collapsed');
+            });
+        });
+
+        // Initialize
+        loadFont();
+        updateVisualization();
+    </script>
+</body>
+</html>
+

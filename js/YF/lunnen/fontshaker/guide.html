@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Font Shaker - Quick Guide</title>
+    <link rel="stylesheet" href="css/yf-styles.css">
+    <style>
+        body {
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .guide-section {
+            margin-bottom: 40px;
+            padding: 30px;
+            background: var(--color-bg-panel);
+            border-radius: var(--radius);
+        }
+        
+        .guide-section h2 {
+            color: var(--color-text);
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        .guide-section h3 {
+            color: var(--color-text-secondary);
+            margin-top: 24px;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+        
+        .guide-section p, .guide-section li {
+            color: var(--color-text-secondary);
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .guide-section ul, .guide-section ol {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .feature-card {
+            background: var(--color-bg);
+            padding: 20px;
+            border-radius: var(--radius-input);
+            border: 1px solid var(--color-border);
+        }
+        
+        .feature-card h4 {
+            color: var(--color-text);
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .feature-card p {
+            color: var(--color-text-muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .btn-primary {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: var(--color-text);
+            color: var(--color-bg);
+            text-decoration: none;
+            border-radius: var(--radius-button);
+            font-weight: 500;
+            transition: opacity 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+        
+        .shortcut-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        
+        .shortcut-table th,
+        .shortcut-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .shortcut-table th {
+            color: var(--color-text);
+            font-weight: 500;
+        }
+        
+        .shortcut-table td {
+            color: var(--color-text-secondary);
+        }
+        
+        .shortcut-table code {
+            background: var(--color-bg);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: var(--color-text);
+        }
+        
+        .color-example {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .color-swatch {
+            width: 80px;
+            height: 80px;
+            border-radius: var(--radius-input);
+            border: 1px solid var(--color-border);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .color-swatch-label {
+            font-size: 10px;
+            color: var(--color-text-muted);
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-links" style="position: sticky; top: 0; background: var(--color-bg); z-index: 100; padding: 20px 0;">
+        <a href="index.html" class="yf-tools-link">← Back to Font Shaker</a>
+    </div>
+
+    <h1 style="color: var(--color-text); margin-bottom: 10px;">Font Shaker Quick Guide</h1>
+    <p style="color: var(--color-text-secondary); margin-bottom: 40px;">
+        Интерактивный инструмент для визуализации и анимации вариативных шрифтов
+    </p>
+
+    <div class="guide-section">
+        <h2>🚀 Быстрый старт</h2>
+        <ol>
+            <li>Откройте <strong>fontshaker.html</strong> в браузере</li>
+            <li>Введите текст в поле "Text" (по умолчанию "Rg")</li>
+            <li>Экспериментируйте со слайдерами вариативных осей</li>
+            <li>Включите отображение контуров и точек</li>
+            <li>Настройте цвета под ваши нужды</li>
+            <li>Включите анимацию для демонстрации</li>
+            <li>Экспортируйте результат в SVG</li>
+        </ol>
+        
+        <a href="index.html" class="btn-primary">Открыть Font Shaker</a>
+    </div>
+
+    <div class="guide-section">
+        <h2>✨ Основные возможности</h2>
+        
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>📝 Редактирование текста</h4>
+                <p>Введите любой текст для отображения. Поддерживается многострочный ввод. Размер от 50px до 1000px.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h4>🎨 Вариативные оси</h4>
+                <p>Автоматическое определение осей вариативности. Для каждой оси создается слайдер с реальными диапазонами значений.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h4>🖌️ Контуры шрифта</h4>
+                <p>Визуализация контуров, узловых точек (anchor points) и направляющих (handle points) с настройкой цветов и размеров.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h4>🎭 OpenType фичи</h4>
+                <p>Поддержка лигатур, кернинга, стилистических альтернатив и других OpenType features.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h4>🎬 Анимация</h4>
+                <p>Плавная анимация по любой оси вариативности. Регулируемая скорость от 0.5x до 10x. Зациклена для скринкастов.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h4>💾 Экспорт SVG</h4>
+                <p>Сохранение в векторный формат со всеми настройками: цвета, контуры, точки, значения осей.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="guide-section">
+        <h2>⌨️ Горячие клавиши</h2>
+        
+        <h3>Навигация и зум</h3>
+        <table class="shortcut-table">
+            <thead>
+                <tr>
+                    <th>Клавиши</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>Cmd + Scroll</code></td>
+                    <td>Zoom in/out</td>
+                </tr>
+                <tr>
+                    <td><code>Cmd + 0</code></td>
+                    <td>Reset zoom (100%)</td>
+                </tr>
+                <tr>
+                    <td><code>Cmd + 1</code></td>
+                    <td>Fit to screen</td>
+                </tr>
+                <tr>
+                    <td><code>+</code> / <code>-</code></td>
+                    <td>Zoom in/out</td>
+                </tr>
+                <tr>
+                    <td><code>Space + Drag</code></td>
+                    <td>Pan canvas</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3>Работа со слайдерами</h3>
+        <table class="shortcut-table">
+            <thead>
+                <tr>
+                    <th>Клавиши</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>↑</code> / <code>↓</code></td>
+                    <td>Изменить значение (малый шаг)</td>
+                </tr>
+                <tr>
+                    <td><code>Shift + ↑</code> / <code>Shift + ↓</code></td>
+                    <td>Изменить значение (большой шаг)</td>
+                </tr>
+                <tr>
+                    <td><code>Enter</code></td>
+                    <td>Применить введенное значение</td>
+                </tr>
+                <tr>
+                    <td><code>Escape</code></td>
+                    <td>Отменить изменения</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="guide-section">
+        <h2>🎨 Рекомендуемые цветовые схемы</h2>
+        
+        <h3>Темная тема (по умолчанию)</h3>
+        <div class="color-example">
+            <div>
+                <div class="color-swatch" style="background: #000000;">
+                    <span style="color: #ffffff; font-size: 11px;">BG</span>
+                </div>
+                <div class="color-swatch-label">#000000</div>
+            </div>
+            <div>
+                <div class="color-swatch" style="background: #ffffff;">
+                    <span style="color: #000000; font-size: 11px;">Text</span>
+                </div>
+                <div class="color-swatch-label">#ffffff</div>
+            </div>
+            <div>
+                <div class="color-swatch" style="background: #00ffff;">
+                    <span style="color: #000000; font-size: 11px;">Outline</span>
+                </div>
+                <div class="color-swatch-label">#00ffff</div>
+            </div>
+            <div>
+                <div class="color-swatch" style="background: #ff0000;">
+                    <span style="color: #ffffff; font-size: 11px;">Anchor</span>
+                </div>
+                <div class="color-swatch-label">#ff0000</div>
+            </div>
+            <div>
+                <div class="color-swatch" style="background: #00ff00;">
+                    <span style="color: #000000; font-size: 11px;">Handle</span>
+                </div>
+                <div class="color-swatch-label">#00ff00</div>
+            </div>
+        </div>
+        
+        <h3>Светлая тема</h3>
+        <div class="color-example">
+            <div>
+                <div class="color-swatch" style="background: #ffffff; border-color: #ccc;">
+                    <span style="color: #000000; font-size: 11px;">BG</span>
+                </div>
+                <div class="color-swatch-label">#ffffff</div>
+            </div>
+            <div>
+                <div class="color-swatch" style="background: #000000;">
+                    <span style="color: #ffffff; font-size: 11px;">Text</span>
+                </div>
+                <div class="color-swatch-label">#000000</div>
+            </div>
+            <div>
+                <div class="color-swatch" style="background: #0066ff;">
+                    <span style="color: #ffffff; font-size: 11px;">Outline</span>
+                </div>
+                <div class="color-swatch-label">#0066ff</div>
+            </div>
+            <div>
+                <div class="color-swatch" style="background: #ff0066;">
+                    <span style="color: #ffffff; font-size: 11px;">Anchor</span>
+                </div>
+                <div class="color-swatch-label">#ff0066</div>
+            </div>
+            <div>
+                <div class="color-swatch" style="background: #00cc66;">
+                    <span style="color: #ffffff; font-size: 11px;">Handle</span>
+                </div>
+                <div class="color-swatch-label">#00cc66</div>
+            </div>
+        </div>
+        
+        <h3>Высококонтрастная</h3>
+        <div class="color-example">
+            <div>
+                <div class="color-swatch" style="background: #000000;">
+                    <span style="color: #ffffff; font-size: 11px;">BG</span>
+                </div>
+                <div class="color-swatch-label">#000000</div>
+            </div>
+            <div>
+                <div class="color-swatch" style="background: #ffffff;">
+                    <span style="color: #000000; font-size: 11px;">Text</span>
+                </div>
+                <div class="color-swatch-label">#ffffff</div>
+            </div>
+            <div>
+                <div class="color-swatch" style="background: #ffff00;">
+                    <span style="color: #000000; font-size: 11px;">Outline</span>
+                </div>
+                <div class="color-swatch-label">#ffff00</div>
+            </div>
+            <div>
+                <div class="color-swatch" style="background: #ff00ff;">
+                    <span style="color: #000000; font-size: 11px;">Anchor</span>
+                </div>
+                <div class="color-swatch-label">#ff00ff</div>
+            </div>
+            <div>
+                <div class="color-swatch" style="background: #00ffff;">
+                    <span style="color: #000000; font-size: 11px;">Handle</span>
+                </div>
+                <div class="color-swatch-label">#00ffff</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="guide-section">
+        <h2>📸 Сценарии использования</h2>
+        
+        <h3>1. Запись скринкастов</h3>
+        <ol>
+            <li>Настройте желаемое отображение (текст, цвета, размер)</li>
+            <li>Включите отображение контуров и точек</li>
+            <li>Выберите ось для анимации (например, Weight)</li>
+            <li>Настройте скорость анимации (2-3x оптимально)</li>
+            <li>Включите анимацию</li>
+            <li>Запустите запись экрана (анимация автоматически зациклена)</li>
+        </ol>
+        
+        <h3>2. Статические изображения для документации</h3>
+        <ol>
+            <li>Используйте нейтральный фон (белый или черный)</li>
+            <li>Настройте все параметры</li>
+            <li>Отключите анимацию</li>
+            <li>Установите нужные значения осей вручную</li>
+            <li>Экспортируйте в SVG</li>
+            <li>Конвертируйте SVG в нужный формат</li>
+        </ol>
+        
+        <h3>3. Демонстрация контуров</h3>
+        <ol>
+            <li>Отключите заливку текста</li>
+            <li>Включите контур с толщиной 2-3px</li>
+            <li>Включите anchor и handle points</li>
+            <li>Используйте контрастные цвета</li>
+            <li>Анимируйте по оси Weight для демонстрации изменений контуров</li>
+        </ol>
+        
+        <h3>4. Сравнение значений осей</h3>
+        <ol>
+            <li>Откройте несколько окон браузера с Font Shaker</li>
+            <li>В каждом установите разные значения осей</li>
+            <li>Расположите окна рядом</li>
+            <li>Сделайте скриншот или запишите видео</li>
+        </ol>
+    </div>
+
+    <div class="guide-section">
+        <h2>💡 Советы</h2>
+        <ul>
+            <li><strong>Производительность</strong>: При большом количестве точек отключите ненужные (handles или anchors)</li>
+            <li><strong>Размеры точек</strong>: 4-6px для anchor points и 3-5px для handle points оптимально</li>
+            <li><strong>Анимация</strong>: Скорость 2-3x идеальна для большинства демонстраций</li>
+            <li><strong>Экспорт</strong>: SVG можно редактировать в Figma, Illustrator, Inkscape</li>
+            <li><strong>Текст</strong>: Используйте "Rg" для демонстрации большинства характеристик шрифта</li>
+            <li><strong>Цвета</strong>: При записи видео используйте высококонтрастные схемы</li>
+        </ul>
+    </div>
+
+    <div class="guide-section">
+        <h2>🔧 Технические требования</h2>
+        <ul>
+            <li><strong>Браузеры</strong>: Chrome 90+, Firefox 88+, Safari 14+</li>
+            <li><strong>Разрешение</strong>: Минимум 1280×720, рекомендуется 1920×1080</li>
+            <li><strong>JavaScript</strong>: Должен быть включен</li>
+            <li><strong>Подключение</strong>: Для загрузки opentype.js (CDN)</li>
+        </ul>
+    </div>
+
+    <div class="guide-section">
+        <h2>📚 Дополнительные ресурсы</h2>
+        <ul>
+            <li><a href="FONTSHAKER_README.md" style="color: var(--color-text);">Полная документация</a></li>
+            <li><a href="README.md" style="color: var(--color-text);">YF UI Framework</a></li>
+            <li><a href="COMPONENTS.md" style="color: var(--color-text);">Справочник компонентов</a></li>
+        </ul>
+        
+        <a href="index.html" class="btn-primary">Начать работу →</a>
+    </div>
+
+    <footer style="text-align: center; padding: 40px 0; color: var(--color-text-muted); font-size: 13px;">
+        <p>Font Shaker v1.0.0 • YF Tools • December 2025</p>
+    </footer>
+</body>
+</html>
+
