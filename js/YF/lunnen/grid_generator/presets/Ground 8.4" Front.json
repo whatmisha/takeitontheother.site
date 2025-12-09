@@ -1,7 +1,7 @@
 {
   "presetName": "Ground 8.4\" Front",
   "version": "1.0",
-  "timestamp": "2025-12-09T03:41:04.727Z",
+  "timestamp": "2025-12-09T04:17:59.805Z",
   "dimensions": {
     "width": 238,
     "height": 238,
@@ -34,7 +34,7 @@
     "columns": 12,
     "rows": 17,
     "rowHeight": 4,
-    "linkMode": "rows-height",
+    "linkMode": "module",
     "visibility": {
       "columns": true,
       "rows": true,
