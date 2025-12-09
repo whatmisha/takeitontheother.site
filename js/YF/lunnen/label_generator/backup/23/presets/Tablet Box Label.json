@@ -20,7 +20,7 @@
       },
       "width": 1,
       "alignment": "left",
-      "alignmentMode": "cap-height",
+      "alignmentMode": "x-height",
       "surface": "front",
       "showBounds": false,
       "useXHeight": true
@@ -110,7 +110,7 @@
   "typography": {
     "headline": {
       "size": 7,
-      "lineHeight": 8.5,
+      "lineHeight": 9.5,
       "tracking": -0.015,
       "useXHeight": false,
       "fontWeight": 500

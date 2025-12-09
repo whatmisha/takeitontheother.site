@@ -1,0 +1,18 @@
+{
+  "presets": [
+    {
+      "name": "Laptop Box Label 120×24mm",
+      "file": "Laptop Box Label.json"
+    },
+    {
+      "name": "Tablet Box Label 120×24mm",
+      "file": "Tablet Box Label.json"
+    },
+    {
+      "name": "Monitor Box Label 93×25mm",
+      "file": "Monitor Box Label.json"
+    }
+  ],
+  "generated": "2025-11-22T03:00:00.000Z",
+  "count": 4
+}
