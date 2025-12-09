@@ -1,7 +1,7 @@
 {
   "presetName": "Ground 8.4\" Front",
   "version": "1.0",
-  "timestamp": "2025-12-03T01:48:53.539Z",
+  "timestamp": "2025-12-09T03:41:04.727Z",
   "dimensions": {
     "width": 238,
     "height": 238,
@@ -28,8 +28,8 @@
     }
   ],
   "grid": {
-    "module": 2.5493,
-    "margins": 4.6783,
+    "module": 2.5297,
+    "margins": 5.0402,
     "marginsUnit": "mm",
     "columns": 12,
     "rows": 17,
@@ -54,7 +54,7 @@
     },
     "text": {
       "size": 0.45,
-      "lineHeight": 1.2,
+      "lineHeight": 1.18,
       "tracking": -0.01,
       "useXHeight": true,
       "fontWeight": 500
