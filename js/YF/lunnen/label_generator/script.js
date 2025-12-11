@@ -8498,8 +8498,24 @@ class GridGenerator {
             class: 'text-line-with-glyph'
         }, container);
         
-        // Разбиваем строку на части
+        // Разбиваем строку на части по символу ⎓
         const parts = text.split(dcGlyphChar);
+        
+        // Обрабатываем пробелы вокруг символа ⎓ для корректного позиционирования:
+        // Если слева от ⎓ есть пробел, оставляем его в левой части
+        // Если справа от ⎓ есть пробел, оставляем его в правой части
+        // Но нужно добавить один пробел между текстом и символом
+        const processedParts = parts.map((part, index) => {
+            if (index === 0 && part.endsWith(' ')) {
+                // Первая часть: убираем trailing пробел, добавим его позже как отдельный элемент
+                return { text: part.trimEnd(), trailingSpace: true };
+            } else if (index > 0 && part.startsWith(' ')) {
+                // Части после первой: убираем leading пробел, добавим его перед текстом
+                return { text: part.trimStart(), leadingSpace: true };
+            }
+            return { text: part, trailingSpace: false, leadingSpace: false };
+        });
+        
         let currentX = x;
         
         // Получаем размер шрифта для расчета ширины символа
@@ -8534,15 +8550,36 @@ class GridGenerator {
         const glyphWidth = glyphHeight * glyphAspectRatio;
         
         // Рендерим каждую часть
-        parts.forEach((part, index) => {
+        processedParts.forEach((partData, index) => {
+            // Добавляем пробел перед текстом, если он был в начале части
+            if (partData.leadingSpace) {
+                const spaceElement = this.createSVGElement('text', {
+                    ...textAttrs,
+                    x: currentX,
+                    y: y
+                }, lineGroup);
+                spaceElement.textContent = ' ';
+                
+                // Вычисляем ширину пробела
+                const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                tempSvg.style.position = 'absolute';
+                tempSvg.style.visibility = 'hidden';
+                document.body.appendChild(tempSvg);
+                const tempText = this.createSVGElement('text', textAttrs, tempSvg);
+                tempText.textContent = ' ';
+                const spaceWidth = tempText.getBBox().width;
+                document.body.removeChild(tempSvg);
+                currentX += spaceWidth;
+            }
+            
             // Добавляем текстовую часть
-            if (part) {
+            if (partData.text) {
                 const textElement = this.createSVGElement('text', {
                     ...textAttrs,
                     x: currentX,
                     y: y
                 }, lineGroup);
-                textElement.textContent = part;
+                textElement.textContent = partData.text;
                 
                 // Вычисляем ширину текста для позиционирования следующего элемента
                 const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -8550,14 +8587,35 @@ class GridGenerator {
                 tempSvg.style.visibility = 'hidden';
                 document.body.appendChild(tempSvg);
                 const tempText = this.createSVGElement('text', textAttrs, tempSvg);
-                tempText.textContent = part;
+                tempText.textContent = partData.text;
                 const bbox = tempText.getBBox();
                 document.body.removeChild(tempSvg);
                 currentX += bbox.width;
             }
             
+            // Добавляем пробел после текста, если он был в конце части
+            if (partData.trailingSpace) {
+                const spaceElement = this.createSVGElement('text', {
+                    ...textAttrs,
+                    x: currentX,
+                    y: y
+                }, lineGroup);
+                spaceElement.textContent = ' ';
+                
+                // Вычисляем ширину пробела
+                const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                tempSvg.style.position = 'absolute';
+                tempSvg.style.visibility = 'hidden';
+                document.body.appendChild(tempSvg);
+                const tempText = this.createSVGElement('text', textAttrs, tempSvg);
+                tempText.textContent = ' ';
+                const spaceWidth = tempText.getBBox().width;
+                document.body.removeChild(tempSvg);
+                currentX += spaceWidth;
+            }
+            
             // Добавляем SVG символ после текстовой части (кроме последней)
-            if (index < parts.length - 1) {
+            if (index < processedParts.length - 1) {
                 // Создаем use элемент или встраиваем SVG
                 const glyphGroup = this.createSVGElement('g', {
                     transform: `translate(${currentX}, ${y - capHeight})`
