@@ -118,17 +118,44 @@ export class TextToPath {
             for (let i = 0; i < text.length; i++) {
                 const char = text[i];
                 const glyph = font.charToGlyph(char);
-                let advance = glyph.advanceWidth * scale;
+                const isSpace = char === ' ' || char === '\t' || char === '\n';
+                
+                // Для пробелов используем стандартную ширину для совместимости с браузером
+                let advance;
+                if (isSpace) {
+                    const spaceAdvanceWidth = glyph.advanceWidth * scale;
+                    const standardSpaceWidth = fontSize * 0.25; // 0.25em
+                    advance = Math.abs(spaceAdvanceWidth - standardSpaceWidth) > fontSize * 0.1 
+                        ? standardSpaceWidth 
+                        : spaceAdvanceWidth;
+                } else {
+                    advance = glyph.advanceWidth * scale;
+                }
                 
                 // Добавляем кернинг если это не последний символ
                 if (i < text.length - 1) {
                     const nextGlyph = font.charToGlyph(text[i + 1]);
                     const kerning = font.getKerningValue(glyph, nextGlyph);
-                    advance += kerning * scale;
+                    // Для некоторых специальных символов (например, "⎓") кернинг с пробелами
+                    // может быть неправильным, поэтому корректируем его
+                    const nextIsSpace = text[i + 1] === ' ' || text[i + 1] === '\t' || text[i + 1] === '\n';
+                    if (nextIsSpace && Math.abs(kerning) > font.unitsPerEm * 0.1) {
+                        // Если кернинг с пробелом слишком большой, ограничиваем его
+                        // чтобы соответствовать браузерному рендерингу
+                        const maxKerning = font.unitsPerEm * 0.05; // Максимальный кернинг с пробелом
+                        advance += Math.sign(kerning) * Math.min(Math.abs(kerning * scale), maxKerning * scale);
+                    } else {
+                        advance += kerning * scale;
+                    }
                 }
                 
                 // Добавляем letter-spacing (в em, относительно fontSize)
-                advance += letterSpacingEm * fontSize;
+                // Letter-spacing добавляется после каждого символа, кроме последнего
+                // (в SVG letter-spacing применяется между символами, но для совместимости
+                // с браузерным рендерингом добавляем после каждого, кроме последнего)
+                if (i < text.length - 1) {
+                    advance += letterSpacingEm * fontSize;
+                }
                 
                 totalWidth += advance;
             }
@@ -149,22 +176,57 @@ export class TextToPath {
                 const char = text[i];
                 const glyph = font.charToGlyph(char);
                 
-                // Получаем path для глифа
-                const glyphPath = glyph.getPath(currentX, y, fontSize);
-                pathData += glyphPath.toPathData() + ' ';
+                // Пробелы не создают видимый path, но учитываются в позиционировании
+                const isSpace = char === ' ' || char === '\t' || char === '\n';
+                
+                if (!isSpace) {
+                    // Получаем path для глифа (только для не-пробелов)
+                    const glyphPath = glyph.getPath(currentX, y, fontSize);
+                    pathData += glyphPath.toPathData() + ' ';
+                }
                 
                 // Вычисляем продвижение (advance) с учетом letter-spacing
-                let advance = glyph.advanceWidth * scale;
+                // Для пробелов используем стандартную ширину (примерно 0.25em от fontSize)
+                // чтобы соответствовать браузерному рендерингу SVG text элементов
+                let advance;
+                if (isSpace) {
+                    // Стандартная ширина пробела в SVG обычно составляет около 0.25-0.3em
+                    // Используем advanceWidth из шрифта, но если он слишком отличается от стандарта,
+                    // используем стандартную ширину для совместимости с браузером
+                    const spaceAdvanceWidth = glyph.advanceWidth * scale;
+                    const standardSpaceWidth = fontSize * 0.25; // 0.25em
+                    // Используем стандартную ширину, если advanceWidth из шрифта сильно отличается
+                    advance = Math.abs(spaceAdvanceWidth - standardSpaceWidth) > fontSize * 0.1 
+                        ? standardSpaceWidth 
+                        : spaceAdvanceWidth;
+                } else {
+                    advance = glyph.advanceWidth * scale;
+                }
                 
                 // Добавляем кернинг если это не последний символ
                 if (i < text.length - 1) {
                     const nextGlyph = font.charToGlyph(text[i + 1]);
                     const kerning = font.getKerningValue(glyph, nextGlyph);
-                    advance += kerning * scale;
+                    // Для некоторых специальных символов (например, "⎓") кернинг с пробелами
+                    // может быть неправильным, поэтому корректируем его
+                    const nextIsSpace = text[i + 1] === ' ' || text[i + 1] === '\t' || text[i + 1] === '\n';
+                    if (nextIsSpace && Math.abs(kerning) > font.unitsPerEm * 0.1) {
+                        // Если кернинг с пробелом слишком большой, ограничиваем его
+                        // чтобы соответствовать браузерному рендерингу
+                        const maxKerning = font.unitsPerEm * 0.05; // Максимальный кернинг с пробелом
+                        advance += Math.sign(kerning) * Math.min(Math.abs(kerning * scale), maxKerning * scale);
+                    } else {
+                        advance += kerning * scale;
+                    }
                 }
                 
                 // Добавляем letter-spacing (в em, относительно fontSize)
-                advance += letterSpacingEm * fontSize;
+                // Letter-spacing добавляется после каждого символа, кроме последнего
+                // В SVG letter-spacing применяется между символами, но для совместимости
+                // с браузерным рендерингом добавляем после каждого, кроме последнего.
+                if (i < text.length - 1) {
+                    advance += letterSpacingEm * fontSize;
+                }
                 
                 currentX += advance;
             }
