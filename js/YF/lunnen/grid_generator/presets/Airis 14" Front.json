@@ -1,7 +1,7 @@
 {
-  "presetName": "Outer 14\" Front",
+  "presetName": "Airis 14\" Front",
   "version": "1.0",
-  "timestamp": "2025-12-15T12:00:05.283Z",
+  "timestamp": "2025-12-15T12:06:32.325Z",
   "dimensions": {
     "width": 390.5,
     "height": 395.5,
@@ -15,8 +15,8 @@
       "style": "text",
       "position": {
         "column": 12,
-        "row": 17,
-        "baseline": 5
+        "row": 18,
+        "baseline": 6
       },
       "width": 1,
       "alignment": "right",
@@ -28,8 +28,8 @@
     }
   ],
   "grid": {
-    "module": 2.9991,
-    "margins": 3.4346,
+    "module": 2.9311,
+    "margins": 4.9661,
     "marginsUnit": "mm",
     "columns": 12,
     "rows": 18,
@@ -53,10 +53,10 @@
       "fontWeight": 500
     },
     "text": {
-      "size": 0.75,
-      "lineHeight": 1,
+      "size": 0.6,
+      "lineHeight": 1.7,
       "tracking": 0,
-      "useXHeight": false,
+      "useXHeight": true,
       "fontWeight": 500
     }
   },
