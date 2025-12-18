@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulsar Coder - YF Tools</title>
+    <link rel="stylesheet" href="css/yf-styles.css">
+    <link rel="stylesheet" href="pulsar-styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Top Navigation -->
+        <div class="top-links">
+            <a href="/js/YF/" class="yf-tools-link">←YF Tools</a>
+            
+            <!-- Preset Dropdown -->
+            <div class="preset-dropdown" id="presetDropdown">
+                <button class="preset-dropdown-toggle" id="presetDropdownToggle" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="preset-dropdown-text" id="presetDropdownText">Voyager 14</span>
+                    <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <ul class="preset-dropdown-menu" id="presetDropdownMenu">
+                    <li class="preset-dropdown-item selected" data-preset="voyager">Voyager 14 rays</li>
+                    <li class="preset-dropdown-item" data-preset="dense">Dense 20 rays</li>
+                    <li class="preset-dropdown-item" data-preset="minimal">Minimal 8 rays</li>
+                    <li class="preset-dropdown-item" data-preset="accurate">Accurate 16 rays</li>
+                </ul>
+            </div>
+            
+            <button class="zoom-indicator" id="zoomIndicator">100%</button>
+        </div>
+
+        <div class="main-content">
+            <!-- Main Canvas Area -->
+            <div class="canvas-container" id="canvasContainer">
+                <svg id="pulsarSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+                    <!-- Pulsar map will be rendered here -->
+                </svg>
+            </div>
+
+            <!-- Main Panel (left side, top) -->
+            <aside class="controls-panel" id="mainPanel" style="top: 20px; left: 20px;">
+                <div class="panel-header" id="mainPanelHeader">
+                    <span>Main</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <!-- Payload Input -->
+                    <section class="control-section">
+                        <h3>Payload</h3>
+                        <textarea id="payloadInput" placeholder="Enter your message (ASCII/UTF-8)..." rows="4">Hello, Universe! 🌌</textarea>
+                        <div class="textarea-footer">
+                            <span class="char-counter" id="charCounter">22 characters</span>
+                        </div>
+                    </section>
+
+                    <!-- Ray Parameters -->
+                    <section class="control-section">
+                        <h3>Ray Parameters</h3>
+                        
+                        <div class="control-group">
+                            <label for="rayCountSlider">
+                                <span>Ray Count</span>
+                                <input type="text" class="value-display" id="rayCountValue" value="14">
+                            </label>
+                            <input type="range" id="rayCountSlider" min="8" max="24" step="1" value="14">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="rayLengthSlider">
+                                <span>Ray Length <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="rayLengthValue" value="250">
+                            </label>
+                            <input type="range" id="rayLengthSlider" min="200" max="500" step="10" value="250">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="bitStepSlider">
+                                <span>Bit Step <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="bitStepValue" value="8">
+                            </label>
+                            <input type="range" id="bitStepSlider" min="4" max="16" step="0.5" value="8">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="strokeWidthSlider">
+                                <span>Stroke Width <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="strokeWidthValue" value="1.5">
+                            </label>
+                            <input type="range" id="strokeWidthSlider" min="0.5" max="4" step="0.1" value="1.5">
+                        </div>
+                        
+                        <div class="control-group" style="margin-top: 16px;">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showRays" checked>
+                                <span>Show Rays</span>
+                            </label>
+                        </div>
+                        
+                        <div class="control-group" style="margin-top: 20px;">
+                            <button id="resetCenterBtn" class="btn btn-secondary" style="width: 100%;">
+                                Reset Center
+                            </button>
+                            <p style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 8px; text-align: center;">
+                                Drag canvas to move center
+                            </p>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <!-- Encoding Panel (right side, top) -->
+            <aside class="controls-panel" id="encodingPanel" style="top: 20px; right: 20px;">
+                <div class="panel-header" id="encodingPanelHeader">
+                    <span>Encoding</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="tickShortSlider">
+                                <span>Tick Short <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="tickShortValue" value="4">
+                            </label>
+                            <input type="range" id="tickShortSlider" min="2" max="12" step="0.5" value="4">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="tickLongSlider">
+                                <span>Tick Long <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="tickLongValue" value="12">
+                            </label>
+                            <input type="range" id="tickLongSlider" min="4" max="20" step="0.5" value="12">
+                        </div>
+
+                        <fieldset style="margin-top: 16px;">
+                            <legend class="sr-only">Error correction mode</legend>
+                            <div class="segmented-control segmented-control-compact">
+                                <input type="radio" name="eccMode" value="none" id="eccNone" checked>
+                                <label for="eccNone">No ECC</label>
+                                
+                                <input type="radio" name="eccMode" value="repeat2" id="eccRepeat2">
+                                <label for="eccRepeat2">2x</label>
+                                
+                                <input type="radio" name="eccMode" value="repeat3" id="eccRepeat3">
+                                <label for="eccRepeat3">3x</label>
+                            </div>
+                        </fieldset>
+                    </section>
+                </div>
+            </aside>
+
+            <!-- Visual & Info Panel (left side, bottom) -->
+            <aside class="controls-panel controls-panel-text panel-collapsed" id="visualPanel" style="left: 20px; bottom: 20px;">
+                <div class="panel-header" id="visualPanelHeader">
+                    <span>Visual & Info</span>
+                    <span class="collapse-icon collapsed">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="seedInput">
+                                <span>Seed (for variation)</span>
+                            </label>
+                            <input type="text" id="seedInput" class="style-select" value="voyager1977" placeholder="Enter seed string">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="marginSlider">
+                                <span>Margin <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="marginValue" value="50">
+                            </label>
+                            <input type="range" id="marginSlider" min="20" max="100" step="5" value="50">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="preambleLengthSlider">
+                                <span>Preamble Length <span class="unit">bits</span></span>
+                                <input type="text" class="value-display" id="preambleLengthValue" value="16">
+                            </label>
+                            <input type="range" id="preambleLengthSlider" min="8" max="32" step="8" value="16">
+                        </div>
+
+                        <button class="btn-secondary" id="randomizeBtn" style="width: 100%; margin-top: 12px;">Randomize All</button>
+                    </section>
+
+                    <!-- Info Section -->
+                    <section class="control-section">
+                        <div class="info-display">
+                            <div class="info-row">
+                                <span class="info-label">Payload:</span>
+                                <span class="info-value" id="infoPayloadBytes">0 bytes</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Encoded:</span>
+                                <span class="info-value" id="infoEncodedBits">0 bits</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">CRC32:</span>
+                                <span class="info-value" id="infoCrc">—</span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Bottom Action Buttons -->
+    <nav class="bottom-buttons">
+        <button class="btn-fixed" id="verifyBtn">Verify</button>
+        <button class="btn-fixed" id="copyBtn">Copy SVG</button>
+        <button class="btn-fixed btn-export" id="downloadBtn">Download SVG</button>
+    </nav>
+
+    <!-- Verification Modal -->
+    <div class="modal-overlay" id="verifyModal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <h2>Verification Result</h2>
+            <div class="modal-body" id="verifyModalBody">
+                <p>Checking pulsar code integrity...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="pulsar-main.js"></script>
+</body>
+</html>
+
