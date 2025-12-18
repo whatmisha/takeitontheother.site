@@ -1,0 +1,176 @@
+/**
+ * Pulsar Coder - Additional Styles
+ * Extends yf-styles.css with app-specific components
+ */
+
+/* Info Display - Status information panel */
+.info-display {
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    font-size: 0.85rem;
+}
+
+.info-row:last-child {
+    margin-bottom: 0;
+}
+
+.info-label {
+    color: var(--color-text-secondary);
+    font-weight: 400;
+}
+
+.info-value {
+    color: var(--color-text);
+    font-weight: 500;
+    font-family: monospace;
+    font-size: 0.8rem;
+}
+
+/* Seed Input Field */
+#seedInput {
+    width: 100%;
+    padding: 6px 12px;
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-family: monospace;
+    font-size: 0.85rem;
+    border-radius: var(--radius-input);
+    margin-top: var(--spacing-md);
+    transition: border-color var(--transition-normal);
+}
+
+#seedInput:focus {
+    outline: none;
+    border-color: var(--color-text-dim);
+}
+
+#seedInput::placeholder {
+    color: var(--color-text-muted);
+}
+
+/* Canvas specific */
+#pulsarSvg {
+    width: 100%;
+    height: 100%;
+    max-width: 1000px;
+    max-height: 1000px;
+}
+
+/* Pulse animation for Generate button */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+}
+
+#generateBtn:active {
+    animation: pulse 0.3s ease;
+}
+
+/* Success flash for Copy button */
+.btn-success-flash {
+    background: #4CAF50 !important;
+    color: white !important;
+    transition: all 0.2s ease;
+}
+
+/* Verification Modal Content Styles */
+.verify-success {
+    color: #4CAF50;
+    font-weight: 600;
+}
+
+.verify-error {
+    color: #f44336;
+    font-weight: 600;
+}
+
+.verify-warning {
+    color: #ff9800;
+    font-weight: 600;
+}
+
+.modal-body code {
+    background: var(--color-bg-input);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: var(--color-text);
+}
+
+.modal-body pre {
+    background: var(--color-bg-input);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-input);
+    overflow-x: auto;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    margin: var(--spacing-lg) 0;
+}
+
+/* Multiple panels layout adjustments */
+#mainPanel {
+    max-height: calc(100vh - 160px);
+}
+
+#encodingPanel {
+    max-height: calc(100vh - 500px);
+}
+
+#visualPanel {
+    max-height: calc(100vh - 100px);
+}
+
+/* Left-aligned panels */
+.controls-panel-left {
+    left: var(--spacing-3xl) !important;
+    right: auto !important;
+}
+
+/* Compact control sections for multiple panels */
+.controls-panel .control-section {
+    margin-bottom: var(--spacing-2xl);
+}
+
+.controls-panel .control-section:last-child {
+    margin-bottom: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .info-display {
+        padding: var(--spacing-md);
+    }
+    
+    .info-row {
+        font-size: 0.8rem;
+    }
+    
+    #mainPanel,
+    #encodingPanel {
+        top: auto !important;
+        right: var(--spacing-lg);
+        max-height: 50vh;
+    }
+    
+    #encodingPanel {
+        display: none; /* Hide on mobile to save space */
+    }
+}
+
