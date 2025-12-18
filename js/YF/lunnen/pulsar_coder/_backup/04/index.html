@@ -41,7 +41,7 @@
             </div>
 
             <!-- Main Panel (left side, top) -->
-            <aside class="controls-panel" id="mainPanel" style="top: 20px; left: 20px;">
+            <aside class="controls-panel" id="mainPanel" style="top: 80px; left: 40px;">
                 <div class="panel-header" id="mainPanelHeader">
                     <span>Main</span>
                     <span class="collapse-icon">
@@ -88,21 +88,6 @@
                             <input type="range" id="bitStepSlider" min="4" max="16" step="0.5" value="8">
                         </div>
                         
-                        <div class="control-group">
-                            <label for="strokeWidthSlider">
-                                <span>Stroke Width <span class="unit">px</span></span>
-                                <input type="text" class="value-display" id="strokeWidthValue" value="1.5">
-                            </label>
-                            <input type="range" id="strokeWidthSlider" min="0.5" max="4" step="0.1" value="1.5">
-                        </div>
-                        
-                        <div class="control-group" style="margin-top: 16px;">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="showRays" checked>
-                                <span>Show Rays</span>
-                            </label>
-                        </div>
-                        
                         <div class="control-group" style="margin-top: 20px;">
                             <button id="resetCenterBtn" class="btn btn-secondary" style="width: 100%;">
                                 Reset Center
@@ -115,8 +100,8 @@
                 </div>
             </aside>
 
-            <!-- Encoding Panel (right side, top) -->
-            <aside class="controls-panel" id="encodingPanel" style="top: 20px; right: 20px;">
+            <!-- Encoding Panel (right side, middle) -->
+            <aside class="controls-panel" id="encodingPanel" style="top: 420px;">
                 <div class="panel-header" id="encodingPanelHeader">
                     <span>Encoding</span>
                     <span class="collapse-icon">
@@ -127,6 +112,19 @@
                 </div>
                 <div class="panel-content">
                     <section class="control-section">
+                        <h3>Bit Mode</h3>
+                        
+                        <fieldset style="margin-bottom: 20px;">
+                            <legend class="sr-only">Bit representation mode</legend>
+                            <div class="segmented-control">
+                                <input type="radio" name="bitMode" value="length" id="bitModeLength" checked>
+                                <label for="bitModeLength">Tick Length</label>
+                                
+                                <input type="radio" name="bitMode" value="gap" id="bitModeGap">
+                                <label for="bitModeGap">Gap/Solid</label>
+                            </div>
+                        </fieldset>
+
                         <div class="control-group">
                             <label for="tickShortSlider">
                                 <span>Tick Short <span class="unit">px</span></span>
@@ -138,9 +136,9 @@
                         <div class="control-group">
                             <label for="tickLongSlider">
                                 <span>Tick Long <span class="unit">px</span></span>
-                                <input type="text" class="value-display" id="tickLongValue" value="12">
+                                <input type="text" class="value-display" id="tickLongValue" value="8">
                             </label>
-                            <input type="range" id="tickLongSlider" min="4" max="20" step="0.5" value="12">
+                            <input type="range" id="tickLongSlider" min="4" max="20" step="0.5" value="8">
                         </div>
 
                         <fieldset style="margin-top: 16px;">
@@ -161,10 +159,10 @@
             </aside>
 
             <!-- Visual & Info Panel (left side, bottom) -->
-            <aside class="controls-panel controls-panel-text panel-collapsed" id="visualPanel" style="left: 20px; bottom: 20px;">
+            <aside class="controls-panel controls-panel-text" id="visualPanel">
                 <div class="panel-header" id="visualPanelHeader">
                     <span>Visual & Info</span>
-                    <span class="collapse-icon collapsed">
+                    <span class="collapse-icon">
                         <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
@@ -172,30 +170,68 @@
                 </div>
                 <div class="panel-content">
                     <section class="control-section">
+                        <h3>Visual Style</h3>
+                        
                         <div class="control-group">
-                            <label for="seedInput">
-                                <span>Seed (for variation)</span>
+                            <label for="strokeWidthSlider">
+                                <span>Stroke Width <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="strokeWidthValue" value="1.5">
                             </label>
-                            <input type="text" id="seedInput" class="style-select" value="voyager1977" placeholder="Enter seed string">
+                            <input type="range" id="strokeWidthSlider" min="0.5" max="4" step="0.1" value="1.5">
                         </div>
 
-                        <div class="control-group">
-                            <label for="marginSlider">
-                                <span>Margin <span class="unit">px</span></span>
-                                <input type="text" class="value-display" id="marginValue" value="50">
+                        <div class="control-group" style="margin-top: 16px;">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showCalibrator" checked>
+                                <span>Show Calibrator Scale</span>
                             </label>
-                            <input type="range" id="marginSlider" min="20" max="100" step="5" value="50">
                         </div>
-
+                        
                         <div class="control-group">
-                            <label for="preambleLengthSlider">
-                                <span>Preamble Length <span class="unit">bits</span></span>
-                                <input type="text" class="value-display" id="preambleLengthValue" value="16">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showRays" checked>
+                                <span>Show Rays</span>
                             </label>
-                            <input type="range" id="preambleLengthSlider" min="8" max="32" step="8" value="16">
                         </div>
+                    </section>
 
-                        <button class="btn-secondary" id="randomizeBtn" style="width: 100%; margin-top: 12px;">Randomize All</button>
+                    <!-- Advanced -->
+                    <section class="control-section">
+                        <h3 class="collapsible-header" id="advancedHeader">
+                            <span>Advanced</span>
+                            <button class="collapse-toggle" aria-expanded="false">
+                                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </h3>
+                        
+                        <div class="collapsible-content collapsed" id="advancedContent">
+                            <div class="control-group">
+                                <label for="seedInput">
+                                    <span>Seed (for variation)</span>
+                                </label>
+                                <input type="text" id="seedInput" class="style-select" value="voyager1977" placeholder="Enter seed string">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="marginSlider">
+                                    <span>Margin <span class="unit">px</span></span>
+                                    <input type="text" class="value-display" id="marginValue" value="50">
+                                </label>
+                                <input type="range" id="marginSlider" min="20" max="100" step="5" value="50">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="preambleLengthSlider">
+                                    <span>Preamble Length <span class="unit">bits</span></span>
+                                    <input type="text" class="value-display" id="preambleLengthValue" value="16">
+                                </label>
+                                <input type="range" id="preambleLengthSlider" min="8" max="32" step="8" value="16">
+                            </div>
+
+                            <button class="btn-secondary" id="randomizeBtn" style="width: 100%; margin-top: 12px;">Randomize All</button>
+                        </div>
                     </section>
 
                     <!-- Info Section -->

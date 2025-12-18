@@ -33,12 +33,14 @@ const settings = {
         bitStep: 8,
         
         // Encoding
+        bitMode: 'length', // 'length' or 'gap'
         tickShort: 4,
-        tickLong: 12,
+        tickLong: 8,
         eccMode: 'none', // 'none', 'repeat2', 'repeat3'
         
         // Visual
         strokeWidth: 1.5,
+        showCalibrator: true,
         showRays: true,
         
         // Advanced
@@ -318,8 +320,8 @@ function makeAngles(rayCount, seed) {
 function buildSvg(params, raysBits, metadata, forExport = false, preserveEndpoints = false) {
     const { 
         rayCount, rayLength, bitStep, 
-        tickShort, tickLong, 
-        strokeWidth, showRays,
+        bitMode, tickShort, tickLong, 
+        strokeWidth, showCalibrator, showRays,
         seed, margin,
         centerOffsetX = 0,
         centerOffsetY = 0
@@ -338,11 +340,11 @@ function buildSvg(params, raysBits, metadata, forExport = false, preserveEndpoin
     
     let angles, rayLengths, rayEndpoints;
     
-    if (preserveEndpoints && fixedRayEndpoints && fixedRayLengths) {
-        // Use fixed endpoints and fixed lengths (not recalculated)
+    if (preserveEndpoints && fixedRayEndpoints) {
+        // Use fixed endpoints and calculate angles/lengths from them
         rayEndpoints = fixedRayEndpoints;
-        rayLengths = fixedRayLengths; // Use stored lengths, not recalculated
         angles = [];
+        rayLengths = [];
         
         for (let i = 0; i < rayCount; i++) {
             const endpoint = rayEndpoints[i];
@@ -352,6 +354,10 @@ function buildSvg(params, raysBits, metadata, forExport = false, preserveEndpoin
             // Calculate angle from center to fixed endpoint
             const angle = Math.atan2(dy, dx) * 180 / Math.PI;
             angles.push(angle);
+            
+            // Calculate length
+            const length = Math.sqrt(dx * dx + dy * dy);
+            rayLengths.push(length);
         }
     } else {
         // Generate angles normally (always non-uniform, reference at 0°)
@@ -381,7 +387,6 @@ function buildSvg(params, raysBits, metadata, forExport = false, preserveEndpoin
         
         // Store for dragging
         fixedRayEndpoints = rayEndpoints;
-        fixedRayLengths = rayLengths; // Store original lengths
     }
     
     // Generate varied starting offsets for bits on each ray (like in pulsar map)
@@ -419,11 +424,6 @@ function buildSvg(params, raysBits, metadata, forExport = false, preserveEndpoin
         const x2 = rayEndpoints[rayIndex].x;
         const y2 = rayEndpoints[rayIndex].y;
         
-        // Calculate actual distance from current center to endpoint
-        const dx = x2 - centerX;
-        const dy = y2 - centerY;
-        const actualRayLength = Math.sqrt(dx * dx + dy * dy);
-        
         // Draw ray line only if showRays is enabled
         if (showRays) {
             elements.push(`<line x1="${centerX}" y1="${centerY}" x2="${x2}" y2="${y2}" stroke="${strokeColor}" stroke-width="${strokeWidth}" opacity="0.8" stroke-linecap="round"/>`);
@@ -436,16 +436,22 @@ function buildSvg(params, raysBits, metadata, forExport = false, preserveEndpoin
         bits.forEach((bit, bitIndex) => {
             const dist = rayOffsets[rayIndex] + bitIndex * bitStep;
             
-            // Skip if bit position exceeds ACTUAL ray length (from current center to endpoint)
-            if (dist > actualRayLength) {
+            // Skip if bit position exceeds ray length
+            if (dist > rayLengths[rayIndex]) {
                 return;
             }
             
             const x = centerX + Math.cos(rad) * dist;
             const y = centerY + Math.sin(rad) * dist;
             
-            // Tick Length mode: 0 = short, 1 = long
-            const tickLength = bit ? tickLong : tickShort;
+            let tickLength = 0;
+            if (bitMode === 'length') {
+                // 0 = short, 1 = long
+                tickLength = bit ? tickLong : tickShort;
+            } else {
+                // gap: 0 = no tick, 1 = tick
+                tickLength = bit ? tickLong : 0;
+            }
             
             if (tickLength > 0) {
                 // Perpendicular tick
@@ -459,6 +465,23 @@ function buildSvg(params, raysBits, metadata, forExport = false, preserveEndpoin
             }
         });
     });
+    
+    // Calibrator scale (bottom)
+    if (showCalibrator) {
+        const calY = viewBoxSize - 30;
+        const calX = 30;
+        const calUnit = 10;
+        
+        // Base line
+        elements.push(`<line x1="${calX}" y1="${calY}" x2="${calX + calUnit * 5}" y2="${calY}" stroke="${strokeColor}" stroke-width="${strokeWidth}" opacity="0.5"/>`);
+        
+        // Tick marks
+        for (let i = 0; i <= 5; i++) {
+            const x = calX + i * calUnit;
+            const h = i % 5 === 0 ? 6 : 3;
+            elements.push(`<line x1="${x}" y1="${calY - h}" x2="${x}" y2="${calY + h}" stroke="${strokeColor}" stroke-width="${strokeWidth * 0.8}" opacity="0.5"/>`);
+        }
+    }
     
     // Build SVG
     const svg = `<?xml version="1.0" encoding="UTF-8"?>
@@ -598,7 +621,6 @@ let currentRaysBits = [];
 // Store fixed ray endpoints for center dragging
 let fixedRayEndpoints = null;
 let fixedRayOffsets = null; // Store fixed offsets for bits
-let fixedRayLengths = null; // Store fixed ray lengths
 let baseParams = null; // Store base params for recalculation
 
 function generate(preserveEndpoints = false) {
@@ -606,10 +628,12 @@ function generate(preserveEndpoints = false) {
         rayCount: settings.get('rayCount') || 14,
         rayLength: settings.get('rayLength') || 250,
         bitStep: settings.get('bitStep') || 8,
+        bitMode: settings.get('bitMode') || 'length',
         tickShort: settings.get('tickShort') || 4,
-        tickLong: settings.get('tickLong') || 12,
+        tickLong: settings.get('tickLong') || 8,
         eccMode: settings.get('eccMode') || 'none',
         strokeWidth: settings.get('strokeWidth') || 1.5,
+        showCalibrator: settings.get('showCalibrator') !== false,
         showRays: settings.get('showRays') !== false,
         seed: settings.get('seed') || 'voyager1977',
         margin: settings.get('margin') || 50,
@@ -629,7 +653,6 @@ function generate(preserveEndpoints = false) {
         baseParams = { ...params };
         fixedRayEndpoints = null;
         fixedRayOffsets = null;
-        fixedRayLengths = null;
     }
     
     // Generate SVG for UI (white on black)
@@ -925,6 +948,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Radio buttons with real-time generation
+    document.querySelectorAll('input[name="bitMode"]').forEach(radio => {
+        if (radio.checked) {
+            settings.set('bitMode', radio.value);
+        }
+        radio.addEventListener('change', () => {
+            settings.set('bitMode', radio.value);
+            generate();
+        });
+    });
+    
     document.querySelectorAll('input[name="eccMode"]').forEach(radio => {
         if (radio.checked) {
             settings.set('eccMode', radio.value);
@@ -936,12 +969,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Checkboxes
+    const showCalibratorCb = document.getElementById('showCalibrator');
     const showRaysCb = document.getElementById('showRays');
     const seedInput = document.getElementById('seedInput');
     
     // Initialize from HTML
+    settings.set('showCalibrator', showCalibratorCb.checked);
     settings.set('showRays', showRaysCb.checked);
     settings.set('seed', seedInput.value || 'voyager1977');
+    
+    showCalibratorCb.addEventListener('change', (e) => {
+        settings.set('showCalibrator', e.target.checked);
+        generate();
+    });
     
     showRaysCb.addEventListener('change', (e) => {
         settings.set('showRays', e.target.checked);
