@@ -137,12 +137,6 @@
     max-height: calc(100vh - 100px);
 }
 
-/* Left-aligned panels */
-.controls-panel-left {
-    left: var(--spacing-3xl) !important;
-    right: auto !important;
-}
-
 /* Compact control sections for multiple panels */
 .controls-panel .control-section {
     margin-bottom: var(--spacing-2xl);

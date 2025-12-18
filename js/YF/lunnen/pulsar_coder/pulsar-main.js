@@ -390,14 +390,25 @@ function buildSvg(params, raysBits, metadata, forExport = false, preserveEndpoin
     }
     
     // Generate varied starting offsets for bits on each ray (like in pulsar map)
-    const rngOffsets = seededRandom(seed + '_offsets');
-    const rayOffsets = [];
-    const minOffset = 15; // Minimum distance from center
-    for (let i = 0; i < rayCount; i++) {
-        // Each ray has offset anywhere along the ray - from very close to center to far end
-        const variation = rngOffsets();
-        const maxOffset = rayLengths[i] * 0.9; // Up to 90% of individual ray length
-        rayOffsets.push(minOffset + variation * maxOffset);
+    let rayOffsets;
+    
+    if (preserveEndpoints && fixedRayOffsets) {
+        // Use fixed offsets when dragging center
+        rayOffsets = fixedRayOffsets;
+    } else {
+        // Generate new offsets
+        const rngOffsets = seededRandom(seed + '_offsets');
+        rayOffsets = [];
+        const minOffset = 15; // Minimum distance from center
+        for (let i = 0; i < rayCount; i++) {
+            // Each ray has offset anywhere along the ray - from very close to center to far end
+            const variation = rngOffsets();
+            const maxOffset = rayLengths[i] * 0.9; // Up to 90% of individual ray length
+            rayOffsets.push(minOffset + variation * maxOffset);
+        }
+        
+        // Store offsets for dragging
+        fixedRayOffsets = rayOffsets;
     }
     
     // SVG elements
@@ -424,6 +435,12 @@ function buildSvg(params, raysBits, metadata, forExport = false, preserveEndpoin
         
         bits.forEach((bit, bitIndex) => {
             const dist = rayOffsets[rayIndex] + bitIndex * bitStep;
+            
+            // Skip if bit position exceeds ray length
+            if (dist > rayLengths[rayIndex]) {
+                return;
+            }
+            
             const x = centerX + Math.cos(rad) * dist;
             const y = centerY + Math.sin(rad) * dist;
             
@@ -603,6 +620,7 @@ let currentRaysBits = [];
 
 // Store fixed ray endpoints for center dragging
 let fixedRayEndpoints = null;
+let fixedRayOffsets = null; // Store fixed offsets for bits
 let baseParams = null; // Store base params for recalculation
 
 function generate(preserveEndpoints = false) {
@@ -634,6 +652,7 @@ function generate(preserveEndpoints = false) {
     if (!preserveEndpoints) {
         baseParams = { ...params };
         fixedRayEndpoints = null;
+        fixedRayOffsets = null;
     }
     
     // Generate SVG for UI (white on black)
