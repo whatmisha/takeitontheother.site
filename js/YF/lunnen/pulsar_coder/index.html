@@ -40,8 +40,8 @@
                 </svg>
             </div>
 
-            <!-- Main Panel (right side, top) -->
-            <aside class="controls-panel" id="mainPanel" style="top: 80px;">
+            <!-- Main Panel (left side, top) -->
+            <aside class="controls-panel controls-panel-left" id="mainPanel" style="top: 80px;">
                 <div class="panel-header" id="mainPanelHeader">
                     <span>Main</span>
                     <span class="collapse-icon">
@@ -86,14 +86,6 @@
                                 <input type="text" class="value-display" id="bitStepValue" value="8">
                             </label>
                             <input type="range" id="bitStepSlider" min="4" max="16" step="0.5" value="8">
-                        </div>
-
-                        <div class="control-group">
-                            <label for="rotationSlider">
-                                <span>Rotation <span class="unit">deg</span></span>
-                                <input type="text" class="value-display" id="rotationValue" value="0">
-                            </label>
-                            <input type="range" id="rotationSlider" min="0" max="360" step="1" value="0">
                         </div>
                     </section>
                 </div>
@@ -179,31 +171,10 @@
                             <input type="range" id="strokeWidthSlider" min="0.5" max="4" step="0.1" value="1.5">
                         </div>
 
-                        <fieldset style="margin-top: 16px;">
-                            <legend class="sr-only">Background color</legend>
-                            <div class="segmented-control segmented-control-compact">
-                                <input type="radio" name="bgMode" value="transparent" id="bgTransparent" checked>
-                                <label for="bgTransparent">Transparent</label>
-                                
-                                <input type="radio" name="bgMode" value="white" id="bgWhite">
-                                <label for="bgWhite">White</label>
-                                
-                                <input type="radio" name="bgMode" value="black" id="bgBlack">
-                                <label for="bgBlack">Black</label>
-                            </div>
-                        </fieldset>
-
                         <div class="control-group" style="margin-top: 16px;">
                             <label class="checkbox-label">
                                 <input type="checkbox" id="showCalibrator" checked>
                                 <span>Show Calibrator Scale</span>
-                            </label>
-                        </div>
-
-                        <div class="control-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="showReferenceRay" checked>
-                                <span>Highlight Reference Ray</span>
                             </label>
                         </div>
                     </section>

@@ -31,7 +31,6 @@ const settings = {
         rayCount: 14,
         rayLength: 350,
         bitStep: 8,
-        rotation: 0,
         
         // Encoding
         bitMode: 'length', // 'length' or 'gap'
@@ -41,9 +40,7 @@ const settings = {
         
         // Visual
         strokeWidth: 1.5,
-        bgMode: 'transparent', // 'transparent', 'white', 'black'
         showCalibrator: true,
-        showReferenceRay: true,
         
         // Advanced
         seed: 'voyager1977',
@@ -276,17 +273,20 @@ function seededRandom(seed) {
 
 /**
  * Generate ray angles (non-uniform like pulsar map)
+ * Reference ray is always at 0° (3 o'clock position)
  */
 function makeAngles(rayCount, seed) {
     const angles = [];
     const rng = seededRandom(seed + '_angles');
     
+    // First ray (reference) is always at 0° (3 o'clock)
+    angles.push(0);
+    
     // Generate non-uniform angles with varying separation
     const minSeparation = 360 / rayCount * 0.3; // Minimum 30% of uniform
     const maxSeparation = 360 / rayCount * 2.0; // Maximum 200% of uniform
     
-    let currentAngle = rng() * 60; // Start with random offset
-    angles.push(currentAngle);
+    let currentAngle = 0; // Start from reference ray
     
     for (let i = 1; i < rayCount; i++) {
         // Vary the angular spacing
@@ -297,8 +297,10 @@ function makeAngles(rayCount, seed) {
         angles.push(currentAngle);
     }
     
-    // Sort angles
+    // Sort angles, keeping 0° as first
+    const referenceAngle = angles.shift(); // Remove 0°
     angles.sort((a, b) => a - b);
+    angles.unshift(referenceAngle); // Put 0° back as first
     
     return angles;
 }
@@ -310,65 +312,63 @@ function makeAngles(rayCount, seed) {
 /**
  * Build complete SVG with pulsar map
  */
-function buildSvg(params, raysBits, metadata) {
+function buildSvg(params, raysBits, metadata, forExport = false) {
     const { 
-        rayCount, rayLength, bitStep, rotation, 
+        rayCount, rayLength, bitStep, 
         bitMode, tickShort, tickLong, 
-        strokeWidth, bgMode, 
-        showCalibrator, showReferenceRay,
+        strokeWidth, showCalibrator,
         seed, margin 
     } = params;
     
     const viewBoxSize = 1000;
     const center = viewBoxSize / 2;
     
-    // Background
-    let bgRect = '';
-    if (bgMode === 'white') {
-        bgRect = `<rect width="${viewBoxSize}" height="${viewBoxSize}" fill="#ffffff"/>`;
-    } else if (bgMode === 'black') {
-        bgRect = `<rect width="${viewBoxSize}" height="${viewBoxSize}" fill="#000000"/>`;
-    }
+    // Stroke color: white for UI (black page bg), black for export
+    const strokeColor = forExport ? '#000000' : '#ffffff';
     
-    // Stroke color: white for black/transparent bg (page is black), black for white bg
-    const strokeColor = (bgMode === 'black' || bgMode === 'transparent') ? '#ffffff' : '#000000';
+    // No background rect - always transparent
+    const bgRect = '';
     
-    // Generate angles (always non-uniform)
+    // Generate angles (always non-uniform, reference at 0°)
     const angles = makeAngles(rayCount, seed);
     
     // Generate varied ray lengths (like in pulsar map)
-    const rng = seededRandom(seed + '_lengths');
+    const rngLengths = seededRandom(seed + '_lengths');
     const rayLengths = [];
     for (let i = 0; i < rayCount; i++) {
         // Each ray has length between 60% and 140% of base length
-        const variation = rng();
+        const variation = rngLengths();
         rayLengths.push(rayLength * (0.6 + variation * 0.8));
+    }
+    
+    // Generate varied starting offsets for bits on each ray (like in pulsar map)
+    const rngOffsets = seededRandom(seed + '_offsets');
+    const rayOffsets = [];
+    for (let i = 0; i < rayCount; i++) {
+        // Each ray has offset between 50% and 200% of base margin
+        const variation = rngOffsets();
+        rayOffsets.push(margin * (0.5 + variation * 1.5));
     }
     
     // SVG elements
     let elements = [];
     
     // Rays with bits (NO center circle)
-    angles.forEach((baseAngle, rayIndex) => {
-        const angle = (baseAngle + rotation) % 360;
+    angles.forEach((angle, rayIndex) => {
         const rad = (angle * Math.PI) / 180;
         
         const bits = raysBits[rayIndex] || [];
         const rayLengthAdjusted = rayLengths[rayIndex] + bits.length * bitStep;
         
-        // Ray line
+        // Ray line - all rays same style
         const x2 = center + Math.cos(rad) * rayLengthAdjusted;
         const y2 = center + Math.sin(rad) * rayLengthAdjusted;
         
-        const isReference = rayIndex === 0 && showReferenceRay;
-        const rayStroke = isReference ? strokeWidth * 1.5 : strokeWidth;
-        const rayOpacity = isReference ? 1 : 0.8;
+        elements.push(`<line x1="${center}" y1="${center}" x2="${x2}" y2="${y2}" stroke="${strokeColor}" stroke-width="${strokeWidth}" opacity="0.8" stroke-linecap="round"/>`);
         
-        elements.push(`<line x1="${center}" y1="${center}" x2="${x2}" y2="${y2}" stroke="${strokeColor}" stroke-width="${rayStroke}" opacity="${rayOpacity}" stroke-linecap="round"/>`);
-        
-        // Bits along ray
+        // Bits along ray - each ray starts at its own offset
         bits.forEach((bit, bitIndex) => {
-            const dist = margin + bitIndex * bitStep;
+            const dist = rayOffsets[rayIndex] + bitIndex * bitStep;
             const x = center + Math.cos(rad) * dist;
             const y = center + Math.sin(rad) * dist;
             
@@ -551,15 +551,12 @@ function generate() {
         rayCount: settings.get('rayCount') || 14,
         rayLength: settings.get('rayLength') || 350,
         bitStep: settings.get('bitStep') || 8,
-        rotation: settings.get('rotation') || 0,
         bitMode: settings.get('bitMode') || 'length',
         tickShort: settings.get('tickShort') || 4,
         tickLong: settings.get('tickLong') || 8,
         eccMode: settings.get('eccMode') || 'none',
         strokeWidth: settings.get('strokeWidth') || 1.5,
-        bgMode: settings.get('bgMode') || 'transparent',
         showCalibrator: settings.get('showCalibrator') !== false,
-        showReferenceRay: settings.get('showReferenceRay') !== false,
         seed: settings.get('seed') || 'voyager1977',
         margin: settings.get('margin') || 50,
         preambleLength: settings.get('preambleLength') || 16
@@ -571,14 +568,17 @@ function generate() {
     const { raysBits, metadata } = encodePulsar(payload, params);
     currentRaysBits = raysBits;
     
-    // Generate SVG
-    const svg = buildSvg(params, raysBits, metadata);
-    currentSvg = svg;
+    // Generate SVG for UI (white on black)
+    const svgUI = buildSvg(params, raysBits, metadata, false);
     
-    // Update display
+    // Generate SVG for export (black on transparent)
+    const svgExport = buildSvg(params, raysBits, metadata, true);
+    currentSvg = svgExport; // For download
+    
+    // Update display with UI version
     const container = document.getElementById('pulsarSvg');
     const parser = new DOMParser();
-    const svgDoc = parser.parseFromString(svg, 'image/svg+xml');
+    const svgDoc = parser.parseFromString(svgUI, 'image/svg+xml');
     const svgElement = svgDoc.documentElement;
     
     // Copy attributes and content
@@ -754,7 +754,6 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'rayCountSlider', valueId: 'rayCountValue', setting: 'rayCount', decimals: 0, min: 8, max: 24, baseStep: 1, shiftStep: 2 },
         { id: 'rayLengthSlider', valueId: 'rayLengthValue', setting: 'rayLength', decimals: 0, min: 200, max: 500, baseStep: 10, shiftStep: 50 },
         { id: 'bitStepSlider', valueId: 'bitStepValue', setting: 'bitStep', decimals: 1, min: 4, max: 16, baseStep: 0.5, shiftStep: 2 },
-        { id: 'rotationSlider', valueId: 'rotationValue', setting: 'rotation', decimals: 0, min: 0, max: 360, baseStep: 1, shiftStep: 15 },
         { id: 'tickShortSlider', valueId: 'tickShortValue', setting: 'tickShort', decimals: 1, min: 2, max: 12, baseStep: 0.5, shiftStep: 2 },
         { id: 'tickLongSlider', valueId: 'tickLongValue', setting: 'tickLong', decimals: 1, min: 4, max: 20, baseStep: 0.5, shiftStep: 2 },
         { id: 'strokeWidthSlider', valueId: 'strokeWidthValue', setting: 'strokeWidth', decimals: 1, min: 0.5, max: 4, baseStep: 0.1, shiftStep: 0.5 },
@@ -882,33 +881,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    document.querySelectorAll('input[name="bgMode"]').forEach(radio => {
-        if (radio.checked) {
-            settings.set('bgMode', radio.value);
-        }
-        radio.addEventListener('change', () => {
-            settings.set('bgMode', radio.value);
-            generate();
-        });
-    });
-    
     // Checkboxes
     const showCalibratorCb = document.getElementById('showCalibrator');
-    const showReferenceRayCb = document.getElementById('showReferenceRay');
     const seedInput = document.getElementById('seedInput');
     
     // Initialize from HTML
     settings.set('showCalibrator', showCalibratorCb.checked);
-    settings.set('showReferenceRay', showReferenceRayCb.checked);
     settings.set('seed', seedInput.value || 'voyager1977');
     
     showCalibratorCb.addEventListener('change', (e) => {
         settings.set('showCalibrator', e.target.checked);
-        generate();
-    });
-    
-    showReferenceRayCb.addEventListener('change', (e) => {
-        settings.set('showReferenceRay', e.target.checked);
         generate();
     });
     
