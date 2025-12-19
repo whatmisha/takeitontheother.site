@@ -25,3 +25,5 @@ rsync -av --exclude='_backup' . "$NEXT/"
 - Не копировать папку `_backup`
 
 
+
+

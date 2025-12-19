@@ -25,7 +25,7 @@ import { ZoomPanManager } from './js/ui/ZoomPanManager.js';
 const settings = {
     values: {
         // Payload
-        payload: 'Hello, Universe! 🌌',
+        payload: 'The truth is out there',
         
         // Ray parameters
         rayCount: 14,
@@ -618,7 +618,7 @@ function generate(preserveEndpoints = false) {
         centerOffsetY: settings.get('centerOffsetY') || 0
     };
     
-    const payload = settings.get('payload') || 'Hello, Universe! 🌌';
+    const payload = settings.get('payload') || 'The truth is out there';
     
     // Encode
     const { raysBits, metadata } = encodePulsar(payload, params);
