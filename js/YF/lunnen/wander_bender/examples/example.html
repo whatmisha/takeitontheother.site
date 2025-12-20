@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YF UI Framework - Component Examples</title>
+    <link rel="stylesheet" href="../css/yf-styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Top Links -->
+        <div class="top-links">
+            <a href="/js/YF/" class="yf-tools-link">←YF Tools</a>
+            
+            <!-- Preset Dropdown Example -->
+            <div class="preset-dropdown" id="presetDropdown">
+                <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="preset-dropdown-text">Select Preset</span>
+                    <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox">
+                    <li class="preset-dropdown-item selected" data-value="default">Default</li>
+                    <li class="preset-dropdown-item" data-value="preset1">Preset 1</li>
+                    <li class="preset-dropdown-item" data-value="preset2">Preset 2</li>
+                </ul>
+            </div>
+            
+            <!-- Zoom Indicator -->
+            <button class="zoom-indicator" id="zoomIndicator">100%</button>
+        </div>
+
+        <div class="main-content">
+            <!-- Canvas Container (для вашего контента) -->
+            <div class="canvas-container" id="canvasContainer">
+                <svg id="mainSvg" xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+                    <rect x="100" y="100" width="600" height="400" fill="#1a1a1a" stroke="#fff" stroke-width="2"/>
+                    <text x="400" y="300" text-anchor="middle" fill="#fff" font-size="24">Your Content Here</text>
+                </svg>
+            </div>
+
+            <!-- Right Panel - Основная панель управления -->
+            <aside class="controls-panel" id="mainPanel">
+                <div class="panel-header" id="mainPanelHeader">
+                    <span>Main Controls <span class="panel-params">optional params</span></span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <!-- Slider Example -->
+                    <section class="control-section">
+                        <h3>Sliders</h3>
+                        
+                        <div class="control-group">
+                            <label for="widthSlider">
+                                <span>Width <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="widthValue" value="100.0" data-min="10" data-max="500">
+                            </label>
+                            <input type="range" id="widthSlider" min="10" max="500" step="0.1" value="100">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="heightSlider">
+                                <span>Height <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="heightValue" value="50.0" data-min="10" data-max="500">
+                            </label>
+                            <input type="range" id="heightSlider" min="10" max="500" step="0.1" value="50">
+                        </div>
+                        
+                        <!-- Slider with Unit Buttons -->
+                        <div class="control-group">
+                            <label for="sizeSlider">
+                                <span>Size 
+                                    <span class="unit-buttons">
+                                        <button type="button" class="unit-btn active" data-unit="mod">mod</button>
+                                        <button type="button" class="unit-btn" data-unit="mm">mm</button>
+                                    </span>
+                                </span>
+                                <div class="value-display-wrapper">
+                                    <input type="text" class="value-display" id="sizeValue" value="2.00" data-min="0.5" data-max="10">
+                                    <button type="button" class="lock-btn" id="lockSizeBtn">
+                                        <svg class="lock-icon lock-icon-open" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6M3.5 6H10.5C11.3284 6 12 6.67157 12 7.5V11.5C12 12.3284 11.3284 13 10.5 13H3.5C2.67157 13 2 12.3284 2 11.5V7.5C2 6.67157 2.67157 6 3.5 6Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <svg class="lock-icon lock-icon-locked" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                                            <rect x="2" y="6" width="10" height="7" rx="1.5" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </label>
+                            <input type="range" id="sizeSlider" min="0.5" max="10" step="0.25" value="2">
+                        </div>
+                    </section>
+
+                    <!-- Color Picker Example -->
+                    <section class="control-section">
+                        <h3>Color Picker</h3>
+                        
+                        <div class="control-group">
+                            <div class="control-group-header">
+                                <span class="control-label">Background Color</span>
+                                <button type="button" class="color-preset" id="presetBlue">Preset Blue</button>
+                            </div>
+                            <div class="color-input-group">
+                                <button type="button" class="color-preview" id="colorPreview"></button>
+                                <input type="text" id="hexColorInput" value="#808080" maxlength="7">
+                            </div>
+                        </div>
+                        
+                        <!-- HSB Picker -->
+                        <div class="hsb-picker" id="hsbPicker" style="display: none;">
+                            <div class="hsb-controls">
+                                <div class="hsb-control-group">
+                                    <label for="hueSlider">
+                                        <span>Hue</span>
+                                        <input type="text" class="value-display hsb-value" id="hueValue" value="0">
+                                    </label>
+                                    <input type="range" id="hueSlider" min="0" max="360" step="1" value="0">
+                                </div>
+                                
+                                <div class="hsb-control-group">
+                                    <label for="saturationSlider">
+                                        <span>Saturation</span>
+                                        <input type="text" class="value-display hsb-value" id="saturationValue" value="0">
+                                    </label>
+                                    <input type="range" id="saturationSlider" min="0" max="100" step="1" value="0">
+                                </div>
+                                
+                                <div class="hsb-control-group">
+                                    <label for="brightnessSlider">
+                                        <span>Brightness</span>
+                                        <input type="text" class="value-display hsb-value" id="brightnessValue" value="50">
+                                    </label>
+                                    <input type="range" id="brightnessSlider" min="0" max="100" step="1" value="50">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Toggle Chips Example -->
+                    <section class="control-section">
+                        <h3>Toggle Chips</h3>
+                        <div class="control-group show-toggle-chip-group">
+                            <div class="toggle-chip-group">
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="showOption1" checked>
+                                    <span>
+                                        <span class="toggle-chip-icon-wrapper">
+                                            <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                                            <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                        </span>
+                                        Option 1
+                                    </span>
+                                </label>
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="showOption2" checked>
+                                    <span>
+                                        <span class="toggle-chip-icon-wrapper">
+                                            <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                                            <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                        </span>
+                                        Option 2
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Segmented Control Example -->
+                    <section class="control-section">
+                        <h3>Segmented Control</h3>
+                        <div class="control-group">
+                            <label>
+                                <span>Mode</span>
+                            </label>
+                            <fieldset>
+                                <div class="segmented-control">
+                                    <input type="radio" name="mode" value="off" id="modeOff">
+                                    <label for="modeOff">Off</label>
+                                    
+                                    <input type="radio" name="mode" value="auto" id="modeAuto" checked>
+                                    <label for="modeAuto">Auto</label>
+                                    
+                                    <input type="radio" name="mode" value="manual" id="modeManual">
+                                    <label for="modeManual">Manual</label>
+                                </div>
+                            </fieldset>
+                        </div>
+                    </section>
+
+                    <!-- Checkbox Example -->
+                    <section class="control-section">
+                        <h3>Checkboxes</h3>
+                        <div class="control-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="enableFeature" checked>
+                                <span>Enable Feature</span>
+                            </label>
+                        </div>
+                        <div class="control-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="lockPosition">
+                                <span>Lock Position</span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <!-- Dropdown Example -->
+                    <section class="control-section">
+                        <h3>Dropdown</h3>
+                        <div class="control-group">
+                            <label for="styleSelect">
+                                <select id="styleSelect" class="style-select">
+                                    <option value="default">Default Style</option>
+                                    <option value="style1">Style 1</option>
+                                    <option value="style2">Style 2</option>
+                                </select>
+                            </label>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <!-- Left Panel Example -->
+            <aside class="controls-panel controls-panel-left" id="leftPanel">
+                <div class="panel-header" id="leftPanelHeader">
+                    <span>Left Panel <span class="panel-params">100×200</span></span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <h3>Buttons</h3>
+                        
+                        <div class="button-group">
+                            <button class="btn-add-object">Add Text</button>
+                            <button class="btn-add-object">Add Image</button>
+                        </div>
+                    </section>
+
+                    <!-- Collapsible Section Example -->
+                    <section class="control-section">
+                        <h3 class="collapsible-header" id="advancedHeader">
+                            <span>Advanced Settings <span class="font-size-display">12/14 pt</span></span>
+                            <button type="button" class="collapse-toggle" aria-label="Toggle advanced settings" aria-expanded="false">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </h3>
+                        
+                        <div class="collapsible-content collapsed" id="advancedContent">
+                            <div class="control-group">
+                                <label for="advancedSlider">
+                                    <span>Advanced Option</span>
+                                    <input type="text" class="value-display" id="advancedValue" value="5.0">
+                                </label>
+                                <input type="range" id="advancedSlider" min="0" max="10" step="0.1" value="5">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Textarea Example -->
+                    <section class="control-section">
+                        <h3>Textarea</h3>
+                        <div class="control-group">
+                            <textarea id="noteText" placeholder="Enter notes here..." rows="4"></textarea>
+                            <div class="textarea-footer">
+                                <span class="char-counter" id="charCounter">0 characters</span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Bottom Buttons -->
+    <nav class="bottom-buttons">
+        <button class="btn-fixed btn-export-settings" id="exportSettingsBtn">Export Settings</button>
+        <button class="btn-fixed btn-import-settings" id="importSettingsBtn">Import Settings</button>
+        
+        <div class="export-group-right">
+            <button class="btn-fixed btn-export" id="exportBtn">Export SVG ⌘E</button>
+            <label class="toggle-label">
+                <div class="toggle-switch">
+                    <input type="checkbox" id="convertToOutlines">
+                    <span class="toggle-slider"></span>
+                </div>
+                <span class="toggle-label-text">Outline fonts</span>
+            </label>
+        </div>
+    </nav>
+
+    <!-- Modal Example -->
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <h2>YF UI Framework</h2>
+            <div class="modal-body">
+                <p>This is a demonstration of all UI components available in the YF UI Framework.</p>
+                
+                <h3>Features</h3>
+                <ul>
+                    <li>Dark theme with premium design</li>
+                    <li>Responsive panels with drag & drop</li>
+                    <li>Advanced slider controls with keyboard navigation</li>
+                    <li>HSB color picker</li>
+                    <li>Collapsible sections</li>
+                    <li>And much more!</li>
+                </ul>
+                
+                <h3>Keyboard Shortcuts</h3>
+                <ul>
+                    <li><strong>Arrow keys</strong> — Adjust slider values</li>
+                    <li><strong>Shift + Arrow keys</strong> — Adjust with larger step</li>
+                    <li><strong>Cmd/Ctrl + Scroll</strong> — Zoom</li>
+                    <li><strong>Space + drag</strong> — Pan canvas</li>
+                    <li><strong>Cmd/Ctrl + E</strong> — Export</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import utilities and controllers
+        import { ColorUtils } from '../js/utils/ColorUtils.js';
+        import { MathUtils } from '../js/utils/MathUtils.js';
+        import { DOMUtils } from '../js/utils/DOMUtils.js';
+        import { SliderController } from '../js/ui/SliderController.js';
+        import { ColorPicker } from '../js/ui/ColorPicker.js';
+        import { PanelManager } from '../js/ui/PanelManager.js';
+        import { ZoomPanManager } from '../js/ui/ZoomPanManager.js';
+
+        // Simple Settings object
+        const settings = {
+            values: {
+                width: 100,
+                height: 50,
+                size: 2,
+                boxColor: '#808080'
+            },
+            get(key) { return this.values[key]; },
+            set(key, value) { this.values[key] = value; }
+        };
+
+        // Initialize SliderController
+        const sliderController = new SliderController(settings);
+        
+        sliderController.initSlider('widthSlider', {
+            valueId: 'widthValue',
+            setting: 'width',
+            min: 10,
+            max: 500,
+            decimals: 1,
+            baseStep: 1,
+            shiftStep: 10,
+            onUpdate: (value) => console.log('Width:', value)
+        });
+
+        sliderController.initSlider('heightSlider', {
+            valueId: 'heightValue',
+            setting: 'height',
+            min: 10,
+            max: 500,
+            decimals: 1,
+            baseStep: 1,
+            shiftStep: 10,
+            onUpdate: (value) => console.log('Height:', value)
+        });
+
+        sliderController.initSlider('sizeSlider', {
+            valueId: 'sizeValue',
+            setting: 'size',
+            min: 0.5,
+            max: 10,
+            decimals: 2,
+            baseStep: 0.25,
+            shiftStep: 1,
+            onUpdate: (value) => console.log('Size:', value)
+        });
+
+        // Initialize ColorPicker
+        const colorPicker = new ColorPicker(settings, {
+            onChange: (hex) => {
+                console.log('Color changed:', hex);
+                document.getElementById('mainSvg').querySelector('rect').setAttribute('fill', hex);
+            }
+        });
+        colorPicker.init();
+
+        // Initialize PanelManager
+        const panelManager = new PanelManager();
+        
+        panelManager.registerPanel('mainPanel', {
+            headerId: 'mainPanelHeader',
+            draggable: true,
+            persistent: true
+        });
+
+        panelManager.registerPanel('leftPanel', {
+            headerId: 'leftPanelHeader',
+            draggable: true,
+            persistent: true
+        });
+
+        // Initialize ZoomPanManager
+        const zoomPanManager = new ZoomPanManager(
+            document.getElementById('canvasContainer'),
+            document.getElementById('mainSvg')
+        );
+
+        // Update zoom indicator
+        document.getElementById('canvasContainer').addEventListener('zoomchange', (e) => {
+            document.getElementById('zoomIndicator').textContent = e.detail.percent + '%';
+        });
+
+        // Reset zoom on indicator click
+        document.getElementById('zoomIndicator').addEventListener('click', () => {
+            zoomPanManager.resetZoom();
+        });
+
+        // Panel collapse functionality
+        document.querySelectorAll('.collapse-icon').forEach(icon => {
+            icon.addEventListener('click', function() {
+                const panel = this.closest('.controls-panel');
+                panel.classList.toggle('panel-collapsed');
+                this.classList.toggle('collapsed');
+            });
+        });
+
+        // Collapsible sections
+        document.querySelectorAll('.collapsible-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const toggle = this.querySelector('.collapse-toggle');
+                const content = this.nextElementSibling;
+                const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+                
+                toggle.setAttribute('aria-expanded', !isExpanded);
+                content.classList.toggle('collapsed');
+            });
+        });
+
+        // Modal functionality
+        const modal = document.getElementById('helpModal');
+        document.getElementById('modalClose').addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
+
+        // Open modal on Cmd/Ctrl + /
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+                e.preventDefault();
+                modal.classList.add('active');
+            } else if (e.key === 'Escape' && modal.classList.contains('active')) {
+                modal.classList.remove('active');
+            }
+        });
+
+        // Dropdown functionality
+        const dropdown = document.getElementById('presetDropdown');
+        const dropdownToggle = document.getElementById('presetDropdownToggle');
+        const dropdownMenu = document.getElementById('presetDropdownMenu');
+
+        dropdownToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isExpanded = dropdownToggle.getAttribute('aria-expanded') === 'true';
+            dropdownToggle.setAttribute('aria-expanded', !isExpanded);
+            dropdownMenu.classList.toggle('active');
+        });
+
+        dropdownMenu.querySelectorAll('.preset-dropdown-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const text = item.textContent;
+                document.querySelector('.preset-dropdown-text').textContent = text;
+                dropdownMenu.querySelector('.selected')?.classList.remove('selected');
+                item.classList.add('selected');
+                dropdownToggle.setAttribute('aria-expanded', 'false');
+                dropdownMenu.classList.remove('active');
+            });
+        });
+
+        // Close dropdown on outside click
+        document.addEventListener('click', () => {
+            if (dropdownMenu.classList.contains('active')) {
+                dropdownToggle.setAttribute('aria-expanded', 'false');
+                dropdownMenu.classList.remove('active');
+            }
+        });
+
+        // Lock button functionality
+        document.getElementById('lockSizeBtn').addEventListener('click', function() {
+            this.classList.toggle('locked');
+            console.log('Lock toggled:', this.classList.contains('locked'));
+        });
+
+        // Unit buttons functionality
+        document.querySelectorAll('.unit-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.parentElement.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                console.log('Unit changed to:', this.dataset.unit);
+            });
+        });
+
+        // Character counter for textarea
+        const textarea = document.getElementById('noteText');
+        const charCounter = document.getElementById('charCounter');
+        if (textarea && charCounter) {
+            textarea.addEventListener('input', () => {
+                charCounter.textContent = `${textarea.value.length} characters`;
+            });
+        }
+
+        // Preset color button
+        document.getElementById('presetBlue').addEventListener('click', () => {
+            colorPicker.setColorFromHex('#2a4a7f');
+        });
+
+        // Export button
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            console.log('Export SVG');
+            alert('Export functionality goes here');
+        });
+
+        // Log initialization
+        console.log('YF UI Framework Example initialized');
+        console.log('Try these features:');
+        console.log('- Drag panels by their headers');
+        console.log('- Use arrow keys on sliders');
+        console.log('- Cmd/Ctrl + Scroll to zoom');
+        console.log('- Space + drag to pan');
+        console.log('- Cmd/Ctrl + / to open help modal');
+    </script>
+</body>
+</html>
+

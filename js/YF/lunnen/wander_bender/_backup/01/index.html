@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wander Bender - YF Tools</title>
+    <link rel="stylesheet" href="css/yf-styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Top Navigation -->
+        <div class="top-links">
+            <a href="/js/YF/" class="yf-tools-link">←YF Tools</a>
+            <button class="zoom-indicator" id="zoomIndicator">100%</button>
+        </div>
+
+        <div class="main-content">
+            <!-- Main Canvas/Content Area -->
+            <div class="canvas-container" id="canvasContainer">
+                <svg id="mainSvg" xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500">
+                    <rect width="500" height="500" fill="#000"/>
+                    <g id="graphicsGroup"></g>
+                </svg>
+            </div>
+
+            <!-- Control Panel (right side) -->
+            <aside class="controls-panel" id="controlsPanel">
+                <div class="panel-header" id="controlsPanelHeader">
+                    <span>Wander Bender</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <!-- Shape Parameters -->
+                    <section class="control-section">
+                        <h3>Форма</h3>
+                        
+                        <div class="control-group">
+                            <label for="raysSlider">
+                                <span>Количество лучей</span>
+                                <input type="text" class="value-display" id="raysValue" value="1">
+                            </label>
+                            <input type="range" id="raysSlider" min="1" max="12" value="1" step="1">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="radiusSlider">
+                                <span>Радиус</span>
+                                <input type="text" class="value-display" id="radiusValue" value="0">
+                            </label>
+                            <input type="range" id="radiusSlider" min="0" max="200" value="0" step="1">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="lengthSlider">
+                                <span>Длина прямоугольника</span>
+                                <input type="text" class="value-display" id="lengthValue" value="125">
+                            </label>
+                            <input type="range" id="lengthSlider" min="50" max="400" value="125" step="1">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="widthSlider">
+                                <span>Ширина прямоугольника</span>
+                                <input type="text" class="value-display" id="widthValue" value="50">
+                            </label>
+                            <input type="range" id="widthSlider" min="20" max="150" value="50" step="1">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="strokeSlider">
+                                <span>Толщина обводки</span>
+                                <input type="text" class="value-display" id="strokeValue" value="45">
+                            </label>
+                            <input type="range" id="strokeSlider" min="1" max="100" value="45" step="1">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="cornerRadiusSlider">
+                                <span>Скругление углов</span>
+                                <input type="text" class="value-display" id="cornerRadiusValue" value="25">
+                            </label>
+                            <input type="range" id="cornerRadiusSlider" min="0" max="100" value="25" step="1">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="rotationSlider">
+                                <span>Поворот</span>
+                                <input type="text" class="value-display" id="rotationValue" value="0">
+                            </label>
+                            <input type="range" id="rotationSlider" min="0" max="360" value="0" step="1">
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Bottom Action Buttons -->
+    <nav class="bottom-buttons">
+        <button class="btn-fixed btn-export" id="exportBtn">Export SVG</button>
+    </nav>
+
+    <script type="module">
+        // Import framework modules
+        import { SliderController } from './js/ui/SliderController.js';
+        import { PanelManager } from './js/ui/PanelManager.js';
+        import { ZoomPanManager } from './js/ui/ZoomPanManager.js';
+
+        // Settings storage
+        const settings = {
+            values: { 
+                rays: 1,
+                radius: 0,
+                length: 125,
+                width: 50,
+                stroke: 45,
+                cornerRadius: 25,
+                rotation: 0
+            },
+            get(key) { return this.values[key]; },
+            set(key, value) { this.values[key] = value; }
+        };
+
+        // Wander Bender Generator
+        class WanderBenderGenerator {
+            constructor(svgElement) {
+                this.svg = svgElement;
+                this.group = document.getElementById('graphicsGroup');
+                this.centerX = 250;
+                this.centerY = 250;
+            }
+
+            generate(params) {
+                const { rays, radius, length, width, stroke, cornerRadius, rotation } = params;
+                
+                // Clear previous graphics
+                this.group.innerHTML = '';
+
+                // Calculate angle step
+                const angleStep = (2 * Math.PI) / rays;
+                
+                // Pivot point is at cornerRadius distance from three sides of one end
+                // This means the pivot is at (cornerRadius, width/2) from the rect's top-left corner
+                const pivotX = cornerRadius;
+                const pivotY = width / 2;
+                
+                for (let i = 0; i < rays; i++) {
+                    const angle = (i * angleStep) + (rotation * Math.PI / 180);
+                    
+                    // Create a rectangle for each ray
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    
+                    // Calculate center position
+                    const centerX = this.centerX + Math.cos(angle) * radius;
+                    const centerY = this.centerY + Math.sin(angle) * radius;
+                    
+                    // Set rectangle attributes
+                    rect.setAttribute('width', length);
+                    rect.setAttribute('height', width);
+                    rect.setAttribute('rx', cornerRadius);
+                    rect.setAttribute('ry', cornerRadius);
+                    rect.setAttribute('fill', 'none');
+                    rect.setAttribute('stroke', '#ffffff');
+                    rect.setAttribute('stroke-width', stroke);
+                    rect.setAttribute('stroke-linejoin', 'round');
+                    
+                    // Transform: move to center, rotate, then offset by pivot point
+                    const angleDeg = angle * 180 / Math.PI;
+                    rect.setAttribute('transform', `translate(${centerX}, ${centerY}) rotate(${angleDeg}) translate(${-pivotX}, ${-pivotY})`);
+                    
+                    this.group.appendChild(rect);
+                }
+            }
+        }
+
+        // Initialize generator
+        const generator = new WanderBenderGenerator(document.getElementById('mainSvg'));
+
+        // Update visualization
+        function updateVisualization() {
+            generator.generate({
+                rays: settings.get('rays'),
+                radius: settings.get('radius'),
+                length: settings.get('length'),
+                width: settings.get('width'),
+                stroke: settings.get('stroke'),
+                cornerRadius: settings.get('cornerRadius'),
+                rotation: settings.get('rotation')
+            });
+        }
+
+        // Initialize SliderController
+        const sliderController = new SliderController(settings);
+        
+        sliderController.initSlider('raysSlider', {
+            valueId: 'raysValue',
+            setting: 'rays',
+            min: 1,
+            max: 12,
+            decimals: 0,
+            baseStep: 1,
+            shiftStep: 1,
+            onUpdate: updateVisualization
+        });
+
+        sliderController.initSlider('radiusSlider', {
+            valueId: 'radiusValue',
+            setting: 'radius',
+            min: 0,
+            max: 200,
+            decimals: 0,
+            baseStep: 1,
+            shiftStep: 10,
+            onUpdate: updateVisualization
+        });
+
+        sliderController.initSlider('lengthSlider', {
+            valueId: 'lengthValue',
+            setting: 'length',
+            min: 25,
+            max: 400,
+            decimals: 0,
+            baseStep: 1,
+            shiftStep: 10,
+            onUpdate: updateVisualization
+        });
+
+        sliderController.initSlider('widthSlider', {
+            valueId: 'widthValue',
+            setting: 'width',
+            min: 20,
+            max: 150,
+            decimals: 0,
+            baseStep: 1,
+            shiftStep: 5,
+            onUpdate: updateVisualization
+        });
+
+        sliderController.initSlider('strokeSlider', {
+            valueId: 'strokeValue',
+            setting: 'stroke',
+            min: 1,
+            max: 100,
+            decimals: 0,
+            baseStep: 1,
+            shiftStep: 5,
+            onUpdate: updateVisualization
+        });
+
+        sliderController.initSlider('cornerRadiusSlider', {
+            valueId: 'cornerRadiusValue',
+            setting: 'cornerRadius',
+            min: 0,
+            max: 100,
+            decimals: 0,
+            baseStep: 1,
+            shiftStep: 5,
+            onUpdate: updateVisualization
+        });
+
+        sliderController.initSlider('rotationSlider', {
+            valueId: 'rotationValue',
+            setting: 'rotation',
+            min: 0,
+            max: 360,
+            decimals: 0,
+            baseStep: 1,
+            shiftStep: 15,
+            onUpdate: updateVisualization
+        });
+
+        // Initialize PanelManager
+        const panelManager = new PanelManager();
+        panelManager.registerPanel('controlsPanel', {
+            headerId: 'controlsPanelHeader',
+            draggable: true,
+            persistent: true
+        });
+
+        // Initialize ZoomPanManager
+        const zoomPanManager = new ZoomPanManager(
+            document.getElementById('canvasContainer'),
+            document.getElementById('mainSvg')
+        );
+
+        // Update zoom indicator
+        document.getElementById('canvasContainer').addEventListener('zoomchange', (e) => {
+            document.getElementById('zoomIndicator').textContent = e.detail.percent + '%';
+        });
+
+        // Reset zoom on click
+        document.getElementById('zoomIndicator').addEventListener('click', () => {
+            zoomPanManager.resetZoom();
+        });
+
+        // Panel collapse
+        document.querySelectorAll('.collapse-icon').forEach(icon => {
+            icon.addEventListener('click', function() {
+                this.closest('.controls-panel').classList.toggle('panel-collapsed');
+                this.classList.toggle('collapsed');
+            });
+        });
+
+        // Export functionality
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const svgElement = document.getElementById('mainSvg');
+            const svgData = new XMLSerializer().serializeToString(svgElement);
+            const blob = new Blob([svgData], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `wander-bender-${settings.get('rays')}-rays.svg`;
+            link.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Initialize
+        updateVisualization();
+    </script>
+</body>
+</html>
+
