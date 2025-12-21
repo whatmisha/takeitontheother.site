@@ -82,14 +82,8 @@ const settings = {
     }
 };
 
-/**
- * Wander Bender Generator
- * Main class that coordinates different generation modes and manages UI
- */
+// Wander Bender Generator
 class WanderBenderGenerator {
-    /**
-     * @param {SVGElement} svgElement - Main SVG element
-     */
     constructor(svgElement) {
         this.svg = svgElement;
         this.group = document.getElementById('graphicsGroup');
@@ -109,10 +103,6 @@ class WanderBenderGenerator {
         this.currentMode = null;
     }
     
-    /**
-     * Generate graphics based on parameters
-     * @param {Object} params - Generation parameters including mode
-     */
     generate(params) {
         const mode = params.mode || 'radial';
         
@@ -125,27 +115,19 @@ class WanderBenderGenerator {
         this.currentMode.generate(params);
     }
     
-    /**
-     * Reset extracted elements in radial mode
-     */
+    // Proxy methods for backward compatibility
     resetRadialMode() {
         if (this.modes.radial) {
             this.modes.radial.resetExtracted();
         }
     }
     
-    /**
-     * Reset extracted elements in random mode
-     */
     resetRandomMode() {
         if (this.modes.random) {
             this.modes.random.resetExtracted();
         }
     }
     
-    /**
-     * Reset extracted elements in flow field mode
-     */
     resetFlowFieldMode() {
         if (this.modes.flowfield) {
             this.modes.flowfield.resetExtracted();
@@ -156,10 +138,7 @@ class WanderBenderGenerator {
 // Initialize generator
 const generator = new WanderBenderGenerator(document.getElementById('mainSvg'));
 
-/**
- * Update visualization based on current settings
- * Collects parameters and triggers generation for current mode
- */
+// Update visualization
 function updateVisualization() {
     const params = {
         mode: settings.mode,
