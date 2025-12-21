@@ -20,13 +20,8 @@
         }
         
         /* Hover effect for interactive rectangles */
-        .hit-area {
-            transition: fill 0.15s ease;
-        }
-        
         .hit-area:hover {
-            fill: rgba(255, 255, 255, 0.6) !important;
-            cursor: pointer;
+            fill: rgba(255, 255, 255, 0.1) !important;
         }
         
         .extracted-shape {
@@ -89,7 +84,7 @@
                                 <span>Length</span>
                                 <input type="text" class="value-display" id="lengthValue" value="125">
                             </label>
-                            <input type="range" id="lengthSlider" min="50" max="500" value="125" step="1">
+                            <input type="range" id="lengthSlider" min="50" max="400" value="125" step="1">
                         </div>
 
                         <div class="control-group">
@@ -97,7 +92,7 @@
                                 <span>Width</span>
                                 <input type="text" class="value-display" id="widthValue" value="50">
                             </label>
-                            <input type="range" id="widthSlider" min="10" max="200" value="50" step="1">
+                            <input type="range" id="widthSlider" min="20" max="150" value="50" step="1">
                         </div>
 
                         <div class="control-group">
@@ -302,7 +297,7 @@
                 
                 const start = line[0];
                 const end = line[1];
-                const arcAmount = line[2] || 0;
+                const arcAmount = line[2] || 0; // Third element is arcAmount if present
                 
                 const dx = end.x - start.x;
                 const dy = end.y - start.y;
@@ -319,36 +314,17 @@
                     };
                 }
                 
-                // For circular arc (arcAmount > 0)
-                const chord = lineLength;
-                const sagitta = arcAmount;
-                
-                // Calculate radius of the circle: R = (chord² + 4·sagitta²) / (8·sagitta)
-                const radius = (chord * chord + 4 * sagitta * sagitta) / (8 * sagitta);
-                
-                // Center of circle is at distance (R - sagitta) from chord midpoint
-                const midX = start.x + dx * 0.5;
-                const midY = start.y + dy * 0.5;
-                
-                const perpX = -dy / lineLength;
+                // For arc (arcAmount > 0)
+                // Create an arc by offsetting perpendicular to the line
+                const perpX = -dy / lineLength; // perpendicular direction
                 const perpY = dx / lineLength;
                 
-                const centerX = midX + perpX * (radius - sagitta);
-                const centerY = midY + perpY * (radius - sagitta);
-                
-                // Calculate angle span of the arc
-                const halfChord = chord / 2;
-                const angleSpan = 2 * Math.asin(halfChord / radius);
-                
-                // Start angle (from center to start point)
-                const startAngle = Math.atan2(start.y - centerY, start.x - centerX);
-                
-                // Current angle along the arc
-                const currentAngle = startAngle + angleSpan * t;
+                // Arc offset at parameter t (quadratic bezier-like curve)
+                const arcOffset = arcAmount * 4 * t * (1 - t); // peaks at t=0.5
                 
                 return {
-                    x: centerX + radius * Math.cos(currentAngle),
-                    y: centerY + radius * Math.sin(currentAngle)
+                    x: start.x + dx * t + perpX * arcOffset,
+                    y: start.y + dy * t + perpY * arcOffset
                 };
             }
             
@@ -388,140 +364,146 @@
                     return { shape: rect, pivotPoint };
                 }
                 
-                // For circular arc, create a curved path with proper rounded ends
-                const chord = length;
-                const sagitta = arcAmount;
-                
-                // Caps should be INSIDE the line length
-                const capLength = width / 2;
-                const tStart = capLength / length;
-                const tEnd = 1 - capLength / length;
-                
-                // If tStart >= tEnd, the object is too short for the width - fall back to straight
-                if (tStart >= tEnd || length <= width) {
-                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-                    
-                    const rect = new paper.Path.Rectangle({
-                        point: [start.x, start.y - width / 2],
-                        size: [length, width],
-                        radius: cornerRadius
-                    });
-                    
-                    if (angle !== 0) {
-                        rect.rotate(angle, new paper.Point(start.x, start.y));
-                    }
-                    
-                    return { shape: rect, pivotPoint };
-                }
-                
-                // Calculate radius of the circle
-                const radius = (chord * chord + 4 * sagitta * sagitta) / (8 * sagitta);
-                
-                // Center of circle
-                const midX = start.x + dx * 0.5;
-                const midY = start.y + dy * 0.5;
+                // For arc, create a curved path with proper rounded ends
+                const segments = 30;
                 const perpX = -dy / length;
                 const perpY = dx / length;
-                const centerX = midX + perpX * (radius - sagitta);
-                const centerY = midY + perpY * (radius - sagitta);
                 
-                // Calculate angle span
-                const halfChord = chord / 2;
-                const angleSpan = 2 * Math.asin(halfChord / radius);
-                const startAngle = Math.atan2(start.y - centerY, start.x - centerX);
-                
-                const segments = 30;
-                const shape = new paper.Path();
-                
-                // Top edge of the arc (from tStart to tEnd)
+                // Calculate points along the center line of the arc
+                const centerPoints = [];
                 for (let i = 0; i <= segments; i++) {
-                    const t = tStart + (tEnd - tStart) * (i / segments);
+                    const t = i / segments;
+                    const arcOffset = arcAmount * 4 * t * (1 - t);
                     
-                    // Point on circular arc
-                    const currentAngle = startAngle + angleSpan * t;
-                    const arcX = centerX + radius * Math.cos(currentAngle);
-                    const arcY = centerY + radius * Math.sin(currentAngle);
+                    centerPoints.push({
+                        x: start.x + dx * t + perpX * arcOffset,
+                        y: start.y + dy * t + perpY * arcOffset
+                    });
+                }
+                
+                // Create compound path with rounded ends
+                const shape = new paper.CompoundPath();
+                
+                // Create the main body path
+                const bodyPath = new paper.Path();
+                
+                // Top edge
+                for (let i = 0; i <= segments; i++) {
+                    const t = i / segments;
+                    const arcOffset = arcAmount * 4 * t * (1 - t);
                     
-                    // Tangent to circle at this point
-                    const tangentX = -Math.sin(currentAngle);
-                    const tangentY = Math.cos(currentAngle);
+                    const centerX = start.x + dx * t + perpX * arcOffset;
+                    const centerY = start.y + dy * t + perpY * arcOffset;
                     
-                    // Normal (perpendicular to tangent, pointing outward)
-                    const normalX = Math.cos(currentAngle);
-                    const normalY = Math.sin(currentAngle);
+                    // Calculate tangent for proper normal
+                    const dt = 0.01;
+                    const t1 = Math.max(0, t - dt);
+                    const t2 = Math.min(1, t + dt);
+                    const offset1 = arcAmount * 4 * t1 * (1 - t1);
+                    const offset2 = arcAmount * 4 * t2 * (1 - t2);
                     
-                    shape.add(new paper.Point(
-                        arcX + normalX * width / 2,
-                        arcY + normalY * width / 2
+                    const x1 = start.x + dx * t1 + perpX * offset1;
+                    const y1 = start.y + dy * t1 + perpY * offset1;
+                    const x2 = start.x + dx * t2 + perpX * offset2;
+                    const y2 = start.y + dy * t2 + perpY * offset2;
+                    
+                    const tangentX = x2 - x1;
+                    const tangentY = y2 - y1;
+                    const tangentLen = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
+                    
+                    const normalX = -tangentY / tangentLen;
+                    const normalY = tangentX / tangentLen;
+                    
+                    bodyPath.add(new paper.Point(
+                        centerX + normalX * (width / 2 - cornerRadius),
+                        centerY + normalY * (width / 2 - cornerRadius)
                     ));
                 }
                 
                 // Add rounded end cap (right side)
-                const endT = tEnd;
-                const endAngle = startAngle + angleSpan * endT;
-                const endCenterX = centerX + radius * Math.cos(endAngle);
-                const endCenterY = centerY + radius * Math.sin(endAngle);
-                
-                const endTangentX = -Math.sin(endAngle);
-                const endTangentY = Math.cos(endAngle);
-                const endNormalX = Math.cos(endAngle);
-                const endNormalY = Math.sin(endAngle);
-                
-                // Semicircle at end
-                const capSteps = 10;
-                for (let i = 1; i <= capSteps; i++) {
-                    const capAngle = (i / capSteps) * Math.PI;
-                    const capX = endCenterX + endNormalX * Math.cos(capAngle) * width / 2 + 
-                                endTangentX * Math.sin(capAngle) * width / 2;
-                    const capY = endCenterY + endNormalY * Math.cos(capAngle) * width / 2 + 
-                                endTangentY * Math.sin(capAngle) * width / 2;
-                    shape.add(new paper.Point(capX, capY));
+                if (cornerRadius > 0) {
+                    const endPoint = centerPoints[segments];
+                    
+                    // Calculate tangent at end
+                    const lastPoint = centerPoints[segments - 1];
+                    const tangentX = endPoint.x - lastPoint.x;
+                    const tangentY = endPoint.y - lastPoint.y;
+                    const tangentLen = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
+                    const normalX = -tangentY / tangentLen;
+                    const normalY = tangentX / tangentLen;
+                    
+                    // Add arc for rounded end
+                    const steps = 8;
+                    for (let i = 0; i <= steps; i++) {
+                        const angle = (i / steps) * Math.PI;
+                        const radius = width / 2 - cornerRadius;
+                        const px = endPoint.x + normalX * (radius + cornerRadius * Math.cos(angle)) + 
+                                  (tangentX / tangentLen) * cornerRadius * Math.sin(angle);
+                        const py = endPoint.y + normalY * (radius + cornerRadius * Math.cos(angle)) + 
+                                  (tangentY / tangentLen) * cornerRadius * Math.sin(angle);
+                        bodyPath.add(new paper.Point(px, py));
+                    }
                 }
                 
-                // Bottom edge (reverse, from tEnd to tStart)
+                // Bottom edge (reverse)
                 for (let i = segments; i >= 0; i--) {
-                    const t = tStart + (tEnd - tStart) * (i / segments);
+                    const t = i / segments;
+                    const arcOffset = arcAmount * 4 * t * (1 - t);
                     
-                    const currentAngle = startAngle + angleSpan * t;
-                    const arcX = centerX + radius * Math.cos(currentAngle);
-                    const arcY = centerY + radius * Math.sin(currentAngle);
+                    const centerX = start.x + dx * t + perpX * arcOffset;
+                    const centerY = start.y + dy * t + perpY * arcOffset;
                     
-                    const normalX = Math.cos(currentAngle);
-                    const normalY = Math.sin(currentAngle);
+                    const dt = 0.01;
+                    const t1 = Math.max(0, t - dt);
+                    const t2 = Math.min(1, t + dt);
+                    const offset1 = arcAmount * 4 * t1 * (1 - t1);
+                    const offset2 = arcAmount * 4 * t2 * (1 - t2);
                     
-                    shape.add(new paper.Point(
-                        arcX - normalX * width / 2,
-                        arcY - normalY * width / 2
+                    const x1 = start.x + dx * t1 + perpX * offset1;
+                    const y1 = start.y + dy * t1 + perpY * offset1;
+                    const x2 = start.x + dx * t2 + perpX * offset2;
+                    const y2 = start.y + dy * t2 + perpY * offset2;
+                    
+                    const tangentX = x2 - x1;
+                    const tangentY = y2 - y1;
+                    const tangentLen = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
+                    
+                    const normalX = -tangentY / tangentLen;
+                    const normalY = tangentX / tangentLen;
+                    
+                    bodyPath.add(new paper.Point(
+                        centerX - normalX * (width / 2 - cornerRadius),
+                        centerY - normalY * (width / 2 - cornerRadius)
                     ));
                 }
                 
                 // Add rounded end cap (left side)
-                const startT = tStart;
-                const startCircleAngle = startAngle + angleSpan * startT;
-                const startCenterX = centerX + radius * Math.cos(startCircleAngle);
-                const startCenterY = centerY + radius * Math.sin(startCircleAngle);
-                
-                const startTangentX = -Math.sin(startCircleAngle);
-                const startTangentY = Math.cos(startCircleAngle);
-                const startNormalX = Math.cos(startCircleAngle);
-                const startNormalY = Math.sin(startCircleAngle);
-                
-                // Semicircle at start
-                for (let i = 1; i <= capSteps; i++) {
-                    const capAngle = (i / capSteps) * Math.PI;
-                    const capX = startCenterX - startNormalX * Math.cos(capAngle) * width / 2 - 
-                                startTangentX * Math.sin(capAngle) * width / 2;
-                    const capY = startCenterY - startNormalY * Math.cos(capAngle) * width / 2 - 
-                                startTangentY * Math.sin(capAngle) * width / 2;
-                    shape.add(new paper.Point(capX, capY));
-                }
-                
-                shape.closePath();
-                
-                // Apply cornerRadius as smoothing if needed
                 if (cornerRadius > 0) {
-                    shape.smooth({ type: 'continuous', factor: Math.min(cornerRadius / width, 0.5) });
+                    const startPoint = centerPoints[0];
+                    
+                    const nextPoint = centerPoints[1];
+                    const tangentX = nextPoint.x - startPoint.x;
+                    const tangentY = nextPoint.y - startPoint.y;
+                    const tangentLen = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
+                    const normalX = -tangentY / tangentLen;
+                    const normalY = tangentX / tangentLen;
+                    
+                    const steps = 8;
+                    for (let i = 0; i <= steps; i++) {
+                        const angle = (i / steps) * Math.PI + Math.PI;
+                        const radius = width / 2 - cornerRadius;
+                        const px = startPoint.x + normalX * (radius + cornerRadius * Math.cos(angle)) - 
+                                  (tangentX / tangentLen) * cornerRadius * Math.sin(angle);
+                        const py = startPoint.y + normalY * (radius + cornerRadius * Math.cos(angle)) - 
+                                  (tangentY / tangentLen) * cornerRadius * Math.sin(angle);
+                        bodyPath.add(new paper.Point(px, py));
+                    }
                 }
+                
+                bodyPath.closePath();
+                bodyPath.smooth({ type: 'continuous' });
+                
+                shape.addChild(bodyPath);
                 
                 return { shape, pivotPoint };
             }
@@ -1128,7 +1110,7 @@
             valueId: 'lengthValue',
             setting: 'length',
             min: 25,
-            max: 500,
+            max: 400,
             decimals: 0,
             baseStep: 1,
             shiftStep: 10,
@@ -1138,8 +1120,8 @@
         sliderController.initSlider('widthSlider', {
             valueId: 'widthValue',
             setting: 'width',
-            min: 10,
-            max: 200,
+            min: 20,
+            max: 150,
             decimals: 0,
             baseStep: 1,
             shiftStep: 5,
@@ -1334,15 +1316,7 @@
         // Export functionality
         document.getElementById('exportBtn').addEventListener('click', () => {
             const svgElement = document.getElementById('mainSvg');
-            const clone = svgElement.cloneNode(true);
-            
-            // Remove area-boundary from the clone (should not be exported)
-            const areaBoundary = clone.querySelector('.area-boundary');
-            if (areaBoundary) {
-                areaBoundary.remove();
-            }
-            
-            const svgData = new XMLSerializer().serializeToString(clone);
+            const svgData = new XMLSerializer().serializeToString(svgElement);
             const blob = new Blob([svgData], { type: 'image/svg+xml' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');

@@ -20,13 +20,8 @@
         }
         
         /* Hover effect for interactive rectangles */
-        .hit-area {
-            transition: fill 0.15s ease;
-        }
-        
         .hit-area:hover {
-            fill: rgba(255, 255, 255, 0.6) !important;
-            cursor: pointer;
+            fill: rgba(255, 255, 255, 0.1) !important;
         }
         
         .extracted-shape {
@@ -89,7 +84,7 @@
                                 <span>Length</span>
                                 <input type="text" class="value-display" id="lengthValue" value="125">
                             </label>
-                            <input type="range" id="lengthSlider" min="50" max="500" value="125" step="1">
+                            <input type="range" id="lengthSlider" min="50" max="400" value="125" step="1">
                         </div>
 
                         <div class="control-group">
@@ -97,7 +92,7 @@
                                 <span>Width</span>
                                 <input type="text" class="value-display" id="widthValue" value="50">
                             </label>
-                            <input type="range" id="widthSlider" min="10" max="200" value="50" step="1">
+                            <input type="range" id="widthSlider" min="20" max="150" value="50" step="1">
                         </div>
 
                         <div class="control-group">
@@ -120,14 +115,6 @@
                                 </div>
                             </label>
                             <input type="range" id="cornerRadiusSlider" min="0" max="25" value="25" step="1">
-                        </div>
-                        
-                        <div class="control-group">
-                            <label for="arcAmountSlider">
-                                <span>Arc Amount</span>
-                                <input type="text" class="value-display" id="arcAmountValue" value="0">
-                            </label>
-                            <input type="range" id="arcAmountSlider" min="0" max="100" value="0" step="1">
                         </div>
                     </section>
 
@@ -152,10 +139,6 @@
                                 </label>
                                 <input type="range" id="rayRotationSlider" min="0" max="360" value="0" step="1">
                             </div>
-                            
-                            <div class="control-group">
-                                <button type="button" class="btn-secondary" id="resetExtractedRadialBtn" style="width: 100%; margin-top: 8px;">Reset Extracted</button>
-                            </div>
                         </div>
                         
                         <!-- Random Mode Controls -->
@@ -163,33 +146,33 @@
                             <div class="control-group">
                                 <label for="randomCountSlider">
                                     <span>Count</span>
-                                    <input type="text" class="value-display" id="randomCountValue" value="3">
+                                    <input type="text" class="value-display" id="randomCountValue" value="15">
                                 </label>
-                                <input type="range" id="randomCountSlider" min="3" max="50" value="3" step="1">
+                                <input type="range" id="randomCountSlider" min="3" max="50" value="15" step="1">
                             </div>
                             
                             <div class="control-group">
                                 <label for="areaWidthSlider">
                                     <span>Area Width</span>
-                                    <input type="text" class="value-display" id="areaWidthValue" value="200">
+                                    <input type="text" class="value-display" id="areaWidthValue" value="400">
                                 </label>
-                                <input type="range" id="areaWidthSlider" min="100" max="500" value="200" step="10">
+                                <input type="range" id="areaWidthSlider" min="100" max="500" value="400" step="10">
                             </div>
                             
                             <div class="control-group">
                                 <label for="areaHeightSlider">
                                     <span>Area Height</span>
-                                    <input type="text" class="value-display" id="areaHeightValue" value="200">
+                                    <input type="text" class="value-display" id="areaHeightValue" value="400">
                                 </label>
-                                <input type="range" id="areaHeightSlider" min="100" max="500" value="200" step="10">
+                                <input type="range" id="areaHeightSlider" min="100" max="500" value="400" step="10">
                             </div>
                             
                             <div class="control-group">
                                 <label for="lengthVariationSlider">
                                     <span>Length Variation</span>
-                                    <input type="text" class="value-display" id="lengthVariationValue" value="50">
+                                    <input type="text" class="value-display" id="lengthVariationValue" value="30">
                                 </label>
-                                <input type="range" id="lengthVariationSlider" min="0" max="100" value="50" step="1">
+                                <input type="range" id="lengthVariationSlider" min="0" max="100" value="30" step="1">
                             </div>
                             
                             <div class="control-group">
@@ -231,8 +214,7 @@
                 stroke: 45,
                 strokeAuto: true,  // Auto calculate stroke based on width
                 cornerRadius: 25,
-                cornerRadiusMax: true,  // Keep corner radius at maximum
-                arcAmount: 0  // Arc curvature (0-100)
+                cornerRadiusMax: true  // Keep corner radius at maximum
             },
             
             radial: {
@@ -241,10 +223,10 @@
             },
             
             random: {
-                count: 3,
-                areaWidth: 200,
-                areaHeight: 200,
-                lengthVariation: 50,  // Percentage variation in length
+                count: 15,
+                areaWidth: 400,
+                areaHeight: 400,
+                lengthVariation: 30,  // Percentage variation in length
                 randomSeed: 12345
             },
             
@@ -288,249 +270,10 @@
                 this.randomRectangles = [];
                 this.extractedIndices = []; // Array to preserve extraction order
                 this.currentParams = null; // Store current generation parameters
-                
-                // Store rays data for radial mode
-                this.radialRays = [];
-                this.extractedRadialIndices = [];
-            }
-            
-            // Get a point at a specific distance along a line
-            // line can be: [{x, y}, {x, y}] for straight, or [{x, y}, {x, y}, arcAmount] for arc
-            // distance is the distance along the line from the start
-            getPointOnLine(line, distance) {
-                if (line.length < 2) return { x: 0, y: 0 };
-                
-                const start = line[0];
-                const end = line[1];
-                const arcAmount = line[2] || 0;
-                
-                const dx = end.x - start.x;
-                const dy = end.y - start.y;
-                const lineLength = Math.sqrt(dx * dx + dy * dy);
-                
-                // Clamp distance to line length
-                const t = Math.min(distance / lineLength, 1);
-                
-                // For straight line (arcAmount === 0)
-                if (arcAmount === 0) {
-                    return {
-                        x: start.x + dx * t,
-                        y: start.y + dy * t
-                    };
-                }
-                
-                // For circular arc (arcAmount > 0)
-                const chord = lineLength;
-                const sagitta = arcAmount;
-                
-                // Calculate radius of the circle: R = (chord² + 4·sagitta²) / (8·sagitta)
-                const radius = (chord * chord + 4 * sagitta * sagitta) / (8 * sagitta);
-                
-                // Center of circle is at distance (R - sagitta) from chord midpoint
-                const midX = start.x + dx * 0.5;
-                const midY = start.y + dy * 0.5;
-                
-                const perpX = -dy / lineLength;
-                const perpY = dx / lineLength;
-                
-                const centerX = midX + perpX * (radius - sagitta);
-                const centerY = midY + perpY * (radius - sagitta);
-                
-                // Calculate angle span of the arc
-                const halfChord = chord / 2;
-                const angleSpan = 2 * Math.asin(halfChord / radius);
-                
-                // Start angle (from center to start point)
-                const startAngle = Math.atan2(start.y - centerY, start.x - centerX);
-                
-                // Current angle along the arc
-                const currentAngle = startAngle + angleSpan * t;
-                
-                return {
-                    x: centerX + radius * Math.cos(currentAngle),
-                    y: centerY + radius * Math.sin(currentAngle)
-                };
-            }
-            
-            // Create a shape from a line path
-            // line can be: [{x, y}, {x, y}] for straight, or [{x, y}, {x, y}, arcAmount] for arc
-            // width is the thickness of the resulting shape
-            // cornerRadius is applied to the ends
-            // pivotDistance is the distance along the line where the pivot point should be
-            createShapeFromLine(line, width, cornerRadius, pivotDistance) {
-                if (line.length < 2) return null;
-                
-                const start = line[0];
-                const end = line[1];
-                const arcAmount = line[2] || 0;
-                
-                // Calculate pivot point on the line
-                const pivotPoint = this.getPointOnLine(line, pivotDistance);
-                
-                const dx = end.x - start.x;
-                const dy = end.y - start.y;
-                const length = Math.sqrt(dx * dx + dy * dy);
-                
-                // For straight line (arcAmount === 0), create a rounded rectangle
-                if (arcAmount === 0) {
-                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-                    
-                    const rect = new paper.Path.Rectangle({
-                        point: [start.x, start.y - width / 2],
-                        size: [length, width],
-                        radius: cornerRadius
-                    });
-                    
-                    if (angle !== 0) {
-                        rect.rotate(angle, new paper.Point(start.x, start.y));
-                    }
-                    
-                    return { shape: rect, pivotPoint };
-                }
-                
-                // For circular arc, create a curved path with proper rounded ends
-                const chord = length;
-                const sagitta = arcAmount;
-                
-                // Caps should be INSIDE the line length
-                const capLength = width / 2;
-                const tStart = capLength / length;
-                const tEnd = 1 - capLength / length;
-                
-                // If tStart >= tEnd, the object is too short for the width - fall back to straight
-                if (tStart >= tEnd || length <= width) {
-                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-                    
-                    const rect = new paper.Path.Rectangle({
-                        point: [start.x, start.y - width / 2],
-                        size: [length, width],
-                        radius: cornerRadius
-                    });
-                    
-                    if (angle !== 0) {
-                        rect.rotate(angle, new paper.Point(start.x, start.y));
-                    }
-                    
-                    return { shape: rect, pivotPoint };
-                }
-                
-                // Calculate radius of the circle
-                const radius = (chord * chord + 4 * sagitta * sagitta) / (8 * sagitta);
-                
-                // Center of circle
-                const midX = start.x + dx * 0.5;
-                const midY = start.y + dy * 0.5;
-                const perpX = -dy / length;
-                const perpY = dx / length;
-                const centerX = midX + perpX * (radius - sagitta);
-                const centerY = midY + perpY * (radius - sagitta);
-                
-                // Calculate angle span
-                const halfChord = chord / 2;
-                const angleSpan = 2 * Math.asin(halfChord / radius);
-                const startAngle = Math.atan2(start.y - centerY, start.x - centerX);
-                
-                const segments = 30;
-                const shape = new paper.Path();
-                
-                // Top edge of the arc (from tStart to tEnd)
-                for (let i = 0; i <= segments; i++) {
-                    const t = tStart + (tEnd - tStart) * (i / segments);
-                    
-                    // Point on circular arc
-                    const currentAngle = startAngle + angleSpan * t;
-                    const arcX = centerX + radius * Math.cos(currentAngle);
-                    const arcY = centerY + radius * Math.sin(currentAngle);
-                    
-                    // Tangent to circle at this point
-                    const tangentX = -Math.sin(currentAngle);
-                    const tangentY = Math.cos(currentAngle);
-                    
-                    // Normal (perpendicular to tangent, pointing outward)
-                    const normalX = Math.cos(currentAngle);
-                    const normalY = Math.sin(currentAngle);
-                    
-                    shape.add(new paper.Point(
-                        arcX + normalX * width / 2,
-                        arcY + normalY * width / 2
-                    ));
-                }
-                
-                // Add rounded end cap (right side)
-                const endT = tEnd;
-                const endAngle = startAngle + angleSpan * endT;
-                const endCenterX = centerX + radius * Math.cos(endAngle);
-                const endCenterY = centerY + radius * Math.sin(endAngle);
-                
-                const endTangentX = -Math.sin(endAngle);
-                const endTangentY = Math.cos(endAngle);
-                const endNormalX = Math.cos(endAngle);
-                const endNormalY = Math.sin(endAngle);
-                
-                // Semicircle at end
-                const capSteps = 10;
-                for (let i = 1; i <= capSteps; i++) {
-                    const capAngle = (i / capSteps) * Math.PI;
-                    const capX = endCenterX + endNormalX * Math.cos(capAngle) * width / 2 + 
-                                endTangentX * Math.sin(capAngle) * width / 2;
-                    const capY = endCenterY + endNormalY * Math.cos(capAngle) * width / 2 + 
-                                endTangentY * Math.sin(capAngle) * width / 2;
-                    shape.add(new paper.Point(capX, capY));
-                }
-                
-                // Bottom edge (reverse, from tEnd to tStart)
-                for (let i = segments; i >= 0; i--) {
-                    const t = tStart + (tEnd - tStart) * (i / segments);
-                    
-                    const currentAngle = startAngle + angleSpan * t;
-                    const arcX = centerX + radius * Math.cos(currentAngle);
-                    const arcY = centerY + radius * Math.sin(currentAngle);
-                    
-                    const normalX = Math.cos(currentAngle);
-                    const normalY = Math.sin(currentAngle);
-                    
-                    shape.add(new paper.Point(
-                        arcX - normalX * width / 2,
-                        arcY - normalY * width / 2
-                    ));
-                }
-                
-                // Add rounded end cap (left side)
-                const startT = tStart;
-                const startCircleAngle = startAngle + angleSpan * startT;
-                const startCenterX = centerX + radius * Math.cos(startCircleAngle);
-                const startCenterY = centerY + radius * Math.sin(startCircleAngle);
-                
-                const startTangentX = -Math.sin(startCircleAngle);
-                const startTangentY = Math.cos(startCircleAngle);
-                const startNormalX = Math.cos(startCircleAngle);
-                const startNormalY = Math.sin(startCircleAngle);
-                
-                // Semicircle at start
-                for (let i = 1; i <= capSteps; i++) {
-                    const capAngle = (i / capSteps) * Math.PI;
-                    const capX = startCenterX - startNormalX * Math.cos(capAngle) * width / 2 - 
-                                startTangentX * Math.sin(capAngle) * width / 2;
-                    const capY = startCenterY - startNormalY * Math.cos(capAngle) * width / 2 - 
-                                startTangentY * Math.sin(capAngle) * width / 2;
-                    shape.add(new paper.Point(capX, capY));
-                }
-                
-                shape.closePath();
-                
-                // Apply cornerRadius as smoothing if needed
-                if (cornerRadius > 0) {
-                    shape.smooth({ type: 'continuous', factor: Math.min(cornerRadius / width, 0.5) });
-                }
-                
-                return { shape, pivotPoint };
             }
 
             generateRadial(params) {
-                let { rays, rayRotation, length, width, stroke, cornerRadius, arcAmount } = params;
-                
-                // Store params for regeneration
-                this.currentParams = params;
+                let { rays, rayRotation, length, width, stroke, cornerRadius } = params;
                 
                 // Ensure corner radius doesn't exceed half of width
                 cornerRadius = Math.min(cornerRadius, width / 2);
@@ -541,208 +284,59 @@
                 // Calculate angle step
                 const angleStep = (2 * Math.PI) / rays;
                 
-                // Store rays data
-                this.radialRays = [];
+                // Pivot point is at cornerRadius distance from three sides of one end
+                const pivotX = cornerRadius;
+                const pivotY = width / 2;
+                
+                // Create Paper.js paths for each rectangle
+                let unitedPath = null;
                 
                 for (let i = 0; i < rays; i++) {
-                    // Start at 6 o'clock position (90 degrees)
+                    // Start at 6 o'clock position (90 degrees) instead of 3 o'clock (0 degrees)
                     const angle = (i * angleStep) + (Math.PI / 2);
                     
-                    // Calculate center position
+                    // Calculate center position (always from center)
                     const centerX = this.centerX;
                     const centerY = this.centerY;
                     
-                    // Define line: from (0,0) to length with arc
-                    const lineStart = { x: 0, y: 0 };
-                    const lineEnd = { x: length, y: 0 };
-                    
-                    // Pivot distance along the line (at cornerRadius distance from start)
-                    const pivotDistance = cornerRadius;
-                    
-                    // Store ray data (line includes arcAmount as third element)
-                    this.radialRays.push({
-                        line: [lineStart, lineEnd, arcAmount],
-                        angle: angle * 180 / Math.PI,
-                        rayRotation,
-                        centerX,
-                        centerY,
-                        pivotDistance,
-                        length,
-                        width,
-                        cornerRadius
+                    // Create rounded rectangle in Paper.js
+                    const rect = new paper.Path.Rectangle({
+                        point: [centerX - pivotX, centerY - pivotY],
+                        size: [length, width],
+                        radius: cornerRadius
                     });
-                }
-                
-                // Render the composition
-                this.renderRadialComposition(stroke);
-            }
-            
-            renderRadialComposition(stroke) {
-                // Clear group
-                this.group.innerHTML = '';
-                
-                // Create Paper.js paths for non-extracted rays
-                let unitedPath = null;
-                
-                for (let i = 0; i < this.radialRays.length; i++) {
-                    if (this.extractedRadialIndices.includes(i)) {
-                        // This ray is extracted, skip for united path
-                        continue;
-                    }
                     
-                    const { line, angle, rayRotation, centerX, centerY, pivotDistance, width, cornerRadius } = this.radialRays[i];
-                    
-                    // Create shape from line with pivot point
-                    const result = this.createShapeFromLine(line, width, cornerRadius, pivotDistance);
-                    if (!result) continue;
-                    
-                    const { shape, pivotPoint } = result;
-                    
-                    // Translate so that pivot point is at origin
-                    shape.translate(new paper.Point(-pivotPoint.x, -pivotPoint.y));
-                    
-                    // First rotate by radial angle (around origin = pivot point)
-                    shape.rotate(angle, new paper.Point(0, 0));
-                    
-                    // Then move to centerX, centerY
-                    shape.translate(new paper.Point(centerX, centerY));
+                    // First rotate by radial angle (around center)
+                    rect.rotate(angle * 180 / Math.PI, new paper.Point(centerX, centerY));
                     
                     // Then rotate each ray around its own center
                     if (rayRotation !== 0) {
-                        const shapeCenter = shape.bounds.center;
-                        shape.rotate(rayRotation, shapeCenter);
+                        const rectCenter = rect.bounds.center;
+                        rect.rotate(rayRotation, rectCenter);
                     }
                     
                     // Unite with previous shapes
                     if (unitedPath === null) {
-                        unitedPath = shape;
+                        unitedPath = rect;
                     } else {
-                        unitedPath = unitedPath.unite(shape);
-                        shape.remove();
+                        unitedPath = unitedPath.unite(rect);
+                        rect.remove();
                     }
                 }
                 
-                // Render united path (if any rays remain united)
-                if (unitedPath) {
-                    const pathData = unitedPath.pathData;
-                    unitedPath.remove();
-                    
-                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    path.setAttribute('d', pathData);
-                    path.setAttribute('fill', 'none');
-                    path.setAttribute('stroke', '#ffffff');
-                    path.setAttribute('stroke-width', stroke);
-                    path.setAttribute('stroke-linejoin', 'round');
-                    path.classList.add('united-shape');
-                    
-                    this.group.appendChild(path);
-                }
+                // Get the unified path data
+                const pathData = unitedPath.pathData;
+                unitedPath.remove();
                 
-                // Render interactive hit areas for non-extracted rays
-                for (let i = 0; i < this.radialRays.length; i++) {
-                    if (this.extractedRadialIndices.includes(i)) continue;
-                    
-                    const { line, angle, rayRotation, centerX, centerY, pivotDistance, width, cornerRadius } = this.radialRays[i];
-                    
-                    // Create shape from line for hit area
-                    const result = this.createShapeFromLine(line, width, cornerRadius, pivotDistance);
-                    if (!result) continue;
-                    
-                    const { shape, pivotPoint } = result;
-                    
-                    shape.translate(new paper.Point(-pivotPoint.x, -pivotPoint.y));
-                    shape.rotate(angle, new paper.Point(0, 0));
-                    shape.translate(new paper.Point(centerX, centerY));
-                    if (rayRotation !== 0) {
-                        const shapeCenter = shape.bounds.center;
-                        shape.rotate(rayRotation, shapeCenter);
-                    }
-                    
-                    const pathData = shape.pathData;
-                    shape.remove();
-                    
-                    // Create invisible hit area
-                    const hitArea = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    hitArea.setAttribute('d', pathData);
-                    hitArea.setAttribute('fill', 'transparent');
-                    hitArea.setAttribute('stroke', 'none');
-                    hitArea.style.cursor = 'pointer';
-                    hitArea.classList.add('hit-area');
-                    hitArea.dataset.rayIndex = i;
-                    
-                    // Add click handler
-                    hitArea.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.extractRadialRay(i);
-                    });
-                    
-                    this.group.appendChild(hitArea);
-                }
+                // Create SVG path with the unified geometry
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', pathData);
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke', '#ffffff');
+                path.setAttribute('stroke-width', stroke);
+                path.setAttribute('stroke-linejoin', 'round');
                 
-                // Render extracted rays in order of extraction (bottom to top)
-                for (const index of this.extractedRadialIndices) {
-                    const { line, angle, rayRotation, centerX, centerY, pivotDistance, width, cornerRadius } = this.radialRays[index];
-                    
-                    // Create shape from line
-                    const result = this.createShapeFromLine(line, width, cornerRadius, pivotDistance);
-                    if (!result) continue;
-                    
-                    const { shape, pivotPoint } = result;
-                    
-                    shape.translate(new paper.Point(-pivotPoint.x, -pivotPoint.y));
-                    shape.rotate(angle, new paper.Point(0, 0));
-                    shape.translate(new paper.Point(centerX, centerY));
-                    if (rayRotation !== 0) {
-                        const shapeCenter = shape.bounds.center;
-                        shape.rotate(rayRotation, shapeCenter);
-                    }
-                    
-                    const pathData = shape.pathData;
-                    shape.remove();
-                    
-                    // Create SVG path
-                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    path.setAttribute('d', pathData);
-                    path.setAttribute('fill', '#000000'); // Black fill like background
-                    path.setAttribute('stroke', '#ffffff');
-                    path.setAttribute('stroke-width', stroke);
-                    path.setAttribute('stroke-linejoin', 'round');
-                    path.classList.add('extracted-shape');
-                    path.dataset.rayIndex = index;
-                    path.style.cursor = 'pointer';
-                    
-                    // Add click handler to return to united group
-                    path.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.returnRadialRay(index);
-                    });
-                    
-                    this.group.appendChild(path);
-                }
-            }
-            
-            extractRadialRay(index) {
-                // Add to extracted array if not already there
-                if (!this.extractedRadialIndices.includes(index)) {
-                    this.extractedRadialIndices.push(index);
-                }
-                this.renderRadialComposition(this.currentParams.stroke);
-            }
-            
-            returnRadialRay(index) {
-                // Remove from extracted array
-                const position = this.extractedRadialIndices.indexOf(index);
-                if (position > -1) {
-                    this.extractedRadialIndices.splice(position, 1);
-                }
-                this.renderRadialComposition(this.currentParams.stroke);
-            }
-            
-            resetRadialMode() {
-                this.extractedRadialIndices = [];
-                if (this.currentParams) {
-                    this.renderRadialComposition(this.currentParams.stroke);
-                }
+                this.group.appendChild(path);
             }
             
             // Seeded random number generator for reproducibility
@@ -755,7 +349,7 @@
             }
             
             generateRandom(params) {
-                let { count, areaWidth, areaHeight, lengthVariation, randomSeed, length, width, stroke, cornerRadius, arcAmount } = params;
+                let { count, areaWidth, areaHeight, lengthVariation, randomSeed, length, width, stroke, cornerRadius } = params;
                 
                 // Store params for regeneration
                 this.currentParams = params;
@@ -788,39 +382,19 @@
                     const lengthMultiplier = 1 + (random() * 2 - 1) * (lengthVariation / 100);
                     const actualLength = length * lengthMultiplier;
                     
-                    // Define line: straight line of actualLength with arc
-                    const lineStart = { x: 0, y: 0 };
-                    const lineEnd = { x: actualLength, y: 0 };
-                    
-                    // Pivot distance (center of the line)
-                    const pivotDistance = actualLength / 2;
-                    
-                    // Store rectangle data (line includes arcAmount as third element)
+                    // Store rectangle data
                     this.randomRectangles.push({
-                        line: [lineStart, lineEnd, arcAmount],
-                        x, y, angle, width, cornerRadius, pivotDistance
+                        x, y, angle, length: actualLength, width, cornerRadius
                     });
                 }
                 
                 // Render the composition
-                this.renderRandomComposition(stroke, areaWidth, areaHeight);
+                this.renderRandomComposition(stroke);
             }
             
-            renderRandomComposition(stroke, areaWidth, areaHeight) {
+            renderRandomComposition(stroke) {
                 // Clear group
                 this.group.innerHTML = '';
-                
-                // Draw area boundary (subtle dark gray rectangle)
-                const areaRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                areaRect.setAttribute('x', this.centerX - areaWidth / 2);
-                areaRect.setAttribute('y', this.centerY - areaHeight / 2);
-                areaRect.setAttribute('width', areaWidth);
-                areaRect.setAttribute('height', areaHeight);
-                areaRect.setAttribute('fill', 'none');
-                areaRect.setAttribute('stroke', '#333333');
-                areaRect.setAttribute('stroke-width', '0.5');
-                areaRect.classList.add('area-boundary');
-                this.group.appendChild(areaRect);
                 
                 // Create Paper.js paths for non-extracted rectangles
                 let unitedPath = null;
@@ -831,26 +405,24 @@
                         continue;
                     }
                     
-                    const { line, x, y, angle, width, cornerRadius, pivotDistance } = this.randomRectangles[i];
+                    const { x, y, angle, length, width, cornerRadius } = this.randomRectangles[i];
                     
-                    // Create shape from line
-                    const result = this.createShapeFromLine(line, width, cornerRadius, pivotDistance);
-                    if (!result) continue;
+                    // Create rounded rectangle
+                    const rect = new paper.Path.Rectangle({
+                        point: [x - length / 2, y - width / 2],
+                        size: [length, width],
+                        radius: cornerRadius
+                    });
                     
-                    const { shape, pivotPoint } = result;
-                    
-                    // Position pivot at x,y
-                    shape.translate(new paper.Point(x - pivotPoint.x, y - pivotPoint.y));
-                    
-                    // Rotate around x,y
-                    shape.rotate(angle, new paper.Point(x, y));
+                    // Rotate around center
+                    rect.rotate(angle, new paper.Point(x, y));
                     
                     // Unite with previous shapes
                     if (unitedPath === null) {
-                        unitedPath = shape;
+                        unitedPath = rect;
                     } else {
-                        unitedPath = unitedPath.unite(shape);
-                        shape.remove();
+                        unitedPath = unitedPath.unite(rect);
+                        rect.remove();
                     }
                 }
                 
@@ -874,25 +446,17 @@
                 for (let i = 0; i < this.randomRectangles.length; i++) {
                     if (this.extractedIndices.includes(i)) continue;
                     
-                    const { line, x, y, angle, width, cornerRadius, pivotDistance } = this.randomRectangles[i];
-                    
-                    // Create shape from line for hit area
-                    const result = this.createShapeFromLine(line, width, cornerRadius, pivotDistance);
-                    if (!result) continue;
-                    
-                    const { shape, pivotPoint } = result;
-                    
-                    shape.translate(new paper.Point(x - pivotPoint.x, y - pivotPoint.y));
-                    shape.rotate(angle, new paper.Point(x, y));
-                    
-                    const pathData = shape.pathData;
-                    shape.remove();
+                    const { x, y, angle, length, width, cornerRadius } = this.randomRectangles[i];
                     
                     // Create invisible hit area
-                    const hitArea = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    hitArea.setAttribute('d', pathData);
+                    const hitArea = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    hitArea.setAttribute('x', x - length / 2);
+                    hitArea.setAttribute('y', y - width / 2);
+                    hitArea.setAttribute('width', length);
+                    hitArea.setAttribute('height', width);
                     hitArea.setAttribute('fill', 'transparent');
                     hitArea.setAttribute('stroke', 'none');
+                    hitArea.setAttribute('transform', `rotate(${angle} ${x} ${y})`);
                     hitArea.style.cursor = 'pointer';
                     hitArea.classList.add('hit-area');
                     hitArea.dataset.rectIndex = i;
@@ -908,19 +472,18 @@
                 
                 // Render extracted rectangles in order of extraction (bottom to top)
                 for (const index of this.extractedIndices) {
-                    const { line, x, y, angle, width, cornerRadius, pivotDistance } = this.randomRectangles[index];
+                    const { x, y, angle, length, width, cornerRadius } = this.randomRectangles[index];
                     
-                    // Create shape from line
-                    const result = this.createShapeFromLine(line, width, cornerRadius, pivotDistance);
-                    if (!result) continue;
+                    // Create Paper.js rectangle
+                    const rect = new paper.Path.Rectangle({
+                        point: [x - length / 2, y - width / 2],
+                        size: [length, width],
+                        radius: cornerRadius
+                    });
+                    rect.rotate(angle, new paper.Point(x, y));
                     
-                    const { shape, pivotPoint } = result;
-                    
-                    shape.translate(new paper.Point(x - pivotPoint.x, y - pivotPoint.y));
-                    shape.rotate(angle, new paper.Point(x, y));
-                    
-                    const pathData = shape.pathData;
-                    shape.remove();
+                    const pathData = rect.pathData;
+                    rect.remove();
                     
                     // Create SVG path
                     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -948,11 +511,7 @@
                 if (!this.extractedIndices.includes(index)) {
                     this.extractedIndices.push(index);
                 }
-                this.renderRandomComposition(
-                    this.currentParams.stroke, 
-                    this.currentParams.areaWidth, 
-                    this.currentParams.areaHeight
-                );
+                this.renderRandomComposition(this.currentParams.stroke);
             }
             
             returnRectangle(index) {
@@ -961,21 +520,13 @@
                 if (position > -1) {
                     this.extractedIndices.splice(position, 1);
                 }
-                this.renderRandomComposition(
-                    this.currentParams.stroke, 
-                    this.currentParams.areaWidth, 
-                    this.currentParams.areaHeight
-                );
+                this.renderRandomComposition(this.currentParams.stroke);
             }
             
             resetRandomMode() {
                 this.extractedIndices = [];
                 if (this.currentParams) {
-                    this.renderRandomComposition(
-                        this.currentParams.stroke, 
-                        this.currentParams.areaWidth, 
-                        this.currentParams.areaHeight
-                    );
+                    this.renderRandomComposition(this.currentParams.stroke);
                 }
             }
             
@@ -1000,8 +551,7 @@
                 length: settings.get('length'),
                 width: settings.get('width'),
                 stroke: settings.get('stroke'),
-                cornerRadius: settings.get('cornerRadius'),
-                arcAmount: settings.get('arcAmount')
+                cornerRadius: settings.get('cornerRadius')
             };
             
             // Add mode-specific parameters
@@ -1128,7 +678,7 @@
             valueId: 'lengthValue',
             setting: 'length',
             min: 25,
-            max: 500,
+            max: 400,
             decimals: 0,
             baseStep: 1,
             shiftStep: 10,
@@ -1138,8 +688,8 @@
         sliderController.initSlider('widthSlider', {
             valueId: 'widthValue',
             setting: 'width',
-            min: 10,
-            max: 200,
+            min: 20,
+            max: 150,
             decimals: 0,
             baseStep: 1,
             shiftStep: 5,
@@ -1244,17 +794,6 @@
                 updateVisualization();
             }
         });
-        
-        sliderController.initSlider('arcAmountSlider', {
-            valueId: 'arcAmountValue',
-            setting: 'arcAmount',
-            min: 0,
-            max: 100,
-            decimals: 0,
-            baseStep: 1,
-            shiftStep: 10,
-            onUpdate: updateVisualization
-        });
 
         // Corner Radius Max button
         const cornerRadiusMaxBtn = document.getElementById('cornerRadiusMaxBtn');
@@ -1293,11 +832,6 @@
         document.getElementById('resetExtractedBtn').addEventListener('click', () => {
             generator.resetRandomMode();
         });
-        
-        // Reset Extracted button for Radial mode
-        document.getElementById('resetExtractedRadialBtn').addEventListener('click', () => {
-            generator.resetRadialMode();
-        });
 
         // Initialize PanelManager
         const panelManager = new PanelManager();
@@ -1334,15 +868,7 @@
         // Export functionality
         document.getElementById('exportBtn').addEventListener('click', () => {
             const svgElement = document.getElementById('mainSvg');
-            const clone = svgElement.cloneNode(true);
-            
-            // Remove area-boundary from the clone (should not be exported)
-            const areaBoundary = clone.querySelector('.area-boundary');
-            if (areaBoundary) {
-                areaBoundary.remove();
-            }
-            
-            const svgData = new XMLSerializer().serializeToString(clone);
+            const svgData = new XMLSerializer().serializeToString(svgElement);
             const blob = new Blob([svgData], { type: 'image/svg+xml' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');

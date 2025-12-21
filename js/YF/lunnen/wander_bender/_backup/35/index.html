@@ -20,13 +20,8 @@
         }
         
         /* Hover effect for interactive rectangles */
-        .hit-area {
-            transition: fill 0.15s ease;
-        }
-        
         .hit-area:hover {
-            fill: rgba(255, 255, 255, 0.6) !important;
-            cursor: pointer;
+            fill: rgba(255, 255, 255, 0.1) !important;
         }
         
         .extracted-shape {
@@ -392,28 +387,6 @@
                 const chord = length;
                 const sagitta = arcAmount;
                 
-                // Caps should be INSIDE the line length
-                const capLength = width / 2;
-                const tStart = capLength / length;
-                const tEnd = 1 - capLength / length;
-                
-                // If tStart >= tEnd, the object is too short for the width - fall back to straight
-                if (tStart >= tEnd || length <= width) {
-                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-                    
-                    const rect = new paper.Path.Rectangle({
-                        point: [start.x, start.y - width / 2],
-                        size: [length, width],
-                        radius: cornerRadius
-                    });
-                    
-                    if (angle !== 0) {
-                        rect.rotate(angle, new paper.Point(start.x, start.y));
-                    }
-                    
-                    return { shape: rect, pivotPoint };
-                }
-                
                 // Calculate radius of the circle
                 const radius = (chord * chord + 4 * sagitta * sagitta) / (8 * sagitta);
                 
@@ -432,6 +405,11 @@
                 
                 const segments = 30;
                 const shape = new paper.Path();
+                
+                // Caps should be INSIDE the line length
+                const capLength = width / 2;
+                const tStart = capLength / length;
+                const tEnd = 1 - capLength / length;
                 
                 // Top edge of the arc (from tStart to tEnd)
                 for (let i = 0; i <= segments; i++) {
