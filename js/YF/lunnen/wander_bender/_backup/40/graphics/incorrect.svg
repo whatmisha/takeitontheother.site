@@ -1,7 +1,0 @@
-<svg width="500" height="500" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="500" height="500" fill="white"/>
-<rect width="125" height="50" rx="25" transform="matrix(-4.37114e-08 -1 -1 4.37114e-08 274.996 275)" stroke="black" stroke-width="45" stroke-linejoin="round"/>
-<rect width="125" height="50" rx="25" transform="matrix(-1 8.74228e-08 8.74228e-08 1 275.004 225)" stroke="black" stroke-width="45" stroke-linejoin="round"/>
-<rect x="275" y="224.992" width="125" height="50" rx="25" transform="rotate(90 275 224.992)" stroke="black" stroke-width="45" stroke-linejoin="round"/>
-<rect x="224.996" y="225" width="125" height="50" rx="25" stroke="black" stroke-width="45" stroke-linejoin="round"/>
-</svg>
