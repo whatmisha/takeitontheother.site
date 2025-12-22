@@ -104,13 +104,18 @@ export class FlowFieldMode extends BaseMode {
     getFlowArcAmount(x, y, scale, influence, baseArc) {
         if (!this.perlinNoise) return baseArc;
         
+        // If baseArc is 0, objects should be straight - no variation
+        if (baseArc === 0) return 0;
+        
         // Use different offset for arc variation
         const noiseValue = this.perlinNoise.noise((x / scale) + 100, (y / scale) + 100);
         
-        // Map noise (-1 to 1) to variation around base arc
+        // Map noise (-1 to 1) to absolute variation
         // influence controls the amount of variation (0-100%)
-        const variation = noiseValue * (influence / 100);
-        return baseArc + (baseArc * variation); // Vary around baseArc
+        // Max variation is 50 (half of Arc Amount range 0-100)
+        const maxVariation = 50;
+        const variation = noiseValue * (influence / 100) * maxVariation;
+        return baseArc + variation; // Add absolute variation to baseArc
     }
     
     // Check if two bounding boxes intersect (with margin for spacing)

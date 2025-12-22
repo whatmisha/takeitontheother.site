@@ -28,20 +28,20 @@ const settings = {
     
     random: {
         count: 3,
-        areaWidth: 200,
-        areaHeight: 200,
+        areaWidth: 400,
+        areaHeight: 400,
         lengthVariation: 50,  // Percentage variation in length
         randomSeed: 12345
     },
     
     flowfield: {
         density: 50,          // Target number of elements
-        areaWidth: 500,       // Width of area
-        areaHeight: 500,      // Height of area
+        areaWidth: 400,       // Width of area
+        areaHeight: 400,      // Height of area
         flowScale: 100,       // Scale of Perlin noise field
         flowInfluence: 50,    // How much flow affects rotation (0-100)
         flowSeed: 12345,      // Seed for flow field generation
-        spacing: 20           // Spacing between elements (-100 to 100, negative = overlap)
+        spacing: -50          // Spacing between elements (-100 to 100, negative = overlap)
     },
     
     // Helper methods for backward compatibility
@@ -153,14 +153,17 @@ class WanderBenderGenerator {
     }
 }
 
-// Initialize generator
-const generator = new WanderBenderGenerator(document.getElementById('mainSvg'));
+// Initialize generator (will be created after DOM is ready)
+let generator;
 
 /**
  * Update visualization based on current settings
  * Collects parameters and triggers generation for current mode
  */
 function updateVisualization() {
+    // Don't update if generator is not initialized yet
+    if (!generator) return;
+    
     const params = {
         mode: settings.mode,
         length: settings.get('length'),
@@ -597,7 +600,9 @@ document.querySelectorAll('.collapse-icon').forEach(icon => {
 });
 
 // Copy SVG to clipboard functionality
-document.getElementById('copyBtn').addEventListener('click', async () => {
+const copyBtn = document.getElementById('copyBtn');
+if (copyBtn) {
+    copyBtn.addEventListener('click', async () => {
     const svgElement = document.getElementById('mainSvg');
     const clone = svgElement.cloneNode(true);
     
@@ -641,7 +646,8 @@ document.getElementById('copyBtn').addEventListener('click', async () => {
         }
         document.body.removeChild(textArea);
     }
-});
+    });
+}
 
 // Export functionality
 document.getElementById('exportBtn').addEventListener('click', () => {
@@ -664,6 +670,27 @@ document.getElementById('exportBtn').addEventListener('click', () => {
     URL.revokeObjectURL(url);
 });
 
-// Initialize
-updateVisualization();
+// Initialize when DOM and Paper.js are ready
+function initializeApp() {
+    // Check if Paper.js is loaded
+    if (typeof paper === 'undefined') {
+        // Wait a bit and try again
+        setTimeout(initializeApp, 50);
+        return;
+    }
+    
+    // Create generator after DOM is ready
+    generator = new WanderBenderGenerator(document.getElementById('mainSvg'));
+    
+    // Initial visualization
+    updateVisualization();
+}
+
+// Start initialization when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    // DOM is already ready
+    initializeApp();
+}
 
