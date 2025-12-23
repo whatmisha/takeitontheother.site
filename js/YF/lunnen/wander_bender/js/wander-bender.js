@@ -12,8 +12,8 @@ const settings = {
     mode: 'radial',
     
     global: {
-        length: 125,
-        width: 50,
+        length: 63,
+        width: 25,
         stroke: 45,
         strokeAuto: true,  // Auto calculate stroke based on width
         cornerRadius: 25,
