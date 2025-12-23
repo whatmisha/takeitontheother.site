@@ -12,11 +12,11 @@ const settings = {
     mode: 'radial',
     
     global: {
-        length: 63,
+        length: 62.5,
         width: 25,
-        stroke: 45,
+        stroke: 22.5,
         strokeAuto: true,  // Auto calculate stroke based on width
-        cornerRadius: 25,
+        cornerRadius: 12.5,
         cornerRadiusMax: true,  // Keep corner radius at maximum
         arcAmount: 0  // Arc curvature (0-100)
     },
