@@ -27,7 +27,8 @@ const settings = {
     },
     
     random: {
-        count: 3,
+        count: 20,
+        length: 100,
         areaWidth: 400,
         areaHeight: 400,
         lengthVariation: 50,  // Percentage variation in length
@@ -179,6 +180,8 @@ function updateVisualization() {
         params.rayRotation = settings.get('rayRotation');
     } else if (settings.mode === 'random') {
         params.count = settings.get('count');
+        // Use length from random settings if available, otherwise use global
+        params.length = settings.random.length !== undefined ? settings.random.length : settings.get('length');
         params.areaWidth = settings.get('areaWidth');
         params.areaHeight = settings.get('areaHeight');
         params.lengthVariation = settings.get('lengthVariation');
@@ -224,6 +227,15 @@ document.querySelectorAll('input[name="mode"]').forEach(radio => {
             radialControls.style.display = 'block';
         } else if (settings.mode === 'random') {
             randomControls.style.display = 'block';
+            // Update length slider to show random mode default (100)
+            if (settings.random.length !== undefined) {
+                const lengthSlider = document.getElementById('lengthSlider');
+                const lengthValue = document.getElementById('lengthValue');
+                if (lengthSlider && lengthValue) {
+                    lengthSlider.value = settings.random.length;
+                    lengthValue.value = settings.random.length;
+                }
+            }
         } else if (settings.mode === 'flowfield') {
             flowFieldControls.style.display = 'block';
         }
@@ -396,7 +408,13 @@ sliderController.initSlider('lengthSlider', {
     decimals: 0,
     baseStep: 1,
     shiftStep: 10,
-    onUpdate: updateVisualizationFast
+    onUpdate: (value) => {
+        // Save length to random settings if in random mode
+        if (settings.mode === 'random' && settings.random.length !== undefined) {
+            settings.random.length = value;
+        }
+        updateVisualizationFast();
+    }
 });
 
 sliderController.initSlider('widthSlider', {
