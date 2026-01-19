@@ -608,6 +608,7 @@ fileInput.addEventListener('change', (e) => {
 ---
 
 **Полная документация:** `README.md`  
-**Примеры:** `examples/example.html`  
-**Быстрый старт:** `QUICK_START.md`
+**Примеры:** `index.html`  
+**Быстрый старт:** `QUICK_START.md`  
+**Автономный Color Picker:** `picker/README.md`
 

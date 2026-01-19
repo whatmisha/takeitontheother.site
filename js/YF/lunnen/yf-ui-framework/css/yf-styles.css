@@ -1805,7 +1805,21 @@ textarea::placeholder {
     display: flex;
     gap: var(--spacing-lg);
     align-items: center;
+    justify-content: center;
     z-index: 10000;
+}
+
+.export-group-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+}
+
+.export-group-right .toggle-label {
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 /* Toggle Label для "Outline fonts" и подобных */
