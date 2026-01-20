@@ -125,14 +125,15 @@ export class TextRenderer {
 
     /**
      * Отрисовка текста с переносами строк
+     * Поддерживает принудительные переносы (\n) и неразрывные пробелы (\u00A0)
      */
     renderWrappedText(text, maxWidth, style, scale, textAlign = 'left') {
         const textGroup = DOMUtils.createSVGElement('g', {
             class: 'text-content'
         });
 
-        // Разбиваем на слова
-        const words = text.split(/\s+/);
+        // Сначала разбиваем по принудительным переносам (\n)
+        const forcedLines = text.split('\n');
         
         // Временный SVG для измерений
         const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -143,29 +144,82 @@ export class TextRenderer {
         const tempText = this.createTextElement('', style, scale, textAlign);
         tempSvg.appendChild(tempText);
 
-        // Собираем строки
+        // Обрабатываем каждую строку с принудительным переносом
         const lines = [];
-        let currentLine = '';
-
-        words.forEach((word, index) => {
-            const testLine = currentLine ? `${currentLine} ${word}` : word;
-            tempText.textContent = testLine;
+        
+        forcedLines.forEach(forcedLine => {
+            // Разбиваем строку на слова, учитывая неразрывные пробелы
+            // Неразрывный пробел (\u00A0) не должен разбивать слова
+            // Разбиваем только по обычным пробелам, но сохраняем неразрывные пробелы
+            const parts = [];
+            let currentPart = '';
             
-            const bbox = tempText.getBBox();
+            for (let i = 0; i < forcedLine.length; i++) {
+                const char = forcedLine[i];
+                const charCode = forcedLine.charCodeAt(i);
+                
+                if (charCode === 0x00A0) {
+                    // Неразрывный пробел - добавляем к текущей части
+                    currentPart += '\u00A0';
+                } else if (char === ' ' || char === '\t') {
+                    // Обычный пробел - завершаем текущую часть и начинаем новую
+                    if (currentPart) {
+                        parts.push(currentPart);
+                        currentPart = '';
+                    }
+                    parts.push(' '); // Помечаем пробел
+                } else {
+                    currentPart += char;
+                }
+            }
             
-            if (bbox.width > maxWidth && currentLine) {
-                // Текущее слово не помещается, добавляем строку
+            if (currentPart) {
+                parts.push(currentPart);
+            }
+            
+            // Теперь собираем строки с автоматическим переносом, но уважая неразрывные пробелы
+            let currentLine = '';
+            
+            parts.forEach((part, index) => {
+                // Если это пробел-маркер, пропускаем его при сборке
+                if (part === ' ') {
+                    if (!currentLine) {
+                        // Пропускаем пробелы в начале строки
+                        return;
+                    }
+                    const testLine = `${currentLine} `;
+                    tempText.textContent = testLine;
+                    const bbox = tempText.getBBox();
+                    
+                    if (bbox.width > maxWidth) {
+                        // Пробел не помещается, завершаем текущую строку
+                        lines.push(currentLine);
+                        currentLine = '';
+                    } else {
+                        // Пробел помещается, добавляем его
+                        currentLine = testLine;
+                    }
+                } else {
+                    // Это слово или часть с неразрывным пробелом
+                    const testLine = currentLine ? `${currentLine}${part}` : part;
+                    tempText.textContent = testLine;
+                    const bbox = tempText.getBBox();
+                    
+                    if (bbox.width > maxWidth && currentLine) {
+                        // Текущая часть не помещается, добавляем строку
+                        lines.push(currentLine);
+                        currentLine = part;
+                    } else {
+                        currentLine = testLine;
+                    }
+                }
+            });
+            
+            // Добавляем последнюю строку для этого принудительного переноса
+            if (currentLine) {
                 lines.push(currentLine);
-                currentLine = word;
-            } else {
-                currentLine = testLine;
             }
         });
-
-        // Добавляем последнюю строку
-        if (currentLine) {
-            lines.push(currentLine);
-        }
 
         // Очистка
         document.body.removeChild(tempSvg);

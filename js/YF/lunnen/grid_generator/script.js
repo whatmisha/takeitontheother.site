@@ -2868,9 +2868,36 @@ class GridGenerator {
         
         // Обработчик для текстового поля - изменения применяются только при blur или Enter
         if (this.dom.paragraphTextArea) {
-            // Обработка Enter
+            // Обработка клавиш для принудительных переносов и неразрывных пробелов
             this.dom.paragraphTextArea.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                // Shift+Enter или Shift+Space - принудительный перенос строки (\n)
+                if ((e.key === 'Enter' || e.key === ' ') && e.shiftKey) {
+                    e.preventDefault();
+                    const textarea = e.target;
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    const text = textarea.value;
+                    
+                    // Вставляем \n в позицию курсора
+                    textarea.value = text.substring(0, start) + '\n' + text.substring(end);
+                    textarea.selectionStart = textarea.selectionEnd = start + 1;
+                    this.updateCharCounter();
+                }
+                // Option+Space (Alt+Space на Windows/Linux) - неразрывный пробел (\u00A0)
+                else if (e.key === ' ' && (e.altKey || e.metaKey)) {
+                    e.preventDefault();
+                    const textarea = e.target;
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    const text = textarea.value;
+                    
+                    // Вставляем неразрывный пробел в позицию курсора
+                    textarea.value = text.substring(0, start) + '\u00A0' + text.substring(end);
+                    textarea.selectionStart = textarea.selectionEnd = start + 1;
+                    this.updateCharCounter();
+                }
+                // Обычный Enter без Shift - закрываем редактор
+                else if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     this.dom.paragraphTextArea.blur();
                 }
@@ -6583,25 +6610,79 @@ class GridGenerator {
     
     // Разбить текст на строки с учетом ширины блока
     wrapText(text, maxWidth, fontSize, scale, tracking = 0) {
-        const words = text.split(' ');
+        // Сначала разбиваем по принудительным переносам (\n)
+        const forcedLines = text.split('\n');
         const lines = [];
-        let currentLine = '';
         
-        words.forEach(word => {
-            const testLine = currentLine ? `${currentLine} ${word}` : word;
-            const testWidth = this.measureTextWidth(testLine, fontSize, scale, tracking);
+        forcedLines.forEach(forcedLine => {
+            // Разбиваем строку на части, учитывая неразрывные пробелы
+            // Неразрывный пробел (\u00A0) не должен разбивать слова
+            const parts = [];
+            let currentPart = '';
             
-            if (testWidth > maxWidth && currentLine !== '') {
+            for (let i = 0; i < forcedLine.length; i++) {
+                const char = forcedLine[i];
+                const charCode = forcedLine.charCodeAt(i);
+                
+                if (charCode === 0x00A0) {
+                    // Неразрывный пробел - добавляем к текущей части
+                    currentPart += '\u00A0';
+                } else if (char === ' ' || char === '\t') {
+                    // Обычный пробел - завершаем текущую часть
+                    if (currentPart) {
+                        parts.push(currentPart);
+                        currentPart = '';
+                    }
+                    parts.push(' '); // Помечаем пробел
+                } else {
+                    currentPart += char;
+                }
+            }
+            
+            if (currentPart) {
+                parts.push(currentPart);
+            }
+            
+            // Собираем строки с автоматическим переносом
+            let currentLine = '';
+            
+            parts.forEach(part => {
+                if (part === ' ') {
+                    // Пробел-маркер
+                    if (!currentLine) {
+                        // Пропускаем пробелы в начале строки
+                        return;
+                    }
+                    const testLine = `${currentLine} `;
+                    const testWidth = this.measureTextWidth(testLine, fontSize, scale, tracking);
+                    
+                    if (testWidth > maxWidth) {
+                        // Пробел не помещается, завершаем текущую строку
+                        lines.push(currentLine);
+                        currentLine = '';
+                    } else {
+                        // Пробел помещается, добавляем его
+                        currentLine = testLine;
+                    }
+                } else {
+                    // Слово или часть с неразрывным пробелом
+                    const testLine = currentLine ? `${currentLine}${part}` : part;
+                    const testWidth = this.measureTextWidth(testLine, fontSize, scale, tracking);
+                    
+                    if (testWidth > maxWidth && currentLine) {
+                        lines.push(currentLine);
+                        currentLine = part;
+                    } else {
+                        currentLine = testLine;
+                    }
+                }
+            });
+            
+            // Добавляем последнюю строку для этого принудительного переноса
+            if (currentLine) {
                 lines.push(currentLine);
-                currentLine = word;
-            } else {
-                currentLine = testLine;
             }
         });
-        
-        if (currentLine) {
-            lines.push(currentLine);
-        }
         
         return lines;
     }
@@ -6613,9 +6694,9 @@ class GridGenerator {
         // Get style settings based on block's styleRef
         const style = this.getStyleSettings(block.styleRef || 'text');
         
-        // Get text content
-        const inputLines = block.content.split('\n').filter(line => line.trim() !== '');
-        if (inputLines.length === 0) {
+        // Get text content - разбиваем по принудительным переносам, сохраняя пустые строки
+        const inputLines = block.content.split('\n');
+        if (inputLines.length === 0 || (inputLines.length === 1 && inputLines[0].trim() === '')) {
             return style.lineHeight; // Return minimum height for empty block
         }
         
@@ -6650,9 +6731,9 @@ class GridGenerator {
         const fontWeight = style.fontWeight;
         const fontFamily = style.fontFamily;
         
-        // Get text content
-        const inputLines = block.content.split('\n').filter(line => line.trim() !== '');
-        if (inputLines.length === 0) {
+        // Get text content - разбиваем по принудительным переносам, сохраняя пустые строки
+        const inputLines = block.content.split('\n');
+        if (inputLines.length === 0 || (inputLines.length === 1 && inputLines[0].trim() === '')) {
             // Show placeholder
             const placeholderGroup = this.createSVGElement('g', {
                 id: `text-group-${block.id}`,
