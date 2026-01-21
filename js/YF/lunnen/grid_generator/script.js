@@ -9,10 +9,14 @@ import { TextToPath } from './src/utils/TextToPath.js';
 
 // Итерация 2: Core
 import { Settings } from './src/core/Settings.js';
+import { DOMCache } from './src/core/DOMCache.js';
 
 // Итерация 3: Grid
 import { GridCalculator } from './src/grid/GridCalculator.js';
 import { GridRenderer } from './src/grid/GridRenderer.js';
+
+// Итерация 4: Config
+import { SLIDER_CONFIG } from './src/config/SliderConfig.js';
 
 // Итерация 5: UI Controllers
 import { SliderController } from './src/ui/SliderController.js';
@@ -30,6 +34,9 @@ import { ElementsNavigator } from './src/elements/ElementsNavigator.js';
 // Итерация 7: SVG Export
 import { SVGExporter } from './src/svg/SVGExporter.js';
 
+// Итерация 8: Preset Management
+import { PresetManager } from './src/preset/PresetManager.js';
+
 class GridGenerator {
     constructor() {
         // Slider configuration - defines behavior for each slider
@@ -45,7 +52,7 @@ class GridGenerator {
                 shiftStep: 10,
                 onUpdate: () => {
                     this.markAsChanged();
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             frontHeightSlider: {
@@ -79,7 +86,7 @@ class GridGenerator {
                     }
                     this.constrainAllObjectsToGrid();
                     this.generateRowPresets();
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             thicknessSlider: {
@@ -92,7 +99,7 @@ class GridGenerator {
                 shiftStep: 10,
                 onUpdate: () => {
                     this.markAsChanged();
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             gridModuleSlider: {
@@ -138,7 +145,7 @@ class GridGenerator {
                     if (this.settings.lineHeightUnit === 'pt') {
                         this.switchFontSizeUnit('headline', 'lineHeight', 'mod');
                     }
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             marginsSlider: {
@@ -212,7 +219,7 @@ class GridGenerator {
                     }
                     this.constrainAllObjectsToGrid();
                     this.generateRowPresets();
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             columnCountSlider: {
@@ -232,7 +239,7 @@ class GridGenerator {
                     // автоматически использует актуальное количество колонок
                     
                     this.constrainAllObjectsToGrid();
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             rowCountSlider: {
@@ -266,7 +273,7 @@ class GridGenerator {
                     }
                     this.constrainAllObjectsToGrid();
                     this.updatePresetButtons();
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             rowHeightSlider: {
@@ -299,7 +306,7 @@ class GridGenerator {
                     }
                     this.constrainAllObjectsToGrid();
                     this.updatePresetButtons();
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             hueSlider: {
@@ -377,7 +384,7 @@ class GridGenerator {
                     }
                     sizeInMod = parseFloat(sizeInMod.toFixed(2));
                     this.settings.headlineSize = sizeInMod;
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             lineHeightSlider: {
@@ -415,7 +422,7 @@ class GridGenerator {
                     }
                     lineHeightInMod = parseFloat(lineHeightInMod.toFixed(2));
                     this.settings.lineHeight = lineHeightInMod;
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             trackingSlider: {
@@ -428,7 +435,7 @@ class GridGenerator {
                 shiftStep: 0.01,
                 onUpdate: () => {
                     this.markAsChanged();
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             textSizeSlider: {
@@ -463,7 +470,7 @@ class GridGenerator {
                     }
                     sizeInMod = parseFloat(sizeInMod.toFixed(2));
                     this.settings.textSize = sizeInMod;
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             textLineHeightSlider: {
@@ -497,7 +504,7 @@ class GridGenerator {
                     }
                     lineHeightInMod = parseFloat(lineHeightInMod.toFixed(2));
                     this.settings.textLineHeight = lineHeightInMod;
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             textTrackingSlider: {
@@ -510,7 +517,7 @@ class GridGenerator {
                 shiftStep: 0.01,
                 onUpdate: () => {
                     this.markAsChanged();
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             captionSizeSlider: {
@@ -545,7 +552,7 @@ class GridGenerator {
                     }
                     sizeInMod = parseFloat(sizeInMod.toFixed(2));
                     this.settings.captionSize = sizeInMod;
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             captionLineHeightSlider: {
@@ -579,7 +586,7 @@ class GridGenerator {
                     }
                     lineHeightInMod = parseFloat(lineHeightInMod.toFixed(2));
                     this.settings.captionLineHeight = lineHeightInMod;
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             captionTrackingSlider: {
@@ -592,7 +599,7 @@ class GridGenerator {
                 shiftStep: 0.01,
                 onUpdate: () => {
                     this.markAsChanged();
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             lunnenDisplaySizeSlider: {
@@ -627,7 +634,7 @@ class GridGenerator {
                     }
                     sizeInMod = parseFloat(sizeInMod.toFixed(2));
                     this.settings.lunnenDisplaySize = sizeInMod;
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             lunnenDisplayLineHeightSlider: {
@@ -661,7 +668,7 @@ class GridGenerator {
                     }
                     lineHeightInMod = parseFloat(lineHeightInMod.toFixed(2));
                     this.settings.lunnenDisplayLineHeight = lineHeightInMod;
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             },
             lunnenDisplayTrackingSlider: {
@@ -674,7 +681,7 @@ class GridGenerator {
                 shiftStep: 0.01,
                 onUpdate: () => {
                     this.markAsChanged();
-                    this.updateGrid();
+                    this.updateGridDebounced();
                 }
             }
         };
@@ -871,8 +878,24 @@ class GridGenerator {
         // Display constants
         this.PADDING = 60; // padding around the grid (increased for dimensions)
         
-        // Cache DOM elements
-        this.dom = this.cacheDOMElements();
+        // ============================================
+        // Performance: Debounced/Throttled update methods (Итерация 11)
+        // ============================================
+        // Debounced версия для слайдеров - откладывает рендеринг до прекращения ввода
+        this._debouncedUpdateGridCore = MathUtils.debounce(() => {
+            this._updateGridCore();
+        }, 16); // ~60fps, достаточно для плавности
+        
+        // Throttled версия для drag операций - ограничивает частоту обновлений
+        this._throttledUpdateGridCore = MathUtils.throttle(() => {
+            this._updateGridCore();
+        }, 16); // ~60fps
+        
+        // ============================================
+        // Cache DOM elements (Итерация 9: DOMCache модуль)
+        // ============================================
+        this.domCache = new DOMCache().init();
+        this.dom = this.domCache.createProxy(); // Proxy для обратной совместимости с this.dom.element
         
         // ============================================
         // Initialize UI Controllers (Итерация 5)
@@ -886,12 +909,22 @@ class GridGenerator {
         this.svgExporter = new SVGExporter(this.settingsModule, this.textToPath);
         
         // ============================================
-        // Presets (Итерация 10)
+        // Presets (Итерация 10: PresetManager модуль)
         // ============================================
-        this.availablePresets = [];
-        this.importedPresets = []; // Хранилище импортированных пресетов
         this.hasUnsavedChanges = false; // Флаг наличия несохраненных изменений
-        this.loadPresetsManifest();
+        this.presetManager = new PresetManager({
+            dropdownToggle: this.dom.presetDropdownToggle,
+            dropdownMenu: this.dom.presetDropdownMenu,
+            dropdown: this.dom.presetDropdown,
+            onPresetLoad: (data, name) => this.handlePresetLoad(data, name),
+            onPresetSelect: (file, name) => {
+                this.hasUnsavedChanges = false;
+            }
+        });
+        // Легаси свойства для обратной совместимости (используются в некоторых местах)
+        this.availablePresets = this.presetManager.availablePresets;
+        this.importedPresets = this.presetManager.importedPresets;
+        this.presetManager.init();
         
         // Предупреждение при закрытии вкладки с несохраненными изменениями
         window.addEventListener('beforeunload', (e) => {
@@ -972,6 +1005,9 @@ class GridGenerator {
     // Отметить, что были внесены изменения
     markAsChanged() {
         this.hasUnsavedChanges = true;
+        if (this.presetManager) {
+            this.presetManager.markAsChanged();
+        }
     }
     
     // Сбросить флаг изменений (при загрузке пресета, импорте и т.д.)
@@ -1008,6 +1044,10 @@ class GridGenerator {
         }
     }
     
+    /**
+     * @deprecated Используйте DOMCache модуль вместо этого метода.
+     * Оставлен для обратной совместимости.
+     */
     cacheDOMElements() {
         return {
             svg: document.getElementById('gridSvg'),
@@ -2221,6 +2261,22 @@ class GridGenerator {
         
         // Data is already normalized, apply directly
         await this.applyPresetData(importedPreset.data, importedPreset.displayName);
+    }
+    
+    // Handle preset load from PresetManager
+    async handlePresetLoad(data, presetName) {
+        try {
+            // Normalize data through SVGExporter
+            const normalizedData = await this.svgExporter.importSettings(
+                new Blob([JSON.stringify(data)], { type: 'application/json' })
+            );
+            
+            // Apply normalized data
+            await this.applyPresetData(normalizedData, data.presetName || presetName);
+        } catch (error) {
+            console.error('Failed to load preset:', error);
+            alert(`Failed to load preset: ${error.message}`);
+        }
     }
     
     // Apply preset data (common logic for both file and imported presets)
@@ -4127,7 +4183,7 @@ class GridGenerator {
             
             graphicsInputs.forEach(({ id, property, baseStep, shiftStep, decimals, applyConstraints }) => {
                 const input = this.dom[id];
-                if (!input) return;
+                if (!input || !input.parentNode) return;
                 
                 // Remove old event listeners by cloning the node
                 const newInput = input.cloneNode(true);
@@ -7166,7 +7222,8 @@ class GridGenerator {
                     // For right-aligned blocks, width changes but position (block.x) stays the same
                     // The right edge remains anchored to the column
                     block.width = roundedWidth;
-                    this.updateGrid();
+                    // Перерисовываем сетку (throttled для плавности resize)
+                    this.updateGridThrottled();
                 }
             };
             
@@ -7499,7 +7556,8 @@ class GridGenerator {
                     }
                 }
                 
-                this.updateGrid();
+                // Перерисовываем сетку (throttled для плавности drag)
+                this.updateGridThrottled();
             };
             
             const mouseUpHandler = () => {
@@ -8186,7 +8244,8 @@ class GridGenerator {
                     }
                 }
                 
-                this.updateGrid();
+                // Перерисовываем сетку (throttled для плавности drag)
+                this.updateGridThrottled();
             };
             
             const mouseUpHandler = () => {
@@ -9712,8 +9771,8 @@ class GridGenerator {
             }
         }
         
-        // Перерисовываем сетку
-        this.updateGrid();
+        // Перерисовываем сетку (throttled для плавности drag)
+        this.updateGridThrottled();
     }
     
     // Завершить перемещение
@@ -9833,7 +9892,35 @@ class GridGenerator {
         }, 100);
     }
     
+    /**
+     * Немедленное обновление сетки (для критичных операций)
+     * Используйте updateGridDebounced() для слайдеров
+     */
     updateGrid() {
+        this._updateGridCore();
+    }
+    
+    /**
+     * Debounced обновление сетки - для слайдеров и частых изменений
+     * Откладывает рендеринг до прекращения ввода
+     */
+    updateGridDebounced() {
+        this._debouncedUpdateGridCore();
+    }
+    
+    /**
+     * Throttled обновление сетки - для drag операций
+     * Ограничивает частоту обновлений до ~60fps
+     */
+    updateGridThrottled() {
+        this._throttledUpdateGridCore();
+    }
+    
+    /**
+     * Внутренний метод обновления сетки
+     * @private
+     */
+    _updateGridCore() {
         // Constrain elements to grid bounds if lockPosition is enabled
         this.constrainElementsToBounds();
         
