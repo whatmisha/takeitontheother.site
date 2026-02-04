@@ -1,11 +1,11 @@
 {
   "presetName": "Ground 10.4\" Front",
   "version": "1.0",
-  "timestamp": "2025-12-03T02:11:47.551Z",
+  "timestamp": "2026-02-04T07:56:03.054Z",
   "dimensions": {
     "width": 294,
-    "height": 294,
-    "thickness": 50,
+    "height": 275,
+    "thickness": 35,
     "unit": "mm"
   },
   "texts": [
@@ -15,8 +15,8 @@
       "style": "text",
       "position": {
         "column": 12,
-        "row": 16,
-        "baseline": 3.299999999999997
+        "row": 15,
+        "baseline": 2.819999999999993
       },
       "width": 1,
       "alignment": "right",
@@ -28,11 +28,11 @@
     }
   ],
   "grid": {
-    "module": 3.0528,
-    "margins": 6.1524,
+    "module": 3.1941,
+    "margins": 3.5468,
     "marginsUnit": "mm",
     "columns": 12,
-    "rows": 17,
+    "rows": 16,
     "rowHeight": 4,
     "linkMode": "module",
     "visibility": {
@@ -53,9 +53,9 @@
       "fontWeight": 500
     },
     "text": {
-      "size": 0.6,
-      "lineHeight": 1.7,
-      "tracking": 0,
+      "size": 0.45,
+      "lineHeight": 1.18,
+      "tracking": -0.01,
       "useXHeight": true,
       "fontWeight": 500
     }
@@ -91,7 +91,7 @@
     "claim": {
       "position": {
         "column": 1,
-        "row": 16,
+        "row": 15,
         "baseline": 1
       },
       "height": 3,

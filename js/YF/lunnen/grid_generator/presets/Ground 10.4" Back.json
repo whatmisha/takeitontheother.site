@@ -1,7 +1,7 @@
 {
   "presetName": "Ground 10.4\" Back",
   "version": "1.0",
-  "timestamp": "2026-02-04T06:46:47.408Z",
+  "timestamp": "2026-02-04T07:47:07.800Z",
   "dimensions": {
     "width": 288.5,
     "height": 269.5,
@@ -96,8 +96,8 @@
     }
   ],
   "grid": {
-    "module": 3.1544,
-    "margins": 3.2169,
+    "module": 3.1942,
+    "margins": 2.6846,
     "marginsUnit": "mm",
     "columns": 12,
     "rows": 16,
