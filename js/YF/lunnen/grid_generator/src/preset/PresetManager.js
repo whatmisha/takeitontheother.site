@@ -170,6 +170,7 @@ export class PresetManager {
         
         // Calculate width for imported presets
         this.importedPresets.forEach(preset => {
+            if (!preset.id || preset.displayName == null) return;
             const width = this.measureTextWidth(preset.displayName);
             this.presetWidths[preset.id] = width;
         });

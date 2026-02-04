@@ -924,6 +924,7 @@ class GridGenerator {
         // Легаси свойства для обратной совместимости (используются в некоторых местах)
         this.availablePresets = this.presetManager.availablePresets;
         this.importedPresets = this.presetManager.importedPresets;
+        this.presetWidths = this.presetManager.presetWidths; // общий объект ширин (addImportedPresetToDropdown → calculatePresetWidths)
         this.presetManager.init();
         
         // Предупреждение при закрытии вкладки с несохраненными изменениями
@@ -2066,13 +2067,17 @@ class GridGenerator {
         });
         
         // Calculate width for imported presets
-        this.importedPresets.forEach(preset => {
-            const width = this.measureTextWidth(preset.displayName);
-            this.presetWidths[preset.id] = width;
-        });
+        if (this.presetWidths) {
+            this.importedPresets.forEach(preset => {
+                if (!preset.id || preset.displayName == null) return;
+                const width = this.measureTextWidth(preset.displayName);
+                this.presetWidths[preset.id] = width;
+            });
+        }
         
         // Find max width
-        this.maxPresetWidth = Math.max(...Object.values(this.presetWidths));
+        const widthValues = this.presetWidths ? Object.values(this.presetWidths) : [];
+        this.maxPresetWidth = widthValues.length > 0 ? Math.max(...widthValues) : 200;
     }
     
     // Add imported preset to dropdown

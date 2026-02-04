@@ -1,11 +1,11 @@
 {
   "presetName": "Ground 10.4\" Back",
   "version": "1.0",
-  "timestamp": "2025-12-03T01:40:07.586Z",
+  "timestamp": "2026-02-04T06:46:47.408Z",
   "dimensions": {
     "width": 288.5,
-    "height": 288.5,
-    "thickness": 48,
+    "height": 269.5,
+    "thickness": 33,
     "unit": "mm"
   },
   "texts": [
@@ -45,7 +45,7 @@
     },
     {
       "id": "text2",
-      "content": "Lunnen Ground — базовая линейка для решения земных задач. Всё необходимое для повседневной работы: от прочного корпуса до современных технологий.",
+      "content": "Базовая линейка Lunnen Ground для решения земных задач. Всё необходимое для повседневной работы: от прочного корпуса до современных технологий.",
       "style": "text",
       "position": {
         "column": 10,
@@ -96,11 +96,11 @@
     }
   ],
   "grid": {
-    "module": 3.1901,
+    "module": 3.1544,
     "margins": 3.2169,
     "marginsUnit": "mm",
     "columns": 12,
-    "rows": 17,
+    "rows": 16,
     "rowHeight": 4,
     "linkMode": "module",
     "visibility": {
@@ -139,7 +139,7 @@
     "icons": {
       "position": {
         "column": 7,
-        "row": 16,
+        "row": 15,
         "baseline": 1
       },
       "height": 3,
@@ -149,7 +149,7 @@
     "claim": {
       "position": {
         "column": 1,
-        "row": 16,
+        "row": 15,
         "baseline": 1
       },
       "height": 3,
