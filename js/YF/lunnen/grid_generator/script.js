@@ -809,10 +809,9 @@ class GridGenerator {
         // Storage for deletion timers to allow cancellation
         this.deletionTimers = {};
         
-        // Undo/Redo history - используем HistoryManager
-        this.historyManager = new HistoryManager({
-            maxSize: 50
-        });
+        // Undo/Redo history - отдельный HistoryManager для каждого пресета
+        this.presetHistories = new Map(); // presetName → HistoryManager
+        this.historyManager = new HistoryManager({ maxSize: 50 });
         
         // Сохраняем совместимость со старым кодом (будет удалено после полной миграции)
         this.isRestoringState = false;
@@ -2358,8 +2357,38 @@ class GridGenerator {
     
     // Apply preset data (common logic for both file and imported presets)
     async applyPresetData(normalizedData, presetName) {
-        // Begin action: load preset
-        this.historyManager.beginAction(`load preset: ${presetName}`, this.getStateSnapshot());
+        // === Per-preset history: сохраняем историю текущего пресета и переключаемся ===
+        const oldPresetName = this.currentPresetName;
+        
+        // Сохраняем историю текущего пресета
+        if (oldPresetName && this.historyManager) {
+            // Отменяем незавершённые транзакции
+            if (this.historyManager.currentTransaction) {
+                this.historyManager.cancelAction();
+            }
+            this.presetHistories.set(oldPresetName, this.historyManager);
+        }
+        
+        // Проверяем, есть ли сохранённая история для нового пресета
+        const savedHistory = this.presetHistories.get(presetName);
+        if (savedHistory && savedHistory.history.length > 0) {
+            // === Восстановление из сохранённой истории ===
+            this.historyManager = savedHistory;
+            this.currentPresetName = presetName;
+            
+            // Применяем текущее состояние из истории (без записи в историю)
+            const currentState = this.historyManager.getCurrentState();
+            if (currentState) {
+                this.applyStateSnapshot(currentState);
+            }
+            
+            this.resetChangesFlag();
+            console.log(`✅ Preset "${presetName}" restored from history (historyLength=${savedHistory.history.length})`);
+            return;
+        }
+        
+        // === Новый пресет — создаём свежую историю ===
+        this.historyManager = new HistoryManager({ maxSize: 50 });
         
         try {
             // Apply settings FIRST (before normalizing graphics blocks)
@@ -2462,12 +2491,12 @@ class GridGenerator {
             // Сбрасываем флаг изменений после загрузки пресета
             this.resetChangesFlag();
             
-            // Commit action: load preset
+            // Сохраняем начальное состояние нового пресета
+            // (commitAction на пустой истории создаст первый снэпшот)
             this.historyManager.commitAction(this.getStateSnapshot());
             
             console.log(`✅ Preset "${this.currentPresetName}" loaded successfully`);
         } catch (error) {
-            // Отменяем транзакцию при ошибке
             this.historyManager.cancelAction();
             console.error('Failed to apply preset data:', error);
             alert(`Ошибка при применении данных пресета: ${error.message}`);
@@ -11536,7 +11565,9 @@ class GridGenerator {
         return {
             settings: JSON.parse(JSON.stringify(this.settingsModule.getAll())),
             textBlocks: JSON.parse(JSON.stringify(this.textBlocks)),
-            graphicsBlocks: JSON.parse(JSON.stringify(this.graphicsBlocks))
+            graphicsBlocks: JSON.parse(JSON.stringify(this.graphicsBlocks)),
+            iconsBlock: this.iconsBlock ? JSON.parse(JSON.stringify(this.iconsBlock)) : null,
+            claimBlock: this.claimBlock ? JSON.parse(JSON.stringify(this.claimBlock)) : null
         };
     }
     
@@ -11561,6 +11592,14 @@ class GridGenerator {
             
             // Восстанавливаем graphics blocks
             this.graphicsBlocks = JSON.parse(JSON.stringify(snapshot.graphicsBlocks));
+            
+            // Восстанавливаем icons и claim blocks (если есть в снэпшоте)
+            if (snapshot.iconsBlock !== undefined) {
+                this.iconsBlock = snapshot.iconsBlock ? JSON.parse(JSON.stringify(snapshot.iconsBlock)) : null;
+            }
+            if (snapshot.claimBlock !== undefined) {
+                this.claimBlock = snapshot.claimBlock ? JSON.parse(JSON.stringify(snapshot.claimBlock)) : null;
+            }
             
             // Обновляем UI элементы
             this.updateLockButtons();
