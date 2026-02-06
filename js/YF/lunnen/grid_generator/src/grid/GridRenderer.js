@@ -95,8 +95,13 @@ export class GridRenderer {
         
         let currentY = y + topMargin;
         
+        // Epsilon для компенсации накопленных ошибок floating-point арифметики.
+        // Без него последний row может не отрисоваться из-за того, что
+        // currentY + rowHeight > y + height на ~1e-12
+        const fpEpsilon = 1e-6;
+        
         for (let i = 0; i < n; i++) {
-            if (currentY + rowHeight > y + height) {
+            if (currentY + rowHeight > y + height + fpEpsilon) {
                 break;
             }
             
@@ -191,7 +196,7 @@ export class GridRenderer {
         let currentY = y + margin;
         
         for (let i = 0; i < n; i++) {
-            if (currentY + columnHeight > y + height - margin) {
+            if (currentY + columnHeight > y + height - margin + 1e-6) {
                 break;
             }
             

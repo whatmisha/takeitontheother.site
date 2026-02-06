@@ -4,6 +4,11 @@
  */
 import { getSurfaceConfig, SURFACE_TYPES } from '../core/Constants.js';
 
+// Epsilon для компенсации ошибок округления IEEE 754 double precision.
+// Достаточно мал, чтобы не влиять на реальные значения, но компенсирует
+// накопленные ошибки floating-point арифметики.
+const FP_EPSILON = 1e-9;
+
 export class GridCalculator {
     constructor(settings) {
         this.settings = settings;
@@ -47,7 +52,8 @@ export class GridCalculator {
         const rowWithGutter = module * rowHeightInModules + module;
         
         // Вычисляем сколько строк поместится
-        const rowCount = Math.floor((availableHeight + module) / rowWithGutter);
+        // FP_EPSILON компенсирует ошибки floating-point: без него 12.0 может стать 11.9999999999
+        const rowCount = Math.floor((availableHeight + module) / rowWithGutter + FP_EPSILON);
         
         return Math.max(1, rowCount);
     }
@@ -69,7 +75,8 @@ export class GridCalculator {
         // Формула: rowCount × rowHeight × module + (rowCount - 1) × module ≤ availableHeight
         // Решаем для rowHeight: rowHeight ≤ (availableHeight / module - rowCount + 1) / rowCount
         const availableModules = availableHeight / module;
-        const rowHeight = Math.floor((availableModules - rowCount + 1) / rowCount);
+        // FP_EPSILON компенсирует ошибки floating-point при делении
+        const rowHeight = Math.floor((availableModules - rowCount + 1) / rowCount + FP_EPSILON);
         
         return Math.max(1, rowHeight);
     }
@@ -93,18 +100,20 @@ export class GridCalculator {
             const contentHeight = frontHeight - 2 * lockedMarginsValue;
             const totalModules = rowCount * rowHeight + (rowCount - 1);
             if (totalModules > 0) {
-                const calculatedModule = contentHeight / totalModules;
-                return Math.floor(calculatedModule * 10000) / 10000;
+                // Возвращаем точное значение без округления — epsilon-толерантность
+                // в местах использования компенсирует ошибки floating-point
+                return contentHeight / totalModules;
             }
         }
         
         // Стандартный расчет (если поля не заблокированы)
         const margins = this.settings.get('margins');
         const totalModules = 2 * margins + rowCount * rowHeight + (rowCount - 1);
-        const calculatedModule = frontHeight / totalModules;
         
-        // Округляем вниз до 4 знаков после запятой для точного попадания
-        return Math.floor(calculatedModule * 10000) / 10000;
+        // Возвращаем точное значение. Раньше здесь было Math.floor(... * 10000) / 10000,
+        // что занижало модуль до 0.0001, накапливая ошибку ~0.01мм на 100 модулях.
+        // Теперь точное деление IEEE 754 даёт ошибку ~1e-14, что незаметно.
+        return frontHeight / totalModules;
     }
     
     /**
@@ -151,7 +160,7 @@ export class GridCalculator {
         for (let rowHeight = 1; rowHeight <= 20; rowHeight++) {
             // Вычисляем сколько строк поместится с этой высотой
             const rowWithGutter = rowHeight + 1; // высота строки + промежуток (1 модуль)
-            const rowCount = Math.floor((availableModules + 1) / rowWithGutter);
+            const rowCount = Math.floor((availableModules + 1) / rowWithGutter + FP_EPSILON);
             
             if (rowCount < 1) continue;
             
@@ -160,8 +169,9 @@ export class GridCalculator {
             const remaining = availableModules - totalUsed;
             
             // Включаем только если остаток меньше 1 модуля (идеальное заполнение)
-            if (remaining >= 0 && remaining < 1) {
-                combinations.push({ rowCount, rowHeight, remaining });
+            // FP_EPSILON: remaining может быть -1e-14 из-за floating-point вместо 0
+            if (remaining >= -FP_EPSILON && remaining < 1) {
+                combinations.push({ rowCount, rowHeight, remaining: Math.max(0, remaining) });
             }
         }
         
@@ -269,7 +279,9 @@ export class GridCalculator {
         const frontHeight = this.settings.get('frontHeight');
         
         const contentHeightMm = frontHeight - 2 * margins * module;
-        return Math.floor(contentHeightMm / module);
+        // FP_EPSILON: contentHeightMm / module должен давать целое число,
+        // но из-за floating-point может быть 95.999999999 вместо 96
+        return Math.floor(contentHeightMm / module + FP_EPSILON);
     }
 
     /**

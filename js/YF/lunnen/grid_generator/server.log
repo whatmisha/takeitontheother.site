@@ -1,0 +1,411 @@
+::1 - - [06/Feb/2026 18:23:47] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /style.css HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /script.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/utils/ColorUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/utils/MathUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/utils/DOMUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/core/Settings.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/core/DOMCache.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/grid/GridCalculator.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/utils/TextToPath.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/grid/GridRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/config/SliderConfig.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/ui/SliderController.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/ui/ZoomPanManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/ui/ColorPicker.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/ui/PanelManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/elements/TextRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/elements/TextBlockManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/elements/GraphicsManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/elements/GraphicsRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/elements/ElementsNavigator.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/svg/SVGExporter.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/preset/PresetManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /src/core/Constants.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /fonts/TT_Commons_Classic_Medium.woff2 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] code 404, message File not found
+::1 - - [06/Feb/2026 18:24:07] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:24:07] "GET /fonts/TT_Commons_Classic_Regular.woff2 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /presets/manifest.json?ts=1770398647947 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /graphics/icons.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /presets/New.json HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:24:07] "GET /graphics/yf_claim.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:25:59] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:25:59] "GET /script.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:25:59] "GET /src/grid/GridRenderer.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:25:59] "GET /src/grid/GridCalculator.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:25:59] "GET /presets/manifest.json?ts=1770398759965 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /style.css HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /script.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/utils/ColorUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/utils/MathUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/utils/DOMUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/core/Settings.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/utils/TextToPath.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/core/DOMCache.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/grid/GridCalculator.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/grid/GridRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/ui/SliderController.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/config/SliderConfig.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/ui/ColorPicker.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/ui/PanelManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/ui/ZoomPanManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/elements/TextBlockManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/elements/TextRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/elements/GraphicsManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/elements/ElementsNavigator.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/svg/SVGExporter.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/elements/GraphicsRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/preset/PresetManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /src/core/Constants.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /fonts/TT_Commons_Classic_Medium.woff2 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /fonts/TT_Commons_Classic_Regular.woff2 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] code 404, message File not found
+::1 - - [06/Feb/2026 18:26:04] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:26:04] "GET /presets/manifest.json?ts=1770398764919 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /graphics/icons.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /presets/New.json HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:26:04] "GET /graphics/yf_claim.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:36:11] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:36:11] code 404, message File not found
+::1 - - [06/Feb/2026 18:36:11] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:36:11] code 404, message File not found
+::1 - - [06/Feb/2026 18:36:11] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:36:12] code 404, message File not found
+::1 - - [06/Feb/2026 18:36:12] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:36:12] code 404, message File not found
+::1 - - [06/Feb/2026 18:36:12] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:36:12] code 404, message File not found
+::1 - - [06/Feb/2026 18:36:12] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:36:12] code 404, message File not found
+::1 - - [06/Feb/2026 18:36:12] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:36:12] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:36:12] code 404, message File not found
+::1 - - [06/Feb/2026 18:36:12] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:36:12] code 404, message File not found
+::1 - - [06/Feb/2026 18:36:12] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:36:12] code 404, message File not found
+::1 - - [06/Feb/2026 18:36:12] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:36:12] code 404, message File not found
+::1 - - [06/Feb/2026 18:36:12] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:36:12] code 404, message File not found
+::1 - - [06/Feb/2026 18:36:12] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:36:12] code 404, message File not found
+::1 - - [06/Feb/2026 18:36:12] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:42] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:42] "GET /script.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:42] "GET /src/core/Settings.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:41:42] "GET /src/utils/TextToPath.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:41:42] "GET /src/ui/SliderController.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:41:42] "GET /src/grid/GridCalculator.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:41:42] "GET /src/grid/GridRenderer.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:41:42] "GET /src/elements/GraphicsManager.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:41:42] "GET /src/core/Constants.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:41:42] "GET /src/svg/SVGExporter.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:41:42] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:42] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:42] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:42] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:42] "GET /presets/manifest.json?ts=1770399702888 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:42] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:42] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:45] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:45] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:45] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:45] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:45] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:45] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:45] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:45] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:45] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:45] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:45] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:45] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:45] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:45] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:45] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:45] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:45] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:45] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:45] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:45] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:45] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:45] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:45] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:45] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:45] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:45] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:46] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /style.css HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /script.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/utils/ColorUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/utils/MathUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/utils/DOMUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/core/Settings.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/utils/TextToPath.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/core/DOMCache.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/grid/GridCalculator.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/grid/GridRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/config/SliderConfig.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/ui/SliderController.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/ui/PanelManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/ui/ColorPicker.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/ui/ZoomPanManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/elements/TextBlockManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/elements/TextRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:46] "GET /src/elements/GraphicsManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/elements/GraphicsRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/elements/ElementsNavigator.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/svg/SVGExporter.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/preset/PresetManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /src/core/Constants.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /fonts/TT_Commons_Classic_Medium.woff2 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /fonts/TT_Commons_Classic_Regular.woff2 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:46] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:46] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:46] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:46] code 404, message File not found
+::1 - - [06/Feb/2026 18:41:46] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:41:46] "GET /presets/manifest.json?ts=1770399706498 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /graphics/icons.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /presets/New.json HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:41:46] "GET /graphics/yf_claim.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:42:45] "GET /fonts/LunnenDisplay-VariableVF.woff2 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:44:17] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:44:17] "GET /script.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:44:17] "GET /src/grid/GridCalculator.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:44:17] "GET /src/grid/GridRenderer.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:44:17] "GET /presets/manifest.json?ts=1770399857255 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:48] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:49] "GET /script.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:49] "GET /src/core/Settings.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:54:49] "GET /src/grid/GridCalculator.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:54:49] "GET /src/grid/GridRenderer.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:54:49] "GET /src/ui/SliderController.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:54:49] "GET /src/utils/TextToPath.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:54:49] "GET /src/elements/GraphicsManager.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:54:49] "GET /src/svg/SVGExporter.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:54:49] "GET /src/core/Constants.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 18:54:49] "GET /presets/manifest.json?ts=1770400489387 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:52] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:52] code 404, message File not found
+::1 - - [06/Feb/2026 18:54:52] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:54:52] code 404, message File not found
+::1 - - [06/Feb/2026 18:54:52] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:54:52] code 404, message File not found
+::1 - - [06/Feb/2026 18:54:52] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:54:52] code 404, message File not found
+::1 - - [06/Feb/2026 18:54:52] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:54:52] code 404, message File not found
+::1 - - [06/Feb/2026 18:54:52] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:54:52] code 404, message File not found
+::1 - - [06/Feb/2026 18:54:52] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:54:52] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:52] code 404, message File not found
+::1 - - [06/Feb/2026 18:54:52] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:54:52] code 404, message File not found
+::1 - - [06/Feb/2026 18:54:52] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:54:52] code 404, message File not found
+::1 - - [06/Feb/2026 18:54:52] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:54:52] code 404, message File not found
+::1 - - [06/Feb/2026 18:54:52] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:54:52] code 404, message File not found
+::1 - - [06/Feb/2026 18:54:52] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:54:52] code 404, message File not found
+::1 - - [06/Feb/2026 18:54:52] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:54:53] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /style.css HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /script.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/utils/ColorUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/utils/MathUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/utils/DOMUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/utils/TextToPath.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/grid/GridCalculator.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/core/Settings.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/core/DOMCache.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/grid/GridRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/config/SliderConfig.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] code 404, message File not found
+::1 - - [06/Feb/2026 18:54:53] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/ui/SliderController.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/ui/ColorPicker.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/ui/PanelManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/ui/ZoomPanManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/elements/TextBlockManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/elements/TextRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/elements/GraphicsManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/elements/GraphicsRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/elements/ElementsNavigator.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/svg/SVGExporter.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/preset/PresetManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /src/core/Constants.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /fonts/TT_Commons_Classic_Medium.woff2 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /fonts/TT_Commons_Classic_Regular.woff2 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] code 404, message File not found
+::1 - - [06/Feb/2026 18:54:53] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:54:53] code 404, message File not found
+::1 - - [06/Feb/2026 18:54:53] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:54:53] code 404, message File not found
+::1 - - [06/Feb/2026 18:54:53] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:54:53] "GET /presets/manifest.json?ts=1770400493858 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /graphics/icons.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /presets/New.json HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:54:53] "GET /graphics/yf_claim.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:21] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:21] code 404, message File not found
+::1 - - [06/Feb/2026 18:55:21] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:55:21] code 404, message File not found
+::1 - - [06/Feb/2026 18:55:21] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:55:21] code 404, message File not found
+::1 - - [06/Feb/2026 18:55:21] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:55:21] code 404, message File not found
+::1 - - [06/Feb/2026 18:55:21] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:55:21] code 404, message File not found
+::1 - - [06/Feb/2026 18:55:21] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:55:21] code 404, message File not found
+::1 - - [06/Feb/2026 18:55:21] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:55:21] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:22] code 404, message File not found
+::1 - - [06/Feb/2026 18:55:22] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:55:22] code 404, message File not found
+::1 - - [06/Feb/2026 18:55:22] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:55:22] code 404, message File not found
+::1 - - [06/Feb/2026 18:55:22] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:55:22] code 404, message File not found
+::1 - - [06/Feb/2026 18:55:22] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:55:22] code 404, message File not found
+::1 - - [06/Feb/2026 18:55:22] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:55:22] code 404, message File not found
+::1 - - [06/Feb/2026 18:55:22] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:55:24] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /script.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /style.css HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/utils/ColorUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/utils/MathUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/utils/DOMUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/utils/TextToPath.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/core/Settings.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/core/DOMCache.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/grid/GridCalculator.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/grid/GridRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/config/SliderConfig.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/ui/SliderController.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/ui/ColorPicker.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/ui/PanelManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/ui/ZoomPanManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/elements/TextBlockManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/elements/TextRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/elements/GraphicsManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/elements/GraphicsRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/elements/ElementsNavigator.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/svg/SVGExporter.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/preset/PresetManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /src/core/Constants.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /fonts/TT_Commons_Classic_Medium.woff2 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /fonts/TT_Commons_Classic_Regular.woff2 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] code 404, message File not found
+::1 - - [06/Feb/2026 18:55:24] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:55:24] code 404, message File not found
+::1 - - [06/Feb/2026 18:55:24] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:55:24] "GET /presets/manifest.json?ts=1770400524339 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] code 404, message File not found
+::1 - - [06/Feb/2026 18:55:24] "GET /graphics/icons.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:55:24] code 404, message File not found
+::1 - - [06/Feb/2026 18:55:24] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 18:55:24] "GET /presets/New.json HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:55:24] "GET /graphics/yf_claim.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:57:35] "GET /graphics/lunnen_logo.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:57:35] "GET /graphics/1.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:57:35] "GET /graphics/2.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:57:35] "GET /graphics/3.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:57:35] "GET /graphics/l_sign.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:57:35] "GET /graphics/qr_lunnen.pro.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:57:37] "GET /fonts/TT%20Commons%20Classic%20Medium.otf HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 18:57:37] "GET /fonts/TT%20Commons%20Classic%20Regular.otf HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:50] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:50] "GET /script.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:50] "GET /src/core/Settings.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 19:04:50] "GET /src/utils/TextToPath.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 19:04:50] "GET /src/grid/GridRenderer.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 19:04:50] "GET /src/elements/GraphicsManager.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 19:04:50] "GET /src/grid/GridCalculator.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 19:04:50] "GET /src/ui/SliderController.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 19:04:50] "GET /src/svg/SVGExporter.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 19:04:50] "GET /src/core/Constants.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 19:04:50] "GET /presets/manifest.json?ts=1770401090466 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:53] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:53] code 404, message File not found
+::1 - - [06/Feb/2026 19:04:53] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 19:04:53] code 404, message File not found
+::1 - - [06/Feb/2026 19:04:53] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 19:04:53] code 404, message File not found
+::1 - - [06/Feb/2026 19:04:53] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 19:04:53] code 404, message File not found
+::1 - - [06/Feb/2026 19:04:53] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 19:04:53] code 404, message File not found
+::1 - - [06/Feb/2026 19:04:53] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 19:04:53] code 404, message File not found
+::1 - - [06/Feb/2026 19:04:53] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 19:04:53] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:53] code 404, message File not found
+::1 - - [06/Feb/2026 19:04:53] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 19:04:53] code 404, message File not found
+::1 - - [06/Feb/2026 19:04:53] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 19:04:53] code 404, message File not found
+::1 - - [06/Feb/2026 19:04:53] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 19:04:53] code 404, message File not found
+::1 - - [06/Feb/2026 19:04:53] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 19:04:53] code 404, message File not found
+::1 - - [06/Feb/2026 19:04:53] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 19:04:53] code 404, message File not found
+::1 - - [06/Feb/2026 19:04:53] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 19:04:54] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /style.css HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /script.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/utils/ColorUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/utils/MathUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/utils/DOMUtils.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/core/Settings.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/grid/GridCalculator.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/utils/TextToPath.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/core/DOMCache.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/grid/GridRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/config/SliderConfig.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/ui/SliderController.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/ui/ColorPicker.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/ui/PanelManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/ui/ZoomPanManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/elements/TextBlockManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/elements/TextRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] code 404, message File not found
+::1 - - [06/Feb/2026 19:04:54] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/elements/GraphicsManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/elements/GraphicsRenderer.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/elements/ElementsNavigator.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/svg/SVGExporter.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/preset/PresetManager.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /src/core/Constants.js HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /fonts/TT_Commons_Classic_Medium.woff2 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] "GET /fonts/TT_Commons_Classic_Regular.woff2 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:54] code 404, message File not found
+::1 - - [06/Feb/2026 19:04:54] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 19:04:54] code 404, message File not found
+::1 - - [06/Feb/2026 19:04:54] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 19:04:54] code 404, message File not found
+::1 - - [06/Feb/2026 19:04:54] "GET /favicon.ico HTTP/1.1" 404 -
+::1 - - [06/Feb/2026 19:04:55] "GET /presets/manifest.json?ts=1770401095021 HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:55] "GET /graphics/icons.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:55] "GET /presets/New.json HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:04:55] "GET /graphics/yf_claim.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:05:36] "GET /graphics/lunnen_logo.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:05:36] "GET /graphics/1.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:05:36] "GET /graphics/2.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:05:36] "GET /graphics/3.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:05:36] "GET /graphics/l_sign.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 19:05:36] "GET /graphics/qr_lunnen.pro.svg HTTP/1.1" 200 -

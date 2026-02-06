@@ -78,6 +78,11 @@ class GridGenerator {
                             const module = this.gridCalculator.calculateModule();
                             this.settings.gridModule = module;
                             this.sliderController.setValue('gridModuleSlider', module, false);
+                            // Обновляем margins display в мм (модуль изменился)
+                            if (this.settings.marginsUnit === 'mm') {
+                                const marginsInMm = this.settings.margins * module;
+                                this.sliderController.setValue('marginsSlider', parseFloat(marginsInMm.toFixed(4)), false);
+                            }
                         } else {
                             const rowCount = this.gridCalculator.calculateRowCount();
                             this.settings.rowCount = rowCount;
@@ -136,6 +141,14 @@ class GridGenerator {
                     const rowCount = this.gridCalculator.calculateRowCount();
                     this.settings.rowCount = rowCount;
                     this.sliderController.setValue('rowCountSlider', rowCount, false);
+                    
+                    // Обновляем отображение полей если они в мм:
+                    // margins хранятся в модулях, при смене модуля мм-значение меняется
+                    if (this.settings.marginsUnit === 'mm') {
+                        const marginsInMm = this.settings.margins * this.settings.gridModule;
+                        this.sliderController.setValue('marginsSlider', parseFloat(marginsInMm.toFixed(4)), false);
+                    }
+                    
                     this.constrainAllObjectsToGrid();
                     this.generateRowPresets();
                     // При изменении модуля принудительно переключаем единицы в mod, если они были в pt
@@ -265,6 +278,11 @@ class GridGenerator {
                             const module = this.gridCalculator.calculateModule();
                             this.settings.gridModule = module;
                             this.sliderController.setValue('gridModuleSlider', module, false);
+                            // Обновляем margins display в мм (модуль изменился)
+                            if (this.settings.marginsUnit === 'mm') {
+                                const marginsInMm = this.settings.margins * module;
+                                this.sliderController.setValue('marginsSlider', parseFloat(marginsInMm.toFixed(4)), false);
+                            }
                         } else if (this.settings.linkMode === 'rows-height') {
                             const rowHeight = this.gridCalculator.calculateRowHeight();
                             this.settings.rowHeight = rowHeight;
@@ -298,6 +316,11 @@ class GridGenerator {
                             const module = this.gridCalculator.calculateModule();
                             this.settings.gridModule = module;
                             this.sliderController.setValue('gridModuleSlider', module, false);
+                            // Обновляем margins display в мм (модуль изменился)
+                            if (this.settings.marginsUnit === 'mm') {
+                                const marginsInMm = this.settings.margins * module;
+                                this.sliderController.setValue('marginsSlider', parseFloat(marginsInMm.toFixed(4)), false);
+                            }
                         } else if (this.settings.linkMode === 'rows-height') {
                             const rowCount = this.gridCalculator.calculateRowCount();
                             this.settings.rowCount = rowCount;
@@ -2780,9 +2803,10 @@ class GridGenerator {
                     const module = this.settings.gridModule;
                     const margins = this.settings.margins;
                     const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module);
-                    const textBlockHeightInModules = this.getTextBlockHeightInModules(this.currentEditingBlock);
-                    const maxY = maxYInBaseline - textBlockHeightInModules;
+                    const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
+                    // Ограничиваем по стартовой позиции: первая строка блока должна быть
+                    // в пределах контентной области. Остальное (lineHeight) может выходить за поля.
+                    const maxY = maxYInBaseline - 1;
                     
                     // Calculate Y position from row (baselineOffset всегда сбрасывается в 0)
                     const rowHeight = this.settings.rowHeight;
@@ -2840,9 +2864,9 @@ class GridGenerator {
                     const module = this.settings.gridModule;
                     const margins = this.settings.margins;
                     const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module);
-                    const textBlockHeightInModules = this.getTextBlockHeightInModules(this.currentEditingBlock);
-                    const maxY = maxYInBaseline - textBlockHeightInModules;
+                    const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
+                    // Ограничиваем по стартовой позиции первой строки
+                    const maxY = maxYInBaseline - 1;
                     
                     // Constrain baseline
                     const constrainedBaseline = Math.max(0, Math.min(globalBaseline, maxY));
@@ -2875,9 +2899,9 @@ class GridGenerator {
                     const module = this.settings.gridModule;
                     const margins = this.settings.margins;
                     const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module);
-                    const textBlockHeightInModules = this.getTextBlockHeightInModules(this.currentEditingBlock);
-                    const maxY = maxYInBaseline - textBlockHeightInModules;
+                    const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
+                    // Ограничиваем по стартовой позиции первой строки
+                    const maxY = maxYInBaseline - 1;
                     
                     newGlobalBaseline = Math.max(0, Math.min(newGlobalBaseline, maxY));
                     
@@ -3360,7 +3384,7 @@ class GridGenerator {
                 
                 // Calculate max Y position
                 const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                const maxYInBaseline = Math.floor(contentHeightMm / module);
+                const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                 const iconHeightModules = this.iconsBlock.heightInModules;
                 const maxY = maxYInBaseline - iconHeightModules;
                 
@@ -3400,7 +3424,7 @@ class GridGenerator {
                 
                 // Calculate max Y position
                 const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                const maxYInBaseline = Math.floor(contentHeightMm / module);
+                const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                 const iconHeightModules = this.iconsBlock.heightInModules;
                 const maxY = maxYInBaseline - iconHeightModules;
                 
@@ -3430,7 +3454,7 @@ class GridGenerator {
                 const module = this.settings.gridModule;
                 const margins = this.settings.margins;
                 const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                const maxYInBaseline = Math.floor(contentHeightMm / module);
+                const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                 const maxY = maxYInBaseline - this.iconsBlock.heightInModules;
                 
                 // Get current Y position
@@ -3511,7 +3535,7 @@ class GridGenerator {
                     const module = this.settings.gridModule;
                     const margins = this.settings.margins;
                     const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module);
+                    const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                     const iconHeightModules = this.iconsBlock.heightInModules;
                     const maxY = maxYInBaseline - iconHeightModules;
                     
@@ -3545,7 +3569,7 @@ class GridGenerator {
                     const margins = this.settings.margins;
                     const rowHeight = this.settings.rowHeight;
                     const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module);
+                    const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                     const iconHeightModules = this.iconsBlock.heightInModules;
                     const maxY = maxYInBaseline - iconHeightModules;
                     
@@ -3577,7 +3601,7 @@ class GridGenerator {
                     const module = this.settings.gridModule;
                     const margins = this.settings.margins;
                     const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module);
+                    const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                     const maxY = maxYInBaseline - constrainedValue;
                     
                     const currentY = this.getBlockY(this.iconsBlock);
@@ -3700,7 +3724,7 @@ class GridGenerator {
                 
                 // Calculate max Y position
                 const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                const maxYInBaseline = Math.floor(contentHeightMm / module);
+                const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                 const claimHeightModules = this.claimBlock.heightInModules;
                 const maxY = maxYInBaseline - claimHeightModules;
                 
@@ -3767,7 +3791,7 @@ class GridGenerator {
                 const module = this.settings.gridModule;
                 const margins = this.settings.margins;
                 const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                const maxYInBaseline = Math.floor(contentHeightMm / module);
+                const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                 const maxY = maxYInBaseline - constrainedHeight;
                 
                 const currentY = this.getBlockY(this.claimBlock);
@@ -3846,7 +3870,7 @@ class GridGenerator {
                     const margins = this.settings.margins;
                     const rowHeight = this.settings.rowHeight;
                     const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module);
+                    const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                     const claimHeightModules = this.claimBlock.heightInModules;
                     const maxY = maxYInBaseline - claimHeightModules;
                     
@@ -3879,7 +3903,7 @@ class GridGenerator {
                     const module = this.settings.gridModule;
                     const margins = this.settings.margins;
                     const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module);
+                    const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                     const maxY = maxYInBaseline - constrainedValue;
                     
                     const currentY = this.getBlockY(this.claimBlock);
@@ -4027,7 +4051,7 @@ class GridGenerator {
                         const module = this.settings.gridModule;
                         const margins = this.settings.margins;
                         const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                        const maxYInBaseline = Math.floor(contentHeightMm / module);
+                        const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                         const graphicsHeightModules = block.heightInModules;
                         const maxY = maxYInBaseline - graphicsHeightModules;
                         
@@ -4065,7 +4089,7 @@ class GridGenerator {
                         const margins = this.settings.margins;
                         const rowHeight = this.settings.rowHeight;
                         const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                        const maxYInBaseline = Math.floor(contentHeightMm / module);
+                        const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                         const graphicsHeightModules = block.heightInModules;
                         const maxY = maxYInBaseline - graphicsHeightModules;
                         
@@ -4114,7 +4138,7 @@ class GridGenerator {
                         // After changing height, recheck vertical position constraints
                         const margins = this.settings.margins;
                         const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                        const maxYInBaseline = Math.floor(contentHeightMm / module);
+                        const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                         const maxY = maxYInBaseline - heightInModules;
                         
                         const currentY = this.getBlockY(block);
@@ -4164,7 +4188,7 @@ class GridGenerator {
                         
                         // After changing height, recheck vertical position constraints
                         const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                        const maxYInBaseline = Math.floor(contentHeightMm / module);
+                        const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                         const maxY = maxYInBaseline - constrainedValue;
                         
                         const currentY = this.getBlockY(block);
@@ -4355,9 +4379,9 @@ class GridGenerator {
             const module = this.settings.gridModule;
             const margins = this.settings.margins;
             const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-            const maxYInBaseline = Math.floor(contentHeightMm / module);
-            const textBlockHeightInModules = this.getTextBlockHeightInModules(this.currentEditingBlock);
-            const maxY = maxYInBaseline - textBlockHeightInModules;
+            const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
+            // Ограничиваем по стартовой позиции первой строки
+            const maxY = maxYInBaseline - 1;
             
             // Calculate Y position from row (baselineOffset всегда сбрасывается в 0)
             const rowHeight = this.settings.rowHeight;
@@ -6009,6 +6033,7 @@ class GridGenerator {
             button.setAttribute('aria-label', `Set ${combo.rowCount} rows with height ${combo.rowHeight}`);
             
             button.addEventListener('click', () => {
+                this.markAsChanged();
                 this.settings.rowCount = combo.rowCount;
                 this.settings.rowHeight = combo.rowHeight;
                 
@@ -6019,12 +6044,31 @@ class GridGenerator {
                     this.updateLinkedControlsVisual();
                 }
                 
-                // Update UI
-                this.dom.rowCountValue.value = combo.rowCount;
-                this.dom.rowCountSlider.value = combo.rowCount;
-                this.dom.rowHeightValue.value = combo.rowHeight;
-                this.dom.rowHeightSlider.value = combo.rowHeight;
+                // Пересчитываем зависимые параметры в зависимости от режима блокировки и link mode
+                if (this.settings.lockedModule) {
+                    // Модуль заблокирован → пересчитываем поля
+                    this.recalculateWithLockedModule();
+                } else if (this.settings.lockedMargins) {
+                    // Поля заблокированы → пересчитываем модуль
+                    this.recalculateWithLockedMargins();
+                } else if (this.settings.linkMode === 'module') {
+                    // Режим RRH⇄Mod → пересчитываем модуль для точного заполнения
+                    const module = this.gridCalculator.calculateModule();
+                    this.settings.gridModule = module;
+                    this.sliderController.setValue('gridModuleSlider', module, false);
+                    
+                    // Обновляем отображение полей если они в мм
+                    if (this.settings.marginsUnit === 'mm') {
+                        const marginsInMm = this.settings.margins * module;
+                        this.sliderController.setValue('marginsSlider', parseFloat(marginsInMm.toFixed(4)), false);
+                    }
+                }
                 
+                // Update UI
+                this.sliderController.setValue('rowCountSlider', combo.rowCount, false);
+                this.sliderController.setValue('rowHeightSlider', combo.rowHeight, false);
+                
+                this.constrainAllObjectsToGrid();
                 this.updateGrid();
                 this.updatePresetButtons();
             });
@@ -6056,7 +6100,7 @@ class GridGenerator {
         const margins = this.settings.margins;
         const maxColumns = this.settings.columnCount;
         const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-        const maxYInBaseline = Math.floor(contentHeightMm / module);
+        const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
         const rowHeight = this.settings.rowHeight;
         
         // Ограничение текстовых блоков
@@ -6077,9 +6121,8 @@ class GridGenerator {
                 block.width = Math.max(1, maxColumns - block.x);
             }
             
-            // Вертикальные ограничения
-            const textBlockHeightInModules = this.getTextBlockHeightInModules(block);
-            const maxY = maxYInBaseline - textBlockHeightInModules;
+            // Вертикальные ограничения: первая строка блока должна быть в пределах контентной области
+            const maxY = maxYInBaseline - 1;
             const currentY = this.getBlockY(block);
             
             if (currentY > maxY) {
@@ -6232,6 +6275,22 @@ class GridGenerator {
     // Получить Y позицию блока в baseline модулях
     getBlockY(block) {
         return this.rowBaselineToY(block.row, block.baselineOffset);
+    }
+    
+    /**
+     * Коэффициент для конвертации экранных пикселей в SVG-координаты.
+     * Использует getScreenCTM() — встроенный метод SVG, который корректно
+     * учитывает viewBox, preserveAspectRatio, CSS-трансформации и зум.
+     * @returns {number} - множитель: svgDelta = screenDelta * getScreenToSvgScale()
+     */
+    getScreenToSvgScale() {
+        if (this.dom.svg) {
+            const ctm = this.dom.svg.getScreenCTM();
+            if (ctm && ctm.a !== 0) {
+                return 1 / ctm.a;
+            }
+        }
+        return 1;
     }
     
     // Конвертировать колонки в мм
@@ -7194,7 +7253,9 @@ class GridGenerator {
                 moveEvent.stopPropagation();
                 moveEvent.preventDefault();
                 
-                const dx = moveEvent.clientX - startX;
+                // Конвертируем экранные пиксели в SVG-координаты с учётом зума
+                const screenToSvg = this.getScreenToSvgScale();
+                const dx = (moveEvent.clientX - startX) * screenToSvg;
                 const module = this.settings.gridModule;
                 const margins = this.settings.margins;
                 const columnCount = this.settings.columnCount;
@@ -7504,8 +7565,10 @@ class GridGenerator {
                 const currentBlock = this.getGraphicsBlock(this.textDragState.blockId);
                 if (!currentBlock) return;
                 
-                const dx = e.clientX - this.textDragState.startMouseX;
-                const dy = e.clientY - this.textDragState.startMouseY;
+                // Конвертируем экранные пиксели в SVG-координаты с учётом зума
+                const screenToSvg = this.getScreenToSvgScale();
+                const dx = (e.clientX - this.textDragState.startMouseX) * screenToSvg;
+                const dy = (e.clientY - this.textDragState.startMouseY) * screenToSvg;
                 
                 const module = this.settings.gridModule;
                 const margins = this.settings.margins;
@@ -8173,8 +8236,10 @@ class GridGenerator {
                 const currentBlock = this.getGraphicsBlock(this.textDragState.blockId);
                 if (!currentBlock) return;
                 
-                const dx = e.clientX - this.textDragState.startMouseX;
-                const dy = e.clientY - this.textDragState.startMouseY;
+                // Конвертируем экранные пиксели в SVG-координаты с учётом зума
+                const screenToSvg = this.getScreenToSvgScale();
+                const dx = (e.clientX - this.textDragState.startMouseX) * screenToSvg;
+                const dy = (e.clientY - this.textDragState.startMouseY) * screenToSvg;
                 
                 const module = this.settings.gridModule;
                 const margins = this.settings.margins;
@@ -8219,7 +8284,7 @@ class GridGenerator {
                     
                     // Calculate content area in baseline modules
                     const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module);
+                    const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                     
                     // Constrain vertical position considering icon height
                     const iconHeightModules = currentBlock.heightInModules;
@@ -8353,8 +8418,10 @@ class GridGenerator {
                 const currentBlock = this.getGraphicsBlock(this.textDragState.blockId);
                 if (!currentBlock) return;
                 
-                const dx = e.clientX - this.textDragState.startMouseX;
-                const dy = e.clientY - this.textDragState.startMouseY;
+                // Конвертируем экранные пиксели в SVG-координаты с учётом зума
+                const screenToSvg = this.getScreenToSvgScale();
+                const dx = (e.clientX - this.textDragState.startMouseX) * screenToSvg;
+                const dy = (e.clientY - this.textDragState.startMouseY) * screenToSvg;
                 
                 const module = this.settings.gridModule;
                 const margins = this.settings.margins;
@@ -8399,7 +8466,7 @@ class GridGenerator {
                     
                     // Calculate content area in baseline modules
                     const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module);
+                    const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                     
                     // Constrain vertical position considering claim height
                     const claimHeightModules = currentBlock.heightInModules;
@@ -9699,9 +9766,11 @@ class GridGenerator {
         
         const { startMouseX, startMouseY, startBlockX, startBlockRow, startBlockBaselineOffset, frontX, frontY, scale } = this.textDragState;
         
-        // Вычисляем смещение мыши
-        const deltaX = e.clientX - startMouseX;
-        const deltaY = e.clientY - startMouseY;
+        // Вычисляем смещение мыши в экранных пикселях, затем конвертируем в SVG-координаты
+        // с учётом текущего зума (viewBox). При зуме 2x один экранный пиксель = 0.5 SVG-единицы.
+        const screenToSvg = this.getScreenToSvgScale();
+        const deltaX = (e.clientX - startMouseX) * screenToSvg;
+        const deltaY = (e.clientY - startMouseY) * screenToSvg;
         
         // Преобразуем смещение в колонки и baseline модули
         const module = this.settings.gridModule;
@@ -9740,11 +9809,10 @@ class GridGenerator {
             }
             
             // Ограничиваем Y: минимум 0 (не выходим за верхний margin)
-            // Максимум - высота контента в baseline модулях минус высота текстового блока
+            // Максимум - первая строка блока должна быть в пределах контентной области
             const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-            const maxYInBaseline = Math.floor(contentHeightMm / module);
-            const textBlockHeightInModules = this.getTextBlockHeightInModules(block);
-            const maxY = maxYInBaseline - textBlockHeightInModules;
+            const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
+            const maxY = maxYInBaseline - 1;
             newY = Math.max(0, Math.min(newY, maxY));
         }
         
@@ -10306,9 +10374,11 @@ class GridGenerator {
         let currentY = y + margin;
         
         // Draw n "columns" vertically (using row parameters)
+        // Epsilon для компенсации ошибок floating-point (аналогично drawRows на front)
+        const fpEpsilon = 1e-6;
         for (let i = 0; i < n; i++) {
             // Check if there's enough space for this column
-            if (currentY + columnHeight > y + height - margin) {
+            if (currentY + columnHeight > y + height - margin + fpEpsilon) {
                 break;
             }
             
@@ -10384,7 +10454,7 @@ class GridGenerator {
         
         // Calculate how many full-width elements can fit
         const availableWidth = width - 2 * margin;
-        const numFullElements = Math.floor(availableWidth / baselineWidth);
+        const numFullElements = Math.floor(availableWidth / baselineWidth + 1e-9);
         
         // If no elements fit, draw a line at the center of the panel
         if (numFullElements <= 0) {
@@ -10492,7 +10562,7 @@ class GridGenerator {
         
         // Calculate how many full-height elements can fit
         const availableHeight = height - 2 * margin;
-        const numFullElements = Math.floor(availableHeight / baselineHeight);
+        const numFullElements = Math.floor(availableHeight / baselineHeight + 1e-9);
         
         // If no elements fit, draw a line at the center of the panel
         if (numFullElements <= 0) {
