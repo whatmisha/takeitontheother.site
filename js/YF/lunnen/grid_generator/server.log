@@ -1560,3 +1560,15 @@
 ::1 - - [06/Feb/2026 21:01:45] "GET /graphics/3.svg HTTP/1.1" 200 -
 ::1 - - [06/Feb/2026 21:01:45] "GET /graphics/l_sign.svg HTTP/1.1" 200 -
 ::1 - - [06/Feb/2026 21:01:45] "GET /graphics/qr_lunnen.pro.svg HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 21:36:37] "GET / HTTP/1.1" 200 -
+::1 - - [06/Feb/2026 21:36:38] "GET /script.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 21:36:38] "GET /src/core/Settings.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 21:36:38] "GET /src/utils/TextToPath.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 21:36:38] "GET /src/elements/GraphicsManager.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 21:36:38] "GET /src/grid/GridCalculator.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 21:36:38] "GET /src/ui/SliderController.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 21:36:38] "GET /src/grid/GridRenderer.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 21:36:38] "GET /src/svg/SVGExporter.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 21:36:38] "GET /src/history/HistoryManager.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 21:36:38] "GET /src/core/Constants.js HTTP/1.1" 304 -
+::1 - - [06/Feb/2026 21:36:38] "GET /presets/manifest.json?ts=1770410198109 HTTP/1.1" 200 -
