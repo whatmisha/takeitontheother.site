@@ -37,6 +37,9 @@ import { SVGExporter } from './src/svg/SVGExporter.js';
 // Итерация 8: Preset Management
 import { PresetManager } from './src/preset/PresetManager.js';
 
+// Итерация 9: History Management
+import { HistoryManager } from './src/history/HistoryManager.js';
+
 class GridGenerator {
     constructor() {
         // Slider configuration - defines behavior for each slider
@@ -806,12 +809,14 @@ class GridGenerator {
         // Storage for deletion timers to allow cancellation
         this.deletionTimers = {};
         
-        // Undo/Redo history
-        this.history = [];
-        this.historyIndex = 0;
-        this.maxHistorySize = 50; // Maximum number of undo steps
-        this.isRestoringState = false; // Flag to prevent saving state during undo/redo
-        this.saveStateTimer = null; // Timer for debounced save
+        // Undo/Redo history - используем HistoryManager
+        this.historyManager = new HistoryManager({
+            maxSize: 50
+        });
+        
+        // Сохраняем совместимость со старым кодом (будет удалено после полной миграции)
+        this.isRestoringState = false;
+        this.saveStateTimer = null;
         
         // SVG content will be loaded from graphics/icons.svg in initializeBuiltInGraphics()
         // Initialize built-in graphics blocks (Icons and Claim)
@@ -985,8 +990,9 @@ class GridGenerator {
         this.initPanels();
         console.log('✅ PanelManager initialized with all panels');
         
-        // Save initial state for undo
-        this.saveState();
+        // НЕ сохраняем начальное состояние здесь — SVG иконок, claim и пресет
+        // загружаются асинхронно. Первое состояние в истории будет создано
+        // автоматически при первом beginAction/commitAction (загрузка пресета).
         this.initValueInputs();
         this.initSizeInputsWithArrows();
         this.initCollapsibleSections();
@@ -1282,14 +1288,17 @@ class GridGenerator {
         
         // Show side panels checkbox
         this.dom.showSidePanels.addEventListener('change', (e) => {
+            this.historyManager.beginAction('toggle side panels', this.getStateSnapshot());
             this.markAsChanged();
             this.settings.showSidePanels = e.target.checked;
             this.updateEyeIcon(e.target);
             this.updateGrid();
+            this.historyManager.commitAction(this.getStateSnapshot());
         });
         
         // Link mode radio buttons
         const linkModeHandler = (e) => {
+            this.historyManager.beginAction('change link mode', this.getStateSnapshot());
             this.markAsChanged();
             this.settings.linkMode = e.target.value;
             this.updateLinkedControlsVisual();
@@ -1311,6 +1320,7 @@ class GridGenerator {
                 }
             }
             this.updateGrid();
+            this.historyManager.commitAction(this.getStateSnapshot());
         };
         
         this.dom.linkModeOff.addEventListener('change', linkModeHandler);
@@ -1319,56 +1329,70 @@ class GridGenerator {
         
         // Show columns checkbox
         this.dom.showColumns.addEventListener('change', (e) => {
+            this.historyManager.beginAction('toggle columns', this.getStateSnapshot());
             this.markAsChanged();
             this.settings.showColumns = e.target.checked;
             this.updateEyeIcon(e.target);
             this.updateGrid();
+            this.historyManager.commitAction(this.getStateSnapshot());
         });
         
         // Show rows checkbox
         this.dom.showRows.addEventListener('change', (e) => {
+            this.historyManager.beginAction('toggle rows', this.getStateSnapshot());
             this.markAsChanged();
             this.settings.showRows = e.target.checked;
             this.updateEyeIcon(e.target);
             this.updateGrid();
+            this.historyManager.commitAction(this.getStateSnapshot());
         });
         
         // Show baseline checkbox
         this.dom.showBaseline.addEventListener('change', (e) => {
+            this.historyManager.beginAction('toggle baseline', this.getStateSnapshot());
             this.markAsChanged();
             this.settings.showBaseline = e.target.checked;
             this.updateEyeIcon(e.target);
             this.updateGrid();
+            this.historyManager.commitAction(this.getStateSnapshot());
         });
         
         // Show objects checkbox
         this.dom.showObjects.addEventListener('change', (e) => {
+            this.historyManager.beginAction('toggle objects', this.getStateSnapshot());
             this.markAsChanged();
             this.settings.showObjects = e.target.checked;
             this.updateEyeIcon(e.target);
             this.updateGrid();
+            this.historyManager.commitAction(this.getStateSnapshot());
         });
         
         // Use x-height checkbox
         this.dom.useXHeight.addEventListener('change', (e) => {
+            this.historyManager.beginAction('toggle x-height', this.getStateSnapshot());
             this.markAsChanged();
             this.settings.useXHeight = e.target.checked;
             this.updateGrid();
+            this.historyManager.commitAction(this.getStateSnapshot());
         });
         
         // Use x-height 2 checkbox
         this.dom.useXHeight2.addEventListener('change', (e) => {
+            this.historyManager.beginAction('toggle x-height 2', this.getStateSnapshot());
             this.markAsChanged();
             this.settings.useXHeight2 = e.target.checked;
             this.updateGrid();
+            this.historyManager.commitAction(this.getStateSnapshot());
         });
         
         // Use x-height Caption checkbox
         if (this.dom.useXHeightCaption) {
             this.dom.useXHeightCaption.addEventListener('change', (e) => {
+                this.historyManager.beginAction('toggle x-height caption', this.getStateSnapshot());
                 this.markAsChanged();
                 this.settings.useXHeightCaption = e.target.checked;
                 this.updateGrid();
+                this.historyManager.commitAction(this.getStateSnapshot());
             });
         }
         
@@ -1548,26 +1572,32 @@ class GridGenerator {
         
         if (headlineStyleDropdown) {
             headlineStyleDropdown.addEventListener('change', (e) => {
+                this.historyManager.beginAction('change headline font weight', this.getStateSnapshot());
                 this.settings.headlineFontWeight = parseInt(e.target.value);
                 this.updateElementsNavigator();
                 this.updateGrid();
+                this.historyManager.commitAction(this.getStateSnapshot());
             });
         }
         
         if (textStyleDropdown) {
             textStyleDropdown.addEventListener('change', (e) => {
+                this.historyManager.beginAction('change text font weight', this.getStateSnapshot());
                 this.settings.textFontWeight = parseInt(e.target.value);
                 this.updateElementsNavigator();
                 this.updateGrid();
+                this.historyManager.commitAction(this.getStateSnapshot());
             });
         }
         
         const captionStyleDropdown = document.getElementById('captionStyleDropdown');
         if (captionStyleDropdown) {
             captionStyleDropdown.addEventListener('change', (e) => {
+                this.historyManager.beginAction('change caption font weight', this.getStateSnapshot());
                 this.settings.captionFontWeight = parseInt(e.target.value);
                 this.updateElementsNavigator();
                 this.updateGrid();
+                this.historyManager.commitAction(this.getStateSnapshot());
             });
         }
         
@@ -1584,6 +1614,7 @@ class GridGenerator {
         
         // Lunnen Blue preset
         this.dom.lunnenBlue.addEventListener('click', () => {
+            this.historyManager.beginAction('apply Lunnen Blue color', this.getStateSnapshot());
             this.markAsChanged();
             const lunnenBlueColor = '#2353DB';
             // Обновляем через оба способа для совместимости
@@ -1593,6 +1624,12 @@ class GridGenerator {
             this.dom.colorPreview.style.backgroundColor = lunnenBlueColor;
             this.updateHSBFromHex(lunnenBlueColor);
             this.updateGrid();
+            this.historyManager.commitAction(this.getStateSnapshot());
+        });
+        
+        // Hex color input - history tracking
+        this.dom.hexColorInput.addEventListener('focus', () => {
+            this.historyManager.beginAction('edit hex color', this.getStateSnapshot());
         });
         
         // Hex color input - только форматирование при вводе, без применения изменений
@@ -1637,6 +1674,7 @@ class GridGenerator {
             this.dom.colorPreview.style.backgroundColor = hexValue;
             this.updateHSBFromHex(hexValue);
             this.updateGrid();
+            this.historyManager.commitAction(this.getStateSnapshot());
         });
         
         // Export button
@@ -1675,10 +1713,21 @@ class GridGenerator {
                 e.preventDefault();
                 this.exportSVG();
             }
-            // Cmd+Z / Ctrl+Z - Undo
-            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+            // Cmd+Z / Ctrl+Z - Undo, Cmd+Shift+Z / Ctrl+Shift+Z - Redo
+            // Используем toLowerCase() т.к. при зажатом Shift e.key может быть 'Z' (заглавная)
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
                 e.preventDefault();
-                this.undo();
+                // Если пользователь в инпуте — сначала коммитим текущие изменения (blur),
+                // а потом выполняем undo/redo
+                const activeEl = document.activeElement;
+                if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+                    activeEl.blur();
+                }
+                if (e.shiftKey) {
+                    this.redo();
+                } else {
+                    this.undo();
+                }
             }
             // Delete / Backspace - Delete selected element
             if ((e.key === 'Delete' || e.key === 'Backspace') && !e.ctrlKey && !e.metaKey) {
@@ -2309,6 +2358,9 @@ class GridGenerator {
     
     // Apply preset data (common logic for both file and imported presets)
     async applyPresetData(normalizedData, presetName) {
+        // Begin action: load preset
+        this.historyManager.beginAction(`load preset: ${presetName}`, this.getStateSnapshot());
+        
         try {
             // Apply settings FIRST (before normalizing graphics blocks)
             if (normalizedData.settings) {
@@ -2410,8 +2462,13 @@ class GridGenerator {
             // Сбрасываем флаг изменений после загрузки пресета
             this.resetChangesFlag();
             
+            // Commit action: load preset
+            this.historyManager.commitAction(this.getStateSnapshot());
+            
             console.log(`✅ Preset "${this.currentPresetName}" loaded successfully`);
         } catch (error) {
+            // Отменяем транзакцию при ошибке
+            this.historyManager.cancelAction();
             console.error('Failed to apply preset data:', error);
             alert(`Ошибка при применении данных пресета: ${error.message}`);
         }
@@ -2695,6 +2752,7 @@ class GridGenerator {
             items.forEach(item => {
                 item.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    this.historyManager.beginAction(`select ${sliderId} dropdown`, this.getStateSnapshot());
                     const value = parseFloat(item.getAttribute('data-value'));
                     
                     // Update slider using universal method
@@ -2702,6 +2760,7 @@ class GridGenerator {
                     
                     // Close dropdown
                     dropdown.classList.remove('active');
+                    this.historyManager.commitAction(this.getStateSnapshot());
                 });
             });
         });
@@ -2745,6 +2804,23 @@ class GridGenerator {
     
     // Инициализация панели настроек параграфа
     initParagraphPanel() {
+        // ===== History: focus/blur обработчики для инпутов текстовых блоков =====
+        // Группируют все изменения (набор текста, стрелки) в одно действие
+        const textBlockInputIds = [
+            'paragraphXInput', 'paragraphRowInput', 'paragraphBaselineInput', 'paragraphWidthInput'
+        ];
+        textBlockInputIds.forEach(inputId => {
+            const input = this.dom[inputId];
+            if (input) {
+                input.addEventListener('focus', () => {
+                    this.historyManager.beginAction(`edit text block ${inputId}`, this.getStateSnapshot());
+                });
+                input.addEventListener('blur', () => {
+                    this.historyManager.commitAction(this.getStateSnapshot());
+                });
+            }
+        });
+        
         // Обработчики изменений параметров
         if (this.dom.paragraphXInput) {
             this.dom.paragraphXInput.addEventListener('change', () => {
@@ -4222,6 +4298,13 @@ class GridGenerator {
                 newInput.addEventListener('focus', () => {
                     newInput.dataset.originalValue = newInput.value;
                     newInput.select();
+                    // History: сохраняем состояние "до" при фокусе
+                    this.historyManager.beginAction(`edit graphics ${id}`, this.getStateSnapshot());
+                });
+                
+                newInput.addEventListener('blur', () => {
+                    // History: фиксируем состояние "после" при потере фокуса
+                    this.historyManager.commitAction(this.getStateSnapshot());
                 });
                 
                 newInput.addEventListener('change', () => {
@@ -5337,13 +5420,13 @@ class GridGenerator {
         // Run update callback
         config.onUpdate();
         
-        // Save state after making changes (only on user interaction, not during restore)
-        if (!this.isRestoringState) {
-            this.debounceSaveState();
-        }
+        // NOTE: Сохранение состояния для слайдеров теперь происходит через
+        // beginAction/commitAction паттерн в initSliderHistoryHandlers().
+        // Здесь не сохраняем, чтобы не создавать промежуточные снэпшоты во время перетаскивания.
     }
     
     switchMarginsUnit(newUnit) {
+        this.historyManager.beginAction('switch margins unit', this.getStateSnapshot());
         this.markAsChanged();
         // Margins ВСЕГДА храним в модулях; при переключении единиц сохраняем физический размер.
         const currentModule = this.settings.gridModule;
@@ -5406,12 +5489,16 @@ class GridGenerator {
                 valueDisplay.dataset.max = '10';
             }
         }
+        
+        // Commit action: switch margins unit
+        this.historyManager.commitAction(this.getStateSnapshot());
     }
     
     /**
      * Переключить блокировку модуля
      */
     toggleLockModule() {
+        this.historyManager.beginAction('toggle lock module', this.getStateSnapshot());
         const isLocked = this.settings.lockedModule;
         
         if (isLocked) {
@@ -5455,12 +5542,14 @@ class GridGenerator {
         }
         
         this.updateGrid();
+        this.historyManager.commitAction(this.getStateSnapshot());
     }
     
     /**
      * Переключить блокировку полей
      */
     toggleLockMargins() {
+        this.historyManager.beginAction('toggle lock margins', this.getStateSnapshot());
         const isLocked = this.settings.lockedMargins;
         
         if (isLocked) {
@@ -5509,6 +5598,7 @@ class GridGenerator {
         }
         
         this.updateGrid();
+        this.historyManager.commitAction(this.getStateSnapshot());
     }
     
     /**
@@ -5600,6 +5690,7 @@ class GridGenerator {
     // style: 'headline', 'text', 'caption', 'lunnenDisplay'
     // property: 'size' or 'lineHeight'
     switchFontSizeUnit(style, property, newUnit) {
+        this.historyManager.beginAction(`switch ${style} ${property} unit`, this.getStateSnapshot());
         this.markAsChanged();
         // Значения ВСЕГДА храним в модулях; при переключении единиц сохраняем физический размер.
         const currentModule = this.settings.gridModule;
@@ -5762,6 +5853,9 @@ class GridGenerator {
                 }
             });
         }
+        
+        // Commit action: switch font size unit
+        this.historyManager.commitAction(this.getStateSnapshot());
     }
     
     // Initialize font size unit buttons state and update slider values
@@ -5887,10 +5981,14 @@ class GridGenerator {
             input.addEventListener('focus', () => {
                 input.dataset.originalValue = input.value;
                 input.select();
+                // History: сохраняем состояние "до"
+                this.historyManager.beginAction(`edit ${input.id}`, this.getStateSnapshot());
             });
             
             input.addEventListener('blur', () => {
                 this.processValueInput(input, slider, min, max);
+                // History: фиксируем состояние "после"
+                this.historyManager.commitAction(this.getStateSnapshot());
             });
             
             input.addEventListener('keydown', (e) => {
@@ -6033,6 +6131,7 @@ class GridGenerator {
             button.setAttribute('aria-label', `Set ${combo.rowCount} rows with height ${combo.rowHeight}`);
             
             button.addEventListener('click', () => {
+                this.historyManager.beginAction(`apply row preset ${combo.rowCount}:${combo.rowHeight}`, this.getStateSnapshot());
                 this.markAsChanged();
                 this.settings.rowCount = combo.rowCount;
                 this.settings.rowHeight = combo.rowHeight;
@@ -6071,6 +6170,7 @@ class GridGenerator {
                 this.constrainAllObjectsToGrid();
                 this.updateGrid();
                 this.updatePresetButtons();
+                this.historyManager.commitAction(this.getStateSnapshot());
             });
             
             container.appendChild(button);
@@ -7240,6 +7340,9 @@ class GridGenerator {
             e.stopPropagation();
             e.preventDefault();
             
+            // Begin action: resize text block
+            this.historyManager.beginAction('resize text block', this.getStateSnapshot());
+            
             isResizing = true;
             startX = e.clientX;
             startWidth = block.width || 1;
@@ -7294,6 +7397,9 @@ class GridGenerator {
             };
             
             const mouseUpHandler = () => {
+                // Commit action: resize text block
+                this.historyManager.commitAction(this.getStateSnapshot());
+                
                 isResizing = false;
                 handle.setAttribute('fill-opacity', '0');
                 document.removeEventListener('mousemove', mouseMoveHandler);
@@ -7516,6 +7622,9 @@ class GridGenerator {
             mouseDownX = e.clientX;
             mouseDownY = e.clientY;
             
+            // Begin action: drag graphics block
+            this.historyManager.beginAction('drag graphics block', this.getStateSnapshot());
+            
             // Всегда начинаем с перетаскивания оригинала
             // Start dragging
             this.textDragState.isDragging = true;
@@ -7629,6 +7738,11 @@ class GridGenerator {
             };
             
             const mouseUpHandler = () => {
+                // Commit action: drag graphics block
+                if (this.textDragState.isDragging) {
+                    this.historyManager.commitAction(this.getStateSnapshot());
+                }
+                
                 this.textDragState.isDragging = false;
                 
                 // Check if it was a click (not a drag)
@@ -8193,6 +8307,9 @@ class GridGenerator {
             mouseDownX = e.clientX;
             mouseDownY = e.clientY;
             
+            // Begin action: drag icons block
+            this.historyManager.beginAction('drag icons block', this.getStateSnapshot());
+            
             // Всегда начинаем с перетаскивания оригинала
             // Start dragging
             this.textDragState.isDragging = true;
@@ -8319,6 +8436,11 @@ class GridGenerator {
             };
             
             const mouseUpHandler = () => {
+                // Commit action: drag icons block
+                if (this.textDragState.isDragging) {
+                    this.historyManager.commitAction(this.getStateSnapshot());
+                }
+                
                 this.textDragState.isDragging = false;
                 
                 // Check if it was a click (not a drag)
@@ -8374,6 +8496,9 @@ class GridGenerator {
             mouseDownTime = Date.now();
             mouseDownX = e.clientX;
             mouseDownY = e.clientY;
+            
+            // Begin action: drag claim block
+            this.historyManager.beginAction('drag claim block', this.getStateSnapshot());
             
             // Всегда начинаем с перетаскивания оригинала
             // Start dragging
@@ -8500,6 +8625,11 @@ class GridGenerator {
             };
             
             const mouseUpHandler = (e) => {
+                // Commit action: drag claim block
+                if (this.textDragState.isDragging) {
+                    this.historyManager.commitAction(this.getStateSnapshot());
+                }
+                
                 this.textDragState.isDragging = false;
                 
                 // Check if it was a click (not a drag)
@@ -8889,6 +9019,7 @@ class GridGenerator {
     
     // Toggle element visibility
     toggleElementVisibility(type, blockId) {
+        this.historyManager.beginAction(`toggle visibility ${type}`, this.getStateSnapshot());
         if (type === 'text' && blockId) {
             const block = this.textBlocks.find(b => b.id === blockId);
             if (block) {
@@ -8965,6 +9096,7 @@ class GridGenerator {
                 }
             }
         }
+        this.historyManager.commitAction(this.getStateSnapshot());
     }
     
     // Update eye icon for toggle-chip and checkbox-label elements
@@ -9002,8 +9134,8 @@ class GridGenerator {
     
     // Duplicate element
     duplicateElement(type, blockId, skipSelection = false) {
-        // Save state before duplicating
-        this.saveState();
+        // Begin action: duplicate element
+        this.historyManager.beginAction(`duplicate ${type}`, this.getStateSnapshot());
         
         if (type === 'text' && blockId) {
             const originalBlock = this.textBlocks.find(b => b.id === blockId);
@@ -9034,6 +9166,9 @@ class GridGenerator {
                     this.selectElement('text', newId);
                 }, 100);
             }
+            
+            // Commit action: duplicate text element
+            this.historyManager.commitAction(this.getStateSnapshot());
         } else if ((type === 'graphics' || type === 'icons' || type === 'claim') && blockId) {
             const originalBlock = this.getGraphicsBlock(blockId);
             if (!originalBlock) return;
@@ -9078,12 +9213,15 @@ class GridGenerator {
                 }, 100);
             }
         }
+        
+        // Commit action: duplicate element
+        this.historyManager.commitAction(this.getStateSnapshot());
     }
     
     // Start delete element with progress bar
     startDeleteElement(button, type, blockId, name) {
-        // Save state before starting deletion
-        this.saveState();
+        // Begin action: delete element
+        this.historyManager.beginAction(`delete ${type}`, this.getStateSnapshot());
         
         // Создаем уникальный ключ для этого объекта
         const timerKey = `${type}-${blockId}`;
@@ -9118,6 +9256,9 @@ class GridGenerator {
         
         // Обновляем сетку (объект скрыт с флагом deleting)
         this.updateGrid();
+        
+        // Commit action: delete element (флаг deleting установлен)
+        this.historyManager.commitAction(this.getStateSnapshot());
         
         // Таймер для окончательного удаления (3 секунды)
         const timerId = setTimeout(() => {
@@ -9202,8 +9343,8 @@ class GridGenerator {
     
     // Add new text block
     addTextBlock() {
-        // Save state before adding
-        this.saveState();
+        // Begin action: add text block
+        this.historyManager.beginAction('add text block', this.getStateSnapshot());
         
         // Создаем новый уникальный ID
         const newId = 'text-' + Date.now();
@@ -9228,6 +9369,9 @@ class GridGenerator {
         this.updateElementsNavigator();
         this.updateGrid();
         
+        // Commit action: add text block
+        this.historyManager.commitAction(this.getStateSnapshot());
+        
         // Открываем панель редактирования для нового блока
         setTimeout(() => {
             this.selectElement('text', newId);
@@ -9236,8 +9380,8 @@ class GridGenerator {
     
     // Add new graphics block
     addGraphicsBlock(svgContent, name, originalWidth, originalHeight) {
-        // Save state before adding
-        this.saveState();
+        // Begin action: add graphics block
+        this.historyManager.beginAction('add graphics block', this.getStateSnapshot());
         
         if (!this.graphicsBlocks) {
             this.graphicsBlocks = [];
@@ -9269,6 +9413,9 @@ class GridGenerator {
         this.graphicsBlocks.push(newBlock);
         this.updateElementsNavigator();
         this.updateGrid();
+        
+        // Commit action: add graphics block
+        this.historyManager.commitAction(this.getStateSnapshot());
     }
     
     // Select and highlight element
@@ -9716,6 +9863,9 @@ class GridGenerator {
         const block = this.getTextBlock(blockId);
         if (!block) return;
         
+        // Begin action: drag text block
+        this.historyManager.beginAction('drag text block', this.getStateSnapshot());
+        
         this.textDragState = {
             isDragging: true,
             blockId: blockId,
@@ -9864,8 +10014,10 @@ class GridGenerator {
             this.markAsChanged();
         }
         
-        // Не сохраняем начальное состояние автоматически при перетаскивании
-        // Изменения будут применены только при нажатии кнопки Apply
+        // Commit action: drag text block
+        if (this.textDragState.isDragging) {
+            this.historyManager.commitAction(this.getStateSnapshot());
+        }
         
         this.textDragState.isDragging = false;
         this.textDragState.blockId = null;
@@ -11372,84 +11524,45 @@ class GridGenerator {
         }
     }
     
-    // Debounced save state - saves after user stops interacting for 300ms
-    debounceSaveState() {
-        if (this.saveStateTimer) {
-            clearTimeout(this.saveStateTimer);
-        }
-        this.saveStateTimer = setTimeout(() => {
-            this.saveState();
-        }, 300);
-    }
-    
-    // Save current state to history
-    saveState() {
-        // Don't save state if we're currently restoring from history
-        if (this.isRestoringState) {
-            return;
-        }
-        
-        // Create a deep copy of current state
-        const state = {
-            settings: JSON.parse(JSON.stringify(this.settings)),
+    /**
+     * Получить снэпшот текущего состояния приложения
+     * @returns {Object} - Снэпшот состояния {settings, textBlocks, graphicsBlocks}
+     */
+    getStateSnapshot() {
+        // ВАЖНО: this.settings — это Proxy с пустым target {}.
+        // JSON.stringify(Proxy) перечисляет собственные свойства target (которых нет!),
+        // поэтому JSON.stringify(this.settings) возвращает "{}".
+        // Используем settingsModule.getAll() для получения реальных данных.
+        return {
+            settings: JSON.parse(JSON.stringify(this.settingsModule.getAll())),
             textBlocks: JSON.parse(JSON.stringify(this.textBlocks)),
             graphicsBlocks: JSON.parse(JSON.stringify(this.graphicsBlocks))
         };
-        
-        // Check if state is different from the last saved state
-        if (this.history.length > 0) {
-            const lastState = this.history[this.historyIndex];
-            if (JSON.stringify(lastState) === JSON.stringify(state)) {
-                // State hasn't changed, don't save
-                return;
-            }
-        }
-        
-        // Remove any items after current index (when undoing and then making new changes)
-        this.history = this.history.slice(0, this.historyIndex + 1);
-        
-        // Add new state
-        this.history.push(state);
-        this.historyIndex = this.history.length - 1;
-        
-        // Limit history size
-        if (this.history.length > this.maxHistorySize) {
-            this.history.shift();
-            this.historyIndex--;
-        }
-        
-        console.log(`[UNDO] State saved. History size: ${this.history.length}, Index: ${this.historyIndex}`);
     }
     
-    // Undo last action
-    undo() {
-        console.log(`[UNDO] Current index: ${this.historyIndex}, History length: ${this.history.length}`);
-        
-        if (this.history.length < 2 || this.historyIndex <= 0) {
-            console.log('[UNDO] Nothing to undo');
-            return;
-        }
-        
-        this.historyIndex--;
-        console.log(`[UNDO] Moving to index: ${this.historyIndex}`);
-        this.restoreState(this.history[this.historyIndex]);
-    }
-    
-    // Restore state from history
-    restoreState(state) {
+    /**
+     * Применить снэпшот состояния к приложению
+     * @param {Object} snapshot - Снэпшот состояния {settings, textBlocks, graphicsBlocks}
+     */
+    applyStateSnapshot(snapshot) {
+        // Устанавливаем флаг восстановления
         this.isRestoringState = true;
+        this.historyManager.setRestoring(true);
         
         try {
-            // Restore settings
-            Object.assign(this.settings, state.settings);
+            // Восстанавливаем settings через settingsModule напрямую
+            // (this.settings — это Proxy с пустым target {}, Object.assign на нём НЕ работает)
+            // silent=true, чтобы не тригерить subscribers во время восстановления —
+            // UI обновится ниже через updateAllSliders() и updateGrid()
+            this.settingsModule.setMultiple(snapshot.settings, true);
             
-            // Restore text blocks
-            this.textBlocks = JSON.parse(JSON.stringify(state.textBlocks));
+            // Восстанавливаем text blocks
+            this.textBlocks = JSON.parse(JSON.stringify(snapshot.textBlocks));
             
-            // Restore graphics blocks
-            this.graphicsBlocks = JSON.parse(JSON.stringify(state.graphicsBlocks));
+            // Восстанавливаем graphics blocks
+            this.graphicsBlocks = JSON.parse(JSON.stringify(snapshot.graphicsBlocks));
             
-            // Update all UI elements to reflect restored state
+            // Обновляем UI элементы
             this.updateLockButtons();
             this.updateAllSliders();
             this.updateElementsNavigator();
@@ -11467,13 +11580,72 @@ class GridGenerator {
             this.generateRowPresets();
             this.updateGrid();
             
-            // Close any open panels
+            // Закрываем открытые панели
             this.closeParagraphPanel();
             this.closeGraphicsPanel();
             
         } finally {
             this.isRestoringState = false;
+            this.historyManager.setRestoring(false);
         }
+    }
+    
+    // Debounced save state - saves after user stops interacting for 300ms
+    // ВАЖНО: Этот метод используется только для слайдеров на этапе миграции.
+    // На этапе 3 будет заменен на beginAction/commitAction паттерн.
+    debounceSaveState() {
+        if (this.saveStateTimer) {
+            clearTimeout(this.saveStateTimer);
+        }
+        this.saveStateTimer = setTimeout(() => {
+            this.saveState();
+        }, 300);
+    }
+    
+    /**
+     * Сохранить текущее состояние в историю (без транзакции)
+     * Используется для простых мгновенных действий
+     * @param {string} label - Метка действия для отладки (опционально)
+     */
+    saveState(label = '') {
+        if (this.isRestoringState) {
+            return;
+        }
+        
+        const snapshot = this.getStateSnapshot();
+        this.historyManager.saveSnapshot(snapshot, label);
+    }
+    
+    /**
+     * Отменить последнее действие
+     */
+    undo() {
+        const previousState = this.historyManager.undo();
+        if (previousState) {
+            this.applyStateSnapshot(previousState);
+        } else {
+            console.log('[UNDO] Nothing to undo');
+        }
+    }
+    
+    /**
+     * Повторить отмененное действие
+     */
+    redo() {
+        const nextState = this.historyManager.redo();
+        if (nextState) {
+            this.applyStateSnapshot(nextState);
+        } else {
+            console.log('[REDO] Nothing to redo');
+        }
+    }
+    
+    /**
+     * Восстановить состояние из снэпшота (legacy метод, использует applyStateSnapshot)
+     * @deprecated Используйте applyStateSnapshot напрямую
+     */
+    restoreState(state) {
+        this.applyStateSnapshot(state);
     }
     
     // Update all sliders to reflect current settings
@@ -11530,7 +11702,9 @@ class GridGenerator {
         // Update color
         if (this.dom.hexColorInput) {
             this.dom.hexColorInput.value = this.settings.boxColor;
-            this.updateColorPreview();
+            if (this.dom.colorPreview) {
+                this.dom.colorPreview.style.backgroundColor = this.settings.boxColor;
+            }
             this.updateHSBFromHex(this.settings.boxColor);
         }
         
@@ -11552,6 +11726,84 @@ class GridGenerator {
         }
     }
     
+    /**
+     * Инициализация обработчиков истории для слайдеров
+     * Группирует действия слайдера: одно перетаскивание = одно действие в истории
+     */
+    initSliderHistoryHandlers() {
+        // Map для отслеживания активных транзакций слайдеров
+        this.activeSliderTransactions = new Map();
+        // Set для отслеживания транзакций по вводу значений с клавиатуры
+        this.activeInputTransactions = new Set();
+        
+        // Добавляем обработчики для каждого слайдера
+        this.sliderController.sliders.forEach((sliderData, sliderId) => {
+            const slider = sliderData.element;
+            const valueInput = sliderData.valueInput;
+            
+            // ===== Обработчики для перетаскивания слайдера мышью =====
+            
+            // Начало перетаскивания - начинаем транзакцию
+            slider.addEventListener('mousedown', (e) => {
+                // Только левая кнопка мыши
+                if (e.button !== 0) return;
+                
+                // Сохраняем состояние "до" изменений
+                this.historyManager.beginAction(`adjust ${sliderId}`, this.getStateSnapshot());
+                this.activeSliderTransactions.set(sliderId, true);
+            });
+            
+            // Окончание перетаскивания - завершаем транзакцию
+            slider.addEventListener('mouseup', (e) => {
+                // Только левая кнопка мыши
+                if (e.button !== 0) return;
+                
+                if (this.activeSliderTransactions.has(sliderId)) {
+                    // Сохраняем состояние "после" изменений
+                    this.historyManager.commitAction(this.getStateSnapshot());
+                    this.activeSliderTransactions.delete(sliderId);
+                }
+            });
+            
+            // Обработка случая, когда мышь уходит за пределы слайдера во время перетаскивания
+            slider.addEventListener('mouseleave', (e) => {
+                // Если кнопка мыши все еще зажата, это означает, что перетаскивание продолжается
+                // Мы не завершаем транзакцию здесь, а ждем mouseup
+            });
+            
+            // ===== Обработчики для ввода значений с клавиатуры =====
+            // Паттерн: focus → beginAction, blur → commitAction
+            // Группирует все изменения (набор текста, стрелки) в одно действие
+            
+            if (valueInput) {
+                valueInput.addEventListener('focus', () => {
+                    if (!this.activeInputTransactions.has(sliderId)) {
+                        this.historyManager.beginAction(`type ${sliderId}`, this.getStateSnapshot());
+                        this.activeInputTransactions.add(sliderId);
+                    }
+                });
+                
+                valueInput.addEventListener('blur', () => {
+                    if (this.activeInputTransactions.has(sliderId)) {
+                        this.historyManager.commitAction(this.getStateSnapshot());
+                        this.activeInputTransactions.delete(sliderId);
+                    }
+                });
+            }
+        });
+        
+        // Глобальный обработчик mouseup на случай, если мышь отпущена вне слайдера
+        document.addEventListener('mouseup', (e) => {
+            if (this.activeSliderTransactions.size > 0) {
+                // Завершаем все активные транзакции
+                this.activeSliderTransactions.forEach((_, sliderId) => {
+                    this.historyManager.commitAction(this.getStateSnapshot());
+                });
+                this.activeSliderTransactions.clear();
+            }
+        });
+    }
+    
     // ============================================
     // UI Controllers initialization (Итерация 5)
     // ============================================
@@ -11568,6 +11820,9 @@ class GridGenerator {
             const config = this.SLIDER_CONFIG[sliderId];
             this.sliderController.initSlider(sliderId, config);
         });
+        
+        // Добавляем обработчики mousedown/mouseup для группировки действий слайдеров
+        this.initSliderHistoryHandlers();
         
         console.log('✅ SliderController initialized with', this.sliderController.sliders.size, 'sliders');
         
