@@ -9244,6 +9244,76 @@ class GridGenerator {
     }
 
     /**
+     * Инлайнит CSS-стили на все элементы frame SVG и удаляет <style>,
+     * чтобы избежать конфликта CSS-классов при объединении со стикером
+     */
+    inlineFrameStyles(frameSvgEl) {
+        const styleEl = frameSvgEl.querySelector('defs > style');
+        if (!styleEl) return;
+        
+        // Парсим CSS-правила из <style>
+        const cssText = styleEl.textContent;
+        const rules = {};
+        
+        // Извлекаем правила: .className { prop: value; ... }
+        const ruleRegex = /([^{]+)\{([^}]+)\}/g;
+        let match;
+        while ((match = ruleRegex.exec(cssText)) !== null) {
+            const selectors = match[1].trim().split(',').map(s => s.trim());
+            const props = match[2].trim();
+            
+            // Парсим пары property: value
+            const propMap = {};
+            props.split(';').forEach(decl => {
+                const parts = decl.split(':');
+                if (parts.length === 2) {
+                    propMap[parts[0].trim()] = parts[1].trim();
+                }
+            });
+            
+            selectors.forEach(sel => {
+                if (!rules[sel]) rules[sel] = {};
+                Object.assign(rules[sel], propMap);
+            });
+        }
+        
+        // Применяем стили как inline-атрибуты ко всем элементам
+        const allElements = frameSvgEl.querySelectorAll('*');
+        allElements.forEach(el => {
+            const classList = el.getAttribute('class');
+            if (!classList) return;
+            
+            const classes = classList.split(/\s+/);
+            const inlineProps = {};
+            
+            classes.forEach(cls => {
+                const selector = `.${cls}`;
+                if (rules[selector]) {
+                    Object.assign(inlineProps, rules[selector]);
+                }
+            });
+            
+            // Устанавливаем inline-стили через SVG-атрибуты
+            const svgStyleAttrs = ['fill', 'stroke', 'stroke-width', 'stroke-miterlimit', 
+                                   'font-family', 'font-size', 'font-weight', 'opacity', 'isolation'];
+            
+            Object.entries(inlineProps).forEach(([prop, value]) => {
+                if (svgStyleAttrs.includes(prop)) {
+                    if (!el.hasAttribute(prop)) {
+                        el.setAttribute(prop, value);
+                    }
+                }
+            });
+            
+            // Удаляем class после инлайна
+            el.removeAttribute('class');
+        });
+        
+        // Удаляем <style> из defs
+        styleEl.remove();
+    }
+
+    /**
      * Загружает prepress frame SVG и оборачивает стикер в него
      * @param {SVGElement} stickerSvg - SVG стикера
      * @returns {SVGElement} - новый SVG с prepress frame и стикером внутри
@@ -9309,6 +9379,10 @@ class GridGenerator {
         const stickerXmm = cutXmm + (cutWmm - stickerW) / 2;
         const stickerYmm = cutYmm + (cutHmm - stickerH) / 2;
         
+        // Инлайним CSS-стили frame-элементов, чтобы избежать конфликта классов со стикером
+        // (frame и стикер могут определять .st0, .st1 и т.д. с разными значениями)
+        this.inlineFrameStyles(frameSvgEl);
+        
         // Создаем новый SVG с размерами frame (в мм)
         const resultSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         resultSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -9316,20 +9390,13 @@ class GridGenerator {
         resultSvg.setAttribute('height', `${frameHmm}mm`);
         resultSvg.setAttribute('viewBox', `0 0 ${frameWmm} ${frameHmm}`);
         
-        // Добавляем defs из frame
-        const frameDefs = frameSvgEl.querySelector('defs');
-        if (frameDefs) {
-            const importedDefs = document.importNode(frameDefs, true);
-            resultSvg.appendChild(importedDefs);
-        }
-        
         // Группа для frame content (только #info, без #cut)
         // Рисуем frame в его координатах, масштабируя из pt в mm
         const frameGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         frameGroup.setAttribute('id', 'prepress-frame');
         frameGroup.setAttribute('transform', `scale(${1 / mmToPt})`);
         
-        // Копируем все group элементы из frame, кроме #cut (его добавим отдельно поверх стикера)
+        // Копируем все group элементы из frame, кроме #cut и defs
         Array.from(frameSvgEl.children).forEach(child => {
             if (child.tagName !== 'defs' && child.id !== 'cut') {
                 const imported = document.importNode(child, true);
@@ -9343,37 +9410,21 @@ class GridGenerator {
         stickerGroup.setAttribute('id', 'sticker');
         stickerGroup.setAttribute('transform', `translate(${stickerXmm}, ${stickerYmm})`);
         
-        // Копируем содержимое стикера
+        // Копируем содержимое стикера (включая defs со стилями)
         Array.from(stickerSvg.children).forEach(child => {
-            if (child.tagName !== 'defs') {
-                const imported = document.importNode(child, true);
-                stickerGroup.appendChild(imported);
-            }
+            const imported = document.importNode(child, true);
+            stickerGroup.appendChild(imported);
         });
-        
-        // Добавляем defs из стикера (шрифты и т.д.)
-        const stickerDefs = stickerSvg.querySelector('defs');
-        if (stickerDefs) {
-            const existingDefs = resultSvg.querySelector('defs');
-            if (existingDefs) {
-                Array.from(stickerDefs.children).forEach(child => {
-                    existingDefs.appendChild(document.importNode(child, true));
-                });
-            } else {
-                resultSvg.appendChild(document.importNode(stickerDefs, true));
-            }
-        }
         
         resultSvg.appendChild(stickerGroup);
         
-        // Группа для #cut - добавляем ПОСЛЕДНЕЙ, чтобы она была поверх всего
+        // Группа для #cut — добавляем ПОСЛЕДНЕЙ, чтобы она была поверх всего
         const cutGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         cutGroup.setAttribute('id', 'cut');
         cutGroup.setAttribute('transform', `scale(${1 / mmToPt})`);
         
         const cutGroupOriginal = frameSvgEl.querySelector('#cut');
         if (cutGroupOriginal) {
-            // Копируем все дочерние элементы из #cut (rect и т.д.)
             Array.from(cutGroupOriginal.children).forEach(child => {
                 const imported = document.importNode(child, true);
                 cutGroup.appendChild(imported);

@@ -90,8 +90,14 @@ export class TextToPath {
     async convertTextElementToPath(textElement) {
         try {
             // Получаем атрибуты text элемента
-            const fontFamily = textElement.getAttribute('font-family')?.split(',')[0]?.trim() || 'TT Commons Classic';
+            let fontFamily = textElement.getAttribute('font-family')?.split(',')[0]?.trim() || 'TT Commons Classic';
             const fontWeight = textElement.getAttribute('font-weight') || '400';
+            
+            // Нормализуем имя шрифта (TTCommons-Medium -> TT Commons Classic)
+            if (fontFamily === 'TTCommons-Medium' || fontFamily === 'TT Commons') {
+                fontFamily = 'TT Commons Classic';
+            }
+            
             const fontSize = parseFloat(textElement.getAttribute('font-size') || '12');
             const x = parseFloat(textElement.getAttribute('x') || '0');
             const y = parseFloat(textElement.getAttribute('y') || '0');
