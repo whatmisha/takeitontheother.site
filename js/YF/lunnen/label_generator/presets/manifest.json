@@ -8,11 +8,6 @@
       "name": "Tablet Box Label 120×24mm",
       "file": "Tablet Box Label.json"
     },
-    {
-      "name": "Monitor Box Label 93×25mm",
-      "file": "Monitor Box Label.json"
-    }
-  ],
   "generated": "2026-02-13T00:00:00.000Z",
-  "count": 3
+  "count": 2
 }
