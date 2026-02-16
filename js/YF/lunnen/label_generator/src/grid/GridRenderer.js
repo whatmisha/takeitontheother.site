@@ -41,28 +41,32 @@ export class GridRenderer {
         const module = this.settings.get('gridModule');
         const margins = this.settings.get('margins');
         const n = this.settings.get('columnCount');
+        const fixedColumns = this.settings.get('fixedColumns') || {};
         const gridColor = this.getGridColor();
         const opacity = this.getGridOpacity(0.08);
+        const fixedOpacity = this.getGridOpacity(0.12);
         
-        const columnWidth = this.calculator.calculateColumnWidth();
+        const columnWidths = this.calculator.calculateColumnWidths();
         const margin = module * margins * scale;
-        const scaledColumnWidth = columnWidth * scale;
         const gutter = module * scale;
         
         let currentX = x + margin;
         
         for (let i = 0; i < n; i++) {
+            const colWidth = columnWidths[i] * scale;
+            const isFixed = fixedColumns[i + 1] !== undefined; // 1-based ключи
+            
             DOMUtils.createSVGElement('rect', {
                 x: currentX,
                 y: y + margin,
-                width: scaledColumnWidth,
+                width: colWidth,
                 height: height - 2 * margin,
                 fill: gridColor,
-                'fill-opacity': opacity,
+                'fill-opacity': isFixed ? fixedOpacity : opacity,
                 stroke: 'none'
             }, container);
             
-            currentX += scaledColumnWidth + gutter;
+            currentX += colWidth + gutter;
         }
     }
 
@@ -219,12 +223,13 @@ export class GridRenderer {
         const module = this.settings.get('gridModule');
         const margins = this.settings.get('margins');
         const n = this.settings.get('columnCount');
+        const fixedColumns = this.settings.get('fixedColumns') || {};
         const gridColor = this.getGridColor();
         const opacity = this.getGridOpacity(0.08);
+        const fixedOpacity = this.getGridOpacity(0.12);
         
-        const columnWidth = this.calculator.calculateColumnWidth();
+        const columnWidths = this.calculator.calculateColumnWidths();
         const margin = module * margins * scale;
-        const scaledColumnWidth = columnWidth * scale;
         const gutter = module * scale;
         let columnHeight = height - 2 * margin;
         
@@ -238,17 +243,20 @@ export class GridRenderer {
         let currentX = x + margin;
         
         for (let i = 0; i < n; i++) {
+            const colWidth = columnWidths[i] * scale;
+            const isFixed = fixedColumns[i + 1] !== undefined;
+            
             DOMUtils.createSVGElement('rect', {
                 x: currentX,
                 y: columnY,
-                width: scaledColumnWidth,
+                width: colWidth,
                 height: columnHeight,
                 fill: gridColor,
-                'fill-opacity': opacity,
+                'fill-opacity': isFixed ? fixedOpacity : opacity,
                 stroke: 'none'
             }, container);
             
-            currentX += scaledColumnWidth + gutter;
+            currentX += colWidth + gutter;
         }
     }
 

@@ -448,8 +448,8 @@ export class BarcodeGenerator {
             // Ширина основного кода = ширина колонки (без учета первой цифры)
             const barcodeWidth = columnWidth;
             
-            // Размер шрифта: 10 pt = 10 * (25.4/72) = 3.5278 мм
-            const textFontSizePt = 10;
+            // Размер шрифта: по умолчанию 10 pt, можно задать через block.barcode.fontSize
+            const textFontSizePt = (block.barcode && block.barcode.fontSize !== undefined) ? block.barcode.fontSize : 10;
             const textFontSizeMm = textFontSizePt * (25.4 / 72);
             
             // Baseline текста должен быть на уровне 6-го бейслайна от верха штрихкода.

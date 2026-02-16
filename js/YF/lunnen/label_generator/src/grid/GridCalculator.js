@@ -43,7 +43,9 @@ export class GridCalculator {
         const values = dependencies.map(key => {
             const value = this.settings.get(key);
             // Для чисел используем фиксированную точность, чтобы избежать проблем с плавающей точкой
-            return typeof value === 'number' ? value.toFixed(10) : String(value);
+            if (typeof value === 'number') return value.toFixed(10);
+            if (typeof value === 'object' && value !== null) return JSON.stringify(value);
+            return String(value);
         });
         return `${this._cacheVersion}_${dependencies.join(',')}_${values.join(',')}`;
     }
@@ -208,23 +210,112 @@ export class GridCalculator {
     }
 
     /**
-     * Рассчитать ширину колонки
+     * Рассчитать ширину колонки (для регулярной сетки или авто-ширину для кастомной)
+     * При наличии fixedColumns возвращает ширину авто-колонок
      * @returns {number} - ширина в мм
      */
     calculateColumnWidth() {
         return this._getCached(
             'columnWidth',
-            ['gridModule', 'margins', 'columnCount', 'frontWidth'],
+            ['gridModule', 'margins', 'columnCount', 'frontWidth', 'fixedColumns'],
             () => {
                 const module = this.settings.get('gridModule');
                 const margins = this.settings.get('margins');
                 const columnCount = this.settings.get('columnCount');
                 const frontWidth = this.settings.get('frontWidth');
+                const fixedColumns = this.settings.get('fixedColumns') || {};
                 
-                // Формула: columnWidth = (frontWidth - module × margins × 2 - module × (n - 1)) / n
-                return (frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
+                const totalGutters = module * (columnCount - 1);
+                const totalMargins = module * margins * 2;
+                
+                // Суммируем ширины фиксированных колонок (только в пределах columnCount)
+                const fixedKeys = Object.keys(fixedColumns).filter(k => {
+                    const idx = parseInt(k);
+                    return idx >= 1 && idx <= columnCount;
+                });
+                const fixedTotal = fixedKeys.reduce((sum, key) => sum + fixedColumns[key], 0);
+                const autoCount = columnCount - fixedKeys.length;
+                
+                if (autoCount <= 0) {
+                    // Все колонки фиксированные — возвращаем 0 (нет авто-колонок)
+                    return 0;
+                }
+                
+                // autoWidth = (frontWidth - margins - gutters - fixedTotal) / autoCount
+                return (frontWidth - totalMargins - totalGutters - fixedTotal) / autoCount;
             }
         );
+    }
+
+    /**
+     * Рассчитать массив ширин всех колонок (с учетом fixedColumns)
+     * @returns {number[]} - массив ширин в мм, индекс 0 = колонка 1
+     */
+    calculateColumnWidths() {
+        return this._getCached(
+            'columnWidths',
+            ['gridModule', 'margins', 'columnCount', 'frontWidth', 'fixedColumns'],
+            () => {
+                const columnCount = this.settings.get('columnCount');
+                const fixedColumns = this.settings.get('fixedColumns') || {};
+                const autoWidth = this.calculateColumnWidth();
+                
+                const widths = [];
+                for (let i = 1; i <= columnCount; i++) {
+                    if (fixedColumns[i] !== undefined) {
+                        widths.push(fixedColumns[i]);
+                    } else {
+                        widths.push(autoWidth);
+                    }
+                }
+                return widths;
+            }
+        );
+    }
+
+    /**
+     * Проверить, есть ли фиксированные колонки
+     * @returns {boolean}
+     */
+    hasFixedColumns() {
+        const fixedColumns = this.settings.get('fixedColumns') || {};
+        return Object.keys(fixedColumns).length > 0;
+    }
+
+    /**
+     * Получить X-позицию начала колонки (в мм, от левого края контентной области)
+     * @param {number} column - номер колонки (1-based)
+     * @returns {number} - X в мм от начала контентной области (без учёта margin)
+     */
+    getColumnX(column) {
+        const module = this.settings.get('gridModule');
+        const widths = this.calculateColumnWidths();
+        
+        let x = 0;
+        for (let i = 0; i < column - 1; i++) {
+            x += widths[i] + module; // ширина колонки + gutter
+        }
+        return x;
+    }
+
+    /**
+     * Рассчитать ширину спана из нескольких колонок (от startColumn до startColumn + span - 1)
+     * @param {number} startColumn - начальная колонка (1-based)
+     * @param {number} span - количество колонок
+     * @returns {number} - ширина в мм
+     */
+    calculateSpanWidth(startColumn, span) {
+        const module = this.settings.get('gridModule');
+        const widths = this.calculateColumnWidths();
+        
+        let totalWidth = 0;
+        for (let i = startColumn - 1; i < startColumn - 1 + span && i < widths.length; i++) {
+            totalWidth += widths[i];
+        }
+        // Добавляем гаттеры между колонками спана
+        totalWidth += module * (span - 1);
+        
+        return totalWidth;
     }
 
     /**
@@ -246,9 +337,14 @@ export class GridCalculator {
     /**
      * Рассчитать ширину блока по количеству колонок
      * @param {number} widthInColumns - ширина в колонках
+     * @param {number} [startColumn=1] - начальная колонка (1-based), используется при fixedColumns
      * @returns {number} - ширина в мм
      */
-    calculateBlockWidth(widthInColumns) {
+    calculateBlockWidth(widthInColumns, startColumn = 1) {
+        if (this.hasFixedColumns()) {
+            return this.calculateSpanWidth(startColumn, widthInColumns);
+        }
+        
         const module = this.settings.get('gridModule');
         const columnWidth = this.calculateColumnWidth();
         
@@ -265,12 +361,11 @@ export class GridCalculator {
     calculateBlockPosition(block, scale = 1) {
         const module = this.settings.get('gridModule');
         const margins = this.settings.get('margins');
-        const columnWidth = this.calculateColumnWidth();
         const gutter = module;
         
-        // Позиция X (учитывая левое поле и номер колонки)
-        // Вычитаем 1, т.к. отсчет колонок начинается с 1
-        const x = module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale);
+        // Позиция X с учётом кастомных ширин колонок
+        const columnX = this.getColumnX(block.x); // X от начала контентной области
+        const x = (module * margins + columnX) * scale;
         
         // Позиция Y (на основе row и baselineOffset)
         const yInBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
@@ -335,25 +430,12 @@ export class GridCalculator {
     }
 
     /**
-     * Получить ширину одной колонки в pt
+     * Получить ширину авто-колонки в мм (для обратной совместимости)
+     * При наличии fixedColumns возвращает ширину авто-колонок
      * @returns {number}
      */
     getColumnWidth() {
-        return this._getCached(
-            'getColumnWidth',
-            ['gridModule', 'margins', 'frontWidth', 'columnCount'],
-            () => {
-                const module = this.settings.get('gridModule');
-                const margins = this.settings.get('margins');
-                const frontWidth = this.settings.get('frontWidth');
-                const columnCount = this.settings.get('columnCount');
-                
-                const contentWidth = frontWidth - 2 * margins * module;
-                const gutterWidth = module;
-                
-                return (contentWidth - (columnCount - 1) * gutterWidth) / columnCount;
-            }
-        );
+        return this.calculateColumnWidth();
     }
 
     /**
@@ -378,15 +460,14 @@ export class GridCalculator {
         const rowHeight = this.settings.get('rowHeight');
         
         // Базовый расчет для фронтальной панели
-        const columnWidth = this.getColumnWidth();
-        const gutterSize = this.getGutterSize();
         const marginX = margins * module;
         const marginY = margins * module;
         const rowHeightMm = rowHeight * module;
         const baselineOffsetMm = baselineOffset * module;
         
         // Локальные координаты (относительно поверхности)
-        let localX = marginX + (column - 1) * (columnWidth + gutterSize);
+        // Используем getColumnX для корректного расчёта при кастомных колонках
+        let localX = marginX + this.getColumnX(column);
         let localY = marginY + row * (rowHeightMm + module) + baselineOffsetMm;
         
         // Если не фронтальная панель, применяем трансформацию
@@ -457,13 +538,26 @@ export class GridCalculator {
         const module = this.settings.get('gridModule');
         const margins = this.settings.get('margins');
         const rowHeight = this.settings.get('rowHeight');
+        const columnCount = this.settings.get('columnCount');
         
-        // Вычисляем колонку
-        const columnWidth = this.getColumnWidth();
-        const gutterSize = this.getGutterSize();
         const marginX = margins * module;
         const xInContent = x - marginX;
-        const column = Math.max(1, Math.round(xInContent / (columnWidth + gutterSize)) + 1);
+        
+        // Вычисляем колонку — находим ближайшую по X
+        const widths = this.calculateColumnWidths();
+        let bestColumn = 1;
+        let bestDist = Infinity;
+        let colX = 0;
+        for (let i = 0; i < widths.length; i++) {
+            const colCenter = colX + widths[i] / 2;
+            const dist = Math.abs(xInContent - colX);
+            if (dist < bestDist) {
+                bestDist = dist;
+                bestColumn = i + 1;
+            }
+            colX += widths[i] + module;
+        }
+        const column = Math.max(1, Math.min(columnCount, bestColumn));
         
         // Вычисляем строку и baseline
         const marginY = margins * module;
@@ -516,6 +610,8 @@ export class GridCalculator {
             rowCount: this.settings.get('rowCount'),
             rowHeight: this.settings.get('rowHeight'),
             columnWidth: this.getColumnWidth(),
+            columnWidths: this.calculateColumnWidths(),
+            fixedColumns: this.settings.get('fixedColumns') || {},
             gutterSize: this.getGutterSize(),
             totalBaselines: this.getTotalBaselines()
         };

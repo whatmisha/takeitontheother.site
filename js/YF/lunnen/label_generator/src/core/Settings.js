@@ -21,6 +21,7 @@ export class Settings {
             rowCount: DEFAULTS.ROW_COUNT,
             rowHeight: DEFAULTS.ROW_HEIGHT,
             linkMode: DEFAULTS.LINK_MODE,
+            fixedColumns: DEFAULTS.FIXED_COLUMNS,
             
             // Стили текста - Headline
             headlineSize: DEFAULTS.HEADLINE_SIZE,
@@ -70,7 +71,12 @@ export class Settings {
         const oldValue = this.data[key];
         this.data[key] = value;
         
-        if (!silent && oldValue !== value) {
+        // Для объектов (например fixedColumns) используем JSON-сравнение
+        const changed = typeof value === 'object' && value !== null
+            ? JSON.stringify(oldValue) !== JSON.stringify(value)
+            : oldValue !== value;
+        
+        if (!silent && changed) {
             this.notify(key, value, oldValue);
         }
     }
@@ -150,6 +156,7 @@ export class Settings {
             rowCount: DEFAULTS.ROW_COUNT,
             rowHeight: DEFAULTS.ROW_HEIGHT,
             linkMode: DEFAULTS.LINK_MODE,
+            fixedColumns: DEFAULTS.FIXED_COLUMNS,
             headlineSize: DEFAULTS.HEADLINE_SIZE,
             lineHeight: DEFAULTS.LINE_HEIGHT,
             tracking: DEFAULTS.TRACKING,

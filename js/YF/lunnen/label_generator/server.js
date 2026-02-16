@@ -4,7 +4,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const PORT = 8081; // Используем порт 8081 вместо 8080
+const PORT = 5001; // Используем порт 5001
 
 const MIME_TYPES = {
     '.html': 'text/html',

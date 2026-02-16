@@ -190,6 +190,9 @@ export class SVGExporter {
                 rows: settings.rowCount,
                 rowHeight: settings.rowHeight,
                 linkMode: settings.linkMode,
+                ...(settings.fixedColumns && Object.keys(settings.fixedColumns).length > 0
+                    ? { fixedColumns: settings.fixedColumns }
+                    : {}),
                 visibility: {
                     columns: settings.showColumns,
                     rows: settings.showRows,
@@ -231,22 +234,36 @@ export class SVGExporter {
             graphics: {
                 blocks: graphicsBlocks
                     .filter(block => !block.isBuiltIn) // Исключаем встроенные (icons, claim)
-                    .map((block, index) => ({
-                        id: block.id || `graphic_${index + 1}`,
-                        name: block.name || `Graphic ${index + 1}`,
-                        position: {
-                            column: block.x || 1,
-                            row: block.row || 0,
-                            baseline: block.baselineOffset || 0
-                        },
-                        height: block.heightInModules || 3,
-                        originalWidth: block.originalWidth,
-                        originalHeight: block.originalHeight,
-                        alignment: block.alignment || 'left',
-                        surface: block.surface || 'front',
+                    .map((block, index) => {
+                        const result = {
+                            id: block.id || `graphic_${index + 1}`,
+                            name: block.name || `Graphic ${index + 1}`,
+                            position: {
+                                column: block.x || 1,
+                                row: block.row || 0,
+                                baseline: block.baselineOffset || 0
+                            },
+                            height: block.heightInModules || 3,
+                            originalWidth: block.originalWidth,
+                            originalHeight: block.originalHeight,
+                            alignment: block.alignment || 'left',
+                            surface: block.surface || 'front'
+                        };
+                        // Сохраняем width если задана
+                        if (block.widthInModules) {
+                            result.width = block.widthInModules;
+                        }
+                        // Сохраняем barcode-свойства
+                        if (block.barcode || block.barcodeType) {
+                            result.barcode = block.barcode || {
+                                type: block.barcodeType,
+                                column: block.barcodeColumn
+                            };
+                        }
                         // SVG код в самом конце
-                        svg: block.svgContent || ''
-                    }))
+                        result.svg = block.svgContent || '';
+                        return result;
+                    })
             }
         };
     }
@@ -400,6 +417,7 @@ export class SVGExporter {
             rowCount: newData.grid?.rows,
             rowHeight: newData.grid?.rowHeight,
             linkMode: newData.grid?.linkMode,
+            fixedColumns: newData.grid?.fixedColumns || {},
             showColumns: newData.grid?.visibility?.columns,
             showRows: newData.grid?.visibility?.rows,
             showBaseline: newData.grid?.visibility?.baseline,
@@ -458,6 +476,8 @@ export class SVGExporter {
                 isBuiltIn: false,
                 svgContent: graphic.svg || '',
                 heightInModules: graphic.height || 3,
+                widthInModules: graphic.width || null,
+                sizeMode: graphic.sizeMode || 'height',
                 x: graphic.position?.column || 1,
                 row: graphic.position?.row || 0,
                 baselineOffset: graphic.position?.baseline || 0,

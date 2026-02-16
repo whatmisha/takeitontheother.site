@@ -74,6 +74,7 @@ export const DEFAULTS = {
     ROW_COUNT: 12,
     ROW_HEIGHT: 7,         // в модулях
     LINK_MODE: 'module',   // 'off', 'rows-height', или 'module'
+    FIXED_COLUMNS: {},      // Словарь фиксированных колонок: { номер_колонки(1-based): ширина_мм }
     
     // Стили текста
     HEADLINE_SIZE: 0.69,        // в модулях

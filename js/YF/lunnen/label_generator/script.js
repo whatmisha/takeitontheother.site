@@ -114,7 +114,9 @@ class GridGenerator {
                 baseStep: 1,
                 shiftStep: 10,
                 onUpdate: () => {
+                    this.cleanupFixedColumns();
                     this.constrainAllObjectsToGrid();
+                    this.renderCustomColumnsUI();
                     this.updateGrid();
                 }
             },
@@ -230,7 +232,7 @@ class GridGenerator {
             },
             headlineSizeValue: {
                 setting: 'headlineSize',
-                min: 6,
+                min: 1,
                 max: 144,
                 decimals: 2,
                 baseStep: 0.01,
@@ -239,7 +241,7 @@ class GridGenerator {
             },
             lineHeightValue: {
                 setting: 'lineHeight',
-                min: 6,
+                min: 1,
                 max: 144,
                 decimals: 2,
                 baseStep: 0.01,
@@ -257,7 +259,7 @@ class GridGenerator {
             },
             textSizeValue: {
                 setting: 'textSize',
-                min: 6,
+                min: 1,
                 max: 144,
                 decimals: 2,
                 baseStep: 0.01,
@@ -266,7 +268,7 @@ class GridGenerator {
             },
             textLineHeightValue: {
                 setting: 'textLineHeight',
-                min: 6,
+                min: 1,
                 max: 144,
                 decimals: 2,
                 baseStep: 0.01,
@@ -284,7 +286,7 @@ class GridGenerator {
             },
             captionSizeValue: {
                 setting: 'captionSize',
-                min: 6,
+                min: 1,
                 max: 144,
                 decimals: 2,
                 baseStep: 0.01,
@@ -293,7 +295,7 @@ class GridGenerator {
             },
             captionLineHeightValue: {
                 setting: 'captionLineHeight',
-                min: 6,
+                min: 1,
                 max: 144,
                 decimals: 2,
                 baseStep: 0.01,
@@ -532,6 +534,7 @@ class GridGenerator {
         // ============================================
         this.availablePresets = [];
         this.loadPresetsManifest();
+        this.updatePrepressToggle();
         
         // Calculate initial row count to fill the format (after DOM is ready)
         const rowCount = this.gridCalculator.calculateRowCount();
@@ -540,6 +543,9 @@ class GridGenerator {
         
         // Generate row presets
         this.generateRowPresets();
+        
+        // Render custom columns UI
+        this.renderCustomColumnsUI();
         
         // Initialize
         this.initEventListeners();
@@ -617,6 +623,10 @@ class GridGenerator {
             rowCountValue: document.getElementById('rowCountValue'),
             rowHeightValue: document.getElementById('rowHeightValue'),
             
+            // Custom columns
+            customColumnsSection: document.getElementById('customColumnsSection'),
+            customColumnsList: document.getElementById('customColumnsList'),
+            
             // Containers
             linkedControlsContainer: document.getElementById('linkedControlsContainer'),
             
@@ -639,6 +649,8 @@ class GridGenerator {
             // Buttons
             exportPdfBtn: document.getElementById('exportPdfBtn'),
             convertToOutlinesCheckbox: document.getElementById('convertToOutlinesCheckbox'),
+            prepressCheckbox: document.getElementById('prepressCheckbox'),
+            prepressToggleLabel: document.getElementById('prepressToggleLabel'),
             exportSettingsBtn: document.getElementById('exportSettingsBtn'),
             importSettingsBtn: document.getElementById('importSettingsBtn'),
             exportCurrentSvgBtn: document.getElementById('exportCurrentSvgBtn'),
@@ -740,10 +752,8 @@ class GridGenerator {
             graphicsXInput: document.getElementById('graphicsXInput'),
             graphicsRowInput: document.getElementById('graphicsRowInput'),
             graphicsBaselineInput: document.getElementById('graphicsBaselineInput'),
-            graphicsSizeInput: document.getElementById('graphicsSizeInput'),
-            graphicsSizeUnitHeight: document.getElementById('graphicsSizeUnitHeight'),
-            graphicsSizeUnitWidth: document.getElementById('graphicsSizeUnitWidth'),
-            graphicsHeightInput: document.getElementById('graphicsHeightInput'), // Keep for backward compatibility
+            graphicsHeightInput: document.getElementById('graphicsHeightInput'),
+            graphicsWidthInput: document.getElementById('graphicsWidthInput'),
             graphicsLockPositionToggle: document.getElementById('graphicsLockPositionToggle'),
             graphicsAlignRightToggle: document.getElementById('graphicsAlignRightToggle'),
             fileUploadArea: document.getElementById('fileUploadArea'),
@@ -770,6 +780,14 @@ class GridGenerator {
         // ============================================
         // NOTE: Slider initialization moved to initUIControllers()
         // ============================================
+        
+        // Subscribe to settings that affect custom column widths
+        const columnsAffectingKeys = ['gridModule', 'margins', 'frontWidth', 'fixedColumns'];
+        columnsAffectingKeys.forEach(key => {
+            this.settingsModule.subscribe(key, () => {
+                this.renderCustomColumnsUI();
+            });
+        });
         
         // Edit mode toggle
         const editModeToggle = document.getElementById('editModeToggle');
@@ -1631,6 +1649,7 @@ class GridGenerator {
         // Current selected preset
         this.currentPreset = null;
         this.currentPresetName = 'Custom';
+        this.prepressConfig = null;
         
         // Track widths for animation
         this.presetWidths = {};
@@ -1813,6 +1832,10 @@ class GridGenerator {
             
             // Apply settings
             if (normalizedData.settings) {
+                // Сбрасываем fixedColumns если в пресете его нет
+                if (normalizedData.settings.fixedColumns === undefined) {
+                    normalizedData.settings.fixedColumns = {};
+                }
                 Object.entries(normalizedData.settings).forEach(([key, value]) => {
                     this.settingsModule.set(key, value);
                 });
@@ -1898,6 +1921,10 @@ class GridGenerator {
             // Store preset name for export
             this.currentPresetName = data.presetName || filename.replace('.json', '');
             
+            // Prepress: сохраняем конфигурацию и обновляем UI тогла
+            this.prepressConfig = data.prepress || null;
+            this.updatePrepressToggle();
+            
             // Update UI and grid (используем немедленное обновление при загрузке пресета)
             this.updateGridImmediate();
             this.updateElementsNavigator();
@@ -1980,6 +2007,9 @@ class GridGenerator {
         
         // Generate row presets
         this.generateRowPresets();
+        
+        // Update custom columns UI
+        this.renderCustomColumnsUI();
         
         // Update font size displays
         this.updateFontSizeDisplays();
@@ -2630,26 +2660,6 @@ class GridGenerator {
             }
         });
         
-        // Graphics Size Mode переключатели (Height/Width)
-        if (this.dom.graphicsSizeUnitHeight) {
-            this.dom.graphicsSizeUnitHeight.addEventListener('click', (e) => {
-                e.preventDefault();
-                const block = this.graphicsBlocks?.find(b => b.id === this.currentEditingGraphicsId);
-                if (block && block.sizeMode !== 'height') {
-                    this.switchGraphicsSizeMode(block, 'height');
-                }
-            });
-        }
-        if (this.dom.graphicsSizeUnitWidth) {
-            this.dom.graphicsSizeUnitWidth.addEventListener('click', (e) => {
-                e.preventDefault();
-                const block = this.graphicsBlocks?.find(b => b.id === this.currentEditingGraphicsId);
-                if (block && block.sizeMode !== 'width') {
-                    this.switchGraphicsSizeMode(block, 'width');
-                }
-            });
-        }
-        
         // Graphics Align Right toggle
         if (this.dom.graphicsAlignRightToggle) {
             this.dom.graphicsAlignRightToggle.addEventListener('change', () => {
@@ -2741,30 +2751,7 @@ class GridGenerator {
                     decimals: 0,
                     applyConstraints: (value) => {
                         const maxColumns = this.settings.columnCount;
-                        const module = this.settings.gridModule;
-                        const margins = this.settings.margins;
-                        const heightInMm = module * block.heightInModules;
-                        const aspectRatio = block.originalWidth / block.originalHeight;
-                        const widthInMm = heightInMm * aspectRatio;
-                        
-                        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (maxColumns - 1)) / maxColumns;
-                        const gutter = module;
-                        const graphicsWidthInColumns = Math.ceil(widthInMm / (columnWidth + gutter));
-                        
-                        const alignment = block.alignment || 'left';
-                        let minX = 1;
-                        let maxX;
-                        
-                        if (alignment === 'right') {
-                            // x — правая колонка, левая граница не должна выходить за пределы сетки
-                            minX = graphicsWidthInColumns;
-                            maxX = maxColumns;
-                        } else {
-                            // x — левая колонка, правая граница не должна выходить за пределы
-                            maxX = Math.max(1, maxColumns - graphicsWidthInColumns + 1);
-                        }
-                        
-                        return Math.max(minX, Math.min(value, maxX));
+                        return Math.max(1, Math.min(value, maxColumns));
                     }
                 },
                 { 
@@ -2838,53 +2825,51 @@ class GridGenerator {
                     }
                 },
                 { 
-                    id: 'graphicsSizeInput', 
-                    property: (block) => {
-                        // Determine which property to update based on sizeMode
-                        const sizeMode = block.sizeMode || 'height';
-                        return sizeMode === 'height' ? 'heightInModules' : 'widthInModules';
-                    },
+                    id: 'graphicsHeightInput', 
+                    property: 'heightInModules',
                     baseStep: 0.25,
                     shiftStep: 1,
                     decimals: 2,
                     applyConstraints: (value) => {
-                        const sizeMode = block.sizeMode || 'height';
                         const module = this.settings.gridModule;
                         const margins = this.settings.margins;
-                        const aspectRatio = block.originalWidth / block.originalHeight;
+                        const constrainedValue = Math.max(0.25, Math.min(value, 100));
                         
-                        // Different max values for height and width modes
-                        const maxValue = sizeMode === 'height' ? 20 : 100;
-                        const constrainedValue = Math.max(0.25, Math.min(value, maxValue));
+                        const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+                        const maxYInBaseline = Math.floor(contentHeightMm / module);
+                        const maxY = maxYInBaseline - constrainedValue;
                         
-                        if (sizeMode === 'height') {
-                            // After changing height, recheck vertical position constraints
-                            const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                            const maxYInBaseline = Math.floor(contentHeightMm / module);
-                            const maxY = maxYInBaseline - constrainedValue;
+                        const currentY = this.getBlockY(block);
+                        if (currentY > maxY) {
+                            const adjustedY = Math.max(0, maxY);
+                            const { row, baselineOffset } = this.yToRowBaseline(adjustedY);
+                            block.row = row;
+                            block.baselineOffset = baselineOffset;
                             
-                            const currentY = this.getBlockY(block);
-                            if (currentY > maxY) {
-                                const adjustedY = Math.max(0, maxY);
-                                const { row, baselineOffset } = this.yToRowBaseline(adjustedY);
-                                block.row = row;
-                                block.baselineOffset = baselineOffset;
-                                
-                                if (this.dom.graphicsRowInput) this.dom.graphicsRowInput.value = row + 1;
-                                if (this.dom.graphicsBaselineInput) {
-                                    const globalBaseline = this.rowBaselineToY(row, baselineOffset);
-                                    this.dom.graphicsBaselineInput.value = globalBaseline + 1;
-                                }
+                            if (this.dom.graphicsRowInput) this.dom.graphicsRowInput.value = row + 1;
+                            if (this.dom.graphicsBaselineInput) {
+                                const globalBaseline = this.rowBaselineToY(row, baselineOffset);
+                                this.dom.graphicsBaselineInput.value = globalBaseline + 1;
                             }
-                        } else {
-                            // sizeMode === 'width': check horizontal constraints
-                            const widthInMm = constrainedValue * module;
-                            const contentWidthMm = this.settings.frontWidth - 2 * margins * module;
-                            
-                            // Ensure graphics fits within content area
-                            if (widthInMm > contentWidthMm) {
-                                return Math.floor(contentWidthMm / module * 4) / 4; // Round down to 0.25
-                            }
+                        }
+                        
+                        return constrainedValue;
+                    }
+                },
+                { 
+                    id: 'graphicsWidthInput', 
+                    property: 'widthInModules',
+                    baseStep: 0.25,
+                    shiftStep: 1,
+                    decimals: 2,
+                    applyConstraints: (value) => {
+                        const module = this.settings.gridModule;
+                        const margins = this.settings.margins;
+                        const constrainedValue = Math.max(0.25, Math.min(value, 100));
+                        
+                        const contentWidthMm = this.settings.frontWidth - 2 * margins * module;
+                        if (constrainedValue * module > contentWidthMm) {
+                            return Math.floor(contentWidthMm / module * 4) / 4;
                         }
                         
                         return constrainedValue;
@@ -3318,6 +3303,9 @@ class GridGenerator {
         }
         if (this.dom.graphicsHeightInput) {
             this.dom.graphicsHeightInput.value = '3.00';
+        }
+        if (this.dom.graphicsWidthInput) {
+            this.dom.graphicsWidthInput.value = '3.00';
         }
         if (this.dom.graphicsLockPositionToggle) {
             this.dom.graphicsLockPositionToggle.checked = false;
@@ -4187,59 +4175,6 @@ class GridGenerator {
     }
     
     // Switch margins unit between mod and mm
-    switchGraphicsSizeMode(block, newMode) {
-        if (!block) return;
-        
-        const oldMode = block.sizeMode || 'height';
-        const aspectRatio = block.originalWidth / block.originalHeight;
-        const module = this.settings.gridModule;
-        
-        // Calculate the actual size in mm (physical size that should stay the same)
-        let actualHeightInMm, actualWidthInMm;
-        if (oldMode === 'height') {
-            actualHeightInMm = (block.heightInModules || 3) * module;
-            actualWidthInMm = actualHeightInMm * aspectRatio;
-        } else {
-            // oldMode === 'width'
-            actualWidthInMm = (block.widthInModules || 3) * module;
-            actualHeightInMm = actualWidthInMm / aspectRatio;
-        }
-        
-        // Update block's size mode
-        block.sizeMode = newMode;
-        
-        // Update active state of buttons
-        if (this.dom.graphicsSizeUnitHeight && this.dom.graphicsSizeUnitWidth) {
-            if (newMode === 'height') {
-                this.dom.graphicsSizeUnitHeight.classList.add('active');
-                this.dom.graphicsSizeUnitWidth.classList.remove('active');
-            } else {
-                this.dom.graphicsSizeUnitWidth.classList.add('active');
-                this.dom.graphicsSizeUnitHeight.classList.remove('active');
-            }
-        }
-        
-        // Update the input value
-        if (newMode === 'height') {
-            // Show height in modules
-            const heightInModules = actualHeightInMm / module;
-            block.heightInModules = parseFloat(heightInModules.toFixed(2));
-            if (this.dom.graphicsSizeInput) {
-                this.dom.graphicsSizeInput.value = heightInModules.toFixed(2);
-            }
-        } else {
-            // Show width in modules
-            const widthInModules = actualWidthInMm / module;
-            block.widthInModules = parseFloat(widthInModules.toFixed(2));
-            if (this.dom.graphicsSizeInput) {
-                this.dom.graphicsSizeInput.value = widthInModules.toFixed(2);
-            }
-        }
-        
-        // Update grid to reflect new size
-        this.updateGrid();
-    }
-    
     switchMarginsUnit(newUnit) {
         // Margins are always stored in modules internally
         const currentMarginsInMod = this.settings.margins;
@@ -4916,31 +4851,33 @@ class GridGenerator {
         return frontY + topMargin + nearestBaseline;
     }
     
-    // Calculate text block width in mm based on columns
+    // Calculate text block width in mm based on columns (with fixedColumns support)
     calculateBlockWidth(block) {
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         const columnCount = this.settings.columnCount;
+        const fixedColumns = this.settings.fixedColumns || {};
         const widthInColumns = block.width;
         
-        // Calculate column width (same formula as in drawColumns)
-        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
+        // Если есть калькулятор и фиксированные колонки — используем его
+        if (this.gridCalculator && Object.keys(fixedColumns).length > 0) {
+            return this.gridCalculator.calculateBlockWidth(widthInColumns, block.x || 1);
+        }
         
-        // Text width = column width × number of columns + gutters between them
+        // Фолбек: стандартная формула для регулярной сетки
+        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
         const textWidth = columnWidth * widthInColumns + module * (widthInColumns - 1);
         
         return textWidth;
     }
     
-    // Calculate text block position in mm
+    // Calculate text block position in mm (with fixedColumns support)
     calculateBlockPosition(block, scale = 1) {
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         const columnCount = this.settings.columnCount;
-        
-        // Calculate column width
-        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
-        const gutter = module;
+        const fixedColumns = this.settings.fixedColumns || {};
+        const hasFixed = Object.keys(fixedColumns).length > 0;
         
         // Position based on column and row
         let x;
@@ -4948,16 +4885,27 @@ class GridGenerator {
         // Check alignment (default to 'left' for backward compatibility)
         const alignment = block.alignment || 'left';
         
-        if (alignment === 'right') {
-            // For right alignment: return the RIGHT edge of the column
-            // x включает левый margin, так как колонки считаются внутри margin
-            // Правый край колонки = левый край + ширина колонки
-            x = module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale) + columnWidth * scale;
+        if (hasFixed && this.gridCalculator) {
+            // Кастомная сетка: используем массив ширин из калькулятора
+            const columnX = this.gridCalculator.getColumnX(block.x);
+            
+            if (alignment === 'right') {
+                const widths = this.gridCalculator.calculateColumnWidths();
+                const colWidth = widths[block.x - 1] || 0;
+                x = (module * margins + columnX + colWidth) * scale;
+            } else {
+                x = (module * margins + columnX) * scale;
+            }
         } else {
-            // Left alignment (default): return the LEFT edge of the column
-            // x включает левый margin, так как колонки считаются внутри margin
-            // Вычитаем 1, т.к. отсчет колонок начинается с 1
-            x = module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale);
+            // Регулярная сетка: стандартная формула
+            const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
+            const gutter = module;
+            
+            if (alignment === 'right') {
+                x = module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale) + columnWidth * scale;
+            } else {
+                x = module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale);
+            }
         }
         
         // y НЕ включает topMargin - он добавляется при отрисовке
@@ -5632,6 +5580,60 @@ class GridGenerator {
     }
     
     // Draw graphics block on canvas
+    /**
+     * Вычислить размеры графического блока в мм
+     * Поддерживает независимую ширину/высоту: если заданы оба — используются оба,
+     * иначе вычисляется по sizeMode и aspect ratio
+     */
+    getGraphicsBlockDimensions(block) {
+        const module = this.settings.gridModule;
+        const aspectRatio = block.originalWidth / block.originalHeight;
+        
+        // Если заданы и высота, и ширина — используем оба независимо
+        if (block.heightInModules && block.widthInModules) {
+            return {
+                heightInMm: module * block.heightInModules,
+                widthInMm: module * block.widthInModules
+            };
+        }
+        
+        const sizeMode = block.sizeMode || 'height';
+        if (sizeMode === 'width' && block.widthInModules) {
+            const widthInMm = module * block.widthInModules;
+            return { heightInMm: widthInMm / aspectRatio, widthInMm };
+        }
+        
+        const heightInMm = module * (block.heightInModules || 3);
+        return { heightInMm, widthInMm: heightInMm * aspectRatio };
+    }
+    
+    /**
+     * Вычислить X-позицию графического блока с учётом кастомных колонок
+     */
+    getGraphicsBlockX(block, frontX, widthInMm, scale) {
+        const module = this.settings.gridModule;
+        const margins = this.settings.margins;
+        const alignment = block.alignment || 'left';
+        
+        // Для EAN13 учитываем внутренний левый отступ до полос
+        const isEan = block.barcodeType === 'ean13' && block.leftPaddingMm != null && block.barsWidthMm != null;
+        const scaleFactor = widthInMm > 0 ? (widthInMm / (block.originalWidth || widthInMm)) : 1;
+        const leftPaddingScaled = isEan ? (block.leftPaddingMm * scaleFactor * scale) : 0;
+        
+        // Используем gridCalculator для корректной работы с кастомными колонками
+        const columnX = this.gridCalculator.getColumnX(block.x); // X от начала контентной области
+        const widths = this.gridCalculator.calculateColumnWidths();
+        const colWidth = widths[block.x - 1] || 0;
+        
+        if (alignment === 'right') {
+            const areaRightEdge = frontX + (module * margins + columnX + colWidth) * scale;
+            return areaRightEdge - widthInMm * scale;
+        } else {
+            const columnLeftEdge = frontX + (module * margins + columnX) * scale;
+            return isEan ? (columnLeftEdge - leftPaddingScaled) : columnLeftEdge;
+        }
+    }
+    
     drawGraphicsBlock(container, block, frontX, frontY, frontWidth, frontHeight, scale) {
         if (!block.svgContent || block.svgContent.trim() === '') return;
         
@@ -5639,23 +5641,9 @@ class GridGenerator {
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         
-        // Calculate dimensions based on sizeMode
-        const sizeMode = block.sizeMode || 'height';
-        const aspectRatio = block.originalWidth / block.originalHeight;
-        let heightInMm, widthInMm;
+        // Calculate dimensions
+        const { heightInMm, widthInMm } = this.getGraphicsBlockDimensions(block);
         
-        if (sizeMode === 'height') {
-            heightInMm = module * (block.heightInModules || 3);
-            widthInMm = heightInMm * aspectRatio;
-        } else {
-            // sizeMode === 'width'
-            widthInMm = module * (block.widthInModules || 3);
-            heightInMm = widthInMm / aspectRatio;
-        }
-        
-        // Calculate position
-        const columnWidth = (frontWidth / scale - module * margins * 2 - module * (this.settings.columnCount - 1)) / this.settings.columnCount;
-        const gutter = module;
         const topMargin = module * margins * scale;
         
         const yInBaseline = this.getBlockY({
@@ -5663,27 +5651,8 @@ class GridGenerator {
             baselineOffset: block.baselineOffset
         });
         
-        // Calculate X position based on alignment
-        const alignment = block.alignment || 'left';
-        let graphicsX;
-        
-        // Для EAN13 учитываем внутренний левый отступ до полос
-        const isEan = block.barcodeType === 'ean13' && block.leftPaddingMm != null && block.barsWidthMm != null;
-        const scaleFactor = widthInMm > 0 ? (widthInMm / (block.originalWidth || widthInMm)) : 1;
-        const leftPaddingScaled = isEan ? (block.leftPaddingMm * scaleFactor * scale) : 0;
-        
-        if (alignment === 'right') {
-            // Для правого выравнивания: x — это ПРАВАЯ граница колонки, к которой прижимаются полосы
-            const areaRightColumn = block.x;
-            const areaRightEdge = frontX + module * margins * scale + (areaRightColumn - 1) * (columnWidth * scale + gutter * scale) + columnWidth * scale;
-            // Смещаем SVG так, чтобы правая граница полос совпала с правой границей колонки
-            graphicsX = areaRightEdge - widthInMm * scale;
-        } else {
-            // Для левого выравнивания: x — это ЛЕВАЯ граница колонки, с которой начинается первая полоса
-            const columnLeftEdge = frontX + module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale);
-            graphicsX = isEan ? (columnLeftEdge - leftPaddingScaled) : columnLeftEdge;
-        }
-        
+        // Calculate X position using grid calculator (supports custom columns)
+        const graphicsX = this.getGraphicsBlockX(block, frontX, widthInMm, scale);
         const graphicsY = frontY + yInBaseline * (module * scale) + topMargin;
         
         // Scale dimensions
@@ -5732,13 +5701,15 @@ class GridGenerator {
         // Use contentColor for graphics blocks (except barcodes which use gridColor)
         const contentColor = this.settings.contentColor || '#17264E';
         const svgColor = block.barcodeType ? gridColor : contentColor;
+        // Если заданы оба размера независимо — растягиваем без сохранения пропорций
+        const hasIndependentSize = block.heightInModules && block.widthInModules;
         const nestedSvg = this.createSVGElement('svg', {
             x: graphicsX,
             y: graphicsY,
             width: scaledWidth,
             height: scaledHeight,
             viewBox: `0 0 ${block.originalWidth} ${block.originalHeight}`,
-            preserveAspectRatio: 'xMinYMin meet',
+            preserveAspectRatio: hasIndependentSize ? 'none' : 'xMinYMin meet',
             style: `color: ${svgColor}; overflow: visible; pointer-events: none;`
         }, graphicsGroup);
         
@@ -5804,36 +5775,34 @@ class GridGenerator {
                 const module = this.settings.gridModule;
                 const margins = this.settings.margins;
                 const columnCount = this.settings.columnCount;
-                
-                // Calculate column width
-                const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
+                const colWidths = this.gridCalculator.calculateColumnWidths();
                 const gutter = module;
                 
-                // Convert pixel movement to grid units
+                // Convert pixel movement to grid units using variable column widths
                 const effectiveScale = scale;
-                const columnWithGutter = (columnWidth + gutter) * effectiveScale;
                 const moduleScaled = module * effectiveScale;
                 
-                const newX = Math.round((this.textDragState.startBlockX * columnWithGutter + dx) / columnWithGutter);
-                let newY = Math.round((this.textDragState.startBlockY * moduleScaled + dy) / moduleScaled);
+                // Find nearest column by X position
+                const startColX = this.gridCalculator.getColumnX(this.textDragState.startBlockX);
+                const newXMm = startColX + dx / effectiveScale;
                 
-                // Calculate graphics width for drag constraints
-                // Для EAN-13 используем только ширину полос (barsWidthMm),
-                // без левого поля с первой цифрой, чтобы блок вел себя
-                // как «одноколоночный» и не перепрыгивал во вторую колонку.
-                let widthInMm;
-                if (block.barcodeType === 'ean13' && block.barsWidthMm != null) {
-                    widthInMm = block.barsWidthMm;
-                } else {
-                    const heightInMm = module * block.heightInModules;
-                    const aspectRatio = block.originalWidth / block.originalHeight;
-                    widthInMm = heightInMm * aspectRatio;
+                // Find which column this X falls into
+                let newX = 1;
+                let bestDist = Infinity;
+                for (let col = 1; col <= columnCount; col++) {
+                    const colX = this.gridCalculator.getColumnX(col);
+                    const dist = Math.abs(newXMm - colX);
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        newX = col;
+                    }
                 }
-                const widthInColumns = widthInMm / (columnWidth + gutter);
+                
+                let newY = Math.round((this.textDragState.startBlockY * moduleScaled + dy) / moduleScaled);
                 
                 // Constrain within grid boundaries
                 const minX = 1;
-                const maxX = Math.max(1, Math.floor(columnCount - widthInColumns) + 1);
+                const maxX = columnCount;
                 block.x = Math.max(minX, Math.min(maxX, newX));
                 
                 // Convert Y from baseline grid to row and baseline offset
@@ -5940,26 +5909,22 @@ class GridGenerator {
             const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
             this.dom.graphicsBaselineInput.value = globalBaseline + 1;
         }
+        // Set height and width fields
         if (this.dom.graphicsHeightInput) {
-            this.dom.graphicsHeightInput.value = block.heightInModules.toFixed(2);
+            this.dom.graphicsHeightInput.value = (block.heightInModules || 3).toFixed(2);
         }
-        
-        // Set size mode and value
-        const sizeMode = block.sizeMode || 'height';
-        if (this.dom.graphicsSizeUnitHeight && this.dom.graphicsSizeUnitWidth) {
-            if (sizeMode === 'height') {
-                this.dom.graphicsSizeUnitHeight.classList.add('active');
-                this.dom.graphicsSizeUnitWidth.classList.remove('active');
-                if (this.dom.graphicsSizeInput) {
-                    this.dom.graphicsSizeInput.value = (block.heightInModules || 3).toFixed(2);
-                }
+        if (this.dom.graphicsWidthInput) {
+            // Если widthInModules не задан, вычисляем из heightInModules и aspectRatio
+            const aspectRatio = block.originalWidth / block.originalHeight;
+            const module = this.settings.gridModule;
+            let widthMod;
+            if (block.widthInModules) {
+                widthMod = block.widthInModules;
             } else {
-                this.dom.graphicsSizeUnitWidth.classList.add('active');
-                this.dom.graphicsSizeUnitHeight.classList.remove('active');
-                if (this.dom.graphicsSizeInput) {
-                    this.dom.graphicsSizeInput.value = (block.widthInModules || 3).toFixed(2);
-                }
+                const heightMm = module * (block.heightInModules || 3);
+                widthMod = (heightMm * aspectRatio) / module;
             }
+            this.dom.graphicsWidthInput.value = widthMod.toFixed(2);
         }
         
         if (this.dom.graphicsLockPositionToggle) {
@@ -6317,27 +6282,13 @@ class GridGenerator {
     drawGraphicsBlockForExport(container, block, frontX, frontY, frontWidth, frontHeight, scale) {
         if (!block.svgContent || block.svgContent.trim() === '') return;
         
-        const gridColor = this.getContrastColor(); // Color depends on background
+        const gridColor = this.getContrastColor();
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         
-        // Calculate dimensions based on sizeMode
-        const sizeMode = block.sizeMode || 'height';
-        const aspectRatio = block.originalWidth / block.originalHeight;
-        let heightInMm, widthInMm;
+        // Calculate dimensions
+        const { heightInMm, widthInMm } = this.getGraphicsBlockDimensions(block);
         
-        if (sizeMode === 'height') {
-            heightInMm = module * (block.heightInModules || 3);
-            widthInMm = heightInMm * aspectRatio;
-        } else {
-            // sizeMode === 'width'
-            widthInMm = module * (block.widthInModules || 3);
-            heightInMm = widthInMm / aspectRatio;
-        }
-        
-        // Calculate position
-        const columnWidth = (frontWidth / scale - module * margins * 2 - module * (this.settings.columnCount - 1)) / this.settings.columnCount;
-        const gutter = module;
         const topMargin = module * margins * scale;
         
         const yInBaseline = this.getBlockY({
@@ -6345,27 +6296,8 @@ class GridGenerator {
             baselineOffset: block.baselineOffset
         });
         
-        // Calculate X position based on alignment
-        const alignment = block.alignment || 'left';
-        let graphicsX;
-        
-        // Для EAN13 учитываем внутренний левый отступ до полос
-        const isEan = block.barcodeType === 'ean13' && block.leftPaddingMm != null && block.barsWidthMm != null;
-        const scaleFactor = widthInMm > 0 ? (widthInMm / (block.originalWidth || widthInMm)) : 1;
-        const leftPaddingScaled = isEan ? (block.leftPaddingMm * scaleFactor * scale) : 0;
-        
-        if (alignment === 'right') {
-            // Для правого выравнивания: x — это ПРАВАЯ граница колонки, к которой прижимаются полосы
-            const areaRightColumn = block.x;
-            const areaRightEdge = frontX + module * margins * scale + (areaRightColumn - 1) * (columnWidth * scale + gutter * scale) + columnWidth * scale;
-            // Смещаем SVG так, чтобы правая граница полос совпала с правой границей колонки
-            graphicsX = areaRightEdge - widthInMm * scale;
-        } else {
-            // Для левого выравнивания: x — это ЛЕВАЯ граница колонки, с которой начинается первая полоса
-            const columnLeftEdge = frontX + module * margins * scale + (block.x - 1) * (columnWidth * scale + gutter * scale);
-            graphicsX = isEan ? (columnLeftEdge - leftPaddingScaled) : columnLeftEdge;
-        }
-        
+        // Calculate X position using grid calculator (supports custom columns)
+        const graphicsX = this.getGraphicsBlockX(block, frontX, widthInMm, scale);
         const graphicsY = frontY + yInBaseline * (module * scale) + topMargin;
         
         // Scale dimensions
@@ -6373,13 +6305,14 @@ class GridGenerator {
         const scaledHeight = heightInMm * scale;
         
         // Create nested SVG for graphics with correct viewBox
+        const hasIndependentSize = block.heightInModules && block.widthInModules;
         const nestedSvg = this.createSVGElement('svg', {
             x: graphicsX,
             y: graphicsY,
             width: scaledWidth,
             height: scaledHeight,
             viewBox: `0 0 ${block.originalWidth} ${block.originalHeight}`,
-            preserveAspectRatio: 'xMinYMin meet',
+            preserveAspectRatio: hasIndependentSize ? 'none' : 'xMinYMin meet',
             style: `color: ${gridColor}; overflow: visible;`
         }, container);
         
@@ -8361,6 +8294,157 @@ class GridGenerator {
         this.scheduleGridUpdate();
     }
     
+    // ========== Custom Columns ==========
+    
+    /**
+     * Построить/обновить UI кастомных колонок
+     */
+    renderCustomColumnsUI() {
+        const section = this.dom.customColumnsSection;
+        const list = this.dom.customColumnsList;
+        if (!section || !list) return;
+        
+        const columnCount = this.settings.columnCount;
+        const fixedColumns = this.settings.fixedColumns || {};
+        
+        // Показываем секцию только если колонок > 1
+        section.style.display = columnCount > 1 ? '' : 'none';
+        if (columnCount <= 1) return;
+        
+        // Вычисляем текущие ширины
+        const widths = this.gridCalculator
+            ? this.gridCalculator.calculateColumnWidths()
+            : [];
+        
+        // Очищаем список
+        list.innerHTML = '';
+        
+        for (let i = 1; i <= columnCount; i++) {
+            const isFixed = fixedColumns[i] !== undefined;
+            const width = widths[i - 1] || 0;
+            
+            const row = document.createElement('div');
+            row.className = 'custom-column-row';
+            
+            // Номер колонки
+            const label = document.createElement('span');
+            label.className = 'custom-column-label';
+            label.textContent = i;
+            row.appendChild(label);
+            
+            // Переключатель auto/fixed
+            const typeGroup = document.createElement('div');
+            typeGroup.className = 'custom-column-type';
+            
+            const autoBtn = document.createElement('button');
+            autoBtn.type = 'button';
+            autoBtn.className = 'unit-btn' + (!isFixed ? ' active' : '');
+            autoBtn.textContent = 'auto';
+            autoBtn.addEventListener('click', () => this.setColumnType(i, 'auto'));
+            
+            const fixedBtn = document.createElement('button');
+            fixedBtn.type = 'button';
+            fixedBtn.className = 'unit-btn' + (isFixed ? ' active' : '');
+            fixedBtn.textContent = 'fixed';
+            fixedBtn.addEventListener('click', () => this.setColumnType(i, 'fixed'));
+            
+            typeGroup.appendChild(autoBtn);
+            typeGroup.appendChild(fixedBtn);
+            row.appendChild(typeGroup);
+            
+            // Ширина (инпут или отображение)
+            const widthGroup = document.createElement('div');
+            widthGroup.className = 'custom-column-width';
+            
+            if (isFixed) {
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.className = 'number-input';
+                input.value = fixedColumns[i].toFixed(2);
+                input.min = '1';
+                input.max = '500';
+                input.step = '0.5';
+                input.addEventListener('change', (e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val) && val > 0) {
+                        this.setFixedColumnWidth(i, val);
+                    }
+                });
+                widthGroup.appendChild(input);
+                
+                const unit = document.createElement('span');
+                unit.className = 'unit';
+                unit.textContent = 'mm';
+                widthGroup.appendChild(unit);
+            } else {
+                const computed = document.createElement('span');
+                computed.className = 'computed-width';
+                computed.textContent = width.toFixed(2) + ' mm';
+                widthGroup.appendChild(computed);
+            }
+            
+            row.appendChild(widthGroup);
+            list.appendChild(row);
+        }
+    }
+    
+    /**
+     * Переключить тип колонки (auto / fixed)
+     */
+    setColumnType(columnIndex, type) {
+        const fixedColumns = { ...(this.settings.fixedColumns || {}) };
+        
+        if (type === 'fixed') {
+            // Берём текущую вычисленную ширину как начальное значение
+            const widths = this.gridCalculator
+                ? this.gridCalculator.calculateColumnWidths()
+                : [];
+            const currentWidth = widths[columnIndex - 1] || 10;
+            fixedColumns[columnIndex] = Math.round(currentWidth * 100) / 100;
+        } else {
+            delete fixedColumns[columnIndex];
+        }
+        
+        this.settings.fixedColumns = fixedColumns;
+        this.settingsModule.set('fixedColumns', fixedColumns);
+        this.renderCustomColumnsUI();
+        this.updateGrid();
+    }
+    
+    /**
+     * Установить ширину фиксированной колонки
+     */
+    setFixedColumnWidth(columnIndex, widthMm) {
+        const fixedColumns = { ...(this.settings.fixedColumns || {}) };
+        fixedColumns[columnIndex] = widthMm;
+        
+        this.settings.fixedColumns = fixedColumns;
+        this.settingsModule.set('fixedColumns', fixedColumns);
+        this.renderCustomColumnsUI();
+        this.updateGrid();
+    }
+    
+    /**
+     * Очистить фиксированные колонки, которые выходят за пределы columnCount
+     */
+    cleanupFixedColumns() {
+        const fixedColumns = { ...(this.settings.fixedColumns || {}) };
+        const columnCount = this.settings.columnCount;
+        let changed = false;
+        
+        for (const key of Object.keys(fixedColumns)) {
+            if (parseInt(key) > columnCount) {
+                delete fixedColumns[key];
+                changed = true;
+            }
+        }
+        
+        if (changed) {
+            this.settings.fixedColumns = fixedColumns;
+            this.settingsModule.set('fixedColumns', fixedColumns);
+        }
+    }
+    
     /**
      * Внутренний метод, выполняющий фактическое обновление сетки.
      * @private
@@ -8858,14 +8942,17 @@ class GridGenerator {
         const module = this.settings.gridModule;
         const margins = this.settings.margins;
         const n = this.settings.columnCount;
+        const fixedColumns = this.settings.fixedColumns || {};
         const gridColor = this.getContrastColor();
         const opacity = this.getGridOpacity(0.08);
+        const fixedOpacity = this.getGridOpacity(0.12);
         
-        // Calculate column width (same as front panel)
-        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (n - 1)) / n;
+        // Массив ширин колонок (с учётом fixedColumns)
+        const columnWidths = this.gridCalculator 
+            ? this.gridCalculator.calculateColumnWidths()
+            : Array(n).fill((this.settings.frontWidth - module * margins * 2 - module * (n - 1)) / n);
         
         const margin = module * margins * scale;
-        const scaledColumnWidth = columnWidth * scale;
         const gutter = module * scale;
         
         // Height with margins
@@ -8882,17 +8969,20 @@ class GridGenerator {
         let currentX = x + margin;
         
         for (let i = 0; i < n; i++) {
+            const colWidth = columnWidths[i] * scale;
+            const isFixed = fixedColumns[i + 1] !== undefined;
+            
             this.createSVGElement('rect', {
                 x: currentX,
                 y: columnY,
-                width: scaledColumnWidth,
+                width: colWidth,
                 height: columnHeight,
                 fill: gridColor,
-                'fill-opacity': opacity,
+                'fill-opacity': isFixed ? fixedOpacity : opacity,
                 stroke: 'none'
             }, container);
             
-            currentX += scaledColumnWidth + gutter;
+            currentX += colWidth + gutter;
         }
     }
     
@@ -9123,21 +9213,191 @@ class GridGenerator {
         return 'laptop';
     }
 
+    /**
+     * Обновляет состояние тогла Prepress: активен только если пресет имеет prepress-конфигурацию
+     */
+    updatePrepressToggle() {
+        const hasPrepress = this.prepressConfig && this.prepressConfig.enabled && this.prepressConfig.frame;
+        
+        if (this.dom.prepressCheckbox) {
+            if (hasPrepress) {
+                this.dom.prepressCheckbox.disabled = false;
+                this.dom.prepressCheckbox.checked = true;
+            } else {
+                this.dom.prepressCheckbox.disabled = true;
+                this.dom.prepressCheckbox.checked = false;
+            }
+        }
+        if (this.dom.prepressToggleLabel) {
+            this.dom.prepressToggleLabel.style.opacity = hasPrepress ? '1' : '0.4';
+            this.dom.prepressToggleLabel.style.pointerEvents = hasPrepress ? 'auto' : 'none';
+        }
+    }
+
+    /**
+     * Проверяет, нужно ли оборачивать экспорт в prepress frame
+     */
+    isPrepressEnabled() {
+        const hasConfig = this.prepressConfig && this.prepressConfig.enabled && this.prepressConfig.frame;
+        const isChecked = this.dom.prepressCheckbox ? this.dom.prepressCheckbox.checked : false;
+        return hasConfig && isChecked;
+    }
+
+    /**
+     * Загружает prepress frame SVG и оборачивает стикер в него
+     * @param {SVGElement} stickerSvg - SVG стикера
+     * @returns {SVGElement} - новый SVG с prepress frame и стикером внутри
+     */
+    async wrapWithPrepressFrame(stickerSvg) {
+        if (!this.prepressConfig || !this.prepressConfig.frame) {
+            return stickerSvg;
+        }
+        
+        // Загружаем prepress frame SVG
+        const frameUrl = this.prepressConfig.frame;
+        const response = await fetch(frameUrl);
+        if (!response.ok) {
+            console.warn(`Не удалось загрузить prepress frame: ${frameUrl}`);
+            return stickerSvg;
+        }
+        const frameText = await response.text();
+        
+        // Парсим frame SVG
+        const parser = new DOMParser();
+        const frameDoc = parser.parseFromString(frameText, 'image/svg+xml');
+        const frameSvgEl = frameDoc.querySelector('svg');
+        if (!frameSvgEl) {
+            console.warn('Prepress frame SVG не содержит элемент <svg>');
+            return stickerSvg;
+        }
+        
+        // Получаем viewBox frame
+        const frameViewBox = frameSvgEl.getAttribute('viewBox');
+        const [, , fvbW, fvbH] = frameViewBox.split(/\s+/).map(Number);
+        
+        // Находим rect#cut для позиционирования стикера (вместо удаленного #print)
+        const cutRect = frameSvgEl.querySelector('#cut rect');
+        if (!cutRect) {
+            console.warn('Prepress frame не содержит #cut rect');
+            return stickerSvg;
+        }
+        
+        const cutX = parseFloat(cutRect.getAttribute('x'));
+        const cutY = parseFloat(cutRect.getAttribute('y'));
+        const cutW = parseFloat(cutRect.getAttribute('width'));
+        const cutH = parseFloat(cutRect.getAttribute('height'));
+        
+        // frame viewBox в пунктах, стикер — в мм
+        // 1pt = 25.4/72 мм; 1мм = 72/25.4 pt
+        const mmToPt = 72 / 25.4;
+        
+        // Получаем размеры стикера (в мм из viewBox)
+        const stickerVB = stickerSvg.getAttribute('viewBox');
+        const [, , stickerW, stickerH] = stickerVB.split(/\s+/).map(Number);
+        
+        // Размеры frame viewBox в мм
+        const frameWmm = fvbW / mmToPt;
+        const frameHmm = fvbH / mmToPt;
+        
+        // Позиция cut rect в мм (стикер выравнивается по центру cut rect)
+        const cutXmm = cutX / mmToPt;
+        const cutYmm = cutY / mmToPt;
+        const cutWmm = cutW / mmToPt;
+        const cutHmm = cutH / mmToPt;
+        
+        // Центрируем стикер внутри cut rect
+        const stickerXmm = cutXmm + (cutWmm - stickerW) / 2;
+        const stickerYmm = cutYmm + (cutHmm - stickerH) / 2;
+        
+        // Создаем новый SVG с размерами frame (в мм)
+        const resultSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        resultSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        resultSvg.setAttribute('width', `${frameWmm}mm`);
+        resultSvg.setAttribute('height', `${frameHmm}mm`);
+        resultSvg.setAttribute('viewBox', `0 0 ${frameWmm} ${frameHmm}`);
+        
+        // Добавляем defs из frame
+        const frameDefs = frameSvgEl.querySelector('defs');
+        if (frameDefs) {
+            const importedDefs = document.importNode(frameDefs, true);
+            resultSvg.appendChild(importedDefs);
+        }
+        
+        // Группа для frame content (только #info, без #cut)
+        // Рисуем frame в его координатах, масштабируя из pt в mm
+        const frameGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        frameGroup.setAttribute('id', 'prepress-frame');
+        frameGroup.setAttribute('transform', `scale(${1 / mmToPt})`);
+        
+        // Копируем все group элементы из frame, кроме #cut (его добавим отдельно поверх стикера)
+        Array.from(frameSvgEl.children).forEach(child => {
+            if (child.tagName !== 'defs' && child.id !== 'cut') {
+                const imported = document.importNode(child, true);
+                frameGroup.appendChild(imported);
+            }
+        });
+        resultSvg.appendChild(frameGroup);
+        
+        // Группа для стикера, позиционированная по центру cut rect
+        const stickerGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        stickerGroup.setAttribute('id', 'sticker');
+        stickerGroup.setAttribute('transform', `translate(${stickerXmm}, ${stickerYmm})`);
+        
+        // Копируем содержимое стикера
+        Array.from(stickerSvg.children).forEach(child => {
+            if (child.tagName !== 'defs') {
+                const imported = document.importNode(child, true);
+                stickerGroup.appendChild(imported);
+            }
+        });
+        
+        // Добавляем defs из стикера (шрифты и т.д.)
+        const stickerDefs = stickerSvg.querySelector('defs');
+        if (stickerDefs) {
+            const existingDefs = resultSvg.querySelector('defs');
+            if (existingDefs) {
+                Array.from(stickerDefs.children).forEach(child => {
+                    existingDefs.appendChild(document.importNode(child, true));
+                });
+            } else {
+                resultSvg.appendChild(document.importNode(stickerDefs, true));
+            }
+        }
+        
+        resultSvg.appendChild(stickerGroup);
+        
+        // Группа для #cut - добавляем ПОСЛЕДНЕЙ, чтобы она была поверх всего
+        const cutGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        cutGroup.setAttribute('id', 'cut');
+        cutGroup.setAttribute('transform', `scale(${1 / mmToPt})`);
+        
+        const cutGroupOriginal = frameSvgEl.querySelector('#cut');
+        if (cutGroupOriginal) {
+            // Копируем все дочерние элементы из #cut (rect и т.д.)
+            Array.from(cutGroupOriginal.children).forEach(child => {
+                const imported = document.importNode(child, true);
+                cutGroup.appendChild(imported);
+            });
+            resultSvg.appendChild(cutGroup);
+        }
+        
+        return resultSvg;
+    }
+
     // Итерация 7: Упрощенный экспорт SVG через SVGExporter
     async exportSVG() {
         try {
             const { frontWidth, frontHeight, gridModule, columnCount, rowCount } = this.settings;
             
             // Создаем SVG для экспорта (scale = 1 для точных размеров)
-            const exportSvg = await this.createExportSVG();
+            let exportSvg = await this.createExportSVG();
             
-            // Генерируем timestamp с точностью до минуты
-            const now = new Date();
-            const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+            // Оборачиваем в prepress frame если включено
+            if (this.isPrepressEnabled()) {
+                exportSvg = await this.wrapWithPrepressFrame(exportSvg);
+            }
             
-            // Генерируем имя файла: "размер колонки строки модуль timestamp.svg"
-            // Формируем имя файла: "(значение из ячейки B)_[device]_label_120×24mm.svg"
-            // Получаем значение из ячейки B текущей строки данных
+            // Генерируем имя файла
             let cellBValue = '';
             if (this.loadedTableData && 
                 this.currentRowIndex !== null && 
@@ -9146,20 +9406,17 @@ class GridGenerator {
                 this.currentRowIndex < this.loadedTableData.length) {
                 const currentRow = this.loadedTableData[this.currentRowIndex];
                 if (currentRow && currentRow.length > 1) {
-                    cellBValue = currentRow[1] || ''; // Ячейка B (индекс 1)
+                    cellBValue = currentRow[1] || '';
                 }
             }
             
-            // Очищаем значение от недопустимых символов для имени файла
             const sanitizedValue = cellBValue.replace(/[^a-zA-Z0-9а-яА-ЯёЁ\s\-_]/g, '').trim() || 'label';
             const size = `${frontWidth}×${frontHeight}mm`;
             const deviceType = this.getDeviceType();
             const filename = `${sanitizedValue}_${deviceType}_label_${size}.svg`;
             
-            // Получаем значение тогла "Outline fonts" (по умолчанию true)
             const convertToOutlines = this.dom.convertToOutlinesCheckbox ? this.dom.convertToOutlinesCheckbox.checked : true;
             
-            // Экспортируем через модуль
             await this.svgExporter.exportToFile(exportSvg, filename, {
                 removeInteractive: true,
                 optimizeSize: true,
@@ -9177,13 +9434,14 @@ class GridGenerator {
             const { frontWidth, frontHeight, gridModule, columnCount, rowCount } = this.settings;
             
             // Создаем SVG для экспорта (scale = 1 для точных размеров)
-            const exportSvg = await this.createExportSVG();
+            let exportSvg = await this.createExportSVG();
             
-            // Генерируем timestamp с точностью до минуты
-            const now = new Date();
-            const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+            // Оборачиваем в prepress frame если включено
+            if (this.isPrepressEnabled()) {
+                exportSvg = await this.wrapWithPrepressFrame(exportSvg);
+            }
             
-            // Генерируем имя файла аналогично SVG экспорту
+            // Генерируем имя файла
             let cellBValue = '';
             if (this.loadedTableData && 
                 this.currentRowIndex !== null && 
@@ -9192,28 +9450,25 @@ class GridGenerator {
                 this.currentRowIndex < this.loadedTableData.length) {
                 const currentRow = this.loadedTableData[this.currentRowIndex];
                 if (currentRow && currentRow.length > 1) {
-                    cellBValue = currentRow[1] || ''; // Ячейка B (индекс 1)
+                    cellBValue = currentRow[1] || '';
                 }
             }
             
-            // Очищаем значение от недопустимых символов для имени файла
             const sanitizedValue = cellBValue.replace(/[^a-zA-Z0-9а-яА-ЯёЁ\s\-_]/g, '').trim() || 'label';
             const size = `${frontWidth}×${frontHeight}mm`;
             const deviceType = this.getDeviceType();
             const filename = `${sanitizedValue}_${deviceType}_label_${size}.pdf`;
             
-            // Получаем значение тогла "Outline fonts" (по умолчанию true)
             const convertToOutlines = this.dom.convertToOutlinesCheckbox ? this.dom.convertToOutlinesCheckbox.checked : true;
             
             // Используем размеры SVG для формата страницы
             const svgWidth = parseFloat(exportSvg.getAttribute('width')) || parseFloat(exportSvg.viewBox.baseVal.width);
             const svgHeight = parseFloat(exportSvg.getAttribute('height')) || parseFloat(exportSvg.viewBox.baseVal.height);
             
-            // Экспортируем через модуль PDFExporter
             await this.pdfExporter.exportToFile(exportSvg, filename, {
                 removeInteractive: true,
                 convertTextToOutlines: convertToOutlines,
-                format: [svgWidth, svgHeight] // Используем размеры SVG как формат страницы
+                format: [svgWidth, svgHeight]
             });
         } catch (error) {
             console.error('Ошибка при экспорте PDF:', error);
@@ -9285,12 +9540,17 @@ class GridGenerator {
                 }
 
                 // Создаем SVG для экспорта
-                const exportSvg = await this.createExportSVG();
+                let exportSvg = await this.createExportSVG();
+                
+                // Оборачиваем в prepress frame если включено
+                if (this.isPrepressEnabled()) {
+                    exportSvg = await this.wrapWithPrepressFrame(exportSvg);
+                }
 
-                // Генерируем имя файла: "(значение из ячейки B)_[device]_label_120×24mm.svg"
+                // Генерируем имя файла
                 let cellBValue = '';
                 if (row && row.length > 1) {
-                    cellBValue = row[1] || ''; // Ячейка B (индекс 1)
+                    cellBValue = row[1] || '';
                 }
                 const sanitizedValue = cellBValue.replace(/[^a-zA-Z0-9а-яА-ЯёЁ\s\-_]/g, '').trim() || `row${rowIndex + 1}`;
                 const deviceType = this.getDeviceType();
@@ -9880,22 +10140,29 @@ class GridGenerator {
                 }
 
                 // Создаем SVG для экспорта
-                const exportSvg = await this.createExportSVG();
+                let exportSvg = await this.createExportSVG();
+                
+                // Оборачиваем в prepress frame если включено
+                if (this.isPrepressEnabled()) {
+                    exportSvg = await this.wrapWithPrepressFrame(exportSvg);
+                }
 
-                // Генерируем имя файла: "(значение из ячейки B)_[device]_label_120×24mm.pdf"
+                // Генерируем имя файла
                 let cellBValue = '';
                 if (row && row.length > 1) {
-                    cellBValue = row[1] || ''; // Ячейка B (индекс 1)
+                    cellBValue = row[1] || '';
                 }
                 const sanitizedValue = cellBValue.replace(/[^a-zA-Z0-9а-яА-ЯёЁ\s\-_]/g, '').trim() || `row${rowIndex + 1}`;
                 const deviceType = this.getDeviceType();
                 const filename = `${sanitizedValue}_${deviceType}_label_${size}.pdf`;
 
                 // Экспортируем PDF
+                const svgWidth = parseFloat(exportSvg.getAttribute('width')) || parseFloat(exportSvg.viewBox.baseVal.width);
+                const svgHeight = parseFloat(exportSvg.getAttribute('height')) || parseFloat(exportSvg.viewBox.baseVal.height);
                 await this.pdfExporter.exportToFile(exportSvg, filename, {
                     removeInteractive: true,
                     convertTextToOutlines: convertToOutlines,
-                    format: [frontWidth, frontHeight]
+                    format: [svgWidth, svgHeight]
                 });
 
                 // Небольшая задержка между скачиваниями, чтобы браузер успел обработать

@@ -2406,3 +2406,81 @@ legend {
     }
 }
 
+/* ========== Custom Columns Section ========== */
+
+.custom-columns-section {
+    padding-top: 0;
+    margin-bottom: var(--spacing-lg);
+}
+
+.custom-columns-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+}
+
+.custom-columns-header .control-label {
+    font-size: var(--font-size-sm);
+    opacity: 0.6;
+}
+
+.custom-columns-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.custom-column-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    min-height: 28px;
+}
+
+.custom-column-label {
+    font-size: var(--font-size-sm);
+    opacity: 0.5;
+    width: 14px;
+    text-align: right;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.custom-column-type {
+    display: flex;
+    gap: 0;
+    flex-shrink: 0;
+}
+
+.custom-column-type .unit-btn {
+    font-size: 10px;
+    padding: 2px 6px;
+    min-width: 32px;
+    text-align: center;
+}
+
+.custom-column-width {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.custom-column-width .number-input {
+    width: 60px;
+    font-size: var(--font-size-sm);
+    padding: 2px 6px;
+    height: 24px;
+}
+
+.custom-column-width .computed-width {
+    font-size: var(--font-size-sm);
+    opacity: 0.35;
+    font-variant-numeric: tabular-nums;
+}
+
+.custom-column-width .unit {
+    font-size: var(--font-size-sm);
+    opacity: 0.3;
+}

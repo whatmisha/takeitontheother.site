@@ -212,6 +212,16 @@
                             </div>
                         </div>
                         
+                        <!-- Custom columns section -->
+                        <div class="control-group custom-columns-section" id="customColumnsSection" style="display: none;">
+                            <div class="custom-columns-header">
+                                <span class="control-label">Custom columns</span>
+                            </div>
+                            <div class="custom-columns-list" id="customColumnsList">
+                                <!-- Dynamically generated -->
+                            </div>
+                        </div>
+                        
                         <div class="control-group">
                             <label for="rowHeightValue">
                                 <span>Row Height <span class="unit">mod</span></span>
@@ -368,6 +378,13 @@
                     <span class="toggle-slider"></span>
                 </div>
                 <span class="toggle-label-text">Outline</span>
+            </label>
+            <label class="toggle-label" id="prepressToggleLabel">
+                <div class="toggle-switch">
+                    <input type="checkbox" id="prepressCheckbox" checked aria-label="Prepress">
+                    <span class="toggle-slider"></span>
+                </div>
+                <span class="toggle-label-text">Prepress</span>
             </label>
         </div>
     </nav>
@@ -821,16 +838,18 @@
                     </div>
                     
                     <div class="control-group">
-                        <label for="graphicsSizeInput">
-                            <span>Size 
-                                <span class="unit-buttons">
-                                    <button type="button" class="unit-btn active" data-unit="height" id="graphicsSizeUnitHeight">H</button>
-                                    <button type="button" class="unit-btn" data-unit="width" id="graphicsSizeUnitWidth">W</button>
-                                </span>
-                                <span class="unit">mod</span>
-                            </span>
+                        <label for="graphicsHeightInput">
+                            <span>Height <span class="unit">mod</span></span>
                         </label>
-                        <input type="number" class="number-input" id="graphicsSizeInput" value="3" min="1" max="20" step="0.25" aria-label="Size in modules">
+                        <input type="number" class="number-input" id="graphicsHeightInput" value="3" min="0.25" max="100" step="0.25" aria-label="Height in modules">
+                    </div>
+                </div>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label for="graphicsWidthInput">
+                            <span>Width <span class="unit">mod</span></span>
+                        </label>
+                        <input type="number" class="number-input" id="graphicsWidthInput" value="3" min="0.25" max="100" step="0.25" aria-label="Width in modules">
                     </div>
                 </div>
                 
