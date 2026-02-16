@@ -9956,7 +9956,12 @@ class GridGenerator {
             console.log('CSV данные загружены, длина:', csvText.length);
 
             // Парсим CSV
-            const rows = this.parseCsv(csvText);
+            let rows = this.parseCsv(csvText);
+            // Исключение: не подгружаем строки, где колонка A = "Название" (заголовок)
+            rows = rows.filter(row => {
+                const colA = (row[0] ?? '').toString().trim();
+                return colA !== 'Название';
+            });
             console.log('Распарсенные строки:', rows);
             console.log('Количество строк:', rows.length);
 
