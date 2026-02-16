@@ -445,9 +445,6 @@ export class BarcodeGenerator {
             const shortBarHeight = 15;
             const longBarHeight = 18;
             
-            // Ширина основного кода = ширина колонки (без учета первой цифры)
-            const barcodeWidth = columnWidth;
-            
             // Размер шрифта: по умолчанию 10 pt, можно задать через block.barcode.fontSize
             const textFontSizePt = (block.barcode && block.barcode.fontSize !== undefined) ? block.barcode.fontSize : 10;
             const textFontSizeMm = textFontSizePt * (25.4 / 72);
@@ -460,7 +457,19 @@ export class BarcodeGenerator {
             // Вычисляем место для первой цифры слева
             const firstDigitWidth = textFontSizeMm * 0.7; // примерная ширина цифры
             const firstDigitMargin = textFontSizeMm * 0.2; // отступ от guard bars (умеренно уменьшен)
-            const totalWidthWithFirstDigit = firstDigitWidth + firstDigitMargin + barcodeWidth;
+            
+            // Целевая общая ширина блока: если задана widthInModules — используем её,
+            // чтобы SVG генерировался ровно под размер рендеринга и текст не искажался
+            const blockWidthMod = block.widthInModules || block.width;
+            let totalWidthWithFirstDigit;
+            let barcodeWidth;
+            if (blockWidthMod) {
+                totalWidthWithFirstDigit = blockWidthMod * gridModule;
+                barcodeWidth = totalWidthWithFirstDigit - firstDigitWidth - firstDigitMargin;
+            } else {
+                barcodeWidth = columnWidth;
+                totalWidthWithFirstDigit = firstDigitWidth + firstDigitMargin + barcodeWidth;
+            }
             
             // КРИТИЧНО: finalWidth и finalHeight должны соответствовать реальным размерам SVG
             // чтобы не было масштабирования в GraphicsRenderer.
@@ -490,7 +499,8 @@ export class BarcodeGenerator {
             // Code128: стандартная логика
             heightInModules = block.height || block.heightInModules || 8;
             const barcodeHeight = heightInModules * gridModule;
-            const barcodeWidth = columnWidth;
+            const blockWidthModCode = block.widthInModules || block.width;
+            const barcodeWidth = blockWidthModCode ? (blockWidthModCode * gridModule) : columnWidth;
             
             finalWidth = barcodeWidth;
             finalHeight = barcodeHeight;
