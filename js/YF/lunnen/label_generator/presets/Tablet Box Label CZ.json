@@ -11,7 +11,7 @@
   "texts": [
     {
       "id": "text-1763334866163",
-      "content": "Планшет Lunnen Portal 14\"\nBM1312001 Vantablack",
+      "content": "A1\nB1 C1",
       "style": "headline",
       "position": {
         "column": 1,
@@ -26,24 +26,8 @@
       "useXHeight": true
     },
     {
-      "id": "text-imei1",
-      "content": "IMEI1: 1110358283111",
-      "style": "text",
-      "position": {
-        "column": 1,
-        "row": 0,
-        "baseline": 5
-      },
-      "width": 1,
-      "alignment": "left",
-      "alignmentMode": "baseline",
-      "surface": "front",
-      "showBounds": false,
-      "useXHeight": false
-    },
-    {
       "id": "text-1763335182965",
-      "content": "Дата изготовления: 01.2026",
+      "content": "Дата изготовления: E1",
       "style": "text",
       "position": {
         "column": 1,
@@ -58,8 +42,24 @@
       "useXHeight": false
     },
     {
+      "id": "text-imei1",
+      "content": "IMEI1: H1",
+      "style": "text",
+      "position": {
+        "column": 1,
+        "row": 0,
+        "baseline": 5
+      },
+      "width": 1,
+      "alignment": "left",
+      "alignmentMode": "baseline",
+      "surface": "front",
+      "showBounds": false,
+      "useXHeight": false
+    },
+    {
       "id": "text-1763335152097",
-      "content": "Серийный номер: 7770358281777",
+      "content": "Серийный номер: F1",
       "style": "text",
       "position": {
         "column": 2,
@@ -75,7 +75,7 @@
     },
     {
       "id": "text-imei2",
-      "content": "IMEI2: 2220358281222",
+      "content": "IMEI2: I1",
       "style": "text",
       "position": {
         "column": 2,
@@ -102,9 +102,9 @@
       "4": 15
     },
     "visibility": {
-      "columns": true,
+      "columns": false,
       "rows": false,
-      "baseline": true
+      "baseline": false
     }
   },
   "colors": {
@@ -142,16 +142,17 @@
           "baseline": 0
         },
         "height": 6,
-        "originalWidth": 39.175,
+        "width": 10,
+        "originalWidth": 40,
         "originalHeight": 18,
         "alignment": "right",
         "surface": "front",
-        "width": 11,
+        "svg": "",
         "barcode": {
           "type": "ean-13",
-          "column": "G"
-        },
-        "svg": "<svg width=\"39.17\" height=\"18.00\" viewBox=\"0 0 39.17 18.00\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"3.175\" y=\"0\" width=\"0.379\" height=\"18.00\" fill=\"#17264E\"/><rect x=\"3.933\" y=\"0\" width=\"0.379\" height=\"18.00\" fill=\"#17264E\"/><rect x=\"4.691\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"5.070\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"5.449\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"6.207\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"6.586\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"7.722\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"9.238\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"9.996\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"10.375\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"10.754\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"11.512\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"11.891\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"12.649\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"13.028\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"13.407\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"13.786\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"14.543\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"15.301\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"15.680\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"16.059\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"17.196\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"18.712\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"19.849\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"20.607\" y=\"0\" width=\"0.379\" height=\"18.00\" fill=\"#17264E\"/><rect x=\"21.364\" y=\"0\" width=\"0.379\" height=\"18.00\" fill=\"#17264E\"/><rect x=\"22.122\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"22.501\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"23.259\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"23.638\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"24.775\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"25.912\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"27.428\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"27.807\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"28.943\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"29.322\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"30.080\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"31.596\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"32.733\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"34.249\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"35.386\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"36.901\" y=\"0\" width=\"0.379\" height=\"15.00\" fill=\"#17264E\"/><rect x=\"38.038\" y=\"0\" width=\"0.379\" height=\"18.00\" fill=\"#17264E\"/><rect x=\"38.796\" y=\"0\" width=\"0.379\" height=\"18.00\" fill=\"#17264E\"/><text x=\"1.61\" y=\"18.00\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"3.53\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#17264E\">4</text><text x=\"6.59\" y=\"18.00\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"3.53\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#17264E\">7</text><text x=\"8.86\" y=\"18.00\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"3.53\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#17264E\">7</text><text x=\"11.13\" y=\"18.00\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"3.53\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#17264E\">7</text><text x=\"13.41\" y=\"18.00\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"3.53\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#17264E\">3</text><text x=\"15.68\" y=\"18.00\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"3.53\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#17264E\">5</text><text x=\"17.95\" y=\"18.00\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"3.53\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#17264E\">8</text><text x=\"24.40\" y=\"18.00\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"3.53\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#17264E\">2</text><text x=\"26.67\" y=\"18.00\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"3.53\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#17264E\">8</text><text x=\"28.94\" y=\"18.00\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"3.53\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#17264E\">1</text><text x=\"31.22\" y=\"18.00\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"3.53\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#17264E\">7</text><text x=\"33.49\" y=\"18.00\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"3.53\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#17264E\">7</text><text x=\"35.76\" y=\"18.00\" font-family=\"TT Commons Classic, Arial, sans-serif\" font-size=\"3.53\" font-weight=\"500\" text-anchor=\"middle\" dominant-baseline=\"alphabetic\" fill=\"#17264E\">7</text></svg>"
+          "column": "G",
+          "fontSize": 9.5
+        }
       },
       {
         "id": "sticker-barcode-imei1",
@@ -162,16 +163,16 @@
           "baseline": 4
         },
         "height": 1,
-        "originalWidth": 36,
-        "originalHeight": 3,
+        "width": 10,
+        "originalWidth": 40,
+        "originalHeight": 18,
         "alignment": "left",
         "surface": "front",
-        "width": 10,
+        "svg": "",
         "barcode": {
           "type": "IMEI1",
           "column": "H"
-        },
-        "svg": "<svg width=\"36\" height=\"3\" viewBox=\"0 0 36 3\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0.00\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"0.22\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"0.65\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"1.29\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"2.37\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"2.59\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"3.23\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"3.45\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"3.88\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"4.10\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"4.74\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"4.96\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"5.60\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"5.82\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"6.25\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"6.47\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"7.11\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"7.33\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"7.98\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"8.19\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"8.62\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"8.84\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"9.49\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"9.70\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"10.13\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"10.35\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"10.99\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"11.21\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"11.86\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"12.50\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"13.15\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"13.37\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"14.23\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"15.09\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"15.74\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"15.95\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"16.60\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"17.46\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"17.68\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"18.32\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"18.97\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"19.19\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"19.83\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"20.05\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"20.69\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"20.91\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"21.34\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"22.20\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"22.42\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"23.07\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"23.71\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"24.36\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"25.01\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"25.22\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"26.08\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"26.30\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"26.95\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"27.16\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"27.59\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"27.81\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"28.46\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"28.67\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"29.32\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"29.53\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"29.96\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"30.18\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"30.83\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"31.04\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"31.69\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"31.90\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"32.34\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"32.55\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"33.20\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"33.41\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"34.28\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"34.49\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"34.71\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"35.14\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"35.57\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"35.78\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/></svg>"
+        }
       },
       {
         "id": "sticker-barcode-small",
@@ -182,16 +183,16 @@
           "baseline": 0
         },
         "height": 2,
-        "originalWidth": 36,
-        "originalHeight": 6,
+        "width": 10,
+        "originalWidth": 40,
+        "originalHeight": 18,
         "alignment": "left",
         "surface": "front",
-        "width": 10,
+        "svg": "",
         "barcode": {
           "type": "SN",
           "column": "F"
-        },
-        "svg": "<svg width=\"36\" height=\"6\" viewBox=\"0 0 36 6\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0.00\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"0.22\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"0.65\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"1.29\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"2.37\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"3.02\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"3.23\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"4.10\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"4.74\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"5.39\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"5.60\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"6.47\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"7.11\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"7.76\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"7.98\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"8.84\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"9.49\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"9.70\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"10.13\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"10.35\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"10.99\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"11.21\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"11.86\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"12.50\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"13.15\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"13.37\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"14.23\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"15.09\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"15.74\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"15.95\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"16.60\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"17.46\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"17.68\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"18.32\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"18.97\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"19.19\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"19.83\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"20.05\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"20.69\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"20.91\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"21.34\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"22.20\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"22.42\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"23.07\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"23.71\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"23.93\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"24.57\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"24.79\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"25.22\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"25.44\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"26.08\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"26.73\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"26.95\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"27.81\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"28.46\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"29.10\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"29.32\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"30.18\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"30.83\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"31.47\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"31.69\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"32.55\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"33.20\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"33.41\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"34.28\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"34.49\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"34.71\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"35.14\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"35.57\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/><rect x=\"35.78\" y=\"0\" width=\"0.22\" height=\"6\" fill=\"#17264E\"/></svg>"
+        }
       },
       {
         "id": "sticker-barcode-imei2",
@@ -202,33 +203,48 @@
           "baseline": 4
         },
         "height": 1,
-        "originalWidth": 36,
-        "originalHeight": 3,
+        "width": 10,
+        "originalWidth": 40,
+        "originalHeight": 18,
         "alignment": "left",
         "surface": "front",
-        "width": 10,
+        "svg": "",
         "barcode": {
           "type": "IMEI2",
           "column": "I"
-        },
-        "svg": "<svg width=\"36\" height=\"3\" viewBox=\"0 0 36 3\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0.00\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"0.22\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"0.65\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"1.29\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"2.37\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"2.59\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"3.23\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"3.45\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"4.10\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"4.31\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"4.74\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"4.96\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"5.60\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"5.82\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"6.47\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"6.68\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"7.11\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"7.33\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"7.98\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"8.19\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"8.84\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"9.05\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"9.49\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"9.70\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"10.13\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"10.35\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"10.99\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"11.21\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"11.86\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"12.50\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"13.15\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"13.37\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"14.23\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"15.09\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"15.74\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"15.95\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"16.60\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"17.46\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"17.68\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"18.32\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"18.97\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"19.19\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"19.83\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"20.05\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"20.69\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"20.91\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"21.34\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"22.20\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"22.42\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"23.07\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"23.71\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"23.93\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"24.57\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"24.79\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"25.22\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"25.44\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"26.08\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"26.30\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"26.95\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"27.16\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"27.81\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"28.02\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"28.46\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"28.67\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"29.32\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"29.53\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"30.18\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"30.40\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"30.83\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"31.04\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"31.69\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"31.90\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"32.55\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"32.77\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"33.20\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"33.41\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"34.28\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"34.49\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"34.71\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"35.14\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"35.57\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/><rect x=\"35.78\" y=\"0\" width=\"0.22\" height=\"3\" fill=\"#17264E\"/></svg>"
+        }
       },
       {
-        "id": "graphics-1771208518368",
-        "name": "cz_marks",
+        "id": "cz-marks",
+        "name": "CZ Marks",
         "position": {
           "column": 4,
           "row": 0,
           "baseline": 0
         },
         "height": 6,
+        "width": 5,
         "originalWidth": 15,
         "originalHeight": 18,
         "alignment": "left",
         "surface": "front",
-        "width": 5,
-        "svg": "<defs>\n    <style>\n      .claim-fill {\n        fill: currentColor;\n      }\n    </style>\n  </defs>\n  <!-- Generator: Adobe Illustrator 30.1.0, SVG Export Plug-In . SVG Version: 2.1.1 Build 136)  -->\n  <defs xmlns=\"http://www.w3.org/2000/svg\">\n    <style>\n      .st0 {\n        fill: currentColor;\n        stroke: currentColor;\n        stroke-miterlimit: 10;\n        stroke-width: .2px;\n      }\n    </style>\n  </defs>\n  <path xmlns=\"http://www.w3.org/2000/svg\" class=\"claim-fill\" d=\"M13,.1h.9c.6,0,1,.4,1,1v.9M13,17.9h.9c.6,0,1-.4,1-1v-.9M.1,16v.9c0,.6.4,1,1,1h.9M2,.1h-.9C.6.1.1.6.1,1.1v.9\"/>\n"
+        "svg": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg id=\"Layer_1\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 15 18\"><defs><style>.st0{fill:none;stroke:#17264e;stroke-miterlimit:10;stroke-width:.2px;}</style></defs><path class=\"st0\" d=\"M13,.1h.9c.6,0,1,.4,1,1v.9M13,17.9h.9c.6,0,1-.4,1-1v-.9M.1,16v.9c0,.6.4,1,1,1h.9M2,.1h-.9C.6.1.1.6.1,1.1v.9\"/></svg>"
       }
     ]
-  }
+  },
+  "prepress": {
+    "enabled": true,
+    "frame": "graphics/prepress/prepress_frame_tablet_box_label_cz.svg"
+  },
+  "exampleRow": [
+    "Планшет Lunnen Portal 14\"",
+    "BM1312001",
+    "Vantablack",
+    "Номинальное напряжение: 240 В\nКласс защиты: X\nНоминальный ток: 8 А\nНоминальная мощность: 380 Вт",
+    "01.2026",
+    "7770358281777",
+    "4777358281777",
+    "1110358283111",
+    "2220358281222"
+  ]
 }
