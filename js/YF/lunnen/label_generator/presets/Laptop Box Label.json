@@ -1,7 +1,7 @@
 {
-  "presetName": "Laptop Box Label 120×24mm",
+  "presetName": "Laptop Box Label CZ 120×24mm",
   "version": "1.0",
-  "timestamp": "2025-11-22T00:18:11.410Z",
+  "timestamp": "2026-02-13T00:00:00.000Z",
   "dimensions": {
     "width": 120,
     "height": 24,
@@ -48,11 +48,11 @@
       "position": {
         "column": 1,
         "row": 0,
-        "baseline": 2
+        "baseline": 3
       },
       "width": 1,
       "alignment": "left",
-      "alignmentMode": "baseline",
+      "alignmentMode": "cap-height",
       "surface": "front",
       "showBounds": false,
       "useXHeight": false
@@ -78,10 +78,13 @@
     "module": 3,
     "margins": 1,
     "marginsUnit": "mod",
-    "columns": 3,
+    "columns": 4,
     "rows": 1,
     "rowHeight": 6,
     "linkMode": "module",
+    "fixedColumns": {
+      "4": 15
+    },
     "visibility": {
       "columns": false,
       "rows": false,
@@ -94,23 +97,23 @@
   "typography": {
     "headline": {
       "size": 7,
-      "lineHeight": 8.5,
+      "lineHeight": 7.25,
       "tracking": -0.015,
       "useXHeight": false,
       "fontWeight": 500
     },
     "text": {
       "size": 6,
-      "lineHeight": 7.25,
+      "lineHeight": 8.5,
       "tracking": 0,
       "useXHeight": false,
       "fontWeight": 500
     }
   },
   "display": {
-  "dimensions": false,
-  "labels": false,
-  "objects": true
+    "dimensions": false,
+    "labels": false,
+    "objects": true
   },
   "graphics": {
     "blocks": [
@@ -122,7 +125,9 @@
           "row": 0,
           "baseline": 0
         },
-        "height": 2,
+        "height": 6,
+        "sizeMode": "width",
+        "width": 10,
         "originalWidth": 40,
         "originalHeight": 18,
         "alignment": "right",
@@ -130,7 +135,8 @@
         "svg": "",
         "barcode": {
           "type": "ean-13",
-          "column": "G"
+          "column": "G",
+          "fontSize": 9.5
         }
       },
       {
@@ -142,6 +148,8 @@
           "baseline": 4
         },
         "height": 2,
+        "sizeMode": "width",
+        "width": 10,
         "originalWidth": 40,
         "originalHeight": 18,
         "alignment": "left",
@@ -151,8 +159,28 @@
           "type": "SN",
           "column": "F"
         }
+      },
+      {
+        "id": "cz-marks",
+        "name": "CZ Marks",
+        "position": {
+          "column": 4,
+          "row": 0,
+          "baseline": 0
+        },
+        "height": 6,
+        "width": 5,
+        "originalWidth": 15,
+        "originalHeight": 18,
+        "alignment": "left",
+        "surface": "front",
+        "svg": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg id=\"Layer_1\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 15 18\"><defs><style>.st0{fill:none;stroke:#17264e;stroke-miterlimit:10;stroke-width:.2px;}</style></defs><path class=\"st0\" d=\"M13,.1h.9c.6,0,1,.4,1,1v.9M13,17.9h.9c.6,0,1-.4,1-1v-.9M.1,16v.9c0,.6.4,1,1,1h.9M2,.1h-.9C.6.1.1.6.1,1.1v.9\"/></svg>"
       }
     ]
+  },
+  "prepress": {
+    "enabled": true,
+    "frame": "graphics/prepress/prepress_frame_laptop_box_label_cz.svg"
   },
   "exampleRow": [
     "Ноутбук Lunnen Falcon 24\"",

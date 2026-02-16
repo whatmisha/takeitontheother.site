@@ -1,16 +1,8 @@
 {
   "presets": [
     {
-      "name": "Laptop Box Label CZ 120×24mm",
-      "file": "Laptop Box Label CZ.json"
-    },
-    {
       "name": "Laptop Box Label 120×24mm",
       "file": "Laptop Box Label.json"
-    },
-    {
-      "name": "Tablet Box Label CZ 120×24mm",
-      "file": "Tablet Box Label CZ.json"
     },
     {
       "name": "Tablet Box Label 120×24mm",
@@ -22,5 +14,5 @@
     }
   ],
   "generated": "2026-02-13T00:00:00.000Z",
-  "count": 5
+  "count": 3
 }
