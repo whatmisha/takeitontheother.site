@@ -455,6 +455,13 @@ body {
     display: flex;
 }
 
+.object-properties-info {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    line-height: 1.4;
+}
+
 /* Panel Header */
 
 .panel-header {

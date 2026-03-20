@@ -96,6 +96,8 @@ class AppTemplate {
         this.initExporter();
         this.initCheckboxes();
         this.initCollapse();
+        this.initObjectPropertiesPanel();
+        this.initObjectSelection();
         this.initButtons();
         this.initModals();
         this.initKeyboardShortcuts();
@@ -155,6 +157,103 @@ class AppTemplate {
             headerId:   'secondaryPanelHeader',
             draggable:  true,
             persistent: true
+        });
+
+        this.panels.registerPanel('objectPropertiesPanel', {
+            headerId:   'objectPropertiesPanelHeader',
+            draggable:  true,
+            persistent: false
+        });
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Панель свойств объекта (при клике на объект)                       */
+    /* ------------------------------------------------------------------ */
+
+    /** Инициализирует панель свойств объекта и закрытие по клику вне панели */
+    initObjectPropertiesPanel() {
+        const panel = document.getElementById('objectPropertiesPanel');
+        const closeBtn = document.getElementById('objectPropertiesCloseBtn');
+        if (!panel || !closeBtn) return;
+
+        closeBtn.addEventListener('click', () => this.hideObjectPropertiesPanel());
+
+        document.addEventListener('click', (e) => {
+            if (panel.classList.contains('active') &&
+                !panel.contains(e.target) &&
+                !this.dom?.canvas?.contains(e.target)) {
+                this.hideObjectPropertiesPanel();
+            }
+        });
+    }
+
+    /** Показывает панель свойств объекта */
+    showObjectPropertiesPanel(objectId, objectType = 'object', objectData = {}) {
+        const panel = document.getElementById('objectPropertiesPanel');
+        const titleEl = document.getElementById('objectPropertiesPanelTitle');
+        const infoEl = document.getElementById('objectPropertiesInfo');
+        const nameInput = document.getElementById('objectNameInput');
+        const visibleCheckbox = document.getElementById('objectVisibleCheckbox');
+        if (!panel) return;
+
+        if (titleEl) titleEl.textContent = `${objectType} Properties`;
+        if (infoEl) infoEl.textContent = `Selected: ${objectType} (${objectId})`;
+        if (nameInput) nameInput.value = objectData.name || objectId;
+        if (visibleCheckbox) visibleCheckbox.checked = objectData.visible !== false;
+
+        this.positionObjectPropertiesPanel(panel, objectId);
+        panel.style.display = 'flex';
+        panel.classList.add('active');
+        this.panels?.bringToFront?.('objectPropertiesPanel');
+    }
+
+    /** Скрывает панель свойств объекта */
+    hideObjectPropertiesPanel() {
+        const panel = document.getElementById('objectPropertiesPanel');
+        if (!panel) return;
+        panel.classList.remove('active');
+        panel.style.display = 'none';
+    }
+
+    /** Позиционирует панель (по центру экрана или рядом с объектом) */
+    positionObjectPropertiesPanel(panel, objectId) {
+        const svg = this.dom?.svg;
+        const targetEl = objectId && svg ? svg.querySelector(`[data-object-id="${objectId}"]`) : null;
+        const padding = 16;
+
+        if (targetEl) {
+            const rect = targetEl.getBoundingClientRect();
+            const panelRect = panel.getBoundingClientRect();
+            const offset = 24;
+            let left = rect.right + offset;
+            let top = rect.top;
+            if (left + panelRect.width > window.innerWidth - padding) {
+                left = rect.left - panelRect.width - offset;
+            }
+            left = Math.max(padding, Math.min(left, window.innerWidth - panelRect.width - padding));
+            top = Math.max(padding, Math.min(top, window.innerHeight - panelRect.height - 80));
+            panel.style.left = `${Math.round(left)}px`;
+            panel.style.top = `${Math.round(top)}px`;
+        } else {
+            const left = Math.max(padding, (window.innerWidth - panel.offsetWidth) / 2);
+            const top = Math.max(padding, (window.innerHeight - panel.offsetHeight) / 2);
+            panel.style.left = `${Math.round(left)}px`;
+            panel.style.top = `${Math.round(top)}px`;
+        }
+    }
+
+    /** Инициализирует обработку кликов по объектам на canvas */
+    initObjectSelection() {
+        const canvas = this.dom?.canvas;
+        if (!canvas) return;
+
+        canvas.addEventListener('click', (e) => {
+            const target = e.target.closest('[data-object-id]');
+            if (!target) return;
+            e.stopPropagation();
+            const id = target.getAttribute('data-object-id');
+            const type = target.getAttribute('data-object-type') || 'object';
+            this.showObjectPropertiesPanel(id, type, { name: id, visible: true });
         });
     }
 
@@ -382,6 +481,9 @@ class AppTemplate {
             rect.setAttribute('width', w);
             rect.setAttribute('height', h);
             rect.setAttribute('fill', this.settings.color);
+            rect.setAttribute('data-object-id', 'background');
+            rect.setAttribute('data-object-type', 'background');
+            rect.style.cursor = 'pointer';
             svg.appendChild(rect);
 
             const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -391,6 +493,10 @@ class AppTemplate {
             text.setAttribute('dominant-baseline', 'central');
             text.setAttribute('fill', '#ffffff');
             text.setAttribute('font-size', '24');
+            text.setAttribute('data-object-id', 'placeholder-text');
+            text.setAttribute('data-object-type', 'text');
+            text.style.cursor = 'pointer';
+            text.style.pointerEvents = 'all';
             text.textContent = 'Your Content Here';
             svg.appendChild(text);
         } finally {
@@ -424,7 +530,11 @@ class AppTemplate {
     exportSVG() {
         const svg = this.dom?.svg;
         if (!svg) return;
-        this.svgExporter.exportToFile(svg, 'export.svg', { removeInteractive: true });
+        const convertToOutlines = document.getElementById('convertToOutlinesCheckbox')?.checked ?? false;
+        this.svgExporter.exportToFile(svg, 'export.svg', {
+            removeInteractive: true,
+            convertTextToOutlines: convertToOutlines
+        });
     }
 
     /** Экспортирует текущий SVG в PDF */

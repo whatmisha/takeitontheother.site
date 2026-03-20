@@ -290,11 +290,52 @@
 
         <div class="export-group-right">
             <button class="btn-fixed btn-export" id="exportSvgBtn" type="button">Export SVG ⌘E</button>
+            <label class="toggle-label">
+                <div class="toggle-switch">
+                    <input type="checkbox" id="convertToOutlinesCheckbox" aria-label="Outline fonts">
+                    <span class="toggle-slider"></span>
+                </div>
+                <span class="toggle-label-text">Outline fonts</span>
+            </label>
             <button class="btn-fixed btn-export" id="exportPdfBtn" type="button">Export PDF</button>
         </div>
 
         <button class="btn-help" id="helpBtn" type="button" aria-label="Help">?</button>
     </nav>
+
+    <!-- Object Properties Panel (floating, shown on object click) -->
+    <aside class="controls-panel paragraph-settings-panel" id="objectPropertiesPanel" style="display: none;" role="complementary" aria-label="Object properties">
+        <div class="panel-header" id="objectPropertiesPanelHeader">
+            <span id="objectPropertiesPanelTitle">Object Properties</span>
+            <div class="panel-header-actions">
+                <button type="button" class="panel-action-btn" id="objectPropertiesCloseBtn" aria-label="Close panel">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="panel-content">
+            <section class="control-section">
+                <h3>Selected Object</h3>
+                <div class="control-group">
+                    <p class="object-properties-info" id="objectPropertiesInfo">Click an object on the canvas to edit its properties.</p>
+                </div>
+                <div class="control-group">
+                    <label for="objectNameInput">
+                        <span>Name</span>
+                        <input type="text" class="value-display" id="objectNameInput" value="" placeholder="Object name" aria-label="Object name">
+                    </label>
+                </div>
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="objectVisibleCheckbox" checked aria-label="Object visible">
+                        <span>Visible</span>
+                    </label>
+                </div>
+            </section>
+        </div>
+    </aside>
 
     <!-- Modal Overlay -->
     <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -316,6 +357,8 @@
                     <li>Preset dropdown</li>
                     <li>Collapsible panels with drag support</li>
                     <li>Zoom &amp; pan canvas</li>
+                    <li><strong>Outline fonts</strong> — toggle for SVG export (converts text to paths when TextToPath is provided)</li>
+                    <li><strong>Object properties panel</strong> — click any object on the canvas to open its settings</li>
                 </ul>
 
                 <h3>Keyboard Shortcuts</h3>
