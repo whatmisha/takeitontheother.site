@@ -373,3 +373,40 @@ this.sliders.setValue('gridSizeSlider', this.settingsStore.get('gridSize'), fals
 6. **`hexColorInput` needs class `hex-color-input`** for dark-themed styling (CSS uses class selector, not ID).
 7. **PresetManager expects `presets/manifest.json`** relative to `index.html`. If no presets, it logs a warning and shows "No presets available".
 8. **PDF export loads jsPDF + svg2pdf from CDN** on first call. Requires internet connection.
+
+---
+
+## App-Level Responsibilities (NOT handled by the framework)
+
+These features must be implemented by each tool that uses the framework:
+
+### SVG Export: Restore Original viewBox
+
+`ZoomPanManager` modifies the live SVG's `viewBox` for zoom/pan. `SVGExporter.exportToFile()` clones the SVG as-is, meaning the export will contain whatever is currently visible on screen (with current zoom and pan). **Your app must restore the original viewBox before exporting:**
+
+```js
+exportSVG() {
+    const svg = this.dom.svg;
+    const w = this.settings.width;
+    const h = this.settings.height;
+    // Save current viewBox
+    const savedViewBox = svg.getAttribute('viewBox');
+    // Restore original dimensions for export
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.setAttribute('width', w);
+    svg.setAttribute('height', h);
+    this.svgExporter.exportToFile(svg, 'export.svg', { removeInteractive: true });
+    // Restore zoom viewBox
+    svg.setAttribute('viewBox', savedViewBox);
+}
+```
+
+### Text-to-Outlines (Outline Fonts Toggle)
+
+The framework provides the UI toggle (`#convertToOutlinesCheckbox`) and passes the flag to `SVGExporter`, but actual text-to-path conversion requires a `TextToPath` module with font parsing (e.g., using opentype.js). This is project-specific because each tool uses different fonts. To enable:
+
+```js
+import { TextToPath } from './your-text-to-path.js';
+const textToPath = new TextToPath(fontData);
+this.svgExporter = new SVGExporter({ textToPath });
+```

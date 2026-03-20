@@ -364,17 +364,18 @@ export class ZoomPanManager {
      * Минимальный зум ограничен 100%
      */
     fitToScreen() {
-        // Получаем размеры содержимого SVG
         const bbox = this.svg.getBBox();
         const containerRect = this.container.getBoundingClientRect();
         
-        // Фиксированные отступы в пикселях
-        const paddingHorizontal = 360; // 360px слева и справа
-        const paddingVertical = 120;   // 120px сверху и снизу
+        const topBar = document.querySelector('.top-links');
+        const bottomBar = document.querySelector('.bottom-buttons');
+        const topEdge = topBar ? topBar.getBoundingClientRect().bottom : 0;
+        const bottomEdge = bottomBar ? bottomBar.getBoundingClientRect().top : window.innerHeight;
         
-        // Вычисляем доступную область для размещения макета
-        const availableWidth = Math.max(100, containerRect.width - paddingHorizontal * 2);
-        const availableHeight = Math.max(100, containerRect.height - paddingVertical * 2);
+        const verticalPadding = 40;
+        const horizontalPadding = 40;
+        const availableWidth = Math.max(100, containerRect.width - horizontalPadding * 2);
+        const availableHeight = Math.max(100, (bottomEdge - topEdge) - verticalPadding * 2);
         
         // Вычисляем необходимый зум
         const scaleX = availableWidth / bbox.width;
