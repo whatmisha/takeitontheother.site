@@ -90,7 +90,6 @@ class AppTemplate {
         this.initSliders();
         this.initPanels();
         this.initColorPicker();
-        this.initZoom();
         this.initHistory();
         this.initPresets();
         this.initExporter();
@@ -103,6 +102,7 @@ class AppTemplate {
         this.initKeyboardShortcuts();
 
         this.update();
+        this.initZoom();
 
         this.state.isInitialized = true;
         console.log('App initialized');
@@ -137,6 +137,9 @@ class AppTemplate {
             shiftStep: 10,
             onUpdate: () => this.update()
         });
+
+        this.sliders.setValue('widthSlider', this.settingsStore.get('width'), false);
+        this.sliders.setValue('heightSlider', this.settingsStore.get('height'), false);
     }
 
     /* ------------------------------------------------------------------ */
@@ -179,11 +182,10 @@ class AppTemplate {
         closeBtn.addEventListener('click', () => this.hideObjectPropertiesPanel());
 
         document.addEventListener('click', (e) => {
-            if (panel.classList.contains('active') &&
-                !panel.contains(e.target) &&
-                !this.dom?.canvas?.contains(e.target)) {
-                this.hideObjectPropertiesPanel();
-            }
+            if (!panel.classList.contains('active')) return;
+            if (panel.contains(e.target)) return;
+            if (e.target.closest('[data-object-id]')) return;
+            this.hideObjectPropertiesPanel();
         });
     }
 
@@ -292,10 +294,13 @@ class AppTemplate {
 
         const indicator = this.dom.zoomIndicator;
         if (indicator) {
-            indicator.addEventListener('click', () => this.zoomPan.resetZoom());
+            indicator.addEventListener('click', () => this.zoomPan.fitToScreen());
         }
 
-        setTimeout(() => this.zoomPan.fitToScreen(), 100);
+        requestAnimationFrame(() => {
+            this.zoomPan.reinitializeSVGDimensions();
+            this.zoomPan.fitToScreen();
+        });
     }
 
     /* ------------------------------------------------------------------ */
@@ -397,8 +402,6 @@ class AppTemplate {
         };
 
         bind('exportSvgBtn',  () => this.exportSVG());
-        bind('exportPdfBtn',  () => this.exportPDF());
-        bind('helpBtn',       () => this.showHelp());
     }
 
     /* ------------------------------------------------------------------ */
@@ -476,6 +479,8 @@ class AppTemplate {
             const w = this.settings.width;
             const h = this.settings.height;
             svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+            svg.setAttribute('width', w);
+            svg.setAttribute('height', h);
 
             const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             rect.setAttribute('width', w);
@@ -499,6 +504,10 @@ class AppTemplate {
             text.style.pointerEvents = 'all';
             text.textContent = 'Your Content Here';
             svg.appendChild(text);
+
+            if (this.zoomPan) {
+                this.zoomPan.reinitializeSVGDimensions();
+            }
         } finally {
             this.state.isUpdating = false;
         }
