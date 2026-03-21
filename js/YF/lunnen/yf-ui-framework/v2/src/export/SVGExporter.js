@@ -20,6 +20,7 @@ export class SVGExporter {
      */
     async exportToFile(svgElement, filename = 'export.svg', options = {}) {
         const clonedSvg = svgElement.cloneNode(true);
+        this.normalizeSvgForExport(clonedSvg);
 
         if (options.removeInteractive) {
             this.removeInteractiveElements(clonedSvg);
@@ -81,6 +82,7 @@ export class SVGExporter {
         await this.loadPDFLibraries();
 
         const clonedSvg = svgElement.cloneNode(true);
+        this.normalizeSvgForExport(clonedSvg);
 
         if (options.removeInteractive !== false) {
             this.removeInteractiveElements(clonedSvg);
@@ -156,6 +158,40 @@ export class SVGExporter {
         });
     }
 
+    /**
+     * Сбрасывает viewBox и размеры корня SVG к логическому артборду.
+     * ZoomPanManager меняет viewBox при зуме/пане — в файле экспорта должен быть полный документ,
+     * без «окна» и без процентных размеров от превью.
+     *
+     * Ожидаются числовые атрибуты width/height на корневом <svg> (задаётся в update()).
+     * Иначе — fallback из data-export-width / data-export-height или 500×500.
+     *
+     * @param {SVGSVGElement} svg — клон или живой элемент
+     */
+    normalizeSvgForExport(svg) {
+        let w = parseFloat(svg.getAttribute('width'));
+        let h = parseFloat(svg.getAttribute('height'));
+        if (!w || !h) {
+            const dw = svg.getAttribute('data-export-width');
+            const dh = svg.getAttribute('data-export-height');
+            w = parseFloat(dw) || 0;
+            h = parseFloat(dh) || 0;
+        }
+        if (!w || !h) {
+            console.warn('SVGExporter: missing width/height on <svg> for export; using 500×500. Set width/height in render.');
+            w = 500;
+            h = 500;
+        }
+        svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+        svg.setAttribute('width', String(w));
+        svg.setAttribute('height', String(h));
+        svg.removeAttribute('x');
+        svg.removeAttribute('y');
+        svg.style.width = '';
+        svg.style.height = '';
+        svg.style.transform = '';
+    }
+
     removeInteractiveElements(svg) {
         const selectors = [
             '.resize-handle', '.hover-overlay',
@@ -174,6 +210,7 @@ export class SVGExporter {
 
     getCleanSVG(svgElement) {
         const cloned = svgElement.cloneNode(true);
+        this.normalizeSvgForExport(cloned);
         this.removeInteractiveElements(cloned);
         return cloned;
     }

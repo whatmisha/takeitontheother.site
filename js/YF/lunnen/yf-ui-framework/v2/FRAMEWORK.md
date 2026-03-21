@@ -35,7 +35,8 @@ your-tool/
     └── utils/
         ├── ColorUtils.js   ← HEX↔RGB↔HSB conversions
         ├── MathUtils.js    ← clamp, lerp, roundTo, etc.
-        └── DOMUtils.js     ← DOM helpers
+        ├── DOMUtils.js     ← DOM helpers
+        └── TextToPath.js   ← <text> → <path> via opentype.js (Outline fonts)
 ```
 
 ---
@@ -117,6 +118,16 @@ SVG viewBox-based zoom and pan (vector, not CSS transform).
 | Zoom in/out | Cmd/Ctrl + Plus/Minus |
 
 Key methods: `fitToScreen()`, `resetZoom()`, `reinitializeSVGDimensions()`, `getZoomPercent()`, `destroy()`.
+
+Constructor (third argument):
+
+```js
+new ZoomPanManager(container, svg, {
+  fitPadding: { top: 20, right: 20, bottom: 20, left: 20 }
+});
+```
+
+`fitPadding` — inset **inside** `#canvasContainer` (the flex slot between top bar and bottom bar). Defaults are small margins so the artboard fills that slot at “100%” zoom after `fitToScreen()`, matching the original grid tool idea. Wider side panels do not shrink the container rect — only adjust padding if you add chrome **inside** the canvas area.
 
 **Important:** After changing SVG content/size in `update()`, call `reinitializeSVGDimensions()` so zoom calculations use correct dimensions.
 
@@ -223,9 +234,13 @@ this.presetManager.init();
 
 Export SVG to file, PDF (via CDN jsPDF + svg2pdf), JSON import/export.
 
+**Export is always the full logical artboard**, not the current on-screen crop. `ZoomPanManager` changes the live `viewBox` for zoom/pan; before serialization, `normalizeSvgForExport()` resets the clone to `viewBox="0 0 width height"` using numeric `width`/`height` on the root `<svg>` (set these in `update()`). Zoom and pan never affect the downloaded file.
+
+Fallback if `width`/`height` are missing: `data-export-width` / `data-export-height`, then 500×500 with a console warning.
+
 ```js
 this.svgExporter = new SVGExporter({ textToPath: myTextToPathInstance }); // optional
-this.svgExporter.exportToFile(svg, 'export.svg', {
+await this.svgExporter.exportToFile(svg, 'export.svg', {
     removeInteractive: true,
     convertTextToOutlines: true  // requires textToPath
 });
@@ -233,6 +248,10 @@ await this.svgExporter.exportToPDF(svg, 'export.pdf', { unit: 'mm' });
 this.svgExporter.exportJSON(data, 'settings.json');
 const imported = await this.svgExporter.importJSON(file);
 ```
+
+### TextToPath (`src/utils/TextToPath.js`)
+
+Converts all `<text>` nodes to `<path>` using opentype.js (CDN) and font files under `fonts/`. Map `font-family` + `font-weight` to files via `fontPaths` (constructor option to extend/override). For outline export, `<text>` must use a font declared in `fontPaths` (template uses TT Commons Classic 400).
 
 ---
 
@@ -373,40 +392,5 @@ this.sliders.setValue('gridSizeSlider', this.settingsStore.get('gridSize'), fals
 6. **`hexColorInput` needs class `hex-color-input`** for dark-themed styling (CSS uses class selector, not ID).
 7. **PresetManager expects `presets/manifest.json`** relative to `index.html`. If no presets, it logs a warning and shows "No presets available".
 8. **PDF export loads jsPDF + svg2pdf from CDN** on first call. Requires internet connection.
-
----
-
-## App-Level Responsibilities (NOT handled by the framework)
-
-These features must be implemented by each tool that uses the framework:
-
-### SVG Export: Restore Original viewBox
-
-`ZoomPanManager` modifies the live SVG's `viewBox` for zoom/pan. `SVGExporter.exportToFile()` clones the SVG as-is, meaning the export will contain whatever is currently visible on screen (with current zoom and pan). **Your app must restore the original viewBox before exporting:**
-
-```js
-exportSVG() {
-    const svg = this.dom.svg;
-    const w = this.settings.width;
-    const h = this.settings.height;
-    // Save current viewBox
-    const savedViewBox = svg.getAttribute('viewBox');
-    // Restore original dimensions for export
-    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-    svg.setAttribute('width', w);
-    svg.setAttribute('height', h);
-    this.svgExporter.exportToFile(svg, 'export.svg', { removeInteractive: true });
-    // Restore zoom viewBox
-    svg.setAttribute('viewBox', savedViewBox);
-}
-```
-
-### Text-to-Outlines (Outline Fonts Toggle)
-
-The framework provides the UI toggle (`#convertToOutlinesCheckbox`) and passes the flag to `SVGExporter`, but actual text-to-path conversion requires a `TextToPath` module with font parsing (e.g., using opentype.js). This is project-specific because each tool uses different fonts. To enable:
-
-```js
-import { TextToPath } from './your-text-to-path.js';
-const textToPath = new TextToPath(fontData);
-this.svgExporter = new SVGExporter({ textToPath });
-```
+9. **Outline fonts** loads opentype.js from CDN and font files from `fonts/`; offline export of outlined text needs those assets cached or self-hosted.
+10. **`dominant-baseline` on `<text>`** is not fully emulated in TextToPath — for pixel-perfect baseline, adjust Y after conversion or extend `TextToPath`.

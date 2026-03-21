@@ -18,6 +18,7 @@ import { DragDropManager }  from './ui/DragDropManager.js';
 import { HistoryManager }  from './history/HistoryManager.js';
 import { PresetManager }   from './preset/PresetManager.js';
 import { SVGExporter }     from './export/SVGExporter.js';
+import { TextToPath }      from './utils/TextToPath.js';
 
 class AppTemplate {
 
@@ -64,6 +65,8 @@ class AppTemplate {
         this.presetManager = null;
         /** @type {SVGExporter|null} */
         this.svgExporter = null;
+        /** @type {TextToPath|null} */
+        this.textToPath = null;
     }
 
     /* ------------------------------------------------------------------ */
@@ -283,7 +286,9 @@ class AppTemplate {
         const svg    = this.dom.svg;
         const canvas = this.dom.canvas;
 
-        this.zoomPan = new ZoomPanManager(canvas, svg);
+        this.zoomPan = new ZoomPanManager(canvas, svg, {
+            fitPadding: { top: 20, right: 20, bottom: 20, left: 20 }
+        });
 
         canvas.addEventListener('zoomchange', () => {
             const indicator = this.dom.zoomIndicator;
@@ -297,10 +302,7 @@ class AppTemplate {
             indicator.addEventListener('click', () => this.zoomPan.fitToScreen());
         }
 
-        requestAnimationFrame(() => {
-            this.zoomPan.reinitializeSVGDimensions();
-            this.zoomPan.fitToScreen();
-        });
+        this.zoomPan.fitToScreen();
     }
 
     /* ------------------------------------------------------------------ */
@@ -335,9 +337,10 @@ class AppTemplate {
     /*  Экспорт                                                           */
     /* ------------------------------------------------------------------ */
 
-    /** Создаёт SVG-экспортёр */
+    /** Создаёт SVG-экспортёр и конвертер текста в кривые (Outline fonts) */
     initExporter() {
-        this.svgExporter = new SVGExporter();
+        this.textToPath = new TextToPath();
+        this.svgExporter = new SVGExporter({ textToPath: this.textToPath });
     }
 
     /* ------------------------------------------------------------------ */
@@ -401,7 +404,7 @@ class AppTemplate {
             if (el) el.addEventListener('click', handler);
         };
 
-        bind('exportSvgBtn',  () => this.exportSVG());
+        bind('exportSvgBtn',  () => { void this.exportSVG(); });
     }
 
     /* ------------------------------------------------------------------ */
@@ -453,7 +456,7 @@ class AppTemplate {
                 this.redo();
             } else if (e.key === 'e') {
                 e.preventDefault();
-                this.exportSVG();
+                void this.exportSVG();
             }
         });
     }
@@ -478,9 +481,13 @@ class AppTemplate {
 
             const w = this.settings.width;
             const h = this.settings.height;
-            svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+
             svg.setAttribute('width', w);
             svg.setAttribute('height', h);
+
+            if (!this.zoomPan) {
+                svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+            }
 
             const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
             rect.setAttribute('width', w);
@@ -498,6 +505,8 @@ class AppTemplate {
             text.setAttribute('dominant-baseline', 'central');
             text.setAttribute('fill', '#ffffff');
             text.setAttribute('font-size', '24');
+            text.setAttribute('font-family', 'TT Commons Classic');
+            text.setAttribute('font-weight', '400');
             text.setAttribute('data-object-id', 'placeholder-text');
             text.setAttribute('data-object-type', 'text');
             text.style.cursor = 'pointer';
@@ -507,6 +516,7 @@ class AppTemplate {
 
             if (this.zoomPan) {
                 this.zoomPan.reinitializeSVGDimensions();
+                this.zoomPan.centerContent();
             }
         } finally {
             this.state.isUpdating = false;
@@ -535,12 +545,12 @@ class AppTemplate {
     /*  Экспорт                                                           */
     /* ================================================================== */
 
-    /** Экспортирует текущий SVG в файл */
-    exportSVG() {
+    /** Экспортирует текущий SVG в файл (артборд в логических размерах; зум/пан не влияют) */
+    async exportSVG() {
         const svg = this.dom?.svg;
         if (!svg) return;
         const convertToOutlines = document.getElementById('convertToOutlinesCheckbox')?.checked ?? false;
-        this.svgExporter.exportToFile(svg, 'export.svg', {
+        await this.svgExporter.exportToFile(svg, 'export.svg', {
             removeInteractive: true,
             convertTextToOutlines: convertToOutlines
         });
