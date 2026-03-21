@@ -584,6 +584,36 @@
                             </div>
                         </section>
 
+                        <section class="control-section">
+                            <h3>Animation</h3>
+
+                            <div class="control-group">
+                                <label for="animDurationSlider">
+                                    <span>Duration (s)</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="animDurationValue" value="10">
+                                    </div>
+                                </label>
+                                <input type="range" id="animDurationSlider" min="2" max="60" step="1" value="10">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="animMaxSpeedSlider">
+                                    <span>Max Speed</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="animMaxSpeedValue" value="3">
+                                    </div>
+                                </label>
+                                <input type="range" id="animMaxSpeedSlider" min="1" max="10" step="1" value="3">
+                            </div>
+
+                            <div class="control-group">
+                                <button type="button" id="animPlayPauseBtn" class="export-btn" style="width:100%;">
+                                    ▶ Play
+                                </button>
+                            </div>
+                        </section>
+
                     </div><!-- /concentricControls -->
 
                 </div>

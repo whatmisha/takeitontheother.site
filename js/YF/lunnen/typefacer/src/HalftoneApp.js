@@ -71,8 +71,15 @@ class HalftoneApp {
             concentricCenterX:     50,
             concentricCenterY:     50,
 
+            // Animation params
+            animDuration:  10,
+            animMaxSpeed:  3,
+
             ...overrides
         };
+
+        this._animPlaying = false;
+        this._animPaused  = false;
 
         this.settingsStore = new Settings(defaults);
         this.settings = this.settingsStore.createProxy();
@@ -255,6 +262,17 @@ class HalftoneApp {
             onUpdate: () => this.debouncedUpdate()
         });
 
+        this.sliders.initSlider('animDurationSlider', {
+            valueId: 'animDurationValue', setting: 'animDuration',
+            min: 2, max: 60, decimals: 0, baseStep: 1, shiftStep: 5,
+            onUpdate: () => { if (this._animPlaying) this._restartAnimation(); }
+        });
+        this.sliders.initSlider('animMaxSpeedSlider', {
+            valueId: 'animMaxSpeedValue', setting: 'animMaxSpeed',
+            min: 1, max: 10, decimals: 0, baseStep: 1, shiftStep: 1,
+            onUpdate: () => { if (this._animPlaying) this._restartAnimation(); }
+        });
+
         this.sliders.setValue('concentricCountSlider',       this.settingsStore.get('concentricCount'), false);
         this.sliders.setValue('concentricFontSizeSlider',    this.settingsStore.get('concentricFontSize'), false);
         this.sliders.setValue('concentricFontWeightSlider',  this.settingsStore.get('concentricFontWeight'), false);
@@ -267,6 +285,10 @@ class HalftoneApp {
         this.sliders.setValue('concentricCenterXSlider',     this.settingsStore.get('concentricCenterX'), false);
         this.sliders.setValue('concentricCenterYSlider',     this.settingsStore.get('concentricCenterY'), false);
         this.sliders.setValue('concentricRotationSlider',    this.settingsStore.get('rotation'), false);
+        this.sliders.setValue('animDurationSlider',          this.settingsStore.get('animDuration'), false);
+        this.sliders.setValue('animMaxSpeedSlider',          this.settingsStore.get('animMaxSpeed'), false);
+
+        this._initAnimButton();
     }
 
     /* ================================================================ */
@@ -306,6 +328,7 @@ class HalftoneApp {
         const concentricEl = document.getElementById('concentricControls');
         if (halftoneEl)   halftoneEl.style.display   = mode === 'halftone'    ? 'block' : 'none';
         if (concentricEl) concentricEl.style.display = mode === 'concentric' ? 'block' : 'none';
+        if (mode !== 'concentric') this._stopAnimation();
     }
 
     /* ================================================================ */
@@ -382,6 +405,73 @@ class HalftoneApp {
                 this.settingsStore.set(key, el.checked);
                 this.debouncedUpdate();
             });
+        }
+    }
+
+    /* ================================================================ */
+    /*  Concentric Animation                                              */
+    /* ================================================================ */
+
+    _initAnimButton() {
+        const btn = document.getElementById('animPlayPauseBtn');
+        if (!btn) return;
+        btn.addEventListener('click', () => this._toggleAnimation());
+    }
+
+    _toggleAnimation() {
+        if (!this._animPlaying) {
+            this._startAnimation();
+        } else if (this._animPaused) {
+            this._resumeAnimation();
+        } else {
+            this._pauseAnimation();
+        }
+    }
+
+    _startAnimation() {
+        if (this.settings.generatorMode !== 'concentric') return;
+        this.update();
+        this.concentricRenderer.applyAnimation(this.dom.svg, this.settings);
+        this._animPlaying = true;
+        this._animPaused  = false;
+        this._updateAnimButtonUI();
+    }
+
+    _pauseAnimation() {
+        this.concentricRenderer.pauseAnimation(this.dom.svg);
+        this._animPaused = true;
+        this._updateAnimButtonUI();
+    }
+
+    _resumeAnimation() {
+        this.concentricRenderer.resumeAnimation(this.dom.svg);
+        this._animPaused = false;
+        this._updateAnimButtonUI();
+    }
+
+    _stopAnimation() {
+        if (!this._animPlaying) return;
+        this.concentricRenderer.stopAnimation(this.dom.svg);
+        this._animPlaying = false;
+        this._animPaused  = false;
+        this._updateAnimButtonUI();
+    }
+
+    _restartAnimation() {
+        if (!this._animPlaying) return;
+        this._stopAnimation();
+        this._startAnimation();
+    }
+
+    _updateAnimButtonUI() {
+        const btn = document.getElementById('animPlayPauseBtn');
+        if (!btn) return;
+        if (!this._animPlaying) {
+            btn.textContent = '▶ Play';
+        } else if (this._animPaused) {
+            btn.textContent = '▶ Resume';
+        } else {
+            btn.textContent = '⏸ Pause';
         }
     }
 
@@ -726,6 +816,9 @@ class HalftoneApp {
 
             if (mode === 'concentric') {
                 this.concentricRenderer.render(svg, this.settings);
+                if (this._animPlaying && !this._animPaused) {
+                    this.concentricRenderer.applyAnimation(svg, this.settings);
+                }
             } else {
                 const w          = this.settings.artboardWidth;
                 const h          = this.settings.artboardHeight;
@@ -846,6 +939,8 @@ class HalftoneApp {
         this.sliders.setValue('concentricCenterXSlider',     s.get('concentricCenterX'), false);
         this.sliders.setValue('concentricCenterYSlider',     s.get('concentricCenterY'), false);
         this.sliders.setValue('concentricRotationSlider',    s.get('rotation'), false);
+        this.sliders.setValue('animDurationSlider',          s.get('animDuration'), false);
+        this.sliders.setValue('animMaxSpeedSlider',          s.get('animMaxSpeed'), false);
 
         const formatRadio = document.querySelector(`input[name="format"][value="${s.get('format')}"]`);
         if (formatRadio) formatRadio.checked = true;

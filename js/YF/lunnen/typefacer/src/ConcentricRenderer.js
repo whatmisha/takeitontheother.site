@@ -4,6 +4,7 @@
  * Каждое кольцо — строка текста, расположенная по дуге окружности.
  * Символы размещаются через rotate + translate на каждый символ.
  * Содержимое обрезается по границам артборда через clipPath.
+ * Каждое кольцо обёрнуто в <g> для поддержки CSS-анимации вращения.
  */
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -54,6 +55,7 @@ export class ConcentricRenderer {
 
         const charWidthFactor = 0.6;
         const baseCharWidth = fontSize * charWidthFactor * letterSpacing;
+        const minCharWidth  = fontSize * 0.85;
 
         const defs = document.createElementNS(SVG_NS, 'defs');
         const clipPath = document.createElementNS(SVG_NS, 'clipPath');
@@ -74,6 +76,9 @@ export class ConcentricRenderer {
         bg.setAttribute('fill', settings.bgColor);
         g.appendChild(bg);
 
+        this._centerX = cx;
+        this._centerY = cy;
+
         for (let i = 0; i < circleCount; i++) {
             const t = circleCount === 1 ? 0 : i / (circleCount - 1);
             const radius = minRadius + (maxRadius - minRadius) * t;
@@ -83,10 +88,15 @@ export class ConcentricRenderer {
             const circumference = 2 * Math.PI * radius;
             const totalChars = Math.max(1, Math.floor(circumference / baseCharWidth));
             const baseAngleStep = 360 / totalChars;
+            const minAngleStep = Math.min(baseAngleStep, (minCharWidth / circumference) * 360);
 
             const ringStartOffset = rndmStart > 0
                 ? this._pseudoRandom(i, 9999) * 360 * rndmStart
                 : 0;
+
+            const ringGroup = document.createElementNS(SVG_NS, 'g');
+            ringGroup.setAttribute('class', 'concentric-ring');
+            ringGroup.setAttribute('data-ring', i);
 
             let angleCursor = startAngle + ringStartOffset;
             let charIdx = 0;
@@ -95,17 +105,13 @@ export class ConcentricRenderer {
                 const char = chars[charIdx % chars.length];
 
                 let localStep = baseAngleStep;
-                const minStepMultiplier = 1.0 / letterSpacing;
-                const minStep = baseAngleStep * minStepMultiplier;
                 if (rndmSpacing > 0) {
                     const r = this._pseudoRandom(i, charIdx);
                     const groupRand = this._pseudoRandom(i, charIdx + 7777);
                     const keepBase = groupRand > rndmSpacing;
-                    if (keepBase) {
-                        localStep = baseAngleStep;
-                    } else {
+                    if (!keepBase) {
                         localStep = baseAngleStep * (1 + (r * 2 - 1) * rndmSpacing * 3);
-                        if (localStep < minStep) localStep = minStep;
+                        if (localStep < minAngleStep) localStep = minAngleStep;
                     }
                 }
 
@@ -136,15 +142,89 @@ export class ConcentricRenderer {
                     `translate(${x.toFixed(2)}, ${y.toFixed(2)}) rotate(${rot.toFixed(2)})`
                 );
                 el.textContent = char;
-                g.appendChild(el);
+                ringGroup.appendChild(el);
 
                 angleCursor += localStep;
                 charIdx++;
             }
+
+            g.appendChild(ringGroup);
         }
 
         svg.appendChild(g);
     }
+
+    /* ================================================================ */
+    /*  Animation — CSS keyframes on ring <g> groups                     */
+    /* ================================================================ */
+
+    applyAnimation(svg, settings) {
+        const duration = settings.animDuration ?? 10;
+        const maxSpeed = settings.animMaxSpeed ?? 3;
+        const cx = this._centerX;
+        const cy = this._centerY;
+
+        const rings = svg.querySelectorAll('.concentric-ring');
+        if (!rings.length) return;
+
+        this._removeAnimStyle(svg);
+
+        let css = '';
+        rings.forEach((ring, i) => {
+            const n = 1 + Math.floor(this._pseudoRandom(i, 31337) * maxSpeed);
+            const dir = this._pseudoRandom(i, 54321) > 0.5 ? 1 : -1;
+            const totalDeg = n * 360 * dir;
+
+            css += `
+@keyframes cr-${i} {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(${totalDeg}deg); }
+}
+.cr-${i} {
+  transform-origin: ${cx.toFixed(2)}px ${cy.toFixed(2)}px;
+  animation: cr-${i} ${duration}s linear infinite;
+}
+`;
+            ring.classList.add(`cr-${i}`);
+        });
+
+        const style = document.createElementNS(SVG_NS, 'style');
+        style.id = 'concentric-anim-style';
+        style.textContent = css;
+        const defs = svg.querySelector('defs');
+        if (defs) defs.appendChild(style);
+        else svg.insertBefore(style, svg.firstChild);
+    }
+
+    pauseAnimation(svg) {
+        svg.querySelectorAll('.concentric-ring').forEach(ring => {
+            ring.style.animationPlayState = 'paused';
+        });
+    }
+
+    resumeAnimation(svg) {
+        svg.querySelectorAll('.concentric-ring').forEach(ring => {
+            ring.style.animationPlayState = 'running';
+        });
+    }
+
+    stopAnimation(svg) {
+        this._removeAnimStyle(svg);
+        svg.querySelectorAll('.concentric-ring').forEach(ring => {
+            ring.style.animationPlayState = '';
+            const classes = [...ring.classList].filter(c => c.startsWith('cr-'));
+            classes.forEach(c => ring.classList.remove(c));
+        });
+    }
+
+    _removeAnimStyle(svg) {
+        const old = svg.querySelector('#concentric-anim-style');
+        if (old) old.remove();
+    }
+
+    /* ================================================================ */
+    /*  Helpers                                                          */
+    /* ================================================================ */
 
     _pseudoRandom(ring, index) {
         const v = Math.sin(ring * 12.9898 + index * 78.233) * 43758.5453;
