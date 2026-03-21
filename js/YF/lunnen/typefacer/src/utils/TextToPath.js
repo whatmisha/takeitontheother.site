@@ -8,11 +8,16 @@
 export class TextToPath {
     constructor(options = {}) {
         this.fonts = new Map();
+        this._fontsByPath = new Map();
         this.fontPaths = {
             'TT Commons Classic-400': 'fonts/TT Commons Classic Regular.otf',
             'TT Commons Classic-500': 'fonts/TT Commons Classic Medium.otf',
             'Lunnen Display-400': 'fonts/LunnenDisplay-VariableVF.ttf',
             ...options.fontPaths
+        };
+        this.fontFamilyFallbacks = {
+            'Lunnen Display': 'fonts/LunnenDisplay-VariableVF.ttf',
+            ...options.fontFamilyFallbacks
         };
         this.opentypeLoaded = false;
         this.loadingPromise = null;
@@ -54,9 +59,20 @@ export class TextToPath {
 
         await this.loadOpentype();
 
-        const fontPath = this.fontPaths[fontKey];
+        let fontPath = this.fontPaths[fontKey];
+        if (!fontPath) {
+            const family = fontKey.split('-').slice(0, -1).join('-');
+            fontPath = this.fontFamilyFallbacks[family];
+        }
         if (!fontPath) {
             throw new Error(`Font not found: ${fontKey}`);
+        }
+
+        // Reuse already-loaded font object if the same file was loaded for another key
+        if (this._fontsByPath.has(fontPath)) {
+            const cached = this._fontsByPath.get(fontPath);
+            this.fonts.set(fontKey, cached);
+            return cached;
         }
 
         try {
@@ -70,6 +86,7 @@ export class TextToPath {
                 });
             });
 
+            this._fontsByPath.set(fontPath, font);
             this.fonts.set(fontKey, font);
             return font;
         } catch (error) {

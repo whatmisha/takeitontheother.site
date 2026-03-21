@@ -9,6 +9,14 @@
 import { ColorUtils } from '../utils/ColorUtils.js';
 
 export class ColorPicker {
+    /**
+     * @param {Object} settings — Settings store
+     * @param {Object} options
+     * @param {string}   [options.settingKey]   — ключ в Settings (default 'color')
+     * @param {string}   [options.defaultColor] — цвет по умолчанию (default '#808080')
+     * @param {Function} [options.onChange]      — callback(hex)
+     * @param {Object}   [options.elementIds]   — карта id элементов для кастомных пикеров
+     */
     constructor(settings, options = {}) {
         this.settings = settings;
         this.settingKey = options.settingKey || 'color';
@@ -16,36 +24,32 @@ export class ColorPicker {
         this.callbacks = { onChange: options.onChange || null };
         this.isUpdating = false;
         
-        // HSB значения
         this.hsb = { h: 0, s: 0, b: 0 };
+
+        const ids = options.elementIds || {};
+        this.elementIds = {
+            picker:           ids.picker           || 'hsbPicker',
+            preview:          ids.preview          || 'colorPreview',
+            hexInput:         ids.hexInput         || 'hexColorInput',
+            hueSlider:        ids.hueSlider        || 'hueSlider',
+            saturationSlider: ids.saturationSlider || 'saturationSlider',
+            brightnessSlider: ids.brightnessSlider || 'brightnessSlider',
+            hueValue:         ids.hueValue         || 'hueValue',
+            saturationValue:  ids.saturationValue  || 'saturationValue',
+            brightnessValue:  ids.brightnessValue  || 'brightnessValue',
+        };
         
-        // DOM элементы
         this.elements = {
-            picker: null,
-            preview: null,
-            hexInput: null,
-            hueSlider: null,
-            saturationSlider: null,
-            brightnessSlider: null,
-            hueValue: null,
-            saturationValue: null,
-            brightnessValue: null
+            picker: null, preview: null, hexInput: null,
+            hueSlider: null, saturationSlider: null, brightnessSlider: null,
+            hueValue: null, saturationValue: null, brightnessValue: null
         };
     }
 
-    /**
-     * Инициализация пикера
-     */
     init() {
-        this.elements.picker = document.getElementById('hsbPicker');
-        this.elements.preview = document.getElementById('colorPreview');
-        this.elements.hexInput = document.getElementById('hexColorInput');
-        this.elements.hueSlider = document.getElementById('hueSlider');
-        this.elements.saturationSlider = document.getElementById('saturationSlider');
-        this.elements.brightnessSlider = document.getElementById('brightnessSlider');
-        this.elements.hueValue = document.getElementById('hueValue');
-        this.elements.saturationValue = document.getElementById('saturationValue');
-        this.elements.brightnessValue = document.getElementById('brightnessValue');
+        for (const key of Object.keys(this.elements)) {
+            this.elements[key] = document.getElementById(this.elementIds[key]);
+        }
 
         // Проверка наличия элементов
         const missingElements = Object.entries(this.elements)

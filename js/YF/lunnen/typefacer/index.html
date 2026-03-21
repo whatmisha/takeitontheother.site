@@ -3,8 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YF Tool — Template</title>
+    <title>Halftone Generator — Lunnen Display</title>
     <link rel="stylesheet" href="css/yf-styles.css">
+    <style>
+        /* ── Format grid ── */
+        .format-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            margin-top: 8px;
+        }
+        .format-grid label {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            text-align: center; padding: 7px 4px; margin: 0;
+            font-size: 0.8rem; line-height: 1; color: var(--color-text-secondary);
+            background: var(--color-bg-input); border-radius: calc(var(--radius-input) - 2px);
+            cursor: pointer; transition: all var(--transition-normal);
+            user-select: none; font-weight: 400;
+        }
+        .format-grid label:hover { color: var(--color-text); }
+        .format-grid input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+        .format-grid input[type="radio"]:checked + label {
+            background: var(--color-text); color: var(--color-bg); font-weight: 500;
+        }
+        .custom-format-row {
+            display: flex; gap: 8px; margin-top: 8px; align-items: center;
+        }
+        .custom-format-row input {
+            flex: 1; height: 28px; background: var(--color-bg-input);
+            border: 1px solid var(--color-border); color: var(--color-text);
+            font-family: inherit; font-size: 0.85rem; padding: 0 8px;
+            border-radius: var(--radius-input); text-align: center;
+        }
+        .custom-format-row input:focus { outline: none; border-color: var(--color-text-dim); }
+        .custom-format-row span { color: var(--color-text-dim); font-size: 0.8rem; flex-shrink: 0; }
+
+        /* ── Pattern text input ── */
+        .pattern-text-input {
+            width: 100%; height: 32px; background: var(--color-bg-input);
+            border: 1px solid var(--color-border); color: var(--color-text);
+            font-family: 'Lunnen Display', sans-serif; font-size: 1.1rem;
+            font-weight: 300; padding: 0 10px; border-radius: var(--radius-input);
+            letter-spacing: 2px; transition: border-color var(--transition-normal);
+        }
+        .pattern-text-input:focus { outline: none; border-color: var(--color-text-dim); }
+        .pattern-text-input::placeholder { color: var(--color-text-muted); font-family: inherit; letter-spacing: 0; }
+
+        /* ── Image upload ── */
+        .image-upload-compact {
+            display: flex; align-items: center; gap: 8px; margin-top: 8px;
+            padding: 10px 12px; border: 1px dashed var(--color-border);
+            border-radius: var(--radius-input); cursor: pointer;
+            transition: border-color var(--transition-normal), background var(--transition-normal);
+        }
+        .image-upload-compact:hover { border-color: var(--color-text-dim); background: rgba(255,255,255,0.02); }
+        .image-upload-compact.dragover { border-color: var(--color-text); background: rgba(255,255,255,0.05); }
+        .image-upload-icon { color: var(--color-text-dim); flex-shrink: 0; }
+        .image-upload-info { flex: 1; min-width: 0; }
+        .image-upload-name { font-size: 0.8rem; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .image-upload-hint { font-size: 0.7rem; color: var(--color-text-muted); margin-top: 1px; }
+        .image-remove-btn {
+            background: transparent; border: none; color: var(--color-text-muted);
+            cursor: pointer; padding: 2px; display: flex; align-items: center;
+            transition: color var(--transition-fast); flex-shrink: 0;
+        }
+        .image-remove-btn:hover { color: var(--color-text); }
+
+        /* ── Generator mode select ── */
+        .generator-mode-select {
+            width: 100%; padding: 6px 12px; background: #2a2a2a; border: none;
+            color: var(--color-text); font-family: inherit; font-size: 0.85rem;
+            border-radius: var(--radius-input); cursor: pointer;
+            transition: background var(--transition-normal); height: 32px;
+        }
+        .generator-mode-select:hover { background: #333; }
+        .generator-mode-select:focus { outline: none; background: #333; }
+        .generator-mode-select option { background: #2a2a2a; color: var(--color-text); }
+
+        /* ── Compact segmented for 4 items ── */
+        .segmented-control-compact label { padding: 8px 2px; font-size: 0.8rem; }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -12,19 +90,6 @@
         <!-- Top Links -->
         <div class="top-links">
             <a href="/js/YF/" class="yf-tools-link">← YF Tools</a>
-
-            <div class="preset-dropdown" id="presetDropdown">
-                <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button" aria-haspopup="listbox" aria-expanded="false">
-                    <span class="preset-dropdown-text">Select Preset</span>
-                    <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
-                <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox" aria-label="Presets">
-                    <!-- Populated by JS -->
-                </ul>
-            </div>
-
             <button class="zoom-indicator" id="zoomIndicator" type="button" aria-label="Reset zoom">100%</button>
         </div>
 
@@ -36,10 +101,12 @@
                 <svg id="mainSvg" xmlns="http://www.w3.org/2000/svg"></svg>
             </div>
 
-            <!-- Right Panel — Settings -->
-            <aside class="controls-panel" id="mainPanel" aria-label="Settings panel">
-                <div class="panel-header" id="mainPanelHeader">
-                    <span>Settings</span>
+            <!-- ============================================ -->
+            <!-- LEFT PANEL — General                         -->
+            <!-- ============================================ -->
+            <aside class="controls-panel controls-panel-left" id="generalPanel" aria-label="General panel">
+                <div class="panel-header" id="generalPanelHeader">
+                    <span>General</span>
                     <span class="collapse-icon" role="button" aria-label="Collapse panel" tabindex="0">
                         <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -48,183 +115,104 @@
                 </div>
                 <div class="panel-content">
 
-                    <!-- Sliders -->
+                    <!-- Text -->
                     <section class="control-section">
-                        <h3>Dimensions</h3>
-
+                        <h3>Text</h3>
                         <div class="control-group">
-                            <label for="widthSlider">
-                                <span>Width <span class="unit">mm</span></span>
-                                <div class="value-display-wrapper">
-                                    <input type="text" class="value-display" id="widthValue" value="100.0" data-min="10" data-max="500">
-                                    <button type="button" class="lock-btn" id="lockWidthBtn" aria-label="Lock width" aria-pressed="false">
-                                        <svg class="lock-icon lock-icon-open" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6M3.5 6H10.5C11.3284 6 12 6.67157 12 7.5V11.5C12 12.3284 11.3284 13 10.5 13H3.5C2.67157 13 2 12.3284 2 11.5V7.5C2 6.67157 2.67157 6 3.5 6Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                        <svg class="lock-icon lock-icon-locked" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
-                                            <rect x="2" y="6" width="10" height="7" rx="1.5" fill="currentColor" stroke="currentColor" stroke-width="1.2"/>
-                                            <path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </label>
-                            <input type="range" id="widthSlider" min="10" max="500" step="0.1" value="100">
-                        </div>
-
-                        <div class="control-group">
-                            <label for="heightSlider">
-                                <span>Height <span class="unit">mm</span></span>
-                                <div class="value-display-wrapper">
-                                    <input type="text" class="value-display" id="heightValue" value="50.0" data-min="10" data-max="500">
-                                    <button type="button" class="lock-btn" id="lockHeightBtn" aria-label="Lock height" aria-pressed="false">
-                                        <svg class="lock-icon lock-icon-open" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6M3.5 6H10.5C11.3284 6 12 6.67157 12 7.5V11.5C12 12.3284 11.3284 13 10.5 13H3.5C2.67157 13 2 12.3284 2 11.5V7.5C2 6.67157 2.67157 6 3.5 6Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                        <svg class="lock-icon lock-icon-locked" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
-                                            <rect x="2" y="6" width="10" height="7" rx="1.5" fill="currentColor" stroke="currentColor" stroke-width="1.2"/>
-                                            <path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </label>
-                            <input type="range" id="heightSlider" min="10" max="500" step="0.1" value="50">
-                        </div>
-
-                        <!-- Slider with unit buttons -->
-                        <div class="control-group">
-                            <label for="sizeSlider">
-                                <span>Size
-                                    <span class="unit-buttons">
-                                        <button type="button" class="unit-btn active" data-unit="mod">mod</button>
-                                        <button type="button" class="unit-btn" data-unit="mm">mm</button>
-                                    </span>
-                                </span>
-                                <div class="value-display-wrapper">
-                                    <input type="text" class="value-display" id="sizeValue" value="2.00" data-min="0.5" data-max="10">
-                                    <button type="button" class="lock-btn" id="lockSizeBtn" aria-label="Lock size" aria-pressed="false">
-                                        <svg class="lock-icon lock-icon-open" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6M3.5 6H10.5C11.3284 6 12 6.67157 12 7.5V11.5C12 12.3284 11.3284 13 10.5 13H3.5C2.67157 13 2 12.3284 2 11.5V7.5C2 6.67157 2.67157 6 3.5 6Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                        <svg class="lock-icon lock-icon-locked" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
-                                            <rect x="2" y="6" width="10" height="7" rx="1.5" fill="currentColor" stroke="currentColor" stroke-width="1.2"/>
-                                            <path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </label>
-                            <input type="range" id="sizeSlider" min="0.5" max="10" step="0.25" value="2">
+                            <input type="text" class="pattern-text-input" id="patternTextInput" value="A" placeholder="A" autocomplete="off" spellcheck="false">
                         </div>
                     </section>
 
-                    <!-- Color Picker -->
+                    <!-- Background Color -->
                     <section class="control-section">
-                        <h3>Color</h3>
-
+                        <h3>Background</h3>
                         <div class="control-group">
                             <div class="color-input-group">
-                                <button type="button" class="color-preview" id="colorPreview" aria-label="Toggle color picker"></button>
-                                <input type="text" class="hex-color-input" id="hexColorInput" value="#808080" maxlength="7" aria-label="Hex color value">
+                                <button type="button" class="color-preview" id="bgColorPreview" aria-label="Toggle background color picker"></button>
+                                <input type="text" class="hex-color-input" id="bgHexColorInput" value="#000000" maxlength="7" aria-label="Background hex color">
                             </div>
                         </div>
-
-                        <div class="hsb-picker" id="hsbPicker" style="display: none;">
+                        <div class="hsb-picker" id="bgHsbPicker" style="display: none;">
                             <div class="hsb-controls">
                                 <div class="hsb-control-group">
-                                    <label for="hueSlider">
-                                        <span>Hue</span>
-                                        <input type="text" class="value-display hsb-value" id="hueValue" value="0">
-                                    </label>
-                                    <input type="range" id="hueSlider" min="0" max="360" step="1" value="0">
+                                    <label for="bgHueSlider"><span>Hue</span><input type="text" class="value-display hsb-value" id="bgHueValue" value="0"></label>
+                                    <input type="range" id="bgHueSlider" min="0" max="360" step="1" value="0">
                                 </div>
-
                                 <div class="hsb-control-group">
-                                    <label for="saturationSlider">
-                                        <span>Saturation</span>
-                                        <input type="text" class="value-display hsb-value" id="saturationValue" value="0">
-                                    </label>
-                                    <input type="range" id="saturationSlider" min="0" max="100" step="1" value="0">
+                                    <label for="bgSaturationSlider"><span>Saturation</span><input type="text" class="value-display hsb-value" id="bgSaturationValue" value="0"></label>
+                                    <input type="range" id="bgSaturationSlider" min="0" max="100" step="1" value="0">
                                 </div>
-
                                 <div class="hsb-control-group">
-                                    <label for="brightnessSlider">
-                                        <span>Brightness</span>
-                                        <input type="text" class="value-display hsb-value" id="brightnessValue" value="50">
-                                    </label>
-                                    <input type="range" id="brightnessSlider" min="0" max="100" step="1" value="50">
+                                    <label for="bgBrightnessSlider"><span>Brightness</span><input type="text" class="value-display hsb-value" id="bgBrightnessValue" value="0"></label>
+                                    <input type="range" id="bgBrightnessSlider" min="0" max="100" step="1" value="0">
                                 </div>
                             </div>
                         </div>
                     </section>
 
-                    <!-- Toggle Chips -->
+                    <!-- Text Color -->
                     <section class="control-section">
-                        <h3>Layers</h3>
-                        <fieldset>
-                            <legend class="sr-only">Toggle layer visibility</legend>
-                            <div class="control-group show-toggle-chip-group">
-                                <div class="toggle-chip-group">
-                                    <label class="toggle-chip">
-                                        <input type="checkbox" id="showLayer1" data-setting="showLayer1" checked>
-                                        <span>
-                                            <span class="toggle-chip-icon-wrapper">
-                                                <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
-                                                <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                                            </span>
-                                            Layer 1
-                                        </span>
-                                    </label>
-                                    <label class="toggle-chip">
-                                        <input type="checkbox" id="showLayer2" data-setting="showLayer2" checked>
-                                        <span>
-                                            <span class="toggle-chip-icon-wrapper">
-                                                <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
-                                                <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                                            </span>
-                                            Layer 2
-                                        </span>
-                                    </label>
-                                    <label class="toggle-chip">
-                                        <input type="checkbox" id="showLayer3" data-setting="showLayer3" checked>
-                                        <span>
-                                            <span class="toggle-chip-icon-wrapper">
-                                                <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
-                                                <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                                            </span>
-                                            Layer 3
-                                        </span>
-                                    </label>
+                        <h3>Text Color</h3>
+                        <div class="control-group">
+                            <div class="color-input-group">
+                                <button type="button" class="color-preview" id="textColorPreview" aria-label="Toggle text color picker"></button>
+                                <input type="text" class="hex-color-input" id="textHexColorInput" value="#FFFFFF" maxlength="7" aria-label="Text hex color">
+                            </div>
+                        </div>
+                        <div class="hsb-picker" id="textHsbPicker" style="display: none;">
+                            <div class="hsb-controls">
+                                <div class="hsb-control-group">
+                                    <label for="textHueSlider"><span>Hue</span><input type="text" class="value-display hsb-value" id="textHueValue" value="0"></label>
+                                    <input type="range" id="textHueSlider" min="0" max="360" step="1" value="0">
+                                </div>
+                                <div class="hsb-control-group">
+                                    <label for="textSaturationSlider"><span>Saturation</span><input type="text" class="value-display hsb-value" id="textSaturationValue" value="0"></label>
+                                    <input type="range" id="textSaturationSlider" min="0" max="100" step="1" value="0">
+                                </div>
+                                <div class="hsb-control-group">
+                                    <label for="textBrightnessSlider"><span>Brightness</span><input type="text" class="value-display hsb-value" id="textBrightnessValue" value="100"></label>
+                                    <input type="range" id="textBrightnessSlider" min="0" max="100" step="1" value="100">
                                 </div>
                             </div>
-                        </fieldset>
+                        </div>
                     </section>
 
-                    <!-- Segmented Control -->
+                    <!-- Format -->
                     <section class="control-section">
-                        <h3>Mode</h3>
+                        <h3>Format</h3>
                         <div class="control-group">
                             <fieldset>
-                                <legend class="sr-only">Select mode</legend>
-                                <div class="segmented-control">
-                                    <input type="radio" name="mode" value="optionA" id="modeOptionA" checked>
-                                    <label for="modeOptionA">Option A</label>
-
-                                    <input type="radio" name="mode" value="optionB" id="modeOptionB">
-                                    <label for="modeOptionB">Option B</label>
-
-                                    <input type="radio" name="mode" value="optionC" id="modeOptionC">
-                                    <label for="modeOptionC">Option C</label>
+                                <legend class="sr-only">Artboard format</legend>
+                                <div class="format-grid">
+                                    <input type="radio" name="format" value="1080×1920" id="fmt1080x1920" checked>
+                                    <label for="fmt1080x1920">1080 × 1920</label>
+                                    <input type="radio" name="format" value="1080×1080" id="fmt1080x1080">
+                                    <label for="fmt1080x1080">1080 × 1080</label>
+                                    <input type="radio" name="format" value="1080×1440" id="fmt1080x1440">
+                                    <label for="fmt1080x1440">1080 × 1440</label>
+                                    <input type="radio" name="format" value="1920×1080" id="fmt1920x1080">
+                                    <label for="fmt1920x1080">1920 × 1080</label>
+                                    <input type="radio" name="format" value="custom" id="fmtCustom">
+                                    <label for="fmtCustom">Custom</label>
                                 </div>
                             </fieldset>
+                        </div>
+                        <div class="control-group custom-format-row" id="customFormatGroup" style="display:none">
+                            <input type="number" id="customWidthInput" value="1080" min="100" max="7680" placeholder="W">
+                            <span>×</span>
+                            <input type="number" id="customHeightInput" value="1920" min="100" max="7680" placeholder="H">
                         </div>
                     </section>
 
                 </div>
             </aside>
 
-            <!-- Left Panel — Properties -->
-            <aside class="controls-panel controls-panel-left" id="secondaryPanel" aria-label="Properties panel">
-                <div class="panel-header" id="secondaryPanelHeader">
-                    <span>Properties</span>
+            <!-- ============================================ -->
+            <!-- RIGHT PANEL — Style                          -->
+            <!-- ============================================ -->
+            <aside class="controls-panel" id="stylePanel" aria-label="Style panel">
+                <div class="panel-header" id="stylePanelHeader">
+                    <span>Style</span>
                     <span class="collapse-icon" role="button" aria-label="Collapse panel" tabindex="0">
                         <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -233,47 +221,109 @@
                 </div>
                 <div class="panel-content">
 
-                    <!-- Toggle Switch -->
+                    <!-- Generator mode -->
                     <section class="control-section">
-                        <h3>Options</h3>
                         <div class="control-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="toggleFeature" checked>
-                                <span>Enable Feature</span>
-                            </label>
-                        </div>
-                        <div class="control-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="toggleSnap">
-                                <span>Snap to Grid</span>
-                            </label>
+                            <select id="generatorModeSelect" class="generator-mode-select" aria-label="Generator mode">
+                                <option value="halftone" selected>Halftone</option>
+                            </select>
                         </div>
                     </section>
 
-                    <!-- Dropdown Select -->
-                    <section class="control-section">
-                        <h3>Style</h3>
-                        <div class="control-group">
-                            <label for="styleSelect">
-                                <select id="styleSelect" class="style-select" aria-label="Style selection">
-                                    <option value="default">Default Style</option>
-                                    <option value="minimal">Minimal</option>
-                                    <option value="detailed">Detailed</option>
-                                </select>
-                            </label>
-                        </div>
-                    </section>
+                    <!-- Halftone controls -->
+                    <div id="halftoneControls">
 
-                    <!-- Textarea with char counter -->
-                    <section class="control-section">
-                        <h3>Notes</h3>
-                        <div class="control-group">
-                            <textarea id="noteText" placeholder="Enter notes here..." rows="4" aria-label="Notes"></textarea>
-                            <div class="textarea-footer">
-                                <span class="char-counter" id="charCounter">0 characters</span>
+                        <section class="control-section">
+                            <h3>Pattern</h3>
+
+                            <div class="control-group">
+                                <fieldset>
+                                    <legend class="sr-only">Render mode</legend>
+                                    <div class="segmented-control segmented-control-compact">
+                                        <input type="radio" name="renderMode" value="size" id="modeSize" checked>
+                                        <label for="modeSize">Size</label>
+                                        <input type="radio" name="renderMode" value="weight" id="modeWeight">
+                                        <label for="modeWeight">Weight</label>
+                                        <input type="radio" name="renderMode" value="combined" id="modeCombined">
+                                        <label for="modeCombined">Both</label>
+                                        <input type="radio" name="renderMode" value="uniform" id="modeUniform">
+                                        <label for="modeUniform">Uniform</label>
+                                    </div>
+                                </fieldset>
                             </div>
-                        </div>
-                    </section>
+
+                            <div class="control-group">
+                                <label for="resolutionSlider">
+                                    <span>Resolution</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="resolutionValue" value="30">
+                                    </div>
+                                </label>
+                                <input type="range" id="resolutionSlider" min="5" max="120" step="1" value="30">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="spacingSlider">
+                                    <span>Spacing</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="spacingValue" value="1.00">
+                                    </div>
+                                </label>
+                                <input type="range" id="spacingSlider" min="0.30" max="3.00" step="0.05" value="1.00">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="contrastSlider">
+                                    <span>Contrast</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="contrastValue" value="70">
+                                    </div>
+                                </label>
+                                <input type="range" id="contrastSlider" min="0" max="100" step="1" value="70">
+                            </div>
+
+                            <div class="control-group" id="fontWeightGroup">
+                                <label for="fontWeightSlider">
+                                    <span>Weight</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="fontWeightValue" value="200">
+                                    </div>
+                                </label>
+                                <input type="range" id="fontWeightSlider" min="100" max="400" step="1" value="200">
+                            </div>
+                        </section>
+
+                        <!-- Source Image -->
+                        <section class="control-section">
+                            <h3>Source Image</h3>
+                            <div class="control-group">
+                                <div class="image-upload-compact" id="imageUploadArea">
+                                    <svg class="image-upload-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="2" y="2" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                                        <circle cx="7" cy="7" r="1.5" stroke="currentColor" stroke-width="1.2"/>
+                                        <path d="M2 14l4-4 3 3 3-4 6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <div class="image-upload-info">
+                                        <div class="image-upload-name" id="imageFileName">9x16_01.png</div>
+                                        <div class="image-upload-hint">Drop image or click to upload</div>
+                                    </div>
+                                    <button type="button" class="image-remove-btn" id="imageRemoveBtn" aria-label="Reset image">
+                                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <input type="file" id="imageFileInput" accept="image/*" style="display:none">
+                            </div>
+                            <div class="control-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="invertBrightnessToggle">
+                                    <span>Invert brightness</span>
+                                </label>
+                            </div>
+                        </section>
+
+                    </div><!-- /halftoneControls -->
 
                 </div>
             </aside>
@@ -282,10 +332,9 @@
     </div>
 
     <!-- Bottom Buttons -->
-    <nav class="bottom-buttons" aria-label="Export and settings actions">
+    <nav class="bottom-buttons" aria-label="Export actions">
         <button class="btn-fixed btn-export-settings" id="exportSettingsBtn" type="button">Export Settings</button>
         <button class="btn-fixed btn-import-settings" id="importSettingsBtn" type="button">Import Settings</button>
-
         <div class="export-group-right">
             <button class="btn-fixed btn-export" id="exportSvgBtn" type="button">Export SVG ⌘E</button>
             <label class="toggle-label">
@@ -298,84 +347,10 @@
         </div>
     </nav>
 
-    <!-- Object Properties Panel (floating, shown on object click) -->
-    <aside class="controls-panel paragraph-settings-panel" id="objectPropertiesPanel" style="display: none;" role="complementary" aria-label="Object properties">
-        <div class="panel-header" id="objectPropertiesPanelHeader">
-            <span id="objectPropertiesPanelTitle">Object Properties</span>
-            <div class="panel-header-actions">
-                <button type="button" class="panel-action-btn" id="objectPropertiesCloseBtn" aria-label="Close panel">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
-            </div>
-        </div>
-        <div class="panel-content">
-            <section class="control-section">
-                <h3>Selected Object</h3>
-                <div class="control-group">
-                    <p class="object-properties-info" id="objectPropertiesInfo">Click an object on the canvas to edit its properties.</p>
-                </div>
-                <div class="control-group">
-                    <label for="objectNameInput">
-                        <span>Name</span>
-                        <input type="text" class="value-display" id="objectNameInput" value="" placeholder="Object name" aria-label="Object name">
-                    </label>
-                </div>
-                <div class="control-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="objectVisibleCheckbox" checked aria-label="Object visible">
-                        <span>Visible</span>
-                    </label>
-                </div>
-            </section>
-        </div>
-    </aside>
-
-    <!-- Modal Overlay -->
-    <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-        <div class="modal-content">
-            <button class="modal-close" id="modalClose" type="button" aria-label="Close modal">&times;</button>
-            <h2 id="modalTitle">YF Tool — Help</h2>
-            <div class="modal-body">
-                <p>This is a template for YF Tools applications. Customize the panels and canvas to build your tool.</p>
-
-                <h3>Available Components</h3>
-                <ul>
-                    <li>Sliders with value display, lock buttons, and unit toggles</li>
-                    <li>HSB color picker with hex input</li>
-                    <li>Toggle chips for layer visibility</li>
-                    <li>Segmented controls for mode switching</li>
-                    <li>Checkbox toggle switches</li>
-                    <li>Dropdown selects</li>
-                    <li>Textarea with character counter</li>
-                    <li>Preset dropdown</li>
-                    <li>Collapsible panels with drag support</li>
-                    <li>Zoom &amp; pan canvas</li>
-                    <li><strong>Outline fonts</strong> — toggle for SVG export (converts text to paths when TextToPath is provided)</li>
-                    <li><strong>Object properties panel</strong> — click any object on the canvas to open its settings</li>
-                </ul>
-
-                <h3>Keyboard Shortcuts</h3>
-                <ul>
-                    <li><strong>Arrow keys</strong> — Adjust slider values</li>
-                    <li><strong>Shift + Arrow</strong> — Adjust with larger step</li>
-                    <li><strong>⌘/Ctrl + Scroll</strong> — Zoom canvas</li>
-                    <li><strong>Space + Drag</strong> — Pan canvas</li>
-                    <li><strong>⌘/Ctrl + E</strong> — Export SVG</li>
-                    <li><strong>⌘/Ctrl + Z</strong> — Undo</li>
-                    <li><strong>⌘/Ctrl + Shift + Z</strong> — Redo</li>
-                    <li><strong>Escape</strong> — Close modal</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
     <script type="module">
-        import { AppTemplate } from './src/AppTemplate.js';
-
+        import { HalftoneApp } from './src/HalftoneApp.js';
         document.addEventListener('DOMContentLoaded', () => {
-            const app = new AppTemplate();
+            const app = new HalftoneApp();
             app.init();
         });
     </script>
