@@ -226,6 +226,7 @@
                         <div class="control-group">
                             <select id="generatorModeSelect" class="generator-mode-select" aria-label="Generator mode">
                                 <option value="halftone" selected>Halftone</option>
+                                <option value="concentric">Concentric</option>
                             </select>
                         </div>
                     </section>
@@ -324,6 +325,105 @@
                         </section>
 
                     </div><!-- /halftoneControls -->
+
+                    <!-- Concentric controls -->
+                    <div id="concentricControls" style="display: none;">
+
+                        <section class="control-section">
+                            <h3>Circles</h3>
+
+                            <div class="control-group">
+                                <label for="concentricCountSlider">
+                                    <span>Count</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricCountValue" value="10">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricCountSlider" min="1" max="100" step="1" value="10">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="concentricFontSizeSlider">
+                                    <span>Font Size</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricFontSizeValue" value="24">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricFontSizeSlider" min="4" max="200" step="1" value="24">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="concentricFontWeightSlider">
+                                    <span>Weight</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricFontWeightValue" value="200">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricFontWeightSlider" min="100" max="400" step="1" value="200">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="concentricLineSpacingSlider">
+                                    <span>Line Spacing</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricLineSpacingValue" value="1.40">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricLineSpacingSlider" min="0.50" max="5.00" step="0.05" value="1.40">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="concentricMinRadiusSlider">
+                                    <span>Min Radius</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricMinRadiusValue" value="40">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricMinRadiusSlider" min="0" max="500" step="1" value="40">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="concentricMaxRadiusSlider">
+                                    <span>Max Radius</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricMaxRadiusValue" value="0">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricMaxRadiusSlider" min="0" max="2000" step="1" value="0">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="concentricStartAngleSlider">
+                                    <span>Start Angle</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricStartAngleValue" value="0">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricStartAngleSlider" min="0" max="360" step="1" value="0">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="concentricCenterXSlider">
+                                    <span>Center X</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricCenterXValue" value="50">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricCenterXSlider" min="0" max="100" step="1" value="50">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="concentricCenterYSlider">
+                                    <span>Center Y</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricCenterYValue" value="50">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricCenterYSlider" min="0" max="100" step="1" value="50">
+                            </div>
+                        </section>
+
+                    </div><!-- /concentricControls -->
 
                 </div>
             </aside>

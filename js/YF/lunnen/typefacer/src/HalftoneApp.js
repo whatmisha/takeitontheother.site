@@ -16,8 +16,9 @@ import { ColorPicker }        from './ui/ColorPicker.js';
 import { HistoryManager }     from './history/HistoryManager.js';
 import { SVGExporter }        from './export/SVGExporter.js';
 import { TextToPath }         from './utils/TextToPath.js';
-import { ImageSampler }       from './ImageSampler.js';
-import { HalftoneRenderer }   from './HalftoneRenderer.js';
+import { ImageSampler }         from './ImageSampler.js';
+import { HalftoneRenderer }     from './HalftoneRenderer.js';
+import { ConcentricRenderer }   from './ConcentricRenderer.js';
 
 const FORMATS = {
     '1080×1920': { width: 1080, height: 1920 },
@@ -45,6 +46,17 @@ class HalftoneApp {
             fontWeight:       200,
             invertBrightness: false,
 
+            // Concentric params
+            concentricCount:       10,
+            concentricFontSize:    24,
+            concentricFontWeight:  200,
+            concentricLineSpacing: 1.4,
+            concentricMinRadius:   40,
+            concentricMaxRadius:   0,
+            concentricStartAngle:  0,
+            concentricCenterX:     50,
+            concentricCenterY:     50,
+
             ...overrides
         };
 
@@ -64,9 +76,10 @@ class HalftoneApp {
         this.textToPath     = null;
         this.bgColorPicker  = null;
         this.textColorPicker = null;
-        this.imageSampler   = new ImageSampler();
-        this.renderer       = new HalftoneRenderer();
-        this.brightnessMap  = null;
+        this.imageSampler        = new ImageSampler();
+        this.halftoneRenderer    = new HalftoneRenderer();
+        this.concentricRenderer  = new ConcentricRenderer();
+        this.brightnessMap       = null;
 
         this._updateDebounceTimer = null;
     }
@@ -165,6 +178,63 @@ class HalftoneApp {
         this.sliders.setValue('fontWeightSlider',   this.settingsStore.get('fontWeight'), false);
 
         this._syncWeightSliderVisibility();
+
+        // ── Concentric sliders ──
+        this.sliders.initSlider('concentricCountSlider', {
+            valueId: 'concentricCountValue', setting: 'concentricCount',
+            min: 1, max: 100, decimals: 0, baseStep: 1, shiftStep: 5,
+            onUpdate: () => this.debouncedUpdate()
+        });
+        this.sliders.initSlider('concentricFontSizeSlider', {
+            valueId: 'concentricFontSizeValue', setting: 'concentricFontSize',
+            min: 4, max: 200, decimals: 0, baseStep: 1, shiftStep: 10,
+            onUpdate: () => this.debouncedUpdate()
+        });
+        this.sliders.initSlider('concentricFontWeightSlider', {
+            valueId: 'concentricFontWeightValue', setting: 'concentricFontWeight',
+            min: 100, max: 400, decimals: 0, baseStep: 1, shiftStep: 50,
+            onUpdate: () => this.debouncedUpdate()
+        });
+        this.sliders.initSlider('concentricLineSpacingSlider', {
+            valueId: 'concentricLineSpacingValue', setting: 'concentricLineSpacing',
+            min: 0.5, max: 5.0, decimals: 2, baseStep: 0.05, shiftStep: 0.25,
+            onUpdate: () => this.debouncedUpdate()
+        });
+        this.sliders.initSlider('concentricMinRadiusSlider', {
+            valueId: 'concentricMinRadiusValue', setting: 'concentricMinRadius',
+            min: 0, max: 500, decimals: 0, baseStep: 1, shiftStep: 20,
+            onUpdate: () => this.debouncedUpdate()
+        });
+        this.sliders.initSlider('concentricMaxRadiusSlider', {
+            valueId: 'concentricMaxRadiusValue', setting: 'concentricMaxRadius',
+            min: 0, max: 2000, decimals: 0, baseStep: 1, shiftStep: 50,
+            onUpdate: () => this.debouncedUpdate()
+        });
+        this.sliders.initSlider('concentricStartAngleSlider', {
+            valueId: 'concentricStartAngleValue', setting: 'concentricStartAngle',
+            min: 0, max: 360, decimals: 0, baseStep: 1, shiftStep: 15,
+            onUpdate: () => this.debouncedUpdate()
+        });
+        this.sliders.initSlider('concentricCenterXSlider', {
+            valueId: 'concentricCenterXValue', setting: 'concentricCenterX',
+            min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10,
+            onUpdate: () => this.debouncedUpdate()
+        });
+        this.sliders.initSlider('concentricCenterYSlider', {
+            valueId: 'concentricCenterYValue', setting: 'concentricCenterY',
+            min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10,
+            onUpdate: () => this.debouncedUpdate()
+        });
+
+        this.sliders.setValue('concentricCountSlider',       this.settingsStore.get('concentricCount'), false);
+        this.sliders.setValue('concentricFontSizeSlider',    this.settingsStore.get('concentricFontSize'), false);
+        this.sliders.setValue('concentricFontWeightSlider',  this.settingsStore.get('concentricFontWeight'), false);
+        this.sliders.setValue('concentricLineSpacingSlider', this.settingsStore.get('concentricLineSpacing'), false);
+        this.sliders.setValue('concentricMinRadiusSlider',   this.settingsStore.get('concentricMinRadius'), false);
+        this.sliders.setValue('concentricMaxRadiusSlider',   this.settingsStore.get('concentricMaxRadius'), false);
+        this.sliders.setValue('concentricStartAngleSlider',  this.settingsStore.get('concentricStartAngle'), false);
+        this.sliders.setValue('concentricCenterXSlider',     this.settingsStore.get('concentricCenterX'), false);
+        this.sliders.setValue('concentricCenterYSlider',     this.settingsStore.get('concentricCenterY'), false);
     }
 
     /* ================================================================ */
@@ -209,8 +279,10 @@ class HalftoneApp {
 
     _syncGeneratorVisibility() {
         const mode = this.settings.generatorMode;
-        const halftoneEl = document.getElementById('halftoneControls');
-        if (halftoneEl) halftoneEl.style.display = mode === 'halftone' ? 'block' : 'none';
+        const halftoneEl    = document.getElementById('halftoneControls');
+        const concentricEl  = document.getElementById('concentricControls');
+        if (halftoneEl)   halftoneEl.style.display   = mode === 'halftone'    ? 'block' : 'none';
+        if (concentricEl) concentricEl.style.display = mode === 'concentric' ? 'block' : 'none';
     }
 
     /* ================================================================ */
@@ -566,21 +638,27 @@ class HalftoneApp {
             const svg = this.dom?.svg;
             if (!svg) return;
 
-            const w    = this.settings.artboardWidth;
-            const h    = this.settings.artboardHeight;
-            const cols = this.settings.resolution;
-            const spacing = this.settings.spacing;
-            const baseCellSize = w / cols;
-            const step = baseCellSize * spacing;
-            const rows = Math.ceil(h / step);
+            const mode = this.settings.generatorMode;
 
-            if (!this.brightnessMap ||
-                this.brightnessMap.length !== rows ||
-                this.brightnessMap[0]?.length !== cols) {
-                this.brightnessMap = this.imageSampler.getBrightnessMap(cols, rows);
+            if (mode === 'concentric') {
+                this.concentricRenderer.render(svg, this.settings);
+            } else {
+                const w    = this.settings.artboardWidth;
+                const cols = this.settings.resolution;
+                const spacing = this.settings.spacing;
+                const baseCellSize = w / cols;
+                const step = baseCellSize * spacing;
+                const h    = this.settings.artboardHeight;
+                const rows = Math.ceil(h / step);
+
+                if (!this.brightnessMap ||
+                    this.brightnessMap.length !== rows ||
+                    this.brightnessMap[0]?.length !== cols) {
+                    this.brightnessMap = this.imageSampler.getBrightnessMap(cols, rows);
+                }
+
+                this.halftoneRenderer.render(svg, this.settings, this.brightnessMap);
             }
-
-            this.renderer.render(svg, this.settings, this.brightnessMap);
 
             if (this.zoomPan) {
                 this.zoomPan.reinitializeSVGDimensions();
@@ -637,7 +715,8 @@ class HalftoneApp {
         const convertToOutlines = document.getElementById('convertToOutlinesCheckbox')?.checked ?? false;
         const w = this.settings.artboardWidth;
         const h = this.settings.artboardHeight;
-        const filename = `halftone_${w}x${h}.svg`;
+        const mode = this.settings.generatorMode;
+        const filename = `${mode}_${w}x${h}.svg`;
         await this.svgExporter.exportToFile(svg, filename, {
             removeInteractive: true,
             convertTextToOutlines: convertToOutlines
@@ -672,10 +751,22 @@ class HalftoneApp {
     _syncUIFromSettings() {
         const s = this.settingsStore;
 
+        // Halftone sliders
         this.sliders.setValue('resolutionSlider',  s.get('resolution'),  false);
         this.sliders.setValue('spacingSlider',      s.get('spacing'),     false);
         this.sliders.setValue('contrastSlider',     s.get('contrast'),    false);
         this.sliders.setValue('fontWeightSlider',   s.get('fontWeight'),  false);
+
+        // Concentric sliders
+        this.sliders.setValue('concentricCountSlider',       s.get('concentricCount'), false);
+        this.sliders.setValue('concentricFontSizeSlider',    s.get('concentricFontSize'), false);
+        this.sliders.setValue('concentricFontWeightSlider',  s.get('concentricFontWeight'), false);
+        this.sliders.setValue('concentricLineSpacingSlider', s.get('concentricLineSpacing'), false);
+        this.sliders.setValue('concentricMinRadiusSlider',   s.get('concentricMinRadius'), false);
+        this.sliders.setValue('concentricMaxRadiusSlider',   s.get('concentricMaxRadius'), false);
+        this.sliders.setValue('concentricStartAngleSlider',  s.get('concentricStartAngle'), false);
+        this.sliders.setValue('concentricCenterXSlider',     s.get('concentricCenterX'), false);
+        this.sliders.setValue('concentricCenterYSlider',     s.get('concentricCenterY'), false);
 
         const formatRadio = document.querySelector(`input[name="format"][value="${s.get('format')}"]`);
         if (formatRadio) formatRadio.checked = true;

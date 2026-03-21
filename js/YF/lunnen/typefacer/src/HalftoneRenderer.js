@@ -147,13 +147,15 @@ export class HalftoneRenderer {
     /**
      * Режим 4: кегль меняется, жирность компенсируется
      * так, чтобы толщина штриха оставалась постоянной.
-     * weight = STROKE_CONST / fontSize, clamped to [100, 400].
+     * K вычисляется динамически: K = maxFontSize × 100,
+     * гарантируя weight = 100 для самых крупных букв.
      */
     _calcUniform(brightness, cellSize, contrast) {
         const maxSize = cellSize * 1.1;
         const minSize = maxSize * (1 - contrast);
         const fontSize = Math.max(minSize + (maxSize - minSize) * brightness, 0.5);
-        const fontWeight = this._clampWeight(STROKE_CONST / fontSize);
+        const K = maxSize * MIN_WEIGHT;
+        const fontWeight = this._clampWeight(K / fontSize);
         return { fontSize, fontWeight };
     }
 
