@@ -47,10 +47,10 @@ class HalftoneApp {
             invertBrightness: false,
 
             // Concentric params
-            concentricCount:       10,
-            concentricFontSize:    24,
-            concentricFontWeight:  200,
-            concentricLineSpacing: 1.4,
+            concentricCount:        10,
+            concentricFontSize:     24,
+            concentricFontWeight:   200,
+            concentricLetterSpacing: 1.0,
             concentricMinRadius:   40,
             concentricMaxRadius:   0,
             concentricStartAngle:  0,
@@ -195,9 +195,9 @@ class HalftoneApp {
             min: 100, max: 400, decimals: 0, baseStep: 1, shiftStep: 50,
             onUpdate: () => this.debouncedUpdate()
         });
-        this.sliders.initSlider('concentricLineSpacingSlider', {
-            valueId: 'concentricLineSpacingValue', setting: 'concentricLineSpacing',
-            min: 0.5, max: 5.0, decimals: 2, baseStep: 0.05, shiftStep: 0.25,
+        this.sliders.initSlider('concentricLetterSpacingSlider', {
+            valueId: 'concentricLetterSpacingValue', setting: 'concentricLetterSpacing',
+            min: 0.3, max: 3.0, decimals: 2, baseStep: 0.05, shiftStep: 0.25,
             onUpdate: () => this.debouncedUpdate()
         });
         this.sliders.initSlider('concentricMinRadiusSlider', {
@@ -229,7 +229,7 @@ class HalftoneApp {
         this.sliders.setValue('concentricCountSlider',       this.settingsStore.get('concentricCount'), false);
         this.sliders.setValue('concentricFontSizeSlider',    this.settingsStore.get('concentricFontSize'), false);
         this.sliders.setValue('concentricFontWeightSlider',  this.settingsStore.get('concentricFontWeight'), false);
-        this.sliders.setValue('concentricLineSpacingSlider', this.settingsStore.get('concentricLineSpacing'), false);
+        this.sliders.setValue('concentricLetterSpacingSlider', this.settingsStore.get('concentricLetterSpacing'), false);
         this.sliders.setValue('concentricMinRadiusSlider',   this.settingsStore.get('concentricMinRadius'), false);
         this.sliders.setValue('concentricMaxRadiusSlider',   this.settingsStore.get('concentricMaxRadius'), false);
         this.sliders.setValue('concentricStartAngleSlider',  this.settingsStore.get('concentricStartAngle'), false);
@@ -761,7 +761,7 @@ class HalftoneApp {
         this.sliders.setValue('concentricCountSlider',       s.get('concentricCount'), false);
         this.sliders.setValue('concentricFontSizeSlider',    s.get('concentricFontSize'), false);
         this.sliders.setValue('concentricFontWeightSlider',  s.get('concentricFontWeight'), false);
-        this.sliders.setValue('concentricLineSpacingSlider', s.get('concentricLineSpacing'), false);
+        this.sliders.setValue('concentricLetterSpacingSlider', s.get('concentricLetterSpacing'), false);
         this.sliders.setValue('concentricMinRadiusSlider',   s.get('concentricMinRadius'), false);
         this.sliders.setValue('concentricMaxRadiusSlider',   s.get('concentricMaxRadius'), false);
         this.sliders.setValue('concentricStartAngleSlider',  s.get('concentricStartAngle'), false);

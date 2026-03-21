@@ -3,6 +3,7 @@
  *
  * Каждое кольцо — строка текста, расположенная по дуге окружности.
  * Символы размещаются через rotate + translate на каждый символ.
+ * Содержимое обрезается по границам артборда.
  */
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -21,42 +22,52 @@ export class ConcentricRenderer {
 
         svg.setAttribute('width', w);
         svg.setAttribute('height', h);
+        svg.setAttribute('overflow', 'hidden');
 
         if (!svg._zoomManaged) {
             svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
         }
 
-        const bg = document.createElementNS(SVG_NS, 'rect');
-        bg.setAttribute('width', w);
-        bg.setAttribute('height', h);
-        bg.setAttribute('fill', settings.bgColor);
-        svg.appendChild(bg);
-
         const cx = w * (settings.concentricCenterX ?? 50) / 100;
         const cy = h * (settings.concentricCenterY ?? 50) / 100;
 
-        const circleCount = settings.concentricCount ?? 10;
+        const circleCount  = settings.concentricCount ?? 10;
         const fontSize    = settings.concentricFontSize ?? 24;
         const fontWeight  = settings.concentricFontWeight ?? 200;
-        const lineSpacing = settings.concentricLineSpacing ?? 1.4;
+        const letterSpacing = settings.concentricLetterSpacing ?? 1.0;
         const startAngle  = settings.concentricStartAngle ?? 0;
 
-        const minRadius = settings.concentricMinRadius ?? fontSize * lineSpacing;
-        const maxEdge   = Math.max(
-            Math.hypot(cx, cy),
-            Math.hypot(w - cx, cy),
-            Math.hypot(cx, h - cy),
-            Math.hypot(w - cx, h - cy)
-        );
+        const minRadius = settings.concentricMinRadius ?? 40;
+        const maxRadiusToFit = Math.min(cx, w - cx, cy, h - cy);
         const maxRadius = settings.concentricMaxRadius > 0
-            ? settings.concentricMaxRadius
-            : maxEdge;
+            ? Math.min(settings.concentricMaxRadius, maxRadiusToFit)
+            : maxRadiusToFit;
 
         const text  = settings.text || 'A';
         const chars = [...text];
         const fill  = settings.textColor;
 
         const charWidthFactor = 0.6;
+        const charWidth = fontSize * charWidthFactor * letterSpacing;
+
+        const defs = document.createElementNS(SVG_NS, 'defs');
+        const clipPath = document.createElementNS(SVG_NS, 'clipPath');
+        clipPath.setAttribute('id', 'artboardClip');
+        const clipRect = document.createElementNS(SVG_NS, 'rect');
+        clipRect.setAttribute('width', w);
+        clipRect.setAttribute('height', h);
+        clipPath.appendChild(clipRect);
+        defs.appendChild(clipPath);
+        svg.appendChild(defs);
+
+        const g = document.createElementNS(SVG_NS, 'g');
+        g.setAttribute('clip-path', 'url(#artboardClip)');
+
+        const bg = document.createElementNS(SVG_NS, 'rect');
+        bg.setAttribute('width', w);
+        bg.setAttribute('height', h);
+        bg.setAttribute('fill', settings.bgColor);
+        g.appendChild(bg);
 
         for (let i = 0; i < circleCount; i++) {
             const t = circleCount === 1 ? 0 : i / (circleCount - 1);
@@ -65,7 +76,6 @@ export class ConcentricRenderer {
             if (radius < 1) continue;
 
             const circumference = 2 * Math.PI * radius;
-            const charWidth = fontSize * charWidthFactor;
             const totalChars = Math.max(1, Math.floor(circumference / charWidth));
             const angleStep = 360 / totalChars;
 
@@ -91,8 +101,10 @@ export class ConcentricRenderer {
                     `translate(${x.toFixed(2)}, ${y.toFixed(2)}) rotate(${(angleDeg + 90).toFixed(2)})`
                 );
                 el.textContent = char;
-                svg.appendChild(el);
+                g.appendChild(el);
             }
         }
+
+        svg.appendChild(g);
     }
 }
