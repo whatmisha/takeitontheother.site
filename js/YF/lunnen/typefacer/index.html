@@ -241,12 +241,8 @@
                                 <fieldset>
                                     <legend class="sr-only">Render mode</legend>
                                     <div class="segmented-control segmented-control-compact">
-                                        <input type="radio" name="renderMode" value="size" id="modeSize" checked>
-                                        <label for="modeSize">Size</label>
-                                        <input type="radio" name="renderMode" value="weight" id="modeWeight">
-                                        <label for="modeWeight">Weight</label>
-                                        <input type="radio" name="renderMode" value="combined" id="modeCombined">
-                                        <label for="modeCombined">Both</label>
+                                        <input type="radio" name="renderMode" value="standard" id="modeStandard" checked>
+                                        <label for="modeStandard">Standard</label>
                                         <input type="radio" name="renderMode" value="uniform" id="modeUniform">
                                         <label for="modeUniform">Uniform</label>
                                     </div>
@@ -273,24 +269,44 @@
                                 <input type="range" id="spacingSlider" min="0.30" max="3.00" step="0.05" value="1.00">
                             </div>
 
-                            <div class="control-group">
-                                <label for="contrastSlider">
-                                    <span>Contrast</span>
-                                    <div class="value-display-wrapper">
-                                        <input type="text" class="value-display" id="contrastValue" value="70">
-                                    </div>
-                                </label>
-                                <input type="range" id="contrastSlider" min="0" max="100" step="1" value="70">
-                            </div>
-
                             <div class="control-group" id="fontWeightGroup">
                                 <label for="fontWeightSlider">
                                     <span>Weight</span>
                                     <div class="value-display-wrapper">
-                                        <input type="text" class="value-display" id="fontWeightValue" value="200">
+                                        <input type="text" class="value-display" id="fontWeightValue" value="250">
                                     </div>
                                 </label>
-                                <input type="range" id="fontWeightSlider" min="100" max="400" step="1" value="200">
+                                <input type="range" id="fontWeightSlider" min="100" max="400" step="1" value="250">
+                            </div>
+
+                            <div class="control-group" id="weightContrastGroup">
+                                <label for="weightContrastSlider">
+                                    <span>Weight Contrast</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="weightContrastValue" value="50">
+                                    </div>
+                                </label>
+                                <input type="range" id="weightContrastSlider" min="0" max="100" step="1" value="50">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="sizeContrastSlider">
+                                    <span>Size Contrast</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="sizeContrastValue" value="50">
+                                    </div>
+                                </label>
+                                <input type="range" id="sizeContrastSlider" min="0" max="100" step="1" value="50">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="rotationSlider">
+                                    <span>Random Rotation</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="rotationValue" value="0">
+                                    </div>
+                                </label>
+                                <input type="range" id="rotationSlider" min="0" max="180" step="1" value="0">
                             </div>
                         </section>
 
@@ -336,40 +352,40 @@
                                 <label for="concentricCountSlider">
                                     <span>Count</span>
                                     <div class="value-display-wrapper">
-                                        <input type="text" class="value-display" id="concentricCountValue" value="10">
+                                        <input type="text" class="value-display" id="concentricCountValue" value="30">
                                     </div>
                                 </label>
-                                <input type="range" id="concentricCountSlider" min="1" max="100" step="1" value="10">
+                                <input type="range" id="concentricCountSlider" min="1" max="100" step="1" value="30">
                             </div>
 
                             <div class="control-group">
                                 <label for="concentricFontSizeSlider">
                                     <span>Font Size</span>
                                     <div class="value-display-wrapper">
-                                        <input type="text" class="value-display" id="concentricFontSizeValue" value="24">
+                                        <input type="text" class="value-display" id="concentricFontSizeValue" value="30">
                                     </div>
                                 </label>
-                                <input type="range" id="concentricFontSizeSlider" min="4" max="200" step="1" value="24">
+                                <input type="range" id="concentricFontSizeSlider" min="4" max="200" step="1" value="30">
                             </div>
 
                             <div class="control-group">
                                 <label for="concentricFontWeightSlider">
                                     <span>Weight</span>
                                     <div class="value-display-wrapper">
-                                        <input type="text" class="value-display" id="concentricFontWeightValue" value="200">
+                                        <input type="text" class="value-display" id="concentricFontWeightValue" value="250">
                                     </div>
                                 </label>
-                                <input type="range" id="concentricFontWeightSlider" min="100" max="400" step="1" value="200">
+                                <input type="range" id="concentricFontWeightSlider" min="100" max="400" step="1" value="250">
                             </div>
 
                             <div class="control-group">
                                 <label for="concentricLetterSpacingSlider">
                                     <span>Letter Spacing</span>
                                     <div class="value-display-wrapper">
-                                        <input type="text" class="value-display" id="concentricLetterSpacingValue" value="1.00">
+                                        <input type="text" class="value-display" id="concentricLetterSpacingValue" value="2.00">
                                     </div>
                                 </label>
-                                <input type="range" id="concentricLetterSpacingSlider" min="0.30" max="3.00" step="0.05" value="1.00">
+                                <input type="range" id="concentricLetterSpacingSlider" min="0.30" max="3.00" step="0.05" value="2.00">
                             </div>
 
                             <div class="control-group">
@@ -420,6 +436,16 @@
                                     </div>
                                 </label>
                                 <input type="range" id="concentricCenterYSlider" min="0" max="100" step="1" value="50">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="concentricRotationSlider">
+                                    <span>Rotation</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricRotationValue" value="0">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricRotationSlider" min="0" max="180" step="1" value="0">
                             </div>
                         </section>
 

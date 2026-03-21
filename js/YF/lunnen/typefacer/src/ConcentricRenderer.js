@@ -3,17 +3,13 @@
  *
  * Каждое кольцо — строка текста, расположенная по дуге окружности.
  * Символы размещаются через rotate + translate на каждый символ.
- * Содержимое обрезается по границам артборда.
+ * Содержимое обрезается по границам артборда через clipPath.
  */
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 export class ConcentricRenderer {
 
-    /**
-     * @param {SVGSVGElement} svg
-     * @param {Object} settings — proxy Settings
-     */
     render(svg, settings) {
         while (svg.firstChild) svg.removeChild(svg.firstChild);
 
@@ -31,17 +27,23 @@ export class ConcentricRenderer {
         const cx = w * (settings.concentricCenterX ?? 50) / 100;
         const cy = h * (settings.concentricCenterY ?? 50) / 100;
 
-        const circleCount  = settings.concentricCount ?? 10;
-        const fontSize    = settings.concentricFontSize ?? 24;
-        const fontWeight  = settings.concentricFontWeight ?? 200;
+        const circleCount   = settings.concentricCount ?? 10;
+        const fontSize      = settings.concentricFontSize ?? 24;
+        const fontWeight    = settings.concentricFontWeight ?? 200;
         const letterSpacing = settings.concentricLetterSpacing ?? 1.0;
-        const startAngle  = settings.concentricStartAngle ?? 0;
+        const startAngle    = settings.concentricStartAngle ?? 0;
+        const rotation      = settings.rotation ?? 0;
 
         const minRadius = settings.concentricMinRadius ?? 40;
-        const maxRadiusToFit = Math.min(cx, w - cx, cy, h - cy);
+        const maxRadiusAuto = Math.max(
+            Math.hypot(cx, cy),
+            Math.hypot(w - cx, cy),
+            Math.hypot(cx, h - cy),
+            Math.hypot(w - cx, h - cy)
+        );
         const maxRadius = settings.concentricMaxRadius > 0
-            ? Math.min(settings.concentricMaxRadius, maxRadiusToFit)
-            : maxRadiusToFit;
+            ? settings.concentricMaxRadius
+            : maxRadiusAuto;
 
         const text  = settings.text || 'A';
         const chars = [...text];
@@ -87,6 +89,12 @@ export class ConcentricRenderer {
                 const x = cx + radius * Math.cos(angleRad);
                 const y = cy + radius * Math.sin(angleRad);
 
+                let rot = angleDeg + 90;
+                if (rotation > 0) {
+                    const rand = this._pseudoRandom(i, c) * rotation * 2 - rotation;
+                    rot += rand;
+                }
+
                 const el = document.createElementNS(SVG_NS, 'text');
                 el.setAttribute('x', '0');
                 el.setAttribute('y', '0');
@@ -98,7 +106,7 @@ export class ConcentricRenderer {
                 el.setAttribute('dominant-baseline', 'central');
                 el.setAttribute(
                     'transform',
-                    `translate(${x.toFixed(2)}, ${y.toFixed(2)}) rotate(${(angleDeg + 90).toFixed(2)})`
+                    `translate(${x.toFixed(2)}, ${y.toFixed(2)}) rotate(${rot.toFixed(2)})`
                 );
                 el.textContent = char;
                 g.appendChild(el);
@@ -106,5 +114,10 @@ export class ConcentricRenderer {
         }
 
         svg.appendChild(g);
+    }
+
+    _pseudoRandom(ring, index) {
+        const v = Math.sin(ring * 12.9898 + index * 78.233) * 43758.5453;
+        return v - Math.floor(v);
     }
 }

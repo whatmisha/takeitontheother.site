@@ -1,31 +1,24 @@
 /**
  * HalftoneRenderer — генерация текстового halftone-паттерна в SVG.
  *
- * Четыре режима отрисовки:
- *   1. size     — кегль меняется, жирность фиксирована
- *   2. weight   — жирность меняется, кегль фиксирован
- *   3. combined — оба параметра меняются одновременно
- *   4. uniform  — кегль меняется, жирность автоматически компенсируется
- *                 так, чтобы толщина штриха оставалась постоянной
+ * Два режима:
+ *   1. standard — кегль и жирность варьируются независимо,
+ *      каждый со своим контрастом (sizeContrast, weightContrast).
+ *   2. uniform  — кегль меняется, жирность компенсируется
+ *      так, чтобы толщина штриха оставалась постоянной
+ *      (K = maxFontSize × 100, weight = K / fontSize).
  *
- * Ключевая пропорция шрифта Lunnen Display Variable:
- *   fontSize 56.76 @ weight 400  ≈  fontSize 225.29 @ weight 100
- *   → fontSize × weight ≈ 22 616 для одинаковой толщины штриха.
+ * Spacing масштабирует расстояние между буквами по обеим осям.
+ * Rotation задаёт максимальный случайный поворот каждой буквы.
  */
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 const MIN_WEIGHT = 100;
 const MAX_WEIGHT = 400;
-const STROKE_CONST = 22616;
 
 export class HalftoneRenderer {
 
-    /**
-     * @param {SVGSVGElement} svg
-     * @param {Object} settings — proxy Settings
-     * @param {number[][]} brightnessMap — [row][col], значения 0..1
-     */
     render(svg, settings, brightnessMap) {
         while (svg.firstChild) svg.removeChild(svg.firstChild);
 
@@ -39,23 +32,27 @@ export class HalftoneRenderer {
             svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
         }
 
-        // Background
         const bg = document.createElementNS(SVG_NS, 'rect');
         bg.setAttribute('width', w);
         bg.setAttribute('height', h);
         bg.setAttribute('fill', settings.bgColor);
         svg.appendChild(bg);
 
-        const cols = settings.resolution;
-        const spacing = settings.spacing ?? 1.0;
-        const baseCellSize = w / cols;
+        const resolution = settings.resolution;
+        const spacing    = settings.spacing ?? 1.0;
+        const baseCellSize = w / resolution;
         const step = baseCellSize * spacing;
+        const cols = Math.ceil(w / step);
         const rows = Math.ceil(h / step);
 
-        const text = settings.text || 'A';
+        const text  = settings.text || 'A';
         const chars = [...text];
-        const mode = settings.renderMode;
-        const contrast = settings.contrast / 100;
+        const mode  = settings.renderMode;
+
+        const sizeContrast   = (settings.sizeContrast ?? 70) / 100;
+        const weightContrast = (settings.weightContrast ?? 0) / 100;
+        const baseWeight     = settings.fontWeight ?? 200;
+        const rotation       = settings.rotation ?? 0;
 
         for (let row = 0; row < rows; row++) {
             const mapRow = Math.min(row, brightnessMap.length - 1);
@@ -71,72 +68,54 @@ export class HalftoneRenderer {
                 const charIndex = (row * cols + col) % chars.length;
                 const char = chars[charIndex];
 
-                const cx = col * baseCellSize + baseCellSize / 2;
+                const cx = col * step + step / 2;
                 const cy = row * step + step / 2;
 
                 let fontSize, fontWeight;
 
-                switch (mode) {
-                    case 'size':
-                        ({ fontSize, fontWeight } = this._calcSize(brightness, baseCellSize, contrast, settings.fontWeight));
-                        break;
-                    case 'weight':
-                        ({ fontSize, fontWeight } = this._calcWeight(brightness, baseCellSize, contrast));
-                        break;
-                    case 'combined':
-                        ({ fontSize, fontWeight } = this._calcCombined(brightness, baseCellSize, contrast));
-                        break;
-                    case 'uniform':
-                        ({ fontSize, fontWeight } = this._calcUniform(brightness, baseCellSize, contrast));
-                        break;
-                    default:
-                        ({ fontSize, fontWeight } = this._calcSize(brightness, baseCellSize, contrast, settings.fontWeight));
+                if (mode === 'uniform') {
+                    ({ fontSize, fontWeight } = this._calcUniform(brightness, baseCellSize, sizeContrast));
+                } else {
+                    ({ fontSize, fontWeight } = this._calcStandard(brightness, baseCellSize, sizeContrast, weightContrast, baseWeight));
                 }
 
                 if (fontSize < 1) continue;
 
                 const el = document.createElementNS(SVG_NS, 'text');
-                el.setAttribute('x', cx);
-                el.setAttribute('y', cy);
                 el.setAttribute('font-family', 'Lunnen Display');
                 el.setAttribute('font-size', fontSize.toFixed(2));
                 el.setAttribute('font-weight', Math.round(fontWeight));
                 el.setAttribute('fill', settings.textColor);
                 el.setAttribute('text-anchor', 'middle');
                 el.setAttribute('dominant-baseline', 'central');
+
+                if (rotation > 0) {
+                    const angle = this._pseudoRandom(row, col) * rotation * 2 - rotation;
+                    el.setAttribute('transform', `translate(${cx.toFixed(2)},${cy.toFixed(2)}) rotate(${angle.toFixed(2)})`);
+                    el.setAttribute('x', '0');
+                    el.setAttribute('y', '0');
+                } else {
+                    el.setAttribute('x', cx.toFixed(2));
+                    el.setAttribute('y', cy.toFixed(2));
+                }
+
                 el.textContent = char;
                 svg.appendChild(el);
             }
         }
     }
 
-    /** Режим 1: кегль меняется, жирность фиксирована. */
-    _calcSize(brightness, cellSize, contrast, fixedWeight) {
+    /**
+     * Standard: sizeContrast и weightContrast независимо управляют
+     * диапазоном кегля и жирности. fontWeight slider задаёт минимум.
+     */
+    _calcStandard(brightness, cellSize, sizeContrast, weightContrast, baseWeight) {
         const maxSize = cellSize * 1.1;
-        const minSize = maxSize * (1 - contrast);
-        const fontSize = minSize + (maxSize - minSize) * brightness;
-        return { fontSize: Math.max(fontSize, 0.5), fontWeight: fixedWeight };
-    }
-
-    /** Режим 2: жирность меняется, кегль фиксирован. */
-    _calcWeight(brightness, cellSize, contrast) {
-        const fontSize = cellSize * 0.9;
-        const midWeight = (MIN_WEIGHT + MAX_WEIGHT) / 2;
-        const halfRange = ((MAX_WEIGHT - MIN_WEIGHT) / 2) * contrast;
-        const minW = Math.max(MIN_WEIGHT, midWeight - halfRange);
-        const maxW = Math.min(MAX_WEIGHT, midWeight + halfRange);
-        const fontWeight = minW + (maxW - minW) * brightness;
-        return { fontSize, fontWeight: this._clampWeight(fontWeight) };
-    }
-
-    /** Режим 3: оба параметра меняются. */
-    _calcCombined(brightness, cellSize, contrast) {
-        const maxSize = cellSize * 1.1;
-        const minSize = maxSize * (1 - contrast);
+        const minSize = maxSize * (1 - sizeContrast);
         const fontSize = minSize + (maxSize - minSize) * brightness;
 
-        const weightRange = (MAX_WEIGHT - MIN_WEIGHT) * contrast;
-        const fontWeight = MIN_WEIGHT + weightRange * brightness;
+        const maxW = baseWeight + (MAX_WEIGHT - baseWeight) * weightContrast;
+        const fontWeight = baseWeight + (maxW - baseWeight) * brightness;
 
         return {
             fontSize: Math.max(fontSize, 0.5),
@@ -145,21 +124,27 @@ export class HalftoneRenderer {
     }
 
     /**
-     * Режим 4: кегль меняется, жирность компенсируется
-     * так, чтобы толщина штриха оставалась постоянной.
-     * K вычисляется динамически: K = maxFontSize × 100,
-     * гарантируя weight = 100 для самых крупных букв.
+     * Uniform: кегль меняется, жирность = K / fontSize.
+     * K = maxFontSize × MIN_WEIGHT, гарантируя weight=100 для max size.
      */
-    _calcUniform(brightness, cellSize, contrast) {
+    _calcUniform(brightness, cellSize, sizeContrast) {
         const maxSize = cellSize * 1.1;
-        const minSize = maxSize * (1 - contrast);
+        const minSize = maxSize * (1 - sizeContrast);
         const fontSize = Math.max(minSize + (maxSize - minSize) * brightness, 0.5);
         const K = maxSize * MIN_WEIGHT;
         const fontWeight = this._clampWeight(K / fontSize);
         return { fontSize, fontWeight };
     }
 
-    /** @private */
+    /**
+     * Deterministic pseudo-random 0..1 for a grid cell.
+     * Same (row, col) always produces the same value.
+     */
+    _pseudoRandom(row, col) {
+        const v = Math.sin(row * 12.9898 + col * 78.233) * 43758.5453;
+        return v - Math.floor(v);
+    }
+
     _clampWeight(w) {
         return Math.max(MIN_WEIGHT, Math.min(MAX_WEIGHT, w));
     }

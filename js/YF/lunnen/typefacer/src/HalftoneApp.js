@@ -1,10 +1,10 @@
 /**
- * HalftoneApp — генератор текстового halftone-паттерна
+ * HalftoneApp — генератор графических паттернов
  * на основе вариативного шрифта Lunnen Display.
  *
  * Layout:
  *   LEFT  — General  (text, colors, format)
- *   RIGHT — Style    (generator mode, halftone controls)
+ *   RIGHT — Style    (generator mode, pattern params)
  */
 
 import { Settings }          from './core/Settings.js';
@@ -36,21 +36,24 @@ class HalftoneApp {
             format:           '1080×1920',
             generatorMode:    'halftone',
 
+            // Halftone params
             text:             'A',
             bgColor:          '#000000',
             textColor:        '#FFFFFF',
             resolution:       30,
             spacing:          1.0,
-            contrast:         70,
-            renderMode:       'size',
-            fontWeight:       200,
+            sizeContrast:     50,
+            weightContrast:   50,
+            renderMode:       'standard',
+            fontWeight:       250,
+            rotation:         0,
             invertBrightness: false,
 
             // Concentric params
-            concentricCount:        10,
-            concentricFontSize:     24,
-            concentricFontWeight:   200,
-            concentricLetterSpacing: 1.0,
+            concentricCount:         30,
+            concentricFontSize:     30,
+            concentricFontWeight:   250,
+            concentricLetterSpacing: 2.0,
             concentricMinRadius:   40,
             concentricMaxRadius:   0,
             concentricStartAngle:  0,
@@ -90,9 +93,9 @@ class HalftoneApp {
 
     async init() {
         this.domCache.init({
-            svg:                  'mainSvg',
-            canvas:               'canvasContainer',
-            zoomIndicator:        'zoomIndicator',
+            svg:           'mainSvg',
+            canvas:        'canvasContainer',
+            zoomIndicator: 'zoomIndicator',
         });
         this.dom = this.domCache.createProxy();
 
@@ -128,56 +131,46 @@ class HalftoneApp {
     initSliders() {
         this.sliders = new SliderController(this.settingsStore);
 
+        // ── Halftone sliders ──
         this.sliders.initSlider('resolutionSlider', {
-            valueId:   'resolutionValue',
-            setting:   'resolution',
-            min:       5,
-            max:       120,
-            decimals:  0,
-            baseStep:  1,
-            shiftStep: 10,
-            onUpdate:  () => this.debouncedUpdate()
+            valueId: 'resolutionValue', setting: 'resolution',
+            min: 5, max: 120, decimals: 0, baseStep: 1, shiftStep: 10,
+            onUpdate: () => this.debouncedUpdate()
         });
-
         this.sliders.initSlider('spacingSlider', {
-            valueId:   'spacingValue',
-            setting:   'spacing',
-            min:       0.3,
-            max:       3.0,
-            decimals:  2,
-            baseStep:  0.05,
-            shiftStep: 0.25,
-            onUpdate:  () => this.debouncedUpdate()
+            valueId: 'spacingValue', setting: 'spacing',
+            min: 0.3, max: 3.0, decimals: 2, baseStep: 0.05, shiftStep: 0.25,
+            onUpdate: () => this.debouncedUpdate()
         });
-
-        this.sliders.initSlider('contrastSlider', {
-            valueId:   'contrastValue',
-            setting:   'contrast',
-            min:       0,
-            max:       100,
-            decimals:  0,
-            baseStep:  1,
-            shiftStep: 10,
-            onUpdate:  () => this.debouncedUpdate()
+        this.sliders.initSlider('sizeContrastSlider', {
+            valueId: 'sizeContrastValue', setting: 'sizeContrast',
+            min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10,
+            onUpdate: () => this.debouncedUpdate()
         });
-
+        this.sliders.initSlider('weightContrastSlider', {
+            valueId: 'weightContrastValue', setting: 'weightContrast',
+            min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10,
+            onUpdate: () => this.debouncedUpdate()
+        });
         this.sliders.initSlider('fontWeightSlider', {
-            valueId:   'fontWeightValue',
-            setting:   'fontWeight',
-            min:       100,
-            max:       400,
-            decimals:  0,
-            baseStep:  1,
-            shiftStep: 50,
-            onUpdate:  () => this.debouncedUpdate()
+            valueId: 'fontWeightValue', setting: 'fontWeight',
+            min: 100, max: 400, decimals: 0, baseStep: 1, shiftStep: 50,
+            onUpdate: () => this.debouncedUpdate()
+        });
+        this.sliders.initSlider('rotationSlider', {
+            valueId: 'rotationValue', setting: 'rotation',
+            min: 0, max: 180, decimals: 0, baseStep: 1, shiftStep: 15,
+            onUpdate: () => this.debouncedUpdate()
         });
 
-        this.sliders.setValue('resolutionSlider',  this.settingsStore.get('resolution'), false);
-        this.sliders.setValue('spacingSlider',      this.settingsStore.get('spacing'), false);
-        this.sliders.setValue('contrastSlider',     this.settingsStore.get('contrast'), false);
-        this.sliders.setValue('fontWeightSlider',   this.settingsStore.get('fontWeight'), false);
+        this.sliders.setValue('resolutionSlider',      this.settingsStore.get('resolution'), false);
+        this.sliders.setValue('spacingSlider',          this.settingsStore.get('spacing'), false);
+        this.sliders.setValue('sizeContrastSlider',     this.settingsStore.get('sizeContrast'), false);
+        this.sliders.setValue('weightContrastSlider',   this.settingsStore.get('weightContrast'), false);
+        this.sliders.setValue('fontWeightSlider',       this.settingsStore.get('fontWeight'), false);
+        this.sliders.setValue('rotationSlider',         this.settingsStore.get('rotation'), false);
 
-        this._syncWeightSliderVisibility();
+        this._syncModeVisibility();
 
         // ── Concentric sliders ──
         this.sliders.initSlider('concentricCountSlider', {
@@ -225,6 +218,11 @@ class HalftoneApp {
             min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10,
             onUpdate: () => this.debouncedUpdate()
         });
+        this.sliders.initSlider('concentricRotationSlider', {
+            valueId: 'concentricRotationValue', setting: 'rotation',
+            min: 0, max: 180, decimals: 0, baseStep: 1, shiftStep: 15,
+            onUpdate: () => this.debouncedUpdate()
+        });
 
         this.sliders.setValue('concentricCountSlider',       this.settingsStore.get('concentricCount'), false);
         this.sliders.setValue('concentricFontSizeSlider',    this.settingsStore.get('concentricFontSize'), false);
@@ -235,6 +233,7 @@ class HalftoneApp {
         this.sliders.setValue('concentricStartAngleSlider',  this.settingsStore.get('concentricStartAngle'), false);
         this.sliders.setValue('concentricCenterXSlider',     this.settingsStore.get('concentricCenterX'), false);
         this.sliders.setValue('concentricCenterYSlider',     this.settingsStore.get('concentricCenterY'), false);
+        this.sliders.setValue('concentricRotationSlider',    this.settingsStore.get('rotation'), false);
     }
 
     /* ================================================================ */
@@ -243,17 +242,11 @@ class HalftoneApp {
 
     initPanels() {
         this.panels = new PanelManager();
-
         this.panels.registerPanel('generalPanel', {
-            headerId:   'generalPanelHeader',
-            draggable:  true,
-            persistent: true
+            headerId: 'generalPanelHeader', draggable: true, persistent: true
         });
-
         this.panels.registerPanel('stylePanel', {
-            headerId:   'stylePanelHeader',
-            draggable:  true,
-            persistent: true
+            headerId: 'stylePanelHeader', draggable: true, persistent: true
         });
     }
 
@@ -264,23 +257,20 @@ class HalftoneApp {
     initGeneratorModeSelector() {
         const select = document.getElementById('generatorModeSelect');
         if (!select) return;
-
         select.value = this.settings.generatorMode;
-
         select.addEventListener('change', () => {
             this.settingsStore.set('generatorMode', select.value);
             this._syncGeneratorVisibility();
             this.invalidateBrightnessMap();
             this.update();
         });
-
         this._syncGeneratorVisibility();
     }
 
     _syncGeneratorVisibility() {
         const mode = this.settings.generatorMode;
-        const halftoneEl    = document.getElementById('halftoneControls');
-        const concentricEl  = document.getElementById('concentricControls');
+        const halftoneEl   = document.getElementById('halftoneControls');
+        const concentricEl = document.getElementById('concentricControls');
         if (halftoneEl)   halftoneEl.style.display   = mode === 'halftone'    ? 'block' : 'none';
         if (concentricEl) concentricEl.style.display = mode === 'concentric' ? 'block' : 'none';
     }
@@ -304,7 +294,6 @@ class HalftoneApp {
                 this.update();
             });
         });
-
         const current = this.settings.format;
         const active = document.querySelector(`input[name="format"][value="${current}"]`);
         if (active) active.checked = true;
@@ -314,7 +303,6 @@ class HalftoneApp {
         const wInput = document.getElementById('customWidthInput');
         const hInput = document.getElementById('customHeightInput');
         if (!wInput || !hInput) return;
-
         const apply = () => {
             const w = parseInt(wInput.value) || 1080;
             const h = parseInt(hInput.value) || 1920;
@@ -323,12 +311,10 @@ class HalftoneApp {
             this.invalidateBrightnessMap();
             this.update();
         };
-
         wInput.addEventListener('change', apply);
         hInput.addEventListener('change', apply);
         wInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.target.blur(); apply(); } });
         hInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.target.blur(); apply(); } });
-
         this._syncCustomFormatVisibility();
     }
 
@@ -354,7 +340,7 @@ class HalftoneApp {
     }
 
     /* ================================================================ */
-    /*  Color Pickers (full HSB via framework ColorPicker)               */
+    /*  Color Pickers                                                    */
     /* ================================================================ */
 
     initColorPickers() {
@@ -363,15 +349,9 @@ class HalftoneApp {
             defaultColor: '#000000',
             onChange: () => this.debouncedUpdate(),
             elementIds: {
-                picker:           'bgHsbPicker',
-                preview:          'bgColorPreview',
-                hexInput:         'bgHexColorInput',
-                hueSlider:        'bgHueSlider',
-                saturationSlider: 'bgSaturationSlider',
-                brightnessSlider: 'bgBrightnessSlider',
-                hueValue:         'bgHueValue',
-                saturationValue:  'bgSaturationValue',
-                brightnessValue:  'bgBrightnessValue',
+                picker: 'bgHsbPicker', preview: 'bgColorPreview', hexInput: 'bgHexColorInput',
+                hueSlider: 'bgHueSlider', saturationSlider: 'bgSaturationSlider', brightnessSlider: 'bgBrightnessSlider',
+                hueValue: 'bgHueValue', saturationValue: 'bgSaturationValue', brightnessValue: 'bgBrightnessValue',
             }
         });
         this.bgColorPicker.init();
@@ -381,22 +361,16 @@ class HalftoneApp {
             defaultColor: '#FFFFFF',
             onChange: () => this.debouncedUpdate(),
             elementIds: {
-                picker:           'textHsbPicker',
-                preview:          'textColorPreview',
-                hexInput:         'textHexColorInput',
-                hueSlider:        'textHueSlider',
-                saturationSlider: 'textSaturationSlider',
-                brightnessSlider: 'textBrightnessSlider',
-                hueValue:         'textHueValue',
-                saturationValue:  'textSaturationValue',
-                brightnessValue:  'textBrightnessValue',
+                picker: 'textHsbPicker', preview: 'textColorPreview', hexInput: 'textHexColorInput',
+                hueSlider: 'textHueSlider', saturationSlider: 'textSaturationSlider', brightnessSlider: 'textBrightnessSlider',
+                hueValue: 'textHueValue', saturationValue: 'textSaturationValue', brightnessValue: 'textBrightnessValue',
             }
         });
         this.textColorPicker.init();
     }
 
     /* ================================================================ */
-    /*  Render mode selector (Size / Weight / Both / Uniform)            */
+    /*  Render mode selector (Standard / Uniform)                        */
     /* ================================================================ */
 
     initModeSelector() {
@@ -404,21 +378,21 @@ class HalftoneApp {
         radios.forEach(radio => {
             radio.addEventListener('change', () => {
                 this.settingsStore.set('renderMode', radio.value);
-                this._syncWeightSliderVisibility();
+                this._syncModeVisibility();
                 this.update();
             });
         });
-
         const current = this.settings.renderMode;
         const active = document.querySelector(`input[name="renderMode"][value="${current}"]`);
         if (active) active.checked = true;
     }
 
-    _syncWeightSliderVisibility() {
-        const group = document.getElementById('fontWeightGroup');
-        if (!group) return;
-        const mode = this.settings.renderMode;
-        group.style.display = (mode === 'size') ? 'block' : 'none';
+    _syncModeVisibility() {
+        const isUniform = this.settings.renderMode === 'uniform';
+        const weightGroup         = document.getElementById('fontWeightGroup');
+        const weightContrastGroup = document.getElementById('weightContrastGroup');
+        if (weightGroup)         weightGroup.style.display         = isUniform ? 'none' : 'block';
+        if (weightContrastGroup) weightContrastGroup.style.display = isUniform ? 'none' : 'block';
     }
 
     /* ================================================================ */
@@ -429,33 +403,25 @@ class HalftoneApp {
         const area      = document.getElementById('imageUploadArea');
         const fileInput = document.getElementById('imageFileInput');
         const removeBtn = document.getElementById('imageRemoveBtn');
-
         if (!area || !fileInput) return;
 
         area.addEventListener('click', (e) => {
             if (e.target.closest('.image-remove-btn')) return;
             fileInput.click();
         });
-
         area.addEventListener('dragover', (e) => { e.preventDefault(); area.classList.add('dragover'); });
         area.addEventListener('dragleave', ()  => area.classList.remove('dragover'));
         area.addEventListener('drop', (e) => {
-            e.preventDefault();
-            area.classList.remove('dragover');
+            e.preventDefault(); area.classList.remove('dragover');
             const file = e.dataTransfer.files[0];
             if (file && file.type.startsWith('image/')) this._handleImageFile(file);
         });
-
         fileInput.addEventListener('change', () => {
             const file = fileInput.files[0];
             if (file) this._handleImageFile(file);
         });
-
         if (removeBtn) {
-            removeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this._resetToDefaultImage();
-            });
+            removeBtn.addEventListener('click', (e) => { e.stopPropagation(); this._resetToDefaultImage(); });
         }
     }
 
@@ -465,9 +431,7 @@ class HalftoneApp {
             this._showImageName(file.name);
             this.invalidateBrightnessMap();
             this.update();
-        } catch (err) {
-            console.error('Image load error:', err);
-        }
+        } catch (err) { console.error('Image load error:', err); }
     }
 
     async _resetToDefaultImage() {
@@ -486,9 +450,7 @@ class HalftoneApp {
             await this.imageSampler.loadFromURL('images/9x16_01.png');
             this._showImageName('9x16_01.png');
             this.invalidateBrightnessMap();
-        } catch (err) {
-            console.warn('Default image not found, using flat gray:', err);
-        }
+        } catch (err) { console.warn('Default image not found:', err); }
     }
 
     /* ================================================================ */
@@ -512,23 +474,16 @@ class HalftoneApp {
     initZoom() {
         const svg    = this.dom.svg;
         const canvas = this.dom.canvas;
-
         this.zoomPan = new ZoomPanManager(canvas, svg, {
             fitPadding: { top: 20, right: 20, bottom: 20, left: 20 }
         });
-
         svg._zoomManaged = true;
-
         canvas.addEventListener('zoomchange', () => {
             const indicator = this.dom.zoomIndicator;
             if (indicator) indicator.textContent = `${this.zoomPan.getZoomPercent()}%`;
         });
-
         const indicator = this.dom.zoomIndicator;
-        if (indicator) {
-            indicator.addEventListener('click', () => this.zoomPan.fitToScreen());
-        }
-
+        if (indicator) indicator.addEventListener('click', () => this.zoomPan.fitToScreen());
         this.zoomPan.fitToScreen();
     }
 
@@ -536,9 +491,7 @@ class HalftoneApp {
     /*  History                                                          */
     /* ================================================================ */
 
-    initHistory() {
-        this.historyManager = new HistoryManager({ maxSize: 50 });
-    }
+    initHistory() { this.historyManager = new HistoryManager({ maxSize: 50 }); }
 
     /* ================================================================ */
     /*  Exporter                                                         */
@@ -564,10 +517,7 @@ class HalftoneApp {
         document.querySelectorAll('.collapse-icon').forEach(icon => {
             icon.addEventListener('click', () => {
                 const panel = icon.closest('.controls-panel');
-                if (panel) {
-                    panel.classList.toggle('panel-collapsed');
-                    icon.classList.toggle('collapsed');
-                }
+                if (panel) { panel.classList.toggle('panel-collapsed'); icon.classList.toggle('collapsed'); }
             });
         });
     }
@@ -577,11 +527,7 @@ class HalftoneApp {
     /* ================================================================ */
 
     initButtons() {
-        const bind = (id, handler) => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('click', handler);
-        };
-
+        const bind = (id, handler) => { const el = document.getElementById(id); if (el) el.addEventListener('click', handler); };
         bind('exportSvgBtn',      () => { void this.exportSVG(); });
         bind('exportSettingsBtn', () => this.exportSettings());
         bind('importSettingsBtn', () => this.importSettings());
@@ -595,8 +541,7 @@ class HalftoneApp {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 document.querySelectorAll('.modal-overlay.active').forEach(ov => {
-                    ov.classList.remove('active');
-                    ov.setAttribute('aria-hidden', 'true');
+                    ov.classList.remove('active'); ov.setAttribute('aria-hidden', 'true');
                 });
             }
         });
@@ -609,20 +554,11 @@ class HalftoneApp {
     initKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
             const mod = e.metaKey || e.ctrlKey;
             if (!mod) return;
-
-            if (e.key === 'z' && !e.shiftKey) {
-                e.preventDefault();
-                this.undo();
-            } else if (e.key === 'z' && e.shiftKey) {
-                e.preventDefault();
-                this.redo();
-            } else if (e.key === 'e') {
-                e.preventDefault();
-                void this.exportSVG();
-            }
+            if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); this.undo(); }
+            else if (e.key === 'z' && e.shiftKey) { e.preventDefault(); this.redo(); }
+            else if (e.key === 'e') { e.preventDefault(); void this.exportSVG(); }
         });
     }
 
@@ -633,7 +569,6 @@ class HalftoneApp {
     update() {
         if (this.state.isUpdating) return;
         this.state.isUpdating = true;
-
         try {
             const svg = this.dom?.svg;
             if (!svg) return;
@@ -643,12 +578,13 @@ class HalftoneApp {
             if (mode === 'concentric') {
                 this.concentricRenderer.render(svg, this.settings);
             } else {
-                const w    = this.settings.artboardWidth;
-                const cols = this.settings.resolution;
-                const spacing = this.settings.spacing;
-                const baseCellSize = w / cols;
+                const w          = this.settings.artboardWidth;
+                const h          = this.settings.artboardHeight;
+                const resolution = this.settings.resolution;
+                const spacing    = this.settings.spacing;
+                const baseCellSize = w / resolution;
                 const step = baseCellSize * spacing;
-                const h    = this.settings.artboardHeight;
+                const cols = Math.ceil(w / step);
                 const rows = Math.ceil(h / step);
 
                 if (!this.brightnessMap ||
@@ -656,7 +592,6 @@ class HalftoneApp {
                     this.brightnessMap[0]?.length !== cols) {
                     this.brightnessMap = this.imageSampler.getBrightnessMap(cols, rows);
                 }
-
                 this.halftoneRenderer.render(svg, this.settings, this.brightnessMap);
             }
 
@@ -664,9 +599,7 @@ class HalftoneApp {
                 this.zoomPan.reinitializeSVGDimensions();
                 this.zoomPan.centerContent();
             }
-        } finally {
-            this.state.isUpdating = false;
-        }
+        } finally { this.state.isUpdating = false; }
     }
 
     debouncedUpdate() {
@@ -674,9 +607,7 @@ class HalftoneApp {
         this._updateDebounceTimer = setTimeout(() => this.update(), 30);
     }
 
-    invalidateBrightnessMap() {
-        this.brightnessMap = null;
-    }
+    invalidateBrightnessMap() { this.brightnessMap = null; }
 
     /* ================================================================ */
     /*  History                                                          */
@@ -694,9 +625,7 @@ class HalftoneApp {
         if (next) this.restoreState(next);
     }
 
-    getStateSnapshot() {
-        return this.settingsStore.toJSON();
-    }
+    getStateSnapshot() { return this.settingsStore.toJSON(); }
 
     restoreState(snapshot) {
         this.settingsStore.fromJSON(snapshot);
@@ -730,8 +659,7 @@ class HalftoneApp {
 
     importSettings() {
         const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
+        input.type = 'file'; input.accept = '.json';
         input.onchange = async () => {
             const file = input.files[0];
             if (!file) return;
@@ -741,9 +669,7 @@ class HalftoneApp {
                 this._syncUIFromSettings();
                 this.invalidateBrightnessMap();
                 this.update();
-            } catch (err) {
-                console.error('Import error:', err);
-            }
+            } catch (err) { console.error('Import error:', err); }
         };
         input.click();
     }
@@ -751,13 +677,13 @@ class HalftoneApp {
     _syncUIFromSettings() {
         const s = this.settingsStore;
 
-        // Halftone sliders
-        this.sliders.setValue('resolutionSlider',  s.get('resolution'),  false);
-        this.sliders.setValue('spacingSlider',      s.get('spacing'),     false);
-        this.sliders.setValue('contrastSlider',     s.get('contrast'),    false);
-        this.sliders.setValue('fontWeightSlider',   s.get('fontWeight'),  false);
+        this.sliders.setValue('resolutionSlider',      s.get('resolution'), false);
+        this.sliders.setValue('spacingSlider',          s.get('spacing'), false);
+        this.sliders.setValue('sizeContrastSlider',     s.get('sizeContrast'), false);
+        this.sliders.setValue('weightContrastSlider',   s.get('weightContrast'), false);
+        this.sliders.setValue('fontWeightSlider',       s.get('fontWeight'), false);
+        this.sliders.setValue('rotationSlider',         s.get('rotation'), false);
 
-        // Concentric sliders
         this.sliders.setValue('concentricCountSlider',       s.get('concentricCount'), false);
         this.sliders.setValue('concentricFontSizeSlider',    s.get('concentricFontSize'), false);
         this.sliders.setValue('concentricFontWeightSlider',  s.get('concentricFontWeight'), false);
@@ -767,6 +693,7 @@ class HalftoneApp {
         this.sliders.setValue('concentricStartAngleSlider',  s.get('concentricStartAngle'), false);
         this.sliders.setValue('concentricCenterXSlider',     s.get('concentricCenterX'), false);
         this.sliders.setValue('concentricCenterYSlider',     s.get('concentricCenterY'), false);
+        this.sliders.setValue('concentricRotationSlider',    s.get('rotation'), false);
 
         const formatRadio = document.querySelector(`input[name="format"][value="${s.get('format')}"]`);
         if (formatRadio) formatRadio.checked = true;
@@ -783,7 +710,7 @@ class HalftoneApp {
         const genSelect = document.getElementById('generatorModeSelect');
         if (genSelect) genSelect.value = s.get('generatorMode');
 
-        this._syncWeightSliderVisibility();
+        this._syncModeVisibility();
         this._syncCustomFormatVisibility();
         this._syncGeneratorVisibility();
     }
