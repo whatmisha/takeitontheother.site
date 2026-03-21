@@ -42,7 +42,7 @@ class HalftoneApp {
             textColor:        '#FFFFFF',
             resolution:       30,
             spacing:          1.0,
-            sizeContrast:     50,
+            sizeContrast:     100,
             weightContrast:   50,
             renderMode:       'standard',
             fontWeight:       250,
@@ -85,6 +85,7 @@ class HalftoneApp {
         this.brightnessMap       = null;
 
         this._updateDebounceTimer = null;
+        this._rafId               = null;
     }
 
     /* ================================================================ */
@@ -111,6 +112,7 @@ class HalftoneApp {
         this.initColorPickers();
         this.initModeSelector();
         this.initImageUpload();
+        this.initVideoFrameSlider();
         this.initInvertToggle();
         this.initButtons();
         this.initModals();
@@ -396,7 +398,7 @@ class HalftoneApp {
     }
 
     /* ================================================================ */
-    /*  Image upload                                                     */
+    /*  Media upload (image + video)                                     */
     /* ================================================================ */
 
     initImageUpload() {
@@ -414,35 +416,138 @@ class HalftoneApp {
         area.addEventListener('drop', (e) => {
             e.preventDefault(); area.classList.remove('dragover');
             const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) this._handleImageFile(file);
+            if (file) this._handleMediaFile(file);
         });
         fileInput.addEventListener('change', () => {
             const file = fileInput.files[0];
-            if (file) this._handleImageFile(file);
+            if (file) this._handleMediaFile(file);
         });
         if (removeBtn) {
             removeBtn.addEventListener('click', (e) => { e.stopPropagation(); this._resetToDefaultImage(); });
         }
     }
 
-    async _handleImageFile(file) {
+    initVideoFrameSlider() {
+        const slider  = document.getElementById('videoFrameSlider');
+        const valueEl = document.getElementById('videoFrameValue');
+        const playBtn = document.getElementById('videoPlayPauseBtn');
+
+        if (slider) {
+            slider.addEventListener('input', async () => {
+                const pct     = parseFloat(slider.value) / 100;
+                const timeSec = pct * this.imageSampler.videoDuration;
+                if (valueEl) valueEl.value = timeSec.toFixed(1) + 's';
+                await this.imageSampler.seekVideo(timeSec);
+                this.invalidateBrightnessMap();
+                this.update();
+            });
+        }
+
+        if (playBtn) {
+            playBtn.addEventListener('click', () => {
+                if (this.imageSampler.isVideoPlaying()) {
+                    this._stopPlayback();
+                } else {
+                    this._startPlayback();
+                }
+            });
+        }
+    }
+
+    _startPlayback() {
+        this.imageSampler.playVideo().catch(err => console.error('Video play error:', err));
+        this._updatePlayPauseUI(true);
+        this._rafId = requestAnimationFrame(() => this._playbackLoop());
+    }
+
+    _stopPlayback() {
+        this.imageSampler.pauseVideo();
+        this._updatePlayPauseUI(false);
+        if (this._rafId !== null) {
+            cancelAnimationFrame(this._rafId);
+            this._rafId = null;
+        }
+    }
+
+    _playbackLoop() {
+        if (!this.imageSampler.isVideoPlaying()) {
+            this._updatePlayPauseUI(false);
+            this._rafId = null;
+            return;
+        }
+
+        // Sync timeline slider
+        const slider  = document.getElementById('videoFrameSlider');
+        const valueEl = document.getElementById('videoFrameValue');
+        const t   = this.imageSampler.getVideoCurrentTime();
+        const dur = this.imageSampler.videoDuration;
+        if (slider && dur > 0) slider.value = String((t / dur) * 100);
+        if (valueEl) valueEl.value = t.toFixed(1) + 's';
+
+        // Capture frame and render
+        this.imageSampler.captureCurrentVideoFrame();
+        this.invalidateBrightnessMap();
+        this.update();
+
+        this._rafId = requestAnimationFrame(() => this._playbackLoop());
+    }
+
+    _updatePlayPauseUI(isPlaying) {
+        const btn       = document.getElementById('videoPlayPauseBtn');
+        const playIcon  = document.getElementById('videoPlayIcon');
+        const pauseIcon = document.getElementById('videoPauseIcon');
+        if (!btn) return;
+        btn.classList.toggle('playing', isPlaying);
+        if (playIcon)  playIcon.style.display  = isPlaying ? 'none'  : '';
+        if (pauseIcon) pauseIcon.style.display = isPlaying ? ''      : 'none';
+    }
+
+    async _handleMediaFile(file) {
+        this._stopPlayback();
         try {
-            await this.imageSampler.loadFromFile(file);
-            this._showImageName(file.name);
+            if (file.type.startsWith('video/')) {
+                const { duration } = await this.imageSampler.loadFromVideo(file);
+                this._showImageName(file.name);
+                this._showVideoFrameSlider(true, duration);
+                this._updatePlayPauseUI(false);
+            } else {
+                await this.imageSampler.loadFromFile(file);
+                this._showImageName(file.name);
+                this._showVideoFrameSlider(false);
+            }
             this.invalidateBrightnessMap();
             this.update();
-        } catch (err) { console.error('Image load error:', err); }
+        } catch (err) { console.error('Media load error:', err); }
+    }
+
+    async _handleImageFile(file) {
+        return this._handleMediaFile(file);
     }
 
     async _resetToDefaultImage() {
+        this._stopPlayback();
         await this.loadDefaultImage();
         this._showImageName('9x16_01.png');
+        this._showVideoFrameSlider(false);
         this.update();
     }
 
     _showImageName(name) {
         const el = document.getElementById('imageFileName');
         if (el) el.textContent = name;
+    }
+
+    _showVideoFrameSlider(visible, duration = 0) {
+        const group   = document.getElementById('videoFrameGroup');
+        const slider  = document.getElementById('videoFrameSlider');
+        const valueEl = document.getElementById('videoFrameValue');
+        if (!group) return;
+        group.style.display = visible ? 'block' : 'none';
+        if (slider)  { slider.value = '0'; }
+        if (valueEl) { valueEl.value = '0.0s'; }
+        if (visible && slider && duration > 0) {
+            slider.setAttribute('data-duration', duration);
+        }
     }
 
     async loadDefaultImage() {
