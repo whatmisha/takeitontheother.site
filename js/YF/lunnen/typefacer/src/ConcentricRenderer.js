@@ -33,6 +33,9 @@ export class ConcentricRenderer {
         const letterSpacing = settings.concentricLetterSpacing ?? 1.0;
         const startAngle    = settings.concentricStartAngle ?? 0;
         const rotation      = settings.rotation ?? 0;
+        const rndmStart     = (settings.concentricRndmStart ?? 0) / 100;
+        const rndmSpacing   = (settings.concentricRndmSpacing ?? 0) / 100;
+        const fontFeatures  = this._buildFontFeatures(settings);
 
         const minRadius = settings.concentricMinRadius ?? 40;
         const maxRadiusAuto = Math.max(
@@ -46,11 +49,11 @@ export class ConcentricRenderer {
             : maxRadiusAuto;
 
         const text  = settings.text || 'A';
-        const chars = [...text];
+        const chars = this._tokenize(text, settings.otDlig);
         const fill  = settings.textColor;
 
         const charWidthFactor = 0.6;
-        const charWidth = fontSize * charWidthFactor * letterSpacing;
+        const baseCharWidth = fontSize * charWidthFactor * letterSpacing;
 
         const defs = document.createElementNS(SVG_NS, 'defs');
         const clipPath = document.createElementNS(SVG_NS, 'clipPath');
@@ -78,12 +81,35 @@ export class ConcentricRenderer {
             if (radius < 1) continue;
 
             const circumference = 2 * Math.PI * radius;
-            const totalChars = Math.max(1, Math.floor(circumference / charWidth));
-            const angleStep = 360 / totalChars;
+            const totalChars = Math.max(1, Math.floor(circumference / baseCharWidth));
+            const baseAngleStep = 360 / totalChars;
 
-            for (let c = 0; c < totalChars; c++) {
-                const char = chars[c % chars.length];
-                const angleDeg = startAngle + c * angleStep;
+            const ringStartOffset = rndmStart > 0
+                ? this._pseudoRandom(i, 9999) * 360 * rndmStart
+                : 0;
+
+            let angleCursor = startAngle + ringStartOffset;
+            let charIdx = 0;
+
+            while (charIdx < totalChars) {
+                const char = chars[charIdx % chars.length];
+
+                let localStep = baseAngleStep;
+                const minStepMultiplier = 1.0 / letterSpacing;
+                const minStep = baseAngleStep * minStepMultiplier;
+                if (rndmSpacing > 0) {
+                    const r = this._pseudoRandom(i, charIdx);
+                    const groupRand = this._pseudoRandom(i, charIdx + 7777);
+                    const keepBase = groupRand > rndmSpacing;
+                    if (keepBase) {
+                        localStep = baseAngleStep;
+                    } else {
+                        localStep = baseAngleStep * (1 + (r * 2 - 1) * rndmSpacing * 3);
+                        if (localStep < minStep) localStep = minStep;
+                    }
+                }
+
+                const angleDeg = angleCursor;
                 const angleRad = (angleDeg * Math.PI) / 180;
 
                 const x = cx + radius * Math.cos(angleRad);
@@ -91,7 +117,7 @@ export class ConcentricRenderer {
 
                 let rot = angleDeg + 90;
                 if (rotation > 0) {
-                    const rand = this._pseudoRandom(i, c) * rotation * 2 - rotation;
+                    const rand = this._pseudoRandom(i, charIdx) * rotation * 2 - rotation;
                     rot += rand;
                 }
 
@@ -104,12 +130,16 @@ export class ConcentricRenderer {
                 el.setAttribute('fill', fill);
                 el.setAttribute('text-anchor', 'middle');
                 el.setAttribute('dominant-baseline', 'central');
+                if (fontFeatures) el.setAttribute('style', `font-feature-settings: ${fontFeatures};`);
                 el.setAttribute(
                     'transform',
                     `translate(${x.toFixed(2)}, ${y.toFixed(2)}) rotate(${rot.toFixed(2)})`
                 );
                 el.textContent = char;
                 g.appendChild(el);
+
+                angleCursor += localStep;
+                charIdx++;
             }
         }
 
@@ -119,5 +149,45 @@ export class ConcentricRenderer {
     _pseudoRandom(ring, index) {
         const v = Math.sin(ring * 12.9898 + index * 78.233) * 43758.5453;
         return v - Math.floor(v);
+    }
+
+    static LIGATURES = ['LUNNEN', 'LNN', 'NN', 'ИИ', 'ИЙ'];
+
+    _tokenize(text, dligEnabled) {
+        if (!dligEnabled) return [...text];
+        const tokens = [];
+        const upper = text.toUpperCase();
+        let i = 0;
+        while (i < text.length) {
+            let matched = false;
+            for (const lig of ConcentricRenderer.LIGATURES) {
+                if (upper.startsWith(lig, i)) {
+                    tokens.push(text.slice(i, i + lig.length));
+                    i += lig.length;
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) {
+                tokens.push(text[i]);
+                i++;
+            }
+        }
+        return tokens;
+    }
+
+    _buildFontFeatures(settings) {
+        const map = [
+            ['otSalt', 'salt'],
+            ['otAalt', 'aalt'],
+            ['otSs01', 'ss01'],
+            ['otSs02', 'ss02'],
+            ['otDlig', 'dlig'],
+            ['otTnum', 'tnum'],
+        ];
+        const active = map.filter(([k]) => settings[k]).map(([, tag]) => `"${tag}" 1`);
+        if (!active.length) return '';
+        const base = ['"kern" 1', '"liga" 1'];
+        return [...base, ...active].join(', ');
     }
 }

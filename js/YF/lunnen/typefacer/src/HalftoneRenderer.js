@@ -46,13 +46,16 @@ export class HalftoneRenderer {
         const rows = Math.ceil(h / step);
 
         const text  = settings.text || 'A';
-        const chars = [...text];
+        const chars = this._tokenize(text, settings.otDlig);
         const mode  = settings.renderMode;
 
-        const sizeContrast   = (settings.sizeContrast ?? 70) / 100;
-        const weightContrast = (settings.weightContrast ?? 0) / 100;
-        const baseWeight     = settings.fontWeight ?? 200;
-        const rotation       = settings.rotation ?? 0;
+        const sizeContrast      = (settings.sizeContrast ?? 70) / 100;
+        const weightContrast    = (settings.weightContrast ?? 0) / 100;
+        const baseWeight        = settings.fontWeight ?? 200;
+        const rotation          = settings.rotation ?? 0;
+        const rotationContrast  = settings.rotationContrast ?? 0;
+
+        const fontFeatures = this._buildFontFeatures(settings);
 
         for (let row = 0; row < rows; row++) {
             const mapRow = Math.min(row, brightnessMap.length - 1);
@@ -88,10 +91,14 @@ export class HalftoneRenderer {
                 el.setAttribute('fill', settings.textColor);
                 el.setAttribute('text-anchor', 'middle');
                 el.setAttribute('dominant-baseline', 'central');
+                if (fontFeatures) el.setAttribute('style', `font-feature-settings: ${fontFeatures};`);
 
-                if (rotation > 0) {
-                    const angle = this._pseudoRandom(row, col) * rotation * 2 - rotation;
-                    el.setAttribute('transform', `translate(${cx.toFixed(2)},${cy.toFixed(2)}) rotate(${angle.toFixed(2)})`);
+                const randomAngle    = this._pseudoRandom(row, col) * rotation * 2 - rotation;
+                const brightnessAngle = brightness * rotationContrast;
+                const totalAngle      = randomAngle + brightnessAngle;
+
+                if (totalAngle !== 0) {
+                    el.setAttribute('transform', `translate(${cx.toFixed(2)},${cy.toFixed(2)}) rotate(${totalAngle.toFixed(2)})`);
                     el.setAttribute('x', '0');
                     el.setAttribute('y', '0');
                 } else {
@@ -147,5 +154,46 @@ export class HalftoneRenderer {
 
     _clampWeight(w) {
         return Math.max(MIN_WEIGHT, Math.min(MAX_WEIGHT, w));
+    }
+
+    static LIGATURES = ['LUNNEN', 'LNN', 'NN', 'ИИ', 'ИЙ'];
+
+    _tokenize(text, dligEnabled) {
+        if (!dligEnabled) return [...text];
+        const tokens = [];
+        const upper = text.toUpperCase();
+        let i = 0;
+        while (i < text.length) {
+            let matched = false;
+            for (const lig of HalftoneRenderer.LIGATURES) {
+                if (upper.startsWith(lig, i)) {
+                    tokens.push(text.slice(i, i + lig.length));
+                    i += lig.length;
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) {
+                tokens.push(text[i]);
+                i++;
+            }
+        }
+        return tokens;
+    }
+
+    _buildFontFeatures(settings) {
+        const map = [
+            ['otSalt', 'salt'],
+            ['otAalt', 'aalt'],
+            ['otSs01', 'ss01'],
+            ['otSs02', 'ss02'],
+            ['otDlig', 'dlig'],
+            ['otTnum', 'tnum'],
+        ];
+        const active = map.filter(([k]) => settings[k]).map(([, tag]) => `"${tag}" 1`);
+        if (!active.length) return '';
+        // Always keep kern and liga when overriding feature settings
+        const base = ['"kern" 1', '"liga" 1'];
+        return [...base, ...active].join(', ');
     }
 }

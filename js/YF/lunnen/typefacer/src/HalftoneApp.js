@@ -47,13 +47,24 @@ class HalftoneApp {
             renderMode:       'standard',
             fontWeight:       250,
             rotation:         0,
+            rotationContrast: 0,
             invertBrightness: false,
+
+            // OpenType features
+            otSalt: false,
+            otAalt: false,
+            otSs01: false,
+            otSs02: false,
+            otDlig: false,
+            otTnum: false,
 
             // Concentric params
             concentricCount:         30,
             concentricFontSize:     30,
             concentricFontWeight:   250,
             concentricLetterSpacing: 2.0,
+            concentricRndmStart:   0,
+            concentricRndmSpacing: 0,
             concentricMinRadius:   40,
             concentricMaxRadius:   0,
             concentricStartAngle:  0,
@@ -109,6 +120,7 @@ class HalftoneApp {
         this.initFormatSelector();
         this.initCustomFormat();
         this.initTextInput();
+        this.initOTToggles();
         this.initColorPickers();
         this.initModeSelector();
         this.initImageUpload();
@@ -165,12 +177,19 @@ class HalftoneApp {
             onUpdate: () => this.debouncedUpdate()
         });
 
-        this.sliders.setValue('resolutionSlider',      this.settingsStore.get('resolution'), false);
-        this.sliders.setValue('spacingSlider',          this.settingsStore.get('spacing'), false);
-        this.sliders.setValue('sizeContrastSlider',     this.settingsStore.get('sizeContrast'), false);
-        this.sliders.setValue('weightContrastSlider',   this.settingsStore.get('weightContrast'), false);
-        this.sliders.setValue('fontWeightSlider',       this.settingsStore.get('fontWeight'), false);
-        this.sliders.setValue('rotationSlider',         this.settingsStore.get('rotation'), false);
+        this.sliders.initSlider('rotationContrastSlider', {
+            valueId: 'rotationContrastValue', setting: 'rotationContrast',
+            min: 0, max: 360, decimals: 0, baseStep: 1, shiftStep: 15,
+            onUpdate: () => this.debouncedUpdate()
+        });
+
+        this.sliders.setValue('resolutionSlider',         this.settingsStore.get('resolution'), false);
+        this.sliders.setValue('spacingSlider',             this.settingsStore.get('spacing'), false);
+        this.sliders.setValue('sizeContrastSlider',        this.settingsStore.get('sizeContrast'), false);
+        this.sliders.setValue('weightContrastSlider',      this.settingsStore.get('weightContrast'), false);
+        this.sliders.setValue('fontWeightSlider',          this.settingsStore.get('fontWeight'), false);
+        this.sliders.setValue('rotationSlider',            this.settingsStore.get('rotation'), false);
+        this.sliders.setValue('rotationContrastSlider',    this.settingsStore.get('rotationContrast'), false);
 
         this._syncModeVisibility();
 
@@ -192,7 +211,17 @@ class HalftoneApp {
         });
         this.sliders.initSlider('concentricLetterSpacingSlider', {
             valueId: 'concentricLetterSpacingValue', setting: 'concentricLetterSpacing',
-            min: 0.3, max: 3.0, decimals: 2, baseStep: 0.05, shiftStep: 0.25,
+            min: 1.0, max: 10.0, decimals: 2, baseStep: 0.05, shiftStep: 0.5,
+            onUpdate: () => this.debouncedUpdate()
+        });
+        this.sliders.initSlider('concentricRndmStartSlider', {
+            valueId: 'concentricRndmStartValue', setting: 'concentricRndmStart',
+            min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10,
+            onUpdate: () => this.debouncedUpdate()
+        });
+        this.sliders.initSlider('concentricRndmSpacingSlider', {
+            valueId: 'concentricRndmSpacingValue', setting: 'concentricRndmSpacing',
+            min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10,
             onUpdate: () => this.debouncedUpdate()
         });
         this.sliders.initSlider('concentricMinRadiusSlider', {
@@ -230,6 +259,8 @@ class HalftoneApp {
         this.sliders.setValue('concentricFontSizeSlider',    this.settingsStore.get('concentricFontSize'), false);
         this.sliders.setValue('concentricFontWeightSlider',  this.settingsStore.get('concentricFontWeight'), false);
         this.sliders.setValue('concentricLetterSpacingSlider', this.settingsStore.get('concentricLetterSpacing'), false);
+        this.sliders.setValue('concentricRndmStartSlider',   this.settingsStore.get('concentricRndmStart'), false);
+        this.sliders.setValue('concentricRndmSpacingSlider',  this.settingsStore.get('concentricRndmSpacing'), false);
         this.sliders.setValue('concentricMinRadiusSlider',   this.settingsStore.get('concentricMinRadius'), false);
         this.sliders.setValue('concentricMaxRadiusSlider',   this.settingsStore.get('concentricMaxRadius'), false);
         this.sliders.setValue('concentricStartAngleSlider',  this.settingsStore.get('concentricStartAngle'), false);
@@ -339,6 +370,19 @@ class HalftoneApp {
             this.settingsStore.set('text', val);
             this.debouncedUpdate();
         });
+    }
+
+    initOTToggles() {
+        const features = ['otSalt', 'otAalt', 'otSs01', 'otSs02', 'otDlig', 'otTnum'];
+        for (const key of features) {
+            const el = document.getElementById(key);
+            if (!el) continue;
+            el.checked = !!this.settingsStore.get(key);
+            el.addEventListener('change', () => {
+                this.settingsStore.set(key, el.checked);
+                this.debouncedUpdate();
+            });
+        }
     }
 
     /* ================================================================ */
@@ -552,7 +596,7 @@ class HalftoneApp {
 
     async loadDefaultImage() {
         try {
-            await this.imageSampler.loadFromURL('images/9x16_01.png');
+            await this.imageSampler.loadFromURL('media/9x16_01.png');
             this._showImageName('9x16_01.png');
             this.invalidateBrightnessMap();
         } catch (err) { console.warn('Default image not found:', err); }
@@ -788,11 +832,14 @@ class HalftoneApp {
         this.sliders.setValue('weightContrastSlider',   s.get('weightContrast'), false);
         this.sliders.setValue('fontWeightSlider',       s.get('fontWeight'), false);
         this.sliders.setValue('rotationSlider',         s.get('rotation'), false);
+        this.sliders.setValue('rotationContrastSlider', s.get('rotationContrast'), false);
 
         this.sliders.setValue('concentricCountSlider',       s.get('concentricCount'), false);
         this.sliders.setValue('concentricFontSizeSlider',    s.get('concentricFontSize'), false);
         this.sliders.setValue('concentricFontWeightSlider',  s.get('concentricFontWeight'), false);
         this.sliders.setValue('concentricLetterSpacingSlider', s.get('concentricLetterSpacing'), false);
+        this.sliders.setValue('concentricRndmStartSlider',   s.get('concentricRndmStart'), false);
+        this.sliders.setValue('concentricRndmSpacingSlider',  s.get('concentricRndmSpacing'), false);
         this.sliders.setValue('concentricMinRadiusSlider',   s.get('concentricMinRadius'), false);
         this.sliders.setValue('concentricMaxRadiusSlider',   s.get('concentricMaxRadius'), false);
         this.sliders.setValue('concentricStartAngleSlider',  s.get('concentricStartAngle'), false);
@@ -808,6 +855,12 @@ class HalftoneApp {
 
         const textInput = document.getElementById('patternTextInput');
         if (textInput) textInput.value = s.get('text');
+
+        const otFeatures = ['otSalt', 'otAalt', 'otSs01', 'otSs02', 'otDlig', 'otTnum'];
+        for (const key of otFeatures) {
+            const el = document.getElementById(key);
+            if (el) el.checked = !!s.get(key);
+        }
 
         if (this.bgColorPicker)   this.bgColorPicker.setColorFromHex(s.get('bgColor'));
         if (this.textColorPicker) this.textColorPicker.setColorFromHex(s.get('textColor'));

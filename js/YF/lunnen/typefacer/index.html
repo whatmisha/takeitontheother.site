@@ -40,14 +40,35 @@
 
         /* ── Pattern text input ── */
         .pattern-text-input {
-            width: 100%; height: 32px; background: var(--color-bg-input);
+            width: 100%; height: 72px; background: var(--color-bg-input);
             border: 1px solid var(--color-border); color: var(--color-text);
             font-family: 'Lunnen Display', sans-serif; font-size: 1.1rem;
-            font-weight: 300; padding: 0 10px; border-radius: var(--radius-input);
+            font-weight: 300; padding: 8px 10px; border-radius: var(--radius-input);
             letter-spacing: 2px; transition: border-color var(--transition-normal);
+            resize: none; line-height: 1.5; box-sizing: border-box;
         }
         .pattern-text-input:focus { outline: none; border-color: var(--color-text-dim); }
         .pattern-text-input::placeholder { color: var(--color-text-muted); font-family: inherit; letter-spacing: 0; }
+
+        /* ── OpenType toggles ── */
+        .ot-toggles {
+            display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px;
+        }
+        .ot-toggle {
+            display: flex; align-items: center; gap: 0;
+        }
+        .ot-toggle input[type="checkbox"] { display: none; }
+        .ot-toggle label {
+            padding: 3px 9px; border-radius: 20px; font-size: 0.72rem;
+            font-family: var(--font-ui); letter-spacing: 0.04em;
+            background: var(--color-bg-input); border: 1px solid var(--color-border);
+            color: var(--color-text-muted); cursor: pointer; user-select: none;
+            transition: background var(--transition-normal), color var(--transition-normal), border-color var(--transition-normal);
+        }
+        .ot-toggle input[type="checkbox"]:checked + label {
+            background: var(--color-text-dim); border-color: var(--color-text-dim);
+            color: var(--color-bg);
+        }
 
         /* ── Image upload ── */
         .image-upload-compact {
@@ -149,9 +170,41 @@
 
                     <!-- Text -->
                     <section class="control-section">
-                        <h3>Text</h3>
                         <div class="control-group">
-                            <input type="text" class="pattern-text-input" id="patternTextInput" value="A" placeholder="A" autocomplete="off" spellcheck="false">
+                            <textarea class="pattern-text-input" id="patternTextInput" placeholder="A" autocomplete="off" spellcheck="false" rows="3">A</textarea>
+                        </div>
+                    </section>
+
+                    <!-- OpenType -->
+                    <section class="control-section">
+                        <h3>OpenType</h3>
+                        <div class="control-group">
+                            <div class="ot-toggles">
+                                <div class="ot-toggle">
+                                    <input type="checkbox" id="otSalt">
+                                    <label for="otSalt">salt</label>
+                                </div>
+                                <div class="ot-toggle">
+                                    <input type="checkbox" id="otAalt">
+                                    <label for="otAalt">aalt</label>
+                                </div>
+                                <div class="ot-toggle">
+                                    <input type="checkbox" id="otSs01">
+                                    <label for="otSs01">ss01</label>
+                                </div>
+                                <div class="ot-toggle">
+                                    <input type="checkbox" id="otSs02">
+                                    <label for="otSs02">ss02</label>
+                                </div>
+                                <div class="ot-toggle">
+                                    <input type="checkbox" id="otDlig">
+                                    <label for="otDlig">dlig</label>
+                                </div>
+                                <div class="ot-toggle">
+                                    <input type="checkbox" id="otTnum">
+                                    <label for="otTnum">tnum</label>
+                                </div>
+                            </div>
                         </div>
                     </section>
 
@@ -332,6 +385,16 @@
                             </div>
 
                             <div class="control-group">
+                                <label for="rotationContrastSlider">
+                                    <span>Rotation Contrast</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="rotationContrastValue" value="0">
+                                    </div>
+                                </label>
+                                <input type="range" id="rotationContrastSlider" min="0" max="360" step="1" value="0">
+                            </div>
+
+                            <div class="control-group">
                                 <label for="rotationSlider">
                                     <span>Random Rotation</span>
                                     <div class="value-display-wrapper">
@@ -437,7 +500,27 @@
                                         <input type="text" class="value-display" id="concentricLetterSpacingValue" value="2.00">
                                     </div>
                                 </label>
-                                <input type="range" id="concentricLetterSpacingSlider" min="0.30" max="3.00" step="0.05" value="2.00">
+                                <input type="range" id="concentricLetterSpacingSlider" min="1.00" max="10.00" step="0.05" value="2.00">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="concentricRndmStartSlider">
+                                    <span>Rndm Start</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricRndmStartValue" value="0">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricRndmStartSlider" min="0" max="100" step="1" value="0">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="concentricRndmSpacingSlider">
+                                    <span>Rndm Spacing</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricRndmSpacingValue" value="0">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricRndmSpacingSlider" min="0" max="100" step="1" value="0">
                             </div>
 
                             <div class="control-group">
