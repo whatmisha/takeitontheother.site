@@ -3,6 +3,7 @@
  *
  * Поддерживает:
  *   - loadFromURL(url)            — загрузить изображение по URL
+ *   - loadFromVideoURL(url)       — загрузить видео по URL (как loadFromVideo)
  *   - loadFromFile(file)          — загрузить изображение из File
  *   - loadFromVideo(file)         — загрузить видео из File (первый кадр)
  *   - seekVideo(timeSec)          — перейти на указанное время и захватить кадр
@@ -17,6 +18,7 @@ export class ImageSampler {
         this.imageLoaded = false;
 
         this._videoEl  = null;
+        this._videoURLIsBlob = false;
         this._videoURL = null;
         this.videoLoaded   = false;
         this.videoDuration = 0;
@@ -82,6 +84,7 @@ export class ImageSampler {
 
         this._videoEl  = video;
         this._videoURL = url;
+        this._videoURLIsBlob = true;
 
         await new Promise((resolve, reject) => {
             video.onloadedmetadata = () => {
@@ -90,6 +93,38 @@ export class ImageSampler {
                 resolve();
             };
             video.onerror = () => reject(new Error('Failed to load video'));
+        });
+
+        await this.seekVideo(0);
+        return { duration: this.videoDuration };
+    }
+
+    /**
+     * Загрузить видео по URL (относительный или абсолютный). Не отзывает URL при release.
+     * @param {string} url
+     * @returns {Promise<{ duration: number }>}
+     */
+    async loadFromVideoURL(url) {
+        this._releaseVideo();
+
+        const video = document.createElement('video');
+        video.muted       = true;
+        video.playsInline = true;
+        video.loop        = true;
+        video.preload     = 'auto';
+        video.src         = url;
+
+        this._videoEl  = video;
+        this._videoURL = url;
+        this._videoURLIsBlob = false;
+
+        await new Promise((resolve, reject) => {
+            video.onloadedmetadata = () => {
+                this.videoDuration = video.duration;
+                this.videoLoaded = true;
+                resolve();
+            };
+            video.onerror = () => reject(new Error(`Failed to load video: ${url}`));
         });
 
         await this.seekVideo(0);
@@ -222,10 +257,11 @@ export class ImageSampler {
             this._videoEl.pause();
             this._videoEl = null;
         }
-        if (this._videoURL) {
+        if (this._videoURL && this._videoURLIsBlob) {
             URL.revokeObjectURL(this._videoURL);
-            this._videoURL = null;
         }
+        this._videoURL = null;
+        this._videoURLIsBlob = false;
         this.videoLoaded   = false;
         this.videoDuration = 0;
     }

@@ -1,5 +1,5 @@
 /**
- * HalftoneApp — генератор графических паттернов
+ * HalftoneApp — Lunnen Display Lab (halftone + concentric и др.)
  * на основе вариативного шрифта Lunnen Display.
  *
  * Layout:
@@ -37,7 +37,7 @@ class HalftoneApp {
             generatorMode:    'halftone',
 
             // Halftone params
-            text:             'A',
+            text:             'lunnen',
             bgColor:          '#000000',
             textColor:        '#FFFFFF',
             resolution:       30,
@@ -137,7 +137,7 @@ class HalftoneApp {
         this.initModals();
         this.initKeyboardShortcuts();
 
-        await this.loadDefaultImage();
+        await this.loadDefaultMedia();
 
         this.update();
         this.initZoom();
@@ -387,9 +387,12 @@ class HalftoneApp {
     initTextInput() {
         const input = document.getElementById('patternTextInput');
         if (!input) return;
-        input.value = this.settings.text;
+        const defaultText = 'lunnen';
+        const current = (this.settingsStore.get('text') || '').trim() || defaultText;
+        this.settingsStore.set('text', current, true);
+        input.value = current;
         input.addEventListener('input', () => {
-            const val = input.value || 'A';
+            const val = input.value || defaultText;
             this.settingsStore.set('text', val);
             this.debouncedUpdate();
         });
@@ -618,10 +621,11 @@ class HalftoneApp {
         if (slider && dur > 0) slider.value = String((t / dur) * 100);
         if (valueEl) valueEl.value = t.toFixed(1) + 's';
 
-        // Capture frame and render
         this.imageSampler.captureCurrentVideoFrame();
-        this.invalidateBrightnessMap();
-        this.update();
+        if (this.settings.generatorMode === 'halftone') {
+            this.invalidateBrightnessMap();
+            this.update();
+        }
 
         this._rafId = requestAnimationFrame(() => this._playbackLoop());
     }
@@ -660,10 +664,7 @@ class HalftoneApp {
 
     async _resetToDefaultImage() {
         this._stopPlayback();
-        await this.loadDefaultImage();
-        this._showImageName('9x16_01.png');
-        this._showVideoFrameSlider(false);
-        this.update();
+        await this.loadDefaultMedia();
     }
 
     _showImageName(name) {
@@ -684,12 +685,27 @@ class HalftoneApp {
         }
     }
 
-    async loadDefaultImage() {
+    /** Дефолт: зацикленное видео + сразу воспроизведение и обновление халфтона. */
+    async loadDefaultMedia() {
+        const url  = 'media/9x16_02.mp4';
+        const name = '9x16_02.mp4';
         try {
-            await this.imageSampler.loadFromURL('media/9x16_01.png');
-            this._showImageName('9x16_01.png');
+            const { duration } = await this.imageSampler.loadFromVideoURL(url);
+            this._showImageName(name);
+            this._showVideoFrameSlider(true, duration);
             this.invalidateBrightnessMap();
-        } catch (err) { console.warn('Default image not found:', err); }
+            this.update();
+            this._startPlayback();
+        } catch (err) {
+            console.warn('Default video not found, falling back to image:', err);
+            try {
+                await this.imageSampler.loadFromURL('media/9x16_01.png');
+                this._showImageName('9x16_01.png');
+                this._showVideoFrameSlider(false);
+                this.invalidateBrightnessMap();
+                this.update();
+            } catch (e) { console.warn('Default image not found:', e); }
+        }
     }
 
     /* ================================================================ */
@@ -896,7 +912,7 @@ class HalftoneApp {
 
     exportSettings() {
         const data = this.settingsStore.getAll();
-        this.svgExporter.exportJSON(data, 'halftone-settings.json');
+        this.svgExporter.exportJSON(data, 'lunnen-display-lab-settings.json');
     }
 
     importSettings() {

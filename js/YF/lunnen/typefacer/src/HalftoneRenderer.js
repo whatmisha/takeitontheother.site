@@ -45,7 +45,7 @@ export class HalftoneRenderer {
         const cols = Math.ceil(w / step);
         const rows = Math.ceil(h / step);
 
-        const text  = settings.text || 'A';
+        const text  = settings.text || 'lunnen';
         const chars = this._tokenize(text, settings.otDlig);
         const mode  = settings.renderMode;
 

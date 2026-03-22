@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Halftone Generator — Lunnen Display</title>
+    <title>Lunnen Display Lab</title>
     <link rel="stylesheet" href="css/yf-styles.css">
     <style>
         /* ── Format grid ── */
@@ -70,6 +70,18 @@
             color: var(--color-bg);
         }
 
+        /* ── Full-bleed section divider (как .controls-panel-text .control-section) ── */
+        .control-section.control-section-divider {
+            border-top: 1px solid var(--color-border);
+            padding-top: var(--spacing-lg);
+            margin-top: var(--spacing-md);
+            margin-left: calc(-1 * var(--spacing-3xl));
+            margin-right: calc(-1 * var(--spacing-3xl));
+            padding-left: var(--spacing-3xl);
+            padding-right: var(--spacing-3xl);
+            margin-bottom: 20px;
+        }
+
         /* ── Image upload ── */
         .image-upload-compact {
             display: flex; align-items: center; gap: 8px; margin-top: 8px;
@@ -120,21 +132,6 @@
         }
         .video-play-btn:hover { border-color: var(--color-text-dim); color: var(--color-text); }
         .video-play-btn.playing { border-color: var(--color-text); color: var(--color-text); }
-        .video-frame-label {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 6px;
-        }
-        .video-frame-label span { color: var(--color-text-secondary); font-size: 0.85rem; }
-        .video-frame-right { display: flex; align-items: center; gap: 6px; }
-        .video-play-btn {
-            background: transparent; border: 1px solid var(--color-border);
-            color: var(--color-text-secondary); cursor: pointer; border-radius: 4px;
-            width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
-            padding: 0; transition: border-color var(--transition-fast), color var(--transition-fast);
-            flex-shrink: 0;
-        }
-        .video-play-btn:hover { border-color: var(--color-text-dim); color: var(--color-text); }
-        .video-play-btn.playing { border-color: var(--color-text); color: var(--color-text); }
     </style>
 </head>
 <body>
@@ -171,7 +168,7 @@
                     <!-- Text -->
                     <section class="control-section">
                         <div class="control-group">
-                            <textarea class="pattern-text-input" id="patternTextInput" placeholder="A" autocomplete="off" spellcheck="false" rows="3">A</textarea>
+                            <textarea class="pattern-text-input" id="patternTextInput" placeholder="lunnen" autocomplete="off" spellcheck="false" rows="3">lunnen</textarea>
                         </div>
                     </section>
 
@@ -320,8 +317,7 @@
                     <div id="halftoneControls">
 
                         <section class="control-section">
-                            <h3>Pattern</h3>
-
+                            <h3 class="settings-section-header">Pattern</h3>
                             <div class="control-group">
                                 <fieldset>
                                     <legend class="sr-only">Render mode</legend>
@@ -333,7 +329,10 @@
                                     </div>
                                 </fieldset>
                             </div>
+                        </section>
 
+                        <section class="control-section control-section-divider">
+                            <h3 class="settings-section-header">Grid</h3>
                             <div class="control-group">
                                 <label for="resolutionSlider">
                                     <span>Resolution</span>
@@ -343,7 +342,6 @@
                                 </label>
                                 <input type="range" id="resolutionSlider" min="5" max="120" step="1" value="30">
                             </div>
-
                             <div class="control-group">
                                 <label for="spacingSlider">
                                     <span>Spacing</span>
@@ -353,7 +351,10 @@
                                 </label>
                                 <input type="range" id="spacingSlider" min="0.30" max="3.00" step="0.05" value="1.00">
                             </div>
+                        </section>
 
+                        <section class="control-section control-section-divider">
+                            <h3 class="settings-section-header">Contrast</h3>
                             <div class="control-group" id="fontWeightGroup">
                                 <label for="fontWeightSlider">
                                     <span>Weight</span>
@@ -363,7 +364,6 @@
                                 </label>
                                 <input type="range" id="fontWeightSlider" min="100" max="400" step="1" value="250">
                             </div>
-
                             <div class="control-group" id="weightContrastGroup">
                                 <label for="weightContrastSlider">
                                     <span>Weight Contrast</span>
@@ -373,7 +373,6 @@
                                 </label>
                                 <input type="range" id="weightContrastSlider" min="0" max="100" step="1" value="50">
                             </div>
-
                             <div class="control-group">
                                 <label for="sizeContrastSlider">
                                     <span>Size Contrast</span>
@@ -383,7 +382,10 @@
                                 </label>
                                 <input type="range" id="sizeContrastSlider" min="0" max="100" step="1" value="100">
                             </div>
+                        </section>
 
+                        <section class="control-section control-section-divider">
+                            <h3 class="settings-section-header">Rotation</h3>
                             <div class="control-group">
                                 <label for="rotationContrastSlider">
                                     <span>Rotation Contrast</span>
@@ -393,7 +395,6 @@
                                 </label>
                                 <input type="range" id="rotationContrastSlider" min="0" max="360" step="1" value="0">
                             </div>
-
                             <div class="control-group">
                                 <label for="rotationSlider">
                                     <span>Random Rotation</span>
@@ -405,9 +406,8 @@
                             </div>
                         </section>
 
-                        <!-- Source Media -->
-                        <section class="control-section">
-                            <h3>Source Media</h3>
+                        <section class="control-section control-section-divider">
+                            <h3 class="settings-section-header">Source Media</h3>
                             <div class="control-group">
                                 <div class="image-upload-compact" id="imageUploadArea">
                                     <svg class="image-upload-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -416,7 +416,7 @@
                                         <path d="M2 14l4-4 3 3 3-4 6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
                                     <div class="image-upload-info">
-                                        <div class="image-upload-name" id="imageFileName">9x16_01.png</div>
+                                        <div class="image-upload-name" id="imageFileName">9x16_02.mp4</div>
                                         <div class="image-upload-hint">Drop image or video, or click to upload</div>
                                     </div>
                                     <button type="button" class="image-remove-btn" id="imageRemoveBtn" aria-label="Reset media">
@@ -461,8 +461,7 @@
                     <div id="concentricControls" style="display: none;">
 
                         <section class="control-section">
-                            <h3>Circles</h3>
-
+                            <h3 class="settings-section-header">Circles</h3>
                             <div class="control-group">
                                 <label for="concentricCountSlider">
                                     <span>Count</span>
@@ -472,57 +471,6 @@
                                 </label>
                                 <input type="range" id="concentricCountSlider" min="1" max="100" step="1" value="30">
                             </div>
-
-                            <div class="control-group">
-                                <label for="concentricFontSizeSlider">
-                                    <span>Font Size</span>
-                                    <div class="value-display-wrapper">
-                                        <input type="text" class="value-display" id="concentricFontSizeValue" value="30">
-                                    </div>
-                                </label>
-                                <input type="range" id="concentricFontSizeSlider" min="4" max="200" step="1" value="30">
-                            </div>
-
-                            <div class="control-group">
-                                <label for="concentricFontWeightSlider">
-                                    <span>Weight</span>
-                                    <div class="value-display-wrapper">
-                                        <input type="text" class="value-display" id="concentricFontWeightValue" value="250">
-                                    </div>
-                                </label>
-                                <input type="range" id="concentricFontWeightSlider" min="100" max="400" step="1" value="250">
-                            </div>
-
-                            <div class="control-group">
-                                <label for="concentricLetterSpacingSlider">
-                                    <span>Letter Spacing</span>
-                                    <div class="value-display-wrapper">
-                                        <input type="text" class="value-display" id="concentricLetterSpacingValue" value="2.00">
-                                    </div>
-                                </label>
-                                <input type="range" id="concentricLetterSpacingSlider" min="1.00" max="10.00" step="0.05" value="2.00">
-                            </div>
-
-                            <div class="control-group">
-                                <label for="concentricRndmStartSlider">
-                                    <span>Rndm Start</span>
-                                    <div class="value-display-wrapper">
-                                        <input type="text" class="value-display" id="concentricRndmStartValue" value="0">
-                                    </div>
-                                </label>
-                                <input type="range" id="concentricRndmStartSlider" min="0" max="100" step="1" value="0">
-                            </div>
-
-                            <div class="control-group">
-                                <label for="concentricRndmSpacingSlider">
-                                    <span>Rndm Spacing</span>
-                                    <div class="value-display-wrapper">
-                                        <input type="text" class="value-display" id="concentricRndmSpacingValue" value="0">
-                                    </div>
-                                </label>
-                                <input type="range" id="concentricRndmSpacingSlider" min="0" max="100" step="1" value="0">
-                            </div>
-
                             <div class="control-group">
                                 <label for="concentricMinRadiusSlider">
                                     <span>Min Radius</span>
@@ -532,7 +480,6 @@
                                 </label>
                                 <input type="range" id="concentricMinRadiusSlider" min="0" max="500" step="1" value="40">
                             </div>
-
                             <div class="control-group">
                                 <label for="concentricMaxRadiusSlider">
                                     <span>Max Radius</span>
@@ -542,7 +489,63 @@
                                 </label>
                                 <input type="range" id="concentricMaxRadiusSlider" min="0" max="2000" step="1" value="0">
                             </div>
+                        </section>
 
+                        <section class="control-section control-section-divider">
+                            <h3 class="settings-section-header">Type</h3>
+                            <div class="control-group">
+                                <label for="concentricFontSizeSlider">
+                                    <span>Font Size</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricFontSizeValue" value="30">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricFontSizeSlider" min="4" max="200" step="1" value="30">
+                            </div>
+                            <div class="control-group">
+                                <label for="concentricFontWeightSlider">
+                                    <span>Weight</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricFontWeightValue" value="250">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricFontWeightSlider" min="100" max="400" step="1" value="250">
+                            </div>
+                        </section>
+
+                        <section class="control-section control-section-divider">
+                            <h3 class="settings-section-header">Ring spacing</h3>
+                            <div class="control-group">
+                                <label for="concentricLetterSpacingSlider">
+                                    <span>Letter Spacing</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricLetterSpacingValue" value="2.00">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricLetterSpacingSlider" min="1.00" max="10.00" step="0.05" value="2.00">
+                            </div>
+                            <div class="control-group">
+                                <label for="concentricRndmStartSlider">
+                                    <span>Rndm Start</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricRndmStartValue" value="0">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricRndmStartSlider" min="0" max="100" step="1" value="0">
+                            </div>
+                            <div class="control-group">
+                                <label for="concentricRndmSpacingSlider">
+                                    <span>Rndm Spacing</span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" id="concentricRndmSpacingValue" value="0">
+                                    </div>
+                                </label>
+                                <input type="range" id="concentricRndmSpacingSlider" min="0" max="100" step="1" value="0">
+                            </div>
+                        </section>
+
+                        <section class="control-section control-section-divider">
+                            <h3 class="settings-section-header">Position</h3>
                             <div class="control-group">
                                 <label for="concentricStartAngleSlider">
                                     <span>Start Angle</span>
@@ -552,7 +555,6 @@
                                 </label>
                                 <input type="range" id="concentricStartAngleSlider" min="0" max="360" step="1" value="0">
                             </div>
-
                             <div class="control-group">
                                 <label for="concentricCenterXSlider">
                                     <span>Center X</span>
@@ -562,7 +564,6 @@
                                 </label>
                                 <input type="range" id="concentricCenterXSlider" min="0" max="100" step="1" value="50">
                             </div>
-
                             <div class="control-group">
                                 <label for="concentricCenterYSlider">
                                     <span>Center Y</span>
@@ -572,10 +573,13 @@
                                 </label>
                                 <input type="range" id="concentricCenterYSlider" min="0" max="100" step="1" value="50">
                             </div>
+                        </section>
 
+                        <section class="control-section control-section-divider">
+                            <h3 class="settings-section-header">Letter rotation</h3>
                             <div class="control-group">
                                 <label for="concentricRotationSlider">
-                                    <span>Rotation</span>
+                                    <span>Random Rotation</span>
                                     <div class="value-display-wrapper">
                                         <input type="text" class="value-display" id="concentricRotationValue" value="0">
                                     </div>
@@ -584,8 +588,8 @@
                             </div>
                         </section>
 
-                        <section class="control-section">
-                            <h3>Animation</h3>
+                        <section class="control-section control-section-divider">
+                            <h3 class="settings-section-header">Animation</h3>
 
                             <div class="control-group">
                                 <label for="animDurationSlider">

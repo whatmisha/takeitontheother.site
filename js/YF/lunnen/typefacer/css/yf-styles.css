@@ -432,6 +432,9 @@ body {
     z-index: 999;
     display: flex;
     flex-direction: column;
+    /* Не выше экрана: скролл идёт внутри .panel-content */
+    max-height: calc(100vh - 2 * var(--spacing-3xl) - 96px);
+    max-height: calc(100dvh - 2 * var(--spacing-3xl) - 96px);
 }
 
 .controls-panel-left {
@@ -594,8 +597,11 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
     flex: 1;
+    min-height: 0; /* flex: даёт сжатие ниже контента → работает вертикальный скролл */
     display: flex;
     flex-direction: column;
+    scrollbar-width: thin;
+    scrollbar-color: #0a0a0a transparent;
     transition: max-height var(--duration-expand) var(--easing-standard), 
                 opacity var(--duration-fade) var(--easing-decelerate),
                 padding-top var(--duration-expand) var(--easing-standard),
@@ -657,6 +663,27 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+/**
+ * Заголовки блоков настроек в стиле Variability (random-section-header / «GENERAL»):
+ * капс, увеличенный трекинг, приглушённый цвет.
+ * random-section-header — то же визуально, для совместимости с другими инструментами.
+ */
+.control-section h3.settings-section-header,
+.settings-section-header,
+.control-section h3.random-section-header,
+.random-section-header {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-md);
+    margin-top: 0;
+    display: block;
+    justify-content: unset;
+    align-items: unset;
 }
 
 
@@ -2360,22 +2387,22 @@ textarea::placeholder {
    28. SCROLLBARS
    ============================================ */
 
+/* Панели: узкий чёрный скролл (как в Variability / Style) — Firefox: scrollbar-* на .panel-content выше */
 .panel-content::-webkit-scrollbar {
-    width: var(--spacing-md);
+    width: 3px;
 }
 
 .panel-content::-webkit-scrollbar-track {
-    background: var(--color-bg-panel);
-    border-radius: var(--radius);
+    background: transparent;
 }
 
 .panel-content::-webkit-scrollbar-thumb {
-    background: var(--color-text);
-    border-radius: var(--radius);
+    background: #000000;
+    border-radius: 2px;
 }
 
 .panel-content::-webkit-scrollbar-thumb:hover {
-    background: var(--color-text);
+    background: #1a1a1a;
 }
 
 .dropdown-menu::-webkit-scrollbar,
