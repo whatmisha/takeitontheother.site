@@ -36,16 +36,16 @@ class HalftoneApp {
             format:           '1080×1920',
             generatorMode:    'halftone',
 
-            // Halftone params
-            text:             'lunnen',
+            // Halftone params (defaults from screenshot)
+            text:             '1234567890',
             bgColor:          '#000000',
             textColor:        '#FFFFFF',
-            resolution:       30,
+            resolution:       21,
             spacing:          1.0,
             sizeContrast:     100,
-            weightContrast:   50,
+            weightContrast:   100,
             renderMode:       'standard',
-            fontWeight:       250,
+            fontWeight:       200,
             rotation:         0,
             rotationContrast: 0,
             invertBrightness: false,
@@ -58,12 +58,12 @@ class HalftoneApp {
             otDlig: false,
             otTnum: false,
 
-            // Concentric params
-            concentricCount:         30,
-            concentricFontSize:     30,
+            // Concentric params (defaults from screenshot)
+            concentricCount:         15,
+            concentricFontSize:     32,
             concentricFontWeight:   250,
             concentricLetterSpacing: 2.0,
-            concentricRndmStart:   0,
+            concentricRndmStart:   100,
             concentricRndmSpacing: 0,
             concentricMinRadius:   40,
             concentricMaxRadius:   0,
@@ -387,7 +387,7 @@ class HalftoneApp {
     initTextInput() {
         const input = document.getElementById('patternTextInput');
         if (!input) return;
-        const defaultText = 'lunnen';
+        const defaultText = '1234567890';
         const current = (this.settingsStore.get('text') || '').trim() || defaultText;
         this.settingsStore.set('text', current, true);
         input.value = current;

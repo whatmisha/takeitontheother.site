@@ -49,7 +49,7 @@ export class ConcentricRenderer {
             ? settings.concentricMaxRadius
             : maxRadiusAuto;
 
-        const text  = settings.text || 'lunnen';
+        const text  = settings.text || '1234567890';
         const chars = this._tokenize(text, settings.otDlig);
         const fill  = settings.textColor;
 
