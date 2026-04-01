@@ -40,6 +40,17 @@ import { PresetManager } from './src/preset/PresetManager.js';
 // Итерация 9: History Management
 import { HistoryManager } from './src/history/HistoryManager.js';
 
+const TEXT_PRESETS = [
+    { id: 'brand',        label: 'Brand',         text: 'Lunnen — бренд компьютерной техники и аксессуаров, придуманный в Яндекс Фабрике. Сопровождает в исследованиях, работе и развлечениях.' },
+    { id: 'outer',        label: 'Outer',         text: 'Продвинутая линейка Lunnen Outer для исследований неизведанного. Эффективные технологии для работы с графикой или развлечений разного уровня сложностей.' },
+    { id: 'ground',       label: 'Ground',        text: 'Базовая линейка Lunnen Ground для решения земных задач. Всё необходимое для повседневной работы: от прочного корпуса до современных технологий.' },
+    { id: 'airis',        label: 'Airis',         text: 'Lunnen Airis — лёгкая линейка с мощными возможностями. Справляется с тяжёлыми задачами и расширяет границы невесомости.' },
+    { id: 'work',         label: 'Work',          text: 'Lunnen Work — это серия аксессуаров для компьютерной техники, которая подходит для работы и повседневных задач.' },
+    { id: 'manufacturer', label: 'Изготовитель',  text: 'Изготовитель: Винд Мобилити Текнолоджи (Пекин) Лимитед. Адрес: офис 11605, 13 этаж, корпус 1, дом 2, переулок Наньчжугань, район Дунчэн, Пекин, Китай. Сделано в Китае.' },
+    { id: 'market',       label: 'Маркет.Трейд',  text: 'Импортёр/Организация, принимающая претензии на территории РФ: ООО «Маркет. Трейд». Адрес: 121099, Россия, г. Москва, Новинский б-р, д. 8. Info@lunnen.pro' },
+    { id: 'cyberstor',    label: 'Сайберстор',    text: 'Импортёр/Организация, принимающая претензии на территории РФ: ООО «САЙБЕРСТОР». Адрес импортёра: 123112, Россия, г. Москва, вн.тер.г. Муниципальный Округ Пресненский, проезд 1-й. Info@lunnen.pro' },
+];
+
 class GridGenerator {
     constructor() {
         // Slider configuration - defines behavior for each slider
@@ -3103,6 +3114,9 @@ class GridGenerator {
             });
         }
         
+        // Кнопки быстрой вставки текстовых пресетов
+        this.initTextPresetChips();
+        
         // Обработчик для дропдауна стиля текста
         if (this.dom.paragraphStyleSelect) {
             this.dom.paragraphStyleSelect.addEventListener('change', () => {
@@ -3404,6 +3418,37 @@ class GridGenerator {
                 }
             });
         }
+    }
+    
+    initTextPresetChips() {
+        const container = document.getElementById('textPresetChips');
+        if (!container) return;
+        
+        const plusSvg = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="5" y1="1" x2="5" y2="9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="1" y1="5" x2="9" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+        
+        TEXT_PRESETS.forEach(preset => {
+            const btn = document.createElement('button');
+            btn.className = 'text-preset-chip';
+            btn.type = 'button';
+            btn.setAttribute('aria-label', `Insert text: ${preset.label}`);
+            btn.innerHTML = `${plusSvg}<span>${preset.label}</span>`;
+            
+            btn.addEventListener('click', () => {
+                if (!this.currentEditingBlock || !this.dom.paragraphTextArea) return;
+                
+                this.historyManager.beginAction(`insert text preset: ${preset.label}`, this.getStateSnapshot());
+                this.markAsChanged();
+                
+                this.dom.paragraphTextArea.value = preset.text;
+                this.currentEditingBlock.content = preset.text;
+                this.updateCharCounter();
+                this.updateGrid();
+                
+                this.historyManager.commitAction(this.getStateSnapshot());
+            });
+            
+            container.appendChild(btn);
+        });
     }
     
     // Обновить счетчик символов
