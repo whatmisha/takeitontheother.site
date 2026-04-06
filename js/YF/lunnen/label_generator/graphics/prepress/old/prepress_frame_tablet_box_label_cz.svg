@@ -14,7 +14,7 @@
         stroke-width: .5px;
       }
 
-      .st4, .st1, .st2 {
+      .st4, .st2 {
         isolation: isolate;
       }
 
@@ -33,16 +33,6 @@
     </style>
   </defs>
   <g id="info">
-    <g class="st4">
-      <g class="st4">
-        <text class="st1" transform="translate(127.559021 400.3189697)"><tspan x="0" y="0">SN barcode 30×6 mm</tspan></text>
-      </g>
-    </g>
-    <g class="st4">
-      <g class="st4">
-        <text class="st1" transform="translate(261.9088745 400.3189697)"><tspan x="0" y="0">EAN 30×18 mm</tspan></text>
-      </g>
-    </g>
     <g>
       <g class="st4">
         <g class="st4">
@@ -56,11 +46,12 @@
         <text class="st2" transform="translate(486.6656494 31.8106689)"><tspan x="0" y="0">120×24 mm</tspan></text>
       </g>
     </g>
+    <text class="st1" transform="translate(19.2114258 400.3189697)"><tspan x="0" y="0">SN barcode 30×6 mm</tspan></text>
+    <text class="st1" transform="translate(191.0788574 400.3189697)"><tspan x="0" y="0">IMEI 30×3 mm</tspan></text>
+    <text class="st1" transform="translate(460.7453613 400.3189697)"><tspan x="0" y="0">Честный знак 15×18 mm</tspan></text>
+    <text class="st1" transform="translate(330.3864746 400.3189697)"><tspan x="0" y="0">EAN 30×18 mm</tspan></text>
   </g>
   <g id="cut">
     <rect class="st3" x="127.5590515" y="175.7480316" width="340.1574707" height="68.0314941" rx="5.6692963" ry="5.6692963"/>
-  </g>
-  <g class="st4">
-    <text class="st1" transform="translate(352.3978882 400.3189697)"><tspan x="0" y="0">Chestny ZNAK 15×18 mm</tspan></text>
   </g>
 </svg>
