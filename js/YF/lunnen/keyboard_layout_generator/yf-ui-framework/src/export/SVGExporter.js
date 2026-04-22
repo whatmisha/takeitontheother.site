@@ -75,8 +75,17 @@ export class SVGExporter {
      * @param {string} filename
      * @param {Object} options
      * @param {boolean} [options.removeInteractive]
-     * @param {string} [options.unit] — 'mm', 'pt', 'in', 'px'
-     * @param {Object} [options.format] — { width, height }
+     * @param {boolean} [options.convertTextToOutlines] — default true (text -> path);
+     *        when false, rely on PDF font embedding (requires svg2pdf to handle it).
+     * @param {string} [options.unit] — 'mm', 'pt', 'in', 'px' (default 'mm')
+     * @param {Object} [options.format] — { width, height } (legacy, kept for BC)
+     * @param {number} [options.pageWidth]  — page size in `unit` (preferred)
+     * @param {number} [options.pageHeight] — page size in `unit` (preferred)
+     * @param {number} [options.renderWidth]  — SVG render size on page; defaults to SVG own width
+     * @param {number} [options.renderHeight] — SVG render size on page; defaults to SVG own height
+     * @param {number} [options.xOffset] — explicit x offset on the page
+     * @param {number} [options.yOffset] — explicit y offset on the page
+     * @param {boolean} [options.center] — center renderSize on the page (used if xOffset/yOffset unset)
      */
     async exportToPDF(svgElement, filename = 'export.pdf', options = {}) {
         await this.loadPDFLibraries();
@@ -88,32 +97,37 @@ export class SVGExporter {
             this.removeInteractiveElements(clonedSvg);
         }
 
-        if (this.textToPath) {
+        const doOutline = options.convertTextToOutlines !== false;
+        if (doOutline && this.textToPath) {
             try {
                 await this.textToPath.convertAllTextToPaths(clonedSvg);
             } catch (error) {
-                throw new Error('Failed to convert text to paths: ' + error.message);
+                console.error('Failed to convert text to paths:', error);
             }
         }
 
-        const svgWidth = parseFloat(clonedSvg.getAttribute('width')) || parseFloat(clonedSvg.viewBox?.baseVal?.width) || 500;
+        const svgWidth  = parseFloat(clonedSvg.getAttribute('width'))  || parseFloat(clonedSvg.viewBox?.baseVal?.width)  || 500;
         const svgHeight = parseFloat(clonedSvg.getAttribute('height')) || parseFloat(clonedSvg.viewBox?.baseVal?.height) || 500;
 
         const unit = options.unit || 'mm';
-        const pageWidth = options.format?.width || svgWidth;
-        const pageHeight = options.format?.height || svgHeight;
+
+        // Resolve page size (preferred: explicit pageWidth/pageHeight; fallback: legacy `format`; else the SVG size)
+        const pageWidth  = options.pageWidth  ?? options.format?.width  ?? svgWidth;
+        const pageHeight = options.pageHeight ?? options.format?.height ?? svgHeight;
+
+        // Render size = how big the SVG is drawn on the page (default: SVG own mm)
+        const renderWidth  = options.renderWidth  ?? svgWidth;
+        const renderHeight = options.renderHeight ?? svgHeight;
+
+        const xOffset = options.xOffset ?? (options.center ? (pageWidth  - renderWidth)  / 2 : 0);
+        const yOffset = options.yOffset ?? (options.center ? (pageHeight - renderHeight) / 2 : 0);
 
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({
             orientation: pageWidth > pageHeight ? 'landscape' : 'portrait',
             unit,
-            format: options.format ? [pageWidth, pageHeight] : undefined
+            format: [pageWidth, pageHeight]
         });
-
-        if (!options.format) {
-            pdf.internal.pageSize.setWidth(pageWidth);
-            pdf.internal.pageSize.setHeight(pageHeight);
-        }
 
         const svg2pdf = window.svg2pdf?.svg2pdf || window.svg2pdf;
         if (!svg2pdf) {
@@ -121,8 +135,9 @@ export class SVGExporter {
         }
 
         await svg2pdf(clonedSvg, pdf, {
-            xOffset: 0, yOffset: 0,
-            width: pageWidth, height: pageHeight
+            xOffset, yOffset,
+            width:  renderWidth,
+            height: renderHeight
         });
 
         pdf.save(filename);

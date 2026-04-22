@@ -161,7 +161,11 @@
                             <button type="button" class="inspector-action-btn" id="tplAddRowBtn" title="Append a new row at the bottom of the layout">+ Add row</button>
                             <button type="button" class="inspector-action-btn inspector-action-danger" id="tplResetBtn" title="Reset layout to the current preset template">Reset template</button>
                         </div>
-                        <p class="inspector-hint" id="tplHint">Click a key on canvas to edit it. Cmd+Z to undo.</p>
+                        <div class="inspector-btn-row">
+                            <button type="button" class="inspector-action-btn" id="tplExportBtn" title="Save the current template as a standalone JSON file">Export template</button>
+                            <button type="button" class="inspector-action-btn" id="tplImportBtn" title="Load a template from a JSON file (replaces the current one)">Import template</button>
+                        </div>
+                        <p class="inspector-hint" id="tplHint">Click a key to select; double-click to rename in place. Cmd+Z undoes.</p>
                     </section>
 
                     <!-- Keys -->
@@ -261,6 +265,13 @@
                             </label>
                             <input type="range" id="padKeySlider" min="0" max="8" step="0.05" value="2.50">
                         </div>
+                        <div class="control-group">
+                            <label for="iconSizeSlider">
+                                <span>Icon size <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="iconSizeValue" value="4.00">
+                            </label>
+                            <input type="range" id="iconSizeSlider" min="0" max="12" step="0.05" value="4.00">
+                        </div>
                     </section>
 
                 </div>
@@ -315,6 +326,28 @@
                                                 <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                                             </span>
                                             Safeguard
+                                        </span>
+                                    </label>
+
+                                    <label class="toggle-chip">
+                                        <input type="checkbox" id="showLatin" data-setting="showLatin" checked>
+                                        <span>
+                                            <span class="toggle-chip-icon-wrapper">
+                                                <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                                                <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                            </span>
+                                            Latin
+                                        </span>
+                                    </label>
+
+                                    <label class="toggle-chip">
+                                        <input type="checkbox" id="showCyrillic" data-setting="showCyrillic" checked>
+                                        <span>
+                                            <span class="toggle-chip-icon-wrapper">
+                                                <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                                                <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                            </span>
+                                            Cyrillic
                                         </span>
                                     </label>
 
@@ -391,6 +424,13 @@
             <button class="btn-fixed btn-export" id="exportSvgBtn" type="button">Export SVG &nbsp;Cmd+E</button>
             <label class="toggle-label">
                 <div class="toggle-switch">
+                    <input type="checkbox" id="exportSafeguardCheckbox" aria-label="Include safeguard in export">
+                    <span class="toggle-slider"></span>
+                </div>
+                <span class="toggle-label-text">Include safeguard</span>
+            </label>
+            <label class="toggle-label">
+                <div class="toggle-switch">
                     <input type="checkbox" id="convertToOutlinesCheckbox" aria-label="Outline fonts">
                     <span class="toggle-slider"></span>
                 </div>
@@ -438,6 +478,7 @@
                     <label for="insKeyW"><span>Width <span class="unit">mm</span></span>
                         <input type="number" class="value-display" id="insKeyW" step="0.01" min="0.5">
                     </label>
+                    <button type="button" class="inspector-reset-btn" id="insKeyWSnap" title="Snap width to the nearest 0.25 U (multiple of Base width)">Snap</button>
                     <button type="button" class="inspector-reset-btn" id="insKeyWReset" title="Reset to base width">Reset</button>
                 </div>
                 <div class="control-group">

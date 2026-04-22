@@ -45,7 +45,7 @@
 
 const FN_W = 0.920782;  // 43.8660533 pt / 47.6400146 pt
 
-const ESC   = { id: 'esc',   kind: 'function', w: FN_W, label: 'esc' };
+const ESC   = { id: 'esc',   kind: 'function', w: FN_W, label: 'esc', icon: 'fn_lock' };
 const F1    = { id: 'f1',    kind: 'function', w: FN_W, label: 'F1',  icon: 'sound_mute' };
 const F2    = { id: 'f2',    kind: 'function', w: FN_W, label: 'F2',  icon: 'sound_down' };
 const F3    = { id: 'f3',    kind: 'function', w: FN_W, label: 'F3',  icon: 'sound_up' };
@@ -56,10 +56,11 @@ const F7    = { id: 'f7',    kind: 'function', w: FN_W, label: 'F7',  icon: 'scr
 const F8    = { id: 'f8',    kind: 'function', w: FN_W, label: 'F8',  icon: 'monitor' };
 const F9    = { id: 'f9',    kind: 'function', w: FN_W, label: 'F9',  icon: 'touchpad_on_off' };
 const F10   = { id: 'f10',   kind: 'function', w: FN_W, label: 'F10' };
-const F11   = { id: 'f11',   kind: 'function', w: FN_W, label: 'F11', icon: 'printscreen' };
+const F11   = { id: 'f11',   kind: 'function', w: FN_W, label: 'F11' };
 const F12   = { id: 'f12',   kind: 'function', w: FN_W, label: 'F12' };
-// 14th main fn-key on laptop-14 (Touch ID / power button)
-const TOUCHID = { id: 'touchid', kind: 'function', w: FN_W, label: '' };
+// 14th main fn-key on laptop-14 (Touch ID / power button); carries the
+// printscreen icon per ground_14.svg.
+const TOUCHID = { id: 'touchid', kind: 'function', w: FN_W, label: '', icon: 'printscreen' };
 
 // Number row
 const GRAVE = { id: 'grave', kind: 'char', chars: { base: '`', shift: '~', ru: '\u0401' } };  // Yo
@@ -124,7 +125,7 @@ const SHIFT_R = { id: 'shift_r', kind: 'special', w: 2.781650, label: 'shift' };
 
 // Bottom row
 const CTRL_L  = { id: 'ctrl_l',  kind: 'special', w: 1.430167, label: 'ctrl' };
-const FN_L    = { id: 'fn_l',    kind: 'special', w: 1.0,      label: 'fn', icon: 'fn_lock' };
+const FN_L    = { id: 'fn_l',    kind: 'special', w: 1.0,      label: 'fn' };
 const WIN     = { id: 'win',     kind: 'special', w: 1.0,      label: '',   icon: 'win' };
 const ALT_L   = { id: 'alt_l',   kind: 'special', w: 1.0,      label: 'alt' };
 const SPACE   = { id: 'space',   kind: 'special', w: 5.386139, label: '' };
@@ -133,10 +134,10 @@ const FN_R    = { id: 'fn_r',    kind: 'special', w: 1.0,      label: 'fn' };
 const CTRL_R  = { id: 'ctrl_r',  kind: 'special', w: 1.418860, label: 'ctrl' };
 
 // Arrow cluster (split vertically: up/down are half height)
-const ARROW_L  = { id: 'arrow_l',  kind: 'special', w: 1.0, label: '' };
-const ARROW_UP = { id: 'arrow_up', kind: 'arrow-half', w: 1.0 };
-const ARROW_DN = { id: 'arrow_dn', kind: 'arrow-half', w: 1.0 };
-const ARROW_R  = { id: 'arrow_r',  kind: 'special', w: 1.0, label: '' };
+const ARROW_L  = { id: 'arrow_l',  kind: 'special',    w: 1.0, label: '', icon: 'arrow_left'  };
+const ARROW_UP = { id: 'arrow_up', kind: 'arrow-half', w: 1.0,            icon: 'arrow_up'    };
+const ARROW_DN = { id: 'arrow_dn', kind: 'arrow-half', w: 1.0,            icon: 'arrow_down'  };
+const ARROW_R  = { id: 'arrow_r',  kind: 'special',    w: 1.0, label: '', icon: 'arrow_right' };
 
 // Additional block (right side of laptop-14)
 const HOME   = { id: 'home',   kind: 'special', w: 1.0, label: 'home' };
@@ -211,10 +212,45 @@ export const LAPTOP_14 = {
  * LAPTOP-16
  * Like laptop-14 but:
  *   - smaller corner radius (already handled via settings slider)
- *   - has a numpad block on the right (4 cols x 5 rows with double-height + and Enter)
+ *   - has a numpad block on the right (4 cols x 5 rows with double-height + and Enter,
+ *     double-width 0)
  *   - no separate additional (home/end/pg_up/pg_dn) column in the main block
- *   - fn-row has extra print-screen, scroll-lock, pause before numpad row
+ *   - fn-row adds prtsc / scrlk on the right (aligned over the numpad area)
  */
+
+// Numpad cells -- standard 17-key layout:
+//   row 0: num-lock  /          *          -
+//   row 1:  7        8          9          +   (rowSpan 2)
+//   row 2:  4        5          6          (+ continues)
+//   row 3:  1        2          3          enter (rowSpan 2)
+//   row 4:  0 (colSpan 2)       .          (enter continues)
+const NUMPAD_LAPTOP_16 = {
+    cols: 4,
+    keys: [
+        { id: 'num_lock', kind: 'special', col: 0, row: 0, label: 'num' },
+        { id: 'np_div',   kind: 'char',    col: 1, row: 0, chars: { base: '/' } },
+        { id: 'np_mul',   kind: 'char',    col: 2, row: 0, chars: { base: '*' } },
+        { id: 'np_sub',   kind: 'char',    col: 3, row: 0, chars: { base: '-' } },
+
+        { id: 'np7',      kind: 'char',    col: 0, row: 1, chars: { base: '7' } },
+        { id: 'np8',      kind: 'char',    col: 1, row: 1, chars: { base: '8' } },
+        { id: 'np9',      kind: 'char',    col: 2, row: 1, chars: { base: '9' } },
+        { id: 'np_add',   kind: 'char',    col: 3, row: 1, rowSpan: 2, chars: { base: '+' } },
+
+        { id: 'np4',      kind: 'char',    col: 0, row: 2, chars: { base: '4' } },
+        { id: 'np5',      kind: 'char',    col: 1, row: 2, chars: { base: '5' } },
+        { id: 'np6',      kind: 'char',    col: 2, row: 2, chars: { base: '6' } },
+
+        { id: 'np1',      kind: 'char',    col: 0, row: 3, chars: { base: '1' } },
+        { id: 'np2',      kind: 'char',    col: 1, row: 3, chars: { base: '2' } },
+        { id: 'np3',      kind: 'char',    col: 2, row: 3, chars: { base: '3' } },
+        { id: 'np_enter', kind: 'special', col: 3, row: 3, rowSpan: 2, label: 'enter' },
+
+        { id: 'np0',      kind: 'char',    col: 0, row: 4, colSpan: 2, chars: { base: '0' } },
+        { id: 'np_dot',   kind: 'char',    col: 2, row: 4, chars: { base: '.' } }
+    ]
+};
+
 export const LAPTOP_16 = {
     id: 'laptop-16',
     label: 'Laptop 16"',
@@ -251,7 +287,8 @@ export const LAPTOP_16 = {
             arrowCluster: [ ARROW_L, ARROW_UP, ARROW_DN, ARROW_R ],
             keys: [ CTRL_L, FN_L, WIN, ALT_L, SPACE, ALT_R, FN_R, CTRL_R ]
         }
-    ]
+    ],
+    numpad: NUMPAD_LAPTOP_16
 };
 
 export const TEMPLATES = {

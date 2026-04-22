@@ -22,6 +22,24 @@
  *   w    -- width multiplier relative to baseW (default 1)
  *   wMm  -- absolute mm width; if set (> 0), overrides w * baseW
  *   hMm  -- absolute mm height; if set (> 0), overrides rowH
+ *
+ * Optional numpad (if template.numpad is defined):
+ *   template.numpad = {
+ *     cols          : number of columns (default 4),
+ *     gapX          : gap between numpad and the main block (default gapX * 2),
+ *     keys          : [
+ *       { id, label?, icon?, chars?, kind?,
+ *         col, row,                            // 0-indexed grid slot
+ *         colSpan?, rowSpan?,                  // default 1
+ *         w?, h?, wMm?, hMm? }                 // overrides (same rules as main)
+ *     ]
+ *   }
+ *
+ * Numpad keys live in a rectangular grid to the right of main + additional. The
+ * grid origin Y aligns with the top of the first non-fn row. Column width = baseW,
+ * row height = baseH; spans grow by `n*cell + (n-1)*gap`. Numpad keys are also
+ * pushed into `placedKeys` (rowId = 'numpad'), so everything downstream (render,
+ * export, inspector) works without further changes.
  */
 
 /**
@@ -55,22 +73,36 @@ export function computeLayout(template, settings) {
     const placed = [];
 
     // Step 1: reference row width defines main block (numbers row).
-    //         fullWidth = main block + optional additional column.
+    //         mainWidth = main block + optional additional column.
     const refRow    = template.rows.find(r => !r.isFnRow) ?? template.rows[0];
     const rowWidth  = rowNaturalWidth(refRow.keys, baseW, gapX);
     const addColW   = template.hasAdditional ? (gapX + baseW) : 0;
-    const fullWidth = rowWidth + addColW;
+    const mainWidth = rowWidth + addColW;
 
-    // Step 2: total height
-    let totalH = 0;
+    // Numpad geometry (if present). Width in mm = cols * baseW + (cols - 1) * gapX.
+    const npCfg   = template.numpad || null;
+    const npCols  = npCfg ? (+npCfg.cols || 4) : 0;
+    // Nullish coalescing doesn't catch NaN from +undefined, so check explicitly.
+    const npGapX  = npCfg
+        ? ((isFinite(+npCfg.gapX) && +npCfg.gapX >= 0) ? +npCfg.gapX : gapX * 2)
+        : 0;
+    const npW     = npCfg ? (npCols * baseW + (npCols - 1) * gapX) : 0;
+    const fullWidth = mainWidth + (npCfg ? npGapX + npW : 0);
+
+    // Step 2: total height.
+    // Track the y-position of the first non-fn row so the numpad can align to it.
+    let totalH       = 0;
+    let firstMainY   = null;
     for (let i = 0; i < template.rows.length; i++) {
         const row = template.rows[i];
         const rh  = row.isFnRow ? fnH : baseH;
+        if (!row.isFnRow && firstMainY === null) firstMainY = totalH;
         const gap = (i < template.rows.length - 1)
                     ? (row.isFnRow ? fnGap : gapY)
                     : 0;
         totalH += rh + gap;
     }
+    if (firstMainY === null) firstMainY = 0;
 
     const backdropW = fullWidth + pad * 2;
     const backdropH = totalH    + pad * 2;
@@ -85,7 +117,7 @@ export function computeLayout(template, settings) {
         const row = template.rows[i];
         const rh  = row.isFnRow ? fnH : baseH;
 
-        placeRow(row, originX, curY, baseW, rh, gapX, fullWidth, placed);
+        placeRow(row, originX, curY, baseW, rh, gapX, mainWidth, placed);
 
         if (template.hasAdditional && row.additionalKey) {
             const ax = originX + rowWidth + gapX;
@@ -104,7 +136,42 @@ export function computeLayout(template, settings) {
         curY += rh + gap;
     }
 
+    // Step 4: place numpad (if any).
+    if (npCfg && Array.isArray(npCfg.keys)) {
+        const npOriginX = originX + mainWidth + npGapX;
+        const npOriginY = backdropY + pad + firstMainY;
+        placeNumpad(npCfg.keys, npOriginX, npOriginY, baseW, baseH, gapX, gapY, placed);
+    }
+
     return { placedKeys: placed, backdropX, backdropY, backdropW, backdropH };
+}
+
+/**
+ * Places numpad keys on a rectangular grid (baseW x baseH cells, gapX / gapY
+ * between them). Each key specifies absolute grid coords (col, row) and optional
+ * spans. Absolute wMm/hMm overrides still win over the span math.
+ */
+function placeNumpad(keys, originX, originY, baseW, baseH, gapX, gapY, out) {
+    for (const key of keys) {
+        const col      = Math.max(0, +key.col || 0);
+        const row      = Math.max(0, +key.row || 0);
+        const colSpan  = Math.max(1, +key.colSpan || 1);
+        const rowSpan  = Math.max(1, +key.rowSpan || 1);
+
+        const x = originX + col * (baseW + gapX);
+        const y = originY + row * (baseH + gapY);
+
+        // Numpad keys don't use ratio `w` (unlike main-row keys); the size
+        // comes from col/rowSpan. Absolute wMm/hMm still wins if provided.
+        const spanW = colSpan * baseW + (colSpan - 1) * gapX;
+        const spanH = rowSpan * baseH + (rowSpan - 1) * gapY;
+        const wAbs  = +key.wMm;
+        const hAbs  = +key.hMm;
+        const w = (isFinite(wAbs) && wAbs > 0) ? wAbs : spanW;
+        const h = (isFinite(hAbs) && hAbs > 0) ? hAbs : spanH;
+
+        out.push({ ...key, x, y, w, h, rowId: 'numpad' });
+    }
 }
 
 // ---------------------------------------------------------------------------

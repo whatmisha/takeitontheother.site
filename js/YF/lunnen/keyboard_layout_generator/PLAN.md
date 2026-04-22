@@ -97,11 +97,13 @@
 - Отдельные слайдеры: `Char`, `Shift char`, `Label`, `Inner pad` (все в мм). Все под историей изменений.
 - Позиционирование привязано к внутреннему прямоугольнику `padKeyMm` — этот же прямоугольник в 4c становится видимым «охранным полем».
 
-#### Итерация 4b — библиотека иконок
+#### Итерация 4b — библиотека иконок (готово)
 
-- Вытащить иконки из `examples/ground_14.svg` (`tab_arrow`, `capslock_indicator`, `sound_mute`, `backspace_arrow`, ...) в `src/assets/icons.js` как карту `id -> { path, viewBox }`.
-- Рендер иконки по `key.icon` поверх клавиши; позиция — над/рядом с `label` в зависимости от типа.
-- Размер иконки — отдельный слайдер.
+- 15 иконок из `examples/ground_14.svg` вытащены в `src/assets/icons.js` с bbox в мм: `sound_mute`, `sound_down`, `sound_up`, `mic_mute`, `keyboard_light`, `screen_brightness_down/up`, `monitor`, `touchpad_on_off`, `printscreen`, `fn_lock`, `win`, `tab_arrow`, `capslock_indicator`, `backspace_arrow`.
+- Сырой `d` остаётся в pt, `iconTransform(icon, fitMm, xMm, yMm)` делает весь матричный расчёт на рендере (pt→mm + вписывание в квадрат `iconSize` с сохранением пропорций).
+- `renderKeyIcon` ставит иконку по правилу: для `char` и `special`/`function` с непустым `label` — правый верхний угол inner-pad (чтобы не столкнулась с лейблом в левом нижнем), для key-only (`win`, `backspace`) — по центру inner-pad.
+- Цвет иконки тянется из `fontColor`, так что слайдер цвета шрифта управляет и графикой.
+- Новый слайдер `Icon size` (мм) в секции Typography, под историей изменений.
 
 #### Итерация 4c — охранные поля (готово)
 
@@ -109,33 +111,66 @@
 - Переключатель видимости в Visibility (Layers-панель) как третий toggle-chip рядом с Backdrop и Keys; выключен по умолчанию.
 - Когда слой скрыт на канвасе — его нет и в экспорте, потому что это обычные `<rect>` без `data-interactive`.
 
-### Итерация 5 — многоязычная раскладка
+### Итерация 5 — многоязычная раскладка (готово)
 
-- Флаги `showLatin`, `showCyrillic` в Settings.
-- Режимы позиционирования: только латиница, только кириллица, обе с разделением по четвертям клавиши (base-lat / shift-lat / base-cyr / shift-cyr).
-- Независимые размеры шрифта и offsets для каждого алфавита.
+- Флаги `showLatin`, `showCyrillic` в `Settings` (оба по дефолту `true`).
+- `renderKeyTypography` учитывает оба флага:
+  - **оба языка**: как было — 4 квадранта на числовом ряду (Latin слева, Cyrillic справа), на буквенных — `base` top-left, `ru` bottom-right;
+  - **только Latin**: `base`/`shift` остаются в левой колонке (как «главный» алфавит), правая пустая;
+  - **только Cyrillic**: `ru`/`ruShift` повышаются в левую колонку, чтобы буква не висела в правом нижнем углу одна;
+  - **оба off**: только `label` (у special-клавиш) и иконки.
+- Два toggle-chip'а в Layers → Visibility: `Latin` и `Cyrillic`. Подключаются к `Settings` через общий `initCheckboxes()` → история `toggle:showLatin` / `toggle:showCyrillic`.
+- Размер шрифта — общий `fontChar` / `fontShift` для обоих алфавитов (достаточно для MVP; отдельные размеры по алфавитам — при необходимости в 8-й итерации UX-полировки).
 
 ### Итерация 6 — новые шаблоны-заготовки
 
-- Laptop 16" (с numpad, меньше радиус скругления).
-- External TKL (tenkeyless, без numpad, с полноразмерным ctrl/shift/enter).
-- External Full (полная клавиатура с numpad).
-- Каждый — preset JSON в `presets/`, загружающий готовую структуру. Сам `computeLayout` остаётся без изменений: шаблон пришёл как данные.
+#### Итерация 6a — numpad engine + Laptop 16" (готово)
 
-### Итерация 7 — production-ready экспорт
+- `computeLayout` умеет располагать **блок numpad** справа от main + additional:
+  - `template.numpad = { cols, gapX, keys }`, каждая клавиша с абсолютными `col`/`row` + опциональными `colSpan`/`rowSpan`.
+  - Ячейка = `baseW` × `baseH`, span растёт как `n*cell + (n-1)*gap`. `wMm`/`hMm` перекрывают span math.
+  - numpad выравнивается по верху первой main-row (после fn-row); `backdropW` расширяется на `gapX_between + cols*baseW + (cols-1)*gapX`.
+- `LAPTOP_16` получил реальный 17-клавишный numpad (num / / * -, 7-9 +, 4-6, 1-3 enter, 0 .), с двойной высотой `+` и `enter` и двойной шириной `0`.
+- `findKeyInTemplate` смотрит в `template.numpad.keys`, так что клавиши numpad выделяются, редактируются в инспекторе, попадают под undo/redo и экспорт.
+- Обратная совместимость: `laptop-14` даёт те же 86 клавиш и ширину ~288.72 мм без изменений.
 
-- Переключатель text -> path (встраивание шрифтов vs outlines через `TextToPath`).
-- Слой охранных полей в экспорте (опциональный чекбокс, независимый от preview).
-- Имена id'шек и слоёв идентичны нашим декларативным id (`space`, `ctrl_right`, `shift_left`), чтобы результат было удобно открыть в Illustrator.
-- PDF A3 landscape с корректными полями.
+#### Итерация 6b — External TKL / External Full (в задел)
+
+- External TKL: главная зона без additional-колонки, отдельный navigation-cluster (insert/home/pgup + delete/end/pgdn), fn-row полной высоты.
+- External Full: TKL + numpad из 6a.
+- Каждый — preset JSON в `presets/`, загружающий готовую структуру. `computeLayout` после 6a достаточно гибкий: потребуется, возможно, только расширенный `additionalKeys` (массив на ряд) для nav-cluster.
+
+### Итерация 7 — production-ready экспорт (готово)
+
+- **Outline fonts toggle.** Переключатель «Outline fonts» (внизу страницы) теперь живёт в `Settings.outlineFonts`: состояние переживает preset-load, попадает в undo/redo и в `Export Settings` JSON.
+- **Independent safeguard in export.** Рядом с «Outline fonts» добавлен чекбокс «Include safeguard», привязанный к `Settings.exportSafeguard`. Охранное поле можно держать выключенным на canvas и при этом включить его только для экспорта (или наоборот). Safeguard-группа всегда в DOM, но помечается `data-preview-hidden="true"` + `display:none`; при экспорте `_buildExportSvg` снимает это с клона.
+- **Named layers for Illustrator.** `Keys` — не плоская группа, а `#Keys > #row_{rowId}` на каждый ряд (включая `numpad`, `arrows`, `adds`). Все `<rect>`, `<text>` и `<g.key-icon>` несут `data-row-id` и `data-key-id` / `id="key_{id}"`, так что Illustrator / Figma показывают осмысленные слои.
+- **SVGExporter bonus.** `exportToPDF` расширен общими опциями (`pageWidth/Height`, `renderWidth/Height`, `xOffset/yOffset`, `center`, `convertTextToOutlines`) — пока не вынесено в UI, но уже удобно вызывать из скриптов. Сбой text-to-path больше не ломает экспорт (ловим исключение и продолжаем).
+- **Что не делаем в MVP.** Отдельная кнопка «Export PDF A3» убрана как избыточная — PDF с корректными мм легко получить из SVG через любой векторный редактор.
 
 ### Итерация 8 — UX-полировка
 
-- Inline-редактирование `label` прямо на canvas (double-click -> input).
-- Drag-reorder клавиш внутри ряда, drag-reorder рядов.
-- Snap-to-grid для нестандартных клавиш.
-- Multi-select + bulk edit.
-- Импорт/экспорт своих шаблонов в JSON.
+#### Итерация 8a — on-canvas editing + template I/O (готово)
+
+- **Inline rename.** Double-click по любой клавише на канвасе открывает HTML-инпут поверх неё:
+  - для `kind: char` с `chars.base` редактируется `chars.base` (главный глиф, участвующий в Latin/Cyrillic логике);
+  - для `special` / `function` и пустых клавиш — `label`.
+  - Enter / blur коммитит, Escape отменяет; любой перерендер (update, zoom, resize) тоже закрывает редактор. Коммит попадает в undo/redo под тегом `key:label:{id}` или `key:chars.base:{id}`.
+- **Template JSON I/O.** В секции Template на правой панели появились кнопки «Export template» / «Import template». Export пишет `{ schema: 'keyboard-template/v1', templateId, template }` — только структура, без цветов / слайдеров / visibility. Import принимает как полный payload, так и «голый» объект шаблона (валидирует `rows[]`), применяет его через `commitTemplate` и сбрасывает выделение.
+- **UX hint.** Подсказка в секции Template обновлена: «Click a key to select; double-click to rename in place».
+
+#### Итерация 8b — drag-reorder клавиш в ряду (готово частично)
+
+- Клавиша теперь имеет курсор `grab`. Удерживая её мышью и сдвигая за порог 4 px, пользователь входит в drag-режим: курсор `grabbing`, сама клавиша становится полупрозрачной, над рядом возникает синяя вертикальная линия — точка вставки. Отпускание коммитит перестановку (`key:reorder:{id}` в истории), Escape отменяет.
+- Порог отделяет клик от дрэга, так что single-click по-прежнему выделяет клавишу, а double-click открывает inline-rename. Post-drag `click` глушится флагом `_suppressNextClick`, чтобы не «выбрать» только что уронённую клавишу.
+- Скоуп MVP: только простые `row.keys`. В arrow-кластере, numpad-сетке и слоте `additionalKey` drag не активируется — там структурные координаты (grid / dedicated slot), а обычный left-right swap не имеет смысла.
+- Drop-индикатор рендерится прямо в основной SVG c `data-interactive="true"`, так что в экспорт не попадает. Индикатор стирается при любом `update`, смене зума, успешном коммите или Escape.
+
+#### Итерация 8b-rest — row drag + snap + multi-select (готово)
+
+- **Drag-reorder рядов.** В левой части каждого ряда (внутри backdrop padding) рисуется маленький grip-хендл из 6 точек; курсор `grab`. Удерживая его мышью за порог 4 px, пользователь входит в drag-режим: курсор `grabbing`, над/под соседним рядом появляется горизонтальная синяя линия — точка вставки. Отпускание коммитит перестановку (`row:reorder:{id}` в истории), Escape отменяет. Хендлы помечены `data-interactive="true"`, в экспорт не попадают.
+- **Snap-to-U.** Рядом с полем Width в инспекторе появилась кнопка `Snap`, которая прилипает текущую ширину клавиши к ближайшему кратному `0.25 × baseW` (реальный keyboard-стандарт: 1.25 U / 1.5 U / 1.75 U / 2.25 U и т. д.) и сохраняет её как абсолютный override `wMm`. Работает и на одиночной, и на мульти-селекции.
+- **Multi-select + bulk edit.** Shift-клик (или Cmd/Ctrl-клик) по клавише добавляет её в выделение или снимает; plain-клик заменяет selection на одну клавишу. Все выделенные клавиши получают синюю пунктирную рамку; у primary — более яркая/широкая, у остальных — тоньше. В инспекторе при `N > 1` блокируются identity-поля (`id`, `label`, `kind`), а Width/Height/Snap/Reset/Duplicate/Delete применяются ко всему выделению одной записью в истории (`key:delete:bulk(N)`, `key:snapW:bulk(N)` и т. п.). Undo/redo восстанавливает template, но сбрасывает UI-selection (он не часть снэпшота).
 
 ## 3. Принципы разработки
 
@@ -163,8 +198,11 @@
 - [x] Типографика по углам клавиши: label / base / shift / ru / ruShift (4a)
 - [x] Слайдеры Char / Shift char / Label / Inner pad (4a)
 - [x] Охранные поля: чекбокс Visibility + рендер обводки (4c)
-- [ ] Библиотека иконок из ground_14.svg (4b)
-- [ ] Многоязычная раскладка en + ru (5)
-- [ ] Шаблоны для 16", внешних клавиатур (6)
-- [ ] Production text-to-path экспорт (7)
-- [ ] UX-полировка: inline-edit, drag-reorder (8)
+- [x] Библиотека иконок из ground_14.svg (4b)
+- [x] Многоязычная раскладка en + ru (5)
+- [x] Numpad engine + Laptop 16" (6a)
+- [ ] External TKL / External Full (6b)
+- [x] Production-ready экспорт: outline fonts, safeguard-in-export, named layers, PDF A3 (7)
+- [x] Inline-rename + template JSON I/O (8a)
+- [x] Drag-reorder клавиш внутри простого ряда (8b, partial)
+- [x] Drag-reorder рядов, snap-to-grid, multi-select (8b-rest)

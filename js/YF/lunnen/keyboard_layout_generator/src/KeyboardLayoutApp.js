@@ -45,6 +45,7 @@ import { TextToPath }       from '../yf-ui-framework/src/utils/TextToPath.js';
 import { ColorUtils }       from '../yf-ui-framework/src/utils/ColorUtils.js';
 import { computeLayout }    from './layout/layoutEngine.js';
 import { TEMPLATES, DEFAULT_TEMPLATE_ID } from './data/rowTemplates.js';
+import { ICONS, iconTransform } from './assets/icons.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -83,6 +84,10 @@ const DEFAULTS = {
     padKeyMm:  2.50,      // Inner padding used for text placement anchors
     fontColor: '#e6e7e8', // Matches ground_14.svg .st5/.st6 color
 
+    /* Icon size: target fit-box side in mm. The longest bbox side of the icon
+       is scaled to this value; icons keep their aspect ratio. */
+    iconSize:  4.0,
+
     /* Colors */
     backdropFill: '#131313',
     keyFill:      '#303030',
@@ -90,14 +95,29 @@ const DEFAULTS = {
     /* Layers */
     showBackdrop:  true,
     showKeys:      true,
-    showSafeguard: false
+    showSafeguard: false,
+
+    /* Languages: which glyph sets to render on char keys.
+       These toggles affect `base`/`shift` (Latin) and `ru`/`ruShift` (Cyrillic)
+       independently. When only one language is on, its glyphs are promoted to
+       the primary (left / top-left) position; bottom-right / right-column
+       positions become empty. Special-key `label`s are unaffected. */
+    showLatin:     true,
+    showCyrillic:  true,
+
+    /* Export options (iteration 7).
+       These are independent of the preview toggles so a user can, for example,
+       hide safeguards while designing but still ship them in the exported SVG
+       so the print shop has the exact text-safe zones. */
+    outlineFonts:    false,   // convert <text> -> <path> on SVG/PDF export
+    exportSafeguard: false    // include Safeguard layer in the exported file */
 };
 
 /**
  * Walk the template and locate a key by id.
  * Returns { key, row, list, index } or null if not found.
- * `list` is the array the key belongs to (row.keys | row.arrowCluster | null
- * for additionalKey).
+ * `list` is the array the key belongs to (row.keys | row.arrowCluster
+ * | template.numpad.keys | null for additionalKey).
  */
 function findKeyInTemplate(template, keyId) {
     if (!template?.rows) return null;
@@ -114,6 +134,11 @@ function findKeyInTemplate(template, keyId) {
             return { key: row.additionalKey, row, list: null, index: -1 };
         }
     }
+    if (template.numpad && Array.isArray(template.numpad.keys)) {
+        const list = template.numpad.keys;
+        const i = list.findIndex(k => k.id === keyId);
+        if (i !== -1) return { key: list[i], row: { id: 'numpad', keys: list }, list, index: i };
+    }
     return null;
 }
 
@@ -126,10 +151,21 @@ class KeyboardLayoutApp {
         this.domCache = new DOMCache();
         this.dom      = null;
 
-        this.state = { isInitialized: false, isUpdating: false, selectedKeyId: null };
+        // `selectedKeyId` = the primary selection (inspector target).
+        // `multiSelectIds` = all selected (primary + additional via Shift/Cmd).
+        // Both are kept in sync by selectKey / clearSelection.
+        this.state = {
+            isInitialized:  false,
+            isUpdating:     false,
+            selectedKeyId:  null,
+            multiSelectIds: new Set()
+        };
         this.lastLayout = null;   // Cached layout from most recent update (for inspector lookups)
         this.inspector  = null;   // DOM refs + helpers, populated in initInspector()
         this.historyDebounce = null; // Pending timer for coalesced slider/color pushes
+        this.inlineEditor = null; // Active inline-label editor {input, keyId, field} | null
+        this._dragIndicator     = null;   // <line> drop indicator during drag-reorder
+        this._suppressNextClick = false;  // Swallow the post-drag `click` selection
 
         this.zoomPan        = null;
         this.sliders        = null;
@@ -221,6 +257,7 @@ class KeyboardLayoutApp {
         reg('fontShiftSlider', 'fontShiftValue', 'fontShift', { min: 1,  max: 10, decimals: 2, baseStep: 0.05, shiftStep: 0.5 });
         reg('fontLabelSlider', 'fontLabelValue', 'fontLabel', { min: 1,  max: 8,  decimals: 2, baseStep: 0.05, shiftStep: 0.5 });
         reg('padKeySlider',    'padKeyValue',    'padKeyMm',  { min: 0,  max: 8,  decimals: 2, baseStep: 0.05, shiftStep: 0.5 });
+        reg('iconSizeSlider',  'iconSizeValue',  'iconSize',  { min: 0,  max: 12, decimals: 2, baseStep: 0.05, shiftStep: 0.5 });
     }
 
     /* ------------------------------------------------------------ */
@@ -355,6 +392,11 @@ class KeyboardLayoutApp {
         canvas.addEventListener('zoomchange', () => {
             const ind = this.dom.zoomIndicator;
             if (ind) ind.textContent = `${this.zoomPan.getZoomPercent()}%`;
+            // Zoom/pan changes detach the inline editor from its key visually.
+            if (this.inlineEditor) this._finishInlineEdit(true);
+        });
+        window.addEventListener('resize', () => {
+            if (this.inlineEditor) this._finishInlineEdit(true);
         });
         const ind = this.dom.zoomIndicator;
         if (ind) ind.addEventListener('click', () => this.zoomPan.fitToScreen());
@@ -387,6 +429,7 @@ class KeyboardLayoutApp {
                         if (t) this.settingsStore.set('template', clone(t));
                     }
                     this.state.selectedKeyId = null;
+                    this.state.multiSelectIds.clear();
                     this.historyManager?.setRestoring(true);
                     try {
                         this.syncSliders();
@@ -445,6 +488,29 @@ class KeyboardLayoutApp {
         bind('exportSvgBtn',      () => { void this.exportSVG(); });
         bind('exportSettingsBtn', () => { this.exportSettings(); });
         bind('importSettingsBtn', () => { void this.importSettings(); });
+
+        // "Outline fonts" is a persistent setting, not an ephemeral UI flag, so
+        // it plays nicely with undo/redo and settings import/export. We keep
+        // the existing non-toggle-chip styling by wiring it manually here.
+        const outlineCb = document.getElementById('convertToOutlinesCheckbox');
+        if (outlineCb) {
+            outlineCb.checked = !!this.settingsStore.get('outlineFonts');
+            outlineCb.addEventListener('change', () => {
+                this.settingsStore.set('outlineFonts', outlineCb.checked);
+                this.pushHistory('toggle:outlineFonts');
+            });
+            this.settingsStore.subscribe('outlineFonts', (v) => { outlineCb.checked = !!v; });
+        }
+        const exportSgCb = document.getElementById('exportSafeguardCheckbox');
+        if (exportSgCb) {
+            exportSgCb.checked = !!this.settingsStore.get('exportSafeguard');
+            exportSgCb.addEventListener('change', () => {
+                this.settingsStore.set('exportSafeguard', exportSgCb.checked);
+                this.update();
+                this.pushHistory('toggle:exportSafeguard');
+            });
+            this.settingsStore.subscribe('exportSafeguard', (v) => { exportSgCb.checked = !!v; });
+        }
     }
 
     initModals() {
@@ -480,6 +546,14 @@ class KeyboardLayoutApp {
     update() {
         if (this.state.isUpdating) return;
         this.state.isUpdating = true;
+
+        // Re-render destroys the rect the editor is anchored to. Drop any
+        // in-progress inline edit without committing -- the caller of update()
+        // is already performing a structural change unrelated to that edit.
+        if (this.inlineEditor) this._finishInlineEdit(false);
+        // Likewise kill a leftover drag drop-indicator so it doesn't float
+        // over the fresh render.
+        this._removeDragIndicator();
 
         try {
             const svg = this.dom?.svg;
@@ -538,12 +612,44 @@ class KeyboardLayoutApp {
 
     renderKeys(svg, layout) {
         if (!this.settings.showKeys) return;
-        const g    = document.createElementNS(SVG_NS, 'g');
-        g.setAttribute('id', 'Keys');
+
+        // Parent group: single "Keys" layer, then one sub-group per row so the
+        // exported SVG has clean named layers in Illustrator (row_numbers,
+        // row_qwerty, row_asdfgh, ..., row_numpad, row_arrows_*).
+        const parent = document.createElementNS(SVG_NS, 'g');
+        parent.setAttribute('id', 'Keys');
+
         const r    = this.settings.radius;
         const fill = this.settings.keyFill;
 
+        // Stable row order = first-seen order in placedKeys (matches template order).
+        const rowGroups = new Map();
+        const getRow = (rowId) => {
+            let g = rowGroups.get(rowId);
+            if (g) return g;
+            g = document.createElementNS(SVG_NS, 'g');
+            g.setAttribute('id', `row_${rowId}`);
+            g.setAttribute('data-row-id', rowId);
+            rowGroups.set(rowId, g);
+            parent.appendChild(g);
+            return g;
+        };
+
+        // Track the first key in each template-row so we can anchor a drag
+        // handle to the row's top-left corner. Rows that don't live in
+        // `template.rows` (numpad, arrow cluster belonging to a row_add) get
+        // no handle.
+        const template = this.settingsStore.get('template');
+        const templateRowIds = new Set((template?.rows || []).map(r => r.id));
+        const firstKeyPerRow = new Map();
+
         for (const key of layout.placedKeys) {
+            const rowId = key.rowId || 'misc';
+            if (templateRowIds.has(rowId) && !firstKeyPerRow.has(rowId)) {
+                firstKeyPerRow.set(rowId, key);
+            }
+            const g = getRow(rowId);
+
             const rect = document.createElementNS(SVG_NS, 'rect');
             rect.setAttribute('x',      key.x);
             rect.setAttribute('y',      key.y);
@@ -552,17 +658,99 @@ class KeyboardLayoutApp {
             rect.setAttribute('rx',     r);
             rect.setAttribute('ry',     r);
             rect.setAttribute('fill',   fill);
+            rect.setAttribute('id',               `key_${key.id}`);
             rect.setAttribute('data-object-id',   key.id);
             rect.setAttribute('data-object-type', 'key');
+            rect.setAttribute('data-row-id',      rowId);
+            rect.style.cursor = 'grab';
             rect.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.selectKey(key.id);
+                // Pointer-drag above the threshold sets this flag so the
+                // post-drag click doesn't "select" the dropped key.
+                if (this._suppressNextClick) {
+                    this._suppressNextClick = false;
+                    return;
+                }
+                const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+                this.selectKey(key.id, { additive });
             });
+            // Double-click enters inline label edit mode (iteration 8a).
+            rect.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                this.startInlineEdit(key.id);
+            });
+            // Drag-to-reorder within the same row (iteration 8b).
+            this._initKeyDrag(rect, key);
             g.appendChild(rect);
 
             this.renderKeyTypography(g, key);
         }
-        svg.appendChild(g);
+
+        // Row drag handles (iteration 8b-rest). Anchored to the left edge of
+        // each template row inside the backdrop padding. Marked interactive so
+        // SVGExporter strips them from the file.
+        this._renderRowHandles(parent, firstKeyPerRow, layout);
+
+        svg.appendChild(parent);
+    }
+
+    /**
+     * Render a small grab handle at the left of every template row so the
+     * user can drag-reorder whole rows. The handle is a 3x3 dots grid that
+     * sits in the backdrop padding area; it's non-exported (`data-interactive`)
+     * and ignores safeguard / keys layers.
+     */
+    _renderRowHandles(parent, firstKeyPerRow, layout) {
+        if (firstKeyPerRow.size === 0) return;
+
+        const g = document.createElementNS(SVG_NS, 'g');
+        g.setAttribute('id', 'RowHandles');
+        g.setAttribute('data-interactive', 'true');
+
+        const dotR    = 0.3;  // mm
+        const spacing = 0.9;  // mm between dot centers
+        const offsetX = -1.8; // mm to the left of the first key (fits inside default 2.65 mm padding)
+
+        for (const [rowId, key] of firstKeyPerRow.entries()) {
+            const cx = key.x + offsetX;
+            const cy = key.y + key.h / 2;
+
+            // Hit area: a slightly larger invisible rect for easier grabbing.
+            const hit = document.createElementNS(SVG_NS, 'rect');
+            const pad = 1.2;
+            hit.setAttribute('x',      cx - pad);
+            hit.setAttribute('y',      cy - pad * 1.8);
+            hit.setAttribute('width',  pad * 2);
+            hit.setAttribute('height', pad * 3.6);
+            hit.setAttribute('fill',   'transparent');
+            hit.setAttribute('data-row-handle', rowId);
+            hit.style.cursor = 'grab';
+            // A plain click (no drag) on the handle would otherwise bubble to
+            // the svg-level click handler and clear the current selection.
+            hit.addEventListener('click', (ev) => ev.stopPropagation());
+
+            // Visible grip: 2x3 dots.
+            const grip = document.createElementNS(SVG_NS, 'g');
+            grip.setAttribute('fill',  '#6a6a6a');
+            grip.setAttribute('pointer-events', 'none');
+            for (let row = -1; row <= 1; row++) {
+                for (let col = 0; col <= 1; col++) {
+                    const dot = document.createElementNS(SVG_NS, 'circle');
+                    dot.setAttribute('cx', cx - spacing / 2 + col * spacing);
+                    dot.setAttribute('cy', cy + row * spacing);
+                    dot.setAttribute('r',  dotR);
+                    grip.appendChild(dot);
+                }
+            }
+
+            // Wire drag on the hit rect.
+            this._initRowDrag(hit, rowId);
+
+            g.appendChild(grip);
+            g.appendChild(hit);
+        }
+        parent.appendChild(g);
     }
 
     /**
@@ -576,15 +764,27 @@ class KeyboardLayoutApp {
      * `showSafeguard` affects both canvas preview and exported SVG.
      */
     renderSafeguard(svg, layout) {
-        if (!this.settings.showSafeguard) return;
+        const showPreview = !!this.settings.showSafeguard;
+        const showExport  = !!this.settings.exportSafeguard;
+        if (!showPreview && !showExport) return;
+
         const pad = +this.settings.padKeyMm || 0;
         if (pad <= 0) return;
 
         const g = document.createElementNS(SVG_NS, 'g');
         g.setAttribute('id', 'Safeguard');
         g.setAttribute('pointer-events', 'none');
+        g.setAttribute('data-role', 'safeguard');
 
-        const baseR = +this.settings.radius || 0;
+        // Export-only: hide from preview but keep in DOM so the clone we ship
+        // to the exporter still contains it. exportSVG / exportPDF strip the
+        // inline display:none on any `[data-preview-hidden]` before writing.
+        if (!showPreview && showExport) {
+            g.setAttribute('data-preview-hidden', 'true');
+            g.style.display = 'none';
+        }
+
+        const baseR  = +this.settings.radius || 0;
         const innerR = Math.max(0, baseR - pad);
 
         for (const key of layout.placedKeys) {
@@ -602,6 +802,8 @@ class KeyboardLayoutApp {
             rect.setAttribute('fill',   'none');
             rect.setAttribute('stroke', '#4ea1ff');
             rect.setAttribute('stroke-width', '0.15');
+            rect.setAttribute('data-row-id',    key.rowId || '');
+            rect.setAttribute('data-object-id', key.id);
             g.appendChild(rect);
         }
         svg.appendChild(g);
@@ -621,8 +823,73 @@ class KeyboardLayoutApp {
      * (key.x + padKey .. key.x + key.w - padKey) so edits to `padKeyMm`
      * reflow all labels simultaneously.
      */
+    /**
+     * Render a glyph-style icon for a single key.
+     *
+     * Placement rules (no explicit iconPos yet -- kept simple for MVP):
+     *   - function / special kind:   icon is centered in the inner padding box
+     *     (either alongside a label in the bottom-left, or as the sole mark).
+     *   - char kind (rare -- kept as an escape hatch): icon is placed in the
+     *     top-right inner corner so it doesn't collide with letters.
+     *
+     * The longest bbox side of the icon is scaled to `iconSize`, preserving
+     * aspect ratio. If the key is too small to fit the icon within the inner
+     * pad, rendering is skipped (prevents visual overflow).
+     */
+    renderKeyIcon(parent, key) {
+        const icon = ICONS[key.icon];
+        if (!icon) return;
+
+        const pad       = +this.settings.padKeyMm || 0;
+        const requested = +this.settings.iconSize || 4.0;
+        if (requested <= 0) return;
+
+        // Keep a small breathing margin between icon and the inner padding edge.
+        // For very small keys (arrow-half, tight custom sizes) the icon is
+        // scaled down proportionally to fit inside the inner-pad box rather
+        // than being skipped entirely.
+        const innerW = key.w - pad * 2;
+        const innerH = key.h - pad * 2;
+        if (innerW <= 0 || innerH <= 0) return;
+
+        const fit = Math.min(requested, innerW, innerH);
+        if (fit <= 0) return;
+
+        let xMm, yMm;
+        const hasLabel = !!(key.label && String(key.label).length > 0);
+        if (key.kind === 'char' || hasLabel) {
+            // Label (if any) sits bottom-left -> icon goes top-right.
+            xMm = key.x + key.w - pad - fit;
+            yMm = key.y + pad;
+        } else {
+            // Icon-only key: center of the inner padding box.
+            xMm = key.x + pad + (innerW - fit) / 2;
+            yMm = key.y + pad + (innerH - fit) / 2;
+        }
+
+        const g = document.createElementNS(SVG_NS, 'g');
+        g.setAttribute('class', 'key-icon');
+        g.setAttribute('transform', iconTransform(icon, fit, xMm, yMm));
+        g.setAttribute('pointer-events', 'none');
+        g.setAttribute('data-key-id', key.id);
+        g.setAttribute('data-icon',   key.icon);
+
+        const path = document.createElementNS(SVG_NS, 'path');
+        path.setAttribute('d',    icon.d);
+        path.setAttribute('fill', this.settings.fontColor || '#e6e7e8');
+        g.appendChild(path);
+
+        parent.appendChild(g);
+    }
+
     renderKeyTypography(parent, key) {
-        if (key.kind === 'arrow-half' || key.kind === 'spacer') return;
+        if (key.kind === 'spacer') return;
+
+        // Icons come first so text labels (drawn after) overlay them if they
+        // happen to share a corner -- but placement rules below try to avoid
+        // collisions anyway. Arrow-half keys get icon-only (no labels/chars).
+        if (key.icon) this.renderKeyIcon(parent, key);
+        if (key.kind === 'arrow-half') return;
 
         const pad       = +this.settings.padKeyMm || 0;
         const sizeChar  = +this.settings.fontChar  || 5;
@@ -651,22 +918,44 @@ class KeyboardLayoutApp {
             el.setAttribute('text-anchor',       anchor);
             el.setAttribute('dominant-baseline', baseline);
             el.setAttribute('pointer-events',    'none');
+            el.setAttribute('data-key-id',       key.id);
             el.textContent = String(text);
             parent.appendChild(el);
         };
 
         if (key.kind === 'char' && key.chars) {
             const { base, shift, ru, ruShift } = key.chars;
+            const showLat = this.settings.showLatin    !== false;
+            const showCyr = this.settings.showCyrillic !== false;
+
             if (shift != null) {
-                // Number / punctuation row: 4-quadrant layout.
-                draw(shift,   { x: leftX,  y: topY,    size: sizeShift, anchor: 'start', baseline: 'hanging' });
-                draw(base,    { x: leftX,  y: bottomY, size: sizeChar,  anchor: 'start', baseline: 'alphabetic' });
-                draw(ruShift, { x: rightX, y: topY,    size: sizeShift, anchor: 'end',   baseline: 'hanging' });
-                draw(ru,      { x: rightX, y: bottomY, size: sizeChar,  anchor: 'end',   baseline: 'alphabetic' });
+                // Number / punctuation row.
+                if (showLat && showCyr) {
+                    // 4-quadrant: Latin left, Cyrillic right; shift-top, base-bottom.
+                    draw(shift,   { x: leftX,  y: topY,    size: sizeShift, anchor: 'start', baseline: 'hanging' });
+                    draw(base,    { x: leftX,  y: bottomY, size: sizeChar,  anchor: 'start', baseline: 'alphabetic' });
+                    draw(ruShift, { x: rightX, y: topY,    size: sizeShift, anchor: 'end',   baseline: 'hanging' });
+                    draw(ru,      { x: rightX, y: bottomY, size: sizeChar,  anchor: 'end',   baseline: 'alphabetic' });
+                } else if (showLat) {
+                    // Only Latin: promote to left column (primary).
+                    draw(shift, { x: leftX, y: topY,    size: sizeShift, anchor: 'start', baseline: 'hanging' });
+                    draw(base,  { x: leftX, y: bottomY, size: sizeChar,  anchor: 'start', baseline: 'alphabetic' });
+                } else if (showCyr) {
+                    // Only Cyrillic: promote ru/ruShift to left column.
+                    draw(ruShift, { x: leftX, y: topY,    size: sizeShift, anchor: 'start', baseline: 'hanging' });
+                    draw(ru,      { x: leftX, y: bottomY, size: sizeChar,  anchor: 'start', baseline: 'alphabetic' });
+                }
             } else {
-                // Letter row: base top-left, Cyrillic bottom-right.
-                draw(base, { x: leftX,  y: topY,    size: sizeChar, anchor: 'start', baseline: 'hanging' });
-                draw(ru,   { x: rightX, y: bottomY, size: sizeChar, anchor: 'end',   baseline: 'alphabetic' });
+                // Letter row.
+                if (showLat && showCyr) {
+                    draw(base, { x: leftX,  y: topY,    size: sizeChar, anchor: 'start', baseline: 'hanging' });
+                    draw(ru,   { x: rightX, y: bottomY, size: sizeChar, anchor: 'end',   baseline: 'alphabetic' });
+                } else if (showLat) {
+                    draw(base, { x: leftX, y: topY, size: sizeChar, anchor: 'start', baseline: 'hanging' });
+                } else if (showCyr) {
+                    // Promote Cyrillic letter to the top-left primary slot.
+                    draw(ru,   { x: leftX, y: topY, size: sizeChar, anchor: 'start', baseline: 'hanging' });
+                }
             }
             return;
         }
@@ -683,32 +972,47 @@ class KeyboardLayoutApp {
      * intercepting clicks.
      */
     renderSelectionOverlay(svg, layout) {
-        const id = this.state.selectedKeyId;
-        if (!id) return;
-        const key = layout.placedKeys.find(k => k.id === id);
-        if (!key) return;
+        const primary = this.state.selectedKeyId;
+        const ids = this.state.multiSelectIds;
+        if (!primary && ids.size === 0) return;
 
         const g = document.createElementNS(SVG_NS, 'g');
         g.setAttribute('id', 'Selection');
         g.setAttribute('pointer-events', 'none');
-        // Marks this group as on-screen-only so SVGExporter.removeInteractiveElements
-        // strips it before writing the file.
         g.setAttribute('data-interactive', 'true');
 
         const inset = 0.35;
         const r = Math.max(0, (this.settings.radius || 0) + inset);
-        const rect = document.createElementNS(SVG_NS, 'rect');
-        rect.setAttribute('x',      key.x - inset);
-        rect.setAttribute('y',      key.y - inset);
-        rect.setAttribute('width',  key.w + inset * 2);
-        rect.setAttribute('height', key.h + inset * 2);
-        rect.setAttribute('rx',     r);
-        rect.setAttribute('ry',     r);
-        rect.setAttribute('fill',   'none');
-        rect.setAttribute('stroke', '#4ea1ff');
-        rect.setAttribute('stroke-width', '0.35');
-        rect.setAttribute('stroke-dasharray', '1.2 0.8');
-        g.appendChild(rect);
+
+        // Render every selected key's outline. Primary gets a brighter, solid
+        // outline; additional selections get a dashed, slightly dimmer one.
+        const drawOutline = (key, { isPrimary }) => {
+            const rect = document.createElementNS(SVG_NS, 'rect');
+            rect.setAttribute('x',      key.x - inset);
+            rect.setAttribute('y',      key.y - inset);
+            rect.setAttribute('width',  key.w + inset * 2);
+            rect.setAttribute('height', key.h + inset * 2);
+            rect.setAttribute('rx',     r);
+            rect.setAttribute('ry',     r);
+            rect.setAttribute('fill',   'none');
+            rect.setAttribute('stroke', isPrimary ? '#4ea1ff' : '#4ea1ff');
+            rect.setAttribute('stroke-width', isPrimary ? '0.45' : '0.3');
+            rect.setAttribute('stroke-opacity', isPrimary ? '1' : '0.7');
+            rect.setAttribute('stroke-dasharray', isPrimary ? '1.2 0.6' : '0.6 0.6');
+            g.appendChild(rect);
+        };
+
+        // Draw non-primary first so primary stroke renders on top if overlapping.
+        for (const id of ids) {
+            if (id === primary) continue;
+            const k = layout.placedKeys.find(kk => kk.id === id);
+            if (k) drawOutline(k, { isPrimary: false });
+        }
+        if (primary) {
+            const pk = layout.placedKeys.find(k => k.id === primary);
+            if (pk) drawOutline(pk, { isPrimary: true });
+        }
+
         svg.appendChild(g);
     }
 
@@ -734,8 +1038,10 @@ class KeyboardLayoutApp {
      *   - "Reset template" reloads the current preset's starter template.
      */
     initTemplateActions() {
-        const addBtn   = document.getElementById('tplAddRowBtn');
-        const resetBtn = document.getElementById('tplResetBtn');
+        const addBtn    = document.getElementById('tplAddRowBtn');
+        const resetBtn  = document.getElementById('tplResetBtn');
+        const exportBtn = document.getElementById('tplExportBtn');
+        const importBtn = document.getElementById('tplImportBtn');
 
         addBtn?.addEventListener('click', () => this.addRowRelative('end'));
 
@@ -745,21 +1051,675 @@ class KeyboardLayoutApp {
             if (!src) return;
             this.settingsStore.set('template', clone(src));
             this.state.selectedKeyId = null;
+            this.state.multiSelectIds.clear();
             this.update();
             this.pushHistory(`template:reset:${id}`);
         });
+
+        exportBtn?.addEventListener('click', () => this.exportTemplate());
+        importBtn?.addEventListener('click', () => { void this.importTemplate(); });
     }
 
-    selectKey(keyId) {
-        if (this.state.selectedKeyId === keyId) return;
-        this.state.selectedKeyId = keyId;
+    /**
+     * Export only the template tree (structure of rows/keys) as a JSON file.
+     * Unlike `Export Settings`, this deliberately omits colors, slider values,
+     * and visibility toggles -- so a template JSON can be shared/re-used on
+     * any Settings baseline without dragging preferences along.
+     */
+    exportTemplate() {
+        const template   = this.settingsStore.get('template');
+        const templateId = this.settingsStore.get('templateId') || null;
+        if (!template) return;
+        const payload = {
+            schema:     'keyboard-template/v1',
+            templateId,
+            template
+        };
+        this.svgExporter.exportJSON(payload, 'keyboard-template.json');
+    }
+
+    /**
+     * Load a template JSON file and swap it into `Settings.template`.
+     * Accepts the v1 payload ({ schema, templateId, template }) or a bare
+     * template object (so users can hand-craft minimal files).
+     */
+    async importTemplate() {
+        const input = document.createElement('input');
+        input.type   = 'file';
+        input.accept = 'application/json,.json';
+        input.addEventListener('change', async () => {
+            const file = input.files?.[0];
+            if (!file) return;
+            try {
+                const parsed = await this.svgExporter.importJSON(file);
+                const tpl = parsed?.template ?? parsed;
+                if (!tpl || !Array.isArray(tpl.rows)) {
+                    throw new Error('missing rows[]');
+                }
+                if (parsed?.templateId) {
+                    this.settingsStore.set('templateId', parsed.templateId);
+                }
+                this.state.selectedKeyId = null;
+                this.state.multiSelectIds.clear();
+                this.commitTemplate(clone(tpl), { historyLabel: 'template:import' });
+            } catch (e) {
+                console.error('[KeyboardLayoutApp] template import failed:', e);
+                alert('Template import failed: ' + e.message);
+            }
+        });
+        input.click();
+    }
+
+    /**
+     * Select a key, optionally in additive mode.
+     *
+     * @param {string}  keyId
+     * @param {Object}  [opts]
+     * @param {boolean} [opts.additive]  Shift/Cmd+click: toggle in/out of the
+     *                                   multi-selection instead of replacing.
+     */
+    selectKey(keyId, { additive = false } = {}) {
+        if (!keyId) return;
+        const sel = this.state.multiSelectIds;
+
+        if (additive) {
+            if (sel.has(keyId)) {
+                sel.delete(keyId);
+                if (this.state.selectedKeyId === keyId) {
+                    // Primary leaves selection: fall back to any remaining id.
+                    const next = sel.values().next().value ?? null;
+                    this.state.selectedKeyId = next;
+                }
+            } else {
+                sel.add(keyId);
+                this.state.selectedKeyId = keyId;
+            }
+        } else {
+            if (this.state.selectedKeyId === keyId && sel.size === 1) return;
+            sel.clear();
+            sel.add(keyId);
+            this.state.selectedKeyId = keyId;
+        }
         this.update();
     }
 
     clearSelection() {
-        if (this.state.selectedKeyId == null) return;
+        if (this.state.selectedKeyId == null && this.state.multiSelectIds.size === 0) return;
         this.state.selectedKeyId = null;
+        this.state.multiSelectIds.clear();
         this.update();
+    }
+
+    /* ============================================================ */
+    /*  Inline label editing (iteration 8a)                         */
+    /* ============================================================ */
+
+    /**
+     * Open an HTML input over a key so the user can rename it in place.
+     *
+     * Edit target is picked by kind:
+     *   - `char` keys with a `chars.base` glyph  -> edits `chars.base`
+     *     (preserves the Latin/Cyrillic rendering rules in renderKeyTypography).
+     *   - everything else                        -> edits `label`
+     *
+     * Positioning uses the live rect's getBoundingClientRect so zoom/pan are
+     * honored automatically. The editor is torn down on Enter/Blur (commit),
+     * Escape (cancel), window resize, or any re-render.
+     */
+    startInlineEdit(keyId) {
+        // If an editor is already open for another key, commit it first.
+        if (this.inlineEditor) this._finishInlineEdit(true);
+
+        const svg = this.dom?.svg;
+        const rect = svg?.querySelector(`rect[data-object-id="${CSS.escape(keyId)}"]`);
+        if (!rect) return;
+
+        const template = this.settingsStore.get('template');
+        const found = findKeyInTemplate(template, keyId);
+        if (!found) return;
+
+        // Edit target.
+        let field, initial;
+        if (found.key.kind === 'char' && found.key.chars && 'base' in found.key.chars) {
+            field   = 'chars.base';
+            initial = found.key.chars.base ?? '';
+        } else {
+            field   = 'label';
+            initial = found.key.label ?? '';
+        }
+
+        const bbox = rect.getBoundingClientRect();
+        const input = document.createElement('input');
+        input.type  = 'text';
+        input.value = initial;
+        input.setAttribute('data-inline-editor', 'true');
+        input.setAttribute('aria-label', `Edit ${field} of key ${keyId}`);
+        Object.assign(input.style, {
+            position:     'fixed',
+            left:         `${bbox.left}px`,
+            top:          `${bbox.top}px`,
+            width:        `${Math.max(40, bbox.width)}px`,
+            height:       `${Math.max(22, bbox.height)}px`,
+            zIndex:       '9999',
+            fontFamily:   'YSText-Regular, "YS Text", Helvetica, Arial, sans-serif',
+            fontSize:     `${Math.max(11, Math.min(18, bbox.height * 0.4))}px`,
+            color:        '#e6e7e8',
+            background:   '#1f1f1f',
+            border:       '1.5px solid #4ea1ff',
+            borderRadius: '4px',
+            padding:      '0 6px',
+            textAlign:    'center',
+            outline:      'none',
+            boxShadow:    '0 2px 8px rgba(0,0,0,0.4)'
+        });
+        document.body.appendChild(input);
+
+        this.inlineEditor = { input, keyId, field, initial };
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter')      { e.preventDefault(); this._finishInlineEdit(true);  }
+            else if (e.key === 'Escape'){ e.preventDefault(); this._finishInlineEdit(false); }
+        });
+        input.addEventListener('blur', () => this._finishInlineEdit(true));
+
+        requestAnimationFrame(() => { input.focus(); input.select(); });
+    }
+
+    /* ============================================================ */
+    /*  Drag-reorder within a row (iteration 8b)                    */
+    /* ============================================================ */
+
+    /**
+     * Wire up pointer-drag on a key rect so the user can reorder it inside
+     * its row.
+     *
+     * Scope for MVP: only plain `row.keys` arrays -- arrow cluster, numpad
+     * grid and `row.additionalKey` have structural semantics (grid coordinates,
+     * dedicated slot) where a simple left-right swap isn't meaningful. For
+     * those keys, pointerdown does nothing and the normal click/dblclick
+     * handlers keep working.
+     *
+     * UX:
+     *   - grab cursor at rest, grabbing during drag;
+     *   - a 4 px threshold separates click from drag so selection still works;
+     *   - a blue drop indicator line shows where the key will land;
+     *   - Escape cancels mid-drag without mutating the template.
+     */
+    _initKeyDrag(rect, key) {
+        rect.addEventListener('pointerdown', (e) => {
+            if (e.button !== 0) return;
+            const template = this.settingsStore.get('template');
+            const found = findKeyInTemplate(template, key.id);
+            if (!found || !found.list) return;
+            // Only drag within plain row.keys (skip arrow cluster / numpad / additional).
+            if (found.list !== found.row.keys) return;
+            if (found.row.keys.length <= 1) return;
+
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const state = {
+                active:   false,
+                keyId:    key.id,
+                row:      found.row,
+                oldIndex: found.index,
+                rect
+            };
+
+            const onMove = (ev) => {
+                if (!state.active) {
+                    if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 4) return;
+                    state.active = true;
+                    rect.style.cursor  = 'grabbing';
+                    rect.style.opacity = '0.55';
+                    // Raise the dragged rect to the top of its row group so the
+                    // opacity overlay looks right above its neighbours.
+                    rect.parentNode?.appendChild(rect);
+                }
+                this._updateDragIndicator(state, ev);
+            };
+
+            const onUp = (ev) => {
+                document.removeEventListener('pointermove', onMove);
+                document.removeEventListener('pointerup',   onUp);
+                document.removeEventListener('keydown',     onKey);
+                if (!state.active) return;
+                ev.stopPropagation();
+                this._suppressNextClick = true;
+                this._commitDrag(state, ev, /*cancel*/ false);
+            };
+
+            const onKey = (ev) => {
+                if (ev.key !== 'Escape' || !state.active) return;
+                document.removeEventListener('pointermove', onMove);
+                document.removeEventListener('pointerup',   onUp);
+                document.removeEventListener('keydown',     onKey);
+                this._commitDrag(state, null, /*cancel*/ true);
+            };
+
+            document.addEventListener('pointermove', onMove);
+            document.addEventListener('pointerup',   onUp);
+            document.addEventListener('keydown',     onKey);
+        });
+    }
+
+    /**
+     * Figure out where in `row.keys` the dragged key should be inserted
+     * given the current pointer position. Returns an integer in [0..N].
+     */
+    _dropIndex(row, ev) {
+        const svg = this.dom?.svg;
+        if (!svg) return 0;
+        let idx = 0;
+        for (const k of row.keys) {
+            const r = svg.querySelector(`rect[data-object-id="${CSS.escape(k.id)}"]`);
+            if (!r) continue;
+            const box = r.getBoundingClientRect();
+            if (ev.clientX > box.left + box.width / 2) idx++;
+            else break;
+        }
+        return idx;
+    }
+
+    _updateDragIndicator(state, ev) {
+        const svg = this.dom?.svg;
+        if (!svg) return;
+
+        const insertIdx = this._dropIndex(state.row, ev);
+        const keys = state.row.keys;
+
+        // Resolve the x in SVG user units. Use the rect attrs (mm) since
+        // ZoomPanManager drives everything via viewBox.
+        let xMm;
+        if (insertIdx === 0) {
+            const first = svg.querySelector(`rect[data-object-id="${CSS.escape(keys[0].id)}"]`);
+            if (!first) return;
+            xMm = +first.getAttribute('x') - 0.3;
+        } else {
+            const prev = svg.querySelector(`rect[data-object-id="${CSS.escape(keys[insertIdx - 1].id)}"]`);
+            if (!prev) return;
+            xMm = +prev.getAttribute('x') + +prev.getAttribute('width') + 0.3;
+        }
+
+        // Use any rect from the row for vertical extents.
+        const ref = svg.querySelector(`rect[data-object-id="${CSS.escape(keys[0].id)}"]`);
+        if (!ref) return;
+        const y1 = +ref.getAttribute('y') - 0.8;
+        const y2 = +ref.getAttribute('y') + +ref.getAttribute('height') + 0.8;
+
+        if (!this._dragIndicator) {
+            const line = document.createElementNS(SVG_NS, 'line');
+            line.setAttribute('stroke',         '#4ea1ff');
+            line.setAttribute('stroke-width',   '0.6');
+            line.setAttribute('stroke-linecap', 'round');
+            line.setAttribute('pointer-events', 'none');
+            line.setAttribute('data-interactive', 'true');
+            svg.appendChild(line);
+            this._dragIndicator = line;
+        }
+        this._dragIndicator.setAttribute('x1', xMm);
+        this._dragIndicator.setAttribute('y1', y1);
+        this._dragIndicator.setAttribute('x2', xMm);
+        this._dragIndicator.setAttribute('y2', y2);
+    }
+
+    _removeDragIndicator() {
+        if (this._dragIndicator?.parentNode) {
+            this._dragIndicator.parentNode.removeChild(this._dragIndicator);
+        }
+        this._dragIndicator = null;
+    }
+
+    /**
+     * Wire pointer-drag on a row's grab handle so the user can reorder whole
+     * rows vertically within `template.rows`.
+     *
+     * Uses the same 4 px threshold and Escape-cancels-drag semantics as key
+     * drag-reorder. The drop indicator is a horizontal blue line between rows.
+     */
+    _initRowDrag(hit, rowId) {
+        hit.addEventListener('pointerdown', (e) => {
+            if (e.button !== 0) return;
+            e.stopPropagation();
+            const template = this.settingsStore.get('template');
+            const rowIdx = (template?.rows || []).findIndex(r => r.id === rowId);
+            if (rowIdx < 0 || template.rows.length <= 1) return;
+
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const state = {
+                active:   false,
+                rowId,
+                oldIndex: rowIdx,
+                handle:   hit
+            };
+
+            const onMove = (ev) => {
+                if (!state.active) {
+                    if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 4) return;
+                    state.active = true;
+                    hit.style.cursor = 'grabbing';
+                }
+                this._updateRowDragIndicator(state, ev);
+            };
+
+            const onUp = (ev) => {
+                document.removeEventListener('pointermove', onMove);
+                document.removeEventListener('pointerup',   onUp);
+                document.removeEventListener('keydown',     onKey);
+                if (!state.active) { hit.style.cursor = 'grab'; return; }
+                ev.stopPropagation();
+                this._commitRowDrag(state, ev, /*cancel*/ false);
+            };
+
+            const onKey = (ev) => {
+                if (ev.key !== 'Escape' || !state.active) return;
+                document.removeEventListener('pointermove', onMove);
+                document.removeEventListener('pointerup',   onUp);
+                document.removeEventListener('keydown',     onKey);
+                this._commitRowDrag(state, null, /*cancel*/ true);
+            };
+
+            document.addEventListener('pointermove', onMove);
+            document.addEventListener('pointerup',   onUp);
+            document.addEventListener('keydown',     onKey);
+        });
+    }
+
+    /**
+     * For the current cursor Y, compute the insertion slot index in
+     * template.rows (0..rows.length). Uses the midline of each row's handle
+     * as the split point.
+     */
+    _rowDropIndex(ev) {
+        const svg = this.dom?.svg;
+        const template = this.settingsStore.get('template');
+        if (!svg || !template) return 0;
+
+        let idx = 0;
+        for (const r of template.rows) {
+            const handle = svg.querySelector(`[data-row-handle="${CSS.escape(r.id)}"]`);
+            if (!handle) continue;
+            const box = handle.getBoundingClientRect();
+            if (ev.clientY > box.top + box.height / 2) idx++;
+            else break;
+        }
+        return idx;
+    }
+
+    _updateRowDragIndicator(state, ev) {
+        const svg = this.dom?.svg;
+        const template = this.settingsStore.get('template');
+        if (!svg || !template) return;
+
+        const insertIdx = this._rowDropIndex(ev);
+        const rows = template.rows;
+
+        // Resolve a y in SVG mm coords. Use the first key's rect of the
+        // neighboring row as anchor.
+        const refRowIdx = insertIdx === 0 ? 0 : insertIdx - 1;
+        const refRow = rows[refRowIdx];
+        if (!refRow?.keys?.length) return;
+        const anchor = svg.querySelector(`rect[data-object-id="${CSS.escape(refRow.keys[0].id)}"]`);
+        if (!anchor) return;
+
+        const yMm = insertIdx === 0
+            ? +anchor.getAttribute('y') - 0.6
+            : +anchor.getAttribute('y') + +anchor.getAttribute('height') + 0.6;
+
+        // Horizontal span: from first key of first row to right edge of
+        // the backdrop (approx via widest row). Simpler: use the selected
+        // row's left..right extent.
+        const firstKeyRect = svg.querySelector(`rect[data-object-id="${CSS.escape(rows[0].keys[0].id)}"]`);
+        if (!firstKeyRect) return;
+        const x1 = +firstKeyRect.getAttribute('x') - 0.5;
+        // Right edge: last key of refRow if it has keys.
+        const last = refRow.keys[refRow.keys.length - 1];
+        const lastRect = svg.querySelector(`rect[data-object-id="${CSS.escape(last.id)}"]`);
+        const x2 = lastRect
+            ? (+lastRect.getAttribute('x') + +lastRect.getAttribute('width') + 0.5)
+            : (x1 + 100);
+
+        if (!this._dragIndicator) {
+            const line = document.createElementNS(SVG_NS, 'line');
+            line.setAttribute('stroke',         '#4ea1ff');
+            line.setAttribute('stroke-width',   '0.6');
+            line.setAttribute('stroke-linecap', 'round');
+            line.setAttribute('pointer-events', 'none');
+            line.setAttribute('data-interactive', 'true');
+            svg.appendChild(line);
+            this._dragIndicator = line;
+        }
+        this._dragIndicator.setAttribute('x1', x1);
+        this._dragIndicator.setAttribute('y1', yMm);
+        this._dragIndicator.setAttribute('x2', x2);
+        this._dragIndicator.setAttribute('y2', yMm);
+    }
+
+    _commitRowDrag(state, ev, cancel) {
+        this._removeDragIndicator();
+        if (state.handle) state.handle.style.cursor = 'grab';
+        if (cancel || !ev) return;
+
+        const template = this.settingsStore.get('template');
+        const rows = template.rows;
+        const oldIndex = rows.findIndex(r => r.id === state.rowId);
+        if (oldIndex < 0) return;
+
+        const newIndex = this._rowDropIndex(ev);
+        const insertAt = newIndex > oldIndex ? newIndex - 1 : newIndex;
+        if (insertAt === oldIndex) return;
+
+        const [moved] = rows.splice(oldIndex, 1);
+        rows.splice(insertAt, 0, moved);
+
+        this.commitTemplate(template, {
+            historyLabel: `row:reorder:${state.rowId}`
+        });
+    }
+
+    /**
+     * Drag-reorder whole rows via the left-edge handle (iteration 8b-rest).
+     *
+     * Restricted to rows that live in `template.rows`. Numpad and arrow
+     * cluster rows are structural and don't appear in template.rows, so their
+     * handles don't exist in the first place.
+     */
+    _initRowDrag(hit, rowId) {
+        hit.addEventListener('pointerdown', (e) => {
+            if (e.button !== 0) return;
+            e.stopPropagation();
+            const template = this.settingsStore.get('template');
+            const rows = template?.rows || [];
+            const oldIndex = rows.findIndex(r => r.id === rowId);
+            if (oldIndex < 0 || rows.length <= 1) return;
+
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const state = {
+                active:   false,
+                rowId,
+                oldIndex,
+                hit
+            };
+
+            const onMove = (ev) => {
+                if (!state.active) {
+                    if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 4) return;
+                    state.active = true;
+                    hit.style.cursor = 'grabbing';
+                }
+                this._updateRowDragIndicator(state, ev);
+            };
+
+            const onUp = (ev) => {
+                document.removeEventListener('pointermove', onMove);
+                document.removeEventListener('pointerup',   onUp);
+                document.removeEventListener('keydown',     onKey);
+                if (!state.active) return;
+                ev.stopPropagation();
+                this._commitRowDrag(state, ev, /*cancel*/ false);
+            };
+
+            const onKey = (ev) => {
+                if (ev.key !== 'Escape' || !state.active) return;
+                document.removeEventListener('pointermove', onMove);
+                document.removeEventListener('pointerup',   onUp);
+                document.removeEventListener('keydown',     onKey);
+                this._commitRowDrag(state, null, /*cancel*/ true);
+            };
+
+            document.addEventListener('pointermove', onMove);
+            document.addEventListener('pointerup',   onUp);
+            document.addEventListener('keydown',     onKey);
+        });
+    }
+
+    /** Find the insertion index (0..rows.length) for the current cursor Y. */
+    _rowDropIndex(ev) {
+        const svg = this.dom?.svg;
+        if (!svg) return 0;
+        const template = this.settingsStore.get('template');
+        const rows = template?.rows || [];
+
+        let idx = 0;
+        for (const r of rows) {
+            // Use the first rect of the row as its vertical reference.
+            const rect = svg.querySelector(`[data-row-id="${CSS.escape(r.id)}"]`);
+            if (!rect) continue;
+            const box = rect.getBoundingClientRect();
+            if (ev.clientY > box.top + box.height / 2) idx++;
+            else break;
+        }
+        return idx;
+    }
+
+    _updateRowDragIndicator(state, ev) {
+        const svg = this.dom?.svg;
+        if (!svg) return;
+        const template = this.settingsStore.get('template');
+        const rows = template?.rows || [];
+        const insertIdx = this._rowDropIndex(ev);
+
+        // Figure out the Y (mm) for the indicator line.
+        let yMm;
+        if (insertIdx === 0) {
+            const firstRow = rows[0];
+            const ref = svg.querySelector(`rect[data-row-id="${CSS.escape(firstRow.id)}"]`);
+            if (!ref) return;
+            yMm = +ref.getAttribute('y') - 0.6;
+        } else {
+            const prevRow = rows[insertIdx - 1];
+            const ref = svg.querySelector(`rect[data-row-id="${CSS.escape(prevRow.id)}"]`);
+            if (!ref) return;
+            yMm = +ref.getAttribute('y') + +ref.getAttribute('height') + 0.6;
+        }
+
+        // Use the whole keyboard width for the indicator.
+        const backdropW = this.lastLayout?.backdropW || 0;
+        const backdropX = this.lastLayout?.backdropX || 0;
+        const pad       = +this.settings.padding    || 0;
+        const x1 = backdropX + pad;
+        const x2 = backdropX + backdropW - pad;
+
+        if (!this._dragIndicator) {
+            const line = document.createElementNS(SVG_NS, 'line');
+            line.setAttribute('stroke',         '#4ea1ff');
+            line.setAttribute('stroke-width',   '0.6');
+            line.setAttribute('stroke-linecap', 'round');
+            line.setAttribute('pointer-events', 'none');
+            line.setAttribute('data-interactive', 'true');
+            svg.appendChild(line);
+            this._dragIndicator = line;
+        }
+        this._dragIndicator.setAttribute('x1', x1);
+        this._dragIndicator.setAttribute('y1', yMm);
+        this._dragIndicator.setAttribute('x2', x2);
+        this._dragIndicator.setAttribute('y2', yMm);
+    }
+
+    _commitRowDrag(state, ev, cancel) {
+        this._removeDragIndicator();
+        if (state.hit) state.hit.style.cursor = 'grab';
+        if (cancel || !ev) return;
+
+        const template = this.settingsStore.get('template');
+        const rows = template.rows;
+        const oldIndex = rows.findIndex(r => r.id === state.rowId);
+        if (oldIndex < 0) return;
+
+        const newIndex = this._rowDropIndex(ev);
+        const insertAt = newIndex > oldIndex ? newIndex - 1 : newIndex;
+        if (insertAt === oldIndex) return;
+
+        const [moved] = rows.splice(oldIndex, 1);
+        rows.splice(insertAt, 0, moved);
+
+        this.commitTemplate(template, { historyLabel: `row:reorder:${state.rowId}` });
+    }
+
+    /**
+     * Finalize (or cancel) an active drag. On commit, splice the dragged key
+     * to the computed insertion index and push one undo entry.
+     */
+    _commitDrag(state, ev, cancel) {
+        this._removeDragIndicator();
+        if (state.rect) {
+            state.rect.style.cursor  = 'grab';
+            state.rect.style.opacity = '';
+        }
+        if (cancel || !ev) return;
+
+        const template = this.settingsStore.get('template');
+        const found = findKeyInTemplate(template, state.keyId);
+        if (!found || found.list !== found.row.keys) return;
+
+        const newIndex = this._dropIndex(state.row, ev);
+        const oldIndex = found.index;
+        // Splice-out + splice-in: if old was before the drop slot, shift by -1.
+        const insertAt = newIndex > oldIndex ? newIndex - 1 : newIndex;
+        if (insertAt === oldIndex) return; // no-op drop
+
+        const [moved] = found.row.keys.splice(oldIndex, 1);
+        found.row.keys.splice(insertAt, 0, moved);
+
+        this.commitTemplate(template, {
+            selectKeyId:  state.keyId,
+            historyLabel: `key:reorder:${state.keyId}`
+        });
+    }
+
+    /**
+     * Finish the current inline edit.
+     *
+     * @param {boolean} commit - true = write value back and push history;
+     *                           false = drop the input without touching the template.
+     */
+    _finishInlineEdit(commit) {
+        const ed = this.inlineEditor;
+        if (!ed) return;
+        // Clear the reference BEFORE calling commitTemplate so the recursive
+        // update() doesn't try to close the editor we're already finishing.
+        this.inlineEditor = null;
+        if (ed.input.parentNode) ed.input.parentNode.removeChild(ed.input);
+        if (!commit) return;
+
+        const next = ed.input.value;
+        if (next === ed.initial) return;
+
+        const template = this.settingsStore.get('template');
+        const found = findKeyInTemplate(template, ed.keyId);
+        if (!found) return;
+
+        if (ed.field === 'label') {
+            found.key.label = next;
+        } else if (ed.field === 'chars.base') {
+            if (!found.key.chars) found.key.chars = {};
+            found.key.chars.base = next;
+        }
+        this.commitTemplate(template, {
+            selectKeyId:  ed.keyId,
+            historyLabel: `key:${ed.field}:${ed.keyId}`
+        });
     }
 
     initInspector() {
@@ -772,6 +1732,7 @@ class KeyboardLayoutApp {
             kind:      $('insKeyKind'),
             w:         $('insKeyW'),
             wReset:    $('insKeyWReset'),
+            wSnap:     $('insKeyWSnap'),
             h:         $('insKeyH'),
             hReset:    $('insKeyHReset'),
             hint:      $('insKeyHint'),
@@ -809,7 +1770,14 @@ class KeyboardLayoutApp {
 
         const patch = (partial) => {
             if (ins.muted) return;
-            this.updateSelectedKey(partial);
+            // Bulk-aware: if 2+ keys are selected, apply to all, otherwise fall
+            // through to the existing single-key update.
+            if (this.state.multiSelectIds.size > 1) {
+                const labelKey = Object.keys(partial)[0] ?? 'patch';
+                this._patchSelected(partial, `key:${labelKey}`);
+            } else {
+                this.updateSelectedKey(partial);
+            }
         };
 
         ins.kind?.addEventListener('change', () => patch({ kind: ins.kind.value }));
@@ -845,8 +1813,66 @@ class KeyboardLayoutApp {
         if (ins.w) bindNumber(ins.w, 'wMm');
         if (ins.h) bindNumber(ins.h, 'hMm');
 
-        ins.wReset?.addEventListener('click', () => patch({ wMm: undefined }));
-        ins.hReset?.addEventListener('click', () => patch({ hMm: undefined }));
+        // Reset buttons: bulk-aware via _patchSelected helper.
+        ins.wReset?.addEventListener('click', () => this._patchSelected({ wMm: undefined }, 'key:wReset'));
+        ins.hReset?.addEventListener('click', () => this._patchSelected({ hMm: undefined }, 'key:hReset'));
+
+        // Snap current width to the nearest 0.25 U (= 0.25 * baseW mm).
+        // Acts on whichever width is currently effective: wMm override if
+        // set, otherwise the ratio-derived width (baseW * w). Result is
+        // stored as wMm so subsequent baseW changes don't override it.
+        ins.wSnap?.addEventListener('click', () => {
+            const ids = this._selectedKeyIds();
+            if (ids.length === 0) return;
+            const baseW  = +this.settingsStore.get('keyWidth') || 16.8;
+            const STEP_U = 0.25;
+            const template = this.settingsStore.get('template');
+            let changed = 0;
+            for (const id of ids) {
+                const found = findKeyInTemplate(template, id);
+                if (!found) continue;
+                const curMm = (isFinite(+found.key.wMm) && +found.key.wMm > 0)
+                    ? +found.key.wMm
+                    : (baseW * (+found.key.w || 1));
+                const u = curMm / baseW;
+                const snappedU = Math.max(STEP_U, Math.round(u / STEP_U) * STEP_U);
+                found.key.wMm = +(snappedU * baseW).toFixed(4);
+                changed++;
+            }
+            if (!changed) return;
+            const label = ids.length > 1 ? `key:snapW:bulk(${changed})` : 'key:snapW';
+            this.commitTemplate(template, { historyLabel: label });
+        });
+    }
+
+    /**
+     * Bulk-apply a patch to every currently selected key in one history entry.
+     * Patch semantics match updateSelectedKey: `undefined` deletes the field.
+     * Falls back to single-key updateSelectedKey when only one is selected
+     * (so existing validation / label-syncing stays in one place).
+     */
+    _patchSelected(partial, actionLabel = 'key:patch') {
+        if (this.inspector?.muted) return;
+        const ids = this._selectedKeyIds();
+        if (ids.length <= 1) {
+            this.updateSelectedKey(partial);
+            return;
+        }
+        const template = this.settingsStore.get('template');
+        let changed = 0;
+        for (const id of ids) {
+            const found = findKeyInTemplate(template, id);
+            if (!found) continue;
+            for (const [field, value] of Object.entries(partial)) {
+                if (value === undefined) delete found.key[field];
+                else                     found.key[field] = value;
+            }
+            changed++;
+        }
+        if (!changed) return;
+        this.commitTemplate(template, {
+            historyLabel: `${actionLabel}:bulk(${changed})`
+        });
     }
 
     /**
@@ -925,6 +1951,23 @@ class KeyboardLayoutApp {
                 ins.rowHint.textContent =
                     `row "${found.row.id}" - ${rowIdx + 1} of ${rows.length}` +
                     (found.list ? `, key ${found.index + 1} of ${listLen}` : ' (additional slot)');
+            }
+
+            // Multi-select presentation:
+            //   - Primary key still fills the inspector (so users can see what
+            //     they're editing when Snap/Reset/Delete run in bulk).
+            //   - Identity fields (id, label, kind) are disabled to prevent
+            //     accidentally clobbering every key with one value.
+            //   - Row-level actions apply to the primary's row only; left
+            //     enabled, but hint shows the bulk count.
+            const multiCount = this.state.multiSelectIds.size;
+            const isMulti = multiCount > 1;
+            if (ins.label) ins.label.disabled = isMulti;
+            if (ins.kind)  ins.kind .disabled = isMulti;
+            if (ins.idField) ins.idField.disabled = true; // always read-only
+            if (isMulti) {
+                ins.hint.textContent =
+                    `${multiCount} keys selected - width/height, Snap, Reset, Duplicate and Delete act on all`;
             }
         } finally {
             ins.muted = false;
@@ -1008,28 +2051,64 @@ class KeyboardLayoutApp {
         this.pushHistory(historyLabel);
     }
 
+    /**
+     * Delete every selected key in a single history entry.
+     *
+     * Iterates by-id each time so the intermediate splices don't corrupt
+     * the subsequent lookups. Keys outside a list (additionalKey slot) are
+     * skipped silently since they're row-positional, not row-members.
+     */
     deleteSelectedKey() {
-        const id = this.state.selectedKeyId;
-        if (!id) return;
+        const ids = this._selectedKeyIds();
+        if (ids.length === 0) return;
         const template = this.settingsStore.get('template');
-        const found = findKeyInTemplate(template, id);
-        if (!found || !found.list) return;
-
-        found.list.splice(found.index, 1);
-        this.commitTemplate(template, { selectKeyId: null, historyLabel: 'key:delete' });
+        let changed = 0;
+        for (const id of ids) {
+            const found = findKeyInTemplate(template, id);
+            if (!found || !found.list) continue;
+            found.list.splice(found.index, 1);
+            changed++;
+        }
+        if (!changed) return;
+        this.state.multiSelectIds.clear();
+        const label = ids.length > 1 ? `key:delete:bulk(${changed})` : 'key:delete';
+        this.commitTemplate(template, { selectKeyId: null, historyLabel: label });
     }
 
     duplicateSelectedKey() {
-        const id = this.state.selectedKeyId;
-        if (!id) return;
+        const ids = this._selectedKeyIds();
+        if (ids.length === 0) return;
         const template = this.settingsStore.get('template');
-        const found = findKeyInTemplate(template, id);
-        if (!found || !found.list) return;
+        const newIds = [];
+        // Snapshot existing ids ONCE so all duplicates get unique ids vs each
+        // other, not just vs the pre-duplicate state.
+        const existingIds = this.collectKeyIds(template);
+        for (const id of ids) {
+            const found = findKeyInTemplate(template, id);
+            if (!found || !found.list) continue;
+            const copy = clone(found.key);
+            copy.id = this.uniqueKeyId(existingIds, found.key.id);
+            existingIds.push(copy.id);
+            found.list.splice(found.index + 1, 0, copy);
+            newIds.push(copy.id);
+        }
+        if (newIds.length === 0) return;
+        // Select the duplicates as the new multi-selection.
+        this.state.multiSelectIds = new Set(newIds);
+        const primary = newIds[newIds.length - 1];
+        const label = ids.length > 1 ? `key:duplicate:bulk(${newIds.length})` : 'key:duplicate';
+        this.commitTemplate(template, { selectKeyId: primary, historyLabel: label });
+    }
 
-        const copy = clone(found.key);
-        copy.id = this.uniqueKeyId(this.collectKeyIds(template), found.key.id);
-        found.list.splice(found.index + 1, 0, copy);
-        this.commitTemplate(template, { selectKeyId: copy.id, historyLabel: 'key:duplicate' });
+    /**
+     * Return the list of keys to act on.
+     * Uses `multiSelectIds` if non-empty, otherwise falls back to the
+     * legacy single `selectedKeyId`.
+     */
+    _selectedKeyIds() {
+        const set = this.state.multiSelectIds;
+        if (set && set.size > 0) return Array.from(set);
+        return this.state.selectedKeyId ? [this.state.selectedKeyId] : [];
     }
 
     /** Move the selected key by `dir` (+1 right, -1 left) within its array. */
@@ -1168,13 +2247,40 @@ class KeyboardLayoutApp {
     /*  Export                                                      */
     /* ============================================================ */
 
-    async exportSVG() {
+    /**
+     * Produce an export-ready clone of the live SVG.
+     *
+     * - Strips any preview-only `display:none` (lets safeguard layer ship when
+     *   `exportSafeguard` is on but `showSafeguard` is off).
+     * - Leaves the original DOM untouched; caller gets a detached clone.
+     *
+     * The SVGExporter clones internally too, so the double-clone is cheap and
+     * isolates export-side mutations from the live preview.
+     */
+    _buildExportSvg() {
         const svg = this.dom?.svg;
-        if (!svg) return;
-        const outlines = document.getElementById('convertToOutlinesCheckbox')?.checked ?? false;
-        await this.svgExporter.exportToFile(svg, 'keyboard-layout.svg', {
-            removeInteractive: true,
-            convertTextToOutlines: outlines
+        if (!svg) return null;
+        const clone = svg.cloneNode(true);
+        clone.querySelectorAll('[data-preview-hidden="true"]').forEach(el => {
+            el.style.display = '';
+            el.removeAttribute('data-preview-hidden');
+        });
+        // Mirror export dims from the live svg so the exporter can read them.
+        const w = svg.getAttribute('data-export-width');
+        const h = svg.getAttribute('data-export-height');
+        const u = svg.getAttribute('data-export-unit');
+        if (w) clone.setAttribute('data-export-width',  w);
+        if (h) clone.setAttribute('data-export-height', h);
+        if (u) clone.setAttribute('data-export-unit',   u);
+        return clone;
+    }
+
+    async exportSVG() {
+        const clone = this._buildExportSvg();
+        if (!clone) return;
+        await this.svgExporter.exportToFile(clone, 'keyboard-layout.svg', {
+            removeInteractive:     true,
+            convertTextToOutlines: !!this.settings.outlineFonts
         });
     }
 
@@ -1210,7 +2316,10 @@ class KeyboardLayoutApp {
         this.historyManager?.setRestoring(true);
         try {
             this.settingsStore.fromJSON(snapshot);
-            this.state.selectedKeyId = null;   // UI selection isn't part of the snapshot
+            // UI selection isn't part of the snapshot — clear both primary
+            // and multi-select so stale ids don't linger across undo/redo.
+            this.state.selectedKeyId = null;
+            this.state.multiSelectIds.clear();
             this.syncSliders();
             this.syncColorPickers();
             this.update();
@@ -1251,7 +2360,8 @@ class KeyboardLayoutApp {
             fontCharSlider:     'fontChar',
             fontShiftSlider:    'fontShift',
             fontLabelSlider:    'fontLabel',
-            padKeySlider:       'padKeyMm'
+            padKeySlider:       'padKeyMm',
+            iconSizeSlider:     'iconSize'
         };
         for (const [id, key] of Object.entries(map)) {
             const val = this.settingsStore.get(key);
