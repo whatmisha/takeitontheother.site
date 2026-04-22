@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyboard Layout Generator</title>
+    <link rel="stylesheet" href="yf-ui-framework/css/yf-styles.css">
+    <style>
+        /* Font used on the generated keyboard graphic (NOT the interface).
+           Keeping it scoped to the SVG canvas leaves the framework UI fonts intact. */
+        @font-face {
+            font-family: 'YSText-Regular';
+            src: url('fonts/YSText-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        /* Tool-specific additions */
+        svg#mainSvg rect[data-object-type="key"] { cursor: pointer; }
+        svg#mainSvg rect[data-object-type="key"]:hover { filter: brightness(1.15); }
+
+        .inspector-reset-btn {
+            margin-left: 8px;
+            padding: 4px 8px;
+            font-size: 11px;
+            background: transparent;
+            color: var(--text-secondary, #888);
+            border: 1px solid var(--border-color, #333);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .inspector-reset-btn:hover {
+            background: var(--border-color, #333);
+            color: var(--text-primary, #ddd);
+        }
+        .inspector-reset-btn:disabled {
+            opacity: 0.35;
+            cursor: default;
+        }
+        .inspector-hint {
+            font-size: 11px;
+            color: var(--text-secondary, #888);
+            margin: 8px 0 0 0;
+            line-height: 1.4;
+        }
+        #objectPropertiesPanel .control-group {
+            display: flex;
+            align-items: flex-end;
+            gap: 0;
+        }
+        #objectPropertiesPanel .control-group > label {
+            flex: 1;
+        }
+        #objectPropertiesPanel select.value-display {
+            width: 100%;
+            padding: 4px 6px;
+            background: transparent;
+            color: var(--text-primary, #ddd);
+            border: 1px solid var(--border-color, #333);
+            border-radius: 4px;
+        }
+        .inspector-btn-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+        .inspector-action-btn {
+            flex: 1 1 auto;
+            min-width: 40px;
+            padding: 6px 10px;
+            font-size: 12px;
+            background: transparent;
+            color: var(--text-primary, #ddd);
+            border: 1px solid var(--border-color, #333);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .inspector-action-btn:hover:not(:disabled) {
+            background: var(--border-color, #333);
+        }
+        .inspector-action-btn:disabled {
+            opacity: 0.35;
+            cursor: default;
+        }
+        .inspector-action-btn.inspector-action-danger:hover:not(:disabled) {
+            background: #5a2222;
+            border-color: #803030;
+            color: #ffb3b3;
+        }
+        .inspector-actions h3 {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary, #888);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin: 0 0 4px 0;
+        }
+        /* Typography on the keyboard graphic. Font-family is duplicated as an
+           SVG attribute on each <text> element so downstream viewers / Illustrator
+           pick up the font even without this stylesheet. */
+        svg#mainSvg text.key-text {
+            pointer-events: none;
+            user-select: none;
+        }
+        /* Inspector sits on the left so it doesn't hide the Geometry panel. */
+        #objectPropertiesPanel {
+            left: var(--spacing-3xl, 24px);
+            right: auto;
+            max-width: 280px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Top bar -->
+        <div class="top-links">
+            <a href="/js/YF/" class="yf-tools-link">&larr; YF Tools</a>
+
+            <div class="preset-dropdown" id="presetDropdown">
+                <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="preset-dropdown-text">Select Preset</span>
+                    <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox" aria-label="Presets"></ul>
+            </div>
+
+            <button class="zoom-indicator" id="zoomIndicator" type="button" aria-label="Reset zoom">100%</button>
+        </div>
+
+        <!-- Main content -->
+        <div class="main-content">
+
+            <!-- Canvas -->
+            <div class="canvas-container" id="canvasContainer">
+                <svg id="mainSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+
+            <!-- Right panel - Geometry -->
+            <aside class="controls-panel" id="mainPanel" aria-label="Geometry">
+                <div class="panel-header" id="mainPanelHeader">
+                    <span>Geometry</span>
+                    <span class="collapse-icon" role="button" aria-label="Collapse" tabindex="0">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+
+                    <!-- Template structure -->
+                    <section class="control-section">
+                        <h3>Template</h3>
+                        <div class="inspector-btn-row">
+                            <button type="button" class="inspector-action-btn" id="tplAddRowBtn" title="Append a new row at the bottom of the layout">+ Add row</button>
+                            <button type="button" class="inspector-action-btn inspector-action-danger" id="tplResetBtn" title="Reset layout to the current preset template">Reset template</button>
+                        </div>
+                        <p class="inspector-hint" id="tplHint">Click a key on canvas to edit it. Cmd+Z to undo.</p>
+                    </section>
+
+                    <!-- Keys -->
+                    <section class="control-section">
+                        <h3>Keys</h3>
+                        <div class="control-group">
+                            <label for="keyWidthSlider">
+                                <span>Base width <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="keyWidthValue" value="16.81">
+                            </label>
+                            <input type="range" id="keyWidthSlider" min="5" max="40" step="0.01" value="16.8063">
+                        </div>
+                        <div class="control-group">
+                            <label for="keyHeightSlider">
+                                <span>Base height <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="keyHeightValue" value="16.68">
+                            </label>
+                            <input type="range" id="keyHeightSlider" min="5" max="40" step="0.01" value="16.6764">
+                        </div>
+                        <div class="control-group">
+                            <label for="keyGapXSlider">
+                                <span>Gap X <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="keyGapXValue" value="1.58">
+                            </label>
+                            <input type="range" id="keyGapXSlider" min="0" max="8" step="0.01" value="1.5769">
+                        </div>
+                        <div class="control-group">
+                            <label for="keyGapYSlider">
+                                <span>Gap Y <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="keyGapYValue" value="2.12">
+                            </label>
+                            <input type="range" id="keyGapYSlider" min="0" max="8" step="0.01" value="2.1220">
+                        </div>
+                        <div class="control-group">
+                            <label for="keyRadiusSlider">
+                                <span>Corner radius <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="keyRadiusValue" value="2.16">
+                            </label>
+                            <input type="range" id="keyRadiusSlider" min="0" max="10" step="0.01" value="2.1554">
+                        </div>
+                        <div class="control-group">
+                            <label for="paddingSlider">
+                                <span>Backdrop padding <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="paddingValue" value="2.65">
+                            </label>
+                            <input type="range" id="paddingSlider" min="0" max="30" step="0.05" value="2.6480">
+                        </div>
+                    </section>
+
+                    <!-- Fn row -->
+                    <section class="control-section">
+                        <h3>Function row</h3>
+                        <div class="control-group">
+                            <label for="fnRowHSlider">
+                                <span>Height <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="fnRowHValue" value="10.92">
+                            </label>
+                            <input type="range" id="fnRowHSlider" min="3" max="25" step="0.01" value="10.9166">
+                        </div>
+                        <div class="control-group">
+                            <label for="fnGapSlider">
+                                <span>Gap below <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="fnGapValue" value="2.12">
+                            </label>
+                            <input type="range" id="fnGapSlider" min="0" max="15" step="0.01" value="2.1220">
+                        </div>
+                    </section>
+
+                    <!-- Typography -->
+                    <section class="control-section">
+                        <h3>Typography</h3>
+                        <div class="control-group">
+                            <label for="fontCharSlider">
+                                <span>Char <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="fontCharValue" value="5.29">
+                            </label>
+                            <input type="range" id="fontCharSlider" min="1" max="12" step="0.05" value="5.2917">
+                        </div>
+                        <div class="control-group">
+                            <label for="fontShiftSlider">
+                                <span>Shift char <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="fontShiftValue" value="4.23">
+                            </label>
+                            <input type="range" id="fontShiftSlider" min="1" max="10" step="0.05" value="4.2333">
+                        </div>
+                        <div class="control-group">
+                            <label for="fontLabelSlider">
+                                <span>Label <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="fontLabelValue" value="3.18">
+                            </label>
+                            <input type="range" id="fontLabelSlider" min="1" max="8" step="0.05" value="3.1750">
+                        </div>
+                        <div class="control-group">
+                            <label for="padKeySlider">
+                                <span>Inner pad <span class="unit">mm</span></span>
+                                <input type="text" class="value-display" id="padKeyValue" value="2.50">
+                            </label>
+                            <input type="range" id="padKeySlider" min="0" max="8" step="0.05" value="2.50">
+                        </div>
+                    </section>
+
+                </div>
+            </aside>
+
+            <!-- Left panel - Layers -->
+            <aside class="controls-panel controls-panel-left" id="secondaryPanel" aria-label="Layers">
+                <div class="panel-header" id="secondaryPanelHeader">
+                    <span>Layers</span>
+                    <span class="collapse-icon" role="button" aria-label="Collapse" tabindex="0">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+
+                    <section class="control-section">
+                        <h3>Visibility</h3>
+                        <fieldset>
+                            <legend class="sr-only">Toggle layers</legend>
+                            <div class="control-group show-toggle-chip-group">
+                                <div class="toggle-chip-group">
+
+                                    <label class="toggle-chip">
+                                        <input type="checkbox" id="showBackdrop" data-setting="showBackdrop" checked>
+                                        <span>
+                                            <span class="toggle-chip-icon-wrapper">
+                                                <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                                                <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                            </span>
+                                            Backdrop
+                                        </span>
+                                    </label>
+
+                                    <label class="toggle-chip">
+                                        <input type="checkbox" id="showKeys" data-setting="showKeys" checked>
+                                        <span>
+                                            <span class="toggle-chip-icon-wrapper">
+                                                <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                                                <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                            </span>
+                                            Keys
+                                        </span>
+                                    </label>
+
+                                    <label class="toggle-chip">
+                                        <input type="checkbox" id="showSafeguard" data-setting="showSafeguard">
+                                        <span>
+                                            <span class="toggle-chip-icon-wrapper">
+                                                <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                                                <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                            </span>
+                                            Safeguard
+                                        </span>
+                                    </label>
+
+                                </div>
+                            </div>
+                        </fieldset>
+                    </section>
+
+                    <!-- Key fill color -->
+                    <section class="control-section">
+                        <h3>Key color</h3>
+                        <div class="control-group">
+                            <div class="color-input-group">
+                                <button type="button" class="color-preview" id="keyColorPreview" aria-label="Toggle key color picker"></button>
+                                <input type="text" class="hex-color-input" id="keyHexColorInput" value="#303030" maxlength="7" aria-label="Key hex color">
+                            </div>
+                        </div>
+                        <div class="hsb-picker" id="keyHsbPicker" style="display: none;">
+                            <div class="hsb-controls">
+                                <div class="hsb-control-group">
+                                    <label for="keyHueSlider"><span>Hue</span><input type="text" class="value-display hsb-value" id="keyHueValue" value="0"></label>
+                                    <input type="range" id="keyHueSlider" min="0" max="360" step="1" value="0">
+                                </div>
+                                <div class="hsb-control-group">
+                                    <label for="keySaturationSlider"><span>Saturation</span><input type="text" class="value-display hsb-value" id="keySaturationValue" value="0"></label>
+                                    <input type="range" id="keySaturationSlider" min="0" max="100" step="1" value="0">
+                                </div>
+                                <div class="hsb-control-group">
+                                    <label for="keyBrightnessSlider"><span>Brightness</span><input type="text" class="value-display hsb-value" id="keyBrightnessValue" value="19"></label>
+                                    <input type="range" id="keyBrightnessSlider" min="0" max="100" step="1" value="19">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Backdrop color (same element IDs as framework ColorPicker) -->
+                    <section class="control-section">
+                        <h3>Backdrop color</h3>
+                        <div class="control-group">
+                            <div class="color-input-group">
+                                <button type="button" class="color-preview" id="colorPreview" aria-label="Toggle backdrop color picker"></button>
+                                <input type="text" class="hex-color-input" id="hexColorInput" value="#131313" maxlength="7" aria-label="Backdrop hex color">
+                            </div>
+                        </div>
+                        <div class="hsb-picker" id="hsbPicker" style="display: none;">
+                            <div class="hsb-controls">
+                                <div class="hsb-control-group">
+                                    <label for="hueSlider"><span>Hue</span><input type="text" class="value-display hsb-value" id="hueValue" value="0"></label>
+                                    <input type="range" id="hueSlider" min="0" max="360" step="1" value="0">
+                                </div>
+                                <div class="hsb-control-group">
+                                    <label for="saturationSlider"><span>Saturation</span><input type="text" class="value-display hsb-value" id="saturationValue" value="0"></label>
+                                    <input type="range" id="saturationSlider" min="0" max="100" step="1" value="0">
+                                </div>
+                                <div class="hsb-control-group">
+                                    <label for="brightnessSlider"><span>Brightness</span><input type="text" class="value-display hsb-value" id="brightnessValue" value="7"></label>
+                                    <input type="range" id="brightnessSlider" min="0" max="100" step="1" value="7">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+            </aside>
+
+        </div>
+    </div>
+
+    <!-- Bottom buttons -->
+    <nav class="bottom-buttons" aria-label="Export actions">
+        <button class="btn-fixed btn-export-settings" id="exportSettingsBtn" type="button">Export Settings</button>
+        <button class="btn-fixed btn-import-settings" id="importSettingsBtn" type="button">Import Settings</button>
+        <div class="export-group-right">
+            <button class="btn-fixed btn-export" id="exportSvgBtn" type="button">Export SVG &nbsp;Cmd+E</button>
+            <label class="toggle-label">
+                <div class="toggle-switch">
+                    <input type="checkbox" id="convertToOutlinesCheckbox" aria-label="Outline fonts">
+                    <span class="toggle-slider"></span>
+                </div>
+                <span class="toggle-label-text">Outline fonts</span>
+            </label>
+        </div>
+    </nav>
+
+    <!-- Key inspector -- hidden via CSS until .active class is toggled on -->
+    <aside class="controls-panel paragraph-settings-panel" id="objectPropertiesPanel" role="complementary">
+        <div class="panel-header" id="objectPropertiesPanelHeader">
+            <span id="objectPropertiesPanelTitle">Selected key</span>
+            <div class="panel-header-actions">
+                <button type="button" class="panel-action-btn" id="objectPropertiesCloseBtn" aria-label="Close">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="panel-content">
+            <section class="control-section">
+                <div class="control-group">
+                    <label for="insKeyId"><span>ID</span>
+                        <input type="text" class="value-display" id="insKeyId" readonly>
+                    </label>
+                </div>
+                <div class="control-group">
+                    <label for="insKeyLabel"><span>Label</span>
+                        <input type="text" class="value-display" id="insKeyLabel" placeholder="(empty)">
+                    </label>
+                </div>
+                <div class="control-group">
+                    <label for="insKeyKind"><span>Kind</span>
+                        <select class="value-display" id="insKeyKind">
+                            <option value="char">char</option>
+                            <option value="special">special</option>
+                            <option value="function">function</option>
+                            <option value="arrow-half">arrow-half</option>
+                            <option value="spacer">spacer</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="control-group">
+                    <label for="insKeyW"><span>Width <span class="unit">mm</span></span>
+                        <input type="number" class="value-display" id="insKeyW" step="0.01" min="0.5">
+                    </label>
+                    <button type="button" class="inspector-reset-btn" id="insKeyWReset" title="Reset to base width">Reset</button>
+                </div>
+                <div class="control-group">
+                    <label for="insKeyH"><span>Height <span class="unit">mm</span></span>
+                        <input type="number" class="value-display" id="insKeyH" step="0.01" min="0.5">
+                    </label>
+                    <button type="button" class="inspector-reset-btn" id="insKeyHReset" title="Reset to row height">Reset</button>
+                </div>
+                <p class="inspector-hint" id="insKeyHint"></p>
+            </section>
+
+            <section class="control-section inspector-actions">
+                <h3>Key actions</h3>
+                <div class="inspector-btn-row">
+                    <button type="button" class="inspector-action-btn" id="insKeyMoveLeft"  title="Move key left">&larr;</button>
+                    <button type="button" class="inspector-action-btn" id="insKeyMoveRight" title="Move key right">&rarr;</button>
+                    <button type="button" class="inspector-action-btn" id="insKeyDuplicate" title="Duplicate key">Duplicate</button>
+                    <button type="button" class="inspector-action-btn inspector-action-danger" id="insKeyDelete" title="Delete key">Delete</button>
+                </div>
+            </section>
+
+            <section class="control-section inspector-actions">
+                <h3>Row actions</h3>
+                <div class="inspector-btn-row">
+                    <button type="button" class="inspector-action-btn" id="insRowMoveUp"   title="Move row up">&uarr;</button>
+                    <button type="button" class="inspector-action-btn" id="insRowMoveDown" title="Move row down">&darr;</button>
+                </div>
+                <div class="inspector-btn-row">
+                    <button type="button" class="inspector-action-btn" id="insRowAddAbove" title="Add row above">+ row above</button>
+                    <button type="button" class="inspector-action-btn" id="insRowAddBelow" title="Add row below">+ row below</button>
+                </div>
+                <div class="inspector-btn-row">
+                    <button type="button" class="inspector-action-btn inspector-action-danger" id="insRowDelete" title="Delete row">Delete row</button>
+                </div>
+                <p class="inspector-hint" id="insRowHint"></p>
+            </section>
+        </div>
+    </aside>
+
+    <!-- Help modal -->
+    <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose" type="button" aria-label="Close">&times;</button>
+            <h2 id="modalTitle">Keyboard Layout Generator</h2>
+            <div class="modal-body">
+                <p>Generate vector keyboard layouts for different devices.</p>
+                <h3>Keyboard shortcuts</h3>
+                <ul>
+                    <li><strong>Cmd/Ctrl + Scroll</strong> &mdash; zoom</li>
+                    <li><strong>Space + Drag</strong> &mdash; pan</li>
+                    <li><strong>Cmd/Ctrl + 0</strong> &mdash; fit to screen</li>
+                    <li><strong>Cmd/Ctrl + E</strong> &mdash; export SVG</li>
+                    <li><strong>Cmd/Ctrl + Z / Shift+Z</strong> &mdash; undo / redo</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { KeyboardLayoutApp } from './src/KeyboardLayoutApp.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            const app = new KeyboardLayoutApp();
+            app.init();
+            window.__app = app;
+        });
+    </script>
+</body>
+</html>

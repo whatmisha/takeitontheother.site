@@ -1,0 +1,6 @@
+{
+    "presets": [
+        { "name": "Laptop 14\"", "file": "laptop-14.json" },
+        { "name": "Laptop 16\"", "file": "laptop-16.json" }
+    ]
+}

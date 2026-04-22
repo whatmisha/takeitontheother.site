@@ -1,0 +1,50 @@
+---
+description: Editing Cyrillic (or other non-ASCII) Markdown/text files safely in this workspace
+globs: ["**/*.md", "**/*.txt"]
+alwaysApply: false
+---
+
+# Russian / Cyrillic Markdown files
+
+## Context
+
+This workspace lives under `~/Library/Mobile Documents/com~apple~CloudDocs/…`
+(an iCloud Drive path). On this machine, edits issued via the `StrReplace`
+and `Write` tools have repeatedly corrupted non-ASCII content in Markdown
+files: Cyrillic letters silently became literal `?` characters because the
+file got round-tripped through a single-byte codepage (Windows-1252 / Latin-1).
+
+## Rule
+
+When a Markdown (`*.md`) or plain-text file **contains any non-ASCII
+characters** (Cyrillic, emdashes, guillemets, etc.):
+
+1. **Do NOT edit it with `StrReplace`.**
+2. **Do NOT rewrite it with the `Write` tool either** (it goes through the
+   same broken transport for this workspace).
+3. Rewrite the whole file through `Shell` + `python3` heredoc, explicitly
+   opening the file with `encoding="utf-8"`. Example:
+
+   ```bash
+   python3 <<'PY'
+   content = r"""
+   # Заголовок
+   Текст с кириллицей.
+   """
+   with open("PLAN.md", "w", encoding="utf-8") as f:
+       f.write(content)
+   PY
+   ```
+
+4. After writing, verify the result with:
+
+   ```bash
+   python3 -c "b=open('PLAN.md','rb').read(); b.decode('utf-8'); print('OK', len(b))"
+   ```
+
+   If the decode fails or the file contains an unexpected number of `?`
+   characters, abort and investigate — do not leave corrupted content on
+   disk.
+
+5. For pure-ASCII Markdown files, the normal editing tools are fine; this
+   rule only fires when Cyrillic / non-ASCII is in play.
