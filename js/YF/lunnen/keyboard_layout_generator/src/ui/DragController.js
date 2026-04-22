@@ -17,7 +17,7 @@
  *   host.getSvg()                       ? <svg> root (for drop-index queries)
  *   host.getTemplate()                  ? current template (mutable reference)
  *   host.getLayout()                    ? last computed layout (for backdrop dims)
- *   host.getPadding()                   ? backdrop padding (mm)
+ *   host.getArtboardInsetX()            ? horizontal artboard margin (= gapX, mm)
  *   host.findKey(template, id)          ? { key, row, list, index }
  *   host.commitTemplate(tpl, opts)      ? persist edits + push history
  *   host.onDragStart?(kind)             ? optional hook
@@ -370,9 +370,9 @@ export class DragController {
         }
 
         const layout = this.host.getLayout();
-        const pad    = +this.host.getPadding() || 0;
-        const x1 = (layout?.backdropX ?? 0) + pad;
-        const x2 = (layout?.backdropX ?? 0) + (layout?.backdropW ?? 0) - pad;
+        const insetX = +this.host.getArtboardInsetX?.() || 0;
+        const x1 = (layout?.backdropX ?? 0) + insetX;
+        const x2 = (layout?.backdropX ?? 0) + (layout?.backdropW ?? 0) - insetX;
 
         this._drawIndicator({ x1, y1: yMm, x2, y2: yMm });
     }

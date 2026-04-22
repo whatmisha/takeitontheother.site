@@ -29,7 +29,7 @@
  *   - Arrow cluster in bottom row; absorbs slack into ctrl_r unless ctrl_r has
  *     an explicit wMm override.
  *   - All sizes in mm (1 SVG unit = 1 mm); SVG export preserves the mm unit.
- *   - Two color pickers, layered rendering, presets, SVG/JSON export.
+ *   - Key color picker, layered rendering, presets, SVG/JSON export.
  */
 
 import { Settings }         from '../yf-ui-framework/src/core/Settings.js';
@@ -37,7 +37,6 @@ import { DOMCache }         from '../yf-ui-framework/src/core/DOMCache.js';
 import { ZoomPanManager }   from '../yf-ui-framework/src/ui/ZoomPanManager.js';
 import { SliderController } from '../yf-ui-framework/src/ui/SliderController.js';
 import { PanelManager }     from '../yf-ui-framework/src/ui/PanelManager.js';
-import { ColorPicker }      from '../yf-ui-framework/src/ui/ColorPicker.js';
 import { HistoryManager }   from '../yf-ui-framework/src/history/HistoryManager.js';
 import { PresetManager }    from '../yf-ui-framework/src/preset/PresetManager.js';
 import { SVGExporter }      from '../yf-ui-framework/src/export/SVGExporter.js';
@@ -67,7 +66,7 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 const clone = (o) => JSON.parse(JSON.stringify(o));
 
 const DEFAULTS = {
-    /* SVG size from computeLayout: backdrop = keyboard + Geometry padding. */
+    /* SVG size from computeLayout: artboard = keyboard block + gapX/gapY margins. */
 
     /* Device template id (informational; actual structure lives in `template`) */
     templateId: DEFAULT_TEMPLATE_ID,
@@ -81,7 +80,6 @@ const DEFAULTS = {
     gapX:       1.5769,   //  4.4700318 pt
     gapY:       2.1220,   //  6.0151934 pt
     radius:     2.1554,   //  6.1098343 pt
-    padding:    2.6480,   //  7.5061725 pt
 
     /* Fn-row specific */
     fnRowH: 10.9166,      // 30.9448286 pt
@@ -168,7 +166,7 @@ class KeyboardLayoutApp {
             getSvg:        () => this.dom?.svg,
             getTemplate:   () => this.settingsStore.get('template'),
             getLayout:     () => this.lastLayout,
-            getPadding:    () => this.settings.padding,
+            getArtboardInsetX: () => this.settings.gapX,
             findKey:       (t, id) => findKeyInTemplate(t, id),
             commitTemplate:(t, opts) => this.commitTemplate(t, opts)
         });
@@ -176,7 +174,6 @@ class KeyboardLayoutApp {
         this.zoomPan        = null;
         this.sliders        = null;
         this.panels         = null;
-        this.backdropPicker = null;
         this.historyManager = null;
         this.presetManager  = null;
         this.svgExporter    = null;
@@ -198,6 +195,8 @@ class KeyboardLayoutApp {
             d.exportGuides = d.exportSafeguard;
         }
         delete d.exportSafeguard;
+        /* Obsolete: artboard margin now follows gapX / gapY in layoutEngine. */
+        delete d.padding;
     }
 
     /* ============================================================ */
@@ -271,7 +270,6 @@ class KeyboardLayoutApp {
         reg('keyGapXSlider',   'keyGapXValue',   'gapX',      { min: 0,  max: 8,  decimals: 2, baseStep: 0.01, shiftStep: 0.5 });
         reg('keyGapYSlider',   'keyGapYValue',   'gapY',      { min: 0,  max: 8,  decimals: 2, baseStep: 0.01, shiftStep: 0.5 });
         reg('keyRadiusSlider', 'keyRadiusValue', 'radius',    { min: 0,  max: 10, decimals: 2, baseStep: 0.01, shiftStep: 0.5 });
-        reg('paddingSlider',   'paddingValue',   'padding',   { min: 0,  max: 30, decimals: 2, baseStep: 0.05, shiftStep: 1 });
         reg('fnRowHSlider',    'fnRowHValue',    'fnRowH',    { min: 3,  max: 25, decimals: 2, baseStep: 0.01, shiftStep: 0.5 });
         reg('fnGapSlider',     'fnGapValue',     'fnGap',     { min: 0,  max: 15, decimals: 2, baseStep: 0.01, shiftStep: 0.5 });
 
@@ -298,18 +296,6 @@ class KeyboardLayoutApp {
     /* ------------------------------------------------------------ */
 
     initColorPickers() {
-        // Backdrop (standard framework ColorPicker -- uses fixed element IDs)
-        this.backdropPicker = new ColorPicker(this.settingsStore, {
-            settingKey:   'backdropFill',
-            defaultColor: DEFAULTS.backdropFill,
-            onChange:     () => {
-                this.update();
-                this.schedulePushHistory('color:backdrop');
-            }
-        });
-        this.backdropPicker.init();
-
-        // Key fill (manual wire-up since ColorPicker has only one fixed ID set)
         this.initKeyColorPicker();
     }
 
@@ -632,7 +618,7 @@ class KeyboardLayoutApp {
             const w = layout.backdropW;
             const h = layout.backdropH;
 
-            // viewBox matches backdrop (keys + backdrop padding).
+            // viewBox matches artboard (keys + gapX/gapY margins).
             svg.setAttribute('width',  `${w}mm`);
             svg.setAttribute('height', `${h}mm`);
             svg.setAttribute('data-export-width',  w);
@@ -736,9 +722,8 @@ class KeyboardLayoutApp {
             this.renderKeyTypography(g, key);
         }
 
-        // Row drag handles (iteration 8b-rest). Anchored to the left edge of
-        // each template row inside the backdrop padding. Marked interactive so
-        // SVGExporter strips them from the file.
+        // Row drag handles (iteration 8b-rest). Anchored left of each template row
+        // in the gap margin. Marked interactive so SVGExporter strips them.
         this._renderRowHandles(parent, firstKeyPerRow, layout);
 
         svg.appendChild(parent);
@@ -747,7 +732,7 @@ class KeyboardLayoutApp {
     /**
      * Render a small grab handle at the left of every template row so the
      * user can drag-reorder whole rows. The handle is a 3x3 dots grid that
-     * sits in the backdrop padding area; it's non-exported (`data-interactive`)
+     * sits in the left margin (gapX); it's non-exported (`data-interactive`)
      * and ignores guides / keys layers.
      */
     _renderRowHandles(parent, firstKeyPerRow, layout) {
@@ -757,11 +742,10 @@ class KeyboardLayoutApp {
         g.setAttribute('id', 'RowHandles');
         g.setAttribute('data-interactive', 'true');
 
-        // Handle lives inside the backdrop padding. Scale offset with the
-        // current padding so it doesn't stick out at low values and doesn't
-        // float too far at high ones. Clamped to [0.8..2.4] mm from the key edge.
-        const pad     = +this.settings.padding || 2.65;
-        const offsetX = -Math.max(0.8, Math.min(2.4, pad * 0.7));
+        // Handle sits left of keys in the gap margin. Offset scales with gapX,
+        // clamped to [0.8..2.4] mm from the key edge.
+        const gx      = +this.settings.gapX || 1.6;
+        const offsetX = -Math.max(0.8, Math.min(2.4, gx * 0.7));
         const dotR    = 0.3;                   // mm
         const spacing = 0.9;                   // mm between dot centers
 
@@ -1726,15 +1710,11 @@ class KeyboardLayoutApp {
     }
 
     /**
-     * Reflect current backdropFill / keyFill back into their picker UIs.
-     * Called after a preset load or undo/redo so the swatches and hex inputs
-     * don't lag behind the actual Settings values.
+     * Reflect current keyFill back into the key color picker UI.
+     * Called after a preset load or undo/redo so the swatch and hex input
+     * don't lag behind the actual Settings value.
      */
     syncColorPickers() {
-        const backdrop = this.settings.backdropFill;
-        if (backdrop && this.backdropPicker?.setColorFromHex) {
-            this.backdropPicker.setColorFromHex(backdrop);
-        }
         const keyFill = this.settings.keyFill;
         if (keyFill) {
             const preview  = document.getElementById('keyColorPreview');
@@ -1751,7 +1731,6 @@ class KeyboardLayoutApp {
             keyGapXSlider:      'gapX',
             keyGapYSlider:      'gapY',
             keyRadiusSlider:    'radius',
-            paddingSlider:      'padding',
             fnRowHSlider:       'fnRowH',
             fnGapSlider:        'fnGap',
             fontCharSlider:     'fontChar',

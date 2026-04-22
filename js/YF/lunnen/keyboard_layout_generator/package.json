@@ -5,6 +5,8 @@
   "type": "module",
   "description": "Web tool for designing keyboard layouts with millimetre-precise SVG export.",
   "scripts": {
+    "serve": "sh scripts/serve-8000-daemon.sh",
+    "serve:stop": "sh scripts/stop-8000.sh",
     "test": "node --test 'src/**/*.test.js'",
     "test:layout": "node --test src/layout/layoutEngine.test.js",
     "test:model": "node --test src/model/templateSchema.test.js"

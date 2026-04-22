@@ -12,11 +12,12 @@
  * Settings used:
  *   keyWidth   -- base key width (mm)
  *   keyHeight  -- base key height (mm)
- *   gapX       -- horizontal gap between keys (mm)
- *   gapY       -- vertical gap between rows (mm)
+ *   gapX       -- horizontal gap between keys (mm); also left/right artboard margin
+ *   gapY       -- vertical gap between rows (mm); also top/bottom artboard margin
  *   fnRowH     -- fn-row height override (mm); default = keyHeight * 0.65
  *   fnGap      -- gap after fn-row (mm); default = gapY
- *   padding    -- backdrop inset around key area (mm); SVG canvas size = backdropW x backdropH
+ *
+ * Artboard (backdrop) size = key block + 2×gapX horizontally and + 2×gapY vertically.
  *
  * Per-key overrides on template keys:
  *   w    -- width multiplier relative to baseW (default 1)
@@ -65,7 +66,8 @@ export function computeLayout(template, settings) {
     const baseH   = +settings.keyHeight   || 16.7;
     const gapX    = +settings.gapX        || 1.6;
     const gapY    = +settings.gapY        || 2.1;
-    const pad     = +settings.padding     || 4.0;
+    const padX    = gapX;
+    const padY    = gapY;
 
     const fnH   = (isFinite(+settings.fnRowH) && +settings.fnRowH > 0) ? +settings.fnRowH : baseH * 0.65;
     const fnGap = (isFinite(+settings.fnGap)  && +settings.fnGap  >= 0) ? +settings.fnGap  : gapY;
@@ -104,13 +106,13 @@ export function computeLayout(template, settings) {
     }
     if (firstMainY === null) firstMainY = 0;
 
-    const backdropW = fullWidth + pad * 2;
-    const backdropH = totalH    + pad * 2;
+    const backdropW = fullWidth + padX * 2;
+    const backdropH = totalH    + padY * 2;
     const backdropX = 0;
     const backdropY = 0;
 
-    const originX = backdropX + pad;
-    let   curY    = backdropY + pad;
+    const originX = backdropX + padX;
+    let   curY    = backdropY + padY;
 
     // Step 3: place rows
     for (let i = 0; i < template.rows.length; i++) {
@@ -139,7 +141,7 @@ export function computeLayout(template, settings) {
     // Step 4: place numpad (if any).
     if (npCfg && Array.isArray(npCfg.keys)) {
         const npOriginX = originX + mainWidth + npGapX;
-        const npOriginY = backdropY + pad + firstMainY;
+        const npOriginY = backdropY + padY + firstMainY;
         placeNumpad(npCfg.keys, npOriginX, npOriginY, baseW, baseH, gapX, gapY, placed);
     }
 

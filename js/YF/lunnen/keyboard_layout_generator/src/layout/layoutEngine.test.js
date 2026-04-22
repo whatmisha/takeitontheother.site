@@ -20,7 +20,6 @@ const defaultSettings = {
     keyHeight: 16.6764,
     gapX:       1.5769,
     gapY:       2.1220,
-    padding:    2.6480,
     fnRowH:    10.9166,
     fnGap:      2.1220
 };
@@ -68,7 +67,7 @@ describe('keyHeightMm', () => {
 });
 
 /* ------------------------------------------------------------------ */
-/*  LAPTOP_14 — main reference fixture                                */
+/*  LAPTOP_14  main reference fixture                                */
 /* ------------------------------------------------------------------ */
 
 describe('computeLayout (LAPTOP_14)', () => {
@@ -107,12 +106,11 @@ describe('computeLayout (LAPTOP_14)', () => {
             `fn height ${tallestFn} should be <90% of main row (${defaultSettings.keyHeight})`);
     });
 
-    test('backdrop width matches keyboard block + 2×padding (within 0.01 mm)', () => {
-        // Find the right-most key edge.
+    test('backdrop width matches keyboard block + 2*gapX (within 0.01 mm)', () => {
         const rightEdge = Math.max(...layout.placedKeys.map(k => k.x + k.w));
         const leftEdge  = Math.min(...layout.placedKeys.map(k => k.x));
         const keyBlockW = rightEdge - leftEdge;
-        const expected  = keyBlockW + defaultSettings.padding * 2;
+        const expected  = keyBlockW + defaultSettings.gapX * 2;
         assert.ok(Math.abs(layout.backdropW - expected) < 0.01,
             `backdropW ${layout.backdropW} ~= ${expected}`);
     });
