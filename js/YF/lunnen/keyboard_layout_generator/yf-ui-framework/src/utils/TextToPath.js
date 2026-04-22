@@ -78,16 +78,69 @@ export class TextToPath {
         }
     }
 
+    /**
+     * `glyph.getPath(x, y, size)` in opentype.js always uses **y** as the
+     * **alphabetic** baseline. SVG, however, interprets the same coordinate
+     * according to `dominant-baseline` (e.g. `hanging` is **above** the
+     * alphabetic line). If we copy `y` from `<text>` straight into
+     * `getPath`, all `hanging` labels jump **up and left** relative to
+     * browser/Illustrator rendering.
+     */
+    _svgYToOpenTypeAlphabeticBaseline(svgY, font, fontSize, dominantBaseline) {
+        const scale = fontSize / font.unitsPerEm;
+        const db = (dominantBaseline || 'auto').trim();
+        if (db === 'auto' || db === 'alphabetic' || db === 'use-script' || !db) {
+            return svgY;
+        }
+        // Ascent from alphabetic baseline to “top” of the em box (font units → px)
+        const asc = (font.ascender != null ? font.ascender
+            : (font.tables && font.tables.hhea && font.tables.hhea.ascender) || 0) * scale;
+        // sCapHeight: distance from alphabetic baseline to top of Latin caps
+        // (closer to how browsers position “top”-aligned one-line <text>).
+        const os2 = font.tables && font.tables.os2;
+        const capH = (os2 && (os2.sCapHeight != null) && os2.sCapHeight > 0)
+            ? os2.sCapHeight * scale
+            : 0.72 * fontSize;
+
+        // `hanging` (and the rare SVG fallbacks) — the `y` value is a line
+        // *above* the alphabetic baseline. Move the baseline down so it
+        // matches the live `<text>` layout.
+        if (db === 'hanging' || db === 'text-top' || db === 'text-before-edge' || db === 'top') {
+            // For our keyboard labels, y with `hanging` marks the "top" row of
+            // glyphs. opentype's `getPath(…, y, …)` always places the *alphabetic*
+            // baseline on y, so: alphabeticY ≈ hangingY + capHeight. We use
+            // OS/2 sCapHeight (when present) or 0.72em, matching Latin caps.
+            return svgY + capH;
+        }
+        // `middle` / `central` — y is the vertical center of the em box
+        if (db === 'middle' || db === 'central' || db === 'mathematical') {
+            const d = 0.5 * ((asc || 0.88 * fontSize) + (Math.abs(
+                (font.descender != null ? font.descender
+                    : (font.tables && font.tables.hhea && font.tables.hhea.descender) || 0)
+            ) * scale));
+            return svgY - d;
+        }
+        if (db === 'ideographic' || db === 'bottom' || db === 'text-bottom' || db === 'text-after-edge') {
+            // y near bottom of em: pull baseline *up* toward alphabetic
+            return svgY - Math.abs(
+                (font.descender != null ? font.descender
+                    : (font.tables && font.tables.hhea && font.tables.hhea.descender) || 0)
+            ) * scale;
+        }
+        return svgY;
+    }
+
     async convertTextElementToPath(textElement) {
         try {
             const fontFamily = textElement.getAttribute('font-family')?.split(',')[0]?.trim() || 'TT Commons Classic';
             const fontWeight = textElement.getAttribute('font-weight') || '400';
             const fontSize = parseFloat(textElement.getAttribute('font-size') || '12');
             let x = parseFloat(textElement.getAttribute('x') || '0');
-            const y = parseFloat(textElement.getAttribute('y') || '0');
+            let y = parseFloat(textElement.getAttribute('y') || '0');
             const letterSpacingAttr = textElement.getAttribute('letter-spacing') || '0';
             const fill = textElement.getAttribute('fill') || '#000000';
             const textAnchor = textElement.getAttribute('text-anchor') || 'start';
+            const dominantBaseline = textElement.getAttribute('dominant-baseline') || 'auto';
             const text = textElement.textContent;
 
             if (!text) return null;
@@ -99,6 +152,8 @@ export class TextToPath {
             const font = await this.loadFont(fontKey);
 
             const scale = fontSize / font.unitsPerEm;
+
+            y = this._svgYToOpenTypeAlphabeticBaseline(y, font, fontSize, dominantBaseline);
 
             let textWidth = 0;
             for (let i = 0; i < text.length; i++) {

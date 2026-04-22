@@ -107,7 +107,7 @@
 
 #### Итерация 4c — охранные поля (готово)
 
-- Визуальный слой safeguard: тонкая обводка прямоугольника с отступом `padKeyMm` от края клавиши и радиусом, уменьшенным на тот же inset.
+- Визуальный слой guides: тонкая обводка прямоугольника с отступом `padKeyMm` от края клавиши и радиусом, уменьшенным на тот же inset.
 - Переключатель видимости в Visibility (Layers-панель) как третий toggle-chip рядом с Backdrop и Keys; выключен по умолчанию.
 - Когда слой скрыт на канвасе — его нет и в экспорте, потому что это обычные `<rect>` без `data-interactive`.
 
@@ -143,7 +143,7 @@
 ### Итерация 7 — production-ready экспорт (готово)
 
 - **Outline fonts toggle.** Переключатель «Outline fonts» (внизу страницы) теперь живёт в `Settings.outlineFonts`: состояние переживает preset-load, попадает в undo/redo и в `Export Settings` JSON.
-- **Independent safeguard in export.** Рядом с «Outline fonts» добавлен чекбокс «Include safeguard», привязанный к `Settings.exportSafeguard`. Охранное поле можно держать выключенным на canvas и при этом включить его только для экспорта (или наоборот). Safeguard-группа всегда в DOM, но помечается `data-preview-hidden="true"` + `display:none`; при экспорте `_buildExportSvg` снимает это с клона.
+- **Independent guides in export.** Рядом с «Outline fonts» добавлен чекбокс «Include guides», привязанный к `Settings.exportGuides`. Слой направляющих можно держать выключенным на canvas и при этом включить его только для экспорта (или наоборот). Группа `Guides` всегда в DOM, но помечается `data-preview-hidden="true"` + `display:none`; при экспорте `_buildExportSvg` снимает это с клона.
 - **Named layers for Illustrator.** `Keys` — не плоская группа, а `#Keys > #row_{rowId}` на каждый ряд (включая `numpad`, `arrows`, `adds`). Все `<rect>`, `<text>` и `<g.key-icon>` несут `data-row-id` и `data-key-id` / `id="key_{id}"`, так что Illustrator / Figma показывают осмысленные слои.
 - **SVGExporter bonus.** `exportToPDF` расширен общими опциями (`pageWidth/Height`, `renderWidth/Height`, `xOffset/yOffset`, `center`, `convertTextToOutlines`) — пока не вынесено в UI, но уже удобно вызывать из скриптов. Сбой text-to-path больше не ломает экспорт (ловим исключение и продолжаем).
 - **Что не делаем в MVP.** Отдельная кнопка «Export PDF A3» убрана как избыточная — PDF с корректными мм легко получить из SVG через любой векторный редактор.
@@ -156,8 +156,8 @@
   - для `kind: char` с `chars.base` редактируется `chars.base` (главный глиф, участвующий в Latin/Cyrillic логике);
   - для `special` / `function` и пустых клавиш — `label`.
   - Enter / blur коммитит, Escape отменяет; любой перерендер (update, zoom, resize) тоже закрывает редактор. Коммит попадает в undo/redo под тегом `key:label:{id}` или `key:chars.base:{id}`.
-- **Template JSON I/O.** В секции Template на правой панели появились кнопки «Export template» / «Import template». Export пишет `{ schema: 'keyboard-template/v1', templateId, template }` — только структура, без цветов / слайдеров / visibility. Import принимает как полный payload, так и «голый» объект шаблона (валидирует `rows[]`), применяет его через `commitTemplate` и сбрасывает выделение.
-- **UX hint.** Подсказка в секции Template обновлена: «Click a key to select; double-click to rename in place».
+- **Template JSON I/O.** Объединено с кнопками `Export Settings` / `Import Settings` внизу страницы: они пишут/читают `{ schema: 'keyboard-template/v1', templateId, template }` — только структуру, без цветов / слайдеров / visibility. Import принимает как полный payload, так и «голый» объект шаблона (валидирует `rows[]`), применяет его через `commitTemplate` и сбрасывает выделение. Отдельные кнопки в секции Template убраны, чтобы не дублировать UI.
+- **UX hint.** Подсказка в секции Template обновлена: «Click a key to select; double-click to rename in place. Use Export/Import Settings at the bottom to save or share layouts».
 
 #### Итерация 8b — drag-reorder клавиш в ряду (готово частично)
 
@@ -202,7 +202,34 @@
 - [x] Многоязычная раскладка en + ru (5)
 - [x] Numpad engine + Laptop 16" (6a)
 - [ ] External TKL / External Full (6b)
-- [x] Production-ready экспорт: outline fonts, safeguard-in-export, named layers, PDF A3 (7)
+- [x] Production-ready экспорт: outline fonts, guides-in-export, named layers, PDF A3 (7)
 - [x] Inline-rename + template JSON I/O (8a)
 - [x] Drag-reorder клавиш внутри простого ряда (8b, partial)
 - [x] Drag-reorder рядов, snap-to-grid, multi-select (8b-rest)
+
+## 5. Аудит: волны 1+2 (готово)
+
+После завершения 8b-rest проведён аудит кодовой базы. Реализованы две первые волны плана.
+
+### Волна 1 — стабилизация
+
+- **`package.json` + unit-тесты.** Добавлен `package.json` с `type: "module"` и скриптом `npm test` (node:test). Файл `src/layout/layoutEngine.test.js` снэпшотит геометрию `LAPTOP_14` / `LAPTOP_16`, проверяет абсолютные `wMm`/`hMm`-оверрайды, уникальность ids в `placedKeys`, конечность координат numpad-клавиш и сохранение width-равенства рядов. 20 тестов.
+- **Template schema.** Вынесен `src/model/templateSchema.js` с чистой функцией `validateTemplate(raw, {strictIdUnique=true})`, покрытой 18 unit-тестами. Ошибки кидаются как `TemplateError` с полем `.path` (например, `rows[2].keys[4].wMm`). `importSettings` теперь валидирует импортируемый шаблон и показывает ошибку в toast — вместо нативного `alert` и silent-фейла.
+- **Toast.** `src/ui/Toast.js` заменил `alert(...)` для импорта/экспорта; варианты success / error / info, авто-dismiss 3.5 s (6.5 s для ошибок), click-to-dismiss. Тексты экспорта показывают мм-габариты SVG и количество рядов в JSON.
+- **Шорткаты.** `Escape` снимает выделение (или закрывает inline-editor), `Delete` / `Backspace` удаляет все выделенные клавиши (bulk-aware). Гейт `_isTypingInInput` не мешает вводу в инпутах инспектора.
+- **Row-handle offset.** Отступ grip-хендла теперь считается от текущего `padding` (clamp 0.8..2.4 мм), чтобы хендл не торчал за backdrop при мелких значениях padding.
+
+### Волна 2 — архитектурный рефакторинг
+
+- **`src/model/templateOps.js`.** Вынесены pure-функции: `cloneTemplate`, `findKeyInTemplate`, `findRow`, `collectKeyIds`, `collectRowIds`, `uniqueKeyId`, `uniqueRowId`, `isSimpleRowKey`. Покрыты 20 unit-тестами. Методы `KeyboardLayoutApp` сведены к тонким делегирующим обёрткам.
+- **`src/render/` модули.** Разделены чистые рендер-функции: `renderBackdrop`, `renderGuides`, `renderSelectionOverlay`, `renderTypography`, `renderIcon`. Плюс общий `svgHelpers.js` с `el(tag, attrs)` / `setAttrs(node, attrs)`. Все работают через context-объект, без `this.settings`, что делает их пригодными для future server-side/static-render сценариев.
+- **`src/ui/DragController.js`.** Вся drag-логика (key-reorder + row-reorder) живёт в одном модуле: `bindKey(rect, key)`, `bindRowHandle(hit, rowId)`, `shouldSuppressNextClick()`. Контроллер получает доступ к приложению через host-callbacks (getSvg/getTemplate/getLayout/commitTemplate). По пути устранено дублирование `_initRowDrag` / `_rowDropIndex` / `_updateRowDragIndicator` / `_commitRowDrag` — раньше в классе было два набора методов, JS молча брал второй (latent bug).
+- **Settings convention.** Зафиксирована в комментарии в конструкторе: `this.settings.foo` — для статических чтений, `settingsStore.get(name)` — для динамических и для `template`, все записи — через `settingsStore.set(...)`. Точечно перевели лишние `.get('keyWidth' | 'backdropFill' | 'keyFill')` на короткую proxy-форму.
+
+### Итог
+
+- `KeyboardLayoutApp.js`: 2040 → 1750 строк.
+- Новые модули: 6 файлов рендера + 2 модели + 1 UI + 1 toast = **10 новых файлов** (+ 3 test-файла).
+- Тесты: **58 тестов в 17 сьютах** (layoutEngine 20 + templateSchema 18 + templateOps 20).
+- Линтер чистый, вся функциональность сохранена.
+

@@ -1,0 +1,13 @@
+{
+  "name": "keyboard-layout-generator",
+  "version": "0.8.0",
+  "private": true,
+  "type": "module",
+  "description": "Web tool for designing keyboard layouts with millimetre-precise SVG export.",
+  "scripts": {
+    "test": "node --test 'src/**/*.test.js'",
+    "test:layout": "node --test src/layout/layoutEngine.test.js",
+    "test:model": "node --test src/model/templateSchema.test.js"
+  },
+  "license": "UNLICENSED"
+}
