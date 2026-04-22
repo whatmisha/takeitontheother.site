@@ -1,9 +1,9 @@
 /**
- * DragController ù owns all drag-reorder UX on the canvas.
+ * DragController ? owns all drag-reorder UX on the canvas.
  *
  * Two kinds of drag live here:
- *   - bindKey(rect, key)       ù drag a key within its row (horizontal)
- *   - bindRowHandle(hit, rowId) ù drag a whole row up/down via grip handle
+ *   - bindKey(rect, key)       ? reorder keys along a row and move them between rows
+ *   - bindRowHandle(hit, rowId) ? drag a whole row up/down via grip handle
  *
  * Both share:
  *   - a 4 px start-threshold that separates click from drag,
@@ -50,7 +50,7 @@ export class DragController {
     }
 
     /* ================================================================= */
-    /*  Key drag (horizontal, within a row)                              */
+    /*  Key drag (reorder; horizontal + cross-row)                     */
     /* ================================================================= */
 
     bindKey(rect, key) {
@@ -59,9 +59,10 @@ export class DragController {
             const template = this.host.getTemplate();
             const found = this.host.findKey(template, key.id);
             if (!found || !found.list) return;
-            // Only drag plain row.keys (arrow cluster / additional / numpad are positional).
-            if (found.list !== found.row.keys) return;
-            if (found.row.keys.length <= 1) return;
+            // Only template `row.keys` (not arrow cluster / additional / numpad).
+            if (!template.rows?.some((r) => r.keys === found.list)) return;
+            // Single row, single key: nothing to reorder.
+            if (template.rows.length < 2 && found.row.keys.length < 2) return;
 
             // Block native text selection / image-drag on the SVG while dragging.
             e.preventDefault();
@@ -73,7 +74,7 @@ export class DragController {
             const state = {
                 active:   false,
                 keyId:    key.id,
-                row:      found.row,
+                row:      found.row, // real template row: `r.keys === found.list`
                 oldIndex: found.index,
                 rect
             };
@@ -130,6 +131,36 @@ export class DragController {
         });
     }
 
+    /**
+     * Picks a template row by pointer Y: row whose key band contains `clientY`,
+     * or the vertically nearest row (e.g. when the pointer is in a gap between rows).
+     */
+    _rowAtPointForKeys(ev) {
+        const svg = this.host.getSvg();
+        if (!svg) return null;
+        const rows = this.host.getTemplate()?.rows || [];
+        let inside  = null;
+        let nearest = null;
+        let bestD   = Infinity;
+        for (const r of rows) {
+            if (!r?.keys?.length) continue;
+            const rect = svg.querySelector(`rect[data-row-id="${CSS.escape(r.id)}"]`);
+            if (!rect) continue;
+            const box = rect.getBoundingClientRect();
+            if (ev.clientY >= box.top && ev.clientY <= box.bottom) {
+                inside = r;
+                break;
+            }
+            const midY = box.top + box.height / 2;
+            const d    = Math.abs(ev.clientY - midY);
+            if (d < bestD) {
+                bestD   = d;
+                nearest = r;
+            }
+        }
+        return inside || nearest;
+    }
+
     _keyDropIndex(row, ev) {
         const svg = this.host.getSvg();
         if (!svg) return 0;
@@ -148,12 +179,16 @@ export class DragController {
         const svg = this.host.getSvg();
         if (!svg) return;
 
-        const insertIdx = this._keyDropIndex(state.row, ev);
-        const keys = state.row.keys;
+        const targetRow = this._rowAtPointForKeys(ev) || state.row;
+        if (!targetRow?.keys?.length) return;
+
+        const insertIdx = this._keyDropIndex(targetRow, ev);
+        const keys      = targetRow.keys;
 
         let xMm;
         if (insertIdx === 0) {
-            const first = svg.querySelector(`rect[data-object-id="${CSS.escape(keys[0].id)}"]`);
+            const first = svg.querySelector(`rect[data-object-id="${CSS.escape(keys[0].id)}"]`)
+                || svg.querySelector(`rect[data-row-id="${CSS.escape(targetRow.id)}"]`);
             if (!first) return;
             xMm = +first.getAttribute('x') - 0.3;
         } else {
@@ -162,7 +197,8 @@ export class DragController {
             xMm = +prev.getAttribute('x') + +prev.getAttribute('width') + 0.3;
         }
 
-        const ref = svg.querySelector(`rect[data-object-id="${CSS.escape(keys[0].id)}"]`);
+        const ref = svg.querySelector(`rect[data-object-id="${CSS.escape(keys[0].id)}"]`)
+            || svg.querySelector(`rect[data-row-id="${CSS.escape(targetRow.id)}"]`);
         if (!ref) return;
         const y1 = +ref.getAttribute('y') - 0.8;
         const y2 = +ref.getAttribute('y') + +ref.getAttribute('height') + 0.8;
@@ -182,23 +218,39 @@ export class DragController {
         }
 
         const template = this.host.getTemplate();
-        const found = this.host.findKey(template, state.keyId);
-        if (!found || found.list !== found.row.keys) {
+        const found    = this.host.findKey(template, state.keyId);
+        if (!found || !template.rows?.some((r) => r.keys === found.list)) {
             this.host.onDragEnd?.('key', false);
             return;
         }
 
-        const newIndex = this._keyDropIndex(state.row, ev);
-        const oldIndex = found.index;
-        // Splice-out + splice-in: if old was before the drop slot, shift by -1.
-        const insertAt = newIndex > oldIndex ? newIndex - 1 : newIndex;
-        if (insertAt === oldIndex) {
+        const targetRow = this._rowAtPointForKeys(ev);
+        if (!targetRow) {
             this.host.onDragEnd?.('key', false);
             return;
         }
 
-        const [moved] = found.row.keys.splice(oldIndex, 1);
-        found.row.keys.splice(insertAt, 0, moved);
+        const sourceRow = found.row;
+        const newIndex  = this._keyDropIndex(targetRow, ev);
+        const oldIndex  = found.index;
+
+        if (sourceRow === targetRow) {
+            const insertAt = newIndex > oldIndex ? newIndex - 1 : newIndex;
+            if (insertAt === oldIndex) {
+                this.host.onDragEnd?.('key', false);
+                return;
+            }
+            const [moved] = sourceRow.keys.splice(oldIndex, 1);
+            sourceRow.keys.splice(insertAt, 0, moved);
+        } else {
+            if (sourceRow.keys.length === 1) {
+                this.host.onDragEnd?.('key', false);
+                return;
+            }
+            const insertAt = Math.min(newIndex, targetRow.keys.length);
+            const [moved] = sourceRow.keys.splice(oldIndex, 1);
+            targetRow.keys.splice(insertAt, 0, moved);
+        }
 
         this.host.commitTemplate(template, {
             selectKeyId:  state.keyId,

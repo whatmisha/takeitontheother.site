@@ -161,7 +161,7 @@ class KeyboardLayoutApp {
         this.historyDebounce = null; // Pending timer for coalesced slider/color pushes
         this.inlineEditor = null; // Active inline-label editor {input, keyId, field} | null
 
-        // Drag-reorder UX (keys within a row, rows within the template) is
+        // Drag-reorder UX (keys within / between template rows; whole-row moves) is
         // fully owned by DragController. The controller holds the single
         // drop-indicator element and the suppress-click flag.
         this.dragController = new DragController({
@@ -729,7 +729,7 @@ class KeyboardLayoutApp {
                 e.preventDefault();
                 this.startInlineEdit(key.id);
             });
-            // Drag-to-reorder within the same row (iteration 8b).
+            // Drag-to-reorder keys (same row or another row; iteration 8b+).
             this._initKeyDrag(rect, key);
             g.appendChild(rect);
 

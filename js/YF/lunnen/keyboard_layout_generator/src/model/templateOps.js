@@ -132,8 +132,8 @@ export function uniqueRowId(existing, base) {
 /* --------------------------------------------------------------------- */
 
 /** True if the key sits in a simple row.keys array (not arrow cluster /
- *  additional / numpad). Simple keys are the only ones that support
- *  drag-reorder within a row today. */
+ *  additional / numpad). Those keys may be drag-reordered within a row
+ *  and moved between main template rows. */
 export function isSimpleRowKey(template, keyId) {
     const found = findKeyInTemplate(template, keyId);
     if (!found) return false;
