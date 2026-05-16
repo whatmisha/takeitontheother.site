@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Etica</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="./css/styles.css">
+  </head>
+  <body>
+    <div class="container">
+      <div class="top-links">
+        <button class="yf-tools-link etica-title-button" type="button" aria-label="Etica">Etica</button>
+        <button class="zoom-indicator status-pill" id="canvasMeta" type="button" aria-label="Canvas size">1080 x 1080</button>
+        <button class="zoom-indicator status-pill" id="strokeMeta" type="button" aria-label="Stroke count">0 strokes</button>
+      </div>
+
+      <div class="main-content">
+        <div class="canvas-container etica-canvas-container" id="canvasContainer">
+          <canvas id="drawingCanvas" width="1080" height="1080" aria-label="Etica drawing canvas"></canvas>
+        </div>
+
+        <aside class="controls-panel controls-panel-left etica-panel etica-tools-panel" id="toolsPanel" aria-label="Etica tools panel">
+          <div class="panel-header" id="toolsPanelHeader">
+            <span>Tools</span>
+            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse tools panel">
+              <svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true">
+                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </div>
+
+          <div class="panel-content">
+            <section class="control-section etica-simple-section">
+              <div class="control-group">
+                <fieldset>
+                  <legend class="sr-only">Select brush mode</legend>
+                  <div class="segmented-control segmented-control-compact">
+                    <input type="radio" name="tool" value="dotted" id="toolDotted" data-tool="dotted" checked>
+                    <label for="toolDotted">Dots</label>
+
+                    <input type="radio" name="tool" value="ink" id="toolInk" data-tool="ink">
+                    <label for="toolInk">Ink</label>
+
+                    <input type="radio" name="tool" value="eraser" id="toolEraser" data-tool="eraser">
+                    <label for="toolEraser">Erase</label>
+
+                    <input type="radio" name="tool" value="select" id="toolSelect" data-tool="select">
+                    <label for="toolSelect">Select</label>
+                  </div>
+                </fieldset>
+              </div>
+            </section>
+          </div>
+        </aside>
+
+        <aside class="controls-panel etica-panel etica-line-panel" id="linePanel" aria-label="Etica line panel">
+          <div class="panel-header" id="linePanelHeader">
+            <span>Line</span>
+            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse line panel">
+              <svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true">
+                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </div>
+
+          <div class="panel-content">
+            <section class="control-section etica-simple-section">
+              <div class="control-group">
+                <label for="sizeInput">
+                  <span>Size <span class="unit">px</span></span>
+                  <div class="value-display-wrapper">
+                    <input type="text" class="value-display" id="sizeOutput" value="18" inputmode="numeric" aria-label="Brush size value">
+                  </div>
+                </label>
+                <input id="sizeInput" type="range" min="3" max="160" step="1" value="18">
+              </div>
+
+              <div class="control-group">
+                <label for="densityInput">
+                  <span>Density</span>
+                  <div class="value-display-wrapper">
+                    <input type="text" class="value-display etica-percent-value" id="densityOutput" value="100%" inputmode="numeric" aria-label="Density value">
+                  </div>
+                </label>
+                <input id="densityInput" type="range" min="20" max="320" step="5" value="100">
+              </div>
+
+              <div class="control-group">
+                <label for="densityProfileSelect">
+                  <span>Profile</span>
+                </label>
+                <select id="densityProfileSelect" class="style-select" aria-label="Density profile">
+                  <option value="flat">Flat</option>
+                  <option value="fade-in">Fade In</option>
+                  <option value="fade-out">Fade Out</option>
+                  <option value="in-out">In-Out</option>
+                  <option value="soft-peak">Soft Peak</option>
+                </select>
+              </div>
+
+              <div class="control-group etica-meta-row">
+                <span>Selected</span>
+                <span id="selectionMeta">None</span>
+              </div>
+              <button class="btn-secondary etica-full-button" type="button" id="deselectButton" disabled>Deselect</button>
+            </section>
+          </div>
+        </aside>
+
+        <aside class="controls-panel etica-panel etica-canvas-panel" id="canvasPanel" aria-label="Etica canvas panel">
+          <div class="panel-header" id="canvasPanelHeader">
+            <span>Canvas</span>
+            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse canvas panel">
+              <svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true">
+                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </div>
+
+          <div class="panel-content">
+            <section class="control-section etica-simple-section">
+              <div class="control-group">
+                <select id="ratioSelect" class="style-select" aria-label="Canvas ratio">
+                  <option value="1080x1080">1:1 square</option>
+                  <option value="1920x1080">16:9 landscape</option>
+                  <option value="1080x1920">9:16 portrait</option>
+                  <option value="1350x1080">5:4 landscape</option>
+                  <option value="1080x1350">4:5 portrait</option>
+                  <option value="1440x1080">4:3 landscape</option>
+                  <option value="1080x1440">3:4 portrait</option>
+                  <option value="1620x1080">3:2 landscape</option>
+                  <option value="1080x1620">2:3 portrait</option>
+                  <option value="3120x1080">26:9 wide</option>
+                  <option value="1080x3120">9:26 tall</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+
+              <div class="dimension-grid">
+                <div class="control-group">
+                  <label for="widthInput">
+                    <span>Width <span class="unit">px</span></span>
+                    <div class="value-display-wrapper">
+                      <input id="widthInput" class="value-display dimension-value" type="text" inputmode="numeric" value="1080" aria-label="Canvas width">
+                    </div>
+                  </label>
+                </div>
+
+                <div class="control-group">
+                  <label for="heightInput">
+                    <span>Height <span class="unit">px</span></span>
+                    <div class="value-display-wrapper">
+                      <input id="heightInput" class="value-display dimension-value" type="text" inputmode="numeric" value="1080" aria-label="Canvas height">
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <button class="btn-primary etica-full-button" type="button" id="resizeButton">Apply size</button>
+            </section>
+          </div>
+        </aside>
+
+        <aside class="controls-panel etica-panel etica-background-panel" id="backgroundPanel" aria-label="Etica background panel">
+          <div class="panel-header" id="backgroundPanelHeader">
+            <span>Background</span>
+            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse background panel">
+              <svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true">
+                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </div>
+
+          <div class="panel-content">
+            <section class="control-section etica-simple-section">
+              <div class="color-swatches-compact">
+                <div class="color-swatch-row active" id="backgroundColorRow">
+                  <div class="color-swatch-compact" id="backgroundColorItem">
+                    <button type="button" class="color-dot color-dot--expandable" id="backgroundColorPreview" title="HSB" aria-label="Open background color controls"></button>
+                    <span class="color-label">Color</span>
+                    <input type="text" class="color-swatch-hex" id="backgroundColorHex" value="#050505" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Background color hex">
+                  </div>
+                  <div class="color-hsb-slot" id="backgroundColorHsbSlot">
+                    <div class="etica-hsb-picker" id="backgroundColorPicker" hidden>
+                      <div class="hsb-controls">
+                        <div class="hsb-control-group">
+                          <label for="backgroundHueInput">
+                            <span>Hue</span>
+                            <input type="text" class="value-display hsb-value" id="backgroundHueValue" value="0°" readonly>
+                          </label>
+                          <input type="range" id="backgroundHueInput" min="0" max="360" step="1" value="0">
+                        </div>
+
+                        <div class="hsb-control-group">
+                          <label for="backgroundSaturationInput">
+                            <span>Saturation</span>
+                            <input type="text" class="value-display hsb-value" id="backgroundSaturationValue" value="0%" readonly>
+                          </label>
+                          <input type="range" id="backgroundSaturationInput" min="0" max="100" step="1" value="0">
+                        </div>
+
+                        <div class="hsb-control-group">
+                          <label for="backgroundBrightnessInput">
+                            <span>Brightness</span>
+                            <input type="text" class="value-display hsb-value" id="backgroundBrightnessValue" value="2%" readonly>
+                          </label>
+                          <input type="range" id="backgroundBrightnessInput" min="0" max="100" step="1" value="2">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="control-group etica-meta-row">
+                <span>Image</span>
+                <span id="backgroundMeta">None</span>
+              </div>
+              <div class="control-group">
+                <fieldset>
+                  <legend class="sr-only">Background image fit mode</legend>
+                  <div class="segmented-control segmented-control-compact">
+                    <input type="radio" name="backgroundFit" value="fit" id="backgroundFitMode" data-background-fit="fit" checked>
+                    <label for="backgroundFitMode">Fit</label>
+
+                    <input type="radio" name="backgroundFit" value="fill" id="backgroundFillMode" data-background-fit="fill">
+                    <label for="backgroundFillMode">Fill</label>
+                  </div>
+                </fieldset>
+              </div>
+              <input class="sr-only" id="backgroundInput" type="file" accept="image/*">
+              <div class="button-group etica-panel-buttons">
+                <button class="btn-secondary" type="button" id="backgroundButton">Upload</button>
+                <button class="btn-secondary" type="button" id="clearBackgroundButton" disabled>Clear</button>
+              </div>
+            </section>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <nav class="bottom-buttons etica-actions" aria-label="Drawing actions">
+      <button class="btn-fixed btn-export-settings" type="button" id="undoButton" disabled>Undo</button>
+      <button class="btn-fixed btn-export-settings" type="button" id="redoButton" disabled>Redo</button>
+      <button class="btn-fixed btn-import-settings" type="button" id="clearButton">Clear</button>
+      <div class="export-group-right etica-export-group">
+        <button class="btn-fixed btn-export" type="button" id="exportButton">Export ⌘E</button>
+        <label class="toggle-label">
+          <div class="toggle-switch">
+            <input type="checkbox" id="transparencyToggle" aria-label="Transparency">
+            <span class="toggle-slider"></span>
+          </div>
+          <span class="toggle-label-text">Transparency</span>
+        </label>
+      </div>
+    </nav>
+
+    <script type="module" src="./js/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,450 @@
+@import url("./yf-styles-no-fonts.css");
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.etica-title-button {
+  cursor: default;
+  font-family: inherit;
+  font-size: 1rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.etica-title-button:hover,
+.etica-title-button:focus {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+.status-pill {
+  width: auto;
+  min-width: 96px;
+  padding-left: var(--spacing-2xl);
+  padding-right: var(--spacing-2xl);
+  cursor: default;
+  white-space: nowrap;
+}
+
+.status-pill:hover {
+  background: var(--color-bg-panel);
+}
+
+.etica-canvas-container {
+  padding: 76px 32px 84px;
+  overflow: auto;
+  align-items: center;
+  justify-content: center;
+}
+
+#drawingCanvas {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(100%, calc(100vw - 64px));
+  max-height: calc(100vh - 160px);
+  background: #050505;
+  border: 1px solid #242424;
+  cursor: crosshair;
+  touch-action: none;
+  box-shadow: 0 18px 80px rgba(0, 0, 0, 0.92);
+}
+
+.controls-panel {
+  max-height: calc(100vh - 40px);
+}
+
+.etica-panel {
+  width: 300px;
+}
+
+.etica-tools-panel {
+  top: var(--spacing-3xl);
+  left: var(--spacing-3xl);
+  right: auto;
+}
+
+.etica-line-panel {
+  top: var(--spacing-3xl);
+  right: var(--spacing-3xl);
+}
+
+.etica-canvas-panel {
+  top: auto;
+  right: var(--spacing-3xl);
+  bottom: calc(var(--spacing-3xl) + var(--button-height) + 20px);
+}
+
+.etica-background-panel {
+  top: auto;
+  left: var(--spacing-3xl);
+  right: auto;
+  bottom: calc(var(--spacing-3xl) + var(--button-height) + 20px);
+}
+
+.etica-panel .panel-content {
+  min-height: 0;
+}
+
+.etica-simple-section {
+  margin-bottom: 0;
+}
+
+.etica-simple-section > .control-group:first-child .style-select {
+  margin-top: 0;
+}
+
+.etica-panel .control-section:last-child {
+  margin-bottom: 0;
+}
+
+.etica-tools-panel .panel-content {
+  overflow: visible;
+}
+
+.dimension-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.dimension-grid .control-group {
+  margin-bottom: 0;
+}
+
+.dimension-grid .control-group label {
+  width: 100%;
+  min-width: 0;
+  justify-content: space-between;
+}
+
+.dimension-grid .control-group label > span:first-child {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.dimension-value {
+  width: 76px;
+  min-width: 0;
+  color: #888888;
+  text-align: right;
+}
+
+.dimension-value:focus {
+  color: #ffffff;
+}
+
+.etica-percent-value {
+  min-width: 52px;
+}
+
+.etica-full-button {
+  width: 100%;
+  margin-top: var(--spacing-md);
+}
+
+.etica-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+}
+
+.etica-meta-row span:last-child {
+  color: var(--color-text-muted);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etica-panel-buttons {
+  width: 100%;
+}
+
+.etica-panel-buttons .btn-secondary {
+  flex: 1;
+}
+
+.etica-actions {
+  gap: var(--spacing-md);
+}
+
+.etica-actions .btn-fixed {
+  min-width: 92px;
+}
+
+.etica-export-group {
+  position: static;
+  display: flex;
+  gap: var(--spacing-lg);
+  align-items: center;
+}
+
+.color-swatches-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: var(--spacing-xl);
+}
+
+.color-swatch-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  border-radius: 8px;
+}
+
+.color-hsb-slot:empty {
+  display: none;
+}
+
+.color-swatch-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: var(--radius-button);
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.color-swatch-compact:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+button.color-dot,
+button.color-dot--expandable {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  flex-shrink: 0;
+  cursor: pointer;
+  background: #050505;
+  box-shadow: none;
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+button.color-dot--expandable:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.06);
+}
+
+.color-swatch-compact .color-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  user-select: none;
+  line-height: 1.25;
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.color-swatch-hex {
+  cursor: text;
+  margin-left: auto;
+  width: 7.2em;
+  max-width: 100%;
+  flex: 0 0 auto;
+  height: 26px;
+  padding: 0 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+  background: var(--color-bg-input);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.color-swatch-hex:focus {
+  outline: none;
+  border-color: var(--color-text-subtle);
+  color: #ffffff;
+}
+
+.etica-hsb-picker {
+  padding: 0 8px 8px;
+}
+
+.etica-hsb-picker[hidden] {
+  display: none;
+}
+
+.hsb-controls {
+  display: flex;
+  flex-direction: column;
+}
+
+.hsb-control-group {
+  margin-bottom: var(--spacing-lg);
+  padding-top: 1px;
+}
+
+.hsb-control-group:last-child {
+  margin-bottom: 0;
+}
+
+.hsb-control-group label {
+  display: flex;
+  align-items: center;
+  font-weight: 400;
+  margin-bottom: var(--spacing-xs);
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.hsb-control-group label > span {
+  flex: 1;
+}
+
+.hsb-value {
+  display: inline-block;
+  min-width: 40px;
+  text-align: right;
+  font-weight: 400;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  font-family: inherit;
+}
+
+.hsb-control-group input[type="range"] {
+  width: 100%;
+  height: 10px;
+  border-radius: var(--radius);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  margin-top: calc(var(--spacing-md) - 2px);
+  cursor: pointer;
+  position: relative;
+  background: transparent;
+}
+
+.hsb-control-group input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-text);
+  cursor: pointer;
+  border: none;
+  transition: transform var(--transition-fast);
+  margin-top: calc((1px - 12px) / 2);
+}
+
+.hsb-control-group input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-text);
+  cursor: pointer;
+  border: none;
+  transition: transform var(--transition-fast);
+}
+
+.hsb-control-group input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+}
+
+.hsb-control-group input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.25);
+}
+
+.hsb-control-group input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 1px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+}
+
+.hsb-control-group input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 1px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+}
+
+@media (max-width: 1024px) {
+  .etica-canvas-container {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  #drawingCanvas {
+    max-width: min(100%, calc(100vw - 48px));
+  }
+}
+
+@media (max-width: 768px) {
+  .top-links {
+    top: var(--spacing-lg);
+  }
+
+  .status-pill {
+    display: none;
+  }
+
+  .etica-canvas-container {
+    padding: 72px 18px 128px;
+    align-items: flex-start;
+  }
+
+  #drawingCanvas {
+    max-width: 100%;
+    max-height: calc(100vh - 230px);
+  }
+
+  .controls-panel {
+    width: min(300px, calc(100vw - 36px));
+    max-height: min(58vh, 520px);
+  }
+
+  .etica-tools-panel {
+    top: 72px;
+    left: var(--spacing-lg);
+    right: auto;
+    bottom: auto;
+  }
+
+  .etica-line-panel {
+    top: 72px;
+    right: var(--spacing-lg);
+    left: auto;
+    bottom: auto;
+  }
+
+  .etica-canvas-panel {
+    top: auto;
+    right: var(--spacing-lg);
+    left: auto;
+    bottom: 128px;
+  }
+
+  .etica-background-panel {
+    top: auto;
+    left: var(--spacing-lg);
+    right: auto;
+    bottom: 128px;
+  }
+}
