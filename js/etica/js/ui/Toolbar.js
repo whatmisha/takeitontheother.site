@@ -11,6 +11,7 @@ export class Toolbar {
     this.modeButtons = document.querySelectorAll("[data-mode-tab]");
     this.toolsPanel = document.getElementById("toolsPanel");
     this.linePanel = document.getElementById("linePanel");
+    this.effectsPanel = document.getElementById("effectsPanel");
     this.backgroundPanel = document.getElementById("backgroundPanel");
     this.fotoPanel = document.getElementById("fotoPanel");
     this.nuevoPanel = document.getElementById("nuevoPanel");
@@ -65,6 +66,13 @@ export class Toolbar {
     this.florRegenerateButton = document.getElementById("florRegenerateButton");
     this.florSeedInput = document.getElementById("florSeedInput");
     this.florTypeSelect = document.getElementById("florTypeSelect");
+    this.windEnabledCheckbox = document.getElementById("windEnabledCheckbox");
+    this.windSectionContent = document.getElementById("windSectionContent");
+    this.windDirectionInput = document.getElementById("windDirectionInput");
+    this.windStrengthInput = document.getElementById("windStrengthInput");
+    this.windTrailInput = document.getElementById("windTrailInput");
+    this.windDestructionInput = document.getElementById("windDestructionInput");
+    this.windUniformityInput = document.getElementById("windUniformityInput");
     this.lastDetail = null;
     this.nuevoGenerator = new NuevoGenerator();
     this.photoGenerator = new PhotoGenerator();
@@ -123,7 +131,7 @@ export class Toolbar {
     this.bindRangeKeyboard(this.densityInput, {
       min: 20,
       max: 320,
-      baseStep: 5,
+      baseStep: 1,
       shiftStep: 10,
       onApply: (value) => this.applyDensity(value)
     });
@@ -152,7 +160,7 @@ export class Toolbar {
     this.bindValueInput(this.densityOutput, this.densityInput, {
       min: 20,
       max: 320,
-      baseStep: 5,
+      baseStep: 1,
       shiftStep: 10,
       shiftSnap: true,
       formatter: (value) => `${Math.round(value)}%`,
@@ -220,6 +228,7 @@ export class Toolbar {
 
     this.bindMobileControls();
     this.bindGeneratorControls();
+    this.bindEffectControls();
 
     window.addEventListener("keydown", (event) => {
       if (isTypingTarget(event.target)) return;
@@ -285,50 +294,57 @@ export class Toolbar {
 
   applyParameterTooltips() {
     const tooltips = {
-      toolDotted: "Рисует отдельными точками.",
-      toolInk: "Рисует более плотной чернильной массой.",
-      toolEraser: "Стирает существующие strokes.",
-      toolSelect: "Выбор и перемещение strokes.",
-      sizeInput: "Базовый размер точки или кисти.",
-      densityInput: "Плотность точек вдоль линии.",
-      sizeVariationInput: "Максимальный разброс размеров точек.",
-      densityProfileSelect: "Как плотность меняется вдоль stroke.",
-      fotoRecognitionInput: "Насколько генерация должна быть похожа на фото.",
-      fotoAbstractionInput: "Упрощает фото и убирает часть деталей.",
-      fotoDetailInput: "Количество мелких деталей из фото.",
-      fotoMassInput: "Насколько активно заполнять темные массы.",
-      fotoContourInput: "Насколько активно искать контуры.",
-      fotoDensityInput: "Общее количество точек генерации.",
-      fotoDotSizeInput: "Базовый размер точки.",
-      fotoSizeVariationInput: "Максимальный разброс размеров точек.",
-      fotoJitterInput: "Случайное смещение точек от исходных мест.",
-      fotoMaxPointsInput: "Жесткий максимум точек в генерации.",
-      fotoSeedInput: "Фиксирует случайный вариант генерации.",
-      nuevoLineStrengthInput: "Сила поиска контрастных и цветовых линий.",
-      nuevoMassOutlineInput: "Обводка границ крупных масс.",
-      nuevoInteriorDetailInput: "Количество внутренних линий и фактуры.",
-      nuevoFillInput: "Редкое заполнение внутри темных масс.",
-      nuevoSimplifyInput: "Упрощает фото перед поиском линий.",
-      nuevoSpacingInput: "Расстояние между точками на линиях.",
-      nuevoDotSizeInput: "Базовый размер точки.",
-      nuevoSizeVariationInput: "Максимальный разброс размеров точек.",
-      nuevoJitterInput: "Живое смещение точек от найденной линии.",
-      nuevoMaxPointsInput: "Жесткий максимум точек в генерации.",
-      nuevoSeedInput: "Фиксирует случайный вариант генерации.",
-      florTypeSelect: "Тип растительной формы.",
-      florScaleInput: "Общий размер растения.",
-      florComplexityInput: "Количество веток, листьев и деталей.",
-      florBendInput: "Изгиб стебля.",
-      florOpennessInput: "Ширина и раскрытость формы.",
-      florRecognitionInput: "Насколько форма остается узнаваемой.",
-      florAbstractionInput: "Упрощает растение и убирает часть деталей.",
-      florDensityInput: "Общее количество точек генерации.",
-      florMassInput: "Насколько часто точки собираются в плотные массы.",
-      florDotSizeInput: "Базовый размер точки.",
-      florSizeVariationInput: "Максимальный разброс размеров точек.",
-      florJitterInput: "Случайное смещение точек от формы.",
-      florMaxPointsInput: "Жесткий максимум точек в генерации.",
-      florSeedInput: "Фиксирует случайный вариант генерации."
+      toolDotted: "Draws with separate dots.",
+      toolInk: "Draws denser ink-like marks.",
+      toolEraser: "Removes existing strokes.",
+      toolSelect: "Select and move strokes.",
+      sizeInput: "Base dot or brush size.",
+      densityInput: "Dot density along a stroke.",
+      sizeVariationInput: "Maximum random dot size difference.",
+      densityProfileSelect: "How density changes along a stroke.",
+      fotoRecognitionInput: "How closely the result follows the photo.",
+      fotoAbstractionInput: "Simplifies the photo and removes details.",
+      fotoDetailInput: "Amount of small photo detail.",
+      fotoMassInput: "How strongly dark masses are filled.",
+      fotoContourInput: "How strongly contours are detected.",
+      fotoDensityInput: "Overall amount of generated dots.",
+      fotoDotSizeInput: "Base dot size.",
+      fotoSizeVariationInput: "Maximum random dot size difference.",
+      fotoJitterInput: "Random dot offset from source positions.",
+      fotoMaxPointsInput: "Hard maximum number of generated dots.",
+      fotoSeedInput: "Locks the random generation variant.",
+      nuevoLineStrengthInput: "Strength of contrast and color line detection.",
+      nuevoMassOutlineInput: "Outlines the borders of large masses.",
+      nuevoInteriorDetailInput: "Amount of inner lines and texture.",
+      nuevoFillInput: "Sparse fill inside dark masses.",
+      nuevoSimplifyInput: "Simplifies the photo before line detection.",
+      nuevoSpacingInput: "Distance between dots on detected lines.",
+      nuevoDotSizeInput: "Base dot size.",
+      nuevoSizeVariationInput: "Maximum random dot size difference.",
+      nuevoJitterInput: "Organic offset from the detected line.",
+      nuevoMaxPointsInput: "Hard maximum number of generated dots.",
+      nuevoSeedInput: "Locks the random generation variant.",
+      florTypeSelect: "Type of plant structure.",
+      florScaleInput: "Overall plant size.",
+      florComplexityInput: "Amount of branches, leaves, and detail.",
+      florBendInput: "Stem curvature.",
+      florOpennessInput: "Width and openness of the shape.",
+      florRecognitionInput: "How recognizable the plant remains.",
+      florAbstractionInput: "Simplifies the plant and removes detail.",
+      florDensityInput: "Overall amount of generated dots.",
+      florMassInput: "How often dots gather into dense masses.",
+      florDotSizeInput: "Base dot size.",
+      florSizeVariationInput: "Maximum random dot size difference.",
+      florJitterInput: "Random dot offset from the plant form.",
+      florMaxPointsInput: "Hard maximum number of generated dots.",
+      florSeedInput: "Locks the random generation variant.",
+      windDirectionInput: "Direction the dots are blown, in degrees.",
+      windStrengthInput: "Overall force of the wind displacement.",
+      windTrailInput: "Maximum length of the blown dot trail.",
+      windDestructionInput: "How much of the original shape breaks apart.",
+      windUniformityInput: "Flag-like falloff at low values, sand-like spread at high values.",
+      echoAmountInput: "Placeholder effect control.",
+      staticSpreadInput: "Placeholder effect control."
     };
 
     for (const [controlId, tooltip] of Object.entries(tooltips)) {
@@ -339,10 +355,10 @@ export class Toolbar {
     }
 
     const fitTooltips = [
-      ["fotoFitMode", "Помещает фото целиком."],
-      ["fotoFillMode", "Заполняет холст фото с обрезкой."],
-      ["nuevoFitMode", "Помещает фото целиком."],
-      ["nuevoFillMode", "Заполняет холст фото с обрезкой."]
+      ["fotoFitMode", "Fit the entire photo inside the canvas."],
+      ["fotoFillMode", "Fill the canvas and crop the photo."],
+      ["nuevoFitMode", "Fit the entire photo inside the canvas."],
+      ["nuevoFillMode", "Fill the canvas and crop the photo."]
     ];
     for (const [controlId, tooltip] of fitTooltips) {
       const label = document.querySelector(`label[for="${controlId}"]`);
@@ -371,10 +387,12 @@ export class Toolbar {
 
     if (this.toolsPanel) this.toolsPanel.hidden = mode !== "pinta";
     if (this.linePanel) this.linePanel.hidden = mode !== "pinta";
+    if (this.effectsPanel) this.effectsPanel.hidden = mode !== "pinta";
     if (this.fotoPanel) this.fotoPanel.hidden = mode !== "foto";
     if (this.nuevoPanel) this.nuevoPanel.hidden = mode !== "nuevo";
     if (this.florPanel) this.florPanel.hidden = mode !== "flor";
     if (this.backgroundPanel) this.backgroundPanel.hidden = false;
+    this.controller.setEffectsEnabled(mode === "pinta");
 
     if (mode === "pinta" && previousMode !== "pinta") {
       this.setActiveTool(this.previousPintaTool || "dotted");
@@ -427,14 +445,14 @@ export class Toolbar {
     };
 
     textInput.addEventListener("focus", () => {
-      this.controller.beginEditSession();
+      if (options.editSession !== false) this.controller.beginEditSession();
       textInput.value = String(parseNumber(textInput.value, sliderInput.value));
       textInput.select();
     });
 
     textInput.addEventListener("blur", () => {
       applyValue(textInput.value);
-      this.controller.endEditSession();
+      if (options.editSession !== false) this.controller.endEditSession();
     });
 
     textInput.addEventListener("keydown", (event) => {
@@ -459,7 +477,7 @@ export class Toolbar {
       if (event.key === "Escape") {
         event.preventDefault();
         textInput.value = options.formatter(Number(sliderInput.value));
-        this.controller.endEditSession();
+        if (options.editSession !== false) this.controller.endEditSession();
         textInput.blur();
       }
     });
@@ -478,13 +496,13 @@ export class Toolbar {
       if (!direction) return;
 
       event.preventDefault();
-      this.controller.beginEditSession();
+      if (options.editSession !== false) this.controller.beginEditSession();
       const current = parseNumber(sliderInput.value, options.min);
       const next = event.shiftKey
         ? snapByStep(current, direction, options.shiftStep)
         : current + (direction * options.baseStep);
       options.onApply(clampNumber(next, options.min, options.max));
-      this.controller.endEditSession();
+      if (options.editSession !== false) this.controller.endEditSession();
     });
   }
 
@@ -541,6 +559,7 @@ export class Toolbar {
   }
 
   bindGeneratorControls() {
+    this.hydrateGeneratorValueInputs();
     this.bindGeneratorValueMirrors();
 
     document.querySelectorAll("[data-generator-input]").forEach((input) => {
@@ -555,6 +574,7 @@ export class Toolbar {
 
       if (input.type === "range") {
         const step = Math.max(1, Number(input.step) || 1);
+        const valueInput = document.getElementById(`${input.id.replace(/Input$/, "")}Value`);
         this.bindRangeKeyboard(input, {
           min: Number(input.min) || 0,
           max: Number(input.max) || 100,
@@ -562,6 +582,17 @@ export class Toolbar {
           shiftStep: step * 10,
           onApply: (value) => this.applyGeneratorRange(input, value)
         });
+        if (valueInput instanceof HTMLInputElement) {
+          this.bindValueInput(valueInput, input, {
+            min: Number(input.min) || 0,
+            max: Number(input.max) || 100,
+            baseStep: step,
+            shiftStep: step * 10,
+            shiftSnap: true,
+            formatter: (value) => formatGeneratorValue(input, value),
+            onApply: (value) => this.applyGeneratorRange(input, value)
+          });
+        }
       }
     });
 
@@ -616,14 +647,115 @@ export class Toolbar {
     });
   }
 
+  bindEffectControls() {
+    this.bindEffectSection(this.windEnabledCheckbox, this.windSectionContent, () => this.applyWindEffect());
+    this.bindEffectSection(
+      document.getElementById("echoEnabledCheckbox"),
+      document.getElementById("echoSectionContent")
+    );
+    this.bindEffectSection(
+      document.getElementById("staticEnabledCheckbox"),
+      document.getElementById("staticSectionContent")
+    );
+
+    document.querySelectorAll("[data-effect-input]").forEach((input) => {
+      this.updateEffectValue(input);
+      input.addEventListener("input", () => this.applyEffectRange(input, input.value));
+      input.addEventListener("change", () => this.applyEffectRange(input, input.value));
+
+      if (input.type === "range") {
+        const step = Math.max(1, Number(input.step) || 1);
+        const valueInput = document.getElementById(`${input.id.replace(/Input$/, "")}Value`);
+        this.bindRangeKeyboard(input, {
+          min: Number(input.min) || 0,
+          max: Number(input.max) || 100,
+          baseStep: step,
+          shiftStep: step * 10,
+          editSession: false,
+          onApply: (value) => this.applyEffectRange(input, value)
+        });
+        if (valueInput instanceof HTMLInputElement) {
+          this.bindValueInput(valueInput, input, {
+            min: Number(input.min) || 0,
+            max: Number(input.max) || 100,
+            baseStep: step,
+            shiftStep: step * 10,
+            shiftSnap: true,
+            editSession: false,
+            formatter: (value) => formatEffectValue(input, value),
+            onApply: (value) => this.applyEffectRange(input, value)
+          });
+        }
+      }
+    });
+
+    this.applyWindEffect();
+  }
+
+  bindEffectSection(toggle, content, onToggle) {
+    if (!toggle || !content) return;
+    const sync = () => {
+      content.classList.toggle("controls-disabled", !toggle.checked);
+      if (onToggle) onToggle();
+    };
+    toggle.addEventListener("change", sync);
+    sync();
+  }
+
+  updateEffectValue(input) {
+    if (!input || input.type !== "range") return;
+    const value = document.getElementById(`${input.id.replace(/Input$/, "")}Value`);
+    if (value instanceof HTMLInputElement) {
+      value.value = formatEffectValue(input, input.value);
+    } else if (value) {
+      value.textContent = formatEffectValue(input, input.value);
+    }
+  }
+
+  applyEffectRange(input, value) {
+    const next = clampNumber(value, Number(input.min) || 0, Number(input.max) || 100);
+    input.value = next;
+    this.updateEffectValue(input);
+    if (input.dataset.effectInput === "wind") this.applyWindEffect();
+  }
+
+  applyWindEffect() {
+    this.controller.setWindEffect({
+      enabled: this.windEnabledCheckbox?.checked ?? false,
+      direction: valueOf("windDirectionInput", 0),
+      strength: valueOf("windStrengthInput", 45),
+      trailLength: valueOf("windTrailInput", 120),
+      destruction: valueOf("windDestructionInput", 40),
+      uniformity: valueOf("windUniformityInput", 35)
+    });
+  }
+
   bindGeneratorValueMirrors() {
     document.querySelectorAll("[data-generator-input]").forEach((input) => this.updateGeneratorValue(input));
+  }
+
+  hydrateGeneratorValueInputs() {
+    document.querySelectorAll(".generator-value").forEach((value) => {
+      if (value instanceof HTMLInputElement) return;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "value-display generator-value generator-value-input";
+      input.id = value.id;
+      input.value = value.textContent || "";
+      input.inputMode = "numeric";
+      input.setAttribute("aria-label", `${value.id.replace(/Value$/, "")} value`);
+      value.replaceWith(input);
+    });
   }
 
   updateGeneratorValue(input) {
     if (!input || input.type !== "range") return;
     const value = document.getElementById(`${input.id.replace(/Input$/, "")}Value`);
-    if (value) value.textContent = input.dataset.generatorUnit === "%" ? `${input.value}%` : input.value;
+    if (value instanceof HTMLInputElement) {
+      value.value = formatGeneratorValue(input, input.value);
+    } else if (value) {
+      value.textContent = formatGeneratorValue(input, input.value);
+    }
   }
 
   applyGeneratorRange(input, value) {
@@ -739,17 +871,17 @@ export class Toolbar {
   getNuevoSettings() {
     return {
       fit: document.querySelector("[data-nuevo-fit]:checked")?.dataset.nuevoFit || "fill",
-      lineStrength: valueOf("nuevoLineStrengthInput", 74),
-      massOutline: valueOf("nuevoMassOutlineInput", 68),
-      interiorDetail: valueOf("nuevoInteriorDetailInput", 42),
-      fill: valueOf("nuevoFillInput", 24),
-      simplify: valueOf("nuevoSimplifyInput", 34),
-      spacing: valueOf("nuevoSpacingInput", 16),
-      dotSize: valueOf("nuevoDotSizeInput", 18),
+      lineStrength: valueOf("nuevoLineStrengthInput", 50),
+      massOutline: valueOf("nuevoMassOutlineInput", 50),
+      interiorDetail: valueOf("nuevoInteriorDetailInput", 50),
+      fill: valueOf("nuevoFillInput", 50),
+      simplify: valueOf("nuevoSimplifyInput", 50),
+      spacing: valueOf("nuevoSpacingInput", 15),
+      dotSize: valueOf("nuevoDotSizeInput", 75),
       sizeVariation: valueOf("nuevoSizeVariationInput", 0),
-      jitter: valueOf("nuevoJitterInput", 18),
-      maxPoints: valueOf("nuevoMaxPointsInput", 1400),
-      seed: sanitizeSeed(this.nuevoSeedInput?.value, 3101)
+      jitter: valueOf("nuevoJitterInput", 10),
+      maxPoints: valueOf("nuevoMaxPointsInput", 320),
+      seed: sanitizeSeed(this.nuevoSeedInput?.value, 851663)
     };
   }
 
@@ -889,6 +1021,18 @@ function valueOf(id, fallback) {
   if (!element) return fallback;
   const numeric = Number.parseFloat(String(element.value).replace(",", "."));
   return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function formatGeneratorValue(input, value) {
+  const numeric = Math.round(Number(value));
+  const formatted = Number.isFinite(numeric) ? String(numeric) : String(value);
+  return input.dataset.generatorUnit === "%" ? `${formatted}%` : formatted;
+}
+
+function formatEffectValue(input, value) {
+  const numeric = Math.round(Number(value));
+  const formatted = Number.isFinite(numeric) ? String(numeric) : String(value);
+  return input.dataset.effectUnit === "°" ? `${formatted}°` : formatted;
 }
 
 function sanitizeSeed(value, fallback) {

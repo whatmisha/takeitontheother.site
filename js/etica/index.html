@@ -99,7 +99,7 @@
                     <input type="text" class="value-display etica-percent-value" id="densityOutput" value="100%" inputmode="numeric" aria-label="Density value">
                   </div>
                 </label>
-                <input id="densityInput" type="range" min="20" max="320" step="5" value="100">
+                <input id="densityInput" type="range" min="20" max="320" step="1" value="100">
               </div>
 
               <div class="control-group">
@@ -133,6 +133,107 @@
                 <span id="selectionMeta">0/0</span>
               </div>
               <button class="btn-secondary etica-full-button" type="button" id="deselectButton" disabled>Deselect</button>
+            </section>
+          </div>
+        </aside>
+
+        <aside class="controls-panel etica-panel etica-effects-panel" id="effectsPanel" aria-label="Etica effects panel">
+          <div class="panel-header" id="effectsPanelHeader">
+            <span>Effects</span>
+            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse effects panel">
+              <svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true">
+                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </div>
+
+          <div class="panel-content">
+            <section class="control-section etica-effects-section">
+              <div class="effect-section">
+                <div class="section-divider-header">
+                  <label class="section-toggle-label" for="windEnabledCheckbox">
+                    <input type="checkbox" id="windEnabledCheckbox" class="sr-only">
+                    Wind
+                  </label>
+                </div>
+                <div class="effect-section-content controls-disabled" id="windSectionContent">
+                  <div class="control-group">
+                    <label for="windDirectionInput">
+                      <span>Direction</span>
+                      <span class="generator-value" id="windDirectionValue">0°</span>
+                    </label>
+                    <input id="windDirectionInput" type="range" min="0" max="360" step="1" value="0" data-effect-input="wind" data-effect-unit="°">
+                  </div>
+
+                  <div class="control-group">
+                    <label for="windStrengthInput">
+                      <span>Strength</span>
+                      <span class="generator-value" id="windStrengthValue">45</span>
+                    </label>
+                    <input id="windStrengthInput" type="range" min="0" max="100" step="1" value="45" data-effect-input="wind">
+                  </div>
+
+                  <div class="control-group">
+                    <label for="windTrailInput">
+                      <span>Trail Length</span>
+                      <span class="generator-value" id="windTrailValue">120</span>
+                    </label>
+                    <input id="windTrailInput" type="range" min="0" max="420" step="1" value="120" data-effect-input="wind">
+                  </div>
+
+                  <div class="control-group">
+                    <label for="windDestructionInput">
+                      <span>Destruction</span>
+                      <span class="generator-value" id="windDestructionValue">40</span>
+                    </label>
+                    <input id="windDestructionInput" type="range" min="0" max="100" step="1" value="40" data-effect-input="wind">
+                  </div>
+
+                  <div class="control-group">
+                    <label for="windUniformityInput">
+                      <span>Uniformity</span>
+                      <span class="generator-value" id="windUniformityValue">35</span>
+                    </label>
+                    <input id="windUniformityInput" type="range" min="0" max="100" step="1" value="35" data-effect-input="wind">
+                  </div>
+                </div>
+              </div>
+
+              <div class="effect-section">
+                <div class="section-divider-header">
+                  <label class="section-toggle-label" for="echoEnabledCheckbox">
+                    <input type="checkbox" id="echoEnabledCheckbox" class="sr-only">
+                    Echo
+                  </label>
+                </div>
+                <div class="effect-section-content controls-disabled" id="echoSectionContent">
+                  <div class="control-group">
+                    <label for="echoAmountInput">
+                      <span>Amount</span>
+                      <span class="generator-value" id="echoAmountValue">50</span>
+                    </label>
+                    <input id="echoAmountInput" type="range" min="0" max="100" step="1" value="50" data-effect-input="fake">
+                  </div>
+                </div>
+              </div>
+
+              <div class="effect-section">
+                <div class="section-divider-header">
+                  <label class="section-toggle-label" for="staticEnabledCheckbox">
+                    <input type="checkbox" id="staticEnabledCheckbox" class="sr-only">
+                    Static
+                  </label>
+                </div>
+                <div class="effect-section-content controls-disabled" id="staticSectionContent">
+                  <div class="control-group">
+                    <label for="staticSpreadInput">
+                      <span>Spread</span>
+                      <span class="generator-value" id="staticSpreadValue">25</span>
+                    </label>
+                    <input id="staticSpreadInput" type="range" min="0" max="100" step="1" value="25" data-effect-input="fake">
+                  </div>
+                </div>
+              </div>
             </section>
           </div>
         </aside>
@@ -373,48 +474,48 @@
               </div>
 
               <div class="control-group">
-                <label for="nuevoLineStrengthInput"><span>Line Strength</span><span class="generator-value" id="nuevoLineStrengthValue">74</span></label>
-                <input id="nuevoLineStrengthInput" type="range" min="0" max="100" step="1" value="74" data-generator-input="nuevo">
+                <label for="nuevoLineStrengthInput"><span>Line Strength</span><span class="generator-value" id="nuevoLineStrengthValue">50</span></label>
+                <input id="nuevoLineStrengthInput" type="range" min="0" max="100" step="1" value="50" data-generator-input="nuevo">
               </div>
               <div class="control-group">
-                <label for="nuevoMassOutlineInput"><span>Mass Outline</span><span class="generator-value" id="nuevoMassOutlineValue">68</span></label>
-                <input id="nuevoMassOutlineInput" type="range" min="0" max="100" step="1" value="68" data-generator-input="nuevo">
+                <label for="nuevoMassOutlineInput"><span>Mass Outline</span><span class="generator-value" id="nuevoMassOutlineValue">50</span></label>
+                <input id="nuevoMassOutlineInput" type="range" min="0" max="100" step="1" value="50" data-generator-input="nuevo">
               </div>
               <div class="control-group">
-                <label for="nuevoInteriorDetailInput"><span>Interior Detail</span><span class="generator-value" id="nuevoInteriorDetailValue">42</span></label>
-                <input id="nuevoInteriorDetailInput" type="range" min="0" max="100" step="1" value="42" data-generator-input="nuevo">
+                <label for="nuevoInteriorDetailInput"><span>Interior Detail</span><span class="generator-value" id="nuevoInteriorDetailValue">50</span></label>
+                <input id="nuevoInteriorDetailInput" type="range" min="0" max="100" step="1" value="50" data-generator-input="nuevo">
               </div>
               <div class="control-group">
-                <label for="nuevoFillInput"><span>Fill</span><span class="generator-value" id="nuevoFillValue">24</span></label>
-                <input id="nuevoFillInput" type="range" min="0" max="100" step="1" value="24" data-generator-input="nuevo">
+                <label for="nuevoFillInput"><span>Fill</span><span class="generator-value" id="nuevoFillValue">50</span></label>
+                <input id="nuevoFillInput" type="range" min="0" max="100" step="1" value="50" data-generator-input="nuevo">
               </div>
               <div class="control-group">
-                <label for="nuevoSimplifyInput"><span>Simplify</span><span class="generator-value" id="nuevoSimplifyValue">34</span></label>
-                <input id="nuevoSimplifyInput" type="range" min="0" max="100" step="1" value="34" data-generator-input="nuevo">
+                <label for="nuevoSimplifyInput"><span>Simplify</span><span class="generator-value" id="nuevoSimplifyValue">50</span></label>
+                <input id="nuevoSimplifyInput" type="range" min="0" max="100" step="1" value="50" data-generator-input="nuevo">
               </div>
               <div class="control-group">
-                <label for="nuevoSpacingInput"><span>Spacing</span><span class="generator-value" id="nuevoSpacingValue">16</span></label>
-                <input id="nuevoSpacingInput" type="range" min="4" max="44" step="1" value="16" data-generator-input="nuevo">
+                <label for="nuevoSpacingInput"><span>Spacing</span><span class="generator-value" id="nuevoSpacingValue">15</span></label>
+                <input id="nuevoSpacingInput" type="range" min="4" max="44" step="1" value="15" data-generator-input="nuevo">
               </div>
               <div class="control-group">
-                <label for="nuevoDotSizeInput"><span>Dot Size</span><span class="generator-value" id="nuevoDotSizeValue">18</span></label>
-                <input id="nuevoDotSizeInput" type="range" min="3" max="90" step="1" value="18" data-generator-input="nuevo">
+                <label for="nuevoDotSizeInput"><span>Dot Size</span><span class="generator-value" id="nuevoDotSizeValue">75</span></label>
+                <input id="nuevoDotSizeInput" type="range" min="3" max="90" step="1" value="75" data-generator-input="nuevo">
               </div>
               <div class="control-group">
                 <label for="nuevoSizeVariationInput"><span>Dot Variation</span><span class="generator-value" id="nuevoSizeVariationValue">0%</span></label>
                 <input id="nuevoSizeVariationInput" type="range" min="0" max="100" step="1" value="0" data-generator-input="nuevo" data-generator-unit="%">
               </div>
               <div class="control-group">
-                <label for="nuevoJitterInput"><span>Jitter</span><span class="generator-value" id="nuevoJitterValue">18</span></label>
-                <input id="nuevoJitterInput" type="range" min="0" max="100" step="1" value="18" data-generator-input="nuevo">
+                <label for="nuevoJitterInput"><span>Jitter</span><span class="generator-value" id="nuevoJitterValue">10</span></label>
+                <input id="nuevoJitterInput" type="range" min="0" max="100" step="1" value="10" data-generator-input="nuevo">
               </div>
               <div class="control-group">
-                <label for="nuevoMaxPointsInput"><span>Max Points</span><span class="generator-value" id="nuevoMaxPointsValue">1400</span></label>
-                <input id="nuevoMaxPointsInput" type="range" min="10" max="10000" step="10" value="1400" data-generator-input="nuevo">
+                <label for="nuevoMaxPointsInput"><span>Max Points</span><span class="generator-value" id="nuevoMaxPointsValue">320</span></label>
+                <input id="nuevoMaxPointsInput" type="range" min="10" max="10000" step="10" value="320" data-generator-input="nuevo">
               </div>
               <div class="control-group generator-seed-row">
                 <label for="nuevoSeedInput"><span>Seed</span></label>
-                <input type="text" class="value-display generator-seed-input" id="nuevoSeedInput" value="3101" inputmode="numeric">
+                <input type="text" class="value-display generator-seed-input" id="nuevoSeedInput" value="851663" inputmode="numeric">
               </div>
               <div class="button-group etica-panel-buttons generator-actions">
                 <button class="btn-secondary etica-full-button" type="button" id="nuevoRegenerateButton" disabled>Regenerate</button>

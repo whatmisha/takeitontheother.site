@@ -13,10 +13,11 @@ export function renderStroke(ctx, stroke, options = {}) {
   const density = getStrokeDensity(stroke);
   const renderAlpha = options.alpha ?? 1;
   const pathMetrics = getPathMetrics(points);
+  const wind = createWindEffect(options);
 
   ctx.save();
   ctx.globalCompositeOperation = stroke.tool === "eraser" ? "destination-out" : "source-over";
-  drawPoint(ctx, stamps, points[0], stroke, getProfiledDensity(stroke, density, 0), rng, kind, renderAlpha);
+  drawPoint(ctx, stamps, points[0], stroke, getProfiledDensity(stroke, density, 0), rng, kind, renderAlpha, wind);
 
   for (let index = 1; index < points.length; index += 1) {
     drawSegment(
@@ -29,6 +30,7 @@ export function renderStroke(ctx, stroke, options = {}) {
       rng,
       kind,
       renderAlpha,
+      wind,
       pathMetrics.cumulative[index - 1],
       pathMetrics.total
     );
@@ -41,13 +43,13 @@ function normalizeColor(color, fallback = "#000000") {
   return /^#[0-9a-f]{6}$/i.test(color || "") ? color.toLowerCase() : fallback;
 }
 
-function drawSegment(ctx, stamps, from, to, stroke, baseDensity, rng, kind, renderAlpha, segmentStartLength, totalLength) {
+function drawSegment(ctx, stamps, from, to, stroke, baseDensity, rng, kind, renderAlpha, wind, segmentStartLength, totalLength) {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
   if (distance < 0.01) {
     const pathT = totalLength > 0 ? segmentStartLength / totalLength : 0;
-    drawPoint(ctx, stamps, to, stroke, getProfiledDensity(stroke, baseDensity, pathT), rng, kind, renderAlpha);
+    drawPoint(ctx, stamps, to, stroke, getProfiledDensity(stroke, baseDensity, pathT), rng, kind, renderAlpha, wind);
     return;
   }
 
@@ -68,12 +70,12 @@ function drawSegment(ctx, stamps, from, to, stroke, baseDensity, rng, kind, rend
       pointerType: to.pointerType,
       time: lerp(from.time, to.time, t)
     };
-    drawPoint(ctx, stamps, point, stroke, densityMultiplier, rng, kind, renderAlpha);
+    drawPoint(ctx, stamps, point, stroke, densityMultiplier, rng, kind, renderAlpha, wind);
     traveled += spacing * lerp(0.62, 1.32, rng());
   }
 }
 
-function drawPoint(ctx, stamps, point, stroke, densityMultiplier, rng, kind, renderAlpha) {
+function drawPoint(ctx, stamps, point, stroke, densityMultiplier, rng, kind, renderAlpha, wind) {
   const size = getStrokeSize(stroke);
   const sizeVariation = getStrokeSizeVariation(stroke);
   const pressureScale = stroke.settings.pressureEnabled ? lerp(0.72, 1.38, point.pressure) : 1;
@@ -93,15 +95,80 @@ function drawPoint(ctx, stamps, point, stroke, densityMultiplier, rng, kind, ren
     const drawSize = size * pressureScale * radiusJitter * (kind === "eraser" ? 1.1 : 1);
     const x = point.x + Math.cos(angle) * spread;
     const y = point.y + Math.sin(angle) * spread;
-    const alpha = (kind === "dotted" ? lerp(0.86, 1, rng()) : 1) * renderAlpha;
+    const windSample = applyWindEffect(kind === "eraser" ? null : wind, x, y, rng);
+    if (windSample.skip) continue;
+    const alpha = (kind === "dotted" ? lerp(0.86, 1, rng()) : 1) * renderAlpha * windSample.alpha;
 
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.translate(x, y);
+    ctx.translate(windSample.x, windSample.y);
     ctx.rotate(rng() * Math.PI * 2);
     ctx.drawImage(stamp, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
     ctx.restore();
   }
+}
+
+function createWindEffect(options) {
+  const wind = options.effects?.wind;
+  if (!wind?.enabled) return null;
+  const strength = clamp(Number(wind.strength ?? 0) / 100, 0, 1);
+  const force = strength * 10;
+  const trailLength = clamp(Number(wind.trailLength ?? 0), 0, 420);
+  if (strength <= 0 || trailLength <= 0) return null;
+
+  const radians = (Number(wind.direction ?? 0) * Math.PI) / 180;
+  const dx = Math.cos(radians);
+  const dy = Math.sin(radians);
+  const width = Math.max(1, Number(options.canvasWidth ?? 1));
+  const height = Math.max(1, Number(options.canvasHeight ?? 1));
+  const projections = [
+    0,
+    width * dx,
+    height * dy,
+    (width * dx) + (height * dy)
+  ];
+  const minProjection = Math.min(...projections);
+  const maxProjection = Math.max(...projections);
+
+  return {
+    dx,
+    dy,
+    crossX: -dy,
+    crossY: dx,
+    minProjection,
+    projectionRange: Math.max(1, maxProjection - minProjection),
+    strength,
+    force,
+    trailLength,
+    destruction: clamp(Number(wind.destruction ?? 0) / 100, 0, 1),
+    uniformity: clamp(Number(wind.uniformity ?? 0) / 100, 0, 1)
+  };
+}
+
+function applyWindEffect(wind, x, y, rng) {
+  if (!wind) return { x, y, alpha: 1, skip: false };
+
+  const projection = ((x * wind.dx) + (y * wind.dy) - wind.minProjection) / wind.projectionRange;
+  const downwindT = clamp(projection, 0, 1);
+  const flagInfluence = downwindT;
+  const sandInfluence = lerp(1, 0.65, downwindT);
+  const influence = clamp(lerp(flagInfluence, sandInfluence, wind.uniformity), 0, 1);
+  const destructiveForce = wind.destruction * influence;
+  const skipChance = destructiveForce * Math.min(1, wind.force) * 0.5;
+  const skipRoll = rng();
+  if (skipRoll < skipChance) return { x, y, alpha: 0, skip: true };
+
+  const gust = lerp(0.18, 1.15, rng());
+  const drift = wind.trailLength * wind.force * influence * lerp(0.25, 1, wind.destruction) * gust;
+  const cross = wind.trailLength * wind.force * influence * 0.22 * (rng() - 0.5);
+  const alpha = clamp(lerp(1, lerp(0.32, 0.82, rng()), destructiveForce), 0.08, 1);
+
+  return {
+    x: x + (wind.dx * drift) + (wind.crossX * cross),
+    y: y + (wind.dy * drift) + (wind.crossY * cross),
+    alpha,
+    skip: false
+  };
 }
 
 export function getStrokeSize(stroke) {

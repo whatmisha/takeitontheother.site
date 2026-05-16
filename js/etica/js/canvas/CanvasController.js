@@ -5,6 +5,16 @@ import { exportPng } from "./Exporter.js";
 
 const CANVAS_BACKGROUND = "#bbbbbb";
 const BRUSH_COLOR = "#000000";
+const DEFAULT_EFFECTS = {
+  wind: {
+    enabled: false,
+    direction: 0,
+    strength: 45,
+    trailLength: 120,
+    destruction: 40,
+    uniformity: 35
+  }
+};
 
 export class CanvasController extends EventTarget {
   constructor(canvas) {
@@ -34,6 +44,8 @@ export class CanvasController extends EventTarget {
     this.backgroundObjectUrl = null;
     this.backgroundName = "";
     this.backgroundFit = "fill";
+    this.effects = cloneEffects(DEFAULT_EFFECTS);
+    this.effectsEnabled = true;
     this.previewPoint = null;
     this.selectDrag = null;
     this.renderNow();
@@ -127,6 +139,24 @@ export class CanvasController extends EventTarget {
   setBackgroundFit(fit) {
     if (fit !== "fit" && fit !== "fill") return;
     this.backgroundFit = fit;
+    this.queueRender();
+  }
+
+  setWindEffect(settings = {}) {
+    this.effects.wind = {
+      ...this.effects.wind,
+      enabled: Boolean(settings.enabled),
+      direction: sanitizeNumber(settings.direction, 0, 0, 360),
+      strength: sanitizeNumber(settings.strength, 45, 0, 100),
+      trailLength: sanitizeNumber(settings.trailLength, 120, 0, 420),
+      destruction: sanitizeNumber(settings.destruction, 40, 0, 100),
+      uniformity: sanitizeNumber(settings.uniformity, 35, 0, 100)
+    };
+    this.queueRender();
+  }
+
+  setEffectsEnabled(enabled) {
+    this.effectsEnabled = Boolean(enabled);
     this.queueRender();
   }
 
@@ -475,12 +505,12 @@ export class CanvasController extends EventTarget {
 
     for (const stroke of this.strokes) {
       const isHovered = showSelection && this.tool === "select" && stroke.id === this.hoveredStrokeId && stroke.tool !== "eraser";
-      renderStroke(this.strokeCtx, stroke, { alpha: isHovered ? 0.7 : 1, fallbackColor: this.brushColor });
+      renderStroke(this.strokeCtx, stroke, this.getStrokeRenderOptions({ alpha: isHovered ? 0.7 : 1 }));
     }
 
     if (showGeneratedPreview) {
       for (const stroke of this.generatedPreviewStrokes) {
-        renderStroke(this.strokeCtx, stroke, { alpha: generatedPreviewAlpha, fallbackColor: this.brushColor });
+        renderStroke(this.strokeCtx, stroke, this.getStrokeRenderOptions({ alpha: generatedPreviewAlpha }));
       }
     }
 
@@ -488,6 +518,16 @@ export class CanvasController extends EventTarget {
     if (showSelection) this.drawSelectionOverlay();
     if (showSelection) this.drawBrushPreview();
     this.emitChange();
+  }
+
+  getStrokeRenderOptions(options = {}) {
+    return {
+      ...options,
+      fallbackColor: this.brushColor,
+      effects: this.effectsEnabled ? this.effects : null,
+      canvasWidth: this.canvas.width,
+      canvasHeight: this.canvas.height
+    };
   }
 
   paintBackground() {
@@ -648,6 +688,7 @@ export class CanvasController extends EventTarget {
         activeBrushColor: selected?.settings?.color ?? this.brushColor,
         backgroundColor: this.backgroundColor,
         brushColor: this.brushColor,
+        effects: cloneEffects(this.effects),
         selectedStrokeId: selected?.id ?? null,
         selectedStrokeIndex: selectedIndex,
         selectedStrokeTotal: selectableStrokes.length,
@@ -666,6 +707,12 @@ function cloneStrokes(strokes) {
     meta: stroke.meta ? { ...stroke.meta } : undefined,
     points: stroke.points.map((point) => ({ ...point }))
   }));
+}
+
+function cloneEffects(effects) {
+  return {
+    wind: { ...effects.wind }
+  };
 }
 
 function getGeneratedGroupId(stroke) {

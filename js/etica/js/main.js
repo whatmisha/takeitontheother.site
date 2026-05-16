@@ -21,6 +21,7 @@ new Toolbar(controller);
 [
   ["toolsPanel", "toolsPanelHeader"],
   ["linePanel", "linePanelHeader"],
+  ["effectsPanel", "effectsPanelHeader"],
   ["backgroundPanel", "backgroundPanelHeader"],
   ["fotoPanel", "fotoPanelHeader"],
   ["nuevoPanel", "nuevoPanelHeader"],
