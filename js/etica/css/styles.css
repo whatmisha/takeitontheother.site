@@ -667,6 +667,11 @@ button.color-dot--expandable:hover {
   color: #4b4b4b;
 }
 
+.etica-mobile-icon.active {
+  background: #000;
+  color: #d2d2d2;
+}
+
 .is-etica-mobile .etica-mobile-brush-popover {
   position: fixed;
   left: 50%;

@@ -29,7 +29,7 @@ export class CanvasController extends EventTarget {
     this.selectedStrokeId = null;
     this.hoveredStrokeId = null;
     this.tool = "dotted";
-    this.size = 18;
+    this.size = 60;
     this.sizeVariation = 0;
     this.density = 1;
     this.densityProfile = DENSITY_PROFILE_DEFAULT;

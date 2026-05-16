@@ -47,12 +47,14 @@ export class Toolbar {
     this.mobileBrushButton = document.getElementById("mobileBrushButton");
     this.mobileBrushPopover = document.getElementById("mobileBrushPopover");
     this.mobilePhotoButton = document.getElementById("mobilePhotoButton");
+    this.mobilePlayButton = document.getElementById("mobilePlayButton");
     this.mobileExportButton = document.getElementById("mobileExportButton");
     this.mobileExportSheet = document.getElementById("mobileExportSheet");
     this.mobileUndoButton = document.getElementById("mobileUndoButton");
     this.mobileRedoButton = document.getElementById("mobileRedoButton");
-    this.mobileExportCanvasButton = document.getElementById("mobileExportCanvasButton");
-    this.mobileExportTransparentButton = document.getElementById("mobileExportTransparentButton");
+    this.mobilePhotoExportToggle = document.getElementById("mobilePhotoExportToggle");
+    this.mobileTransparencyToggle = document.getElementById("mobileTransparencyToggle");
+    this.mobileExportActionButton = document.getElementById("mobileExportActionButton");
     this.mobileGifToggle = document.getElementById("mobileGifToggle");
     this.mobileCopyTransparentButton = document.getElementById("mobileCopyTransparentButton");
     this.fotoInput = document.getElementById("fotoInput");
@@ -555,6 +557,7 @@ export class Toolbar {
     this.mobileUndoButton?.addEventListener("click", () => this.controller.undo());
     this.mobileRedoButton?.addEventListener("click", () => this.controller.redo());
     this.mobilePhotoButton?.addEventListener("click", () => this.backgroundInput.click());
+    this.mobilePlayButton?.addEventListener("click", () => this.toggleBoilPreview());
 
     this.mobileBrushButton?.addEventListener("click", () => {
       this.closeMobileExportSheet();
@@ -570,22 +573,31 @@ export class Toolbar {
       this.mobileExportSheet.hidden = !this.mobileExportSheet.hidden;
     });
 
-    this.mobileExportCanvasButton?.addEventListener("click", () => {
-      this.closeMobileExportSheet();
-      this.controller.export({ transparent: false });
+    this.mobilePhotoExportToggle?.addEventListener("change", () => {
+      if (this.mobilePhotoExportToggle.checked && this.mobileTransparencyToggle) {
+        this.mobileTransparencyToggle.checked = false;
+      }
     });
 
-    this.mobileExportTransparentButton?.addEventListener("click", () => {
-      this.closeMobileExportSheet();
-      if (this.mobileGifToggle?.checked) {
-        this.exportTransparentGif();
-      } else {
-        this.controller.export({ transparent: true });
+    this.mobileTransparencyToggle?.addEventListener("change", () => {
+      if (this.mobileTransparencyToggle.checked && this.mobilePhotoExportToggle) {
+        this.mobilePhotoExportToggle.checked = false;
       }
     });
 
     this.mobileGifToggle?.addEventListener("change", () => {
       if (this.gifToggle) this.gifToggle.checked = this.mobileGifToggle.checked;
+    });
+
+    this.mobileExportActionButton?.addEventListener("click", () => {
+      this.closeMobileExportSheet();
+      if (this.mobileGifToggle?.checked) {
+        this.exportTransparentGif();
+        return;
+      }
+      const includePhoto = this.mobilePhotoExportToggle?.checked ?? false;
+      const transparent = includePhoto ? false : (this.mobileTransparencyToggle?.checked ?? true);
+      this.controller.export({ transparent });
     });
 
     this.mobileCopyTransparentButton?.addEventListener("click", async () => {
@@ -716,6 +728,8 @@ export class Toolbar {
     this.controller.addEventListener("boilpreviewchange", (event) => {
       this.boilPreviewButton?.classList.toggle("active", Boolean(event.detail.active));
       this.boilPreviewButton?.setAttribute("aria-pressed", String(Boolean(event.detail.active)));
+      this.mobilePlayButton?.classList.toggle("active", Boolean(event.detail.active));
+      this.mobilePlayButton?.setAttribute("aria-pressed", String(Boolean(event.detail.active)));
     });
 
     document.querySelectorAll("[data-effect-input]").forEach((input) => {
@@ -802,11 +816,10 @@ export class Toolbar {
   }
 
   exportTransparentGif() {
-    this.applyBoilSettings();
     this.controller.exportTransparentGif({
-      boilAmount: this.boilEnabledCheckbox?.checked ? valueOf("boilAmountInput", 42) : 0,
-      frames: valueOf("boilFramesInput", 4),
-      fps: valueOf("boilFpsInput", 8)
+      boilAmount: 42,
+      frames: 4,
+      fps: 8
     });
   }
 
