@@ -624,3 +624,17 @@
 127.0.0.1 - - [16/May/2026 04:00:18] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
 127.0.0.1 - - [16/May/2026 04:00:18] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
 127.0.0.1 - - [16/May/2026 04:03:29] "HEAD / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 04:04:26] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 04:04:26] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 04:04:26] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 04:04:26] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 04:04:26] "GET /js/input/PointerTracker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 04:04:26] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 04:04:26] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 04:04:26] "GET /js/brushes/DensityProfiles.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 04:04:26] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 04:04:26] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 04:04:26] "GET /js/brushes/random.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 04:04:26] "GET /js/canvas/Exporter.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 04:04:26] "GET /js/utils/ColorUtils.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 04:04:26] "GET /js/brushes/stamps.js HTTP/1.1" 304 -
