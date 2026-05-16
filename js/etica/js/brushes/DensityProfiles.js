@@ -1,6 +1,6 @@
 import { clamp } from "./random.js";
 
-export const DENSITY_PROFILE_DEFAULT = "flat";
+export const DENSITY_PROFILE_DEFAULT = "fade-out";
 
 export function getDensityProfileMultiplier(profile, t) {
   const x = clamp(t, 0, 1);

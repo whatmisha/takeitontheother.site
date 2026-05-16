@@ -7,8 +7,11 @@ body {
 .etica-title-button {
   font-family: inherit;
   font-size: 1rem;
+  font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
+  background: var(--color-bg-panel);
+  color: var(--color-text);
 }
 
 .etica-title-button.active,
@@ -22,14 +25,16 @@ body {
   cursor: pointer;
 }
 
-.etica-preset-select {
-  width: auto;
-  min-width: 210px;
-  height: var(--button-height);
-  margin: 0;
-  border-radius: 999px;
-  background-color: var(--color-bg-panel);
+.etica-canvas-dropdown .preset-dropdown-toggle {
+  padding: var(--spacing-md) var(--spacing-3xl);
+  font-family: inherit;
   font-size: 1rem;
+  font-weight: 500;
+}
+
+.etica-canvas-dropdown .preset-dropdown-item {
+  min-width: 118px;
+  font-size: 0.95rem;
 }
 
 .etica-canvas-container {
@@ -368,9 +373,10 @@ button.color-dot--expandable:hover {
     top: var(--spacing-lg);
   }
 
-  .etica-preset-select {
-    min-width: 170px;
+  .etica-canvas-dropdown .preset-dropdown-toggle {
     max-width: 42vw;
+    padding-left: var(--spacing-2xl);
+    padding-right: var(--spacing-2xl);
   }
 
   .etica-canvas-container {

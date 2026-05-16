@@ -12,13 +12,23 @@
       <div class="top-links">
         <button class="yf-tools-link etica-title-button active" type="button" aria-label="Etica Pinta">Etica Pinta</button>
         <button class="yf-tools-link etica-title-button etica-tab-button" type="button" aria-label="Etica Sueño">Etica Sueño</button>
-        <select id="canvasPresetSelect" class="style-select etica-preset-select" aria-label="Canvas preset">
-          <option value="1080x1080" selected>Square 1080x1080</option>
-          <option value="1080x1350">Instagram Portrait 1080x1350</option>
-          <option value="1080x566">Instagram Landscape 1080x566</option>
-          <option value="1080x1920">Stories/Reels 1080x1920</option>
-          <option value="1920x1080">Full HD 1920x1080</option>
-        </select>
+        <div class="preset-dropdown etica-canvas-dropdown" id="canvasPresetDropdown">
+          <button class="preset-dropdown-toggle" id="canvasPresetToggle" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="canvasPresetMenu">
+            <span class="preset-dropdown-text" id="canvasPresetText">1080×1080</span>
+            <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true">
+              <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <ul class="preset-dropdown-menu" id="canvasPresetMenu" role="listbox" aria-label="Canvas preset">
+            <li class="preset-dropdown-item selected" role="option" aria-selected="true" data-canvas-preset="1080x1080">1080×1080</li>
+            <li class="preset-dropdown-item" role="option" aria-selected="false" data-canvas-preset="1080x1350">1080×1350</li>
+            <li class="preset-dropdown-item" role="option" aria-selected="false" data-canvas-preset="1080x1440">1080×1440</li>
+            <li class="preset-dropdown-item" role="option" aria-selected="false" data-canvas-preset="1080x1920">1080×1920</li>
+            <li class="preset-dropdown-item" role="option" aria-selected="false" data-canvas-preset="1080x566">1080×566</li>
+            <li class="preset-dropdown-item" role="option" aria-selected="false" data-canvas-preset="1080x608">1080×608</li>
+            <li class="preset-dropdown-item" role="option" aria-selected="false" data-canvas-preset="1920x1080">1920×1080</li>
+          </ul>
+        </div>
       </div>
 
       <div class="main-content">
@@ -99,7 +109,7 @@
                 <select id="densityProfileSelect" class="style-select" aria-label="Density profile">
                   <option value="flat">Flat</option>
                   <option value="fade-in">Fade In</option>
-                  <option value="fade-out">Fade Out</option>
+                  <option value="fade-out" selected>Fade Out</option>
                   <option value="in-out">In-Out</option>
                   <option value="soft-peak">Soft Peak</option>
                   <option value="hard-peak">Hard Peak</option>
@@ -110,7 +120,7 @@
 
               <div class="control-group etica-meta-row">
                 <span>Selected</span>
-                <span id="selectionMeta">None</span>
+                <span id="selectionMeta">0/0</span>
               </div>
               <button class="btn-secondary etica-full-button" type="button" id="deselectButton" disabled>Deselect</button>
             </section>

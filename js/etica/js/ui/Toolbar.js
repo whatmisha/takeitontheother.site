@@ -8,7 +8,10 @@ export class Toolbar {
     this.densityInput = document.getElementById("densityInput");
     this.densityOutput = document.getElementById("densityOutput");
     this.densityProfileSelect = document.getElementById("densityProfileSelect");
-    this.canvasPresetSelect = document.getElementById("canvasPresetSelect");
+    this.canvasPresetToggle = document.getElementById("canvasPresetToggle");
+    this.canvasPresetText = document.getElementById("canvasPresetText");
+    this.canvasPresetMenu = document.getElementById("canvasPresetMenu");
+    this.canvasPresetItems = document.querySelectorAll("[data-canvas-preset]");
     this.undoButton = document.getElementById("undoButton");
     this.redoButton = document.getElementById("redoButton");
     this.clearButton = document.getElementById("clearButton");
@@ -91,10 +94,7 @@ export class Toolbar {
       this.controller.setDensityProfile(this.densityProfileSelect.value);
     });
 
-    this.canvasPresetSelect.addEventListener("change", () => {
-      const [width, height] = this.canvasPresetSelect.value.split("x").map(Number);
-      this.controller.resize(width, height);
-    });
+    this.bindCanvasPresetDropdown();
 
     this.undoButton.addEventListener("click", () => {
       this.controller.undo();
@@ -343,6 +343,42 @@ export class Toolbar {
     if (this.mobileExportSheet) this.mobileExportSheet.hidden = true;
   }
 
+  bindCanvasPresetDropdown() {
+    this.canvasPresetToggle?.addEventListener("click", () => {
+      const isOpen = this.canvasPresetMenu.classList.toggle("active");
+      this.canvasPresetToggle.setAttribute("aria-expanded", String(isOpen));
+    });
+
+    this.canvasPresetItems.forEach((item) => {
+      item.addEventListener("click", () => {
+        this.applyCanvasPreset(item.dataset.canvasPreset);
+        this.closeCanvasPresetDropdown();
+      });
+    });
+
+    document.addEventListener("pointerdown", (event) => {
+      const dropdown = document.getElementById("canvasPresetDropdown");
+      if (!dropdown || dropdown.contains(event.target)) return;
+      this.closeCanvasPresetDropdown();
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") this.closeCanvasPresetDropdown();
+    });
+  }
+
+  applyCanvasPreset(value) {
+    if (!value) return;
+    const [width, height] = value.split("x").map(Number);
+    this.setCanvasPresetLabel(value);
+    this.controller.resize(width, height);
+  }
+
+  closeCanvasPresetDropdown() {
+    this.canvasPresetMenu?.classList.remove("active");
+    this.canvasPresetToggle?.setAttribute("aria-expanded", "false");
+  }
+
   sync(detail) {
     this.lastDetail = detail;
     this.undoButton.disabled = !detail.canUndo;
@@ -353,13 +389,10 @@ export class Toolbar {
     this.clearBackgroundButton.disabled = !detail.backgroundName;
     this.selectionMeta.textContent = detail.selectedStrokeId
       ? `${detail.selectedStrokeIndex}/${detail.selectedStrokeTotal}`
-      : "None";
+      : `0/${detail.selectedStrokeTotal}`;
     this.backgroundMeta.textContent = detail.backgroundName || "None";
 
-    const presetValue = `${detail.width}x${detail.height}`;
-    if (document.activeElement !== this.canvasPresetSelect && hasSelectOption(this.canvasPresetSelect, presetValue)) {
-      this.canvasPresetSelect.value = presetValue;
-    }
+    this.setCanvasPresetLabel(`${detail.width}x${detail.height}`);
 
     if (!isActivelyEditing(this.sizeInput, this.sizeOutput)) {
       this.sizeInput.value = Math.round(detail.activeSize);
@@ -376,6 +409,18 @@ export class Toolbar {
     if (document.activeElement !== this.densityProfileSelect) {
       this.densityProfileSelect.value = detail.activeDensityProfile || "flat";
     }
+  }
+
+  setCanvasPresetLabel(value) {
+    const selectedItem = Array.from(this.canvasPresetItems).find((item) => item.dataset.canvasPreset === value);
+    if (!selectedItem) return;
+
+    this.canvasPresetItems.forEach((item) => {
+      const isSelected = item === selectedItem;
+      item.classList.toggle("selected", isSelected);
+      item.setAttribute("aria-selected", String(isSelected));
+    });
+    if (this.canvasPresetText) this.canvasPresetText.textContent = selectedItem.textContent;
   }
 }
 
@@ -398,11 +443,6 @@ function snapByStep(value, direction, step) {
   return direction > 0
     ? Math.ceil((value + 1) / step) * step
     : Math.floor((value - 1) / step) * step;
-}
-
-function hasSelectOption(select, value) {
-  if (!select) return false;
-  return Array.from(select.options).some((option) => option.value === value);
 }
 
 function isTypingTarget(target) {

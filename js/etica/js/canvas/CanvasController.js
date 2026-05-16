@@ -185,6 +185,8 @@ export class CanvasController extends EventTarget {
   resize(width, height) {
     const nextWidth = sanitizeSize(width);
     const nextHeight = sanitizeSize(height);
+    if (nextWidth === this.canvas.width && nextHeight === this.canvas.height) return;
+
     const dx = (nextWidth - this.canvas.width) / 2;
     const dy = (nextHeight - this.canvas.height) / 2;
 
