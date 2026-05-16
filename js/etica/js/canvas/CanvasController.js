@@ -98,6 +98,13 @@ export class CanvasController extends EventTarget {
     this.queueRender();
   }
 
+  setCanvasSize(width, height) {
+    this.canvas.width = sanitizeSize(width);
+    this.canvas.height = sanitizeSize(height);
+    this.ensureStrokeLayer();
+    this.queueRender();
+  }
+
   beginEditSession() {
     if (!this.getSelectedStroke() || this.editSessionActive) return;
     this.commitHistory();
@@ -225,6 +232,18 @@ export class CanvasController extends EventTarget {
   export({ transparent = false } = {}) {
     this.renderNow({ showSelection: false });
     exportPng(transparent ? this.strokeCanvas : this.canvas, { transparent });
+    this.queueRender();
+  }
+
+  async copyTransparent() {
+    this.renderNow({ showSelection: false });
+    const blob = await canvasToBlob(this.strokeCanvas);
+    if (!blob || !navigator.clipboard || !window.ClipboardItem) {
+      exportPng(this.strokeCanvas, { transparent: true });
+      this.queueRender();
+      return;
+    }
+    await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
     this.queueRender();
   }
 
@@ -559,6 +578,12 @@ function sanitizeDensityProfile(profile) {
   return ["flat", "fade-in", "fade-out", "in-out", "soft-peak"].includes(profile)
     ? profile
     : DENSITY_PROFILE_DEFAULT;
+}
+
+function canvasToBlob(canvas) {
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), "image/png");
+  });
 }
 
 function containRect(sourceWidth, sourceHeight, targetWidth, targetHeight, mode = "fit") {

@@ -184,6 +184,12 @@ body {
   align-items: center;
 }
 
+.etica-mobile-toolbar,
+.etica-mobile-brush-popover,
+.etica-mobile-sheet {
+  display: none;
+}
+
 .color-swatches-compact {
   display: flex;
   flex-direction: column;
@@ -447,4 +453,139 @@ button.color-dot--expandable:hover {
     right: auto;
     bottom: 128px;
   }
+}
+
+.is-etica-mobile,
+.is-etica-mobile body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+.is-etica-mobile .top-links,
+.is-etica-mobile .controls-panel,
+.is-etica-mobile .bottom-buttons {
+  display: none !important;
+}
+
+.is-etica-mobile .container,
+.is-etica-mobile .main-content,
+.is-etica-mobile .canvas-container {
+  width: 100vw;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.is-etica-mobile .etica-canvas-container {
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.is-etica-mobile #drawingCanvas {
+  flex: 0 0 auto;
+  width: auto;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  border: none;
+  box-shadow: none;
+  cursor: crosshair;
+}
+
+.is-etica-mobile .etica-mobile-toolbar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 10020;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 999px;
+  background: rgba(26, 26, 26, 0.88);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(18px);
+}
+
+.etica-mobile-icon {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: #d2d2d2;
+  color: #000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.etica-mobile-icon:disabled {
+  background: #0e0e0e;
+  color: #4b4b4b;
+}
+
+.is-etica-mobile .etica-mobile-brush-popover {
+  position: fixed;
+  left: 50%;
+  bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 10021;
+  display: block;
+  width: min(280px, calc(100vw - 40px));
+  padding: 16px 18px;
+  border-radius: 22px;
+  background: rgba(26, 26, 26, 0.92);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(18px);
+}
+
+.is-etica-mobile .etica-mobile-brush-popover[hidden] {
+  display: none;
+}
+
+.etica-mobile-brush-popover input[type="range"] {
+  width: 100%;
+}
+
+.is-etica-mobile .etica-mobile-sheet {
+  position: fixed;
+  left: 50%;
+  bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 10021;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(280px, calc(100vw - 40px));
+  padding: 8px;
+  border-radius: 22px;
+  background: rgba(26, 26, 26, 0.92);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(18px);
+}
+
+.is-etica-mobile .etica-mobile-sheet[hidden] {
+  display: none;
+}
+
+.etica-mobile-sheet button {
+  width: 100%;
+  height: 40px;
+  border: none;
+  border-radius: 999px;
+  background: #000;
+  color: #d2d2d2;
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: center;
 }

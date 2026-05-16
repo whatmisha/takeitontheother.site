@@ -26,6 +26,17 @@ export class Toolbar {
     this.selectionMeta = document.getElementById("selectionMeta");
     this.canvasMeta = document.getElementById("canvasMeta");
     this.strokeMeta = document.getElementById("strokeMeta");
+    this.mobileSizeInput = document.getElementById("mobileSizeInput");
+    this.mobileBrushButton = document.getElementById("mobileBrushButton");
+    this.mobileBrushPopover = document.getElementById("mobileBrushPopover");
+    this.mobilePhotoButton = document.getElementById("mobilePhotoButton");
+    this.mobileExportButton = document.getElementById("mobileExportButton");
+    this.mobileExportSheet = document.getElementById("mobileExportSheet");
+    this.mobileUndoButton = document.getElementById("mobileUndoButton");
+    this.mobileRedoButton = document.getElementById("mobileRedoButton");
+    this.mobileExportCanvasButton = document.getElementById("mobileExportCanvasButton");
+    this.mobileExportTransparentButton = document.getElementById("mobileExportTransparentButton");
+    this.mobileCopyTransparentButton = document.getElementById("mobileCopyTransparentButton");
     this.lastDetail = null;
     this.backgroundColorPicker = new BackgroundColorPicker(controller);
     this.bind();
@@ -140,6 +151,8 @@ export class Toolbar {
       this.controller.clearSelection();
     });
 
+    this.bindMobileControls();
+
     window.addEventListener("keydown", (event) => {
       if (isTypingTarget(event.target)) return;
 
@@ -206,6 +219,7 @@ export class Toolbar {
     const next = clampNumber(value, 3, 160);
     this.sizeInput.value = next;
     this.sizeOutput.value = String(Math.round(next));
+    if (this.mobileSizeInput) this.mobileSizeInput.value = next;
     this.controller.setSize(next);
   }
 
@@ -338,12 +352,70 @@ export class Toolbar {
     });
   }
 
+  bindMobileControls() {
+    this.mobileUndoButton?.addEventListener("click", () => this.controller.undo());
+    this.mobileRedoButton?.addEventListener("click", () => this.controller.redo());
+    this.mobilePhotoButton?.addEventListener("click", () => this.backgroundInput.click());
+
+    this.mobileBrushButton?.addEventListener("click", () => {
+      this.closeMobileExportSheet();
+      this.mobileBrushPopover.hidden = !this.mobileBrushPopover.hidden;
+    });
+
+    this.mobileSizeInput?.addEventListener("input", () => {
+      this.applySize(this.mobileSizeInput.value);
+    });
+
+    this.mobileExportButton?.addEventListener("click", () => {
+      this.mobileBrushPopover.hidden = true;
+      this.mobileExportSheet.hidden = !this.mobileExportSheet.hidden;
+    });
+
+    this.mobileExportCanvasButton?.addEventListener("click", () => {
+      this.closeMobileExportSheet();
+      this.controller.export({ transparent: false });
+    });
+
+    this.mobileExportTransparentButton?.addEventListener("click", () => {
+      this.closeMobileExportSheet();
+      this.controller.export({ transparent: true });
+    });
+
+    this.mobileCopyTransparentButton?.addEventListener("click", async () => {
+      this.closeMobileExportSheet();
+      try {
+        await this.controller.copyTransparent();
+      } catch {
+        this.controller.export({ transparent: true });
+      }
+    });
+
+    document.addEventListener("pointerdown", (event) => {
+      if (!document.documentElement.classList.contains("is-etica-mobile")) return;
+      const target = event.target;
+      if (this.mobileBrushPopover && !this.mobileBrushPopover.hidden) {
+        const insideBrush = this.mobileBrushPopover.contains(target) || this.mobileBrushButton?.contains(target);
+        if (!insideBrush) this.mobileBrushPopover.hidden = true;
+      }
+      if (this.mobileExportSheet && !this.mobileExportSheet.hidden) {
+        const insideExport = this.mobileExportSheet.contains(target) || this.mobileExportButton?.contains(target);
+        if (!insideExport) this.mobileExportSheet.hidden = true;
+      }
+    });
+  }
+
+  closeMobileExportSheet() {
+    if (this.mobileExportSheet) this.mobileExportSheet.hidden = true;
+  }
+
   sync(detail) {
     this.lastDetail = detail;
     this.canvasMeta.textContent = `${detail.width} x ${detail.height}`;
     this.strokeMeta.textContent = `${detail.strokes} ${detail.strokes === 1 ? "stroke" : "strokes"}`;
     this.undoButton.disabled = !detail.canUndo;
     this.redoButton.disabled = !detail.canRedo;
+    if (this.mobileUndoButton) this.mobileUndoButton.disabled = !detail.canUndo;
+    if (this.mobileRedoButton) this.mobileRedoButton.disabled = !detail.canRedo;
     this.deselectButton.disabled = !detail.selectedStrokeId;
     this.clearBackgroundButton.disabled = !detail.backgroundName;
     this.selectionMeta.textContent = detail.selectedStrokeId ? `Line ${detail.selectedStrokeIndex}` : "None";
@@ -355,6 +427,7 @@ export class Toolbar {
     if (!isActivelyEditing(this.sizeInput, this.sizeOutput)) {
       this.sizeInput.value = Math.round(detail.activeSize);
       this.sizeOutput.value = String(Math.round(detail.activeSize));
+      if (this.mobileSizeInput) this.mobileSizeInput.value = Math.round(detail.activeSize);
     }
 
     if (!isActivelyEditing(this.densityInput, this.densityOutput)) {
