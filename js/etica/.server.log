@@ -1,0 +1,566 @@
+127.0.0.1 - - [16/May/2026 01:05:35] "HEAD / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:05:39] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:05:39] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:05:39] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:05:39] "GET /yf-ui-framework/v2/css/yf-styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:05:39] "GET /js/canvas/CanvasController.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:05:39] "GET /js/input/PointerTracker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:05:39] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:05:39] "GET /js/brushes/random.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:05:39] "GET /js/canvas/Exporter.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:05:39] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:05:39] "GET /yf-ui-framework/v2/fonts/TT_Commons_Classic_Regular.woff2 HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:05:39] "GET /yf-ui-framework/v2/fonts/LunnenDisplay-VariableVF.woff2 HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:05:39] "GET /js/brushes/stamps.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:05:39] "GET /yf-ui-framework/v2/fonts/TT_Commons_Classic_Medium.woff2 HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:05:59] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:05:59] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:05:59] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:05:59] "GET /yf-ui-framework/v2/css/yf-styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:05:59] "GET /js/canvas/CanvasController.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:05:59] "GET /js/input/PointerTracker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:05:59] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:05:59] "GET /yf-ui-framework/v2/fonts/TT_Commons_Classic_Regular.woff2 HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:05:59] "GET /yf-ui-framework/v2/fonts/LunnenDisplay-VariableVF.woff2 HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:05:59] "GET /yf-ui-framework/v2/fonts/TT_Commons_Classic_Medium.woff2 HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:05:59] "GET /js/brushes/random.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:05:59] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:05:59] "GET /js/canvas/Exporter.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:05:59] "GET /js/brushes/stamps.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:06:27] "GET / HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:06:27] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:06:27] "GET /js/ui/Toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:07:05] "GET / HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:07:05] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:07:05] "GET /js/ui/Toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:08:01] "GET / HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:08:01] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:08:01] "GET /js/ui/Toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:08:22] "GET / HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:08:22] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:21:54] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:21:54] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:21:54] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:21:54] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:21:54] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:21:54] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:21:54] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:21:54] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:21:54] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:21:54] "GET /js/brushes/random.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:21:54] "GET /js/canvas/Exporter.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:21:54] "GET /js/brushes/stamps.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:22:22] "GET / HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:22:22] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:22:22] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:22:22] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:22:22] "GET /js/input/PointerTracker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:22:22] "GET /js/ui/Toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:22:22] "GET /js/canvas/CanvasController.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:22:22] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:22:46] "HEAD / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:22:56] "GET / HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:22:56] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:22:56] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:22:56] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:22:56] "GET /js/canvas/CanvasController.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:22:56] "GET /js/input/PointerTracker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:22:56] "GET /js/ui/Toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:22:56] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:29:20] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:29:21] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:29:21] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:29:21] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:29:21] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:29:21] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:29:21] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:29:21] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:29:21] "GET /js/brushes/random.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:29:21] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:29:21] "GET /js/canvas/Exporter.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:29:21] "GET /js/brushes/stamps.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:30:59] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:30:59] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:30:59] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:30:59] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:30:59] "GET /js/canvas/CanvasController.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:30:59] "GET /js/input/PointerTracker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:30:59] "GET /js/ui/Toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:30:59] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:31:03] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:03] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:03] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:03] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:03] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:03] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:03] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:03] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:03] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:03] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:03] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:03] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:03] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:31:03] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:31:03] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:31:03] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:31:03] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:31:03] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:31:03] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:31:03] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:31:22] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:22] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:22] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:22] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:22] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:22] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:22] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:22] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:22] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:22] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:22] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:22] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:31:22] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:31:22] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:31:22] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:31:22] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:31:22] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:31:22] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:31:22] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:31:22] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:33:10] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:33:10] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:33:10] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:33:10] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:33:10] "GET /js/canvas/CanvasController.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:33:10] "GET /js/input/PointerTracker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:33:10] "GET /js/ui/Toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:33:10] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:34:57] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:34:57] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:34:57] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:34:57] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:34:57] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:34:57] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:34:57] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:34:57] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:34:57] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:34:57] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:34:57] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:34:57] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:34:57] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:34:57] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:34:57] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:34:57] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:34:57] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:34:57] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:34:57] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:34:57] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:34:57] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:34:57] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:34:57] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:34:57] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:34:57] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:34:57] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:49:05] "HEAD / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:49:33] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:49:33] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:49:33] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:49:34] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:49:34] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:49:34] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:49:34] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:49:34] "GET /js/brushes/random.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:49:34] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:49:34] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:49:34] "GET /js/brushes/stamps.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:49:59] "GET / HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:49:59] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:49:59] "GET /js/canvas/CanvasController.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:49:59] "GET /js/input/PointerTracker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:49:59] "GET /js/ui/Toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:49:59] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:49:59] "GET /js/canvas/Exporter.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:50:36] "HEAD / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:57:30] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:57:30] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:57:30] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:57:30] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:57:30] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:57:30] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:57:30] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:57:30] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:57:30] "GET /js/brushes/random.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:57:30] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 01:57:30] "GET /js/brushes/stamps.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 01:57:30] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:57:30] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:57:30] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:57:30] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 01:57:30] code 404, message File not found
+127.0.0.1 - - [16/May/2026 01:57:30] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 02:16:39] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:16:40] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:16:40] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:16:40] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:16:40] "GET /js/canvas/CanvasController.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:16:40] "GET /js/input/PointerTracker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:16:40] "GET /js/ui/Toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:16:40] "GET /js/brushes/random.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:16:40] "GET /js/canvas/Exporter.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:16:40] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:16:40] "GET /js/brushes/stamps.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:17:08] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:17:30] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:18:23] "HEAD / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:18:49] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:14] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:14] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:14] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:14] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:14] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:14] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:14] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:14] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:14] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:14] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:14] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:14] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:14] code 404, message File not found
+127.0.0.1 - - [16/May/2026 02:19:14] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 02:19:14] code 404, message File not found
+127.0.0.1 - - [16/May/2026 02:19:14] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 02:19:14] code 404, message File not found
+127.0.0.1 - - [16/May/2026 02:19:14] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 02:19:14] code 404, message File not found
+127.0.0.1 - - [16/May/2026 02:19:14] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 02:19:41] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:41] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:41] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:41] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:41] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:41] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:41] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:41] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:41] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:41] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:41] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:41] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:19:41] code 404, message File not found
+127.0.0.1 - - [16/May/2026 02:19:41] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 02:20:06] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:20:06] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:20:06] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:20:06] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:20:06] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:20:06] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:20:06] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:20:06] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:20:06] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:20:06] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:20:06] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:20:06] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:21:44] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:21:44] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:21:44] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:21:44] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:21:44] "GET /js/ui/Toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:48:01] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:01] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:01] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:01] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:01] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:01] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:01] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:01] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:01] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:01] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:01] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:01] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:01] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:01] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:21] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:21] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:21] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:21] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:21] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:21] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:21] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:21] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:21] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:21] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:21] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:21] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:22] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:22] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:35] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:35] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:35] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:35] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:35] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:35] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:35] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:35] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:35] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:35] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:35] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:35] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:35] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:35] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:48:44] "HEAD / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:51] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:52] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:52] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:52] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:59:52] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:52] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:52] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:52] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:52] "GET /js/brushes/random.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:59:52] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:59:52] "GET /js/canvas/Exporter.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:59:52] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:52] "GET /js/brushes/stamps.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 02:59:59] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:59] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:59] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:59] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:59] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:59] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:59] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:59] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:59] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:59] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:59] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:59] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:59] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:59] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 02:59:59] code 404, message File not found
+127.0.0.1 - - [16/May/2026 02:59:59] code 404, message File not found
+127.0.0.1 - - [16/May/2026 02:59:59] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 02:59:59] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 02:59:59] code 404, message File not found
+127.0.0.1 - - [16/May/2026 02:59:59] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:03:08] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:03:08] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:03:08] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:03:08] "GET /js/input/PointerTracker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:03:08] "GET /js/canvas/CanvasController.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:03:08] "GET /js/ui/Toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:03:08] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:03:08] "GET /js/utils/ColorUtils.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:03:11] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:03:11] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:03:11] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:03:11] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:03:11] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:03:11] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:03:11] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:03:11] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:03:11] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:03:11] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:03:11] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:03:11] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:03:11] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:03:11] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:03:11] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:03:11] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:03:11] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:03:11] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:03:11] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:03:11] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:13:51] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:13:51] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:13:51] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:13:51] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:13:51] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:13:51] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:13:51] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:13:51] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:13:51] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:13:51] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:13:51] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:13:51] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:13:51] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:13:51] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:14:23] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:14:23] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:14:23] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:14:23] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:14:23] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:14:23] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:14:23] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:14:23] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:14:23] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:14:23] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:14:23] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:14:23] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:14:23] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:14:23] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:14:48] "HEAD / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:16:23] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:16:23] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:16:23] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:16:23] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:16:23] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:16:23] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:16:23] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:16:23] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:16:23] "GET /js/canvas/Exporter.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:16:23] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:16:23] "GET /js/utils/ColorUtils.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:16:25] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:20:07] "HEAD / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:20:22] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:20:22] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:20:22] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:20:22] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:20:22] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:20:22] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:20:22] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:20:22] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:20:22] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:20:22] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:20:22] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:20:22] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:20:22] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:20:22] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:24:33] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:24:34] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:24:34] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:24:34] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:24:34] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:24:34] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:24:34] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:24:34] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:24:34] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:24:34] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:24:34] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:24:34] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:24:34] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:24:34] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:24:34] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:24:34] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:24:34] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:24:34] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:24:34] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:24:34] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:24:34] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:24:34] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:24:34] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:24:34] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:24:34] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:24:34] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:25:31] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:25:31] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:25:31] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:25:31] "GET /js/input/PointerTracker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:25:31] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:25:31] "GET /js/canvas/CanvasController.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:25:31] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:25:31] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:25:31] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:25:31] "GET /js/canvas/Exporter.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:25:31] "GET /js/brushes/random.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:25:31] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:25:31] "GET /js/brushes/stamps.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:25:31] "GET /js/utils/ColorUtils.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:25:31] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:25:31] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:25:31] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:25:31] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:36:50] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:36:51] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:36:51] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:36:51] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:36:51] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:36:51] "GET /js/input/PointerTracker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:36:51] "GET /js/ui/Toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:36:51] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:36:51] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:36:51] "GET /js/canvas/Exporter.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:36:51] "GET /js/utils/ColorUtils.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:37:03] "HEAD / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:19] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:19] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:19] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:19] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:19] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:19] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:19] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:19] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:19] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:19] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:19] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:19] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:19] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:19] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:27] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:27] "GET /js/canvas/CanvasController.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 03:37:50] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:50] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:50] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:50] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:50] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:50] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:50] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:50] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:50] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:50] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:50] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:50] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:50] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:50] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:50] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:50] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:50] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:50] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:50] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:50] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:50] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:50] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:50] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:50] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:50] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:50] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:51] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:51] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:51] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:51] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:37:51] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:51] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:37:51] code 404, message File not found
+127.0.0.1 - - [16/May/2026 03:37:51] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 03:51:38] "HEAD / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:52:00] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:52:00] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:52:00] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:52:00] "GET /css/yf-styles-no-fonts.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:52:00] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:52:00] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:52:00] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:52:00] "GET /yf-ui-framework/v2/src/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:52:00] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:52:00] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:52:00] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:52:00] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:52:00] "GET /js/brushes/DensityProfiles.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:52:00] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 03:52:00] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
