@@ -10,8 +10,10 @@
   <body>
     <div class="container">
       <div class="top-links">
-        <button class="yf-tools-link etica-title-button active" type="button" aria-label="Etica Pinta">Etica Pinta</button>
-        <button class="yf-tools-link etica-title-button etica-tab-button" type="button" aria-label="Etica Sueño">Etica Sueño</button>
+        <button class="yf-tools-link etica-title-button etica-tab-button active" type="button" data-mode-tab="pinta" aria-pressed="true">Etica Pinta</button>
+        <button class="yf-tools-link etica-title-button etica-tab-button" type="button" data-mode-tab="foto" aria-pressed="false">Foto</button>
+        <button class="yf-tools-link etica-title-button etica-tab-button" type="button" data-mode-tab="nuevo" aria-pressed="false">Nuevo</button>
+        <button class="yf-tools-link etica-title-button etica-tab-button" type="button" data-mode-tab="flor" aria-pressed="false">Flor</button>
         <div class="preset-dropdown etica-canvas-dropdown" id="canvasPresetDropdown">
           <button class="preset-dropdown-toggle" id="canvasPresetToggle" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="canvasPresetMenu">
             <span class="preset-dropdown-text" id="canvasPresetText">1:1</span>
@@ -101,6 +103,16 @@
               </div>
 
               <div class="control-group">
+                <label for="sizeVariationInput">
+                  <span>Dot Variation</span>
+                  <div class="value-display-wrapper">
+                    <input type="text" class="value-display etica-percent-value" id="sizeVariationOutput" value="0%" inputmode="numeric" aria-label="Dot size variation value">
+                  </div>
+                </label>
+                <input id="sizeVariationInput" type="range" min="0" max="100" step="1" value="0">
+              </div>
+
+              <div class="control-group">
                 <label for="densityProfileSelect">
                   <span>Profile</span>
                 </label>
@@ -141,8 +153,8 @@
                 <div class="color-swatch-row active" id="backgroundColorRow">
                   <div class="color-swatch-compact" id="backgroundColorItem">
                     <button type="button" class="color-dot color-dot--expandable" id="backgroundColorPreview" title="HSB" aria-label="Open background color controls"></button>
-                    <span class="color-label">Color</span>
-                    <input type="text" class="color-swatch-hex" id="backgroundColorHex" value="#050505" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Background color hex">
+                    <span class="color-label">Background</span>
+                    <input type="text" class="color-swatch-hex" id="backgroundColorHex" value="#BBBBBB" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Background color hex">
                   </div>
                   <div class="color-hsb-slot" id="backgroundColorHsbSlot">
                     <div class="etica-hsb-picker" id="backgroundColorPicker" hidden>
@@ -174,6 +186,50 @@
                     </div>
                   </div>
                 </div>
+                <div class="color-swatch-row" id="brushColorRow">
+                  <div class="color-swatch-compact" id="brushColorItem">
+                    <button type="button" class="color-dot color-dot--expandable" id="brushColorPreview" title="HSB" aria-label="Open brush color controls"></button>
+                    <span class="color-label">Brush</span>
+                    <input type="text" class="color-swatch-hex" id="brushColorHex" value="#000000" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Brush color hex">
+                  </div>
+                  <div class="color-hsb-slot" id="brushColorHsbSlot">
+                    <div class="etica-hsb-picker" id="brushColorPicker" hidden>
+                      <div class="hsb-controls">
+                        <div class="hsb-control-group">
+                          <label for="brushHueInput">
+                            <span>Hue</span>
+                            <input type="text" class="value-display hsb-value" id="brushHueValue" value="0°" readonly>
+                          </label>
+                          <input type="range" id="brushHueInput" min="0" max="360" step="1" value="0">
+                        </div>
+
+                        <div class="hsb-control-group">
+                          <label for="brushSaturationInput">
+                            <span>Saturation</span>
+                            <input type="text" class="value-display hsb-value" id="brushSaturationValue" value="0%" readonly>
+                          </label>
+                          <input type="range" id="brushSaturationInput" min="0" max="100" step="1" value="0">
+                        </div>
+
+                        <div class="hsb-control-group">
+                          <label for="brushBrightnessInput">
+                            <span>Brightness</span>
+                            <input type="text" class="value-display hsb-value" id="brushBrightnessValue" value="0%" readonly>
+                          </label>
+                          <input type="range" id="brushBrightnessInput" min="0" max="100" step="1" value="0">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="color-swap-row">
+                  <button class="btn-secondary color-swap-button" type="button" id="swapColorsButton" aria-label="Swap background and brush colors" title="Swap background and brush colors">
+                    <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
+                      <path d="M3.2 5.2h8.4l-2-2M12.8 10.8H4.4l2 2" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Swap colors</span>
+                  </button>
+                </div>
               </div>
 
               <div class="control-group etica-meta-row">
@@ -200,6 +256,252 @@
             </section>
           </div>
         </aside>
+
+        <aside class="controls-panel etica-panel etica-generator-panel" id="fotoPanel" aria-label="Etica Foto panel" hidden>
+          <div class="panel-header" id="fotoPanelHeader">
+            <span>Foto</span>
+            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse Foto panel">
+              <svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true">
+                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </div>
+
+          <div class="panel-content">
+            <section class="control-section etica-simple-section">
+              <div class="control-group etica-meta-row">
+                <span>Source</span>
+                <span id="fotoMeta">None</span>
+              </div>
+              <input class="sr-only" id="fotoInput" type="file" accept="image/*">
+              <button class="btn-secondary etica-full-button" type="button" id="fotoUploadButton">Upload Photo</button>
+
+              <div class="control-group">
+                <fieldset>
+                  <legend class="sr-only">Foto fit mode</legend>
+                  <div class="segmented-control segmented-control-compact">
+                    <input type="radio" name="fotoFit" value="fit" id="fotoFitMode" data-foto-fit="fit">
+                    <label for="fotoFitMode">Fit</label>
+
+                    <input type="radio" name="fotoFit" value="fill" id="fotoFillMode" data-foto-fit="fill" checked>
+                    <label for="fotoFillMode">Fill</label>
+                  </div>
+                </fieldset>
+              </div>
+
+              <div class="control-group">
+                <label for="fotoRecognitionInput"><span>Recognition</span><span class="generator-value" id="fotoRecognitionValue">70</span></label>
+                <input id="fotoRecognitionInput" type="range" min="0" max="100" step="1" value="70" data-generator-input="foto">
+              </div>
+              <div class="control-group">
+                <label for="fotoAbstractionInput"><span>Abstraction</span><span class="generator-value" id="fotoAbstractionValue">34</span></label>
+                <input id="fotoAbstractionInput" type="range" min="0" max="100" step="1" value="34" data-generator-input="foto">
+              </div>
+              <div class="control-group">
+                <label for="fotoDetailInput"><span>Detail</span><span class="generator-value" id="fotoDetailValue">52</span></label>
+                <input id="fotoDetailInput" type="range" min="0" max="100" step="1" value="52" data-generator-input="foto">
+              </div>
+              <div class="control-group">
+                <label for="fotoMassInput"><span>Mass</span><span class="generator-value" id="fotoMassValue">56</span></label>
+                <input id="fotoMassInput" type="range" min="0" max="100" step="1" value="56" data-generator-input="foto">
+              </div>
+              <div class="control-group">
+                <label for="fotoContourInput"><span>Contour</span><span class="generator-value" id="fotoContourValue">48</span></label>
+                <input id="fotoContourInput" type="range" min="0" max="100" step="1" value="48" data-generator-input="foto">
+              </div>
+              <div class="control-group">
+                <label for="fotoDensityInput"><span>Density</span><span class="generator-value" id="fotoDensityValue">56</span></label>
+                <input id="fotoDensityInput" type="range" min="0" max="100" step="1" value="56" data-generator-input="foto">
+              </div>
+              <div class="control-group">
+                <label for="fotoDotSizeInput"><span>Dot Size</span><span class="generator-value" id="fotoDotSizeValue">14</span></label>
+                <input id="fotoDotSizeInput" type="range" min="3" max="90" step="1" value="14" data-generator-input="foto">
+              </div>
+              <div class="control-group">
+                <label for="fotoSizeVariationInput"><span>Dot Variation</span><span class="generator-value" id="fotoSizeVariationValue">0%</span></label>
+                <input id="fotoSizeVariationInput" type="range" min="0" max="100" step="1" value="0" data-generator-input="foto" data-generator-unit="%">
+              </div>
+              <div class="control-group">
+                <label for="fotoJitterInput"><span>Jitter</span><span class="generator-value" id="fotoJitterValue">44</span></label>
+                <input id="fotoJitterInput" type="range" min="0" max="100" step="1" value="44" data-generator-input="foto">
+              </div>
+              <div class="control-group">
+                <label for="fotoMaxPointsInput"><span>Max Points</span><span class="generator-value" id="fotoMaxPointsValue">2500</span></label>
+                <input id="fotoMaxPointsInput" type="range" min="10" max="8000" step="10" value="2500" data-generator-input="foto">
+              </div>
+              <div class="control-group generator-seed-row">
+                <label for="fotoSeedInput"><span>Seed</span></label>
+                <input type="text" class="value-display generator-seed-input" id="fotoSeedInput" value="2401" inputmode="numeric">
+              </div>
+              <div class="button-group etica-panel-buttons generator-actions">
+                <button class="btn-secondary etica-full-button" type="button" id="fotoRegenerateButton" disabled>Regenerate</button>
+              </div>
+            </section>
+          </div>
+        </aside>
+
+        <aside class="controls-panel etica-panel etica-generator-panel" id="nuevoPanel" aria-label="Etica Nuevo panel" hidden>
+          <div class="panel-header" id="nuevoPanelHeader">
+            <span>Nuevo</span>
+            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse Nuevo panel">
+              <svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true">
+                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </div>
+
+          <div class="panel-content">
+            <section class="control-section etica-simple-section">
+              <div class="control-group etica-meta-row">
+                <span>Source</span>
+                <span id="nuevoMeta">None</span>
+              </div>
+              <input class="sr-only" id="nuevoInput" type="file" accept="image/*">
+              <button class="btn-secondary etica-full-button" type="button" id="nuevoUploadButton">Upload Photo</button>
+
+              <div class="control-group">
+                <fieldset>
+                  <legend class="sr-only">Nuevo fit mode</legend>
+                  <div class="segmented-control segmented-control-compact">
+                    <input type="radio" name="nuevoFit" value="fit" id="nuevoFitMode" data-nuevo-fit="fit">
+                    <label for="nuevoFitMode">Fit</label>
+
+                    <input type="radio" name="nuevoFit" value="fill" id="nuevoFillMode" data-nuevo-fit="fill" checked>
+                    <label for="nuevoFillMode">Fill</label>
+                  </div>
+                </fieldset>
+              </div>
+
+              <div class="control-group">
+                <label for="nuevoLineStrengthInput"><span>Line Strength</span><span class="generator-value" id="nuevoLineStrengthValue">74</span></label>
+                <input id="nuevoLineStrengthInput" type="range" min="0" max="100" step="1" value="74" data-generator-input="nuevo">
+              </div>
+              <div class="control-group">
+                <label for="nuevoMassOutlineInput"><span>Mass Outline</span><span class="generator-value" id="nuevoMassOutlineValue">68</span></label>
+                <input id="nuevoMassOutlineInput" type="range" min="0" max="100" step="1" value="68" data-generator-input="nuevo">
+              </div>
+              <div class="control-group">
+                <label for="nuevoInteriorDetailInput"><span>Interior Detail</span><span class="generator-value" id="nuevoInteriorDetailValue">42</span></label>
+                <input id="nuevoInteriorDetailInput" type="range" min="0" max="100" step="1" value="42" data-generator-input="nuevo">
+              </div>
+              <div class="control-group">
+                <label for="nuevoFillInput"><span>Fill</span><span class="generator-value" id="nuevoFillValue">24</span></label>
+                <input id="nuevoFillInput" type="range" min="0" max="100" step="1" value="24" data-generator-input="nuevo">
+              </div>
+              <div class="control-group">
+                <label for="nuevoSimplifyInput"><span>Simplify</span><span class="generator-value" id="nuevoSimplifyValue">34</span></label>
+                <input id="nuevoSimplifyInput" type="range" min="0" max="100" step="1" value="34" data-generator-input="nuevo">
+              </div>
+              <div class="control-group">
+                <label for="nuevoSpacingInput"><span>Spacing</span><span class="generator-value" id="nuevoSpacingValue">16</span></label>
+                <input id="nuevoSpacingInput" type="range" min="4" max="44" step="1" value="16" data-generator-input="nuevo">
+              </div>
+              <div class="control-group">
+                <label for="nuevoDotSizeInput"><span>Dot Size</span><span class="generator-value" id="nuevoDotSizeValue">18</span></label>
+                <input id="nuevoDotSizeInput" type="range" min="3" max="90" step="1" value="18" data-generator-input="nuevo">
+              </div>
+              <div class="control-group">
+                <label for="nuevoSizeVariationInput"><span>Dot Variation</span><span class="generator-value" id="nuevoSizeVariationValue">0%</span></label>
+                <input id="nuevoSizeVariationInput" type="range" min="0" max="100" step="1" value="0" data-generator-input="nuevo" data-generator-unit="%">
+              </div>
+              <div class="control-group">
+                <label for="nuevoJitterInput"><span>Jitter</span><span class="generator-value" id="nuevoJitterValue">18</span></label>
+                <input id="nuevoJitterInput" type="range" min="0" max="100" step="1" value="18" data-generator-input="nuevo">
+              </div>
+              <div class="control-group">
+                <label for="nuevoMaxPointsInput"><span>Max Points</span><span class="generator-value" id="nuevoMaxPointsValue">1400</span></label>
+                <input id="nuevoMaxPointsInput" type="range" min="10" max="10000" step="10" value="1400" data-generator-input="nuevo">
+              </div>
+              <div class="control-group generator-seed-row">
+                <label for="nuevoSeedInput"><span>Seed</span></label>
+                <input type="text" class="value-display generator-seed-input" id="nuevoSeedInput" value="3101" inputmode="numeric">
+              </div>
+              <div class="button-group etica-panel-buttons generator-actions">
+                <button class="btn-secondary etica-full-button" type="button" id="nuevoRegenerateButton" disabled>Regenerate</button>
+              </div>
+            </section>
+          </div>
+        </aside>
+
+        <aside class="controls-panel etica-panel etica-generator-panel" id="florPanel" aria-label="Etica Flor panel" hidden>
+          <div class="panel-header" id="florPanelHeader">
+            <span>Flor</span>
+            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse Flor panel">
+              <svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true">
+                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </div>
+
+          <div class="panel-content">
+            <section class="control-section etica-simple-section">
+              <div class="control-group">
+                <label for="florTypeSelect"><span>Type</span></label>
+                <select id="florTypeSelect" class="style-select" data-generator-input="flor">
+                  <option value="single">Single Flower</option>
+                  <option value="branch">Branch</option>
+                  <option value="wild">Wild Stem</option>
+                  <option value="bouquet">Bouquet</option>
+                </select>
+              </div>
+              <div class="control-group">
+                <label for="florScaleInput"><span>Scale</span><span class="generator-value" id="florScaleValue">70</span></label>
+                <input id="florScaleInput" type="range" min="0" max="100" step="1" value="70" data-generator-input="flor">
+              </div>
+              <div class="control-group">
+                <label for="florComplexityInput"><span>Complexity</span><span class="generator-value" id="florComplexityValue">65</span></label>
+                <input id="florComplexityInput" type="range" min="0" max="100" step="1" value="65" data-generator-input="flor">
+              </div>
+              <div class="control-group">
+                <label for="florBendInput"><span>Stem Bend</span><span class="generator-value" id="florBendValue">50</span></label>
+                <input id="florBendInput" type="range" min="0" max="100" step="1" value="50" data-generator-input="flor">
+              </div>
+              <div class="control-group">
+                <label for="florOpennessInput"><span>Openness</span><span class="generator-value" id="florOpennessValue">64</span></label>
+                <input id="florOpennessInput" type="range" min="0" max="100" step="1" value="64" data-generator-input="flor">
+              </div>
+              <div class="control-group">
+                <label for="florRecognitionInput"><span>Recognition</span><span class="generator-value" id="florRecognitionValue">72</span></label>
+                <input id="florRecognitionInput" type="range" min="0" max="100" step="1" value="72" data-generator-input="flor">
+              </div>
+              <div class="control-group">
+                <label for="florAbstractionInput"><span>Abstraction</span><span class="generator-value" id="florAbstractionValue">28</span></label>
+                <input id="florAbstractionInput" type="range" min="0" max="100" step="1" value="28" data-generator-input="flor">
+              </div>
+              <div class="control-group">
+                <label for="florDensityInput"><span>Density</span><span class="generator-value" id="florDensityValue">70</span></label>
+                <input id="florDensityInput" type="range" min="0" max="100" step="1" value="70" data-generator-input="flor">
+              </div>
+              <div class="control-group">
+                <label for="florMassInput"><span>Mass</span><span class="generator-value" id="florMassValue">50</span></label>
+                <input id="florMassInput" type="range" min="0" max="100" step="1" value="50" data-generator-input="flor">
+              </div>
+              <div class="control-group">
+                <label for="florDotSizeInput"><span>Dot Size</span><span class="generator-value" id="florDotSizeValue">22</span></label>
+                <input id="florDotSizeInput" type="range" min="4" max="90" step="1" value="22" data-generator-input="flor">
+              </div>
+              <div class="control-group">
+                <label for="florSizeVariationInput"><span>Dot Variation</span><span class="generator-value" id="florSizeVariationValue">0%</span></label>
+                <input id="florSizeVariationInput" type="range" min="0" max="100" step="1" value="0" data-generator-input="flor" data-generator-unit="%">
+              </div>
+              <div class="control-group">
+                <label for="florJitterInput"><span>Jitter</span><span class="generator-value" id="florJitterValue">46</span></label>
+                <input id="florJitterInput" type="range" min="0" max="100" step="1" value="46" data-generator-input="flor">
+              </div>
+              <div class="control-group">
+                <label for="florMaxPointsInput"><span>Max Points</span><span class="generator-value" id="florMaxPointsValue">1200</span></label>
+                <input id="florMaxPointsInput" type="range" min="10" max="3000" step="10" value="1200" data-generator-input="flor">
+              </div>
+              <div class="control-group generator-seed-row">
+                <label for="florSeedInput"><span>Seed</span></label>
+                <input type="text" class="value-display generator-seed-input" id="florSeedInput" value="1207" inputmode="numeric">
+              </div>
+              <div class="button-group etica-panel-buttons generator-actions">
+                <button class="btn-secondary etica-full-button" type="button" id="florRegenerateButton">Regenerate</button>
+              </div>
+            </section>
+          </div>
+        </aside>
       </div>
     </div>
 
@@ -211,7 +513,7 @@
         <button class="btn-fixed btn-export" type="button" id="exportButton">Export ⌘E</button>
         <label class="toggle-label">
           <div class="toggle-switch">
-            <input type="checkbox" id="transparencyToggle" aria-label="Transparency">
+            <input type="checkbox" id="transparencyToggle" aria-label="Transparency" checked>
             <span class="toggle-slider"></span>
           </div>
           <span class="toggle-label-text">Transparency</span>

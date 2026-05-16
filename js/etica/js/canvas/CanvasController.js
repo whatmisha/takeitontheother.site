@@ -1,9 +1,10 @@
-import { getStrokeDensity, getStrokeDensityProfile, getStrokeSize, renderStroke } from "../brushes/BrushEngine.js";
+import { getStrokeDensity, getStrokeDensityProfile, getStrokeSize, getStrokeSizeVariation, renderStroke } from "../brushes/BrushEngine.js";
 import { DENSITY_PROFILE_DEFAULT } from "../brushes/DensityProfiles.js";
 import { randomSeed } from "../brushes/random.js";
 import { exportPng } from "./Exporter.js";
 
-const CANVAS_BACKGROUND = "#050505";
+const CANVAS_BACKGROUND = "#bbbbbb";
+const BRUSH_COLOR = "#000000";
 
 export class CanvasController extends EventTarget {
   constructor(canvas) {
@@ -13,11 +14,13 @@ export class CanvasController extends EventTarget {
     this.strokeCanvas = document.createElement("canvas");
     this.strokeCtx = this.strokeCanvas.getContext("2d", { willReadFrequently: true });
     this.strokes = [];
+    this.generatedPreviewStrokes = [];
     this.currentStroke = null;
     this.selectedStrokeId = null;
     this.hoveredStrokeId = null;
     this.tool = "dotted";
     this.size = 18;
+    this.sizeVariation = 0;
     this.density = 1;
     this.densityProfile = DENSITY_PROFILE_DEFAULT;
     this.pressureEnabled = true;
@@ -26,6 +29,7 @@ export class CanvasController extends EventTarget {
     this.historyFuture = [];
     this.editSessionActive = false;
     this.backgroundColor = CANVAS_BACKGROUND;
+    this.brushColor = BRUSH_COLOR;
     this.backgroundImage = null;
     this.backgroundObjectUrl = null;
     this.backgroundName = "";
@@ -73,6 +77,19 @@ export class CanvasController extends EventTarget {
     this.emitChange();
   }
 
+  setSizeVariation(percent) {
+    const next = sanitizeNumber(percent, 0, 0, 100) / 100;
+    const selected = this.getSelectedStroke();
+    if (selected) {
+      if (!this.editSessionActive) this.commitHistory();
+      selected.settings.sizeVariation = next;
+      this.queueRender();
+      return;
+    }
+    this.sizeVariation = next;
+    this.emitChange();
+  }
+
   setDensityProfile(profile) {
     const next = sanitizeDensityProfile(profile);
     const selected = this.getSelectedStroke();
@@ -89,6 +106,21 @@ export class CanvasController extends EventTarget {
   setBackgroundColor(color) {
     if (!/^#[0-9a-f]{6}$/i.test(color)) return;
     this.backgroundColor = color.toLowerCase();
+    this.queueRender();
+  }
+
+  setBrushColor(color) {
+    if (!/^#[0-9a-f]{6}$/i.test(color)) return;
+    const next = color.toLowerCase();
+    this.brushColor = next;
+    const selected = this.getSelectedStroke();
+    if (selected && selected.tool !== "eraser") {
+      if (!this.editSessionActive) this.commitHistory();
+      selected.settings.color = next;
+      this.queueRender();
+      return;
+    }
+    this.emitChange();
     this.queueRender();
   }
 
@@ -132,9 +164,11 @@ export class CanvasController extends EventTarget {
       brush: this.tool === "ink" ? "ink" : "dotted",
       settings: {
         size: this.size,
+        sizeVariation: this.sizeVariation,
         density: this.density,
         densityProfile: this.densityProfile,
-        pressureEnabled: this.pressureEnabled
+        pressureEnabled: this.pressureEnabled,
+        color: this.brushColor
       },
       sizeScale: 1,
       densityScale: 1,
@@ -177,9 +211,57 @@ export class CanvasController extends EventTarget {
   clear() {
     if (this.strokes.length) this.commitHistory();
     this.strokes = [];
+    this.generatedPreviewStrokes = [];
     this.currentStroke = null;
     this.selectedStrokeId = null;
     this.queueRender();
+  }
+
+  addGeneratedStrokes(strokes, { selectGroup = false } = {}) {
+    if (!Array.isArray(strokes) || !strokes.length) return;
+    this.commitHistory();
+    const nextStrokes = cloneStrokes(strokes);
+    this.strokes.push(...nextStrokes);
+    this.generatedPreviewStrokes = [];
+    this.historyFuture = [];
+    this.currentStroke = null;
+    this.hoveredStrokeId = null;
+    this.selectedStrokeId = selectGroup ? nextStrokes.find((stroke) => stroke.tool !== "eraser")?.id ?? null : null;
+    this.queueRender();
+    return getGeneratedGroupId(nextStrokes[0]);
+  }
+
+  replaceGeneratedGroup(groupId, strokes, { selectGroup = false, commitHistory = true } = {}) {
+    if (!Array.isArray(strokes) || !strokes.length) return null;
+    if (commitHistory) this.commitHistory();
+    const nextStrokes = cloneStrokes(strokes);
+    this.strokes = groupId
+      ? this.strokes.filter((stroke) => getGeneratedGroupId(stroke) !== groupId)
+      : this.strokes;
+    this.strokes.push(...nextStrokes);
+    this.generatedPreviewStrokes = [];
+    if (commitHistory) this.historyFuture = [];
+    this.currentStroke = null;
+    this.hoveredStrokeId = null;
+    this.selectedStrokeId = selectGroup ? nextStrokes.find((stroke) => stroke.tool !== "eraser")?.id ?? null : null;
+    this.queueRender();
+    return getGeneratedGroupId(nextStrokes[0]);
+  }
+
+  previewGeneratedStrokes(strokes) {
+    this.generatedPreviewStrokes = Array.isArray(strokes) ? cloneStrokes(strokes) : [];
+    this.queueRender();
+  }
+
+  clearGeneratedPreview() {
+    if (!this.generatedPreviewStrokes.length) return;
+    this.generatedPreviewStrokes = [];
+    this.queueRender();
+  }
+
+  commitGeneratedPreview(options = {}) {
+    if (!this.generatedPreviewStrokes.length) return;
+    this.addGeneratedStrokes(this.generatedPreviewStrokes, options);
   }
 
   resize(width, height) {
@@ -232,13 +314,13 @@ export class CanvasController extends EventTarget {
   }
 
   export({ transparent = false } = {}) {
-    this.renderNow({ showSelection: false });
+    this.renderNow({ showSelection: false, generatedPreviewAlpha: 1 });
     exportPng(transparent ? this.strokeCanvas : this.canvas, { transparent });
     this.queueRender();
   }
 
   async copyTransparent() {
-    this.renderNow({ showSelection: false });
+    this.renderNow({ showSelection: false, generatedPreviewAlpha: 1 });
     const blob = await canvasToBlob(this.strokeCanvas);
     if (!blob || !navigator.clipboard || !window.ClipboardItem) {
       exportPng(this.strokeCanvas, { transparent: true });
@@ -260,6 +342,7 @@ export class CanvasController extends EventTarget {
     this.selectedStrokeId = hit?.id ?? null;
     this.selectDrag = hit ? {
       strokeId: hit.id,
+      groupId: getGeneratedGroupId(hit),
       lastPoint: point,
       hasMoved: false
     } : null;
@@ -282,9 +365,15 @@ export class CanvasController extends EventTarget {
       this.selectDrag.hasMoved = true;
     }
 
-    for (const strokePoint of stroke.points) {
-      strokePoint.x += dx;
-      strokePoint.y += dy;
+    const draggedStrokes = this.selectDrag.groupId
+      ? this.strokes.filter((item) => getGeneratedGroupId(item) === this.selectDrag.groupId)
+      : [stroke];
+
+    for (const draggedStroke of draggedStrokes) {
+      for (const strokePoint of draggedStroke.points) {
+        strokePoint.x += dx;
+        strokePoint.y += dy;
+      }
     }
 
     this.selectDrag.lastPoint = point;
@@ -341,7 +430,12 @@ export class CanvasController extends EventTarget {
     }
 
     this.commitHistory();
-    this.strokes.splice(strokeIndex, 1);
+    const groupId = getGeneratedGroupId(this.strokes[strokeIndex]);
+    if (groupId) {
+      this.strokes = this.strokes.filter((stroke) => getGeneratedGroupId(stroke) !== groupId);
+    } else {
+      this.strokes.splice(strokeIndex, 1);
+    }
     this.selectedStrokeId = null;
     this.hoveredStrokeId = null;
     this.editSessionActive = false;
@@ -374,14 +468,20 @@ export class CanvasController extends EventTarget {
     });
   }
 
-  renderNow({ showSelection = true } = {}) {
+  renderNow({ showSelection = true, showGeneratedPreview = true, generatedPreviewAlpha = 0.68 } = {}) {
     this.ensureStrokeLayer();
     this.paintBackground();
     this.strokeCtx.clearRect(0, 0, this.strokeCanvas.width, this.strokeCanvas.height);
 
     for (const stroke of this.strokes) {
       const isHovered = showSelection && this.tool === "select" && stroke.id === this.hoveredStrokeId && stroke.tool !== "eraser";
-      renderStroke(this.strokeCtx, stroke, { alpha: isHovered ? 0.7 : 1 });
+      renderStroke(this.strokeCtx, stroke, { alpha: isHovered ? 0.7 : 1, fallbackColor: this.brushColor });
+    }
+
+    if (showGeneratedPreview) {
+      for (const stroke of this.generatedPreviewStrokes) {
+        renderStroke(this.strokeCtx, stroke, { alpha: generatedPreviewAlpha, fallbackColor: this.brushColor });
+      }
     }
 
     this.ctx.drawImage(this.strokeCanvas, 0, 0);
@@ -426,8 +526,8 @@ export class CanvasController extends EventTarget {
     this.ctx.save();
     this.ctx.globalCompositeOperation = "source-over";
     this.ctx.lineWidth = 1.5;
-    this.ctx.strokeStyle = isEraser ? "rgba(255, 92, 92, 0.92)" : "rgba(244, 244, 240, 0.82)";
-    this.ctx.fillStyle = isEraser ? "rgba(255, 92, 92, 0.08)" : "rgba(244, 244, 240, 0.08)";
+    this.ctx.strokeStyle = isEraser ? "rgba(255, 92, 92, 0.92)" : hexToRgba(this.brushColor, 0.82);
+    this.ctx.fillStyle = isEraser ? "rgba(255, 92, 92, 0.08)" : hexToRgba(this.brushColor, 0.08);
     this.ctx.shadowColor = "rgba(0, 0, 0, 0.85)";
     this.ctx.shadowBlur = 3;
     this.ctx.beginPath();
@@ -436,7 +536,7 @@ export class CanvasController extends EventTarget {
     this.ctx.stroke();
 
     if (this.tool === "dotted") {
-      this.ctx.fillStyle = "rgba(244, 244, 240, 0.9)";
+      this.ctx.fillStyle = hexToRgba(this.brushColor, 0.9);
       this.ctx.beginPath();
       this.ctx.arc(this.previewPoint.x, this.previewPoint.y, Math.max(2, radius * 0.16), 0, Math.PI * 2);
       this.ctx.fill();
@@ -477,10 +577,12 @@ export class CanvasController extends EventTarget {
 
     for (let index = this.strokes.length - 1; index >= 0; index -= 1) {
       const stroke = this.strokes[index];
-      if (stroke.tool === "eraser" || stroke.points.length < 2) continue;
+      if (stroke.tool === "eraser" || stroke.points.length < 1) continue;
 
       const threshold = Math.max(18, getStrokeSize(stroke) * 1.75);
-      const distance = distanceToStroke(point, stroke);
+      const distance = stroke.points.length === 1
+        ? Math.hypot(point.x - stroke.points[0].x, point.y - stroke.points[0].y)
+        : distanceToStroke(point, stroke);
       if (distance <= threshold && distance < bestDistance) {
         best = stroke;
         bestDistance = distance;
@@ -523,6 +625,7 @@ export class CanvasController extends EventTarget {
     this.currentStroke = null;
     this.editSessionActive = false;
     this.selectDrag = null;
+    this.generatedPreviewStrokes = [];
     this.queueRender();
   }
 
@@ -539,8 +642,12 @@ export class CanvasController extends EventTarget {
         size: this.size,
         density: this.density,
         activeSize: selected ? getStrokeSize(selected) : this.size,
+        activeSizeVariation: selected ? getStrokeSizeVariation(selected) : this.sizeVariation,
         activeDensity: selected ? getStrokeDensity(selected) : this.density,
         activeDensityProfile: selected ? getStrokeDensityProfile(selected) : this.densityProfile,
+        activeBrushColor: selected?.settings?.color ?? this.brushColor,
+        backgroundColor: this.backgroundColor,
+        brushColor: this.brushColor,
         selectedStrokeId: selected?.id ?? null,
         selectedStrokeIndex: selectedIndex,
         selectedStrokeTotal: selectableStrokes.length,
@@ -556,8 +663,22 @@ function cloneStrokes(strokes) {
   return strokes.map((stroke) => ({
     ...stroke,
     settings: { ...stroke.settings },
+    meta: stroke.meta ? { ...stroke.meta } : undefined,
     points: stroke.points.map((point) => ({ ...point }))
   }));
+}
+
+function getGeneratedGroupId(stroke) {
+  return stroke?.meta?.generated ? stroke.meta.groupId : null;
+}
+
+function hexToRgba(hex, alpha) {
+  const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!match) return `rgba(0, 0, 0, ${alpha})`;
+  const red = Number.parseInt(match[1], 16);
+  const green = Number.parseInt(match[2], 16);
+  const blue = Number.parseInt(match[3], 16);
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
 function normalizePressure(event) {

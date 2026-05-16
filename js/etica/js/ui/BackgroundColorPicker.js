@@ -1,28 +1,31 @@
 import { ColorUtils } from "../utils/ColorUtils.js";
 
 export class BackgroundColorPicker {
-  constructor(controller) {
+  constructor(controller, options = {}) {
     this.controller = controller;
-    this.hsb = { h: 0, s: 0, b: 2 };
+    this.prefix = options.prefix || "background";
+    this.applyColor = options.onChange || ((hex) => this.controller.setBackgroundColor(hex));
+    this.initialColor = options.initialColor || "#bbbbbb";
+    this.hsb = { h: 0, s: 0, b: 73 };
     this.elements = {
-      row: document.getElementById("backgroundColorRow"),
-      item: document.getElementById("backgroundColorItem"),
-      picker: document.getElementById("backgroundColorPicker"),
-      preview: document.getElementById("backgroundColorPreview"),
-      hex: document.getElementById("backgroundColorHex"),
-      hue: document.getElementById("backgroundHueInput"),
-      saturation: document.getElementById("backgroundSaturationInput"),
-      brightness: document.getElementById("backgroundBrightnessInput"),
-      hueValue: document.getElementById("backgroundHueValue"),
-      saturationValue: document.getElementById("backgroundSaturationValue"),
-      brightnessValue: document.getElementById("backgroundBrightnessValue")
+      row: document.getElementById(`${this.prefix}ColorRow`),
+      item: document.getElementById(`${this.prefix}ColorItem`),
+      picker: document.getElementById(`${this.prefix}ColorPicker`),
+      preview: document.getElementById(`${this.prefix}ColorPreview`),
+      hex: document.getElementById(`${this.prefix}ColorHex`),
+      hue: document.getElementById(`${this.prefix}HueInput`),
+      saturation: document.getElementById(`${this.prefix}SaturationInput`),
+      brightness: document.getElementById(`${this.prefix}BrightnessInput`),
+      hueValue: document.getElementById(`${this.prefix}HueValue`),
+      saturationValue: document.getElementById(`${this.prefix}SaturationValue`),
+      brightnessValue: document.getElementById(`${this.prefix}BrightnessValue`)
     };
   }
 
   init() {
     if (!this.elements.hex || !this.elements.picker) return;
     this.bind();
-    this.setColor(this.elements.hex.value || "#050505");
+    this.setColor(this.elements.hex.value || this.initialColor);
   }
 
   bind() {
@@ -81,13 +84,13 @@ export class BackgroundColorPicker {
     if (!rgb) return;
     this.hsb = ColorUtils.rgbToHsb(rgb.r, rgb.g, rgb.b);
     this.updateUi(hex.toLowerCase());
-    this.controller.setBackgroundColor(hex);
+    this.applyColor(hex.toLowerCase());
   }
 
   applyHsb() {
     const hex = this.currentHex();
     this.updateUi(hex);
-    this.controller.setBackgroundColor(hex);
+    this.applyColor(hex);
   }
 
   currentHex() {

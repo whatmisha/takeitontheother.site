@@ -7,7 +7,7 @@ export function renderStroke(ctx, stroke, options = {}) {
 
   const rng = createRng(stroke.seed);
   const kind = stroke.tool === "eraser" ? "eraser" : stroke.brush;
-  const color = stroke.tool === "eraser" ? "#000000" : "#f4f4f0";
+  const color = stroke.tool === "eraser" ? "#000000" : normalizeColor(stroke.settings?.color, options.fallbackColor);
   const stamps = getStampSet(kind, color);
   const points = stroke.points;
   const density = getStrokeDensity(stroke);
@@ -35,6 +35,10 @@ export function renderStroke(ctx, stroke, options = {}) {
   }
 
   ctx.restore();
+}
+
+function normalizeColor(color, fallback = "#000000") {
+  return /^#[0-9a-f]{6}$/i.test(color || "") ? color.toLowerCase() : fallback;
 }
 
 function drawSegment(ctx, stamps, from, to, stroke, baseDensity, rng, kind, renderAlpha, segmentStartLength, totalLength) {
@@ -71,6 +75,7 @@ function drawSegment(ctx, stamps, from, to, stroke, baseDensity, rng, kind, rend
 
 function drawPoint(ctx, stamps, point, stroke, densityMultiplier, rng, kind, renderAlpha) {
   const size = getStrokeSize(stroke);
+  const sizeVariation = getStrokeSizeVariation(stroke);
   const pressureScale = stroke.settings.pressureEnabled ? lerp(0.72, 1.38, point.pressure) : 1;
   const clusterCount = kind === "ink" ? 3 : kind === "eraser" ? 2 : 1;
   const jitterBase = kind === "dotted" ? size * 0.62 : size * 0.32;
@@ -82,7 +87,9 @@ function drawPoint(ctx, stamps, point, stroke, densityMultiplier, rng, kind, ren
     const stamp = stamps[Math.floor(rng() * stamps.length)];
     const angle = rng() * Math.PI * 2;
     const spread = jitterBase * (kind === "eraser" ? 0.5 : 1) * rng();
-    const radiusJitter = kind === "ink" ? lerp(0.74, 1.42, rng()) : lerp(0.72, 1.18, rng());
+    const radiusJitter = sizeVariation > 0
+      ? Math.max(0.08, lerp(1 - sizeVariation, 1 + sizeVariation, rng()))
+      : 1;
     const drawSize = size * pressureScale * radiusJitter * (kind === "eraser" ? 1.1 : 1);
     const x = point.x + Math.cos(angle) * spread;
     const y = point.y + Math.sin(angle) * spread;
@@ -99,6 +106,10 @@ function drawPoint(ctx, stamps, point, stroke, densityMultiplier, rng, kind, ren
 
 export function getStrokeSize(stroke) {
   return Math.max(1, Number(stroke.settings?.size ?? 18) * Number(stroke.sizeScale ?? 1));
+}
+
+export function getStrokeSizeVariation(stroke) {
+  return clamp(Number(stroke.settings?.sizeVariation ?? 0), 0, 1);
 }
 
 export function getStrokeDensity(stroke) {
