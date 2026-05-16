@@ -21,7 +21,6 @@ new Toolbar(controller);
 [
   ["toolsPanel", "toolsPanelHeader"],
   ["linePanel", "linePanelHeader"],
-  ["canvasPanel", "canvasPanelHeader"],
   ["backgroundPanel", "backgroundPanelHeader"]
 ].forEach(([panelId, headerId]) => {
   panels.registerPanel(panelId, {

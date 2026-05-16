@@ -15,6 +15,12 @@ export function getDensityProfileMultiplier(profile, t) {
       return lerp(0.34, 1.78, Math.sin(Math.PI * x));
     case "soft-peak":
       return lerp(0.72, 1.42, Math.sin(Math.PI * x));
+    case "hard-peak":
+      return lerp(0.28, 2.05, Math.pow(Math.sin(Math.PI * x), 2.4));
+    case "soft-dip":
+      return lerp(1.28, 0.58, Math.sin(Math.PI * x));
+    case "hard-dip":
+      return lerp(1.78, 0.22, Math.pow(Math.sin(Math.PI * x), 1.8));
     case "flat":
     default:
       return 1;

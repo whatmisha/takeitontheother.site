@@ -3,16 +3,22 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Etica</title>
+    <title>Etica Pinta</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="./css/styles.css">
   </head>
   <body>
     <div class="container">
       <div class="top-links">
-        <button class="yf-tools-link etica-title-button" type="button" aria-label="Etica">Etica</button>
-        <button class="zoom-indicator status-pill" id="canvasMeta" type="button" aria-label="Canvas size">1080 x 1080</button>
-        <button class="zoom-indicator status-pill" id="strokeMeta" type="button" aria-label="Stroke count">0 strokes</button>
+        <button class="yf-tools-link etica-title-button active" type="button" aria-label="Etica Pinta">Etica Pinta</button>
+        <button class="yf-tools-link etica-title-button etica-tab-button" type="button" aria-label="Etica Sueño">Etica Sueño</button>
+        <select id="canvasPresetSelect" class="style-select etica-preset-select" aria-label="Canvas preset">
+          <option value="1080x1080" selected>Square 1080x1080</option>
+          <option value="1080x1350">Instagram Portrait 1080x1350</option>
+          <option value="1080x566">Instagram Landscape 1080x566</option>
+          <option value="1080x1920">Stories/Reels 1080x1920</option>
+          <option value="1920x1080">Full HD 1920x1080</option>
+        </select>
       </div>
 
       <div class="main-content">
@@ -96,6 +102,9 @@
                   <option value="fade-out">Fade Out</option>
                   <option value="in-out">In-Out</option>
                   <option value="soft-peak">Soft Peak</option>
+                  <option value="hard-peak">Hard Peak</option>
+                  <option value="soft-dip">Soft Dip</option>
+                  <option value="hard-dip">Hard Dip</option>
                 </select>
               </div>
 
@@ -104,60 +113,6 @@
                 <span id="selectionMeta">None</span>
               </div>
               <button class="btn-secondary etica-full-button" type="button" id="deselectButton" disabled>Deselect</button>
-            </section>
-          </div>
-        </aside>
-
-        <aside class="controls-panel etica-panel etica-canvas-panel" id="canvasPanel" aria-label="Etica canvas panel">
-          <div class="panel-header" id="canvasPanelHeader">
-            <span>Canvas</span>
-            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse canvas panel">
-              <svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true">
-                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-          </div>
-
-          <div class="panel-content">
-            <section class="control-section etica-simple-section">
-              <div class="control-group">
-                <select id="ratioSelect" class="style-select" aria-label="Canvas ratio">
-                  <option value="1080x1080">1:1 square</option>
-                  <option value="1920x1080">16:9 landscape</option>
-                  <option value="1080x1920">9:16 portrait</option>
-                  <option value="1350x1080">5:4 landscape</option>
-                  <option value="1080x1350">4:5 portrait</option>
-                  <option value="1440x1080">4:3 landscape</option>
-                  <option value="1080x1440">3:4 portrait</option>
-                  <option value="1620x1080">3:2 landscape</option>
-                  <option value="1080x1620">2:3 portrait</option>
-                  <option value="3120x1080">26:9 wide</option>
-                  <option value="1080x3120">9:26 tall</option>
-                  <option value="custom">Custom</option>
-                </select>
-              </div>
-
-              <div class="dimension-grid">
-                <div class="control-group">
-                  <label for="widthInput">
-                    <span>Width <span class="unit">px</span></span>
-                    <div class="value-display-wrapper">
-                      <input id="widthInput" class="value-display dimension-value" type="text" inputmode="numeric" value="1080" aria-label="Canvas width">
-                    </div>
-                  </label>
-                </div>
-
-                <div class="control-group">
-                  <label for="heightInput">
-                    <span>Height <span class="unit">px</span></span>
-                    <div class="value-display-wrapper">
-                      <input id="heightInput" class="value-display dimension-value" type="text" inputmode="numeric" value="1080" aria-label="Canvas height">
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <button class="btn-primary etica-full-button" type="button" id="resizeButton">Apply size</button>
             </section>
           </div>
         </aside>
@@ -221,10 +176,10 @@
                 <fieldset>
                   <legend class="sr-only">Background image fit mode</legend>
                   <div class="segmented-control segmented-control-compact">
-                    <input type="radio" name="backgroundFit" value="fit" id="backgroundFitMode" data-background-fit="fit" checked>
+                    <input type="radio" name="backgroundFit" value="fit" id="backgroundFitMode" data-background-fit="fit">
                     <label for="backgroundFitMode">Fit</label>
 
-                    <input type="radio" name="backgroundFit" value="fill" id="backgroundFillMode" data-background-fit="fill">
+                    <input type="radio" name="backgroundFit" value="fill" id="backgroundFillMode" data-background-fit="fill" checked>
                     <label for="backgroundFillMode">Fill</label>
                   </div>
                 </fieldset>

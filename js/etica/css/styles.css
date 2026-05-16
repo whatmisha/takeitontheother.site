@@ -5,30 +5,31 @@ body {
 }
 
 .etica-title-button {
-  cursor: default;
   font-family: inherit;
   font-size: 1rem;
   letter-spacing: 0;
   text-transform: none;
 }
 
+.etica-title-button.active,
 .etica-title-button:hover,
-.etica-title-button:focus {
+.etica-title-button:focus-visible {
   background: var(--color-text);
   color: var(--color-bg);
 }
 
-.status-pill {
-  width: auto;
-  min-width: 96px;
-  padding-left: var(--spacing-2xl);
-  padding-right: var(--spacing-2xl);
-  cursor: default;
-  white-space: nowrap;
+.etica-tab-button {
+  cursor: pointer;
 }
 
-.status-pill:hover {
-  background: var(--color-bg-panel);
+.etica-preset-select {
+  width: auto;
+  min-width: 210px;
+  height: var(--button-height);
+  margin: 0;
+  border-radius: 999px;
+  background-color: var(--color-bg-panel);
+  font-size: 1rem;
 }
 
 .etica-canvas-container {
@@ -70,16 +71,9 @@ body {
   right: var(--spacing-3xl);
 }
 
-.etica-canvas-panel {
-  top: auto;
-  right: var(--spacing-3xl);
-  bottom: calc(var(--spacing-3xl) + var(--button-height) + 20px);
-}
-
 .etica-background-panel {
   top: auto;
-  left: var(--spacing-3xl);
-  right: auto;
+  right: var(--spacing-3xl);
   bottom: calc(var(--spacing-3xl) + var(--button-height) + 20px);
 }
 
@@ -101,39 +95,6 @@ body {
 
 .etica-tools-panel .panel-content {
   overflow: visible;
-}
-
-.dimension-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-xl);
-}
-
-.dimension-grid .control-group {
-  margin-bottom: 0;
-}
-
-.dimension-grid .control-group label {
-  width: 100%;
-  min-width: 0;
-  justify-content: space-between;
-}
-
-.dimension-grid .control-group label > span:first-child {
-  flex: 0 1 auto;
-  min-width: 0;
-}
-
-.dimension-value {
-  width: 76px;
-  min-width: 0;
-  color: #888888;
-  text-align: right;
-}
-
-.dimension-value:focus {
-  color: #ffffff;
 }
 
 .etica-percent-value {
@@ -407,8 +368,9 @@ button.color-dot--expandable:hover {
     top: var(--spacing-lg);
   }
 
-  .status-pill {
-    display: none;
+  .etica-preset-select {
+    min-width: 170px;
+    max-width: 42vw;
   }
 
   .etica-canvas-container {
@@ -440,17 +402,10 @@ button.color-dot--expandable:hover {
     bottom: auto;
   }
 
-  .etica-canvas-panel {
-    top: auto;
-    right: var(--spacing-lg);
-    left: auto;
-    bottom: 128px;
-  }
-
   .etica-background-panel {
     top: auto;
-    left: var(--spacing-lg);
     right: auto;
+    left: var(--spacing-lg);
     bottom: 128px;
   }
 }

@@ -29,7 +29,7 @@ export class CanvasController extends EventTarget {
     this.backgroundImage = null;
     this.backgroundObjectUrl = null;
     this.backgroundName = "";
-    this.backgroundFit = "fit";
+    this.backgroundFit = "fill";
     this.previewPoint = null;
     this.selectDrag = null;
     this.renderNow();
@@ -526,7 +526,8 @@ export class CanvasController extends EventTarget {
 
   emitChange() {
     const selected = this.getSelectedStroke();
-    const selectedIndex = selected ? this.strokes.findIndex((stroke) => stroke.id === selected.id) + 1 : 0;
+    const selectableStrokes = this.strokes.filter((stroke) => stroke.tool !== "eraser");
+    const selectedIndex = selected ? selectableStrokes.findIndex((stroke) => stroke.id === selected.id) + 1 : 0;
     this.dispatchEvent(new CustomEvent("change", {
       detail: {
         width: this.canvas.width,
@@ -540,6 +541,7 @@ export class CanvasController extends EventTarget {
         activeDensityProfile: selected ? getStrokeDensityProfile(selected) : this.densityProfile,
         selectedStrokeId: selected?.id ?? null,
         selectedStrokeIndex: selectedIndex,
+        selectedStrokeTotal: selectableStrokes.length,
         canUndo: this.historyPast.length > 0,
         canRedo: this.historyFuture.length > 0,
         backgroundName: this.backgroundName
@@ -575,7 +577,7 @@ function sanitizeNumber(value, fallback, min, max) {
 }
 
 function sanitizeDensityProfile(profile) {
-  return ["flat", "fade-in", "fade-out", "in-out", "soft-peak"].includes(profile)
+  return ["flat", "fade-in", "fade-out", "in-out", "soft-peak", "hard-peak", "soft-dip", "hard-dip"].includes(profile)
     ? profile
     : DENSITY_PROFILE_DEFAULT;
 }

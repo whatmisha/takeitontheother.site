@@ -8,10 +8,7 @@ export class Toolbar {
     this.densityInput = document.getElementById("densityInput");
     this.densityOutput = document.getElementById("densityOutput");
     this.densityProfileSelect = document.getElementById("densityProfileSelect");
-    this.widthInput = document.getElementById("widthInput");
-    this.heightInput = document.getElementById("heightInput");
-    this.ratioSelect = document.getElementById("ratioSelect");
-    this.resizeButton = document.getElementById("resizeButton");
+    this.canvasPresetSelect = document.getElementById("canvasPresetSelect");
     this.undoButton = document.getElementById("undoButton");
     this.redoButton = document.getElementById("redoButton");
     this.clearButton = document.getElementById("clearButton");
@@ -24,8 +21,6 @@ export class Toolbar {
     this.backgroundMeta = document.getElementById("backgroundMeta");
     this.deselectButton = document.getElementById("deselectButton");
     this.selectionMeta = document.getElementById("selectionMeta");
-    this.canvasMeta = document.getElementById("canvasMeta");
-    this.strokeMeta = document.getElementById("strokeMeta");
     this.mobileSizeInput = document.getElementById("mobileSizeInput");
     this.mobileBrushButton = document.getElementById("mobileBrushButton");
     this.mobileBrushPopover = document.getElementById("mobileBrushPopover");
@@ -96,18 +91,9 @@ export class Toolbar {
       this.controller.setDensityProfile(this.densityProfileSelect.value);
     });
 
-    this.ratioSelect.addEventListener("change", () => {
-      if (this.ratioSelect.value === "custom") return;
-      const [width, height] = this.ratioSelect.value.split("x").map(Number);
-      this.widthInput.value = width;
-      this.heightInput.value = height;
-    });
-
-    this.bindDimensionInput(this.widthInput);
-    this.bindDimensionInput(this.heightInput);
-
-    this.resizeButton.addEventListener("click", () => {
-      this.controller.resize(this.widthInput.value, this.heightInput.value);
+    this.canvasPresetSelect.addEventListener("change", () => {
+      const [width, height] = this.canvasPresetSelect.value.split("x").map(Number);
+      this.controller.resize(width, height);
     });
 
     this.undoButton.addEventListener("click", () => {
@@ -301,57 +287,6 @@ export class Toolbar {
     });
   }
 
-  bindDimensionInput(input) {
-    const restore = () => {
-      const fallback = input === this.widthInput ? this.lastDetail?.width : this.lastDetail?.height;
-      input.value = fallback ?? 1080;
-    };
-
-    const applyLocalValue = (value) => {
-      const next = Math.round(clampNumber(value, 64, 6000));
-      input.value = String(next);
-      this.ratioSelect.value = "custom";
-    };
-
-    input.addEventListener("focus", () => {
-      input.dataset.restoreValue = input.value;
-      input.select();
-    });
-
-    input.addEventListener("input", () => {
-      this.ratioSelect.value = "custom";
-    });
-
-    input.addEventListener("blur", () => {
-      applyLocalValue(input.value);
-    });
-
-    input.addEventListener("keydown", (event) => {
-      const isArrow = event.key === "ArrowUp" || event.key === "ArrowDown";
-      if (isArrow) {
-        event.preventDefault();
-        const direction = event.key === "ArrowUp" ? 1 : -1;
-        const current = parseNumber(input.value, 1080);
-        const next = event.shiftKey ? snapByStep(current, direction, 10) : current + direction;
-        applyLocalValue(next);
-        return;
-      }
-
-      if (event.key === "Enter") {
-        event.preventDefault();
-        input.blur();
-        return;
-      }
-
-      if (event.key === "Escape") {
-        event.preventDefault();
-        input.value = input.dataset.restoreValue || "";
-        if (!input.value) restore();
-        input.blur();
-      }
-    });
-  }
-
   bindMobileControls() {
     this.mobileUndoButton?.addEventListener("click", () => this.controller.undo());
     this.mobileRedoButton?.addEventListener("click", () => this.controller.redo());
@@ -410,19 +345,21 @@ export class Toolbar {
 
   sync(detail) {
     this.lastDetail = detail;
-    this.canvasMeta.textContent = `${detail.width} x ${detail.height}`;
-    this.strokeMeta.textContent = `${detail.strokes} ${detail.strokes === 1 ? "stroke" : "strokes"}`;
     this.undoButton.disabled = !detail.canUndo;
     this.redoButton.disabled = !detail.canRedo;
     if (this.mobileUndoButton) this.mobileUndoButton.disabled = !detail.canUndo;
     if (this.mobileRedoButton) this.mobileRedoButton.disabled = !detail.canRedo;
     this.deselectButton.disabled = !detail.selectedStrokeId;
     this.clearBackgroundButton.disabled = !detail.backgroundName;
-    this.selectionMeta.textContent = detail.selectedStrokeId ? `Line ${detail.selectedStrokeIndex}` : "None";
+    this.selectionMeta.textContent = detail.selectedStrokeId
+      ? `${detail.selectedStrokeIndex}/${detail.selectedStrokeTotal}`
+      : "None";
     this.backgroundMeta.textContent = detail.backgroundName || "None";
 
-    if (document.activeElement !== this.widthInput) this.widthInput.value = detail.width;
-    if (document.activeElement !== this.heightInput) this.heightInput.value = detail.height;
+    const presetValue = `${detail.width}x${detail.height}`;
+    if (document.activeElement !== this.canvasPresetSelect && hasSelectOption(this.canvasPresetSelect, presetValue)) {
+      this.canvasPresetSelect.value = presetValue;
+    }
 
     if (!isActivelyEditing(this.sizeInput, this.sizeOutput)) {
       this.sizeInput.value = Math.round(detail.activeSize);
@@ -461,6 +398,11 @@ function snapByStep(value, direction, step) {
   return direction > 0
     ? Math.ceil((value + 1) / step) * step
     : Math.floor((value - 1) / step) * step;
+}
+
+function hasSelectOption(select, value) {
+  if (!select) return false;
+  return Array.from(select.options).some((option) => option.value === value);
 }
 
 function isTypingTarget(target) {
