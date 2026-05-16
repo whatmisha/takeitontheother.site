@@ -147,6 +147,13 @@ export class BackgroundColorPicker {
     this.applyColor(hex.toLowerCase());
   }
 
+  syncColor(hex) {
+    const rgb = ColorUtils.hexToRgb(hex);
+    if (!rgb) return;
+    this.hsb = ColorUtils.rgbToHsb(rgb.r, rgb.g, rgb.b);
+    this.updateUi(hex.toLowerCase());
+  }
+
   applyHsb() {
     const hex = this.currentHex();
     this.updateUi(hex);

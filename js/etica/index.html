@@ -201,36 +201,39 @@
 
               <div class="effect-section">
                 <div class="section-divider-header">
-                  <label class="section-toggle-label" for="echoEnabledCheckbox">
-                    <input type="checkbox" id="echoEnabledCheckbox" class="sr-only">
-                    Echo
+                  <label class="section-toggle-label" for="boilEnabledCheckbox">
+                    <input type="checkbox" id="boilEnabledCheckbox" class="sr-only" checked>
+                    Boil
                   </label>
+                  <button class="effect-preview-button" type="button" id="boilPreviewButton" aria-label="Preview Boil animation" title="Preview Boil">
+                    <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+                      <path d="M3.25 2.1 9.25 6l-6 3.9Z" fill="currentColor"/>
+                    </svg>
+                  </button>
                 </div>
-                <div class="effect-section-content controls-disabled" id="echoSectionContent">
+                <div class="effect-section-content" id="boilSectionContent">
                   <div class="control-group">
-                    <label for="echoAmountInput">
+                    <label for="boilAmountInput">
                       <span>Amount</span>
-                      <span class="generator-value" id="echoAmountValue">50</span>
+                      <span class="generator-value" id="boilAmountValue">42</span>
                     </label>
-                    <input id="echoAmountInput" type="range" min="0" max="100" step="1" value="50" data-effect-input="fake">
+                    <input id="boilAmountInput" type="range" min="0" max="100" step="1" value="42" data-effect-input="boil">
                   </div>
-                </div>
-              </div>
 
-              <div class="effect-section">
-                <div class="section-divider-header">
-                  <label class="section-toggle-label" for="staticEnabledCheckbox">
-                    <input type="checkbox" id="staticEnabledCheckbox" class="sr-only">
-                    Static
-                  </label>
-                </div>
-                <div class="effect-section-content controls-disabled" id="staticSectionContent">
                   <div class="control-group">
-                    <label for="staticSpreadInput">
-                      <span>Spread</span>
-                      <span class="generator-value" id="staticSpreadValue">25</span>
+                    <label for="boilFramesInput">
+                      <span>Frames</span>
+                      <span class="generator-value" id="boilFramesValue">4</span>
                     </label>
-                    <input id="staticSpreadInput" type="range" min="0" max="100" step="1" value="25" data-effect-input="fake">
+                    <input id="boilFramesInput" type="range" min="2" max="8" step="1" value="4" data-effect-input="boil">
+                  </div>
+
+                  <div class="control-group">
+                    <label for="boilFpsInput">
+                      <span>FPS</span>
+                      <span class="generator-value" id="boilFpsValue">8</span>
+                    </label>
+                    <input id="boilFpsInput" type="range" min="2" max="18" step="1" value="8" data-effect-input="boil">
                   </div>
                 </div>
               </div>
@@ -619,6 +622,13 @@
           </div>
           <span class="toggle-label-text">Transparency</span>
         </label>
+        <label class="toggle-label">
+          <div class="toggle-switch">
+            <input type="checkbox" id="gifToggle" aria-label="GIF">
+            <span class="toggle-slider"></span>
+          </div>
+          <span class="toggle-label-text">GIF</span>
+        </label>
       </div>
     </nav>
 
@@ -656,6 +666,13 @@
     </div>
 
     <div class="etica-mobile-sheet" id="mobileExportSheet" hidden>
+      <label class="toggle-label etica-mobile-sheet-toggle">
+        <div class="toggle-switch">
+          <input type="checkbox" id="mobileGifToggle" aria-label="GIF">
+          <span class="toggle-slider"></span>
+        </div>
+        <span class="toggle-label-text">GIF</span>
+      </label>
       <button type="button" id="mobileExportCanvasButton">PNG with photo</button>
       <button type="button" id="mobileExportTransparentButton">Transparent PNG</button>
       <button type="button" id="mobileCopyTransparentButton">Copy transparent</button>

@@ -1,7 +1,7 @@
 import { getStrokeDensity, getStrokeDensityProfile, getStrokeSize, getStrokeSizeVariation, renderStroke } from "../brushes/BrushEngine.js";
 import { DENSITY_PROFILE_DEFAULT } from "../brushes/DensityProfiles.js";
 import { randomSeed } from "../brushes/random.js";
-import { exportPng } from "./Exporter.js";
+import { exportGif, exportPng } from "./Exporter.js";
 
 const CANVAS_BACKGROUND = "#bbbbbb";
 const BRUSH_COLOR = "#000000";
@@ -45,6 +45,18 @@ export class CanvasController extends EventTarget {
     this.backgroundName = "";
     this.backgroundFit = "fill";
     this.effects = cloneEffects(DEFAULT_EFFECTS);
+    this.animationSettings = {
+      frames: 4,
+      fps: 8,
+      boilAmount: 42
+    };
+    this.animationPreview = {
+      active: false,
+      frameIndex: 0,
+      lastTime: 0,
+      raf: 0,
+      settings: { ...this.animationSettings }
+    };
     this.effectsEnabled = true;
     this.previewPoint = null;
     this.selectDrag = null;
@@ -52,6 +64,7 @@ export class CanvasController extends EventTarget {
   }
 
   setTool(tool) {
+    this.stopBoilPreview({ render: false });
     this.tool = tool;
     if (tool !== "select") {
       this.hoveredStrokeId = null;
@@ -136,6 +149,32 @@ export class CanvasController extends EventTarget {
     this.queueRender();
   }
 
+  swapBackgroundAndBrushColors() {
+    const oldBackgroundColor = this.backgroundColor;
+    const oldBrushColor = this.brushColor;
+    const nextBackgroundColor = oldBrushColor;
+    const nextBrushColor = oldBackgroundColor;
+    const recoloredStrokes = [];
+
+    for (const stroke of this.strokes) {
+      if (stroke.tool === "eraser") continue;
+      const color = normalizeHexColor(stroke.settings?.color, oldBrushColor);
+      if (color === oldBrushColor || color === oldBackgroundColor) recoloredStrokes.push(stroke);
+    }
+
+    if (recoloredStrokes.length) this.commitHistory();
+
+    this.backgroundColor = nextBackgroundColor;
+    this.brushColor = nextBrushColor;
+
+    for (const stroke of recoloredStrokes) {
+      const color = normalizeHexColor(stroke.settings?.color, oldBrushColor);
+      stroke.settings.color = color === oldBrushColor ? nextBrushColor : nextBackgroundColor;
+    }
+
+    this.queueRender();
+  }
+
   setBackgroundFit(fit) {
     if (fit !== "fit" && fit !== "fill") return;
     this.backgroundFit = fit;
@@ -160,6 +199,20 @@ export class CanvasController extends EventTarget {
     this.queueRender();
   }
 
+  setAnimationSettings(settings = {}) {
+    this.animationSettings = {
+      ...this.animationSettings,
+      frames: sanitizeNumber(settings.frames, this.animationSettings.frames, 2, 8),
+      fps: sanitizeNumber(settings.fps, this.animationSettings.fps, 2, 18),
+      boilAmount: sanitizeNumber(settings.boilAmount, this.animationSettings.boilAmount, 0, 100)
+    };
+    if (this.animationPreview.active) {
+      this.animationPreview.settings = { ...this.animationSettings };
+      this.animationPreview.frameIndex %= Math.round(this.animationPreview.settings.frames);
+    }
+    this.emitChange();
+  }
+
   setCanvasSize(width, height) {
     this.canvas.width = sanitizeSize(width);
     this.canvas.height = sanitizeSize(height);
@@ -181,6 +234,7 @@ export class CanvasController extends EventTarget {
   }
 
   beginStroke(point) {
+    this.stopBoilPreview({ render: false });
     if (this.tool === "select") {
       this.selectStrokeAt(point);
       return;
@@ -239,6 +293,7 @@ export class CanvasController extends EventTarget {
   }
 
   clear() {
+    this.stopBoilPreview({ render: false });
     if (this.strokes.length) this.commitHistory();
     this.strokes = [];
     this.generatedPreviewStrokes = [];
@@ -344,9 +399,89 @@ export class CanvasController extends EventTarget {
   }
 
   export({ transparent = false } = {}) {
+    this.stopBoilPreview({ render: false });
     this.renderNow({ showSelection: false, generatedPreviewAlpha: 1 });
     exportPng(transparent ? this.strokeCanvas : this.canvas, { transparent });
     this.queueRender();
+  }
+
+  async exportTransparentGif(settings = {}) {
+    this.stopBoilPreview({ render: false });
+    const animation = {
+      ...this.animationSettings,
+      ...settings
+    };
+    const frameCount = Math.round(sanitizeNumber(animation.frames, 4, 2, 8));
+    const frames = [];
+
+    for (let frameIndex = 0; frameIndex < frameCount; frameIndex += 1) {
+      frames.push(this.renderTransparentAnimationFrame({
+        frameIndex,
+        boilAmount: animation.boilAmount
+      }));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+
+    exportGif(frames, {
+      fps: animation.fps,
+      alphaThreshold: 96
+    });
+    this.queueRender();
+  }
+
+  startBoilPreview(settings = {}) {
+    this.stopBoilPreview({ render: false });
+    const previewSettings = {
+      ...this.animationSettings,
+      ...settings
+    };
+    previewSettings.frames = Math.round(sanitizeNumber(previewSettings.frames, 4, 2, 8));
+    previewSettings.fps = sanitizeNumber(previewSettings.fps, 8, 2, 18);
+    previewSettings.boilAmount = sanitizeNumber(previewSettings.boilAmount, 42, 0, 100);
+
+    this.animationPreview = {
+      active: true,
+      frameIndex: 0,
+      lastTime: 0,
+      raf: 0,
+      settings: previewSettings
+    };
+    this.emitBoilPreviewChange();
+
+    const tick = (time) => {
+      if (!this.animationPreview.active) return;
+      const interval = 1000 / this.animationPreview.settings.fps;
+      if (!this.animationPreview.lastTime || time - this.animationPreview.lastTime >= interval) {
+        this.drawBoilPreviewFrame(this.animationPreview.frameIndex, this.animationPreview.settings.boilAmount);
+        this.animationPreview.frameIndex = (this.animationPreview.frameIndex + 1) % this.animationPreview.settings.frames;
+        this.animationPreview.lastTime = time;
+      }
+      this.animationPreview.raf = requestAnimationFrame(tick);
+    };
+
+    this.animationPreview.raf = requestAnimationFrame(tick);
+  }
+
+  stopBoilPreview({ render = true } = {}) {
+    if (!this.animationPreview.active && !this.animationPreview.raf) return;
+    cancelAnimationFrame(this.animationPreview.raf);
+    this.animationPreview = {
+      ...this.animationPreview,
+      active: false,
+      raf: 0,
+      lastTime: 0
+    };
+    this.emitBoilPreviewChange();
+    if (render) this.queueRender();
+  }
+
+  toggleBoilPreview(settings = {}) {
+    if (this.animationPreview.active) {
+      this.stopBoilPreview();
+      return false;
+    }
+    this.startBoilPreview(settings);
+    return true;
   }
 
   async copyTransparent() {
@@ -520,6 +655,54 @@ export class CanvasController extends EventTarget {
     this.emitChange();
   }
 
+  renderTransparentAnimationFrame({ frameIndex = 0, boilAmount = 0 } = {}) {
+    const frameCanvas = document.createElement("canvas");
+    frameCanvas.width = this.canvas.width;
+    frameCanvas.height = this.canvas.height;
+    const frameCtx = frameCanvas.getContext("2d", { willReadFrequently: true });
+    frameCtx.clearRect(0, 0, frameCanvas.width, frameCanvas.height);
+
+    const options = {
+      ...this.getStrokeRenderOptions({
+        alpha: 1,
+        frameIndex,
+        boilAmount
+      })
+    };
+
+    for (const stroke of this.strokes) {
+      renderStroke(frameCtx, stroke, options);
+    }
+
+    for (const stroke of this.generatedPreviewStrokes) {
+      renderStroke(frameCtx, stroke, options);
+    }
+
+    return frameCanvas;
+  }
+
+  drawBoilPreviewFrame(frameIndex = 0, boilAmount = 0) {
+    this.ensureStrokeLayer();
+    this.paintBackground();
+    this.strokeCtx.clearRect(0, 0, this.strokeCanvas.width, this.strokeCanvas.height);
+
+    const options = this.getStrokeRenderOptions({
+      alpha: 1,
+      frameIndex,
+      boilAmount
+    });
+
+    for (const stroke of this.strokes) {
+      renderStroke(this.strokeCtx, stroke, options);
+    }
+
+    for (const stroke of this.generatedPreviewStrokes) {
+      renderStroke(this.strokeCtx, stroke, options);
+    }
+
+    this.ctx.drawImage(this.strokeCanvas, 0, 0);
+  }
+
   getStrokeRenderOptions(options = {}) {
     return {
       ...options,
@@ -689,13 +872,21 @@ export class CanvasController extends EventTarget {
         backgroundColor: this.backgroundColor,
         brushColor: this.brushColor,
         effects: cloneEffects(this.effects),
+        animationSettings: { ...this.animationSettings },
         selectedStrokeId: selected?.id ?? null,
         selectedStrokeIndex: selectedIndex,
         selectedStrokeTotal: selectableStrokes.length,
         canUndo: this.historyPast.length > 0,
         canRedo: this.historyFuture.length > 0,
-        backgroundName: this.backgroundName
+        backgroundName: this.backgroundName,
+        boilPreviewActive: this.animationPreview.active
       }
+    }));
+  }
+
+  emitBoilPreviewChange() {
+    this.dispatchEvent(new CustomEvent("boilpreviewchange", {
+      detail: { active: this.animationPreview.active }
     }));
   }
 }
@@ -726,6 +917,10 @@ function hexToRgba(hex, alpha) {
   const green = Number.parseInt(match[2], 16);
   const blue = Number.parseInt(match[3], 16);
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
+function normalizeHexColor(color, fallback = "#000000") {
+  return /^#[0-9a-f]{6}$/i.test(color || "") ? color.toLowerCase() : fallback;
 }
 
 function normalizePressure(event) {

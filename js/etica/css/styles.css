@@ -205,13 +205,38 @@ body {
 }
 
 .section-divider-header {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
   margin-top: var(--spacing-lg);
   margin-bottom: 0;
   margin-left: calc(-1 * var(--spacing-3xl));
   margin-right: calc(-1 * var(--spacing-3xl));
   padding: 14px var(--spacing-3xl) 16px;
   border-top: 1px solid var(--color-border);
+}
+
+.effect-preview-button {
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-dim);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.effect-preview-button:hover,
+.effect-preview-button.active {
+  color: var(--color-bg);
+  border-color: var(--color-text);
+  background: var(--color-text);
 }
 
 .etica-effects-section > .effect-section:first-child .section-divider-header {
@@ -696,4 +721,9 @@ button.color-dot--expandable:hover {
   font: inherit;
   font-size: 0.95rem;
   text-align: center;
+}
+
+.etica-mobile-sheet-toggle {
+  height: 36px;
+  justify-content: center;
 }

@@ -14,10 +14,11 @@ export function renderStroke(ctx, stroke, options = {}) {
   const renderAlpha = options.alpha ?? 1;
   const pathMetrics = getPathMetrics(points);
   const wind = createWindEffect(options);
+  const boil = createBoilEffect(options);
 
   ctx.save();
   ctx.globalCompositeOperation = stroke.tool === "eraser" ? "destination-out" : "source-over";
-  drawPoint(ctx, stamps, points[0], stroke, getProfiledDensity(stroke, density, 0), rng, kind, renderAlpha, wind);
+  drawPoint(ctx, stamps, points[0], stroke, getProfiledDensity(stroke, density, 0), rng, kind, renderAlpha, wind, boil);
 
   for (let index = 1; index < points.length; index += 1) {
     drawSegment(
@@ -31,6 +32,7 @@ export function renderStroke(ctx, stroke, options = {}) {
       kind,
       renderAlpha,
       wind,
+      boil,
       pathMetrics.cumulative[index - 1],
       pathMetrics.total
     );
@@ -43,13 +45,13 @@ function normalizeColor(color, fallback = "#000000") {
   return /^#[0-9a-f]{6}$/i.test(color || "") ? color.toLowerCase() : fallback;
 }
 
-function drawSegment(ctx, stamps, from, to, stroke, baseDensity, rng, kind, renderAlpha, wind, segmentStartLength, totalLength) {
+function drawSegment(ctx, stamps, from, to, stroke, baseDensity, rng, kind, renderAlpha, wind, boil, segmentStartLength, totalLength) {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
   if (distance < 0.01) {
     const pathT = totalLength > 0 ? segmentStartLength / totalLength : 0;
-    drawPoint(ctx, stamps, to, stroke, getProfiledDensity(stroke, baseDensity, pathT), rng, kind, renderAlpha, wind);
+    drawPoint(ctx, stamps, to, stroke, getProfiledDensity(stroke, baseDensity, pathT), rng, kind, renderAlpha, wind, boil);
     return;
   }
 
@@ -70,12 +72,12 @@ function drawSegment(ctx, stamps, from, to, stroke, baseDensity, rng, kind, rend
       pointerType: to.pointerType,
       time: lerp(from.time, to.time, t)
     };
-    drawPoint(ctx, stamps, point, stroke, densityMultiplier, rng, kind, renderAlpha, wind);
+    drawPoint(ctx, stamps, point, stroke, densityMultiplier, rng, kind, renderAlpha, wind, boil);
     traveled += spacing * lerp(0.62, 1.32, rng());
   }
 }
 
-function drawPoint(ctx, stamps, point, stroke, densityMultiplier, rng, kind, renderAlpha, wind) {
+function drawPoint(ctx, stamps, point, stroke, densityMultiplier, rng, kind, renderAlpha, wind, boil) {
   const size = getStrokeSize(stroke);
   const sizeVariation = getStrokeSizeVariation(stroke);
   const pressureScale = stroke.settings.pressureEnabled ? lerp(0.72, 1.38, point.pressure) : 1;
@@ -95,17 +97,51 @@ function drawPoint(ctx, stamps, point, stroke, densityMultiplier, rng, kind, ren
     const drawSize = size * pressureScale * radiusJitter * (kind === "eraser" ? 1.1 : 1);
     const x = point.x + Math.cos(angle) * spread;
     const y = point.y + Math.sin(angle) * spread;
-    const windSample = applyWindEffect(kind === "eraser" ? null : wind, x, y, rng);
+    const boilSample = applyBoilEffect(kind === "eraser" ? null : boil, x, y, drawSize, i);
+    const windSample = applyWindEffect(kind === "eraser" ? null : wind, boilSample.x, boilSample.y, rng);
     if (windSample.skip) continue;
-    const alpha = (kind === "dotted" ? lerp(0.86, 1, rng()) : 1) * renderAlpha * windSample.alpha;
+    const alpha = (kind === "dotted" ? lerp(0.86, 1, rng()) : 1) * renderAlpha * windSample.alpha * boilSample.alpha;
 
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.translate(windSample.x, windSample.y);
-    ctx.rotate(rng() * Math.PI * 2);
-    ctx.drawImage(stamp, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+    ctx.rotate(rng() * Math.PI * 2 + boilSample.rotation);
+    ctx.drawImage(stamp, -boilSample.size / 2, -boilSample.size / 2, boilSample.size, boilSample.size);
     ctx.restore();
   }
+}
+
+function createBoilEffect(options) {
+  const amount = clamp(Number(options.boilAmount ?? options.boil?.amount ?? 0) / 100, 0, 1);
+  if (amount <= 0) return null;
+  return {
+    amount,
+    frameIndex: Math.max(0, Math.round(Number(options.frameIndex ?? options.boil?.frameIndex ?? 0)))
+  };
+}
+
+function applyBoilEffect(boil, x, y, size, dotIndex) {
+  if (!boil) return { x, y, size, rotation: 0, alpha: 1 };
+
+  const salt = boil.frameIndex * 101.37 + dotIndex * 17.19;
+  const angle = hashNoise(x * 0.013, y * 0.013, salt) * Math.PI * 2;
+  const maxShift = boil.amount * Math.max(1.25, Math.min(14, size * 0.22));
+  const shift = maxShift * lerp(0.35, 1, hashNoise(x * 0.021, y * 0.021, salt + 33.3));
+  const sizeScale = lerp(1 - boil.amount * 0.11, 1 + boil.amount * 0.12, hashNoise(x * 0.017, y * 0.017, salt + 71.7));
+  const alpha = lerp(1 - boil.amount * 0.08, 1, hashNoise(x * 0.019, y * 0.019, salt + 121.1));
+
+  return {
+    x: x + Math.cos(angle) * shift,
+    y: y + Math.sin(angle) * shift,
+    size: Math.max(0.5, size * sizeScale),
+    rotation: (hashNoise(x * 0.023, y * 0.023, salt + 197.5) - 0.5) * boil.amount * 0.45,
+    alpha
+  };
+}
+
+function hashNoise(x, y, salt) {
+  const n = Math.sin(x * 127.1 + y * 311.7 + salt * 74.7) * 43758.5453123;
+  return n - Math.floor(n);
 }
 
 function createWindEffect(options) {

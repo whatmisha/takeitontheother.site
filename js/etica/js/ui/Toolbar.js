@@ -32,6 +32,7 @@ export class Toolbar {
     this.clearButton = document.getElementById("clearButton");
     this.exportButton = document.getElementById("exportButton");
     this.transparencyToggle = document.getElementById("transparencyToggle");
+    this.gifToggle = document.getElementById("gifToggle");
     this.backgroundInput = document.getElementById("backgroundInput");
     this.backgroundButton = document.getElementById("backgroundButton");
     this.swapColorsButton = document.getElementById("swapColorsButton");
@@ -50,6 +51,7 @@ export class Toolbar {
     this.mobileRedoButton = document.getElementById("mobileRedoButton");
     this.mobileExportCanvasButton = document.getElementById("mobileExportCanvasButton");
     this.mobileExportTransparentButton = document.getElementById("mobileExportTransparentButton");
+    this.mobileGifToggle = document.getElementById("mobileGifToggle");
     this.mobileCopyTransparentButton = document.getElementById("mobileCopyTransparentButton");
     this.fotoInput = document.getElementById("fotoInput");
     this.fotoUploadButton = document.getElementById("fotoUploadButton");
@@ -73,6 +75,12 @@ export class Toolbar {
     this.windTrailInput = document.getElementById("windTrailInput");
     this.windDestructionInput = document.getElementById("windDestructionInput");
     this.windUniformityInput = document.getElementById("windUniformityInput");
+    this.boilEnabledCheckbox = document.getElementById("boilEnabledCheckbox");
+    this.boilSectionContent = document.getElementById("boilSectionContent");
+    this.boilAmountInput = document.getElementById("boilAmountInput");
+    this.boilFramesInput = document.getElementById("boilFramesInput");
+    this.boilFpsInput = document.getElementById("boilFpsInput");
+    this.boilPreviewButton = document.getElementById("boilPreviewButton");
     this.lastDetail = null;
     this.nuevoGenerator = new NuevoGenerator();
     this.photoGenerator = new PhotoGenerator();
@@ -198,7 +206,11 @@ export class Toolbar {
     });
 
     this.exportButton.addEventListener("click", () => {
-      this.controller.export({ transparent: this.transparencyToggle.checked });
+      this.exportCurrentFormat();
+    });
+
+    this.gifToggle?.addEventListener("change", () => {
+      if (this.mobileGifToggle) this.mobileGifToggle.checked = this.gifToggle.checked;
     });
 
     this.backgroundButton.addEventListener("click", () => {
@@ -234,13 +246,18 @@ export class Toolbar {
       if (isTypingTarget(event.target)) return;
 
       const key = event.key.toLowerCase();
-      if ((event.metaKey || event.ctrlKey) && key === "e") {
+      const code = event.code;
+      if ((event.metaKey || event.ctrlKey) && code === "KeyE") {
         event.preventDefault();
-        this.controller.export({ transparent: this.transparencyToggle.checked });
+        if (event.shiftKey) {
+          this.exportTransparentGif();
+        } else {
+          this.exportCurrentFormat();
+        }
         return;
       }
 
-      if ((event.metaKey || event.ctrlKey) && key === "z") {
+      if ((event.metaKey || event.ctrlKey) && code === "KeyZ") {
         event.preventDefault();
         if (event.shiftKey) {
           this.controller.redo();
@@ -252,31 +269,37 @@ export class Toolbar {
 
       if (event.metaKey || event.ctrlKey || event.altKey) return;
 
-      if (event.key === "Delete" || event.key === "Backspace") {
+      if (code === "Space") {
+        event.preventDefault();
+        this.toggleBoilPreview();
+        return;
+      }
+
+      if (code === "Delete" || code === "Backspace") {
         event.preventDefault();
         this.controller.deleteSelectedStroke();
         return;
       }
 
-      if (event.key === "[" || event.key === "]") {
+      if (code === "BracketLeft" || code === "BracketRight") {
         event.preventDefault();
-        const direction = event.key === "]" ? 1 : -1;
+        const direction = code === "BracketRight" ? 1 : -1;
         const current = Number(this.sizeInput.value);
         const next = event.shiftKey ? snapByStep(current, direction, 10) : current + direction;
         this.applySize(next);
         return;
       }
 
-      const toolByKey = {
-        v: "select",
-        b: "dotted",
-        i: "ink",
-        e: "eraser"
+      const toolByCode = {
+        KeyV: "select",
+        KeyB: "dotted",
+        KeyI: "ink",
+        KeyE: "eraser"
       };
 
-      if (toolByKey[key]) {
+      if (toolByCode[code]) {
         event.preventDefault();
-        this.setActiveTool(toolByKey[key]);
+        this.setActiveTool(toolByCode[code]);
       }
     });
 
@@ -343,8 +366,9 @@ export class Toolbar {
       windTrailInput: "Maximum length of the blown dot trail.",
       windDestructionInput: "How much of the original shape breaks apart.",
       windUniformityInput: "Flag-like falloff at low values, sand-like spread at high values.",
-      echoAmountInput: "Placeholder effect control.",
-      staticSpreadInput: "Placeholder effect control."
+      boilAmountInput: "How much the dots jitter between GIF frames.",
+      boilFramesInput: "Number of frames in the transparent GIF loop.",
+      boilFpsInput: "Playback speed for the GIF loop."
     };
 
     for (const [controlId, tooltip] of Object.entries(tooltips)) {
@@ -402,14 +426,9 @@ export class Toolbar {
   }
 
   swapColors() {
-    const backgroundColor = this.controller.backgroundColor;
-    const brushColor = this.controller.brushColor;
-    const selectedStrokeId = this.controller.selectedStrokeId;
-    this.controller.selectedStrokeId = null;
-    this.backgroundColorPicker.setColor(brushColor);
-    this.brushColorPicker.setColor(backgroundColor);
-    this.controller.selectedStrokeId = selectedStrokeId;
-    this.controller.queueRender();
+    this.controller.swapBackgroundAndBrushColors();
+    this.backgroundColorPicker.syncColor(this.controller.backgroundColor);
+    this.brushColorPicker.syncColor(this.controller.brushColor);
     this.queueActiveGeneratorRefresh();
   }
 
@@ -532,7 +551,15 @@ export class Toolbar {
 
     this.mobileExportTransparentButton?.addEventListener("click", () => {
       this.closeMobileExportSheet();
-      this.controller.export({ transparent: true });
+      if (this.mobileGifToggle?.checked) {
+        this.exportTransparentGif();
+      } else {
+        this.controller.export({ transparent: true });
+      }
+    });
+
+    this.mobileGifToggle?.addEventListener("change", () => {
+      if (this.gifToggle) this.gifToggle.checked = this.mobileGifToggle.checked;
     });
 
     this.mobileCopyTransparentButton?.addEventListener("click", async () => {
@@ -649,14 +676,12 @@ export class Toolbar {
 
   bindEffectControls() {
     this.bindEffectSection(this.windEnabledCheckbox, this.windSectionContent, () => this.applyWindEffect());
-    this.bindEffectSection(
-      document.getElementById("echoEnabledCheckbox"),
-      document.getElementById("echoSectionContent")
-    );
-    this.bindEffectSection(
-      document.getElementById("staticEnabledCheckbox"),
-      document.getElementById("staticSectionContent")
-    );
+    this.bindEffectSection(this.boilEnabledCheckbox, this.boilSectionContent, () => this.applyBoilSettings());
+    this.boilPreviewButton?.addEventListener("click", () => this.toggleBoilPreview());
+    this.controller.addEventListener("boilpreviewchange", (event) => {
+      this.boilPreviewButton?.classList.toggle("active", Boolean(event.detail.active));
+      this.boilPreviewButton?.setAttribute("aria-pressed", String(Boolean(event.detail.active)));
+    });
 
     document.querySelectorAll("[data-effect-input]").forEach((input) => {
       this.updateEffectValue(input);
@@ -690,6 +715,7 @@ export class Toolbar {
     });
 
     this.applyWindEffect();
+    this.applyBoilSettings();
   }
 
   bindEffectSection(toggle, content, onToggle) {
@@ -717,6 +743,7 @@ export class Toolbar {
     input.value = next;
     this.updateEffectValue(input);
     if (input.dataset.effectInput === "wind") this.applyWindEffect();
+    if (input.dataset.effectInput === "boil") this.applyBoilSettings();
   }
 
   applyWindEffect() {
@@ -727,6 +754,41 @@ export class Toolbar {
       trailLength: valueOf("windTrailInput", 120),
       destruction: valueOf("windDestructionInput", 40),
       uniformity: valueOf("windUniformityInput", 35)
+    });
+  }
+
+  applyBoilSettings() {
+    const enabled = this.boilEnabledCheckbox?.checked ?? true;
+    this.controller.setAnimationSettings({
+      boilAmount: enabled ? valueOf("boilAmountInput", 42) : 0,
+      frames: valueOf("boilFramesInput", 4),
+      fps: valueOf("boilFpsInput", 8)
+    });
+  }
+
+  exportTransparentGif() {
+    this.applyBoilSettings();
+    this.controller.exportTransparentGif({
+      boilAmount: this.boilEnabledCheckbox?.checked ? valueOf("boilAmountInput", 42) : 0,
+      frames: valueOf("boilFramesInput", 4),
+      fps: valueOf("boilFpsInput", 8)
+    });
+  }
+
+  exportCurrentFormat() {
+    if (this.gifToggle?.checked) {
+      this.exportTransparentGif();
+      return;
+    }
+    this.controller.export({ transparent: this.transparencyToggle.checked });
+  }
+
+  toggleBoilPreview() {
+    this.applyBoilSettings();
+    this.controller.toggleBoilPreview({
+      boilAmount: this.boilEnabledCheckbox?.checked ? valueOf("boilAmountInput", 42) : 0,
+      frames: valueOf("boilFramesInput", 4),
+      fps: valueOf("boilFpsInput", 8)
     });
   }
 
