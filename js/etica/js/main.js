@@ -1,7 +1,7 @@
 import { CanvasController } from "./canvas/CanvasController.js";
 import { PointerTracker } from "./input/PointerTracker.js";
 import { Toolbar } from "./ui/Toolbar.js";
-import { PanelManager } from "../yf-ui-framework/v2/src/ui/PanelManager.js";
+import { PanelManager } from "./ui/PanelManager.js";
 
 const canvas = document.getElementById("drawingCanvas");
 const controller = new CanvasController(canvas);

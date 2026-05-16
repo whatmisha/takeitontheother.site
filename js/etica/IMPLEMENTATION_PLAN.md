@@ -90,7 +90,7 @@ etica/
   index.html
   css/
     styles.css
-  yf-ui-framework/
+  js/ui/PanelManager.js
     v2/
   js/
     main.js
@@ -438,8 +438,8 @@ V1 можно считать готовой, если:
 Создан plain HTML/CSS/JS прототип:
 
 - `index.html`;
-- `css/yf-styles-no-fonts.css`, локальная копия YF v2 CSS без `@font-face` и ссылок на `fonts`;
-- `css/styles.css`, который подключает `yf-styles-no-fonts.css` и содержит только Etica-specific layout overrides;
+- `css/ui-base.css`, локальная базовая CSS-система без `@font-face` и ссылок на `fonts`;
+- `css/styles.css`, который подключает `ui-base.css` и содержит только Etica-specific layout overrides;
 - `js/main.js`;
 - `js/canvas/CanvasController.js`;
 - `js/canvas/Exporter.js`;
@@ -455,7 +455,7 @@ UI переведен на YF UI Framework v2:
 - настройки используют `controls-panel`, `control-section`, `segmented-control`, `value-display`, `style-select` и framework-кнопки;
 - canvas размещен внутри `canvas-container`;
 - действия вынесены в `bottom-buttons`.
-- `Settings` panel подключена к `PanelManager` из YF v2 и перетаскивается за header.
+- Панели подключены к локальному `PanelManager` и перетаскиваются за header.
 
 Добавленные решения после уточнений:
 
