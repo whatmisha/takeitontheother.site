@@ -25,7 +25,8 @@ new Toolbar(controller);
   ["backgroundPanel", "backgroundPanelHeader"],
   ["fotoPanel", "fotoPanelHeader"],
   ["nuevoPanel", "nuevoPanelHeader"],
-  ["florPanel", "florPanelHeader"]
+  ["florPanel", "florPanelHeader"],
+  ["doodleFlorPanel", "doodleFlorPanelHeader"]
 ].forEach(([panelId, headerId]) => {
   panels.registerPanel(panelId, {
     headerId,

@@ -14,6 +14,7 @@
         <button class="yf-tools-link etica-title-button etica-tab-button" type="button" data-mode-tab="foto" aria-pressed="false">Foto</button>
         <button class="yf-tools-link etica-title-button etica-tab-button" type="button" data-mode-tab="nuevo" aria-pressed="false">Nuevo</button>
         <button class="yf-tools-link etica-title-button etica-tab-button" type="button" data-mode-tab="flor" aria-pressed="false">Flor</button>
+        <button class="yf-tools-link etica-title-button etica-tab-button" type="button" data-mode-tab="doodleFlor" aria-pressed="false">Doodle Flor</button>
         <div class="preset-dropdown etica-canvas-dropdown" id="canvasPresetDropdown">
           <button class="preset-dropdown-toggle" id="canvasPresetToggle" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="canvasPresetMenu">
             <span class="preset-dropdown-text" id="canvasPresetText">1:1</span>
@@ -602,6 +603,86 @@
               </div>
               <div class="button-group etica-panel-buttons generator-actions">
                 <button class="btn-secondary etica-full-button" type="button" id="florRegenerateButton">Regenerate</button>
+              </div>
+            </section>
+          </div>
+        </aside>
+        <aside class="controls-panel etica-panel etica-generator-panel" id="doodleFlorPanel" aria-label="Etica Doodle Flor panel" hidden>
+          <div class="panel-header" id="doodleFlorPanelHeader">
+            <span>Doodle Flor</span>
+            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse Doodle Flor panel">
+              <svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true">
+                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </div>
+
+          <div class="panel-content">
+            <section class="control-section etica-simple-section">
+              <div class="control-group">
+                <label for="doodleFlorShapeSelect"><span>Shape</span></label>
+                <select id="doodleFlorShapeSelect" class="style-select" data-generator-input="doodleFlor">
+                  <option value="mixed">Mixed</option>
+                  <option value="daisy">Daisy Loop</option>
+                  <option value="blob">Blob Outline</option>
+                  <option value="star">Star Petals</option>
+                  <option value="tulip">Tulip Bud</option>
+                </select>
+              </div>
+              <div class="control-group">
+                <label for="doodleFlorScaleInput"><span>Scale</span><span class="generator-value" id="doodleFlorScaleValue">64</span></label>
+                <input id="doodleFlorScaleInput" type="range" min="0" max="100" step="1" value="64" data-generator-input="doodleFlor">
+              </div>
+              <div class="control-group">
+                <label for="doodleFlorPetalsInput"><span>Petals</span><span class="generator-value" id="doodleFlorPetalsValue">6</span></label>
+                <input id="doodleFlorPetalsInput" type="range" min="3" max="12" step="1" value="6" data-generator-input="doodleFlor">
+              </div>
+              <div class="control-group">
+                <label for="doodleFlorOpennessInput"><span>Openness</span><span class="generator-value" id="doodleFlorOpennessValue">72</span></label>
+                <input id="doodleFlorOpennessInput" type="range" min="0" max="100" step="1" value="72" data-generator-input="doodleFlor">
+              </div>
+              <div class="control-group">
+                <label for="doodleFlorWobbleInput"><span>Wobble</span><span class="generator-value" id="doodleFlorWobbleValue">46</span></label>
+                <input id="doodleFlorWobbleInput" type="range" min="0" max="100" step="1" value="46" data-generator-input="doodleFlor">
+              </div>
+              <div class="control-group">
+                <label for="doodleFlorScribbleInput"><span>Scribble</span><span class="generator-value" id="doodleFlorScribbleValue">28</span></label>
+                <input id="doodleFlorScribbleInput" type="range" min="0" max="100" step="1" value="28" data-generator-input="doodleFlor">
+              </div>
+              <div class="control-group">
+                <label for="doodleFlorStemInput"><span>Stem</span><span class="generator-value" id="doodleFlorStemValue">84</span></label>
+                <input id="doodleFlorStemInput" type="range" min="0" max="100" step="1" value="84" data-generator-input="doodleFlor">
+              </div>
+              <div class="control-group">
+                <label for="doodleFlorLeavesInput"><span>Leaves</span><span class="generator-value" id="doodleFlorLeavesValue">42</span></label>
+                <input id="doodleFlorLeavesInput" type="range" min="0" max="100" step="1" value="42" data-generator-input="doodleFlor">
+              </div>
+              <div class="control-group">
+                <label for="doodleFlorDensityInput"><span>Dot Density</span><span class="generator-value" id="doodleFlorDensityValue">78</span></label>
+                <input id="doodleFlorDensityInput" type="range" min="0" max="100" step="1" value="78" data-generator-input="doodleFlor">
+              </div>
+              <div class="control-group">
+                <label for="doodleFlorDotSizeInput"><span>Dot Size</span><span class="generator-value" id="doodleFlorDotSizeValue">20</span></label>
+                <input id="doodleFlorDotSizeInput" type="range" min="4" max="90" step="1" value="20" data-generator-input="doodleFlor">
+              </div>
+              <div class="control-group">
+                <label for="doodleFlorSizeVariationInput"><span>Dot Variation</span><span class="generator-value" id="doodleFlorSizeVariationValue">0%</span></label>
+                <input id="doodleFlorSizeVariationInput" type="range" min="0" max="100" step="1" value="0" data-generator-input="doodleFlor" data-generator-unit="%">
+              </div>
+              <div class="control-group">
+                <label for="doodleFlorJitterInput"><span>Line Jitter</span><span class="generator-value" id="doodleFlorJitterValue">16</span></label>
+                <input id="doodleFlorJitterInput" type="range" min="0" max="100" step="1" value="16" data-generator-input="doodleFlor">
+              </div>
+              <div class="control-group">
+                <label for="doodleFlorMaxStrokesInput"><span>Max Strokes</span><span class="generator-value" id="doodleFlorMaxStrokesValue">60</span></label>
+                <input id="doodleFlorMaxStrokesInput" type="range" min="8" max="180" step="1" value="60" data-generator-input="doodleFlor">
+              </div>
+              <div class="control-group generator-seed-row">
+                <label for="doodleFlorSeedInput"><span>Seed</span></label>
+                <input type="text" class="value-display generator-seed-input" id="doodleFlorSeedInput" value="2207" inputmode="numeric">
+              </div>
+              <div class="button-group etica-panel-buttons generator-actions">
+                <button class="btn-secondary etica-full-button" type="button" id="doodleFlorRegenerateButton">Regenerate</button>
               </div>
             </section>
           </div>

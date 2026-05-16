@@ -1,4 +1,5 @@
 import { BackgroundColorPicker } from "./BackgroundColorPicker.js";
+import { DoodleFlorGenerator } from "../generators/DoodleFlorGenerator.js";
 import { NuevoGenerator } from "../generators/NuevoGenerator.js";
 import { PhotoGenerator } from "../generators/PhotoGenerator.js";
 import { PlantGenerator } from "../generators/PlantGenerator.js";
@@ -16,6 +17,7 @@ export class Toolbar {
     this.fotoPanel = document.getElementById("fotoPanel");
     this.nuevoPanel = document.getElementById("nuevoPanel");
     this.florPanel = document.getElementById("florPanel");
+    this.doodleFlorPanel = document.getElementById("doodleFlorPanel");
     this.sizeInput = document.getElementById("sizeInput");
     this.sizeOutput = document.getElementById("sizeOutput");
     this.sizeVariationInput = document.getElementById("sizeVariationInput");
@@ -68,6 +70,9 @@ export class Toolbar {
     this.florRegenerateButton = document.getElementById("florRegenerateButton");
     this.florSeedInput = document.getElementById("florSeedInput");
     this.florTypeSelect = document.getElementById("florTypeSelect");
+    this.doodleFlorRegenerateButton = document.getElementById("doodleFlorRegenerateButton");
+    this.doodleFlorSeedInput = document.getElementById("doodleFlorSeedInput");
+    this.doodleFlorShapeSelect = document.getElementById("doodleFlorShapeSelect");
     this.windEnabledCheckbox = document.getElementById("windEnabledCheckbox");
     this.windSectionContent = document.getElementById("windSectionContent");
     this.windDirectionInput = document.getElementById("windDirectionInput");
@@ -85,12 +90,14 @@ export class Toolbar {
     this.nuevoGenerator = new NuevoGenerator();
     this.photoGenerator = new PhotoGenerator();
     this.plantGenerator = new PlantGenerator();
+    this.doodleFlorGenerator = new DoodleFlorGenerator();
     this.photoImage = null;
     this.photoObjectUrl = null;
     this.generatedGroupIds = {
       foto: null,
       nuevo: null,
-      flor: null
+      flor: null,
+      doodleFlor: null
     };
     this.generatorRefreshTimer = null;
     this.backgroundColorPicker = new BackgroundColorPicker(controller, {
@@ -361,6 +368,20 @@ export class Toolbar {
       florJitterInput: "Random dot offset from the plant form.",
       florMaxPointsInput: "Hard maximum number of generated dots.",
       florSeedInput: "Locks the random generation variant.",
+      doodleFlorShapeSelect: "Simple doodle flower silhouette.",
+      doodleFlorScaleInput: "Overall single flower size.",
+      doodleFlorPetalsInput: "Number of looped petals or lobes.",
+      doodleFlorOpennessInput: "How far the petals open from the center.",
+      doodleFlorWobbleInput: "Hand-drawn asymmetry in the outline.",
+      doodleFlorScribbleInput: "Extra center fill and interior doodle lines.",
+      doodleFlorStemInput: "Length and presence of the stem.",
+      doodleFlorLeavesInput: "Amount of simple leaf loops.",
+      doodleFlorDensityInput: "How tightly dots form each line.",
+      doodleFlorDotSizeInput: "Base dot size.",
+      doodleFlorSizeVariationInput: "Maximum random dot size difference.",
+      doodleFlorJitterInput: "Organic offset from the doodle line.",
+      doodleFlorMaxStrokesInput: "Hard maximum number of generated line strokes.",
+      doodleFlorSeedInput: "Locks the random generation variant.",
       windDirectionInput: "Direction the dots are blown, in degrees.",
       windStrengthInput: "Overall force of the wind displacement.",
       windTrailInput: "Maximum length of the blown dot trail.",
@@ -397,7 +418,7 @@ export class Toolbar {
   }
 
   setMode(mode) {
-    if (!["pinta", "foto", "nuevo", "flor"].includes(mode)) return;
+    if (!["pinta", "foto", "nuevo", "flor", "doodleFlor"].includes(mode)) return;
     const previousMode = this.activeMode;
     if (previousMode === "pinta" && mode !== "pinta" && this.controller.tool !== "select") {
       this.previousPintaTool = this.controller.tool;
@@ -415,6 +436,7 @@ export class Toolbar {
     if (this.fotoPanel) this.fotoPanel.hidden = mode !== "foto";
     if (this.nuevoPanel) this.nuevoPanel.hidden = mode !== "nuevo";
     if (this.florPanel) this.florPanel.hidden = mode !== "flor";
+    if (this.doodleFlorPanel) this.doodleFlorPanel.hidden = mode !== "doodleFlor";
     if (this.backgroundPanel) this.backgroundPanel.hidden = false;
     this.controller.setEffectsEnabled(mode === "pinta");
 
@@ -422,6 +444,10 @@ export class Toolbar {
       this.setActiveTool(this.previousPintaTool || "dotted");
     } else if (mode !== "pinta" && this.controller.tool !== "select") {
       this.setActiveTool("select");
+    }
+
+    if (mode === "doodleFlor" && !this.hasGeneratedGroup("doodleFlor")) {
+      this.regenerateDoodleFlor({ commitHistory: true });
     }
   }
 
@@ -657,6 +683,10 @@ export class Toolbar {
       this.florSeedInput.value = String(sanitizeSeed(this.florSeedInput.value, 1207));
       this.regenerateFlor({ commitHistory: true });
     });
+    this.doodleFlorSeedInput?.addEventListener("change", () => {
+      this.doodleFlorSeedInput.value = String(sanitizeSeed(this.doodleFlorSeedInput.value, 2207));
+      this.regenerateDoodleFlor({ commitHistory: true });
+    });
 
     this.fotoRegenerateButton?.addEventListener("click", () => {
       this.fotoSeedInput.value = String(randomUiSeed());
@@ -671,6 +701,11 @@ export class Toolbar {
     this.florRegenerateButton?.addEventListener("click", () => {
       this.florSeedInput.value = String(randomUiSeed());
       this.regenerateFlor({ commitHistory: true });
+    });
+
+    this.doodleFlorRegenerateButton?.addEventListener("click", () => {
+      this.doodleFlorSeedInput.value = String(randomUiSeed());
+      this.regenerateDoodleFlor({ commitHistory: true });
     });
   }
 
@@ -854,19 +889,20 @@ export class Toolbar {
   }
 
   queueActiveGeneratorRefresh() {
-    if (this.activeMode === "foto" || this.activeMode === "nuevo" || this.activeMode === "flor") {
+    if (this.activeMode === "foto" || this.activeMode === "nuevo" || this.activeMode === "flor" || this.activeMode === "doodleFlor") {
       this.queueGeneratorRefresh(this.activeMode);
     }
   }
 
   queueGeneratorRefresh(mode) {
-    if (mode !== "foto" && mode !== "nuevo" && mode !== "flor") return;
+    if (mode !== "foto" && mode !== "nuevo" && mode !== "flor" && mode !== "doodleFlor") return;
     if ((mode === "foto" || mode === "nuevo") && !this.photoImage) return;
     window.clearTimeout(this.generatorRefreshTimer);
     this.generatorRefreshTimer = window.setTimeout(() => {
       if (mode === "foto") this.regenerateFoto({ commitHistory: false });
       if (mode === "nuevo") this.regenerateNuevo({ commitHistory: false });
       if (mode === "flor") this.regenerateFlor({ commitHistory: false });
+      if (mode === "doodleFlor") this.regenerateDoodleFlor({ commitHistory: false });
     }, 120);
   }
 
@@ -904,6 +940,16 @@ export class Toolbar {
     this.commitGeneratedStrokes("flor", strokes, { commitHistory });
   }
 
+  regenerateDoodleFlor({ commitHistory = false } = {}) {
+    const strokes = this.doodleFlorGenerator.generate({
+      width: this.controller.canvas.width,
+      height: this.controller.canvas.height,
+      color: this.controller.brushColor,
+      settings: this.getDoodleFlorSettings()
+    });
+    this.commitGeneratedStrokes("doodleFlor", strokes, { commitHistory });
+  }
+
   commitGeneratedStrokes(mode, strokes, { commitHistory = false } = {}) {
     if (!strokes.length) return;
     const hasExistingGroup = Boolean(this.generatedGroupIds[mode]);
@@ -911,6 +957,11 @@ export class Toolbar {
       selectGroup: false,
       commitHistory: commitHistory || !hasExistingGroup
     });
+  }
+
+  hasGeneratedGroup(mode) {
+    const groupId = this.generatedGroupIds[mode];
+    return Boolean(groupId && this.controller.strokes.some((stroke) => stroke.meta?.generated && stroke.meta.groupId === groupId));
   }
 
   getFotoSettings() {
@@ -963,6 +1014,25 @@ export class Toolbar {
       jitter: valueOf("florJitterInput", 46),
       maxPoints: valueOf("florMaxPointsInput", 1200),
       seed: sanitizeSeed(this.florSeedInput?.value, 1207)
+    };
+  }
+
+  getDoodleFlorSettings() {
+    return {
+      shape: this.doodleFlorShapeSelect?.value || "mixed",
+      scale: valueOf("doodleFlorScaleInput", 64),
+      petals: valueOf("doodleFlorPetalsInput", 6),
+      openness: valueOf("doodleFlorOpennessInput", 72),
+      wobble: valueOf("doodleFlorWobbleInput", 46),
+      scribble: valueOf("doodleFlorScribbleInput", 28),
+      stem: valueOf("doodleFlorStemInput", 84),
+      leaves: valueOf("doodleFlorLeavesInput", 42),
+      density: valueOf("doodleFlorDensityInput", 78),
+      dotSize: valueOf("doodleFlorDotSizeInput", 20),
+      sizeVariation: valueOf("doodleFlorSizeVariationInput", 0),
+      jitter: valueOf("doodleFlorJitterInput", 16),
+      maxStrokes: valueOf("doodleFlorMaxStrokesInput", 60),
+      seed: sanitizeSeed(this.doodleFlorSeedInput?.value, 2207)
     };
   }
 
