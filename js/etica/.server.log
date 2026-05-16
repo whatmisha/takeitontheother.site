@@ -929,3 +929,292 @@
 127.0.0.1 - - [16/May/2026 05:27:46] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
 127.0.0.1 - - [16/May/2026 05:27:46] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
 127.0.0.1 - - [16/May/2026 05:27:46] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /css/ui-base.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /js/input/PointerTracker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /js/ui/PanelManager.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /js/brushes/DensityProfiles.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /js/generators/PhotoGenerator.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /js/generators/PlantGenerator.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /js/brushes/random.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /js/canvas/Exporter.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /js/generators/StrokeFactory.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /js/generators/GeneratorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /js/brushes/stamps.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:01:23] "GET /js/utils/ColorUtils.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /css/ui-base.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /js/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /js/brushes/DensityProfiles.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /js/generators/PlantGenerator.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /js/generators/PhotoGenerator.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:03:47] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:03:47] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /js/generators/StrokeFactory.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:03:47] "GET /js/generators/GeneratorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:07:19] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:07:19] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:07:19] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:07:19] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:07:19] "GET /js/ui/Toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:07:19] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:07:19] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:07:19] "GET /js/generators/PlantGenerator.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:07:19] "GET /js/generators/PhotoGenerator.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:07:19] "GET /js/generators/StrokeFactory.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:07:19] "GET /js/generators/GeneratorUtils.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:09:47] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:09:47] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:09:47] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:09:47] "GET /js/ui/Toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:09:47] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:09:47] "GET /js/generators/PlantGenerator.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:09:47] "GET /js/generators/PhotoGenerator.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:09:47] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:09:47] "GET /js/brushes/DensityProfiles.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:09:47] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:09:47] "GET /js/generators/GeneratorUtils.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:09:47] "GET /js/generators/StrokeFactory.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:20:22] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:20:23] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:20:23] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:20:23] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:20:23] "GET /js/ui/Toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:20:23] "GET /js/ui/PanelManager.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:20:23] "GET /js/brushes/DensityProfiles.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:20:23] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:20:23] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:20:23] "GET /js/generators/PhotoGenerator.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:20:23] "GET /js/generators/PlantGenerator.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:20:23] "GET /js/generators/GeneratorUtils.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:20:23] "GET /js/generators/StrokeFactory.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:20:24] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:21:44] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:21:44] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:21:44] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:21:44] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:21:44] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:21:44] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:21:44] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:21:44] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:21:44] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:21:44] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:21:44] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:21:44] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:21:44] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:21:44] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:21:44] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:21:44] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:21:44] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:21:44] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:21:44] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:21:44] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:21:44] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:21:44] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:21:44] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:21:44] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:21:44] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:21:44] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /css/ui-base.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /js/input/PointerTracker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /js/ui/PanelManager.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /js/brushes/DensityProfiles.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /js/canvas/Exporter.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /js/brushes/random.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /js/generators/PhotoGenerator.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /js/generators/PlantGenerator.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /js/brushes/stamps.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /js/utils/ColorUtils.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /js/generators/StrokeFactory.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /js/generators/GeneratorUtils.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:39:49] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:39:49] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:39:49] code 404, message File not found
+127.0.0.1 - - [16/May/2026 06:39:49] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 06:55:50] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:55:51] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:55:51] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:55:51] "GET /js/ui/PanelManager.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:55:51] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:55:51] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:55:51] "GET /js/brushes/DensityProfiles.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:55:51] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:55:51] "GET /js/generators/PhotoGenerator.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:55:51] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 06:55:51] "GET /js/generators/PlantGenerator.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:55:51] "GET /js/generators/StrokeFactory.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 06:55:51] "GET /js/generators/GeneratorUtils.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /css/ui-base.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /js/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /js/generators/PhotoGenerator.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /js/generators/PlantGenerator.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /js/brushes/DensityProfiles.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /js/generators/StrokeFactory.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /js/generators/GeneratorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:14:29] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:14:29] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:22:46] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:22:47] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:22:47] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:22:47] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:22:47] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:22:47] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:22:47] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:22:47] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:22:47] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:22:47] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:22:47] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:22:47] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:22:47] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:22:47] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:22:47] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:22:47] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:22:47] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:22:47] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:22:47] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:22:47] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:22:47] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:22:47] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:22:47] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:22:47] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:22:47] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:22:47] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:30:58] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:30:58] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:30:58] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:30:58] "GET /js/canvas/CanvasController.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:30:58] "GET /js/ui/Toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:30:59] "GET /js/brushes/DensityProfiles.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:30:59] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:30:59] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:30:59] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:30:59] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:30:59] "GET /js/generators/PhotoGenerator.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:30:59] "GET /js/generators/PlantGenerator.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:30:59] "GET /js/generators/StrokeFactory.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:30:59] "GET /js/generators/GeneratorUtils.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:30:59] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:30:59] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:30:59] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:30:59] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:31:00] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:00] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:31:16] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:16] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:31:17] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:17] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:17] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:18] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /css/styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /js/canvas/CanvasController.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /css/ui-base.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /js/input/PointerTracker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /js/ui/PanelManager.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /js/brushes/BrushEngine.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /js/brushes/DensityProfiles.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /js/brushes/random.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /js/canvas/Exporter.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /js/ui/BackgroundColorPicker.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /js/generators/PlantGenerator.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /js/generators/PhotoGenerator.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /js/brushes/stamps.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /js/utils/ColorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /js/generators/StrokeFactory.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /js/generators/GeneratorUtils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:31:21] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:31:21] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:31:21] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:31:21] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:35:10] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:35:10] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:35:10] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:35:10] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:35:10] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:35:10] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:35:10] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:35:10] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:35:10] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:35:10] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:35:10] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:35:10] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:35:10] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:35:10] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:35:10] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:35:10] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:35:10] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:35:10] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:35:10] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:35:10] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:35:10] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:35:10] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:35:10] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:35:10] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:35:10] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:35:10] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:35:45] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:35:45] "GET /css/styles.css HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:35:45] "GET /js/main.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:35:45] "GET /js/canvas/CanvasController.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:35:45] "GET /js/ui/Toolbar.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:35:45] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:35:45] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:35:45] "GET /js/generators/NuevoGenerator.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 07:35:45] "GET /js/brushes/BrushEngine.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:35:45] "GET /js/generators/PhotoGenerator.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:35:45] "GET /js/generators/PlantGenerator.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:35:45] "GET /js/generators/StrokeFactory.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 07:35:45] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:35:45] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+127.0.0.1 - - [16/May/2026 07:35:45] code 404, message File not found
+127.0.0.1 - - [16/May/2026 07:35:45] "GET /favicon.ico HTTP/1.1" 404 -

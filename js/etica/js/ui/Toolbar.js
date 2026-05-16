@@ -91,6 +91,7 @@ export class Toolbar {
       }
     });
     this.bind();
+    this.applyParameterTooltips();
     this.backgroundColorPicker.init();
     this.brushColorPicker.init();
     this.setMode("pinta");
@@ -280,6 +281,73 @@ export class Toolbar {
       input.checked = input.dataset.tool === tool;
     });
     this.controller.setTool(tool);
+  }
+
+  applyParameterTooltips() {
+    const tooltips = {
+      toolDotted: "Рисует отдельными точками.",
+      toolInk: "Рисует более плотной чернильной массой.",
+      toolEraser: "Стирает существующие strokes.",
+      toolSelect: "Выбор и перемещение strokes.",
+      sizeInput: "Базовый размер точки или кисти.",
+      densityInput: "Плотность точек вдоль линии.",
+      sizeVariationInput: "Максимальный разброс размеров точек.",
+      densityProfileSelect: "Как плотность меняется вдоль stroke.",
+      fotoRecognitionInput: "Насколько генерация должна быть похожа на фото.",
+      fotoAbstractionInput: "Упрощает фото и убирает часть деталей.",
+      fotoDetailInput: "Количество мелких деталей из фото.",
+      fotoMassInput: "Насколько активно заполнять темные массы.",
+      fotoContourInput: "Насколько активно искать контуры.",
+      fotoDensityInput: "Общее количество точек генерации.",
+      fotoDotSizeInput: "Базовый размер точки.",
+      fotoSizeVariationInput: "Максимальный разброс размеров точек.",
+      fotoJitterInput: "Случайное смещение точек от исходных мест.",
+      fotoMaxPointsInput: "Жесткий максимум точек в генерации.",
+      fotoSeedInput: "Фиксирует случайный вариант генерации.",
+      nuevoLineStrengthInput: "Сила поиска контрастных и цветовых линий.",
+      nuevoMassOutlineInput: "Обводка границ крупных масс.",
+      nuevoInteriorDetailInput: "Количество внутренних линий и фактуры.",
+      nuevoFillInput: "Редкое заполнение внутри темных масс.",
+      nuevoSimplifyInput: "Упрощает фото перед поиском линий.",
+      nuevoSpacingInput: "Расстояние между точками на линиях.",
+      nuevoDotSizeInput: "Базовый размер точки.",
+      nuevoSizeVariationInput: "Максимальный разброс размеров точек.",
+      nuevoJitterInput: "Живое смещение точек от найденной линии.",
+      nuevoMaxPointsInput: "Жесткий максимум точек в генерации.",
+      nuevoSeedInput: "Фиксирует случайный вариант генерации.",
+      florTypeSelect: "Тип растительной формы.",
+      florScaleInput: "Общий размер растения.",
+      florComplexityInput: "Количество веток, листьев и деталей.",
+      florBendInput: "Изгиб стебля.",
+      florOpennessInput: "Ширина и раскрытость формы.",
+      florRecognitionInput: "Насколько форма остается узнаваемой.",
+      florAbstractionInput: "Упрощает растение и убирает часть деталей.",
+      florDensityInput: "Общее количество точек генерации.",
+      florMassInput: "Насколько часто точки собираются в плотные массы.",
+      florDotSizeInput: "Базовый размер точки.",
+      florSizeVariationInput: "Максимальный разброс размеров точек.",
+      florJitterInput: "Случайное смещение точек от формы.",
+      florMaxPointsInput: "Жесткий максимум точек в генерации.",
+      florSeedInput: "Фиксирует случайный вариант генерации."
+    };
+
+    for (const [controlId, tooltip] of Object.entries(tooltips)) {
+      const label = document.querySelector(`label[for="${controlId}"]`);
+      if (!label) continue;
+      const textNode = label.querySelector("span:first-child") || label;
+      textNode.title = tooltip;
+    }
+
+    const fitTooltips = [
+      ["fotoFitMode", "Помещает фото целиком."],
+      ["fotoFillMode", "Заполняет холст фото с обрезкой."],
+      ["nuevoFitMode", "Помещает фото целиком."],
+      ["nuevoFillMode", "Заполняет холст фото с обрезкой."]
+    ];
+    for (const [controlId, tooltip] of fitTooltips) {
+      const label = document.querySelector(`label[for="${controlId}"]`);
+      if (label) label.title = tooltip;
+    }
   }
 
   bindModeTabs() {
