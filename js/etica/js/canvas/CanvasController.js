@@ -1,7 +1,7 @@
 import { getStrokeDensity, getStrokeDensityProfile, getStrokeSize, getStrokeSizeVariation, renderStroke } from "../brushes/BrushEngine.js";
 import { DENSITY_PROFILE_DEFAULT } from "../brushes/DensityProfiles.js";
 import { randomSeed } from "../brushes/random.js";
-import { exportGif, exportPng } from "./Exporter.js";
+import { exportGif, exportJson, exportPng } from "./Exporter.js";
 
 const CANVAS_BACKGROUND = "#bbbbbb";
 const BRUSH_COLOR = "#000000";
@@ -402,6 +402,36 @@ export class CanvasController extends EventTarget {
     this.stopBoilPreview({ render: false });
     this.renderNow({ showSelection: false, generatedPreviewAlpha: 1 });
     exportPng(transparent ? this.strokeCanvas : this.canvas, { transparent });
+    this.queueRender();
+  }
+
+  exportJson() {
+    this.stopBoilPreview({ render: false });
+    exportJson({
+      format: "etica-document",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      canvas: {
+        width: this.canvas.width,
+        height: this.canvas.height,
+        backgroundColor: this.backgroundColor,
+        brushColor: this.brushColor,
+        backgroundFit: this.backgroundFit,
+        backgroundName: this.backgroundName || null
+      },
+      defaults: {
+        tool: this.tool,
+        size: this.size,
+        sizeVariation: this.sizeVariation,
+        density: this.density,
+        densityProfile: this.densityProfile,
+        pressureEnabled: this.pressureEnabled
+      },
+      effects: cloneEffects(this.effects),
+      effectsEnabled: this.effectsEnabled,
+      animationSettings: { ...this.animationSettings },
+      strokes: cloneStrokes(this.strokes)
+    });
     this.queueRender();
   }
 

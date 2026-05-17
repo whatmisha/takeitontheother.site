@@ -13,6 +13,15 @@ export function exportPng(canvas, options = {}) {
   }, "image/png");
 }
 
+export function exportJson(data, options = {}) {
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const width = data?.canvas?.width ?? "document";
+  const height = data?.canvas?.height ?? "";
+  const suffix = height ? `${width}x${height}` : width;
+  downloadBlob(blob, options.filename || `etica-document-${suffix}.json`);
+}
+
 export function exportGif(frames, options = {}) {
   if (!Array.isArray(frames) || !frames.length) return;
 

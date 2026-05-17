@@ -33,6 +33,7 @@ export class Toolbar {
     this.redoButton = document.getElementById("redoButton");
     this.clearButton = document.getElementById("clearButton");
     this.exportButton = document.getElementById("exportButton");
+    this.jsonExportButton = document.getElementById("jsonExportButton");
     this.transparencyToggle = document.getElementById("transparencyToggle");
     this.gifToggle = document.getElementById("gifToggle");
     this.backgroundInput = document.getElementById("backgroundInput");
@@ -218,6 +219,10 @@ export class Toolbar {
       this.exportCurrentFormat();
     });
 
+    this.jsonExportButton?.addEventListener("click", () => {
+      this.controller.exportJson();
+    });
+
     this.gifToggle?.addEventListener("change", () => {
       if (this.mobileGifToggle) this.mobileGifToggle.checked = this.gifToggle.checked;
     });
@@ -277,6 +282,12 @@ export class Toolbar {
       }
 
       if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+      if (code === "KeyJ") {
+        event.preventDefault();
+        this.toggleJsonExportButton();
+        return;
+      }
 
       if (code === "Space") {
         event.preventDefault();
@@ -997,16 +1008,16 @@ export class Toolbar {
   getNuevoSettings() {
     return {
       fit: document.querySelector("[data-nuevo-fit]:checked")?.dataset.nuevoFit || "fill",
-      lineStrength: valueOf("nuevoLineStrengthInput", 50),
+      lineStrength: valueOf("nuevoLineStrengthInput", 68),
       massOutline: valueOf("nuevoMassOutlineInput", 50),
-      interiorDetail: valueOf("nuevoInteriorDetailInput", 50),
-      fill: valueOf("nuevoFillInput", 50),
-      simplify: valueOf("nuevoSimplifyInput", 50),
-      spacing: valueOf("nuevoSpacingInput", 15),
-      dotSize: valueOf("nuevoDotSizeInput", 75),
+      interiorDetail: valueOf("nuevoInteriorDetailInput", 62),
+      fill: valueOf("nuevoFillInput", 18),
+      simplify: valueOf("nuevoSimplifyInput", 34),
+      spacing: valueOf("nuevoSpacingInput", 11),
+      dotSize: valueOf("nuevoDotSizeInput", 22),
       sizeVariation: valueOf("nuevoSizeVariationInput", 0),
       jitter: valueOf("nuevoJitterInput", 10),
-      maxPoints: valueOf("nuevoMaxPointsInput", 320),
+      maxPoints: valueOf("nuevoMaxPointsInput", 1200),
       seed: sanitizeSeed(this.nuevoSeedInput?.value, 851663)
     };
   }
@@ -1051,6 +1062,11 @@ export class Toolbar {
 
   closeMobileExportSheet() {
     if (this.mobileExportSheet) this.mobileExportSheet.hidden = true;
+  }
+
+  toggleJsonExportButton() {
+    if (!this.jsonExportButton) return;
+    this.jsonExportButton.hidden = !this.jsonExportButton.hidden;
   }
 
   bindCanvasPresetDropdown() {
