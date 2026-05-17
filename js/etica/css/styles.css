@@ -701,8 +701,8 @@ button.color-dot--expandable:hover {
   bottom: calc(78px + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
   z-index: 10021;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   width: min(280px, calc(100vw - 40px));
   padding: 8px;
@@ -717,6 +717,7 @@ button.color-dot--expandable:hover {
 }
 
 .etica-mobile-sheet button {
+  grid-column: 1 / -1;
   width: 100%;
   height: 40px;
   border: none;
@@ -729,6 +730,16 @@ button.color-dot--expandable:hover {
 }
 
 .etica-mobile-sheet-toggle {
-  height: 36px;
+  min-width: 0;
+  height: 48px;
+  flex-direction: column;
+  gap: 3px;
   justify-content: center;
+}
+
+.etica-mobile-sheet-toggle .toggle-label-text {
+  max-width: 100%;
+  font-size: 0.68rem;
+  line-height: 1;
+  white-space: nowrap;
 }
