@@ -45,6 +45,7 @@ export class Toolbar {
     this.deselectButton = document.getElementById("deselectButton");
     this.selectionMeta = document.getElementById("selectionMeta");
     this.mobileSizeInput = document.getElementById("mobileSizeInput");
+    this.mobileContrastButton = document.getElementById("mobileContrastButton");
     this.mobileBrushButton = document.getElementById("mobileBrushButton");
     this.mobileBrushPopover = document.getElementById("mobileBrushPopover");
     this.mobilePhotoButton = document.getElementById("mobilePhotoButton");
@@ -120,6 +121,9 @@ export class Toolbar {
     this.applyParameterTooltips();
     this.backgroundColorPicker.init();
     this.brushColorPicker.init();
+    if (document.documentElement.classList.contains("is-etica-mobile") && this.mobileSizeInput) {
+      this.applySize(this.mobileSizeInput.value);
+    }
     this.setMode("pinta");
   }
 
@@ -471,6 +475,14 @@ export class Toolbar {
     this.queueActiveGeneratorRefresh();
   }
 
+  applyMobileContrastColors() {
+    this.controller.setBackgroundColor("#111111");
+    this.controller.setBrushColor("#ffffff");
+    this.backgroundColorPicker.syncColor(this.controller.backgroundColor);
+    this.brushColorPicker.syncColor(this.controller.brushColor);
+    this.queueActiveGeneratorRefresh();
+  }
+
   applySize(value) {
     const next = clampNumber(value, 3, 160);
     this.sizeInput.value = next;
@@ -569,6 +581,11 @@ export class Toolbar {
     this.mobileRedoButton?.addEventListener("click", () => this.controller.redo());
     this.mobilePhotoButton?.addEventListener("click", () => this.backgroundInput.click());
     this.mobilePlayButton?.addEventListener("click", () => this.toggleBoilPreview());
+    this.mobileContrastButton?.addEventListener("click", () => {
+      this.closeMobileExportSheet();
+      if (this.mobileBrushPopover) this.mobileBrushPopover.hidden = true;
+      this.applyMobileContrastColors();
+    });
 
     this.mobileBrushButton?.addEventListener("click", () => {
       this.closeMobileExportSheet();

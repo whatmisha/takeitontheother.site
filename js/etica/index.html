@@ -726,6 +726,18 @@
           <path d="m9.5 4.25 3.25 3.25-3.25 3.25M12.5 7.5H7.25C4.9 7.5 3.5 8.7 3.5 10.75" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
+      <button class="etica-mobile-icon" type="button" id="mobileContrastButton" aria-label="High contrast colors">
+        <svg viewBox="0 0 16 16" width="18" height="18" fill="none" aria-hidden="true">
+          <defs>
+            <clipPath id="mobileContrastCircle">
+              <circle cx="8" cy="8" r="4.25"/>
+            </clipPath>
+          </defs>
+          <rect x="8" y="3.75" width="4.25" height="8.5" fill="currentColor" clip-path="url(#mobileContrastCircle)"/>
+          <circle cx="8" cy="8" r="4.25" stroke="currentColor" stroke-width="1.45"/>
+          <path d="M8 3.75v8.5" stroke="currentColor" stroke-width="1.45" stroke-linecap="round"/>
+        </svg>
+      </button>
       <button class="etica-mobile-icon" type="button" id="mobileBrushButton" aria-label="Brush size">
         <svg viewBox="0 0 16 16" width="18" height="18" fill="none" aria-hidden="true">
           <circle cx="8" cy="8" r="4.25" stroke="currentColor" stroke-width="1.45"/>
@@ -750,7 +762,7 @@
     </nav>
 
     <div class="etica-mobile-brush-popover" id="mobileBrushPopover" hidden>
-      <input id="mobileSizeInput" type="range" min="3" max="160" step="1" value="60" aria-label="Brush size">
+      <input id="mobileSizeInput" type="range" min="3" max="160" step="1" value="120" aria-label="Brush size">
     </div>
 
     <div class="etica-mobile-sheet" id="mobileExportSheet" hidden>
@@ -759,7 +771,7 @@
           <input type="checkbox" id="mobilePhotoExportToggle" aria-label="Photo">
           <span class="toggle-slider"></span>
         </div>
-        <span class="toggle-label-text">Pic</span>
+        <span class="toggle-label-text">Photo</span>
       </label>
       <label class="toggle-label etica-mobile-sheet-toggle">
         <div class="toggle-switch">
