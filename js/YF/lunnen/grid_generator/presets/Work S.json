@@ -1,7 +1,7 @@
 {
   "presetName": "Work S",
   "version": "1.0",
-  "timestamp": "2026-06-02T19:44:55.686Z",
+  "timestamp": "2026-06-02T20:18:39.634Z",
   "dimensions": {
     "width": 288,
     "height": 128.5,
@@ -133,7 +133,7 @@
       "content": "Экспедиция начинается",
       "style": "text",
       "position": {
-        "column": 4,
+        "column": 3,
         "row": 1,
         "baseline": 0
       },
@@ -167,7 +167,7 @@
       "content": "*S — размер small, \nмаленький",
       "style": "text",
       "position": {
-        "column": 3,
+        "column": 4,
         "row": 1,
         "baseline": 0
       },
@@ -181,8 +181,8 @@
     }
   ],
   "grid": {
-    "module": 4.398692177614251,
-    "margins": 1.1066,
+    "module": 4.3225242195909575,
+    "margins": 1.364,
     "marginsUnit": "mm",
     "columns": 4,
     "rows": 4,
