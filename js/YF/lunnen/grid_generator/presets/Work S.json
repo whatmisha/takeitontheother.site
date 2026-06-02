@@ -1,10 +1,10 @@
 {
   "presetName": "Work S",
   "version": "1.0",
-  "timestamp": "2026-06-02T20:18:39.634Z",
+  "timestamp": "2026-06-02T20:55:55.696Z",
   "dimensions": {
     "width": 288,
-    "height": 128.5,
+    "height": 127,
     "thickness": 32,
     "unit": "mm"
   },
@@ -181,7 +181,7 @@
     }
   ],
   "grid": {
-    "module": 4.3225242195909575,
+    "module": 4.272066738428418,
     "margins": 1.364,
     "marginsUnit": "mm",
     "columns": 4,
