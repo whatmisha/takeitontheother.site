@@ -67,12 +67,12 @@
       "position": {
         "column": 1,
         "row": 3,
-        "baseline": 3
+        "baseline": 4
       },
       "width": 0.75,
       "alignment": "right",
       "textAlign": "left",
-      "alignmentMode": "baseline",
+      "alignmentMode": "x-height",
       "surface": "front",
       "showBounds": false,
       "visible": true
