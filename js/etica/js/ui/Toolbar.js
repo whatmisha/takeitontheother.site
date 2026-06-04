@@ -3,12 +3,14 @@ import { DoodleFlorGenerator } from "../generators/DoodleFlorGenerator.js";
 import { NuevoGenerator } from "../generators/NuevoGenerator.js";
 import { PhotoGenerator } from "../generators/PhotoGenerator.js";
 import { PlantGenerator } from "../generators/PlantGenerator.js";
+import { createSvgLineStrokes } from "../importers/SvgLineImporter.js";
 
 export class Toolbar {
   constructor(controller) {
     this.controller = controller;
     this.activeMode = "pinta";
     this.previousPintaTool = "dotted";
+    this.activeBrushTool = "dotted";
     this.modeButtons = document.querySelectorAll("[data-mode-tab]");
     this.toolsPanel = document.getElementById("toolsPanel");
     this.linePanel = document.getElementById("linePanel");
@@ -25,6 +27,10 @@ export class Toolbar {
     this.densityInput = document.getElementById("densityInput");
     this.densityOutput = document.getElementById("densityOutput");
     this.densityProfileSelect = document.getElementById("densityProfileSelect");
+    this.svgLineInput = document.getElementById("svgLineInput");
+    this.svgLineUploadButton = document.getElementById("svgLineUploadButton");
+    this.svgLineReapplyButton = document.getElementById("svgLineReapplyButton");
+    this.svgLineMeta = document.getElementById("svgLineMeta");
     this.canvasPresetToggle = document.getElementById("canvasPresetToggle");
     this.canvasPresetText = document.getElementById("canvasPresetText");
     this.canvasPresetMenu = document.getElementById("canvasPresetMenu");
@@ -103,7 +109,11 @@ export class Toolbar {
       flor: null,
       doodleFlor: null
     };
+    this.svgLineSource = null;
+    this.svgLineName = "";
+    this.svgLineGroupId = null;
     this.generatorRefreshTimer = null;
+    this.svgLineRefreshTimer = null;
     this.backgroundColorPicker = new BackgroundColorPicker(controller, {
       prefix: "background",
       initialColor: "#bbbbbb",
@@ -201,6 +211,16 @@ export class Toolbar {
 
     this.densityProfileSelect.addEventListener("change", () => {
       this.controller.setDensityProfile(this.densityProfileSelect.value);
+      this.queueSvgLineRefresh();
+    });
+
+    this.svgLineUploadButton?.addEventListener("click", () => this.svgLineInput?.click());
+    this.svgLineInput?.addEventListener("change", () => {
+      this.loadSvgLineFile(this.svgLineInput.files?.[0]);
+      this.svgLineInput.value = "";
+    });
+    this.svgLineReapplyButton?.addEventListener("click", () => {
+      this.regenerateSvgLines({ commitHistory: true });
     });
 
     this.bindCanvasPresetDropdown();
@@ -336,7 +356,9 @@ export class Toolbar {
     document.querySelectorAll("[data-tool]").forEach((input) => {
       input.checked = input.dataset.tool === tool;
     });
+    if (tool === "dotted" || tool === "ink") this.activeBrushTool = tool;
     this.controller.setTool(tool);
+    this.queueSvgLineRefresh();
   }
 
   applyParameterTooltips() {
@@ -489,6 +511,7 @@ export class Toolbar {
     this.sizeOutput.value = String(Math.round(next));
     if (this.mobileSizeInput) this.mobileSizeInput.value = next;
     this.controller.setSize(next);
+    this.queueSvgLineRefresh();
   }
 
   applyDensity(value) {
@@ -496,6 +519,7 @@ export class Toolbar {
     this.densityInput.value = next;
     this.densityOutput.value = `${Math.round(next)}%`;
     this.controller.setDensity(next);
+    this.queueSvgLineRefresh();
   }
 
   applySizeVariation(value) {
@@ -503,6 +527,7 @@ export class Toolbar {
     this.sizeVariationInput.value = next;
     this.sizeVariationOutput.value = `${Math.round(next)}%`;
     this.controller.setSizeVariation(next);
+    this.queueSvgLineRefresh();
   }
 
   bindValueInput(textInput, sliderInput, options) {
@@ -929,10 +954,77 @@ export class Toolbar {
     image.src = objectUrl;
   }
 
+  async loadSvgLineFile(file) {
+    if (!file) return;
+    if (this.svgLineMeta) this.svgLineMeta.textContent = "Importing…";
+
+    try {
+      this.svgLineSource = await file.text();
+      this.svgLineName = file.name || "Imported SVG";
+      this.regenerateSvgLines({ commitHistory: true });
+    } catch (error) {
+      console.error(error);
+      this.svgLineSource = null;
+      this.svgLineName = "";
+      if (this.svgLineMeta) this.svgLineMeta.textContent = "Failed";
+      if (this.svgLineReapplyButton) this.svgLineReapplyButton.disabled = true;
+    }
+  }
+
+  regenerateSvgLines({ commitHistory = false } = {}) {
+    if (!this.svgLineSource) return;
+
+    try {
+      const strokes = createSvgLineStrokes(this.svgLineSource, {
+        width: this.controller.canvas.width,
+        height: this.controller.canvas.height,
+        color: this.controller.brushColor,
+        brush: this.activeBrushTool,
+        size: this.controller.size,
+        sizeVariation: this.controller.sizeVariation,
+        density: this.controller.density,
+        densityProfile: this.controller.densityProfile,
+        pressureEnabled: this.controller.pressureEnabled,
+        sourceName: this.svgLineName
+      });
+
+      if (!strokes.length) {
+        if (this.svgLineMeta) this.svgLineMeta.textContent = "No lines found";
+        if (this.svgLineReapplyButton) this.svgLineReapplyButton.disabled = true;
+        return;
+      }
+
+      const hasExistingGroup = this.hasSvgLineGroup();
+      this.svgLineGroupId = this.controller.replaceGeneratedGroup(this.svgLineGroupId, strokes, {
+        selectGroup: false,
+        commitHistory: commitHistory || !hasExistingGroup
+      });
+      if (this.svgLineMeta) this.svgLineMeta.textContent = `${this.svgLineName} · ${strokes.length}`;
+      if (this.svgLineReapplyButton) this.svgLineReapplyButton.disabled = false;
+    } catch (error) {
+      console.error(error);
+      if (this.svgLineMeta) this.svgLineMeta.textContent = "Failed";
+      if (this.svgLineReapplyButton) this.svgLineReapplyButton.disabled = true;
+    }
+  }
+
   queueActiveGeneratorRefresh() {
+    if (this.activeMode === "pinta") {
+      this.queueSvgLineRefresh();
+      return;
+    }
     if (this.activeMode === "foto" || this.activeMode === "nuevo" || this.activeMode === "flor" || this.activeMode === "doodleFlor") {
       this.queueGeneratorRefresh(this.activeMode);
     }
+  }
+
+  queueSvgLineRefresh() {
+    if (this.activeMode !== "pinta" || !this.svgLineSource || !this.hasSvgLineGroup()) return;
+    if (this.controller.getSelectedStroke()) return;
+    window.clearTimeout(this.svgLineRefreshTimer);
+    this.svgLineRefreshTimer = window.setTimeout(() => {
+      this.regenerateSvgLines({ commitHistory: false });
+    }, 120);
   }
 
   queueGeneratorRefresh(mode) {
@@ -1003,6 +1095,10 @@ export class Toolbar {
   hasGeneratedGroup(mode) {
     const groupId = this.generatedGroupIds[mode];
     return Boolean(groupId && this.controller.strokes.some((stroke) => stroke.meta?.generated && stroke.meta.groupId === groupId));
+  }
+
+  hasSvgLineGroup() {
+    return Boolean(this.svgLineGroupId && this.controller.strokes.some((stroke) => stroke.meta?.generated && stroke.meta.groupId === this.svgLineGroupId));
   }
 
   getFotoSettings() {
@@ -1115,6 +1211,7 @@ export class Toolbar {
     const [width, height] = value.split("x").map(Number);
     this.setCanvasPresetLabel(value);
     this.controller.resize(width, height);
+    this.queueSvgLineRefresh();
   }
 
   closeCanvasPresetDropdown() {
