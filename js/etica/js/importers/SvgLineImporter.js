@@ -1,5 +1,6 @@
 import { DENSITY_PROFILE_DEFAULT } from "../brushes/DensityProfiles.js";
 import { randomSeed } from "../brushes/random.js";
+import { LINE_DENSITY_MAX, LINE_DENSITY_MIN } from "../utils/LineSettings.js?v=density-2";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const GEOMETRY_SELECTOR = "path,line,polyline,polygon,rect,circle,ellipse";
@@ -335,7 +336,7 @@ function createStroke(points, index, groupId, sourceBox, placement, options) {
     settings: {
       size: sanitizeNumber(options.size, 60, 3, 160),
       sizeVariation: sanitizeNumber(options.sizeVariation, 0, 0, 1),
-      density: sanitizeNumber(options.density, 1, 0.2, 3.2),
+      density: sanitizeNumber(options.density, 1, LINE_DENSITY_MIN, LINE_DENSITY_MAX),
       densityProfile: sanitizeDensityProfile(options.densityProfile),
       pressureEnabled: Boolean(options.pressureEnabled ?? true),
       color: sanitizeColor(options.color)

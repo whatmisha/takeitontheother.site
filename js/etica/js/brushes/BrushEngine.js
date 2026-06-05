@@ -1,6 +1,7 @@
 import { clamp, createRng, lerp } from "./random.js";
 import { DENSITY_PROFILE_DEFAULT, getDensityProfileMultiplier } from "./DensityProfiles.js";
 import { getStampSet } from "./stamps.js";
+import { LINE_DENSITY_MIN } from "../utils/LineSettings.js?v=density-2";
 
 export function renderStroke(ctx, stroke, options = {}) {
   if (!stroke.points.length) return;
@@ -18,7 +19,9 @@ export function renderStroke(ctx, stroke, options = {}) {
 
   ctx.save();
   ctx.globalCompositeOperation = stroke.tool === "eraser" ? "destination-out" : "source-over";
-  drawPoint(ctx, stamps, points[0], stroke, getProfiledDensity(stroke, density, 0), rng, kind, renderAlpha, wind, boil);
+  const initialDensity = getProfiledDensity(stroke, density, 0);
+  const placement = createPlacementState(stroke, initialDensity, rng, kind);
+  drawPoint(ctx, stamps, points[0], stroke, initialDensity, rng, kind, renderAlpha, wind, boil);
 
   for (let index = 1; index < points.length; index += 1) {
     drawSegment(
@@ -34,7 +37,8 @@ export function renderStroke(ctx, stroke, options = {}) {
       wind,
       boil,
       pathMetrics.cumulative[index - 1],
-      pathMetrics.total
+      pathMetrics.total,
+      placement
     );
   }
 
@@ -45,25 +49,36 @@ function normalizeColor(color, fallback = "#000000") {
   return /^#[0-9a-f]{6}$/i.test(color || "") ? color.toLowerCase() : fallback;
 }
 
-function drawSegment(ctx, stamps, from, to, stroke, baseDensity, rng, kind, renderAlpha, wind, boil, segmentStartLength, totalLength) {
+function createPlacementState(stroke, initialDensity, rng, kind) {
+  return {
+    nextDistance: nextSpacing(stroke, initialDensity, rng, kind)
+  };
+}
+
+function nextSpacing(stroke, densityMultiplier, rng, kind) {
+  const baseSpacing = getBaseSpacing(stroke, kind);
+  const spacing = clamp(baseSpacing / densityMultiplier, 1.25, Math.max(2, baseSpacing * 120));
+  return spacing * lerp(0.62, 1.32, rng());
+}
+
+function getBaseSpacing(stroke, kind) {
+  const size = getStrokeSize(stroke);
+  return kind === "dotted" ? size * 0.72 : size * 0.28;
+}
+
+function drawSegment(ctx, stamps, from, to, stroke, baseDensity, rng, kind, renderAlpha, wind, boil, segmentStartLength, totalLength, placement) {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
-  if (distance < 0.01) {
-    const pathT = totalLength > 0 ? segmentStartLength / totalLength : 0;
-    drawPoint(ctx, stamps, to, stroke, getProfiledDensity(stroke, baseDensity, pathT), rng, kind, renderAlpha, wind, boil);
-    return;
-  }
+  if (distance < 0.01) return;
 
-  const size = getStrokeSize(stroke);
-  const baseSpacing = kind === "dotted" ? size * 0.72 : size * 0.28;
-  let traveled = 0;
+  const segmentEndLength = segmentStartLength + distance;
 
-  while (traveled <= distance) {
+  while (placement.nextDistance <= segmentEndLength) {
+    const traveled = placement.nextDistance - segmentStartLength;
     const t = traveled / distance;
-    const pathT = totalLength > 0 ? (segmentStartLength + traveled) / totalLength : t;
+    const pathT = totalLength > 0 ? placement.nextDistance / totalLength : t;
     const densityMultiplier = getProfiledDensity(stroke, baseDensity, pathT);
-    const spacing = clamp(baseSpacing / densityMultiplier, 1.25, Math.max(2, baseSpacing * 2.4));
     const pressure = lerp(from.pressure, to.pressure, t);
     const point = {
       x: lerp(from.x, to.x, t),
@@ -73,7 +88,7 @@ function drawSegment(ctx, stamps, from, to, stroke, baseDensity, rng, kind, rend
       time: lerp(from.time, to.time, t)
     };
     drawPoint(ctx, stamps, point, stroke, densityMultiplier, rng, kind, renderAlpha, wind, boil);
-    traveled += spacing * lerp(0.62, 1.32, rng());
+    placement.nextDistance += nextSpacing(stroke, densityMultiplier, rng, kind);
   }
 }
 
@@ -216,7 +231,7 @@ export function getStrokeSizeVariation(stroke) {
 }
 
 export function getStrokeDensity(stroke) {
-  return Math.max(0.2, Number(stroke.settings?.density ?? 1) * Number(stroke.densityScale ?? 1));
+  return Math.max(LINE_DENSITY_MIN, Number(stroke.settings?.density ?? 1) * Number(stroke.densityScale ?? 1));
 }
 
 export function getStrokeDensityProfile(stroke) {
@@ -224,7 +239,7 @@ export function getStrokeDensityProfile(stroke) {
 }
 
 function getProfiledDensity(stroke, baseDensity, t) {
-  return Math.max(0.08, baseDensity * getDensityProfileMultiplier(getStrokeDensityProfile(stroke), t));
+  return Math.max(LINE_DENSITY_MIN, baseDensity * getDensityProfileMultiplier(getStrokeDensityProfile(stroke), t));
 }
 
 function getPathMetrics(points) {

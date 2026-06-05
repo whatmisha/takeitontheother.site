@@ -3,7 +3,8 @@ import { DoodleFlorGenerator } from "../generators/DoodleFlorGenerator.js";
 import { NuevoGenerator } from "../generators/NuevoGenerator.js";
 import { PhotoGenerator } from "../generators/PhotoGenerator.js";
 import { PlantGenerator } from "../generators/PlantGenerator.js";
-import { createSvgLineStrokes } from "../importers/SvgLineImporter.js";
+import { createSvgLineStrokes } from "../importers/SvgLineImporter.js?v=density-2";
+import { LINE_DENSITY_MAX_PERCENT, LINE_DENSITY_MIN_PERCENT } from "../utils/LineSettings.js?v=density-2";
 
 export class Toolbar {
   constructor(controller) {
@@ -127,6 +128,7 @@ export class Toolbar {
         this.queueActiveGeneratorRefresh();
       }
     });
+    this.applyLineControlLimits();
     this.bind();
     this.applyParameterTooltips();
     this.backgroundColorPicker.init();
@@ -135,6 +137,12 @@ export class Toolbar {
       this.applySize(this.mobileSizeInput.value);
     }
     this.setMode("pinta");
+  }
+
+  applyLineControlLimits() {
+    if (!this.densityInput) return;
+    this.densityInput.min = String(LINE_DENSITY_MIN_PERCENT);
+    this.densityInput.max = String(LINE_DENSITY_MAX_PERCENT);
   }
 
   bind() {
@@ -161,8 +169,8 @@ export class Toolbar {
     this.densityInput.addEventListener("input", () => this.applyDensity(this.densityInput.value));
     this.densityInput.addEventListener("change", () => this.controller.endEditSession());
     this.bindRangeKeyboard(this.densityInput, {
-      min: 20,
-      max: 320,
+      min: LINE_DENSITY_MIN_PERCENT,
+      max: LINE_DENSITY_MAX_PERCENT,
       baseStep: 1,
       shiftStep: 10,
       onApply: (value) => this.applyDensity(value)
@@ -190,8 +198,8 @@ export class Toolbar {
     });
 
     this.bindValueInput(this.densityOutput, this.densityInput, {
-      min: 20,
-      max: 320,
+      min: LINE_DENSITY_MIN_PERCENT,
+      max: LINE_DENSITY_MAX_PERCENT,
       baseStep: 1,
       shiftStep: 10,
       shiftSnap: true,
@@ -515,7 +523,7 @@ export class Toolbar {
   }
 
   applyDensity(value) {
-    const next = clampNumber(value, 20, 320);
+    const next = clampNumber(value, LINE_DENSITY_MIN_PERCENT, LINE_DENSITY_MAX_PERCENT);
     this.densityInput.value = next;
     this.densityOutput.value = `${Math.round(next)}%`;
     this.controller.setDensity(next);

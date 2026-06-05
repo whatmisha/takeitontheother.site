@@ -1,7 +1,8 @@
-import { getStrokeDensity, getStrokeDensityProfile, getStrokeSize, getStrokeSizeVariation, renderStroke } from "../brushes/BrushEngine.js";
+import { getStrokeDensity, getStrokeDensityProfile, getStrokeSize, getStrokeSizeVariation, renderStroke } from "../brushes/BrushEngine.js?v=density-2";
 import { DENSITY_PROFILE_DEFAULT } from "../brushes/DensityProfiles.js";
 import { randomSeed } from "../brushes/random.js";
 import { exportGif, exportJson, exportPng } from "./Exporter.js";
+import { LINE_DENSITY_MAX_PERCENT, LINE_DENSITY_MIN_PERCENT } from "../utils/LineSettings.js?v=density-2";
 
 const CANVAS_BACKGROUND = "#bbbbbb";
 const BRUSH_COLOR = "#000000";
@@ -90,7 +91,7 @@ export class CanvasController extends EventTarget {
   }
 
   setDensity(percent) {
-    const next = sanitizeNumber(percent, 100, 20, 320) / 100;
+    const next = sanitizeNumber(percent, 100, LINE_DENSITY_MIN_PERCENT, LINE_DENSITY_MAX_PERCENT) / 100;
     const selected = this.getSelectedStroke();
     if (selected) {
       if (!this.editSessionActive) this.commitHistory();
