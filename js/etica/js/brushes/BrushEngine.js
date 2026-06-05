@@ -1,7 +1,7 @@
 import { clamp, createRng, lerp } from "./random.js";
 import { DENSITY_PROFILE_DEFAULT, getDensityProfileMultiplier } from "./DensityProfiles.js";
-import { getStampSet } from "./stamps.js";
-import { LINE_DENSITY_MIN } from "../utils/LineSettings.js?v=density-2";
+import { getStampSet } from "./stamps.js?v=roughness-1";
+import { LINE_DENSITY_MIN } from "../utils/LineSettings.js?v=roughness-1";
 
 export function renderStroke(ctx, stroke, options = {}) {
   if (!stroke.points.length) return;
@@ -9,7 +9,7 @@ export function renderStroke(ctx, stroke, options = {}) {
   const rng = createRng(stroke.seed);
   const kind = stroke.tool === "eraser" ? "eraser" : stroke.brush;
   const color = stroke.tool === "eraser" ? "#000000" : normalizeColor(stroke.settings?.color, options.fallbackColor);
-  const stamps = getStampSet(kind, color);
+  const stamps = getStampSet(kind, color, getStrokeRoughness(stroke));
   const points = stroke.points;
   const density = getStrokeDensity(stroke);
   const renderAlpha = options.alpha ?? 1;
@@ -228,6 +228,10 @@ export function getStrokeSize(stroke) {
 
 export function getStrokeSizeVariation(stroke) {
   return clamp(Number(stroke.settings?.sizeVariation ?? 0), 0, 1);
+}
+
+export function getStrokeRoughness(stroke) {
+  return clamp(Number(stroke.settings?.roughness ?? 1), 0, 1);
 }
 
 export function getStrokeDensity(stroke) {

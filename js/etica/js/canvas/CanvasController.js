@@ -1,8 +1,8 @@
-import { getStrokeDensity, getStrokeDensityProfile, getStrokeSize, getStrokeSizeVariation, renderStroke } from "../brushes/BrushEngine.js?v=density-2";
+import { getStrokeDensity, getStrokeDensityProfile, getStrokeRoughness, getStrokeSize, getStrokeSizeVariation, renderStroke } from "../brushes/BrushEngine.js?v=roughness-1";
 import { DENSITY_PROFILE_DEFAULT } from "../brushes/DensityProfiles.js";
 import { randomSeed } from "../brushes/random.js";
 import { exportGif, exportJson, exportPng } from "./Exporter.js";
-import { LINE_DENSITY_MAX_PERCENT, LINE_DENSITY_MIN_PERCENT } from "../utils/LineSettings.js?v=density-2";
+import { LINE_DENSITY_MAX_PERCENT, LINE_DENSITY_MIN_PERCENT } from "../utils/LineSettings.js?v=roughness-1";
 
 const CANVAS_BACKGROUND = "#bbbbbb";
 const BRUSH_COLOR = "#000000";
@@ -32,6 +32,7 @@ export class CanvasController extends EventTarget {
     this.tool = "dotted";
     this.size = 60;
     this.sizeVariation = 0;
+    this.roughness = 1;
     this.density = 1;
     this.densityProfile = DENSITY_PROFILE_DEFAULT;
     this.pressureEnabled = true;
@@ -113,6 +114,19 @@ export class CanvasController extends EventTarget {
       return;
     }
     this.sizeVariation = next;
+    this.emitChange();
+  }
+
+  setRoughness(percent) {
+    const next = sanitizeNumber(percent, 100, 0, 100) / 100;
+    const selected = this.getSelectedStroke();
+    if (selected) {
+      if (!this.editSessionActive) this.commitHistory();
+      selected.settings.roughness = next;
+      this.queueRender();
+      return;
+    }
+    this.roughness = next;
     this.emitChange();
   }
 
@@ -250,6 +264,7 @@ export class CanvasController extends EventTarget {
       settings: {
         size: this.size,
         sizeVariation: this.sizeVariation,
+        roughness: this.roughness,
         density: this.density,
         densityProfile: this.densityProfile,
         pressureEnabled: this.pressureEnabled,
@@ -424,6 +439,7 @@ export class CanvasController extends EventTarget {
         tool: this.tool,
         size: this.size,
         sizeVariation: this.sizeVariation,
+        roughness: this.roughness,
         density: this.density,
         densityProfile: this.densityProfile,
         pressureEnabled: this.pressureEnabled
@@ -895,8 +911,10 @@ export class CanvasController extends EventTarget {
         tool: this.tool,
         size: this.size,
         density: this.density,
+        roughness: this.roughness,
         activeSize: selected ? getStrokeSize(selected) : this.size,
         activeSizeVariation: selected ? getStrokeSizeVariation(selected) : this.sizeVariation,
+        activeRoughness: selected ? getStrokeRoughness(selected) : this.roughness,
         activeDensity: selected ? getStrokeDensity(selected) : this.density,
         activeDensityProfile: selected ? getStrokeDensityProfile(selected) : this.densityProfile,
         activeBrushColor: selected?.settings?.color ?? this.brushColor,

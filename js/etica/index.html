@@ -114,6 +114,16 @@
               </div>
 
               <div class="control-group">
+                <label for="roughnessInput">
+                  <span>Dot Roughness</span>
+                  <div class="value-display-wrapper">
+                    <input type="text" class="value-display etica-percent-value" id="roughnessOutput" value="100%" inputmode="numeric" aria-label="Dot roughness value">
+                  </div>
+                </label>
+                <input id="roughnessInput" type="range" min="0" max="100" step="1" value="100">
+              </div>
+
+              <div class="control-group">
                 <label for="densityProfileSelect">
                   <span>Profile</span>
                 </label>
@@ -801,6 +811,6 @@
       <button type="button" id="mobileCopyTransparentButton">Copy transparent</button>
     </div>
 
-    <script type="module" src="./js/main.js?v=density-2"></script>
+    <script type="module" src="./js/main.js?v=roughness-1"></script>
   </body>
 </html>

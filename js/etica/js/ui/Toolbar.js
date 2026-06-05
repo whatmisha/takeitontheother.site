@@ -3,8 +3,8 @@ import { DoodleFlorGenerator } from "../generators/DoodleFlorGenerator.js";
 import { NuevoGenerator } from "../generators/NuevoGenerator.js";
 import { PhotoGenerator } from "../generators/PhotoGenerator.js";
 import { PlantGenerator } from "../generators/PlantGenerator.js";
-import { createSvgLineStrokes } from "../importers/SvgLineImporter.js?v=density-2";
-import { LINE_DENSITY_MAX_PERCENT, LINE_DENSITY_MIN_PERCENT } from "../utils/LineSettings.js?v=density-2";
+import { createSvgLineStrokes } from "../importers/SvgLineImporter.js?v=roughness-1";
+import { LINE_DENSITY_MAX_PERCENT, LINE_DENSITY_MIN_PERCENT } from "../utils/LineSettings.js?v=roughness-1";
 
 export class Toolbar {
   constructor(controller) {
@@ -25,6 +25,8 @@ export class Toolbar {
     this.sizeOutput = document.getElementById("sizeOutput");
     this.sizeVariationInput = document.getElementById("sizeVariationInput");
     this.sizeVariationOutput = document.getElementById("sizeVariationOutput");
+    this.roughnessInput = document.getElementById("roughnessInput");
+    this.roughnessOutput = document.getElementById("roughnessOutput");
     this.densityInput = document.getElementById("densityInput");
     this.densityOutput = document.getElementById("densityOutput");
     this.densityProfileSelect = document.getElementById("densityProfileSelect");
@@ -187,6 +189,17 @@ export class Toolbar {
       onApply: (value) => this.applySizeVariation(value)
     });
 
+    this.roughnessInput.addEventListener("pointerdown", () => this.controller.beginEditSession());
+    this.roughnessInput.addEventListener("input", () => this.applyRoughness(this.roughnessInput.value));
+    this.roughnessInput.addEventListener("change", () => this.controller.endEditSession());
+    this.bindRangeKeyboard(this.roughnessInput, {
+      min: 0,
+      max: 100,
+      baseStep: 1,
+      shiftStep: 10,
+      onApply: (value) => this.applyRoughness(value)
+    });
+
     this.bindValueInput(this.sizeOutput, this.sizeInput, {
       min: 3,
       max: 160,
@@ -215,6 +228,16 @@ export class Toolbar {
       shiftSnap: true,
       formatter: (value) => `${Math.round(value)}%`,
       onApply: (value) => this.applySizeVariation(value)
+    });
+
+    this.bindValueInput(this.roughnessOutput, this.roughnessInput, {
+      min: 0,
+      max: 100,
+      baseStep: 1,
+      shiftStep: 10,
+      shiftSnap: true,
+      formatter: (value) => `${Math.round(value)}%`,
+      onApply: (value) => this.applyRoughness(value)
     });
 
     this.densityProfileSelect.addEventListener("change", () => {
@@ -378,6 +401,7 @@ export class Toolbar {
       sizeInput: "Base dot or brush size.",
       densityInput: "Dot density along a stroke.",
       sizeVariationInput: "Maximum random dot size difference.",
+      roughnessInput: "How irregular each dot edge is.",
       densityProfileSelect: "How density changes along a stroke.",
       fotoRecognitionInput: "How closely the result follows the photo.",
       fotoAbstractionInput: "Simplifies the photo and removes details.",
@@ -536,6 +560,14 @@ export class Toolbar {
     this.sizeVariationOutput.value = `${Math.round(next)}%`;
     this.controller.setSizeVariation(next);
     this.queueSvgLineRefresh();
+  }
+
+  applyRoughness(value) {
+    const next = clampNumber(value, 0, 100);
+    this.roughnessInput.value = next;
+    this.roughnessOutput.value = `${Math.round(next)}%`;
+    this.controller.setRoughness(next);
+    this.queueActiveGeneratorRefresh();
   }
 
   bindValueInput(textInput, sliderInput, options) {
@@ -990,6 +1022,7 @@ export class Toolbar {
         brush: this.activeBrushTool,
         size: this.controller.size,
         sizeVariation: this.controller.sizeVariation,
+        roughness: this.controller.roughness,
         density: this.controller.density,
         densityProfile: this.controller.densityProfile,
         pressureEnabled: this.controller.pressureEnabled,
@@ -1120,6 +1153,7 @@ export class Toolbar {
       density: valueOf("fotoDensityInput", 56),
       dotSize: valueOf("fotoDotSizeInput", 14),
       sizeVariation: valueOf("fotoSizeVariationInput", 0),
+      roughness: this.controller.roughness * 100,
       jitter: valueOf("fotoJitterInput", 44),
       maxPoints: valueOf("fotoMaxPointsInput", 2500),
       seed: sanitizeSeed(this.fotoSeedInput?.value, 2401)
@@ -1137,6 +1171,7 @@ export class Toolbar {
       spacing: valueOf("nuevoSpacingInput", 11),
       dotSize: valueOf("nuevoDotSizeInput", 22),
       sizeVariation: valueOf("nuevoSizeVariationInput", 0),
+      roughness: this.controller.roughness * 100,
       jitter: valueOf("nuevoJitterInput", 10),
       maxPoints: valueOf("nuevoMaxPointsInput", 1200),
       seed: sanitizeSeed(this.nuevoSeedInput?.value, 851663)
@@ -1156,6 +1191,7 @@ export class Toolbar {
       mass: valueOf("florMassInput", 50),
       dotSize: valueOf("florDotSizeInput", 22),
       sizeVariation: valueOf("florSizeVariationInput", 0),
+      roughness: this.controller.roughness * 100,
       jitter: valueOf("florJitterInput", 46),
       maxPoints: valueOf("florMaxPointsInput", 1200),
       seed: sanitizeSeed(this.florSeedInput?.value, 1207)
@@ -1175,6 +1211,7 @@ export class Toolbar {
       density: valueOf("doodleFlorDensityInput", 78),
       dotSize: valueOf("doodleFlorDotSizeInput", 20),
       sizeVariation: valueOf("doodleFlorSizeVariationInput", 0),
+      roughness: this.controller.roughness * 100,
       jitter: valueOf("doodleFlorJitterInput", 16),
       maxStrokes: valueOf("doodleFlorMaxStrokesInput", 60),
       seed: sanitizeSeed(this.doodleFlorSeedInput?.value, 2207)
@@ -1258,6 +1295,12 @@ export class Toolbar {
       const variationPercent = Math.round(detail.activeSizeVariation * 100);
       this.sizeVariationInput.value = variationPercent;
       this.sizeVariationOutput.value = `${variationPercent}%`;
+    }
+
+    if (!isActivelyEditing(this.roughnessInput, this.roughnessOutput)) {
+      const roughnessPercent = Math.round(detail.activeRoughness * 100);
+      this.roughnessInput.value = roughnessPercent;
+      this.roughnessOutput.value = `${roughnessPercent}%`;
     }
 
     if (document.activeElement !== this.densityProfileSelect) {

@@ -1,29 +1,33 @@
-import { createRng, lerp } from "./random.js";
+import { clamp, createRng, lerp } from "./random.js";
 
 const STAMP_SIZE = 96;
 const cache = new Map();
 
-export function getStampSet(kind, color) {
-  const key = `${kind}:${color}`;
+export function getStampSet(kind, color, roughness = 1) {
+  const normalizedRoughness = clamp(Number(roughness), 0, 1);
+  const roughnessKey = Math.round(normalizedRoughness * 100);
+  const key = `${kind}:${color}:${roughnessKey}`;
   if (!cache.has(key)) {
     const stamps = [];
     for (let index = 0; index < 18; index += 1) {
-      stamps.push(createStamp(kind, color, 1009 + index * 7919));
+      stamps.push(createStamp(kind, color, 1009 + index * 7919, normalizedRoughness));
     }
     cache.set(key, stamps);
   }
   return cache.get(key);
 }
 
-function createStamp(kind, color, seed) {
+function createStamp(kind, color, seed, roughness) {
   const rng = createRng(seed);
   const canvas = document.createElement("canvas");
   canvas.width = STAMP_SIZE;
   canvas.height = STAMP_SIZE;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   const center = STAMP_SIZE / 2;
-  const mainRadius = kind === "ink" || kind === "eraser" ? 19 + rng() * 8 : 14 + rng() * 5;
-  const lobeCount = kind === "dotted" ? 13 : 24;
+  const irregularMainRadius = kind === "ink" || kind === "eraser" ? 19 + rng() * 8 : 14 + rng() * 5;
+  const smoothMainRadius = kind === "ink" || kind === "eraser" ? 23 : 18;
+  const mainRadius = lerp(smoothMainRadius, irregularMainRadius, roughness);
+  const lobeCount = Math.round((kind === "dotted" ? 13 : 24) * roughness);
 
   ctx.clearRect(0, 0, STAMP_SIZE, STAMP_SIZE);
   ctx.fillStyle = color;
@@ -44,11 +48,13 @@ function createStamp(kind, color, seed) {
     ctx.fill();
   }
 
-  roughenAlpha(ctx, kind);
+  roughenAlpha(ctx, kind, roughness);
   return canvas;
 }
 
-function roughenAlpha(ctx, kind) {
+function roughenAlpha(ctx, kind, roughness) {
+  if (roughness <= 0) return;
+
   const image = ctx.getImageData(0, 0, STAMP_SIZE, STAMP_SIZE);
   const data = image.data;
   const center = STAMP_SIZE / 2;
@@ -65,8 +71,8 @@ function roughenAlpha(ctx, kind) {
       const distance = Math.sqrt(dx * dx + dy * dy);
       const edge = Math.max(0, (distance - maxDistance * 0.55) / (maxDistance * 0.45));
       const grain = pseudoNoise(x, y, alpha + (kind === "ink" ? 71 : 19));
-      const grainStrength = kind === "dotted" ? 0.22 : 0.16;
-      const edgeLoss = edge * edge * (kind === "dotted" ? 130 : 95);
+      const grainStrength = (kind === "dotted" ? 0.22 : 0.16) * roughness;
+      const edgeLoss = edge * edge * (kind === "dotted" ? 130 : 95) * roughness;
       const grainLoss = grain * 255 * grainStrength;
 
       data[index + 3] = Math.max(0, Math.min(255, alpha - edgeLoss - grainLoss));
