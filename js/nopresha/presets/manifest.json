@@ -1,0 +1,8 @@
+{
+    "presets": [
+        { "name": "Few Colors", "file": "few-colors.json" },
+        { "name": "One Color Hatch", "file": "one-color-hatch.json" },
+        { "name": "Soft Bouba", "file": "soft-bouba.json" },
+        { "name": "Sharp Kiki", "file": "sharp-kiki.json" }
+    ]
+}

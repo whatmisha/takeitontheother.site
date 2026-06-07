@@ -1,0 +1,18 @@
+{
+    "width": 1200,
+    "height": 1200,
+    "seed": "soft-bouba-01",
+    "pencilWidth": 18,
+    "pencilSoftness": 82,
+    "intensity": 88,
+    "colorCount": 5,
+    "spread": 72,
+    "shapeCharacter": 4,
+    "strokeDensity": 82,
+    "hatchDeviation": 26,
+    "paperGrain": 44,
+    "paletteMode": "soft",
+    "spotBlendMode": "multiply",
+    "showPaperGrain": true,
+    "transparentExport": false
+}

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nopresha Pencil Identity Generator</title>
+    <link rel="stylesheet" href="css/yf-styles.css">
+    <link rel="stylesheet" href="css/pencil-app.css">
+</head>
+<body>
+    <div class="container">
+        <div class="top-links">
+            <a href="/js/YF/" class="yf-tools-link">YF Tools</a>
+
+            <div class="preset-dropdown" id="presetDropdown">
+                <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="preset-dropdown-text">Preset</span>
+                    <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox" aria-label="Presets"></ul>
+            </div>
+
+            <span class="zoom-indicator app-status" id="canvasMeta">PNG</span>
+        </div>
+
+        <main class="main-content">
+            <div class="canvas-container" id="canvasContainer">
+                <div class="canvas-stage">
+                    <canvas id="artCanvas" class="art-canvas" width="1200" height="1200"></canvas>
+                </div>
+            </div>
+
+            <aside class="controls-panel controls-panel-left drawing-panel" id="drawingPanel" aria-label="Drawing settings">
+                <div class="panel-header" id="drawingPanelHeader">
+                    <span>Drawing</span>
+                    <span class="collapse-icon" role="button" aria-label="Collapse panel" tabindex="0">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <h3>Pencil</h3>
+
+                        <div class="control-group">
+                            <label for="pencilWidthSlider">
+                                <span>Thickness</span>
+                                <input type="text" class="value-display" id="pencilWidthValue" value="16">
+                            </label>
+                            <input type="range" id="pencilWidthSlider" min="2" max="34" step="1" value="16">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="pencilSoftnessSlider">
+                                <span>Softness</span>
+                                <input type="text" class="value-display" id="pencilSoftnessValue" value="64">
+                            </label>
+                            <input type="range" id="pencilSoftnessSlider" min="0" max="100" step="1" value="64">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="intensitySlider">
+                                <span>Pigment</span>
+                                <input type="text" class="value-display" id="intensityValue" value="74">
+                            </label>
+                            <input type="range" id="intensitySlider" min="20" max="100" step="1" value="74">
+                        </div>
+                    </section>
+
+                    <section class="control-section">
+                        <h3>Hatching</h3>
+
+                        <div class="control-group">
+                            <label for="strokeDensitySlider">
+                                <span>Density</span>
+                                <input type="text" class="value-display" id="strokeDensityValue" value="55">
+                            </label>
+                            <input type="range" id="strokeDensitySlider" min="1" max="100" step="1" value="55">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="hatchDeviationSlider">
+                                <span>Hatch deviation</span>
+                                <input type="text" class="value-display" id="hatchDeviationValue" value="18">
+                            </label>
+                            <input type="range" id="hatchDeviationSlider" min="0" max="100" step="1" value="18">
+                        </div>
+                    </section>
+
+                    <section class="control-section">
+                        <h3>Paper</h3>
+
+                        <div class="control-group">
+                            <label for="paperGrainSlider">
+                                <span>Grain</span>
+                                <input type="text" class="value-display" id="paperGrainValue" value="38">
+                            </label>
+                            <input type="range" id="paperGrainSlider" min="0" max="100" step="1" value="38">
+                        </div>
+
+                        <div class="control-group show-toggle-chip-group">
+                            <div class="toggle-chip-group">
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="showPaperGrain" data-setting="showPaperGrain" checked>
+                                    <span>Paper grain</span>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <aside class="controls-panel controls-panel-left color-panel" id="colorPanel" aria-label="Color settings">
+                <div class="panel-header" id="colorPanelHeader">
+                    <span>Color</span>
+                    <span class="collapse-icon" role="button" aria-label="Collapse panel" tabindex="0">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <h3>Palette</h3>
+                        <div class="control-group">
+                            <label for="colorCountSlider">
+                                <span>Colors</span>
+                                <input type="text" class="value-display" id="colorCountValue" value="5">
+                            </label>
+                            <input type="range" id="colorCountSlider" min="1" max="8" step="1" value="5">
+                        </div>
+
+                        <div class="control-group">
+                            <fieldset>
+                                <legend class="sr-only">Palette mode</legend>
+                                <div class="segmented-control">
+                                    <input type="radio" name="paletteMode" value="vivid" id="paletteVivid" checked>
+                                    <label for="paletteVivid">Vivid</label>
+
+                                    <input type="radio" name="paletteMode" value="soft" id="paletteSoft">
+                                    <label for="paletteSoft">Soft</label>
+
+                                    <input type="radio" name="paletteMode" value="electric" id="paletteElectric">
+                                    <label for="paletteElectric">Electric</label>
+                                </div>
+                            </fieldset>
+                        </div>
+
+                        <div class="control-group">
+                            <fieldset>
+                                <legend class="sr-only">Spot overlap mode</legend>
+                                <div class="segmented-control">
+                                    <input type="radio" name="spotBlendMode" value="multiply" id="blendMultiply" checked>
+                                    <label for="blendMultiply">Mix</label>
+
+                                    <input type="radio" name="spotBlendMode" value="overlap" id="blendOverlap">
+                                    <label for="blendOverlap">Overlap</label>
+                                </div>
+                            </fieldset>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <aside class="controls-panel" id="mainPanel" aria-label="Composition settings">
+                <div class="panel-header" id="mainPanelHeader">
+                    <span>Composition</span>
+                    <span class="collapse-icon" role="button" aria-label="Collapse panel" tabindex="0">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <h3>PNG Size</h3>
+
+                        <div class="control-group">
+                            <label for="widthSlider">
+                                <span>Width <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="widthValue" value="1200">
+                            </label>
+                            <input type="range" id="widthSlider" min="512" max="2400" step="16" value="1200">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="heightSlider">
+                                <span>Height <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="heightValue" value="1200">
+                            </label>
+                            <input type="range" id="heightSlider" min="512" max="2400" step="16" value="1200">
+                        </div>
+                    </section>
+
+                    <section class="control-section">
+                        <h3>Seed</h3>
+                        <div class="control-group">
+                            <label for="seedInput">
+                                <span>Seed</span>
+                                <input type="text" class="value-display seed-input" id="seedInput" value="nopresha-01" autocomplete="off">
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="control-section">
+                        <h3>Spots</h3>
+
+                        <div class="control-group">
+                            <label for="spreadSlider">
+                                <span>Spread</span>
+                                <input type="text" class="value-display" id="spreadValue" value="38">
+                            </label>
+                            <input type="range" id="spreadSlider" min="0" max="100" step="1" value="38">
+                        </div>
+                    </section>
+
+                    <section class="control-section">
+                        <h3>Shape</h3>
+
+                        <div class="control-group">
+                            <label for="shapeCharacterSlider">
+                                <span>Booba / Kiki</span>
+                                <input type="text" class="value-display" id="shapeCharacterValue" value="42">
+                            </label>
+                            <input type="range" id="shapeCharacterSlider" min="0" max="100" step="1" value="42">
+                        </div>
+                    </section>
+
+                    <div class="panel-action-row">
+                        <button class="btn-fixed app-panel-btn" id="rerollSeedBtn" type="button">Regenerate</button>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <nav class="bottom-buttons" aria-label="Export and settings actions">
+        <button class="btn-fixed btn-export-settings" id="exportSettingsBtn" type="button">Export Settings</button>
+        <button class="btn-fixed btn-import-settings" id="importSettingsBtn" type="button">Import Settings</button>
+        <input id="settingsFileInput" type="file" accept="application/json,.json" hidden>
+
+        <div class="export-group-right">
+            <label class="toggle-label">
+                <div class="toggle-switch">
+                    <input type="checkbox" id="transparentExportCheckbox" data-setting="transparentExport" aria-label="Transparent PNG">
+                    <span class="toggle-slider"></span>
+                </div>
+                <span class="toggle-label-text">Transparent PNG</span>
+            </label>
+            <button class="btn-fixed btn-export" id="resetBtn" type="button">Reset</button>
+            <button class="btn-fixed btn-export" id="exportPngBtn" type="button">Export PNG</button>
+        </div>
+    </nav>
+
+    <script type="module">
+        import { PencilIdentityApp } from './src/PencilIdentityApp.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const app = new PencilIdentityApp();
+            app.init();
+            window.pencilIdentityApp = app;
+        });
+    </script>
+</body>
+</html>

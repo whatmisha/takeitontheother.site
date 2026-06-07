@@ -1,0 +1,18 @@
+{
+    "width": 1200,
+    "height": 1200,
+    "seed": "one-color-hatch-01",
+    "pencilWidth": 20,
+    "pencilSoftness": 64,
+    "intensity": 92,
+    "colorCount": 1,
+    "spread": 14,
+    "shapeCharacter": 30,
+    "strokeDensity": 58,
+    "hatchDeviation": 10,
+    "paperGrain": 36,
+    "paletteMode": "vivid",
+    "spotBlendMode": "multiply",
+    "showPaperGrain": true,
+    "transparentExport": false
+}

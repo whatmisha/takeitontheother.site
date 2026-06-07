@@ -1,0 +1,18 @@
+{
+    "width": 1200,
+    "height": 1200,
+    "seed": "sharp-kiki-01",
+    "pencilWidth": 13,
+    "pencilSoftness": 36,
+    "intensity": 90,
+    "colorCount": 6,
+    "spread": 76,
+    "shapeCharacter": 96,
+    "strokeDensity": 72,
+    "hatchDeviation": 20,
+    "paperGrain": 34,
+    "paletteMode": "electric",
+    "spotBlendMode": "multiply",
+    "showPaperGrain": true,
+    "transparentExport": false
+}

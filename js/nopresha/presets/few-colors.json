@@ -1,0 +1,18 @@
+{
+    "width": 1200,
+    "height": 1200,
+    "seed": "few-colors-01",
+    "pencilWidth": 14,
+    "pencilSoftness": 58,
+    "intensity": 86,
+    "colorCount": 6,
+    "spread": 64,
+    "shapeCharacter": 44,
+    "strokeDensity": 48,
+    "hatchDeviation": 18,
+    "paperGrain": 42,
+    "paletteMode": "vivid",
+    "spotBlendMode": "multiply",
+    "showPaperGrain": true,
+    "transparentExport": false
+}
