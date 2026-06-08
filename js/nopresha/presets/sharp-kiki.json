@@ -14,7 +14,18 @@
     "paletteMode": "electric",
     "spotBlendMode": "multiply",
     "backgroundColor": "#ffffff",
+    "eyesColor": "#000000",
+    "legsColor": "#000000",
     "showPaperGrain": false,
     "showCharacter": true,
+    "animateThickness": false,
+    "animateSoftness": false,
+    "animatePigment": false,
+    "animateDensity": false,
+    "animateHatchDeviation": false,
+    "animatePalette": false,
+    "animateSpread": true,
+    "animateShapeCharacter": false,
+    "gifExport": false,
     "transparentExport": false
 }

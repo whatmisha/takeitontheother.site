@@ -4,6 +4,21 @@ import { SliderController } from './ui/SliderController.js';
 import { PanelManager } from './ui/PanelManager.js';
 import { PresetManager } from './preset/PresetManager.js';
 import { PencilRenderer } from './generator/PencilRenderer.js';
+import { GifEncoder } from './export/GifEncoder.js';
+
+const ANIMATION_DURATION_MS = 3000;
+const GIF_FRAME_COUNT = 20;
+const GIF_FRAME_DELAY_CS = 15;
+const ANIMATION_PARAMETERS = [
+    { flag: 'animateThickness', setting: 'pencilWidth', sliderId: 'pencilWidthSlider', min: 2, max: 34, amplitude: 10 },
+    { flag: 'animateSoftness', setting: 'pencilSoftness', sliderId: 'pencilSoftnessSlider', min: 0, max: 100, amplitude: 10 },
+    { flag: 'animatePigment', setting: 'intensity', sliderId: 'intensitySlider', min: 20, max: 100, amplitude: 10 },
+    { flag: 'animateDensity', setting: 'strokeDensity', sliderId: 'strokeDensitySlider', min: 1, max: 100, amplitude: 10 },
+    { flag: 'animateHatchDeviation', setting: 'hatchDeviation', sliderId: 'hatchDeviationSlider', min: 0, max: 100, amplitude: 10 },
+    { flag: 'animatePalette', setting: 'colorCount', sliderId: 'colorCountSlider', min: 1, max: 8, lowOffset: -1, highOffset: 2, integer: true },
+    { flag: 'animateSpread', setting: 'spread', sliderId: 'spreadSlider', min: 0, max: 100, amplitude: 10 },
+    { flag: 'animateShapeCharacter', setting: 'shapeCharacter', sliderId: 'shapeCharacterSlider', min: 0, max: 100, amplitude: 10 }
+];
 
 export class PencilIdentityApp {
     constructor() {
@@ -23,8 +38,19 @@ export class PencilIdentityApp {
             paletteMode: 'vivid',
             spotBlendMode: 'multiply',
             backgroundColor: '#ffffff',
+            eyesColor: '#000000',
+            legsColor: '#000000',
             showPaperGrain: false,
             showCharacter: true,
+            animateThickness: false,
+            animateSoftness: false,
+            animatePigment: false,
+            animateDensity: false,
+            animateHatchDeviation: false,
+            animatePalette: false,
+            animateSpread: true,
+            animateShapeCharacter: false,
+            gifExport: false,
             transparentExport: false
         };
 
@@ -38,6 +64,10 @@ export class PencilIdentityApp {
         this.renderer = new PencilRenderer();
         this.pendingRender = false;
         this.lastRenderInfo = null;
+        this.animationFrame = null;
+        this.isPlayingAnimation = false;
+        this.animationBaseValues = null;
+        this.isPlayButtonHovered = false;
     }
 
     async init() {
@@ -50,6 +80,8 @@ export class PencilIdentityApp {
             drawingPanelHeader: 'drawingPanelHeader',
             colorPanel: 'colorPanel',
             colorPanelHeader: 'colorPanelHeader',
+            animationPanel: 'animationPanel',
+            animationPanelHeader: 'animationPanelHeader',
             presetDropdown: 'presetDropdown',
             presetDropdownToggle: 'presetDropdownToggle',
             presetDropdownMenu: 'presetDropdownMenu'
@@ -67,6 +99,7 @@ export class PencilIdentityApp {
         this.initCollapse();
         await this.initCharacterAsset();
         await this.initPresets();
+        this.updateExportButtonLabel();
         this.scheduleRender();
     }
 
@@ -86,6 +119,12 @@ export class PencilIdentityApp {
 
         this.panels.registerPanel('colorPanel', {
             headerId: 'colorPanelHeader',
+            draggable: true,
+            persistent: true
+        });
+
+        this.panels.registerPanel('animationPanel', {
+            headerId: 'animationPanelHeader',
             draggable: true,
             persistent: true
         });
@@ -126,7 +165,10 @@ export class PencilIdentityApp {
             checkbox.checked = Boolean(this.settingsStore.get(key));
             checkbox.addEventListener('change', () => {
                 this.settingsStore.set(key, checkbox.checked);
-                if (key !== 'transparentExport') {
+                if (key === 'gifExport') {
+                    this.updateExportButtonLabel();
+                }
+                if (!['transparentExport', 'gifExport'].includes(key) && !key.startsWith('animate')) {
                     this.scheduleRender();
                 }
             });
@@ -134,12 +176,13 @@ export class PencilIdentityApp {
     }
 
     initColorInputs() {
-        const input = document.getElementById('backgroundColorInput');
-        if (!input) return;
-        input.value = this.normalizeHexColor(this.settingsStore.get('backgroundColor'));
-        input.addEventListener('input', () => {
-            this.settingsStore.set('backgroundColor', this.normalizeHexColor(input.value));
-            this.scheduleRender();
+        document.querySelectorAll('input[type="color"][data-color-setting]').forEach((input) => {
+            const key = input.dataset.colorSetting;
+            input.value = this.normalizeHexColor(this.settingsStore.get(key));
+            input.addEventListener('input', () => {
+                this.settingsStore.set(key, this.normalizeHexColor(input.value));
+                this.scheduleRender();
+            });
         });
     }
 
@@ -188,7 +231,8 @@ export class PencilIdentityApp {
         };
 
         bind('rerollSeedBtn', () => this.regenerate());
-        bind('exportPngBtn', () => this.exportPNG());
+        bind('playAnimationBtn', () => this.playAnimation());
+        bind('exportPngBtn', () => this.exportArtwork());
         bind('resetBtn', () => this.reset());
         bind('exportSettingsBtn', () => this.exportSettings());
         bind('importSettingsBtn', () => document.getElementById('settingsFileInput')?.click());
@@ -196,6 +240,18 @@ export class PencilIdentityApp {
         const fileInput = document.getElementById('settingsFileInput');
         if (fileInput) {
             fileInput.addEventListener('change', (event) => this.importSettings(event));
+        }
+
+        const playButton = document.getElementById('playAnimationBtn');
+        if (playButton) {
+            playButton.addEventListener('mouseenter', () => {
+                this.isPlayButtonHovered = true;
+                this.updatePlayButtonLabel();
+            });
+            playButton.addEventListener('mouseleave', () => {
+                this.isPlayButtonHovered = false;
+                this.updatePlayButtonLabel();
+            });
         }
     }
 
@@ -212,8 +268,8 @@ export class PencilIdentityApp {
 
     async initCharacterAsset() {
         try {
-            const image = await this.loadImage('assets/character.svg');
-            this.renderer.setCharacterImage(image);
+            const svgText = await this.loadText('assets/character.svg');
+            this.renderer.setCharacterSvg(svgText);
         } catch (error) {
             console.warn('Character asset failed to load:', error);
         }
@@ -252,6 +308,97 @@ export class PencilIdentityApp {
         canvas.dataset.spotCount = String(this.lastRenderInfo.spotCount);
     }
 
+    playAnimation() {
+        if (this.isPlayingAnimation) {
+            this.stopAnimation();
+            return;
+        }
+        if (!this.hasEnabledAnimationParameters()) return;
+
+        const startedAt = performance.now();
+        this.animationBaseValues = this.getAnimationBaseValues();
+
+        this.isPlayingAnimation = true;
+        this.updatePlayButtonLabel();
+
+        const tick = (now) => {
+            const progress = ((now - startedAt) % ANIMATION_DURATION_MS) / ANIMATION_DURATION_MS;
+            this.applyAnimatedValues(this.animationBaseValues, progress);
+            this.animationFrame = requestAnimationFrame(tick);
+        };
+
+        if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
+        this.animationFrame = requestAnimationFrame(tick);
+    }
+
+    stopAnimation() {
+        if (this.animationFrame) {
+            cancelAnimationFrame(this.animationFrame);
+        }
+        if (this.animationBaseValues) {
+            this.restoreAnimationBaseValues(this.animationBaseValues);
+        }
+
+        this.animationFrame = null;
+        this.isPlayingAnimation = false;
+        this.animationBaseValues = null;
+        this.updatePlayButtonLabel();
+    }
+
+    restoreAnimationBaseValues(baseValues) {
+        ANIMATION_PARAMETERS.forEach((parameter) => {
+            this.setAnimatedSlider(parameter.sliderId, baseValues[parameter.setting]);
+        });
+        this.scheduleRender();
+    }
+
+    applyAnimatedValues(baseValues, progress) {
+        if (!baseValues) return;
+        ANIMATION_PARAMETERS.forEach((parameter) => {
+            if (!this.settingsStore.get(parameter.flag)) return;
+            this.setAnimatedSlider(parameter.sliderId, this.getAnimatedParameterValue(parameter, baseValues[parameter.setting], progress));
+        });
+        this.scheduleRender();
+    }
+
+    setAnimatedSlider(sliderId, value) {
+        this.sliders?.setValue(sliderId, value, false);
+    }
+
+    getAnimatedParameterValue(parameter, baseValue, progress) {
+        const base = Number(baseValue) || 0;
+        const low = parameter.lowOffset !== undefined
+            ? base + parameter.lowOffset
+            : base - parameter.amplitude;
+        const high = parameter.highOffset !== undefined
+            ? base + parameter.highOffset
+            : base + parameter.amplitude;
+
+        if (progress < 1 / 3) {
+            return this.formatAnimatedValue(parameter, lerp(base, low, smoothstep(progress * 3)));
+        }
+        if (progress < 2 / 3) {
+            return this.formatAnimatedValue(parameter, lerp(low, high, smoothstep((progress - 1 / 3) * 3)));
+        }
+        return this.formatAnimatedValue(parameter, lerp(high, base, smoothstep((progress - 2 / 3) * 3)));
+    }
+
+    formatAnimatedValue(parameter, value) {
+        const clamped = clamp(value, parameter.min, parameter.max);
+        return parameter.integer ? Math.round(clamped) : clamped;
+    }
+
+    hasEnabledAnimationParameters() {
+        return ANIMATION_PARAMETERS.some((parameter) => this.settingsStore.get(parameter.flag));
+    }
+
+    getAnimationBaseValues() {
+        return ANIMATION_PARAMETERS.reduce((values, parameter) => {
+            values[parameter.setting] = this.settingsStore.get(parameter.setting);
+            return values;
+        }, {});
+    }
+
     regenerate() {
         const seed = this.makeSeed();
         this.settingsStore.set('seed', seed);
@@ -287,14 +434,15 @@ export class PencilIdentityApp {
         const seedInput = document.getElementById('seedInput');
         if (seedInput) seedInput.value = this.settings.seed;
 
-        const backgroundColorInput = document.getElementById('backgroundColorInput');
-        if (backgroundColorInput) {
-            backgroundColorInput.value = this.normalizeHexColor(this.settingsStore.get('backgroundColor'));
-        }
+        document.querySelectorAll('input[type="color"][data-color-setting]').forEach((input) => {
+            input.value = this.normalizeHexColor(this.settingsStore.get(input.dataset.colorSetting));
+        });
 
         document.querySelectorAll('input[type="checkbox"][data-setting]').forEach((checkbox) => {
             checkbox.checked = Boolean(this.settingsStore.get(checkbox.dataset.setting));
         });
+        this.updateExportButtonLabel();
+        this.updatePlayButtonLabel();
 
         [
             ['paletteMode', 'paletteMode'],
@@ -304,6 +452,14 @@ export class PencilIdentityApp {
                 radio.checked = radio.value === this.settingsStore.get(setting);
             });
         });
+    }
+
+    exportArtwork() {
+        if (this.settings.gifExport) {
+            this.exportGIF();
+            return;
+        }
+        this.exportPNG();
     }
 
     exportPNG() {
@@ -327,6 +483,89 @@ export class PencilIdentityApp {
             link.remove();
             URL.revokeObjectURL(url);
         }, 'image/png');
+    }
+
+    async exportGIF() {
+        const settings = this.settingsStore.getAll();
+        const exportButton = document.getElementById('exportPngBtn');
+        const originalText = exportButton?.textContent || 'Export GIF';
+        const exportCanvas = document.createElement('canvas');
+        const width = Math.round(settings.width);
+        const height = Math.round(settings.height);
+        const encoder = new GifEncoder(width, height, {
+            delayCentiseconds: GIF_FRAME_DELAY_CS,
+            transparent: Boolean(settings.transparentExport)
+        });
+
+        if (exportButton) {
+            exportButton.textContent = 'Rendering GIF';
+            exportButton.classList.add('is-busy');
+            exportButton.disabled = true;
+        }
+
+        try {
+            for (let frame = 0; frame < GIF_FRAME_COUNT; frame += 1) {
+                const progress = frame / (GIF_FRAME_COUNT - 1);
+                const animatedSettings = this.getAnimationFrameSettings(settings, progress);
+
+                this.renderer.render(exportCanvas, {
+                    ...animatedSettings,
+                    transparentBackground: Boolean(settings.transparentExport),
+                    showPaperGrain: settings.transparentExport ? false : settings.showPaperGrain
+                });
+
+                const ctx = exportCanvas.getContext('2d');
+                const imageData = ctx.getImageData(0, 0, width, height);
+                encoder.addFrame(imageData, GIF_FRAME_DELAY_CS);
+
+                await waitForFrame();
+            }
+
+            const blob = encoder.finish();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const transparentSuffix = settings.transparentExport ? '-transparent' : '';
+            link.href = url;
+            link.download = `nopresha-pencil-${this.settings.seed}${transparentSuffix}.gif`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        } finally {
+            if (exportButton) {
+                exportButton.disabled = false;
+                exportButton.classList.remove('is-busy');
+                exportButton.textContent = originalText;
+                this.updateExportButtonLabel();
+            }
+        }
+    }
+
+    updateExportButtonLabel() {
+        const button = document.getElementById('exportPngBtn');
+        if (button && !button.classList.contains('is-busy')) {
+            button.textContent = this.settingsStore.get('gifExport') ? 'Export GIF' : 'Export PNG';
+        }
+    }
+
+    updatePlayButtonLabel() {
+        const button = document.getElementById('playAnimationBtn');
+        if (!button) return;
+        button.classList.toggle('is-active', this.isPlayingAnimation);
+        if (!this.isPlayingAnimation) {
+            button.textContent = 'Play';
+            return;
+        }
+        button.textContent = this.isPlayButtonHovered ? 'Stop' : 'Playing';
+    }
+
+    getAnimationFrameSettings(settings, progress) {
+        return ANIMATION_PARAMETERS.reduce((animatedSettings, parameter) => {
+            if (settings[parameter.flag]) {
+                animatedSettings[parameter.setting] = this.getAnimatedParameterValue(parameter, settings[parameter.setting], progress);
+            }
+            return animatedSettings;
+        }, { ...settings });
     }
 
     exportSettings() {
@@ -361,17 +600,33 @@ export class PencilIdentityApp {
         return `nopresha-${Math.floor(Date.now() % 1000000).toString(36)}`;
     }
 
-    loadImage(src) {
-        return new Promise((resolve, reject) => {
-            const image = new Image();
-            image.onload = () => resolve(image);
-            image.onerror = () => reject(new Error(`Unable to load image: ${src}`));
-            image.src = src;
-        });
+    async loadText(src) {
+        const response = await fetch(src);
+        if (!response.ok) {
+            throw new Error(`Unable to load text: ${src}`);
+        }
+        return response.text();
     }
 
     normalizeHexColor(value) {
         const color = String(value || '').trim();
         return /^#[0-9a-f]{6}$/i.test(color) ? color : '#ffffff';
     }
+}
+
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+
+function lerp(a, b, t) {
+    return a + (b - a) * t;
+}
+
+function smoothstep(t) {
+    const clamped = clamp(t, 0, 1);
+    return clamped * clamped * (3 - 2 * clamped);
+}
+
+function waitForFrame() {
+    return new Promise((resolve) => requestAnimationFrame(resolve));
 }

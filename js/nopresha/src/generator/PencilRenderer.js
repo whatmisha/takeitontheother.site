@@ -10,11 +10,11 @@ const PALETTES = {
 
 export class PencilRenderer {
     constructor() {
-        this.characterImage = null;
+        this.characterSvg = null;
     }
 
-    setCharacterImage(image) {
-        this.characterImage = image;
+    setCharacterSvg(svgText) {
+        this.characterSvg = parseCharacterSvg(svgText);
     }
 
     render(canvas, settings) {
@@ -125,19 +125,51 @@ export class PencilRenderer {
     }
 
     drawCharacter(ctx, width, height, settings) {
-        if (!settings.showCharacter || !this.characterImage) return;
+        if (!settings.showCharacter || !this.characterSvg) return;
 
-        const sourceWidth = this.characterImage.naturalWidth || this.characterImage.width || 1200;
-        const sourceHeight = this.characterImage.naturalHeight || this.characterImage.height || 1200;
+        const { viewBox, elements } = this.characterSvg;
+        const sourceWidth = viewBox.width || 1200;
+        const sourceHeight = viewBox.height || 1200;
         const scale = Math.min(width / sourceWidth, height / sourceHeight);
         const targetWidth = sourceWidth * scale;
         const targetHeight = sourceHeight * scale;
         const x = (width - targetWidth) / 2;
         const y = (height - targetHeight) / 2;
+        const colors = {
+            eyes: normalizeColor(settings.eyesColor, '#000000'),
+            legs: normalizeColor(settings.legsColor, '#000000')
+        };
 
         ctx.save();
         ctx.globalCompositeOperation = 'source-over';
-        ctx.drawImage(this.characterImage, x, y, targetWidth, targetHeight);
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.translate(-viewBox.x, -viewBox.y);
+        elements.forEach((element) => this.drawCharacterElement(ctx, element, colors[element.group]));
+        ctx.restore();
+    }
+
+    drawCharacterElement(ctx, element, color) {
+        ctx.save();
+
+        if (element.type === 'ellipse') {
+            ctx.fillStyle = color;
+            ctx.translate(element.cx, element.cy);
+            if (element.rotation) {
+                ctx.rotate(element.rotation);
+            }
+            ctx.beginPath();
+            ctx.ellipse(0, 0, element.rx, element.ry, 0, 0, TWO_PI);
+            ctx.fill();
+        }
+
+        if (element.type === 'path' && typeof Path2D !== 'undefined') {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = element.strokeWidth;
+            ctx.lineCap = element.lineCap;
+            ctx.stroke(new Path2D(element.d));
+        }
+
         ctx.restore();
     }
 
@@ -471,6 +503,60 @@ export class PencilRenderer {
         }
         return { coloredSamples };
     }
+}
+
+function parseCharacterSvg(svgText) {
+    if (typeof DOMParser === 'undefined') return null;
+
+    const document = new DOMParser().parseFromString(svgText, 'image/svg+xml');
+    const svg = document.querySelector('svg');
+    if (!svg) return null;
+
+    const viewBox = parseViewBox(svg.getAttribute('viewBox'));
+    const elements = Array.from(svg.querySelectorAll('ellipse, path')).map((node, index) => {
+        const group = index < 2 ? 'eyes' : 'legs';
+        if (node.tagName.toLowerCase() === 'ellipse') {
+            return {
+                type: 'ellipse',
+                group,
+                cx: readNumber(node, 'cx'),
+                cy: readNumber(node, 'cy'),
+                rx: readNumber(node, 'rx'),
+                ry: readNumber(node, 'ry'),
+                rotation: parseRotation(node.getAttribute('transform'))
+            };
+        }
+
+        return {
+            type: 'path',
+            group,
+            d: node.getAttribute('d') || '',
+            strokeWidth: readNumber(node, 'stroke-width', 1),
+            lineCap: node.getAttribute('stroke-linecap') || 'butt'
+        };
+    });
+
+    return { viewBox, elements };
+}
+
+function parseViewBox(value) {
+    const numbers = String(value || '0 0 1200 1200').trim().split(/\s+/).map(Number);
+    return {
+        x: numbers[0] || 0,
+        y: numbers[1] || 0,
+        width: numbers[2] || 1200,
+        height: numbers[3] || 1200
+    };
+}
+
+function parseRotation(value) {
+    const match = String(value || '').match(/rotate\((-?\d+(?:\.\d+)?)/);
+    return match ? Number(match[1]) * Math.PI / 180 : 0;
+}
+
+function readNumber(node, attribute, fallback = 0) {
+    const value = Number(node.getAttribute(attribute));
+    return Number.isFinite(value) ? value : fallback;
 }
 
 function lerp(a, b, t) {

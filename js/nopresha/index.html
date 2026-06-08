@@ -100,10 +100,9 @@
                 </div>
                 <div class="panel-content">
                     <section class="control-section">
-                        <h3>Palette</h3>
                         <div class="control-group">
                             <label for="colorCountSlider">
-                                <span>Colors</span>
+                                <span>Palette</span>
                                 <input type="text" class="value-display" id="colorCountValue" value="5">
                             </label>
                             <input type="range" id="colorCountSlider" min="1" max="8" step="1" value="5">
@@ -140,13 +139,27 @@
                     </section>
 
                     <section class="control-section">
-                        <h3>Background</h3>
+                        <div class="color-picker-stack">
+                            <div class="control-group color-control-group">
+                                <label class="color-field" for="backgroundColorInput">
+                                    <input type="color" class="color-swatch-input" id="backgroundColorInput" data-color-setting="backgroundColor" value="#ffffff" aria-label="Background color">
+                                    <span>Background</span>
+                                </label>
+                            </div>
 
-                        <div class="control-group">
-                            <label for="backgroundColorInput">
-                                <span>Color</span>
-                                <input type="color" class="color-swatch-input" id="backgroundColorInput" value="#ffffff" aria-label="Background color">
-                            </label>
+                            <div class="control-group color-control-group">
+                                <label class="color-field" for="eyesColorInput">
+                                    <input type="color" class="color-swatch-input" id="eyesColorInput" data-color-setting="eyesColor" value="#000000" aria-label="Eyes color">
+                                    <span>Eyes</span>
+                                </label>
+                            </div>
+
+                            <div class="control-group color-control-group">
+                                <label class="color-field" for="legsColorInput">
+                                    <input type="color" class="color-swatch-input" id="legsColorInput" data-color-setting="legsColor" value="#000000" aria-label="Legs color">
+                                    <span>Legs</span>
+                                </label>
+                            </div>
                         </div>
 
                         <div class="control-group show-toggle-chip-group">
@@ -234,6 +247,62 @@
                     </div>
                 </div>
             </aside>
+
+            <aside class="controls-panel animation-panel" id="animationPanel" aria-label="Animation settings">
+                <div class="panel-header" id="animationPanelHeader">
+                    <span>Animation</span>
+                    <span class="collapse-icon" role="button" aria-label="Collapse panel" tabindex="0">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <h3>Parameters</h3>
+                        <div class="control-group show-toggle-chip-group">
+                            <div class="toggle-chip-group">
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="animateThickness" data-setting="animateThickness">
+                                    <span>Thickness</span>
+                                </label>
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="animateSoftness" data-setting="animateSoftness">
+                                    <span>Softness</span>
+                                </label>
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="animatePigment" data-setting="animatePigment">
+                                    <span>Pigment</span>
+                                </label>
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="animateDensity" data-setting="animateDensity">
+                                    <span>Density</span>
+                                </label>
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="animateHatchDeviation" data-setting="animateHatchDeviation">
+                                    <span>Hatch deviation</span>
+                                </label>
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="animatePalette" data-setting="animatePalette">
+                                    <span>Palette</span>
+                                </label>
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="animateSpread" data-setting="animateSpread" checked>
+                                    <span>Spread</span>
+                                </label>
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="animateShapeCharacter" data-setting="animateShapeCharacter">
+                                    <span>Booba / Kiki</span>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="panel-action-row">
+                        <button class="btn-fixed app-panel-btn" id="playAnimationBtn" type="button">Play</button>
+                    </div>
+                </div>
+            </aside>
         </main>
     </div>
 
@@ -251,6 +320,13 @@
                     <span class="toggle-slider"></span>
                 </div>
                 <span class="toggle-label-text">Transparent</span>
+            </label>
+            <label class="toggle-label">
+                <div class="toggle-switch">
+                    <input type="checkbox" id="gifExportCheckbox" data-setting="gifExport" aria-label="GIF">
+                    <span class="toggle-slider"></span>
+                </div>
+                <span class="toggle-label-text">GIF</span>
             </label>
         </div>
     </nav>
