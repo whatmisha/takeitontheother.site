@@ -13,6 +13,7 @@
     "paperGrain": 34,
     "paletteMode": "electric",
     "spotBlendMode": "multiply",
+    "backgroundColor": "#ffffff",
     "showPaperGrain": true,
     "transparentExport": false
 }

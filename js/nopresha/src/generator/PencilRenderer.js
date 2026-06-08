@@ -54,7 +54,7 @@ export class PencilRenderer {
     }
 
     drawPaper(ctx, width, height, settings, rng) {
-        ctx.fillStyle = '#f4f1ea';
+        ctx.fillStyle = normalizeColor(settings.backgroundColor, '#ffffff');
         ctx.fillRect(0, 0, width, height);
 
         if (!settings.showPaperGrain || settings.paperGrain <= 0) return;
@@ -481,6 +481,11 @@ function hexToRgb(hex) {
         g: (num >> 8) & 255,
         b: num & 255
     };
+}
+
+function normalizeColor(value, fallback) {
+    const color = String(value || '').trim();
+    return /^#[0-9a-f]{6}$/i.test(color) ? color : fallback;
 }
 
 function rgba(rgb, alpha) {

@@ -13,6 +13,7 @@
     "paperGrain": 36,
     "paletteMode": "vivid",
     "spotBlendMode": "multiply",
+    "backgroundColor": "#ffffff",
     "showPaperGrain": true,
     "transparentExport": false
 }

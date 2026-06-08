@@ -22,6 +22,7 @@ export class PencilIdentityApp {
             paperGrain: 42,
             paletteMode: 'vivid',
             spotBlendMode: 'multiply',
+            backgroundColor: '#ffffff',
             showPaperGrain: true,
             transparentExport: false
         };
@@ -58,6 +59,7 @@ export class PencilIdentityApp {
 
         this.initPanels();
         this.initSliders();
+        this.initColorInputs();
         this.initToggles();
         this.initSegmentedControls();
         this.initSeed();
@@ -128,6 +130,16 @@ export class PencilIdentityApp {
                     this.scheduleRender();
                 }
             });
+        });
+    }
+
+    initColorInputs() {
+        const input = document.getElementById('backgroundColorInput');
+        if (!input) return;
+        input.value = this.normalizeHexColor(this.settingsStore.get('backgroundColor'));
+        input.addEventListener('input', () => {
+            this.settingsStore.set('backgroundColor', this.normalizeHexColor(input.value));
+            this.scheduleRender();
         });
     }
 
@@ -270,6 +282,11 @@ export class PencilIdentityApp {
         const seedInput = document.getElementById('seedInput');
         if (seedInput) seedInput.value = this.settings.seed;
 
+        const backgroundColorInput = document.getElementById('backgroundColorInput');
+        if (backgroundColorInput) {
+            backgroundColorInput.value = this.normalizeHexColor(this.settingsStore.get('backgroundColor'));
+        }
+
         document.querySelectorAll('input[type="checkbox"][data-setting]').forEach((checkbox) => {
             checkbox.checked = Boolean(this.settingsStore.get(checkbox.dataset.setting));
         });
@@ -337,5 +354,10 @@ export class PencilIdentityApp {
 
     makeSeed() {
         return `nopresha-${Math.floor(Date.now() % 1000000).toString(36)}`;
+    }
+
+    normalizeHexColor(value) {
+        const color = String(value || '').trim();
+        return /^#[0-9a-f]{6}$/i.test(color) ? color : '#ffffff';
     }
 }

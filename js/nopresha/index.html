@@ -90,26 +90,6 @@
                         </div>
                     </section>
 
-                    <section class="control-section">
-                        <h3>Paper</h3>
-
-                        <div class="control-group">
-                            <label for="paperGrainSlider">
-                                <span>Grain</span>
-                                <input type="text" class="value-display" id="paperGrainValue" value="38">
-                            </label>
-                            <input type="range" id="paperGrainSlider" min="0" max="100" step="1" value="38">
-                        </div>
-
-                        <div class="control-group show-toggle-chip-group">
-                            <div class="toggle-chip-group">
-                                <label class="toggle-chip">
-                                    <input type="checkbox" id="showPaperGrain" data-setting="showPaperGrain" checked>
-                                    <span>Paper grain</span>
-                                </label>
-                            </div>
-                        </div>
-                    </section>
                 </div>
             </aside>
 
@@ -160,6 +140,34 @@
                                     <label for="blendOverlap">Overlap</label>
                                 </div>
                             </fieldset>
+                        </div>
+                    </section>
+
+                    <section class="control-section">
+                        <h3>Background</h3>
+
+                        <div class="control-group">
+                            <label for="backgroundColorInput">
+                                <span>Color</span>
+                                <input type="color" class="color-swatch-input" id="backgroundColorInput" value="#ffffff" aria-label="Background color">
+                            </label>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="paperGrainSlider">
+                                <span>Grain</span>
+                                <input type="text" class="value-display" id="paperGrainValue" value="38">
+                            </label>
+                            <input type="range" id="paperGrainSlider" min="0" max="100" step="1" value="38">
+                        </div>
+
+                        <div class="control-group show-toggle-chip-group">
+                            <div class="toggle-chip-group">
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="showPaperGrain" data-setting="showPaperGrain" checked>
+                                    <span>Paper grain</span>
+                                </label>
+                            </div>
                         </div>
                     </section>
                 </div>
@@ -243,15 +251,15 @@
         <input id="settingsFileInput" type="file" accept="application/json,.json" hidden>
 
         <div class="export-group-right">
-            <label class="toggle-label">
-                <div class="toggle-switch">
-                    <input type="checkbox" id="transparentExportCheckbox" data-setting="transparentExport" aria-label="Transparent PNG">
-                    <span class="toggle-slider"></span>
-                </div>
-                <span class="toggle-label-text">Transparent PNG</span>
-            </label>
             <button class="btn-fixed btn-export" id="resetBtn" type="button">Reset</button>
             <button class="btn-fixed btn-export" id="exportPngBtn" type="button">Export PNG</button>
+            <label class="toggle-label">
+                <div class="toggle-switch">
+                    <input type="checkbox" id="transparentExportCheckbox" data-setting="transparentExport" aria-label="Transparent">
+                    <span class="toggle-slider"></span>
+                </div>
+                <span class="toggle-label-text">Transparent</span>
+            </label>
         </div>
     </nav>
 
