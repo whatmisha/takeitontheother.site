@@ -23,7 +23,8 @@ export class PencilIdentityApp {
             paletteMode: 'vivid',
             spotBlendMode: 'multiply',
             backgroundColor: '#ffffff',
-            showPaperGrain: true,
+            showPaperGrain: false,
+            showCharacter: true,
             transparentExport: false
         };
 
@@ -64,6 +65,7 @@ export class PencilIdentityApp {
         this.initSeed();
         this.initButtons();
         this.initCollapse();
+        await this.initCharacterAsset();
         await this.initPresets();
         this.scheduleRender();
     }
@@ -102,8 +104,7 @@ export class PencilIdentityApp {
             ['spreadSlider', 'spreadValue', 'spread', 0, 100, 0, 1, 10],
             ['shapeCharacterSlider', 'shapeCharacterValue', 'shapeCharacter', 0, 100, 0, 1, 10],
             ['strokeDensitySlider', 'strokeDensityValue', 'strokeDensity', 1, 100, 0, 1, 10],
-            ['hatchDeviationSlider', 'hatchDeviationValue', 'hatchDeviation', 0, 100, 0, 1, 10],
-            ['paperGrainSlider', 'paperGrainValue', 'paperGrain', 0, 100, 0, 1, 10]
+            ['hatchDeviationSlider', 'hatchDeviationValue', 'hatchDeviation', 0, 100, 0, 1, 10]
         ].forEach(([sliderId, valueId, setting, min, max, decimals, baseStep, shiftStep]) => {
             this.sliders.initSlider(sliderId, {
                 valueId,
@@ -209,6 +210,15 @@ export class PencilIdentityApp {
         });
     }
 
+    async initCharacterAsset() {
+        try {
+            const image = await this.loadImage('assets/character.svg');
+            this.renderer.setCharacterImage(image);
+        } catch (error) {
+            console.warn('Character asset failed to load:', error);
+        }
+    }
+
     async initPresets() {
         this.presetManager = new PresetManager({
             dropdown: this.dom.presetDropdown,
@@ -267,8 +277,7 @@ export class PencilIdentityApp {
             spread: 'spreadSlider',
             shapeCharacter: 'shapeCharacterSlider',
             strokeDensity: 'strokeDensitySlider',
-            hatchDeviation: 'hatchDeviationSlider',
-            paperGrain: 'paperGrainSlider'
+            hatchDeviation: 'hatchDeviationSlider'
         };
 
         Object.entries(sliderIds).forEach(([setting, sliderId]) => {
@@ -350,6 +359,15 @@ export class PencilIdentityApp {
 
     makeSeed() {
         return `nopresha-${Math.floor(Date.now() % 1000000).toString(36)}`;
+    }
+
+    loadImage(src) {
+        return new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = () => reject(new Error(`Unable to load image: ${src}`));
+            image.src = src;
+        });
     }
 
     normalizeHexColor(value) {

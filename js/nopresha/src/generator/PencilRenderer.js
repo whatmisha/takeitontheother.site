@@ -9,6 +9,14 @@ const PALETTES = {
 };
 
 export class PencilRenderer {
+    constructor() {
+        this.characterImage = null;
+    }
+
+    setCharacterImage(image) {
+        this.characterImage = image;
+    }
+
     render(canvas, settings) {
         const startedAt = performance.now();
         const width = Math.round(settings.width);
@@ -35,6 +43,8 @@ export class PencilRenderer {
         ctx.globalCompositeOperation = this.getSpotCompositeMode(settings);
         spots.forEach((spot) => this.drawSpot(ctx, spot, globalShape, settings, rng));
         ctx.restore();
+
+        this.drawCharacter(ctx, width, height, settings);
 
         if (!transparent) {
             this.drawPaperVignette(ctx, width, height);
@@ -111,6 +121,23 @@ export class PencilRenderer {
         ctx.globalCompositeOperation = 'multiply';
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
+        ctx.restore();
+    }
+
+    drawCharacter(ctx, width, height, settings) {
+        if (!settings.showCharacter || !this.characterImage) return;
+
+        const sourceWidth = this.characterImage.naturalWidth || this.characterImage.width || 1200;
+        const sourceHeight = this.characterImage.naturalHeight || this.characterImage.height || 1200;
+        const scale = Math.min(width / sourceWidth, height / sourceHeight);
+        const targetWidth = sourceWidth * scale;
+        const targetHeight = sourceHeight * scale;
+        const x = (width - targetWidth) / 2;
+        const y = (height - targetHeight) / 2;
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.drawImage(this.characterImage, x, y, targetWidth, targetHeight);
         ctx.restore();
     }
 
