@@ -67,6 +67,7 @@ export class PencilIdentityApp {
         this.animationFrame = null;
         this.isPlayingAnimation = false;
         this.animationBaseValues = null;
+        this.animationTracks = null;
         this.isPlayButtonHovered = false;
     }
 
@@ -317,13 +318,15 @@ export class PencilIdentityApp {
 
         const startedAt = performance.now();
         this.animationBaseValues = this.getAnimationBaseValues();
+        this.animationTracks = this.createAnimationTracks(this.animationBaseValues, this.settingsStore.getAll());
 
         this.isPlayingAnimation = true;
         this.updatePlayButtonLabel();
+        this.applyAnimatedValues(this.animationTracks, 0);
 
         const tick = (now) => {
             const progress = ((now - startedAt) % ANIMATION_DURATION_MS) / ANIMATION_DURATION_MS;
-            this.applyAnimatedValues(this.animationBaseValues, progress);
+            this.applyAnimatedValues(this.animationTracks, progress);
             this.animationFrame = requestAnimationFrame(tick);
         };
 
@@ -342,6 +345,7 @@ export class PencilIdentityApp {
         this.animationFrame = null;
         this.isPlayingAnimation = false;
         this.animationBaseValues = null;
+        this.animationTracks = null;
         this.updatePlayButtonLabel();
     }
 
@@ -352,11 +356,13 @@ export class PencilIdentityApp {
         this.scheduleRender();
     }
 
-    applyAnimatedValues(baseValues, progress) {
-        if (!baseValues) return;
+    applyAnimatedValues(tracks, progress) {
+        if (!tracks) return;
         ANIMATION_PARAMETERS.forEach((parameter) => {
             if (!this.settingsStore.get(parameter.flag)) return;
-            this.setAnimatedSlider(parameter.sliderId, this.getAnimatedParameterValue(parameter, baseValues[parameter.setting], progress));
+            const track = tracks[parameter.setting];
+            if (!track) return;
+            this.setAnimatedSlider(parameter.sliderId, this.getAnimatedTrackValue(parameter, track, progress));
         });
         this.scheduleRender();
     }
@@ -365,7 +371,33 @@ export class PencilIdentityApp {
         this.sliders?.setValue(sliderId, value, false);
     }
 
-    getAnimatedParameterValue(parameter, baseValue, progress) {
+    getAnimatedTrackValue(parameter, track, progress) {
+        if (progress < 1 / 3) {
+            return this.formatAnimatedValue(parameter, lerp(track.start, track.firstTarget, smoothstep(progress * 3)));
+        }
+        if (progress < 2 / 3) {
+            return this.formatAnimatedValue(parameter, lerp(track.firstTarget, track.secondTarget, smoothstep((progress - 1 / 3) * 3)));
+        }
+        return this.formatAnimatedValue(parameter, lerp(track.secondTarget, track.start, smoothstep((progress - 2 / 3) * 3)));
+    }
+
+    createAnimationTracks(baseValues, settings) {
+        return ANIMATION_PARAMETERS.reduce((tracks, parameter) => {
+            if (!settings[parameter.flag]) return tracks;
+
+            const range = this.getAnimationRange(parameter, baseValues[parameter.setting]);
+            const direction = Math.random() < 0.5 ? -1 : 1;
+            const start = this.getRandomAnimationStart(parameter, range);
+            tracks[parameter.setting] = {
+                start,
+                firstTarget: direction > 0 ? range.high : range.low,
+                secondTarget: direction > 0 ? range.low : range.high
+            };
+            return tracks;
+        }, {});
+    }
+
+    getAnimationRange(parameter, baseValue) {
         const base = Number(baseValue) || 0;
         const low = parameter.lowOffset !== undefined
             ? base + parameter.lowOffset
@@ -374,13 +406,22 @@ export class PencilIdentityApp {
             ? base + parameter.highOffset
             : base + parameter.amplitude;
 
-        if (progress < 1 / 3) {
-            return this.formatAnimatedValue(parameter, lerp(base, low, smoothstep(progress * 3)));
+        return {
+            low: this.formatAnimatedValue(parameter, low),
+            high: this.formatAnimatedValue(parameter, high)
+        };
+    }
+
+    getRandomAnimationStart(parameter, range) {
+        if (parameter.integer) {
+            const min = Math.ceil(range.low);
+            const max = Math.floor(range.high);
+            const innerMin = max - min >= 2 ? min + 1 : min;
+            const innerMax = max - min >= 2 ? max - 1 : max;
+            return randomInteger(innerMin, innerMax);
         }
-        if (progress < 2 / 3) {
-            return this.formatAnimatedValue(parameter, lerp(low, high, smoothstep((progress - 1 / 3) * 3)));
-        }
-        return this.formatAnimatedValue(parameter, lerp(high, base, smoothstep((progress - 2 / 3) * 3)));
+        const value = lerp(range.low, range.high, Math.random());
+        return this.formatAnimatedValue(parameter, value);
     }
 
     formatAnimatedValue(parameter, value) {
@@ -392,9 +433,9 @@ export class PencilIdentityApp {
         return ANIMATION_PARAMETERS.some((parameter) => this.settingsStore.get(parameter.flag));
     }
 
-    getAnimationBaseValues() {
+    getAnimationBaseValues(settings = this.settingsStore.getAll()) {
         return ANIMATION_PARAMETERS.reduce((values, parameter) => {
-            values[parameter.setting] = this.settingsStore.get(parameter.setting);
+            values[parameter.setting] = settings[parameter.setting];
             return values;
         }, {});
     }
@@ -496,6 +537,7 @@ export class PencilIdentityApp {
             delayCentiseconds: GIF_FRAME_DELAY_CS,
             transparent: Boolean(settings.transparentExport)
         });
+        const animationTracks = this.createAnimationTracks(this.getAnimationBaseValues(settings), settings);
 
         if (exportButton) {
             exportButton.textContent = 'Rendering GIF';
@@ -506,7 +548,7 @@ export class PencilIdentityApp {
         try {
             for (let frame = 0; frame < GIF_FRAME_COUNT; frame += 1) {
                 const progress = frame / (GIF_FRAME_COUNT - 1);
-                const animatedSettings = this.getAnimationFrameSettings(settings, progress);
+                const animatedSettings = this.getAnimationFrameSettings(settings, progress, animationTracks);
 
                 this.renderer.render(exportCanvas, {
                     ...animatedSettings,
@@ -559,10 +601,10 @@ export class PencilIdentityApp {
         button.textContent = this.isPlayButtonHovered ? 'Stop' : 'Playing';
     }
 
-    getAnimationFrameSettings(settings, progress) {
+    getAnimationFrameSettings(settings, progress, tracks) {
         return ANIMATION_PARAMETERS.reduce((animatedSettings, parameter) => {
-            if (settings[parameter.flag]) {
-                animatedSettings[parameter.setting] = this.getAnimatedParameterValue(parameter, settings[parameter.setting], progress);
+            if (settings[parameter.flag] && tracks?.[parameter.setting]) {
+                animatedSettings[parameter.setting] = this.getAnimatedTrackValue(parameter, tracks[parameter.setting], progress);
             }
             return animatedSettings;
         }, { ...settings });
@@ -629,4 +671,8 @@ function smoothstep(t) {
 
 function waitForFrame() {
     return new Promise((resolve) => requestAnimationFrame(resolve));
+}
+
+function randomInteger(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
