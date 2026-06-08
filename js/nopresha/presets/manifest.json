@@ -1,5 +1,6 @@
 {
     "presets": [
+        { "name": "Preshaman", "file": "preshaman.json" },
         { "name": "Few Colors", "file": "few-colors.json" },
         { "name": "One Color Hatch", "file": "one-color-hatch.json" },
         { "name": "Soft Bouba", "file": "soft-bouba.json" },
