@@ -26,12 +26,6 @@
     bottom: 76px;
 }
 
-.app-status {
-    cursor: default;
-    min-width: 120px;
-    text-align: center;
-}
-
 .seed-input {
     width: 100%;
     min-width: 0;
@@ -84,10 +78,6 @@
 
     .art-canvas {
         max-height: calc(100vh - 388px);
-    }
-
-    .app-status {
-        display: none;
     }
 
     .drawing-panel,

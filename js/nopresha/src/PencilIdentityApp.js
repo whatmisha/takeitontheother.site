@@ -49,7 +49,6 @@ export class PencilIdentityApp {
             drawingPanelHeader: 'drawingPanelHeader',
             colorPanel: 'colorPanel',
             colorPanelHeader: 'colorPanelHeader',
-            canvasMeta: 'canvasMeta',
             presetDropdown: 'presetDropdown',
             presetDropdownToggle: 'presetDropdownToggle',
             presetDropdownMenu: 'presetDropdownMenu'
@@ -241,9 +240,6 @@ export class PencilIdentityApp {
         canvas.dataset.seed = this.lastRenderInfo.seed;
         canvas.dataset.coloredSamples = String(this.lastRenderInfo.coloredSamples);
         canvas.dataset.spotCount = String(this.lastRenderInfo.spotCount);
-        if (this.dom.canvasMeta) {
-            this.dom.canvasMeta.textContent = `${this.lastRenderInfo.width} x ${this.lastRenderInfo.height} PNG`;
-        }
     }
 
     regenerate() {
