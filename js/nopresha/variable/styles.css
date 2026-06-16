@@ -68,10 +68,24 @@ body {
     will-change: font-variation-settings;
 }
 
-.axis-readout {
+.corner-asterisk {
     position: fixed;
     bottom: 10px;
     left: 10px;
+    color: var(--foreground);
+    font-family: "Nopresha Variable", sans-serif;
+    font-size: calc(var(--word-font-size, 160px) / 4);
+    font-weight: 400;
+    font-variation-settings: "wdth" var(--asterisk-width-value, 50);
+    line-height: 0.78;
+    pointer-events: none;
+    user-select: none;
+}
+
+.axis-readout {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
     color: var(--foreground);
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     font-size: 11px;
@@ -80,6 +94,7 @@ body {
     letter-spacing: 0;
     opacity: 0.72;
     pointer-events: none;
+    text-align: right;
     user-select: none;
     white-space: nowrap;
 }

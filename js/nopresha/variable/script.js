@@ -1,5 +1,6 @@
 const word = document.querySelector("#word");
 const axisReadout = document.querySelector("#axisReadout");
+const cornerAsterisk = document.querySelector(".corner-asterisk");
 const text = word.textContent.trim();
 
 const SIDE_PADDING = 10;
@@ -12,6 +13,8 @@ const GAMMA_MAX = 12;
 const SEARCH_STEPS = 18;
 const INERTIA = 0.16;
 const SNAP_DISTANCE = 0.05;
+const INITIAL_BACKGROUND_COLOR = "#AD4422";
+const CLICK_BACKGROUND_COLOR = "#658659";
 const initialPointerX = Number(new URLSearchParams(window.location.search).get("x"));
 const startPointerX = Number.isFinite(initialPointerX) ? initialPointerX : window.innerWidth / 2;
 
@@ -20,6 +23,7 @@ const state = {
     targetPointerX: startPointerX,
     raf: 0,
     needsFontSize: true,
+    isAlternateBackground: false,
 };
 
 word.textContent = "";
@@ -62,7 +66,7 @@ function measureWordWidth() {
 }
 
 function updateFontSizeForViewport() {
-    word.style.setProperty("--word-font-size", `${FONT_SIZE_MEASURE}px`);
+    document.documentElement.style.setProperty("--word-font-size", `${FONT_SIZE_MEASURE}px`);
     setLetterWidths(letters.map(() => NEUTRAL_AXIS_VALUE));
 
     const neutralWidth = measureWordWidth();
@@ -70,7 +74,7 @@ function updateFontSizeForViewport() {
         ? FONT_SIZE_MEASURE * getTargetWidth() / neutralWidth
         : FONT_SIZE_MEASURE;
 
-    word.style.setProperty("--word-font-size", `${targetFontSize}px`);
+    document.documentElement.style.setProperty("--word-font-size", `${targetFontSize}px`);
     state.needsFontSize = false;
 }
 
@@ -162,6 +166,14 @@ function applyWidthGradient() {
     setLetterWidths(getWidthValues(normalizedDistances, bestGamma), true);
 }
 
+function updateAsteriskWidth() {
+    const widthValue = window.innerWidth > 0
+        ? clamp((state.pointerX / window.innerWidth) * TARGET_AXIS_MAX, TARGET_AXIS_MIN, TARGET_AXIS_MAX)
+        : TARGET_AXIS_MIN;
+
+    cornerAsterisk.style.setProperty("--asterisk-width-value", widthValue.toFixed(2));
+}
+
 function advancePointer() {
     const distance = state.targetPointerX - state.pointerX;
 
@@ -186,6 +198,7 @@ function updateWidths() {
 
     applyWidthGradient();
     applyWidthGradient();
+    updateAsteriskWidth();
 
     if (isPointerMoving) {
         requestUpdate();
@@ -221,6 +234,14 @@ window.addEventListener("touchmove", (event) => {
     }
 }, { passive: true });
 
+window.addEventListener("click", () => {
+    state.isAlternateBackground = !state.isAlternateBackground;
+    document.documentElement.style.setProperty(
+        "--background",
+        state.isAlternateBackground ? CLICK_BACKGROUND_COLOR : INITIAL_BACKGROUND_COLOR,
+    );
+});
+
 window.addEventListener("resize", () => {
     state.pointerX = clamp(state.pointerX, 0, window.innerWidth);
     state.targetPointerX = clamp(state.targetPointerX, 0, window.innerWidth);
@@ -228,5 +249,8 @@ window.addEventListener("resize", () => {
     requestUpdate();
 });
 
-document.fonts.ready.then(updateWidths);
+document.fonts.ready.then(() => {
+    state.needsFontSize = true;
+    updateWidths();
+});
 updateWidths();
