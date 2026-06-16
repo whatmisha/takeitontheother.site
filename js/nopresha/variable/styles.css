@@ -1,0 +1,69 @@
+@font-face {
+    font-family: "Nopresha Variable";
+    src: url("fonts/Nopresha260616-VariableVF.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+}
+
+:root {
+    --background: #AD4422;
+    --foreground: #E1B746;
+    --side-padding: 10px;
+    --top-padding: 50px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+}
+
+body {
+    overflow: hidden;
+    background: var(--background);
+}
+
+.stage {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100svh;
+    background: var(--background);
+    color: var(--foreground);
+}
+
+.word {
+    position: absolute;
+    top: var(--top-padding);
+    left: var(--side-padding);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    color: var(--foreground);
+    font-family: "Nopresha Variable", sans-serif;
+    font-size: var(--word-font-size, 160px);
+    font-weight: 400;
+    line-height: 0.78;
+    letter-spacing: 0;
+    text-align: center;
+    text-rendering: geometricPrecision;
+    text-transform: uppercase;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.letter {
+    display: inline-block;
+    color: inherit;
+    font: inherit;
+    font-variation-settings: "wdth" var(--width-value, 50);
+    line-height: inherit;
+    will-change: font-variation-settings;
+}
