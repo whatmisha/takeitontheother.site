@@ -9,10 +9,14 @@ const FONT_SIZE_MEASURE = 100;
 const GAMMA_MIN = 0.05;
 const GAMMA_MAX = 12;
 const SEARCH_STEPS = 18;
+const INERTIA = 0.16;
+const SNAP_DISTANCE = 0.05;
 const initialPointerX = Number(new URLSearchParams(window.location.search).get("x"));
+const startPointerX = Number.isFinite(initialPointerX) ? initialPointerX : window.innerWidth / 2;
 
 const state = {
-    pointerX: Number.isFinite(initialPointerX) ? initialPointerX : window.innerWidth / 2,
+    pointerX: startPointerX,
+    targetPointerX: startPointerX,
     raf: 0,
     needsFontSize: true,
 };
@@ -147,8 +151,23 @@ function applyWidthGradient() {
     setLetterWidths(getWidthValues(normalizedDistances, bestGamma));
 }
 
+function advancePointer() {
+    const distance = state.targetPointerX - state.pointerX;
+
+    if (Math.abs(distance) <= SNAP_DISTANCE) {
+        state.pointerX = state.targetPointerX;
+
+        return false;
+    }
+
+    state.pointerX += distance * INERTIA;
+
+    return true;
+}
+
 function updateWidths() {
     state.raf = 0;
+    const isPointerMoving = advancePointer();
 
     if (state.needsFontSize) {
         updateFontSizeForViewport();
@@ -156,6 +175,10 @@ function updateWidths() {
 
     applyWidthGradient();
     applyWidthGradient();
+
+    if (isPointerMoving) {
+        requestUpdate();
+    }
 }
 
 function requestUpdate() {
@@ -167,7 +190,7 @@ function requestUpdate() {
 }
 
 function setPointerX(clientX) {
-    state.pointerX = clientX;
+    state.targetPointerX = clamp(clientX, 0, window.innerWidth);
     requestUpdate();
 }
 
@@ -189,6 +212,7 @@ window.addEventListener("touchmove", (event) => {
 
 window.addEventListener("resize", () => {
     state.pointerX = clamp(state.pointerX, 0, window.innerWidth);
+    state.targetPointerX = clamp(state.targetPointerX, 0, window.innerWidth);
     state.needsFontSize = true;
     requestUpdate();
 });
