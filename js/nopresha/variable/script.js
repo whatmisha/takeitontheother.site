@@ -1,4 +1,5 @@
 const word = document.querySelector("#word");
+const axisReadout = document.querySelector("#axisReadout");
 const text = word.textContent.trim();
 
 const SIDE_PADDING = 10;
@@ -40,10 +41,20 @@ function getTargetWidth() {
     return Math.max(window.innerWidth - SIDE_PADDING * 2, 1);
 }
 
-function setLetterWidths(widthValues) {
+function updateAxisReadout(widthValues) {
+    axisReadout.textContent = widthValues
+        .map((widthValue, index) => `${text[index]} ${widthValue.toFixed(1)}`)
+        .join(" · ");
+}
+
+function setLetterWidths(widthValues, shouldUpdateReadout = false) {
     letters.forEach((letter, index) => {
         letter.style.setProperty("--width-value", widthValues[index].toFixed(2));
     });
+
+    if (shouldUpdateReadout) {
+        updateAxisReadout(widthValues);
+    }
 }
 
 function measureWordWidth() {
@@ -148,7 +159,7 @@ function applyWidthGradient() {
     const normalizedDistances = getNormalizedDistances();
     const bestGamma = findBestGamma(normalizedDistances);
 
-    setLetterWidths(getWidthValues(normalizedDistances, bestGamma));
+    setLetterWidths(getWidthValues(normalizedDistances, bestGamma), true);
 }
 
 function advancePointer() {
