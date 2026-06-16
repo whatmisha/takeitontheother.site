@@ -1,0 +1,11 @@
+{
+  "name": "techstyler",
+  "version": "1.0.0",
+  "description": "Web generator of single-layer textile weaves (plain, basket, twill, satin) with SVG/PNG/JSON export.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test",
+    "serve": "python3 -m http.server 8000"
+  }
+}

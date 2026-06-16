@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Techstyler — textile weave generator</title>
+    <link rel="stylesheet" href="./css/othersite-styles.css">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Top navigation: preset dropdown + share + save + zoom -->
+        <div class="top-links">
+            <span class="top-link top-link--brand">Techstyler</span>
+
+            <div class="preset-toolbar-cluster" style="display:flex;align-items:center;gap:var(--spacing-md);">
+                <div class="preset-dropdown" id="presetDropdown">
+                    <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button"
+                            aria-haspopup="listbox" aria-expanded="false" aria-controls="presetDropdownMenu">
+                        <span class="preset-dropdown-text">Presets</span>
+                        <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox"></ul>
+                </div>
+                <button type="button" id="presetToolbarShareBtn" class="preset-toolbar-share-btn" title="Copy share link" aria-label="Copy share link"
+                        data-tooltip="Copy share link">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="18" height="18" fill="none" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M5.7410987,3.4304742l.6124561-.6124561c.7810478-.7810478,2.0473765-.7810478,2.8284243,0l.0000028.0000028c.7810478.7810478.7810478,2.0473765,0,2.8284243l-.6124561.6124561"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M6.2589013,8.5695258l-.6124561.6124561c-.7810478.7810478-2.0473765.7810478-2.8284243,0l-.0000028-.0000028c-.7810478-.7810478-.7810478-2.0473765,0-2.8284243l.6124561-.6124561"/><line x1="7.5184826" y1="4.4815174" x2="4.4815174" y2="7.5184826" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"/></svg>
+                </button>
+            </div>
+
+            <button class="top-link" id="savePresetBtn" type="button" style="display:none;">Save preset</button>
+
+            <div class="zoom-indicator" id="zoomIndicator" data-tooltip="Click to fit to screen">100%</div>
+        </div>
+
+        <main class="main-content" id="mainContent">
+            <h1 class="sr-only">Techstyler — textile weave generator</h1>
+
+            <div class="canvas-container" id="canvasContainer">
+                <svg id="mainSvg" role="img" aria-label="Weave preview"></svg>
+            </div>
+
+            <!-- STRUCTURE panel (top-left) -->
+            <aside class="controls-panel controls-panel-left" id="structurePanel">
+                <div class="panel-header" id="structurePanelHeader">
+                    <span>Structure</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="segmented-control segmented-control-compact" data-segment="family" role="radiogroup" aria-label="Weave family">
+                            <input type="radio" name="family" id="famPlain" value="plain"><label for="famPlain">Plain</label>
+                            <input type="radio" name="family" id="famBasket" value="basket"><label for="famBasket">Basket</label>
+                        </div>
+                        <div class="segmented-control segmented-control-compact" data-segment="family" role="radiogroup" aria-label="Weave family (2)">
+                            <input type="radio" name="family" id="famTwill" value="twill"><label for="famTwill">Twill</label>
+                            <input type="radio" name="family" id="famSatin" value="satin"><label for="famSatin">Satin</label>
+                        </div>
+
+                        <div class="control-group" style="margin-top:var(--spacing-md);">
+                            <label for="phaseSlider"><span>Phase (shift)</span>
+                                <input type="text" class="value-display" id="phaseValue" value="0"></label>
+                            <input type="range" id="phaseSlider" min="0" max="64" value="0" step="1">
+                        </div>
+                    </section>
+
+                    <!-- BASKET params -->
+                    <section class="control-section fam-section" data-family="basket">
+                        <h3>Basket</h3>
+                        <div class="control-group">
+                            <label for="warpGroupSlider"><span>Warp group</span>
+                                <input type="text" class="value-display" id="warpGroupValue" value="2"></label>
+                            <input type="range" id="warpGroupSlider" min="1" max="12" value="2" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="weftGroupSlider"><span>Weft group</span>
+                                <input type="text" class="value-display" id="weftGroupValue" value="2"></label>
+                            <input type="range" id="weftGroupSlider" min="1" max="12" value="2" step="1">
+                        </div>
+                    </section>
+
+                    <!-- TWILL params -->
+                    <section class="control-section fam-section" data-family="twill">
+                        <h3>Twill</h3>
+                        <div class="control-group">
+                            <label for="overSlider"><span>Over</span>
+                                <input type="text" class="value-display" id="overValue" value="2"></label>
+                            <input type="range" id="overSlider" min="1" max="16" value="2" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="underSlider"><span>Under</span>
+                                <input type="text" class="value-display" id="underValue" value="2"></label>
+                            <input type="range" id="underSlider" min="1" max="16" value="2" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="twillStepSlider"><span>Diagonal step</span>
+                                <input type="text" class="value-display" id="twillStepValue" value="1"></label>
+                            <input type="range" id="twillStepSlider" min="1" max="16" value="1" step="1">
+                        </div>
+                        <div class="segmented-control segmented-control-compact" data-segment="direction" role="radiogroup" aria-label="Twill direction">
+                            <input type="radio" name="direction" id="dirZ" value="1"><label for="dirZ">Z (right)</label>
+                            <input type="radio" name="direction" id="dirS" value="-1"><label for="dirS">S (left)</label>
+                        </div>
+                    </section>
+
+                    <!-- SATIN params -->
+                    <section class="control-section fam-section" data-family="satin">
+                        <h3>Satin</h3>
+                        <div class="control-group">
+                            <label for="satinNSlider"><span>Repeat n</span>
+                                <input type="text" class="value-display" id="satinNValue" value="5"></label>
+                            <input type="range" id="satinNSlider" min="4" max="24" value="5" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="satinStepSlider"><span>Step (coprime with n)</span>
+                                <input type="text" class="value-display" id="satinStepValue" value="2"></label>
+                            <input type="range" id="satinStepSlider" min="1" max="23" value="2" step="1">
+                        </div>
+                        <div class="segmented-control segmented-control-compact" data-segment="faced" role="radiogroup" aria-label="Face side">
+                            <input type="radio" name="faced" id="facedWarp" value="warp"><label for="facedWarp">Warp-faced</label>
+                            <input type="radio" name="faced" id="facedWeft" value="weft"><label for="facedWeft">Weft-faced</label>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <!-- VIEW panel (top-right) -->
+            <aside class="controls-panel" id="viewPanel">
+                <div class="panel-header" id="viewPanelHeader">
+                    <span>View</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="segmented-control" data-segment="viewMode" role="radiogroup" aria-label="Display mode">
+                            <input type="radio" name="viewMode" id="viewGrid" value="grid"><label for="viewGrid">Draft</label>
+                            <input type="radio" name="viewMode" id="viewThreads" value="threads"><label for="viewThreads">Threads</label>
+                        </div>
+
+                        <div class="control-group" style="margin-top:var(--spacing-md);">
+                            <label for="tileXSlider"><span>Repeats X</span>
+                                <input type="text" class="value-display" id="tileXValue" value="3"></label>
+                            <input type="range" id="tileXSlider" min="1" max="12" value="3" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="tileYSlider"><span>Repeats Y</span>
+                                <input type="text" class="value-display" id="tileYValue" value="3"></label>
+                            <input type="range" id="tileYSlider" min="1" max="12" value="3" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="thicknessSlider"><span>Thread thickness <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="thicknessValue" value="18"></label>
+                            <input type="range" id="thicknessSlider" min="4" max="48" value="18" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="spacingSlider"><span>Spacing <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="spacingValue" value="4"></label>
+                            <input type="range" id="spacingSlider" min="0" max="24" value="4" step="1">
+                        </div>
+
+                        <div class="control-group pill-toggle-row" style="gap:var(--spacing-sm);flex-wrap:wrap;">
+                            <label class="pill-toggle" for="showGrid" data-tooltip="Repeat grid">
+                                <input type="checkbox" id="showGrid" class="sr-only" data-setting="showGrid"><span>Grid</span>
+                            </label>
+                            <label class="pill-toggle" for="showLabel" data-tooltip="Weave label (graphic font)">
+                                <input type="checkbox" id="showLabel" class="sr-only" data-setting="showLabel"><span>Label</span>
+                            </label>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <!-- MATRIX editor panel (bottom-left) -->
+            <aside class="controls-panel controls-panel-text" id="matrixPanel">
+                <div class="panel-header" id="matrixPanelHeader">
+                    <span>Repeat Matrix</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <p class="matrix-hint">Click a cell to switch the crossing (1 — warp on top, 0 — weft on top).</p>
+                        <div class="matrix-editor" id="matrixEditor" role="grid" aria-label="Repeat editor"></div>
+                        <div class="matrix-meta" id="matrixMeta"></div>
+                        <div class="matrix-actions">
+                            <button type="button" class="btn-mini" id="regenerateBtn" data-tooltip="Discard manual edits and regenerate from the formula">↻ Regenerate</button>
+                            <button type="button" class="btn-mini" id="invertBtn" data-tooltip="Invert all cells">⇄ Invert</button>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <!-- COLORS panel (bottom-right) -->
+            <aside class="controls-panel controls-panel-presets" id="colorsPanel">
+                <div class="panel-header" id="colorsPanelHeader">
+                    <span>Colors</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <div class="color-swatches-compact" id="colorPickersGroup">
+                                <div class="color-swatch-row">
+                                    <div class="color-swatch-compact" id="warpColorItem" data-color-type="warp">
+                                        <button type="button" class="color-dot color-dot--expandable" id="warpColorPreview" aria-label="Warp color"></button>
+                                        <span class="color-label">Warp</span>
+                                        <input type="text" class="color-swatch-hex" id="warpColorHex" value="#d8c9a3" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Warp color hex">
+                                    </div>
+                                    <div class="color-hsb-slot" id="warpColorHsbSlot">
+                                        <div id="unifiedColorPickerContainer"></div>
+                                    </div>
+                                </div>
+                                <div class="color-swatch-row">
+                                    <div class="color-swatch-compact" id="weftColorItem" data-color-type="weft">
+                                        <button type="button" class="color-dot color-dot--expandable" id="weftColorPreview" aria-label="Weft color"></button>
+                                        <span class="color-label">Weft</span>
+                                        <input type="text" class="color-swatch-hex" id="weftColorHex" value="#6f4e37" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Weft color hex">
+                                    </div>
+                                    <div class="color-hsb-slot" id="weftColorHsbSlot"></div>
+                                </div>
+                                <div class="color-swatch-row">
+                                    <div class="color-swatch-compact" id="bgColorItem" data-color-type="bg">
+                                        <button type="button" class="color-dot color-dot--expandable" id="bgColorPreview" aria-label="Background color"></button>
+                                        <span class="color-label">Background</span>
+                                        <input type="text" class="color-swatch-hex" id="bgColorHex" value="#0a0a0a" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Background color hex">
+                                    </div>
+                                    <div class="color-hsb-slot" id="bgColorHsbSlot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Bottom actions -->
+        <nav class="bottom-buttons">
+            <button class="btn-fixed btn-intro-help" id="introHelpBtn" type="button" aria-label="About" data-tooltip="About">?</button>
+            <button class="btn-fixed" id="importJsonBtn" type="button">Import JSON</button>
+            <button class="btn-fixed" id="exportJsonBtn" type="button">Export JSON</button>
+            <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
+            <button class="btn-fixed" id="exportSvgBtn" type="button">Export SVG ⌘E</button>
+            <input type="file" id="importJsonInput" accept="application/json,.json" style="display:none;">
+        </nav>
+
+        <!-- Dialog host -->
+        <dialog id="dialog" class="modal">
+            <div class="modal-content">
+                <h2 id="dialogTitle" class="modal-title"></h2>
+                <div id="dialogText" class="modal-text"></div>
+                <input id="dialogInput" class="modal-input" type="text" style="display:none;">
+                <div id="dialogButtons" class="modal-buttons"></div>
+            </div>
+        </dialog>
+    </div>
+
+    <script type="module" src="./tool.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "presets": [
+    { "name": "Plain", "file": "plain.json" },
+    { "name": "Twill 2/2 Z", "file": "twill-2-2.json" },
+    { "name": "Denim 3/1 S", "file": "denim.json" },
+    { "name": "Satin 5", "file": "satin-5.json" },
+    { "name": "Basket 3×3", "file": "basket-3.json" }
+  ]
+}

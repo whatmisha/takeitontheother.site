@@ -1,0 +1,4388 @@
+/**
+ * UI Framework — stylesheets
+ *
+ * Shared UI kit for authoring small web tools:
+ * panels, sliders, buttons, dropdowns, modals, etc.
+ *
+ * File map:
+ * 1. CSS tokens (color, spacing, motion)
+ * 2. Base styles (reset, typography)
+ * 3. Layout (container, top-links, panels)
+ * 4. Components (buttons, sliders, inputs)
+ * 5. Modals
+ * 6. Responsive rules
+ */
+
+/* ============================================
+   0. FONT FACES
+   ============================================ */
+
+@font-face {
+    font-family: 'CoFo Sans';
+    src: url('https://mishaivanov.ru/fonts/CoFoSans-Regular.woff2') format('woff2'),
+         url('https://mishaivanov.ru/fonts/CoFoSans-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+}
+
+@font-face {
+    font-family: 'CoFo Sans';
+    src: url('https://mishaivanov.ru/fonts/CoFoSans-Medium.woff2') format('woff2'),
+         url('https://mishaivanov.ru/fonts/CoFoSans-Medium.woff') format('woff');
+    font-weight: 500;
+    font-style: normal;
+    font-display: block;
+}
+
+/* ============================================
+   1. CSS TOKENS
+   ============================================ */
+
+:root {
+    /* Color scheme - dark theme */
+    --color-bg: #000;
+    --color-bg-panel: #1a1a1a;
+    --color-bg-input: #0a0a0a;
+    --color-text: #d2d2d2;
+    --color-text-secondary: #ccc;
+    --color-text-muted: #888;
+    --color-text-dim: #666;
+    --color-text-subtle: #555;
+    --color-border: #333;
+    --color-grid: #d2d2d2;
+
+    /* Inactive / disabled element colours */
+    --color-inactive-bg: #0E0E0E;
+    --color-inactive-text: #4B4B4B;
+    
+    /* Spacing - use for consistency */
+    --spacing-xs: 2px;
+    --spacing-sm: 4px;
+    --spacing-md: 8px;
+    --spacing-lg: 10px;
+    --spacing-xl: 12px;
+    --spacing-2xl: 15px;
+    --spacing-3xl: 20px;
+    --spacing-4xl: 30px;
+    
+    /* Border radius */
+    --radius: 12px;           /* Panels */
+    --radius-sm: 12px;
+    --radius-button: 20px;    /* Buttons */
+    --radius-input: 6px;      /* Inputs, dropdowns */
+    
+    /* Transitions - basic */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.2s ease;
+    --transition-slow: 0.3s ease;
+    
+    /* Premium Easing Functions - for smooth animations */
+    --easing-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+    --easing-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
+    --easing-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
+    --easing-sharp: cubic-bezier(0.4, 0.0, 0.6, 1);
+    
+    /* Animation Durations - for complex animations */
+    --duration-collapse: 0.35s;
+    --duration-expand: 0.35s;
+    --duration-fade: 0.25s;
+    
+    /* UI element sizes */
+    --slider-thumb-size: 8px;
+    --checkbox-size: 14px;
+    --handle-size: 8px;
+    --button-height: 36px;
+
+    /* Mobile visual viewport, kept in sync by MobileBootstrap for iOS Safari chrome changes */
+    --mobile-vw: 100vw;
+    --mobile-vh: 100dvh;
+    --mobile-vx: 0px;
+    --mobile-vy: 0px;
+}
+
+/* ============================================
+   2. BASE STYLES
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Screen reader only - for accessibility */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+body {
+    font-family: 'CoFo Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: var(--color-bg);
+    height: 100vh;
+    padding: 0;
+    color: var(--color-text);
+    overflow: hidden;
+    /* Prevent double-tap zoom on mobile */
+    touch-action: pan-x pan-y;
+}
+
+/* CoFo Sans is only bundled as 400 / 500 — avoid browser synthetic bold/heavy weights */
+b,
+strong {
+    font-weight: 500;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-weight: 500;
+}
+
+/* ============================================
+   3. LAYOUT
+   ============================================ */
+
+.container {
+    width: 100%;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* Top Links Container - top navigation */
+.top-links {
+    position: absolute;
+    /* Account for safe area for devices with camera notch (iPhone) */
+    top: calc(var(--spacing-3xl) + env(safe-area-inset-top, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    max-width: min(980px, 96vw);
+}
+
+.void-share-toast {
+    position: absolute;
+    top: calc(100% + var(--spacing-sm));
+    left: 50%;
+    transform: translateX(-50%);
+    padding: var(--spacing-md) var(--spacing-xl);
+    background: var(--color-text);
+    color: var(--color-bg);
+    border-radius: var(--radius-button);
+    font-size: 0.9rem;
+    z-index: 10001;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.void-share-toast--visible {
+    opacity: 1;
+}
+
+.mobile-preset-share-btn {
+    display: none;
+}
+
+/* Top Link - back button */
+.top-link {
+    padding: var(--spacing-md) var(--spacing-3xl);
+    background: var(--color-text);
+    color: var(--color-bg);
+    border: none;
+    border-radius: var(--radius-button);
+    font-family: 'CoFo Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--transition-slow);
+    height: var(--button-height);
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+}
+
+.top-link:hover {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+/* Save and Delete preset buttons */
+#savePresetBtn,
+#deletePresetBtn {
+    background: var(--color-bg-panel);
+    color: var(--color-text);
+    border: none;
+    border-radius: var(--radius-button);
+    font-family: 'CoFo Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: var(--spacing-md) var(--spacing-3xl);
+}
+
+#savePresetBtn:hover {
+    background-color: #2a2a2a;
+}
+
+#deletePresetBtn:hover {
+    background: #ff4444;
+    color: #d2d2d2;
+    border-color: #ff4444;
+}
+
+/* Main Content Area */
+.main-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+}
+
+/* Canvas Container - for tools with canvas/SVG */
+.canvas-container {
+    background: var(--color-bg);
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+/* ============================================
+   4. CONTROL PANELS
+   ============================================ */
+
+/**
+ * Base shell for anchored tool panels —
+ * combine with directional modifiers below.
+ */
+.controls-panel {
+    position: fixed;
+    top: var(--spacing-3xl);
+    right: var(--spacing-3xl);
+    width: 300px;
+    max-height: calc(100vh - var(--spacing-3xl) * 2);
+    background: var(--color-bg-panel);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+    border: none;
+    padding: 0;
+    overflow: hidden;
+    color: var(--color-text);
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Left panel */
+.controls-panel-left {
+    left: var(--spacing-3xl);
+    right: auto;
+}
+
+/* Text panel (bottom left) */
+.controls-panel-text {
+    left: var(--spacing-3xl);
+    right: auto;
+    top: auto;
+    bottom: var(--spacing-3xl);
+    max-height: calc(100vh - var(--spacing-3xl) * 2);
+}
+
+/* Presets panel (bottom right) */
+.controls-panel-presets {
+    right: var(--spacing-3xl);
+    left: auto;
+    top: auto;
+    bottom: var(--spacing-3xl);
+    max-height: calc(100vh - var(--spacing-3xl) * 2);
+}
+
+/* Effects panel (bottom right) */
+.controls-panel-effects {
+    right: var(--spacing-3xl);
+    left: auto;
+    top: auto;
+    bottom: var(--spacing-3xl);
+    max-height: calc(100vh - var(--spacing-3xl) * 2);
+}
+
+/* Random panel (centered above export buttons, 20px gap) */
+.controls-panel-random {
+    left: 50%;
+    right: auto;
+    top: auto;
+    transform: translateX(-50%);
+    bottom: calc(var(--spacing-3xl) + var(--button-height) + 20px);
+    max-height: none;
+}
+
+/* Scrollable body: grows with content, capped at 320px; scroll when taller */
+.controls-panel-random .panel-content {
+    max-height: 320px;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.random-panel-actions {
+    display: flex;
+    gap: 8px;
+    padding: 0 var(--spacing-3xl) var(--spacing-3xl);
+}
+
+.random-panel-actions__stretch {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.random-panel-actions__randomize {
+    flex: 0 1 auto;
+    min-width: 0;
+    padding-top: calc(var(--spacing-md) - 4px);
+    padding-bottom: calc(var(--spacing-md) - 4px);
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
+    white-space: nowrap;
+    /* Visually recessed beside neighbouring pills */
+    box-shadow:
+        inset 0 3px 5px rgba(0, 0, 0, 0.35),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.random-panel-actions__randomize:hover:not(:disabled) {
+    box-shadow: none;
+}
+
+.random-panel-actions #resetAllDiceBtn {
+    padding-left: var(--spacing-xl);
+    padding-right: var(--spacing-xl);
+}
+
+/* Empty Random panel: center hint in the available space (not stuck to the top) */
+.controls-panel-random .panel-content > .control-section:has(> .random-params-list:has(> .random-params-empty-hint:only-child)) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-bottom: 0;
+}
+
+.random-params-list:has(> .random-params-empty-hint:only-child) {
+    min-height: 0;
+    margin: 0;
+    align-content: center;
+    justify-content: center;
+}
+
+.random-params-empty-hint {
+    margin: 0;
+    padding: var(--spacing-3xl);
+    max-width: 32em;
+    color: var(--color-text-dim);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.color-source-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.color-source-row .style-buttons-container {
+    flex: 1;
+}
+
+.dice-count-badge {
+    margin-left: 4px;
+    color: #d2d2d2;
+    font-weight: 400 !important;
+}
+
+/* Paragraph settings panel - modal panel for object settings */
+.paragraph-settings-panel {
+    z-index: 1001;
+    display: none;
+}
+
+.paragraph-settings-panel.active {
+    display: flex;
+}
+
+/* Panel Header - header with drag & drop */
+.panel-header {
+    background: var(--color-bg-panel);
+    padding: var(--spacing-2xl) var(--spacing-3xl);
+    border-radius: var(--radius);
+    cursor: move;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: none;
+    flex-shrink: 0;
+    min-height: var(--button-height);
+}
+
+.panel-header:active {
+    cursor: grabbing;
+}
+
+.panel-header span:first-child {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--color-text);
+}
+
+.panel-header .unit {
+    opacity: 0.4;
+    color: var(--color-text-secondary);
+}
+
+/* Panel params - additional information in header */
+.panel-params {
+    opacity: 0;
+    white-space: nowrap;
+    margin-left: 6px;
+    font-weight: 400 !important;
+    color: var(--color-text-secondary);
+    transition: opacity var(--duration-fade) var(--easing-standard);
+}
+
+.controls-panel.panel-collapsed .panel-params {
+    opacity: 0.4;
+}
+
+/* Collapse Icon - panel collapse icon */
+.collapse-icon {
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: transform var(--duration-collapse) var(--easing-standard),
+                color var(--transition-normal);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+}
+
+.collapse-icon:hover {
+    color: var(--color-text);
+}
+
+.collapse-icon.collapsed {
+    transform: rotate(-90deg);
+}
+
+/* Panel Content - panel content with collapse animation */
+.panel-content {
+    margin-top: 0;
+    padding-left: var(--spacing-3xl);
+    padding-right: var(--spacing-3xl);
+    padding-bottom: var(--spacing-3xl);
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    transition: max-height var(--duration-expand) var(--easing-standard), 
+                opacity var(--duration-fade) var(--easing-decelerate),
+                padding-top var(--duration-expand) var(--easing-standard),
+                padding-bottom var(--duration-expand) var(--easing-standard),
+                margin-top var(--duration-expand) var(--easing-standard);
+}
+
+.controls-panel.panel-collapsed .panel-content {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    overflow: hidden;
+    transition: max-height var(--duration-collapse) var(--easing-standard), 
+                opacity var(--duration-fade) var(--easing-accelerate),
+                padding-top var(--duration-collapse) var(--easing-standard),
+                padding-bottom var(--duration-collapse) var(--easing-standard),
+                margin-top var(--duration-collapse) var(--easing-standard);
+}
+
+/* Panel Header Actions - buttons in header (Hide, Duplicate, Delete) */
+.panel-header-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.panel-action-btn {
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--transition-fast);
+    border-radius: 4px;
+}
+
+.panel-action-btn:hover {
+    color: var(--color-text);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.panel-action-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Control Section - control section inside panel */
+.control-section {
+    margin-bottom: 20px;
+    border-bottom: none;
+}
+
+.control-section:last-child {
+    margin-bottom: 0;
+}
+
+.control-section:last-child .control-group:last-child {
+    margin-bottom: 0;
+}
+
+/* Separator lines between sections (optional) */
+.controls-panel-text .control-section {
+    border-top: 1px solid var(--color-border);
+    padding-top: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    margin-left: calc(-1 * var(--spacing-3xl));
+    margin-right: calc(-1 * var(--spacing-3xl));
+    padding-left: var(--spacing-3xl);
+    padding-right: var(--spacing-3xl);
+}
+
+.controls-panel-text .control-section:first-child {
+    padding-top: 0;
+    border-top: none;
+}
+
+.controls-panel-text .control-section:last-child {
+    margin-bottom: 0;
+}
+
+.control-section h3 {
+    font-size: 0.9rem;
+    margin-bottom: var(--spacing-md);
+    color: var(--color-text);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Collapsible Header - collapsible sections */
+.control-section h3.collapsible-header {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    letter-spacing: 0;
+    margin-bottom: var(--spacing-xs);
+}
+
+.collapsible-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--transition-fast);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    margin-left: calc(-1 * var(--spacing-lg));
+    margin-right: calc(-1 * var(--spacing-lg));
+    border-radius: var(--radius-input);
+}
+
+.collapsible-header:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.collapsible-header span {
+    font-weight: 400;
+    color: var(--color-text-secondary);
+}
+
+.collapse-toggle {
+    background: transparent;
+    border: none;
+    color: var(--color-text-dim);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--transition-fast);
+}
+
+.collapsible-header:hover .collapse-toggle {
+    color: var(--color-text);
+}
+
+.collapse-toggle svg {
+    transition: transform var(--duration-collapse) var(--easing-standard);
+}
+
+.collapse-toggle[aria-expanded="false"] svg {
+    transform: rotate(-90deg);
+}
+
+/* Collapsible Content - collapsible section content */
+.collapsible-content {
+    overflow: hidden;
+    max-height: 1000px;
+    opacity: 1;
+    padding-top: var(--spacing-2xl);
+    padding-bottom: var(--spacing-2xl);
+    transition: max-height var(--duration-expand) var(--easing-standard), 
+                opacity var(--duration-fade) var(--easing-decelerate),
+                padding var(--duration-expand) var(--easing-standard);
+}
+
+.collapsible-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    transition: max-height var(--duration-collapse) var(--easing-standard), 
+                opacity var(--duration-fade) var(--easing-accelerate),
+                padding var(--duration-collapse) var(--easing-standard);
+}
+
+/* ============================================
+   5. CONTROL GROUP — baseline wrapper for labelled controls
+   ============================================ */
+
+.control-group {
+    margin-bottom: 12px;
+}
+
+/* Dice sliders: extra space under single value; in min–max (range) mode keep default 12px */
+.control-group.dice-slider-group {
+    margin-bottom: 21px;
+}
+.control-group.dice-slider-group:has(> .dice-single[style*='display: none']) {
+    margin-bottom: 12px;
+}
+
+/* Remove bottom margin from color swatches block */
+.control-group:has(.color-swatches-compact) {
+    margin-bottom: 0;
+}
+
+/* Last element in section without bottom margin */
+.control-section > .control-group:last-child {
+    margin-bottom: 0;
+}
+
+.control-group label {
+    display: flex;
+    align-items: center;
+    font-weight: 400;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    gap: var(--spacing-md);
+}
+
+.control-group-header {
+    display: flex;
+    align-items: center;
+    font-weight: 400;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    gap: var(--spacing-md);
+}
+
+.control-label {
+    display: inline-block;
+    margin-right: auto;
+}
+
+.control-group label > span:first-child {
+    white-space: nowrap;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.control-group label .value-display-wrapper {
+    margin-left: auto;
+}
+
+.control-group label .unit {
+    opacity: 0.4;
+    white-space: nowrap;
+}
+
+/* ============================================
+   5.1 COMPACT TEXT CONTROLS (Figma-style)
+   ============================================ */
+
+/* Screen reader only (hidden radio for accessibility) */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Row with compact controls */
+.text-controls-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Icon + input group */
+.compact-input-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--color-input-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    padding: 4px 6px;
+    transition: border-color 0.15s ease;
+}
+
+.compact-input-group:hover {
+    border-color: var(--color-border-hover);
+}
+
+.compact-input-group:focus-within {
+    border-color: var(--color-text);
+}
+
+.compact-input-group:has(input:disabled) {
+    opacity: 0.5;
+    /* pointer-events kept for tooltip support */
+}
+
+.compact-input-group:has(input:disabled) input {
+    pointer-events: none;
+}
+
+.compact-input-group:has(input:disabled) .compact-input-icon {
+    opacity: 0.4;
+}
+
+.compact-input-group .unit {
+    opacity: 0.4;
+    white-space: nowrap;
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+}
+
+.compact-input:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.compact-input-icon {
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.compact-input {
+    width: 24px;
+    background: transparent;
+    border: none;
+    color: var(--color-text);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-align: center;
+    outline: none;
+    padding: 0;
+    -moz-appearance: textfield;
+}
+
+.compact-input::-webkit-outer-spin-button,
+.compact-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Text alignment icons */
+.text-align-icons {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+}
+
+.align-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.align-icon-btn:hover {
+    background: var(--color-hover);
+    color: var(--color-text);
+}
+
+/* Active alignment state */
+input[name="textAlign"]:checked + .align-icon-btn {
+    background: #666666;
+    color: var(--color-text);
+}
+
+/* ============================================
+   6. RANGE SLIDERS
+   ============================================
+   
+   Behaviour:
+   - Thin 1px track
+   - Round 8px thumbs, scale to 10px on hover
+   - Keyboard (↑/↓, Shift+↑/↓ for larger steps)
+   ============================================ */
+
+.control-group input[type="range"] {
+    width: 100%;
+    height: 10px; /* Clickable area */
+    border-radius: var(--radius);
+    background: transparent;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    margin-top: calc(var(--spacing-md) - 2px);
+    margin-bottom: 12px;
+    cursor: pointer;
+    position: relative;
+}
+
+/* Slider Thumb - slider handle */
+.control-group input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: var(--slider-thumb-size);
+    height: var(--slider-thumb-size);
+    border-radius: 50%;
+    background: var(--color-text);
+    cursor: pointer;
+    border: none;
+    transition: all var(--transition-fast);
+    margin-top: calc((1px - var(--slider-thumb-size)) / 2); /* Center relative to track */
+}
+
+.control-group input[type="range"]::-moz-range-thumb {
+    width: var(--slider-thumb-size);
+    height: var(--slider-thumb-size);
+    border-radius: 50%;
+    background: var(--color-text);
+    cursor: pointer;
+    border: none;
+    transition: all var(--transition-fast);
+    margin-top: 0;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.25); /* 8px × 1.25 = 10px */
+    background: var(--color-text);
+}
+
+.control-group input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.25);
+    background: var(--color-text);
+}
+
+/* Slider track */
+.control-group input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 1px;
+    background: var(--color-border);
+    border: none;
+    border-radius: var(--radius);
+}
+
+.control-group input[type="range"]::-moz-range-track {
+    width: 100%;
+    height: 1px;
+    background: var(--color-border);
+    border: none;
+    border-radius: var(--radius);
+}
+
+/* Focus ring for keyboard users */
+.control-group input[type="range"]:focus {
+    outline: none;
+}
+
+.control-group input[type="range"]:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
+}
+
+.control-group input[type="range"]:focus::-moz-range-thumb {
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
+}
+
+/* Disabled slider */
+.control-group input[type="range"]:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.control-group input[type="range"]:disabled::-webkit-slider-thumb {
+    background: var(--color-text-muted);
+    cursor: default;
+    transform: none;
+}
+
+.control-group input[type="range"]:disabled::-moz-range-thumb {
+    background: var(--color-text-muted);
+    cursor: default;
+    transform: none;
+}
+
+.control-group input[type="range"]:disabled::-webkit-slider-runnable-track {
+    background: var(--color-text-subtle);
+}
+
+.control-group input[type="range"]:disabled::-moz-range-track {
+    background: var(--color-text-subtle);
+}
+
+/* Range Slider - slider with two handles */
+.range-slider-container {
+    width: 100%;
+    margin-top: var(--spacing-md);
+    margin-bottom: 6px;
+    position: relative;
+    height: 10px; /* Clickable area */
+}
+
+/* Range slider wrapper with values below */
+.range-slider-wrapper {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+/* Control group with range slider has top margin */
+.control-group:has(.range-slider-wrapper) {
+    margin-top: 12px;
+}
+
+/* Additional spacing between consecutive range sliders */
+.control-group:has(.range-slider-wrapper) + .control-group:has(.range-slider-wrapper) {
+    margin-top: 18px;
+}
+
+.range-slider-wrapper .range-slider-container {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+/* Range values below slider */
+.range-slider-values {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2px;
+}
+
+.range-slider-values .value-display {
+    width: auto;
+    min-width: 28px;
+}
+
+.range-slider-values .value-display:first-child {
+    text-align: left;
+}
+
+.range-slider-values .value-display:last-child {
+    text-align: right;
+}
+
+/* Legacy range-value-display (in label) - hide when new structure is used */
+.range-value-display {
+    display: none;
+}
+
+.range-separator {
+    color: var(--color-text-muted);
+    margin: 0 3px;
+}
+
+.range-slider-track {
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background: var(--color-border);
+    border-radius: var(--radius);
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.range-slider-active {
+    position: absolute;
+    height: 1px;
+    background: #888888;
+    border-radius: var(--radius);
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.range-slider-thumb {
+    position: absolute;
+    width: 8px;
+    height: 10px; /* Active area stays 10px for easier dragging */
+    background: var(--color-text);
+    cursor: grab;
+    top: 50%;
+    transition: opacity var(--transition-fast);
+    outline: none;
+    /* Visual height is reduced via clip-path */
+}
+
+/* Min thumb (left) — triangle points right, tip (right edge) at value */
+.range-slider-thumb-min {
+    transform: translate(-100%, -50%); /* Shift left by 100% width so right edge is at position */
+    /* Visual height reduced by 2px (from 10px to 8px), but active area stays 10px */
+    clip-path: polygon(100% 50%, 0 1px, 0 calc(100% - 1px));
+}
+
+/* Max thumb (right) — triangle points left, tip (left edge) at value */
+.range-slider-thumb-max {
+    transform: translateY(-50%); /* Left edge at position */
+    /* Visual height reduced by 2px (from 10px to 8px), but active area stays 10px */
+    clip-path: polygon(0 50%, 100% 1px, 100% calc(100% - 1px));
+}
+
+.range-slider-thumb:hover {
+    opacity: 0.7;
+}
+
+.range-slider-thumb:focus {
+    opacity: 0.8;
+}
+
+.range-slider-thumb:active {
+    cursor: grabbing;
+}
+
+/* ============================================
+   7. TEXT INPUTS & VALUE DISPLAYS
+   ============================================ */
+
+/* Value Display - text field with slider value */
+.value-display-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    width: auto;
+}
+
+.control-group label .value-display {
+    flex-shrink: 0;
+}
+
+.value-display {
+    display: inline-block;
+    text-align: right;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+    cursor: text;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+}
+
+.value-display:focus {
+    color: var(--color-text);
+}
+
+.value-display:disabled {
+    opacity: 0.4;
+    cursor: default;
+    color: var(--color-text-muted);
+}
+
+/* Visual highlight for inactive control-group */
+.control-group:has(input[type="range"]:disabled) label span:first-child {
+    opacity: 0.5;
+    color: var(--color-text-muted);
+}
+
+/* Unit Buttons - unit switchers (mod/mm, mod/pt) */
+.unit-buttons {
+    display: inline-flex;
+    gap: 2px;
+    margin-left: 4px;
+}
+
+.unit-btn {
+    background: #2a2a2a;
+    border: none;
+    padding: 1px 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #ccc;
+    opacity: 0.4;
+    border-radius: 2px;
+    transition: all var(--transition-fast);
+    font-family: 'CoFo Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.unit-btn.active {
+    opacity: 1;
+    background: #3a3a3a;
+}
+
+.unit-btn:hover:not(.active) {
+    opacity: 0.6;
+    background: #333;
+}
+
+/* Lock Button - parameter lock button */
+.lock-btn {
+    background: transparent;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    opacity: 0.5;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+}
+
+.lock-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-text);
+}
+
+.lock-btn.locked {
+    opacity: 1;
+    color: var(--color-text);
+}
+
+.lock-btn.locked .lock-icon-open {
+    display: none;
+}
+
+.lock-btn.locked .lock-icon-locked {
+    display: block !important;
+}
+
+.lock-btn:not(.locked) .lock-icon-open {
+    display: block;
+}
+
+.lock-btn:not(.locked) .lock-icon-locked {
+    display: none !important;
+}
+
+.lock-icon {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+}
+
+/* ============================================
+   8. COLOR PICKER
+   ============================================ */
+
+.color-input-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+}
+
+.color-picker-wrapper {
+    width: 100%;
+}
+
+.control-group .color-input-group {
+    gap: var(--spacing-md);
+}
+
+/* Color Preview Button (built into ColorPicker) */
+.color-picker-wrapper .color-preview {
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    background: var(--color-bg-input);
+    cursor: pointer;
+    padding: 0;
+    transition: border-color var(--transition-normal), transform var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.color-picker-wrapper .color-preview:hover {
+    border-color: var(--color-text-subtle);
+    transform: scale(1.05);
+}
+
+.color-picker-wrapper .color-preview:focus {
+    border-color: var(--color-text-subtle);
+    outline: none;
+}
+
+/* Unified picker: only HSB block (hex lives on swatch rows); docked under active swatch row */
+#unifiedColorPickerContainer .color-picker-wrapper {
+    margin-top: 0;
+}
+
+#unifiedColorPickerContainer .hsb-picker {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.color-hsb-slot #unifiedColorPickerContainer .hsb-picker {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+/* HEX Input */
+.control-group input[type="text"]#hexColorInput,
+.hex-color-input {
+    flex: 1;
+    height: 30px;
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-family: monospace;
+    font-size: 0.9rem;
+    padding: 0 var(--spacing-md);
+    border-radius: var(--radius-input);
+    transition: border-color var(--transition-normal);
+}
+
+.hex-color-input:focus {
+    outline: none;
+    border-color: var(--color-text-subtle);
+}
+
+.control-group input[type="text"]#hexColorInput::selection,
+.hex-color-input::selection {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-text);
+}
+
+.control-group input[type="text"]#hexColorInput::-moz-selection,
+.hex-color-input::-moz-selection {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-text);
+}
+
+/* HSB Picker - dropdown HSB picker */
+.hsb-picker {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    animation: slideDown var(--transition-normal) ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden;
+    }
+    to {
+        opacity: 1;
+        max-height: 300px;
+        overflow: visible;
+    }
+}
+
+.hsb-controls {
+    display: flex;
+    flex-direction: column;
+}
+
+.hsb-control-group {
+    margin-bottom: var(--spacing-lg);
+    padding-top: 1px;
+}
+
+.hsb-control-group:last-child {
+    margin-bottom: 0;
+}
+
+.hsb-control-group label {
+    display: flex;
+    align-items: center;
+    font-weight: 400;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+}
+
+.hsb-control-group label > span {
+    flex: 1;
+}
+
+.hsb-value {
+    display: inline-block;
+    min-width: 40px;
+    text-align: right;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+    cursor: text;
+    font-family: inherit;
+    position: relative;
+}
+
+.hsb-value:focus {
+    color: var(--color-text);
+}
+
+/* HSB Sliders - same styles as regular sliders */
+.hsb-control-group input[type="range"] {
+    width: 100%;
+    height: 10px;
+    border-radius: var(--radius);
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    margin-top: calc(var(--spacing-md) - 2px);
+    cursor: pointer;
+    position: relative;
+    background: transparent;
+}
+
+.hsb-control-group input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--color-text);
+    cursor: pointer;
+    border: none;
+    transition: all var(--transition-fast);
+    margin-top: calc((1px - 12px) / 2);
+}
+
+.hsb-control-group input[type="range"]::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--color-text);
+    cursor: pointer;
+    border: none;
+    transition: all var(--transition-fast);
+}
+
+.hsb-control-group input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.25);
+    background: var(--color-text);
+}
+
+.hsb-control-group input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.25);
+    background: var(--color-text);
+}
+
+.hsb-control-group input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 1px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius);
+}
+
+.hsb-control-group input[type="range"]::-moz-range-track {
+    width: 100%;
+    height: 1px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius);
+}
+
+.hsb-control-group input[type="range"]:focus {
+    outline: none;
+}
+
+.hsb-control-group input[type="range"]:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
+}
+
+.hsb-control-group input[type="range"]:focus::-moz-range-thumb {
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
+}
+
+/* Color Gradients for HSB sliders - set dynamically via JS in ColorPicker.updateGradients() */
+
+/* Color Preset Button */
+.color-preset {
+    font-size: 0.9rem;
+    color: var(--color-text-dim);
+    cursor: pointer;
+    padding: var(--spacing-xs) 6px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-normal);
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+}
+
+.color-preset:hover {
+    color: var(--color-text);
+    background: #2a2a2a;
+}
+
+/* ============================================
+   9. BUTTONS
+   ============================================ */
+
+/* Base Button Styles - common styles for all buttons */
+.btn-primary,
+.btn-secondary,
+.btn-fixed {
+    padding: var(--spacing-md) var(--spacing-3xl);
+    border: none;
+    border-radius: var(--radius-button);
+    font-family: 'CoFo Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-slow);
+    height: var(--button-height);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* Prevent double-tap zoom on mobile */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-primary {
+    background: var(--color-text);
+    color: var(--color-bg);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.btn-secondary {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: var(--color-text);
+    color: var(--color-bg);
+}
+
+.btn-secondary.active {
+    background: var(--color-text);
+    color: var(--color-bg);
+}
+
+.btn-secondary.active:hover:not(:disabled) {
+    opacity: 0.85;
+}
+
+/* Disabled State */
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-fixed:disabled {
+    background: var(--color-inactive-bg);
+    color: var(--color-inactive-text);
+    opacity: 1;
+    cursor: default;
+}
+
+/* Fixed Buttons - for bottom bar */
+.btn-fixed {
+    background: var(--color-text);
+    color: var(--color-bg);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+}
+
+.btn-fixed:hover {
+    background: #2a2a2a;
+    color: var(--color-text);
+}
+
+.btn-fixed:active {
+    transform: none;
+}
+
+/* Temp: preset JSON dump — muted like Save preset (dark surface, not inverted white bar) */
+.btn-fixed.btn-fixed--muted,
+#exportJsonBtn {
+    background: var(--color-bg-panel);
+    color: var(--color-text);
+}
+
+.btn-fixed.btn-fixed--muted:hover:not(:disabled),
+#exportJsonBtn:hover:not(:disabled) {
+    background-color: #2a2a2a;
+}
+
+/* Intro help (?): circular, opens “What is Void?” modal — left of Export PNG */
+.btn-fixed.btn-intro-help {
+    width: var(--button-height);
+    min-width: var(--button-height);
+    padding: 0;
+    border-radius: 50%;
+    font-size: 1.125rem;
+    font-weight: 500;
+    line-height: 1;
+    background: #1a1a1a;
+    color: #d2d2d2;
+}
+
+.btn-fixed.btn-intro-help:hover:not(:disabled) {
+    background: #2a2a2a;
+    color: #d2d2d2;
+}
+
+.btn-fixed.btn-intro-help:active {
+    transform: none;
+}
+
+/* Apply/Close Buttons in modal panels */
+.btn-apply {
+    padding: var(--spacing-sm) var(--spacing-2xl);
+    background: var(--color-text);
+    color: var(--color-bg);
+    border: none;
+    border-radius: var(--radius-button);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-family: inherit;
+    height: 36px;
+}
+
+.btn-apply:hover {
+    background: #000;
+    color: #d2d2d2;
+}
+
+.btn-close {
+    padding: var(--spacing-sm) var(--spacing-2xl);
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-button);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-family: inherit;
+    height: 36px;
+}
+
+.btn-close:hover {
+    background: #000;
+    color: #d2d2d2;
+    border-color: #000;
+}
+
+/* Add Object Buttons */
+.btn-add-object {
+    flex: 1;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-button);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-family: inherit;
+}
+
+.btn-add-object:hover {
+    background: #d2d2d2;
+    color: #000;
+    border-color: #d2d2d2;
+}
+
+/* Button Group - button group */
+.button-group {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+/* ============================================
+   10. TOGGLE CHIPS
+   ============================================
+   Chip-style toggles (e.g., Show Columns / Rows / Baseline)
+   ============================================ */
+
+.show-toggle-chip-group {
+    padding-top: 0;
+    margin-bottom: var(--spacing-md);
+}
+
+.toggle-chip-group {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.toggle-chip {
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-button);
+    background: rgba(255, 255, 255, 0.03);
+    transition: border-color var(--transition-normal), 
+                background var(--transition-normal), 
+                color var(--transition-normal);
+    /* Prevent double-tap zoom on mobile */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.toggle-chip input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.toggle-chip span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    gap: 2px;
+}
+
+/* Toggle Chip Icons - icons inside chips */
+.toggle-chip-icon-wrapper {
+    position: relative;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-chip-icon {
+    width: 14px;
+    height: 14px;
+    transition: opacity var(--transition-normal);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: block;
+}
+
+/* Inactive buttons: crossed icon by default */
+.toggle-chip:not(.toggle-chip-checked) .toggle-chip-icon-open {
+    opacity: 0;
+}
+
+.toggle-chip:not(.toggle-chip-checked) .toggle-chip-icon-crossed {
+    opacity: 0.7;
+}
+
+.toggle-chip:not(.toggle-chip-checked):hover .toggle-chip-icon-open {
+    opacity: 1;
+}
+
+.toggle-chip:not(.toggle-chip-checked):hover .toggle-chip-icon-crossed {
+    opacity: 0;
+}
+
+/* Active buttons: uncrossed icon */
+.toggle-chip-checked .toggle-chip-icon-open,
+.toggle-chip input:checked + span .toggle-chip-icon-open {
+    opacity: 1;
+}
+
+.toggle-chip-checked .toggle-chip-icon-crossed,
+.toggle-chip input:checked + span .toggle-chip-icon-crossed {
+    opacity: 0;
+}
+
+.toggle-chip-checked:hover .toggle-chip-icon-open,
+.toggle-chip input:checked + span:hover .toggle-chip-icon-open {
+    opacity: 0;
+}
+
+.toggle-chip-checked:hover .toggle-chip-icon-crossed,
+.toggle-chip input:checked + span:hover .toggle-chip-icon-crossed {
+    opacity: 1;
+}
+
+.toggle-chip:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Checked State */
+.toggle-chip input:checked + span {
+    background: var(--color-text);
+    color: var(--color-bg);
+    border-radius: var(--radius-button);
+    transition: background-color var(--transition-normal);
+}
+
+.toggle-chip input:checked + span:hover {
+    background: rgba(240, 240, 240, 1);
+}
+
+.toggle-chip input:checked + span .toggle-chip-icon {
+    color: #000000;
+    stroke: #000000;
+}
+
+.toggle-chip input:checked + span .toggle-chip-icon path,
+.toggle-chip input:checked + span .toggle-chip-icon circle,
+.toggle-chip input:checked + span .toggle-chip-icon line {
+    stroke: #000000;
+}
+
+.toggle-chip input:focus-visible + span {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
+/* ============================================
+   11. SEGMENTED CONTROL
+   ============================================
+   Mutually-exclusive options surfaced as radios
+   ============================================ */
+
+fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+legend {
+    padding: 0;
+}
+
+.segmented-control {
+    display: flex;
+    background: var(--color-bg-input);
+    border-radius: var(--radius-input);
+    padding: 4px;
+    gap: 4px;
+    margin-top: var(--spacing-md);
+    /* Prevent double-tap zoom on mobile */
+    touch-action: manipulation;
+}
+
+.segmented-control input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.segmented-control label {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--spacing-lg);
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1;
+    color: var(--color-text-secondary);
+    background: transparent;
+    border-radius: calc(var(--radius-input) - 4px);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    user-select: none;
+    position: relative;
+    font-weight: 400;
+}
+
+.segmented-control label:hover {
+    color: var(--color-text);
+}
+
+.segmented-control input[type="radio"]:checked + label {
+    background: var(--color-text);
+    color: var(--color-bg);
+    font-weight: 500;
+}
+
+.segmented-control input[type="radio"]:focus + label {
+    outline: 2px solid var(--color-text);
+    outline-offset: 2px;
+}
+
+/* Compact Segmented Control - smaller height */
+.segmented-control-compact label {
+    padding: 6px var(--spacing-lg);
+}
+
+/* Remove top margin from segmented-control-compact on Variability panel */
+#variabilityPanel .segmented-control-compact {
+    margin-top: 0;
+}
+
+/* Style Buttons Container - style buttons with wrapping */
+.style-buttons-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 0;
+    width: 100%;
+}
+
+.style-button {
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    line-height: 1;
+    font-weight: 400;
+    font-family: 'CoFo Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    border: none;
+    border-radius: 999px; /* Fully rounded */
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    user-select: none;
+    /* Prevent double-tap zoom on mobile */
+    touch-action: manipulation;
+    white-space: nowrap;
+    /* Inactive state: black background, white text */
+    background: var(--color-bg);
+    color: var(--color-text);
+    /* Each button grows to fill space */
+    flex: 1 1 auto;
+}
+
+/* Solid / Gradient — single segmented tab strip: flush inner seam, outer pill radii */
+.style-buttons-container--segmented {
+    gap: 0;
+    flex-wrap: nowrap;
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--color-bg);
+    box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+.style-buttons-container--segmented .style-button {
+    border-radius: 0;
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.style-buttons-container--segmented .style-button + .style-button {
+    box-shadow: inset 1px 0 0 var(--color-border);
+}
+
+/* Active segment overlaps the vertical divider by 1px */
+.style-buttons-container--segmented .style-button.active {
+    position: relative;
+    z-index: 1;
+}
+
+/* States: dark idle surface vs. light active pill */
+.style-buttons-container--segmented .style-button:hover:not(:disabled):not(.active) {
+    opacity: 1;
+    background: #666666;
+    color: #d2d2d2;
+}
+
+.style-buttons-container--segmented .style-button.active:hover:not(:disabled) {
+    opacity: 1;
+    background: #2a2a2a;
+    color: #d2d2d2;
+}
+
+.style-button-spacer {
+    display: none;
+}
+
+.style-button:hover {
+    opacity: 0.8;
+}
+
+.style-button.active {
+    /* Active state: white background, black text */
+    background: var(--color-text);
+    color: var(--color-bg);
+}
+
+.style-button:focus {
+    outline: 2px solid var(--color-text);
+    outline-offset: 2px;
+}
+
+/* Control group with style buttons (Solid/Gradient) */
+.control-group:has(.style-buttons-container) {
+    margin-bottom: 16px;
+}
+
+/* ============================================
+   WOBBLY SECTION (non-random modes)
+   ============================================ */
+
+/* Dashes section (header uses .section-divider-header) */
+.dashes-section {
+    margin-top: 0;
+    border-top: none;
+    padding-top: 0;
+}
+
+.dashes-section-content {
+    margin-top: 8px;
+}
+
+/* Typefacer-style section title with inline power icon */
+.section-divider-header {
+    display: block;
+    margin-top: 16px;
+    margin-bottom: 0;
+    margin-left: calc(-1 * var(--spacing-3xl));
+    margin-right: calc(-1 * var(--spacing-3xl));
+    padding-top: 14px;
+    padding-bottom: 16px;
+    padding-left: var(--spacing-3xl);
+    padding-right: var(--spacing-3xl);
+    border-top: 1px solid var(--color-border);
+}
+
+.section-divider-header .section-toggle-label {
+    display: inline;
+    cursor: pointer;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--color-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: color var(--transition-fast);
+}
+
+.section-divider-header .section-toggle-label::before {
+    content: "○  ";
+    transition: content var(--transition-fast);
+}
+
+.section-divider-header .section-toggle-label:hover {
+    color: var(--color-text-secondary);
+}
+
+.section-divider-header .section-toggle-label:hover::before,
+.section-divider-header .section-toggle-label:has(input:checked)::before {
+    content: "●  ";
+}
+
+.section-divider-header .section-toggle-label:has(input:checked) {
+    color: var(--color-text);
+}
+
+.section-divider-header .section-toggle-label:has(input:checked):hover {
+    color: #fff;
+}
+
+/* Row of pill toggles (Grid / Joints / …) */
+.pill-toggle-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+/* OpenType-style pill toggle (checkbox inside label) */
+.pill-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 12px;
+    border: none;
+    border-radius: 999px;
+    background: var(--color-inactive-bg);
+    cursor: pointer;
+    user-select: none;
+    touch-action: manipulation;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.pill-toggle span {
+    font-size: 0.8rem;
+    color: var(--color-inactive-text);
+    line-height: 1.2;
+    transition: color var(--transition-fast);
+}
+
+/* Effect pills: label text + ◆/◇ (like ●/○) on one line */
+.pill-toggle--with-dice .pill-toggle-inner {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+.pill-toggle:hover {
+    background: var(--color-text);
+}
+
+.pill-toggle:hover span {
+    color: var(--color-bg);
+}
+
+.pill-toggle:has(input:checked) {
+    background: var(--color-text);
+}
+
+.pill-toggle:has(input:checked) span {
+    color: var(--color-bg);
+}
+
+.pill-toggle:has(input:focus-visible) {
+    outline: 2px solid var(--color-text);
+    outline-offset: 2px;
+}
+
+/* Muted pills: single dark treatment even when checked (no bright capsule) */
+.pill-toggle:has(input:disabled),
+.pill-toggle.controls-disabled,
+.pill-toggle.inactive {
+    background: var(--color-inactive-bg) !important;
+    opacity: 1;
+    cursor: default !important;
+}
+
+.pill-toggle:has(input:disabled) span,
+.pill-toggle.controls-disabled span,
+.pill-toggle.inactive span {
+    color: var(--color-inactive-text);
+}
+
+.pill-toggle:has(input:disabled),
+.pill-toggle.controls-disabled {
+    pointer-events: none;
+}
+
+/* ◆/◇ control remains clickable when the pill is dimmed (e.g. Chess without Dashes) */
+.pill-toggle:has(input:disabled) .dice-btn--pill,
+.pill-toggle.controls-disabled .dice-btn--pill {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.pill-toggle.inactive:hover {
+    background: var(--color-inactive-bg) !important;
+    opacity: 1;
+}
+
+.pill-toggle.inactive:hover span {
+    color: var(--color-inactive-text);
+}
+
+.pill-toggle.hidden {
+    display: none !important;
+}
+
+.control-group.disabled .pill-toggle {
+    background: var(--color-inactive-bg) !important;
+    opacity: 1;
+    pointer-events: none;
+}
+
+.control-group.disabled .pill-toggle span {
+    color: var(--color-inactive-text);
+}
+
+/* First section under Effects panel header — no extra top rule */
+.effects-panel-section > .section-divider-header:first-child {
+    margin-top: 0;
+    padding-top: 2px;
+    border-top: none;
+}
+
+.dashes-section-content.controls-disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* Disabled state for controls when their toggle is off */
+.controls-disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+/* Random toggle (◇ / ◆ with .active), same on sliders and effect pills */
+.dice-btn {
+    display: inline;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: inherit;
+    padding: 0;
+    margin-left: 3px;
+    opacity: 0.35;
+    transition: color var(--transition-fast), opacity var(--transition-fast);
+    line-height: 1;
+    color: var(--color-text-dim);
+    vertical-align: baseline;
+}
+
+.dice-slider-group label:hover .dice-btn {
+    opacity: 0.65;
+    color: var(--color-text-secondary);
+}
+
+.dice-btn:hover {
+    opacity: 0.8;
+}
+
+.dice-btn.active {
+    opacity: 1;
+    color: var(--color-text);
+}
+
+.dice-btn--diamond {
+    min-width: 0.85em;
+    text-align: center;
+    font-size: inherit;
+    line-height: 1;
+}
+.dice-btn--diamond::before {
+    content: "◇";
+    display: inline-block;
+    line-height: 1;
+    vertical-align: 0.02em;
+    color: inherit;
+}
+.dice-btn--diamond.active::before {
+    content: "◆";
+}
+
+/* Pills: diamond uses the same color as the pill label, not .dice-btn dimming */
+.dice-btn--pill,
+.dice-btn--pill:hover,
+.dice-btn--pill:focus-visible,
+.dice-btn--pill.active,
+.dice-btn--pill.active:hover {
+    color: inherit;
+    opacity: 1;
+    font-size: 0.75rem;
+    transition: color var(--transition-fast);
+}
+.dice-btn--pill.dice-btn--diamond {
+    min-width: 0.9em;
+}
+
+.dice-slider-group label > span:first-child {
+    cursor: pointer;
+}
+
+.dice-slider-group label:hover > span:first-child {
+    color: var(--color-text);
+    transition: color var(--transition-fast);
+}
+
+.dice-slider-group .value-display {
+    margin-right: 4px;
+}
+
+.dice-range .range-slider-values {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+/* ============================================
+   RANDOM PARAMS LIST (pill-style items)
+   ============================================ */
+.random-params-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 8px 0;
+    align-content: flex-start;
+}
+
+.random-param-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: #000;
+    border: none;
+    border-radius: var(--radius-button);
+    padding: 6px 8px 6px 12px;
+    cursor: default;
+    transition: background-color var(--transition-fast);
+}
+
+.random-param-pill-text {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.random-param-pill-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    line-height: 1;
+    padding: 0 2px;
+    opacity: 0.5;
+    transition: opacity var(--transition-fast), color var(--transition-fast);
+}
+
+.random-param-pill-close:hover {
+    opacity: 1;
+    color: var(--color-text);
+}
+
+
+
+
+/* Disabled state for control groups */
+.control-group.disabled {
+    opacity: 0.4;
+    /* pointer-events kept for tooltip support, children handle input blocking */
+}
+
+.control-group.disabled input,
+.control-group.disabled select,
+.control-group.disabled button,
+.control-group.disabled textarea {
+    pointer-events: none;
+}
+
+.control-group.disabled label {
+    cursor: default !important;
+}
+
+.control-group.disabled * {
+    cursor: default !important;
+}
+
+
+/* ============================================
+   COLOR SWATCHES - Compact inline display
+   ============================================ */
+
+.color-swatches-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 8px;
+}
+
+.color-swatch-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+    border-radius: 8px;
+    transition: background-color var(--transition-fast);
+}
+
+.color-swatch-row.active {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.color-hsb-slot {
+    width: 100%;
+    min-height: 0;
+}
+
+.color-hsb-slot:empty {
+    display: none;
+}
+
+.color-swatch-compact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: var(--radius-button);
+    text-align: left;
+    width: 100%;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.color-swatch-compact:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.color-swatch-compact.active {
+    background: transparent;
+}
+
+/* Clickable color preview — reads as a control */
+button.color-dot,
+button.color-dot--expandable {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    flex-shrink: 0;
+    cursor: pointer;
+    box-shadow: none;
+    transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+button.color-dot--expandable:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.06);
+    box-shadow: none;
+}
+
+button.color-dot--expandable:focus-visible {
+    outline: 2px solid var(--color-text);
+    outline-offset: 2px;
+}
+
+/* Match .control-group label (slider captions) */
+.color-swatch-compact .color-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    user-select: none;
+    line-height: 1.25;
+    font-weight: 400;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+/* ◆ on color swatch rows */
+.color-swatch-compact .palette-swatch-dice.dice-btn--diamond {
+    margin-left: 0;
+    flex: 0 0 auto;
+    color: var(--color-text-secondary);
+    opacity: 1;
+}
+.color-swatch-compact .palette-swatch-dice.dice-btn--diamond:hover,
+.color-swatch-compact .palette-swatch-dice.dice-btn--diamond.active {
+    color: var(--color-text);
+}
+
+#viewColorsPanel #paletteColorsDiceGroup {
+    margin-top: 12px;
+    margin-bottom: 0;
+}
+
+#paletteColorsDiceGroup.palette-size-group--disabled {
+    opacity: 0.38;
+    pointer-events: none;
+}
+#paletteColorsDiceGroup.palette-size-group--disabled .range-slider-container,
+#paletteColorsDiceGroup.palette-size-group--disabled .range-slider-values {
+    pointer-events: none;
+}
+
+.color-swatch-hex {
+    cursor: text;
+    margin-left: auto;
+    width: 7.2em;
+    max-width: 100%;
+    flex: 0 0 auto;
+    height: 26px;
+    padding: 0 6px;
+    font-family: monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    color: var(--color-text-muted);
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    transition: border-color var(--transition-fast);
+}
+
+.color-swatch-hex:focus {
+    outline: none;
+    border-color: var(--color-text-subtle);
+    color: var(--color-text);
+}
+
+
+.segmented-control input[type="radio"].hidden,
+.segmented-control label.hidden {
+    display: none !important;
+}
+
+
+/* ============================================
+   13. DROPDOWNS & SELECTS
+   ============================================ */
+
+/* Style Select Dropdown */
+.style-select {
+    width: 100%;
+    padding: 6px 12px;
+    background: #2a2a2a;
+    border: none;
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 0.9rem;
+    border-radius: var(--radius-input);
+    margin-top: var(--spacing-md);
+    cursor: pointer;
+    transition: background var(--transition-normal);
+    height: 32px;
+}
+
+.style-select:hover {
+    background: #333333;
+}
+
+.style-select:focus {
+    outline: none;
+    background: #333333;
+}
+
+.style-select option {
+    background: #2a2a2a;
+    color: var(--color-text);
+    padding: var(--spacing-md);
+}
+
+/* Custom Dropdown with value input */
+.value-input-with-dropdown {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: auto;
+}
+
+.dropdown-toggle {
+    background: transparent;
+    border: none;
+    color: var(--color-text-dim);
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--transition-fast);
+    margin-left: 2px;
+}
+
+.dropdown-toggle:hover {
+    color: var(--color-text);
+}
+
+.dropdown-toggle svg {
+    display: block;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    background: var(--color-bg-panel);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.9);
+    padding: 4px;
+    min-width: 60px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1001;
+    display: none;
+}
+
+.dropdown-menu.active {
+    display: block;
+}
+
+.dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 4px 8px;
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: 0.8rem;
+    font-family: inherit;
+    text-align: right;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background var(--transition-fast);
+}
+
+.dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-text);
+}
+
+.dropdown-item.selected {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--color-text);
+}
+
+/* Custom Preset Dropdown (in top-links) */
+.preset-toolbar-cluster {
+    display: inline-flex;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+}
+
+.preset-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.preset-dropdown-toggle {
+    padding: var(--spacing-md) var(--spacing-3xl) var(--spacing-md) var(--spacing-3xl);
+    background: var(--color-bg-panel);
+    color: var(--color-text);
+    border: none;
+    border-radius: var(--radius-button);
+    font-family: 'CoFo Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    width: auto;
+    min-width: fit-content;
+    height: var(--button-height);
+    transition: width var(--duration-expand) var(--easing-standard),
+                background-color var(--transition-slow);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+}
+
+.preset-dropdown-toggle:hover:not(:disabled) {
+    background-color: #2a2a2a;
+}
+
+.preset-dropdown-toggle:focus:not(:disabled) {
+    outline: none;
+    background-color: #2a2a2a;
+}
+
+.preset-dropdown-toggle:disabled {
+    cursor: default;
+}
+
+.preset-dropdown-toggle:disabled .preset-dropdown-arrow {
+    opacity: 0.3;
+}
+
+.preset-dropdown-text {
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+.preset-dropdown-arrow {
+    color: var(--color-text);
+    transition: transform var(--duration-collapse) var(--easing-standard);
+    flex-shrink: 0;
+    width: 12px;
+    height: 8px;
+}
+
+.preset-dropdown-toggle[aria-expanded="true"] .preset-dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.preset-toolbar-share-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--button-height);
+    min-width: var(--button-height);
+    height: var(--button-height);
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: var(--radius-button);
+    background: var(--color-bg-panel);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+    transition: background-color var(--transition-slow), color var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.preset-toolbar-share-btn:hover {
+    background-color: #2a2a2a;
+    color: var(--color-text);
+}
+
+.preset-toolbar-share-btn:active {
+    transform: scale(0.98);
+}
+
+.mobile-preset-share-btn {
+    align-items: center;
+    justify-content: center;
+    width: var(--button-height);
+    min-width: var(--button-height);
+    height: var(--button-height);
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-radius: var(--radius-button);
+    background: var(--color-bg-panel);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+    transition: background-color var(--transition-slow), color var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-preset-share-btn:hover,
+.mobile-preset-share-btn:focus {
+    background-color: #2a2a2a;
+    color: var(--color-text);
+    outline: none;
+}
+
+.mobile-preset-share-btn:active {
+    transform: scale(0.98);
+}
+
+.preset-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 100%;
+    width: max-content;
+    background: var(--color-bg-panel);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+    border: 1px solid var(--color-border);
+    padding: 4px;
+    margin: 0;
+    list-style: none;
+    z-index: 10001;
+    /* JS clamps height / overflow — scrollbar only when the list overflows the viewport */
+    max-height: none;
+    overflow-y: visible;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px) scale(0.98);
+    transform-origin: top left;
+    transition: opacity var(--duration-fade) var(--easing-standard), 
+                transform var(--duration-expand) var(--easing-standard),
+                visibility 0s var(--duration-fade);
+}
+
+.preset-dropdown-menu.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    transition: opacity var(--duration-fade) var(--easing-decelerate), 
+                transform var(--duration-expand) var(--easing-decelerate),
+                visibility 0s 0s;
+}
+
+.preset-dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all var(--transition-fast);
+    font-family: 'CoFo Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    margin-bottom: 2px;
+}
+
+.preset-dropdown-item-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+}
+
+.preset-dropdown-item-trailing {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 6px;
+}
+
+.preset-dropdown-item-colors {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.preset-dropdown-item-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+}
+
+.preset-dropdown-color-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #000;
+    /* Hairline inset ring keeps pure-black dots visible on charcoal panels */
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+.preset-dropdown-color-dot--random {
+    background: conic-gradient(
+        from 0deg,
+        #ff5f6d,
+        #ffc371,
+        #c2e063,
+        #5ad1c8,
+        #6e8bff,
+        #c46bff,
+        #ff5f6d
+    );
+}
+
+.preset-dropdown-item-random {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 10px;
+    height: 10px;
+    color: var(--color-text-dim);
+}
+
+.preset-dropdown-random-shape {
+    width: 10px;
+    height: 10px;
+    display: block;
+}
+
+.preset-dropdown-item.selected .preset-dropdown-item-random,
+.preset-dropdown-item:hover .preset-dropdown-item-random {
+    color: var(--color-text-secondary);
+}
+
+/* Random panel invert flashes (JS cadence — hard steps, no CSS interpolation). */
+.controls-panel-random.preset-random-attention-invert {
+    filter: invert(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .controls-panel-random.preset-random-attention-invert {
+        filter: none;
+    }
+
+    #renewRandomBtn.btn-randomize-attention-glare::after {
+        animation: none;
+    }
+}
+
+/* Subtle sheen across Randomize after the invert pulses (presets carrying random dice). */
+#renewRandomBtn.btn-randomize-attention-glare {
+    position: relative;
+    overflow: hidden;
+}
+
+#renewRandomBtn.btn-randomize-attention-glare::after {
+    content: '';
+    position: absolute;
+    top: -15%;
+    left: -75%;
+    width: 62%;
+    height: 130%;
+    background: linear-gradient(
+        105deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.18) 35%,
+        rgba(255, 255, 255, 0.48) 50%,
+        rgba(255, 255, 255, 0.18) 65%,
+        transparent 100%
+    );
+    transform: skewX(-14deg);
+    pointer-events: none;
+    opacity: 1;
+    animation: btn-randomize-glare-slide 1.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes btn-randomize-glare-slide {
+    from {
+        transform: skewX(-14deg) translateX(-130%);
+    }
+    to {
+        transform: skewX(-14deg) translateX(320%);
+    }
+}
+
+.preset-dropdown-item-action {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity var(--transition-fast);
+    color: var(--color-text-muted);
+    border-radius: 4px;
+}
+
+.preset-dropdown-item:hover .preset-dropdown-item-action {
+    opacity: 1;
+}
+
+.preset-dropdown-item-action:hover {
+    color: var(--color-text);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.preset-dropdown-item:last-child {
+    margin-bottom: 0;
+}
+
+.preset-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-text);
+}
+
+.preset-dropdown-item.selected {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--color-text);
+    font-weight: 500;
+}
+
+/* Footer rows: same padding as .preset-dropdown-item (no extra inset — avoids hover “jump”).
+   Idle text #666666; Restore matches normal row hover; Delete only swaps to red hover. */
+.preset-dropdown-item.preset-dropdown-item-utility,
+.preset-dropdown-item.preset-dropdown-item-danger {
+    color: #666666;
+    transition:
+        background-color var(--transition-fast),
+        color var(--transition-fast);
+}
+
+.preset-dropdown-item.preset-dropdown-item-utility:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-text);
+}
+
+.preset-dropdown-item.preset-dropdown-item-danger:hover {
+    background: #c0392b;
+    color: #ffffff;
+}
+
+/* ============================================
+   14. TEXTAREA
+   ============================================ */
+
+textarea {
+    width: 100%;
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-input);
+    resize: vertical;
+    min-height: 60px;
+    line-height: 1.5;
+    transition: border-color var(--transition-normal);
+}
+
+textarea:focus {
+    outline: none;
+    border-color: var(--color-text-dim);
+}
+
+textarea::placeholder {
+    color: var(--color-text-muted);
+}
+
+textarea::selection {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-text);
+}
+
+textarea::-moz-selection {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-text);
+}
+
+.textarea-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: var(--spacing-md);
+    gap: var(--spacing-md);
+}
+
+.char-counter {
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+/* Text Input - regular text field */
+.text-input {
+    width: 100%;
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-input);
+    transition: border-color var(--transition-fast);
+}
+
+.text-input:focus {
+    outline: none;
+    border-color: var(--color-text-dim);
+}
+
+.text-input::placeholder {
+    color: var(--color-text-muted);
+}
+
+.text-input::selection {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-text);
+}
+
+.text-input::-moz-selection {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-text);
+}
+
+/* Select Input - dropdown list */
+.select-input {
+    width: 100%;
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-input);
+    cursor: pointer;
+    transition: border-color var(--transition-fast);
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right var(--spacing-md) center;
+    padding-right: calc(var(--spacing-md) * 2 + 10px);
+}
+
+.select-input:focus {
+    outline: none;
+    border-color: var(--color-text-dim);
+}
+
+.select-input:hover {
+    border-color: var(--color-text-dim);
+}
+
+/* Button Danger - delete button */
+.btn-danger {
+    background: var(--color-bg);
+    color: var(--color-text-secondary);
+    border: none;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: rgba(255, 0, 0, 0.2);
+    color: #ff8888;
+}
+
+/* ============================================
+   15. MODALS
+   ============================================ */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-fade) var(--easing-standard);
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background: var(--color-bg-panel);
+    border: none;
+    border-radius: var(--radius-sm);
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: var(--spacing-4xl);
+    position: relative;
+    transform: scale(0.95);
+    transition: transform var(--duration-expand) var(--easing-decelerate);
+}
+
+.modal-overlay.active .modal-content {
+    transform: scale(1);
+}
+
+.modal-close {
+    position: absolute;
+    top: var(--spacing-2xl);
+    right: var(--spacing-2xl);
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--transition-fast);
+}
+
+.modal-close:hover {
+    color: var(--color-text);
+}
+
+.modal-content h2 {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-3xl);
+    color: var(--color-text);
+    font-weight: 500;
+}
+
+.modal-body {
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    font-size: 0.9rem;
+}
+
+.modal-body h3 {
+    color: var(--color-text);
+    font-size: 1rem;
+    font-weight: 500;
+    margin-top: var(--spacing-4xl);
+    margin-bottom: var(--spacing-lg);
+}
+
+.modal-body h3:first-child {
+    margin-top: 0;
+}
+
+.modal-body p {
+    margin-bottom: var(--spacing-2xl);
+}
+
+.modal-body ul {
+    margin-bottom: var(--spacing-2xl);
+    padding-left: var(--spacing-3xl);
+}
+
+.modal-body li {
+    margin-bottom: var(--spacing-md);
+}
+
+.modal-body p:last-child {
+    margin-bottom: 0;
+}
+
+.modal-body strong {
+    color: var(--color-text);
+    font-weight: 500;
+}
+
+/* ============================================
+   16. BOTTOM BUTTONS
+   ============================================ */
+
+.bottom-buttons {
+    position: fixed;
+    bottom: var(--spacing-3xl);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: var(--spacing-lg);
+    align-items: center;
+    z-index: 10000;
+}
+
+.mobile-preset-select-wrap {
+    display: none;
+    height: var(--button-height);
+    min-width: 0;
+    width: 37vw;
+    max-width: 150px;
+    position: relative;
+}
+
+.mobile-preset-select {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0 30px 0 14px;
+    border: none;
+    border-radius: var(--radius-button);
+    background-color: var(--color-bg-panel);
+    color: var(--color-text);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+    font-family: 'CoFo Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    transition: background-color var(--transition-slow);
+}
+
+.mobile-preset-select-arrow {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.mobile-preset-select:hover:not(:disabled),
+.mobile-preset-select:focus:not(:disabled) {
+    background-color: #2a2a2a;
+    outline: none;
+}
+
+.mobile-preset-select:disabled {
+    background-color: var(--color-inactive-bg);
+    color: var(--color-inactive-text);
+    cursor: default;
+}
+
+.mobile-preset-select:disabled + .mobile-preset-select-arrow {
+    opacity: 0.3;
+}
+
+.mobile-preset-select:focus-visible {
+    outline: 2px solid var(--color-text);
+    outline-offset: 3px;
+}
+
+.mobile-text-input,
+.mobile-randomize-btn,
+.mobile-export-png-btn {
+    display: none;
+    height: var(--button-height);
+    border: none;
+    background: var(--color-bg-panel);
+    color: var(--color-text);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+    font-family: 'CoFo Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color var(--transition-slow);
+}
+
+.mobile-text-input {
+    min-width: 0;
+    width: 35vw;
+    max-width: 142px;
+    padding: 0 14px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.mobile-text-input::placeholder {
+    color: var(--color-text-dim);
+}
+
+.mobile-text-input:focus {
+    outline: none;
+    background-color: #2a2a2a;
+}
+
+.mobile-randomize-btn,
+.mobile-export-png-btn {
+    align-items: center;
+    justify-content: center;
+    width: var(--button-height);
+    min-width: var(--button-height);
+    padding: 0;
+    border-radius: var(--radius-button);
+    cursor: pointer;
+}
+
+.mobile-export-png-btn {
+    background: var(--color-text);
+    color: var(--color-bg);
+}
+
+.mobile-randomize-btn svg,
+.mobile-export-png-btn svg {
+    display: block;
+    flex: 0 0 auto;
+}
+
+.mobile-randomize-btn:hover,
+.mobile-randomize-btn:focus,
+.mobile-export-png-btn:hover,
+.mobile-export-png-btn:focus {
+    background-color: #2a2a2a;
+    color: var(--color-text);
+    outline: none;
+}
+
+/* Toggle Label for "Outline fonts" and similar */
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-label-text {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    transition: color var(--transition-fast);
+}
+
+.toggle-label:hover .toggle-label-text {
+    color: var(--color-text);
+}
+
+.toggle-switch {
+    position: relative;
+    width: 40px;
+    height: 20px;
+}
+
+.toggle-switch input[type="checkbox"] {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--color-border);
+    transition: all var(--transition-normal);
+    border-radius: 20px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--color-bg);
+    transition: all var(--transition-normal);
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: var(--color-text);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+}
+
+.toggle-switch input:focus + .toggle-slider {
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
+}
+
+/* ============================================
+   17. ZOOM CONTROLS
+   ============================================ */
+
+/* Zoom indicator pill (nested inside top-links) */
+.zoom-indicator {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--color-bg-panel);
+    color: var(--color-text);
+    border: none;
+    border-radius: var(--radius-button);
+    font-family: 'CoFo Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color var(--transition-slow);
+    height: var(--button-height);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 65px;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+}
+
+.zoom-indicator:hover {
+    background-color: #2a2a2a;
+}
+
+/* Zoom Controls (in bottom-buttons) */
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: var(--color-bg-panel);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-button);
+    padding: var(--spacing-sm);
+    transition: opacity var(--transition-fast);
+}
+
+.zoom-controls-inline {
+    box-shadow: none;
+    margin: 0;
+}
+
+.zoom-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.zoom-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-text);
+}
+
+.zoom-btn:active {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(0.95);
+}
+
+.zoom-display {
+    min-width: 50px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text);
+    font-family: 'CoFo Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    user-select: none;
+    padding: 0 var(--spacing-sm);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
+}
+
+.zoom-display:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* ============================================
+   18. SCROLLBARS
+   ============================================ */
+
+/* Panel Content Scrollbar */
+.panel-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.panel-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.panel-content::-webkit-scrollbar-thumb {
+    background: #000;
+    border-radius: 3px;
+    border-right: 1px solid #1a1a1a;
+}
+
+.panel-content::-webkit-scrollbar-thumb:hover {
+    background: #000;
+    border-right: 1px solid #1a1a1a;
+}
+
+/* Dropdown Menu Scrollbar */
+.dropdown-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-dim);
+}
+
+/* Preset-prefix dropdown: scrollbar appears only once JS applies --scrollable */
+.preset-dropdown-menu {
+    scrollbar-width: none;
+}
+.preset-dropdown-menu.preset-dropdown-menu--scrollable {
+    scrollbar-width: thin;
+}
+.preset-dropdown-menu::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+.preset-dropdown-menu::-webkit-scrollbar-thumb {
+    background: transparent;
+}
+.preset-dropdown-menu.preset-dropdown-menu--scrollable::-webkit-scrollbar {
+    width: 6px;
+}
+.preset-dropdown-menu.preset-dropdown-menu--scrollable::-webkit-scrollbar-track {
+    background: transparent;
+}
+.preset-dropdown-menu.preset-dropdown-menu--scrollable::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+}
+.preset-dropdown-menu.preset-dropdown-menu--scrollable::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-dim);
+}
+
+/* Modal Content Scrollbar */
+.modal-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: var(--color-bg);
+    border-radius: var(--radius);
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: var(--color-text-dim);
+    border-radius: var(--radius);
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-secondary);
+}
+
+/* ============================================
+   19. RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 1024px) {
+    .controls-panel {
+        width: 280px;
+    }
+}
+
+/* Hide panels on mobile devices immediately (before JS loads) */
+.is-mobile .controls-panel,
+.is-mobile #presetDropdown,
+.is-mobile .preset-toolbar-cluster,
+.is-mobile #savePresetBtn,
+.is-mobile #deletePresetBtn,
+.is-mobile .bottom-buttons > .btn-fixed:not(#renewBtn) {
+    display: none !important;
+}
+
+.is-mobile .bottom-buttons {
+    width: calc(var(--mobile-vw) - 24px);
+    max-width: 420px;
+    gap: 8px;
+    justify-content: center;
+    flex-direction: row;
+    flex-wrap: nowrap;
+}
+
+.is-mobile .mobile-preset-select-wrap {
+    display: block;
+    flex: 1 1 0;
+    width: auto;
+}
+
+.is-mobile .mobile-text-input,
+.is-mobile .mobile-randomize-btn,
+.is-mobile .mobile-export-png-btn {
+    display: inline-flex;
+}
+
+.is-mobile .mobile-randomize-btn[hidden] {
+    display: none !important;
+}
+
+.is-mobile .mobile-text-input {
+    flex: 1 1 0;
+    width: auto;
+}
+
+.is-mobile .mobile-randomize-btn,
+.is-mobile .mobile-export-png-btn {
+    flex: 0 0 var(--button-height);
+}
+
+.is-mobile #renewBtn {
+    display: none !important;
+}
+
+.is-mobile .mobile-preset-share-btn {
+    position: fixed;
+    top: calc(var(--mobile-vy) + var(--spacing-3xl) + env(safe-area-inset-top, 0px));
+    right: calc(var(--mobile-vx) + var(--spacing-3xl) + env(safe-area-inset-right, 0px));
+    display: inline-flex;
+    z-index: 10000;
+}
+
+@media (max-width: 360px) {
+    .is-mobile .bottom-buttons {
+        width: calc(100vw - 16px);
+        gap: 6px;
+    }
+
+    .mobile-preset-select-wrap {
+        width: 34vw;
+    }
+
+    .mobile-preset-select {
+        padding-left: 11px;
+        padding-right: 25px;
+        font-size: 0.82rem;
+    }
+
+    .mobile-text-input {
+        width: 34vw;
+        padding-left: 11px;
+        padding-right: 11px;
+        font-size: 0.82rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .controls-panel {
+        width: 260px;
+        top: var(--spacing-lg);
+        right: var(--spacing-lg);
+        max-height: calc(100vh - var(--spacing-lg) * 2);
+    }
+    
+    .controls-panel-text {
+        bottom: var(--spacing-3xl);
+    }
+    
+    .panel-content {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: var(--spacing-xl);
+        padding-bottom: var(--spacing-xl);
+    }
+    
+    .bottom-buttons {
+        bottom: var(--spacing-3xl);
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .btn-fixed {
+        padding: calc(var(--spacing-xl) * 1.5) calc(var(--spacing-3xl) * 1.5);
+        font-size: calc(1rem * 1.5);
+        height: calc(var(--button-height) * 1.5);
+        border-radius: calc(calc(var(--button-height) * 1.5) / 2);
+    }
+    
+    .btn-secondary {
+        padding: calc(var(--spacing-md) * 1.5) calc(var(--spacing-3xl) * 1.5);
+        font-size: calc(1rem * 1.5);
+        height: calc(var(--button-height) * 1.5);
+        border-radius: calc(calc(var(--button-height) * 1.5) / 2);
+    }
+    
+    .top-link {
+        padding: calc(var(--spacing-md) * 1.5) calc(var(--spacing-3xl) * 1.5);
+        font-size: calc(1rem * 1.5);
+        height: calc(var(--button-height) * 1.5);
+        border-radius: calc(calc(var(--button-height) * 1.5) / 2);
+    }
+    
+    .panel-header {
+        padding: calc(var(--spacing-2xl) * 1.5) calc(var(--spacing-3xl) * 1.5);
+        min-height: calc(var(--button-height) * 1.5);
+        border-radius: calc(calc(var(--button-height) * 1.5) / 2);
+    }
+    
+    button.color-dot--expandable {
+        width: calc(18px * 1.5);
+        height: calc(18px * 1.5);
+    }
+    
+    .modal-content {
+        padding: var(--spacing-3xl);
+    }
+    
+    .modal-content h2 {
+        font-size: 1.3rem;
+        margin-bottom: var(--spacing-3xl);
+    }
+}
+
+html.is-mobile,
+html.is-mobile body {
+    width: var(--mobile-vw);
+    height: var(--mobile-vh);
+    min-height: var(--mobile-vh);
+    max-width: var(--mobile-vw);
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+.is-mobile .container {
+    position: fixed;
+    top: var(--mobile-vy);
+    left: var(--mobile-vx);
+    width: var(--mobile-vw);
+    height: var(--mobile-vh);
+    min-height: var(--mobile-vh);
+    overflow: hidden;
+}
+
+.is-mobile .main-content {
+    position: fixed;
+    top: var(--mobile-vy);
+    left: var(--mobile-vx);
+    width: var(--mobile-vw);
+    height: var(--mobile-vh);
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.is-mobile .canvas-container {
+    position: fixed;
+    top: var(--mobile-vy);
+    left: var(--mobile-vx);
+    width: var(--mobile-vw);
+    height: var(--mobile-vh);
+    min-height: 0;
+    overflow: hidden;
+}
+
+.is-mobile #mainCanvas {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none;
+    max-height: none;
+}
+
+.is-mobile .top-links {
+    position: fixed;
+    top: calc(var(--mobile-vy) + var(--spacing-3xl) + env(safe-area-inset-top, 0px));
+    left: calc(var(--mobile-vx) + (var(--mobile-vw) / 2));
+    max-width: calc(var(--mobile-vw) - 16px);
+}
+
+.is-mobile .top-link {
+    height: var(--button-height);
+    padding: 0 var(--spacing-3xl);
+    border-radius: var(--radius-button);
+    font-size: 1rem;
+}
+
+.is-mobile .void-share-toast {
+    position: fixed;
+    top: calc(var(--mobile-vy) + var(--spacing-3xl) + var(--button-height) + var(--spacing-sm) + env(safe-area-inset-top, 0px));
+    left: calc(var(--mobile-vx) + (var(--mobile-vw) / 2));
+    transform: translateX(-50%);
+    max-width: calc(var(--mobile-vw) - 32px);
+    white-space: normal;
+    text-align: center;
+}
+
+.is-mobile .bottom-buttons {
+    top: calc(var(--mobile-vy) + var(--mobile-vh) - var(--button-height) - var(--spacing-3xl) - env(safe-area-inset-bottom, 0px));
+    bottom: auto;
+    left: calc(var(--mobile-vx) + (var(--mobile-vw) / 2));
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 360px) {
+    .is-mobile .bottom-buttons {
+        gap: 6px;
+    }
+}
+
+/* ============================================
+   20. EXTRA COMPONENTS
+   ============================================ */
+
+/* File Upload Area */
+.file-upload-area {
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-input);
+    padding: var(--spacing-4xl);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color var(--transition-normal), background var(--transition-normal);
+    margin-top: var(--spacing-md);
+}
+
+.file-upload-area:hover {
+    border-color: var(--color-text-dim);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.file-upload-area.dragover {
+    border-color: var(--color-text);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.upload-placeholder p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Row Presets Buttons */
+.row-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: var(--spacing-md);
+}
+
+.row-preset-btn {
+    font-size: 0.75rem;
+    color: var(--color-text-dim);
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: all var(--transition-normal);
+    background: transparent;
+    border: 1px solid var(--color-border);
+    font-family: inherit;
+    min-width: auto;
+}
+
+.row-preset-btn:hover {
+    color: var(--color-text);
+    background: #2a2a2a;
+    border-color: var(--color-text-dim);
+}
+
+.row-preset-btn.active {
+    color: var(--color-text);
+    background: var(--color-text-dim);
+    border-color: var(--color-text-dim);
+}
+
+/* Font Size Display (for displaying current font size) */
+.font-size-display {
+    opacity: 0.4;
+    white-space: nowrap;
+    margin-left: 6px;
+}
+
+/* Linked Controls Group - visual grouping of linked controls */
+#linkedControlsContainer {
+    padding: var(--spacing-lg);
+    margin: var(--spacing-3xl) calc(-1 * var(--spacing-lg)) 0;
+    border-radius: var(--radius-sm);
+    border: 1px solid #2a2a2a;
+    transition: background-color var(--transition-normal), border-color var(--transition-normal);
+}
+
+#linkedControlsContainer.linked-controls-group {
+    background: #2a2a2a;
+    border-color: transparent;
+}
+
+#linkedControlsContainer .control-group:last-child {
+    margin-bottom: 0;
+}
+
+/* ============================================
+   21. CANVAS STYLES (Void Typeface)
+   ============================================ */
+
+#mainCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.canvas-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: var(--color-canvas-bg);
+    cursor: default;
+}
+
+/* ============================================
+   EDITOR PANEL
+   ============================================ */
+
+.controls-panel-editor {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    max-width: 320px;
+    max-height: calc(100vh - 40px);
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+}
+
+.controls-panel-editor .panel-content {
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+.controls-panel-editor .control-section {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.controls-panel-editor .control-group {
+    margin-bottom: 20px;
+}
+
+.editor-glyph-string-group {
+    margin-bottom: 0 !important;
+}
+
+.editor-save-button-group {
+    margin-top: 10px !important;
+    margin-bottom: 10px !important;
+}
+
+.editor-saved-glyphs-group {
+    margin-bottom: 0 !important;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.editor-saved-glyphs-group textarea {
+    flex: 1;
+    min-height: 0;
+}
+
+.editor-copy-button-group {
+    margin-top: 10px !important;
+    margin-bottom: 0 !important;
+}
+
+.editor-module-display {
+    font-family: var(--font-mono);
+    font-size: 42px;
+    font-weight: 500;
+    padding: 36px 12px;
+    text-align: center;
+    background: #808080;
+    color: #d2d2d2;
+    border: 1px solid var(--color-border);
+    border-radius: 100px;
+    font-feature-settings: "case" 1;
+}
+
+.editor-btn {
+    width: 100%;
+    padding: 10px 16px;
+    margin-top: 0;
+    background: var(--color-bg);
+    border: none;
+    border-radius: 24px;
+    color: var(--color-text);
+    font-size: 14px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.editor-btn:hover {
+    background: var(--color-text);
+    color: var(--color-bg);
+}
+
+#editorGlyphString,
+#editorSavedGlyphs {
+    width: 100%;
+    padding: 8px 12px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.4;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-canvas-bg);
+    resize: vertical;
+    word-break: break-all;
+    color: var(--color-text);
+}
+
+#editorGlyphString {
+    resize: none;
+}
+
+/* Editor Hint - hint in bottom right corner */
+.editor-hint {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.7);
+    color: var(--color-text);
+    font-size: 12px;
+    font-family: var(--font-mono);
+    border-radius: 6px;
+    pointer-events: none;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+/* Editor Alternatives Panel - alternative glyphs panel */
+.editor-alternatives-panel {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    width: 300px;
+    max-height: calc(100vh - 40px);
+    background: var(--color-bg-panel);
+    border-radius: var(--radius);
+    border: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    z-index: 1001;
+    overflow: hidden;
+}
+
+.editor-alternatives-header {
+    padding: var(--spacing-xl) var(--spacing-2xl);
+    border-bottom: 1px solid var(--color-border);
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--color-text);
+    flex-shrink: 0;
+}
+
+.editor-alternatives-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-lg);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+}
+
+.editor-alternative-item {
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    padding: var(--spacing-md);
+    background: var(--color-bg-input);
+    transition: all 0.2s ease;
+}
+
+.editor-alternative-item:hover {
+    border-color: var(--color-text-muted);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.editor-alternative-item.selected {
+    border-color: var(--color-text);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.editor-alternative-item.edited {
+    border-left: 3px solid var(--color-text);
+}
+
+.editor-alternative-preview {
+    width: 100%;
+    height: 80px;
+    background: var(--color-bg-panel);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.editor-alternative-preview canvas {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.editor-alternative-label {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    text-align: center;
+    font-family: var(--font-mono);
+}
+
+.editor-alternatives-empty {
+    padding: var(--spacing-2xl);
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    grid-column: 1 / -1;
+}
+
+/* ============================================
+   MOBILE EDITOR
+   ============================================ */
+
+.is-mobile .controls-panel-editor {
+    display: none !important;
+}
+
+/* ============================================
+   MODAL DIALOGS
+   ============================================ */
+
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: none;
+    border-radius: var(--radius);
+    padding: 0;
+    background: var(--color-bg-panel);
+    color: var(--color-text);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+    max-width: 480px;
+    width: calc(100% - 32px);
+    margin: 0;
+}
+
+.modal::backdrop {
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    width: 100%;
+    padding: var(--spacing-3xl);
+}
+
+.modal-title {
+    margin: 0 0 var(--spacing-3xl) 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.modal-text {
+    margin: 0 0 var(--spacing-3xl) 0;
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+}
+
+.modal-text:empty {
+    display: none;
+    margin: 0;
+}
+
+.modal-text--intro p {
+    margin: 0 0 var(--spacing-xl) 0;
+}
+
+.modal-text--intro ul {
+    margin: 0;
+    padding-left: 1.15rem;
+}
+
+.modal-text--intro li {
+    margin: 0 0 var(--spacing-lg) 0;
+}
+
+.modal-text--intro li:last-child {
+    margin-bottom: 0;
+}
+
+.modal-text--intro a {
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+.modal-input {
+    display: block;
+    width: 100%;
+    padding: var(--spacing-md);
+    margin: 0 0 var(--spacing-3xl) 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    background: var(--color-bg-input);
+    color: var(--color-text);
+    font-size: 0.9rem;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color var(--transition-normal);
+}
+
+.modal-input:hover {
+    border-color: var(--color-border);
+}
+
+.modal-input:focus {
+    outline: none;
+    border-color: var(--color-text-dim);
+}
+
+.modal-input::selection {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-text);
+}
+
+.modal-input::-moz-selection {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-text);
+}
+
+.modal-buttons {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.modal-btn {
+    padding: var(--spacing-md) var(--spacing-3xl);
+    border: none;
+    border-radius: var(--radius-button);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-slow);
+    font-family: 'CoFo Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    height: var(--button-height);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Icon-only actions (e.g. rename modal Share / Delete — matches preset row icons). */
+.modal-btn--icon-only {
+    padding: 0;
+    width: var(--button-height);
+    min-width: var(--button-height);
+}
+
+.modal-btn--icon-only svg {
+    display: block;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+}
+
+.modal-btn-primary {
+    background: var(--color-text);
+    color: var(--color-bg);
+}
+
+.modal-btn-primary:hover:not(:disabled) {
+    background: #2a2a2a;
+    color: var(--color-text);
+}
+
+.modal-btn-secondary {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.modal-btn-secondary:hover:not(:disabled) {
+    background: var(--color-text);
+    color: var(--color-bg);
+}
+
+.modal-btn-danger {
+    background: #c0392b;
+    color: white;
+}
+
+.modal-btn-danger:hover:not(:disabled) {
+    background: #e74c3c;
+}
+
+.modal-btn-ghost {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.modal-btn-ghost:hover:not(:disabled) {
+    background: var(--color-text);
+    color: var(--color-bg);
+}
+
+/* ============================================
+   CUSTOM TOOLTIPS (cursor-following)
+   ============================================ */
+
+/* Global tooltip element (created via JS) */
+.cursor-tooltip {
+    position: fixed;
+    padding: 6px 10px;
+    background: #1a1a1a;
+    color: var(--color-text);
+    font-size: 0.75rem;
+    font-weight: 400;
+    white-space: nowrap;
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 100000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.1s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.cursor-tooltip.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Mark elements with tooltip for hover detection */
+[data-tooltip] {
+    /* No pseudo-elements needed - handled by JS */
+}
+
+/* Effects pill toggles container */
+#effectsPillToggles {
+    margin-top: 20px;
+    margin-bottom: 0;
+}
+
+/* ============================================
+   END OF STYLESHEET
+   ============================================ */
