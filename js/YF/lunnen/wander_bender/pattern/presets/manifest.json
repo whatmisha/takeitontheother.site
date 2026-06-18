@@ -1,0 +1,8 @@
+{
+  "presets": [
+    { "name": "Default", "file": "default.json" },
+    { "name": "Dense", "file": "dense.json" },
+    { "name": "Arcs", "file": "arcs.json" },
+    { "name": "Scatter", "file": "scatter.json" }
+  ]
+}

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pattern Bender — генератор паттерна</title>
+    <link rel="stylesheet" href="css/othersite-styles.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Top navigation: preset dropdown + share + save -->
+        <div class="top-links">
+            <a href="../" class="top-link">←YF Tools</a>
+
+            <div class="preset-toolbar-cluster" style="display:flex;align-items:center;gap:var(--spacing-md);">
+                <div class="preset-dropdown" id="presetDropdown">
+                    <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button"
+                            aria-haspopup="listbox" aria-expanded="false" aria-controls="presetDropdownMenu">
+                        <span class="preset-dropdown-text">Presets</span>
+                        <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox"></ul>
+                </div>
+                <button type="button" id="presetToolbarShareBtn" class="preset-toolbar-share-btn" title="Скопировать ссылку" aria-label="Скопировать ссылку"
+                        data-tooltip="Скопировать ссылку">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="18" height="18" fill="none" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M5.7410987,3.4304742l.6124561-.6124561c.7810478-.7810478,2.0473765-.7810478,2.8284243,0l.0000028.0000028c.7810478.7810478.7810478,2.0473765,0,2.8284243l-.6124561.6124561"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M6.2589013,8.5695258l-.6124561.6124561c-.7810478.7810478-2.0473765.7810478-2.8284243,0l-.0000028-.0000028c-.7810478-.7810478-.7810478-2.0473765,0-2.8284243l.6124561-.6124561"/><line x1="7.5184826" y1="4.4815174" x2="4.4815174" y2="7.5184826" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"/></svg>
+                </button>
+            </div>
+
+            <button class="top-link" id="savePresetBtn" type="button" style="display:none;">Save preset</button>
+
+            <div class="zoom-indicator" id="zoomIndicator" data-tooltip="Клик — вписать в экран">100%</div>
+        </div>
+
+        <main class="main-content" id="mainContent">
+            <h1 class="sr-only">Pattern Bender</h1>
+
+            <div class="canvas-container" id="canvasContainer">
+                <svg id="mainSvg" role="img" aria-label="Превью паттерна"></svg>
+            </div>
+
+            <!-- CANVAS panel (top-left) -->
+            <aside class="controls-panel controls-panel-left" id="canvasPanel">
+                <div class="panel-header" id="canvasPanelHeader">
+                    <span>Канвас</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="canvasWSlider"><span>Ширина <span class="unit">мм</span></span>
+                                <input type="text" class="value-display" id="canvasWValue" value="500"></label>
+                            <input type="range" id="canvasWSlider" min="100" max="1200" value="500" step="10">
+                        </div>
+                        <div class="control-group">
+                            <label for="canvasHSlider"><span>Высота <span class="unit">мм</span></span>
+                                <input type="text" class="value-display" id="canvasHValue" value="500"></label>
+                            <input type="range" id="canvasHSlider" min="100" max="1200" value="500" step="10">
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <!-- SHAPE panel (top-right) -->
+            <aside class="controls-panel" id="shapePanel">
+                <div class="panel-header" id="shapePanelHeader">
+                    <span>Элемент</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <!-- Length -->
+                        <div class="control-group dice-slider-group">
+                            <label for="lengthSlider"><span>Длина <span class="unit">мм</span>
+                                <button type="button" class="dice-btn dice-btn--diamond" id="lengthDice" data-param="length" data-tooltip="Случайная длина в диапазоне для каждого элемента" aria-label="Случайный диапазон: Длина"></button>
+                            </span><input type="text" class="value-display" id="lengthValue" value="90"></label>
+                            <div class="dice-single" id="lengthSingle">
+                                <input type="range" id="lengthSlider" min="1" max="500" value="90" step="1">
+                            </div>
+                            <div class="dice-range" id="lengthRange" style="display:none;">
+                                <div id="lengthRangeSlider" class="range-slider-container"></div>
+                                <div class="range-slider-values">
+                                    <input type="text" class="value-display" id="lengthMinValue" value="40">
+                                    <input type="text" class="value-display" id="lengthMaxValue" value="160">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Thickness (element width) -->
+                        <div class="control-group dice-slider-group">
+                            <label for="thicknessSlider"><span>Ширина <span class="unit">мм</span>
+                                <button type="button" class="dice-btn dice-btn--diamond" id="thicknessDice" data-param="thickness" data-tooltip="Случайная ширина в диапазоне для каждого элемента" aria-label="Случайный диапазон: Ширина"></button>
+                            </span><input type="text" class="value-display" id="thicknessValue" value="32"></label>
+                            <div class="dice-single" id="thicknessSingle">
+                                <input type="range" id="thicknessSlider" min="1" max="500" value="32" step="1">
+                            </div>
+                            <div class="dice-range" id="thicknessRange" style="display:none;">
+                                <div id="thicknessRangeSlider" class="range-slider-container"></div>
+                                <div class="range-slider-values">
+                                    <input type="text" class="value-display" id="thicknessMinValue" value="16">
+                                    <input type="text" class="value-display" id="thicknessMaxValue" value="60">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Corner radius -->
+                        <div class="control-group dice-slider-group">
+                            <label for="cornerSlider"><span>Скругление <span class="unit">мм</span>
+                                <button type="button" class="dice-btn dice-btn--diamond" id="cornerDice" data-param="cornerRadius" data-tooltip="Случайное скругление в диапазоне для каждого элемента" aria-label="Случайный диапазон: Скругление"></button>
+                            </span><input type="text" class="value-display" id="cornerValue" value="16"></label>
+                            <div class="dice-single" id="cornerSingle">
+                                <input type="range" id="cornerSlider" min="0" max="250" value="16" step="1">
+                            </div>
+                            <div class="dice-range" id="cornerRange" style="display:none;">
+                                <div id="cornerRangeSlider" class="range-slider-container"></div>
+                                <div class="range-slider-values">
+                                    <input type="text" class="value-display" id="cornerMinValue" value="0">
+                                    <input type="text" class="value-display" id="cornerMaxValue" value="30">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Arc / bend -->
+                        <div class="control-group dice-slider-group">
+                            <label for="arcSlider"><span>Изгиб <span class="unit">мм</span>
+                                <button type="button" class="dice-btn dice-btn--diamond" id="arcDice" data-param="arc" data-tooltip="Случайный изгиб в диапазоне для каждого элемента" aria-label="Случайный диапазон: Изгиб"></button>
+                            </span><input type="text" class="value-display" id="arcValue" value="0"></label>
+                            <div class="dice-single" id="arcSingle">
+                                <input type="range" id="arcSlider" min="0" max="250" value="0" step="1">
+                            </div>
+                            <div class="dice-range" id="arcRange" style="display:none;">
+                                <div id="arcRangeSlider" class="range-slider-container"></div>
+                                <div class="range-slider-values">
+                                    <input type="text" class="value-display" id="arcMinValue" value="0">
+                                    <input type="text" class="value-display" id="arcMaxValue" value="80">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stroke -->
+                        <div class="control-group dice-slider-group">
+                            <label for="strokeSlider"><span>Обводка <span class="unit">мм</span>
+                                <button type="button" class="dice-btn dice-btn--diamond" id="strokeDice" data-param="stroke" data-tooltip="Случайная толщина обводки в диапазоне" aria-label="Случайный диапазон: Обводка"></button>
+                            </span><input type="text" class="value-display" id="strokeValue" value="26"></label>
+                            <div class="dice-single" id="strokeSingle">
+                                <input type="range" id="strokeSlider" min="1" max="100" value="26" step="1">
+                            </div>
+                            <div class="dice-range" id="strokeRange" style="display:none;">
+                                <div id="strokeRangeSlider" class="range-slider-container"></div>
+                                <div class="range-slider-values">
+                                    <input type="text" class="value-display" id="strokeMinValue" value="10">
+                                    <input type="text" class="value-display" id="strokeMaxValue" value="40">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <!-- DISTRIBUTION panel (bottom-right) -->
+            <aside class="controls-panel controls-panel-presets" id="distPanel">
+                <div class="panel-header" id="distPanelHeader">
+                    <span>Раскладка</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <!-- Count -->
+                        <div class="control-group dice-slider-group">
+                            <label for="countSlider"><span>Количество
+                                <button type="button" class="dice-btn dice-btn--diamond" id="countDice" data-param="count" data-tooltip="Случайное количество в диапазоне" aria-label="Случайный диапазон: Количество"></button>
+                            </span><input type="text" class="value-display" id="countValue" value="40"></label>
+                            <div class="dice-single" id="countSingle">
+                                <input type="range" id="countSlider" min="1" max="500" value="40" step="1">
+                            </div>
+                            <div class="dice-range" id="countRange" style="display:none;">
+                                <div id="countRangeSlider" class="range-slider-container"></div>
+                                <div class="range-slider-values">
+                                    <input type="text" class="value-display" id="countMinValue" value="10">
+                                    <input type="text" class="value-display" id="countMaxValue" value="120">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Density -->
+                        <div class="control-group dice-slider-group">
+                            <label for="densitySlider"><span>Плотность <span class="unit">%</span>
+                                <button type="button" class="dice-btn dice-btn--diamond" id="densityDice" data-param="density" data-tooltip="Случайная плотность в диапазоне" aria-label="Случайный диапазон: Плотность"></button>
+                            </span><input type="text" class="value-display" id="densityValue" value="35"></label>
+                            <div class="dice-single" id="densitySingle">
+                                <input type="range" id="densitySlider" min="0" max="100" value="35" step="1">
+                            </div>
+                            <div class="dice-range" id="densityRange" style="display:none;">
+                                <div id="densityRangeSlider" class="range-slider-container"></div>
+                                <div class="range-slider-values">
+                                    <input type="text" class="value-display" id="densityMinValue" value="0">
+                                    <input type="text" class="value-display" id="densityMaxValue" value="80">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Extracted -->
+                        <div class="control-group dice-slider-group">
+                            <label for="extractedSlider"><span>Выделенные
+                                <button type="button" class="dice-btn dice-btn--diamond" id="extractedDice" data-param="extracted" data-tooltip="Случайное число выделенных в диапазоне" aria-label="Случайный диапазон: Выделенные"></button>
+                            </span><input type="text" class="value-display" id="extractedValue" value="0"></label>
+                            <div class="dice-single" id="extractedSingle">
+                                <input type="range" id="extractedSlider" min="0" max="100" value="0" step="1">
+                            </div>
+                            <div class="dice-range" id="extractedRange" style="display:none;">
+                                <div id="extractedRangeSlider" class="range-slider-container"></div>
+                                <div class="range-slider-values">
+                                    <input type="text" class="value-display" id="extractedMinValue" value="0">
+                                    <input type="text" class="value-display" id="extractedMaxValue" value="20">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Seed -->
+                        <div class="control-group">
+                            <label for="seedSlider"><span>Сид</span>
+                                <input type="text" class="value-display" id="seedValue" value="12345"></label>
+                            <input type="range" id="seedSlider" min="1" max="99999" value="12345" step="1">
+                        </div>
+
+                        <div class="control-group">
+                            <button type="button" class="btn-secondary" id="resetExtractedBtn" style="width:100%;">Сбросить выделение</button>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <!-- COLORS panel (bottom-left) -->
+            <aside class="controls-panel controls-panel-text" id="colorsPanel">
+                <div class="panel-header" id="colorsPanelHeader">
+                    <span>Цвета</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <div class="color-swatches-compact" id="colorPickersGroup">
+                                <div class="color-swatch-row">
+                                    <div class="color-swatch-compact" id="strokeColorItem" data-color-type="stroke">
+                                        <button type="button" class="color-dot color-dot--expandable" id="strokeColorPreview" title="HSB — клик чтобы раскрыть" aria-label="Цвет обводки"></button>
+                                        <span class="color-label">Обводка</span>
+                                        <input type="text" class="color-swatch-hex" id="strokeColorHex" value="#ffffff" maxlength="7" spellcheck="false" autocomplete="off" aria-label="HEX обводки">
+                                    </div>
+                                    <div class="color-hsb-slot" id="strokeColorHsbSlot">
+                                        <div id="unifiedColorPickerContainer"></div>
+                                    </div>
+                                </div>
+                                <div class="color-swatch-row">
+                                    <div class="color-swatch-compact" id="bgColorItem" data-color-type="bg">
+                                        <button type="button" class="color-dot color-dot--expandable" id="bgColorPreview" title="HSB — клик чтобы раскрыть" aria-label="Цвет фона"></button>
+                                        <span class="color-label">Фон</span>
+                                        <input type="text" class="color-swatch-hex" id="bgColorHex" value="#0a0a0a" maxlength="7" spellcheck="false" autocomplete="off" aria-label="HEX фона">
+                                    </div>
+                                    <div class="color-hsb-slot" id="bgColorHsbSlot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Bottom actions -->
+        <nav class="bottom-buttons">
+            <button class="btn-fixed" id="shuffleBtn" type="button" data-tooltip="Перемешать (новый сид + случайные параметры)">Перемешать</button>
+            <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
+            <button class="btn-fixed btn-export" id="exportSvgBtn" type="button">Export SVG ⌘E</button>
+        </nav>
+
+        <!-- Dialog host -->
+        <dialog id="dialog" class="modal">
+            <div class="modal-content">
+                <h2 id="dialogTitle" class="modal-title"></h2>
+                <div id="dialogText" class="modal-text"></div>
+                <input id="dialogInput" class="modal-input" type="text" style="display:none;">
+                <div id="dialogButtons" class="modal-buttons"></div>
+            </div>
+        </dialog>
+    </div>
+
+    <script type="module" src="./tool.js"></script>
+</body>
+</html>

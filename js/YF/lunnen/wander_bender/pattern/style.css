@@ -1,0 +1,11 @@
+/* Pattern Bender — tool-specific tweaks on top of othersite-styles.css */
+
+/* Subtle artboard frame so the canvas bounds are visible against the page. */
+.canvas-container #mainSvg {
+    box-shadow: 0 0 0 1px var(--color-border, #333);
+}
+
+/* The interactive hit areas sit above the artwork but stay invisible. */
+.hit-area {
+    pointer-events: all;
+}
