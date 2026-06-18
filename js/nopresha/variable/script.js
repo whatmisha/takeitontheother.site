@@ -342,12 +342,15 @@ window.addEventListener("click", () => {
 });
 
 window.addEventListener("keydown", (event) => {
-    if (event.code !== "Space" || event.repeat) {
+    if (event.code !== "Space" && event.key !== " ") {
         return;
     }
 
     event.preventDefault();
-    startRandomMode();
+
+    if (!event.repeat) {
+        startRandomMode();
+    }
 });
 
 window.addEventListener("resize", () => {
