@@ -13,8 +13,6 @@ const GAMMA_MAX = 12;
 const SEARCH_STEPS = 18;
 const INERTIA = 0.16;
 const SNAP_DISTANCE = 0.05;
-const INITIAL_BACKGROUND_COLOR = "#AD4422";
-const CLICK_BACKGROUND_COLOR = "#658659";
 const initialPointerX = Number(new URLSearchParams(window.location.search).get("x"));
 const startPointerX = Number.isFinite(initialPointerX) ? initialPointerX : window.innerWidth / 2;
 
@@ -23,7 +21,9 @@ const state = {
     targetPointerX: startPointerX,
     raf: 0,
     needsFontSize: true,
-    isAlternateBackground: false,
+    mode: "cursor",
+    randomBaseValues: [],
+    needsRandomFit: false,
 };
 
 word.textContent = "";
@@ -109,6 +109,18 @@ function measureAtGamma(normalizedDistances, gamma) {
     return measureWordWidth();
 }
 
+function getOffsetWidthValues(baseValues, offset) {
+    return baseValues.map((widthValue) => {
+        return clamp(widthValue + offset, TARGET_AXIS_MIN, TARGET_AXIS_MAX);
+    });
+}
+
+function measureAtOffset(baseValues, offset) {
+    setLetterWidths(getOffsetWidthValues(baseValues, offset));
+
+    return measureWordWidth();
+}
+
 function findBestGamma(normalizedDistances) {
     const targetWidth = getTargetWidth();
     let lowGamma = GAMMA_MIN;
@@ -166,6 +178,71 @@ function applyWidthGradient() {
     setLetterWidths(getWidthValues(normalizedDistances, bestGamma), true);
 }
 
+function getRandomBaseValues() {
+    return letters.map(() => Math.random() * TARGET_AXIS_MAX);
+}
+
+function findBestOffset(baseValues) {
+    const targetWidth = getTargetWidth();
+    let lowOffset = -TARGET_AXIS_MAX;
+    let highOffset = TARGET_AXIS_MAX;
+    let lowWidth = measureAtOffset(baseValues, lowOffset);
+    let highWidth = measureAtOffset(baseValues, highOffset);
+    let bestOffset = lowOffset;
+    let bestError = Math.abs(lowWidth - targetWidth);
+    const highError = Math.abs(highWidth - targetWidth);
+
+    if (highError < bestError) {
+        bestOffset = highOffset;
+        bestError = highError;
+    }
+
+    const minReachableWidth = Math.min(lowWidth, highWidth);
+    const maxReachableWidth = Math.max(lowWidth, highWidth);
+
+    if (targetWidth <= minReachableWidth || targetWidth >= maxReachableWidth) {
+        return bestOffset;
+    }
+
+    const increasesWithOffset = highWidth > lowWidth;
+
+    for (let step = 0; step < SEARCH_STEPS; step += 1) {
+        const midOffset = (lowOffset + highOffset) / 2;
+        const midWidth = measureAtOffset(baseValues, midOffset);
+        const midError = Math.abs(midWidth - targetWidth);
+
+        if (midError < bestError) {
+            bestOffset = midOffset;
+            bestError = midError;
+        }
+
+        if (increasesWithOffset) {
+            if (midWidth < targetWidth) {
+                lowOffset = midOffset;
+            } else {
+                highOffset = midOffset;
+            }
+        } else if (midWidth > targetWidth) {
+            lowOffset = midOffset;
+        } else {
+            highOffset = midOffset;
+        }
+    }
+
+    return bestOffset;
+}
+
+function applyRandomWidths() {
+    if (!state.randomBaseValues.length) {
+        state.randomBaseValues = getRandomBaseValues();
+    }
+
+    const bestOffset = findBestOffset(state.randomBaseValues);
+
+    setLetterWidths(getOffsetWidthValues(state.randomBaseValues, bestOffset), true);
+    state.needsRandomFit = false;
+}
+
 function updateAsteriskWidth() {
     const widthValue = window.innerWidth > 0
         ? clamp((state.pointerX / window.innerWidth) * TARGET_AXIS_MAX, TARGET_AXIS_MIN, TARGET_AXIS_MAX)
@@ -191,13 +268,21 @@ function advancePointer() {
 function updateWidths() {
     state.raf = 0;
     const isPointerMoving = advancePointer();
+    const needsFontSize = state.needsFontSize;
 
     if (state.needsFontSize) {
         updateFontSizeForViewport();
     }
 
-    applyWidthGradient();
-    applyWidthGradient();
+    if (state.mode === "random") {
+        if (state.needsRandomFit || needsFontSize) {
+            applyRandomWidths();
+        }
+    } else {
+        applyWidthGradient();
+        applyWidthGradient();
+    }
+
     updateAsteriskWidth();
 
     if (isPointerMoving) {
@@ -218,6 +303,18 @@ function setPointerX(clientX) {
     requestUpdate();
 }
 
+function startRandomMode() {
+    state.mode = "random";
+    state.randomBaseValues = getRandomBaseValues();
+    state.needsRandomFit = true;
+    requestUpdate();
+}
+
+function startCursorMode() {
+    state.mode = "cursor";
+    requestUpdate();
+}
+
 window.addEventListener("pointermove", (event) => {
     setPointerX(event.clientX);
 });
@@ -235,11 +332,22 @@ window.addEventListener("touchmove", (event) => {
 }, { passive: true });
 
 window.addEventListener("click", () => {
-    state.isAlternateBackground = !state.isAlternateBackground;
-    document.documentElement.style.setProperty(
-        "--background",
-        state.isAlternateBackground ? CLICK_BACKGROUND_COLOR : INITIAL_BACKGROUND_COLOR,
-    );
+    if (state.mode === "random") {
+        startCursorMode();
+
+        return;
+    }
+
+    startRandomMode();
+});
+
+window.addEventListener("keydown", (event) => {
+    if (event.code !== "Space" || event.repeat) {
+        return;
+    }
+
+    event.preventDefault();
+    startRandomMode();
 });
 
 window.addEventListener("resize", () => {
