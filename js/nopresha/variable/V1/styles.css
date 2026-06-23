@@ -1,17 +1,16 @@
 @font-face {
     font-family: "Nopresha Variable";
-    src: url("fonts/Nopresha260622-VariableVF.ttf") format("truetype");
+    src: url("fonts/Nopresha260616-VariableVF.ttf") format("truetype");
     font-weight: 400;
     font-style: normal;
     font-display: block;
 }
 
 :root {
-    --background: #D0C7BE;
-    --foreground: #0700CC;
+    --background: #AD4422;
+    --foreground: #E1B746;
     --side-padding: 10px;
     --top-padding: 50px;
-    --letter-paint-bleed: 0.12em;
 }
 
 * {
@@ -66,12 +65,10 @@ body {
     font: inherit;
     font-variation-settings: "wdth" var(--width-value, 50);
     line-height: inherit;
-    margin-block: calc(var(--letter-paint-bleed) * -1);
-    padding-block: var(--letter-paint-bleed);
     will-change: font-variation-settings;
 }
 
-.corner-mark {
+.corner-asterisk {
     position: fixed;
     bottom: 10px;
     left: 10px;
@@ -79,18 +76,10 @@ body {
     font-family: "Nopresha Variable", sans-serif;
     font-size: calc(var(--word-font-size, 160px) / 4);
     font-weight: 400;
+    font-variation-settings: "wdth" var(--asterisk-width-value, 50);
     line-height: 0.78;
     pointer-events: none;
     user-select: none;
-}
-
-.corner-mark-letter {
-    display: inline-block;
-    color: inherit;
-    font: inherit;
-    font-variation-settings: "wdth" var(--corner-mark-width-value, 50);
-    line-height: inherit;
-    will-change: font-variation-settings;
 }
 
 .axis-readout {

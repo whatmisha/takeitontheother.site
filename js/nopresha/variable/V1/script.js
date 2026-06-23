@@ -1,8 +1,7 @@
 const word = document.querySelector("#word");
 const axisReadout = document.querySelector("#axisReadout");
-const cornerMark = document.querySelector(".corner-mark");
+const cornerAsterisk = document.querySelector(".corner-asterisk");
 const text = word.textContent.trim();
-const cornerText = cornerMark.textContent.trim();
 
 const SIDE_PADDING = 10;
 const TARGET_AXIS_MIN = 0;
@@ -24,7 +23,6 @@ const state = {
     needsFontSize: true,
     mode: "cursor",
     randomBaseValues: [],
-    cornerRandomValues: [],
     needsRandomFit: false,
 };
 
@@ -34,20 +32,8 @@ const letters = [...text].map((character) => {
     const span = document.createElement("span");
     span.className = "letter";
     span.textContent = character;
-    span.dataset.letter = character;
     span.setAttribute("aria-hidden", "true");
     word.appendChild(span);
-    return span;
-});
-
-cornerMark.textContent = "";
-
-const cornerLetters = [...cornerText].map((character) => {
-    const span = document.createElement("span");
-    span.className = "corner-mark-letter";
-    span.textContent = character;
-    span.setAttribute("aria-hidden", "true");
-    cornerMark.appendChild(span);
     return span;
 });
 
@@ -196,10 +182,6 @@ function getRandomBaseValues() {
     return letters.map(() => Math.random() * TARGET_AXIS_MAX);
 }
 
-function getCornerRandomValues() {
-    return cornerLetters.map(() => Math.random() * TARGET_AXIS_MAX);
-}
-
 function findBestOffset(baseValues) {
     const targetWidth = getTargetWidth();
     let lowOffset = -TARGET_AXIS_MAX;
@@ -261,24 +243,12 @@ function applyRandomWidths() {
     state.needsRandomFit = false;
 }
 
-function setCornerMarkWidths(widthValues) {
-    cornerLetters.forEach((letter, index) => {
-        letter.style.fontVariationSettings = `"wdth" ${widthValues[index].toFixed(2)}`;
-    });
-}
-
-function updateCornerMarkWidth() {
-    if (state.mode === "random" && state.cornerRandomValues.length) {
-        setCornerMarkWidths(state.cornerRandomValues);
-
-        return;
-    }
-
+function updateAsteriskWidth() {
     const widthValue = window.innerWidth > 0
         ? clamp((state.pointerX / window.innerWidth) * TARGET_AXIS_MAX, TARGET_AXIS_MIN, TARGET_AXIS_MAX)
         : TARGET_AXIS_MIN;
 
-    setCornerMarkWidths(cornerLetters.map(() => widthValue));
+    cornerAsterisk.style.setProperty("--asterisk-width-value", widthValue.toFixed(2));
 }
 
 function advancePointer() {
@@ -313,7 +283,7 @@ function updateWidths() {
         applyWidthGradient();
     }
 
-    updateCornerMarkWidth();
+    updateAsteriskWidth();
 
     if (isPointerMoving) {
         requestUpdate();
@@ -336,7 +306,6 @@ function setPointerX(clientX) {
 function startRandomMode() {
     state.mode = "random";
     state.randomBaseValues = getRandomBaseValues();
-    state.cornerRandomValues = getCornerRandomValues();
     state.needsRandomFit = true;
     requestUpdate();
 }
