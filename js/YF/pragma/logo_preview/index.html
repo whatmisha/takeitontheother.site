@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pragma A Variable Preview</title>
+    <link rel="stylesheet" href="./framework/css/othersite-styles.css">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="top-links">
+            <span class="top-link top-link-static">Pragma A</span>
+            <div class="zoom-indicator" id="zoomIndicator" data-tooltip="Click to fit to screen">100%</div>
+        </div>
+
+        <main class="main-content" id="mainContent">
+            <h1 class="sr-only">Pragma A Variable Preview</h1>
+
+            <div class="canvas-container" id="canvasContainer">
+                <svg id="mainSvg" role="img" aria-label="Layered variable-font preview of A"></svg>
+            </div>
+
+            <aside class="controls-panel controls-panel-left" id="axesPanel">
+                <div class="panel-header" id="axesPanelHeader">
+                    <span>Axes</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="weightStepsSlider"><span>Weight</span>
+                                <input type="text" class="value-display" id="weightStepsValue" value="6"></label>
+                            <input type="range" id="weightStepsSlider" min="1" max="100" value="6" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="opszStepsSlider"><span>Optical size</span>
+                                <input type="text" class="value-display" id="opszStepsValue" value="12"></label>
+                            <input type="range" id="opszStepsSlider" min="1" max="100" value="12" step="1">
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <aside class="controls-panel" id="typePanel">
+                <div class="panel-header" id="typePanelHeader">
+                    <span>Type</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="fontSizeSlider"><span>Size <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="fontSizeValue" value="240"></label>
+                            <input type="range" id="fontSizeSlider" min="80" max="1100" value="240" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="opacitySlider"><span>Opacity <span class="unit">%</span></span>
+                                <input type="text" class="value-display" id="opacityValue" value="1"></label>
+                            <input type="range" id="opacitySlider" min="1" max="100" value="1" step="1">
+                        </div>
+                        <div class="control-group pill-toggle-row">
+                            <label class="pill-toggle" for="outlineMode" data-tooltip="Show outlines without fill">
+                                <input type="checkbox" id="outlineMode" class="sr-only" data-setting="outlineMode">
+                                <span>Outline</span>
+                            </label>
+                        </div>
+                        <div class="control-group">
+                            <label for="strokeWidthSlider"><span>Stroke <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="strokeWidthValue" value="1"></label>
+                            <input type="range" id="strokeWidthSlider" min="1" max="80" value="1" step="1">
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <aside class="controls-panel controls-panel-text" id="colorsPanel">
+                <div class="panel-header" id="colorsPanelHeader">
+                    <span>Colors</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <div class="color-swatches-compact" id="colorPickersGroup">
+                                <div class="color-swatch-row">
+                                    <div class="color-swatch-compact" id="typeColorItem" data-color-type="type">
+                                        <button type="button" class="color-dot color-dot--expandable" id="typeColorPreview" title="HSB" aria-label="Open type color controls"></button>
+                                        <span class="color-label">Type</span>
+                                        <input type="text" class="color-swatch-hex" id="typeColorHex" value="#ffffff" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Type color hex">
+                                    </div>
+                                    <div class="color-hsb-slot" id="typeColorHsbSlot">
+                                        <div id="unifiedColorPickerContainer"></div>
+                                    </div>
+                                </div>
+                                <div class="color-swatch-row">
+                                    <div class="color-swatch-compact" id="bgColorItem" data-color-type="bg">
+                                        <button type="button" class="color-dot color-dot--expandable" id="bgColorPreview" title="HSB" aria-label="Open background color controls"></button>
+                                        <span class="color-label">Background</span>
+                                        <input type="text" class="color-swatch-hex" id="bgColorHex" value="#000000" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Background color hex">
+                                    </div>
+                                    <div class="color-hsb-slot" id="bgColorHsbSlot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        </main>
+
+        <nav class="bottom-buttons">
+            <button class="btn-fixed" id="exportPngBtn" type="button" data-tooltip="Export PNG">Export PNG</button>
+            <button class="btn-fixed" id="exportSvgBtn" type="button" data-tooltip="Export SVG">Export ⌘E</button>
+        </nav>
+
+        <dialog id="dialog" class="modal">
+            <div class="modal-content">
+                <h2 id="dialogTitle" class="modal-title"></h2>
+                <div id="dialogText" class="modal-text"></div>
+                <input id="dialogInput" class="modal-input" type="text" style="display:none;">
+                <div id="dialogButtons" class="modal-buttons"></div>
+            </div>
+        </dialog>
+    </div>
+
+    <script type="module" src="./tool.js"></script>
+</body>
+</html>
