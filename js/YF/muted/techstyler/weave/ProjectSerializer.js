@@ -9,7 +9,7 @@
 
 import { normalizeSpec } from './PatternSpec.js';
 
-export const PROJECT_VERSION = 1;
+export const PROJECT_VERSION = 2;
 
 /**
  * Build a plain, JSON-serialisable project object.

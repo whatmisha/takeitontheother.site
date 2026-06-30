@@ -45,6 +45,8 @@ Domain modules (`weave/`) are fully independent from the UI and DOM:
 | `PatternRenderer.js` | SVG visualisation of the model. **Contains no weave formulas.** |
 | `ProjectSerializer.js` | JSON project import/export (versioned format). |
 | `mathUtils.js` | Positive `mod`, `gcd`, coprimality checks and cyclic run length. |
+| `colorMath.js` | sRGB ↔ linear-RGB ↔ XYZ ↔ CIELAB, linear-light mixing and CIEDE2000 ΔE. |
+| `ColorMixer.js` | Forward optical mix (`predictCloth`) and inverse yarn-pair search (`suggestPairs`). |
 
 `tool.js` is the only place that connects the UI framework with the domain
 modules.
@@ -61,12 +63,31 @@ modules.
 
 The code always uses a **correct positive modulo**.
 
+### Color match
+
+From a distance the eye averages the warp and weft surfaces, so a woven cloth
+reads as a single optical colour. The **Color match** section inverts this:
+
+1. Pick a **target colour** from the bundled catalogue (`palettes/yarn-catalog.json`,
+   searchable by name, code or hex).
+2. The tool searches catalogue yarn pairs and proposes the warp/weft combinations
+   whose optical mix is closest to the target.
+
+The mix is computed in **linear light** at the weave's own warp ratio
+(`cloth ≈ mixLinear(warp, weft, warpRatio)`, gaps ignored), and match quality is
+the **CIEDE2000 ΔE** between the prediction and the target. The **Yarn contrast**
+slider biases suggestions from solid (identical yarns) through heather/mélange to
+shot (high-contrast) effects. `Apply` sets the warp and weft colours. The
+catalogue is an open, approximate palette and is **not** affiliated with or
+derived from Pantone.
+
 ### Interface
 
 Parameter panel · cell matrix editor (click to switch a crossing) · SVG preview
 with zoom/pan · Draft/Threads switch · seamless repeat (X/Y tiling) · colour,
-thread thickness and spacing controls · history (Cmd/Ctrl+Z), presets, share
-links · **SVG / PNG / JSON** export.
+thread thickness and spacing controls · **colour matching** (target colour →
+suggested warp/weft yarn pair) · history (Cmd/Ctrl+Z), presets, share links ·
+**SVG / PNG / JSON** export.
 
 ### Extensibility
 

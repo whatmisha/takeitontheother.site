@@ -24,6 +24,7 @@ import { analyze, validateSpec } from './weave/PatternValidator.js';
 import { matrixModel } from './weave/ThreadModel.js';
 import { renderWeave } from './weave/PatternRenderer.js';
 import * as Project from './weave/ProjectSerializer.js';
+import { suggestPairs } from './weave/ColorMixer.js';
 
 /** Hard cap on drawn cells per axis so big rapports + tiling stay performant. */
 const MAX_AXIS = 96;
@@ -106,7 +107,12 @@ const app = defineTool({
         weftColor: '#6f4e37',
         bg: '#0a0a0a',
         custom: false,
-        matrix: []
+        matrix: [],
+        targetColor: '',
+        targetCode: '',
+        targetName: '',
+        separation: 0.5,
+        paletteName: 'yarn-catalog'
     },
 
     controls: {
@@ -122,7 +128,8 @@ const app = defineTool({
             { id: 'tileXSlider', valueId: 'tileXValue', setting: 'tileX', min: 1, max: 12, decimals: 0, baseStep: 1 },
             { id: 'tileYSlider', valueId: 'tileYValue', setting: 'tileY', min: 1, max: 12, decimals: 0, baseStep: 1 },
             { id: 'thicknessSlider', valueId: 'thicknessValue', setting: 'thickness', min: 4, max: 48, decimals: 0, baseStep: 1, suffix: 'px' },
-            { id: 'spacingSlider', valueId: 'spacingValue', setting: 'spacing', min: 0, max: 24, decimals: 0, baseStep: 1, suffix: 'px' }
+            { id: 'spacingSlider', valueId: 'spacingValue', setting: 'spacing', min: 0, max: 24, decimals: 0, baseStep: 1, suffix: 'px' },
+            { id: 'cmSeparationSlider', valueId: 'cmSeparationValue', setting: 'separation', min: 0, max: 1, decimals: 2, baseStep: 0.05 }
         ],
         toggles: true
     },
@@ -252,6 +259,8 @@ const app = defineTool({
             e.target.value = '';
         });
 
+        initColorMatch(app);
+
         document.getElementById('introHelpBtn')?.addEventListener('click', () => {
             app.dialog?.alert({
                 title: 'Techstyler',
@@ -351,6 +360,170 @@ function syncSegments(app) {
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Color match (target colour → suggested warp/weft yarn pair)               */
+/* -------------------------------------------------------------------------- */
+
+/** Map a ΔE2000 value to a coarse match-quality bucket for the UI badge. */
+function matchQuality(dE) {
+    if (dE < 2) return { cls: 'cm-q-good', label: 'great' };
+    if (dE < 5) return { cls: 'cm-q-ok', label: 'good' };
+    return { cls: 'cm-q-poor', label: 'rough' };
+}
+
+function initColorMatch(app) {
+    const search = document.getElementById('cmSearch');
+    const list = document.getElementById('cmSearchList');
+    const swatch = document.getElementById('cmTargetSwatch');
+
+    // Load the yarn catalogue; it serves both as the target source and the pool
+    // of real yarn colours suggestions snap to.
+    fetch(`palettes/${app.settings.paletteName}.json`)
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error('palette ' + r.status))))
+        .then((data) => {
+            app._palette = Array.isArray(data.colors) ? data.colors : [];
+            updateTargetUI(app);
+            renderCandidates(app);
+        })
+        .catch(() => {
+            app._palette = [];
+            const box = document.getElementById('cmCandidates');
+            if (box) box.innerHTML = '<div class="cm-empty">Palette could not be loaded.</div>';
+        });
+
+    // Search → filtered option list.
+    search?.addEventListener('input', () => renderSearchList(app, search.value));
+    search?.addEventListener('focus', () => renderSearchList(app, search.value));
+    swatch?.addEventListener('click', () => search?.focus());
+
+    // Close the dropdown on outside click / Escape.
+    document.addEventListener('click', (e) => {
+        if (list && !list.contains(e.target) && e.target !== search) list.hidden = true;
+    });
+    search?.addEventListener('keydown', (e) => { if (e.key === 'Escape') list.hidden = true; });
+
+    // Recompute when the target or the contrast preference changes…
+    ['targetColor', 'separation'].forEach((k) =>
+        app.settingsStore.subscribe(k, () => { updateTargetUI(app); scheduleCandidates(app); }));
+    // …and when the structure changes (warp ratio drives the optical mix).
+    [...SPEC_KEYS, 'matrix'].forEach((k) =>
+        app.settingsStore.subscribe(k, () => scheduleCandidates(app)));
+
+    updateTargetUI(app);
+}
+
+let _cmTimer = null;
+function scheduleCandidates(app) {
+    clearTimeout(_cmTimer);
+    _cmTimer = setTimeout(() => renderCandidates(app), 120);
+}
+
+function updateTargetUI(app) {
+    const s = app.settings;
+    const swatch = document.getElementById('cmTargetSwatch');
+    const nameEl = document.getElementById('cmTargetName');
+    const codeEl = document.getElementById('cmTargetCode');
+    if (swatch) swatch.style.background = s.targetColor || '#222';
+    if (nameEl) nameEl.textContent = s.targetColor ? (s.targetName || s.targetColor) : 'No target';
+    if (codeEl) codeEl.textContent = s.targetColor ? [s.targetCode, s.targetColor].filter(Boolean).join(' · ') : '';
+}
+
+function renderSearchList(app, query) {
+    const list = document.getElementById('cmSearchList');
+    if (!list) return;
+    const palette = app._palette || [];
+    const q = query.trim().toLowerCase();
+    const matches = (q
+        ? palette.filter((c) =>
+            (c.name && c.name.toLowerCase().includes(q)) ||
+            (c.code && c.code.toLowerCase().includes(q)) ||
+            (c.hex && c.hex.toLowerCase().includes(q)))
+        : palette
+    ).slice(0, 40);
+
+    if (!matches.length) {
+        list.innerHTML = '<div class="cm-search-empty">No colours found.</div>';
+        list.hidden = false;
+        return;
+    }
+    list.innerHTML = '';
+    matches.forEach((c) => {
+        const opt = document.createElement('button');
+        opt.type = 'button';
+        opt.className = 'cm-option';
+        opt.innerHTML =
+            `<span class="cm-chip" style="background:${c.hex}"></span>` +
+            `<span class="cm-opt-name">${c.name || c.hex}</span>` +
+            `<span class="cm-opt-code">${c.code || ''}</span>`;
+        opt.addEventListener('click', () => {
+            app.settingsStore.setMultiple({
+                targetColor: c.hex,
+                targetCode: c.code || '',
+                targetName: c.name || ''
+            });
+            const search = document.getElementById('cmSearch');
+            if (search) search.value = c.name || c.hex;
+            list.hidden = true;
+        });
+        list.appendChild(opt);
+    });
+    list.hidden = false;
+}
+
+function renderCandidates(app) {
+    const box = document.getElementById('cmCandidates');
+    if (!box) return;
+    const s = app.settings;
+    const palette = app._palette;
+
+    if (!palette) { box.innerHTML = '<div class="cm-loading">Loading palette…</div>'; return; }
+    if (!s.targetColor) {
+        box.innerHTML = '<div class="cm-empty">Pick a target color to see thread suggestions.</div>';
+        return;
+    }
+
+    const ratio = analyze(currentMatrix(s)).warpRatio;
+    const pairs = suggestPairs({
+        target: s.targetColor,
+        ratio,
+        palette,
+        count: 4,
+        separation: s.separation
+    });
+
+    if (!pairs.length) { box.innerHTML = '<div class="cm-empty">No suggestions.</div>'; return; }
+
+    box.innerHTML = '';
+    pairs.forEach((p) => {
+        const q = matchQuality(p.deltaE);
+        const card = document.createElement('div');
+        card.className = 'cm-card';
+        card.innerHTML =
+            `<span class="cm-card-preview" style="background:${p.predicted}"></span>` +
+            `<span class="cm-card-threads">` +
+                `<span style="background:${p.warp.hex}" title="warp ${p.warp.code || ''}"></span>` +
+                `<span style="background:${p.weft.hex}" title="weft ${p.weft.code || ''}"></span>` +
+            `</span>` +
+            `<span class="cm-card-info">` +
+                `<span class="cm-card-de">ΔE <strong>${p.deltaE.toFixed(1)}</strong>` +
+                    `<span class="cm-q ${q.cls}">${q.label}</span></span>` +
+                `<span class="cm-card-yarns">${p.warp.name || p.warp.hex} + ${p.weft.name || p.weft.hex}</span>` +
+            `</span>`;
+        const apply = document.createElement('button');
+        apply.type = 'button';
+        apply.className = 'cm-apply';
+        apply.textContent = 'Apply';
+        apply.addEventListener('click', () => applyCandidate(app, p.warp.hex, p.weft.hex));
+        card.appendChild(apply);
+        box.appendChild(card);
+    });
+}
+
+function applyCandidate(app, warpHex, weftHex) {
+    app.settingsStore.setMultiple({ warpColor: warpHex, weftColor: weftHex });
+    app._syncControls?.();
+}
+
+/* -------------------------------------------------------------------------- */
 /*  JSON import / export                                                      */
 /* -------------------------------------------------------------------------- */
 
@@ -362,7 +535,9 @@ function projectStateFromApp(app) {
             viewMode: s.viewMode, tileX: s.tileX, tileY: s.tileY,
             thickness: s.thickness, spacing: s.spacing,
             warpColor: s.warpColor, weftColor: s.weftColor, bg: s.bg,
-            showGrid: s.showGrid, showLabel: s.showLabel
+            showGrid: s.showGrid, showLabel: s.showLabel,
+            targetColor: s.targetColor, targetCode: s.targetCode, targetName: s.targetName,
+            separation: s.separation, paletteName: s.paletteName
         },
         matrix: s.custom ? s.matrix : null
     };
@@ -397,7 +572,8 @@ async function importProject(app, file) {
         over: spec.over, under: spec.under, twillStep: spec.step, direction: spec.direction,
         satinN: spec.n, satinStep: spec.satinStep, faced: spec.faced
     };
-    const rk = ['viewMode', 'tileX', 'tileY', 'thickness', 'spacing', 'warpColor', 'weftColor', 'bg', 'showGrid', 'showLabel'];
+    const rk = ['viewMode', 'tileX', 'tileY', 'thickness', 'spacing', 'warpColor', 'weftColor', 'bg', 'showGrid', 'showLabel',
+        'targetColor', 'targetCode', 'targetName', 'separation', 'paletteName'];
     rk.forEach((k) => { if (render[k] !== undefined) updates[k] = render[k]; });
     if (matrix) { updates.custom = true; updates.matrix = matrix; }
     else { updates.custom = false; updates.matrix = []; }

@@ -1,0 +1,1786 @@
+{
+  "name": "Reference Yarn Catalog",
+  "note": "Open approximate catalogue for optical-mix matching; not affiliated with or derived from Pantone.",
+  "colors": [
+    {
+      "code": "TX-001",
+      "name": "Red 25/22",
+      "hex": "#462a2a"
+    },
+    {
+      "code": "TX-002",
+      "name": "Red 25/35",
+      "hex": "#704343"
+    },
+    {
+      "code": "TX-003",
+      "name": "Red 25/48",
+      "hex": "#995c5c"
+    },
+    {
+      "code": "TX-004",
+      "name": "Red 25/62",
+      "hex": "#b68686"
+    },
+    {
+      "code": "TX-005",
+      "name": "Red 25/76",
+      "hex": "#d1b3b3"
+    },
+    {
+      "code": "TX-006",
+      "name": "Red 25/88",
+      "hex": "#e8d9d9"
+    },
+    {
+      "code": "TX-007",
+      "name": "Red 55/22",
+      "hex": "#571919"
+    },
+    {
+      "code": "TX-008",
+      "name": "Red 55/35",
+      "hex": "#8a2828"
+    },
+    {
+      "code": "TX-009",
+      "name": "Red 55/48",
+      "hex": "#be3737"
+    },
+    {
+      "code": "TX-010",
+      "name": "Red 55/62",
+      "hex": "#d36969"
+    },
+    {
+      "code": "TX-011",
+      "name": "Red 55/76",
+      "hex": "#e3a0a0"
+    },
+    {
+      "code": "TX-012",
+      "name": "Red 55/88",
+      "hex": "#f1d0d0"
+    },
+    {
+      "code": "TX-013",
+      "name": "Red 85/22",
+      "hex": "#680808"
+    },
+    {
+      "code": "TX-014",
+      "name": "Red 85/35",
+      "hex": "#a50d0d"
+    },
+    {
+      "code": "TX-015",
+      "name": "Red 85/48",
+      "hex": "#e21212"
+    },
+    {
+      "code": "TX-016",
+      "name": "Red 85/62",
+      "hex": "#f04c4c"
+    },
+    {
+      "code": "TX-017",
+      "name": "Red 85/76",
+      "hex": "#f68e8e"
+    },
+    {
+      "code": "TX-018",
+      "name": "Red 100/22",
+      "hex": "#700000"
+    },
+    {
+      "code": "TX-019",
+      "name": "Red 100/35",
+      "hex": "#b30000"
+    },
+    {
+      "code": "TX-020",
+      "name": "Red 100/48",
+      "hex": "#f50000"
+    },
+    {
+      "code": "TX-021",
+      "name": "Red 100/62",
+      "hex": "#ff3d3d"
+    },
+    {
+      "code": "TX-022",
+      "name": "Red 100/76",
+      "hex": "#ff8585"
+    },
+    {
+      "code": "TX-023",
+      "name": "Orange 25/22",
+      "hex": "#46382a"
+    },
+    {
+      "code": "TX-024",
+      "name": "Orange 25/35",
+      "hex": "#705943"
+    },
+    {
+      "code": "TX-025",
+      "name": "Orange 25/48",
+      "hex": "#997a5c"
+    },
+    {
+      "code": "TX-026",
+      "name": "Orange 25/62",
+      "hex": "#b69e86"
+    },
+    {
+      "code": "TX-027",
+      "name": "Orange 25/76",
+      "hex": "#d1c2b3"
+    },
+    {
+      "code": "TX-028",
+      "name": "Orange 25/88",
+      "hex": "#e8e0d9"
+    },
+    {
+      "code": "TX-029",
+      "name": "Orange 55/22",
+      "hex": "#573819"
+    },
+    {
+      "code": "TX-030",
+      "name": "Orange 55/35",
+      "hex": "#8a5928"
+    },
+    {
+      "code": "TX-031",
+      "name": "Orange 55/48",
+      "hex": "#be7a37"
+    },
+    {
+      "code": "TX-032",
+      "name": "Orange 55/62",
+      "hex": "#d39e69"
+    },
+    {
+      "code": "TX-033",
+      "name": "Orange 55/76",
+      "hex": "#e3c2a0"
+    },
+    {
+      "code": "TX-034",
+      "name": "Orange 55/88",
+      "hex": "#f1e0d0"
+    },
+    {
+      "code": "TX-035",
+      "name": "Orange 85/22",
+      "hex": "#683808"
+    },
+    {
+      "code": "TX-036",
+      "name": "Orange 85/35",
+      "hex": "#a5590d"
+    },
+    {
+      "code": "TX-037",
+      "name": "Orange 85/48",
+      "hex": "#e27a12"
+    },
+    {
+      "code": "TX-038",
+      "name": "Orange 85/62",
+      "hex": "#f09e4c"
+    },
+    {
+      "code": "TX-039",
+      "name": "Orange 85/76",
+      "hex": "#f6c28e"
+    },
+    {
+      "code": "TX-040",
+      "name": "Orange 100/22",
+      "hex": "#703800"
+    },
+    {
+      "code": "TX-041",
+      "name": "Orange 100/35",
+      "hex": "#b35900"
+    },
+    {
+      "code": "TX-042",
+      "name": "Orange 100/48",
+      "hex": "#f57a00"
+    },
+    {
+      "code": "TX-043",
+      "name": "Orange 100/62",
+      "hex": "#ff9e3d"
+    },
+    {
+      "code": "TX-044",
+      "name": "Orange 100/76",
+      "hex": "#ffc285"
+    },
+    {
+      "code": "TX-045",
+      "name": "Amber 25/22",
+      "hex": "#463f2a"
+    },
+    {
+      "code": "TX-046",
+      "name": "Amber 25/35",
+      "hex": "#706443"
+    },
+    {
+      "code": "TX-047",
+      "name": "Amber 25/48",
+      "hex": "#998a5c"
+    },
+    {
+      "code": "TX-048",
+      "name": "Amber 25/62",
+      "hex": "#b6aa86"
+    },
+    {
+      "code": "TX-049",
+      "name": "Amber 25/76",
+      "hex": "#d1c9b3"
+    },
+    {
+      "code": "TX-050",
+      "name": "Amber 25/88",
+      "hex": "#e8e4d9"
+    },
+    {
+      "code": "TX-051",
+      "name": "Amber 55/22",
+      "hex": "#574819"
+    },
+    {
+      "code": "TX-052",
+      "name": "Amber 55/35",
+      "hex": "#8a7228"
+    },
+    {
+      "code": "TX-053",
+      "name": "Amber 55/48",
+      "hex": "#be9c37"
+    },
+    {
+      "code": "TX-054",
+      "name": "Amber 55/62",
+      "hex": "#d3b969"
+    },
+    {
+      "code": "TX-055",
+      "name": "Amber 55/76",
+      "hex": "#e3d3a0"
+    },
+    {
+      "code": "TX-056",
+      "name": "Amber 55/88",
+      "hex": "#f1e9d0"
+    },
+    {
+      "code": "TX-057",
+      "name": "Amber 85/22",
+      "hex": "#685008"
+    },
+    {
+      "code": "TX-058",
+      "name": "Amber 85/35",
+      "hex": "#a57f0d"
+    },
+    {
+      "code": "TX-059",
+      "name": "Amber 85/48",
+      "hex": "#e2ae12"
+    },
+    {
+      "code": "TX-060",
+      "name": "Amber 85/62",
+      "hex": "#f0c74c"
+    },
+    {
+      "code": "TX-061",
+      "name": "Amber 85/76",
+      "hex": "#f6dc8e"
+    },
+    {
+      "code": "TX-062",
+      "name": "Amber 100/22",
+      "hex": "#705400"
+    },
+    {
+      "code": "TX-063",
+      "name": "Amber 100/35",
+      "hex": "#b38600"
+    },
+    {
+      "code": "TX-064",
+      "name": "Amber 100/48",
+      "hex": "#f5b800"
+    },
+    {
+      "code": "TX-065",
+      "name": "Amber 100/62",
+      "hex": "#ffcf3d"
+    },
+    {
+      "code": "TX-066",
+      "name": "Amber 100/76",
+      "hex": "#ffe085"
+    },
+    {
+      "code": "TX-067",
+      "name": "Yellow 25/22",
+      "hex": "#46462a"
+    },
+    {
+      "code": "TX-068",
+      "name": "Yellow 25/35",
+      "hex": "#707043"
+    },
+    {
+      "code": "TX-069",
+      "name": "Yellow 25/48",
+      "hex": "#99995c"
+    },
+    {
+      "code": "TX-070",
+      "name": "Yellow 25/62",
+      "hex": "#b6b686"
+    },
+    {
+      "code": "TX-071",
+      "name": "Yellow 25/76",
+      "hex": "#d1d1b3"
+    },
+    {
+      "code": "TX-072",
+      "name": "Yellow 25/88",
+      "hex": "#e8e8d9"
+    },
+    {
+      "code": "TX-073",
+      "name": "Yellow 55/22",
+      "hex": "#575719"
+    },
+    {
+      "code": "TX-074",
+      "name": "Yellow 55/35",
+      "hex": "#8a8a28"
+    },
+    {
+      "code": "TX-075",
+      "name": "Yellow 55/48",
+      "hex": "#bebe37"
+    },
+    {
+      "code": "TX-076",
+      "name": "Yellow 55/62",
+      "hex": "#d3d369"
+    },
+    {
+      "code": "TX-077",
+      "name": "Yellow 55/76",
+      "hex": "#e3e3a0"
+    },
+    {
+      "code": "TX-078",
+      "name": "Yellow 55/88",
+      "hex": "#f1f1d0"
+    },
+    {
+      "code": "TX-079",
+      "name": "Yellow 85/22",
+      "hex": "#686808"
+    },
+    {
+      "code": "TX-080",
+      "name": "Yellow 85/35",
+      "hex": "#a5a50d"
+    },
+    {
+      "code": "TX-081",
+      "name": "Yellow 85/48",
+      "hex": "#e2e212"
+    },
+    {
+      "code": "TX-082",
+      "name": "Yellow 85/62",
+      "hex": "#f0f04c"
+    },
+    {
+      "code": "TX-083",
+      "name": "Yellow 85/76",
+      "hex": "#f6f68e"
+    },
+    {
+      "code": "TX-084",
+      "name": "Yellow 100/22",
+      "hex": "#707000"
+    },
+    {
+      "code": "TX-085",
+      "name": "Yellow 100/35",
+      "hex": "#b3b300"
+    },
+    {
+      "code": "TX-086",
+      "name": "Yellow 100/48",
+      "hex": "#f5f500"
+    },
+    {
+      "code": "TX-087",
+      "name": "Yellow 100/62",
+      "hex": "#ffff3d"
+    },
+    {
+      "code": "TX-088",
+      "name": "Yellow 100/76",
+      "hex": "#ffff85"
+    },
+    {
+      "code": "TX-089",
+      "name": "Lime 25/22",
+      "hex": "#38462a"
+    },
+    {
+      "code": "TX-090",
+      "name": "Lime 25/35",
+      "hex": "#597043"
+    },
+    {
+      "code": "TX-091",
+      "name": "Lime 25/48",
+      "hex": "#7a995c"
+    },
+    {
+      "code": "TX-092",
+      "name": "Lime 25/62",
+      "hex": "#9eb686"
+    },
+    {
+      "code": "TX-093",
+      "name": "Lime 25/76",
+      "hex": "#c2d1b3"
+    },
+    {
+      "code": "TX-094",
+      "name": "Lime 25/88",
+      "hex": "#e0e8d9"
+    },
+    {
+      "code": "TX-095",
+      "name": "Lime 55/22",
+      "hex": "#385719"
+    },
+    {
+      "code": "TX-096",
+      "name": "Lime 55/35",
+      "hex": "#598a28"
+    },
+    {
+      "code": "TX-097",
+      "name": "Lime 55/48",
+      "hex": "#7abe37"
+    },
+    {
+      "code": "TX-098",
+      "name": "Lime 55/62",
+      "hex": "#9ed369"
+    },
+    {
+      "code": "TX-099",
+      "name": "Lime 55/76",
+      "hex": "#c2e3a0"
+    },
+    {
+      "code": "TX-100",
+      "name": "Lime 55/88",
+      "hex": "#e0f1d0"
+    },
+    {
+      "code": "TX-101",
+      "name": "Lime 85/22",
+      "hex": "#386808"
+    },
+    {
+      "code": "TX-102",
+      "name": "Lime 85/35",
+      "hex": "#59a50d"
+    },
+    {
+      "code": "TX-103",
+      "name": "Lime 85/48",
+      "hex": "#7ae212"
+    },
+    {
+      "code": "TX-104",
+      "name": "Lime 85/62",
+      "hex": "#9ef04c"
+    },
+    {
+      "code": "TX-105",
+      "name": "Lime 85/76",
+      "hex": "#c2f68e"
+    },
+    {
+      "code": "TX-106",
+      "name": "Lime 100/22",
+      "hex": "#387000"
+    },
+    {
+      "code": "TX-107",
+      "name": "Lime 100/35",
+      "hex": "#59b300"
+    },
+    {
+      "code": "TX-108",
+      "name": "Lime 100/48",
+      "hex": "#7af500"
+    },
+    {
+      "code": "TX-109",
+      "name": "Lime 100/62",
+      "hex": "#9eff3d"
+    },
+    {
+      "code": "TX-110",
+      "name": "Lime 100/76",
+      "hex": "#c2ff85"
+    },
+    {
+      "code": "TX-111",
+      "name": "Green 25/22",
+      "hex": "#2a462a"
+    },
+    {
+      "code": "TX-112",
+      "name": "Green 25/35",
+      "hex": "#437043"
+    },
+    {
+      "code": "TX-113",
+      "name": "Green 25/48",
+      "hex": "#5c995c"
+    },
+    {
+      "code": "TX-114",
+      "name": "Green 25/62",
+      "hex": "#86b686"
+    },
+    {
+      "code": "TX-115",
+      "name": "Green 25/76",
+      "hex": "#b3d1b3"
+    },
+    {
+      "code": "TX-116",
+      "name": "Green 25/88",
+      "hex": "#d9e8d9"
+    },
+    {
+      "code": "TX-117",
+      "name": "Green 55/22",
+      "hex": "#195719"
+    },
+    {
+      "code": "TX-118",
+      "name": "Green 55/35",
+      "hex": "#288a28"
+    },
+    {
+      "code": "TX-119",
+      "name": "Green 55/48",
+      "hex": "#37be37"
+    },
+    {
+      "code": "TX-120",
+      "name": "Green 55/62",
+      "hex": "#69d369"
+    },
+    {
+      "code": "TX-121",
+      "name": "Green 55/76",
+      "hex": "#a0e3a0"
+    },
+    {
+      "code": "TX-122",
+      "name": "Green 55/88",
+      "hex": "#d0f1d0"
+    },
+    {
+      "code": "TX-123",
+      "name": "Green 85/22",
+      "hex": "#086808"
+    },
+    {
+      "code": "TX-124",
+      "name": "Green 85/35",
+      "hex": "#0da50d"
+    },
+    {
+      "code": "TX-125",
+      "name": "Green 85/48",
+      "hex": "#12e212"
+    },
+    {
+      "code": "TX-126",
+      "name": "Green 85/62",
+      "hex": "#4cf04c"
+    },
+    {
+      "code": "TX-127",
+      "name": "Green 85/76",
+      "hex": "#8ef68e"
+    },
+    {
+      "code": "TX-128",
+      "name": "Green 100/22",
+      "hex": "#007000"
+    },
+    {
+      "code": "TX-129",
+      "name": "Green 100/35",
+      "hex": "#00b300"
+    },
+    {
+      "code": "TX-130",
+      "name": "Green 100/48",
+      "hex": "#00f500"
+    },
+    {
+      "code": "TX-131",
+      "name": "Green 100/62",
+      "hex": "#3dff3d"
+    },
+    {
+      "code": "TX-132",
+      "name": "Green 100/76",
+      "hex": "#85ff85"
+    },
+    {
+      "code": "TX-133",
+      "name": "Teal 25/22",
+      "hex": "#2a463f"
+    },
+    {
+      "code": "TX-134",
+      "name": "Teal 25/35",
+      "hex": "#437064"
+    },
+    {
+      "code": "TX-135",
+      "name": "Teal 25/48",
+      "hex": "#5c998a"
+    },
+    {
+      "code": "TX-136",
+      "name": "Teal 25/62",
+      "hex": "#86b6aa"
+    },
+    {
+      "code": "TX-137",
+      "name": "Teal 25/76",
+      "hex": "#b3d1c9"
+    },
+    {
+      "code": "TX-138",
+      "name": "Teal 25/88",
+      "hex": "#d9e8e4"
+    },
+    {
+      "code": "TX-139",
+      "name": "Teal 55/22",
+      "hex": "#195748"
+    },
+    {
+      "code": "TX-140",
+      "name": "Teal 55/35",
+      "hex": "#288a72"
+    },
+    {
+      "code": "TX-141",
+      "name": "Teal 55/48",
+      "hex": "#37be9c"
+    },
+    {
+      "code": "TX-142",
+      "name": "Teal 55/62",
+      "hex": "#69d3b9"
+    },
+    {
+      "code": "TX-143",
+      "name": "Teal 55/76",
+      "hex": "#a0e3d3"
+    },
+    {
+      "code": "TX-144",
+      "name": "Teal 55/88",
+      "hex": "#d0f1e9"
+    },
+    {
+      "code": "TX-145",
+      "name": "Teal 85/22",
+      "hex": "#086850"
+    },
+    {
+      "code": "TX-146",
+      "name": "Teal 85/35",
+      "hex": "#0da57f"
+    },
+    {
+      "code": "TX-147",
+      "name": "Teal 85/48",
+      "hex": "#12e2ae"
+    },
+    {
+      "code": "TX-148",
+      "name": "Teal 85/62",
+      "hex": "#4cf0c7"
+    },
+    {
+      "code": "TX-149",
+      "name": "Teal 85/76",
+      "hex": "#8ef6dc"
+    },
+    {
+      "code": "TX-150",
+      "name": "Teal 100/22",
+      "hex": "#007054"
+    },
+    {
+      "code": "TX-151",
+      "name": "Teal 100/35",
+      "hex": "#00b386"
+    },
+    {
+      "code": "TX-152",
+      "name": "Teal 100/48",
+      "hex": "#00f5b8"
+    },
+    {
+      "code": "TX-153",
+      "name": "Teal 100/62",
+      "hex": "#3dffcf"
+    },
+    {
+      "code": "TX-154",
+      "name": "Teal 100/76",
+      "hex": "#85ffe0"
+    },
+    {
+      "code": "TX-155",
+      "name": "Cyan 25/22",
+      "hex": "#2a4446"
+    },
+    {
+      "code": "TX-156",
+      "name": "Cyan 25/35",
+      "hex": "#436c70"
+    },
+    {
+      "code": "TX-157",
+      "name": "Cyan 25/48",
+      "hex": "#5c9499"
+    },
+    {
+      "code": "TX-158",
+      "name": "Cyan 25/62",
+      "hex": "#86b2b6"
+    },
+    {
+      "code": "TX-159",
+      "name": "Cyan 25/76",
+      "hex": "#b3cfd1"
+    },
+    {
+      "code": "TX-160",
+      "name": "Cyan 25/88",
+      "hex": "#d9e7e8"
+    },
+    {
+      "code": "TX-161",
+      "name": "Cyan 55/22",
+      "hex": "#195257"
+    },
+    {
+      "code": "TX-162",
+      "name": "Cyan 55/35",
+      "hex": "#28828a"
+    },
+    {
+      "code": "TX-163",
+      "name": "Cyan 55/48",
+      "hex": "#37b2be"
+    },
+    {
+      "code": "TX-164",
+      "name": "Cyan 55/62",
+      "hex": "#69cbd3"
+    },
+    {
+      "code": "TX-165",
+      "name": "Cyan 55/76",
+      "hex": "#a0dee3"
+    },
+    {
+      "code": "TX-166",
+      "name": "Cyan 55/88",
+      "hex": "#d0eef1"
+    },
+    {
+      "code": "TX-167",
+      "name": "Cyan 85/22",
+      "hex": "#086068"
+    },
+    {
+      "code": "TX-168",
+      "name": "Cyan 85/35",
+      "hex": "#0d98a5"
+    },
+    {
+      "code": "TX-169",
+      "name": "Cyan 85/48",
+      "hex": "#12d1e2"
+    },
+    {
+      "code": "TX-170",
+      "name": "Cyan 85/62",
+      "hex": "#4ce3f0"
+    },
+    {
+      "code": "TX-171",
+      "name": "Cyan 85/76",
+      "hex": "#8eedf6"
+    },
+    {
+      "code": "TX-172",
+      "name": "Cyan 100/22",
+      "hex": "#006770"
+    },
+    {
+      "code": "TX-173",
+      "name": "Cyan 100/35",
+      "hex": "#00a4b3"
+    },
+    {
+      "code": "TX-174",
+      "name": "Cyan 100/48",
+      "hex": "#00e0f5"
+    },
+    {
+      "code": "TX-175",
+      "name": "Cyan 100/62",
+      "hex": "#3defff"
+    },
+    {
+      "code": "TX-176",
+      "name": "Cyan 100/76",
+      "hex": "#85f5ff"
+    },
+    {
+      "code": "TX-177",
+      "name": "Azure 25/22",
+      "hex": "#2a3a46"
+    },
+    {
+      "code": "TX-178",
+      "name": "Azure 25/35",
+      "hex": "#435d70"
+    },
+    {
+      "code": "TX-179",
+      "name": "Azure 25/48",
+      "hex": "#5c8099"
+    },
+    {
+      "code": "TX-180",
+      "name": "Azure 25/62",
+      "hex": "#86a2b6"
+    },
+    {
+      "code": "TX-181",
+      "name": "Azure 25/76",
+      "hex": "#b3c4d1"
+    },
+    {
+      "code": "TX-182",
+      "name": "Azure 25/88",
+      "hex": "#d9e2e8"
+    },
+    {
+      "code": "TX-183",
+      "name": "Azure 55/22",
+      "hex": "#193d57"
+    },
+    {
+      "code": "TX-184",
+      "name": "Azure 55/35",
+      "hex": "#28618a"
+    },
+    {
+      "code": "TX-185",
+      "name": "Azure 55/48",
+      "hex": "#3786be"
+    },
+    {
+      "code": "TX-186",
+      "name": "Azure 55/62",
+      "hex": "#69a7d3"
+    },
+    {
+      "code": "TX-187",
+      "name": "Azure 55/76",
+      "hex": "#a0c7e3"
+    },
+    {
+      "code": "TX-188",
+      "name": "Azure 55/88",
+      "hex": "#d0e3f1"
+    },
+    {
+      "code": "TX-189",
+      "name": "Azure 85/22",
+      "hex": "#084068"
+    },
+    {
+      "code": "TX-190",
+      "name": "Azure 85/35",
+      "hex": "#0d66a5"
+    },
+    {
+      "code": "TX-191",
+      "name": "Azure 85/48",
+      "hex": "#128ce2"
+    },
+    {
+      "code": "TX-192",
+      "name": "Azure 85/62",
+      "hex": "#4cacf0"
+    },
+    {
+      "code": "TX-193",
+      "name": "Azure 85/76",
+      "hex": "#8ecaf6"
+    },
+    {
+      "code": "TX-194",
+      "name": "Azure 100/22",
+      "hex": "#004170"
+    },
+    {
+      "code": "TX-195",
+      "name": "Azure 100/35",
+      "hex": "#0068b3"
+    },
+    {
+      "code": "TX-196",
+      "name": "Azure 100/48",
+      "hex": "#008ff5"
+    },
+    {
+      "code": "TX-197",
+      "name": "Azure 100/62",
+      "hex": "#3daeff"
+    },
+    {
+      "code": "TX-198",
+      "name": "Azure 100/76",
+      "hex": "#85ccff"
+    },
+    {
+      "code": "TX-199",
+      "name": "Blue 25/22",
+      "hex": "#2a2f46"
+    },
+    {
+      "code": "TX-200",
+      "name": "Blue 25/35",
+      "hex": "#434a70"
+    },
+    {
+      "code": "TX-201",
+      "name": "Blue 25/48",
+      "hex": "#5c6699"
+    },
+    {
+      "code": "TX-202",
+      "name": "Blue 25/62",
+      "hex": "#868eb6"
+    },
+    {
+      "code": "TX-203",
+      "name": "Blue 25/76",
+      "hex": "#b3b8d1"
+    },
+    {
+      "code": "TX-204",
+      "name": "Blue 25/88",
+      "hex": "#d9dbe8"
+    },
+    {
+      "code": "TX-205",
+      "name": "Blue 55/22",
+      "hex": "#192457"
+    },
+    {
+      "code": "TX-206",
+      "name": "Blue 55/35",
+      "hex": "#28398a"
+    },
+    {
+      "code": "TX-207",
+      "name": "Blue 55/48",
+      "hex": "#374ebe"
+    },
+    {
+      "code": "TX-208",
+      "name": "Blue 55/62",
+      "hex": "#697bd3"
+    },
+    {
+      "code": "TX-209",
+      "name": "Blue 55/76",
+      "hex": "#a0abe3"
+    },
+    {
+      "code": "TX-210",
+      "name": "Blue 55/88",
+      "hex": "#d0d5f1"
+    },
+    {
+      "code": "TX-211",
+      "name": "Blue 85/22",
+      "hex": "#081868"
+    },
+    {
+      "code": "TX-212",
+      "name": "Blue 85/35",
+      "hex": "#0d27a5"
+    },
+    {
+      "code": "TX-213",
+      "name": "Blue 85/48",
+      "hex": "#1235e2"
+    },
+    {
+      "code": "TX-214",
+      "name": "Blue 85/62",
+      "hex": "#4c67f0"
+    },
+    {
+      "code": "TX-215",
+      "name": "Blue 85/76",
+      "hex": "#8e9ff6"
+    },
+    {
+      "code": "TX-216",
+      "name": "Blue 100/22",
+      "hex": "#001370"
+    },
+    {
+      "code": "TX-217",
+      "name": "Blue 100/35",
+      "hex": "#001eb3"
+    },
+    {
+      "code": "TX-218",
+      "name": "Blue 100/48",
+      "hex": "#0029f5"
+    },
+    {
+      "code": "TX-219",
+      "name": "Blue 100/62",
+      "hex": "#3d5dff"
+    },
+    {
+      "code": "TX-220",
+      "name": "Blue 100/76",
+      "hex": "#8599ff"
+    },
+    {
+      "code": "TX-221",
+      "name": "Indigo 25/22",
+      "hex": "#312a46"
+    },
+    {
+      "code": "TX-222",
+      "name": "Indigo 25/35",
+      "hex": "#4e4370"
+    },
+    {
+      "code": "TX-223",
+      "name": "Indigo 25/48",
+      "hex": "#6b5c99"
+    },
+    {
+      "code": "TX-224",
+      "name": "Indigo 25/62",
+      "hex": "#9286b6"
+    },
+    {
+      "code": "TX-225",
+      "name": "Indigo 25/76",
+      "hex": "#bab3d1"
+    },
+    {
+      "code": "TX-226",
+      "name": "Indigo 25/88",
+      "hex": "#ddd9e8"
+    },
+    {
+      "code": "TX-227",
+      "name": "Indigo 55/22",
+      "hex": "#291957"
+    },
+    {
+      "code": "TX-228",
+      "name": "Indigo 55/35",
+      "hex": "#41288a"
+    },
+    {
+      "code": "TX-229",
+      "name": "Indigo 55/48",
+      "hex": "#5937be"
+    },
+    {
+      "code": "TX-230",
+      "name": "Indigo 55/62",
+      "hex": "#8369d3"
+    },
+    {
+      "code": "TX-231",
+      "name": "Indigo 55/76",
+      "hex": "#b1a0e3"
+    },
+    {
+      "code": "TX-232",
+      "name": "Indigo 55/88",
+      "hex": "#d8d0f1"
+    },
+    {
+      "code": "TX-233",
+      "name": "Indigo 85/22",
+      "hex": "#200868"
+    },
+    {
+      "code": "TX-234",
+      "name": "Indigo 85/35",
+      "hex": "#330da5"
+    },
+    {
+      "code": "TX-235",
+      "name": "Indigo 85/48",
+      "hex": "#4612e2"
+    },
+    {
+      "code": "TX-236",
+      "name": "Indigo 85/62",
+      "hex": "#754cf0"
+    },
+    {
+      "code": "TX-237",
+      "name": "Indigo 85/76",
+      "hex": "#a88ef6"
+    },
+    {
+      "code": "TX-238",
+      "name": "Indigo 100/22",
+      "hex": "#1c0070"
+    },
+    {
+      "code": "TX-239",
+      "name": "Indigo 100/35",
+      "hex": "#2d00b3"
+    },
+    {
+      "code": "TX-240",
+      "name": "Indigo 100/48",
+      "hex": "#3d00f5"
+    },
+    {
+      "code": "TX-241",
+      "name": "Indigo 100/62",
+      "hex": "#6e3dff"
+    },
+    {
+      "code": "TX-242",
+      "name": "Indigo 100/76",
+      "hex": "#a385ff"
+    },
+    {
+      "code": "TX-243",
+      "name": "Violet 25/22",
+      "hex": "#3a2a46"
+    },
+    {
+      "code": "TX-244",
+      "name": "Violet 25/35",
+      "hex": "#5d4370"
+    },
+    {
+      "code": "TX-245",
+      "name": "Violet 25/48",
+      "hex": "#7f5c99"
+    },
+    {
+      "code": "TX-246",
+      "name": "Violet 25/62",
+      "hex": "#a286b6"
+    },
+    {
+      "code": "TX-247",
+      "name": "Violet 25/76",
+      "hex": "#c4b3d1"
+    },
+    {
+      "code": "TX-248",
+      "name": "Violet 25/88",
+      "hex": "#e2d9e8"
+    },
+    {
+      "code": "TX-249",
+      "name": "Violet 55/22",
+      "hex": "#3d1957"
+    },
+    {
+      "code": "TX-250",
+      "name": "Violet 55/35",
+      "hex": "#61288a"
+    },
+    {
+      "code": "TX-251",
+      "name": "Violet 55/48",
+      "hex": "#8637be"
+    },
+    {
+      "code": "TX-252",
+      "name": "Violet 55/62",
+      "hex": "#a769d3"
+    },
+    {
+      "code": "TX-253",
+      "name": "Violet 55/76",
+      "hex": "#c7a0e3"
+    },
+    {
+      "code": "TX-254",
+      "name": "Violet 55/88",
+      "hex": "#e3d0f1"
+    },
+    {
+      "code": "TX-255",
+      "name": "Violet 85/22",
+      "hex": "#400868"
+    },
+    {
+      "code": "TX-256",
+      "name": "Violet 85/35",
+      "hex": "#660da5"
+    },
+    {
+      "code": "TX-257",
+      "name": "Violet 85/48",
+      "hex": "#8c12e2"
+    },
+    {
+      "code": "TX-258",
+      "name": "Violet 85/62",
+      "hex": "#ac4cf0"
+    },
+    {
+      "code": "TX-259",
+      "name": "Violet 85/76",
+      "hex": "#ca8ef6"
+    },
+    {
+      "code": "TX-260",
+      "name": "Violet 100/22",
+      "hex": "#410070"
+    },
+    {
+      "code": "TX-261",
+      "name": "Violet 100/35",
+      "hex": "#6800b3"
+    },
+    {
+      "code": "TX-262",
+      "name": "Violet 100/48",
+      "hex": "#8f00f5"
+    },
+    {
+      "code": "TX-263",
+      "name": "Violet 100/62",
+      "hex": "#ae3dff"
+    },
+    {
+      "code": "TX-264",
+      "name": "Violet 100/76",
+      "hex": "#cc85ff"
+    },
+    {
+      "code": "TX-265",
+      "name": "Purple 25/22",
+      "hex": "#442a46"
+    },
+    {
+      "code": "TX-266",
+      "name": "Purple 25/35",
+      "hex": "#6c4370"
+    },
+    {
+      "code": "TX-267",
+      "name": "Purple 25/48",
+      "hex": "#945c99"
+    },
+    {
+      "code": "TX-268",
+      "name": "Purple 25/62",
+      "hex": "#b286b6"
+    },
+    {
+      "code": "TX-269",
+      "name": "Purple 25/76",
+      "hex": "#cfb3d1"
+    },
+    {
+      "code": "TX-270",
+      "name": "Purple 25/88",
+      "hex": "#e7d9e8"
+    },
+    {
+      "code": "TX-271",
+      "name": "Purple 55/22",
+      "hex": "#521957"
+    },
+    {
+      "code": "TX-272",
+      "name": "Purple 55/35",
+      "hex": "#82288a"
+    },
+    {
+      "code": "TX-273",
+      "name": "Purple 55/48",
+      "hex": "#b337be"
+    },
+    {
+      "code": "TX-274",
+      "name": "Purple 55/62",
+      "hex": "#cb69d3"
+    },
+    {
+      "code": "TX-275",
+      "name": "Purple 55/76",
+      "hex": "#dea0e3"
+    },
+    {
+      "code": "TX-276",
+      "name": "Purple 55/88",
+      "hex": "#eed0f1"
+    },
+    {
+      "code": "TX-277",
+      "name": "Purple 85/22",
+      "hex": "#600868"
+    },
+    {
+      "code": "TX-278",
+      "name": "Purple 85/35",
+      "hex": "#980da5"
+    },
+    {
+      "code": "TX-279",
+      "name": "Purple 85/48",
+      "hex": "#d112e2"
+    },
+    {
+      "code": "TX-280",
+      "name": "Purple 85/62",
+      "hex": "#e34cf0"
+    },
+    {
+      "code": "TX-281",
+      "name": "Purple 85/76",
+      "hex": "#ed8ef6"
+    },
+    {
+      "code": "TX-282",
+      "name": "Purple 100/22",
+      "hex": "#670070"
+    },
+    {
+      "code": "TX-283",
+      "name": "Purple 100/35",
+      "hex": "#a400b3"
+    },
+    {
+      "code": "TX-284",
+      "name": "Purple 100/48",
+      "hex": "#e000f5"
+    },
+    {
+      "code": "TX-285",
+      "name": "Purple 100/62",
+      "hex": "#ef3dff"
+    },
+    {
+      "code": "TX-286",
+      "name": "Purple 100/76",
+      "hex": "#f585ff"
+    },
+    {
+      "code": "TX-287",
+      "name": "Magenta 25/22",
+      "hex": "#462a3d"
+    },
+    {
+      "code": "TX-288",
+      "name": "Magenta 25/35",
+      "hex": "#704361"
+    },
+    {
+      "code": "TX-289",
+      "name": "Magenta 25/48",
+      "hex": "#995c85"
+    },
+    {
+      "code": "TX-290",
+      "name": "Magenta 25/62",
+      "hex": "#b686a6"
+    },
+    {
+      "code": "TX-291",
+      "name": "Magenta 25/76",
+      "hex": "#d1b3c7"
+    },
+    {
+      "code": "TX-292",
+      "name": "Magenta 25/88",
+      "hex": "#e8d9e3"
+    },
+    {
+      "code": "TX-293",
+      "name": "Magenta 55/22",
+      "hex": "#571942"
+    },
+    {
+      "code": "TX-294",
+      "name": "Magenta 55/35",
+      "hex": "#8a286a"
+    },
+    {
+      "code": "TX-295",
+      "name": "Magenta 55/48",
+      "hex": "#be3791"
+    },
+    {
+      "code": "TX-296",
+      "name": "Magenta 55/62",
+      "hex": "#d369b0"
+    },
+    {
+      "code": "TX-297",
+      "name": "Magenta 55/76",
+      "hex": "#e3a0cd"
+    },
+    {
+      "code": "TX-298",
+      "name": "Magenta 55/88",
+      "hex": "#f1d0e6"
+    },
+    {
+      "code": "TX-299",
+      "name": "Magenta 85/22",
+      "hex": "#680848"
+    },
+    {
+      "code": "TX-300",
+      "name": "Magenta 85/35",
+      "hex": "#a50d73"
+    },
+    {
+      "code": "TX-301",
+      "name": "Magenta 85/48",
+      "hex": "#e2129d"
+    },
+    {
+      "code": "TX-302",
+      "name": "Magenta 85/62",
+      "hex": "#f04cba"
+    },
+    {
+      "code": "TX-303",
+      "name": "Magenta 85/76",
+      "hex": "#f68ed3"
+    },
+    {
+      "code": "TX-304",
+      "name": "Magenta 100/22",
+      "hex": "#70004b"
+    },
+    {
+      "code": "TX-305",
+      "name": "Magenta 100/35",
+      "hex": "#b30077"
+    },
+    {
+      "code": "TX-306",
+      "name": "Magenta 100/48",
+      "hex": "#f500a3"
+    },
+    {
+      "code": "TX-307",
+      "name": "Magenta 100/62",
+      "hex": "#ff3dbe"
+    },
+    {
+      "code": "TX-308",
+      "name": "Magenta 100/76",
+      "hex": "#ff85d6"
+    },
+    {
+      "code": "TX-309",
+      "name": "Pink 25/22",
+      "hex": "#462a33"
+    },
+    {
+      "code": "TX-310",
+      "name": "Pink 25/35",
+      "hex": "#704352"
+    },
+    {
+      "code": "TX-311",
+      "name": "Pink 25/48",
+      "hex": "#995c70"
+    },
+    {
+      "code": "TX-312",
+      "name": "Pink 25/62",
+      "hex": "#b68696"
+    },
+    {
+      "code": "TX-313",
+      "name": "Pink 25/76",
+      "hex": "#d1b3bd"
+    },
+    {
+      "code": "TX-314",
+      "name": "Pink 25/88",
+      "hex": "#e8d9de"
+    },
+    {
+      "code": "TX-315",
+      "name": "Pink 55/22",
+      "hex": "#57192e"
+    },
+    {
+      "code": "TX-316",
+      "name": "Pink 55/35",
+      "hex": "#8a2849"
+    },
+    {
+      "code": "TX-317",
+      "name": "Pink 55/48",
+      "hex": "#be3764"
+    },
+    {
+      "code": "TX-318",
+      "name": "Pink 55/62",
+      "hex": "#d3698c"
+    },
+    {
+      "code": "TX-319",
+      "name": "Pink 55/76",
+      "hex": "#e3a0b7"
+    },
+    {
+      "code": "TX-320",
+      "name": "Pink 55/88",
+      "hex": "#f1d0db"
+    },
+    {
+      "code": "TX-321",
+      "name": "Pink 85/22",
+      "hex": "#680828"
+    },
+    {
+      "code": "TX-322",
+      "name": "Pink 85/35",
+      "hex": "#a50d40"
+    },
+    {
+      "code": "TX-323",
+      "name": "Pink 85/48",
+      "hex": "#e21258"
+    },
+    {
+      "code": "TX-324",
+      "name": "Pink 85/62",
+      "hex": "#f04c83"
+    },
+    {
+      "code": "TX-325",
+      "name": "Pink 85/76",
+      "hex": "#f68eb0"
+    },
+    {
+      "code": "TX-326",
+      "name": "Pink 100/22",
+      "hex": "#700025"
+    },
+    {
+      "code": "TX-327",
+      "name": "Pink 100/35",
+      "hex": "#b3003b"
+    },
+    {
+      "code": "TX-328",
+      "name": "Pink 100/48",
+      "hex": "#f50052"
+    },
+    {
+      "code": "TX-329",
+      "name": "Pink 100/62",
+      "hex": "#ff3d7e"
+    },
+    {
+      "code": "TX-330",
+      "name": "Pink 100/76",
+      "hex": "#ff85ad"
+    },
+    {
+      "code": "TX-331",
+      "name": "Black 4",
+      "hex": "#0a0a0a"
+    },
+    {
+      "code": "TX-332",
+      "name": "Black 12",
+      "hex": "#1f1f1f"
+    },
+    {
+      "code": "TX-333",
+      "name": "Gray 22",
+      "hex": "#383838"
+    },
+    {
+      "code": "TX-334",
+      "name": "Gray 34",
+      "hex": "#575757"
+    },
+    {
+      "code": "TX-335",
+      "name": "Gray 46",
+      "hex": "#757575"
+    },
+    {
+      "code": "TX-336",
+      "name": "Gray 58",
+      "hex": "#949494"
+    },
+    {
+      "code": "TX-337",
+      "name": "Gray 70",
+      "hex": "#b3b3b3"
+    },
+    {
+      "code": "TX-338",
+      "name": "Gray 82",
+      "hex": "#d1d1d1"
+    },
+    {
+      "code": "TX-339",
+      "name": "White 92",
+      "hex": "#ebebeb"
+    },
+    {
+      "code": "TX-340",
+      "name": "White 98",
+      "hex": "#fafafa"
+    },
+    {
+      "code": "TX-341",
+      "name": "Ecru",
+      "hex": "#e6dfd1"
+    },
+    {
+      "code": "TX-342",
+      "name": "Sand",
+      "hex": "#d1c09f"
+    },
+    {
+      "code": "TX-343",
+      "name": "Taupe",
+      "hex": "#9b856f"
+    },
+    {
+      "code": "TX-344",
+      "name": "Khaki",
+      "hex": "#afa36a"
+    },
+    {
+      "code": "TX-345",
+      "name": "Olive",
+      "hex": "#7b883a"
+    },
+    {
+      "code": "TX-346",
+      "name": "Rust",
+      "hex": "#b14f25"
+    },
+    {
+      "code": "TX-347",
+      "name": "Brick",
+      "hex": "#9e3d2e"
+    },
+    {
+      "code": "TX-348",
+      "name": "Chocolate",
+      "hex": "#684227"
+    },
+    {
+      "code": "TX-349",
+      "name": "Navy",
+      "hex": "#1c325f"
+    },
+    {
+      "code": "TX-350",
+      "name": "Denim",
+      "hex": "#3f6aa6"
+    },
+    {
+      "code": "TX-351",
+      "name": "Forest",
+      "hex": "#246038"
+    },
+    {
+      "code": "TX-352",
+      "name": "Burgundy",
+      "hex": "#772237"
+    },
+    {
+      "code": "TX-353",
+      "name": "Mustard",
+      "hex": "#d0a525"
+    },
+    {
+      "code": "TX-354",
+      "name": "Terracotta",
+      "hex": "#c86341"
+    },
+    {
+      "code": "TX-355",
+      "name": "Slate",
+      "hex": "#5e7387"
+    },
+    {
+      "code": "TX-356",
+      "name": "Cream",
+      "hex": "#f1ebda"
+    }
+  ]
+}

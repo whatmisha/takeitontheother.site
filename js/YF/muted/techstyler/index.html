@@ -238,6 +238,34 @@
                             </div>
                         </div>
                     </section>
+
+                    <section class="control-section color-match">
+                        <div class="control-section-title">Color match</div>
+                        <div class="control-group">
+                            <div class="cm-target-row">
+                                <button type="button" class="color-dot cm-target-dot" id="cmTargetSwatch" aria-label="Target color"></button>
+                                <div class="cm-target-info">
+                                    <span class="cm-target-name" id="cmTargetName">No target</span>
+                                    <span class="cm-target-code" id="cmTargetCode"></span>
+                                </div>
+                            </div>
+                            <div class="cm-search-wrap">
+                                <input type="text" class="cm-search" id="cmSearch" placeholder="Search palette — name or code" spellcheck="false" autocomplete="off" aria-label="Search target palette">
+                                <div class="cm-search-list" id="cmSearchList" hidden></div>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label for="cmSeparationSlider"><span>Yarn contrast</span>
+                                <input type="text" class="value-display" id="cmSeparationValue" value="0.50"></label>
+                            <input type="range" id="cmSeparationSlider" min="0" max="1" value="0.5" step="0.05">
+                            <div class="cm-sep-hint"><span>solid</span><span>mélange</span><span>shot</span></div>
+                        </div>
+                        <div class="control-group">
+                            <div class="cm-candidates" id="cmCandidates">
+                                <div class="cm-empty">Pick a target color to see thread suggestions.</div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </aside>
         </main>
