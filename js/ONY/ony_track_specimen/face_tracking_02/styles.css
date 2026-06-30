@@ -1,6 +1,6 @@
 @font-face {
     font-family: 'Ony Track VGX';
-    src: url('https://mishaivanov.ru/js/ony/ony_track/face_tracking_01/font/Ony_Track_VGX.woff2') format('woff2-variations');
+    src: url('font/Ony_Track_VGX.woff2') format('woff2-variations');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
