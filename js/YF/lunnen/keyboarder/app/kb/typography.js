@@ -194,6 +194,6 @@ export const parseFont = (buf) => new Typeface(opentype.parse(buf));
 /** Загрузка шрифта по URL (браузер). */
 export async function loadTypeface(url) {
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`шрифт не загрузился: ${url} (${res.status})`);
+    if (!res.ok) throw new Error(`font failed to load: ${url} (${res.status})`);
     return parseFont(await res.arrayBuffer());
 }

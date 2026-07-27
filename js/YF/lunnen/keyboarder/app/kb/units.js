@@ -11,5 +11,5 @@ export const PX_PER_MM = 72 / 25.4;          // 2.834645…
 export const toMm = (px) => px * MM_PER_PX;
 export const toPx = (mm) => mm * PX_PER_MM;
 
-/** Формат «12.34 px / 4.35 мм» для полей ввода. */
+/** Формат числа в мм для UI (внутри по-прежнему px). */
 export const fmtMm = (px, decimals = 2) => toMm(px).toFixed(decimals);

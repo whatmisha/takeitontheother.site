@@ -1,14 +1,17 @@
 /**
- * Keyboard Layout Studio — этапы 1–2 (геометрия и легенды).
+ * Keyboarder — этапы 1–2 (геометрия и легенды).
  *
  * Тонкий слой: настройки, реестр контролов и render(ctx). Вся предметная логика — в app/kb/*,
  * вся инфраструктура (слайдеры, панели, зум, история, пресеты, шаринг, экспорт) — во фреймворке.
+ *
+ * В интерфейсе размеры сетки — только мм, кегли (когда появятся) — только pt. Внутри геометрия
+ * по-прежнему в px (= pt = 1/72″), перевод через toPx / toMm.
  */
 import { defineTool } from '../vendor/framework/src/core/defineTool.js';
 import { buildLayout, gapOf, widthInU } from './kb/grid.js';
 import { attachGuides } from './kb/guides.js';
 import { LCAKB23 } from './kb/layouts.js';
-import { toMm } from './kb/units.js';
+import { toMm, toPx } from './kb/units.js';
 import { loadTypeface } from './kb/typography.js';
 import { Compensator } from './kb/compensate.js';
 import { attachContent, buildLegends, textPath } from './kb/legends.js';
@@ -21,6 +24,16 @@ import ICONS from './kb/icons/lcakb23.js';
 import ICON_OPTICS from './kb/icons/lcakb23-optics.js';
 
 const REF = LCAKB23.grid;
+
+/** Эталонная сетка в мм — то, что видит и правит пользователь. */
+const REF_MM = {
+    colPitch: toMm(REF.colPitch),
+    rowPitch: toMm(REF.rowPitch),
+    keyWidth1U: toMm(REF.keyWidth1U),
+    keyHeight: toMm(REF.keyHeight),
+    cornerRadius: toMm(REF.cornerRadius),
+    guideInset: toMm(REF.guideInset)
+};
 
 /**
  * Эталонные прямоугольники для слоя «Эталон». Заполняется асинхронно в onReady.
@@ -36,14 +49,14 @@ let REFERENCE = null;
 let TYPEFACE = null;
 let COMP = null;
 
-/** Значения сетки из настроек — в форму, которую ждёт buildLayout. */
+/** Значения сетки из настроек (мм) — в форму, которую ждёт buildLayout (px). */
 const gridFrom = (s) => ({
-    colPitch: s.colPitch,
-    rowPitch: s.rowPitch,
-    keyWidth1U: s.keyWidth1U,
-    keyHeight: s.keyHeight,
-    cornerRadius: s.cornerRadius,
-    guideInset: s.guideInset,
+    colPitch: toPx(s.colPitch),
+    rowPitch: toPx(s.rowPitch),
+    keyWidth1U: toPx(s.keyWidth1U),
+    keyHeight: toPx(s.keyHeight),
+    cornerRadius: toPx(s.cornerRadius),
+    guideInset: toPx(s.guideInset),
     origin: REF.origin
 });
 
@@ -83,13 +96,13 @@ const app = defineTool({
     zoom: { fitPadding: { top: 24, right: 335, bottom: 24, left: 335 } },
 
     settings: {
-        // Сетка. Четыре размера независимы: по X макет круглый в мм, по Y сжат на 0.648 %.
-        colPitch: REF.colPitch,
-        rowPitch: REF.rowPitch,
-        keyWidth1U: REF.keyWidth1U,
-        keyHeight: REF.keyHeight,
-        cornerRadius: REF.cornerRadius,
-        guideInset: REF.guideInset,
+        // Сетка в мм. Четыре размера независимы: по X макет круглый, по Y сжат на 0.648 %.
+        colPitch: REF_MM.colPitch,
+        rowPitch: REF_MM.rowPitch,
+        keyWidth1U: REF_MM.keyWidth1U,
+        keyHeight: REF_MM.keyHeight,
+        cornerRadius: REF_MM.cornerRadius,
+        guideInset: REF_MM.guideInset,
 
         showCaps: true,
         showGuides: false,
@@ -109,13 +122,14 @@ const app = defineTool({
     },
 
     controls: {
+        // Ranges and steps in mm; value-display shows “N.NN mm”, no px duplicate.
         sliders: [
-            { id: 'colPitchSlider', valueId: 'colPitchValue', setting: 'colPitch', min: 30, max: 80, decimals: 4, baseStep: 0.1, shiftStep: 1 },
-            { id: 'rowPitchSlider', valueId: 'rowPitchValue', setting: 'rowPitch', min: 30, max: 80, decimals: 4, baseStep: 0.1, shiftStep: 1 },
-            { id: 'keyWidthSlider', valueId: 'keyWidthValue', setting: 'keyWidth1U', min: 20, max: 75, decimals: 4, baseStep: 0.1, shiftStep: 1 },
-            { id: 'keyHeightSlider', valueId: 'keyHeightValue', setting: 'keyHeight', min: 20, max: 75, decimals: 4, baseStep: 0.1, shiftStep: 1 },
-            { id: 'radiusSlider', valueId: 'radiusValue', setting: 'cornerRadius', min: 0, max: 20, decimals: 4, baseStep: 0.05, shiftStep: 0.5 },
-            { id: 'insetSlider', valueId: 'insetValue', setting: 'guideInset', min: 0, max: 18, decimals: 4, baseStep: 0.05, shiftStep: 0.5 }
+            { id: 'colPitchSlider', valueId: 'colPitchValue', setting: 'colPitch', min: 10, max: 28, decimals: 2, baseStep: 0.05, shiftStep: 0.5, suffix: ' mm' },
+            { id: 'rowPitchSlider', valueId: 'rowPitchValue', setting: 'rowPitch', min: 10, max: 28, decimals: 2, baseStep: 0.05, shiftStep: 0.5, suffix: ' mm' },
+            { id: 'keyWidthSlider', valueId: 'keyWidthValue', setting: 'keyWidth1U', min: 7, max: 26, decimals: 2, baseStep: 0.05, shiftStep: 0.5, suffix: ' mm' },
+            { id: 'keyHeightSlider', valueId: 'keyHeightValue', setting: 'keyHeight', min: 7, max: 26, decimals: 2, baseStep: 0.05, shiftStep: 0.5, suffix: ' mm' },
+            { id: 'radiusSlider', valueId: 'radiusValue', setting: 'cornerRadius', min: 0, max: 7, decimals: 2, baseStep: 0.05, shiftStep: 0.25, suffix: ' mm' },
+            { id: 'insetSlider', valueId: 'insetValue', setting: 'guideInset', min: 0, max: 6.5, decimals: 2, baseStep: 0.05, shiftStep: 0.25, suffix: ' mm' }
         ],
         toggles: true
     },
@@ -129,15 +143,15 @@ const app = defineTool({
     colorPickers: {
         containerId: 'unifiedColorPickerContainer',
         swatches: [
-            { type: 'cap', setting: 'capColor', label: 'Клавиша', itemId: 'capColorItem', dotId: 'capColorPreview', hexId: 'capColorHex', hsbSlotId: 'capColorHsbSlot' },
-            { type: 'guide', setting: 'guideColor', label: 'Поле', itemId: 'guideColorItem', dotId: 'guideColorPreview', hexId: 'guideColorHex', hsbSlotId: 'guideColorHsbSlot' },
-            { type: 'ink', setting: 'inkColor', label: 'Надпись', itemId: 'inkColorItem', dotId: 'inkColorPreview', hexId: 'inkColorHex', hsbSlotId: 'inkColorHsbSlot' },
-            { type: 'bg', setting: 'bgColor', label: 'Фон', itemId: 'bgColorItem', dotId: 'bgColorPreview', hexId: 'bgColorHex', hsbSlotId: 'bgColorHsbSlot' }
+            { type: 'cap', setting: 'capColor', label: 'Key', itemId: 'capColorItem', dotId: 'capColorPreview', hexId: 'capColorHex', hsbSlotId: 'capColorHsbSlot' },
+            { type: 'guide', setting: 'guideColor', label: 'Guide', itemId: 'guideColorItem', dotId: 'guideColorPreview', hexId: 'guideColorHex', hsbSlotId: 'guideColorHsbSlot' },
+            { type: 'ink', setting: 'inkColor', label: 'Legend', itemId: 'inkColorItem', dotId: 'inkColorPreview', hexId: 'inkColorHex', hsbSlotId: 'inkColorHsbSlot' },
+            { type: 'bg', setting: 'bgColor', label: 'Background', itemId: 'bgColorItem', dotId: 'bgColorPreview', hexId: 'bgColorHex', hsbSlotId: 'bgColorHsbSlot' }
         ]
     },
 
     presets: {
-        storageKey: 'keyboardLayoutStudio',
+        storageKey: 'keyboarder',
         basePath: 'presets',
         colorDots: (b) => [
             { kind: 'solid', value: b.capColor || '#e6e7e8' },
@@ -145,7 +159,7 @@ const app = defineTool({
         ]
     },
     share: { quantizableFloatKeys: [] },
-    export: { filename: 'keyboard.svg' },
+    export: { filename: 'keyboarder.svg' },
 
     /** Артборд зависит от сетки, поэтому размер отдаём хуком. */
     size(s) {
@@ -307,50 +321,48 @@ const app = defineTool({
         document.getElementById('exportPngBtn')?.addEventListener('click', () => readyApp.exportPNG());
 
         document.getElementById('resetGridBtn')?.addEventListener('click', () => {
-            readyApp.settingsStore.setMultiple({
-                colPitch: REF.colPitch, rowPitch: REF.rowPitch,
-                keyWidth1U: REF.keyWidth1U, keyHeight: REF.keyHeight,
-                cornerRadius: REF.cornerRadius, guideInset: REF.guideInset
-            });
+            readyApp.settingsStore.setMultiple({ ...REF_MM });
         });
 
         document.getElementById('verifyBtn')?.addEventListener('click', async () => {
             try {
                 const { keys } = layoutFor(readyApp.settings);
-                let html = '<h3 class="verify-h">Геометрия</h3>'
+                let html = '<h3 class="verify-h">Geometry</h3>'
                     + reportHtml(compare(keys, await loadReference()));
-                html += '<h3 class="verify-h">Легенды</h3>';
+                html += '<h3 class="verify-h">Legends</h3>';
                 if (!TYPEFACE) {
-                    html += '<p>Гарнитура ещё не загрузилась — сверять нечего.</p>';
+                    html += '<p>Typeface is still loading — nothing to verify yet.</p>';
                 } else {
                     const legendRef = await loadLegendReference();
                     const r = compareLegends(layoutFor(readyApp.settings).legends, legendRef.keys);
                     html += legendsReportHtml(r);
                 }
-                // alert() не пропускает флаг html, поэтому идём через show().
+                // alert() does not pass the html flag, so go through show().
                 readyApp.dialog?.show({
-                    title: 'Сверка с эталоном',
+                    title: 'Verify against reference',
                     text: html,
                     html: true,
-                    buttons: [{ id: 'ok', text: 'Закрыть', type: 'primary' }]
+                    buttons: [{ id: 'ok', text: 'Close', type: 'primary' }]
                 });
             } catch (e) {
-                readyApp.dialog?.alert({ title: 'Сверка не удалась', text: e.message, okText: 'Закрыть' });
+                readyApp.dialog?.alert({ title: 'Verification failed', text: e.message, okText: 'Close' });
             }
         });
 
         document.getElementById('aboutBtn')?.addEventListener('click', () => {
             readyApp.dialog?.alert({
-                title: 'Keyboard Layout Studio',
-                text: 'Геометрия выводится из декларативного описания рядов: в каждом ряду одна '
-                    + 'клавиша помечена flex и забирает остаток ширины блока, поэтому ширины не '
-                    + 'приходится хардкодить. Единица — px, она же pt, она же 1/72 дюйма: шаг '
-                    + 'по X ровно 19 мм.\n\nНадписи ставятся не по координатам из чертежа, '
-                    + 'а по правилам: охранное поле работает системой координат, слот задаёт '
-                    + 'пару якорей, а знак у кромки поля выпускается наружу на оптическую '
-                    + 'компенсацию — она считается по форме края контура, а не по полуапрошу. '
-                    + 'Кнопка «Сверить» показывает, насколько это совпало с LCAKB23.',
-                okText: 'Закрыть'
+                title: 'Keyboarder',
+                text: 'Geometry is derived from a declarative row description: each row has one '
+                    + 'key marked flex that takes the remaining block width, so widths do not '
+                    + 'need to be hard-coded. In the UI, sizes are millimetres and type sizes '
+                    + 'are pt; internally 1 px = 1 pt = 1/72″, and the reference column pitch '
+                    + 'is exactly 19 mm.\n\n'
+                    + 'Legends are placed by rules, not by coordinates from the drawing: the '
+                    + 'safety guide is a coordinate system, a slot picks an anchor pair, and a '
+                    + 'glyph at the guide edge is released outward by optical compensation — '
+                    + 'computed from the contour edge shape, not from sidebearings. Verify '
+                    + 'shows how close this matches LCAKB23.',
+                okText: 'Close'
             });
         });
 
@@ -367,9 +379,9 @@ const app = defineTool({
             readyApp.render();
         }).catch((e) => {
             readyApp.dialog?.alert({
-                title: 'Шрифт не загрузился',
-                text: `${e.message}\n\nГеометрия работает, надписей не будет.`,
-                okText: 'Закрыть'
+                title: 'Font failed to load',
+                text: `${e.message}\n\nGeometry still works; legends will be missing.`,
+                okText: 'Close'
             });
         });
     }
@@ -377,21 +389,14 @@ const app = defineTool({
 
 function updateReadout(s, keys, grid, legends) {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    const mm = (px) => `${toMm(px).toFixed(2)} мм`;
-
-    set('colPitchMm', mm(s.colPitch));
-    set('rowPitchMm', mm(s.rowPitch));
-    set('keyWidthMm', mm(s.keyWidth1U));
-    set('keyHeightMm', mm(s.keyHeight));
-    set('radiusMm', mm(s.cornerRadius));
-    set('insetMm', mm(s.guideInset));
-
     const { bounds } = layoutFor(s);
     set('statKeys', String(keys.length));
-    set('statBoard', `${toMm(bounds.w).toFixed(1)} × ${toMm(bounds.h).toFixed(1)} мм`);
-    set('statGap', `${gapOf(grid).toFixed(3)} px / ${toMm(gapOf(grid)).toFixed(2)} мм`);
+    set('statBoard', `${toMm(bounds.w).toFixed(1)} × ${toMm(bounds.h).toFixed(1)} mm`);
+    set('statGap', `${toMm(gapOf(grid)).toFixed(2)} mm`);
     const txt = legends.filter((e) => e.kind === 'txt').length;
-    set('statLegends', TYPEFACE ? `${txt} строк, ${legends.length - txt} иконок` : 'шрифт грузится');
+    set('statLegends', TYPEFACE
+        ? `${txt} strings, ${legends.length - txt} icons`
+        : 'loading font');
 }
 
 export default app;

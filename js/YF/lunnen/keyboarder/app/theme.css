@@ -1,5 +1,5 @@
 /**
- * Keyboard Layout Studio — оверрайд токенов и собственные компоненты.
+ * Keyboarder — оверрайд токенов и собственные компоненты.
  *
  * Подключается ПОСЛЕ vendor/framework/css/othersite-styles.css. Компонентный CSS фреймворка
  * не форкаем, только переопределяем кастомные свойства и добавляем то, чего в нём нет.
@@ -49,13 +49,17 @@
     gap: var(--spacing-md);
 }
 
-/* Дублирующий вывод в миллиметрах рядом с названием параметра. */
-.unit.mm {
+/* Подпись единицы рядом с названием параметра (если нужна отдельно от value-display). */
+.unit.mm,
+.unit.pt {
     color: var(--color-text-muted);
     font-variant-numeric: tabular-nums;
 }
 
-/* Сводка по раскладке под слайдерами сетки. */
+/* Grid fields show “N.NN mm” — a bit wider than the default value-display. */
+#gridPanel .value-display {
+    width: 5.5rem;
+}
 .readout {
     display: flex;
     flex-direction: column;

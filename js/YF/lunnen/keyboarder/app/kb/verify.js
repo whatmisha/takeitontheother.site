@@ -14,7 +14,7 @@ const cache = new Map();
 async function loadOnce(url) {
     if (!cache.has(url)) {
         const res = await fetch(url);
-        if (!res.ok) throw new Error(`Не удалось загрузить эталон ${url}: ${res.status} ${res.statusText}`);
+        if (!res.ok) throw new Error(`Failed to load reference ${url}: ${res.status} ${res.statusText}`);
         cache.set(url, await res.json());
     }
     return cache.get(url);
@@ -45,7 +45,7 @@ export function compare(keys, ref) {
         const k = keyOf(r);
         const m = mine.get(k);
         if (!m) {
-            missing.push(`ряд ${r.row}, x=${r.x} (${r.legend || r.tpl})`);
+            missing.push(`row ${r.row}, x=${r.x} (${r.legend || r.tpl})`);
             continue;
         }
         seen.add(k);
@@ -56,7 +56,7 @@ export function compare(keys, ref) {
 
     rows.sort((a, b) => b.worst - a.worst);
     const extra = keys.filter((k) => !seen.has(keyOf(k)))
-        .map((k) => `ряд ${k.row}, x=${k.x.toFixed(4)}`);
+        .map((k) => `row ${k.row}, x=${k.x.toFixed(4)}`);
 
     const worstOverall = Math.max(...Object.values(max));
     return {
@@ -79,23 +79,23 @@ export function compare(keys, ref) {
  * модель, либо пропустить плохую. Каждое число взято из измерений в PIPELINE.md, а не назначено.
  */
 export const LEGEND_CLASSES = {
-    'v-edge': { tol: 0.15, label: 'вертикаль: кромка поля, буквы, цифры, иконки',
-        why: '§ 9.1: медиана невязки 0.0002 px, σ 0.076 — допуск взят как 2σ дрожания руки' },
-    'v-edge-hand': { tol: 0.40, label: 'вертикаль: кромка поля, знаки',
-        why: '§ 9.1 п. 4: у знаков нет cap-бокса, выключка по ink и подгонка на глаз' },
-    'v-mid': { tol: 0.60, label: 'вертикаль: центрирование',
-        why: '§ 9.1: самый рыхлый якорь, медиана 0.21 px, σ 0.23' },
-    'v-zone': { tol: 0.05, label: 'вертикаль: свободная зона над подписью',
-        why: '§ 9.3: медиана 0.003 px, плюс оптическая поправка иконки' },
-    'h-pen': { tol: 0.06, label: 'горизонталь: центр по перу и привязка иконок',
-        why: '§ 9.2: медиана 0.005 px, максимум 0.042 по 47 точкам' },
-    'h-formula': { tol: 0.30, rmse: 0.12, label: 'горизонталь: кромка + компенсация формулой',
-        why: '§ 10.3: RMSE модели 0.098 px, максимум 0.286 px на знаке Т' },
-    'h-table': { tol: 0.25, label: 'горизонталь: кромка + компенсация по таблице',
-        why: '§ 10.4: таблица хранит медиану, а сам дизайнер знак `;` поставил дважды '
-            + 'по-разному с разбросом 0.38 px — точнее медианы модель быть не может' },
-    explicit: { tol: 0.001, label: 'нежёсткий слот: явное смещение',
-        why: 'правила нет, координата хранится как есть и обязана воспроизводиться точно' }
+    'v-edge': { tol: 0.15, label: 'vertical: guide edge, letters, digits, icons',
+        why: '§ 9.1: median error 0.0002 px, σ 0.076 — tolerance set to 2σ of hand jitter' },
+    'v-edge-hand': { tol: 0.40, label: 'vertical: guide edge, symbols',
+        why: '§ 9.1 ¶ 4: symbols have no cap box; alignment by ink and eye' },
+    'v-mid': { tol: 0.60, label: 'vertical: centering',
+        why: '§ 9.1: loosest anchor, median 0.21 px, σ 0.23' },
+    'v-zone': { tol: 0.05, label: 'vertical: free zone above caption',
+        why: '§ 9.3: median 0.003 px, plus icon optical nudge' },
+    'h-pen': { tol: 0.06, label: 'horizontal: pen center and icon anchors',
+        why: '§ 9.2: median 0.005 px, max 0.042 across 47 points' },
+    'h-formula': { tol: 0.30, rmse: 0.12, label: 'horizontal: edge + formula compensation',
+        why: '§ 10.3: model RMSE 0.098 px, max 0.286 px on glyph Т' },
+    'h-table': { tol: 0.25, label: 'horizontal: edge + table compensation',
+        why: '§ 10.4: table stores the median; the designer placed `;` twice '
+            + 'differently with 0.38 px spread — the model cannot beat the median' },
+    explicit: { tol: 0.001, label: 'soft slot: explicit offset',
+        why: 'no rule; the coordinate is stored as-is and must reproduce exactly' }
 };
 
 /**
@@ -105,14 +105,14 @@ export const LEGEND_CLASSES = {
  */
 export const KNOWN_EXCEPTIONS = [
     { label: 'num lock', axis: 'x', limit: 0.35,
-        why: 'клавиша `num lock clear` — одно из двух исключений типизации (§ 11.2): '
-            + 'двухсоставная подпись, выключенная не по общему правилу' },
+        why: '`num lock clear` is one of two typing exceptions (§ 11.2): '
+            + 'a two-part caption not aligned by the general rule' },
     { label: ',', slot: 'FR', axis: 'y', limit: 0.30,
-        why: 'единственный в макете знак препинания в слоте свободной зоны: '
-            + 'у запятой нет cap-бокса, и центр зоны дизайнер выбрал на глаз' },
+        why: 'only punctuation mark in a free-zone slot in the layout: '
+            + 'comma has no cap box, and the designer picked the zone center by eye' },
     { label: '2.4G', axis: 'x', limit: 0.15,
-        why: 'единственная строка, собранная из трёх tspan с разным трекингом '
-            + '(−0.0200, −0.0300, +0.0200 em); модель хранит один трекинг на строку' }
+        why: 'only string built from three tspans with different tracking '
+            + '(−0.0200, −0.0300, +0.0200 em); the model stores one tracking per string' }
 ];
 
 const exceptionFor = (pt) => KNOWN_EXCEPTIONS.find((e) => e.label === pt.label
@@ -204,14 +204,14 @@ function findIcon(ref, p) {
 /** Отчёт по легендам в HTML. */
 export function legendsReportHtml(r) {
     const f = (v) => v.toFixed(4);
-    let html = `<p>Размещено элементов <b>${r.total}</b>, проверено координат `
-        + `<b>${r.total * 2}</b> — по одной на каждую ось каждого элемента.</p>`;
+    let html = `<p>Placed <b>${r.total}</b> elements, checked <b>${r.total * 2}</b> coordinates `
+        + `— one per axis per element.</p>`;
     if (r.unmatched.length) {
-        html += `<p class="verify-bad">Не нашлись в эталоне (${r.unmatched.length}): `
+        html += `<p class="verify-bad">Missing from reference (${r.unmatched.length}): `
             + `${r.unmatched.slice(0, 10).join('; ')}</p>`;
     }
-    html += '<table class="verify-table"><tr><th>Правило</th><th>n</th><th>медиана</th>'
-        + '<th>макс.</th><th>допуск</th><th>откуда допуск</th></tr>';
+    html += '<table class="verify-table"><tr><th>Rule</th><th>n</th><th>median</th>'
+        + '<th>max</th><th>tolerance</th><th>tolerance source</th></tr>';
     for (const c of r.byClass) {
         html += `<tr><td>${c.label}</td><td>${c.n}</td><td>${f(c.med)}</td>`
             + `<td class="${c.pass ? 'verify-ok' : 'verify-bad'}">${f(c.max)}</td>`
@@ -220,14 +220,14 @@ export function legendsReportHtml(r) {
     }
     html += '</table>';
     html += '<p>' + (r.pass
-        ? '<span class="verify-ok">Пройдено: каждое правило воспроизведено с заявленной точностью.</span>'
-        : '<span class="verify-bad">Не пройдено.</span>')
+        ? '<span class="verify-ok">Passed: every rule reproduced within its stated tolerance.</span>'
+        : '<span class="verify-bad">Failed.</span>')
         + (r.excused.length
-            ? ` Отдельно вынесено ${r.excused.length} расхождений с названной причиной.`
+            ? ` ${r.excused.length} discrepancies called out with a named reason.`
             : '') + '</p>';
     if (r.excused.length) {
-        html += '<table class="verify-table"><tr><th>элемент</th><th>ось</th><th>Δ, px</th>'
-            + '<th>почему так</th></tr>';
+        html += '<table class="verify-table"><tr><th>element</th><th>axis</th><th>Δ, px</th>'
+            + '<th>why</th></tr>';
         for (const e of r.excused) {
             html += `<tr><td>${e.label}</td><td>${e.axis}</td><td>${f(e.d)}</td>`
                 + `<td class="verify-why">${e.why}</td></tr>`;
@@ -235,8 +235,8 @@ export function legendsReportHtml(r) {
         html += '</table>';
     }
     if (r.worst.length) {
-        html += '<table class="verify-table"><tr><th>ряд</th><th>слот</th><th>элемент</th>'
-            + '<th>ось</th><th>Δ, px</th><th>правило</th></tr>';
+        html += '<table class="verify-table"><tr><th>row</th><th>slot</th><th>element</th>'
+            + '<th>axis</th><th>Δ, px</th><th>rule</th></tr>';
         for (const w of r.worst.slice(0, 15)) {
             html += `<tr><td>${w.row}</td><td>${w.slot}</td><td>${w.label}</td>`
                 + `<td>${w.axis}</td><td class="verify-bad">${f(w.d)}</td>`
@@ -252,29 +252,29 @@ export function reportHtml(r) {
     const cls = (v) => (v <= GEOMETRY_TOLERANCE ? 'verify-ok' : 'verify-bad');
     const px = (v) => v.toFixed(6);
 
-    let html = `<p>Клавиш сгенерировано <b>${r.count}</b>, в эталоне <b>${r.refCount}</b>.</p>`;
+    let html = `<p>Generated <b>${r.count}</b> keys, reference has <b>${r.refCount}</b>.</p>`;
 
     if (r.missing.length) {
-        html += `<p class="verify-bad">Нет в генераторе (${r.missing.length}): ${r.missing.join('; ')}</p>`;
+        html += `<p class="verify-bad">Missing from generator (${r.missing.length}): ${r.missing.join('; ')}</p>`;
     }
     if (r.extra.length) {
-        html += `<p class="verify-bad">Лишние (${r.extra.length}): ${r.extra.join('; ')}</p>`;
+        html += `<p class="verify-bad">Extra (${r.extra.length}): ${r.extra.join('; ')}</p>`;
     }
 
-    html += '<table class="verify-table"><tr><th>Параметр</th><th>макс. |Δ|, px</th></tr>';
-    for (const [p, label] of [['x', 'x'], ['y', 'y'], ['w', 'ширина'], ['h', 'высота']]) {
+    html += '<table class="verify-table"><tr><th>Parameter</th><th>max |Δ|, px</th></tr>';
+    for (const [p, label] of [['x', 'x'], ['y', 'y'], ['w', 'width'], ['h', 'height']]) {
         html += `<tr><td>${label}</td><td class="${cls(r.max[p])}">${px(r.max[p])}</td></tr>`;
     }
     html += '</table>';
 
-    html += `<p>Порог приёмки — ${GEOMETRY_TOLERANCE} px (эталон записан с четырьмя знаками). `
+    html += `<p>Acceptance threshold — ${GEOMETRY_TOLERANCE} px (reference stored to four decimals). `
         + (r.pass
-            ? '<span class="verify-ok">Пройдено.</span>'
-            : '<span class="verify-bad">Не пройдено.</span>')
+            ? '<span class="verify-ok">Passed.</span>'
+            : '<span class="verify-bad">Failed.</span>')
         + '</p>';
 
     if (r.worst.length) {
-        html += '<table class="verify-table"><tr><th>ряд</th><th>легенда</th><th>Δx</th><th>Δy</th><th>Δw</th><th>Δh</th></tr>';
+        html += '<table class="verify-table"><tr><th>row</th><th>legend</th><th>Δx</th><th>Δy</th><th>Δw</th><th>Δh</th></tr>';
         for (const w of r.worst) {
             html += `<tr><td>${w.ref.row}</td><td>${w.ref.legend || w.ref.tpl}</td>`
                 + `<td>${w.d.x.toFixed(5)}</td><td>${w.d.y.toFixed(5)}</td>`

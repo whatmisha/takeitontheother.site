@@ -5,19 +5,19 @@
       "file": "lcakb23.json"
     },
     {
-      "name": "Оптическая компенсация",
+      "name": "Optical compensation",
       "file": "lcakb23-optics.json"
     },
     {
-      "name": "Слоты охранного поля",
+      "name": "Guide slots",
       "file": "lcakb23-slots.json"
     },
     {
-      "name": "Только поля",
+      "name": "Guides only",
       "file": "lcakb23-guides.json"
     },
     {
-      "name": "Круглые миллиметры",
+      "name": "Round millimetres",
       "file": "round-mm.json"
     }
   ]
