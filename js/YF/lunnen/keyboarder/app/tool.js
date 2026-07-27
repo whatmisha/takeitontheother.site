@@ -105,7 +105,7 @@ const app = defineTool({
         guideInset: REF_MM.guideInset,
 
         showCaps: true,
-        showGuides: true,
+        showGuides: false,
         showGlyphs: true,
         showIcons: true,
         showColumns: false,

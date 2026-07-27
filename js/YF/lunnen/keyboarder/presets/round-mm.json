@@ -6,7 +6,7 @@
   "cornerRadius": 1.1800000036,
   "guideInset": 2.3313319444,
   "showCaps": true,
-  "showGuides": true,
+  "showGuides": false,
   "showGlyphs": true,
   "showIcons": true,
   "showColumns": false,
