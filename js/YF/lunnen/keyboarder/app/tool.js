@@ -118,7 +118,7 @@ const app = defineTool({
         capColor: '#1e1e1e',
         guideColor: '#2353db',
         inkColor: '#aaaaaa',
-        bgColor: '#1c1f22'
+        bgColor: '#000000'
     },
 
     controls: {
@@ -155,7 +155,7 @@ const app = defineTool({
         basePath: 'presets',
         colorDots: (b) => [
             { kind: 'solid', value: b.capColor || '#1e1e1e' },
-            { kind: 'solid', value: b.bgColor || '#1c1f22' }
+            { kind: 'solid', value: b.bgColor || '#000000' }
         ]
     },
     share: { quantizableFloatKeys: [] },
