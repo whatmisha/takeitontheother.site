@@ -13,7 +13,7 @@ import { attachGuides } from './kb/guides.js';
 import { LCAKB23 } from './kb/layouts.js';
 import { toMm, toPx } from './kb/units.js';
 import { loadTypeface } from './kb/typography.js';
-import { Compensator } from './kb/compensate.js';
+import { Compensator, YS_TEXT_REGULAR } from './kb/compensate.js';
 import { attachContent, buildLegends, textPath } from './kb/legends.js';
 import {
     loadReference, loadLegendReference, compare, reportHtml,
@@ -24,6 +24,31 @@ import ICONS from './kb/icons/lcakb23.js';
 import ICON_OPTICS from './kb/icons/lcakb23-optics.js';
 
 const REF = LCAKB23.grid;
+const SIZE_EPS = 0.0001;
+
+const TYPE_DEFAULTS = {
+    glyphSize: 15.1999,
+    numpadSize: 13.1732,
+    secondarySize: 12.0745,
+    wordSize: 9.1199,
+    leading: CONTENT.interline,
+    trackingOffset: 0
+};
+
+const SLIDER_BY_SETTING = {
+    colPitch: 'colPitchSlider',
+    rowPitch: 'rowPitchSlider',
+    keyWidth1U: 'keyWidthSlider',
+    keyHeight: 'keyHeightSlider',
+    cornerRadius: 'radiusSlider',
+    guideInset: 'insetSlider',
+    glyphSize: 'glyphSizeSlider',
+    numpadSize: 'numpadSizeSlider',
+    secondarySize: 'secondarySizeSlider',
+    wordSize: 'wordSizeSlider',
+    leading: 'leadingSlider',
+    trackingOffset: 'trackingOffsetSlider'
+};
 
 /** Эталонная сетка в мм — то, что видит и правит пользователь. */
 const REF_MM = {
@@ -47,7 +72,19 @@ let REFERENCE = null;
  * и ждать его, чтобы показать первый кадр, незачем.
  */
 let TYPEFACE = null;
-let COMP = null;
+let COMP_CACHE = new Map();
+
+function compFor(s) {
+    if (!TYPEFACE || s.compensationMode === 'off') return null;
+    const mode = s.compensationMode || 'table';
+    if (!COMP_CACHE.has(mode)) {
+        const params = mode === 'model'
+            ? { ...YS_TEXT_REGULAR, table: {} }
+            : YS_TEXT_REGULAR;
+        COMP_CACHE.set(mode, new Compensator(TYPEFACE, params));
+    }
+    return COMP_CACHE.get(mode);
+}
 
 /** Значения сетки из настроек (мм) — в форму, которую ждёт buildLayout (px). */
 const gridFrom = (s) => ({
@@ -60,6 +97,40 @@ const gridFrom = (s) => ({
     origin: REF.origin
 });
 
+const typeSigFrom = (s) => JSON.stringify({
+    glyphSize: s.glyphSize,
+    numpadSize: s.numpadSize,
+    secondarySize: s.secondarySize,
+    wordSize: s.wordSize,
+    leading: s.leading,
+    trackingOffset: s.trackingOffset,
+    compensationMode: s.compensationMode
+});
+
+function sizeRole(size) {
+    if (Math.abs(size - TYPE_DEFAULTS.glyphSize) < SIZE_EPS) return 'glyphSize';
+    if (Math.abs(size - TYPE_DEFAULTS.numpadSize) < SIZE_EPS) return 'numpadSize';
+    if (Math.abs(size - TYPE_DEFAULTS.secondarySize) < SIZE_EPS) return 'secondarySize';
+    if (Math.abs(size - TYPE_DEFAULTS.wordSize) < SIZE_EPS) return 'wordSize';
+    return null;
+}
+
+function applyTypeSettings(keys, s) {
+    for (const k of keys) {
+        k.elements = (k.elements || []).map((el) => {
+            if (el.kind !== 'txt') return el;
+            const role = sizeRole(el.size);
+            return {
+                ...el,
+                size: role ? s[role] : el.size,
+                tracking: (el.tracking || 0) + (s.trackingOffset || 0),
+                baseSize: el.size,
+                role: role || 'custom'
+            };
+        });
+    }
+}
+
 /**
  * Пересчёт раскладки. Кэшируется по подписи сетки: render вызывается и при смене цвета,
  * а геометрия при этом не меняется.
@@ -67,15 +138,16 @@ const gridFrom = (s) => ({
 let cached = { sig: null, data: null };
 function layoutFor(s) {
     const g = gridFrom(s);
-    const sig = JSON.stringify(g) + (TYPEFACE ? '·tf' : '');
+    const sig = JSON.stringify(g) + typeSigFrom(s) + (TYPEFACE ? '·tf' : '');
     if (cached.sig !== sig) {
         const data = buildLayout(LCAKB23, g);
         attachGuides(data.keys, g.guideInset);
         attachContent(data.keys, CONTENT);
+        applyTypeSettings(data.keys, s);
         data.legends = TYPEFACE
             ? buildLegends(data.keys, {
-                tf: TYPEFACE, comp: COMP,
-                interline: CONTENT.interline, iconOptics: ICON_OPTICS
+                tf: TYPEFACE, comp: compFor(s),
+                interline: s.leading, iconOptics: ICON_OPTICS
             })
             : [];
         cached = { sig, data };
@@ -104,6 +176,16 @@ const app = defineTool({
         cornerRadius: REF_MM.cornerRadius,
         guideInset: REF_MM.guideInset,
 
+        // Type sizes are pt. Internally 1 px = 1 pt, so no conversion is needed.
+        glyphSize: TYPE_DEFAULTS.glyphSize,
+        numpadSize: TYPE_DEFAULTS.numpadSize,
+        secondarySize: TYPE_DEFAULTS.secondarySize,
+        wordSize: TYPE_DEFAULTS.wordSize,
+        leading: TYPE_DEFAULTS.leading,
+        trackingOffset: TYPE_DEFAULTS.trackingOffset,
+        compensationMode: 'table',
+        selectedKeyIndex: 0,
+
         showCaps: true,
         showGuides: false,
         showGlyphs: true,
@@ -124,12 +206,19 @@ const app = defineTool({
     controls: {
         // Ranges and steps in mm; value-display shows “N.NNN mm”, no px duplicate.
         sliders: [
-            { id: 'colPitchSlider', valueId: 'colPitchValue', setting: 'colPitch', min: 10, max: 28, decimals: 3, baseStep: 0.001, shiftStep: 0.1, suffix: ' mm' },
-            { id: 'rowPitchSlider', valueId: 'rowPitchValue', setting: 'rowPitch', min: 10, max: 28, decimals: 3, baseStep: 0.001, shiftStep: 0.1, suffix: ' mm' },
-            { id: 'keyWidthSlider', valueId: 'keyWidthValue', setting: 'keyWidth1U', min: 7, max: 26, decimals: 3, baseStep: 0.001, shiftStep: 0.1, suffix: ' mm' },
-            { id: 'keyHeightSlider', valueId: 'keyHeightValue', setting: 'keyHeight', min: 7, max: 26, decimals: 3, baseStep: 0.001, shiftStep: 0.1, suffix: ' mm' },
-            { id: 'radiusSlider', valueId: 'radiusValue', setting: 'cornerRadius', min: 0, max: 7, decimals: 3, baseStep: 0.001, shiftStep: 0.05, suffix: ' mm' },
-            { id: 'insetSlider', valueId: 'insetValue', setting: 'guideInset', min: 0, max: 6.5, decimals: 3, baseStep: 0.001, shiftStep: 0.05, suffix: ' mm' }
+            { id: 'colPitchSlider', valueId: 'colPitchValue', setting: 'colPitch', min: 10, max: 28, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
+            { id: 'rowPitchSlider', valueId: 'rowPitchValue', setting: 'rowPitch', min: 10, max: 28, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
+            { id: 'keyWidthSlider', valueId: 'keyWidthValue', setting: 'keyWidth1U', min: 7, max: 26, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
+            { id: 'keyHeightSlider', valueId: 'keyHeightValue', setting: 'keyHeight', min: 7, max: 26, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
+            { id: 'radiusSlider', valueId: 'radiusValue', setting: 'cornerRadius', min: 0, max: 7, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
+            { id: 'insetSlider', valueId: 'insetValue', setting: 'guideInset', min: 0, max: 6.5, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
+
+            { id: 'glyphSizeSlider', valueId: 'glyphSizeValue', setting: 'glyphSize', min: 6, max: 24, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' pt' },
+            { id: 'numpadSizeSlider', valueId: 'numpadSizeValue', setting: 'numpadSize', min: 6, max: 24, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' pt' },
+            { id: 'secondarySizeSlider', valueId: 'secondarySizeValue', setting: 'secondarySize', min: 6, max: 24, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' pt' },
+            { id: 'wordSizeSlider', valueId: 'wordSizeValue', setting: 'wordSize', min: 5, max: 18, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' pt' },
+            { id: 'leadingSlider', valueId: 'leadingValue', setting: 'leading', min: 6, max: 24, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' pt' },
+            { id: 'trackingOffsetSlider', valueId: 'trackingOffsetValue', setting: 'trackingOffset', min: -0.08, max: 0.08, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' em' }
         ],
         toggles: true
     },
@@ -137,6 +226,8 @@ const app = defineTool({
     panels: [
         { id: 'gridPanel', headerId: 'gridPanelHeader', persistent: true },
         { id: 'layersPanel', headerId: 'layersPanelHeader', persistent: true },
+        { id: 'typePanel', headerId: 'typePanelHeader', persistent: true },
+        { id: 'legendPanel', headerId: 'legendPanelHeader', persistent: true },
         { id: 'colorsPanel', headerId: 'colorsPanelHeader', persistent: true }
     ],
 
@@ -279,9 +370,21 @@ const app = defineTool({
                     ...box, fill: 'none', stroke: '#3d7fd9', 'stroke-width': 0.2
                 }));
                 if (el.kind === 'txt') {
+                    const k = el.size / TYPEFACE.upm;
+                    const capTop = el.by - TYPEFACE.capHeight * k;
+                    const xTop = el.by - TYPEFACE.xHeight * k;
+                    g.appendChild(create('rect', {
+                        x: el.bx, y: capTop,
+                        width: el.advw, height: TYPEFACE.capHeight * k,
+                        fill: 'none', stroke: '#6fbf73', 'stroke-width': 0.16
+                    }));
                     g.appendChild(create('line', {
                         x1: el.bx, y1: el.by, x2: el.bx + el.advw, y2: el.by,
                         stroke: '#ffa500', 'stroke-width': 0.2
+                    }));
+                    g.appendChild(create('line', {
+                        x1: el.bx, y1: xTop, x2: el.bx + el.advw, y2: xTop,
+                        stroke: '#d1b65b', 'stroke-width': 0.16, 'stroke-dasharray': '0.5 0.5'
                     }));
                 }
             }
@@ -314,14 +417,44 @@ const app = defineTool({
         }
 
         updateReadout(s, keys, grid, legends);
+        updateLegendInspector(s, keys, grid, legends);
+        syncCompensationMode(s);
     },
 
     onReady(readyApp) {
         document.getElementById('exportSvgBtn')?.addEventListener('click', () => readyApp.exportSVG());
         document.getElementById('exportPngBtn')?.addEventListener('click', () => readyApp.exportPNG());
 
+        const syncSliders = (values) => {
+            for (const [setting, value] of Object.entries(values)) {
+                const id = SLIDER_BY_SETTING[setting];
+                if (id) readyApp.sliders?.setValue(id, value, false);
+            }
+        };
+
         document.getElementById('resetGridBtn')?.addEventListener('click', () => {
-            readyApp.settingsStore.setMultiple({ ...REF_MM });
+            const values = { ...REF_MM };
+            readyApp.settingsStore.setMultiple(values);
+            syncSliders(values);
+        });
+
+        document.getElementById('resetTypeBtn')?.addEventListener('click', () => {
+            const values = {
+                ...TYPE_DEFAULTS,
+                compensationMode: 'table'
+            };
+            readyApp.settingsStore.setMultiple(values);
+            syncSliders(values);
+        });
+
+        document.getElementById('legendKeySelect')?.addEventListener('change', (e) => {
+            readyApp.settingsStore.set('selectedKeyIndex', Number(e.target.value) || 0);
+        });
+
+        document.querySelectorAll('#compModeGroup [data-mode]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                readyApp.settingsStore.set('compensationMode', btn.dataset.mode);
+            });
         });
 
         document.getElementById('verifyBtn')?.addEventListener('click', async () => {
@@ -375,7 +508,7 @@ const app = defineTool({
         // Гарнитура: путь с пробелом обязан быть URL-энкоден, папка называется Fonts с большой.
         loadTypeface('Fonts/YS%20Text/YS%20Text-Regular.ttf').then((tf) => {
             TYPEFACE = tf;
-            COMP = new Compensator(tf);
+            COMP_CACHE = new Map();
             readyApp.render();
         }).catch((e) => {
             readyApp.dialog?.alert({
@@ -387,6 +520,47 @@ const app = defineTool({
     }
 });
 
+function html(v) {
+    return String(v ?? '').replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[ch]);
+}
+
+function selectedKey(s, keys) {
+    const idx = Math.max(0, Math.min(keys.length - 1, Number(s.selectedKeyIndex) || 0));
+    return keys[idx] || null;
+}
+
+function keyLabel(k) {
+    const first = (k.elements || []).find((e) => e.kind === 'txt' || e.kind === 'ico');
+    const mark = first ? (first.text || first.icon) : (k.tpl || 'blank');
+    return `R${k.row + 1} ${k.block} · ${mark}`;
+}
+
+function syncLegendSelect(s, keys) {
+    const select = document.getElementById('legendKeySelect');
+    if (!select) return;
+    const sig = keys.map((k) => `${k.row}:${k.block}:${k.tpl}:${keyLabel(k)}`).join('|');
+    if (select.dataset.sig !== sig) {
+        select.replaceChildren(...keys.map((k, i) => {
+            const opt = document.createElement('option');
+            opt.value = String(i);
+            opt.textContent = keyLabel(k);
+            return opt;
+        }));
+        select.dataset.sig = sig;
+    }
+    select.value = String(Math.max(0, Math.min(keys.length - 1, Number(s.selectedKeyIndex) || 0)));
+}
+
+function syncCompensationMode(s) {
+    document.querySelectorAll('#compModeGroup [data-mode]').forEach((btn) => {
+        const active = btn.dataset.mode === (s.compensationMode || 'table');
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+}
+
 function updateReadout(s, keys, grid, legends) {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     const { bounds } = layoutFor(s);
@@ -397,6 +571,66 @@ function updateReadout(s, keys, grid, legends) {
     set('statLegends', TYPEFACE
         ? `${txt} strings, ${legends.length - txt} icons`
         : 'loading font');
+}
+
+function compensationInfo(s, el) {
+    const side = el.slot[1];
+    if (!TYPEFACE || (side !== 'L' && side !== 'R')) return null;
+    const chars = [...el.text].filter((c) => c !== ' ');
+    if (!chars.length) return null;
+    const ch = side === 'L' ? chars[0] : chars[chars.length - 1];
+    const comp = compFor(s);
+    if (!comp) return { ch, source: 'off', px: 0 };
+    const ex = comp.explain(ch, side);
+    return { ...ex, px: (ex.em * el.size) / 1000 };
+}
+
+function updateLegendInspector(s, keys, grid, legends) {
+    syncLegendSelect(s, keys);
+    const box = document.getElementById('legendInspector');
+    if (!box) return;
+    const k = selectedKey(s, keys);
+    if (!k) {
+        box.innerHTML = '<p class="inspector-empty">No key selected.</p>';
+        return;
+    }
+    const items = legends.filter((el) => el.key === k);
+    let out = '<dl class="legend-meta">'
+        + `<div><dt>Template</dt><dd>${html(k.tpl || 'blank')}</dd></div>`
+        + `<div><dt>Position</dt><dd>row ${k.row + 1}, ${html(k.block)}, ${widthInU(k.w, grid).toFixed(2)}U</dd></div>`
+        + '</dl>';
+    if (!TYPEFACE) {
+        box.innerHTML = out + '<p class="inspector-empty">Font loading.</p>';
+        return;
+    }
+    if (!items.length) {
+        box.innerHTML = out + '<p class="inspector-empty">No legend elements.</p>';
+        return;
+    }
+    out += '<table class="legend-elements"><tr><th>Slot</th><th>Element</th><th>Type</th><th>Comp</th></tr>';
+    for (const el of items) {
+        if (el.kind === 'txt') {
+            const comp = compensationInfo(s, el);
+            const compText = comp
+                ? `${comp.source} ${comp.px.toFixed(3)}`
+                : '—';
+            out += '<tr>'
+                + `<td>${html(el.slot)}</td>`
+                + `<td>${html(el.text)}</td>`
+                + `<td>${el.size.toFixed(3)} pt, ${(el.tracking || 0).toFixed(3)} em</td>`
+                + `<td>${html(compText)}</td>`
+                + '</tr>';
+        } else {
+            out += '<tr>'
+                + `<td>${html(el.slot)}</td>`
+                + `<td>${html(el.icon)}</td>`
+                + `<td>${el.w.toFixed(2)} × ${el.h.toFixed(2)}</td>`
+                + '<td>—</td>'
+                + '</tr>';
+        }
+    }
+    out += '</table>';
+    box.innerHTML = out;
 }
 
 export default app;

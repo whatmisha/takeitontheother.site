@@ -100,6 +100,63 @@
             </div>
         </aside>
 
+        <!-- TYPE -->
+        <aside class="controls-panel controls-panel-type" id="typePanel">
+            <div class="panel-header" id="typePanelHeader">
+                <span>Type</span>
+                <span class="collapse-icon">
+                    <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+            </div>
+            <div class="panel-content">
+                <section class="control-section">
+                    <div class="control-group">
+                        <label for="glyphSizeSlider"><span>Glyph size</span>
+                            <input type="text" class="value-display" id="glyphSizeValue" inputmode="decimal" aria-label="Glyph size, pt"></label>
+                        <input type="range" id="glyphSizeSlider" min="6" max="24" step="0.001">
+                    </div>
+                    <div class="control-group">
+                        <label for="numpadSizeSlider"><span>Numpad size</span>
+                            <input type="text" class="value-display" id="numpadSizeValue" inputmode="decimal" aria-label="Numpad size, pt"></label>
+                        <input type="range" id="numpadSizeSlider" min="6" max="24" step="0.001">
+                    </div>
+                    <div class="control-group">
+                        <label for="secondarySizeSlider"><span>Secondary size</span>
+                            <input type="text" class="value-display" id="secondarySizeValue" inputmode="decimal" aria-label="Secondary size, pt"></label>
+                        <input type="range" id="secondarySizeSlider" min="6" max="24" step="0.001">
+                    </div>
+                    <div class="control-group">
+                        <label for="wordSizeSlider"><span>Word size</span>
+                            <input type="text" class="value-display" id="wordSizeValue" inputmode="decimal" aria-label="Word size, pt"></label>
+                        <input type="range" id="wordSizeSlider" min="5" max="18" step="0.001">
+                    </div>
+                    <div class="control-group">
+                        <label for="leadingSlider"><span>Leading</span>
+                            <input type="text" class="value-display" id="leadingValue" inputmode="decimal" aria-label="Leading, pt"></label>
+                        <input type="range" id="leadingSlider" min="6" max="24" step="0.001">
+                    </div>
+                    <div class="control-group">
+                        <label for="trackingOffsetSlider"><span>Tracking offset</span>
+                            <input type="text" class="value-display" id="trackingOffsetValue" inputmode="decimal" aria-label="Tracking offset, em"></label>
+                        <input type="range" id="trackingOffsetSlider" min="-0.08" max="0.08" step="0.001">
+                    </div>
+                    <div class="control-group">
+                        <div class="segmented-control" id="compModeGroup" role="group" aria-label="Compensation mode">
+                            <button type="button" data-mode="off" aria-pressed="false">Off</button>
+                            <button type="button" data-mode="model" aria-pressed="false">Model</button>
+                            <button type="button" data-mode="table" aria-pressed="true">Model + table</button>
+                        </div>
+                    </div>
+                    <div class="control-group pill-toggle-row">
+                        <button type="button" class="btn-inline" id="resetTypeBtn"
+                                data-tooltip="Restore measured type settings">Reference type</button>
+                    </div>
+                </section>
+            </div>
+        </aside>
+
         <!-- LAYERS -->
         <aside class="controls-panel" id="layersPanel">
             <div class="panel-header" id="layersPanelHeader">
@@ -144,6 +201,27 @@
                             <input type="checkbox" id="showBlocks" class="sr-only" data-setting="showBlocks"><span>Blocks</span>
                         </label>
                     </div>
+                </section>
+            </div>
+        </aside>
+
+        <!-- LEGEND -->
+        <aside class="controls-panel controls-panel-legend panel-collapsed" id="legendPanel">
+            <div class="panel-header" id="legendPanelHeader">
+                <span>Legend</span>
+                <span class="collapse-icon collapsed">
+                    <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+            </div>
+            <div class="panel-content">
+                <section class="control-section">
+                    <div class="control-group">
+                        <label for="legendKeySelect"><span>Key</span></label>
+                        <select id="legendKeySelect" class="select-control" aria-label="Selected key"></select>
+                    </div>
+                    <div id="legendInspector" class="legend-inspector"></div>
                 </section>
             </div>
         </aside>

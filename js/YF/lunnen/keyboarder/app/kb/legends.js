@@ -9,18 +9,64 @@ import { placeKey } from './slots.js';
 
 /** Ключ сопоставления клавиши и её содержимого — тот же, что в verify.js. */
 export const keyOf = (row, x) => `${row}|${Math.round(x * 10)}`;
+const rowBlockOf = (k) => `${k.row}|${k.block || ''}`;
+
+function groupedByRowBlock(items) {
+    const groups = new Map();
+    for (const item of items) {
+        const key = rowBlockOf(item);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(item);
+    }
+    for (const group of groups.values()) group.sort((a, b) => a.x - b.x);
+    return groups;
+}
+
+function generatedOrdinals(keys) {
+    const ord = new Map();
+    for (const group of groupedByRowBlock(keys).values()) {
+        group.forEach((k, i) => ord.set(k, i));
+    }
+    return ord;
+}
 
 /** Приписать каждой клавише её содержимое из модели. */
 export function attachContent(keys, content) {
     const byKey = new Map(content.keys.map((k) => [keyOf(k.row, k.x), k]));
+    const byRowBlock = groupedByRowBlock(content.keys);
+    const ordinals = generatedOrdinals(keys);
+    const used = new Set();
     let matched = 0;
+
     for (const k of keys) {
         const c = byKey.get(keyOf(k.row, k.x));
-        k.elements = c ? c.elements : [];
-        k.tpl = c ? c.tpl : null;
-        if (c) matched++;
+        if (!c) {
+            k.elements = [];
+            k.tpl = null;
+            k.content = null;
+            continue;
+        }
+        k.elements = c.elements;
+        k.tpl = c.tpl;
+        k.content = c;
+        used.add(c);
+        matched++;
     }
-    return { matched, total: keys.length, orphans: content.keys.length - matched };
+
+    // When Grid sliders move the generated x positions, the exact reference key no longer
+    // matches. Fall back to stable visual order inside each row/block so legends stay attached.
+    for (const k of keys) {
+        if (k.content) continue;
+        const group = byRowBlock.get(rowBlockOf(k));
+        const c = group && group[ordinals.get(k)];
+        if (!c || used.has(c)) continue;
+        k.elements = c.elements;
+        k.tpl = c.tpl;
+        k.content = c;
+        used.add(c);
+        matched++;
+    }
+    return { matched, total: keys.length, orphans: content.keys.length - used.size };
 }
 
 /**
