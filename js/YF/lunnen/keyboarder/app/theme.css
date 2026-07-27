@@ -5,6 +5,33 @@
  * не форкаем, только переопределяем кастомные свойства и добавляем то, чего в нём нет.
  */
 
+/**
+ * CoFo Sans со своего же домена. Копия шрифта в css фреймворка ведёт на mishaivanov.ru,
+ * а тот отдаёт файлы без Access-Control-Allow-Origin — для @font-face это отказ, и интерфейс
+ * молча съезжает на системный sans. Файлы лежат в корне takeitontheother.site, берём оттуда:
+ * тот же origin, лишних копий в проекте не появляется. CDN оставлен вторым источником —
+ * если однажды на нём включат CORS, он и сработает.
+ */
+@font-face {
+    font-family: 'CoFo Sans';
+    src: url('../../../../../fonts/CoFoSans-Regular.woff2') format('woff2'),
+         url('../../../../../fonts/CoFoSans-Regular.woff') format('woff'),
+         url('https://mishaivanov.ru/fonts/CoFoSans-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CoFo Sans';
+    src: url('../../../../../fonts/CoFoSans-Medium.woff2') format('woff2'),
+         url('../../../../../fonts/CoFoSans-Medium.woff') format('woff'),
+         url('https://mishaivanov.ru/fonts/CoFoSans-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
 :root {
     /* Фреймворк использует --font-mono пять раз, но нигде его не определяет. Закрываем пробел. */
     --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
@@ -97,3 +124,25 @@
 
 .verify-ok { color: #6fbf73; }
 .verify-bad { color: #d9736f; }
+
+/* Обоснование допуска — длинный текст, поэтому не моноширинный и приглушённый. */
+.verify-table .verify-why {
+    max-width: 34ch;
+    color: var(--color-text-dim);
+    font-family: inherit;
+    white-space: normal;
+}
+
+.verify-h {
+    margin: var(--spacing-lg) 0 var(--spacing-sm);
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.verify-h:first-child { margin-top: 0; }
+
+/* Отчёт сверки длиннее экрана: скроллим содержимое, а не весь диалог. */
+.modal-text { max-height: 62vh; overflow-y: auto; }

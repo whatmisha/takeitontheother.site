@@ -7,11 +7,16 @@
   "guideInset": 6.6085,
   "showCaps": false,
   "showGuides": true,
+  "showGlyphs": false,
+  "showIcons": false,
   "showColumns": false,
   "showIndex": false,
+  "showInk": false,
+  "showSlots": false,
   "showRef": true,
   "showBlocks": false,
   "capColor": "#e6e7e8",
   "guideColor": "#7fc9a0",
+  "inkColor": "#1c1f22",
   "bgColor": "#1c1f22"
 }

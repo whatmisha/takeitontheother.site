@@ -1,7 +1,24 @@
 {
   "presets": [
-    { "name": "LCAKB23", "file": "lcakb23.json" },
-    { "name": "LCAKB23 — только поля", "file": "lcakb23-guides.json" },
-    { "name": "Круглые миллиметры", "file": "round-mm.json" }
+    {
+      "name": "LCAKB23",
+      "file": "lcakb23.json"
+    },
+    {
+      "name": "Оптическая компенсация",
+      "file": "lcakb23-optics.json"
+    },
+    {
+      "name": "Слоты охранного поля",
+      "file": "lcakb23-slots.json"
+    },
+    {
+      "name": "Только поля",
+      "file": "lcakb23-guides.json"
+    },
+    {
+      "name": "Круглые миллиметры",
+      "file": "round-mm.json"
+    }
   ]
 }

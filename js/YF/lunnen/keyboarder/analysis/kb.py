@@ -231,6 +231,52 @@ def paths(s, gid):
     return [(bb, k) for bb, k in shapes(s, gid)]
 
 
+def shape_geometry(s, gid):
+    """[(bbox, kind, d)] — то же, что shapes(), плюс контур как единый path-d.
+
+    Полигоны переводятся в path, координаты остаются исходными: чтобы поставить
+    иконку в другое место, достаточно translate на разницу углов габарита.
+    """
+    body = group(s, gid)
+    body = body[body.index('>') + 1:body.rindex('</g>')]
+    nested, pos = [], 0
+    while True:
+        i = body.find('<g', pos)
+        if i == -1:
+            break
+        j = body.index('</g>', i)
+        nested.append((i, j + 4))
+        pos = j + 4
+    outer = body
+    for a, b in reversed(nested):
+        outer = outer[:a] + outer[b:]
+
+    def prim(chunk):
+        res = []
+        for m in re.finditer(r'<path[^>]*d="([^"]+)"', chunk):
+            bb = path_bbox(m.group(1))
+            if bb:
+                res.append((bb, 'path', m.group(1).strip()))
+        for m in re.finditer(r'<polygon[^>]*points="([^"]+)"', chunk):
+            v = [float(x) for x in re.findall(_NUM.pattern, m.group(1))]
+            xs, ys = v[0::2], v[1::2]
+            d = 'M' + 'L'.join(f'{a},{b}' for a, b in zip(xs, ys)) + 'Z'
+            res.append(((min(xs), min(ys), max(xs) - min(xs), max(ys) - min(ys)), 'polygon', d))
+        for m in _RECT.finditer(chunk):
+            x, y, w, h = map(float, m.groups())
+            d = f'M{x},{y}H{x + w}V{y + h}H{x}Z'
+            res.append(((x, y, w, h), 'rect', d))
+        return res
+
+    out = [(bb, k, d) for bb, k, d in prim(outer)]
+    for a, b in nested:
+        p = prim(body[a:b])
+        if p:
+            out.append((_union([x[0] for x in p]), 'group:%d' % len(p),
+                        ' '.join(x[2] for x in p)))
+    return out
+
+
 # ---------------------------------------------------------------- text
 
 def texts(s, gid='glyphs'):

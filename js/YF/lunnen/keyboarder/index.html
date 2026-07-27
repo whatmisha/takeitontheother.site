@@ -94,6 +94,7 @@
                         <div><dt>Клавиш</dt><dd id="statKeys">—</dd></div>
                         <div><dt>Артборд</dt><dd id="statBoard">—</dd></div>
                         <div><dt>Зазор</dt><dd id="statGap">—</dd></div>
+                        <div><dt>Легенды</dt><dd id="statLegends">—</dd></div>
                     </dl>
                 </section>
             </div>
@@ -120,11 +121,27 @@
                         </label>
                     </div>
                     <div class="control-group pill-toggle-row">
+                        <label class="pill-toggle" for="showGlyphs" data-tooltip="Надписи кривыми из TTF, с оптической компенсацией">
+                            <input type="checkbox" id="showGlyphs" class="sr-only" data-setting="showGlyphs"><span>Надписи</span>
+                        </label>
+                        <label class="pill-toggle" for="showIcons" data-tooltip="Пиктограммы из библиотеки">
+                            <input type="checkbox" id="showIcons" class="sr-only" data-setting="showIcons"><span>Иконки</span>
+                        </label>
+                    </div>
+                    <div class="control-group pill-toggle-row">
                         <label class="pill-toggle" for="showColumns" data-tooltip="Колонки сетки">
                             <input type="checkbox" id="showColumns" class="sr-only" data-setting="showColumns"><span>Колонки</span>
                         </label>
                         <label class="pill-toggle" for="showIndex" data-tooltip="Номер ряда и ширина в U">
                             <input type="checkbox" id="showIndex" class="sr-only" data-setting="showIndex"><span>Метки</span>
+                        </label>
+                    </div>
+                    <div class="control-group pill-toggle-row">
+                        <label class="pill-toggle" for="showInk" data-tooltip="Чернильные габариты надписей — видно, как работает компенсация">
+                            <input type="checkbox" id="showInk" class="sr-only" data-setting="showInk"><span>Ink-боксы</span>
+                        </label>
+                        <label class="pill-toggle" for="showSlots" data-tooltip="Код слота у каждого элемента">
+                            <input type="checkbox" id="showSlots" class="sr-only" data-setting="showSlots"><span>Слоты</span>
                         </label>
                     </div>
                     <div class="control-group pill-toggle-row">
@@ -170,6 +187,14 @@
                                     <input type="text" class="color-swatch-hex" id="guideColorHex" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Цвет поля, hex">
                                 </div>
                                 <div class="color-hsb-slot" id="guideColorHsbSlot"></div>
+                            </div>
+                            <div class="color-swatch-row">
+                                <div class="color-swatch-compact" id="inkColorItem" data-color-type="ink">
+                                    <button type="button" class="color-dot color-dot--expandable" id="inkColorPreview" aria-label="Цвет надписи"></button>
+                                    <span class="color-label">Надпись</span>
+                                    <input type="text" class="color-swatch-hex" id="inkColorHex" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Цвет надписи, hex">
+                                </div>
+                                <div class="color-hsb-slot" id="inkColorHsbSlot"></div>
                             </div>
                             <div class="color-swatch-row">
                                 <div class="color-swatch-compact" id="bgColorItem" data-color-type="bg">
