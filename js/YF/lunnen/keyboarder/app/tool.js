@@ -105,7 +105,7 @@ const app = defineTool({
         guideInset: REF_MM.guideInset,
 
         showCaps: true,
-        showGuides: false,
+        showGuides: true,
         showGlyphs: true,
         showIcons: true,
         showColumns: false,
@@ -115,21 +115,21 @@ const app = defineTool({
         showRef: false,
         showBlocks: false,
 
-        capColor: '#e6e7e8',
-        guideColor: '#d44698',
-        inkColor: '#1c1f22',
+        capColor: '#1e1e1e',
+        guideColor: '#2353db',
+        inkColor: '#aaaaaa',
         bgColor: '#1c1f22'
     },
 
     controls: {
-        // Ranges and steps in mm; value-display shows “N.NN mm”, no px duplicate.
+        // Ranges and steps in mm; value-display shows “N.NNN mm”, no px duplicate.
         sliders: [
-            { id: 'colPitchSlider', valueId: 'colPitchValue', setting: 'colPitch', min: 10, max: 28, decimals: 2, baseStep: 0.05, shiftStep: 0.5, suffix: ' mm' },
-            { id: 'rowPitchSlider', valueId: 'rowPitchValue', setting: 'rowPitch', min: 10, max: 28, decimals: 2, baseStep: 0.05, shiftStep: 0.5, suffix: ' mm' },
-            { id: 'keyWidthSlider', valueId: 'keyWidthValue', setting: 'keyWidth1U', min: 7, max: 26, decimals: 2, baseStep: 0.05, shiftStep: 0.5, suffix: ' mm' },
-            { id: 'keyHeightSlider', valueId: 'keyHeightValue', setting: 'keyHeight', min: 7, max: 26, decimals: 2, baseStep: 0.05, shiftStep: 0.5, suffix: ' mm' },
-            { id: 'radiusSlider', valueId: 'radiusValue', setting: 'cornerRadius', min: 0, max: 7, decimals: 2, baseStep: 0.05, shiftStep: 0.25, suffix: ' mm' },
-            { id: 'insetSlider', valueId: 'insetValue', setting: 'guideInset', min: 0, max: 6.5, decimals: 2, baseStep: 0.05, shiftStep: 0.25, suffix: ' mm' }
+            { id: 'colPitchSlider', valueId: 'colPitchValue', setting: 'colPitch', min: 10, max: 28, decimals: 3, baseStep: 0.001, shiftStep: 0.1, suffix: ' mm' },
+            { id: 'rowPitchSlider', valueId: 'rowPitchValue', setting: 'rowPitch', min: 10, max: 28, decimals: 3, baseStep: 0.001, shiftStep: 0.1, suffix: ' mm' },
+            { id: 'keyWidthSlider', valueId: 'keyWidthValue', setting: 'keyWidth1U', min: 7, max: 26, decimals: 3, baseStep: 0.001, shiftStep: 0.1, suffix: ' mm' },
+            { id: 'keyHeightSlider', valueId: 'keyHeightValue', setting: 'keyHeight', min: 7, max: 26, decimals: 3, baseStep: 0.001, shiftStep: 0.1, suffix: ' mm' },
+            { id: 'radiusSlider', valueId: 'radiusValue', setting: 'cornerRadius', min: 0, max: 7, decimals: 3, baseStep: 0.001, shiftStep: 0.05, suffix: ' mm' },
+            { id: 'insetSlider', valueId: 'insetValue', setting: 'guideInset', min: 0, max: 6.5, decimals: 3, baseStep: 0.001, shiftStep: 0.05, suffix: ' mm' }
         ],
         toggles: true
     },
@@ -154,7 +154,7 @@ const app = defineTool({
         storageKey: 'keyboarder',
         basePath: 'presets',
         colorDots: (b) => [
-            { kind: 'solid', value: b.capColor || '#e6e7e8' },
+            { kind: 'solid', value: b.capColor || '#1e1e1e' },
             { kind: 'solid', value: b.bgColor || '#1c1f22' }
         ]
     },

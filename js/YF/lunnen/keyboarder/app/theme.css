@@ -56,9 +56,9 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Grid fields show “N.NN mm” — a bit wider than the default value-display. */
+/* Grid fields show “N.NNN mm” — a bit wider than the default value-display. */
 #gridPanel .value-display {
-    width: 5.5rem;
+    width: 6.25rem;
 }
 .readout {
     display: flex;

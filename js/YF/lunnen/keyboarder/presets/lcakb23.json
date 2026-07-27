@@ -6,7 +6,7 @@
   "cornerRadius": 1.1800000036,
   "guideInset": 2.3313319444,
   "showCaps": true,
-  "showGuides": false,
+  "showGuides": true,
   "showGlyphs": true,
   "showIcons": true,
   "showColumns": false,
@@ -15,8 +15,8 @@
   "showSlots": false,
   "showRef": false,
   "showBlocks": false,
-  "capColor": "#e6e7e8",
-  "guideColor": "#d44698",
-  "inkColor": "#1c1f22",
+  "capColor": "#1e1e1e",
+  "guideColor": "#2353db",
+  "inkColor": "#aaaaaa",
   "bgColor": "#1c1f22"
 }

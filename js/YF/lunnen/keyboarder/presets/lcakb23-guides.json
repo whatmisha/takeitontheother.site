@@ -15,8 +15,8 @@
   "showSlots": false,
   "showRef": true,
   "showBlocks": false,
-  "capColor": "#e6e7e8",
-  "guideColor": "#7fc9a0",
-  "inkColor": "#1c1f22",
+  "capColor": "#1e1e1e",
+  "guideColor": "#2353db",
+  "inkColor": "#aaaaaa",
   "bgColor": "#1c1f22"
 }
