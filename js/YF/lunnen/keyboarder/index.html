@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Keyboard Layout Studio</title>
+    <link rel="stylesheet" href="vendor/framework/css/othersite-styles.css">
+    <link rel="stylesheet" href="app/theme.css">
+</head>
+<body>
+<div class="container">
+
+    <div class="top-links">
+        <span class="top-link top-link--static">Keyboard Layout Studio</span>
+
+        <div class="preset-toolbar-cluster">
+            <div class="preset-dropdown" id="presetDropdown">
+                <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button"
+                        aria-haspopup="listbox" aria-expanded="false" aria-controls="presetDropdownMenu">
+                    <span class="preset-dropdown-text">Пресеты</span>
+                    <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox"></ul>
+            </div>
+            <button type="button" id="presetToolbarShareBtn" class="preset-toolbar-share-btn"
+                    aria-label="Скопировать ссылку" data-tooltip="Скопировать ссылку">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="18" height="18" fill="none" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M5.7410987,3.4304742l.6124561-.6124561c.7810478-.7810478,2.0473765-.7810478,2.8284243,0l.0000028.0000028c.7810478.7810478.7810478,2.0473765,0,2.8284243l-.6124561.6124561"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M6.2589013,8.5695258l-.6124561.6124561c-.7810478.7810478-2.0473765.7810478-2.8284243,0l-.0000028-.0000028c-.7810478-.7810478-.7810478-2.0473765,0-2.8284243l.6124561-.6124561"/><line x1="7.5184826" y1="4.4815174" x2="4.4815174" y2="7.5184826" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"/></svg>
+            </button>
+        </div>
+
+        <button class="top-link" id="savePresetBtn" type="button" style="display:none;">Сохранить</button>
+
+        <div class="zoom-indicator" id="zoomIndicator" data-tooltip="Клик — вписать в экран">100%</div>
+    </div>
+
+    <main class="main-content" id="mainContent">
+        <h1 class="sr-only">Keyboard Layout Studio</h1>
+
+        <div class="canvas-container" id="canvasContainer">
+            <svg id="mainSvg" role="img" aria-label="Раскладка клавиатуры"></svg>
+        </div>
+
+        <!-- СЕТКА -->
+        <aside class="controls-panel controls-panel-left" id="gridPanel">
+            <div class="panel-header" id="gridPanelHeader">
+                <span>Сетка</span>
+                <span class="collapse-icon">
+                    <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+            </div>
+            <div class="panel-content">
+                <section class="control-section">
+                    <div class="control-group">
+                        <label for="colPitchSlider"><span>Шаг по X <span class="unit mm" id="colPitchMm"></span></span>
+                            <input type="text" class="value-display" id="colPitchValue"></label>
+                        <input type="range" id="colPitchSlider" min="30" max="80" step="0.0001">
+                    </div>
+                    <div class="control-group">
+                        <label for="rowPitchSlider"><span>Шаг по Y <span class="unit mm" id="rowPitchMm"></span></span>
+                            <input type="text" class="value-display" id="rowPitchValue"></label>
+                        <input type="range" id="rowPitchSlider" min="30" max="80" step="0.0001">
+                    </div>
+                    <div class="control-group">
+                        <label for="keyWidthSlider"><span>Ширина 1U <span class="unit mm" id="keyWidthMm"></span></span>
+                            <input type="text" class="value-display" id="keyWidthValue"></label>
+                        <input type="range" id="keyWidthSlider" min="20" max="75" step="0.0001">
+                    </div>
+                    <div class="control-group">
+                        <label for="keyHeightSlider"><span>Высота клавиши <span class="unit mm" id="keyHeightMm"></span></span>
+                            <input type="text" class="value-display" id="keyHeightValue"></label>
+                        <input type="range" id="keyHeightSlider" min="20" max="75" step="0.0001">
+                    </div>
+                    <div class="control-group">
+                        <label for="radiusSlider"><span>Радиус <span class="unit mm" id="radiusMm"></span></span>
+                            <input type="text" class="value-display" id="radiusValue"></label>
+                        <input type="range" id="radiusSlider" min="0" max="20" step="0.0001">
+                    </div>
+                    <div class="control-group">
+                        <label for="insetSlider"><span>Инсет поля <span class="unit mm" id="insetMm"></span></span>
+                            <input type="text" class="value-display" id="insetValue"></label>
+                        <input type="range" id="insetSlider" min="0" max="18" step="0.0001">
+                    </div>
+
+                    <div class="control-group pill-toggle-row">
+                        <button type="button" class="btn-inline" id="resetGridBtn"
+                                data-tooltip="Вернуть измеренные по чертежу значения">Эталонная сетка</button>
+                    </div>
+
+                    <dl class="readout" id="statsReadout">
+                        <div><dt>Клавиш</dt><dd id="statKeys">—</dd></div>
+                        <div><dt>Артборд</dt><dd id="statBoard">—</dd></div>
+                        <div><dt>Зазор</dt><dd id="statGap">—</dd></div>
+                    </dl>
+                </section>
+            </div>
+        </aside>
+
+        <!-- СЛОИ -->
+        <aside class="controls-panel" id="layersPanel">
+            <div class="panel-header" id="layersPanelHeader">
+                <span>Слои</span>
+                <span class="collapse-icon">
+                    <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+            </div>
+            <div class="panel-content">
+                <section class="control-section">
+                    <div class="control-group pill-toggle-row">
+                        <label class="pill-toggle" for="showCaps" data-tooltip="Габариты клавиш">
+                            <input type="checkbox" id="showCaps" class="sr-only" data-setting="showCaps"><span>Клавиши</span>
+                        </label>
+                        <label class="pill-toggle" for="showGuides" data-tooltip="Охранные поля — система координат для легенд">
+                            <input type="checkbox" id="showGuides" class="sr-only" data-setting="showGuides"><span>Поля</span>
+                        </label>
+                    </div>
+                    <div class="control-group pill-toggle-row">
+                        <label class="pill-toggle" for="showColumns" data-tooltip="Колонки сетки">
+                            <input type="checkbox" id="showColumns" class="sr-only" data-setting="showColumns"><span>Колонки</span>
+                        </label>
+                        <label class="pill-toggle" for="showIndex" data-tooltip="Номер ряда и ширина в U">
+                            <input type="checkbox" id="showIndex" class="sr-only" data-setting="showIndex"><span>Метки</span>
+                        </label>
+                    </div>
+                    <div class="control-group pill-toggle-row">
+                        <label class="pill-toggle" for="showRef" data-tooltip="Эталон из LCAKB23 подложкой">
+                            <input type="checkbox" id="showRef" class="sr-only" data-setting="showRef"><span>Эталон</span>
+                        </label>
+                        <label class="pill-toggle" for="showBlocks" data-tooltip="Границы блоков main / nav / numpad">
+                            <input type="checkbox" id="showBlocks" class="sr-only" data-setting="showBlocks"><span>Блоки</span>
+                        </label>
+                    </div>
+                </section>
+            </div>
+        </aside>
+
+        <!-- ЦВЕТА -->
+        <aside class="controls-panel controls-panel-text" id="colorsPanel">
+            <div class="panel-header" id="colorsPanelHeader">
+                <span>Цвета</span>
+                <span class="collapse-icon">
+                    <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+            </div>
+            <div class="panel-content">
+                <section class="control-section">
+                    <div class="control-group">
+                        <div class="color-swatches-compact" id="colorPickersGroup">
+                            <div class="color-swatch-row">
+                                <div class="color-swatch-compact" id="capColorItem" data-color-type="cap">
+                                    <button type="button" class="color-dot color-dot--expandable" id="capColorPreview" aria-label="Цвет клавиши"></button>
+                                    <span class="color-label">Клавиша</span>
+                                    <input type="text" class="color-swatch-hex" id="capColorHex" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Цвет клавиши, hex">
+                                </div>
+                                <div class="color-hsb-slot" id="capColorHsbSlot">
+                                    <div id="unifiedColorPickerContainer"></div>
+                                </div>
+                            </div>
+                            <div class="color-swatch-row">
+                                <div class="color-swatch-compact" id="guideColorItem" data-color-type="guide">
+                                    <button type="button" class="color-dot color-dot--expandable" id="guideColorPreview" aria-label="Цвет поля"></button>
+                                    <span class="color-label">Поле</span>
+                                    <input type="text" class="color-swatch-hex" id="guideColorHex" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Цвет поля, hex">
+                                </div>
+                                <div class="color-hsb-slot" id="guideColorHsbSlot"></div>
+                            </div>
+                            <div class="color-swatch-row">
+                                <div class="color-swatch-compact" id="bgColorItem" data-color-type="bg">
+                                    <button type="button" class="color-dot color-dot--expandable" id="bgColorPreview" aria-label="Цвет фона"></button>
+                                    <span class="color-label">Фон</span>
+                                    <input type="text" class="color-swatch-hex" id="bgColorHex" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Цвет фона, hex">
+                                </div>
+                                <div class="color-hsb-slot" id="bgColorHsbSlot"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </aside>
+    </main>
+
+    <nav class="bottom-buttons">
+        <button class="btn-fixed btn-intro-help" id="aboutBtn" type="button" aria-label="О программе" data-tooltip="О программе">?</button>
+        <button class="btn-fixed" id="verifyBtn" type="button" data-tooltip="Сверить геометрию с эталоном">Сверить</button>
+        <button class="btn-fixed" id="exportPngBtn" type="button">PNG</button>
+        <button class="btn-fixed" id="exportSvgBtn" type="button">SVG ⌘E</button>
+    </nav>
+
+    <dialog id="dialog" class="modal">
+        <div class="modal-content">
+            <h2 id="dialogTitle" class="modal-title"></h2>
+            <div id="dialogText" class="modal-text"></div>
+            <input id="dialogInput" class="modal-input" type="text" style="display:none;">
+            <div id="dialogButtons" class="modal-buttons"></div>
+        </div>
+    </dialog>
+</div>
+
+<script type="module" src="app/tool.js"></script>
+</body>
+</html>

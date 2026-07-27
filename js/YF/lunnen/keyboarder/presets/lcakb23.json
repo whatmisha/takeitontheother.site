@@ -1,0 +1,17 @@
+{
+  "colPitch": 53.8609619,
+  "rowPitch": 53.5120668,
+  "keyWidth1U": 46.4941101,
+  "keyHeight": 46.1885376,
+  "cornerRadius": 3.3448819,
+  "guideInset": 6.6085,
+  "showCaps": true,
+  "showGuides": true,
+  "showColumns": false,
+  "showIndex": false,
+  "showRef": false,
+  "showBlocks": false,
+  "capColor": "#e6e7e8",
+  "guideColor": "#d44698",
+  "bgColor": "#1c1f22"
+}

@@ -1,0 +1,7 @@
+{
+  "presets": [
+    { "name": "LCAKB23", "file": "lcakb23.json" },
+    { "name": "LCAKB23 — только поля", "file": "lcakb23-guides.json" },
+    { "name": "Круглые миллиметры", "file": "round-mm.json" }
+  ]
+}

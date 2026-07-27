@@ -1,0 +1,99 @@
+/**
+ * Keyboard Layout Studio — оверрайд токенов и собственные компоненты.
+ *
+ * Подключается ПОСЛЕ vendor/framework/css/othersite-styles.css. Компонентный CSS фреймворка
+ * не форкаем, только переопределяем кастомные свойства и добавляем то, чего в нём нет.
+ */
+
+:root {
+    /* Фреймворк использует --font-mono пять раз, но нигде его не определяет. Закрываем пробел. */
+    --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* Заголовок инструмента в топбаре — не ссылка, поэтому гасим интерактивные состояния. */
+.top-link--static {
+    cursor: default;
+    pointer-events: none;
+}
+
+.preset-toolbar-cluster {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+/* Дублирующий вывод в миллиметрах рядом с названием параметра. */
+.unit.mm {
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Сводка по раскладке под слайдерами сетки. */
+.readout {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin: var(--spacing-lg) 0 0;
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-border);
+    font-size: 11px;
+}
+
+.readout > div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+}
+
+.readout dt {
+    color: var(--color-text-dim);
+}
+
+.readout dd {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Кнопка внутри панели: визуально тише, чем .btn-fixed из нижнего ряда. */
+.btn-inline {
+    width: 100%;
+    height: 28px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    background: var(--color-bg-input);
+    color: var(--color-text-secondary);
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.btn-inline:hover {
+    border-color: var(--color-text-subtle);
+    color: var(--color-text);
+}
+
+/* Таблица невязок в диалоге сверки. */
+.verify-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+}
+
+.verify-table th,
+.verify-table td {
+    padding: 3px var(--spacing-md) 3px 0;
+    text-align: left;
+}
+
+.verify-table th {
+    color: var(--color-text-dim);
+    font-weight: 400;
+}
+
+.verify-ok { color: #6fbf73; }
+.verify-bad { color: #d9736f; }
