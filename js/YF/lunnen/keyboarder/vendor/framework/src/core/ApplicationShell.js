@@ -968,8 +968,16 @@ export class ApplicationShell {
         if (!this.presets) return false;
         if (this.presets.isEphemeral) {
             const wasShared = this.presets.isShared;
+            const suggestedName = typeof this.config.presets?.suggestSaveName === 'function'
+                ? String(this.config.presets.suggestSaveName(this) || '').trim()
+                : '';
             const name = this.dialog
-                ? await this.dialog.prompt({ title: 'Save preset', placeholder: 'Preset name', confirmText: 'Save' })
+                ? await this.dialog.prompt({
+                    title: 'Save preset',
+                    value: suggestedName,
+                    placeholder: 'Preset name',
+                    confirmText: 'Save'
+                })
                 : prompt('Preset name');
             if (!name) return false;
             let res = wasShared

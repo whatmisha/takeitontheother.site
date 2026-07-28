@@ -495,6 +495,7 @@ const app = defineTool({
         storageKey: 'keyboarder',
         basePath: 'presets',
         defaultName: 'LCAKB23',
+        suggestSaveName: (app) => suggestedPresetName(app),
         colorDots: (b) => [
             { kind: 'solid', value: b.capColor || '#1e1e1e' },
             { kind: 'solid', value: b.bgColor || '#808080' }
@@ -713,6 +714,7 @@ const app = defineTool({
     onInit(readyApp) {
         installPdfExport(readyApp);
         installCleanExports(readyApp);
+        installSuggestedPresetSave(readyApp);
         initLayoutSelect(readyApp);
         initLanguageLayerSelect(readyApp);
         initFontImport(readyApp);
@@ -959,6 +961,11 @@ function html(v) {
     })[ch]);
 }
 
+function round(value, decimals = 4) {
+    const p = 10 ** decimals;
+    return Math.round((Number(value) + Number.EPSILON) * p) / p;
+}
+
 function modelIOOptions(layout = LCAKB23) {
     return {
         layoutMeta: layout.meta,
@@ -1057,10 +1064,15 @@ function expandedLayoutItems(items) {
     const out = [];
     for (const it of items || []) {
         const n = it.repeat || 1;
+        const ids = Array.isArray(it.ids) ? it.ids : null;
         for (let i = 0; i < n; i++) {
             const copy = { ...it };
             delete copy.repeat;
-            if (n > 1) delete copy.id;
+            delete copy.ids;
+            if (n > 1) {
+                if (ids && ids[i]) copy.id = ids[i];
+                else delete copy.id;
+            }
             out.push(copy);
         }
     }
@@ -1146,6 +1158,7 @@ function cloneAddedRowFromTemplate(row) {
         next[blockId] = (items || []).map((it) => {
             const item = { ...it };
             delete item.id;
+            delete item.ids;
             delete item.editId;
             return item;
         });
@@ -2366,14 +2379,18 @@ async function createNewLayoutFromSvgFile(app, file) {
         if (!draft?.layout) throw new Error('No usable keyboard layout draft was detected.');
         const warnings = analysis.diagnostics?.warnings || [];
         if (warnings.length) {
-            await app.dialog?.show({
+            const result = await app.dialog?.show({
                 title: 'Layout not created',
                 text: svgImportReportHtml(file.name || 'drawing.svg', analysis, {
                     intro: 'Keyboarder found warning-level issues in this drawing. Fix the SVG or inspect the draft before creating a preset.'
                 }),
                 html: true,
-                buttons: [{ id: 'ok', text: 'Close', type: 'primary' }]
+                buttons: [
+                    { id: 'ok', text: 'Close', type: 'primary' },
+                    { id: 'report', text: 'Report JSON', type: 'secondary' }
+                ]
             });
+            if (result?.action === 'report') exportSvgImportReport(file.name || 'drawing.svg', analysis);
             return;
         }
         if (!(await guardUnsavedBeforeNewLayout(app))) return;
@@ -2393,6 +2410,40 @@ async function createNewLayoutFromSvgFile(app, file) {
 async function guardUnsavedBeforeNewLayout(app) {
     if (typeof app._guardUnsaved === 'function') return await app._guardUnsaved();
     return true;
+}
+
+function installSuggestedPresetSave(app) {
+    if (app.__keyboarderSuggestedPresetSave || typeof app.savePreset !== 'function') return;
+    const originalSavePreset = app.savePreset.bind(app);
+    app.savePreset = async () => {
+        if (!app.presets?.isEphemeral || !app.dialog) return await originalSavePreset();
+        const wasShared = app.presets.isShared;
+        const name = await app.dialog.prompt({
+            title: 'Save preset',
+            value: suggestedPresetName(app),
+            placeholder: 'Preset name',
+            confirmText: 'Save'
+        });
+        if (!name) return false;
+        let res = wasShared
+            ? app.presets.saveSharedToLibrary(name, { overwrite: false })
+            : app.presets.saveAs(name);
+        if (!res.ok && res.reason === 'exists') {
+            const replace = await app.dialog.confirm({
+                title: 'Replace preset?',
+                text: `"${name}" already exists.`,
+                confirmText: 'Replace',
+                danger: true
+            });
+            if (!replace) return false;
+            res = wasShared
+                ? app.presets.saveSharedToLibrary(name, { overwrite: true })
+                : app.presets.saveAs(name, { overwrite: true });
+        }
+        app._refreshChrome?.();
+        return !!res.ok;
+    };
+    app.__keyboarderSuggestedPresetSave = true;
 }
 
 function namedCustomLayout(layout, fileName, app) {
@@ -2419,10 +2470,20 @@ function layoutNameFromSvgFile(fileName = '') {
 
 function uniqueCustomLayoutName(name, app) {
     const base = LAYOUTS[name] ? `${name}_CUSTOM` : name;
-    const current = app?.settings?.customLayout?.meta?.name;
-    if (current === base || !LAYOUTS[base]) return base;
+    return uniqueName(base, (candidate) => !!LAYOUTS[candidate] || !!app?.presetStore?.has?.(candidate));
+}
+
+function suggestedPresetName(app) {
+    const layout = sourceLayoutFor(app?.settings || {});
+    if (!layout || isReferenceLayout(layout) || LAYOUTS[layout.meta?.name]) return '';
+    return uniqueName(layout.meta.name, (candidate) => !!app?.presetStore?.has?.(candidate));
+}
+
+function uniqueName(name, isTaken) {
+    const base = String(name || 'IMPORTED_SVG').trim() || 'IMPORTED_SVG';
+    if (typeof isTaken !== 'function' || !isTaken(base)) return base;
     let i = 2;
-    while (LAYOUTS[`${base}_${i}`]) i += 1;
+    while (isTaken(`${base}_${i}`)) i += 1;
     return `${base}_${i}`;
 }
 
@@ -2451,18 +2512,155 @@ function openImportedCustomLayout(app, customLayout) {
 
 function svgImportReportHtml(fileName, analysis, options = {}) {
     const warnings = analysis?.diagnostics?.warnings || [];
+    const notices = analysis?.diagnostics?.notices || [];
     const rows = [
         ['File', fileName || 'drawing.svg'],
         ...blueprintSummaryLines(analysis).map((line, i) => [i === 0 ? 'Data' : '', line])
     ];
-    const warningHtml = warnings.length
-        ? `<ul>${warnings.map((warning) => `<li>${html(warning.message || warning.code || warning)}</li>`).join('')}</ul>`
-        : '';
     return `<div class="svg-import-report">
         ${options.intro ? `<p>${html(options.intro)}</p>` : ''}
         <dl>${rows.map(([label, value]) => `<div><dt>${html(label)}</dt><dd>${html(value)}</dd></div>`).join('')}</dl>
-        ${warningHtml}
+        ${svgImportPreviewHtml(analysis)}
+        ${svgImportIssueListHtml('Warnings', warnings, analysis)}
+        ${svgImportIssueListHtml('Notes', notices, analysis, { limit: 8 })}
     </div>`;
+}
+
+function svgImportPreviewHtml(analysis) {
+    const keys = (analysis?.recognized?.keys || []).filter((key) =>
+        [key.x, key.y, key.w, key.h].every(Number.isFinite));
+    if (!keys.length) return '';
+    const bounds = rectBounds(keys);
+    if (!bounds) return '';
+    const issueLevels = svgImportIssueLevels(analysis);
+    const pad = Math.max(6, Math.max(bounds.w, bounds.h) * 0.04);
+    const viewBox = [
+        round(bounds.x - pad, 3),
+        round(bounds.y - pad, 3),
+        round(bounds.w + pad * 2, 3),
+        round(bounds.h + pad * 2, 3)
+    ].join(' ');
+    const fontSize = round(Math.max(8, Math.min(14, bounds.h / 18)), 3);
+    const rects = keys.map((key) => {
+        const level = issueLevels.get(key.i) || 'ok';
+        const label = level === 'ok' ? '' : String(key.i + 1);
+        const text = label
+            ? `<text class="svg-import-preview-label" x="${round(key.x + key.w / 2, 3)}" y="${round(key.y + key.h / 2, 3)}" font-size="${fontSize}">${html(label)}</text>`
+            : '';
+        return `<g class="svg-import-preview-key is-${html(level)}">
+            <rect x="${round(key.x, 3)}" y="${round(key.y, 3)}" width="${round(key.w, 3)}" height="${round(key.h, 3)}" rx="2" ry="2"/>
+            ${text}
+        </g>`;
+    }).join('');
+    return `<section class="svg-import-preview">
+        <h3 class="verify-h">Key Review</h3>
+        <svg viewBox="${viewBox}" role="img" aria-label="Detected keyboard keys">${rects}</svg>
+        <div class="svg-import-preview-legend">
+            <span><i class="is-warning"></i>Warning</span>
+            <span><i class="is-notice"></i>Note</span>
+            <span><i class="is-ok"></i>Detected</span>
+        </div>
+    </section>`;
+}
+
+function svgImportIssueLevels(analysis) {
+    const levels = new Map();
+    for (const index of analysis?.diagnostics?.suspiciousKeyIndices || []) levels.set(index, 'warning');
+    for (const issue of analysis?.diagnostics?.warnings || []) {
+        if (issue.keyIndex != null) levels.set(issue.keyIndex, 'warning');
+    }
+    for (const issue of analysis?.diagnostics?.notices || []) {
+        if (issue.keyIndex != null && !levels.has(issue.keyIndex)) levels.set(issue.keyIndex, 'notice');
+    }
+    return levels;
+}
+
+function rectBounds(rects = []) {
+    const xs = rects.map((r) => r.x);
+    const ys = rects.map((r) => r.y);
+    const rights = rects.map((r) => r.x + r.w);
+    const bottoms = rects.map((r) => r.y + r.h);
+    const x = Math.min(...xs);
+    const y = Math.min(...ys);
+    const right = Math.max(...rights);
+    const bottom = Math.max(...bottoms);
+    if (![x, y, right, bottom].every(Number.isFinite) || right <= x || bottom <= y) return null;
+    return { x, y, w: right - x, h: bottom - y };
+}
+
+function svgImportIssueListHtml(title, issues = [], analysis, { limit = 12 } = {}) {
+    if (!issues.length) return '';
+    const visible = issues.slice(0, limit);
+    const more = issues.length > visible.length ? [`${issues.length - visible.length} more`] : [];
+    const items = [...visible.map((issue) => svgImportIssueText(issue, analysis)), ...more];
+    return `<section><h3 class="verify-h">${html(title)}</h3><ul>${items.map((item) => `<li>${html(item)}</li>`).join('')}</ul></section>`;
+}
+
+function svgImportIssueText(issue = {}, analysis) {
+    const key = svgImportIssueKey(issue, analysis);
+    const suffix = key ? ` (${key})` : '';
+    return `${issue.message || issue.code || 'Issue'}${suffix}`;
+}
+
+function svgImportIssueKey(issue = {}, analysis) {
+    if (issue.keyIndex == null) return '';
+    const key = (analysis?.recognized?.keys || []).find((candidate) => candidate.i === issue.keyIndex);
+    if (!key) return `key ${issue.keyIndex + 1}`;
+    return `key ${issue.keyIndex + 1}: x ${round(key.x, 2)}, y ${round(key.y, 2)}, w ${round(key.w, 2)}, h ${round(key.h, 2)}`;
+}
+
+function exportSvgImportReport(fileName, analysis) {
+    const base = layoutSlug(String(fileName || 'drawing').replace(/\.svg$/i, ''));
+    downloadJSON(`keyboarder-${base}-import-report.json`, svgImportReportData(fileName, analysis));
+}
+
+function svgImportReportData(fileName, analysis) {
+    const diagnostics = analysis?.diagnostics || {};
+    return {
+        file: fileName || 'drawing.svg',
+        summary: blueprintSummaryLines(analysis),
+        groups: clonePlain(analysis?.groups || {}),
+        elements: clonePlain(analysis?.elements || {}),
+        calibration: clonePlain(analysis?.calibration || null),
+        recognized: {
+            keys: analysis?.recognized?.keys?.length || 0,
+            raw: analysis?.recognized?.raw?.length || 0,
+            cornerOffset: analysis?.recognized?.cornerOffset ?? null,
+            estimatedGrid: clonePlain(analysis?.recognized?.estimatedGrid || null),
+            stacks: analysis?.recognized?.stackCells?.length || 0
+        },
+        diagnostics: {
+            ok: !!diagnostics.ok,
+            warnings: (diagnostics.warnings || []).map((issue) => svgImportReportIssue(issue, analysis)),
+            notices: (diagnostics.notices || []).map((issue) => svgImportReportIssue(issue, analysis)),
+            suspiciousKeyIndices: [...(diagnostics.suspiciousKeyIndices || [])],
+            suspiciousKeys: diagnostics.suspiciousKeys || 0
+        },
+        draft: clonePlain(analysis?.layoutDraft?.stats || null)
+    };
+}
+
+function svgImportReportIssue(issue = {}, analysis) {
+    return {
+        code: issue.code || '',
+        message: issue.message || '',
+        keyIndex: issue.keyIndex ?? null,
+        key: issue.keyIndex == null ? null : svgImportReportKey(issue.keyIndex, analysis)
+    };
+}
+
+function svgImportReportKey(index, analysis) {
+    const key = (analysis?.recognized?.keys || []).find((candidate) => candidate.i === index);
+    if (!key) return null;
+    return {
+        x: round(key.x, 4),
+        y: round(key.y, 4),
+        w: round(key.w, 4),
+        h: round(key.h, 4),
+        rowSpan: key.rowSpan || 1,
+        stackIndex: key.stackIndex ?? null,
+        stackCount: key.stackCount ?? null
+    };
 }
 
 function appendSessionFontDefs(create, svg, s) {

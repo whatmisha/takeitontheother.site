@@ -28,6 +28,26 @@ function roundedRectCornerPaths(x, y, w, h, d = 1) {
       <path d="M${x + w - d},${y + h}c${d},0 ${d},-${d} ${d},-${d}"/>`;
 }
 
+function ansiCompactSvg() {
+    const rowCounts = [14, 14, 14, 13, 12, 10];
+    const keyW = 46;
+    const keyH = 46;
+    const pitch = 53;
+    const rows = rowCounts.map((count, rowIndex) => {
+        const y = rowIndex * pitch;
+        return Array.from({ length: count }, (_, keyIndex) =>
+            roundedRectLines(keyIndex * pitch, y, keyW, keyH, 3)).join('');
+    }).join('');
+    return `<?xml version="1.0"?>
+<svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg">
+  <g id="caps">
+    <rect x="0" y="0" width="${keyW}" height="${keyH}" rx="3" ry="3"/>
+    <rect x="${pitch}" y="0" width="${keyW}" height="${keyH}" rx="3" ry="3"/>
+  </g>
+  <g id="blueprint">${rows}</g>
+</svg>`;
+}
+
 const synthetic = `<?xml version="1.0"?>
 <svg viewBox="0 0 40 30" xmlns="http://www.w3.org/2000/svg">
   <metadata><i:aipgfRef id="adobe_illustrator_pgf"/><i:aipgf>private</i:aipgf></metadata>
@@ -153,6 +173,28 @@ assert.deepEqual(
     }, {}),
     { 1: 108, 2: 2 }
 );
+
+const semanticCompact = analyzeSvgBlueprint(ansiCompactSvg());
+assert.equal(semanticCompact.recognized.keys.length, 77);
+assert.equal(semanticCompact.layoutDraft.stats.keys, 77);
+assert.deepEqual(semanticCompact.layoutDraft.layout.rows[0].main[0], {
+    u: 1,
+    repeat: 14,
+    ids: ['esc', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11', 'f12', 'f13']
+});
+assert.equal(
+    semanticCompact.layoutDraft.layout.rows.flatMap((row) => Object.values(row)).flat().filter((item) => item.ids).length,
+    6
+);
+const semanticBuilt = buildLayout(semanticCompact.layoutDraft.layout);
+assert.equal(semanticBuilt.keys.length, 77);
+assert.deepEqual(semanticBuilt.keys.slice(0, 4).map((key) => key.id), ['esc', 'f1', 'f2', 'f3']);
+assert.deepEqual(semanticBuilt.keys.slice(-3).map((key) => key.id), ['left', 'arrow-stack', 'right']);
+const semanticContent = generatedContentForLayout(semanticCompact.layoutDraft.layout, { secondarySize: 12 }, { interline: 13.5 });
+assert.deepEqual(semanticContent.keys.slice(0, 4).map((key) => key.elements[0].text), ['esc', 'F1', 'F2', 'F3']);
+const semanticContentResult = attachContent(semanticBuilt.keys, semanticContent);
+assert.equal(semanticContentResult.matched, 77);
+assert.equal(semanticContentResult.orphans, 0);
 
 const caps = [...real.caps].sort((a, b) => a.y - b.y || a.x - b.x);
 let worstCapDelta = 0;

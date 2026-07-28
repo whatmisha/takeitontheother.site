@@ -157,7 +157,17 @@ function expandedItems(items = []) {
     const out = [];
     for (const item of items || []) {
         const n = item.repeat || 1;
-        for (let i = 0; i < n; i++) out.push(item);
+        const ids = Array.isArray(item.ids) ? item.ids : null;
+        for (let i = 0; i < n; i++) {
+            const copy = { ...item };
+            delete copy.repeat;
+            delete copy.ids;
+            if (n > 1) {
+                if (ids && ids[i]) copy.id = ids[i];
+                else delete copy.id;
+            }
+            out.push(copy);
+        }
     }
     return out;
 }

@@ -515,6 +515,28 @@ console errors.
 сохраняется в preset/model. Если диагностика содержит warnings, layout не создаётся и вместо
 панельной статистики показывается короткий modal report.
 
+Следующий polish-пункт по naming/saving custom layouts выполнен: `New layout` теперь проверяет
+имена сохранённых presets и встроенных layouts, поэтому повторный импорт `test_layout.svg` после
+сохранения `TEST_LAYOUT` получит `TEST_LAYOUT_2`, затем `TEST_LAYOUT_3` и т.д. Framework получил
+опциональный hook `presets.suggestSaveName`; Keyboarder подставляет в `Save preset` имя текущего
+custom layout через app-level `installSuggestedPresetSave()`, так что новый SVG-проект можно
+сохранить без ручного перепечатывания имени файла.
+
+Richer suspected-key review тоже вынесен в новый pipeline без возвращения `Drawing` panel:
+warning-level import теперь открывает modal report с summary, warnings/notes и координатами
+проблемных key candidates. Кнопка `Report JSON` скачивает компактный отчёт
+`keyboarder-<svg-name>-import-report.json` с groups/elements, calibration, estimated grid,
+recognized counts, diagnostics и draft stats; сырой SVG и line buckets туда не попадают.
+Modal report также показывает visual `Key Review`: мини-карту detected keys, где warning keys
+подсвечены красным, notes — жёлтым, а проблемные key candidates подписаны номерами.
+
+Полировка hand-editable draft завершила следующий кусок Stage 6: SVG import теперь умеет
+компактно хранить семантические имена внутри повторяющихся рядов через
+`{ u: 1, repeat: N, ids: [...] }`. Поэтому ANSI-like custom layout не разворачивается в десятки
+одинаковых элементов ради `esc/f1/...`, но `buildLayout()`, Legend editor и generic labels всё
+равно получают уникальные key IDs после expansion. Добавлены Node-проверки для компактного
+семантического SVG и для standalone `repeat + ids` layout.
+
 ### Этап 7 — про, производство ✅ основные кодовые пункты сделаны (2–3 дня)
 
 - экспорт SVG послойно, именами групп как в эталоне (`caps`, `guides`, `glyphs`, `icons`,

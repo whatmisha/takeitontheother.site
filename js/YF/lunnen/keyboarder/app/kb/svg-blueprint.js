@@ -879,8 +879,8 @@ function compactDraftItems(items) {
     const out = [];
     for (const item of items || []) {
         const last = out[out.length - 1];
-        if (canRepeatDraftItem(item) && canRepeatDraftItem(last) && item.u === last.u) {
-            last.repeat = (last.repeat || 1) + 1;
+        if (canCompactRepeatDraftItem(item) && canCompactRepeatDraftItem(last) && item.u === last.u) {
+            appendRepeatedDraftItem(last, item);
         } else {
             out.push({ ...item });
         }
@@ -888,7 +888,7 @@ function compactDraftItems(items) {
     return out;
 }
 
-function canRepeatDraftItem(item) {
+function canCompactRepeatDraftItem(item) {
     return !!item
         && item.u != null
         && item.w == null
@@ -896,8 +896,31 @@ function canRepeatDraftItem(item) {
         && item.flex == null
         && item.rowSpan == null
         && item.stack == null
-        && item.id == null
         && item.editId == null;
+}
+
+function appendRepeatedDraftItem(last, item) {
+    const lastRepeat = last.repeat || 1;
+    const itemRepeat = item.repeat || 1;
+    const mergedIds = draftItemIds(last, lastRepeat).concat(draftItemIds(item, itemRepeat));
+    last.repeat = lastRepeat + itemRepeat;
+
+    if (mergedIds.some((id) => id)) {
+        last.ids = mergedIds.map((id) => id || null);
+        delete last.id;
+    } else {
+        delete last.ids;
+    }
+}
+
+function draftItemIds(item, repeat) {
+    if (Array.isArray(item.ids)) {
+        return Array.from({ length: repeat }, (_, i) => item.ids[i] || null);
+    }
+    if (item.id) {
+        return Array.from({ length: repeat }, (_, i) => (i === 0 ? item.id : null));
+    }
+    return Array.from({ length: repeat }, () => null);
 }
 
 function normalizedSkip(value) {

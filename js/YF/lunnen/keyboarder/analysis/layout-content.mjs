@@ -20,6 +20,26 @@ const iconGroups = CONTENT.keys.flatMap((key) => key.elements || [])
     }, {});
 assert.deepEqual(iconGroups, { 'f-icons': 13, icons: 15 });
 
+const idsRepeatLayout = {
+    meta: { name: 'IDS_REPEAT' },
+    grid: {
+        origin: { x: 0, y: 0 },
+        colPitch: 12,
+        rowPitch: 12,
+        keyWidth1U: 10,
+        keyHeight: 10
+    },
+    blocks: [{ id: 'main', x: 0, width: 34 }],
+    rows: [{ main: [{ u: 1, repeat: 3, ids: ['esc', 'f1', 'a'] }] }]
+};
+const idsRepeatKeys = buildLayout(idsRepeatLayout).keys;
+assert.deepEqual(idsRepeatKeys.map((key) => key.id), ['esc', 'f1', 'a']);
+const idsRepeatContent = generatedContentForLayout(idsRepeatLayout, TYPE_DEFAULTS, CONTENT);
+assert.deepEqual(idsRepeatContent.keys.map((key) => key.elements[0].text), ['esc', 'F1', 'A']);
+const idsRepeatResult = attachContent(idsRepeatKeys, idsRepeatContent);
+assert.equal(idsRepeatResult.matched, 3);
+assert.equal(idsRepeatResult.orphans, 0);
+
 for (const [name, layout] of Object.entries(LAYOUTS)) {
     if (name === LCAKB23.meta.name) continue;
     const { keys } = buildLayout(layout);

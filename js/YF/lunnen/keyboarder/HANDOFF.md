@@ -201,10 +201,23 @@ Important local entry points:
     `layoutName` from the SVG file name, syncs Grid sliders, clears layout/content edits,
     disables `Reference`/`Diff`, enters the framework `Unsaved*` preset slot, and renders generic
     labels for every detected key;
+  - custom layout naming now checks built-in layout names and saved presets; repeated SVG imports
+    get suffixes such as `TEST_LAYOUT_2`;
+  - `vendor/framework/src/core/ApplicationShell.js` supports optional
+    `presets.suggestSaveName(app)`, and Keyboarder also installs app-level
+    `installSuggestedPresetSave()` so `Save preset` opens with the current custom layout name
+    prefilled;
+  - warning-level imports now show a richer modal report and a `Report JSON` action. The exported
+    compact report includes summary lines, groups/elements, calibration, recognized counts,
+    estimated grid, diagnostics with key coordinates, and draft stats, but not the raw SVG or line
+    buckets. The modal also includes a visual `Key Review` SVG thumbnail: detected keys are shown
+    as a miniature layout, warning keys are red, note-only keys are amber, and issue keys are
+    labeled by candidate number;
   - imported layout drafts are now compacted for hand-editability: consecutive identical unit
-    keys are emitted with `repeat`, and synthetic `r123` key IDs are omitted. The existing
-    row/block/ordinal edit IDs are still assigned after `buildLayout()`, so editing and content
-    attachment remain stable;
+    keys are emitted with `repeat`, semantic per-key names can live in `ids`, and synthetic
+    `r123` key IDs are omitted. `buildLayout()`, the Legend editor expansion, and generic
+    content generation all understand `repeat + ids`; the existing row/block/ordinal edit IDs
+    are still assigned after expansion, so editing and content attachment remain stable;
   - generic labels for imported/custom layouts prefer semantic IDs when present, but hide
     synthetic `r123` IDs and fall back to positional labels such as `main 1`;
   - `keyboarder.model.v1` now preserves `customLayout` in settings, and custom layouts are also
@@ -619,9 +632,9 @@ Stage 6 is started:
   diagnostics, conversion into `keyboarder.layoutDraft.v1`, and the current top-bar `New layout`
   workflow that creates a transient custom layout/preset without drawing an overlay on an opened
   preset.
-- Still remaining: deeper production polish for imported layouts, especially naming/saving
-  multiple custom layouts, richer suspected-key review, and conversion of draft structure into
-  nicer human-authored `u`/`repeat` rows.
+- Still remaining: deeper production polish for imported layouts, especially more real-world SVG
+  QA. Visual suspected-key review and compact `u`/`repeat` draft structure with semantic `ids`
+  are now implemented.
 
 Stage 7 main code items are complete:
 

@@ -21,11 +21,17 @@ function expand(items) {
     const out = [];
     for (const it of items) {
         const n = it.repeat || 1;
+        const ids = Array.isArray(it.ids) ? it.ids : null;
         for (let i = 0; i < n; i++) {
             const copy = { ...it };
             delete copy.repeat;
+            delete copy.ids;
             // При repeat > 1 явный id размножать нельзя — он должен быть уникальным.
-            if (n > 1) delete copy.id;
+            // `ids` хранит имена отдельных повторённых клавиш в компактных импортированных рядах.
+            if (n > 1) {
+                if (ids && ids[i]) copy.id = ids[i];
+                else delete copy.id;
+            }
             out.push(copy);
         }
     }
