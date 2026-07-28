@@ -74,18 +74,19 @@ function centerRefBox(ctx, targetCenter) {
  * @returns {number|null}
  */
 export function penXFor(code, ctx) {
-    const { tf, comp, text, size, tracking = 0 } = ctx;
+    const { tf, comp, compOverride, text, size, tracking = 0 } = ctx;
     const g = ctx.guide;
     const r = tf.layout(text, size, tracking, [0, 0]);
+    const manual = Number.isFinite(compOverride?.px) ? compOverride.px : null;
     // центр — механически по перу: полуапроши симметричны и гасят друг друга (§ 9.2)
     if (code === 'C') return g.cx - r.advw / 2;
     if (!r.ink) return g.x0;
     if (code === 'L') {
-        const c = comp ? comp.outdentPx(text, 'L', size) : 0;
+        const c = manual ?? (comp ? comp.outdentPx(text, 'L', size) : 0);
         return g.x0 - c - r.ink[0];
     }
     if (code === 'R') {
-        const c = comp ? comp.outdentPx(text, 'R', size) : 0;
+        const c = manual ?? (comp ? comp.outdentPx(text, 'R', size) : 0);
         return g.x1 + c - (r.ink[0] + r.ink[2]);
     }
     return null;
@@ -99,7 +100,7 @@ export function penXFor(code, ctx) {
 export function placeText(el, ctx) {
     const g = ctx.guide;
     const [vCode, hCode] = el.slot;
-    const c = { ...ctx, text: el.text, size: el.size, tracking: el.tracking || 0 };
+    const c = { ...ctx, text: el.text, size: el.size, tracking: el.tracking || 0, compOverride: el.compOverride };
     let by = baselineFor(vCode, c);
     let bx = penXFor(hCode, c);
     const anchored = { v: by !== null, h: bx !== null };

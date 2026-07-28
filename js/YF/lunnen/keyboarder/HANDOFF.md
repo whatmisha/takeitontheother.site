@@ -63,7 +63,8 @@ Important local entry points:
     make exact `row+x` matching impossible.
 - Started Stage 4 editing UI:
   - selection state is UI-only and intentionally kept out of tool settings/presets;
-  - clicking a key selects it and updates the Legend inspector/select;
+  - clicking a key selects it, opens the Legend panel if collapsed, and updates the Legend
+    inspector/select;
   - `Shift`/`Cmd`/`Ctrl` click toggles multi-selection;
   - arrow keys move the active key, `Shift+Arrow` extends the selection, `Escape` clears it;
   - `exportSVG()` and `exportPNG()` temporarily hide the selection overlay, then restore it.
@@ -78,7 +79,19 @@ Important local entry points:
     text/icon payloads where possible;
   - template changes apply to all selected keys, while detailed slot/value fields apply to the
     active key;
+  - text elements now have a `Comp` field in px; when filled, it becomes `compOverride` and
+    replaces formula/table optical compensation for L/R slots;
   - reset removes overrides for the selected keys and falls back to generated content.
+- Added the first key geometry editor:
+  - presets now include sanitized `layoutEdits` overrides, keyed by stable `row:block:ordinal`;
+  - the Legend panel has a `Width` field for the active key, in mm;
+  - applying a non-flex width override feeds a cloned row model into `buildLayout()`, so the
+    existing flex key in that row absorbs the remaining space;
+  - applying a source flex key width makes that key explicit and moves the temporary flex role to
+    the next suitable key on the right, or to the previous key if the source flex is at row end;
+  - a key that is currently acting as the temporary flex absorber is locked until the source flex
+    override is reset;
+  - `Reset` removes the active key width override.
 - Moved the collapsed Legend panel above the bottom export buttons; its header had overlapped the
   `SVG` button at the old bottom position.
 
@@ -88,6 +101,7 @@ Commands run successfully:
 
 ```sh
 node --check app/tool.js
+node --check app/kb/grid.js
 node --check app/kb/legends.js
 node --check app/kb/verify.js
 node analysis/harness.mjs
@@ -121,8 +135,8 @@ Browser QA on `http://127.0.0.1:8000/`:
   outlines.
 - `Verify` dialog contains `Close` and `Download JSON` buttons.
 - Default selection is key 0 (`R1 main · esc`), with one visible `#selection rect`.
-- Click on a key selects it, updates the Legend panel, and keeps preset label `LCAKB23` (no dirty
-  marker).
+- Click on a key opens a collapsed Legend panel, selects the key, updates the Legend panel, and
+  keeps preset label `LCAKB23` (no dirty marker).
 - `Shift` click and `Shift+ArrowRight` both produce a 2-key selection.
 - Plain `ArrowRight` moves to the next key and collapses to one selected key.
 - `Escape` clears the selection and the Legend panel shows `No key selected.`
@@ -133,6 +147,20 @@ Browser QA on `http://127.0.0.1:8000/`:
   - changing a single key to `word-center · MC` updates template and slot placement;
   - multi-selecting F5/F6 and applying `word-center · MC` changes both keys;
   - resetting the multi-selection restores the original `fkey-icon+label` content.
+  - setting `Comp` on `esc` to `0.5` changes the inspector from `formula` to `manual 0.500`;
+  - resetting the key clears the manual compensation and restores formula compensation.
+- Key width editor QA:
+  - default `esc` is a source flex key, but its `Width` field is editable and shows `25.302`;
+  - selecting F5 opens Legend, enables `Width`, and shows `16.402`;
+  - applying `18.000` changes F5 width from `46.494 px` to `51.024 px`;
+  - the row's flex `esc` width shrinks from `71.722 px` to `67.192 px`;
+  - F6's x-position stays stable because the row remainder is absorbed before it;
+  - `Reset` restores F5/esc widths and disables the reset button again.
+  - applying `20.000` to source flex `esc` changes esc width from `71.722 px` to `56.693 px`;
+  - F1 becomes the temporary flex absorber, grows from `46.494 px` to `61.523 px`, and F2's
+    x-position stays stable;
+  - selecting F1 after that shows `Width` locked with the flex-derived title;
+  - resetting `esc` restores esc/F1 widths.
 
 Note: the Browser plugin's console log API kept an old error entry from an earlier failed reload
 after it was fixed. Current DOM probes confirmed the app initializes and renders.
@@ -156,10 +184,11 @@ Stage 4 is started, not complete:
 
 - Done: click selection, multi-select, Legend inspector sync, arrow navigation, `Escape` clear,
   preset-backed legend content overrides, active-key slot/value editing, bulk template changes,
-  reset selected edits.
-- Still remaining: row/key edits, manual compensation overrides, richer model export/import for
-  edited keyboard data, and eventually adding/removing legend elements rather than only retargeting
-  existing template variants.
+  reset selected edits, manual compensation overrides in px for text L/R slots, and key width
+  overrides with row flex recalculation, including source flex keys.
+- Still remaining: full row/key editing for adding/removing keys or rows, richer model
+  export/import for edited keyboard data, and eventually adding/removing legend elements rather
+  than only retargeting existing template variants.
 
 ## Notes For The Next Assistant
 

@@ -238,6 +238,48 @@
     border-top: 1px solid var(--color-border);
 }
 
+.legend-geometry-editor {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-border);
+}
+
+.legend-geometry-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(54px, 0.48fr) minmax(54px, 0.48fr);
+    gap: var(--spacing-sm);
+    align-items: end;
+}
+
+.legend-geometry-row label {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.legend-geometry-row span {
+    color: var(--color-text-dim);
+    font-size: 9px;
+}
+
+.legend-geometry-row input {
+    width: 100%;
+    min-width: 0;
+    height: 26px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    background: var(--color-bg-input);
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 0 var(--spacing-sm);
+}
+
+.legend-geometry-row .btn-inline {
+    height: 26px;
+}
+
 .legend-element-editor {
     display: flex;
     flex-direction: column;
@@ -249,6 +291,10 @@
     grid-template-columns: minmax(36px, 0.55fr) minmax(0, 1.6fr) minmax(52px, 0.8fr) minmax(52px, 0.8fr);
     gap: var(--spacing-xs);
     align-items: end;
+}
+
+.legend-edit-row[data-kind="txt"] {
+    grid-template-columns: minmax(34px, 0.5fr) minmax(0, 1.35fr) minmax(46px, 0.7fr) minmax(46px, 0.7fr) minmax(48px, 0.7fr);
 }
 
 .legend-edit-row label {
@@ -288,6 +334,8 @@
 }
 
 .legend-editor-actions .btn-inline:disabled,
+.legend-geometry-row .btn-inline:disabled,
+.legend-geometry-row input:disabled,
 .select-control:disabled {
     cursor: default;
     opacity: 0.45;

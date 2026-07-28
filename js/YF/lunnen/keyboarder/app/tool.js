@@ -25,6 +25,8 @@ import ICON_OPTICS from './kb/icons/lcakb23-optics.js';
 
 const REF = LCAKB23.grid;
 const SIZE_EPS = 0.0001;
+const MIN_KEY_WIDTH_MM = 4;
+const MAX_KEY_WIDTH_MM = 80;
 
 const TYPE_DEFAULTS = {
     glyphSize: 15.1999,
@@ -57,7 +59,7 @@ const PRESET_KEYS = [
     'showCaps', 'showGuides', 'showGlyphs', 'showIcons', 'showColumns', 'showIndex',
     'showInk', 'showSlots', 'showRef', 'showDiff', 'showBlocks',
     'capColor', 'guideColor', 'inkColor', 'bgColor',
-    'contentEdits'
+    'contentEdits', 'layoutEdits'
 ];
 
 const TEMPLATE_VARIANTS = buildTemplateVariants(CONTENT);
@@ -154,10 +156,21 @@ function applyTypeSettings(keys, s) {
 let cached = { sig: null, data: null };
 function layoutFor(s) {
     const g = gridFrom(s);
-    const sig = JSON.stringify(g) + typeSigFrom(s) + (TYPEFACE ? '·tf' : '');
+    const layoutEdits = sanitizeLayoutEdits(s.layoutEdits || {});
+    const sig = JSON.stringify(g) + JSON.stringify(layoutEdits) + typeSigFrom(s) + (TYPEFACE ? '·tf' : '');
     if (cached.sig !== sig) {
-        const data = buildLayout(LCAKB23, g);
+        const editedLayout = layoutWithEdits(LCAKB23, layoutEdits, g);
+        let renderLayout = editedLayout;
+        let data;
+        try {
+            data = buildLayout(renderLayout, g);
+        } catch (e) {
+            console.warn('Keyboarder: layout edits were ignored because the row no longer fits.', e);
+            renderLayout = LCAKB23;
+            data = buildLayout(renderLayout, g);
+        }
         assignEditIds(data.keys);
+        annotateGeometry(data.keys, LCAKB23, renderLayout, g, layoutEdits);
         attachGuides(data.keys, g.guideInset);
         attachContent(data.keys, CONTENT);
         captureBaseContent(data.keys);
@@ -221,7 +234,8 @@ const app = defineTool({
         inkColor: '#aaaaaa',
         bgColor: '#808080',
 
-        contentEdits: {}
+        contentEdits: {},
+        layoutEdits: {}
     },
 
     controls: {
@@ -453,6 +467,7 @@ const app = defineTool({
 
         updateReadout(s, keys, grid, legends);
         updateLegendInspector(s, keys, grid, legends);
+        updateKeyGeometryEditor(s, keys);
         updateLegendEditor(s, keys);
         syncCompensationMode(s);
     },
@@ -471,7 +486,7 @@ const app = defineTool({
         };
 
         document.getElementById('resetGridBtn')?.addEventListener('click', () => {
-            const values = { ...REF_MM };
+            const values = { ...REF_MM, layoutEdits: {} };
             readyApp.settingsStore.setMultiple(values);
             syncSliders(values);
         });
@@ -497,6 +512,18 @@ const app = defineTool({
         document.getElementById('resetLegendEditBtn')?.addEventListener('click', () => {
             resetSelectedLegendEdits(readyApp);
         });
+        document.getElementById('applyKeyWidthBtn')?.addEventListener('click', () => {
+            applyKeyWidthEdit(readyApp);
+        });
+        document.getElementById('resetKeyWidthBtn')?.addEventListener('click', () => {
+            resetKeyWidthEdit(readyApp);
+        });
+        document.getElementById('legendKeyWidthInput')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                applyKeyWidthEdit(readyApp);
+                e.preventDefault();
+            }
+        });
         document.getElementById('legendEditor')?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
                 applyLegendEditor(readyApp);
@@ -512,7 +539,10 @@ const app = defineTool({
 
         readyApp.dom?.surface?.addEventListener('click', (e) => {
             const key = keyAtClientPoint(readyApp.dom.surface, layoutFor(readyApp.settings).keys, e.clientX, e.clientY);
-            if (key) selectKey(readyApp, key.i, { toggle: e.shiftKey || e.metaKey || e.ctrlKey });
+            if (key) {
+                expandLegendPanel();
+                selectKey(readyApp, key.i, { toggle: e.shiftKey || e.metaKey || e.ctrlKey });
+            }
             else if (!e.shiftKey) selectKey(readyApp, null);
         });
 
@@ -606,7 +636,182 @@ function normalizedPresetBlob(blob = {}, defaults = {}) {
         if (source[key] !== undefined) clean[key] = clonePlain(source[key]);
     }
     clean.contentEdits = sanitizeContentEdits(clean.contentEdits || {});
+    clean.layoutEdits = sanitizeLayoutEdits(clean.layoutEdits || {});
     return clean;
+}
+
+function sanitizeLayoutEdits(edits = {}) {
+    const out = {};
+    if (!edits || typeof edits !== 'object') return out;
+    for (const [id, edit] of Object.entries(edits)) {
+        if (!edit || typeof edit !== 'object') continue;
+        const widthMm = clamp(Number(edit.widthMm), MIN_KEY_WIDTH_MM, MAX_KEY_WIDTH_MM);
+        if (!Number.isFinite(widthMm)) continue;
+        out[id] = { widthMm: roundMm(widthMm) };
+    }
+    return out;
+}
+
+function roundMm(value) {
+    return Math.round(value * 1000) / 1000;
+}
+
+function clamp(value, min, max) {
+    if (!Number.isFinite(value)) return NaN;
+    return Math.min(max, Math.max(min, value));
+}
+
+function expandedLayoutItems(items) {
+    const out = [];
+    for (const it of items || []) {
+        const n = it.repeat || 1;
+        for (let i = 0; i < n; i++) {
+            const copy = { ...it };
+            delete copy.repeat;
+            if (n > 1) delete copy.id;
+            out.push(copy);
+        }
+    }
+    return out;
+}
+
+function rowSpecEntries(rowIndex, blockId, items) {
+    const list = expandedLayoutItems(items);
+    const rowHasFlex = list.some((it) => !it.skip && it.flex);
+    let ordinal = 0;
+    return list.map((it, index) => {
+        if (it.skip) return { item: it, index, editId: null, rowHasFlex };
+        return {
+            item: it,
+            index,
+            editId: `${rowIndex}:${blockId}:${ordinal++}`,
+            rowHasFlex
+        };
+    });
+}
+
+function chooseFlexTarget(entries, sourceIndex, edits) {
+    const candidates = entries.filter((entry) =>
+        entry.editId && entry.index !== sourceIndex && !entry.item.skip);
+    const unedited = candidates.filter((entry) => !edits[entry.editId]?.widthMm);
+    const pool = unedited.length ? unedited : candidates;
+    const right = pool
+        .filter((entry) => entry.index > sourceIndex)
+        .sort((a, b) => a.index - b.index)[0];
+    if (right) return right;
+    return pool
+        .filter((entry) => entry.index < sourceIndex)
+        .sort((a, b) => b.index - a.index)[0] || null;
+}
+
+function layoutWithEdits(layout, edits, grid) {
+    const clean = sanitizeLayoutEdits(edits);
+    if (!Object.keys(clean).length) return layout;
+
+    let applied = false;
+    const rows = layout.rows.map((row, rowIndex) => {
+        const nextRow = {};
+        for (const [blockId, items] of Object.entries(row)) {
+            const entries = rowSpecEntries(rowIndex, blockId, items);
+            const sourceFlex = entries.find((entry) => entry.editId && entry.item.flex);
+            const sourceFlexEdit = sourceFlex ? clean[sourceFlex.editId] : null;
+            const flexTarget = sourceFlexEdit
+                ? chooseFlexTarget(entries, sourceFlex.index, clean)
+                : null;
+            let blockChanged = false;
+            const nextItems = entries.map(({ item: it, editId, index }) => {
+                if (it.skip) return { ...it };
+                const edit = clean[editId];
+                if (flexTarget && index === flexTarget.index) {
+                    blockChanged = true;
+                    applied = true;
+                    const next = { ...it, flex: true };
+                    delete next.u;
+                    delete next.w;
+                    return next;
+                }
+                if (!edit) return { ...it };
+                if (it.flex && !flexTarget) return { ...it };
+                blockChanged = true;
+                applied = true;
+                const next = { ...it, w: toPx(edit.widthMm) };
+                delete next.u;
+                delete next.flex;
+                return next;
+            });
+            nextRow[blockId] = blockChanged ? nextItems : items;
+        }
+        return nextRow;
+    });
+
+    return applied ? { ...layout, rows } : layout;
+}
+
+function geometrySpecMap(layout) {
+    const byId = new Map();
+    layout.rows.forEach((row, rowIndex) => {
+        for (const [blockId, items] of Object.entries(row)) {
+            for (const entry of rowSpecEntries(rowIndex, blockId, items)) {
+                if (!entry.editId) continue;
+                byId.set(entry.editId, {
+                    flex: !!entry.item.flex,
+                    rowHasFlex: entry.rowHasFlex,
+                    itemIndex: entry.index
+                });
+            }
+        }
+    });
+    return byId;
+}
+
+function sourceGeometryMap(layout, grid) {
+    const base = buildLayout(layout, grid);
+    assignEditIds(base.keys);
+    const byId = new Map(base.keys.map((k) => [k.editId, {
+        baseWidthMm: toMm(k.w),
+        sourceFlex: false,
+        rowHasFlex: false
+    }]));
+
+    for (const [editId, spec] of geometrySpecMap(layout)) {
+        const info = byId.get(editId) || {};
+        info.sourceFlex = !!spec.flex;
+        info.rowHasFlex = !!spec.rowHasFlex;
+        byId.set(editId, info);
+    }
+
+    return byId;
+}
+
+function annotateGeometry(keys, sourceLayout, currentLayout, grid, edits) {
+    const source = sourceGeometryMap(sourceLayout, grid);
+    const current = geometrySpecMap(currentLayout);
+    const clean = sanitizeLayoutEdits(edits);
+    const flexByRowBlock = new Map();
+
+    for (const k of keys) {
+        if (current.get(k.editId)?.flex) flexByRowBlock.set(rowBlockKey(k), k);
+    }
+
+    for (const k of keys) {
+        const info = source.get(k.editId) || {};
+        const currentInfo = current.get(k.editId) || {};
+        const range = { min: MIN_KEY_WIDTH_MM, max: MAX_KEY_WIDTH_MM };
+        const flex = flexByRowBlock.get(rowBlockKey(k));
+        if (currentInfo.rowHasFlex && flex && flex.editId !== k.editId) {
+            const max = toMm(k.w + flex.w - toPx(MIN_KEY_WIDTH_MM));
+            range.max = Math.min(MAX_KEY_WIDTH_MM, Math.max(MIN_KEY_WIDTH_MM, max));
+        }
+        k.geometry = {
+            baseWidthMm: Number.isFinite(info.baseWidthMm) ? info.baseWidthMm : toMm(k.w),
+            sourceFlex: !!info.sourceFlex,
+            currentFlex: !!currentInfo.flex,
+            rowHasFlex: !!currentInfo.rowHasFlex,
+            widthEditable: !currentInfo.flex || !!info.sourceFlex,
+            widthEdited: !!clean[k.editId]?.widthMm,
+            widthRange: range
+        };
+    }
 }
 
 function cleanOffset(offset) {
@@ -617,6 +822,12 @@ function cleanOffset(offset) {
         if (Number.isFinite(value) && value !== 0) out[key] = value;
     }
     return Object.keys(out).length ? out : null;
+}
+
+function cleanCompOverride(compOverride) {
+    if (!compOverride || typeof compOverride !== 'object') return null;
+    const px = Number(compOverride.px);
+    return Number.isFinite(px) ? { px } : null;
 }
 
 function cleanElement(el = {}) {
@@ -632,6 +843,8 @@ function cleanElement(el = {}) {
         out.size = finiteOr(el.size, TYPE_DEFAULTS.wordSize);
         const tracking = finiteOr(el.tracking, 0);
         if (tracking !== 0) out.tracking = tracking;
+        const compOverride = cleanCompOverride(el.compOverride);
+        if (compOverride) out.compOverride = compOverride;
     }
     const offset = cleanOffset(el.offset);
     if (offset) out.offset = offset;
@@ -855,6 +1068,67 @@ function optionEl(value, label) {
     return opt;
 }
 
+function updateKeyGeometryEditor(s, keys) {
+    const editor = document.getElementById('legendGeometryEditor');
+    const input = document.getElementById('legendKeyWidthInput');
+    const apply = document.getElementById('applyKeyWidthBtn');
+    const reset = document.getElementById('resetKeyWidthBtn');
+    if (!editor || !input) return;
+
+    const active = activeKey(keys);
+    const edits = sanitizeLayoutEdits(s.layoutEdits || {});
+    const editable = !!active?.geometry?.widthEditable;
+    const range = active?.geometry?.widthRange || { min: MIN_KEY_WIDTH_MM, max: MAX_KEY_WIDTH_MM };
+    const value = active ? toMm(active.w).toFixed(3) : '';
+    const editId = active?.editId || '';
+
+    editor.classList.toggle('is-locked', !!active && !editable);
+    input.disabled = !editable;
+    input.min = String(roundMm(range.min));
+    input.max = String(roundMm(range.max));
+    input.dataset.editId = editId;
+    input.title = active && !editable ? 'Flex key: width is derived from the remaining row space.' : '';
+    if (document.activeElement !== input || input.dataset.valueEditId !== editId) {
+        input.value = value;
+        input.dataset.valueEditId = editId;
+    }
+    if (apply) apply.disabled = !editable;
+    if (reset) reset.disabled = !active || !edits[editId];
+}
+
+function writeKeyWidthEdit(edits, k, widthMm) {
+    const edit = { ...(edits[k.editId] || {}) };
+    const base = k.geometry?.baseWidthMm;
+    if (Number.isFinite(base) && Math.abs(widthMm - base) < 0.0005) delete edit.widthMm;
+    else edit.widthMm = roundMm(widthMm);
+    if (Object.keys(edit).length) edits[k.editId] = edit;
+    else delete edits[k.editId];
+}
+
+function applyKeyWidthEdit(app) {
+    const input = document.getElementById('legendKeyWidthInput');
+    const keys = layoutFor(app.settings).keys;
+    const active = activeKey(keys);
+    if (!input || !active?.geometry?.widthEditable) return;
+    const range = active.geometry.widthRange || { min: MIN_KEY_WIDTH_MM, max: MAX_KEY_WIDTH_MM };
+    const widthMm = clamp(Number(input.value), range.min, range.max);
+    if (!Number.isFinite(widthMm)) return;
+    input.value = widthMm.toFixed(3);
+    const next = sanitizeLayoutEdits(app.settings.layoutEdits || {});
+    writeKeyWidthEdit(next, active, widthMm);
+    app.settingsStore.set('layoutEdits', next);
+}
+
+function resetKeyWidthEdit(app) {
+    const keys = layoutFor(app.settings).keys;
+    const active = activeKey(keys);
+    if (!active) return;
+    const next = sanitizeLayoutEdits(app.settings.layoutEdits || {});
+    if (!next[active.editId]) return;
+    delete next[active.editId];
+    app.settingsStore.set('layoutEdits', next);
+}
+
 function updateLegendEditor(s, keys) {
     syncTemplateSelect(keys);
     const editor = document.getElementById('legendElementEditor');
@@ -904,11 +1178,13 @@ function elementEditorHtml(el, i) {
             + `<label><span>H</span><input class="legend-height-input" type="number" step="0.001" value="${html(el.h)}"></label>`
             + '</div>';
     }
+    const compValue = Number.isFinite(el.compOverride?.px) ? String(el.compOverride.px) : '';
     return '<div class="legend-edit-row" data-kind="txt" data-offset="' + offset + '">'
         + `<label><span>Slot</span><input class="legend-slot-input" value="${html(el.slot)}" maxlength="2"></label>`
         + `<label><span>Text</span><input class="legend-text-input" value="${html(el.text)}"></label>`
         + `<label><span>Size</span><input class="legend-size-input" type="number" step="0.001" value="${html(el.size)}"></label>`
         + `<label><span>Track</span><input class="legend-track-input" type="number" step="0.001" value="${html(el.tracking || 0)}"></label>`
+        + `<label><span>Comp</span><input class="legend-comp-input" type="number" step="0.001" value="${html(compValue)}"></label>`
         + '</div>';
 }
 
@@ -948,7 +1224,11 @@ function readElementEditorElements() {
             ...base,
             text: row.querySelector('.legend-text-input')?.value || '',
             size: row.querySelector('.legend-size-input')?.value,
-            tracking: row.querySelector('.legend-track-input')?.value
+            tracking: row.querySelector('.legend-track-input')?.value,
+            compOverride: (() => {
+                const raw = row.querySelector('.legend-comp-input')?.value;
+                return raw === '' || raw == null ? null : { px: raw };
+            })()
         });
     });
 }
@@ -1027,6 +1307,13 @@ function selectKey(app, index, { toggle = false } = {}) {
     }
     SELECTION = { active: index, indices: [...current].sort((a, b) => a - b) };
     app.renderNow();
+}
+
+function expandLegendPanel() {
+    const panel = document.getElementById('legendPanel');
+    if (!panel || !panel.classList.contains('panel-collapsed')) return;
+    panel.classList.remove('panel-collapsed');
+    panel.querySelector('.collapse-icon')?.classList.remove('collapsed');
 }
 
 function installCleanExports(app) {
@@ -1273,6 +1560,7 @@ function compensationInfo(s, el) {
     const chars = [...el.text].filter((c) => c !== ' ');
     if (!chars.length) return null;
     const ch = side === 'L' ? chars[0] : chars[chars.length - 1];
+    if (Number.isFinite(el.compOverride?.px)) return { ch, source: 'manual', px: el.compOverride.px };
     const comp = compFor(s);
     if (!comp) return { ch, source: 'off', px: 0 };
     const ex = comp.explain(ch, side);
@@ -1290,10 +1578,12 @@ function updateLegendInspector(s, keys, grid, legends) {
         return;
     }
     const items = legends.filter((el) => el.key === k);
+    const widthText = `${widthInU(k.w, grid).toFixed(2)}U · ${toMm(k.w).toFixed(3)} mm`
+        + (k.geometry?.widthEdited ? ' *' : '');
     let out = '<dl class="legend-meta">'
         + `<div><dt>Selected</dt><dd>${sel.indices.length}</dd></div>`
         + `<div><dt>Template</dt><dd>${html(k.tpl || 'blank')}</dd></div>`
-        + `<div><dt>Position</dt><dd>row ${k.row + 1}, ${html(k.block)}, ${widthInU(k.w, grid).toFixed(2)}U</dd></div>`
+        + `<div><dt>Position</dt><dd>row ${k.row + 1}, ${html(k.block)}, ${widthText}</dd></div>`
         + '</dl>';
     if (!TYPEFACE) {
         box.innerHTML = out + '<p class="inspector-empty">Font loading.</p>';

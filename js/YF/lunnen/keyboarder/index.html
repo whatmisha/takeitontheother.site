@@ -224,6 +224,16 @@
                         <label for="legendKeySelect"><span>Key</span></label>
                         <select id="legendKeySelect" class="select-control" aria-label="Selected key"></select>
                     </div>
+                    <div class="legend-geometry-editor" id="legendGeometryEditor">
+                        <div class="legend-geometry-row">
+                            <label for="legendKeyWidthInput">
+                                <span>Width</span>
+                                <input id="legendKeyWidthInput" type="number" step="0.001" inputmode="decimal" aria-label="Selected key width, mm">
+                            </label>
+                            <button type="button" class="btn-inline" id="applyKeyWidthBtn">Apply</button>
+                            <button type="button" class="btn-inline" id="resetKeyWidthBtn">Reset</button>
+                        </div>
+                    </div>
                     <div class="legend-editor" id="legendEditor">
                         <div class="control-group">
                             <label for="legendTemplateSelect"><span>Template</span></label>
