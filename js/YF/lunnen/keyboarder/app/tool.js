@@ -21,7 +21,7 @@ import {
     compareLegends, legendsReportHtml, GEOMETRY_TOLERANCE
 } from './kb/verify.js';
 import CONTENT from './kb/content/lcakb23.js';
-import { generatedContentForLayout } from './kb/content/generated-layouts.js';
+import { generatedContentForLayout, generatedContentStatsForLayout } from './kb/content/generated-layouts.js';
 import ICONS from './kb/icons/lcakb23.js';
 import ICON_OPTICS from './kb/icons/lcakb23-optics.js';
 import {
@@ -2377,6 +2377,7 @@ async function createNewLayoutFromSvgFile(app, file) {
         if (!analysis.elements.lines) throw new Error('No SVG lines were found in the blueprint group.');
         const draft = analysis.layoutDraft;
         if (!draft?.layout) throw new Error('No usable keyboard layout draft was detected.');
+        addSvgImportContentStats(analysis);
         const warnings = analysis.diagnostics?.warnings || [];
         if (warnings.length) {
             const result = await app.dialog?.show({
@@ -2396,8 +2397,7 @@ async function createNewLayoutFromSvgFile(app, file) {
         if (!(await guardUnsavedBeforeNewLayout(app))) return;
         const customLayout = namedCustomLayout(draft.layout, file.name, app);
         openImportedCustomLayout(app, customLayout);
-        const stats = draft.stats || {};
-        app._showToast?.(`New layout ${customLayout.meta.name} · ${stats.keys || 0} keys`);
+        app._showToast?.(svgImportToastText(customLayout.meta.name, draft.stats));
     } catch (e) {
         await app.dialog?.alert({
             title: 'Layout import failed',
@@ -2405,6 +2405,29 @@ async function createNewLayoutFromSvgFile(app, file) {
             okText: 'Close'
         });
     }
+}
+
+function addSvgImportContentStats(analysis) {
+    const draft = analysis?.layoutDraft;
+    if (!draft?.layout) return null;
+    const content = generatedContentStatsForLayout(draft.layout);
+    draft.stats = {
+        ...(draft.stats || {}),
+        content
+    };
+    return content;
+}
+
+function svgImportToastText(layoutName, stats = {}) {
+    const content = stats?.content || {};
+    const parts = [
+        `New layout ${layoutName}`,
+        `${stats.keys || 0} keys`
+    ];
+    if (stats.layoutProfile) parts.push(stats.layoutProfile);
+    if (Number.isFinite(content.alphaDualKeys)) parts.push(`${content.alphaDualKeys} alpha-dual`);
+    if (Number.isFinite(content.placeholderKeys)) parts.push(`${content.placeholderKeys} placeholders`);
+    return parts.join(' · ');
 }
 
 async function guardUnsavedBeforeNewLayout(app) {

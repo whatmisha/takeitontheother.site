@@ -684,9 +684,10 @@ export function layoutDraftFromRecognized(analysis = {}, options = {}) {
         return null;
     }
 
-    assignDraftSemanticIds(cells, rowClusters);
+    const draftBlocks = detectDraftBlocks(cells, gap);
+    const layoutProfile = assignDraftSemanticIds(cells, rowClusters, draftBlocks);
 
-    const blocks = detectDraftBlocks(cells, gap).map((block, index, list) => ({
+    const blocks = draftBlocks.map((block, index, list) => ({
         id: blockIdFor(index, list.length),
         x: round(block.x, 4),
         width: round(block.right - block.x, 4),
@@ -726,7 +727,8 @@ export function layoutDraftFromRecognized(analysis = {}, options = {}) {
         meta: {
             name: options.name || 'IMPORTED_SVG',
             formFactor: options.formFactor || 'custom',
-            source: 'svg-blueprint'
+            source: 'svg-blueprint',
+            layoutProfile: layoutProfile?.id || null
         },
         grid: {
             colPitch: round(colPitch, 4),
@@ -755,7 +757,9 @@ export function layoutDraftFromRecognized(analysis = {}, options = {}) {
             unitWidths: countDraftItems(draftRows, (item) => item.u != null),
             skips: countDraftItems(draftRows, (item) => item.skip != null),
             rowSpans: countDraftItems(draftRows, (item) => item.rowSpan != null),
-            stacks: countDraftItems(draftRows, (item) => Array.isArray(item.stack))
+            stacks: countDraftItems(draftRows, (item) => Array.isArray(item.stack)),
+            layoutProfile: layoutProfile?.id || null,
+            semanticKeys: countSemanticKeys(cells)
         }
     };
 }
@@ -786,7 +790,12 @@ export function blueprintSummaryLines(analysis) {
     }
     if (analysis.layoutDraft) {
         const s = analysis.layoutDraft.stats;
-        lines.push(`Draft: ${s.blocks} blocks, ${s.rows} rows, ${s.keys} keys${s.stacks ? `, ${s.stacks} stack` : ''}`);
+        const profile = s.layoutProfile ? `, profile ${s.layoutProfile}` : '';
+        const semantic = Number.isFinite(s.semanticKeys) ? `, semantic ${s.semanticKeys}/${s.keys}` : '';
+        lines.push(`Draft: ${s.blocks} blocks, ${s.rows} rows, ${s.keys} keys${s.stacks ? `, ${s.stacks} stack` : ''}${profile}${semantic}`);
+        if (s.content) {
+            lines.push(`Content: alpha-dual ${s.content.alphaDualKeys || 0}, punctuation-dual ${s.content.punctuationDualKeys || 0}, corners ${s.content.cornerTemplateKeys || 0}, placeholders ${s.content.placeholderKeys || 0}`);
+        }
     }
     if (analysis.privateData?.removedBytes) {
         lines.push(`Removed Illustrator private data: ${analysis.privateData.removedBytes} bytes`);
@@ -828,27 +837,111 @@ const ANSI_COMPACT_IDS = [
     ['lctrl', 'lmeta', 'lalt', 'fn-left', 'space', 'ralt', 'fn-right', 'left', 'arrow-stack', 'right']
 ];
 
-function assignDraftSemanticIds(cells = [], rowClusters = []) {
-    if (rowClusters.length !== ANSI_COMPACT_IDS.length) return;
-    const rows = rowClusters.map((rowY, rowIndex) => cells
-        .filter((key) => nearestIndex(rowClusters, key.y) === rowIndex)
-        .sort((a, b) => a.x - b.x));
-    const rowLengths = rows.map((row) => row.length);
-    const expected = ANSI_COMPACT_IDS.map((row) => row.length);
-    if (!rowLengths.every((count, i) => count === expected[i])) return;
+const ANSI_NAV_89_ROWS = [
+    {
+        main: ['esc', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11', 'f12', 'f13'],
+        nav: ['print', 'scroll', 'pause']
+    },
+    {
+        main: ['grave', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'minus', 'equal', 'backspace'],
+        nav: ['insert', 'home', 'pg-up']
+    },
+    {
+        main: ['tab', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'left-bracket', 'right-bracket', 'backslash'],
+        nav: ['delete', 'end', 'pg-down']
+    },
+    {
+        main: ['caps', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'semicolon', 'quote', 'enter']
+    },
+    {
+        main: ['lshift', 'z', 'x', 'c', 'v', 'b', 'n', 'm', 'comma', 'period', 'slash', 'rshift'],
+        nav: ['up']
+    },
+    {
+        main: ['lctrl', 'lmeta', 'lalt', 'fn-left', 'space', 'ralt', 'fn-right', 'menu', 'rctrl'],
+        nav: ['left', 'down', 'right']
+    }
+];
 
-    rows.forEach((row, rowIndex) => {
-        row.forEach((cell, ordinal) => {
-            const id = ANSI_COMPACT_IDS[rowIndex][ordinal];
-            if (cell.stack?.length) {
-                cell.id = id;
-                cell.stack[0].id = 'up';
-                if (cell.stack[1]) cell.stack[1].id = 'down';
-            } else {
-                cell.id = id;
-            }
+const LAYOUT_PROFILES = [
+    {
+        id: 'ANSI_COMPACT_78',
+        rows: ANSI_COMPACT_IDS.map((main) => ({ main }))
+    },
+    {
+        id: 'ANSI_NAV_89',
+        rows: ANSI_NAV_89_ROWS
+    }
+];
+
+function assignDraftSemanticIds(cells = [], rowClusters = [], rawBlocks = []) {
+    const rows = rowsByDraftBlock(cells, rowClusters, rawBlocks);
+    for (const profile of LAYOUT_PROFILES) {
+        if (!draftProfileMatches(rows, profile)) continue;
+        applyDraftProfile(rows, profile);
+        return { id: profile.id };
+    }
+    return null;
+}
+
+function rowsByDraftBlock(cells = [], rowClusters = [], rawBlocks = []) {
+    return rowClusters.map((rowY, rowIndex) => {
+        const row = {};
+        rawBlocks.forEach((block, blockIndex) => {
+            const blockId = blockIdFor(blockIndex, rawBlocks.length);
+            row[blockId] = cells
+                .filter((key) => nearestIndex(rowClusters, key.y) === rowIndex && block.keys.includes(key))
+                .sort((a, b) => a.x - b.x);
         });
+        return row;
     });
+}
+
+function draftProfileMatches(rows = [], profile = {}) {
+    if (rows.length !== profile.rows?.length) return false;
+    return profile.rows.every((profileRow, rowIndex) => {
+        const row = rows[rowIndex] || {};
+        const blockIds = new Set([...Object.keys(row), ...Object.keys(profileRow || {})]);
+        for (const blockId of blockIds) {
+            const actual = row[blockId] || [];
+            const expected = profileRow?.[blockId] || [];
+            if (actual.length !== expected.length) return false;
+        }
+        return true;
+    });
+}
+
+function applyDraftProfile(rows = [], profile = {}) {
+    profile.rows.forEach((profileRow, rowIndex) => {
+        for (const [blockId, ids] of Object.entries(profileRow || {})) {
+            (rows[rowIndex]?.[blockId] || []).forEach((cell, ordinal) => {
+                assignCellSemanticId(cell, ids[ordinal]);
+            });
+        }
+    });
+}
+
+function assignCellSemanticId(cell, id) {
+    if (!cell || !id) return;
+    if (cell.stack?.length) {
+        cell.id = id;
+        cell.stack[0].id = 'up';
+        if (cell.stack[1]) cell.stack[1].id = 'down';
+    } else {
+        cell.id = id;
+    }
+}
+
+function countSemanticKeys(cells = []) {
+    let count = 0;
+    for (const cell of cells || []) {
+        if (Array.isArray(cell.stack) && cell.stack.length) {
+            count += cell.stack.filter((child) => child.id).length;
+        } else if (cell.id) {
+            count += 1;
+        }
+    }
+    return count;
 }
 
 function draftItemForKey(key, { colPitch, gap }) {

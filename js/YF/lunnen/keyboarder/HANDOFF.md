@@ -218,17 +218,21 @@ Important local entry points:
     `r123` key IDs are omitted. `buildLayout()`, the Legend editor expansion, and generic
     content generation all understand `repeat + ids`; the existing row/block/ordinal edit IDs
     are still assigned after expansion, so editing and content attachment remain stable;
-  - generic labels for imported/custom layouts prefer semantic IDs when present, but hide
-    synthetic `r123` IDs and fall back to positional labels such as `main 1`;
-  - imported/custom ANSI-like alpha keys with semantic ids `q/w/e/...` now generate
-    `tpl: "alpha-dual"` content with Latin in `TL` and Russian ЙЦУКЕН letters in `BR`; `New
+  - generic labels for imported/custom layouts prefer semantic IDs when present, hide synthetic
+    `r123` IDs, and fall back to positional labels such as `main 1`; known `arrow-stack`
+    fallback now renders as `up/down` instead of a placeholder;
+  - imported/custom ANSI-like keys now use profile-based semantic inference. `ANSI_COMPACT_78`
+    covers the one-block S drawing; `ANSI_NAV_89` covers the M drawing with `main + nav` blocks.
+    Alpha ids `q/w/e/...` generate `tpl: "alpha-dual"` with Latin in `TL` and Russian ЙЦУКЕН
+    letters in `BR`; bracket / punctuation / number-row ids generate corner templates. `New
     layout` also resets `languageLayer` to `dual` and syncs the Language select so a fresh SVG
     import opens as `Latin + Cyrillic`;
   - latest QA on `test_layout_S.svg` / `test_layout_M.svg` is documented in `TOOL_PLAN.md`.
-    Short version: S geometry is good and now gets 26 alpha-dual keys, but punctuation/number-row
-    semantic templates are still incomplete; M geometry is good (89 keys, `main` + `nav`) but
-    semantic recognition is missing, so it currently falls back to `main N` / `nav N` labels.
-    Next Stage 6 work should add layout-profile matchers and semantic coverage diagnostics;
+    Short version: S geometry is good, M geometry is good (89 keys, `main` + `nav`), and both now
+    get semantic ids/content through shape profiles. Import stats include `layoutProfile`,
+    `semanticKeys`, and generated-content diagnostics (`alpha-dual`, `punctuation-dual`, corner
+    templates, placeholders); the success toast reports profile, `alpha-dual`, and placeholder
+    count. Fresh manual re-export/visual QA of the real S/M files is still pending;
   - `keyboarder.model.v1` now preserves `customLayout` in settings, and custom layouts are also
     exposed in `keyboard.customLayout` on export.
 - Polished Stage 6 against `/Users/mishaivanov/Desktop/test_layout.svg`, a compact one-block
@@ -641,9 +645,11 @@ Stage 6 is started:
   diagnostics, conversion into `keyboarder.layoutDraft.v1`, and the current top-bar `New layout`
   workflow that creates a transient custom layout/preset without drawing an overlay on an opened
   preset.
-- Still remaining: deeper production polish for imported layouts, especially more real-world SVG
-  QA. Visual suspected-key review and compact `u`/`repeat` draft structure with semantic `ids`
-  are now implemented.
+- Still remaining: deeper production polish for imported layouts, especially fresh manual
+  re-export QA on the real S/M drawings and additional layout profiles as new keyboard drawings
+  appear. Visual suspected-key review, compact `u`/`repeat` draft structure with semantic `ids`,
+  S/M profile matching, punctuation/number-row templates, and content coverage diagnostics are now
+  implemented.
 
 Stage 7 main code items are complete:
 

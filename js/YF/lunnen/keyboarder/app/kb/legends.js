@@ -10,6 +10,7 @@ import { placeKey } from './slots.js';
 /** Ключ сопоставления клавиши и её содержимого — тот же, что в verify.js. */
 export const keyOf = (row, x) => `${row}|${Math.round(x * 10)}`;
 const rowBlockOf = (k) => `${k.row}|${k.block || ''}`;
+const exactContentKeyOf = (k) => `${keyOf(k.row, k.x)}|${k.block || ''}`;
 
 function groupedByRowBlock(items) {
     const groups = new Map();
@@ -48,7 +49,10 @@ function contentByEditId(content) {
 /** Приписать каждой клавише её содержимое из модели. */
 export function attachContent(keys, content) {
     const byEditId = contentByEditId(content);
-    const byKey = new Map(content.keys.map((k) => [keyOf(k.row, k.x), k]));
+    const byKey = new Map(content.keys.map((k) => [exactContentKeyOf(k), k]));
+    const legacyByKey = new Map(content.keys
+        .filter((k) => !k.block)
+        .map((k) => [keyOf(k.row, k.x), k]));
     const byRowBlock = groupedByRowBlock(content.keys);
     const ordinals = generatedOrdinals(keys);
     const used = new Set();
@@ -70,7 +74,7 @@ export function attachContent(keys, content) {
             matched++;
             continue;
         }
-        const c = byKey.get(keyOf(k.row, k.x));
+        const c = byKey.get(exactContentKeyOf(k)) || legacyByKey.get(keyOf(k.row, k.x));
         if (!c) {
             k.elements = [];
             k.tpl = null;

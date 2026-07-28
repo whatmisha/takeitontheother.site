@@ -3,7 +3,7 @@ import { buildLayout } from '../app/kb/grid.js';
 import { LAYOUTS, LCAKB23 } from '../app/kb/layouts.js';
 import { attachContent } from '../app/kb/legends.js';
 import CONTENT from '../app/kb/content/lcakb23.js';
-import { generatedContentForLayout } from '../app/kb/content/generated-layouts.js';
+import { generatedContentForLayout, generatedContentStatsForLayout } from '../app/kb/content/generated-layouts.js';
 
 const TYPE_DEFAULTS = {
     glyphSize: 15.1999,
@@ -37,6 +37,14 @@ assert.deepEqual(idsRepeatKeys.map((key) => key.id), ['esc', 'f1', 'a']);
 const idsRepeatContent = generatedContentForLayout(idsRepeatLayout, TYPE_DEFAULTS, CONTENT);
 assert.deepEqual(idsRepeatContent.keys.map((key) => key.tpl), ['generated-label', 'generated-label', 'alpha-dual']);
 assert.deepEqual(idsRepeatContent.keys[2].elements.map((element) => `${element.slot}:${element.text}`), ['TL:A', 'BR:Ф']);
+assert.deepEqual(generatedContentStatsForLayout(idsRepeatLayout), {
+    keys: 3,
+    alphaDualKeys: 1,
+    punctuationDualKeys: 0,
+    cornerTemplateKeys: 0,
+    generatedLabelKeys: 2,
+    placeholderKeys: 0
+});
 const idsRepeatResult = attachContent(idsRepeatKeys, idsRepeatContent);
 assert.equal(idsRepeatResult.matched, 3);
 assert.equal(idsRepeatResult.orphans, 0);

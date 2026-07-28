@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { buildLayout } from '../app/kb/grid.js';
 import { attachContent } from '../app/kb/legends.js';
-import { generatedContentForLayout } from '../app/kb/content/generated-layouts.js';
+import { generatedContentForLayout, generatedContentStatsForLayout } from '../app/kb/content/generated-layouts.js';
 import {
     analyzeSvgBlueprint,
     blueprintSummaryLines,
@@ -40,6 +40,52 @@ function ansiCompactSvg() {
     }).join('');
     return `<?xml version="1.0"?>
 <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg">
+  <g id="caps">
+    <rect x="0" y="0" width="${keyW}" height="${keyH}" rx="3" ry="3"/>
+    <rect x="${pitch}" y="0" width="${keyW}" height="${keyH}" rx="3" ry="3"/>
+  </g>
+  <g id="blueprint">${rows}</g>
+</svg>`;
+}
+
+function rectRow(x, y, widths, keyH = 46, gap = 7) {
+    let cursor = x;
+    return widths.map((w) => {
+        const lines = roundedRectLines(cursor, y, w, keyH, 3);
+        cursor += w + gap;
+        return lines;
+    }).join('');
+}
+
+function ansiNavSvg() {
+    const keyW = 46;
+    const keyH = 46;
+    const pitch = 53;
+    const gap = pitch - keyW;
+    const navX = 790;
+    const mainRows = [
+        [72.5, ...Array(13).fill(keyW)],
+        [...Array(13).fill(keyW), 72.5],
+        [72.5, ...Array(13).fill(keyW)],
+        [85.75, ...Array(11).fill(keyW), 87.25],
+        [112.25, ...Array(10).fill(keyW), 121],
+        [59.25, keyW, keyW, keyW, 258.75, keyW, keyW, keyW, 99]
+    ];
+    const navRows = [
+        { x: navX, widths: [keyW, keyW, keyW] },
+        { x: navX, widths: [keyW, keyW, keyW] },
+        { x: navX, widths: [keyW, keyW, keyW] },
+        { x: navX, widths: [] },
+        { x: navX + pitch, widths: [keyW] },
+        { x: navX, widths: [keyW, keyW, keyW] }
+    ];
+    const rows = mainRows.map((widths, rowIndex) => {
+        const y = rowIndex * pitch;
+        return rectRow(0, y, widths, keyH, gap)
+            + rectRow(navRows[rowIndex].x, y, navRows[rowIndex].widths, keyH, gap);
+    }).join('');
+    return `<?xml version="1.0"?>
+<svg viewBox="0 0 960 320" xmlns="http://www.w3.org/2000/svg">
   <g id="caps">
     <rect x="0" y="0" width="${keyW}" height="${keyH}" rx="3" ry="3"/>
     <rect x="${pitch}" y="0" width="${keyW}" height="${keyH}" rx="3" ry="3"/>
@@ -145,6 +191,8 @@ assert.equal(real.layoutDraft.stats.blocks, 3);
 assert.equal(real.layoutDraft.stats.rows, 6);
 assert.equal(real.layoutDraft.stats.keys, 110);
 assert.equal(real.layoutDraft.stats.rowSpans, 2);
+assert.equal(real.layoutDraft.stats.semanticKeys, 0);
+assert.ok(blueprintSummaryLines(real).some((line) => line.includes('semantic 0/110')));
 assert.equal(real.layoutDraft.layout.rows.flatMap((row) => Object.values(row)).flat().length, 32);
 assert.equal(real.layoutDraft.layout.rows.flatMap((row) => Object.values(row)).flat().filter((item) => item.repeat).length, 16);
 assert.equal(real.layoutDraft.layout.rows.flatMap((row) => Object.values(row)).flat().filter((item) => item.id).length, 0);
@@ -177,6 +225,8 @@ assert.deepEqual(
 const semanticCompact = analyzeSvgBlueprint(ansiCompactSvg());
 assert.equal(semanticCompact.recognized.keys.length, 77);
 assert.equal(semanticCompact.layoutDraft.stats.keys, 77);
+assert.equal(semanticCompact.layoutDraft.stats.layoutProfile, 'ANSI_COMPACT_78');
+assert.equal(semanticCompact.layoutDraft.stats.semanticKeys, 77);
 assert.deepEqual(semanticCompact.layoutDraft.layout.rows[0].main[0], {
     u: 1,
     repeat: 14,
@@ -191,6 +241,9 @@ assert.equal(semanticBuilt.keys.length, 77);
 assert.deepEqual(semanticBuilt.keys.slice(0, 4).map((key) => key.id), ['esc', 'f1', 'f2', 'f3']);
 assert.deepEqual(semanticBuilt.keys.slice(-3).map((key) => key.id), ['left', 'arrow-stack', 'right']);
 const semanticContent = generatedContentForLayout(semanticCompact.layoutDraft.layout, { secondarySize: 12 }, { interline: 13.5 });
+const semanticContentStats = generatedContentStatsForLayout(semanticCompact.layoutDraft.layout);
+assert.equal(semanticContentStats.alphaDualKeys, 26);
+assert.equal(semanticContentStats.placeholderKeys, 0);
 assert.deepEqual(semanticContent.keys.slice(0, 4).map((key) => key.elements[0].text), ['esc', 'F1', 'F2', 'F3']);
 const semanticQ = semanticContent.keys.find((key) => key.elements.some((element) => element.text === 'Q'));
 assert.equal(semanticQ.tpl, 'alpha-dual');
@@ -198,6 +251,60 @@ assert.deepEqual(semanticQ.elements.map((element) => `${element.slot}:${element.
 const semanticContentResult = attachContent(semanticBuilt.keys, semanticContent);
 assert.equal(semanticContentResult.matched, 77);
 assert.equal(semanticContentResult.orphans, 0);
+
+const semanticNav = analyzeSvgBlueprint(ansiNavSvg());
+assert.equal(semanticNav.recognized.keys.length, 89);
+assert.equal(semanticNav.layoutDraft.stats.keys, 89);
+assert.equal(semanticNav.layoutDraft.stats.blocks, 2);
+assert.equal(semanticNav.layoutDraft.stats.layoutProfile, 'ANSI_NAV_89');
+assert.equal(semanticNav.layoutDraft.stats.semanticKeys, 89);
+assert.deepEqual(semanticNav.layoutDraft.layout.rows[0].nav[0], {
+    u: 1,
+    repeat: 3,
+    ids: ['print', 'scroll', 'pause']
+});
+assert.deepEqual(semanticNav.layoutDraft.layout.rows[4].nav, [{ skip: 1 }, { u: 1, id: 'up' }]);
+assert.deepEqual(semanticNav.layoutDraft.layout.rows[5].main.at(-1), { u: 2, id: 'rctrl' });
+const semanticNavBuilt = buildLayout(semanticNav.layoutDraft.layout);
+assert.equal(semanticNavBuilt.keys.length, 89);
+assert.deepEqual(semanticNavBuilt.keys.slice(14, 17).map((key) => key.id), ['print', 'scroll', 'pause']);
+const semanticNavContent = generatedContentForLayout(semanticNav.layoutDraft.layout, { glyphSize: 15, secondarySize: 12, wordSize: 9 }, { interline: 13.5 });
+const semanticNavContentStats = generatedContentStatsForLayout(semanticNav.layoutDraft.layout);
+assert.deepEqual(semanticNavContentStats, {
+    keys: 89,
+    alphaDualKeys: 26,
+    punctuationDualKeys: 8,
+    cornerTemplateKeys: 21,
+    generatedLabelKeys: 42,
+    placeholderKeys: 0
+});
+semanticNav.layoutDraft.stats.content = semanticNavContentStats;
+assert.ok(blueprintSummaryLines(semanticNav).includes('Content: alpha-dual 26, punctuation-dual 8, corners 21, placeholders 0'));
+const semanticNavLabels = semanticNavContent.keys.map((key) => key.elements.map((element) => element.text).join('/'));
+assert.equal(semanticNavLabels.filter((label) => /^main \d+$|^nav \d+$/.test(label)).length, 0);
+assert.equal(semanticNavContent.keys.filter((key) => key.tpl === 'alpha-dual').length, 26);
+assert.deepEqual(semanticNavLabels.slice(14, 17), ['print', 'scroll', 'pause']);
+assert.ok(semanticNavLabels.includes('pg up'));
+assert.ok(semanticNavLabels.includes('pg dn'));
+assert.deepEqual(
+    semanticNavContent.keys.find((key) => key.elements.some((element) => element.text === '!')).elements.map((element) => `${element.slot}:${element.text}`),
+    ['TL:!', 'BL:1']
+);
+assert.deepEqual(
+    semanticNavContent.keys.find((key) => key.elements.some((element) => element.text === 'Х')).elements.map((element) => `${element.slot}:${element.text}`),
+    ['TL:{', 'BL:[', 'BR:Х']
+);
+assert.deepEqual(
+    semanticNavContent.keys.find((key) => key.elements.some((element) => element.text === 'Ж')).elements.map((element) => `${element.slot}:${element.text}`),
+    ['TL::', 'BL:;', 'BR:Ж']
+);
+assert.deepEqual(
+    semanticNavContent.keys.find((key) => key.elements.some((element) => element.text === '/')).elements.map((element) => `${element.slot}:${element.text}`),
+    ['TL:?', 'FR:,', 'BL:/', 'BR:.']
+);
+const semanticNavContentResult = attachContent(semanticNavBuilt.keys, semanticNavContent);
+assert.equal(semanticNavContentResult.matched, 89);
+assert.equal(semanticNavContentResult.orphans, 0);
 
 const caps = [...real.caps].sort((a, b) => a.y - b.y || a.x - b.x);
 let worstCapDelta = 0;

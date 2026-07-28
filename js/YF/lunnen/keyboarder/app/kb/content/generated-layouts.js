@@ -30,6 +30,10 @@ const SEMANTIC_LABELS = {
     'fn-right': 'fn',
     lshift: 'shift',
     rshift: 'shift',
+    'arrow-stack': 'up/down',
+    menu: 'menu',
+    'pg-up': 'pg up',
+    'pg-down': 'pg dn',
     left: 'left',
     right: 'right',
     up: 'up',
@@ -64,6 +68,41 @@ const CYRILLIC_BY_LATIN_ID = {
     n: 'Т',
     m: 'Ь'
 };
+
+const CORNER_TEXT_BY_ID = {
+    grave: [['TL', '~'], ['BL', '`'], ['BR', 'Ё']],
+    '1': [['TL', '!'], ['BL', '1']],
+    '2': [['TL', '@'], ['TR', '"'], ['BL', '2']],
+    '3': [['TL', '#'], ['TR', '№'], ['BL', '3']],
+    '4': [['TL', '$'], ['TR', ';'], ['BL', '4']],
+    '5': [['TL', '%'], ['BL', '5']],
+    '6': [['TL', '^'], ['TR', ':'], ['BL', '6']],
+    '7': [['TL', '&'], ['TR', '?'], ['BL', '7']],
+    '8': [['TL', '*'], ['BL', '8']],
+    '9': [['TL', '('], ['BL', '9']],
+    '0': [['TL', ')'], ['BL', '0']],
+    minus: [['TL', '_'], ['BL', '-']],
+    equal: [['TL', '+'], ['BL', '=']],
+    'left-bracket': [['TL', '{'], ['BL', '['], ['BR', 'Х']],
+    'right-bracket': [['TL', '}'], ['BL', ']'], ['BR', 'Ъ']],
+    semicolon: [['TL', ':'], ['BL', ';'], ['BR', 'Ж']],
+    quote: [['TL', '"'], ['BL', '\''], ['BR', 'Э']],
+    comma: [['TL', '<'], ['BL', ','], ['BR', 'Б']],
+    period: [['TL', '>'], ['BL', '.'], ['BR', 'Ю']],
+    slash: [['TL', '?'], ['FR', ','], ['BL', '/'], ['BR', '.']],
+    backslash: [['TL', '|'], ['BL', '\\']]
+};
+
+const PUNCTUATION_DUAL_IDS = new Set([
+    'grave',
+    'left-bracket',
+    'right-bracket',
+    'semicolon',
+    'quote',
+    'comma',
+    'period',
+    'slash'
+]);
 
 const LABELS = {
     ANSI_TKL: [
@@ -133,6 +172,16 @@ function alphaDualContentForId(id, typeDefaults = {}) {
     };
 }
 
+function cornerContentForId(id, typeDefaults = {}) {
+    const elements = CORNER_TEXT_BY_ID[String(id || '').trim().toLowerCase()];
+    if (!elements) return null;
+    const size = glyphSize(typeDefaults);
+    return {
+        tpl: elements.length > 2 ? 'legend-corners' : 'legend-2corners',
+        elements: elements.map(([slot, text]) => ({ slot, kind: 'txt', text, size }))
+    };
+}
+
 function generatedLabelContent(label, typeDefaults = {}) {
     return {
         tpl: 'generated-label',
@@ -142,7 +191,47 @@ function generatedLabelContent(label, typeDefaults = {}) {
 
 function genericContentForItem(item, fallbackLabel, typeDefaults = {}) {
     return alphaDualContentForId(item?.id, typeDefaults)
+        || cornerContentForId(item?.id, typeDefaults)
         || generatedLabelContent(userFacingId(item?.id) || fallbackLabel, typeDefaults);
+}
+
+export function generatedContentStatsForLayout(layout) {
+    const rows = LABELS[layout?.meta?.name];
+    if (rows) {
+        const keys = rows.reduce((sum, row) =>
+            sum + Object.values(row || {}).reduce((rowSum, labels) => rowSum + (labels?.length || 0), 0), 0);
+        return {
+            keys,
+            alphaDualKeys: 0,
+            punctuationDualKeys: 0,
+            cornerTemplateKeys: 0,
+            generatedLabelKeys: keys,
+            placeholderKeys: 0
+        };
+    }
+
+    const stats = {
+        keys: 0,
+        alphaDualKeys: 0,
+        punctuationDualKeys: 0,
+        cornerTemplateKeys: 0,
+        generatedLabelKeys: 0,
+        placeholderKeys: 0
+    };
+    for (const { item } of genericContentSlotsForLayout(layout)) {
+        stats.keys += 1;
+        const id = String(item?.id || '').trim().toLowerCase();
+        if (CYRILLIC_BY_LATIN_ID[id]) {
+            stats.alphaDualKeys += 1;
+        } else if (CORNER_TEXT_BY_ID[id]) {
+            stats.cornerTemplateKeys += 1;
+        } else {
+            stats.generatedLabelKeys += 1;
+            if (!userFacingId(item?.id)) stats.placeholderKeys += 1;
+        }
+        if (PUNCTUATION_DUAL_IDS.has(id)) stats.punctuationDualKeys += 1;
+    }
+    return stats;
 }
 
 export function generatedContentForLayout(layout, typeDefaults = {}, baseContent = {}) {
@@ -167,6 +256,16 @@ export function generatedContentForLayout(layout, typeDefaults = {}, baseContent
 }
 
 function genericKeysForLayout(layout, typeDefaults = {}) {
+    return genericContentSlotsForLayout(layout).map(({ rowIndex, x, block, editId, item, fallbackLabel }) => ({
+        row: rowIndex,
+        x,
+        block,
+        editId,
+        ...genericContentForItem(item, fallbackLabel, typeDefaults)
+    }));
+}
+
+function genericContentSlotsForLayout(layout) {
     return (layout?.rows || []).flatMap((row, rowIndex) =>
         Object.entries(row || {}).flatMap(([block, items]) => {
             let ordinal = 0;
@@ -176,20 +275,22 @@ function genericKeysForLayout(layout, typeDefaults = {}) {
                 if (Array.isArray(item.stack) && item.stack.length) {
                     entries = item.stack.map((child, stackIndex) => {
                         return {
-                            row: rowIndex,
+                            rowIndex,
                             x: ordinal + stackIndex / 10,
                             block,
                             editId: child.editId,
-                            ...genericContentForItem(child, `${block} ${ordinal + 1}.${stackIndex + 1}`, typeDefaults)
+                            item: child,
+                            fallbackLabel: `${block} ${ordinal + 1}.${stackIndex + 1}`
                         };
                     });
                 } else {
                     entries = [{
-                        row: rowIndex,
+                        rowIndex,
                         x: ordinal,
                         block,
                         editId: item.editId,
-                        ...genericContentForItem(item, `${block} ${ordinal + 1}`, typeDefaults)
+                        item,
+                        fallbackLabel: `${block} ${ordinal + 1}`
                     }];
                 }
                 ordinal += 1;
@@ -200,7 +301,7 @@ function genericKeysForLayout(layout, typeDefaults = {}) {
 
 function userFacingId(id) {
     const value = String(id || '').trim();
-    if (!value || /^r\d+$/i.test(value) || value === 'arrow-stack') return '';
+    if (!value || /^r\d+$/i.test(value)) return '';
     if (SEMANTIC_LABELS[value]) return SEMANTIC_LABELS[value];
     if (/^f\d+$/i.test(value)) return value.toUpperCase();
     if (/^[a-z]$/.test(value)) return value.toUpperCase();
