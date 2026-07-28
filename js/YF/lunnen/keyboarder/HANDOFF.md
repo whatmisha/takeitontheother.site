@@ -81,6 +81,9 @@ Important local entry points:
     active key;
   - text elements now have a `Comp` field in px; when filled, it becomes `compOverride` and
     replaces formula/table optical compensation for L/R slots;
+  - `Add text` and `Add icon` append draft legend elements to the active key;
+  - every legend element row has `Remove`; after removal, `Apply` saves the shortened element
+    array;
   - reset removes overrides for the selected keys and falls back to generated content.
 - Added the first key geometry editor:
   - presets now include sanitized `layoutEdits` overrides, keyed by stable `row:block:ordinal`;
@@ -149,6 +152,10 @@ Browser QA on `http://127.0.0.1:8000/`:
   - resetting the multi-selection restores the original `fkey-icon+label` content.
   - setting `Comp` on `esc` to `0.5` changes the inspector from `formula` to `manual 0.500`;
   - resetting the key clears the manual compensation and restores formula compensation.
+  - adding a text element to F5, setting it to `QA`, and applying changes F5 from 2 to 3 legend
+    elements;
+  - removing F5's icon row and applying leaves the label plus `QA`;
+  - resetting F5 restores the original icon+label pair.
 - Key width editor QA:
   - default `esc` is a source flex key, but its `Width` field is editable and shows `25.302`;
   - selecting F5 opens Legend, enables `Width`, and shows `16.402`;
@@ -184,11 +191,11 @@ Stage 4 is started, not complete:
 
 - Done: click selection, multi-select, Legend inspector sync, arrow navigation, `Escape` clear,
   preset-backed legend content overrides, active-key slot/value editing, bulk template changes,
-  reset selected edits, manual compensation overrides in px for text L/R slots, and key width
-  overrides with row flex recalculation, including source flex keys.
+  add/remove legend elements, reset selected edits, manual compensation overrides in px for text
+  L/R slots, and key width overrides with row flex recalculation, including source flex keys.
 - Still remaining: full row/key editing for adding/removing keys or rows, richer model
-  export/import for edited keyboard data, and eventually adding/removing legend elements rather
-  than only retargeting existing template variants.
+  export/import for edited keyboard data, and a more explicit edited-keyboard model beyond the
+  current preset override blobs.
 
 ## Notes For The Next Assistant
 

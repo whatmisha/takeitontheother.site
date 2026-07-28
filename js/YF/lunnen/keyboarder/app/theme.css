@@ -288,13 +288,13 @@
 
 .legend-edit-row {
     display: grid;
-    grid-template-columns: minmax(36px, 0.55fr) minmax(0, 1.6fr) minmax(52px, 0.8fr) minmax(52px, 0.8fr);
+    grid-template-columns: minmax(36px, 0.55fr) minmax(0, 1.6fr) minmax(52px, 0.8fr) minmax(52px, 0.8fr) 52px;
     gap: var(--spacing-xs);
     align-items: end;
 }
 
 .legend-edit-row[data-kind="txt"] {
-    grid-template-columns: minmax(34px, 0.5fr) minmax(0, 1.35fr) minmax(46px, 0.7fr) minmax(46px, 0.7fr) minmax(48px, 0.7fr);
+    grid-template-columns: minmax(34px, 0.5fr) minmax(0, 1.35fr) minmax(46px, 0.7fr) minmax(46px, 0.7fr) minmax(48px, 0.7fr) 52px;
 }
 
 .legend-edit-row label {
@@ -333,7 +333,20 @@
     gap: var(--spacing-sm);
 }
 
+.legend-element-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+}
+
+.legend-remove-element-btn {
+    height: 26px;
+    padding: 0 var(--spacing-xs);
+    font-size: 10px;
+}
+
 .legend-editor-actions .btn-inline:disabled,
+.legend-element-actions .btn-inline:disabled,
 .legend-geometry-row .btn-inline:disabled,
 .legend-geometry-row input:disabled,
 .select-control:disabled {

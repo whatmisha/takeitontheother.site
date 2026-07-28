@@ -512,6 +512,18 @@ const app = defineTool({
         document.getElementById('resetLegendEditBtn')?.addEventListener('click', () => {
             resetSelectedLegendEdits(readyApp);
         });
+        document.getElementById('addLegendTextBtn')?.addEventListener('click', () => {
+            addLegendElementDraft(readyApp, 'txt');
+        });
+        document.getElementById('addLegendIconBtn')?.addEventListener('click', () => {
+            addLegendElementDraft(readyApp, 'ico');
+        });
+        document.getElementById('legendElementEditor')?.addEventListener('click', (e) => {
+            const button = e.target.closest('.legend-remove-element-btn');
+            if (!button) return;
+            removeLegendElementDraft(readyApp, button);
+            e.preventDefault();
+        });
         document.getElementById('applyKeyWidthBtn')?.addEventListener('click', () => {
             applyKeyWidthEdit(readyApp);
         });
@@ -1134,11 +1146,15 @@ function updateLegendEditor(s, keys) {
     const editor = document.getElementById('legendElementEditor');
     const apply = document.getElementById('applyLegendEditBtn');
     const reset = document.getElementById('resetLegendEditBtn');
+    const addText = document.getElementById('addLegendTextBtn');
+    const addIcon = document.getElementById('addLegendIconBtn');
     if (!editor) return;
     const active = activeKey(keys);
     const selected = selectedKeys(keys);
     if (apply) apply.disabled = !selected.length;
     if (reset) reset.disabled = !selected.some((k) => !!s.contentEdits?.[k.editId]);
+    if (addText) addText.disabled = !active;
+    if (addIcon) addIcon.disabled = !active;
     if (!active) {
         renderElementEditor([], { disabled: true, sig: 'none' });
         return;
@@ -1168,6 +1184,7 @@ function renderElementEditor(elements, { disabled = false, sig = null, templateI
 
 function elementEditorHtml(el, i) {
     const offset = html(JSON.stringify(cleanOffset(el.offset) || {}));
+    const remove = '<button type="button" class="btn-inline legend-remove-element-btn">Remove</button>';
     if (el.kind === 'ico') {
         const options = ICON_OPTIONS.map((name) =>
             `<option value="${html(name)}"${name === el.icon ? ' selected' : ''}>${html(name)}</option>`).join('');
@@ -1176,6 +1193,7 @@ function elementEditorHtml(el, i) {
             + `<label><span>Icon</span><select class="legend-icon-input">${options}</select></label>`
             + `<label><span>W</span><input class="legend-width-input" type="number" step="0.001" value="${html(el.w)}"></label>`
             + `<label><span>H</span><input class="legend-height-input" type="number" step="0.001" value="${html(el.h)}"></label>`
+            + remove
             + '</div>';
     }
     const compValue = Number.isFinite(el.compOverride?.px) ? String(el.compOverride.px) : '';
@@ -1185,7 +1203,55 @@ function elementEditorHtml(el, i) {
         + `<label><span>Size</span><input class="legend-size-input" type="number" step="0.001" value="${html(el.size)}"></label>`
         + `<label><span>Track</span><input class="legend-track-input" type="number" step="0.001" value="${html(el.tracking || 0)}"></label>`
         + `<label><span>Comp</span><input class="legend-comp-input" type="number" step="0.001" value="${html(compValue)}"></label>`
+        + remove
         + '</div>';
+}
+
+function defaultLegendElement(kind) {
+    if (kind === 'ico') {
+        return cleanElement({
+            slot: 'FC',
+            kind: 'ico',
+            icon: ICON_OPTIONS[0] || '',
+            w: 8,
+            h: 8
+        });
+    }
+    return cleanElement({
+        slot: 'BC',
+        kind: 'txt',
+        text: '',
+        size: TYPE_DEFAULTS.wordSize,
+        tracking: 0
+    });
+}
+
+function renderLegendDraft(app, elements) {
+    const keys = layoutFor(app.settings).keys;
+    const active = activeKey(keys);
+    if (!active) return;
+    const editor = document.getElementById('legendElementEditor');
+    const templateId = editor?.dataset.templateId || variantForKey(active);
+    renderElementEditor(elements, {
+        disabled: false,
+        sig: `draft:manual:${active.editId}:${JSON.stringify(elements)}`,
+        templateId
+    });
+}
+
+function addLegendElementDraft(app, kind) {
+    const keys = layoutFor(app.settings).keys;
+    if (!activeKey(keys)) return;
+    const elements = readElementEditorElements();
+    elements.push(defaultLegendElement(kind));
+    renderLegendDraft(app, elements);
+}
+
+function removeLegendElementDraft(app, button) {
+    const row = button.closest('.legend-edit-row');
+    if (!row) return;
+    row.remove();
+    renderLegendDraft(app, readElementEditorElements());
 }
 
 function refreshLegendTemplateDraft(app) {
