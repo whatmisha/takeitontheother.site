@@ -107,8 +107,8 @@ export function placeText(el, ctx) {
     const off = el.offset || {};
     if (by === null) by = g.y1 + (off.by || 0);
     if (bx === null) bx = g.x0 + (off.bx || 0);
-    const r = ctx.tf.layout(el.text, el.size, el.tracking || 0, [bx, by]);
-    return { bx, by, ink: r.ink, advw: r.advw, per: r.per, anchored };
+    const r = c.tf.layout(el.text, el.size, el.tracking || 0, [bx, by]);
+    return { bx, by, ink: r.ink, advw: r.advw, per: r.per, tf: c.tf, comp: c.comp, anchored };
 }
 
 /**
@@ -157,7 +157,8 @@ export function freeZoneBottom(placed, ctx) {
     let best = null;
     for (const p of placed) {
         if (p.kind !== 'txt' || Math.abs(p.by - g.y1) >= BOTTOM_TOL) continue;
-        const top = p.by - ctx.tf.capHeight * (p.size / ctx.tf.upm);
+        const tf = p.tf || ctx.tf;
+        const top = p.by - tf.capHeight * (p.size / tf.upm);
         if (best === null || top < best) best = top;
     }
     return best;
@@ -171,8 +172,14 @@ export function freeZoneBottom(placed, ctx) {
  */
 export function placeKey(key, ctx) {
     const c = { ...ctx, guide: key.guide };
+    const textContext = (el, extra) => ({
+        ...c,
+        ...extra,
+        tf: ctx.typefaceFor ? (ctx.typefaceFor(el, key) || c.tf) : c.tf,
+        comp: ctx.compForElement ? ctx.compForElement(el, key) : c.comp
+    });
     const one = (el, extra) => (el.kind === 'txt'
-        ? { ...el, ...placeText(el, { ...c, ...extra }) }
+        ? { ...el, ...placeText(el, textContext(el, extra)) }
         : { ...el, ...placeIcon(el, { ...c, ...extra }) });
 
     const out = new Array(key.elements.length);

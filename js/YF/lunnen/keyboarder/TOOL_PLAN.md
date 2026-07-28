@@ -221,10 +221,12 @@
 Статус: **этапы 0–5 сделаны по коду**. Этап 6 имеет рабочий importable draft slice и остаётся
 открыт для дальнейшей production-полировки imported/custom layouts. Этап 7 закрыт по основным
 кодовым пунктам: послойный SVG, PDF в мм, локальные export libs, text/outlines mode,
-compensation table editor и batch SVG. Этап 8 начат: есть чистый `fontprobe.js`, UI-загрузка
-сессионного шрифта, автопараметры компенсации для активной гарнитуры и статус probe/invariants.
-Остаётся ручной production QA скачанных SVG/PDF в Illustrator/PDF viewer; следующий крупный кусок
-Stage 8 — variation instance selection и более широкий контрольный набор чужих гарнитур.
+compensation table editor и batch SVG. Этап 8 закрыт по основным кодовым пунктам: font registry,
+UI-загрузка нескольких сессионных шрифтов, variable axes/instances, per-element `fontId`,
+автопараметры компенсации для активной гарнитуры, статус probe/invariants, control sheet и
+расширенный Node harness по нескольким локальным весам. Остаётся ручной production QA скачанных
+SVG/PDF в Illustrator/PDF viewer и возможный будущий upgrade font engine для настоящего `gvar`
+outline instancing.
 
 ### Этап 0 — каркас ✅ сделано
 
@@ -553,7 +555,7 @@ console clean.
 Browser plugin не предоставляет надёжный saved-file inspection, так что открытие полученных SVG
 в Illustrator остаётся ручной production QA.
 
-### Этап 8 — про, автоматическая оптическая компенсация любой гарнитуры (4–5 дней)
+### Этап 8 — про, автоматическая оптическая компенсация любой гарнитуры ✅ основные кодовые пункты сделаны (4–5 дней)
 
 Сейчас модель компенсации привязана к `YS Text Regular`: коэффициенты 41.34 / −42.60 и параметры
 окна `eps = 32`, `w = 300` получены МНК на 69 знаках именно этого шрифта. На бете это нормально
@@ -686,13 +688,32 @@ monotonic `H < S < O < A < W` и symmetry (`O`, `H`, `X`, `Ж`) без этал�
 Файл TTF/OTF/WOFF/WOFF2 разбирается через тот же `parseFont()`; после успешного импорта активный
 `TYPEFACE` меняется, layout cache и `Compensator` cache инвалидируются, `buildLegends()` начинает
 рисовать live contours из новой гарнитуры, а `compFor()` строится от `autoCompensationParams()`
-этой гарнитуры. SVG `<text>` mode тоже переключается на сессионный `@font-face`
-`Keyboarder Custom Font`. Статус показывает имя гарнитуры, файл/размер, UPM, cap/x-height,
-stem, оси вариативного шрифта, параметры компенсации и результат invariants. Импортированный
-font file остаётся **сессионным**: он не сохраняется в presets/model JSON, чтобы JSON не начинал
-таскать бинарники и не ломал переносимость. Browser smoke на `YS Text-Bold.ttf` подтвердил
-переключение статуса, 176 outline paths, включение `Reference font`, установку custom
-`@font-face`, чистую консоль и корректный сброс обратно на `YS Text Regular`.
+этой гарнитуры. Статус показывает имя гарнитуры, файл/размер, UPM, cap/x-height, stem, оси
+вариативного шрифта, параметры компенсации и результат invariants. Импортированный font file
+остаётся **сессионным**: он не сохраняется в presets/model JSON, чтобы JSON не начинал таскать
+бинарники и не ломал переносимость. Browser smoke на `YS Text-Bold.ttf` подтвердил переключение
+статуса, 176 outline paths, включение `Reference font`, установку custom `@font-face`, чистую
+консоль и корректный сброс обратно на `YS Text Regular`.
+
+Финальный срез Stage 8 готов: одиночный `FONT_IMPORT` заменён на session font registry.
+`Active font` выбирает дефолтную гарнитуру макета, `Apply selected` записывает `fontId` во все
+текстовые элементы выбранных клавиш, а Legend editor получил per-element `Font` select для
+точечной смеси гарнитур в одном макете. `fontId` проходит через `model-io` sanitizer и
+`keyboarder.model.v1`; это только ссылка на session profile, не бинарник. `slots.js` теперь
+получает `typefaceFor(el)` и `compForElement(el)`, поэтому baseline, ink boxes и edge
+compensation считаются по фактической гарнитуре каждого элемента. Для variable fonts UI показывает
+named instances и axis controls; координаты входят в cache signature и SVG `<text>` получает
+`font-variation-settings`. В `Text` mode session font faces встраиваются в SVG `<defs>` как data
+URL, чтобы экспорт был самодостаточным; JSON при этом остаётся лёгким. `Control sheet` генерирует
+SVG с контрольными знаками по всем загруженным профилям, прижатыми к edge line с их текущей
+моделью компенсации. `analysis/fontprobe.mjs` расширен на несколько локальных YS Text weights:
+проверяет рост `eps` вместе с весом, стабильность flat-stem invariant и допускает diagnostic
+`check` на тяжёлых весах, где строгий порядок `H < S < O < A < W` может честно флагнуть модель.
+
+Caveat: текущий локальный `opentype.js` читает `fvar`, но не применяет `gvar`-дельты к outline
+contours. Поэтому variable axes/instances уже работают как UI/profile/cache/CSS-text workflow,
+а outline preview/export остаётся на контурах default instance до будущей замены или расширения
+font engine. Это явно показывается в font status.
 
 ---
 

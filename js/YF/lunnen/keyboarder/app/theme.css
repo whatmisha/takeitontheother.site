@@ -155,6 +155,54 @@
     border-top: 1px solid var(--color-border);
 }
 
+.font-select-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+    color: var(--color-text-dim);
+    font-size: 10px;
+}
+
+.font-instance-controls:empty,
+.font-axis-controls:empty {
+    display: none;
+}
+
+.font-axis-controls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+}
+
+.font-axis-row {
+    display: grid;
+    grid-template-columns: 74px minmax(0, 1fr);
+    gap: var(--spacing-sm);
+    align-items: end;
+}
+
+.font-axis-row label {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    color: var(--color-text-dim);
+    font-size: 9px;
+}
+
+.font-axis-value {
+    width: 100%;
+    height: 26px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    background: var(--color-bg-input);
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 0 var(--spacing-sm);
+}
+
 .comp-table-editor {
     display: flex;
     flex-direction: column;
@@ -389,7 +437,7 @@
 }
 
 .legend-edit-row[data-kind="txt"] {
-    grid-template-columns: minmax(34px, 0.5fr) minmax(0, 1.35fr) minmax(46px, 0.7fr) minmax(46px, 0.7fr) minmax(48px, 0.7fr) 52px;
+    grid-template-columns: minmax(34px, 0.45fr) minmax(0, 0.95fr) minmax(64px, 0.9fr) minmax(44px, 0.58fr) minmax(44px, 0.58fr) minmax(48px, 0.62fr) 52px;
 }
 
 .legend-edit-row label {

@@ -47,4 +47,32 @@ assert.ok(variableProbe.variations.instances.length >= 1, 'variable font should 
 assert.equal(variableParams.eps, YS_TEXT_REGULAR.eps);
 assert.equal(variableInvariants.pass, true);
 
+const weightSamples = [
+    ['light', '../Fonts/YS Text/YS Text-Light.ttf'],
+    ['regular', '../Fonts/YS Text/YS Text-Regular.ttf'],
+    ['bold', '../Fonts/YS Text/YS Text-Bold.ttf'],
+    ['heavy', '../Fonts/YS Text/YS Text-Heavy.ttf'],
+    ['black', '../Fonts/YS Text/YS Text-Black.ttf']
+].map(([id, path]) => {
+    const tf = loadTypeface(path);
+    const probe = probeTypeface(tf);
+    const params = autoCompensationParams(tf, probe);
+    const invariants = runCompensationInvariants(tf, params);
+    return { id, probe, params, invariants };
+});
+
+for (const sample of weightSamples) {
+    assert.ok(sample.probe.id.startsWith('YS Text '), `${sample.id} should expose a readable family name`);
+    assert.ok(sample.probe.stems.vertical.value > 0, `${sample.id} should expose a measured stem`);
+    assert.ok(sample.params.eps > 0, `${sample.id} should produce positive eps`);
+    assert.ok(sample.params.w > 0, `${sample.id} should produce positive w`);
+    assert.ok(sample.invariants.flatStem.pass, `${sample.id} should keep flat stems stable`);
+}
+
+const epsByWeight = weightSamples.map((sample) => sample.params.eps);
+for (let i = 1; i < epsByWeight.length; i++) {
+    assert.ok(epsByWeight[i] > epsByWeight[i - 1], 'eps should grow monotonically with YS Text weight');
+}
+assert.ok(weightSamples.some((sample) => !sample.invariants.pass), 'diagnostic checks should be allowed to flag heavy weights');
+
 console.log('font probe passed');

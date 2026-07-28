@@ -11,7 +11,7 @@
 <div class="container">
 
     <div class="top-links">
-        <span class="top-link top-link--static">Keyboarder</span>
+        <a class="top-link top-link--static" href="../../">←YF Tools</a>
 
         <div class="preset-toolbar-cluster">
             <div class="preset-dropdown" id="presetDropdown">
@@ -164,9 +164,17 @@
                         <div class="font-dropzone" id="fontDropzone">
                             <span>Drop font file</span>
                         </div>
+                        <label class="font-select-row" for="fontSelect">
+                            <span>Active font</span>
+                            <select id="fontSelect" class="select-control" aria-label="Active font"></select>
+                        </label>
+                        <div class="font-instance-controls" id="fontInstanceControls"></div>
+                        <div class="font-axis-controls" id="fontAxisControls"></div>
                         <div class="font-actions">
                             <button type="button" class="btn-inline" id="fontBrowseBtn">Browse Font</button>
                             <button type="button" class="btn-inline" id="fontReferenceBtn">Reference font</button>
+                            <button type="button" class="btn-inline" id="fontApplySelectedBtn">Apply selected</button>
+                            <button type="button" class="btn-inline" id="fontControlSheetBtn">Control sheet</button>
                         </div>
                         <div class="font-status" id="fontProbeStatus"></div>
                     </div>
@@ -428,6 +436,6 @@
 
 <script src="vendor/lib/jspdf.umd.min.js"></script>
 <script src="vendor/lib/svg2pdf.umd.min.js"></script>
-<script type="module" src="app/tool.js?v=20260728-stage8a"></script>
+<script type="module" src="app/tool.js?v=20260728-stage8b"></script>
 </body>
 </html>

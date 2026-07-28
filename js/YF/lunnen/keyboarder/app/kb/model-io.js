@@ -110,6 +110,12 @@ export function cleanIconGroup(group) {
     return String(group || '').trim() === 'f-icons' ? 'f-icons' : 'icons';
 }
 
+function cleanFontId(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    return raw.replace(/[^\w:.-]+/g, '-').slice(0, 96);
+}
+
 export function cleanElement(el = {}, options = {}) {
     const opts = ioOptions(options);
     const slot = String(el.slot || 'BC').trim() || 'BC';
@@ -125,6 +131,8 @@ export function cleanElement(el = {}, options = {}) {
         out.size = finiteOr(el.size, opts.typeDefaults.wordSize ?? 9);
         const tracking = finiteOr(el.tracking, 0);
         if (tracking !== 0) out.tracking = tracking;
+        const fontId = cleanFontId(el.fontId);
+        if (fontId) out.fontId = fontId;
         const compOverride = cleanCompOverride(el.compOverride);
         if (compOverride) out.compOverride = compOverride;
     }

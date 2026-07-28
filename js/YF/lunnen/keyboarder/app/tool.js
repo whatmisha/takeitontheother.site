@@ -79,10 +79,12 @@ const LEGEND_TEXT_MODES = new Set(['outlines', 'text']);
 const ICON_LAYER_IDS = ['icons', 'f-icons'];
 const CYRILLIC_RE = /[\u0400-\u04FF]/;
 const SINGLE_LATIN_RE = /^[A-Za-z]$/;
+const REFERENCE_FONT_ID = 'reference';
 const REFERENCE_FONT_URL = 'Fonts/YS%20Text/YS%20Text-Regular.ttf';
 const REFERENCE_FONT_FAMILY = 'YS Text';
-const CUSTOM_FONT_FAMILY = 'Keyboarder Custom Font';
+const CUSTOM_FONT_FAMILY_PREFIX = 'Keyboarder Session Font';
 const FONT_FILE_RE = /\.(otf|ttf|woff|woff2)$/i;
+const FONT_CONTROL_SHEET_CHARS = ['H', 'S', 'O', 'A', 'W', 'X', 'Ж', 'О', '@', '~', '№', ',', '.', '?', '!'];
 
 function isLayoutLike(layout) {
     return !!layout
@@ -163,8 +165,9 @@ let REFERENCE_TYPEFACE = null;
 let REFERENCE_FONT_PROBE = null;
 let REFERENCE_FONT_INVARIANTS = null;
 let TYPEFACE_SIG = 'font:loading';
-let FONT_IMPORT = null;
-let FONT_FACE_STYLE = null;
+let FONT_REGISTRY = new Map();
+let ACTIVE_FONT_ID = REFERENCE_FONT_ID;
+let FONT_IMPORT_SEQ = 0;
 let COMP_CACHE = new Map();
 let SELECTION = { active: 0, indices: [0] };
 let LAST_DELETED_EDIT_ID = null;
@@ -172,8 +175,45 @@ let LAST_DELETED_ROW_ID = null;
 let BLUEPRINT_IMPORT = null;
 let COMP_TABLE_SELECTED_CH = null;
 
+function cleanRuntimeFontId(value) {
+    return String(value || '').trim().replace(/[^\w:.-]+/g, '-').slice(0, 96);
+}
+
+function slugId(value) {
+    return String(value || 'font')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '') || 'font';
+}
+
+function fontEntry(id) {
+    return FONT_REGISTRY.get(cleanRuntimeFontId(id)) || null;
+}
+
+function activeFontEntry() {
+    return fontEntry(ACTIVE_FONT_ID) || fontEntry(REFERENCE_FONT_ID) || null;
+}
+
+function elementFontId(el = {}) {
+    const explicit = cleanRuntimeFontId(el.fontId);
+    if (explicit && FONT_REGISTRY.has(explicit)) return explicit;
+    return ACTIVE_FONT_ID;
+}
+
+function fontEntryForElement(el = {}) {
+    return fontEntry(elementFontId(el)) || activeFontEntry();
+}
+
+function typefaceForElement(el = {}) {
+    return fontEntryForElement(el)?.tf || TYPEFACE;
+}
+
 function activeCompensationBase() {
-    return FONT_IMPORT?.params || YS_TEXT_REGULAR;
+    return activeFontEntry()?.params || YS_TEXT_REGULAR;
+}
+
+function compensationBaseForFontId(fontId) {
+    return fontEntry(fontId)?.params || activeCompensationBase();
 }
 
 function activeCompensationTable() {
@@ -181,7 +221,27 @@ function activeCompensationTable() {
 }
 
 function activeLegendFontFamily() {
-    return FONT_IMPORT ? CUSTOM_FONT_FAMILY : REFERENCE_FONT_FAMILY;
+    return activeFontEntry()?.cssFamily || REFERENCE_FONT_FAMILY;
+}
+
+function legendFontFamilyForElement(el = {}) {
+    return fontEntryForElement(el)?.cssFamily || activeLegendFontFamily();
+}
+
+function fontVariationSettings(entry) {
+    const axes = entry?.probe?.variations?.axes || [];
+    const coordinates = entry?.coordinates || {};
+    const parts = axes
+        .filter((axis) => Number.isFinite(coordinates[axis.tag]))
+        .map((axis) => `"${axis.tag}" ${Number(coordinates[axis.tag]).toFixed(3).replace(/\.?0+$/, '')}`);
+    return parts.length ? parts.join(', ') : '';
+}
+
+function fontRegistrySignature() {
+    const entries = [...FONT_REGISTRY.values()]
+        .map((entry) => `${entry.id}:${entry.signature}:${JSON.stringify(entry.coordinates || {})}`)
+        .sort();
+    return `${ACTIVE_FONT_ID}::${entries.join('|')}`;
 }
 
 function compensationTableWithEdits(baseTable = activeCompensationTable(), edits = {}) {
@@ -199,19 +259,26 @@ function compensationTableWithEdits(baseTable = activeCompensationTable(), edits
     return table;
 }
 
-function compFor(s) {
+function compForFontId(s, fontId = ACTIVE_FONT_ID) {
     if (!TYPEFACE || s.compensationMode === 'off') return null;
+    const id = FONT_REGISTRY.has(fontId) ? fontId : ACTIVE_FONT_ID;
+    const entry = fontEntry(id) || activeFontEntry();
+    if (!entry?.tf) return null;
     const mode = s.compensationMode || 'table';
     const edits = mode === 'table' ? sanitizeCompensationTableEditsData(s.compensationTableEdits || {}) : {};
-    const sig = `${TYPEFACE_SIG}:${mode}:${JSON.stringify(edits)}`;
+    const sig = `${entry.signature}:${JSON.stringify(entry.coordinates || {})}:${mode}:${JSON.stringify(edits)}`;
     if (!COMP_CACHE.has(sig)) {
-        const base = activeCompensationBase();
+        const base = compensationBaseForFontId(id);
         const params = mode === 'model'
             ? { ...base, table: {} }
             : { ...base, table: compensationTableWithEdits(base.table || {}, edits) };
-        COMP_CACHE.set(sig, new Compensator(TYPEFACE, params));
+        COMP_CACHE.set(sig, new Compensator(entry.tf, params));
     }
     return COMP_CACHE.get(sig);
+}
+
+function compFor(s) {
+    return compForFontId(s, ACTIVE_FONT_ID);
 }
 
 /** Значения сетки из настроек (мм) — в форму, которую ждёт buildLayout (px). */
@@ -318,6 +385,8 @@ function layoutFor(s) {
         data.legends = TYPEFACE
             ? buildLegends(data.keys, {
                 tf: TYPEFACE, comp: compFor(s),
+                typefaceFor: (el) => typefaceForElement(el),
+                compForElement: (el) => compForFontId(s, elementFontId(el)),
                 interline: s.leading, iconOptics: ICON_OPTICS
             })
             : [];
@@ -464,6 +533,7 @@ const app = defineTool({
         const hasReference = isReferenceLayout(data.sourceLayout);
 
         svg.appendChild(create('rect', { x: 0, y: 0, width, height, fill: s.bgColor }));
+        appendSessionFontDefs(create, svg, s);
 
         if (s.showBlocks) {
             const g = create('g', { id: 'blocks' });
@@ -552,7 +622,8 @@ const app = defineTool({
                     g.appendChild(renderLegendText(create, el, s.inkColor));
                     continue;
                 }
-                const d = textPath(TYPEFACE, el);
+                const tf = typefaceForElement(el);
+                const d = tf ? textPath(tf, el) : '';
                 if (d) g.appendChild(create('path', { d }));
             }
             svg.appendChild(g);
@@ -588,12 +659,13 @@ const app = defineTool({
                     ...box, fill: 'none', stroke: '#3d7fd9', 'stroke-width': 0.2
                 }));
                 if (el.kind === 'txt') {
-                    const k = el.size / TYPEFACE.upm;
-                    const capTop = el.by - TYPEFACE.capHeight * k;
-                    const xTop = el.by - TYPEFACE.xHeight * k;
+                    const tf = typefaceForElement(el);
+                    const k = el.size / tf.upm;
+                    const capTop = el.by - tf.capHeight * k;
+                    const xTop = el.by - tf.xHeight * k;
                     g.appendChild(create('rect', {
                         x: el.bx, y: capTop,
-                        width: el.advw, height: TYPEFACE.capHeight * k,
+                        width: el.advw, height: tf.capHeight * k,
                         fill: 'none', stroke: '#6fbf73', 'stroke-width': 0.16
                     }));
                     g.appendChild(create('line', {
@@ -877,11 +949,7 @@ const app = defineTool({
 
         // Гарнитура: путь с пробелом обязан быть URL-энкоден, папка называется Fonts с большой.
         loadTypeface(REFERENCE_FONT_URL).then((tf) => {
-            REFERENCE_TYPEFACE = tf;
-            REFERENCE_FONT_PROBE = probeTypeface(tf);
-            REFERENCE_FONT_INVARIANTS = runCompensationInvariants(tf, YS_TEXT_REGULAR);
-            TYPEFACE = tf;
-            TYPEFACE_SIG = 'font:reference:ys-text-regular';
+            registerReferenceFont(tf);
             COMP_CACHE = new Map();
             syncFontImportStatus();
             syncCompensationTableEditor(readyApp.settings);
@@ -1513,6 +1581,7 @@ function retargetElements(source, pattern) {
             const tracking = finiteOr(match.tracking, finiteOr(sample.tracking, 0));
             delete next.tracking;
             if (tracking !== 0) next.tracking = tracking;
+            if (match.fontId || sample.fontId) next.fontId = match.fontId || sample.fontId;
         }
         if (!next.text && sample.kind === 'txt' && fallbackByKind.txt++ > 0) next.text = '';
         if (!next.icon && sample.kind === 'ico' && fallbackByKind.ico++ > 0) next.icon = ICON_OPTIONS[0] || '';
@@ -1783,8 +1852,29 @@ function initFontImport(app) {
     const dropzone = document.getElementById('fontDropzone');
     const browse = document.getElementById('fontBrowseBtn');
     const reference = document.getElementById('fontReferenceBtn');
+    const applySelected = document.getElementById('fontApplySelectedBtn');
+    const controlSheet = document.getElementById('fontControlSheetBtn');
+    const select = document.getElementById('fontSelect');
+    const axes = document.getElementById('fontAxisControls');
+    const instances = document.getElementById('fontInstanceControls');
     browse?.addEventListener('click', () => openFontPicker());
     reference?.addEventListener('click', () => resetReferenceFont(app));
+    applySelected?.addEventListener('click', () => applyActiveFontToSelection(app));
+    controlSheet?.addEventListener('click', () => exportFontControlSheet(app));
+    select?.addEventListener('change', () => setActiveFontId(app, select.value));
+    axes?.addEventListener('input', (e) => {
+        const row = e.target.closest?.('.font-axis-row');
+        if (!row) return;
+        updateFontAxis(app, row.dataset.axis, e.target.value);
+    });
+    axes?.addEventListener('change', (e) => {
+        const row = e.target.closest?.('.font-axis-row');
+        if (!row) return;
+        updateFontAxis(app, row.dataset.axis, e.target.value);
+    });
+    instances?.addEventListener('change', (e) => {
+        if (e.target.id === 'fontInstanceSelect') applyFontInstance(app, e.target.value);
+    });
     if (dropzone) {
         for (const eventName of ['dragenter', 'dragover']) {
             dropzone.addEventListener(eventName, (e) => {
@@ -1824,32 +1914,106 @@ function fontFormatFor(name) {
     return 'truetype';
 }
 
-function releaseCustomFontFace() {
-    if (FONT_IMPORT?.objectUrl) URL.revokeObjectURL(FONT_IMPORT.objectUrl);
-    if (FONT_FACE_STYLE) FONT_FACE_STYLE.remove();
-    FONT_FACE_STYLE = null;
+function fontMimeType(file) {
+    if (/woff2$/i.test(file?.name || '')) return 'font/woff2';
+    if (/woff$/i.test(file?.name || '')) return 'font/woff';
+    if (/otf$/i.test(file?.name || '')) return 'font/otf';
+    return file?.type || 'font/ttf';
 }
 
-function installCustomFontFace(file) {
-    releaseCustomFontFace();
+function fontDataUrl(buf, file) {
+    const bytes = new Uint8Array(buf);
+    let binary = '';
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    return `data:${fontMimeType(file)};base64,${btoa(binary)}`;
+}
+
+function registerReferenceFont(tf) {
+    const probe = probeTypeface(tf);
+    const entry = {
+        id: REFERENCE_FONT_ID,
+        kind: 'reference',
+        name: 'YS Text Regular',
+        fileName: 'YS Text-Regular.ttf',
+        size: 0,
+        tf,
+        probe,
+        params: YS_TEXT_REGULAR,
+        invariants: runCompensationInvariants(tf, YS_TEXT_REGULAR),
+        coordinates: defaultVariationCoordinates(probe),
+        cssFamily: REFERENCE_FONT_FAMILY,
+        signature: 'font:reference:ys-text-regular'
+    };
+    FONT_REGISTRY.set(entry.id, entry);
+    REFERENCE_TYPEFACE = tf;
+    REFERENCE_FONT_PROBE = probe;
+    REFERENCE_FONT_INVARIANTS = entry.invariants;
+    setActiveFontId(null, ACTIVE_FONT_ID || REFERENCE_FONT_ID, { render: false });
+}
+
+function defaultVariationCoordinates(probe) {
+    const coordinates = {};
+    for (const axis of probe?.variations?.axes || []) {
+        if (Number.isFinite(axis.default)) coordinates[axis.tag] = axis.default;
+    }
+    return coordinates;
+}
+
+function releaseFontEntry(entry) {
+    if (entry?.objectUrl) URL.revokeObjectURL(entry.objectUrl);
+    entry?.styleElement?.remove?.();
+}
+
+function installSessionFontFace(entry, file) {
     const objectUrl = URL.createObjectURL(file);
     const style = document.createElement('style');
-    style.id = 'keyboarder-custom-font-face';
-    style.textContent = `@font-face{font-family:"${CUSTOM_FONT_FAMILY}";src:url("${objectUrl}") format("${fontFormatFor(file.name)}");font-weight:400;font-style:normal;font-display:block;}`;
+    style.id = `keyboarder-font-face-${entry.id.replace(/[^\w-]+/g, '-')}`;
+    style.textContent = `@font-face{font-family:"${entry.cssFamily}";src:url("${objectUrl}") format("${fontFormatFor(file.name)}");font-weight:1 1000;font-stretch:50% 200%;font-style:normal;font-display:block;}`;
     document.head.appendChild(style);
-    FONT_FACE_STYLE = style;
-    if (document.fonts?.load) void document.fonts.load(`12px "${CUSTOM_FONT_FAMILY}"`);
-    return objectUrl;
+    if (document.fonts?.load) void document.fonts.load(`12px "${entry.cssFamily}"`);
+    entry.objectUrl = objectUrl;
+    entry.styleElement = style;
 }
 
-function fontImportSignature(file, probe) {
-    return [
-        'font:custom',
-        file?.name || 'unnamed',
-        file?.size || 0,
-        file?.lastModified || 0,
-        probe?.id || ''
-    ].join(':');
+function fontImportId(file, probe) {
+    return `session:${slugId(probe?.id || file?.name)}:${file?.size || 0}:${file?.lastModified || 0}`;
+}
+
+function buildSessionFontEntry(file, tf, dataUrl) {
+    const probe = probeTypeface(tf);
+    const params = autoCompensationParams(tf, probe);
+    const id = fontImportId(file, probe);
+    return {
+        id,
+        kind: 'session',
+        name: fontDisplayName(probe, file.name || 'Session font'),
+        fileName: file.name || 'session-font',
+        size: file.size || 0,
+        type: file.type || '',
+        tf,
+        probe,
+        params,
+        invariants: runCompensationInvariants(tf, params),
+        coordinates: defaultVariationCoordinates(probe),
+        cssFamily: `${CUSTOM_FONT_FAMILY_PREFIX} ${++FONT_IMPORT_SEQ}`,
+        dataUrl,
+        signature: `font:session:${id}`
+    };
+}
+
+function setActiveFontId(app, id, options = {}) {
+    const nextId = FONT_REGISTRY.has(cleanRuntimeFontId(id)) ? cleanRuntimeFontId(id) : REFERENCE_FONT_ID;
+    ACTIVE_FONT_ID = nextId;
+    TYPEFACE = activeFontEntry()?.tf || REFERENCE_TYPEFACE;
+    TYPEFACE_SIG = fontRegistrySignature();
+    COMP_CACHE.clear();
+    cached.sig = null;
+    syncFontImportStatus();
+    syncCompensationTableEditor(app?.settings || app?.settingsStore?.toObject?.() || {});
+    if (options.render !== false) app?.renderNow?.();
 }
 
 async function importFontFile(app, file) {
@@ -1863,27 +2027,13 @@ async function importFontFile(app, file) {
         return;
     }
     try {
-        const tf = parseFont(await file.arrayBuffer());
-        const probe = probeTypeface(tf);
-        const params = autoCompensationParams(tf, probe);
-        const invariants = runCompensationInvariants(tf, params);
-        const objectUrl = installCustomFontFace(file);
-        FONT_IMPORT = {
-            name: file.name || 'custom font',
-            size: file.size || 0,
-            type: file.type || '',
-            objectUrl,
-            probe,
-            params,
-            invariants
-        };
-        TYPEFACE = tf;
-        TYPEFACE_SIG = fontImportSignature(file, probe);
-        COMP_CACHE.clear();
-        cached.sig = null;
-        syncFontImportStatus();
-        syncCompensationTableEditor(app.settings);
-        app.renderNow();
+        const buf = await file.arrayBuffer();
+        const tf = parseFont(buf);
+        const entry = buildSessionFontEntry(file, tf, fontDataUrl(buf, file));
+        releaseFontEntry(FONT_REGISTRY.get(entry.id));
+        installSessionFontFace(entry, file);
+        FONT_REGISTRY.set(entry.id, entry);
+        setActiveFontId(app, entry.id);
         app._showToast?.('Font loaded');
     } catch (e) {
         await app.dialog?.alert({
@@ -1895,23 +2045,15 @@ async function importFontFile(app, file) {
 }
 
 function resetReferenceFont(app) {
-    releaseCustomFontFace();
-    FONT_IMPORT = null;
-    TYPEFACE = REFERENCE_TYPEFACE;
-    TYPEFACE_SIG = TYPEFACE ? 'font:reference:ys-text-regular' : 'font:loading';
-    COMP_CACHE.clear();
-    cached.sig = null;
-    syncFontImportStatus();
-    syncCompensationTableEditor(app.settings);
-    app.renderNow();
+    setActiveFontId(app, REFERENCE_FONT_ID);
 }
 
 function activeFontProbe() {
-    return FONT_IMPORT?.probe || REFERENCE_FONT_PROBE;
+    return activeFontEntry()?.probe || REFERENCE_FONT_PROBE;
 }
 
 function activeFontInvariants() {
-    return FONT_IMPORT?.invariants || REFERENCE_FONT_INVARIANTS;
+    return activeFontEntry()?.invariants || REFERENCE_FONT_INVARIANTS;
 }
 
 function fontDisplayName(probe, fallback = 'Unknown Typeface') {
@@ -1941,6 +2083,13 @@ function fontAxisText(probe) {
     }).join(', ');
 }
 
+function activeFontCoordinatesText(entry = activeFontEntry()) {
+    const axes = entry?.probe?.variations?.axes || [];
+    if (!axes.length) return 'default';
+    const coordinates = entry.coordinates || {};
+    return axes.map((axis) => `${axis.tag} ${compactNumber(coordinates[axis.tag] ?? axis.default, 3)}`).join(', ');
+}
+
 function fontMetricText(probe) {
     if (!probe) return 'waiting';
     const m = probe.metrics || {};
@@ -1962,36 +2111,242 @@ function fontInvariantText(invariants) {
     return `${invariants.pass ? 'pass' : 'check'} · flat σ ${compactNumber(flat, 4)} px · sym ${compactNumber(symmetry, 2)} em`;
 }
 
+function fontOptionLabel(entry) {
+    const suffix = entry.kind === 'reference' ? 'reference' : entry.fileName || 'session';
+    const axes = entry.probe?.variations?.axes?.length ? ` · ${activeFontCoordinatesText(entry)}` : '';
+    return `${fontDisplayName(entry.probe, entry.name)} · ${suffix}${axes}`;
+}
+
+function syncFontSelect() {
+    const select = document.getElementById('fontSelect');
+    if (!select) return;
+    const entries = [...FONT_REGISTRY.values()];
+    const sig = entries.map((entry) => `${entry.id}:${entry.name}:${entry.fileName}:${JSON.stringify(entry.coordinates || {})}`).join('|');
+    if (select.dataset.sig !== sig) {
+        select.replaceChildren(...entries.map((entry) => {
+            const opt = document.createElement('option');
+            opt.value = entry.id;
+            opt.textContent = fontOptionLabel(entry);
+            return opt;
+        }));
+        select.dataset.sig = sig;
+    }
+    select.value = FONT_REGISTRY.has(ACTIVE_FONT_ID) ? ACTIVE_FONT_ID : REFERENCE_FONT_ID;
+}
+
+function syncFontInstanceControls() {
+    const box = document.getElementById('fontInstanceControls');
+    const entry = activeFontEntry();
+    const instances = entry?.probe?.variations?.instances || [];
+    if (!box) return;
+    if (!instances.length) {
+        box.innerHTML = '';
+        box.dataset.sig = 'none';
+        return;
+    }
+    const current = matchingFontInstance(entry);
+    const sig = `${entry.id}:${instances.map((instance) => instance.name).join('|')}:${current}`;
+    if (box.dataset.sig === sig) return;
+    box.dataset.sig = sig;
+    const options = ['<option value="">Custom axes</option>']
+        .concat(instances.map((instance, index) =>
+            `<option value="${index}"${String(index) === current ? ' selected' : ''}>${html(instance.name || `Instance ${index + 1}`)}</option>`));
+    box.innerHTML = '<label class="font-select-row" for="fontInstanceSelect">'
+        + '<span>Instance</span>'
+        + `<select id="fontInstanceSelect" class="select-control" aria-label="Variable font instance">${options.join('')}</select>`
+        + '</label>';
+}
+
+function axisStep(axis) {
+    const span = Math.abs((axis.max ?? 0) - (axis.min ?? 0));
+    if (span <= 2) return 0.001;
+    if (span <= 20) return 0.01;
+    return 1;
+}
+
+function syncFontAxisControls() {
+    const box = document.getElementById('fontAxisControls');
+    const entry = activeFontEntry();
+    const axes = entry?.probe?.variations?.axes || [];
+    if (!box) return;
+    if (!axes.length) {
+        box.innerHTML = '';
+        box.dataset.sig = 'none';
+        return;
+    }
+    const coordinates = entry.coordinates || {};
+    const sig = `${entry.id}:${JSON.stringify(coordinates)}:${axes.map((axis) => axis.tag).join('|')}`;
+    if (box.dataset.sig === sig) return;
+    box.dataset.sig = sig;
+    box.innerHTML = axes.map((axis) => {
+        const value = coordinates[axis.tag] ?? axis.default ?? axis.min ?? 0;
+        const step = axisStep(axis);
+        return `<div class="font-axis-row" data-axis="${html(axis.tag)}">`
+            + `<label><span>${html(axis.tag)}</span><input class="font-axis-value" type="number" step="${step}" min="${html(axis.min)}" max="${html(axis.max)}" value="${html(compactNumber(value, 3))}" aria-label="${html(axis.name || axis.tag)} axis value"></label>`
+            + `<input class="font-axis-slider" type="range" step="${step}" min="${html(axis.min)}" max="${html(axis.max)}" value="${html(value)}" aria-label="${html(axis.name || axis.tag)} axis">`
+            + '</div>';
+    }).join('');
+}
+
+function matchingFontInstance(entry) {
+    const instances = entry?.probe?.variations?.instances || [];
+    const coordinates = entry?.coordinates || {};
+    const axes = entry?.probe?.variations?.axes || [];
+    for (let i = 0; i < instances.length; i++) {
+        const instance = instances[i];
+        const same = axes.every((axis) =>
+            Math.abs((coordinates[axis.tag] ?? axis.default ?? 0) - (instance.coordinates?.[axis.tag] ?? axis.default ?? 0)) < 0.001);
+        if (same) return String(i);
+    }
+    return '';
+}
+
+function applyFontInstance(app, index) {
+    const entry = activeFontEntry();
+    const instance = entry?.probe?.variations?.instances?.[Number(index)];
+    if (!entry || !instance) return;
+    entry.coordinates = {
+        ...defaultVariationCoordinates(entry.probe),
+        ...(instance.coordinates || {})
+    };
+    entry.instanceName = instance.name || '';
+    TYPEFACE_SIG = fontRegistrySignature();
+    COMP_CACHE.clear();
+    cached.sig = null;
+    syncFontImportStatus();
+    app.renderNow();
+}
+
+function updateFontAxis(app, axisTag, rawValue) {
+    const entry = activeFontEntry();
+    const axis = entry?.probe?.variations?.axes?.find((item) => item.tag === axisTag);
+    if (!entry || !axis) return;
+    const value = clamp(Number(rawValue), axis.min, axis.max);
+    if (!Number.isFinite(value)) return;
+    entry.coordinates = { ...(entry.coordinates || {}), [axis.tag]: value };
+    entry.instanceName = matchingFontInstance(entry)
+        ? entry.probe.variations.instances[Number(matchingFontInstance(entry))]?.name || ''
+        : '';
+    TYPEFACE_SIG = fontRegistrySignature();
+    COMP_CACHE.clear();
+    cached.sig = null;
+    syncFontImportStatus();
+    app.renderNow();
+}
+
+function applyActiveFontToSelection(app) {
+    const keys = layoutFor(app.settings).keys;
+    const selected = selectedKeys(keys);
+    if (!selected.length || !FONT_REGISTRY.has(ACTIVE_FONT_ID)) return;
+    const next = sanitizeContentEdits(app.settings.contentEdits || {});
+    for (const k of selected) {
+        const elements = sourceElements(k).map((el) =>
+            el.kind === 'txt' ? cleanElement({ ...el, fontId: ACTIVE_FONT_ID }) : el);
+        writeContentEdit(next, k, k.tpl || 'blank', elements);
+    }
+    app.settingsStore.set('contentEdits', next);
+    app._showToast?.('Font applied');
+}
+
+function fontOptionsHtml(selectedId = '') {
+    const opts = ['<option value="">Default</option>'];
+    for (const entry of FONT_REGISTRY.values()) {
+        opts.push(`<option value="${html(entry.id)}"${entry.id === selectedId ? ' selected' : ''}>${html(fontOptionLabel(entry))}</option>`);
+    }
+    return opts.join('');
+}
+
 function syncFontImportStatus() {
     const status = document.getElementById('fontProbeStatus');
     const reference = document.getElementById('fontReferenceBtn');
-    if (reference) reference.disabled = !FONT_IMPORT || !REFERENCE_TYPEFACE;
+    const applySelected = document.getElementById('fontApplySelectedBtn');
+    const controlSheet = document.getElementById('fontControlSheetBtn');
+    syncFontSelect();
+    syncFontInstanceControls();
+    syncFontAxisControls();
+    if (reference) reference.disabled = ACTIVE_FONT_ID === REFERENCE_FONT_ID || !REFERENCE_TYPEFACE;
+    if (applySelected) applySelected.disabled = !TYPEFACE || !SELECTION.indices?.length;
+    if (controlSheet) controlSheet.disabled = !TYPEFACE;
     if (!status) return;
     if (!TYPEFACE) {
         status.innerHTML = '<p class="font-empty">Loading reference font...</p>';
         return;
     }
     const probe = activeFontProbe();
-    const rows = FONT_IMPORT
-        ? [
-            ['Font', fontDisplayName(probe, FONT_IMPORT.name)],
-            ['File', `${FONT_IMPORT.name} · ${fontBytes(FONT_IMPORT.size)}`],
-            ['Data', fontMetricText(probe)],
-            ['Axes', fontAxisText(probe)],
-            ['Comp', fontCompText()],
-            ['Check', fontInvariantText(activeFontInvariants())]
-        ]
-        : [
-            ['Font', fontDisplayName(probe, 'YS Text Regular')],
-            ['File', 'YS Text Regular · reference'],
-            ['Data', fontMetricText(probe)],
-            ['Axes', fontAxisText(probe)],
-            ['Comp', 'measured YS Text model + table'],
-            ['Check', fontInvariantText(activeFontInvariants())]
-        ];
+    const entry = activeFontEntry();
+    const isReference = entry?.kind === 'reference';
+    const rows = [
+        ['Font', fontDisplayName(probe, entry?.name || 'YS Text Regular')],
+        ['File', isReference ? 'YS Text Regular · reference' : `${entry.fileName} · ${fontBytes(entry.size)}`],
+        ['Data', fontMetricText(probe)],
+        ['Axes', fontAxisText(probe)],
+        ['Coords', activeFontCoordinatesText(entry)],
+        ['Comp', isReference ? 'measured YS Text model + table' : fontCompText()],
+        ['Check', fontInvariantText(activeFontInvariants())],
+        ['Loaded', `${FONT_REGISTRY.size} font${FONT_REGISTRY.size === 1 ? '' : 's'}`]
+    ];
+    if ((probe?.variations?.axes || []).length) {
+        rows.push(['Note', 'SVG text receives CSS variation settings; outline contours use the loaded default instance.']);
+    }
     status.innerHTML = `<dl class="font-summary">
         ${rows.map(([term, value]) => `<div><dt>${html(term)}</dt><dd>${html(value)}</dd></div>`).join('')}
     </dl>`;
+}
+
+function controlSheetGlyph(entry, comp, ch, x, baseline, side, size) {
+    const tf = entry.tf;
+    const laid = tf.layout(ch, size, 0, [0, baseline]);
+    if (!laid.ink) return '';
+    const outdent = comp ? comp.outdentPx(ch, side, size) : 0;
+    const bx = side === 'L'
+        ? x - outdent - laid.ink[0]
+        : x + outdent - (laid.ink[0] + laid.ink[2]);
+    return tf.pathData(ch, size, 0, [bx, baseline]);
+}
+
+function exportFontControlSheet(app) {
+    const entries = [...FONT_REGISTRY.values()].filter((entry) => entry.tf);
+    if (!entries.length) return;
+    const size = 24;
+    const colW = 72;
+    const rowH = 112;
+    const labelW = 245;
+    const width = labelW + FONT_CONTROL_SHEET_CHARS.length * colW + 40;
+    const height = 58 + entries.length * rowH;
+    const now = new Date().toISOString();
+    const rows = [];
+    rows.push(`<text x="24" y="28" font-family="Arial, sans-serif" font-size="13" fill="#333">Keyboarder font control sheet · ${html(now)}</text>`);
+    rows.push(`<text x="${labelW}" y="28" font-family="Arial, sans-serif" font-size="10" fill="#666">Each sample is edge-aligned against the blue line with its active compensation model.</text>`);
+    FONT_CONTROL_SHEET_CHARS.forEach((ch, i) => {
+        const x = labelW + i * colW + colW / 2;
+        rows.push(`<text x="${x}" y="48" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#555">${html(ch)}</text>`);
+    });
+    entries.forEach((entry, row) => {
+        const y = 72 + row * rowH;
+        const comp = new Compensator(entry.tf, entry.params || YS_TEXT_REGULAR);
+        const title = fontDisplayName(entry.probe, entry.name);
+        const meta = `${entry.kind === 'reference' ? 'reference' : entry.fileName} · ${fontMetricText(entry.probe)} · ${fontInvariantText(entry.invariants)}`;
+        rows.push(`<text x="24" y="${y}" font-family="Arial, sans-serif" font-size="12" fill="#222">${html(title)}</text>`);
+        rows.push(`<text x="24" y="${y + 16}" font-family="Arial, sans-serif" font-size="8.5" fill="#666">${html(meta)}</text>`);
+        rows.push(`<text x="24" y="${y + 30}" font-family="Arial, sans-serif" font-size="8.5" fill="#666">${html(activeFontCoordinatesText(entry))}</text>`);
+        FONT_CONTROL_SHEET_CHARS.forEach((ch, i) => {
+            const x = labelW + i * colW + colW / 2;
+            const baseline = y + 62;
+            const dL = controlSheetGlyph(entry, comp, ch, x - 8, baseline, 'L', size);
+            const dR = controlSheetGlyph(entry, comp, ch, x + 8, baseline + 34, 'R', size);
+            rows.push(`<line x1="${x - 8}" y1="${baseline - 28}" x2="${x - 8}" y2="${baseline + 6}" stroke="#2353db" stroke-width="0.45"/>`);
+            rows.push(`<line x1="${x + 8}" y1="${baseline + 6}" x2="${x + 8}" y2="${baseline + 40}" stroke="#2353db" stroke-width="0.45"/>`);
+            if (dL) rows.push(`<path d="${html(dL)}" fill="#1c1f22"/>`);
+            if (dR) rows.push(`<path d="${html(dR)}" fill="#1c1f22"/>`);
+        });
+    });
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+<rect width="100%" height="100%" fill="#f6f6f4"/>
+${rows.join('\n')}
+</svg>
+`;
+    downloadText(`keyboarder-font-control-${layoutSlug(sourceLayoutFor(app.settings).meta.name)}.svg`, svg, 'image/svg+xml');
+    app._showToast?.('Control sheet exported');
 }
 
 function initDrawingImport(app) {
@@ -2163,19 +2518,35 @@ function appendImportedLines(create, group, lines, stroke, opacity, dasharray = 
     }
 }
 
+function appendSessionFontDefs(create, svg, s) {
+    if (normalizeLegendTextMode(s.legendTextMode) !== 'text') return;
+    const fonts = [...FONT_REGISTRY.values()].filter((entry) => entry.kind === 'session' && entry.dataUrl);
+    if (!fonts.length) return;
+    const defs = create('defs', { id: 'font-faces' });
+    const style = create('style', { type: 'text/css' });
+    style.textContent = fonts.map((entry) =>
+        `@font-face{font-family:"${entry.cssFamily}";src:url("${entry.dataUrl}") format("${fontFormatFor(entry.fileName)}");font-weight:1 1000;font-stretch:50% 200%;font-style:normal;}`).join('\n');
+    defs.appendChild(style);
+    svg.appendChild(defs);
+}
+
 function renderLegendText(create, el, fill) {
+    const entry = fontEntryForElement(el);
+    const variation = fontVariationSettings(entry);
     const text = create('text', {
         x: el.bx,
         y: el.by,
         fill,
-        'font-family': activeLegendFontFamily(),
+        'font-family': legendFontFamilyForElement(el),
         'font-size': el.size,
         'font-weight': 400,
         'letter-spacing': `${el.tracking || 0}em`,
         'font-kerning': 'normal',
         'text-rendering': 'geometricPrecision',
+        'data-font-id': entry?.id || '',
         'xml:space': 'preserve'
     });
+    if (variation) text.setAttribute('style', `font-variation-settings:${variation}`);
     text.textContent = el.text || '';
     return text;
 }
@@ -2568,7 +2939,7 @@ function updateLegendEditor(s, keys) {
         return;
     }
     const elements = sourceElements(active);
-    const sig = `${active.editId}|${active.tpl}|${JSON.stringify(elements)}`;
+    const sig = `${active.editId}|${active.tpl}|${JSON.stringify(elements)}|${fontRegistrySignature()}`;
     renderElementEditor(elements, { disabled: false, sig, templateId: variantForKey(active) });
 }
 
@@ -2608,6 +2979,7 @@ function elementEditorHtml(el, i) {
     return '<div class="legend-edit-row" data-kind="txt" data-offset="' + offset + '">'
         + `<label><span>Slot</span><input class="legend-slot-input" value="${html(el.slot)}" maxlength="2"></label>`
         + `<label><span>Text</span><input class="legend-text-input" value="${html(el.text)}"></label>`
+        + `<label><span>Font</span><select class="legend-font-input">${fontOptionsHtml(el.fontId || '')}</select></label>`
         + `<label><span>Size</span><input class="legend-size-input" type="number" step="0.001" value="${html(el.size)}"></label>`
         + `<label><span>Track</span><input class="legend-track-input" type="number" step="0.001" value="${html(el.tracking || 0)}"></label>`
         + `<label><span>Comp</span><input class="legend-comp-input" type="number" step="0.001" value="${html(compValue)}"></label>`
@@ -2699,6 +3071,7 @@ function readElementEditorElements() {
         return cleanElement({
             ...base,
             text: row.querySelector('.legend-text-input')?.value || '',
+            fontId: row.querySelector('.legend-font-input')?.value || '',
             size: row.querySelector('.legend-size-input')?.value,
             tracking: row.querySelector('.legend-track-input')?.value,
             compOverride: (() => {
@@ -3044,10 +3417,12 @@ function compactLegendReport(r) {
 
 function activeTypefaceReportMeta() {
     if (!TYPEFACE) return null;
-    if (!FONT_IMPORT) return CONTENT.font;
+    const entry = activeFontEntry();
+    if (!entry || entry.kind === 'reference') return CONTENT.font;
     return {
-        family: fontDisplayName(FONT_IMPORT.probe, FONT_IMPORT.name),
-        file: FONT_IMPORT.name,
+        family: fontDisplayName(entry.probe, entry.name),
+        file: entry.fileName,
+        coordinates: clonePlain(entry.coordinates || {}),
         source: 'session-import',
         persisted: false
     };
@@ -3119,7 +3494,11 @@ async function importModelJSONFile(app, file) {
 }
 
 function downloadJSON(filename, data) {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    downloadText(filename, JSON.stringify(data, null, 2), 'application/json');
+}
+
+function downloadText(filename, text, type = 'text/plain') {
+    const blob = new Blob([text], { type });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -3163,7 +3542,7 @@ function compensationInfo(s, el) {
     if (!chars.length) return null;
     const ch = side === 'L' ? chars[0] : chars[chars.length - 1];
     if (Number.isFinite(el.compOverride?.px)) return { ch, source: 'manual', px: el.compOverride.px };
-    const comp = compFor(s);
+    const comp = compForFontId(s, elementFontId(el));
     if (!comp) return { ch, source: 'off', px: 0 };
     const ex = comp.explain(ch, side);
     return { ...ex, px: (ex.em * el.size) / 1000 };
@@ -3195,17 +3574,20 @@ function updateLegendInspector(s, keys, grid, legends) {
         box.innerHTML = out + '<p class="inspector-empty">No legend elements.</p>';
         return;
     }
-    out += '<table class="legend-elements"><tr><th>Slot</th><th>Element</th><th>Type</th><th>Comp</th></tr>';
+    out += '<table class="legend-elements"><tr><th>Slot</th><th>Element</th><th>Type</th><th>Font</th><th>Comp</th></tr>';
     for (const el of items) {
         if (el.kind === 'txt') {
             const comp = compensationInfo(s, el);
             const compText = comp
                 ? `${comp.source} ${comp.px.toFixed(3)}`
                 : '—';
+            const entry = fontEntryForElement(el);
+            const fontText = entry ? fontOptionLabel(entry) : 'default';
             out += '<tr>'
                 + `<td>${html(el.slot)}</td>`
                 + `<td>${html(el.text)}</td>`
                 + `<td>${el.size.toFixed(3)} pt, ${(el.tracking || 0).toFixed(3)} em</td>`
+                + `<td>${html(fontText || 'default')}</td>`
                 + `<td>${html(compText)}</td>`
                 + '</tr>';
         } else {
@@ -3213,6 +3595,7 @@ function updateLegendInspector(s, keys, grid, legends) {
                 + `<td>${html(el.slot)}</td>`
                 + `<td>${html(el.icon)}</td>`
                 + `<td>${el.w.toFixed(2)} × ${el.h.toFixed(2)}</td>`
+                + '<td>—</td>'
                 + '<td>—</td>'
                 + '</tr>';
         }

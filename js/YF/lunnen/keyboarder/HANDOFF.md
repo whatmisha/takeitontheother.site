@@ -34,6 +34,9 @@ Important local entry points:
   A plain arrow still uses `0.001`.
 - Set the startup preset to `LCAKB23` via `presets.defaultName`, so a plain app load opens the
   reference layout instead of whichever seed happens to sort first.
+- Changed the top-left navigation item from static `Keyboarder` text to a relative link
+  `←YF Tools` with `href="../../"`, which resolves from `/js/YF/lunnen/keyboarder/` to
+  `/js/YF/`.
 - Added a Type panel:
   - `Glyph size`, `Numpad size`, `Secondary size`, `Word size` in pt.
   - `Leading` in pt.
@@ -240,8 +243,8 @@ Important local entry points:
   - added a Type panel `Outlines` / `Text` mode for legend output;
   - default `legendTextMode` remains `outlines`, preserving the current exact path rendering;
   - in `text` mode, `#glyphs` renders SVG `<text>` elements with the same baseline coordinates,
-    em letter-spacing, and the active legend font family (`YS Text` by default; the Stage 8
-    session import uses `Keyboarder Custom Font`);
+    em letter-spacing, and the active legend font family (`YS Text` by default; session imports
+    use generated `Keyboarder Session Font N` families);
   - `legendTextMode` is included in presets/model JSON and in the exported `keyboard.type`
     section.
   - added a compact compensation table editor in the Type panel:
@@ -259,7 +262,7 @@ Important local entry points:
     `languageLayer` in `finally`;
   - batch filenames are `keyboarder-<layout>-dual.svg`, `keyboarder-<layout>-latin.svg`, and
     `keyboarder-<layout>-cyrillic.svg`.
-- Started Stage 8 automatic font compensation:
+- Completed the main Stage 8 automatic font compensation code:
   - added pure `app/kb/fontprobe.js`;
   - it probes a parsed `Typeface` for names, units per em, geometric-priority cap/x-height,
     ascender/descender, italic angle, weight/width class, measured vertical stem width, flat/round
@@ -271,24 +274,37 @@ Important local entry points:
     `eps = 32`, `w = 300`, and the same coefficients as `YS_TEXT_REGULAR`;
   - `runCompensationInvariants()` checks flat-stem, monotonic `H < S < O < A < W`, and symmetry
     invariants without needing a manually placed reference layout;
-  - added `analysis/fontprobe.mjs`, covering YS Text Regular and YS Text Variable (`wght`/`wdth`
-    axes, defaults `400`/`100`, named instances visible, invariants pass).
-  - added a first live font-import UI in the Type panel: `Drop font file`, `Browse Font`, and
-    `Reference font`;
+  - added `analysis/fontprobe.mjs`, covering YS Text Regular, YS Text Variable (`wght`/`wdth`
+    axes, defaults `400`/`100`, named instances visible), and several local YS Text weights for
+    broader diagnostic coverage;
+  - replaced the old single `FONT_IMPORT` state with a session font registry;
+  - the Type panel now has `Drop font file`, `Browse Font`, `Reference font`, `Active font`,
+    variable `Instance` and axis controls, `Apply selected`, and `Control sheet`;
   - imported TTF/OTF/WOFF/WOFF2 files are parsed through `parseFont()`, probed through
-    `fontprobe.js`, and applied to the active live renderer by replacing module-level
-    `TYPEFACE`;
-  - `TYPEFACE_SIG` is now part of the layout cache key, so changing fonts invalidates cached
-    legends instead of reusing old outlines/ink boxes;
+    `fontprobe.js`, stored as session profiles, and applied to the active live renderer by
+    changing the active registry entry;
+  - `TYPEFACE_SIG` now includes the active font registry signature, so changing fonts or variable
+    coordinates invalidates cached legends instead of reusing old outlines/ink boxes;
+  - `slots.js` now accepts `typefaceFor(el)` and `compForElement(el)`, so baseline placement,
+    ink boxes, and L/R optical compensation are computed from each text element's resolved font;
+  - text elements can carry a sanitized `fontId`, preserved by `model-io`; Legend editor has a
+    per-row `Font` select, and `Apply selected` writes the active font to all selected keys'
+    text elements;
   - custom fonts use `autoCompensationParams()` as the base params for `Compensator`; the
     editable punctuation table overlays the active base table instead of always overlaying
     `YS_TEXT_REGULAR.table`;
-  - SVG `<text>` mode now uses the active legend font family and a session-only
-    `@font-face` named `Keyboarder Custom Font` for imported files;
-  - the font status shows family/file, UPM, cap/x-height, stem, variation axes, compensation
-    params/table count, and invariant results;
-  - imported font binaries are intentionally session-only and are not persisted into presets or
-    `keyboarder.model.v1` JSON.
+  - SVG `<text>` mode now uses the resolved legend font family, writes `data-font-id`, applies
+    CSS `font-variation-settings`, and embeds session font faces in SVG `<defs>` as data URLs
+    for standalone text-mode SVG export;
+  - `Control sheet` exports a visual SVG sheet with control characters for all loaded font
+    profiles, edge-aligned through their active compensation model;
+  - imported font binaries are session-only and are not persisted into presets or
+    `keyboarder.model.v1` JSON. Their in-memory data URLs are used only for current text-mode
+    SVG export.
+  - caveat: the bundled `opentype.js` reads `fvar` axes/instances but does not apply `gvar`
+    deltas to outline contours. Variable axes therefore affect UI/profile/cache and SVG text CSS;
+    outline preview/export still uses the loaded default contours until the font engine is
+    upgraded.
 
 ## Verification
 
@@ -357,6 +373,23 @@ Browser smoke:
     disables the reset button, and keeps 176 outline paths;
   - after the reset, `Text` mode renders 176 text nodes with `font-family="YS Text"`, and
     returning to `Outlines` restores 176 paths.
+- Stage 8 final browser smoke on `http://127.0.0.1:8015/`:
+  - top-left nav text is `←YF Tools` and its relative `href` is `../../`;
+  - baseline has one `Active font` option, 176 outline paths, and no axis rows;
+  - browsing local `Fonts/YS Text Variable/YSText-Upright-weight-VF.ttf` adds a second font
+    profile, shows two axis rows (`wght=400`, `wdth=100`), exposes named instances including
+    YS Text weights/widths, keeps 176 outline paths, installs one session `@font-face`, and
+    leaves the console clean;
+  - selecting a named variable instance updates coordinates to `wght 800, wdth 100` and keeps
+    176 outline paths;
+  - `Apply selected` writes the active session `fontId` into the active key's text element; the
+    Legend editor font select shows that session profile and the preset becomes dirty as expected;
+  - switching to `Text` mode renders 176 text nodes, the first selected text has the session
+    `data-font-id`, `font-family="Keyboarder Session Font 1"`, CSS
+    `font-variation-settings:"wght" 800, "wdth" 100`, and SVG `#font-faces style` contains a
+    data URL for standalone text-mode SVG export;
+  - clicking `Control sheet` produced no runtime errors, though the Browser plugin still did not
+    surface a download event for this programmatic blob download path.
 - Compensation table editor smoke on `http://127.0.0.1:8015/`: the editor lists 31 characters;
   selecting `~`, setting `L` to `20.25`, and applying shows `edited · L 20.25 · R -` with reset
   buttons enabled; `Reset char` returns `reference · L 11.8 · R -`, disables both reset buttons,
@@ -569,16 +602,17 @@ Stage 7 main code items are complete:
   language layers.
 - Still remaining: stronger manual QA of downloaded PDF/SVG files in Illustrator/PDF viewer.
 
-Stage 8 is started:
+Stage 8 main code items are complete:
 
 - Done: pure font probing/autocalibration module plus Node coverage for YS Text Regular and YS
-  Text Variable.
-- Done: first UI font upload/drop slice. Imported font files are applied to live outline rendering,
-  SVG text mode, active compensation params, the compensation table editor, and probe/invariant
-  status. The imported font file is session-only and not persisted into presets/model JSON.
-- Still remaining: variation instance selection, multi-font handling, visual control sheet
-  generation, broader invariant checks on several unrelated fonts, and production QA of exports
-  generated while a custom font is active.
+  Text Variable plus local YS Text weight diagnostics.
+- Done: session font registry, live font upload/drop, active font selection, variable instance
+  and axis controls, active-font autocompensation, per-element `fontId` assignment in Legend
+  editor and model IO, session font SVG text export defs, visual control sheet generation, and
+  probe/invariant status.
+- Remaining caveats: downloaded PDF/SVG files generated with custom fonts still need manual
+  Illustrator/PDF-viewer QA; true variable outline instancing needs a future font-engine upgrade
+  because bundled `opentype.js` exposes `fvar` but does not apply `gvar` deltas to contours.
 
 ## Notes For The Next Assistant
 
@@ -592,5 +626,6 @@ Stage 8 is started:
   switching now exist; SVG drawing import has its first importable draft slice; Stage 7 export
   polish has local PDF/outline libraries, a mm-sized PDF button, and selectable legend output as
   outlines or SVG text, plus editable punctuation compensation table overrides and language-layer
-  batch SVG export. Stage 8 has a pure fontprobe/autocalibration foundation and the first live
-  session-font upload UI; variation instances and multi-font workflows are still open.
+  batch SVG export. Stage 8 has font probing/autocalibration, session font registry, variable
+  controls, multi-font text assignment, and control sheet export; only manual export QA and the
+  future `gvar` outline-engine upgrade remain as caveats.
