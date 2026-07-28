@@ -191,18 +191,16 @@ Important local entry points:
     884 diagonal lines, 866 paths, 487 horizontal span groups, 110 cap rects, 220 raw key
     candidates, 110 final recognized key rectangles, two double-height keys, zero warnings,
     four notes, zero suspicious keys, and a draft layout with 3 blocks, 6 rows, and 110 keys;
-  - added a `Drawing` panel with `Browse SVG`, drag-and-drop, `Use Draft`, `Draft JSON`,
-    `Clear`, and import status;
-  - added a `Drawing` layer toggle in Layers;
-  - the drawing preview renders the imported line buckets plus recognized key rectangles; warning
-    keys are marked red/dashed, while normal keys remain yellow;
-  - imported drawing analysis is UI-only module state and is not saved into presets/model JSON;
-    only the visual `showDrawing` toggle is a normal setting;
-  - clean SVG/PNG export temporarily hides the imported drawing preview, like the selection
-    overlay.
-  - `Use Draft` writes the generated layout into settings as `customLayout`, switches
-    `layoutName` to `IMPORTED_SVG`, syncs Grid sliders, clears layout/content edits, disables
-    `Reference`/`Diff`, and renders generic labels for every detected key;
+  - current SVG creation UX is top-bar `New layout`, not a persistent Drawing panel: the user
+    chooses an SVG only while creating a new custom layout/preset;
+  - the earlier `Drawing` panel, `Browse SVG`, drag-and-drop, `Use Draft`, `Draft JSON`, `Clear`,
+    Drawing layer toggle, and drawing preview overlay have been removed from the visible workflow;
+  - imported drawing analysis is transient and is not saved into presets/model JSON;
+  - `showDrawing` remains only as backward-compatible old state and is normalized to `false`;
+  - `New layout` writes the generated layout into settings as `customLayout`, derives
+    `layoutName` from the SVG file name, syncs Grid sliders, clears layout/content edits,
+    disables `Reference`/`Diff`, enters the framework `Unsaved*` preset slot, and renders generic
+    labels for every detected key;
   - imported layout drafts are now compacted for hand-editability: consecutive identical unit
     keys are emitted with `repeat`, and synthetic `r123` key IDs are omitted. The existing
     row/block/ordinal edit IDs are still assigned after `buildLayout()`, so editing and content
@@ -252,8 +250,8 @@ Important local entry points:
   - `app.exportPDF()` calls the framework's existing `SVGExporter.exportToPDF()` with
     `unit: "mm"` and an explicit `{ width, height }` page format computed from the current
     SVG artboard via the fixed `25.4 / 72` conversion;
-  - clean export hiding now covers PDF as well as SVG/PNG, so selection and imported drawing
-    overlays stay out of production files;
+  - clean export hiding now covers PDF as well as SVG/PNG, so selection stays out of production
+    files;
   - PDF filenames use the active layout slug, e.g. `keyboarder-lcakb23.pdf`.
   - localized production export dependencies: `vendor/lib/jspdf.umd.min.js` and
     `vendor/lib/svg2pdf.umd.min.js` are shipped with the app and included from `index.html`;
@@ -282,11 +280,8 @@ Important local entry points:
     reposition affected edge legends;
   - `Reference type` clears `compensationTableEdits`, and model JSON includes it in
     `keyboard.type`.
-  - added `Batch SVG` export: it silently cycles the current layout through `dual`, `latin`, and
-    `cyrillic`, calls the normal clean SVG exporter for each layer, and restores the original
-    `languageLayer` in `finally`;
-  - batch filenames are `keyboarder-<layout>-dual.svg`, `keyboarder-<layout>-latin.svg`, and
-    `keyboarder-<layout>-cyrillic.svg`.
+  - `Batch SVG` was implemented earlier but has been removed from the UI and active code after
+    user feedback; production export is now the explicit `Language` selection plus normal `SVG`.
 - Completed the main Stage 8 automatic font compensation code:
   - added pure `app/kb/fontprobe.js`;
   - it probes a parsed `Typeface` for names, units per em, geometric-priority cap/x-height,
@@ -419,11 +414,8 @@ Browser smoke:
   selecting `~`, setting `L` to `20.25`, and applying shows `edited · L 20.25 · R -` with reset
   buttons enabled; `Reset char` returns `reference · L 11.8 · R -`, disables both reset buttons,
   keeps 110 keys and 176 glyph paths, and produces no console warnings/errors.
-- Batch SVG smoke on `http://127.0.0.1:8015/`: before clicking, the language layer is `dual`,
-  with 110 keys and 176 glyph paths; after clicking `Batch SVG`, the button re-enables, language
-  returns to `dual`, the DOM still has 110 keys, 176 glyph paths, 15 `#icons`, 13 `#f-icons`, and
-  no console warnings/errors. Browser automation still cannot inspect the downloaded SVG files
-  reliably.
+- Obsolete Batch SVG smoke: the old batch button had worked in browser QA, but it has now been
+  removed from the UI and active code because it is not part of the user's production workflow.
 
 Browser QA on `http://127.0.0.1:8000/`:
 
@@ -545,7 +537,7 @@ Browser QA on `http://127.0.0.1:8000/`:
     the menu, and applying `ANSI TKL` switched to `ANSI_TKL` with 87 keys, 87 strings, and no
     warnings;
   - current-port console logs for the fresh smoke had no warnings or errors.
-- Stage 6 drawing-import smoke:
+- Historical Stage 6 Drawing-panel smoke, superseded by the current `New layout` flow:
   - on `http://127.0.0.1:8007/`, `Browse SVG` accepted local `LCAKB23.svg`;
   - the Drawing status reported `blueprint yes`, `caps yes`, 1658 H lines, 1388 V lines,
     884 diagonal lines, 866 paths, 487 span groups, 110 caps, 1U width `46.4941`, height
@@ -561,7 +553,8 @@ Browser QA on `http://127.0.0.1:8000/`:
     `Reference`/`Diff`, and produced no console warnings/errors;
   - toggling the `Drawing` layer hid the preview (`0` lines) and restored it (`3930` lines);
   - current-port console logs for this smoke had no warnings or errors.
-- Stage 6 drawing-import smoke for the user's compact drawing:
+- Historical Stage 6 Drawing-panel smoke for the user's compact drawing, now powered through
+  `New layout` instead:
   - on `http://127.0.0.1:8015/?stage6split=20260728b`, `Browse SVG` accepted
     `/Users/mishaivanov/Desktop/test_layout.svg`;
   - Drawing status reported 1199 H lines, 1046 V lines, 632 diagonal lines, 580 paths,
@@ -620,12 +613,12 @@ Stage 5 is complete for code:
   up. Non-LCA labels are generic generated labels, not designer-measured content.
 Stage 6 is started:
 
-- Done: first read-only SVG drawing ingestion/preview slice: strip Illustrator private payloads,
+- Done: SVG drawing ingestion/draft creation: strip Illustrator private payloads,
   extract `blueprint`/`caps`, bucket line segments, cap calibration, candidate key rectangles
   from paired horizontal edges, side-edge verification, nesting removal, suspicious-key
-  diagnostics/marking, conversion into a downloadable `keyboarder.layoutDraft.v1` row/block JSON,
-  a first `Use Draft` workflow to import that layout into the live editor as `customLayout`,
-  Drawing panel, preview layer, and Node/browser coverage.
+  diagnostics, conversion into `keyboarder.layoutDraft.v1`, and the current top-bar `New layout`
+  workflow that creates a transient custom layout/preset without drawing an overlay on an opened
+  preset.
 - Still remaining: deeper production polish for imported layouts, especially naming/saving
   multiple custom layouts, richer suspected-key review, and conversion of draft structure into
   nicer human-authored `u`/`repeat` rows.
@@ -635,8 +628,8 @@ Stage 7 main code items are complete:
 - Done: Illustrator-like SVG icon layer split (`icons` / `f-icons`), PDF export button with
   physically exact mm page format, clean export hiding for PDF, local `jsPDF` / `svg2pdf` /
   `opentype.js` dependencies, guarded seed preset loading, and legend output mode UI
-  (`Outlines` / `Text`), the compensation table editor, and `Batch SVG` generation across
-  language layers.
+  (`Outlines` / `Text`), and the compensation table editor. `Batch SVG` was removed after user
+  feedback; use the Language select plus normal `SVG` export instead.
 - Still remaining: stronger manual QA of downloaded PDF/SVG files in Illustrator/PDF viewer.
 
 Stage 8 main code items are complete:

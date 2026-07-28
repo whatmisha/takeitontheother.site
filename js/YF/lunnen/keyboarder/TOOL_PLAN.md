@@ -457,7 +457,7 @@ detected rectangles в `keyboarder.layoutDraft.v1`: row/block JSON, которы
 1388 V, 884 diagonal, 866 paths, 487 horizontal span groups, 110 caps, `d = 3.3779`,
 220 raw candidates, 110 final recognized keys, из них 2 double-height; worst drift до designer
 caps < 0.03 px; diagnostics на нём даёт 0 warnings, 4 notes, 0 suspicious; draft даёт
-3 blocks, 6 rows, 110 keys. В браузере
+3 blocks, 6 rows, 110 keys. Первоначальный debug-UI в браузере
 `Browse SVG` / drag-and-drop кладут анализ во временное UI-state, показывают summary и рисуют
 preview layer `#imported-blueprint` из 3930 lines плюс `#imported-candidates` из 110 rects;
 на LCAKB23 все 110 rects жёлтые, red suspicious = 0. Кнопка `Draft JSON` disabled до импорта и
@@ -465,10 +465,10 @@ enabled после; она скачивает layout draft. `Use Draft` disabled
 enabled на clean import; на LCAKB23 он переключает Grid layout на `IMPORTED_SVG`, добавляет
 `IMPORTED_SVG · custom` в selector, рендерит 110 keys и 110 generic text legends, выключает
 `Reference` / `Diff` и кладёт layout в settings как `customLayout`. `keyboarder.model.v1`
-сохраняет `customLayout` в settings и дублирует его в `keyboard.customLayout` на export. Toggle
-`Drawing` прячет и возвращает preview. В presets/model JSON сам импортированный SVG не
-сохраняется, сохраняются только результат распознавания как `customLayout` и визуальный
-`showDrawing`. Draft теперь компактируется для ручной доработки: подряд идущие одинаковые
+сохраняет `customLayout` в settings и дублирует его в `keyboard.customLayout` на export.
+Этот панельный preview был промежуточным debug-UI; в текущем UX сохраняется только результат
+распознавания как `customLayout`, а сам SVG/preview не входят в preset/model. Draft теперь
+компактируется для ручной доработки: подряд идущие одинаковые
 unit-клавиши записываются через `repeat`, служебные `r123` IDs не попадают в layout JSON, а
 generic legends для imported/custom layouts показывают позиционные подписи вроде `main 1`
 вместо технических идентификаторов.
@@ -505,6 +505,16 @@ enabled. Draft собирается обратно через `buildLayout()` с
 клавиши высотой ~22.53 px, 78 SVG `<text>` labels в Text mode, наличие `up`/`down` и отсутствие
 console errors.
 
+Дополнительный UX-срез после пользовательского фидбэка: постоянная `Drawing` panel снята из
+рабочего интерфейса. Загрузка SVG теперь является не слоем поверх открытого пресета, а входом в
+создание новой раскладки: верхняя кнопка `New layout` открывает SVG, анализирует файл, при чистой
+диагностике сразу создаёт `customLayout` с именем из файла (например `test_layout.svg` →
+`TEST_LAYOUT`), переводит сессию в `Unsaved*`, синхронизирует Grid и очищает временный чертёж.
+`showDrawing` оставлен только как совместимое поле старых JSON/ссылок и при нормализации
+сбрасывается в `false`; импортированный SVG не рисуется поверх текущей клавиатуры и не
+сохраняется в preset/model. Если диагностика содержит warnings, layout не создаётся и вместо
+панельной статистики показывается короткий modal report.
+
 ### Этап 7 — про, производство ✅ основные кодовые пункты сделаны (2–3 дня)
 
 - экспорт SVG послойно, именами групп как в эталоне (`caps`, `guides`, `glyphs`, `icons`,
@@ -514,7 +524,8 @@ console errors.
 - локальные jsPDF / svg2pdf / opentype.js вместо CDN — офлайн;
 - экспорт и импорт JSON-модели, круговой цикл;
 - редактор таблицы компенсации знаков препинания;
-- пакетная генерация: одна геометрия × N языков.
+- обычный production export активного языкового слоя; пакетная генерация снята из рабочего UI,
+  потому что в реальном процессе она не нужна.
 
 Первый срез Stage 7 готов: экспортная структура легенд начала совпадать с эталоном по группам.
 `analysis/export_tool.py` теперь сохраняет исходную группу каждой иконки (`icons` / `f-icons`) в
@@ -530,8 +541,8 @@ console errors.
 `SVGExporter.exportToPDF()` из framework, но теперь с явным `unit: "mm"` и page format,
 посчитанным из текущего SVG artboard через подтверждённый коэффициент `25.4 / 72`. Для LCAKB23
 это даёт физический размер страницы `412.462 × 115.954 mm`. Clean-export wrapper теперь
-обслуживает PDF вместе с SVG/PNG, поэтому selection overlay и imported drawing preview не
-попадают в production export. Filename строится по активной раскладке:
+обслуживает PDF вместе с SVG/PNG, поэтому selection overlay не попадает в production export.
+Filename строится по активной раскладке:
 `keyboarder-lcakb23.pdf`, `keyboarder-ansi-tkl.pdf`, и т.д. Browser smoke на fresh origin
 подтвердил enabled `PDF` button, 110 keys, 15 `#icons`, 13 `#f-icons`, нужный mm-размер и чистую
 консоль; сам click/download путь сознательно не запускался, потому что текущий PDF exporter ещё
@@ -575,17 +586,10 @@ console clean.
 `Reset char` возвращает `reference · L 11.8 · R -`, reset buttons disabled, 110 keys,
 176 glyph paths, console clean.
 
-Шестой срез Stage 7 готов: добавлена пакетная генерация SVG по языковым слоям. В нижней панели
-появилась кнопка `Batch SVG`; один клик экспортирует текущую геометрию/оформление как
-`keyboarder-<layout>-dual.svg`, `keyboarder-<layout>-latin.svg` и
-`keyboarder-<layout>-cyrillic.svg`. Во время batch export инструмент silent-переключает
-`languageLayer`, вызывает обычный clean `exportSVG()` для каждого слоя, затем в `finally`
-восстанавливает исходный язык и рендерит обратно, поэтому preset dirty/history не загрязняются
-временными состояниями. Browser smoke подтвердил: перед batch `dual`, 110 keys, 176 paths;
-после клика кнопка не зависла, язык вернулся в `dual`, 110 keys, 176 glyph paths,
-15 `#icons`, 13 `#f-icons`, console clean. Как и с обычными blob/download exports,
-Browser plugin не предоставляет надёжный saved-file inspection, так что открытие полученных SVG
-в Illustrator остаётся ручной production QA.
+Шестой срез Stage 7 был реализован как пакетная генерация SVG по языковым слоям, но после
+проверки реального процесса снят из UI и активного кода. Кнопка `Batch SVG` оказалась
+непонятной и создавала артефакты, которые пользователь не использует; рабочим production-путём
+остаётся выбор `Language` и обычный экспорт `SVG` текущего состояния.
 
 ### Этап 8 — про, автоматическая оптическая компенсация любой гарнитуры ✅ основные кодовые пункты сделаны (4–5 дней)
 

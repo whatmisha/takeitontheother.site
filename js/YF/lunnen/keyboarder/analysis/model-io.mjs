@@ -37,7 +37,7 @@ const defaults = {
     showGuides: false,
     showGlyphs: true,
     showIcons: true,
-    showDrawing: true,
+    showDrawing: false,
     showColumns: false,
     showIndex: false,
     showInk: false,

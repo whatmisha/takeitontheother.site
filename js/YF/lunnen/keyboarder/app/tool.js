@@ -74,7 +74,6 @@ const ICON_OPTIONS = Object.keys(ICONS).sort((a, b) => a.localeCompare(b));
 const TEMPLATE_VARIANTS = buildTemplateVariants(CONTENT);
 const TEMPLATE_BY_ID = new Map(TEMPLATE_VARIANTS.map((v) => [v.id, v]));
 const LANGUAGE_LAYERS = new Set(['dual', 'latin', 'cyrillic']);
-const BATCH_LANGUAGE_LAYERS = ['dual', 'latin', 'cyrillic'];
 const LEGEND_TEXT_MODES = new Set(['outlines', 'text']);
 const ICON_LAYER_IDS = ['icons', 'f-icons'];
 const CYRILLIC_RE = /[\u0400-\u04FF]/;
@@ -172,7 +171,6 @@ let COMP_CACHE = new Map();
 let SELECTION = { active: 0, indices: [0] };
 let LAST_DELETED_EDIT_ID = null;
 let LAST_DELETED_ROW_ID = null;
-let BLUEPRINT_IMPORT = null;
 let COMP_TABLE_SELECTED_CH = null;
 
 function cleanRuntimeFontId(value) {
@@ -436,7 +434,7 @@ const app = defineTool({
         showGuides: false,
         showGlyphs: true,
         showIcons: true,
-        showDrawing: true,
+        showDrawing: false,
         showColumns: false,
         showIndex: false,
         showInk: false,
@@ -479,7 +477,6 @@ const app = defineTool({
         { id: 'gridPanel', headerId: 'gridPanelHeader', persistent: true },
         { id: 'layersPanel', headerId: 'layersPanelHeader', persistent: true },
         { id: 'typePanel', headerId: 'typePanelHeader', persistent: true },
-        { id: 'drawingPanel', headerId: 'drawingPanelHeader', persistent: true },
         { id: 'legendPanel', headerId: 'legendPanelHeader', persistent: true },
         { id: 'colorsPanel', headerId: 'colorsPanelHeader', persistent: true }
     ],
@@ -586,11 +583,6 @@ const app = defineTool({
                 }));
             }
             svg.appendChild(g);
-        }
-
-        if (s.showDrawing && BLUEPRINT_IMPORT) {
-            const drawing = renderImportedBlueprint(create, BLUEPRINT_IMPORT.analysis);
-            if (drawing) svg.appendChild(drawing);
         }
 
         if (s.showGuides) {
@@ -716,24 +708,19 @@ const app = defineTool({
         syncCompensationTableEditor(s);
         syncLayoutSelect(s);
         syncLanguageLayerSelect(s);
-        syncDrawingImportStatus();
     },
 
     onInit(readyApp) {
         installPdfExport(readyApp);
         installCleanExports(readyApp);
-        installBatchSvgExport(readyApp);
         initLayoutSelect(readyApp);
         initLanguageLayerSelect(readyApp);
         initFontImport(readyApp);
-        initDrawingImport(readyApp);
+        initNewLayoutImport(readyApp);
         initCompensationTableEditor(readyApp);
 
         document.getElementById('exportSvgBtn')?.addEventListener('click', () => readyApp.exportSVG());
         document.getElementById('exportPngBtn')?.addEventListener('click', () => readyApp.exportPNG());
-        document.getElementById('exportBatchSvgBtn')?.addEventListener('click', () => {
-            void readyApp.exportLanguageBatchSVG();
-        });
         document.getElementById('exportPdfBtn')?.addEventListener('click', () => {
             void readyApp.exportPDF();
         });
@@ -751,7 +738,7 @@ const app = defineTool({
         document.getElementById('drawingSvgInput')?.addEventListener('change', (e) => {
             const file = e.target.files?.[0] || null;
             e.target.value = '';
-            void importDrawingSvgFile(readyApp, file);
+            void createNewLayoutFromSvgFile(readyApp, file);
         });
         document.getElementById('fontFileInput')?.addEventListener('change', (e) => {
             const file = e.target.files?.[0] || null;
@@ -1013,6 +1000,7 @@ function normalizedPresetBlob(blob = {}, defaults = {}) {
     const clean = normalizedPresetBlobData(blob, defaults, modelIOOptions(layout));
     clean.layoutName = layout.meta.name;
     if (!LAYOUTS[layout.meta.name]) clean.customLayout = clonePlain(layout);
+    clean.showDrawing = false;
     clean.languageLayer = normalizeLanguageLayer(clean.languageLayer);
     if (!isReferenceLayout(layout)) {
         clean.showRef = false;
@@ -1034,6 +1022,7 @@ function presetBlobFromKeyboardModel(input = {}, defaults = {}) {
     const clean = presetBlobFromKeyboardModelData(input, defaults, modelIOOptions(layout));
     clean.layoutName = layout.meta.name;
     if (!LAYOUTS[layout.meta.name]) clean.customLayout = clonePlain(layout);
+    clean.showDrawing = false;
     clean.languageLayer = normalizeLanguageLayer(clean.languageLayer);
     if (!isReferenceLayout(layout)) {
         clean.showRef = false;
@@ -2350,51 +2339,21 @@ ${rows.join('\n')}
     app._showToast?.('Control sheet exported');
 }
 
-function initDrawingImport(app) {
-    const dropzone = document.getElementById('drawingDropzone');
-    const browse = document.getElementById('drawingBrowseBtn');
-    const useDraft = document.getElementById('drawingUseDraftBtn');
-    const draft = document.getElementById('drawingDraftJsonBtn');
-    const clear = document.getElementById('drawingClearBtn');
-    browse?.addEventListener('click', () => openDrawingSvgPicker());
-    useDraft?.addEventListener('click', () => useDrawingDraftLayout(app));
-    draft?.addEventListener('click', () => exportDrawingDraftJSON());
-    clear?.addEventListener('click', () => {
-        BLUEPRINT_IMPORT = null;
-        syncDrawingImportStatus();
-        app.renderNow();
+function initNewLayoutImport(app) {
+    document.getElementById('newLayoutBtn')?.addEventListener('click', () => {
+        openNewLayoutSvgPicker();
     });
-    if (dropzone) {
-        for (const eventName of ['dragenter', 'dragover']) {
-            dropzone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                dropzone.classList.add('is-dragover');
-            });
-        }
-        for (const eventName of ['dragleave', 'drop']) {
-            dropzone.addEventListener(eventName, () => {
-                dropzone.classList.remove('is-dragover');
-            });
-        }
-        dropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            const files = [...(e.dataTransfer?.files || [])];
-            const file = files.find((f) => /svg/i.test(f.type) || /\.svg$/i.test(f.name));
-            void importDrawingSvgFile(app, file || files[0] || null);
-        });
-    }
-    syncDrawingImportStatus();
 }
 
-function openDrawingSvgPicker() {
+function openNewLayoutSvgPicker() {
     document.getElementById('drawingSvgInput')?.click();
 }
 
-async function importDrawingSvgFile(app, file) {
+async function createNewLayoutFromSvgFile(app, file) {
     if (!file) return;
     if (!/\.svg$/i.test(file.name || '') && !/svg/i.test(file.type || '')) {
         await app.dialog?.alert({
-            title: 'Drawing import failed',
+            title: 'Layout import failed',
             text: 'Choose an SVG drawing.',
             okText: 'Close'
         });
@@ -2403,120 +2362,107 @@ async function importDrawingSvgFile(app, file) {
     try {
         const analysis = analyzeSvgBlueprint(await file.text());
         if (!analysis.elements.lines) throw new Error('No SVG lines were found in the blueprint group.');
-        BLUEPRINT_IMPORT = { name: file.name || 'drawing.svg', analysis };
-        app.settingsStore.set('showDrawing', true);
-        syncDrawingImportStatus();
-        app.renderNow();
-        app._showToast?.('SVG drawing analysed');
+        const draft = analysis.layoutDraft;
+        if (!draft?.layout) throw new Error('No usable keyboard layout draft was detected.');
+        const warnings = analysis.diagnostics?.warnings || [];
+        if (warnings.length) {
+            await app.dialog?.show({
+                title: 'Layout not created',
+                text: svgImportReportHtml(file.name || 'drawing.svg', analysis, {
+                    intro: 'Keyboarder found warning-level issues in this drawing. Fix the SVG or inspect the draft before creating a preset.'
+                }),
+                html: true,
+                buttons: [{ id: 'ok', text: 'Close', type: 'primary' }]
+            });
+            return;
+        }
+        if (!(await guardUnsavedBeforeNewLayout(app))) return;
+        const customLayout = namedCustomLayout(draft.layout, file.name, app);
+        openImportedCustomLayout(app, customLayout);
+        const stats = draft.stats || {};
+        app._showToast?.(`New layout ${customLayout.meta.name} · ${stats.keys || 0} keys`);
     } catch (e) {
         await app.dialog?.alert({
-            title: 'Drawing import failed',
+            title: 'Layout import failed',
             text: e?.message || 'Could not read this SVG drawing.',
             okText: 'Close'
         });
     }
 }
 
-function syncDrawingImportStatus() {
-    const status = document.getElementById('drawingImportStatus');
-    const clear = document.getElementById('drawingClearBtn');
-    const useDraft = document.getElementById('drawingUseDraftBtn');
-    const draft = document.getElementById('drawingDraftJsonBtn');
-    if (clear) clear.disabled = !BLUEPRINT_IMPORT;
-    if (useDraft) useDraft.disabled = !BLUEPRINT_IMPORT?.analysis?.layoutDraft || !!BLUEPRINT_IMPORT?.analysis?.diagnostics?.warnings?.length;
-    if (draft) draft.disabled = !BLUEPRINT_IMPORT?.analysis?.layoutDraft;
-    if (!status) return;
-    if (!BLUEPRINT_IMPORT) {
-        status.innerHTML = '<p class="drawing-empty">Drop an SVG drawing here, or browse for one.</p>';
-        return;
-    }
-    const lines = blueprintSummaryLines(BLUEPRINT_IMPORT.analysis);
-    status.innerHTML = `<dl class="drawing-summary">
-        <div><dt>File</dt><dd>${html(BLUEPRINT_IMPORT.name)}</dd></div>
-        ${lines.map((line, i) => `<div><dt>${i === 0 ? 'Data' : ''}</dt><dd>${html(line)}</dd></div>`).join('')}
-    </dl>`;
+async function guardUnsavedBeforeNewLayout(app) {
+    if (typeof app._guardUnsaved === 'function') return await app._guardUnsaved();
+    return true;
 }
 
-function exportDrawingDraftJSON() {
-    const draft = BLUEPRINT_IMPORT?.analysis?.layoutDraft;
-    if (!draft) return;
-    const base = String(BLUEPRINT_IMPORT?.name || 'drawing')
-        .replace(/\.svg$/i, '')
-        .replace(/[^a-z0-9_-]+/gi, '-')
-        .replace(/^-+|-+$/g, '')
-        .toLowerCase() || 'drawing';
-    downloadJSON(`keyboarder-${base}-layout-draft.json`, draft);
+function namedCustomLayout(layout, fileName, app) {
+    const customLayout = clonePlain(layout);
+    const proposed = layoutNameFromSvgFile(fileName);
+    customLayout.meta = {
+        ...(customLayout.meta || {}),
+        name: uniqueCustomLayoutName(proposed, app),
+        formFactor: customLayout.meta?.formFactor || 'custom',
+        source: 'svg-blueprint'
+    };
+    return customLayout;
 }
 
-function useDrawingDraftLayout(app) {
-    const layout = BLUEPRINT_IMPORT?.analysis?.layoutDraft?.layout;
-    if (!layout || BLUEPRINT_IMPORT?.analysis?.diagnostics?.warnings?.length) return;
+function layoutNameFromSvgFile(fileName = '') {
+    const base = String(fileName || '')
+        .replace(/\.[^.]+$/i, '')
+        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+        .replace(/[^A-Za-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .toUpperCase();
+    return base || 'IMPORTED_SVG';
+}
+
+function uniqueCustomLayoutName(name, app) {
+    const base = LAYOUTS[name] ? `${name}_CUSTOM` : name;
+    const current = app?.settings?.customLayout?.meta?.name;
+    if (current === base || !LAYOUTS[base]) return base;
+    let i = 2;
+    while (LAYOUTS[`${base}_${i}`]) i += 1;
+    return `${base}_${i}`;
+}
+
+function openImportedCustomLayout(app, customLayout) {
+    if (!isLayoutLike(customLayout)) return;
     SELECTION = { active: 0, indices: [0] };
     LAST_DELETED_EDIT_ID = null;
     LAST_DELETED_ROW_ID = null;
-    const customLayout = clonePlain(layout);
+    if (app.presets) app.presets.openNew(app.settingsStore.getDefaults());
     const values = {
         customLayout,
         layoutName: customLayout.meta.name,
         ...gridMmFor(customLayout),
         layoutEdits: {},
         contentEdits: {},
+        showDrawing: false,
         showRef: false,
         showDiff: false
     };
     app.settingsStore.setMultiple(values);
     syncSliderValues(app, values);
     syncLayoutSelect(app.settings);
-    syncDrawingImportStatus();
     app.renderNow();
-    app._showToast?.('Draft layout applied');
+    app.presets?.commit('new-layout-from-svg');
 }
 
-function renderImportedBlueprint(create, analysis) {
-    const buckets = analysis?.lineBuckets;
-    if (!buckets) return null;
-    const g = create('g', {
-        id: 'imported-blueprint',
-        'pointer-events': 'none',
-        'data-interactive': 'true'
-    });
-    appendImportedLines(create, g, buckets.horizontal || [], '#78a6ff', 0.5);
-    appendImportedLines(create, g, buckets.vertical || [], '#78d88f', 0.5);
-    appendImportedLines(create, g, buckets.diagonal || [], '#df7770', 0.25, '1.8 1.8');
-    const candidates = analysis?.recognized?.keys || [];
-    if (candidates.length) {
-        const cg = create('g', { id: 'imported-candidates' });
-        const rx = analysis?.calibration?.cornerRadius || 0;
-        const suspicious = new Set(analysis?.diagnostics?.suspiciousKeyIndices || []);
-        for (const k of candidates) {
-            const isSuspicious = suspicious.has(k.i);
-            cg.appendChild(create('rect', {
-                x: k.x, y: k.y, width: k.w, height: k.h,
-                rx, ry: rx,
-                fill: 'none',
-                stroke: isSuspicious ? '#ff6f66' : '#ffd36a',
-                'stroke-width': isSuspicious ? 0.9 : 0.65,
-                'stroke-dasharray': isSuspicious ? '2.2 1.4' : null,
-                'data-suspicious': isSuspicious ? 'true' : null,
-                'vector-effect': 'non-scaling-stroke'
-            }));
-        }
-        g.appendChild(cg);
-    }
-    return g.childNodes.length ? g : null;
-}
-
-function appendImportedLines(create, group, lines, stroke, opacity, dasharray = null) {
-    for (const line of lines) {
-        group.appendChild(create('line', {
-            x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2,
-            stroke,
-            opacity,
-            'stroke-width': 0.35,
-            'stroke-dasharray': dasharray,
-            'vector-effect': 'non-scaling-stroke'
-        }));
-    }
+function svgImportReportHtml(fileName, analysis, options = {}) {
+    const warnings = analysis?.diagnostics?.warnings || [];
+    const rows = [
+        ['File', fileName || 'drawing.svg'],
+        ...blueprintSummaryLines(analysis).map((line, i) => [i === 0 ? 'Data' : '', line])
+    ];
+    const warningHtml = warnings.length
+        ? `<ul>${warnings.map((warning) => `<li>${html(warning.message || warning.code || warning)}</li>`).join('')}</ul>`
+        : '';
+    return `<div class="svg-import-report">
+        ${options.intro ? `<p>${html(options.intro)}</p>` : ''}
+        <dl>${rows.map(([label, value]) => `<div><dt>${html(label)}</dt><dd>${html(value)}</dd></div>`).join('')}</dl>
+        ${warningHtml}
+    </div>`;
 }
 
 function appendSessionFontDefs(create, svg, s) {
@@ -3193,38 +3139,6 @@ function installPdfExport(app) {
     app.__keyboarderPdfExport = true;
 }
 
-function installBatchSvgExport(app) {
-    if (app.__keyboarderBatchSvgExport) return;
-    app.exportLanguageBatchSVG = async () => {
-        if (typeof app.exportSVG !== 'function') return;
-        const originalLayer = normalizeLanguageLayer(app.settings.languageLayer);
-        const base = `keyboarder-${layoutSlug(sourceLayoutFor(app.settings).meta.name)}`;
-        const button = document.getElementById('exportBatchSvgBtn');
-        if (button) button.disabled = true;
-        try {
-            for (const layer of BATCH_LANGUAGE_LAYERS) {
-                app.settingsStore.set('languageLayer', layer, true);
-                syncLanguageLayerSelect(app.settings);
-                app.renderNow();
-                await app.exportSVG(`${base}-${layer}.svg`);
-            }
-            app._showToast?.('Batch SVG exported');
-        } catch (e) {
-            app.dialog?.alert({
-                title: 'Batch SVG export failed',
-                text: e?.message || 'Could not export the SVG batch.',
-                okText: 'Close'
-            });
-        } finally {
-            app.settingsStore.set('languageLayer', originalLayer, true);
-            syncLanguageLayerSelect(app.settings);
-            app.renderNow();
-            if (button) button.disabled = false;
-        }
-    };
-    app.__keyboarderBatchSvgExport = true;
-}
-
 function installCleanExports(app) {
     if (app.__keyboarderCleanExports) return;
     for (const method of ['exportSVG', 'exportPNG', 'exportPDF']) {
@@ -3233,20 +3147,16 @@ function installCleanExports(app) {
         app[method] = async (...args) => {
             const previous = {
                 active: SELECTION.active,
-                indices: [...(SELECTION.indices || [])],
-                blueprint: BLUEPRINT_IMPORT
+                indices: [...(SELECTION.indices || [])]
             };
             const hasSelection = previous.active != null || previous.indices.length > 0;
-            const hasBlueprint = !!previous.blueprint;
-            if (!hasSelection && !hasBlueprint) return original(...args);
+            if (!hasSelection) return original(...args);
             SELECTION = { active: null, indices: [] };
-            BLUEPRINT_IMPORT = null;
             app.renderNow();
             try {
                 return await original(...args);
             } finally {
                 SELECTION = { active: previous.active, indices: previous.indices };
-                BLUEPRINT_IMPORT = previous.blueprint;
                 app.renderNow();
             }
         };

@@ -11,7 +11,7 @@
 <div class="container">
 
     <div class="top-links">
-        <a class="top-link top-link--static" href="../../">←YF Tools</a>
+        <a class="top-link" href="../../">←YF Tools</a>
 
         <div class="preset-toolbar-cluster">
             <div class="preset-dropdown" id="presetDropdown">
@@ -30,6 +30,8 @@
             </button>
         </div>
 
+        <button class="top-link" id="newLayoutBtn" type="button"
+                data-tooltip="Create a new layout from an SVG drawing">New layout</button>
         <button class="top-link" id="savePresetBtn" type="button" style="display:none;">Save preset</button>
 
         <div class="zoom-indicator" id="zoomIndicator" data-tooltip="Click to fit to screen">100%</div>
@@ -238,9 +240,6 @@
                         <label class="pill-toggle" for="showIcons" data-tooltip="Icons from the library">
                             <input type="checkbox" id="showIcons" class="sr-only" data-setting="showIcons"><span>Icons</span>
                         </label>
-                        <label class="pill-toggle" for="showDrawing" data-tooltip="Imported SVG drawing preview">
-                            <input type="checkbox" id="showDrawing" class="sr-only" data-setting="showDrawing"><span>Drawing</span>
-                        </label>
                         <label class="pill-toggle" for="showGuides" data-tooltip="Safety guides — coordinate system for legends">
                             <input type="checkbox" id="showGuides" class="sr-only" data-setting="showGuides"><span>Guides</span>
                         </label>
@@ -266,32 +265,6 @@
                             <input type="checkbox" id="showBlocks" class="sr-only" data-setting="showBlocks"><span>Blocks</span>
                         </label>
                     </div>
-                </section>
-            </div>
-        </aside>
-
-        <!-- DRAWING -->
-        <aside class="controls-panel controls-panel-drawing" id="drawingPanel">
-            <div class="panel-header" id="drawingPanelHeader">
-                <span>Drawing</span>
-                <span class="collapse-icon">
-                    <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </span>
-            </div>
-            <div class="panel-content">
-                <section class="control-section">
-                    <div class="drawing-dropzone" id="drawingDropzone">
-                        <span>Drop SVG drawing</span>
-                    </div>
-                    <div class="drawing-actions">
-                        <button type="button" class="btn-inline" id="drawingBrowseBtn">Browse SVG</button>
-                        <button type="button" class="btn-inline" id="drawingUseDraftBtn">Use Draft</button>
-                        <button type="button" class="btn-inline" id="drawingDraftJsonBtn">Draft JSON</button>
-                        <button type="button" class="btn-inline" id="drawingClearBtn">Clear</button>
-                    </div>
-                    <div class="drawing-status" id="drawingImportStatus"></div>
                 </section>
             </div>
         </aside>
@@ -417,7 +390,6 @@
         <button class="btn-fixed" id="importJsonBtn" type="button" aria-label="Import model JSON" data-tooltip="Import model JSON">Import</button>
         <button class="btn-fixed" id="exportPdfBtn" type="button">PDF</button>
         <button class="btn-fixed" id="exportPngBtn" type="button">PNG</button>
-        <button class="btn-fixed" id="exportBatchSvgBtn" type="button">Batch SVG</button>
         <button class="btn-fixed" id="exportSvgBtn" type="button">SVG ⌘E</button>
     </nav>
     <input id="importJsonInput" type="file" accept="application/json,.json" hidden>
@@ -436,6 +408,6 @@
 
 <script src="vendor/lib/jspdf.umd.min.js"></script>
 <script src="vendor/lib/svg2pdf.umd.min.js"></script>
-<script type="module" src="app/tool.js?v=20260728-stage6split"></script>
+<script type="module" src="app/tool.js?v=20260728-newlayout"></script>
 </body>
 </html>

@@ -45,12 +45,6 @@
     --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
 }
 
-/* Заголовок инструмента в топбаре — не ссылка, поэтому гасим интерактивные состояния. */
-.top-link--static {
-    cursor: default;
-    pointer-events: none;
-}
-
 .preset-toolbar-cluster {
     display: flex;
     align-items: center;
@@ -93,12 +87,6 @@
 .controls-panel-legend .panel-content {
     max-height: calc(min(520px, calc(100vh - 94px)) - 44px);
     overflow-y: auto;
-}
-
-.controls-panel-drawing {
-    top: var(--spacing-3xl);
-    left: calc(var(--spacing-3xl) + 316px);
-    right: auto;
 }
 
 #typePanel .value-display {
@@ -492,7 +480,6 @@
 .legend-element-actions .btn-inline:disabled,
 .legend-key-actions .btn-inline:disabled,
 .legend-row-actions .btn-inline:disabled,
-.drawing-actions .btn-inline:disabled,
 .font-actions .btn-inline:disabled,
 .legend-geometry-row .btn-inline:disabled,
 .legend-geometry-row input:disabled,
@@ -506,7 +493,6 @@
     opacity: 0.45;
 }
 
-.drawing-dropzone,
 .font-dropzone {
     display: grid;
     min-height: 56px;
@@ -519,14 +505,12 @@
     transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
 }
 
-.drawing-dropzone.is-dragover,
 .font-dropzone.is-dragover {
     border-color: #78a6ff;
     background: #24272d;
     color: var(--color-text);
 }
 
-.drawing-actions,
 .font-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -534,21 +518,18 @@
     margin-top: var(--spacing-sm);
 }
 
-.drawing-status,
 .font-status {
     margin-top: var(--spacing-lg);
     padding-top: var(--spacing-lg);
     border-top: 1px solid var(--color-border);
 }
 
-.drawing-empty,
 .font-empty {
     margin: 0;
     color: var(--color-text-dim);
     font-size: 11px;
 }
 
-.drawing-summary,
 .font-summary {
     display: flex;
     flex-direction: column;
@@ -557,24 +538,63 @@
     font-size: 10px;
 }
 
-.drawing-summary > div,
 .font-summary > div {
     display: grid;
     grid-template-columns: 42px minmax(0, 1fr);
     gap: var(--spacing-sm);
 }
 
-.drawing-summary dt,
 .font-summary dt {
     color: var(--color-text-dim);
 }
 
-.drawing-summary dd,
 .font-summary dd {
     margin: 0;
     color: var(--color-text-secondary);
     font-family: var(--font-mono);
     overflow-wrap: anywhere;
+}
+
+.svg-import-report {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    min-width: min(480px, 72vw);
+}
+
+.svg-import-report p {
+    margin: 0;
+}
+
+.svg-import-report dl {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin: 0;
+    font-size: 11px;
+}
+
+.svg-import-report dl > div {
+    display: grid;
+    grid-template-columns: 70px minmax(0, 1fr);
+    gap: var(--spacing-sm);
+}
+
+.svg-import-report dt {
+    color: var(--color-text-dim);
+}
+
+.svg-import-report dd {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+    overflow-wrap: anywhere;
+}
+
+.svg-import-report ul {
+    margin: 0;
+    padding-left: 1.2em;
+    color: var(--color-text-secondary);
 }
 
 .legend-meta {
