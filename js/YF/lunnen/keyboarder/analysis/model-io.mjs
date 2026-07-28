@@ -21,6 +21,7 @@ const TYPE_DEFAULTS = {
 
 const defaults = {
     layoutName: LCAKB23.meta.name,
+    customLayout: null,
     colPitch: toMm(LCAKB23.grid.colPitch),
     rowPitch: toMm(LCAKB23.grid.rowPitch),
     keyWidth1U: toMm(LCAKB23.grid.keyWidth1U),
@@ -86,7 +87,7 @@ const edited = {
         },
         '0:main:1': {
             tpl: 'icon',
-            elements: [{ slot: 'BC', kind: 'ico', icon: '', w: '9.5', h: 'bad' }]
+            elements: [{ slot: 'BC', kind: 'ico', icon: '', group: 'f-icons', w: '9.5', h: 'bad' }]
         }
     }
 };
@@ -113,6 +114,7 @@ assert.deepEqual(cleanContent['0:main:1'].elements[0], {
     slot: 'BC',
     kind: 'ico',
     icon: 'arrow-left',
+    group: 'f-icons',
     w: 9.5,
     h: 8
 });

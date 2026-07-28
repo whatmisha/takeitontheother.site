@@ -38,6 +38,7 @@ export default {
      "slot": "FC",
      "kind": "ico",
      "icon": "volume-mute",
+     "group": "f-icons",
      "w": 10.108,
      "h": 8.053
     },
@@ -60,6 +61,7 @@ export default {
      "slot": "FC",
      "kind": "ico",
      "icon": "volume-down",
+     "group": "f-icons",
      "w": 8.1844,
      "h": 8.053
     },
@@ -82,6 +84,7 @@ export default {
      "slot": "FC",
      "kind": "ico",
      "icon": "volume-up",
+     "group": "f-icons",
      "w": 11.7688,
      "h": 8.053
     },
@@ -104,6 +107,7 @@ export default {
      "slot": "FC",
      "kind": "ico",
      "icon": "brightness-down",
+     "group": "f-icons",
      "w": 10.3231,
      "h": 10.3231
     },
@@ -126,6 +130,7 @@ export default {
      "slot": "FC",
      "kind": "ico",
      "icon": "brightness-up",
+     "group": "f-icons",
      "w": 11.5179,
      "h": 11.5179
     },
@@ -148,6 +153,7 @@ export default {
      "slot": "FC",
      "kind": "ico",
      "icon": "backlight",
+     "group": "f-icons",
      "w": 10.7532,
      "h": 6.8581
     },
@@ -170,6 +176,7 @@ export default {
      "slot": "FC",
      "kind": "ico",
      "icon": "lock",
+     "group": "f-icons",
      "w": 6.7019,
      "h": 8.225
     },
@@ -192,6 +199,7 @@ export default {
      "slot": "FC",
      "kind": "ico",
      "icon": "calculator",
+     "group": "f-icons",
      "w": 8.5947,
      "h": 8.7692
     },
@@ -214,6 +222,7 @@ export default {
      "slot": "FC",
      "kind": "ico",
      "icon": "cut",
+     "group": "f-icons",
      "w": 10.4391,
      "h": 9.9748
     },
@@ -236,6 +245,7 @@ export default {
      "slot": "Fr",
      "kind": "ico",
      "icon": "search",
+     "group": "f-icons",
      "w": 8.8705,
      "h": 8.8942,
      "offset": {
@@ -261,6 +271,7 @@ export default {
      "slot": "FC",
      "kind": "ico",
      "icon": "window-split",
+     "group": "f-icons",
      "w": 11.2423,
      "h": 8.4473
     },
@@ -283,6 +294,7 @@ export default {
      "slot": "FC",
      "kind": "ico",
      "icon": "display",
+     "group": "f-icons",
      "w": 9.7009,
      "h": 8.4176
     },
@@ -305,6 +317,7 @@ export default {
      "slot": "MC",
      "kind": "ico",
      "icon": "emoji",
+     "group": "f-icons",
      "w": 9.2285,
      "h": 9.2285
     }
@@ -413,6 +426,7 @@ export default {
      "slot": "Ml",
      "kind": "ico",
      "icon": "bluetooth-1",
+     "group": "icons",
      "w": 5.7322,
      "h": 7.4304,
      "offset": {
@@ -441,6 +455,7 @@ export default {
      "slot": "Ml",
      "kind": "ico",
      "icon": "bluetooth-2",
+     "group": "icons",
      "w": 5.7322,
      "h": 7.4304,
      "offset": {
@@ -469,6 +484,7 @@ export default {
      "slot": "MC",
      "kind": "ico",
      "icon": "clipboard",
+     "group": "icons",
      "w": 7.2045,
      "h": 9.5025
     }
@@ -804,6 +820,7 @@ export default {
      "slot": "TR",
      "kind": "ico",
      "icon": "backspace",
+     "group": "icons",
      "w": 21.6683,
      "h": 5.0756
     },
@@ -931,6 +948,7 @@ export default {
      "slot": "TL",
      "kind": "ico",
      "icon": "tab",
+     "group": "icons",
      "w": 21.6683,
      "h": 5.1018
     },
@@ -1301,6 +1319,7 @@ export default {
      "slot": "BC",
      "kind": "ico",
      "icon": "numpad-up",
+     "group": "icons",
      "w": 4.4318,
      "h": 4.4309
     }
@@ -1622,6 +1641,7 @@ export default {
      "slot": "BC",
      "kind": "ico",
      "icon": "numpad-left",
+     "group": "icons",
      "w": 4.4309,
      "h": 4.4309
     }
@@ -1657,6 +1677,7 @@ export default {
      "slot": "BC",
      "kind": "ico",
      "icon": "numpad-right",
+     "group": "icons",
      "w": 4.4309,
      "h": 4.4309
     }
@@ -1924,6 +1945,7 @@ export default {
      "slot": "MC",
      "kind": "ico",
      "icon": "arrow-up",
+     "group": "icons",
      "w": 4.4309,
      "h": 4.4309
     }
@@ -1965,6 +1987,7 @@ export default {
      "slot": "BC",
      "kind": "ico",
      "icon": "numpad-down",
+     "group": "icons",
      "w": 4.4309,
      "h": 4.4309
     }
@@ -2028,6 +2051,7 @@ export default {
      "slot": "tC",
      "kind": "ico",
      "icon": "squares-left",
+     "group": "icons",
      "w": 7.4304,
      "h": 7.4305,
      "offset": {
@@ -2127,6 +2151,7 @@ export default {
      "slot": "tC",
      "kind": "ico",
      "icon": "squares-right",
+     "group": "icons",
      "w": 7.4304,
      "h": 7.4305,
      "offset": {
@@ -2165,6 +2190,7 @@ export default {
      "slot": "MC",
      "kind": "ico",
      "icon": "arrow-left",
+     "group": "icons",
      "w": 4.4309,
      "h": 4.4309
     }
@@ -2180,6 +2206,7 @@ export default {
      "slot": "MC",
      "kind": "ico",
      "icon": "arrow-down",
+     "group": "icons",
      "w": 4.4309,
      "h": 4.4309
     }
@@ -2195,6 +2222,7 @@ export default {
      "slot": "MC",
      "kind": "ico",
      "icon": "arrow-right",
+     "group": "icons",
      "w": 4.4309,
      "h": 4.4309
     }

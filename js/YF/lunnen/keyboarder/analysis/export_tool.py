@@ -90,7 +90,7 @@ def build():
                 bb = e['bb']
                 iid = ids[(k['i'], ni)]
                 ni += 1
-                item.update(icon=iid, w=round(bb[2], 4), h=round(bb[3], 4))
+                item.update(icon=iid, group=e['group'], w=round(bb[2], 4), h=round(bb[3], 4))
                 if v.islower():
                     off['y'] = round(bb[1] - gy0, 4)
                 if h.islower():

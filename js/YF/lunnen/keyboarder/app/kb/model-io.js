@@ -1,7 +1,7 @@
 export const MODEL_SCHEMA = 'keyboarder.model.v1';
 
 export const PRESET_KEYS = [
-    'layoutName',
+    'layoutName', 'customLayout',
     'colPitch', 'rowPitch', 'keyWidth1U', 'keyHeight', 'cornerRadius', 'guideInset',
     'glyphSize', 'numpadSize', 'secondarySize', 'wordSize', 'leading', 'trackingOffset',
     'compensationMode',
@@ -77,6 +77,10 @@ export function cleanCompOverride(compOverride) {
     return Number.isFinite(px) ? { px } : null;
 }
 
+export function cleanIconGroup(group) {
+    return String(group || '').trim() === 'f-icons' ? 'f-icons' : 'icons';
+}
+
 export function cleanElement(el = {}, options = {}) {
     const opts = ioOptions(options);
     const slot = String(el.slot || 'BC').trim() || 'BC';
@@ -84,6 +88,7 @@ export function cleanElement(el = {}, options = {}) {
     const out = { slot, kind };
     if (kind === 'ico') {
         out.icon = String(el.icon || opts.iconOptions[0] || '').trim();
+        out.group = cleanIconGroup(el.group);
         out.w = finiteOr(el.w, 8);
         out.h = finiteOr(el.h, 8);
     } else {

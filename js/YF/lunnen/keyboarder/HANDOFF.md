@@ -179,17 +179,47 @@ Important local entry points:
   - it now estimates the straight-edge corner offset `d`, pairs horizontal edges by rounded span,
     verifies both side edges against vertical segments, removes nested bevel candidates, and
     returns recognized key rectangles;
+  - diagnostics now separate warning-level suspicious keys from harmless notes such as
+    designer-intent non-standard widths;
+  - `layoutDraftFromRecognized()` converts detected rectangles into `keyboarder.layoutDraft.v1`,
+    a row/block layout draft that can be rendered by the existing `buildLayout()` engine;
   - added `analysis/blueprint-import.mjs`, covering a synthetic SVG and the real `LCAKB23.svg`;
   - real LCAKB23 drawing import currently sees 1658 horizontal lines, 1388 vertical lines,
     884 diagonal lines, 866 paths, 487 horizontal span groups, 110 cap rects, 220 raw key
-    candidates, 110 final recognized key rectangles, and two double-height keys;
-  - added a `Drawing` panel with `Browse SVG`, drag-and-drop, `Clear`, import status, and a
-    `Drawing` layer toggle in Layers;
-  - the drawing preview renders the imported line buckets plus recognized key rectangles;
+    candidates, 110 final recognized key rectangles, two double-height keys, zero warnings,
+    four notes, zero suspicious keys, and a draft layout with 3 blocks, 6 rows, and 110 keys;
+  - added a `Drawing` panel with `Browse SVG`, drag-and-drop, `Use Draft`, `Draft JSON`,
+    `Clear`, and import status;
+  - added a `Drawing` layer toggle in Layers;
+  - the drawing preview renders the imported line buckets plus recognized key rectangles; warning
+    keys are marked red/dashed, while normal keys remain yellow;
   - imported drawing analysis is UI-only module state and is not saved into presets/model JSON;
     only the visual `showDrawing` toggle is a normal setting;
   - clean SVG/PNG export temporarily hides the imported drawing preview, like the selection
     overlay.
+  - `Use Draft` writes the generated layout into settings as `customLayout`, switches
+    `layoutName` to `IMPORTED_SVG`, syncs Grid sliders, clears layout/content edits, disables
+    `Reference`/`Diff`, and renders generic labels for every detected key;
+  - imported layout drafts are now compacted for hand-editability: consecutive identical unit
+    keys are emitted with `repeat`, and synthetic `r123` key IDs are omitted. The existing
+    row/block/ordinal edit IDs are still assigned after `buildLayout()`, so editing and content
+    attachment remain stable;
+  - generic labels for imported/custom layouts prefer semantic IDs when present, but hide
+    synthetic `r123` IDs and fall back to positional labels such as `main 1`;
+  - `keyboarder.model.v1` now preserves `customLayout` in settings, and custom layouts are also
+    exposed in `keyboard.customLayout` on export.
+- Started Stage 7 production export polish:
+  - regenerated `app/kb/content/lcakb23.js` with the source icon group for every icon element
+    (`icons` or `f-icons`), and updated `analysis/export_tool.py` so future regeneration
+    preserves that field;
+  - `cleanElement()` / model JSON sanitization now preserves an icon element's export group,
+    defaulting manual new icons to `icons`;
+  - fixed a latent runtime bug in the Legend editor by wiring the missing `cleanElement()`
+    wrapper in `app/tool.js`;
+  - SVG rendering now splits icon artwork into separate `#icons` and `#f-icons` groups, matching
+    the Illustrator layer structure in `PIPELINE.md`;
+  - the Legend element editor keeps the icon group in hidden row state, so selecting an F-key
+    and pressing `Apply` does not silently move that icon from `f-icons` to `icons`.
 
 ## Verification
 
@@ -210,6 +240,7 @@ node analysis/model-io.mjs
 node analysis/layout-content.mjs
 node analysis/presets.mjs
 node analysis/blueprint-import.mjs
+python3 analysis/export_tool.py
 ```
 
 Geometry check against `LCAKB23.layout.json`:
@@ -225,6 +256,13 @@ Legend check against `LCAKB23.legends.json`:
 - Pass.
 - Formula compensation RMSE: `0.1099 px` with tolerance `0.12 px`.
 - Known named exceptions remain the same: `2.4G`, `num lock`, and comma in `FR`.
+
+Browser smoke:
+
+- Fresh app load on `http://127.0.0.1:8008/`: 110 keys, 176 glyph paths, 15 `#icons` entries,
+  13 `#f-icons` entries, and no console warnings/errors.
+- Selecting a key and clicking `Add icon` adds an icon row in the Legend editor with no console
+  errors.
 
 Browser QA on `http://127.0.0.1:8000/`:
 
@@ -350,9 +388,16 @@ Browser QA on `http://127.0.0.1:8000/`:
   - on `http://127.0.0.1:8007/`, `Browse SVG` accepted local `LCAKB23.svg`;
   - the Drawing status reported `blueprint yes`, `caps yes`, 1658 H lines, 1388 V lines,
     884 diagonal lines, 866 paths, 487 span groups, 110 caps, 1U width `46.4941`, height
-    `46.1885`, pitch `53.861 × 53.5121`, and `Detected: 110 keys from 220 candidates, d 3.3779`;
+    `46.1885`, pitch `53.861 × 53.5121`, `Detected: 110 keys from 220 candidates, d 3.3779`,
+    and `Issues: 0 warnings, 4 notes`;
   - the preview rendered 3930 SVG lines in `#imported-blueprint`, 110 recognized rects in
-    `#imported-candidates`, and 2 double-height rects;
+    `#imported-candidates`, 110 yellow normal rects, 0 red suspicious rects, and 2
+    double-height rects;
+  - the Drawing status included `Draft: 3 blocks, 6 rows, 110 keys`; `Draft JSON` is disabled
+    before import and enabled after import;
+  - `Use Draft` switched the active layout to `IMPORTED_SVG`, added `IMPORTED_SVG · custom` to
+    the Grid layout select, rendered 110 keys and 110 generic text legends, disabled
+    `Reference`/`Diff`, and produced no console warnings/errors;
   - toggling the `Drawing` layer hid the preview (`0` lines) and restored it (`3930` lines);
   - current-port console logs for this smoke had no warnings or errors.
 
@@ -404,10 +449,13 @@ Stage 6 is started:
 
 - Done: first read-only SVG drawing ingestion/preview slice: strip Illustrator private payloads,
   extract `blueprint`/`caps`, bucket line segments, cap calibration, candidate key rectangles
-  from paired horizontal edges, side-edge verification, nesting removal, Drawing panel, preview
-  layer, and Node/browser coverage.
-- Still remaining: suspicious-key heuristics/marking, conversion of recognized rectangles into
-  editable row/block layout JSON, and a workflow to accept/import that generated layout.
+  from paired horizontal edges, side-edge verification, nesting removal, suspicious-key
+  diagnostics/marking, conversion into a downloadable `keyboarder.layoutDraft.v1` row/block JSON,
+  a first `Use Draft` workflow to import that layout into the live editor as `customLayout`,
+  Drawing panel, preview layer, and Node/browser coverage.
+- Still remaining: deeper production polish for imported layouts, especially naming/saving
+  multiple custom layouts, richer suspected-key review, and conversion of draft structure into
+  nicer human-authored `u`/`repeat` rows.
 
 ## Notes For The Next Assistant
 

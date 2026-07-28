@@ -12,6 +12,14 @@ const TYPE_DEFAULTS = {
     wordSize: 9.1199
 };
 
+const iconGroups = CONTENT.keys.flatMap((key) => key.elements || [])
+    .filter((element) => element.kind === 'ico')
+    .reduce((acc, element) => {
+        acc[element.group] = (acc[element.group] || 0) + 1;
+        return acc;
+    }, {});
+assert.deepEqual(iconGroups, { 'f-icons': 13, icons: 15 });
+
 for (const [name, layout] of Object.entries(LAYOUTS)) {
     if (name === LCAKB23.meta.name) continue;
     const { keys } = buildLayout(layout);

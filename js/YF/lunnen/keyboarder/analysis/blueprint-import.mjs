@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { buildLayout } from '../app/kb/grid.js';
+import { attachContent } from '../app/kb/legends.js';
+import { generatedContentForLayout } from '../app/kb/content/generated-layouts.js';
 import {
     analyzeSvgBlueprint,
     blueprintSummaryLines,
+    diagnoseRecognizedKeys,
     extractSvgGroup,
     parseSvgAttributes,
     stripIllustratorPrivateData
@@ -59,7 +63,26 @@ assert.deepEqual(syntheticAnalysis.calibration, {
     rowPitch: 12,
     gap: 2
 });
-assert.equal(blueprintSummaryLines(syntheticAnalysis).length, 5);
+assert.equal(syntheticAnalysis.diagnostics.warnings.length, 1);
+assert.equal(syntheticAnalysis.diagnostics.warnings[0].code, 'no-keys');
+assert.equal(blueprintSummaryLines(syntheticAnalysis).length, 6);
+
+const badDiagnostics = diagnoseRecognizedKeys({
+    groups: { blueprint: true, caps: true },
+    elements: { lines: 8 },
+    calibration: syntheticAnalysis.calibration,
+    caps: [],
+    recognized: {
+        raw: [],
+        keys: [
+            { i: 0, x: 1, y: 2, w: 10, h: 9, rowSpan: 1 },
+            { i: 1, x: 1.5, y: 2.5, w: 10, h: 9, rowSpan: 1 }
+        ]
+    }
+});
+assert.equal(badDiagnostics.ok, false);
+assert.equal(badDiagnostics.warnings.filter((issue) => issue.code === 'overlap').length, 2);
+assert.deepEqual(badDiagnostics.suspiciousKeyIndices, [0, 1]);
 
 const real = analyzeSvgBlueprint(readFileSync('LCAKB23.svg', 'utf8'));
 assert.equal(real.groups.blueprint, true);
@@ -77,6 +100,36 @@ assert.equal(real.calibration.rowPitch, 53.5121);
 assert.equal(real.recognized.cornerOffset, 3.3779);
 assert.equal(real.recognized.raw.length, 220);
 assert.equal(real.recognized.keys.length, 110);
+assert.equal(real.diagnostics.ok, true);
+assert.equal(real.diagnostics.suspiciousKeys, 0);
+assert.equal(real.diagnostics.warnings.length, 0);
+assert.equal(real.diagnostics.notices.length, 4);
+assert.equal(real.layoutDraft.schema, 'keyboarder.layoutDraft.v1');
+assert.equal(real.layoutDraft.stats.blocks, 3);
+assert.equal(real.layoutDraft.stats.rows, 6);
+assert.equal(real.layoutDraft.stats.keys, 110);
+assert.equal(real.layoutDraft.stats.rowSpans, 2);
+assert.equal(real.layoutDraft.layout.rows.flatMap((row) => Object.values(row)).flat().length, 32);
+assert.equal(real.layoutDraft.layout.rows.flatMap((row) => Object.values(row)).flat().filter((item) => item.repeat).length, 16);
+assert.equal(real.layoutDraft.layout.rows.flatMap((row) => Object.values(row)).flat().filter((item) => item.id).length, 0);
+
+const builtDraft = buildLayout(real.layoutDraft.layout);
+assert.equal(builtDraft.keys.length, 110);
+let worstDraftDelta = 0;
+for (let i = 0; i < real.recognized.keys.length; i++) {
+    const key = real.recognized.keys[i];
+    const built = builtDraft.keys[i];
+    for (const [a, b] of [['x', 'x'], ['y', 'y'], ['w', 'w'], ['h', 'h']]) {
+        worstDraftDelta = Math.max(worstDraftDelta, Math.abs(key[a] - built[b]));
+    }
+}
+assert.ok(worstDraftDelta < 0.03, `draft layout drifted by ${worstDraftDelta}px`);
+
+const draftContent = generatedContentForLayout(real.layoutDraft.layout, { secondarySize: 12 }, { interline: 13.5 });
+assert.equal(draftContent.keys[0].elements[0].text, 'main 1');
+const contentResult = attachContent(builtDraft.keys, draftContent);
+assert.equal(contentResult.matched, 110);
+assert.equal(contentResult.orphans, 0);
 assert.deepEqual(
     real.recognized.keys.reduce((acc, key) => {
         acc[key.rowSpan] = (acc[key.rowSpan] || 0) + 1;

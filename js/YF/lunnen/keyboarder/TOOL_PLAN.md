@@ -441,14 +441,30 @@ shipped presets. Non-LCA legends остаются generic generated labels, а �
 vertical / diagonal, считает SVG primitives, группирует horizontal spans и калибрует базовые
 константы по rect'ам `caps`. Следующий кусок распознавания тоже уже внутри этого среза:
 оценивается corner offset `d`, горизонтальные кромки спариваются по rounded span, кандидаты
-проверяются боковыми vertical segments, вложенные фаски снимаются по площади.
+проверяются боковыми vertical segments, вложенные фаски снимаются по площади. Diagnostics
+отделяет warning-level suspicious keys от harmless notes: warning keys подсвечиваются красным
+пунктиром, нормальные recognized keys остаются жёлтыми. `layoutDraftFromRecognized()` переводит
+detected rectangles в `keyboarder.layoutDraft.v1`: row/block JSON, который уже рендерится
+существующим `buildLayout()` с drift < 0.03 px к detected bounds.
 `analysis/blueprint-import.mjs` проверяет synthetic SVG и реальный `LCAKB23.svg`: 1658 H,
 1388 V, 884 diagonal, 866 paths, 487 horizontal span groups, 110 caps, `d = 3.3779`,
 220 raw candidates, 110 final recognized keys, из них 2 double-height; worst drift до designer
-caps < 0.03 px. В браузере `Browse SVG` / drag-and-drop кладут анализ во временное UI-state,
-показывают summary и рисуют preview layer `#imported-blueprint` из 3930 lines плюс
-`#imported-candidates` из 110 rects; toggle `Drawing` прячет и возвращает preview. В presets/model
-JSON сам импортированный SVG не сохраняется, сохраняется только визуальный `showDrawing`.
+caps < 0.03 px; diagnostics на нём даёт 0 warnings, 4 notes, 0 suspicious; draft даёт
+3 blocks, 6 rows, 110 keys. В браузере
+`Browse SVG` / drag-and-drop кладут анализ во временное UI-state, показывают summary и рисуют
+preview layer `#imported-blueprint` из 3930 lines плюс `#imported-candidates` из 110 rects;
+на LCAKB23 все 110 rects жёлтые, red suspicious = 0. Кнопка `Draft JSON` disabled до импорта и
+enabled после; она скачивает layout draft. `Use Draft` disabled при warning-level diagnostics и
+enabled на clean import; на LCAKB23 он переключает Grid layout на `IMPORTED_SVG`, добавляет
+`IMPORTED_SVG · custom` в selector, рендерит 110 keys и 110 generic text legends, выключает
+`Reference` / `Diff` и кладёт layout в settings как `customLayout`. `keyboarder.model.v1`
+сохраняет `customLayout` в settings и дублирует его в `keyboard.customLayout` на export. Toggle
+`Drawing` прячет и возвращает preview. В presets/model JSON сам импортированный SVG не
+сохраняется, сохраняются только результат распознавания как `customLayout` и визуальный
+`showDrawing`. Draft теперь компактируется для ручной доработки: подряд идущие одинаковые
+unit-клавиши записываются через `repeat`, служебные `r123` IDs не попадают в layout JSON, а
+generic legends для imported/custom layouts показывают позиционные подписи вроде `main 1`
+вместо технических идентификаторов.
 
 ### Этап 7 — про, производство (2–3 дня)
 
@@ -460,6 +476,16 @@ JSON сам импортированный SVG не сохраняется, со
 - экспорт и импорт JSON-модели, круговой цикл;
 - редактор таблицы компенсации знаков препинания;
 - пакетная генерация: одна геометрия × N языков.
+
+Первый срез Stage 7 готов: экспортная структура легенд начала совпадать с эталоном по группам.
+`analysis/export_tool.py` теперь сохраняет исходную группу каждой иконки (`icons` / `f-icons`) в
+`app/kb/content/lcakb23.js`; sanitizer JSON-модели и Legend editor это поле не выкидывают, а
+ручные новые иконки по умолчанию идут в `icons`. Renderer разделяет icon legends на два SVG-слоя:
+`#icons` для обычных пиктограмм и `#f-icons` для функциональных. Заодно исправлен скрытый runtime
+баг редактора: в `app/tool.js` появился wrapper `cleanElement()`, без которого `Add text` /
+`Add icon` могли падать, хотя `node --check` этого не видел. Browser smoke на свежем origin:
+110 keys, 176 glyph paths, 15 `#icons`, 13 `#f-icons`, console clean; `Add icon` после выбора
+клавиши добавляет строку редактора без ошибок.
 
 ### Этап 8 — про, автоматическая оптическая компенсация любой гарнитуры (4–5 дней)
 

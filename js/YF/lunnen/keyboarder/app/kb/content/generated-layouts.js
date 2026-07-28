@@ -61,12 +61,8 @@ function labelElement(label, typeDefaults = {}) {
 
 export function generatedContentForLayout(layout, typeDefaults = {}, baseContent = {}) {
     const rows = LABELS[layout?.meta?.name];
-    return {
-        id: layout?.meta?.name || 'generated',
-        font: baseContent.font || null,
-        interline: baseContent.interline,
-        generated: true,
-        keys: (rows || []).flatMap((row, rowIndex) =>
+    const keys = rows
+        ? rows.flatMap((row, rowIndex) =>
             Object.entries(row).flatMap(([block, labels]) =>
                 labels.map((label, ordinal) => ({
                     row: rowIndex,
@@ -75,5 +71,46 @@ export function generatedContentForLayout(layout, typeDefaults = {}, baseContent
                     tpl: 'generated-label',
                     elements: [labelElement(label, typeDefaults)]
                 }))))
+        : genericKeysForLayout(layout, typeDefaults);
+    return {
+        id: layout?.meta?.name || 'generated',
+        font: baseContent.font || null,
+        interline: baseContent.interline,
+        generated: true,
+        keys
     };
+}
+
+function genericKeysForLayout(layout, typeDefaults = {}) {
+    return (layout?.rows || []).flatMap((row, rowIndex) =>
+        Object.entries(row || {}).flatMap(([block, items]) => {
+            let ordinal = 0;
+            return expandedItems(items).flatMap((item) => {
+                if (item.skip) return [];
+                const label = userFacingId(item.id) || `${block} ${ordinal + 1}`;
+                const entry = {
+                    row: rowIndex,
+                    x: ordinal,
+                    block,
+                    tpl: 'generated-label',
+                    elements: [labelElement(label, typeDefaults)]
+                };
+                ordinal += 1;
+                return [entry];
+            });
+        }));
+}
+
+function userFacingId(id) {
+    const value = String(id || '').trim();
+    return value && !/^r\d+$/i.test(value) ? value : '';
+}
+
+function expandedItems(items = []) {
+    const out = [];
+    for (const item of items || []) {
+        const n = item.repeat || 1;
+        for (let i = 0; i < n; i++) out.push(item);
+    }
+    return out;
 }

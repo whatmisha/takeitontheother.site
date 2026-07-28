@@ -25,7 +25,9 @@ import ICONS from './kb/icons/lcakb23.js';
 import ICON_OPTICS from './kb/icons/lcakb23-optics.js';
 import {
     buildKeyboardModel as buildKeyboardModelData,
+    cleanElement as cleanElementData,
     cleanElements as cleanElementsData,
+    cleanIconGroup,
     cleanOffset as cleanOffsetData,
     clonePlain,
     clamp,
@@ -70,11 +72,33 @@ const ICON_OPTIONS = Object.keys(ICONS).sort((a, b) => a.localeCompare(b));
 const TEMPLATE_VARIANTS = buildTemplateVariants(CONTENT);
 const TEMPLATE_BY_ID = new Map(TEMPLATE_VARIANTS.map((v) => [v.id, v]));
 const LANGUAGE_LAYERS = new Set(['dual', 'latin', 'cyrillic']);
+const ICON_LAYER_IDS = ['icons', 'f-icons'];
 const CYRILLIC_RE = /[\u0400-\u04FF]/;
 const SINGLE_LATIN_RE = /^[A-Za-z]$/;
 
-function layoutByName(name) {
-    return LAYOUTS[String(name || '').trim()] || LCAKB23;
+function isLayoutLike(layout) {
+    return !!layout
+        && typeof layout === 'object'
+        && !Array.isArray(layout)
+        && layout.meta?.name
+        && layout.grid
+        && Array.isArray(layout.blocks)
+        && Array.isArray(layout.rows);
+}
+
+function layoutByName(name, customLayout = null) {
+    const key = String(name || '').trim();
+    if (isLayoutLike(customLayout) && customLayout.meta.name === key) return customLayout;
+    return LAYOUTS[key] || LCAKB23;
+}
+
+function layoutOptionsFor(s = {}) {
+    const options = [...LAYOUT_OPTIONS];
+    const custom = isLayoutLike(s.customLayout) ? s.customLayout : null;
+    if (custom && !options.some((option) => option.id === custom.meta.name)) {
+        options.push({ id: custom.meta.name, label: `${custom.meta.name} · custom` });
+    }
+    return options;
 }
 
 function normalizeLanguageLayer(value) {
@@ -83,7 +107,7 @@ function normalizeLanguageLayer(value) {
 }
 
 function sourceLayoutFor(s = {}) {
-    return layoutByName(s.layoutName || LCAKB23.meta.name);
+    return layoutByName(s.layoutName || LCAKB23.meta.name, s.customLayout);
 }
 
 function isReferenceLayout(layout) {
@@ -267,6 +291,7 @@ const app = defineTool({
 
     settings: {
         layoutName: LCAKB23.meta.name,
+        customLayout: null,
 
         // Сетка в мм. Четыре размера независимы: по X макет круглый, по Y сжат на 0.648 %.
         colPitch: REF_MM.colPitch,
@@ -475,7 +500,7 @@ const app = defineTool({
         }
 
         if (s.showIcons) {
-            const g = create('g', { id: 'icons', fill: s.inkColor });
+            const iconGroups = new Map(ICON_LAYER_IDS.map((id) => [id, create('g', { id, fill: s.inkColor })]));
             for (const el of legends) {
                 if (el.kind !== 'ico') continue;
                 const ico = ICONS[el.icon];
@@ -484,9 +509,12 @@ const app = defineTool({
                     transform: `translate(${el.x - ico.ox} ${el.y - ico.oy})`
                 });
                 wrap.appendChild(create('path', { d: ico.d }));
-                g.appendChild(wrap);
+                iconGroups.get(iconLayerId(el)).appendChild(wrap);
             }
-            svg.appendChild(g);
+            for (const id of ICON_LAYER_IDS) {
+                const g = iconGroups.get(id);
+                if (g?.childNodes.length) svg.appendChild(g);
+            }
         }
 
         // Диагностика: чернильный габарит показывает, насколько знак выпущен за кромку поля.
@@ -582,13 +610,6 @@ const app = defineTool({
             void importDrawingSvgFile(readyApp, file);
         });
 
-        const syncSliders = (values) => {
-            for (const [setting, value] of Object.entries(values)) {
-                const id = SLIDER_BY_SETTING[setting];
-                if (id) readyApp.sliders?.setValue(id, value, false);
-            }
-        };
-
         document.getElementById('resetGridBtn')?.addEventListener('click', () => {
             const sourceLayout = sourceLayoutFor(readyApp.settings);
             const values = {
@@ -597,7 +618,7 @@ const app = defineTool({
                 contentEdits: contentEditsWithoutAddedKeys(readyApp.settings.contentEdits || {}, sourceLayout.rows.length)
             };
             readyApp.settingsStore.setMultiple(values);
-            syncSliders(values);
+            syncSliderValues(readyApp, values);
         });
 
         document.getElementById('resetTypeBtn')?.addEventListener('click', () => {
@@ -606,7 +627,7 @@ const app = defineTool({
                 compensationMode: 'table'
             };
             readyApp.settingsStore.setMultiple(values);
-            syncSliders(values);
+            syncSliderValues(readyApp, values);
         });
 
         document.getElementById('legendKeySelect')?.addEventListener('change', (e) => {
@@ -783,15 +804,28 @@ function modelIOOptions(layout = LCAKB23) {
     };
 }
 
+function syncSliderValues(app, values) {
+    for (const [setting, value] of Object.entries(values || {})) {
+        const id = SLIDER_BY_SETTING[setting];
+        if (id) app.sliders?.setValue(id, value, false);
+    }
+}
+
 function layoutFromPresetLike(input = {}, defaults = {}) {
     const source = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
+    const customLayout = source.customLayout
+        || source.settings?.customLayout
+        || source.keyboard?.customLayout
+        || defaults.customLayout
+        || null;
     return layoutByName(
         source.layoutName
         || source.settings?.layoutName
         || source.baseLayout
         || source.keyboard?.meta?.name
         || defaults.layoutName
-        || LCAKB23.meta.name
+        || LCAKB23.meta.name,
+        customLayout
     );
 }
 
@@ -799,6 +833,7 @@ function normalizedPresetBlob(blob = {}, defaults = {}) {
     const layout = layoutFromPresetLike(blob, defaults);
     const clean = normalizedPresetBlobData(blob, defaults, modelIOOptions(layout));
     clean.layoutName = layout.meta.name;
+    if (!LAYOUTS[layout.meta.name]) clean.customLayout = clonePlain(layout);
     clean.languageLayer = normalizeLanguageLayer(clean.languageLayer);
     if (!isReferenceLayout(layout)) {
         clean.showRef = false;
@@ -810,13 +845,16 @@ function normalizedPresetBlob(blob = {}, defaults = {}) {
 function buildKeyboardModel(blob = {}, defaults = {}) {
     const layout = layoutFromPresetLike(blob, defaults);
     const clean = normalizedPresetBlob(blob, defaults);
-    return buildKeyboardModelData(clean, defaults, modelIOOptions(layout));
+    const model = buildKeyboardModelData(clean, defaults, modelIOOptions(layout));
+    if (!LAYOUTS[layout.meta.name]) model.keyboard.customLayout = clonePlain(layout);
+    return model;
 }
 
 function presetBlobFromKeyboardModel(input = {}, defaults = {}) {
     const layout = layoutFromPresetLike(input, defaults);
     const clean = presetBlobFromKeyboardModelData(input, defaults, modelIOOptions(layout));
     clean.layoutName = layout.meta.name;
+    if (!LAYOUTS[layout.meta.name]) clean.customLayout = clonePlain(layout);
     clean.languageLayer = normalizeLanguageLayer(clean.languageLayer);
     if (!isReferenceLayout(layout)) {
         clean.showRef = false;
@@ -1218,8 +1256,16 @@ function cleanOffset(offset) {
     return cleanOffsetData(offset);
 }
 
+function cleanElement(element = {}) {
+    return cleanElementData(element, modelIOOptions());
+}
+
 function cleanElements(elements = []) {
     return cleanElementsData(elements, modelIOOptions());
+}
+
+function iconLayerId(element = {}) {
+    return cleanIconGroup(element.group);
 }
 
 function sanitizeContentEdits(edits = {}) {
@@ -1434,9 +1480,10 @@ function optionEl(value, label) {
 function syncLayoutSelect(s) {
     const select = document.getElementById('layoutSelect');
     if (!select) return;
-    const sig = LAYOUT_OPTIONS.map((v) => `${v.id}:${v.label}`).join('|');
+    const options = layoutOptionsFor(s);
+    const sig = options.map((v) => `${v.id}:${v.label}`).join('|');
     if (select.dataset.sig !== sig) {
-        select.replaceChildren(...LAYOUT_OPTIONS.map((v) => optionEl(v.id, v.label)));
+        select.replaceChildren(...options.map((v) => optionEl(v.id, v.label)));
         select.dataset.sig = sig;
     }
     select.value = sourceLayoutFor(s).meta.name;
@@ -1459,7 +1506,7 @@ function initLayoutSelect(app) {
     if (!select) return;
     syncLayoutSelect(app.settings);
     select.addEventListener('change', () => {
-        const nextLayout = layoutByName(select.value);
+        const nextLayout = layoutByName(select.value, app.settings.customLayout);
         if (nextLayout.meta.name === sourceLayoutFor(app.settings).meta.name) return;
         SELECTION = { active: 0, indices: [0] };
         LAST_DELETED_EDIT_ID = null;
@@ -1499,8 +1546,12 @@ function initLanguageLayerSelect(app) {
 function initDrawingImport(app) {
     const dropzone = document.getElementById('drawingDropzone');
     const browse = document.getElementById('drawingBrowseBtn');
+    const useDraft = document.getElementById('drawingUseDraftBtn');
+    const draft = document.getElementById('drawingDraftJsonBtn');
     const clear = document.getElementById('drawingClearBtn');
     browse?.addEventListener('click', () => openDrawingSvgPicker());
+    useDraft?.addEventListener('click', () => useDrawingDraftLayout(app));
+    draft?.addEventListener('click', () => exportDrawingDraftJSON());
     clear?.addEventListener('click', () => {
         BLUEPRINT_IMPORT = null;
         syncDrawingImportStatus();
@@ -1562,7 +1613,11 @@ async function importDrawingSvgFile(app, file) {
 function syncDrawingImportStatus() {
     const status = document.getElementById('drawingImportStatus');
     const clear = document.getElementById('drawingClearBtn');
+    const useDraft = document.getElementById('drawingUseDraftBtn');
+    const draft = document.getElementById('drawingDraftJsonBtn');
     if (clear) clear.disabled = !BLUEPRINT_IMPORT;
+    if (useDraft) useDraft.disabled = !BLUEPRINT_IMPORT?.analysis?.layoutDraft || !!BLUEPRINT_IMPORT?.analysis?.diagnostics?.warnings?.length;
+    if (draft) draft.disabled = !BLUEPRINT_IMPORT?.analysis?.layoutDraft;
     if (!status) return;
     if (!BLUEPRINT_IMPORT) {
         status.innerHTML = '<p class="drawing-empty">Drop an SVG drawing here, or browse for one.</p>';
@@ -1573,6 +1628,41 @@ function syncDrawingImportStatus() {
         <div><dt>File</dt><dd>${html(BLUEPRINT_IMPORT.name)}</dd></div>
         ${lines.map((line, i) => `<div><dt>${i === 0 ? 'Data' : ''}</dt><dd>${html(line)}</dd></div>`).join('')}
     </dl>`;
+}
+
+function exportDrawingDraftJSON() {
+    const draft = BLUEPRINT_IMPORT?.analysis?.layoutDraft;
+    if (!draft) return;
+    const base = String(BLUEPRINT_IMPORT?.name || 'drawing')
+        .replace(/\.svg$/i, '')
+        .replace(/[^a-z0-9_-]+/gi, '-')
+        .replace(/^-+|-+$/g, '')
+        .toLowerCase() || 'drawing';
+    downloadJSON(`keyboarder-${base}-layout-draft.json`, draft);
+}
+
+function useDrawingDraftLayout(app) {
+    const layout = BLUEPRINT_IMPORT?.analysis?.layoutDraft?.layout;
+    if (!layout || BLUEPRINT_IMPORT?.analysis?.diagnostics?.warnings?.length) return;
+    SELECTION = { active: 0, indices: [0] };
+    LAST_DELETED_EDIT_ID = null;
+    LAST_DELETED_ROW_ID = null;
+    const customLayout = clonePlain(layout);
+    const values = {
+        customLayout,
+        layoutName: customLayout.meta.name,
+        ...gridMmFor(customLayout),
+        layoutEdits: {},
+        contentEdits: {},
+        showRef: false,
+        showDiff: false
+    };
+    app.settingsStore.setMultiple(values);
+    syncSliderValues(app, values);
+    syncLayoutSelect(app.settings);
+    syncDrawingImportStatus();
+    app.renderNow();
+    app._showToast?.('Draft layout applied');
 }
 
 function renderImportedBlueprint(create, analysis) {
@@ -1590,13 +1680,17 @@ function renderImportedBlueprint(create, analysis) {
     if (candidates.length) {
         const cg = create('g', { id: 'imported-candidates' });
         const rx = analysis?.calibration?.cornerRadius || 0;
+        const suspicious = new Set(analysis?.diagnostics?.suspiciousKeyIndices || []);
         for (const k of candidates) {
+            const isSuspicious = suspicious.has(k.i);
             cg.appendChild(create('rect', {
                 x: k.x, y: k.y, width: k.w, height: k.h,
                 rx, ry: rx,
                 fill: 'none',
-                stroke: '#ffd36a',
-                'stroke-width': 0.65,
+                stroke: isSuspicious ? '#ff6f66' : '#ffd36a',
+                'stroke-width': isSuspicious ? 0.9 : 0.65,
+                'stroke-dasharray': isSuspicious ? '2.2 1.4' : null,
+                'data-suspicious': isSuspicious ? 'true' : null,
                 'vector-effect': 'non-scaling-stroke'
             }));
         }
@@ -2034,7 +2128,7 @@ function elementEditorHtml(el, i) {
     if (el.kind === 'ico') {
         const options = ICON_OPTIONS.map((name) =>
             `<option value="${html(name)}"${name === el.icon ? ' selected' : ''}>${html(name)}</option>`).join('');
-        return '<div class="legend-edit-row" data-kind="ico" data-offset="' + offset + '">'
+        return '<div class="legend-edit-row" data-kind="ico" data-group="' + html(iconLayerId(el)) + '" data-offset="' + offset + '">'
             + `<label><span>Slot</span><input class="legend-slot-input" value="${html(el.slot)}" maxlength="2"></label>`
             + `<label><span>Icon</span><select class="legend-icon-input">${options}</select></label>`
             + `<label><span>W</span><input class="legend-width-input" type="number" step="0.001" value="${html(el.w)}"></label>`
@@ -2058,6 +2152,7 @@ function defaultLegendElement(kind) {
         return cleanElement({
             slot: 'FC',
             kind: 'ico',
+            group: 'icons',
             icon: ICON_OPTIONS[0] || '',
             w: 8,
             h: 8
@@ -2127,6 +2222,7 @@ function readElementEditorElements() {
         if (base.kind === 'ico') {
             return cleanElement({
                 ...base,
+                group: row.dataset.group || 'icons',
                 icon: row.querySelector('.legend-icon-input')?.value || ICON_OPTIONS[0] || '',
                 w: row.querySelector('.legend-width-input')?.value,
                 h: row.querySelector('.legend-height-input')?.value
