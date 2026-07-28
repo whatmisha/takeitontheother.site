@@ -90,6 +90,7 @@ let REFERENCE = null;
 let TYPEFACE = null;
 let COMP_CACHE = new Map();
 let SELECTION = { active: 0, indices: [0] };
+let LAST_DELETED_EDIT_ID = null;
 
 function compFor(s) {
     if (!TYPEFACE || s.compensationMode === 'off') return null;
@@ -486,7 +487,11 @@ const app = defineTool({
         };
 
         document.getElementById('resetGridBtn')?.addEventListener('click', () => {
-            const values = { ...REF_MM, layoutEdits: {} };
+            const values = {
+                ...REF_MM,
+                layoutEdits: {},
+                contentEdits: contentEditsWithoutAddedKeys(readyApp.settings.contentEdits || {})
+            };
             readyApp.settingsStore.setMultiple(values);
             syncSliders(values);
         });
@@ -529,6 +534,18 @@ const app = defineTool({
         });
         document.getElementById('resetKeyWidthBtn')?.addEventListener('click', () => {
             resetKeyWidthEdit(readyApp);
+        });
+        document.getElementById('addKeyBeforeBtn')?.addEventListener('click', () => {
+            addKeyNearActive(readyApp, 'before');
+        });
+        document.getElementById('addKeyBtn')?.addEventListener('click', () => {
+            addKeyNearActive(readyApp, 'after');
+        });
+        document.getElementById('deleteKeyBtn')?.addEventListener('click', () => {
+            deleteActiveKey(readyApp);
+        });
+        document.getElementById('restoreKeyBtn')?.addEventListener('click', () => {
+            restoreDeletedKey(readyApp);
         });
         document.getElementById('legendKeyWidthInput')?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -657,9 +674,19 @@ function sanitizeLayoutEdits(edits = {}) {
     if (!edits || typeof edits !== 'object') return out;
     for (const [id, edit] of Object.entries(edits)) {
         if (!edit || typeof edit !== 'object') continue;
+        const clean = {};
+        if (edit.added === true) {
+            const after = String(edit.after || '').trim();
+            const before = String(edit.before || '').trim();
+            if (!after && !before) continue;
+            clean.added = true;
+            if (before) clean.before = before;
+            else clean.after = after;
+        }
+        if (edit.deleted === true) clean.deleted = true;
         const widthMm = clamp(Number(edit.widthMm), MIN_KEY_WIDTH_MM, MAX_KEY_WIDTH_MM);
-        if (!Number.isFinite(widthMm)) continue;
-        out[id] = { widthMm: roundMm(widthMm) };
+        if (Number.isFinite(widthMm)) clean.widthMm = roundMm(widthMm);
+        if (Object.keys(clean).length) out[id] = clean;
     }
     return out;
 }
@@ -693,18 +720,60 @@ function rowSpecEntries(rowIndex, blockId, items) {
     let ordinal = 0;
     return list.map((it, index) => {
         if (it.skip) return { item: it, index, editId: null, rowHasFlex };
+        const editId = it.editId || `${rowIndex}:${blockId}:${ordinal}`;
+        ordinal++;
         return {
             item: it,
             index,
-            editId: `${rowIndex}:${blockId}:${ordinal++}`,
+            editId,
             rowHasFlex
         };
     });
 }
 
+function rowBlockFromEditId(editId) {
+    const parts = String(editId || '').split(':');
+    if (parts.length >= 3 && parts[0] === 'add') {
+        return { row: Number(parts[1]), block: parts[2] || '' };
+    }
+    return { row: Number(parts[0]), block: parts[1] || '' };
+}
+
+function addedOrdinal(editId) {
+    const parts = String(editId || '').split(':');
+    const n = parts[0] === 'add' ? Number(parts[3]) : NaN;
+    return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+}
+
+function insertionMapForRow(edits, rowIndex, blockId) {
+    const before = new Map();
+    const after = new Map();
+    for (const [id, edit] of Object.entries(edits)) {
+        if (!edit?.added || edit.deleted) continue;
+        const at = rowBlockFromEditId(id);
+        if (at.row !== rowIndex || at.block !== blockId) continue;
+        const target = edit.before ? before : after;
+        const anchor = edit.before || edit.after;
+        if (!anchor) continue;
+        if (!target.has(anchor)) target.set(anchor, []);
+        target.get(anchor).push({ id, edit });
+    }
+    for (const list of [...before.values(), ...after.values()]) {
+        list.sort((a, b) => addedOrdinal(a.id) - addedOrdinal(b.id) || a.id.localeCompare(b.id));
+    }
+    return { before, after };
+}
+
+function insertedKeyItem(id, edit) {
+    const next = { editId: id };
+    if (Number.isFinite(edit.widthMm)) next.w = toPx(edit.widthMm);
+    else next.u = 1;
+    return next;
+}
+
 function chooseFlexTarget(entries, sourceIndex, edits) {
     const candidates = entries.filter((entry) =>
-        entry.editId && entry.index !== sourceIndex && !entry.item.skip);
+        entry.editId && entry.index !== sourceIndex && !entry.item.skip && !edits[entry.editId]?.deleted);
     const unedited = candidates.filter((entry) => !edits[entry.editId]?.widthMm);
     const pool = unedited.length ? unedited : candidates;
     const right = pool
@@ -725,32 +794,49 @@ function layoutWithEdits(layout, edits, grid) {
         const nextRow = {};
         for (const [blockId, items] of Object.entries(row)) {
             const entries = rowSpecEntries(rowIndex, blockId, items);
+            const insertions = insertionMapForRow(clean, rowIndex, blockId);
             const sourceFlex = entries.find((entry) => entry.editId && entry.item.flex);
             const sourceFlexEdit = sourceFlex ? clean[sourceFlex.editId] : null;
             const flexTarget = sourceFlexEdit
                 ? chooseFlexTarget(entries, sourceFlex.index, clean)
                 : null;
             let blockChanged = false;
-            const nextItems = entries.map(({ item: it, editId, index }) => {
+            const nextItems = entries.flatMap(({ item: it, editId, index }) => {
+                const insertedBefore = (insertions.before.get(editId) || [])
+                    .map(({ id, edit }) => insertedKeyItem(id, edit));
+                const insertedAfter = (insertions.after.get(editId) || [])
+                    .map(({ id, edit }) => insertedKeyItem(id, edit));
+                if (insertedBefore.length || insertedAfter.length) {
+                    blockChanged = true;
+                    applied = true;
+                }
                 if (it.skip) return { ...it };
                 const edit = clean[editId];
+                if (edit?.deleted) {
+                    blockChanged = true;
+                    applied = true;
+                    return [...insertedBefore, ...insertedAfter];
+                }
+                let item;
                 if (flexTarget && index === flexTarget.index) {
                     blockChanged = true;
                     applied = true;
-                    const next = { ...it, flex: true };
-                    delete next.u;
-                    delete next.w;
-                    return next;
+                    item = { ...it, editId, flex: true };
+                    delete item.u;
+                    delete item.w;
+                } else if (!edit || edit.added) {
+                    item = { ...it, editId };
+                } else if (it.flex && !flexTarget) {
+                    item = { ...it, editId };
+                } else {
+                    blockChanged = true;
+                    applied = true;
+                    item = { ...it, editId, w: toPx(edit.widthMm) };
+                    delete item.u;
+                    delete item.flex;
                 }
-                if (!edit) return { ...it };
-                if (it.flex && !flexTarget) return { ...it };
-                blockChanged = true;
-                applied = true;
-                const next = { ...it, w: toPx(edit.widthMm) };
-                delete next.u;
-                delete next.flex;
-                return next;
-            });
+                return [...insertedBefore, item, ...insertedAfter];
+            }).filter(Boolean);
             nextRow[blockId] = blockChanged ? nextItems : items;
         }
         return nextRow;
@@ -880,6 +966,14 @@ function sanitizeContentEdits(edits = {}) {
     return out;
 }
 
+function contentEditsWithoutAddedKeys(edits = {}) {
+    const clean = sanitizeContentEdits(edits);
+    for (const id of Object.keys(clean)) {
+        if (isAddedEditId(id)) delete clean[id];
+    }
+    return clean;
+}
+
 function finiteOr(value, fallback) {
     const n = Number(value);
     return Number.isFinite(n) ? n : fallback;
@@ -892,6 +986,7 @@ function rowBlockKey(k) {
 function assignEditIds(keys) {
     const groups = new Map();
     for (const k of keys) {
+        if (k.editId) continue;
         const id = rowBlockKey(k);
         if (!groups.has(id)) groups.set(id, []);
         groups.get(id).push(k);
@@ -1085,10 +1180,13 @@ function updateKeyGeometryEditor(s, keys) {
     const input = document.getElementById('legendKeyWidthInput');
     const apply = document.getElementById('applyKeyWidthBtn');
     const reset = document.getElementById('resetKeyWidthBtn');
+    const deleteButton = document.getElementById('deleteKeyBtn');
+    const restoreButton = document.getElementById('restoreKeyBtn');
     if (!editor || !input) return;
 
     const active = activeKey(keys);
     const edits = sanitizeLayoutEdits(s.layoutEdits || {});
+    const restoreId = restoreTargetEditId(edits);
     const editable = !!active?.geometry?.widthEditable;
     const range = active?.geometry?.widthRange || { min: MIN_KEY_WIDTH_MM, max: MAX_KEY_WIDTH_MM };
     const value = active ? toMm(active.w).toFixed(3) : '';
@@ -1105,7 +1203,29 @@ function updateKeyGeometryEditor(s, keys) {
         input.dataset.valueEditId = editId;
     }
     if (apply) apply.disabled = !editable;
-    if (reset) reset.disabled = !active || !edits[editId];
+    if (reset) reset.disabled = !active || !Number.isFinite(edits[editId]?.widthMm);
+    const addBeforeButton = document.getElementById('addKeyBeforeBtn');
+    const addAfterButton = document.getElementById('addKeyBtn');
+    if (deleteButton) {
+        deleteButton.disabled = !active;
+        deleteButton.title = active ? `Delete ${keyLabel(active)}` : '';
+    }
+    if (addBeforeButton || addAfterButton) {
+        const canAddBefore = canAddKeyNear(s, active, 'before');
+        const canAddAfter = canAddKeyNear(s, active, 'after');
+        if (addBeforeButton) {
+            addBeforeButton.disabled = !canAddBefore;
+            addBeforeButton.title = canAddBefore ? `Add key before ${keyLabel(active)}` : '';
+        }
+        if (addAfterButton) {
+            addAfterButton.disabled = !canAddAfter;
+            addAfterButton.title = canAddAfter ? `Add key after ${keyLabel(active)}` : '';
+        }
+    }
+    if (restoreButton) {
+        restoreButton.disabled = !restoreId;
+        restoreButton.title = restoreId ? `Restore ${editIdLabel(restoreId)}` : '';
+    }
 }
 
 function writeKeyWidthEdit(edits, k, widthMm) {
@@ -1137,7 +1257,105 @@ function resetKeyWidthEdit(app) {
     if (!active) return;
     const next = sanitizeLayoutEdits(app.settings.layoutEdits || {});
     if (!next[active.editId]) return;
-    delete next[active.editId];
+    delete next[active.editId].widthMm;
+    if (!Object.keys(next[active.editId]).length) delete next[active.editId];
+    app.settingsStore.set('layoutEdits', next);
+}
+
+function isAddedEditId(editId) {
+    return String(editId || '').startsWith('add:');
+}
+
+function nextAddedKeyId(edits, k) {
+    const prefix = `add:${k.row}:${k.block || ''}:`;
+    let n = 1;
+    while (edits[`${prefix}${n}`]) n++;
+    return `${prefix}${n}`;
+}
+
+function selectKeyByEditId(app, editId) {
+    const keys = layoutFor(app.settings).keys;
+    const index = keys.findIndex((k) => k.editId === editId);
+    if (index >= 0) selectKey(app, index);
+}
+
+function proposedAddKeyEdits(edits, k, side = 'after') {
+    const next = sanitizeLayoutEdits(edits);
+    const id = nextAddedKeyId(next, k);
+    next[id] = side === 'before'
+        ? { added: true, before: k.editId }
+        : { added: true, after: k.editId };
+    return { id, edits: next };
+}
+
+function layoutEditsFit(settings, edits) {
+    try {
+        const layout = layoutWithEdits(LCAKB23, edits, gridFrom(settings));
+        const { keys } = buildLayout(layout, gridFrom(settings));
+        return keys.every((k) => toMm(k.w) >= MIN_KEY_WIDTH_MM - 0.0005);
+    } catch (_) {
+        return false;
+    }
+}
+
+function canAddKeyNear(settings, active, side = 'after') {
+    if (!active?.geometry?.rowHasFlex || isAddedEditId(active.editId)) return false;
+    const { edits } = proposedAddKeyEdits(settings.layoutEdits || {}, active, side);
+    return layoutEditsFit(settings, edits);
+}
+
+function addKeyNearActive(app, side = 'after') {
+    const keys = layoutFor(app.settings).keys;
+    const active = activeKey(keys);
+    if (!canAddKeyNear(app.settings, active, side)) return;
+    const { id, edits } = proposedAddKeyEdits(app.settings.layoutEdits || {}, active, side);
+    app.settingsStore.set('layoutEdits', edits);
+    setTimeout(() => selectKeyByEditId(app, id), 0);
+}
+
+function deletedEditIds(edits) {
+    const clean = sanitizeLayoutEdits(edits);
+    return Object.keys(clean).filter((id) => clean[id]?.deleted);
+}
+
+function restoreTargetEditId(edits) {
+    const ids = deletedEditIds(edits);
+    if (LAST_DELETED_EDIT_ID && ids.includes(LAST_DELETED_EDIT_ID)) return LAST_DELETED_EDIT_ID;
+    return ids[ids.length - 1] || null;
+}
+
+function editIdLabel(editId) {
+    const parts = String(editId || '').split(':');
+    if (parts[0] === 'add') {
+        const row = Number(parts[1]);
+        const ordinal = Number(parts[3]);
+        const rowLabel = Number.isFinite(row) ? `R${row + 1}` : 'R?';
+        const ordinalLabel = Number.isFinite(ordinal) ? `#${ordinal}` : '#?';
+        return `${rowLabel} ${parts[2] || '?'} added ${ordinalLabel}`;
+    }
+    const [row, block, ordinal] = parts;
+    const rowLabel = Number.isFinite(Number(row)) ? `R${Number(row) + 1}` : 'R?';
+    const ordinalLabel = Number.isFinite(Number(ordinal)) ? `#${Number(ordinal) + 1}` : '#?';
+    return `${rowLabel} ${block || '?'} ${ordinalLabel}`;
+}
+
+function deleteActiveKey(app) {
+    const keys = layoutFor(app.settings).keys;
+    const active = activeKey(keys);
+    if (!active) return;
+    const next = sanitizeLayoutEdits(app.settings.layoutEdits || {});
+    next[active.editId] = { ...(next[active.editId] || {}), deleted: true };
+    LAST_DELETED_EDIT_ID = active.editId;
+    app.settingsStore.set('layoutEdits', next);
+}
+
+function restoreDeletedKey(app) {
+    const next = sanitizeLayoutEdits(app.settings.layoutEdits || {});
+    const editId = restoreTargetEditId(next);
+    if (!editId || !next[editId]) return;
+    delete next[editId].deleted;
+    if (!Object.keys(next[editId]).length) delete next[editId];
+    if (LAST_DELETED_EDIT_ID === editId) LAST_DELETED_EDIT_ID = null;
     app.settingsStore.set('layoutEdits', next);
 }
 

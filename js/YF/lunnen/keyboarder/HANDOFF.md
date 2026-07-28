@@ -94,6 +94,22 @@ Important local entry points:
     the next suitable key on the right, or to the previous key if the source flex is at row end;
   - a key that is currently acting as the temporary flex absorber is locked until the source flex
     override is reset;
+  - `Delete key` stores `layoutEdits[editId].deleted = true` and removes that key from the row
+    before `buildLayout()`;
+  - row items now carry stable `editId` through `grid.js`, so deleting a key does not shift
+    content/layout override addresses for keys to its right;
+  - `Restore key` clears the most recent deleted flag without discarding a possible width
+    override on the same key;
+  - `Add before` / `Add after` insert a blank 1U key next to the active source key in rows that
+    have a flex absorber; added keys get IDs like `add:0:main:1` and are stored in `layoutEdits`
+    as `{ added: true, before: editId }` or `{ added: true, after: editId }`;
+  - add buttons run a trial `buildLayout()` and stay disabled if the proposed insertion would
+    make a row overflow or shrink any key below `MIN_KEY_WIDTH_MM`;
+  - added keys start with no generated legend content, can be edited through the existing
+    `contentEdits` Legend editor, and are not allowed to recursively add more keys after
+    themselves yet;
+  - `Reference grid` clears `layoutEdits` and also prunes `contentEdits` for added keys, so
+    removed added-key legends do not come back later as orphaned content;
   - `Reset` removes the active key width override.
 - Moved the collapsed Legend panel above the bottom export buttons; its header had overlapped the
   `SVG` button at the old bottom position.
@@ -168,6 +184,28 @@ Browser QA on `http://127.0.0.1:8000/`:
     x-position stays stable;
   - selecting F1 after that shows `Width` locked with the flex-derived title;
   - resetting `esc` restores esc/F1 widths.
+- Key delete/restore QA:
+  - deleting F5 changes the rendered key count from 110 to 109;
+  - the row flex `esc` grows from `71.722 px` to `125.583 px`;
+  - current index 5 becomes F6 and keeps its own `backlight` / `F6` legend, confirming stable
+    edit/content IDs after deletion;
+  - `Restore key` returns the key count to 110 and restores F5 at its original x/width.
+- Key add/delete/restore QA:
+  - clicking F5 on the canvas opens a collapsed Legend panel and selects `R1 main · brightness-up`;
+  - `Add after` F5 changes the rendered key count from 110 to 111;
+  - the inserted-after key is selected, blank, and has `No legend elements.`;
+  - neighboring labels stay stable: F5 remains `brightness-up`, F6 remains `backlight`;
+  - adding text `NEW` to the inserted key updates it to `R1 main · NEW`;
+  - deleting that added key returns the count to 110 and enables `Restore R1 main added #1`;
+  - restoring returns the count to 111 and brings back the added key with `NEW`;
+  - after `Reference grid`, adding after F5 again produces a blank added key, confirming orphaned
+    added-key `contentEdits` were pruned.
+- Key add-before QA:
+  - `Add before` F5 changes the rendered key count from 110 to 111;
+  - the inserted-before key appears between `brightness-down` and `brightness-up`;
+  - F5 and F6 keep their own legends after the insertion;
+  - selecting original F5 after the insertion shows both add buttons disabled because the row no
+    longer has enough flex capacity for another 1U key.
 
 Note: the Browser plugin's console log API kept an old error entry from an earlier failed reload
 after it was fixed. Current DOM probes confirmed the app initializes and renders.
@@ -192,8 +230,10 @@ Stage 4 is started, not complete:
 - Done: click selection, multi-select, Legend inspector sync, arrow navigation, `Escape` clear,
   preset-backed legend content overrides, active-key slot/value editing, bulk template changes,
   add/remove legend elements, reset selected edits, manual compensation overrides in px for text
-  L/R slots, and key width overrides with row flex recalculation, including source flex keys.
-- Still remaining: full row/key editing for adding/removing keys or rows, richer model
+  L/R slots, key width overrides with row flex recalculation including source flex keys,
+  deleting/restoring individual keys, and adding blank individual keys before/after source keys
+  in flex-backed rows.
+- Still remaining: reordering keys if desired, adding/deleting/restoring whole rows, richer model
   export/import for edited keyboard data, and a more explicit edited-keyboard model beyond the
   current preset override blobs.
 

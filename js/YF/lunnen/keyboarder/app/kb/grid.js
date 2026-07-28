@@ -80,7 +80,8 @@ export function layoutRow(items, block, grid, y) {
                 h: spanHeight(it.rowSpan || 1, grid),
                 block: block.id,
                 span: it.rowSpan || 1,
-                id: it.id || null
+                id: it.id || null,
+                editId: it.editId || null
             });
         }
         x += w + gap;
