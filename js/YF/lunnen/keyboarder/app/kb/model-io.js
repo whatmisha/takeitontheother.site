@@ -4,7 +4,7 @@ export const PRESET_KEYS = [
     'layoutName', 'customLayout',
     'colPitch', 'rowPitch', 'keyWidth1U', 'keyHeight', 'cornerRadius', 'guideInset',
     'glyphSize', 'numpadSize', 'secondarySize', 'wordSize', 'leading', 'trackingOffset',
-    'compensationMode',
+    'compensationMode', 'legendTextMode', 'compensationTableEdits',
     'showCaps', 'showGuides', 'showGlyphs', 'showIcons', 'showDrawing', 'showColumns', 'showIndex',
     'showInk', 'showSlots', 'showRef', 'showDiff', 'showBlocks', 'languageLayer',
     'capColor', 'guideColor', 'inkColor', 'bgColor',
@@ -12,7 +12,10 @@ export const PRESET_KEYS = [
 ];
 
 export const GRID_SETTING_KEYS = ['colPitch', 'rowPitch', 'keyWidth1U', 'keyHeight', 'cornerRadius', 'guideInset'];
-export const TYPE_SETTING_KEYS = ['glyphSize', 'numpadSize', 'secondarySize', 'wordSize', 'leading', 'trackingOffset', 'compensationMode'];
+export const TYPE_SETTING_KEYS = [
+    'glyphSize', 'numpadSize', 'secondarySize', 'wordSize', 'leading', 'trackingOffset',
+    'compensationMode', 'legendTextMode', 'compensationTableEdits'
+];
 export const LAYER_SETTING_KEYS = [
     'showCaps', 'showGuides', 'showGlyphs', 'showIcons', 'showDrawing', 'showColumns', 'showIndex',
     'showInk', 'showSlots', 'showRef', 'showDiff', 'showBlocks', 'languageLayer'
@@ -75,6 +78,32 @@ export function cleanCompOverride(compOverride) {
     if (!compOverride || typeof compOverride !== 'object') return null;
     const px = Number(compOverride.px);
     return Number.isFinite(px) ? { px } : null;
+}
+
+function roundCompensationEm(value) {
+    return Math.round(value * 100) / 100;
+}
+
+export function sanitizeCompensationTableEdits(edits = {}) {
+    const out = {};
+    if (!edits || typeof edits !== 'object' || Array.isArray(edits)) return out;
+    for (const [rawCh, rawRow] of Object.entries(edits)) {
+        if (!rawRow || typeof rawRow !== 'object' || Array.isArray(rawRow)) continue;
+        const ch = [...String(rawCh || '')][0];
+        if (!ch) continue;
+        const row = {};
+        for (const side of ['L', 'R']) {
+            if (!Object.prototype.hasOwnProperty.call(rawRow, side)) continue;
+            if (rawRow[side] === null) {
+                row[side] = null;
+                continue;
+            }
+            const value = Number(rawRow[side]);
+            if (Number.isFinite(value)) row[side] = roundCompensationEm(value);
+        }
+        if (Object.keys(row).length) out[ch] = row;
+    }
+    return out;
 }
 
 export function cleanIconGroup(group) {
@@ -165,6 +194,7 @@ export function normalizedPresetBlob(blob = {}, defaults = {}, options = {}) {
     }
     clean.contentEdits = sanitizeContentEdits(clean.contentEdits || {}, options);
     clean.layoutEdits = sanitizeLayoutEdits(clean.layoutEdits || {}, options);
+    clean.compensationTableEdits = sanitizeCompensationTableEdits(clean.compensationTableEdits || {});
     return clean;
 }
 
@@ -188,6 +218,7 @@ export function buildKeyboardModel(blob = {}, defaults = {}, options = {}) {
             grid: 'mm',
             type: 'pt',
             trackingOffset: 'em',
+            compensationTable: 'em/1000',
             compensationOverride: 'px'
         },
         settings,

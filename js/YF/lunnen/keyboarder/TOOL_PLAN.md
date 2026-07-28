@@ -218,8 +218,13 @@
 
 ## 5. Этапы
 
-Статус: **этапы 0, 1, 2 и 3 сделаны**. Дальше по порядку — этап 4, RC-редактирование:
-выбор клавиш, правка шаблонов/содержимого, изменение рядов и ручные оверрайды.
+Статус: **этапы 0–5 сделаны по коду**. Этап 6 имеет рабочий importable draft slice и остаётся
+открыт для дальнейшей production-полировки imported/custom layouts. Этап 7 закрыт по основным
+кодовым пунктам: послойный SVG, PDF в мм, локальные export libs, text/outlines mode,
+compensation table editor и batch SVG. Этап 8 начат: есть чистый `fontprobe.js`, UI-загрузка
+сессионного шрифта, автопараметры компенсации для активной гарнитуры и статус probe/invariants.
+Остаётся ручной production QA скачанных SVG/PDF в Illustrator/PDF viewer; следующий крупный кусок
+Stage 8 — variation instance selection и более широкий контрольный набор чужих гарнитур.
 
 ### Этап 0 — каркас ✅ сделано
 
@@ -308,7 +313,7 @@ JSON-отчёт, слой **Diff** в панели Layers рисует этал�
 проходит с худшей невязкой 0.0000876 px, легенды проходят с RMSE формульной компенсации
 0.1099 px при лимите 0.12 px.
 
-### Этап 4 — RC, редактирование 🚧 начато (2–3 дня)
+### Этап 4 — RC, редактирование ✅ сделано по коду (2–3 дня)
 
 Бета генерирует; RC даёт менять.
 
@@ -378,7 +383,7 @@ domain-only import и sanitizer edge cases без браузера.
 Этап 4 закрыт по коду. Остаётся только ручной smoke системного file picker, потому что Browser
 automation не выбирает локальные файлы; parse/validate/normalize путь за picker уже покрыт.
 
-### Этап 5 — RC, библиотека раскладок (1–2 дня)
+### Этап 5 — RC, библиотека раскладок ✅ сделано по коду (1–2 дня)
 
 - встроенные раскладки: ANSI 96 % (наш LCAKB23), ANSI TKL, ISO, 65 %, 60 %;
 - языковые слои: латиница, кириллица, и переключение раскладки без смены геометрии;
@@ -423,7 +428,7 @@ Stage 5 закрыт по коду. Caveat: если origin уже был зас
 shipped presets. Non-LCA legends остаются generic generated labels, а не вымеренным дизайнерским
 контентом.
 
-### Этап 6 — про, импорт чертежа (3–4 дня)
+### Этап 6 — про, импорт чертежа 🚧 рабочий importable draft slice (3–4 дня)
 
 Порт § 2–4 `PIPELINE.md` — статистическое распознавание.
 
@@ -466,7 +471,7 @@ unit-клавиши записываются через `repeat`, служебн
 generic legends для imported/custom layouts показывают позиционные подписи вроде `main 1`
 вместо технических идентификаторов.
 
-### Этап 7 — про, производство (2–3 дня)
+### Этап 7 — про, производство ✅ основные кодовые пункты сделаны (2–3 дня)
 
 - экспорт SVG послойно, именами групп как в эталоне (`caps`, `guides`, `glyphs`, `icons`,
   `f-icons`) — чтобы файл открывался в Illustrator привычным;
@@ -486,6 +491,67 @@ generic legends для imported/custom layouts показывают позици
 `Add icon` могли падать, хотя `node --check` этого не видел. Browser smoke на свежем origin:
 110 keys, 176 glyph paths, 15 `#icons`, 13 `#f-icons`, console clean; `Add icon` после выбора
 клавиши добавляет строку редактора без ошибок.
+
+Второй срез Stage 7 готов: в нижней панели появилась кнопка `PDF`. Она вызывает существующий
+`SVGExporter.exportToPDF()` из framework, но теперь с явным `unit: "mm"` и page format,
+посчитанным из текущего SVG artboard через подтверждённый коэффициент `25.4 / 72`. Для LCAKB23
+это даёт физический размер страницы `412.462 × 115.954 mm`. Clean-export wrapper теперь
+обслуживает PDF вместе с SVG/PNG, поэтому selection overlay и imported drawing preview не
+попадают в production export. Filename строится по активной раскладке:
+`keyboarder-lcakb23.pdf`, `keyboarder-ansi-tkl.pdf`, и т.д. Browser smoke на fresh origin
+подтвердил enabled `PDF` button, 110 keys, 15 `#icons`, 13 `#f-icons`, нужный mm-размер и чистую
+консоль; сам click/download путь сознательно не запускался, потому что текущий PDF exporter ещё
+тянет `jsPDF` / `svg2pdf` с CDN, а локализация этих библиотек — следующий production пункт.
+
+Третий срез Stage 7 готов: production export больше не зависит от CDN для экспортных библиотек.
+`jsPDF` и `svg2pdf` лежат локально в `vendor/lib/` и подключаются статическими script tags в
+`index.html`; `SVGExporter` также умеет лениво добрать эти же локальные файлы, если статическая
+загрузка была изменена или удалена. `TextToPath` теперь импортирует локальный
+`vendor/lib/opentype.module.js`, так что outline-конвертация тоже не ходит на jsDelivr.
+Инициализация custom UI wiring перенесена в `onInit`, до seed preset bootstrap, а `PresetStore`
+получил короткий timeout на manifest/preset fetch: если локальный сервер или origin ведёт себя
+странно, кнопки экспорта и редакторские handlers всё равно не зависают за пресетами. Browser QA
+после локализации подтвердил, что страница загружается со статическими локальными export libs,
+клик по клавише по-прежнему раскрывает свернутый Legend panel, а консоль не показывает новых
+runtime errors. Ограничение проверки: Browser plugin не отдал `download` event ни для `PDF`, ни
+для уже существующего blob-based `JSON` export, поэтому сам факт сохранения файла проверен только
+косвенно через доступность локальных библиотек, отсутствие ошибок и существующий export path.
+
+Четвёртый срез Stage 7 готов: добавлен режим legend text output. В Type panel появился
+segmented control `Outlines` / `Text`; дефолт остаётся `Outlines`, поэтому существующий точный
+рендер кривыми и verification не меняются. В режиме `Text` слой `#glyphs` рендерится настоящими
+SVG `<text>` с теми же baseline-координатами, `letter-spacing` в em, `font-family: "YS Text"` и
+локальным `@font-face` из `Fonts/YS Text/YS Text-Regular.ttf`. Новый `legendTextMode` сохраняется
+в presets/model JSON и попадает в `keyboard.type`. Browser smoke подтвердил: на дефолте
+`#glyphs` содержит 176 `<path>` и 0 `<text>`, после переключения `Text` — 0 `<path>` и
+176 `<text>`, первый текст `esc`, шрифт `YS Text`, 110 keys, 15 `#icons`, 13 `#f-icons`,
+console clean.
+
+Пятый срез Stage 7 готов: добавлен редактор таблицы оптической компенсации знаков препинания.
+В Type panel появился компактный `Comp char` editor: выбор знака из базовой таблицы, числовые
+поля `L` / `R` с шагом 0.01 em-units, `Apply`, `Reset char`, `Reset table` и статус
+`reference` / `edited`. Правки хранятся не как копия всей таблицы, а как `compensationTableEdits`
+поверх сгенерированной `YS_TEXT_REGULAR.table`; `null` у стороны означает удалить её из
+эффективной таблицы, числовые значения округляются до сотых. `compFor()` теперь кэшируется по
+режиму компенсации и JSON-подписи table edits, а `typeSigFrom()` включает эти edits, поэтому
+изменение таблицы сразу пересчитывает позиции легенд. `Reference type` очищает table edits.
+Поле сохраняется в presets/model JSON и попадает в `keyboard.type`; `analysis/model-io.mjs`
+проверяет round-trip, округление и `null`. Browser smoke: 31 table character, выбор `~`,
+изменение `L` на `20.25`, статус `edited · L 20.25 · R -`, активные reset buttons; затем
+`Reset char` возвращает `reference · L 11.8 · R -`, reset buttons disabled, 110 keys,
+176 glyph paths, console clean.
+
+Шестой срез Stage 7 готов: добавлена пакетная генерация SVG по языковым слоям. В нижней панели
+появилась кнопка `Batch SVG`; один клик экспортирует текущую геометрию/оформление как
+`keyboarder-<layout>-dual.svg`, `keyboarder-<layout>-latin.svg` и
+`keyboarder-<layout>-cyrillic.svg`. Во время batch export инструмент silent-переключает
+`languageLayer`, вызывает обычный clean `exportSVG()` для каждого слоя, затем в `finally`
+восстанавливает исходный язык и рендерит обратно, поэтому preset dirty/history не загрязняются
+временными состояниями. Browser smoke подтвердил: перед batch `dual`, 110 keys, 176 paths;
+после клика кнопка не зависла, язык вернулся в `dual`, 110 keys, 176 glyph paths,
+15 `#icons`, 13 `#f-icons`, console clean. Как и с обычными blob/download exports,
+Browser plugin не предоставляет надёжный saved-file inspection, так что открытие полученных SVG
+в Illustrator остаётся ручной production QA.
 
 ### Этап 8 — про, автоматическая оптическая компенсация любой гарнитуры (4–5 дней)
 
@@ -602,6 +668,32 @@ k = (sb_круглый − sb_плоский)ₜₑₖ / (sb_круглый − 
 регрессия § 8.4 п. 5 не ломается; инварианты 1–3 проходят хотя бы на гротеске, антикве,
 узкой и жирной гарнитуре из контрольного набора.
 
+Первый срез Stage 8 готов: добавлен чистый `app/kb/fontprobe.js` и Node harness
+`analysis/fontprobe.mjs`. Модуль принимает уже распарсенный `Typeface` из `typography.js` и
+снимает: names, `unitsPerEm`, cap-height и x-height с геометрическим приоритетом (`glyph:H`,
+`glyph:x` на YS Text), ascender/descender с OS/2→hhea fallback, italic angle, weight/width class,
+измеренный вертикальный stem (`glyph:I`), средние flat/round sidebearings, variation axes и
+named instances из `fvar`. `autoCompensationParams()` строит объект того же формата, что
+`YS_TEXT_REGULAR`: `eps`/`w` масштабируются от измеренного stem, коэффициенты — от
+flat/round sidebearing delta, punctuation table грубо генерируется из sidebearings для случая,
+когда ручной таблицы у гарнитуры нет. Для YS Text Regular регрессия возвращает ровно текущие
+`eps=32`, `w=300` и исходные coefficients. `runCompensationInvariants()` проверяет flat-stem,
+monotonic `H < S < O < A < W` и symmetry (`O`, `H`, `X`, `Ж`) без эталонной выкладки.
+`analysis/fontprobe.mjs` проверяет YS Text Regular и YS Text Variable: variable font exposes
+`wght` / `wdth` axes with defaults `400` / `100`, named instances are visible, and invariants pass.
+
+Второй срез Stage 8 готов: Type panel получил `Drop font file`, `Browse Font` и `Reference font`.
+Файл TTF/OTF/WOFF/WOFF2 разбирается через тот же `parseFont()`; после успешного импорта активный
+`TYPEFACE` меняется, layout cache и `Compensator` cache инвалидируются, `buildLegends()` начинает
+рисовать live contours из новой гарнитуры, а `compFor()` строится от `autoCompensationParams()`
+этой гарнитуры. SVG `<text>` mode тоже переключается на сессионный `@font-face`
+`Keyboarder Custom Font`. Статус показывает имя гарнитуры, файл/размер, UPM, cap/x-height,
+stem, оси вариативного шрифта, параметры компенсации и результат invariants. Импортированный
+font file остаётся **сессионным**: он не сохраняется в presets/model JSON, чтобы JSON не начинал
+таскать бинарники и не ломал переносимость. Browser smoke на `YS Text-Bold.ttf` подтвердил
+переключение статуса, 176 outline paths, включение `Reference font`, установку custom
+`@font-face`, чистую консоль и корректный сброс обратно на `YS Text Regular`.
+
 ---
 
 ## 6. Порядок портирования Python → JS
@@ -628,7 +720,7 @@ k = (sb_круглый − sb_плоский)ₜₑₖ / (sb_круглый − 
 | opentype.js даст метрики, отличные от fontTools | низкий | сверка на этапе 6 порядка; расхождения ожидаются только в округлении |
 | Профили контура по сканлайнам тормозят live-рендер | средний | признаки зависят только от гарнитуры → считать один раз при загрузке шрифта, кэшировать по кодовой точке. 176 строк × 24 сканлайна — единицы миллисекунд |
 | Вложенная модель против плоских пресетов фреймворка | средний | свои `collectPreset` / `applyPreset` / `snapshot` / `restore`; `ShareCodec` получит `heavyKeys` для массива клавиш |
-| Ссылки на CDN (CoFo Sans, opentype.js, jsPDF) | средний | для беты приемлемо; локализация библиотек — этап 7 |
+| Ссылки на CDN (CoFo Sans, экспортные библиотеки) | низкий | `opentype.js`, `jsPDF` и `svg2pdf` уже локализованы в `vendor/lib`; UI-шрифт CoFo Sans всё ещё внешний и может фолбэкнуться |
 | `ui-framework` удалят до того, как скопируем | низкий | копирование — самый первый шаг этапа 0 |
 | Шрифт YS Text под лицензией с `fsType=4` | требует решения | см. вопрос 6 |
 | Коэффициенты компенсации не переносятся на другие гарнитуры | **высокий** | этап 8: самокалибровка по полуапрошам гарнитуры плюс четыре инварианта, которые не требуют эталона (§ 8.4). Риск нельзя закрыть заранее — только измерением на нескольких шрифтах |

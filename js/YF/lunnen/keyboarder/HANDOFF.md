@@ -220,6 +220,75 @@ Important local entry points:
     the Illustrator layer structure in `PIPELINE.md`;
   - the Legend element editor keeps the icon group in hidden row state, so selecting an F-key
     and pressing `Apply` does not silently move that icon from `f-icons` to `icons`.
+  - added a bottom-bar `PDF` export button;
+  - `app.exportPDF()` calls the framework's existing `SVGExporter.exportToPDF()` with
+    `unit: "mm"` and an explicit `{ width, height }` page format computed from the current
+    SVG artboard via the fixed `25.4 / 72` conversion;
+  - clean export hiding now covers PDF as well as SVG/PNG, so selection and imported drawing
+    overlays stay out of production files;
+  - PDF filenames use the active layout slug, e.g. `keyboarder-lcakb23.pdf`.
+  - localized production export dependencies: `vendor/lib/jspdf.umd.min.js` and
+    `vendor/lib/svg2pdf.umd.min.js` are shipped with the app and included from `index.html`;
+  - `vendor/framework/src/export/SVGExporter.js` now prefers those local PDF libraries, with a
+    same-origin lazy loader fallback if the static tags are removed;
+  - `vendor/framework/src/export/TextToPath.js` now imports local
+    `vendor/lib/opentype.module.js` instead of jsDelivr;
+  - custom app wiring now runs in `onInit`, before preset seed bootstrap, so export/editor buttons
+    are attached even if seed loading is slow;
+  - `vendor/framework/src/preset/PresetStore.js` now applies a 5-second timeout to seed manifest
+    and preset JSON fetches to avoid indefinite startup waits on broken local origins.
+  - added a Type panel `Outlines` / `Text` mode for legend output;
+  - default `legendTextMode` remains `outlines`, preserving the current exact path rendering;
+  - in `text` mode, `#glyphs` renders SVG `<text>` elements with the same baseline coordinates,
+    em letter-spacing, and the active legend font family (`YS Text` by default; the Stage 8
+    session import uses `Keyboarder Custom Font`);
+  - `legendTextMode` is included in presets/model JSON and in the exported `keyboard.type`
+    section.
+  - added a compact compensation table editor in the Type panel:
+    choose a punctuation character, edit `L`/`R` table values in em-units, apply, reset the
+    selected character, or reset the whole table;
+  - table edits are stored as `compensationTableEdits` on top of generated
+    `YS_TEXT_REGULAR.table`; numeric edits round to hundredths, and `null` deletes a side from the
+    effective table;
+  - compensation caches and layout signatures now include table edits, so changes immediately
+    reposition affected edge legends;
+  - `Reference type` clears `compensationTableEdits`, and model JSON includes it in
+    `keyboard.type`.
+  - added `Batch SVG` export: it silently cycles the current layout through `dual`, `latin`, and
+    `cyrillic`, calls the normal clean SVG exporter for each layer, and restores the original
+    `languageLayer` in `finally`;
+  - batch filenames are `keyboarder-<layout>-dual.svg`, `keyboarder-<layout>-latin.svg`, and
+    `keyboarder-<layout>-cyrillic.svg`.
+- Started Stage 8 automatic font compensation:
+  - added pure `app/kb/fontprobe.js`;
+  - it probes a parsed `Typeface` for names, units per em, geometric-priority cap/x-height,
+    ascender/descender, italic angle, weight/width class, measured vertical stem width, flat/round
+    sidebearing calibration, and `fvar` variation axes/named instances;
+  - `autoCompensationParams()` returns a Compensator-compatible params object with `eps`/`w`
+    scaled from measured stem width, coefficients scaled from flat/round sidebearing delta, and a
+    rough generated punctuation table for fonts that have no hand-tuned table;
+  - for YS Text Regular, auto params intentionally reproduce the current reference values:
+    `eps = 32`, `w = 300`, and the same coefficients as `YS_TEXT_REGULAR`;
+  - `runCompensationInvariants()` checks flat-stem, monotonic `H < S < O < A < W`, and symmetry
+    invariants without needing a manually placed reference layout;
+  - added `analysis/fontprobe.mjs`, covering YS Text Regular and YS Text Variable (`wght`/`wdth`
+    axes, defaults `400`/`100`, named instances visible, invariants pass).
+  - added a first live font-import UI in the Type panel: `Drop font file`, `Browse Font`, and
+    `Reference font`;
+  - imported TTF/OTF/WOFF/WOFF2 files are parsed through `parseFont()`, probed through
+    `fontprobe.js`, and applied to the active live renderer by replacing module-level
+    `TYPEFACE`;
+  - `TYPEFACE_SIG` is now part of the layout cache key, so changing fonts invalidates cached
+    legends instead of reusing old outlines/ink boxes;
+  - custom fonts use `autoCompensationParams()` as the base params for `Compensator`; the
+    editable punctuation table overlays the active base table instead of always overlaying
+    `YS_TEXT_REGULAR.table`;
+  - SVG `<text>` mode now uses the active legend font family and a session-only
+    `@font-face` named `Keyboarder Custom Font` for imported files;
+  - the font status shows family/file, UPM, cap/x-height, stem, variation axes, compensation
+    params/table count, and invariant results;
+  - imported font binaries are intentionally session-only and are not persisted into presets or
+    `keyboarder.model.v1` JSON.
 
 ## Verification
 
@@ -234,13 +303,17 @@ node --check app/kb/verify.js
 node --check app/kb/model-io.js analysis/model-io.mjs
 node --check app/kb/content/generated-layouts.js analysis/layout-content.mjs analysis/presets.mjs
 node --check app/kb/svg-blueprint.js analysis/blueprint-import.mjs
+node --check app/kb/fontprobe.js analysis/fontprobe.mjs
 node analysis/harness.mjs
 node analysis/verify-legends.mjs
 node analysis/model-io.mjs
 node analysis/layout-content.mjs
 node analysis/presets.mjs
 node analysis/blueprint-import.mjs
+node analysis/fontprobe.mjs
 python3 analysis/export_tool.py
+PYTHONPYCACHEPREFIX=/tmp/keyboarder-pycache python3 -m py_compile analysis/export_tool.py
+git diff --check
 ```
 
 Geometry check against `LCAKB23.layout.json`:
@@ -263,6 +336,36 @@ Browser smoke:
   13 `#f-icons` entries, and no console warnings/errors.
 - Selecting a key and clicking `Add icon` adds an icon row in the Legend editor with no console
   errors.
+- PDF/export-library smoke: local `jsPDF` and `svg2pdf` bundles are present in `vendor/lib/` and
+  loaded by static script tags; the `PDF` button is enabled, the artboard remains
+  `1169.1846855 × 328.6893243 px` -> `412.462 × 115.954 mm`, 110 keys render, and no current
+  console warnings/errors were introduced. Browser automation did not surface a `download` event
+  for either the new `PDF` path or the existing blob-based `JSON` path, so saved-file inspection
+  remains a manual QA item rather than a confirmed app failure.
+- Legend text mode smoke on `http://127.0.0.1:8015/`: default `Outlines` renders 176
+  `#glyphs path` nodes and 0 `#glyphs text` nodes; after clicking `Text`, `#glyphs` renders 0
+  paths and 176 text nodes, the first text is `esc`, its `font-family` is `YS Text`, keys remain
+  110, icons remain split as 15 `#icons` and 13 `#f-icons`, and the current console is clean.
+- Stage 8 font import smoke on `http://127.0.0.1:8015/`:
+  - baseline reference font status shows `YS Text Regular`, `UPM 1000`, `cap 717`, `x 519`,
+    `stem 94`, invariant `pass`, 176 `#glyphs path` nodes, and `Reference font` disabled;
+  - using `Browse Font` with local `Fonts/YS Text/YS Text-Bold.ttf` switches status to
+    `YS Text Bold`, reports file size `231.6 KB`, `stem 143`, auto comp `eps 48.68`,
+    `w 456.38`, generated table count `7`, installs the custom `@font-face`, keeps 176
+    outline paths, enables `Reference font`, and produces no console errors;
+  - clicking `Reference font` removes the custom `@font-face`, returns to `YS Text Regular`,
+    disables the reset button, and keeps 176 outline paths;
+  - after the reset, `Text` mode renders 176 text nodes with `font-family="YS Text"`, and
+    returning to `Outlines` restores 176 paths.
+- Compensation table editor smoke on `http://127.0.0.1:8015/`: the editor lists 31 characters;
+  selecting `~`, setting `L` to `20.25`, and applying shows `edited · L 20.25 · R -` with reset
+  buttons enabled; `Reset char` returns `reference · L 11.8 · R -`, disables both reset buttons,
+  keeps 110 keys and 176 glyph paths, and produces no console warnings/errors.
+- Batch SVG smoke on `http://127.0.0.1:8015/`: before clicking, the language layer is `dual`,
+  with 110 keys and 176 glyph paths; after clicking `Batch SVG`, the button re-enables, language
+  returns to `dual`, the DOM still has 110 keys, 176 glyph paths, 15 `#icons`, 13 `#f-icons`, and
+  no console warnings/errors. Browser automation still cannot inspect the downloaded SVG files
+  reliably.
 
 Browser QA on `http://127.0.0.1:8000/`:
 
@@ -431,9 +534,9 @@ Stage 4 is complete for code:
   original source rows.
 - Done: first model JSON export/import round-trip shape with `keyboarder.model.v1`, normalized
   settings, explicit domain fields, and pure Node coverage in `analysis/model-io.mjs`.
-- Remaining manual QA note: the OS file picker itself still needs a human smoke check, because
-  Browser automation cannot select a local file there. The parsing/normalization path behind it
-  is covered in Node.
+- Remaining QA note: JSON file import through the browser picker was not re-smoked in this
+  Stage 8 pass. The parsing/normalization path behind it is covered in Node, and the Browser
+  file chooser flow itself was confirmed by the Stage 8 font-import smoke.
 
 Stage 5 is complete for code:
 
@@ -457,6 +560,26 @@ Stage 6 is started:
   multiple custom layouts, richer suspected-key review, and conversion of draft structure into
   nicer human-authored `u`/`repeat` rows.
 
+Stage 7 main code items are complete:
+
+- Done: Illustrator-like SVG icon layer split (`icons` / `f-icons`), PDF export button with
+  physically exact mm page format, clean export hiding for PDF, local `jsPDF` / `svg2pdf` /
+  `opentype.js` dependencies, guarded seed preset loading, and legend output mode UI
+  (`Outlines` / `Text`), the compensation table editor, and `Batch SVG` generation across
+  language layers.
+- Still remaining: stronger manual QA of downloaded PDF/SVG files in Illustrator/PDF viewer.
+
+Stage 8 is started:
+
+- Done: pure font probing/autocalibration module plus Node coverage for YS Text Regular and YS
+  Text Variable.
+- Done: first UI font upload/drop slice. Imported font files are applied to live outline rendering,
+  SVG text mode, active compensation params, the compensation table editor, and probe/invariant
+  status. The imported font file is session-only and not persisted into presets/model JSON.
+- Still remaining: variation instance selection, multi-font handling, visual control sheet
+  generation, broader invariant checks on several unrelated fonts, and production QA of exports
+  generated while a custom font is active.
+
 ## Notes For The Next Assistant
 
 - Keep UI text in English.
@@ -466,4 +589,8 @@ Stage 6 is started:
 - Defaults matter: at reference settings, numerical verification should stay green.
 - The tool currently starts from static LCAKB23 data and defaults to the `LCAKB23` preset.
   Editing, model JSON import/export, Stage 5 layout-library workflows, and language layer
-  switching now exist; SVG drawing import has its first read-only ingestion/preview slice.
+  switching now exist; SVG drawing import has its first importable draft slice; Stage 7 export
+  polish has local PDF/outline libraries, a mm-sized PDF button, and selectable legend output as
+  outlines or SVG text, plus editable punctuation compensation table overrides and language-layer
+  batch SVG export. Stage 8 has a pure fontprobe/autocalibration foundation and the first live
+  session-font upload UI; variation instances and multi-font workflows are still open.

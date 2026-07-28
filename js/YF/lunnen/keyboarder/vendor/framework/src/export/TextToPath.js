@@ -25,24 +25,16 @@ export class TextToPath {
             return this.loadingPromise;
         }
 
-        this.loadingPromise = new Promise((resolve, reject) => {
+        this.loadingPromise = (async () => {
             if (window.opentype) {
                 this.opentypeLoaded = true;
-                resolve(true);
-                return;
+                return true;
             }
-
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js';
-            script.onload = () => {
-                this.opentypeLoaded = true;
-                resolve(true);
-            };
-            script.onerror = () => {
-                reject(new Error('Failed to load opentype.js'));
-            };
-            document.head.appendChild(script);
-        });
+            const module = await import('../../../lib/opentype.module.js');
+            window.opentype = module.default || module;
+            this.opentypeLoaded = true;
+            return true;
+        })();
 
         return this.loadingPromise;
     }

@@ -8,6 +8,11 @@ export class SVGExporter {
     constructor(options = {}) {
         this.textToPath = options.textToPath || null;
         this.pdfLibsLoaded = false;
+        this.pdfLibPaths = {
+            jsPDF: 'vendor/lib/jspdf.umd.min.js',
+            svg2pdf: 'vendor/lib/svg2pdf.umd.min.js',
+            ...options.pdfLibPaths
+        };
     }
 
     /**
@@ -43,30 +48,13 @@ export class SVGExporter {
      * Загрузить библиотеки для PDF (jsPDF + svg2pdf)
      */
     async loadPDFLibraries() {
-        if (this.pdfLibsLoaded) return;
+        const hasJsPDF = () => !!window.jspdf?.jsPDF;
+        const hasSvg2pdf = () => !!(window.svg2pdf?.svg2pdf || window.svg2pdf);
+        if (this.pdfLibsLoaded && hasJsPDF() && hasSvg2pdf()) return;
 
-        return new Promise((resolve, reject) => {
-            if (window.jspdf) {
-                this.pdfLibsLoaded = true;
-                resolve();
-                return;
-            }
-
-            const jsPDFScript = document.createElement('script');
-            jsPDFScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-            jsPDFScript.onload = () => {
-                const svg2pdfScript = document.createElement('script');
-                svg2pdfScript.src = 'https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.3/dist/svg2pdf.umd.min.js';
-                svg2pdfScript.onload = () => {
-                    this.pdfLibsLoaded = true;
-                    resolve();
-                };
-                svg2pdfScript.onerror = () => reject(new Error('Failed to load svg2pdf.js'));
-                document.head.appendChild(svg2pdfScript);
-            };
-            jsPDFScript.onerror = () => reject(new Error('Failed to load jsPDF'));
-            document.head.appendChild(jsPDFScript);
-        });
+        await this._loadExportLib(this.pdfLibPaths.jsPDF, hasJsPDF, 'jsPDF');
+        await this._loadExportLib(this.pdfLibPaths.svg2pdf, hasSvg2pdf, 'svg2pdf.js');
+        this.pdfLibsLoaded = true;
     }
 
     /**
@@ -213,6 +201,38 @@ export class SVGExporter {
         this.normalizeSvgForExport(cloned);
         this.removeInteractiveElements(cloned);
         return cloned;
+    }
+
+    async _loadExportLib(src, isReady, label) {
+        if (isReady()) return;
+        const url = new URL(src, document.baseURI).href;
+        try {
+            await import(url);
+            if (isReady()) return;
+        } catch (_) {
+            // Some third-party bundles are classic scripts only; fall back below.
+        }
+        await this._loadScriptOnce(url, isReady, label);
+    }
+
+    _loadScriptOnce(src, isReady, label) {
+        if (isReady()) return Promise.resolve();
+        return new Promise((resolve, reject) => {
+            const existing = document.querySelector(`script[data-export-lib="${label}"]`);
+            if (existing) {
+                existing.addEventListener('load', () => resolve(), { once: true });
+                existing.addEventListener('error', () => reject(new Error(`Failed to load ${label}`)), { once: true });
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = src;
+            script.dataset.exportLib = label;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error(`Failed to load ${label}`));
+            document.head.appendChild(script);
+        }).then(() => {
+            if (!isReady()) throw new Error(`${label} loaded but did not expose its API`);
+        });
     }
 
     /** @private */

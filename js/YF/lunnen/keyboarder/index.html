@@ -154,6 +154,44 @@
                             <button type="button" data-mode="table" aria-pressed="true">Model + table</button>
                         </div>
                     </div>
+                    <div class="control-group">
+                        <div class="segmented-control" id="legendTextModeGroup" role="group" aria-label="Legend text mode">
+                            <button type="button" data-mode="outlines" aria-pressed="true">Outlines</button>
+                            <button type="button" data-mode="text" aria-pressed="false">Text</button>
+                        </div>
+                    </div>
+                    <div class="font-import" id="fontImport">
+                        <div class="font-dropzone" id="fontDropzone">
+                            <span>Drop font file</span>
+                        </div>
+                        <div class="font-actions">
+                            <button type="button" class="btn-inline" id="fontBrowseBtn">Browse Font</button>
+                            <button type="button" class="btn-inline" id="fontReferenceBtn">Reference font</button>
+                        </div>
+                        <div class="font-status" id="fontProbeStatus"></div>
+                    </div>
+                    <div class="comp-table-editor" id="compTableEditor">
+                        <div class="comp-table-row">
+                            <label for="compTableCharSelect">
+                                <span>Comp char</span>
+                                <select id="compTableCharSelect" class="select-control" aria-label="Compensation table character"></select>
+                            </label>
+                            <label for="compTableLeftInput">
+                                <span>L</span>
+                                <input id="compTableLeftInput" type="number" step="0.01" inputmode="decimal" aria-label="Left compensation, em units">
+                            </label>
+                            <label for="compTableRightInput">
+                                <span>R</span>
+                                <input id="compTableRightInput" type="number" step="0.01" inputmode="decimal" aria-label="Right compensation, em units">
+                            </label>
+                        </div>
+                        <div class="comp-table-actions">
+                            <button type="button" class="btn-inline" id="applyCompTableBtn">Apply</button>
+                            <button type="button" class="btn-inline" id="resetCompTableCharBtn">Reset char</button>
+                            <button type="button" class="btn-inline" id="resetCompTableBtn">Reset table</button>
+                        </div>
+                        <div class="comp-table-status" id="compTableStatus"></div>
+                    </div>
                     <div class="control-group pill-toggle-row">
                         <button type="button" class="btn-inline" id="resetTypeBtn"
                                 data-tooltip="Restore measured type settings">Reference type</button>
@@ -369,11 +407,14 @@
         <button class="btn-fixed" id="verifyBtn" type="button" data-tooltip="Compare geometry to the reference">Verify</button>
         <button class="btn-fixed" id="exportJsonBtn" type="button" aria-label="Export model JSON" data-tooltip="Export model JSON">JSON</button>
         <button class="btn-fixed" id="importJsonBtn" type="button" aria-label="Import model JSON" data-tooltip="Import model JSON">Import</button>
+        <button class="btn-fixed" id="exportPdfBtn" type="button">PDF</button>
         <button class="btn-fixed" id="exportPngBtn" type="button">PNG</button>
+        <button class="btn-fixed" id="exportBatchSvgBtn" type="button">Batch SVG</button>
         <button class="btn-fixed" id="exportSvgBtn" type="button">SVG ⌘E</button>
     </nav>
     <input id="importJsonInput" type="file" accept="application/json,.json" hidden>
     <input id="drawingSvgInput" type="file" accept="image/svg+xml,.svg" hidden>
+    <input id="fontFileInput" type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden>
 
     <dialog id="dialog" class="modal">
         <div class="modal-content">
@@ -385,6 +426,8 @@
     </dialog>
 </div>
 
-<script type="module" src="app/tool.js"></script>
+<script src="vendor/lib/jspdf.umd.min.js"></script>
+<script src="vendor/lib/svg2pdf.umd.min.js"></script>
+<script type="module" src="app/tool.js?v=20260728-stage8a"></script>
 </body>
 </html>

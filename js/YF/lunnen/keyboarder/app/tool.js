@@ -12,8 +12,9 @@ import { buildLayout, gapOf, widthInU } from './kb/grid.js';
 import { attachGuides } from './kb/guides.js';
 import { LAYOUT_OPTIONS, LAYOUTS, LCAKB23 } from './kb/layouts.js';
 import { toMm, toPx } from './kb/units.js';
-import { loadTypeface } from './kb/typography.js';
+import { loadTypeface, parseFont } from './kb/typography.js';
 import { Compensator, YS_TEXT_REGULAR } from './kb/compensate.js';
+import { autoCompensationParams, probeTypeface, runCompensationInvariants } from './kb/fontprobe.js';
 import { attachContent, buildLegends, textPath } from './kb/legends.js';
 import {
     loadReference, loadLegendReference, compare, reportHtml,
@@ -36,6 +37,7 @@ import {
     presetBlobFromKeyboardModel as presetBlobFromKeyboardModelData,
     roundMm,
     sanitizeContentEdits as sanitizeContentEditsData,
+    sanitizeCompensationTableEdits as sanitizeCompensationTableEditsData,
     sanitizeLayoutEdits as sanitizeLayoutEditsData
 } from './kb/model-io.js';
 import { analyzeSvgBlueprint, blueprintSummaryLines } from './kb/svg-blueprint.js';
@@ -72,9 +74,15 @@ const ICON_OPTIONS = Object.keys(ICONS).sort((a, b) => a.localeCompare(b));
 const TEMPLATE_VARIANTS = buildTemplateVariants(CONTENT);
 const TEMPLATE_BY_ID = new Map(TEMPLATE_VARIANTS.map((v) => [v.id, v]));
 const LANGUAGE_LAYERS = new Set(['dual', 'latin', 'cyrillic']);
+const BATCH_LANGUAGE_LAYERS = ['dual', 'latin', 'cyrillic'];
+const LEGEND_TEXT_MODES = new Set(['outlines', 'text']);
 const ICON_LAYER_IDS = ['icons', 'f-icons'];
 const CYRILLIC_RE = /[\u0400-\u04FF]/;
 const SINGLE_LATIN_RE = /^[A-Za-z]$/;
+const REFERENCE_FONT_URL = 'Fonts/YS%20Text/YS%20Text-Regular.ttf';
+const REFERENCE_FONT_FAMILY = 'YS Text';
+const CUSTOM_FONT_FAMILY = 'Keyboarder Custom Font';
+const FONT_FILE_RE = /\.(otf|ttf|woff|woff2)$/i;
 
 function isLayoutLike(layout) {
     return !!layout
@@ -104,6 +112,11 @@ function layoutOptionsFor(s = {}) {
 function normalizeLanguageLayer(value) {
     const key = String(value || 'dual').trim();
     return LANGUAGE_LAYERS.has(key) ? key : 'dual';
+}
+
+function normalizeLegendTextMode(value) {
+    const key = String(value || 'outlines').trim();
+    return LEGEND_TEXT_MODES.has(key) ? key : 'outlines';
 }
 
 function sourceLayoutFor(s = {}) {
@@ -146,22 +159,59 @@ let REFERENCE = null;
  * и ждать его, чтобы показать первый кадр, незачем.
  */
 let TYPEFACE = null;
+let REFERENCE_TYPEFACE = null;
+let REFERENCE_FONT_PROBE = null;
+let REFERENCE_FONT_INVARIANTS = null;
+let TYPEFACE_SIG = 'font:loading';
+let FONT_IMPORT = null;
+let FONT_FACE_STYLE = null;
 let COMP_CACHE = new Map();
 let SELECTION = { active: 0, indices: [0] };
 let LAST_DELETED_EDIT_ID = null;
 let LAST_DELETED_ROW_ID = null;
 let BLUEPRINT_IMPORT = null;
+let COMP_TABLE_SELECTED_CH = null;
+
+function activeCompensationBase() {
+    return FONT_IMPORT?.params || YS_TEXT_REGULAR;
+}
+
+function activeCompensationTable() {
+    return activeCompensationBase().table || {};
+}
+
+function activeLegendFontFamily() {
+    return FONT_IMPORT ? CUSTOM_FONT_FAMILY : REFERENCE_FONT_FAMILY;
+}
+
+function compensationTableWithEdits(baseTable = activeCompensationTable(), edits = {}) {
+    const table = clonePlain(baseTable || {});
+    for (const [ch, row] of Object.entries(edits)) {
+        const next = { ...(table[ch] || {}) };
+        for (const side of ['L', 'R']) {
+            if (!Object.prototype.hasOwnProperty.call(row, side)) continue;
+            if (row[side] === null) delete next[side];
+            else if (Number.isFinite(row[side])) next[side] = row[side];
+        }
+        if (Object.keys(next).length) table[ch] = next;
+        else delete table[ch];
+    }
+    return table;
+}
 
 function compFor(s) {
     if (!TYPEFACE || s.compensationMode === 'off') return null;
     const mode = s.compensationMode || 'table';
-    if (!COMP_CACHE.has(mode)) {
+    const edits = mode === 'table' ? sanitizeCompensationTableEditsData(s.compensationTableEdits || {}) : {};
+    const sig = `${TYPEFACE_SIG}:${mode}:${JSON.stringify(edits)}`;
+    if (!COMP_CACHE.has(sig)) {
+        const base = activeCompensationBase();
         const params = mode === 'model'
-            ? { ...YS_TEXT_REGULAR, table: {} }
-            : YS_TEXT_REGULAR;
-        COMP_CACHE.set(mode, new Compensator(TYPEFACE, params));
+            ? { ...base, table: {} }
+            : { ...base, table: compensationTableWithEdits(base.table || {}, edits) };
+        COMP_CACHE.set(sig, new Compensator(TYPEFACE, params));
     }
-    return COMP_CACHE.get(mode);
+    return COMP_CACHE.get(sig);
 }
 
 /** Значения сетки из настроек (мм) — в форму, которую ждёт buildLayout (px). */
@@ -186,6 +236,7 @@ const typeSigFrom = (s) => JSON.stringify({
     leading: s.leading,
     trackingOffset: s.trackingOffset,
     compensationMode: s.compensationMode,
+    compensationTableEdits: s.compensationTableEdits || {},
     languageLayer: normalizeLanguageLayer(s.languageLayer),
     contentEdits: s.contentEdits || {}
 });
@@ -244,7 +295,7 @@ function layoutFor(s) {
     const sourceLayout = sourceLayoutFor(s);
     const g = gridFrom(s);
     const layoutEdits = sanitizeLayoutEditsForLayout(s.layoutEdits || {}, sourceLayout);
-    const sig = sourceLayout.meta.name + JSON.stringify(g) + JSON.stringify(layoutEdits) + typeSigFrom(s) + (TYPEFACE ? '·tf' : '');
+    const sig = sourceLayout.meta.name + JSON.stringify(g) + JSON.stringify(layoutEdits) + typeSigFrom(s) + TYPEFACE_SIG;
     if (cached.sig !== sig) {
         const editedLayout = layoutWithEdits(sourceLayout, layoutEdits, g);
         let renderLayout = editedLayout;
@@ -309,6 +360,8 @@ const app = defineTool({
         leading: TYPE_DEFAULTS.leading,
         trackingOffset: TYPE_DEFAULTS.trackingOffset,
         compensationMode: 'table',
+        legendTextMode: 'outlines',
+        compensationTableEdits: {},
 
         showCaps: true,
         showGuides: false,
@@ -390,6 +443,9 @@ const app = defineTool({
     syncControls(app) {
         syncLayoutSelect(app.settings);
         syncLanguageLayerSelect(app.settings);
+        syncLegendTextMode(app.settings);
+        syncFontImportStatus();
+        syncCompensationTableEditor(app.settings);
     },
     share: { quantizableFloatKeys: [] },
     export: { filename: 'keyboarder.svg' },
@@ -487,12 +543,15 @@ const app = defineTool({
 
         const legends = layoutFor(s).legends;
 
-        // Надписи — кривыми из TTF, а не <text>: результат не зависит от того, установлен ли
-        // YS Text у пользователя, и совпадает с тем, что уйдёт в экспорт (решение 2).
         if (s.showGlyphs && TYPEFACE) {
+            const textMode = normalizeLegendTextMode(s.legendTextMode);
             const g = create('g', { id: 'glyphs', fill: s.inkColor });
             for (const el of legends) {
                 if (el.kind !== 'txt') continue;
+                if (textMode === 'text') {
+                    g.appendChild(renderLegendText(create, el, s.inkColor));
+                    continue;
+                }
                 const d = textPath(TYPEFACE, el);
                 if (d) g.appendChild(create('path', { d }));
             }
@@ -580,19 +639,32 @@ const app = defineTool({
         updateKeyGeometryEditor(s, keys);
         updateLegendEditor(s, keys);
         syncCompensationMode(s);
+        syncLegendTextMode(s);
+        syncFontImportStatus();
+        syncCompensationTableEditor(s);
         syncLayoutSelect(s);
         syncLanguageLayerSelect(s);
         syncDrawingImportStatus();
     },
 
-    onReady(readyApp) {
+    onInit(readyApp) {
+        installPdfExport(readyApp);
         installCleanExports(readyApp);
+        installBatchSvgExport(readyApp);
         initLayoutSelect(readyApp);
         initLanguageLayerSelect(readyApp);
+        initFontImport(readyApp);
         initDrawingImport(readyApp);
+        initCompensationTableEditor(readyApp);
 
         document.getElementById('exportSvgBtn')?.addEventListener('click', () => readyApp.exportSVG());
         document.getElementById('exportPngBtn')?.addEventListener('click', () => readyApp.exportPNG());
+        document.getElementById('exportBatchSvgBtn')?.addEventListener('click', () => {
+            void readyApp.exportLanguageBatchSVG();
+        });
+        document.getElementById('exportPdfBtn')?.addEventListener('click', () => {
+            void readyApp.exportPDF();
+        });
         document.getElementById('exportJsonBtn')?.addEventListener('click', () => {
             exportModelJSON(readyApp);
         });
@@ -609,6 +681,11 @@ const app = defineTool({
             e.target.value = '';
             void importDrawingSvgFile(readyApp, file);
         });
+        document.getElementById('fontFileInput')?.addEventListener('change', (e) => {
+            const file = e.target.files?.[0] || null;
+            e.target.value = '';
+            void importFontFile(readyApp, file);
+        });
 
         document.getElementById('resetGridBtn')?.addEventListener('click', () => {
             const sourceLayout = sourceLayoutFor(readyApp.settings);
@@ -624,7 +701,9 @@ const app = defineTool({
         document.getElementById('resetTypeBtn')?.addEventListener('click', () => {
             const values = {
                 ...TYPE_DEFAULTS,
-                compensationMode: 'table'
+                compensationMode: 'table',
+                legendTextMode: 'outlines',
+                compensationTableEdits: {}
             };
             readyApp.settingsStore.setMultiple(values);
             syncSliderValues(readyApp, values);
@@ -705,6 +784,30 @@ const app = defineTool({
                 readyApp.settingsStore.set('compensationMode', btn.dataset.mode);
             });
         });
+        document.querySelectorAll('#legendTextModeGroup [data-mode]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                readyApp.settingsStore.set('legendTextMode', normalizeLegendTextMode(btn.dataset.mode));
+            });
+        });
+        document.getElementById('compTableCharSelect')?.addEventListener('change', (e) => {
+            COMP_TABLE_SELECTED_CH = e.target.value || COMP_TABLE_SELECTED_CH;
+            syncCompensationTableEditor(readyApp.settings);
+        });
+        document.getElementById('applyCompTableBtn')?.addEventListener('click', () => {
+            applyCompensationTableEdit(readyApp);
+        });
+        document.getElementById('resetCompTableCharBtn')?.addEventListener('click', () => {
+            resetCompensationTableChar(readyApp);
+        });
+        document.getElementById('resetCompTableBtn')?.addEventListener('click', () => {
+            readyApp.settingsStore.set('compensationTableEdits', {});
+        });
+        document.getElementById('compTableEditor')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                applyCompensationTableEdit(readyApp);
+                e.preventDefault();
+            }
+        });
 
         readyApp.dom?.surface?.addEventListener('click', (e) => {
             const key = keyAtClientPoint(readyApp.dom.surface, layoutFor(readyApp.settings).keys, e.clientX, e.clientY);
@@ -773,11 +876,19 @@ const app = defineTool({
         }).catch(() => { /* подложка необязательна */ });
 
         // Гарнитура: путь с пробелом обязан быть URL-энкоден, папка называется Fonts с большой.
-        loadTypeface('Fonts/YS%20Text/YS%20Text-Regular.ttf').then((tf) => {
+        loadTypeface(REFERENCE_FONT_URL).then((tf) => {
+            REFERENCE_TYPEFACE = tf;
+            REFERENCE_FONT_PROBE = probeTypeface(tf);
+            REFERENCE_FONT_INVARIANTS = runCompensationInvariants(tf, YS_TEXT_REGULAR);
             TYPEFACE = tf;
+            TYPEFACE_SIG = 'font:reference:ys-text-regular';
             COMP_CACHE = new Map();
+            syncFontImportStatus();
+            syncCompensationTableEditor(readyApp.settings);
             readyApp.render();
         }).catch((e) => {
+            TYPEFACE_SIG = 'font:failed';
+            syncFontImportStatus();
             readyApp.dialog?.alert({
                 title: 'Font failed to load',
                 text: `${e.message}\n\nGeometry still works; legends will be missing.`,
@@ -1445,6 +1556,131 @@ function syncCompensationMode(s) {
     });
 }
 
+function syncLegendTextMode(s) {
+    const mode = normalizeLegendTextMode(s.legendTextMode);
+    document.querySelectorAll('#legendTextModeGroup [data-mode]').forEach((btn) => {
+        const active = btn.dataset.mode === mode;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+}
+
+function initCompensationTableEditor(app) {
+    syncCompensationTableEditor(app.settings);
+}
+
+function compensationTableCharacters(s) {
+    const chars = new Set(Object.keys(activeCompensationTable()));
+    const edits = sanitizeCompensationTableEditsData(s.compensationTableEdits || {});
+    for (const ch of Object.keys(edits)) chars.add(ch);
+    return [...chars].sort((a, b) => a.localeCompare(b));
+}
+
+function baseCompensationRow(ch) {
+    return activeCompensationTable()[ch] || {};
+}
+
+function effectiveCompensationRow(s, ch) {
+    return compensationTableWithEdits(
+        activeCompensationTable(),
+        sanitizeCompensationTableEditsData(s.compensationTableEdits || {})
+    )[ch] || {};
+}
+
+function compSideText(value) {
+    return Number.isFinite(value) ? value.toFixed(2).replace(/\.?0+$/, '') : '';
+}
+
+function syncCompensationTableEditor(s) {
+    const select = document.getElementById('compTableCharSelect');
+    const left = document.getElementById('compTableLeftInput');
+    const right = document.getElementById('compTableRightInput');
+    const status = document.getElementById('compTableStatus');
+    const resetChar = document.getElementById('resetCompTableCharBtn');
+    const resetTable = document.getElementById('resetCompTableBtn');
+    if (!select || !left || !right) return;
+
+    const chars = compensationTableCharacters(s);
+    if (!chars.length) return;
+    const sig = chars.join('\u0000');
+    if (select.dataset.sig !== sig) {
+        select.replaceChildren(...chars.map((ch) => {
+            const opt = document.createElement('option');
+            opt.value = ch;
+            opt.textContent = ch;
+            return opt;
+        }));
+        select.dataset.sig = sig;
+    }
+    if (!COMP_TABLE_SELECTED_CH || !chars.includes(COMP_TABLE_SELECTED_CH)) {
+        COMP_TABLE_SELECTED_CH = select.value && chars.includes(select.value) ? select.value : chars[0];
+    }
+    select.value = COMP_TABLE_SELECTED_CH;
+
+    const edits = sanitizeCompensationTableEditsData(s.compensationTableEdits || {});
+    const base = baseCompensationRow(COMP_TABLE_SELECTED_CH);
+    const row = effectiveCompensationRow(s, COMP_TABLE_SELECTED_CH);
+    left.value = compSideText(row.L);
+    right.value = compSideText(row.R);
+    left.placeholder = compSideText(base.L);
+    right.placeholder = compSideText(base.R);
+    if (resetChar) resetChar.disabled = !edits[COMP_TABLE_SELECTED_CH];
+    if (resetTable) resetTable.disabled = !Object.keys(edits).length;
+    if (status) {
+        const changed = edits[COMP_TABLE_SELECTED_CH] ? 'edited' : 'reference';
+        status.textContent = `${changed} · L ${compSideText(row.L) || '-'} · R ${compSideText(row.R) || '-'}`;
+    }
+}
+
+function parseCompTableInput(input) {
+    const raw = String(input?.value || '').trim();
+    if (!raw) return { ok: true, value: null };
+    const value = Number(raw);
+    if (!Number.isFinite(value)) return { ok: false, value: null };
+    return { ok: true, value: Math.round(value * 100) / 100 };
+}
+
+function applyCompensationTableEdit(app) {
+    const ch = document.getElementById('compTableCharSelect')?.value || COMP_TABLE_SELECTED_CH;
+    if (!ch) return;
+    COMP_TABLE_SELECTED_CH = ch;
+    const left = parseCompTableInput(document.getElementById('compTableLeftInput'));
+    const right = parseCompTableInput(document.getElementById('compTableRightInput'));
+    const status = document.getElementById('compTableStatus');
+    if (!left.ok || !right.ok) {
+        if (status) status.textContent = 'Use numeric L/R values.';
+        return;
+    }
+
+    const base = baseCompensationRow(ch);
+    const row = {};
+    if (left.value === null) {
+        if (base.L !== undefined) row.L = null;
+    } else if (left.value !== base.L) {
+        row.L = left.value;
+    }
+    if (right.value === null) {
+        if (base.R !== undefined) row.R = null;
+    } else if (right.value !== base.R) {
+        row.R = right.value;
+    }
+
+    const edits = sanitizeCompensationTableEditsData(app.settings.compensationTableEdits || {});
+    if (Object.keys(row).length) edits[ch] = row;
+    else delete edits[ch];
+    COMP_CACHE.clear();
+    app.settingsStore.set('compensationTableEdits', edits);
+}
+
+function resetCompensationTableChar(app) {
+    const ch = document.getElementById('compTableCharSelect')?.value || COMP_TABLE_SELECTED_CH;
+    if (!ch) return;
+    const edits = sanitizeCompensationTableEditsData(app.settings.compensationTableEdits || {});
+    delete edits[ch];
+    COMP_CACHE.clear();
+    app.settingsStore.set('compensationTableEdits', edits);
+}
+
 function syncTemplateSelect(keys) {
     const select = document.getElementById('legendTemplateSelect');
     if (!select) return;
@@ -1541,6 +1777,221 @@ function initLanguageLayerSelect(app) {
         syncLanguageLayerSelect(app.settings);
         app.renderNow();
     });
+}
+
+function initFontImport(app) {
+    const dropzone = document.getElementById('fontDropzone');
+    const browse = document.getElementById('fontBrowseBtn');
+    const reference = document.getElementById('fontReferenceBtn');
+    browse?.addEventListener('click', () => openFontPicker());
+    reference?.addEventListener('click', () => resetReferenceFont(app));
+    if (dropzone) {
+        for (const eventName of ['dragenter', 'dragover']) {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropzone.classList.add('is-dragover');
+            });
+        }
+        for (const eventName of ['dragleave', 'drop']) {
+            dropzone.addEventListener(eventName, () => {
+                dropzone.classList.remove('is-dragover');
+            });
+        }
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const files = [...(e.dataTransfer?.files || [])];
+            const file = files.find(isFontFile) || files[0] || null;
+            void importFontFile(app, file);
+        });
+    }
+    syncFontImportStatus();
+}
+
+function openFontPicker() {
+    document.getElementById('fontFileInput')?.click();
+}
+
+function isFontFile(file) {
+    return !!file && (FONT_FILE_RE.test(file.name || '') || /^font\//i.test(file.type || ''));
+}
+
+function fontFormatFor(name) {
+    const ext = String(name || '').split('.').pop().toLowerCase();
+    if (ext === 'ttf') return 'truetype';
+    if (ext === 'otf') return 'opentype';
+    if (ext === 'woff2') return 'woff2';
+    if (ext === 'woff') return 'woff';
+    return 'truetype';
+}
+
+function releaseCustomFontFace() {
+    if (FONT_IMPORT?.objectUrl) URL.revokeObjectURL(FONT_IMPORT.objectUrl);
+    if (FONT_FACE_STYLE) FONT_FACE_STYLE.remove();
+    FONT_FACE_STYLE = null;
+}
+
+function installCustomFontFace(file) {
+    releaseCustomFontFace();
+    const objectUrl = URL.createObjectURL(file);
+    const style = document.createElement('style');
+    style.id = 'keyboarder-custom-font-face';
+    style.textContent = `@font-face{font-family:"${CUSTOM_FONT_FAMILY}";src:url("${objectUrl}") format("${fontFormatFor(file.name)}");font-weight:400;font-style:normal;font-display:block;}`;
+    document.head.appendChild(style);
+    FONT_FACE_STYLE = style;
+    if (document.fonts?.load) void document.fonts.load(`12px "${CUSTOM_FONT_FAMILY}"`);
+    return objectUrl;
+}
+
+function fontImportSignature(file, probe) {
+    return [
+        'font:custom',
+        file?.name || 'unnamed',
+        file?.size || 0,
+        file?.lastModified || 0,
+        probe?.id || ''
+    ].join(':');
+}
+
+async function importFontFile(app, file) {
+    if (!file) return;
+    if (!isFontFile(file)) {
+        await app.dialog?.alert({
+            title: 'Font import failed',
+            text: 'Choose an OpenType font file: TTF, OTF, WOFF, or WOFF2.',
+            okText: 'Close'
+        });
+        return;
+    }
+    try {
+        const tf = parseFont(await file.arrayBuffer());
+        const probe = probeTypeface(tf);
+        const params = autoCompensationParams(tf, probe);
+        const invariants = runCompensationInvariants(tf, params);
+        const objectUrl = installCustomFontFace(file);
+        FONT_IMPORT = {
+            name: file.name || 'custom font',
+            size: file.size || 0,
+            type: file.type || '',
+            objectUrl,
+            probe,
+            params,
+            invariants
+        };
+        TYPEFACE = tf;
+        TYPEFACE_SIG = fontImportSignature(file, probe);
+        COMP_CACHE.clear();
+        cached.sig = null;
+        syncFontImportStatus();
+        syncCompensationTableEditor(app.settings);
+        app.renderNow();
+        app._showToast?.('Font loaded');
+    } catch (e) {
+        await app.dialog?.alert({
+            title: 'Font import failed',
+            text: e?.message || 'Could not parse this font file.',
+            okText: 'Close'
+        });
+    }
+}
+
+function resetReferenceFont(app) {
+    releaseCustomFontFace();
+    FONT_IMPORT = null;
+    TYPEFACE = REFERENCE_TYPEFACE;
+    TYPEFACE_SIG = TYPEFACE ? 'font:reference:ys-text-regular' : 'font:loading';
+    COMP_CACHE.clear();
+    cached.sig = null;
+    syncFontImportStatus();
+    syncCompensationTableEditor(app.settings);
+    app.renderNow();
+}
+
+function activeFontProbe() {
+    return FONT_IMPORT?.probe || REFERENCE_FONT_PROBE;
+}
+
+function activeFontInvariants() {
+    return FONT_IMPORT?.invariants || REFERENCE_FONT_INVARIANTS;
+}
+
+function fontDisplayName(probe, fallback = 'Unknown Typeface') {
+    const names = probe?.names || {};
+    return names.fullName || names.postScriptName || names.family || probe?.id || fallback;
+}
+
+function compactNumber(value, digits = 2) {
+    if (!Number.isFinite(value)) return '-';
+    const text = Number(value).toFixed(digits);
+    return text.includes('.') ? text.replace(/\.?0+$/, '') : text;
+}
+
+function fontBytes(value) {
+    if (!Number.isFinite(value) || value <= 0) return '-';
+    if (value >= 1024 * 1024) return `${compactNumber(value / (1024 * 1024), 2)} MB`;
+    if (value >= 1024) return `${compactNumber(value / 1024, 1)} KB`;
+    return `${value} B`;
+}
+
+function fontAxisText(probe) {
+    const axes = probe?.variations?.axes || [];
+    if (!axes.length) return 'none';
+    return axes.map((axis) => {
+        const tag = axis.tag || '?';
+        return `${tag} ${compactNumber(axis.min, 0)}-${compactNumber(axis.max, 0)} def ${compactNumber(axis.default, 0)}`;
+    }).join(', ');
+}
+
+function fontMetricText(probe) {
+    if (!probe) return 'waiting';
+    const m = probe.metrics || {};
+    const stem = probe.stems?.vertical?.value;
+    return `UPM ${compactNumber(m.unitsPerEm?.value, 0)} · cap ${compactNumber(m.capHeight?.value, 0)} · x ${compactNumber(m.xHeight?.value, 0)} · stem ${compactNumber(stem, 1)}`;
+}
+
+function fontCompText() {
+    const params = activeCompensationBase();
+    const calibration = params.calibration || {};
+    const tableCount = Object.keys(params.table || {}).length;
+    return `eps ${compactNumber(params.eps, 2)} · w ${compactNumber(params.w, 2)} · table ${tableCount} · sb ${compactNumber(calibration.sidebearingScale, 2)}`;
+}
+
+function fontInvariantText(invariants) {
+    if (!invariants) return 'pending';
+    const flat = invariants.flatStem?.sigmaPx;
+    const symmetry = invariants.symmetry?.maxDelta;
+    return `${invariants.pass ? 'pass' : 'check'} · flat σ ${compactNumber(flat, 4)} px · sym ${compactNumber(symmetry, 2)} em`;
+}
+
+function syncFontImportStatus() {
+    const status = document.getElementById('fontProbeStatus');
+    const reference = document.getElementById('fontReferenceBtn');
+    if (reference) reference.disabled = !FONT_IMPORT || !REFERENCE_TYPEFACE;
+    if (!status) return;
+    if (!TYPEFACE) {
+        status.innerHTML = '<p class="font-empty">Loading reference font...</p>';
+        return;
+    }
+    const probe = activeFontProbe();
+    const rows = FONT_IMPORT
+        ? [
+            ['Font', fontDisplayName(probe, FONT_IMPORT.name)],
+            ['File', `${FONT_IMPORT.name} · ${fontBytes(FONT_IMPORT.size)}`],
+            ['Data', fontMetricText(probe)],
+            ['Axes', fontAxisText(probe)],
+            ['Comp', fontCompText()],
+            ['Check', fontInvariantText(activeFontInvariants())]
+        ]
+        : [
+            ['Font', fontDisplayName(probe, 'YS Text Regular')],
+            ['File', 'YS Text Regular · reference'],
+            ['Data', fontMetricText(probe)],
+            ['Axes', fontAxisText(probe)],
+            ['Comp', 'measured YS Text model + table'],
+            ['Check', fontInvariantText(activeFontInvariants())]
+        ];
+    status.innerHTML = `<dl class="font-summary">
+        ${rows.map(([term, value]) => `<div><dt>${html(term)}</dt><dd>${html(value)}</dd></div>`).join('')}
+    </dl>`;
 }
 
 function initDrawingImport(app) {
@@ -1710,6 +2161,23 @@ function appendImportedLines(create, group, lines, stroke, opacity, dasharray = 
             'vector-effect': 'non-scaling-stroke'
         }));
     }
+}
+
+function renderLegendText(create, el, fill) {
+    const text = create('text', {
+        x: el.bx,
+        y: el.by,
+        fill,
+        'font-family': activeLegendFontFamily(),
+        'font-size': el.size,
+        'font-weight': 400,
+        'letter-spacing': `${el.tracking || 0}em`,
+        'font-kerning': 'normal',
+        'text-rendering': 'geometricPrecision',
+        'xml:space': 'preserve'
+    });
+    text.textContent = el.text || '';
+    return text;
 }
 
 function updateKeyGeometryEditor(s, keys) {
@@ -2324,9 +2792,68 @@ function expandLegendPanel() {
     panel.querySelector('.collapse-icon')?.classList.remove('collapsed');
 }
 
+function installPdfExport(app) {
+    if (app.__keyboarderPdfExport) return;
+    app.exportPDF = async (filename) => {
+        if (!app.exporter || app.target?.type !== 'svg') return;
+        const svg = app.target.element;
+        const size = typeof app.config?.size === 'function' ? app.config.size(app.settings) : {};
+        const width = Number(svg?.getAttribute('width')) || Number(size.width) || 500;
+        const height = Number(svg?.getAttribute('height')) || Number(size.height) || 500;
+        const format = { width: toMm(width), height: toMm(height) };
+        const name = filename || `keyboarder-${layoutSlug(sourceLayoutFor(app.settings).meta.name)}.pdf`;
+        try {
+            await app.exporter.exportToPDF(svg, name, {
+                removeInteractive: true,
+                unit: 'mm',
+                format
+            });
+        } catch (e) {
+            app.dialog?.alert({
+                title: 'PDF export failed',
+                text: e?.message || 'Could not export PDF.',
+                okText: 'Close'
+            });
+        }
+    };
+    app.__keyboarderPdfExport = true;
+}
+
+function installBatchSvgExport(app) {
+    if (app.__keyboarderBatchSvgExport) return;
+    app.exportLanguageBatchSVG = async () => {
+        if (typeof app.exportSVG !== 'function') return;
+        const originalLayer = normalizeLanguageLayer(app.settings.languageLayer);
+        const base = `keyboarder-${layoutSlug(sourceLayoutFor(app.settings).meta.name)}`;
+        const button = document.getElementById('exportBatchSvgBtn');
+        if (button) button.disabled = true;
+        try {
+            for (const layer of BATCH_LANGUAGE_LAYERS) {
+                app.settingsStore.set('languageLayer', layer, true);
+                syncLanguageLayerSelect(app.settings);
+                app.renderNow();
+                await app.exportSVG(`${base}-${layer}.svg`);
+            }
+            app._showToast?.('Batch SVG exported');
+        } catch (e) {
+            app.dialog?.alert({
+                title: 'Batch SVG export failed',
+                text: e?.message || 'Could not export the SVG batch.',
+                okText: 'Close'
+            });
+        } finally {
+            app.settingsStore.set('languageLayer', originalLayer, true);
+            syncLanguageLayerSelect(app.settings);
+            app.renderNow();
+            if (button) button.disabled = false;
+        }
+    };
+    app.__keyboarderBatchSvgExport = true;
+}
+
 function installCleanExports(app) {
     if (app.__keyboarderCleanExports) return;
-    for (const method of ['exportSVG', 'exportPNG']) {
+    for (const method of ['exportSVG', 'exportPNG', 'exportPDF']) {
         if (typeof app[method] !== 'function') continue;
         const original = app[method].bind(app);
         app[method] = async (...args) => {
@@ -2515,6 +3042,17 @@ function compactLegendReport(r) {
     };
 }
 
+function activeTypefaceReportMeta() {
+    if (!TYPEFACE) return null;
+    if (!FONT_IMPORT) return CONTENT.font;
+    return {
+        family: fontDisplayName(FONT_IMPORT.probe, FONT_IMPORT.name),
+        file: FONT_IMPORT.name,
+        source: 'session-import',
+        persisted: false
+    };
+}
+
 async function buildVerificationReport(settingsSnapshot, settings) {
     const { keys, legends, sourceLayout } = layoutFor(settings);
     if (!isReferenceLayout(sourceLayout)) {
@@ -2528,7 +3066,7 @@ async function buildVerificationReport(settingsSnapshot, settings) {
         generatedAt: new Date().toISOString(),
         layout: sourceLayout.meta.name,
         settings: settingsSnapshot,
-        typeface: TYPEFACE ? CONTENT.font : null,
+        typeface: activeTypefaceReportMeta(),
         geometry: { raw: geometryRaw, export: compactGeometryReport(geometryRaw) },
         legends: legendsRaw ? { raw: legendsRaw, export: compactLegendReport(legendsRaw) } : null
     };
@@ -2546,14 +3084,18 @@ function reportForExport(report) {
 }
 
 function exportModelJSON(app) {
-    const layoutName = String(sourceLayoutFor(app.settings).meta.name || 'layout')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
+    const layoutName = layoutSlug(sourceLayoutFor(app.settings).meta.name);
     downloadJSON(
         `keyboarder-${layoutName}-model.json`,
         buildKeyboardModel(app.settingsStore.toObject(), app.settingsStore.getDefaults())
     );
+}
+
+function layoutSlug(name) {
+    return String(name || 'layout')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '') || 'layout';
 }
 
 function openModelJSONPicker() {
