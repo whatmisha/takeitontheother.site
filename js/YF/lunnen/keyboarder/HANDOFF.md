@@ -220,6 +220,10 @@ Important local entry points:
     are still assigned after expansion, so editing and content attachment remain stable;
   - generic labels for imported/custom layouts prefer semantic IDs when present, but hide
     synthetic `r123` IDs and fall back to positional labels such as `main 1`;
+  - imported/custom ANSI-like alpha keys with semantic ids `q/w/e/...` now generate
+    `tpl: "alpha-dual"` content with Latin in `TL` and Russian ЙЦУКЕН letters in `BR`; `New
+    layout` also resets `languageLayer` to `dual` and syncs the Language select so a fresh SVG
+    import opens as `Latin + Cyrillic`;
   - `keyboarder.model.v1` now preserves `customLayout` in settings, and custom layouts are also
     exposed in `keyboard.customLayout` on export.
 - Polished Stage 6 against `/Users/mishaivanov/Desktop/test_layout.svg`, a compact one-block

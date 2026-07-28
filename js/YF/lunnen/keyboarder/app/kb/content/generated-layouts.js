@@ -36,6 +36,35 @@ const SEMANTIC_LABELS = {
     down: 'down'
 };
 
+const CYRILLIC_BY_LATIN_ID = {
+    q: 'Й',
+    w: 'Ц',
+    e: 'У',
+    r: 'К',
+    t: 'Е',
+    y: 'Н',
+    u: 'Г',
+    i: 'Ш',
+    o: 'Щ',
+    p: 'З',
+    a: 'Ф',
+    s: 'Ы',
+    d: 'В',
+    f: 'А',
+    g: 'П',
+    h: 'Р',
+    j: 'О',
+    k: 'Л',
+    l: 'Д',
+    z: 'Я',
+    x: 'Ч',
+    c: 'С',
+    v: 'М',
+    b: 'И',
+    n: 'Т',
+    m: 'Ь'
+};
+
 const LABELS = {
     ANSI_TKL: [
         { main: TKL_TOP, nav: NAV_TOP },
@@ -81,9 +110,39 @@ function labelElement(label, typeDefaults = {}) {
         kind: 'txt',
         text,
         size: isSingleLetter
-            ? typeDefaults.glyphSize
+            ? glyphSize(typeDefaults)
             : isLong ? typeDefaults.wordSize : typeDefaults.secondarySize
     };
+}
+
+function glyphSize(typeDefaults = {}) {
+    return typeDefaults.glyphSize ?? typeDefaults.secondarySize ?? typeDefaults.wordSize ?? 12;
+}
+
+function alphaDualContentForId(id, typeDefaults = {}) {
+    const key = String(id || '').trim().toLowerCase();
+    const cyrillic = CYRILLIC_BY_LATIN_ID[key];
+    if (!cyrillic) return null;
+    const size = glyphSize(typeDefaults);
+    return {
+        tpl: 'alpha-dual',
+        elements: [
+            { slot: 'TL', kind: 'txt', text: key.toUpperCase(), size },
+            { slot: 'BR', kind: 'txt', text: cyrillic, size }
+        ]
+    };
+}
+
+function generatedLabelContent(label, typeDefaults = {}) {
+    return {
+        tpl: 'generated-label',
+        elements: [labelElement(label, typeDefaults)]
+    };
+}
+
+function genericContentForItem(item, fallbackLabel, typeDefaults = {}) {
+    return alphaDualContentForId(item?.id, typeDefaults)
+        || generatedLabelContent(userFacingId(item?.id) || fallbackLabel, typeDefaults);
 }
 
 export function generatedContentForLayout(layout, typeDefaults = {}, baseContent = {}) {
@@ -95,8 +154,7 @@ export function generatedContentForLayout(layout, typeDefaults = {}, baseContent
                     row: rowIndex,
                     x: ordinal,
                     block,
-                    tpl: 'generated-label',
-                    elements: [labelElement(label, typeDefaults)]
+                    ...generatedLabelContent(label, typeDefaults)
                 }))))
         : genericKeysForLayout(layout, typeDefaults);
     return {
@@ -117,25 +175,21 @@ function genericKeysForLayout(layout, typeDefaults = {}) {
                 let entries;
                 if (Array.isArray(item.stack) && item.stack.length) {
                     entries = item.stack.map((child, stackIndex) => {
-                        const label = userFacingId(child.id) || `${block} ${ordinal + 1}.${stackIndex + 1}`;
                         return {
                             row: rowIndex,
                             x: ordinal + stackIndex / 10,
                             block,
                             editId: child.editId,
-                            tpl: 'generated-label',
-                            elements: [labelElement(label, typeDefaults)]
+                            ...genericContentForItem(child, `${block} ${ordinal + 1}.${stackIndex + 1}`, typeDefaults)
                         };
                     });
                 } else {
-                    const label = userFacingId(item.id) || `${block} ${ordinal + 1}`;
                     entries = [{
                         row: rowIndex,
                         x: ordinal,
                         block,
                         editId: item.editId,
-                        tpl: 'generated-label',
-                        elements: [labelElement(label, typeDefaults)]
+                        ...genericContentForItem(item, `${block} ${ordinal + 1}`, typeDefaults)
                     }];
                 }
                 ordinal += 1;

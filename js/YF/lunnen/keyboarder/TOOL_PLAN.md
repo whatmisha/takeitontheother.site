@@ -537,6 +537,13 @@ Modal report также показывает visual `Key Review`: мини-ка�
 равно получают уникальные key IDs после expansion. Добавлены Node-проверки для компактного
 семантического SVG и для standalone `repeat + ids` layout.
 
+Ещё один polish-срез для imported ANSI-like content: если custom layout содержит semantic ids
+`q/w/e/...`, generic content создаёт для этих букв не single `generated-label`, а
+`tpl: "alpha-dual"` с латиницей в `TL` и кириллицей ЙЦУКЕН в `BR`. `New layout` также сбрасывает
+`Language` в `Latin + Cyrillic`, чтобы свежий импорт сразу открывался двуязычным. Проверка на
+`/Users/mishaivanov/Desktop/test_layout_S.svg`: 78 keys, 78 content entries, 26 `alpha-dual`;
+первые пары `Q/Й`, `W/Ц`, `E/У`.
+
 ### Этап 7 — про, производство ✅ основные кодовые пункты сделаны (2–3 дня)
 
 - экспорт SVG послойно, именами групп как в эталоне (`caps`, `guides`, `glyphs`, `icons`,

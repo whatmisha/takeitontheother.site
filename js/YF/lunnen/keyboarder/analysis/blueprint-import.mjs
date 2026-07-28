@@ -192,6 +192,9 @@ assert.deepEqual(semanticBuilt.keys.slice(0, 4).map((key) => key.id), ['esc', 'f
 assert.deepEqual(semanticBuilt.keys.slice(-3).map((key) => key.id), ['left', 'arrow-stack', 'right']);
 const semanticContent = generatedContentForLayout(semanticCompact.layoutDraft.layout, { secondarySize: 12 }, { interline: 13.5 });
 assert.deepEqual(semanticContent.keys.slice(0, 4).map((key) => key.elements[0].text), ['esc', 'F1', 'F2', 'F3']);
+const semanticQ = semanticContent.keys.find((key) => key.elements.some((element) => element.text === 'Q'));
+assert.equal(semanticQ.tpl, 'alpha-dual');
+assert.deepEqual(semanticQ.elements.map((element) => `${element.slot}:${element.text}`), ['TL:Q', 'BR:Й']);
 const semanticContentResult = attachContent(semanticBuilt.keys, semanticContent);
 assert.equal(semanticContentResult.matched, 77);
 assert.equal(semanticContentResult.orphans, 0);

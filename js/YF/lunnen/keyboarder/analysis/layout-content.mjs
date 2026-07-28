@@ -35,7 +35,8 @@ const idsRepeatLayout = {
 const idsRepeatKeys = buildLayout(idsRepeatLayout).keys;
 assert.deepEqual(idsRepeatKeys.map((key) => key.id), ['esc', 'f1', 'a']);
 const idsRepeatContent = generatedContentForLayout(idsRepeatLayout, TYPE_DEFAULTS, CONTENT);
-assert.deepEqual(idsRepeatContent.keys.map((key) => key.elements[0].text), ['esc', 'F1', 'A']);
+assert.deepEqual(idsRepeatContent.keys.map((key) => key.tpl), ['generated-label', 'generated-label', 'alpha-dual']);
+assert.deepEqual(idsRepeatContent.keys[2].elements.map((element) => `${element.slot}:${element.text}`), ['TL:A', 'BR:Ф']);
 const idsRepeatResult = attachContent(idsRepeatKeys, idsRepeatContent);
 assert.equal(idsRepeatResult.matched, 3);
 assert.equal(idsRepeatResult.orphans, 0);

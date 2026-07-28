@@ -2499,6 +2499,7 @@ function openImportedCustomLayout(app, customLayout) {
         ...gridMmFor(customLayout),
         layoutEdits: {},
         contentEdits: {},
+        languageLayer: 'dual',
         showDrawing: false,
         showRef: false,
         showDiff: false
@@ -2506,6 +2507,7 @@ function openImportedCustomLayout(app, customLayout) {
     app.settingsStore.setMultiple(values);
     syncSliderValues(app, values);
     syncLayoutSelect(app.settings);
+    syncLanguageLayerSelect(app.settings);
     app.renderNow();
     app.presets?.commit('new-layout-from-svg');
 }
