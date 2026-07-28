@@ -28,6 +28,26 @@ export const loadLegendReference = (url = 'LCAKB23.legends.json') => loadOnce(ur
 
 /** Ключ сопоставления: ряд плюс округлённый x. Устойчив к невязке до 0.05 px. */
 const keyOf = (k) => `${k.row}|${Math.round(k.x * 10)}`;
+const rowBlockOf = (k) => `${k.row}|${k.block || ''}`;
+
+function groupedByRowBlock(items) {
+    const groups = new Map();
+    for (const item of items) {
+        const key = rowBlockOf(item);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(item);
+    }
+    for (const group of groups.values()) group.sort((a, b) => a.x - b.x);
+    return groups;
+}
+
+function ordinalsByRowBlock(items) {
+    const out = new Map();
+    for (const group of groupedByRowBlock(items).values()) {
+        group.forEach((item, i) => out.set(item, i));
+    }
+    return out;
+}
 
 /**
  * @param {Array} keys — результат buildLayout
@@ -36,6 +56,8 @@ const keyOf = (k) => `${k.row}|${Math.round(k.x * 10)}`;
  */
 export function compare(keys, ref) {
     const mine = new Map(keys.map((k) => [keyOf(k), k]));
+    const mineByRowBlock = groupedByRowBlock(keys);
+    const refOrdinals = ordinalsByRowBlock(ref);
     const seen = new Set();
     const max = { x: 0, y: 0, w: 0, h: 0 };
     const rows = [];
@@ -43,12 +65,18 @@ export function compare(keys, ref) {
 
     for (const r of ref) {
         const k = keyOf(r);
-        const m = mine.get(k);
+        let m = mine.get(k);
+        if (m && seen.has(keyOf(m))) m = null;
+        if (!m) {
+            const group = mineByRowBlock.get(rowBlockOf(r));
+            const fallback = group && group[refOrdinals.get(r)];
+            if (fallback && !seen.has(keyOf(fallback))) m = fallback;
+        }
         if (!m) {
             missing.push(`row ${r.row}, x=${r.x} (${r.legend || r.tpl})`);
             continue;
         }
-        seen.add(k);
+        seen.add(keyOf(m));
         const d = { x: m.x - r.x, y: m.y - r.y, w: m.w - r.w, h: m.h - r.h };
         for (const p of ['x', 'y', 'w', 'h']) max[p] = Math.max(max[p], Math.abs(d[p]));
         rows.push({ ref: r, mine: m, d, worst: Math.max(...Object.values(d).map(Math.abs)) });
@@ -65,6 +93,7 @@ export function compare(keys, ref) {
         missing,
         extra,
         max,
+        rows,
         worst: rows.slice(0, 8),
         worstOverall,
         pass: missing.length === 0 && extra.length === 0 && worstOverall <= GEOMETRY_TOLERANCE

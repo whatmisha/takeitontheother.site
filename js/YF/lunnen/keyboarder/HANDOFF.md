@@ -31,6 +31,8 @@ Important local entry points:
 
 - Changed all Grid slider `Shift+Arrow` increments from coarse tenths/five-hundredths to `0.01`.
   A plain arrow still uses `0.001`.
+- Set the startup preset to `LCAKB23` via `presets.defaultName`, so a plain app load opens the
+  reference layout instead of whichever seed happens to sort first.
 - Added a Type panel:
   - `Glyph size`, `Numpad size`, `Secondary size`, `Word size` in pt.
   - `Leading` in pt.
@@ -53,6 +55,18 @@ Important local entry points:
     the grid is adjusted.
 - Fixed `Reference grid` and new `Reference type` reset buttons so slider text fields update
   together with settings.
+- Completed Stage 3 verification polish:
+  - added a `Diff` layer toggle in Layers;
+  - rendered reference and generated key outlines in `#diff`, colored by geometry delta;
+  - added `Download JSON` to the Verify dialog;
+  - changed `compare()` so it falls back to stable order inside `row/block` when Grid changes
+    make exact `row+x` matching impossible.
+- Started Stage 4 editing UI:
+  - selection state is UI-only and intentionally kept out of tool settings/presets;
+  - clicking a key selects it and updates the Legend inspector/select;
+  - `Shift`/`Cmd`/`Ctrl` click toggles multi-selection;
+  - arrow keys move the active key, `Shift+Arrow` extends the selection, `Escape` clears it;
+  - `exportSVG()` and `exportPNG()` temporarily hide the selection overlay, then restore it.
 
 ## Verification
 
@@ -61,6 +75,7 @@ Commands run successfully:
 ```sh
 node --check app/tool.js
 node --check app/kb/legends.js
+node --check app/kb/verify.js
 node analysis/harness.mjs
 node analysis/verify-legends.mjs
 ```
@@ -81,12 +96,22 @@ Legend check against `LCAKB23.legends.json`:
 
 Browser QA on `http://127.0.0.1:8000/`:
 
+- Fresh load with no share/preset URL shows preset `LCAKB23`.
 - Type and Legend panels are present.
 - Legend selector has 110 options.
 - Stats show `176 strings, 28 icons`.
 - With legend/icon layers enabled, SVG contains 176 glyph paths and 28 icon paths.
 - `Ink boxes` overlay renders diagnostic children.
 - Grid `Shift+ArrowUp` test on `Column pitch`: `19.001 mm -> 19.010 mm`.
+- `Diff` layer renders 220 rects at default settings: 110 reference outlines and 110 generated
+  outlines.
+- `Verify` dialog contains `Close` and `Download JSON` buttons.
+- Default selection is key 0 (`R1 main · esc`), with one visible `#selection rect`.
+- Click on a key selects it, updates the Legend panel, and keeps preset label `LCAKB23` (no dirty
+  marker).
+- `Shift` click and `Shift+ArrowRight` both produce a 2-key selection.
+- Plain `ArrowRight` moves to the next key and collapses to one selected key.
+- `Escape` clears the selection and the Legend panel shows `No key selected.`
 
 Note: the Browser plugin's console log API kept an old error entry from an earlier failed reload
 after it was fixed. Current DOM probes confirmed the app initializes and renders.
@@ -97,16 +122,20 @@ looks pre-existing and was not changed in this session.
 
 ## Current Stage Assessment
 
-Stage 2 is now effectively complete for beta generation:
+Stages 0-3 are now effectively complete for beta generation and verification:
 
 - legends render as outlines from the local TTF;
 - type sizes/leading/tracking/compensation are exposed in UI;
 - legend inspection exists;
 - diagnostic overlays cover guides, slots, ink boxes, cap boxes, baseline, and x-height;
-- verification still passes at defaults.
+- verification still passes at defaults;
+- Diff and JSON verification report export are in place.
 
-The next plan item is Stage 3 polish/completion if desired, then Stage 4 editing. Stage 3 already
-has a working base, but it could still be improved with a fuller Diff view and JSON report export.
+Stage 4 is started, not complete:
+
+- Done: click selection, multi-select, Legend inspector sync, arrow navigation, `Escape` clear.
+- Still remaining: template/content edits, row/key edits, manual compensation overrides, and
+  persistence of edited keyboard content/model data.
 
 ## Notes For The Next Assistant
 
@@ -115,4 +144,5 @@ has a working base, but it could still be improved with a fuller Diff view and J
   by `analysis/export_tool.py`; prefer changing the exporter/source pipeline and regenerating.
 - `ui-framework/` is intended to be disposable; active code imports from `vendor/framework/`.
 - Defaults matter: at reference settings, numerical verification should stay green.
-- The tool currently starts from static LCAKB23 data. Import/editing workflows are later stages.
+- The tool currently starts from static LCAKB23 data and defaults to the `LCAKB23` preset.
+  Import/editing workflows are later stages.

@@ -17,7 +17,7 @@ import { Compensator, YS_TEXT_REGULAR } from './kb/compensate.js';
 import { attachContent, buildLegends, textPath } from './kb/legends.js';
 import {
     loadReference, loadLegendReference, compare, reportHtml,
-    compareLegends, legendsReportHtml
+    compareLegends, legendsReportHtml, GEOMETRY_TOLERANCE
 } from './kb/verify.js';
 import CONTENT from './kb/content/lcakb23.js';
 import ICONS from './kb/icons/lcakb23.js';
@@ -73,6 +73,7 @@ let REFERENCE = null;
  */
 let TYPEFACE = null;
 let COMP_CACHE = new Map();
+let SELECTION = { active: 0, indices: [0] };
 
 function compFor(s) {
     if (!TYPEFACE || s.compensationMode === 'off') return null;
@@ -184,7 +185,6 @@ const app = defineTool({
         leading: TYPE_DEFAULTS.leading,
         trackingOffset: TYPE_DEFAULTS.trackingOffset,
         compensationMode: 'table',
-        selectedKeyIndex: 0,
 
         showCaps: true,
         showGuides: false,
@@ -195,6 +195,7 @@ const app = defineTool({
         showInk: false,
         showSlots: false,
         showRef: false,
+        showDiff: false,
         showBlocks: false,
 
         capColor: '#1e1e1e',
@@ -244,6 +245,7 @@ const app = defineTool({
     presets: {
         storageKey: 'keyboarder',
         basePath: 'presets',
+        defaultName: 'LCAKB23',
         colorDots: (b) => [
             { kind: 'solid', value: b.capColor || '#1e1e1e' },
             { kind: 'solid', value: b.bgColor || '#808080' }
@@ -328,6 +330,13 @@ const app = defineTool({
             }
             svg.appendChild(g);
         }
+
+        if (s.showDiff && REFERENCE) {
+            svg.appendChild(renderGeometryDiff(create, keys, grid, REFERENCE));
+        }
+
+        const selection = renderSelection(create, keys, grid);
+        if (selection) svg.appendChild(selection);
 
         const legends = layoutFor(s).legends;
 
@@ -422,6 +431,8 @@ const app = defineTool({
     },
 
     onReady(readyApp) {
+        installCleanExports(readyApp);
+
         document.getElementById('exportSvgBtn')?.addEventListener('click', () => readyApp.exportSVG());
         document.getElementById('exportPngBtn')?.addEventListener('click', () => readyApp.exportPNG());
 
@@ -448,7 +459,7 @@ const app = defineTool({
         });
 
         document.getElementById('legendKeySelect')?.addEventListener('change', (e) => {
-            readyApp.settingsStore.set('selectedKeyIndex', Number(e.target.value) || 0);
+            selectKey(readyApp, Number(e.target.value) || 0);
         });
 
         document.querySelectorAll('#compModeGroup [data-mode]').forEach((btn) => {
@@ -457,26 +468,41 @@ const app = defineTool({
             });
         });
 
+        readyApp.dom?.surface?.addEventListener('click', (e) => {
+            const key = keyAtClientPoint(readyApp.dom.surface, layoutFor(readyApp.settings).keys, e.clientX, e.clientY);
+            if (key) selectKey(readyApp, key.i, { toggle: e.shiftKey || e.metaKey || e.ctrlKey });
+            else if (!e.shiftKey) selectKey(readyApp, null);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (isTypingTarget(e.target)) return;
+            if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Escape'].includes(e.key)) return;
+            if (e.key === 'Escape') {
+                selectKey(readyApp, null);
+                e.preventDefault();
+                return;
+            }
+            if (moveSelection(readyApp, e.key, { extend: e.shiftKey })) e.preventDefault();
+        });
+
         document.getElementById('verifyBtn')?.addEventListener('click', async () => {
             try {
-                const { keys } = layoutFor(readyApp.settings);
-                let html = '<h3 class="verify-h">Geometry</h3>'
-                    + reportHtml(compare(keys, await loadReference()));
-                html += '<h3 class="verify-h">Legends</h3>';
-                if (!TYPEFACE) {
-                    html += '<p>Typeface is still loading — nothing to verify yet.</p>';
-                } else {
-                    const legendRef = await loadLegendReference();
-                    const r = compareLegends(layoutFor(readyApp.settings).legends, legendRef.keys);
-                    html += legendsReportHtml(r);
-                }
+                const report = await buildVerificationReport(readyApp.settingsStore.toObject(), readyApp.settings);
+                let html = '<h3 class="verify-h">Geometry</h3>' + reportHtml(report.geometry.raw);
+                html += '<h3 class="verify-h">Legends</h3>' + (report.legends
+                    ? legendsReportHtml(report.legends.raw)
+                    : '<p>Typeface is still loading — nothing to verify yet.</p>');
                 // alert() does not pass the html flag, so go through show().
-                readyApp.dialog?.show({
+                const result = await readyApp.dialog?.show({
                     title: 'Verify against reference',
                     text: html,
                     html: true,
-                    buttons: [{ id: 'ok', text: 'Close', type: 'primary' }]
+                    buttons: [
+                        { id: 'ok', text: 'Close', type: 'primary' },
+                        { id: 'json', text: 'Download JSON', type: 'secondary' }
+                    ]
                 });
+                if (result?.action === 'json') downloadJSON('keyboarder-verify-report.json', reportForExport(report));
             } catch (e) {
                 readyApp.dialog?.alert({ title: 'Verification failed', text: e.message, okText: 'Close' });
             }
@@ -526,9 +552,9 @@ function html(v) {
     })[ch]);
 }
 
-function selectedKey(s, keys) {
-    const idx = Math.max(0, Math.min(keys.length - 1, Number(s.selectedKeyIndex) || 0));
-    return keys[idx] || null;
+function activeKey(keys) {
+    const sel = normalizedSelection(keys);
+    return sel.active == null ? null : keys[sel.active] || null;
 }
 
 function keyLabel(k) {
@@ -537,7 +563,7 @@ function keyLabel(k) {
     return `R${k.row + 1} ${k.block} · ${mark}`;
 }
 
-function syncLegendSelect(s, keys) {
+function syncLegendSelect(keys) {
     const select = document.getElementById('legendKeySelect');
     if (!select) return;
     const sig = keys.map((k) => `${k.row}:${k.block}:${k.tpl}:${keyLabel(k)}`).join('|');
@@ -550,7 +576,8 @@ function syncLegendSelect(s, keys) {
         }));
         select.dataset.sig = sig;
     }
-    select.value = String(Math.max(0, Math.min(keys.length - 1, Number(s.selectedKeyIndex) || 0)));
+    const sel = normalizedSelection(keys);
+    select.value = sel.active == null ? '' : String(sel.active);
 }
 
 function syncCompensationMode(s) {
@@ -559,6 +586,271 @@ function syncCompensationMode(s) {
         btn.classList.toggle('is-active', active);
         btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
+}
+
+function normalizedSelection(keys) {
+    const max = keys.length - 1;
+    const indices = [...new Set((SELECTION.indices || [])
+        .map((i) => Number(i))
+        .filter((i) => Number.isInteger(i) && i >= 0 && i <= max))];
+    let active = Number.isInteger(SELECTION.active) ? SELECTION.active : null;
+    if (active < 0 || active > max) active = indices[0] ?? null;
+    if (active == null && indices.length) active = indices[0];
+    if (active != null && !indices.includes(active)) indices.push(active);
+    indices.sort((a, b) => a - b);
+    SELECTION = { active, indices };
+    return SELECTION;
+}
+
+function selectedKeys(keys) {
+    const sel = normalizedSelection(keys);
+    return sel.indices.map((i) => keys[i]).filter(Boolean);
+}
+
+function selectKey(app, index, { toggle = false } = {}) {
+    const keys = layoutFor(app.settings).keys;
+    if (index == null || index < 0 || index >= keys.length) {
+        SELECTION = { active: null, indices: [] };
+        app.renderNow();
+        return;
+    }
+    const current = new Set(normalizedSelection(keys).indices);
+    if (toggle) {
+        if (current.has(index)) current.delete(index);
+        else current.add(index);
+        if (!current.size) current.add(index);
+    } else {
+        current.clear();
+        current.add(index);
+    }
+    SELECTION = { active: index, indices: [...current].sort((a, b) => a - b) };
+    app.renderNow();
+}
+
+function installCleanExports(app) {
+    if (app.__keyboarderCleanExports) return;
+    for (const method of ['exportSVG', 'exportPNG']) {
+        if (typeof app[method] !== 'function') continue;
+        const original = app[method].bind(app);
+        app[method] = async (...args) => {
+            const previous = {
+                active: SELECTION.active,
+                indices: [...(SELECTION.indices || [])]
+            };
+            const hasSelection = previous.active != null || previous.indices.length > 0;
+            if (!hasSelection) return original(...args);
+            SELECTION = { active: null, indices: [] };
+            app.renderNow();
+            try {
+                return await original(...args);
+            } finally {
+                SELECTION = previous;
+                app.renderNow();
+            }
+        };
+    }
+    app.__keyboarderCleanExports = true;
+}
+
+function keyAtClientPoint(svg, keys, clientX, clientY) {
+    if (!svg || !svg.createSVGPoint) return null;
+    const point = svg.createSVGPoint();
+    point.x = clientX;
+    point.y = clientY;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return null;
+    const p = point.matrixTransform(ctm.inverse());
+    for (let i = keys.length - 1; i >= 0; i--) {
+        const k = keys[i];
+        if (p.x >= k.x && p.x <= k.x + k.w && p.y >= k.y && p.y <= k.y + k.h) return k;
+    }
+    return null;
+}
+
+function renderSelection(create, keys, grid) {
+    const chosen = selectedKeys(keys);
+    if (!chosen.length) return null;
+    const g = create('g', { id: 'selection', 'pointer-events': 'none', 'data-interactive': 'true' });
+    for (const k of chosen) {
+        const active = k.i === SELECTION.active;
+        g.appendChild(create('rect', {
+            x: k.x - 1.2, y: k.y - 1.2, width: k.w + 2.4, height: k.h + 2.4,
+            rx: grid.cornerRadius + 1.2, ry: grid.cornerRadius + 1.2,
+            fill: 'none',
+            stroke: active ? '#ffffff' : '#b7c7ff',
+            'stroke-width': active ? 1.2 : 0.75,
+            'stroke-dasharray': active ? null : '3 1.6',
+            'vector-effect': 'non-scaling-stroke'
+        }));
+    }
+    return g;
+}
+
+function orderedKeys(keys) {
+    return [...keys].sort((a, b) => (a.row - b.row) || (a.x - b.x));
+}
+
+function nearestInRow(rows, row, x) {
+    const list = rows.get(row) || [];
+    let best = null;
+    for (const k of list) {
+        const d = Math.abs(k.x + k.w / 2 - x);
+        if (!best || d < best.d) best = { k, d };
+    }
+    return best && best.k;
+}
+
+function moveSelection(app, key, { extend = false } = {}) {
+    const keys = layoutFor(app.settings).keys;
+    const sel = normalizedSelection(keys);
+    if (!keys.length || sel.active == null) return false;
+    const active = keys[sel.active];
+    const ordered = orderedKeys(keys);
+    const pos = ordered.findIndex((k) => k.i === active.i);
+    const rows = new Map();
+    for (const k of ordered) {
+        if (!rows.has(k.row)) rows.set(k.row, []);
+        rows.get(k.row).push(k);
+    }
+    let next = null;
+    if (key === 'ArrowLeft') next = ordered[Math.max(0, pos - 1)];
+    if (key === 'ArrowRight') next = ordered[Math.min(ordered.length - 1, pos + 1)];
+    if (key === 'ArrowUp') next = nearestInRow(rows, active.row - 1, active.x + active.w / 2) || active;
+    if (key === 'ArrowDown') next = nearestInRow(rows, active.row + 1, active.x + active.w / 2) || active;
+    if (!next || next.i === active.i) return false;
+    selectKey(app, next.i, { toggle: extend });
+    return true;
+}
+
+function isTypingTarget(target) {
+    return !!target?.closest?.('input, textarea, select, button, [contenteditable="true"], dialog');
+}
+
+function rectCenter(r) {
+    return { x: r.x + r.w / 2, y: r.y + r.h / 2 };
+}
+
+function diffStroke(worst) {
+    if (worst <= GEOMETRY_TOLERANCE) return '#6fbf73';
+    if (worst <= 0.05) return '#d1b65b';
+    return '#d9736f';
+}
+
+function renderGeometryDiff(create, keys, grid, ref) {
+    const report = compare(keys, ref);
+    const g = create('g', { id: 'diff', 'pointer-events': 'none' });
+    const used = new Set(report.rows.map((row) => row.mine));
+
+    for (const row of report.rows) {
+        const color = diffStroke(row.worst);
+        g.appendChild(create('rect', {
+            x: row.ref.x, y: row.ref.y, width: row.ref.w, height: row.ref.h,
+            rx: grid.cornerRadius, ry: grid.cornerRadius,
+            fill: 'none', stroke: '#ffa500', 'stroke-width': 0.28,
+            'stroke-dasharray': '2 1.5', 'vector-effect': 'non-scaling-stroke'
+        }));
+        g.appendChild(create('rect', {
+            x: row.mine.x, y: row.mine.y, width: row.mine.w, height: row.mine.h,
+            rx: grid.cornerRadius, ry: grid.cornerRadius,
+            fill: 'none', stroke: color,
+            'stroke-width': row.worst <= GEOMETRY_TOLERANCE ? 0.35 : 0.85,
+            'vector-effect': 'non-scaling-stroke'
+        }));
+        if (row.worst > GEOMETRY_TOLERANCE) {
+            const a = rectCenter(row.ref);
+            const b = rectCenter(row.mine);
+            g.appendChild(create('line', {
+                x1: a.x, y1: a.y, x2: b.x, y2: b.y,
+                stroke: color, 'stroke-width': 0.35,
+                'vector-effect': 'non-scaling-stroke'
+            }));
+        }
+    }
+
+    for (const extra of keys.filter((k) => !used.has(k))) {
+        g.appendChild(create('rect', {
+            x: extra.x, y: extra.y, width: extra.w, height: extra.h,
+            rx: grid.cornerRadius, ry: grid.cornerRadius,
+            fill: 'none', stroke: '#b36fff', 'stroke-width': 0.9,
+            'stroke-dasharray': '3 1', 'vector-effect': 'non-scaling-stroke'
+        }));
+    }
+
+    return g;
+}
+
+function compactGeometryReport(r) {
+    const rowOf = (row) => ({
+        row: row.ref.row,
+        block: row.ref.block,
+        label: row.ref.legend || row.ref.tpl || '',
+        reference: { x: row.ref.x, y: row.ref.y, w: row.ref.w, h: row.ref.h },
+        generated: { x: row.mine.x, y: row.mine.y, w: row.mine.w, h: row.mine.h },
+        delta: row.d,
+        worst: row.worst
+    });
+    return {
+        pass: r.pass,
+        count: r.count,
+        refCount: r.refCount,
+        tolerance: GEOMETRY_TOLERANCE,
+        missing: r.missing,
+        extra: r.extra,
+        max: r.max,
+        worstOverall: r.worstOverall,
+        worst: r.worst.map(rowOf),
+        rows: r.rows.map(rowOf)
+    };
+}
+
+function compactLegendReport(r) {
+    return {
+        pass: r.pass,
+        total: r.total,
+        unmatched: r.unmatched,
+        byClass: r.byClass,
+        worst: r.worst,
+        excused: r.excused
+    };
+}
+
+async function buildVerificationReport(settingsSnapshot, settings) {
+    const { keys, legends } = layoutFor(settings);
+    const geometryRaw = compare(keys, await loadReference());
+    const legendsRaw = TYPEFACE
+        ? compareLegends(legends, (await loadLegendReference()).keys)
+        : null;
+    return {
+        generatedAt: new Date().toISOString(),
+        layout: LCAKB23.meta.name,
+        settings: settingsSnapshot,
+        typeface: TYPEFACE ? CONTENT.font : null,
+        geometry: { raw: geometryRaw, export: compactGeometryReport(geometryRaw) },
+        legends: legendsRaw ? { raw: legendsRaw, export: compactLegendReport(legendsRaw) } : null
+    };
+}
+
+function reportForExport(report) {
+    return {
+        generatedAt: report.generatedAt,
+        layout: report.layout,
+        settings: report.settings,
+        typeface: report.typeface,
+        geometry: report.geometry.export,
+        legends: report.legends ? report.legends.export : null
+    };
+}
+
+function downloadJSON(filename, data) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function updateReadout(s, keys, grid, legends) {
@@ -586,16 +878,18 @@ function compensationInfo(s, el) {
 }
 
 function updateLegendInspector(s, keys, grid, legends) {
-    syncLegendSelect(s, keys);
+    syncLegendSelect(keys);
     const box = document.getElementById('legendInspector');
     if (!box) return;
-    const k = selectedKey(s, keys);
+    const sel = normalizedSelection(keys);
+    const k = activeKey(keys);
     if (!k) {
         box.innerHTML = '<p class="inspector-empty">No key selected.</p>';
         return;
     }
     const items = legends.filter((el) => el.key === k);
     let out = '<dl class="legend-meta">'
+        + `<div><dt>Selected</dt><dd>${sel.indices.length}</dd></div>`
         + `<div><dt>Template</dt><dd>${html(k.tpl || 'blank')}</dd></div>`
         + `<div><dt>Position</dt><dd>row ${k.row + 1}, ${html(k.block)}, ${widthInU(k.w, grid).toFixed(2)}U</dd></div>`
         + '</dl>';
