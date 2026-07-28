@@ -12,6 +12,22 @@ import {
     stripIllustratorPrivateData
 } from '../app/kb/svg-blueprint.js';
 
+function roundedRectLines(x, y, w, h, d = 1) {
+    return `
+      <line x1="${x + d}" y1="${y}" x2="${x + w - d}" y2="${y}"/>
+      <line x1="${x + d}" y1="${y + h}" x2="${x + w - d}" y2="${y + h}"/>
+      <line x1="${x}" y1="${y + d}" x2="${x}" y2="${y + h - d}"/>
+      <line x1="${x + w}" y1="${y + d}" x2="${x + w}" y2="${y + h - d}"/>`;
+}
+
+function roundedRectCornerPaths(x, y, w, h, d = 1) {
+    return `
+      <path d="M${x + d},${y}c-${d},0 -${d},${d} -${d},${d}"/>
+      <path d="M${x + w},${y + d}c0,-${d} -${d},-${d} -${d},-${d}"/>
+      <path d="M${x},${y + h - d}c0,${d} ${d},${d} ${d},${d}"/>
+      <path d="M${x + w - d},${y + h}c${d},0 ${d},-${d} ${d},-${d}"/>`;
+}
+
 const synthetic = `<?xml version="1.0"?>
 <svg viewBox="0 0 40 30" xmlns="http://www.w3.org/2000/svg">
   <metadata><i:aipgfRef id="adobe_illustrator_pgf"/><i:aipgf>private</i:aipgf></metadata>
@@ -148,5 +164,38 @@ for (let i = 0; i < real.recognized.keys.length; i++) {
     }
 }
 assert.ok(worstCapDelta < 0.03, `recognized caps drifted by ${worstCapDelta}px`);
+
+const sparseSplit = `<?xml version="1.0"?>
+<svg viewBox="0 0 250 60" xmlns="http://www.w3.org/2000/svg">
+  <g id="caps">
+    <rect x="0" y="0" width="72" height="46" rx="3" ry="3"/>
+    <rect x="79" y="0" width="46" height="46" rx="3" ry="3"/>
+  </g>
+  <g id="blueprint">
+    ${roundedRectLines(0, 0, 72, 46, 3)}
+    ${roundedRectLines(79, 0, 46, 46, 3)}
+    ${roundedRectLines(132, 0, 46, 46, 3)}
+    ${roundedRectCornerPaths(185, 0, 46, 22.5, 3)}
+    ${roundedRectCornerPaths(185, 23.5, 46, 22.5, 3)}
+  </g>
+</svg>`;
+
+const splitAnalysis = analyzeSvgBlueprint(sparseSplit);
+assert.equal(splitAnalysis.calibration.caps, 2);
+assert.equal(splitAnalysis.calibration.colPitch, null);
+assert.equal(splitAnalysis.recognized.estimatedGrid.colPitch, 53);
+assert.equal(splitAnalysis.recognized.keys.length, 5);
+assert.equal(splitAnalysis.recognized.stackCells.length, 1);
+assert.equal(splitAnalysis.diagnostics.warnings.length, 0);
+assert.equal(splitAnalysis.diagnostics.notices[0].code, 'caps-used-for-calibration');
+assert.equal(splitAnalysis.layoutDraft.stats.keys, 5);
+assert.equal(splitAnalysis.layoutDraft.stats.stacks, 1);
+const splitBuilt = buildLayout(splitAnalysis.layoutDraft.layout);
+assert.equal(splitBuilt.keys.length, 5);
+assert.deepEqual(splitBuilt.keys.filter((key) => key.stackParentEditId).map((key) => key.id), ['up', 'down']);
+const splitContent = generatedContentForLayout(splitAnalysis.layoutDraft.layout, { secondarySize: 12 }, { interline: 13.5 });
+const splitContentResult = attachContent(splitBuilt.keys, splitContent);
+assert.equal(splitContentResult.matched, 5);
+assert.equal(splitContentResult.orphans, 0);
 
 console.log('blueprint import passed');

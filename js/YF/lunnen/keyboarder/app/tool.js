@@ -1413,9 +1413,10 @@ function annotateGeometry(keys, sourceLayout, currentLayout, grid, edits) {
     for (const k of keys) {
         const info = source.get(k.editId) || {};
         const currentInfo = current.get(k.editId) || {};
+        const layoutLocked = !!k.stackParentEditId;
         const range = { min: MIN_KEY_WIDTH_MM, max: MAX_KEY_WIDTH_MM };
         const flex = flexByRowBlock.get(rowBlockKey(k));
-        if (currentInfo.rowHasFlex && flex && flex.editId !== k.editId) {
+        if (!layoutLocked && currentInfo.rowHasFlex && flex && flex.editId !== k.editId) {
             const max = toMm(k.w + flex.w - toPx(MIN_KEY_WIDTH_MM));
             range.max = Math.min(MAX_KEY_WIDTH_MM, Math.max(MIN_KEY_WIDTH_MM, max));
         }
@@ -1424,7 +1425,8 @@ function annotateGeometry(keys, sourceLayout, currentLayout, grid, edits) {
             sourceFlex: !!info.sourceFlex,
             currentFlex: !!currentInfo.flex,
             rowHasFlex: !!currentInfo.rowHasFlex,
-            widthEditable: !currentInfo.flex || !!info.sourceFlex,
+            layoutLocked,
+            widthEditable: !layoutLocked && (!currentInfo.flex || !!info.sourceFlex),
             widthEdited: !!clean[k.editId]?.widthMm,
             widthRange: range
         };
@@ -1467,15 +1469,14 @@ function rowBlockKey(k) {
 function assignEditIds(keys) {
     const groups = new Map();
     for (const k of keys) {
-        if (k.editId) continue;
         const id = rowBlockKey(k);
         if (!groups.has(id)) groups.set(id, []);
         groups.get(id).push(k);
     }
     for (const group of groups.values()) {
-        group.sort((a, b) => a.x - b.x);
+        group.sort((a, b) => (a.x - b.x) || (a.y - b.y) || (a.i - b.i));
         group.forEach((k, ordinal) => {
-            k.editId = `${k.row}:${k.block || ''}:${ordinal}`;
+            if (!k.editId) k.editId = `${k.row}:${k.block || ''}:${ordinal}`;
         });
     }
 }
@@ -2590,8 +2591,8 @@ function updateKeyGeometryEditor(s, keys) {
     const addBeforeButton = document.getElementById('addKeyBeforeBtn');
     const addAfterButton = document.getElementById('addKeyBtn');
     if (deleteButton) {
-        deleteButton.disabled = !active;
-        deleteButton.title = active ? `Delete ${keyLabel(active)}` : '';
+        deleteButton.disabled = !active || !!active.geometry?.layoutLocked;
+        deleteButton.title = active?.geometry?.layoutLocked ? 'Stacked imported key geometry is locked.' : active ? `Delete ${keyLabel(active)}` : '';
     }
     if (moveLeftButton) {
         const canMoveLeft = canMoveKeyInRow(s, keys, active, -1);
@@ -2725,7 +2726,7 @@ function layoutEditsFit(settings, edits) {
 }
 
 function canAddKeyNear(settings, active, side = 'after') {
-    if (!active?.geometry?.rowHasFlex || isAddedEditId(active.editId)) return false;
+    if (active?.geometry?.layoutLocked || !active?.geometry?.rowHasFlex || isAddedEditId(active.editId)) return false;
     const { edits } = proposedAddKeyEdits(settings.layoutEdits || {}, active, side, sourceLayoutFor(settings));
     return layoutEditsFit(settings, edits);
 }
@@ -2738,7 +2739,7 @@ function rowBlockKeys(keys, active) {
 }
 
 function proposedMoveKeyEdits(edits, keys, active, direction, layout = LCAKB23) {
-    if (!active || !active.editId || ![-1, 1].includes(direction)) return null;
+    if (!active || active.geometry?.layoutLocked || !active.editId || ![-1, 1].includes(direction)) return null;
     const group = rowBlockKeys(keys, active);
     const pos = group.findIndex((k) => k.editId === active.editId);
     const nextPos = pos + direction;
@@ -2820,7 +2821,7 @@ function editIdLabel(editId) {
 function deleteActiveKey(app) {
     const keys = layoutFor(app.settings).keys;
     const active = activeKey(keys);
-    if (!active) return;
+    if (!active || active.geometry?.layoutLocked) return;
     const next = sanitizeLayoutEditsForSettings(app.settings, app.settings.layoutEdits || {});
     next[active.editId] = { ...(next[active.editId] || {}), deleted: true };
     LAST_DELETED_EDIT_ID = active.editId;

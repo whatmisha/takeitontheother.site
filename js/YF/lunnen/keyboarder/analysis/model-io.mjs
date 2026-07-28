@@ -167,6 +167,53 @@ assert.deepEqual(fromLegacyPreset, model.settings);
 const fromLegacyPresetText = parseKeyboardModelJSONText(JSON.stringify(edited), defaults, options);
 assert.deepEqual(fromLegacyPresetText, model.settings);
 
+const stackedCustomLayout = {
+    meta: { name: 'IMPORTED_SPLIT', formFactor: 'custom' },
+    grid: {
+        colPitch: 53,
+        rowPitch: 53,
+        keyWidth1U: 46,
+        keyHeight: 46,
+        cornerRadius: 3,
+        guideInset: 6.5,
+        origin: { x: 0, y: 0 }
+    },
+    blocks: [{ id: 'main', x: 0, width: 205 }],
+    rows: [{
+        main: [
+            { u: 1, id: 'left' },
+            {
+                u: 1,
+                id: 'arrow-stack',
+                editId: '0:main:1',
+                stack: [
+                    { id: 'up', yOffset: 0, h: 22.5, editId: '0:main:1:stack0' },
+                    { id: 'down', yOffset: 23.5, h: 22.5, editId: '0:main:1:stack1' }
+                ]
+            },
+            { u: 1, id: 'right' }
+        ]
+    }]
+};
+const stackedSettings = {
+    ...defaults,
+    layoutName: 'IMPORTED_SPLIT',
+    customLayout: stackedCustomLayout
+};
+const stackedModel = buildKeyboardModel(stackedSettings, defaults, {
+    ...options,
+    layoutMeta: stackedCustomLayout.meta,
+    sourceRowCount: stackedCustomLayout.rows.length
+});
+const stackedRoundTrip = parseKeyboardModelJSONText(JSON.stringify(stackedModel), defaults, {
+    ...options,
+    sourceRowCount: stackedCustomLayout.rows.length
+});
+assert.deepEqual(stackedRoundTrip.customLayout.rows[0].main[1].stack.map((key) => key.editId), [
+    '0:main:1:stack0',
+    '0:main:1:stack1'
+]);
+
 assert.throws(
     () => presetBlobFromKeyboardModel({ schema: 'keyboarder.model.v2' }, defaults, options),
     /Unsupported model schema/

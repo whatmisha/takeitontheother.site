@@ -36,6 +36,9 @@ function editIdOf(k, ordinal) {
 
 function contentByEditId(content) {
     const byId = new Map();
+    for (const k of content.keys || []) {
+        if (k.editId) byId.set(k.editId, k);
+    }
     for (const group of groupedByRowBlock(content.keys).values()) {
         group.forEach((k, ordinal) => byId.set(editIdOf(k, ordinal), k));
     }

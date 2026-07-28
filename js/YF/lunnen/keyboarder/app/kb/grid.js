@@ -75,14 +75,32 @@ export function layoutRow(items, block, grid, y) {
     list.forEach((it, i) => {
         const w = widths[i];
         if (!it.skip) {
-            keys.push({
-                x, y, w,
-                h: spanHeight(it.rowSpan || 1, grid),
-                block: block.id,
-                span: it.rowSpan || 1,
-                id: it.id || null,
-                editId: it.editId || null
-            });
+            if (Array.isArray(it.stack) && it.stack.length) {
+                it.stack.forEach((child, stackIndex) => {
+                    keys.push({
+                        x,
+                        y: y + (Number(child.yOffset) || 0),
+                        w: child.w ?? w,
+                        h: child.h ?? spanHeight(child.rowSpan || 1, grid),
+                        block: block.id,
+                        span: child.rowSpan || 1,
+                        id: child.id || null,
+                        editId: child.editId || (it.editId ? `${it.editId}:stack${stackIndex}` : null),
+                        stackParentEditId: it.editId || null,
+                        stackIndex,
+                        stackCount: it.stack.length
+                    });
+                });
+            } else {
+                keys.push({
+                    x, y, w,
+                    h: spanHeight(it.rowSpan || 1, grid),
+                    block: block.id,
+                    span: it.rowSpan || 1,
+                    id: it.id || null,
+                    editId: it.editId || null
+                });
+            }
         }
         x += w + gap;
     });

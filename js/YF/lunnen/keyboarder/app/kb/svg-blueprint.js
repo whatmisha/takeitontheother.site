@@ -1,5 +1,6 @@
 const NUM_RE = /[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?/g;
 const AXIS_TOLERANCE = 1e-6;
+const PATH_CORNER_TOLERANCE = 0.55;
 export const LAYOUT_DRAFT_SCHEMA = 'keyboarder.layoutDraft.v1';
 
 export function stripIllustratorPrivateData(svgText = '') {
@@ -144,6 +145,47 @@ export function parseSvgRects(source = '') {
     }).filter(Boolean);
 }
 
+export function parseSvgPathCornerArcs(source = '') {
+    return tags(source, 'path').map((tag, i) => {
+        const a = parseSvgAttributes(tag);
+        const d = String(a.d || '').trim();
+        const cubic = d.match(/[cC]/)?.[0] || '';
+        if (!cubic) return null;
+        const nums = numbers(d);
+        if (nums.length < 8) return null;
+        const x = nums[0];
+        const y = nums[1];
+        const ex = cubic === 'c' ? x + nums[6] : nums[6];
+        const ey = cubic === 'c' ? y + nums[7] : nums[7];
+        const dx = ex - x;
+        const dy = ey - y;
+        if (Math.abs(dx) < 0.05 || Math.abs(dy) < 0.05) return null;
+
+        const arc = {
+            i,
+            x: round(x, 4),
+            y: round(y, 4),
+            ex: round(ex, 4),
+            ey: round(ey, 4),
+            dx,
+            dy
+        };
+        if (dx < 0 && dy > 0) {
+            return { ...arc, kind: 'tl', x0: round(ex, 4), y0: round(y, 4) };
+        }
+        if (dx < 0 && dy < 0) {
+            return { ...arc, kind: 'tr', x1: round(x, 4), y0: round(ey, 4) };
+        }
+        if (dx > 0 && dy > 0) {
+            return { ...arc, kind: 'bl', x0: round(x, 4), y1: round(ey, 4) };
+        }
+        if (dx > 0 && dy < 0) {
+            return { ...arc, kind: 'br', x1: round(ex, 4), y1: round(y, 4) };
+        }
+        return null;
+    }).filter(Boolean);
+}
+
 export function calibrateFromCaps(rects = []) {
     const usable = rects.filter((r) => [r.x, r.y, r.w, r.h].every(Number.isFinite));
     if (usable.length < 2) return null;
@@ -192,11 +234,13 @@ export function analyzeSvgBlueprint(svgText = '') {
     const source = blueprint || stripped.svg;
     const lines = parseSvgLines(source);
     const buckets = classifySvgLines(lines);
+    const pathCornerArcs = parseSvgPathCornerArcs(source);
     const capRects = parseSvgRects(caps);
     const spanGroups = horizontalSpanGroups(buckets.horizontal);
     const calibration = calibrateFromCaps(capRects);
     const recognized = detectKeyRectCandidates({
         lineBuckets: buckets,
+        pathCornerArcs,
         calibration,
         caps: capRects
     });
@@ -205,6 +249,7 @@ export function analyzeSvgBlueprint(svgText = '') {
         elements: {
             lines: lines.length,
             paths: countTags(source, 'path'),
+            pathCornerArcs: pathCornerArcs.length,
             rects: countTags(source, 'rect'),
             polygons: countTags(source, 'polygon')
         },
@@ -254,7 +299,8 @@ export function detectKeyRectCandidates(analysis = {}, options = {}) {
 
     const cornerOffset = finiteNumber(
         options.cornerOffset,
-        estimateCornerOffsetFromCaps(analysis.caps || [], horizontal, calibration.cornerRadius)
+        estimateCornerOffsetFromCaps(analysis.caps || [], horizontal, calibration.cornerRadius),
+        calibration.cornerRadius
     );
     if (!Number.isFinite(cornerOffset)) return { cornerOffset: null, raw: [], keys: [] };
 
@@ -294,8 +340,7 @@ export function detectKeyRectCandidates(analysis = {}, options = {}) {
         }
     }
 
-    const keys = removeNestedCandidates(raw).map((k, i) => ({
-        i,
+    const regularKeys = removeNestedCandidates(raw).map((k) => ({
         x: k.x,
         y: k.y,
         w: k.w,
@@ -304,9 +349,42 @@ export function detectKeyRectCandidates(analysis = {}, options = {}) {
         top: k.top,
         bottom: k.bottom
     }));
+
+    const stackCells = detectStackedKeyCellsFromPathArcs(analysis.pathCornerArcs || [], {
+        calibration,
+        cornerOffset,
+        existingKeys: regularKeys
+    }).map((cell, stackId) => ({
+        ...cell,
+        stackId,
+        stack: cell.stack.map((key, stackIndex) => ({
+            ...key,
+            stackId,
+            stackIndex,
+            stackCount: cell.stack.length
+        }))
+    }));
+    const stackedKeys = stackCells.flatMap((cell) => cell.stack.map((key) => ({
+        x: key.x,
+        y: key.y,
+        w: key.w,
+        h: key.h,
+        rowSpan: key.rowSpan,
+        stackId: key.stackId,
+        stackIndex: key.stackIndex,
+        stackCount: key.stackCount,
+        stackBaseY: cell.y,
+        stackBaseH: cell.h
+    })));
+    const keys = [...regularKeys, ...stackedKeys]
+        .sort((a, b) => a.y - b.y || a.x - b.x || (a.stackIndex || 0) - (b.stackIndex || 0))
+        .map((k, i) => ({ i, ...k }));
+    const estimatedGrid = estimateGridFromKeys(draftCellsFromRecognized(keys, { stackCells }), calibration);
     return {
         cornerOffset: round(cornerOffset, 4),
-        raw,
+        raw: [...raw, ...stackedKeys],
+        stackCells,
+        estimatedGrid,
         keys
     };
 }
@@ -332,6 +410,152 @@ export function estimateCornerOffsetFromCaps(caps = [], horizontal = [], radius 
     return clusteredMode(estimates, 0.05, { tie: 'smallest' });
 }
 
+function detectStackedKeyCellsFromPathArcs(arcs = [], options = {}) {
+    const calibration = options.calibration || {};
+    const keyWidth1U = finiteNumber(options.keyWidth1U, calibration.keyWidth1U);
+    const keyHeight = finiteNumber(options.keyHeight, calibration.keyHeight);
+    if (!Number.isFinite(keyWidth1U) || !Number.isFinite(keyHeight)) return [];
+
+    const widthTolerance = Math.max(1.25, keyWidth1U * 0.04);
+    const minH = keyHeight * 0.35;
+    const maxH = keyHeight * 0.75;
+    const tls = arcs.filter((arc) => arc.kind === 'tl');
+    const trs = arcs.filter((arc) => arc.kind === 'tr');
+    const bls = arcs.filter((arc) => arc.kind === 'bl');
+    const brs = arcs.filter((arc) => arc.kind === 'br');
+    const rects = [];
+
+    for (const tl of tls) {
+        for (const tr of trs) {
+            if (!closeEnough(tl.y0, tr.y0, PATH_CORNER_TOLERANCE)) continue;
+            const w = tr.x1 - tl.x0;
+            if (Math.abs(w - keyWidth1U) > widthTolerance) continue;
+            for (const bl of bls) {
+                if (!closeEnough(bl.x0, tl.x0, PATH_CORNER_TOLERANCE)) continue;
+                const h = bl.y1 - tl.y0;
+                if (h < minH || h > maxH) continue;
+                const br = brs.find((candidate) =>
+                    closeEnough(candidate.x1, tr.x1, PATH_CORNER_TOLERANCE)
+                    && closeEnough(candidate.y1, bl.y1, PATH_CORNER_TOLERANCE));
+                if (!br) continue;
+                rects.push({
+                    x: round((tl.x0 + bl.x0) / 2, 4),
+                    y: round((tl.y0 + tr.y0) / 2, 4),
+                    w: round(w, 4),
+                    h: round(h, 4)
+                });
+            }
+        }
+    }
+
+    const unique = uniqueRects(rects, 0.7).sort((a, b) => a.x - b.x || a.y - b.y);
+    const used = new Set();
+    const cells = [];
+    for (let i = 0; i < unique.length; i++) {
+        if (used.has(i)) continue;
+        const top = unique[i];
+        const mateIndex = unique.findIndex((candidate, j) => {
+            if (j === i || used.has(j)) return false;
+            if (!closeEnough(candidate.x, top.x, 0.75) || !closeEnough(candidate.w, top.w, 0.75)) return false;
+            if (candidate.y <= top.y) return false;
+            const footprintH = candidate.y + candidate.h - top.y;
+            return Math.abs(footprintH - keyHeight) <= Math.max(1.5, keyHeight * 0.04);
+        });
+        if (mateIndex < 0) continue;
+        const bottom = unique[mateIndex];
+        const cell = {
+            x: round((top.x + bottom.x) / 2, 4),
+            y: round(top.y, 4),
+            w: round((top.w + bottom.w) / 2, 4),
+            h: round(bottom.y + bottom.h - top.y, 4),
+            stack: [
+                { x: top.x, y: top.y, w: top.w, h: top.h },
+                { x: bottom.x, y: bottom.y, w: bottom.w, h: bottom.h }
+            ]
+        };
+        if (overlapsExistingKey(cell, options.existingKeys || [])) continue;
+        used.add(i);
+        used.add(mateIndex);
+        cells.push(cell);
+    }
+    return cells.sort((a, b) => a.y - b.y || a.x - b.x);
+}
+
+function overlapsExistingKey(cell, keys = []) {
+    return keys.some((key) => rectsIntersect(cell, key, 0.5));
+}
+
+function draftCellsFromRecognized(keys = [], recognized = {}) {
+    const stackKeys = new Set();
+    const cells = [];
+    for (const cell of recognized.stackCells || []) {
+        for (const key of cell.stack || []) {
+            stackKeys.add(`${round(key.x, 3)}:${round(key.y, 3)}:${round(key.w, 3)}:${round(key.h, 3)}`);
+        }
+        cells.push({
+            x: cell.x,
+            y: cell.y,
+            w: cell.w,
+            h: cell.h,
+            stackId: cell.stackId,
+            stack: (cell.stack || []).map((key) => ({
+                x: key.x,
+                y: key.y,
+                w: key.w,
+                h: key.h,
+                stackIndex: key.stackIndex,
+                stackCount: key.stackCount
+            }))
+        });
+    }
+    for (const key of keys) {
+        const signature = `${round(key.x, 3)}:${round(key.y, 3)}:${round(key.w, 3)}:${round(key.h, 3)}`;
+        if (stackKeys.has(signature)) continue;
+        cells.push({ ...key });
+    }
+    return cells.sort((a, b) => a.y - b.y || a.x - b.x);
+}
+
+function estimateGridFromKeys(cells = [], calibration = {}, options = {}) {
+    const keyWidth1U = finiteNumber(options.keyWidth1U, calibration.keyWidth1U, clusteredMode(cells.map((key) => key.w), 0.5, { tie: 'smallest' }));
+    const keyHeight = finiteNumber(options.keyHeight, calibration.keyHeight, clusteredMode(cells.map((key) => key.h), 1, { tie: 'smallest' }));
+    const rowClusters = clusters(cells.map((key) => key.y), finiteNumber(options.rowTolerance, 1))
+        .map((cluster) => cluster.value)
+        .sort((a, b) => a - b);
+    const rowDiffs = diffs(rowClusters).filter((value) => !Number.isFinite(keyHeight) || value > keyHeight * 0.75);
+    const gap = estimateGapFromRows(cells, keyWidth1U);
+    const colPitch = Number.isFinite(gap) && Number.isFinite(keyWidth1U)
+        ? keyWidth1U + gap
+        : NaN;
+    const rowPitch = finiteNumber(calibration.rowPitch, median(rowDiffs), Number.isFinite(keyHeight) && Number.isFinite(gap) ? keyHeight + gap : NaN);
+    return {
+        keyWidth1U: Number.isFinite(keyWidth1U) ? round(keyWidth1U, 4) : null,
+        keyHeight: Number.isFinite(keyHeight) ? round(keyHeight, 4) : null,
+        gap: Number.isFinite(gap) ? round(gap, 4) : null,
+        colPitch: Number.isFinite(colPitch) ? round(colPitch, 4) : null,
+        rowPitch: Number.isFinite(rowPitch) ? round(rowPitch, 4) : null
+    };
+}
+
+function estimateGapFromRows(cells = [], keyWidth1U = NaN) {
+    const rows = clusters(cells.map((key) => key.y), 1).map((cluster) => ({
+        y: cluster.value,
+        keys: cells.filter((key) => Math.abs(key.y - cluster.value) <= 1).sort((a, b) => a.x - b.x)
+    }));
+    const gaps = [];
+    for (const row of rows) {
+        for (let i = 1; i < row.keys.length; i++) {
+            const prev = row.keys[i - 1];
+            const key = row.keys[i];
+            const gap = key.x - (prev.x + prev.w);
+            if (gap <= 0.4) continue;
+            if (Number.isFinite(keyWidth1U) && gap > keyWidth1U * 0.6) continue;
+            gaps.push(gap);
+        }
+    }
+    return clusteredMode(gaps, 0.35, { tie: 'smallest' });
+}
+
 export function diagnoseRecognizedKeys(analysis = {}, options = {}) {
     const warnings = [];
     const notices = [];
@@ -341,11 +565,12 @@ export function diagnoseRecognizedKeys(analysis = {}, options = {}) {
     const raw = recognized.raw || [];
     const caps = analysis.caps || [];
     const calibration = analysis.calibration || {};
-    const keyWidth1U = finiteNumber(options.keyWidth1U, calibration.keyWidth1U);
-    const keyHeight = finiteNumber(options.keyHeight, calibration.keyHeight);
-    const colPitch = finiteNumber(options.colPitch, calibration.colPitch);
-    const rowPitch = finiteNumber(options.rowPitch, calibration.rowPitch);
-    const gap = finiteNumber(options.gap, calibration.gap, colPitch - keyWidth1U);
+    const estimated = recognized.estimatedGrid || {};
+    const keyWidth1U = finiteNumber(options.keyWidth1U, calibration.keyWidth1U, estimated.keyWidth1U);
+    const keyHeight = finiteNumber(options.keyHeight, calibration.keyHeight, estimated.keyHeight);
+    const colPitch = finiteNumber(options.colPitch, calibration.colPitch, estimated.colPitch);
+    const rowPitch = finiteNumber(options.rowPitch, calibration.rowPitch, estimated.rowPitch);
+    const gap = finiteNumber(options.gap, calibration.gap, estimated.gap, colPitch - keyWidth1U);
     const heightTolerance = finiteNumber(options.heightTolerance, 1.2);
     const tinyWidth = Number.isFinite(keyWidth1U) ? keyWidth1U * 0.45 : 20;
     const hugeWidth = Number.isFinite(colPitch) ? colPitch * 8 : 430;
@@ -361,7 +586,13 @@ export function diagnoseRecognizedKeys(analysis = {}, options = {}) {
     if (!calibration) add(warnings, { code: 'no-calibration', message: 'Could not calibrate from caps.' });
     if (!keys.length) add(warnings, { code: 'no-keys', message: 'No key rectangles detected.' });
     if (caps.length && keys.length && caps.length !== keys.length) {
-        add(warnings, { code: 'cap-count-mismatch', message: `Detected ${keys.length} keys, but caps has ${caps.length} rects.` });
+        const sparseCaps = caps.length <= Math.max(4, keys.length * 0.1);
+        add(sparseCaps ? notices : warnings, {
+            code: sparseCaps ? 'caps-used-for-calibration' : 'cap-count-mismatch',
+            message: sparseCaps
+                ? `Detected ${keys.length} keys; ${caps.length} caps rects were used as calibration samples.`
+                : `Detected ${keys.length} keys, but caps has ${caps.length} rects.`
+        }, { suspiciousKey: false });
     }
     if (raw.length && keys.length && raw.length > keys.length * 3) {
         add(notices, { code: 'many-raw-candidates', message: `${raw.length} raw candidates collapsed to ${keys.length} keys.` });
@@ -382,7 +613,7 @@ export function diagnoseRecognizedKeys(analysis = {}, options = {}) {
             const expected = key.rowSpan === 2 && Number.isFinite(rowPitch)
                 ? keyHeight + rowPitch
                 : keyHeight;
-            if (Math.abs(key.h - expected) > heightTolerance) {
+            if (!key.stackCount && Math.abs(key.h - expected) > heightTolerance) {
                 add(warnings, { code: 'height-mismatch', keyIndex: key.i, message: `Key ${key.i + 1} height does not match the calibrated grid.` });
             }
         }
@@ -438,20 +669,24 @@ export function diagnoseRecognizedKeys(analysis = {}, options = {}) {
 export function layoutDraftFromRecognized(analysis = {}, options = {}) {
     const recognized = analysis.recognized || {};
     const keys = (recognized.keys || []).filter((key) => [key.x, key.y, key.w, key.h].every(Number.isFinite));
+    const cells = draftCellsFromRecognized(keys, recognized);
     const calibration = analysis.calibration || {};
-    const keyWidth1U = finiteNumber(options.keyWidth1U, calibration.keyWidth1U);
-    const colPitch = finiteNumber(options.colPitch, calibration.colPitch);
-    const gap = finiteNumber(options.gap, calibration.gap, colPitch - keyWidth1U);
-    const keyHeight = finiteNumber(options.keyHeight, calibration.keyHeight, clusteredMode(keys.map((key) => key.h), 1, { tie: 'smallest' }));
-    const rowClusters = clusters(keys.map((key) => key.y), finiteNumber(options.rowTolerance, 1))
+    const estimated = recognized.estimatedGrid || estimateGridFromKeys(cells, calibration, options);
+    const keyWidth1U = finiteNumber(options.keyWidth1U, calibration.keyWidth1U, estimated.keyWidth1U);
+    const colPitch = finiteNumber(options.colPitch, calibration.colPitch, estimated.colPitch);
+    const gap = finiteNumber(options.gap, calibration.gap, estimated.gap, colPitch - keyWidth1U);
+    const keyHeight = finiteNumber(options.keyHeight, calibration.keyHeight, estimated.keyHeight, clusteredMode(cells.map((key) => key.h), 1, { tie: 'smallest' }));
+    const rowClusters = clusters(cells.map((key) => key.y), finiteNumber(options.rowTolerance, 1))
         .map((cluster) => cluster.value)
         .sort((a, b) => a - b);
-    const rowPitch = finiteNumber(options.rowPitch, median(diffs(rowClusters)), calibration.rowPitch);
-    if (!keys.length || !Number.isFinite(keyWidth1U) || !Number.isFinite(colPitch) || !Number.isFinite(gap) || !Number.isFinite(keyHeight) || !rowClusters.length) {
+    const rowPitch = finiteNumber(options.rowPitch, median(diffs(rowClusters)), calibration.rowPitch, estimated.rowPitch, keyHeight + gap);
+    if (!cells.length || !Number.isFinite(keyWidth1U) || !Number.isFinite(colPitch) || !Number.isFinite(gap) || !Number.isFinite(keyHeight) || !rowClusters.length) {
         return null;
     }
 
-    const blocks = detectDraftBlocks(keys, gap).map((block, index, list) => ({
+    assignDraftSemanticIds(cells, rowClusters);
+
+    const blocks = detectDraftBlocks(cells, gap).map((block, index, list) => ({
         id: blockIdFor(index, list.length),
         x: round(block.x, 4),
         width: round(block.right - block.x, 4),
@@ -460,16 +695,26 @@ export function layoutDraftFromRecognized(analysis = {}, options = {}) {
     const draftRows = rowClusters.map((rowY, rowIndex) => {
         const row = {};
         for (const block of blocks) {
-            const blockKeys = keys
+            const blockKeys = cells
                 .filter((key) => nearestIndex(rowClusters, key.y) === rowIndex && block.keys.includes(key))
                 .sort((a, b) => a.x - b.x);
             if (!blockKeys.length) continue;
             const items = [];
             let cursor = block.x;
+            let ordinal = 0;
             for (const key of blockKeys) {
                 const skip = normalizedSkip((key.x - cursor) / colPitch);
                 if (skip > 0) items.push({ skip });
-                items.push(draftItemForKey(key, { colPitch, gap }));
+                const item = draftItemForKey(key, { colPitch, gap });
+                if (item.stack) {
+                    item.editId = `${rowIndex}:${block.id}:${ordinal}`;
+                    item.stack = item.stack.map((child, stackIndex) => ({
+                        ...child,
+                        editId: `${item.editId}:stack${stackIndex}`
+                    }));
+                }
+                items.push(item);
+                ordinal += 1;
                 cursor = key.x + key.w + gap;
             }
             row[block.id] = compactDraftItems(items);
@@ -509,7 +754,8 @@ export function layoutDraftFromRecognized(analysis = {}, options = {}) {
             explicitWidths: countDraftItems(draftRows, (item) => item.w != null),
             unitWidths: countDraftItems(draftRows, (item) => item.u != null),
             skips: countDraftItems(draftRows, (item) => item.skip != null),
-            rowSpans: countDraftItems(draftRows, (item) => item.rowSpan != null)
+            rowSpans: countDraftItems(draftRows, (item) => item.rowSpan != null),
+            stacks: countDraftItems(draftRows, (item) => Array.isArray(item.stack))
         }
     };
 }
@@ -524,10 +770,12 @@ export function blueprintSummaryLines(analysis) {
         `Paths: ${analysis.elements?.paths || 0}; span groups: ${analysis.horizontalSpanGroups || 0}`
     ];
     if (c) {
-        lines.push(`Caps: ${c.caps}; 1U ${c.keyWidth1U}, H ${c.keyHeight}, pitch ${c.colPitch ?? 'n/a'} × ${c.rowPitch ?? 'n/a'}`);
+        const e = analysis.recognized?.estimatedGrid || {};
+        lines.push(`Caps: ${c.caps}; 1U ${c.keyWidth1U}, H ${c.keyHeight}, pitch ${c.colPitch ?? e.colPitch ?? 'n/a'} × ${c.rowPitch ?? e.rowPitch ?? 'n/a'}`);
     }
     if (analysis.recognized?.keys?.length) {
-        lines.push(`Detected: ${analysis.recognized.keys.length} keys from ${analysis.recognized.raw.length} candidates, d ${analysis.recognized.cornerOffset}`);
+        const stacks = analysis.recognized.stackCells?.length || 0;
+        lines.push(`Detected: ${analysis.recognized.keys.length} keys from ${analysis.recognized.raw.length} candidates, d ${analysis.recognized.cornerOffset}${stacks ? `, ${stacks} stack` : ''}`);
     }
     if (analysis.diagnostics) {
         const warnings = analysis.diagnostics.warnings?.length || 0;
@@ -538,7 +786,7 @@ export function blueprintSummaryLines(analysis) {
     }
     if (analysis.layoutDraft) {
         const s = analysis.layoutDraft.stats;
-        lines.push(`Draft: ${s.blocks} blocks, ${s.rows} rows, ${s.keys} keys`);
+        lines.push(`Draft: ${s.blocks} blocks, ${s.rows} rows, ${s.keys} keys${s.stacks ? `, ${s.stacks} stack` : ''}`);
     }
     if (analysis.privateData?.removedBytes) {
         lines.push(`Removed Illustrator private data: ${analysis.privateData.removedBytes} bytes`);
@@ -571,6 +819,38 @@ function blockIdFor(index, count) {
     return index === 0 ? 'main' : `block${index + 1}`;
 }
 
+const ANSI_COMPACT_IDS = [
+    ['esc', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11', 'f12', 'f13'],
+    ['grave', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'minus', 'equal', 'backspace'],
+    ['tab', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'left-bracket', 'right-bracket', 'backslash'],
+    ['caps', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'semicolon', 'quote', 'enter'],
+    ['lshift', 'z', 'x', 'c', 'v', 'b', 'n', 'm', 'comma', 'period', 'slash', 'rshift'],
+    ['lctrl', 'lmeta', 'lalt', 'fn-left', 'space', 'ralt', 'fn-right', 'left', 'arrow-stack', 'right']
+];
+
+function assignDraftSemanticIds(cells = [], rowClusters = []) {
+    if (rowClusters.length !== ANSI_COMPACT_IDS.length) return;
+    const rows = rowClusters.map((rowY, rowIndex) => cells
+        .filter((key) => nearestIndex(rowClusters, key.y) === rowIndex)
+        .sort((a, b) => a.x - b.x));
+    const rowLengths = rows.map((row) => row.length);
+    const expected = ANSI_COMPACT_IDS.map((row) => row.length);
+    if (!rowLengths.every((count, i) => count === expected[i])) return;
+
+    rows.forEach((row, rowIndex) => {
+        row.forEach((cell, ordinal) => {
+            const id = ANSI_COMPACT_IDS[rowIndex][ordinal];
+            if (cell.stack?.length) {
+                cell.id = id;
+                cell.stack[0].id = 'up';
+                if (cell.stack[1]) cell.stack[1].id = 'down';
+            } else {
+                cell.id = id;
+            }
+        });
+    });
+}
+
 function draftItemForKey(key, { colPitch, gap }) {
     const item = {};
     const widthU = (key.w + gap) / colPitch;
@@ -578,7 +858,20 @@ function draftItemForKey(key, { colPitch, gap }) {
     const quarterWidth = quarter * colPitch - gap;
     if (Math.abs(key.w - quarterWidth) <= 0.02) item.u = normalizedUnit(quarter);
     else item.w = round(key.w, 4);
+    if (key.id) item.id = key.id;
     if (key.rowSpan && key.rowSpan > 1) item.rowSpan = key.rowSpan;
+    if (Array.isArray(key.stack) && key.stack.length) {
+        item.stack = key.stack.map((child, stackIndex) => {
+            const out = {
+                yOffset: round(child.y - key.y, 4),
+                h: round(child.h, 4)
+            };
+            if (child.id) out.id = child.id;
+            else if (stackIndex === 0) out.id = 'up';
+            else if (stackIndex === 1) out.id = 'down';
+            return out;
+        });
+    }
     return item;
 }
 
@@ -602,6 +895,7 @@ function canRepeatDraftItem(item) {
         && item.skip == null
         && item.flex == null
         && item.rowSpan == null
+        && item.stack == null
         && item.id == null
         && item.editId == null;
 }
@@ -687,6 +981,25 @@ function rectsIntersect(a, b, tolerance) {
         && a.y + a.h > b.y + tolerance;
 }
 
+function uniqueRects(rects, tolerance = 0.5) {
+    const out = [];
+    for (const rect of rects || []) {
+        if (out.some((existing) =>
+            closeEnough(existing.x, rect.x, tolerance)
+            && closeEnough(existing.y, rect.y, tolerance)
+            && closeEnough(existing.w, rect.w, tolerance)
+            && closeEnough(existing.h, rect.h, tolerance))) {
+            continue;
+        }
+        out.push(rect);
+    }
+    return out;
+}
+
+function closeEnough(a, b, tolerance) {
+    return Math.abs(a - b) <= tolerance;
+}
+
 function tags(source, name) {
     const re = new RegExp(`<${name}\\b[^>]*>`, 'gi');
     return String(source || '').match(re) || [];
@@ -704,6 +1017,7 @@ function numberAttr(value) {
 
 function finiteNumber(...values) {
     for (const value of values) {
+        if (value == null || value === '') continue;
         const n = Number(value);
         if (Number.isFinite(n)) return n;
     }

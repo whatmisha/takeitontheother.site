@@ -8,6 +8,33 @@ const NAV_TOP = ['print', 'scroll', 'pause'];
 const NAV_NUM = ['insert', 'home', 'pg up'];
 const NAV_Q = ['delete', 'end', 'pg dn'];
 const NAV_ARROWS = ['left', 'down', 'right'];
+const SEMANTIC_LABELS = {
+    grave: '~',
+    minus: '-',
+    equal: '=',
+    'left-bracket': '[',
+    'right-bracket': ']',
+    backslash: '\\',
+    semicolon: ';',
+    quote: '\'',
+    comma: ',',
+    period: '.',
+    slash: '/',
+    lctrl: 'ctrl',
+    rctrl: 'ctrl',
+    lmeta: 'win',
+    rmeta: 'win',
+    lalt: 'alt',
+    ralt: 'alt',
+    'fn-left': 'fn',
+    'fn-right': 'fn',
+    lshift: 'shift',
+    rshift: 'shift',
+    left: 'left',
+    right: 'right',
+    up: 'up',
+    down: 'down'
+};
 
 const LABELS = {
     ANSI_TKL: [
@@ -87,23 +114,43 @@ function genericKeysForLayout(layout, typeDefaults = {}) {
             let ordinal = 0;
             return expandedItems(items).flatMap((item) => {
                 if (item.skip) return [];
-                const label = userFacingId(item.id) || `${block} ${ordinal + 1}`;
-                const entry = {
-                    row: rowIndex,
-                    x: ordinal,
-                    block,
-                    tpl: 'generated-label',
-                    elements: [labelElement(label, typeDefaults)]
-                };
+                let entries;
+                if (Array.isArray(item.stack) && item.stack.length) {
+                    entries = item.stack.map((child, stackIndex) => {
+                        const label = userFacingId(child.id) || `${block} ${ordinal + 1}.${stackIndex + 1}`;
+                        return {
+                            row: rowIndex,
+                            x: ordinal + stackIndex / 10,
+                            block,
+                            editId: child.editId,
+                            tpl: 'generated-label',
+                            elements: [labelElement(label, typeDefaults)]
+                        };
+                    });
+                } else {
+                    const label = userFacingId(item.id) || `${block} ${ordinal + 1}`;
+                    entries = [{
+                        row: rowIndex,
+                        x: ordinal,
+                        block,
+                        editId: item.editId,
+                        tpl: 'generated-label',
+                        elements: [labelElement(label, typeDefaults)]
+                    }];
+                }
                 ordinal += 1;
-                return [entry];
+                return entries;
             });
         }));
 }
 
 function userFacingId(id) {
     const value = String(id || '').trim();
-    return value && !/^r\d+$/i.test(value) ? value : '';
+    if (!value || /^r\d+$/i.test(value) || value === 'arrow-stack') return '';
+    if (SEMANTIC_LABELS[value]) return SEMANTIC_LABELS[value];
+    if (/^f\d+$/i.test(value)) return value.toUpperCase();
+    if (/^[a-z]$/.test(value)) return value.toUpperCase();
+    return value;
 }
 
 function expandedItems(items = []) {

@@ -211,6 +211,31 @@ Important local entry points:
     synthetic `r123` IDs and fall back to positional labels such as `main 1`;
   - `keyboarder.model.v1` now preserves `customLayout` in settings, and custom layouts are also
     exposed in `keyboard.customLayout` on export.
+- Polished Stage 6 against `/Users/mishaivanov/Desktop/test_layout.svg`, a compact one-block
+  keyboard drawing where `caps` contains only two calibration samples and the up/down arrows are
+  two half-height keys stacked inside one normal-key footprint:
+  - sparse `caps` is now treated as a calibration sample layer; a cap/key count mismatch becomes
+    a note (`caps-used-for-calibration`) when `caps` is clearly sparse, so `Use Draft` is not
+    blocked by the new intended workflow;
+  - fixed `finiteNumber()` in `app/kb/svg-blueprint.js` so `null` no longer becomes `0`, which
+    had produced invalid `colPitch: 0` drafts when `caps` could not directly provide pitch;
+  - imported grid pitch now falls back to detected-key gaps and row clusters (`test_layout.svg`
+    estimates `colPitch 53.855`, `rowPitch 53.5147`);
+  - added Illustrator cubic path-corner recovery for split keys. Ordinary keys still come from
+    line pairs; path corners are only used to add half-height stacked keys whose four corners
+    form an approximately 1U wide, half-height rectangle;
+  - added `stack` support to `grid.js`: a row item can occupy one column while producing two real
+    key rectangles with per-child `yOffset`/`h`. Stack child geometry is locked in the UI, but
+    their legend content remains editable;
+  - generic generated content now respects explicit `editId` entries and understands stacked
+    children, so `up` and `down` do not collide on the same row/block ordinal;
+  - added semantic id/label inference for this ANSI-like compact shape: rows become `esc`,
+    `f1...f13`, `backspace`, `tab`, `caps`, `enter`, `lshift`, `space`, `left`, `up`, `down`,
+    `right`, etc. This is a heuristic for this class of layout, not a universal legend parser;
+  - fixed `assignEditIds()` in `app/tool.js` so keys that already have edit IDs still occupy
+    their visual ordinal. Without this, the right arrow after the stack inherited the stack
+    parent ordinal and displayed the wrong generated label;
+  - bumped the module query in `index.html` to `app/tool.js?v=20260728-stage6split`.
 - Started Stage 7 production export polish:
   - regenerated `app/kb/content/lcakb23.js` with the source icon group for every icon element
     (`icons` or `f-icons`), and updated `analysis/export_tool.py` so future regeneration
@@ -536,6 +561,18 @@ Browser QA on `http://127.0.0.1:8000/`:
     `Reference`/`Diff`, and produced no console warnings/errors;
   - toggling the `Drawing` layer hid the preview (`0` lines) and restored it (`3930` lines);
   - current-port console logs for this smoke had no warnings or errors.
+- Stage 6 drawing-import smoke for the user's compact drawing:
+  - on `http://127.0.0.1:8015/?stage6split=20260728b`, `Browse SVG` accepted
+    `/Users/mishaivanov/Desktop/test_layout.svg`;
+  - Drawing status reported 1199 H lines, 1046 V lines, 632 diagonal lines, 580 paths,
+    435 span groups, 2 cap calibration rects, recovered pitch `53.855 × 53.5147`,
+    `Detected: 78 keys from 154 candidates, d 3.3783, 1 stack`, `Issues: 0 warnings, 5 notes`,
+    and `Draft: 1 blocks, 6 rows, 78 keys, 1 stack`;
+  - `Use Draft` was enabled and switched to `IMPORTED_SVG`;
+  - rendered caps count is 78, with exactly two small keys at heights `22.5339` and `22.5342`;
+  - Text mode rendered 78 SVG `<text>` nodes and 0 glyph paths; top-row labels are
+    `esc`, `F1`...`F13`, and the stacked arrow labels include `up` and `down`;
+  - browser console errors after the smoke: none.
 
 Note: the Browser plugin's console log API kept an old error entry from an earlier failed reload
 after it was fixed. Current DOM probes confirmed the app initializes and renders.

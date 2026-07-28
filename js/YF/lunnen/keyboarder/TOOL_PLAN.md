@@ -473,6 +473,38 @@ unit-клавиши записываются через `repeat`, служебн
 generic legends для imported/custom layouts показывают позиционные подписи вроде `main 1`
 вместо технических идентификаторов.
 
+Следующий polish-срез Stage 6/7 зафиксирован по новому рабочему файлу
+`/Users/mishaivanov/Desktop/test_layout.svg`. Этот файл меняет контракт импорта: слой `caps`
+может быть **не полным набором клавиш**, а sparse-калибратором из 1-2 пользовательских образцов;
+остальные клавиши инструмент обязан восстановить сам из `blueprint`. План этого среза:
+
+- считать `caps` калибровочным слоем; mismatch `caps.length !== detectedKeys.length` становится
+  warning только когда `caps` явно выглядит как полный слой и расходится с распознаванием;
+- если `caps` не даёт `colPitch` / `rowPitch`, восстанавливать шаги сетки по detected keys:
+  брать mode обычных межклавишных зазоров и row clusters, а не падать в `0`;
+- дополнить line-based detector path-corner recovery: Illustrator хранит скруглённые углы как
+  cubic `<path>`, и по четырём углам можно распознать split-клавиши, которые не имеют цельных
+  боковых vertical segments;
+- добавить в модель импортированной раскладки stacked cell: одна 1U-ячейка может содержать две
+  физические клавиши с собственными `yOffset` / `h`. Для текущего файла это ↑/↓, скомпонованные
+  в footprint одной обычной клавиши между ← и →;
+- генерировать осмысленные `id` / labels для ANSI-like compact import: `esc`, `f1…f13`,
+  `backspace`, `tab`, `caps`, `enter`, `lshift`, `space`, `left`, `up`, `down`, `right` и т.д.,
+  чтобы после `Use Draft` пользователь получал не `main 1`, а редактируемую раскладку с
+  человеческими именами;
+- Stage 7 polish после этого: проверить, что импортированная stacked-раскладка корректно уходит
+  в SVG/PDF/JSON, clean production export не содержит drawing preview, а text/outlines modes
+  одинаково обрабатывают новые key ids и split-клавиши.
+
+Этот polish-срез выполнен по коду. `test_layout.svg` теперь импортируется clean: 2 `caps` rects
+используются как calibration samples, pitch восстанавливается по detected-key gaps, найдено
+78 физических клавиш, включая 1 stacked cell для ↑/↓, diagnostics даёт 0 warnings и `Use Draft`
+enabled. Draft собирается обратно через `buildLayout()` с nearest drift < 0.03 px, генерирует
+осмысленные labels и сохраняет stacked custom layout через `keyboarder.model.v1`. Browser smoke
+на `http://127.0.0.1:8015/?stage6split=20260728b` подтвердил 78 rendered caps, две половинные
+клавиши высотой ~22.53 px, 78 SVG `<text>` labels в Text mode, наличие `up`/`down` и отсутствие
+console errors.
+
 ### Этап 7 — про, производство ✅ основные кодовые пункты сделаны (2–3 дня)
 
 - экспорт SVG послойно, именами групп как в эталоне (`caps`, `guides`, `glyphs`, `icons`,
