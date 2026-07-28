@@ -243,8 +243,14 @@ assert.deepEqual(semanticBuilt.keys.slice(-3).map((key) => key.id), ['left', 'ar
 const semanticContent = generatedContentForLayout(semanticCompact.layoutDraft.layout, { secondarySize: 12 }, { interline: 13.5 });
 const semanticContentStats = generatedContentStatsForLayout(semanticCompact.layoutDraft.layout);
 assert.equal(semanticContentStats.alphaDualKeys, 26);
+assert.equal(semanticContentStats.fIconKeys, 13);
 assert.equal(semanticContentStats.placeholderKeys, 0);
-assert.deepEqual(semanticContent.keys.slice(0, 4).map((key) => key.elements[0].text), ['esc', 'F1', 'F2', 'F3']);
+assert.equal(semanticContent.keys[1].tpl, 'fkey-icon+label');
+assert.equal(semanticContent.keys[1].elements[0].icon, 'volume-mute');
+assert.equal(semanticContent.keys[10].tpl, 'icon+word-stack');
+assert.equal(semanticContent.keys[10].elements[0].icon, 'search');
+assert.equal(semanticContent.keys[13].tpl, 'icon-center');
+assert.equal(semanticContent.keys[13].elements[0].icon, 'emoji');
 const semanticQ = semanticContent.keys.find((key) => key.elements.some((element) => element.text === 'Q'));
 assert.equal(semanticQ.tpl, 'alpha-dual');
 assert.deepEqual(semanticQ.elements.map((element) => `${element.slot}:${element.text}`), ['TL:Q', 'BR:Й']);
@@ -275,11 +281,12 @@ assert.deepEqual(semanticNavContentStats, {
     alphaDualKeys: 26,
     punctuationDualKeys: 8,
     cornerTemplateKeys: 21,
-    generatedLabelKeys: 42,
+    fIconKeys: 13,
+    generatedLabelKeys: 29,
     placeholderKeys: 0
 });
 semanticNav.layoutDraft.stats.content = semanticNavContentStats;
-assert.ok(blueprintSummaryLines(semanticNav).includes('Content: alpha-dual 26, punctuation-dual 8, corners 21, placeholders 0'));
+assert.ok(blueprintSummaryLines(semanticNav).includes('Content: alpha-dual 26, punctuation-dual 8, f-icons 13, corners 21, placeholders 0'));
 const semanticNavLabels = semanticNavContent.keys.map((key) => key.elements.map((element) => element.text).join('/'));
 assert.equal(semanticNavLabels.filter((label) => /^main \d+$|^nav \d+$/.test(label)).length, 0);
 assert.equal(semanticNavContent.keys.filter((key) => key.tpl === 'alpha-dual').length, 26);

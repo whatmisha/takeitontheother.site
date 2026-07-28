@@ -1,3 +1,5 @@
+import ICONS from '../icons/lcakb23.js';
+
 const TKL_TOP = ['esc', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12'];
 const NUMBER_14 = ['~', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'backspace'];
 const QWERTY_14 = ['tab', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\\'];
@@ -104,6 +106,23 @@ const PUNCTUATION_DUAL_IDS = new Set([
     'slash'
 ]);
 
+const FKEY_LABEL_TRACKING = 0.0199705;
+const FKEY_ICON_BY_ID = {
+    f1: { icon: 'volume-mute', label: 'F1' },
+    f2: { icon: 'volume-down', label: 'F2' },
+    f3: { icon: 'volume-up', label: 'F3' },
+    f4: { icon: 'brightness-down', label: 'F4' },
+    f5: { icon: 'brightness-up', label: 'F5' },
+    f6: { icon: 'backlight', label: 'F6' },
+    f7: { icon: 'lock', label: 'F7' },
+    f8: { icon: 'calculator', label: 'F8' },
+    f9: { icon: 'cut', label: 'F9' },
+    f10: { tpl: 'icon+word-stack', icon: 'search', slot: 'Fr', offset: { x: 12.7739 }, label: 'F10' },
+    f11: { icon: 'window-split', label: 'F11' },
+    f12: { icon: 'display', label: 'F12' },
+    f13: { tpl: 'icon-center', icon: 'emoji', slot: 'MC' }
+};
+
 const LABELS = {
     ANSI_TKL: [
         { main: TKL_TOP, nav: NAV_TOP },
@@ -182,6 +201,40 @@ function cornerContentForId(id, typeDefaults = {}) {
     };
 }
 
+function fKeyIconContentForId(id, typeDefaults = {}) {
+    const spec = FKEY_ICON_BY_ID[String(id || '').trim().toLowerCase()];
+    const icon = spec ? ICONS[spec.icon] : null;
+    if (!spec || !icon) return null;
+    const iconElement = {
+        slot: spec.slot || 'FC',
+        kind: 'ico',
+        icon: spec.icon,
+        group: 'f-icons',
+        w: icon.w,
+        h: icon.h
+    };
+    if (spec.offset) iconElement.offset = { ...spec.offset };
+    if (!spec.label) {
+        return {
+            tpl: spec.tpl || 'icon-center',
+            elements: [iconElement]
+        };
+    }
+    return {
+        tpl: spec.tpl || 'fkey-icon+label',
+        elements: [
+            iconElement,
+            {
+                slot: 'BC',
+                kind: 'txt',
+                text: spec.label,
+                size: typeDefaults.wordSize ?? typeDefaults.secondarySize ?? glyphSize(typeDefaults),
+                tracking: FKEY_LABEL_TRACKING
+            }
+        ]
+    };
+}
+
 function generatedLabelContent(label, typeDefaults = {}) {
     return {
         tpl: 'generated-label',
@@ -192,32 +245,37 @@ function generatedLabelContent(label, typeDefaults = {}) {
 function genericContentForItem(item, fallbackLabel, typeDefaults = {}) {
     return alphaDualContentForId(item?.id, typeDefaults)
         || cornerContentForId(item?.id, typeDefaults)
+        || fKeyIconContentForId(item?.id, typeDefaults)
         || generatedLabelContent(userFacingId(item?.id) || fallbackLabel, typeDefaults);
+}
+
+function generatedContentForPresetLabel(label, typeDefaults = {}) {
+    return fKeyIconContentForId(semanticIdForPresetLabel(label), typeDefaults)
+        || generatedLabelContent(label, typeDefaults);
+}
+
+function semanticIdForPresetLabel(label) {
+    const value = String(label || '').trim().toLowerCase();
+    return /^f\d+$/.test(value) ? value : '';
 }
 
 export function generatedContentStatsForLayout(layout) {
     const rows = LABELS[layout?.meta?.name];
     if (rows) {
-        const keys = rows.reduce((sum, row) =>
-            sum + Object.values(row || {}).reduce((rowSum, labels) => rowSum + (labels?.length || 0), 0), 0);
-        return {
-            keys,
-            alphaDualKeys: 0,
-            punctuationDualKeys: 0,
-            cornerTemplateKeys: 0,
-            generatedLabelKeys: keys,
-            placeholderKeys: 0
-        };
+        const stats = emptyGeneratedContentStats();
+        for (const row of rows) {
+            for (const labels of Object.values(row || {})) {
+                for (const label of labels || []) {
+                    stats.keys += 1;
+                    if (FKEY_ICON_BY_ID[semanticIdForPresetLabel(label)]) stats.fIconKeys += 1;
+                    else stats.generatedLabelKeys += 1;
+                }
+            }
+        }
+        return stats;
     }
 
-    const stats = {
-        keys: 0,
-        alphaDualKeys: 0,
-        punctuationDualKeys: 0,
-        cornerTemplateKeys: 0,
-        generatedLabelKeys: 0,
-        placeholderKeys: 0
-    };
+    const stats = emptyGeneratedContentStats();
     for (const { item } of genericContentSlotsForLayout(layout)) {
         stats.keys += 1;
         const id = String(item?.id || '').trim().toLowerCase();
@@ -225,6 +283,8 @@ export function generatedContentStatsForLayout(layout) {
             stats.alphaDualKeys += 1;
         } else if (CORNER_TEXT_BY_ID[id]) {
             stats.cornerTemplateKeys += 1;
+        } else if (FKEY_ICON_BY_ID[id]) {
+            stats.fIconKeys += 1;
         } else {
             stats.generatedLabelKeys += 1;
             if (!userFacingId(item?.id)) stats.placeholderKeys += 1;
@@ -232,6 +292,18 @@ export function generatedContentStatsForLayout(layout) {
         if (PUNCTUATION_DUAL_IDS.has(id)) stats.punctuationDualKeys += 1;
     }
     return stats;
+}
+
+function emptyGeneratedContentStats() {
+    return {
+        keys: 0,
+        alphaDualKeys: 0,
+        punctuationDualKeys: 0,
+        cornerTemplateKeys: 0,
+        fIconKeys: 0,
+        generatedLabelKeys: 0,
+        placeholderKeys: 0
+    };
 }
 
 export function generatedContentForLayout(layout, typeDefaults = {}, baseContent = {}) {
@@ -243,7 +315,7 @@ export function generatedContentForLayout(layout, typeDefaults = {}, baseContent
                     row: rowIndex,
                     x: ordinal,
                     block,
-                    ...generatedLabelContent(label, typeDefaults)
+                    ...generatedContentForPresetLabel(label, typeDefaults)
                 }))))
         : genericKeysForLayout(layout, typeDefaults);
     return {

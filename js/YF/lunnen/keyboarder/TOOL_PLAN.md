@@ -556,7 +556,8 @@ Modal report также показывает visual `Key Review`: мини-ка�
 - `S`: content import теперь production-useful для основного ANSI typing layer: alpha keys
   получают `alpha-dual` с латиницей в `TL` и кириллицей в `BR`; bracket / semicolon / quote /
   comma / period / slash получают corner templates с кириллицей; number row получает shifted
-  symbols + bottom numerals. F-row пока текстовый, без icon profile.
+  symbols + bottom numerals. F-row получает `f-icons` profile: F1–F12 icon + label, F13 emoji;
+  built-in TKL/ISO generated content тоже использует эти F-row icons.
 - `M`: geometry import тоже справился: 89 keys, 2 blocks (`main` + `nav`), 6 rows, 0 warnings,
   5 notes. Main/nav spacing, wide keys и отдельный nav block распознаны.
 - `M`: приложенный экспорт был semantic/content fail: форма не попадала в one-block matcher,
@@ -586,11 +587,14 @@ content heuristics. Сейчас есть первые два shape profiles д�
      shifted/unshifted symbols and Cyrillic `Х/Ъ/Ж/Э/Б/Ю` in `BR`;
    - number row -> corner template with shifted symbols (`! @ # ...`) plus bottom numerals;
    - modifier/nav word keys -> stable word/generated labels, not generic `main N`;
-   - F-row icons stay a later profile layer.
+   - F-row ids `f1...f13` and built-in labels `F1...F12` -> `f-icons`
+     (`fkey-icon+label`, `icon+word-stack`, `icon-center`).
 5. ✅ Import summary/report includes `layoutProfile`, `semanticKeys`, and generated content
-   diagnostics: `alpha-dual`, `punctuation-dual`, corner template count, and placeholder count.
-6. ✅ SVG import success toast also includes profile, `alpha-dual`, and placeholder count, so
-   `main 1` / `nav 1` fallback content is visible immediately instead of looking finished.
+   diagnostics: `alpha-dual`, `punctuation-dual`, `f-icons`, corner template count, and
+   placeholder count.
+6. ✅ SVG import success toast also includes profile, `alpha-dual`, `f-icons`, and placeholder
+   count, so `main 1` / `nav 1` fallback content is visible immediately instead of looking
+   finished.
 7. ✅ Add repeatable tests with synthetic S/M fixtures in `analysis/blueprint-import.mjs`:
    assert geometry count, block count, assigned ids, `alpha-dual` count, punctuation templates,
    nav labels, content diagnostics, and zero orphan content.

@@ -224,15 +224,18 @@ Important local entry points:
   - imported/custom ANSI-like keys now use profile-based semantic inference. `ANSI_COMPACT_78`
     covers the one-block S drawing; `ANSI_NAV_89` covers the M drawing with `main + nav` blocks.
     Alpha ids `q/w/e/...` generate `tpl: "alpha-dual"` with Latin in `TL` and Russian ЙЦУКЕН
-    letters in `BR`; bracket / punctuation / number-row ids generate corner templates. `New
-    layout` also resets `languageLayer` to `dual` and syncs the Language select so a fresh SVG
-    import opens as `Latin + Cyrillic`;
+    letters in `BR`; bracket / punctuation / number-row ids generate corner templates; F-row ids
+    `f1...f13` and built-in labels `F1...F12` generate `f-icons` content
+    (`fkey-icon+label`, F10 `icon+word-stack`, F13 `icon-center`). `New layout` also resets
+    `languageLayer` to `dual` and syncs the Language select so a fresh SVG import opens as
+    `Latin + Cyrillic`;
   - latest QA on `test_layout_S.svg` / `test_layout_M.svg` is documented in `TOOL_PLAN.md`.
     Short version: S geometry is good, M geometry is good (89 keys, `main` + `nav`), and both now
     get semantic ids/content through shape profiles. Import stats include `layoutProfile`,
-    `semanticKeys`, and generated-content diagnostics (`alpha-dual`, `punctuation-dual`, corner
-    templates, placeholders); the success toast reports profile, `alpha-dual`, and placeholder
-    count. Fresh manual re-export/visual QA of the real S/M files is still pending;
+    `semanticKeys`, and generated-content diagnostics (`alpha-dual`, `punctuation-dual`,
+    `f-icons`, corner templates, placeholders); the success toast reports profile, `alpha-dual`,
+    `f-icons`, and placeholder count. Fresh manual re-export/visual QA of the real S/M files is
+    still pending;
   - `keyboarder.model.v1` now preserves `customLayout` in settings, and custom layouts are also
     exposed in `keyboard.customLayout` on export.
 - Polished Stage 6 against `/Users/mishaivanov/Desktop/test_layout.svg`, a compact one-block
@@ -648,8 +651,8 @@ Stage 6 is started:
 - Still remaining: deeper production polish for imported layouts, especially fresh manual
   re-export QA on the real S/M drawings and additional layout profiles as new keyboard drawings
   appear. Visual suspected-key review, compact `u`/`repeat` draft structure with semantic `ids`,
-  S/M profile matching, punctuation/number-row templates, and content coverage diagnostics are now
-  implemented.
+  S/M profile matching, punctuation/number-row templates, F-row icon content, and content coverage
+  diagnostics are now implemented.
 
 Stage 7 main code items are complete:
 

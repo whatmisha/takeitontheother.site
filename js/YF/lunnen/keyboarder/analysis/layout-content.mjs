@@ -35,19 +35,28 @@ const idsRepeatLayout = {
 const idsRepeatKeys = buildLayout(idsRepeatLayout).keys;
 assert.deepEqual(idsRepeatKeys.map((key) => key.id), ['esc', 'f1', 'a']);
 const idsRepeatContent = generatedContentForLayout(idsRepeatLayout, TYPE_DEFAULTS, CONTENT);
-assert.deepEqual(idsRepeatContent.keys.map((key) => key.tpl), ['generated-label', 'generated-label', 'alpha-dual']);
+assert.deepEqual(idsRepeatContent.keys.map((key) => key.tpl), ['generated-label', 'fkey-icon+label', 'alpha-dual']);
+assert.deepEqual(idsRepeatContent.keys[1].elements.map((element) => element.kind === 'ico' ? `${element.slot}:${element.icon}:${element.group}` : `${element.slot}:${element.text}`), ['FC:volume-mute:f-icons', 'BC:F1']);
 assert.deepEqual(idsRepeatContent.keys[2].elements.map((element) => `${element.slot}:${element.text}`), ['TL:A', 'BR:Ф']);
 assert.deepEqual(generatedContentStatsForLayout(idsRepeatLayout), {
     keys: 3,
     alphaDualKeys: 1,
     punctuationDualKeys: 0,
     cornerTemplateKeys: 0,
-    generatedLabelKeys: 2,
+    fIconKeys: 1,
+    generatedLabelKeys: 1,
     placeholderKeys: 0
 });
 const idsRepeatResult = attachContent(idsRepeatKeys, idsRepeatContent);
 assert.equal(idsRepeatResult.matched, 3);
 assert.equal(idsRepeatResult.orphans, 0);
+
+const ansiTklContent = generatedContentForLayout(LAYOUTS.ANSI_TKL, TYPE_DEFAULTS, CONTENT);
+assert.equal(ansiTklContent.keys[1].tpl, 'fkey-icon+label');
+assert.equal(ansiTklContent.keys[1].elements[0].icon, 'volume-mute');
+assert.equal(ansiTklContent.keys[10].tpl, 'icon+word-stack');
+assert.equal(ansiTklContent.keys[10].elements[0].icon, 'search');
+assert.equal(generatedContentStatsForLayout(LAYOUTS.ANSI_TKL).fIconKeys, 12);
 
 for (const [name, layout] of Object.entries(LAYOUTS)) {
     if (name === LCAKB23.meta.name) continue;

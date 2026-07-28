@@ -794,7 +794,7 @@ export function blueprintSummaryLines(analysis) {
         const semantic = Number.isFinite(s.semanticKeys) ? `, semantic ${s.semanticKeys}/${s.keys}` : '';
         lines.push(`Draft: ${s.blocks} blocks, ${s.rows} rows, ${s.keys} keys${s.stacks ? `, ${s.stacks} stack` : ''}${profile}${semantic}`);
         if (s.content) {
-            lines.push(`Content: alpha-dual ${s.content.alphaDualKeys || 0}, punctuation-dual ${s.content.punctuationDualKeys || 0}, corners ${s.content.cornerTemplateKeys || 0}, placeholders ${s.content.placeholderKeys || 0}`);
+            lines.push(`Content: alpha-dual ${s.content.alphaDualKeys || 0}, punctuation-dual ${s.content.punctuationDualKeys || 0}, f-icons ${s.content.fIconKeys || 0}, corners ${s.content.cornerTemplateKeys || 0}, placeholders ${s.content.placeholderKeys || 0}`);
         }
     }
     if (analysis.privateData?.removedBytes) {

@@ -2426,6 +2426,7 @@ function svgImportToastText(layoutName, stats = {}) {
     ];
     if (stats.layoutProfile) parts.push(stats.layoutProfile);
     if (Number.isFinite(content.alphaDualKeys)) parts.push(`${content.alphaDualKeys} alpha-dual`);
+    if (Number.isFinite(content.fIconKeys) && content.fIconKeys) parts.push(`${content.fIconKeys} f-icons`);
     if (Number.isFinite(content.placeholderKeys)) parts.push(`${content.placeholderKeys} placeholders`);
     return parts.join(' · ');
 }
