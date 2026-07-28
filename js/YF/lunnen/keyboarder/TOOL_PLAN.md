@@ -544,6 +544,60 @@ Modal report также показывает visual `Key Review`: мини-ка�
 `/Users/mishaivanov/Desktop/test_layout_S.svg`: 78 keys, 78 content entries, 26 `alpha-dual`;
 первые пары `Q/Й`, `W/Ц`, `E/У`.
 
+#### Stage 6 QA: `test_layout_S.svg` / `test_layout_M.svg` import quality
+
+2026-07-28 ручная оценка по исходникам
+`/Users/mishaivanov/Desktop/test_layout_S.svg`, `/Users/mishaivanov/Desktop/test_layout_M.svg`
+и экспортам из Downloads:
+
+- `S`: geometry import справился хорошо. Найдено 78 keys, 1 block, 6 rows, 1 stacked cell для
+  `up/down`, 0 warnings, 5 notes. Форма клавиатуры, широкие модификаторы, пробел и split arrows
+  собираются обратно корректно.
+- `S`: content import теперь частично production-useful: alpha keys получают `alpha-dual` с
+  латиницей в `TL` и кириллицей в `BR`. Но генерация всё ещё неполная: bracket / semicolon /
+  quote / comma / period / slash / number row остаются single labels, без `Х/Ъ/Ж/Э/Б/Ю` и без
+  shifted-symbol corners; F-row пока текстовый, без icon profile.
+- `M`: geometry import тоже справился: 89 keys, 2 blocks (`main` + `nav`), 6 rows, 0 warnings,
+  5 notes. Main/nav spacing, wide keys и отдельный nav block распознаны.
+- `M`: semantic/content import пока провален: форма не попадает в текущий one-block
+  `ANSI_COMPACT_IDS` matcher, поэтому все 89 labels становятся placeholder text:
+  `main 1`, `main 2`, `nav 1`, etc. Это не должно считаться готовой раскладкой.
+
+Root cause: SVG-чертёж сейчас несёт в основном геометрию, а не готовый semantic legend layer.
+Значит Keyboarder обязан определять layout profile по форме рядов/блоков и назначать ids +
+content heuristics. Сейчас есть только первый узкий matcher для компактного one-block S layout.
+
+План исправления:
+
+1. Ввести `layoutProfile` у `layoutDraftFromRecognized()`: shape matcher по row/block counts,
+   width pattern, nav presence, stack cells и skip pattern. Не завязываться на имя файла.
+2. Оформить текущую S-эвристику как профиль `ANSI_COMPACT_78`: 6 rows, 1 main block,
+   row lengths `14/14/14/13/12/10`, last-row stacked `up/down`.
+3. Добавить профиль для M, условно `ANSI_NAV_89`: 6 rows, `main + nav`, main row lengths
+   `14/14/14/13/12/9`, nav pattern `3/3/3/0/skip+up/3`. Он должен назначать ids:
+   `esc/f1...f13`, number row, `tab/q...backslash`, `caps/a...enter`,
+   `lshift/z...rshift`, bottom modifiers, nav `print/scroll/pause`,
+   `insert/home/pgup`, `delete/end/pgdn`, `up`, `left/down/right`.
+4. Расширить generic semantic content:
+   - alpha ids -> `alpha-dual` (`TL` Latin, `BR` Cyrillic);
+   - bracket / semicolon / quote / comma / period / slash ids -> `legend-corners` with Latin
+     shifted/unshifted symbols and Cyrillic `Х/Ъ/Ж/Э/Б/Ю` in `BR`;
+   - number row -> corner template with shifted symbols (`! @ # ...`) plus bottom numerals;
+   - modifier/nav word keys -> stable word templates, not generic `main N`;
+   - F-row icons can stay a later profile layer, but the plan should keep a slot for them.
+5. Add import semantic coverage diagnostics: after SVG import, report profile name,
+   semantic-id coverage, alpha-dual count, punctuation-dual count, and placeholder count.
+   If placeholder count is high, show a note/warning in the import report or success toast so
+   `main 1` does not silently look like a finished layout.
+6. Add repeatable tests with synthetic S/M fixtures in `analysis/blueprint-import.mjs` or a new
+   `analysis/import-fixtures.mjs`: assert geometry count, block count, assigned ids, `alpha-dual`
+   count, punctuation templates, nav labels, and zero orphan content.
+7. Re-run manual QA on fresh exports:
+   - `result_test_layout_S`: no `main N`, no missing Cyrillic on alpha/punctuation keys, arrows
+     still stacked correctly;
+   - `result_test_layout_M`: no placeholder labels, nav block named, alpha and punctuation keys
+     use the same templates as S, geometry unchanged.
+
 ### Этап 7 — про, производство ✅ основные кодовые пункты сделаны (2–3 дня)
 
 - экспорт SVG послойно, именами групп как в эталоне (`caps`, `guides`, `glyphs`, `icons`,

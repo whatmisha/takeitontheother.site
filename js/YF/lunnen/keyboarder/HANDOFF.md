@@ -224,6 +224,11 @@ Important local entry points:
     `tpl: "alpha-dual"` content with Latin in `TL` and Russian ЙЦУКЕН letters in `BR`; `New
     layout` also resets `languageLayer` to `dual` and syncs the Language select so a fresh SVG
     import opens as `Latin + Cyrillic`;
+  - latest QA on `test_layout_S.svg` / `test_layout_M.svg` is documented in `TOOL_PLAN.md`.
+    Short version: S geometry is good and now gets 26 alpha-dual keys, but punctuation/number-row
+    semantic templates are still incomplete; M geometry is good (89 keys, `main` + `nav`) but
+    semantic recognition is missing, so it currently falls back to `main N` / `nav N` labels.
+    Next Stage 6 work should add layout-profile matchers and semantic coverage diagnostics;
   - `keyboarder.model.v1` now preserves `customLayout` in settings, and custom layouts are also
     exposed in `keyboard.customLayout` on export.
 - Polished Stage 6 against `/Users/mishaivanov/Desktop/test_layout.svg`, a compact one-block
