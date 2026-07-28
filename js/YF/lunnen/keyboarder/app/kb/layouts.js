@@ -98,4 +98,143 @@ export const LCAKB23 = {
     artboard: { w: 1169.1846855, h: 328.6893243 }
 };
 
-export const LAYOUTS = { LCAKB23 };
+const BASE_GRID = LCAKB23.grid;
+const BASE_GAP = BASE_GRID.colPitch - BASE_GRID.keyWidth1U;
+const BLOCK_GAP = LCAKB23.blocks[1].x - (LCAKB23.blocks[0].x + LCAKB23.blocks[0].width);
+
+function cloneGrid() {
+    return {
+        ...BASE_GRID,
+        origin: { ...BASE_GRID.origin }
+    };
+}
+
+function u(n) {
+    return n * BASE_GRID.colPitch - BASE_GAP;
+}
+
+function block(id, x, units) {
+    return { id, x, width: u(units) };
+}
+
+function after(blockSpec) {
+    return blockSpec.x + blockSpec.width + BLOCK_GAP;
+}
+
+function layout(name, formFactor, blocks, rows) {
+    return {
+        meta: { name, formFactor },
+        grid: cloneGrid(),
+        blocks,
+        rows
+    };
+}
+
+const TKL_MAIN = block('main', BASE_GRID.origin.x, 15);
+const TKL_NAV = block('nav', after(TKL_MAIN), 3);
+
+const ANSI_TKL_ROWS = [
+    {
+        main: [{ u: 1, id: 'esc' }, { skip: 1 }, { u: 1, repeat: 4 }, { skip: 0.5 }, { u: 1, repeat: 4 }, { skip: 0.5 }, { u: 1, repeat: 4 }],
+        nav: [{ u: 1, repeat: 3 }]
+    },
+    {
+        main: [{ u: 1, repeat: 13 }, { u: 2, id: 'backspace' }],
+        nav: [{ u: 1, repeat: 3 }]
+    },
+    {
+        main: [{ u: 1.5, id: 'tab' }, { u: 1, repeat: 12 }, { u: 1.5, id: 'backslash' }],
+        nav: [{ u: 1, repeat: 3 }]
+    },
+    {
+        main: [{ u: 1.75, id: 'caps' }, { u: 1, repeat: 11 }, { u: 2.25, id: 'enter' }]
+    },
+    {
+        main: [{ u: 2.25, id: 'lshift' }, { u: 1, repeat: 10 }, { u: 2.75, id: 'rshift' }],
+        nav: [{ skip: 1 }, { u: 1, id: 'up' }]
+    },
+    {
+        main: [
+            { u: 1.25, id: 'lctrl' }, { u: 1.25, repeat: 2 }, { u: 6.25, id: 'space' },
+            { u: 1.25, repeat: 4 }
+        ],
+        nav: [{ u: 1, repeat: 3 }]
+    }
+];
+
+const ANSI_TKL = layout('ANSI_TKL', 'TKL', [TKL_MAIN, TKL_NAV], ANSI_TKL_ROWS);
+
+const ISO_TKL = layout('ISO_TKL', 'ISO TKL', [TKL_MAIN, TKL_NAV], [
+    ANSI_TKL_ROWS[0],
+    ANSI_TKL_ROWS[1],
+    {
+        main: [{ u: 1.5, id: 'tab' }, { u: 1, repeat: 12 }, { u: 1, id: 'iso-extra' }],
+        nav: [{ u: 1, repeat: 3 }]
+    },
+    {
+        main: [{ u: 1.75, id: 'caps' }, { u: 1, repeat: 11 }, { u: 1.5, id: 'iso-enter' }]
+    },
+    {
+        main: [{ u: 1.25, id: 'lshift' }, { u: 1, id: 'iso-backslash' }, { u: 1, repeat: 10 }, { u: 2.75, id: 'rshift' }],
+        nav: [{ skip: 1 }, { u: 1, id: 'up' }]
+    },
+    ANSI_TKL_ROWS[5]
+]);
+
+const COMPACT_MAIN = block('main', BASE_GRID.origin.x, 14);
+const COMPACT_NAV = block('nav', after(COMPACT_MAIN), 1);
+
+const ANSI_65 = layout('ANSI_65', '65%', [COMPACT_MAIN, COMPACT_NAV], [
+    {
+        main: [{ u: 1, repeat: 13 }, { u: 1, id: 'backspace' }],
+        nav: [{ u: 1, id: 'home' }]
+    },
+    {
+        main: [{ u: 1.5, id: 'tab' }, { u: 1, repeat: 11 }, { u: 1.5, id: 'backslash' }],
+        nav: [{ u: 1, id: 'page-up' }]
+    },
+    {
+        main: [{ u: 1.75, id: 'caps' }, { u: 1, repeat: 10 }, { u: 2.25, id: 'enter' }],
+        nav: [{ u: 1, id: 'page-down' }]
+    },
+    {
+        main: [{ u: 2.25, id: 'lshift' }, { u: 1, repeat: 9 }, { u: 2.75, id: 'rshift' }],
+        nav: [{ u: 1, id: 'up' }]
+    },
+    {
+        main: [
+            { u: 1.25, id: 'lctrl' }, { u: 1.25, repeat: 2 }, { u: 6.25, id: 'space' },
+            { u: 1.25, repeat: 3 }, { u: 1, id: 'fn' }
+        ],
+        nav: [{ u: 1, id: 'right' }]
+    }
+]);
+
+const ANSI_60 = layout('ANSI_60', '60%', [COMPACT_MAIN], [
+    { main: [{ u: 1, repeat: 13 }, { u: 1, id: 'backspace' }] },
+    { main: [{ u: 1.5, id: 'tab' }, { u: 1, repeat: 11 }, { u: 1.5, id: 'backslash' }] },
+    { main: [{ u: 1.75, id: 'caps' }, { u: 1, repeat: 10 }, { u: 2.25, id: 'enter' }] },
+    { main: [{ u: 2.25, id: 'lshift' }, { u: 1, repeat: 9 }, { u: 2.75, id: 'rshift' }] },
+    {
+        main: [
+            { u: 1.25, id: 'lctrl' }, { u: 1.25, repeat: 2 }, { u: 6.25, id: 'space' },
+            { u: 1.25, repeat: 3 }, { u: 1, id: 'fn' }
+        ]
+    }
+]);
+
+export const LAYOUTS = {
+    [LCAKB23.meta.name]: LCAKB23,
+    [ANSI_TKL.meta.name]: ANSI_TKL,
+    [ISO_TKL.meta.name]: ISO_TKL,
+    [ANSI_65.meta.name]: ANSI_65,
+    [ANSI_60.meta.name]: ANSI_60
+};
+
+export const LAYOUT_OPTIONS = [
+    { id: LCAKB23.meta.name, label: 'LCAKB23 · ANSI 96%' },
+    { id: ANSI_TKL.meta.name, label: 'ANSI TKL' },
+    { id: ISO_TKL.meta.name, label: 'ISO TKL' },
+    { id: ANSI_65.meta.name, label: 'ANSI 65%' },
+    { id: ANSI_60.meta.name, label: 'ANSI 60%' }
+];

@@ -1,0 +1,236 @@
+export const MODEL_SCHEMA = 'keyboarder.model.v1';
+
+export const PRESET_KEYS = [
+    'layoutName',
+    'colPitch', 'rowPitch', 'keyWidth1U', 'keyHeight', 'cornerRadius', 'guideInset',
+    'glyphSize', 'numpadSize', 'secondarySize', 'wordSize', 'leading', 'trackingOffset',
+    'compensationMode',
+    'showCaps', 'showGuides', 'showGlyphs', 'showIcons', 'showDrawing', 'showColumns', 'showIndex',
+    'showInk', 'showSlots', 'showRef', 'showDiff', 'showBlocks', 'languageLayer',
+    'capColor', 'guideColor', 'inkColor', 'bgColor',
+    'contentEdits', 'layoutEdits'
+];
+
+export const GRID_SETTING_KEYS = ['colPitch', 'rowPitch', 'keyWidth1U', 'keyHeight', 'cornerRadius', 'guideInset'];
+export const TYPE_SETTING_KEYS = ['glyphSize', 'numpadSize', 'secondarySize', 'wordSize', 'leading', 'trackingOffset', 'compensationMode'];
+export const LAYER_SETTING_KEYS = [
+    'showCaps', 'showGuides', 'showGlyphs', 'showIcons', 'showDrawing', 'showColumns', 'showIndex',
+    'showInk', 'showSlots', 'showRef', 'showDiff', 'showBlocks', 'languageLayer'
+];
+export const COLOR_SETTING_KEYS = ['capColor', 'guideColor', 'inkColor', 'bgColor'];
+
+const DEFAULT_MIN_KEY_WIDTH_MM = 4;
+const DEFAULT_MAX_KEY_WIDTH_MM = 80;
+
+function ioOptions(options = {}) {
+    const sourceRowCount = Number.isInteger(options.sourceRowCount)
+        ? options.sourceRowCount
+        : Number.POSITIVE_INFINITY;
+    const minKeyWidthMm = Number.isFinite(options.minKeyWidthMm)
+        ? options.minKeyWidthMm
+        : DEFAULT_MIN_KEY_WIDTH_MM;
+    const maxKeyWidthMm = Number.isFinite(options.maxKeyWidthMm)
+        ? options.maxKeyWidthMm
+        : DEFAULT_MAX_KEY_WIDTH_MM;
+    return {
+        layoutMeta: options.layoutMeta || {},
+        sourceRowCount,
+        minKeyWidthMm,
+        maxKeyWidthMm,
+        typeDefaults: options.typeDefaults || {},
+        iconOptions: Array.isArray(options.iconOptions) ? options.iconOptions : []
+    };
+}
+
+export function clonePlain(v) {
+    if (v === undefined) return undefined;
+    return JSON.parse(JSON.stringify(v));
+}
+
+export function roundMm(value) {
+    return Math.round(value * 1000) / 1000;
+}
+
+export function clamp(value, min, max) {
+    if (!Number.isFinite(value)) return NaN;
+    return Math.min(max, Math.max(min, value));
+}
+
+export function finiteOr(value, fallback) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+}
+
+export function cleanOffset(offset) {
+    if (!offset || typeof offset !== 'object') return null;
+    const out = {};
+    for (const key of ['x', 'y', 'bx', 'by']) {
+        const value = Number(offset[key]);
+        if (Number.isFinite(value) && value !== 0) out[key] = value;
+    }
+    return Object.keys(out).length ? out : null;
+}
+
+export function cleanCompOverride(compOverride) {
+    if (!compOverride || typeof compOverride !== 'object') return null;
+    const px = Number(compOverride.px);
+    return Number.isFinite(px) ? { px } : null;
+}
+
+export function cleanElement(el = {}, options = {}) {
+    const opts = ioOptions(options);
+    const slot = String(el.slot || 'BC').trim() || 'BC';
+    const kind = el.kind === 'ico' ? 'ico' : 'txt';
+    const out = { slot, kind };
+    if (kind === 'ico') {
+        out.icon = String(el.icon || opts.iconOptions[0] || '').trim();
+        out.w = finiteOr(el.w, 8);
+        out.h = finiteOr(el.h, 8);
+    } else {
+        out.text = String(el.text ?? '');
+        out.size = finiteOr(el.size, opts.typeDefaults.wordSize ?? 9);
+        const tracking = finiteOr(el.tracking, 0);
+        if (tracking !== 0) out.tracking = tracking;
+        const compOverride = cleanCompOverride(el.compOverride);
+        if (compOverride) out.compOverride = compOverride;
+    }
+    const offset = cleanOffset(el.offset);
+    if (offset) out.offset = offset;
+    return out;
+}
+
+export function cleanElements(elements = [], options = {}) {
+    return (Array.isArray(elements) ? elements : []).map((el) => cleanElement(el, options));
+}
+
+export function sanitizeContentEdits(edits = {}, options = {}) {
+    const out = {};
+    if (!edits || typeof edits !== 'object') return out;
+    for (const [id, edit] of Object.entries(edits)) {
+        if (!edit || typeof edit !== 'object') continue;
+        out[id] = {
+            tpl: String(edit.tpl || 'blank'),
+            elements: cleanElements(edit.elements, options)
+        };
+    }
+    return out;
+}
+
+export function sanitizeLayoutEdits(edits = {}, options = {}) {
+    const opts = ioOptions(options);
+    const out = {};
+    if (!edits || typeof edits !== 'object') return out;
+    for (const [id, edit] of Object.entries(edits)) {
+        if (!edit || typeof edit !== 'object') continue;
+        const clean = {};
+        const order = Array.isArray(edit.order)
+            ? [...new Set(edit.order.map((v) => String(v || '').trim()).filter(Boolean))]
+            : [];
+        if (order.length) clean.order = order;
+        if (edit.rowAdded === true) {
+            const afterRow = Number(edit.afterRow);
+            const templateRow = Number(edit.templateRow);
+            if (!Number.isInteger(afterRow) || afterRow < 0 || afterRow >= opts.sourceRowCount) continue;
+            if (!Number.isInteger(templateRow) || templateRow < 0 || templateRow >= opts.sourceRowCount) continue;
+            clean.rowAdded = true;
+            clean.afterRow = afterRow;
+            clean.templateRow = templateRow;
+        }
+        if (edit.added === true) {
+            const after = String(edit.after || '').trim();
+            const before = String(edit.before || '').trim();
+            if (!after && !before) continue;
+            clean.added = true;
+            if (before) clean.before = before;
+            else clean.after = after;
+        }
+        if (edit.deleted === true) clean.deleted = true;
+        const widthMm = clamp(Number(edit.widthMm), opts.minKeyWidthMm, opts.maxKeyWidthMm);
+        if (Number.isFinite(widthMm)) clean.widthMm = roundMm(widthMm);
+        if (Object.keys(clean).length) out[id] = clean;
+    }
+    return out;
+}
+
+export function normalizedPresetBlob(blob = {}, defaults = {}, options = {}) {
+    const source = blob || {};
+    const clean = clonePlain(defaults);
+    for (const key of PRESET_KEYS) {
+        if (source[key] !== undefined) clean[key] = clonePlain(source[key]);
+    }
+    clean.contentEdits = sanitizeContentEdits(clean.contentEdits || {}, options);
+    clean.layoutEdits = sanitizeLayoutEdits(clean.layoutEdits || {}, options);
+    return clean;
+}
+
+export function pickSettings(source, keys) {
+    const out = {};
+    for (const key of keys) {
+        if (source[key] !== undefined) out[key] = clonePlain(source[key]);
+    }
+    return out;
+}
+
+export function buildKeyboardModel(blob = {}, defaults = {}, options = {}) {
+    const opts = ioOptions(options);
+    const settings = normalizedPresetBlob(blob, defaults, opts);
+    return {
+        schema: MODEL_SCHEMA,
+        app: 'Keyboarder',
+        exportedAt: new Date().toISOString(),
+        baseLayout: opts.layoutMeta.name || '',
+        units: {
+            grid: 'mm',
+            type: 'pt',
+            trackingOffset: 'em',
+            compensationOverride: 'px'
+        },
+        settings,
+        keyboard: {
+            meta: clonePlain(opts.layoutMeta),
+            grid: pickSettings(settings, GRID_SETTING_KEYS),
+            type: pickSettings(settings, TYPE_SETTING_KEYS),
+            appearance: pickSettings(settings, [...LAYER_SETTING_KEYS, ...COLOR_SETTING_KEYS]),
+            edits: {
+                layout: settings.layoutEdits,
+                content: settings.contentEdits
+            }
+        }
+    };
+}
+
+export function presetBlobFromKeyboardModel(input = {}, defaults = {}, options = {}) {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) {
+        throw new Error('JSON root must be an object.');
+    }
+    const schema = String(input.schema || input.format || '').trim();
+    if (schema && schema !== MODEL_SCHEMA) {
+        throw new Error(`Unsupported model schema: ${schema}`);
+    }
+    if (!schema) return normalizedPresetBlob(input, defaults, options);
+
+    if (input.settings && typeof input.settings === 'object' && !Array.isArray(input.settings)) {
+        return normalizedPresetBlob(input.settings, defaults, options);
+    }
+
+    const keyboard = input.keyboard || {};
+    const edits = keyboard.edits || {};
+    return normalizedPresetBlob({
+        layoutName: input.baseLayout || keyboard.meta?.name,
+        ...(keyboard.grid || {}),
+        ...(keyboard.type || {}),
+        ...(keyboard.appearance || {}),
+        layoutEdits: edits.layout || {},
+        contentEdits: edits.content || {}
+    }, defaults, options);
+}
+
+export function parseKeyboardModelJSONText(text = '', defaults = {}, options = {}) {
+    let parsed;
+    try {
+        parsed = JSON.parse(String(text));
+    } catch (_) {
+        throw new Error('Could not parse JSON.');
+    }
+    return presetBlobFromKeyboardModel(parsed, defaults, options);
+}

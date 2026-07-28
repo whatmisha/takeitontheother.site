@@ -356,12 +356,27 @@ Legend-панели у активной клавиши можно задать `
 `grid.js` прокидывает `sourceRow`, чтобы display row мог измениться без потери `editId`.
 Перед включением удаления используется fit guard с проверкой пересечений прямоугольников, поэтому
 ряды, которые конфликтуют с `rowSpan` numpad-клавиш, не удаляются. `Restore row` снимает последний
-row delete-флаг и выбирает первую клавишу восстановленного ряда.
+row delete-флаг и выбирает первую клавишу восстановленного ряда. Добавление рядов тоже есть в
+первой безопасной версии: `Add row` клонирует структуру активного исходного ряда ниже него,
+создаёт пустую строку без легенд, хранит операцию как
+`layoutEdits["rowadd:N"] = { rowAdded: true, afterRow, templateRow }` и выдаёт строке synthetic
+source-row, чтобы её клавиши получали стабильные `editId` вроде `6:main:0`. Добавленная строка
+проходит тот же fit/overlap guard, её клавиши можно редактировать теми же content/layout edits,
+а delete/restore строки работает через обычный `layoutEdits["row:N"].deleted`. `Reference grid`
+теперь чистит `contentEdits` не только для `add:*`-клавиш, но и для synthetic rows.
 `Reset` удаляет overrides выбранных клавиш/активной ширины и возвращает контент или геометрию из
-генератора.
+генератора. Первый явный JSON-формат editable keyboard тоже добавлен: нижняя кнопка `JSON`
+скачивает `keyboarder-lcakb23-model.json` со схемой `keyboarder.model.v1`, полным normalized
+`settings` для точного round-trip и читаемой секцией `keyboard` (`grid`, `type`, `appearance`,
+`edits`). Кнопка `Import` принимает этот формат и старые плоские preset blobs, открывая результат
+как shared preset, который можно дальше сохранить штатной preset-кнопкой. Для v1 решено оставить
+дублирование `settings` + `keyboard`: `settings` нужен для lossless app round-trip, `keyboard` —
+для читаемой domain-модели. Helpers для этого вынесены в чистый `app/kb/model-io.js`, а
+`analysis/model-io.mjs` проверяет round-trip, text-parse путь file import, legacy preset import,
+domain-only import и sanitizer edge cases без браузера.
 
-Осталось по этапу 4: добавление рядов, richer JSON-модель для полного кругового цикла и явная
-edited-keyboard модель поверх текущих preset override blobs.
+Этап 4 закрыт по коду. Остаётся только ручной smoke системного file picker, потому что Browser
+automation не выбирает локальные файлы; parse/validate/normalize путь за picker уже покрыт.
 
 ### Этап 5 — RC, библиотека раскладок (1–2 дня)
 
@@ -369,6 +384,44 @@ edited-keyboard модель поверх текущих preset override blobs.
 - языковые слои: латиница, кириллица, и переключение раскладки без смены геометрии;
 - пресеты из `presets/` как сид;
 - вывод: сколько клавиш, габарит в мм, предупреждения о нестандартных ширинах.
+
+Первый срез Stage 5 готов: `app/kb/layouts.js` теперь экспортирует `LAYOUTS` /
+`LAYOUT_OPTIONS`, в библиотеке есть `LCAKB23`, `ANSI_TKL`, `ISO_TKL`, `ANSI_65` и `ANSI_60`.
+В Grid-панели появился `Layout` select. Рендер, block/column overlays, layout edits, rowadd
+sanitizer, `Reference grid`, JSON export/import и filename теперь смотрят на активный
+`layoutName`, а не на жёстко зашитый `LCAKB23`. При переключении layout очищаются
+`layoutEdits` / `contentEdits`, потому что стабильные ids у разных форм-факторов пока не
+считаются совместимыми. Для не-LCA раскладок `Reference` и `Diff` disabled, а `Verify` честно
+отказывается сравнивать их с LCAKB23-эталоном. В readout добавлена строка `Warnings`: сейчас она
+показывает нестандартные ширины и клавиши без attached generated content.
+
+Проверенный browser smoke: `LCAKB23` даёт 110 клавиш, `ANSI_TKL` 87, `ISO_TKL` 88, `ANSI_65` 63,
+`ANSI_60` 58; переключение обратно на `LCAKB23` возвращает 110 клавиш и generated legends.
+
+Второй срез Stage 5 тоже готов: в Layers-панели появился `Language` select (`Latin + Cyrillic`,
+`Latin`, `Cyrillic`). Он фильтрует только generated text legends, не меняя геометрию и не трогая
+icons; `languageLayer` сохраняется в settings/model JSON. Smoke на LCAKB23: dual даёт 176 text
+legends, `Latin` — 143, `Cyrillic` — 150, возврат в dual снова даёт 176, при этом key count и
+artboard остаются прежними.
+
+Третий срез Stage 5 готов: `app/kb/content/generated-layouts.js` генерирует generic legend
+content для non-LCA раскладок по стабильному `row/block/ordinal` адресу. Это пока не
+designer-measured контент, а честные подписи клавиш, но они проходят тот же attach/render путь,
+что и LCAKB23. Browser smoke: `ANSI_TKL` даёт 87 strings, `ISO_TKL` — 88, `ANSI_65` — 63,
+`ANSI_60` — 58; warnings после attach отсутствуют. Node-проверка `analysis/layout-content.mjs`
+проверяет, что каждая клавиша получает content и не появляются orphan entries.
+
+Четвёртый срез Stage 5 готов: shipped seed presets теперь покрывают layout-library workflows.
+В `presets/manifest.json` добавлены `ANSI TKL`, `ISO TKL`, `ANSI 65%`, `ANSI 60%`, а существующие
+LCA seed presets явно получили `layoutName: "LCAKB23"` и `languageLayer: "dual"`. Fresh-origin
+browser smoke на `http://127.0.0.1:8007/` увидел новые пункты меню; применение `ANSI TKL`
+переключило layout на `ANSI_TKL`, 87 keys, 87 strings, warnings none. Node-проверка
+`analysis/presets.mjs` валидирует manifest, JSON-файлы и имена раскладок.
+
+Stage 5 закрыт по коду. Caveat: если origin уже был засиден старой версией preset manifest,
+пользователю может понадобиться restore-default presets или fresh origin, чтобы увидеть новые
+shipped presets. Non-LCA legends остаются generic generated labels, а не вымеренным дизайнерским
+контентом.
 
 ### Этап 6 — про, импорт чертежа (3–4 дня)
 
@@ -381,6 +434,21 @@ edited-keyboard модель поверх текущих preset override blobs.
 - пары кромок с одинаковым пролётом, верификация боковыми, снятие вложенности;
 - предпросмотр распознанного с подсветкой сомнительных клавиш;
 - автовывод состава ряда (`u` / `w` / `close` / `skip`) — то, что сейчас делается руками.
+
+Первый срез Stage 6 готов: добавлен чистый модуль `app/kb/svg-blueprint.js` и UI-панель
+`Drawing`. Модуль снимает Illustrator private payload (`<metadata>/<i:aipgf>`), вытаскивает
+группы `blueprint` / `caps`, парсит `<line>`, раскладывает отрезки в корзины horizontal /
+vertical / diagonal, считает SVG primitives, группирует horizontal spans и калибрует базовые
+константы по rect'ам `caps`. Следующий кусок распознавания тоже уже внутри этого среза:
+оценивается corner offset `d`, горизонтальные кромки спариваются по rounded span, кандидаты
+проверяются боковыми vertical segments, вложенные фаски снимаются по площади.
+`analysis/blueprint-import.mjs` проверяет synthetic SVG и реальный `LCAKB23.svg`: 1658 H,
+1388 V, 884 diagonal, 866 paths, 487 horizontal span groups, 110 caps, `d = 3.3779`,
+220 raw candidates, 110 final recognized keys, из них 2 double-height; worst drift до designer
+caps < 0.03 px. В браузере `Browse SVG` / drag-and-drop кладут анализ во временное UI-state,
+показывают summary и рисуют preview layer `#imported-blueprint` из 3930 lines плюс
+`#imported-candidates` из 110 rects; toggle `Drawing` прячет и возвращает preview. В presets/model
+JSON сам импортированный SVG не сохраняется, сохраняется только визуальный `showDrawing`.
 
 ### Этап 7 — про, производство (2–3 дня)
 

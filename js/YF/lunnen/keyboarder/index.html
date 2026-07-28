@@ -55,6 +55,10 @@
             <div class="panel-content">
                 <section class="control-section">
                     <div class="control-group">
+                        <label for="layoutSelect"><span>Layout</span></label>
+                        <select id="layoutSelect" class="select-control" aria-label="Keyboard layout"></select>
+                    </div>
+                    <div class="control-group">
                         <label for="colPitchSlider"><span>Column pitch</span>
                             <input type="text" class="value-display" id="colPitchValue" inputmode="decimal" aria-label="Column pitch, mm"></label>
                         <input type="range" id="colPitchSlider" min="10" max="28" step="0.001">
@@ -95,6 +99,7 @@
                         <div><dt>Artboard</dt><dd id="statBoard">—</dd></div>
                         <div><dt>Gap</dt><dd id="statGap">—</dd></div>
                         <div><dt>Legends</dt><dd id="statLegends">—</dd></div>
+                        <div><dt>Warnings</dt><dd id="statWarnings">—</dd></div>
                     </dl>
                 </section>
             </div>
@@ -169,6 +174,14 @@
             </div>
             <div class="panel-content">
                 <section class="control-section">
+                    <div class="control-group">
+                        <label for="languageLayerSelect"><span>Language</span></label>
+                        <select id="languageLayerSelect" class="select-control" aria-label="Language layer">
+                            <option value="dual">Latin + Cyrillic</option>
+                            <option value="latin">Latin</option>
+                            <option value="cyrillic">Cyrillic</option>
+                        </select>
+                    </div>
                     <div class="control-group pill-toggle-row">
                         <label class="pill-toggle" for="showCaps" data-tooltip="Key outlines">
                             <input type="checkbox" id="showCaps" class="sr-only" data-setting="showCaps"><span>Keys</span>
@@ -178,6 +191,9 @@
                         </label>
                         <label class="pill-toggle" for="showIcons" data-tooltip="Icons from the library">
                             <input type="checkbox" id="showIcons" class="sr-only" data-setting="showIcons"><span>Icons</span>
+                        </label>
+                        <label class="pill-toggle" for="showDrawing" data-tooltip="Imported SVG drawing preview">
+                            <input type="checkbox" id="showDrawing" class="sr-only" data-setting="showDrawing"><span>Drawing</span>
                         </label>
                         <label class="pill-toggle" for="showGuides" data-tooltip="Safety guides — coordinate system for legends">
                             <input type="checkbox" id="showGuides" class="sr-only" data-setting="showGuides"><span>Guides</span>
@@ -204,6 +220,30 @@
                             <input type="checkbox" id="showBlocks" class="sr-only" data-setting="showBlocks"><span>Blocks</span>
                         </label>
                     </div>
+                </section>
+            </div>
+        </aside>
+
+        <!-- DRAWING -->
+        <aside class="controls-panel controls-panel-drawing" id="drawingPanel">
+            <div class="panel-header" id="drawingPanelHeader">
+                <span>Drawing</span>
+                <span class="collapse-icon">
+                    <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+            </div>
+            <div class="panel-content">
+                <section class="control-section">
+                    <div class="drawing-dropzone" id="drawingDropzone">
+                        <span>Drop SVG drawing</span>
+                    </div>
+                    <div class="drawing-actions">
+                        <button type="button" class="btn-inline" id="drawingBrowseBtn">Browse SVG</button>
+                        <button type="button" class="btn-inline" id="drawingClearBtn">Clear</button>
+                    </div>
+                    <div class="drawing-status" id="drawingImportStatus"></div>
                 </section>
             </div>
         </aside>
@@ -242,6 +282,7 @@
                             <button type="button" class="btn-inline" id="restoreKeyBtn">Restore key</button>
                         </div>
                         <div class="legend-row-actions">
+                            <button type="button" class="btn-inline" id="addRowBtn">Add row</button>
                             <button type="button" class="btn-inline" id="deleteRowBtn">Delete row</button>
                             <button type="button" class="btn-inline" id="restoreRowBtn">Restore row</button>
                         </div>
@@ -324,9 +365,13 @@
     <nav class="bottom-buttons">
         <button class="btn-fixed btn-intro-help" id="aboutBtn" type="button" aria-label="About" data-tooltip="About">?</button>
         <button class="btn-fixed" id="verifyBtn" type="button" data-tooltip="Compare geometry to the reference">Verify</button>
+        <button class="btn-fixed" id="exportJsonBtn" type="button" aria-label="Export model JSON" data-tooltip="Export model JSON">JSON</button>
+        <button class="btn-fixed" id="importJsonBtn" type="button" aria-label="Import model JSON" data-tooltip="Import model JSON">Import</button>
         <button class="btn-fixed" id="exportPngBtn" type="button">PNG</button>
         <button class="btn-fixed" id="exportSvgBtn" type="button">SVG ⌘E</button>
     </nav>
+    <input id="importJsonInput" type="file" accept="application/json,.json" hidden>
+    <input id="drawingSvgInput" type="file" accept="image/svg+xml,.svg" hidden>
 
     <dialog id="dialog" class="modal">
         <div class="modal-content">

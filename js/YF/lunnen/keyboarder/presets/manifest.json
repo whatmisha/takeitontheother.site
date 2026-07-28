@@ -19,6 +19,22 @@
     {
       "name": "Round millimetres",
       "file": "round-mm.json"
+    },
+    {
+      "name": "ANSI TKL",
+      "file": "ansi-tkl.json"
+    },
+    {
+      "name": "ISO TKL",
+      "file": "iso-tkl.json"
+    },
+    {
+      "name": "ANSI 65%",
+      "file": "ansi-65.json"
+    },
+    {
+      "name": "ANSI 60%",
+      "file": "ansi-60.json"
     }
   ]
 }

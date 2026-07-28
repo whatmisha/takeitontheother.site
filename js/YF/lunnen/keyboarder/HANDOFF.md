@@ -14,6 +14,7 @@ Important local entry points:
 - `index.html` - app shell and panels.
 - `app/tool.js` - `defineTool(...)`, settings, controls, render, UI event wiring.
 - `app/kb/*` - pure keyboard/domain modules.
+- `app/kb/model-io.js` - pure editable-keyboard JSON import/export/sanitize helpers.
 - `analysis/*` - Python/Node reference harnesses and source-of-truth measurements.
 - `LCAKB23.layout.json` and `LCAKB23.legends.json` - reference outputs for verification.
 
@@ -118,11 +119,77 @@ Important local entry points:
   - row deletion runs the same layout fit guard plus a rectangle-overlap check, so rows involved
     in numpad `rowSpan` collisions keep `Delete row` disabled;
   - `Restore row` clears the last row delete flag and selects the first key in the restored row;
+  - `Add row` duplicates the active original source row below itself as a blank row; the edit is
+    stored as `layoutEdits["rowadd:N"] = { rowAdded: true, afterRow, templateRow }`;
+  - added rows get synthetic source rows starting at `LCAKB23.rows.length`, so their generated
+    keys receive stable edit IDs like `6:main:0` and can use the same width/content/order/delete
+    mechanisms as original rows;
+  - added-row insertion also runs the fit/overlap guard, auto-selects the first key in the new
+    row, and disables `Add row` while a synthetic row is active;
   - `Reference grid` clears `layoutEdits` and also prunes `contentEdits` for added keys, so
-    removed added-key legends do not come back later as orphaned content;
+    removed added-key or added-row legends do not come back later as orphaned content;
   - `Reset` removes the active key width override.
+- Added a first explicit edited-keyboard JSON model:
+  - bottom bar now has `JSON` and `Import` buttons;
+  - export downloads `keyboarder-lcakb23-model.json`;
+  - schema is `keyboarder.model.v1`;
+  - the model includes a full normalized `settings` blob for exact round-trip and a readable
+    `keyboard` section with `grid`, `type`, `appearance`, and `edits`;
+  - decision for v1: keep the duplicated `settings` + `keyboard` structure intentionally;
+    `settings` is the lossless app state, while `keyboard` is the domain-readable view;
+  - imports accept both the new schema and legacy flat preset blobs;
+  - importing opens the data as the framework's shared preset slot, so it can be saved with the
+    normal preset flow.
+- Extracted model JSON helpers into pure `app/kb/model-io.js` and added
+  `analysis/model-io.mjs` to cover schema round-trip, legacy preset import, domain-only import,
+  text parsing used by file import, layout edit sanitization, content edit sanitization, and
+  unsupported-schema errors.
+- Started Stage 5 layout library work:
+  - `app/kb/layouts.js` now exports `LAYOUTS` and `LAYOUT_OPTIONS`;
+  - built-in source layouts are `LCAKB23`, `ANSI_TKL`, `ISO_TKL`, `ANSI_65`, and `ANSI_60`;
+  - the Grid panel has a `Layout` select;
+  - switching layouts resets `layoutEdits` and `contentEdits`, clears the deleted-key/row targets,
+    and renders immediately so background browser tabs do not wait on a throttled RAF;
+  - `layoutName` is part of app settings and the `keyboarder.model.v1` JSON round-trip;
+  - JSON export filenames now use the active layout name, e.g. `keyboarder-ansi-tkl-model.json`;
+  - `app/kb/content/generated-layouts.js` generates stable generic key labels for non-LCA
+    layouts, using row/block/ordinal-compatible content entries;
+  - `Reference` and `Diff` are disabled outside `LCAKB23`, and `Verify` now refuses non-reference
+    layouts instead of comparing them against the LCAKB23 source;
+  - the Layers panel has a `Language` select with `Latin + Cyrillic`, `Latin`, and `Cyrillic`;
+  - language switching filters generated text legends only, preserving key geometry, icons, and
+    manually edited `contentEdits`;
+  - `languageLayer` is part of settings and model JSON;
+  - the readout now includes `Warnings`, currently reporting non-standard key widths and keys
+    without attached generated content;
+  - seed presets now cover the new layout-library workflows: `ANSI TKL`, `ISO TKL`, `ANSI 65%`,
+    and `ANSI 60%`;
+  - existing shipped LCA presets now explicitly include `layoutName: "LCAKB23"` and
+    `languageLayer: "dual"`;
+  - `analysis/layout-content.mjs` verifies generated non-LCA content attachment, and
+    `analysis/presets.mjs` verifies the shipped preset manifest and layout names.
 - Moved the collapsed Legend panel above the bottom export buttons; its header had overlapped the
   `SVG` button at the old bottom position.
+- Started Stage 6 SVG drawing import:
+  - added pure `app/kb/svg-blueprint.js`;
+  - it strips Illustrator private `<metadata>/<i:aipgf>` payloads, keeps ordinary metadata,
+    extracts `blueprint` and `caps` groups, parses SVG `<line>` elements, buckets them into
+    horizontal/vertical/diagonal lines, counts simple SVG primitives, groups horizontal spans,
+    and calibrates basic cap constants from the `caps` rects;
+  - it now estimates the straight-edge corner offset `d`, pairs horizontal edges by rounded span,
+    verifies both side edges against vertical segments, removes nested bevel candidates, and
+    returns recognized key rectangles;
+  - added `analysis/blueprint-import.mjs`, covering a synthetic SVG and the real `LCAKB23.svg`;
+  - real LCAKB23 drawing import currently sees 1658 horizontal lines, 1388 vertical lines,
+    884 diagonal lines, 866 paths, 487 horizontal span groups, 110 cap rects, 220 raw key
+    candidates, 110 final recognized key rectangles, and two double-height keys;
+  - added a `Drawing` panel with `Browse SVG`, drag-and-drop, `Clear`, import status, and a
+    `Drawing` layer toggle in Layers;
+  - the drawing preview renders the imported line buckets plus recognized key rectangles;
+  - imported drawing analysis is UI-only module state and is not saved into presets/model JSON;
+    only the visual `showDrawing` toggle is a normal setting;
+  - clean SVG/PNG export temporarily hides the imported drawing preview, like the selection
+    overlay.
 
 ## Verification
 
@@ -132,9 +199,17 @@ Commands run successfully:
 node --check app/tool.js
 node --check app/kb/grid.js
 node --check app/kb/legends.js
+node --check app/kb/layouts.js
 node --check app/kb/verify.js
+node --check app/kb/model-io.js analysis/model-io.mjs
+node --check app/kb/content/generated-layouts.js analysis/layout-content.mjs analysis/presets.mjs
+node --check app/kb/svg-blueprint.js analysis/blueprint-import.mjs
 node analysis/harness.mjs
 node analysis/verify-legends.mjs
+node analysis/model-io.mjs
+node analysis/layout-content.mjs
+node analysis/presets.mjs
+node analysis/blueprint-import.mjs
 ```
 
 Geometry check against `LCAKB23.layout.json`:
@@ -231,6 +306,55 @@ Browser QA on `http://127.0.0.1:8000/`:
   - `Restore row` returns the key count to 110 and restores `esc` as the first key;
   - `Delete row` is disabled on the ASDF row because deleting it would create a numpad `rowSpan`
     overlap.
+- Row add/delete/restore QA:
+  - with Legend expanded, `Add row` below the F-row changes the rendered key count from 110 to 131;
+  - the added row is selected at index 21 and appears as `R2 main · blank`;
+  - all duplicated keys start with no generated legend content and show `No legend elements.`;
+  - deleting the added row returns the count to 110 and enables `Restore added row #1`;
+  - restoring the added row returns the count to 131 and reselects the blank added-row key;
+  - adding text `ROW` to that synthetic key changes its label to `R2 main · ROW`;
+  - after `Reference grid`, adding the row again produces a blank key, confirming synthetic-row
+    `contentEdits` were pruned.
+- Collapsed Legend QA after the row-add work:
+  - collapsing Legend and clicking the first key on the canvas expands the panel, selects
+    `R1 main · esc`, and leaves `panel-collapsed = false`.
+- JSON model QA:
+  - `node analysis/model-io.mjs` confirms the exported `keyboarder.model.v1` shape imports back
+    to the same normalized settings, and that domain-only JSON and legacy flat preset blobs import;
+  - the same script now also tests `parseKeyboardModelJSONText()`, which is the parsing path used
+    by the file input handler after `file.text()`;
+  - fresh browser load shows `JSON` and `Import` in the bottom bar;
+  - both buttons hit-test as the topmost element at their centers;
+  - `Import` has `accept="application/json,.json"`;
+  - clicking `JSON` produced no console errors, but the Browser plugin did not surface a download
+    event for the programmatic `<a download>` path, so the actual saved-file payload was not
+    inspected through Browser automation.
+- Stage 5 layout smoke:
+  - fresh load shows `LCAKB23`, 5 layout options, 110 caps, and `Reference`/`Diff` enabled;
+  - switching to `ANSI_TKL` renders 87 caps, `ISO_TKL` renders 88, `ANSI_65` renders 63, and
+    `ANSI_60` renders 58;
+  - generated labels attach to every non-LCA key: `ANSI_TKL` renders 87 strings, `ISO_TKL`
+    renders 88, `ANSI_65` renders 63, and `ANSI_60` renders 58;
+  - non-LCA layouts disable `Reference` and `Diff`, keep both unchecked, and show no warnings
+    after generated labels attach;
+  - switching back to `LCAKB23` renders 110 caps and restores generated legends;
+  - `Verify` on `ANSI_TKL` opens an error dialog saying verification is only available for the
+    `LCAKB23` reference layout;
+  - on `LCAKB23`, `Language` keeps geometry stable: dual renders 176 text legends, `Latin`
+    renders 143, `Cyrillic` renders 150, and returning to dual restores 176;
+  - fresh-origin preset seed smoke on `http://127.0.0.1:8007/` showed the new shipped presets in
+    the menu, and applying `ANSI TKL` switched to `ANSI_TKL` with 87 keys, 87 strings, and no
+    warnings;
+  - current-port console logs for the fresh smoke had no warnings or errors.
+- Stage 6 drawing-import smoke:
+  - on `http://127.0.0.1:8007/`, `Browse SVG` accepted local `LCAKB23.svg`;
+  - the Drawing status reported `blueprint yes`, `caps yes`, 1658 H lines, 1388 V lines,
+    884 diagonal lines, 866 paths, 487 span groups, 110 caps, 1U width `46.4941`, height
+    `46.1885`, pitch `53.861 × 53.5121`, and `Detected: 110 keys from 220 candidates, d 3.3779`;
+  - the preview rendered 3930 SVG lines in `#imported-blueprint`, 110 recognized rects in
+    `#imported-candidates`, and 2 double-height rects;
+  - toggling the `Drawing` layer hid the preview (`0` lines) and restored it (`3930` lines);
+  - current-port console logs for this smoke had no warnings or errors.
 
 Note: the Browser plugin's console log API kept an old error entry from an earlier failed reload
 after it was fixed. Current DOM probes confirmed the app initializes and renders.
@@ -250,17 +374,40 @@ Stages 0-3 are now effectively complete for beta generation and verification:
 - verification still passes at defaults;
 - Diff and JSON verification report export are in place.
 
-Stage 4 is started, not complete:
+Stage 4 is complete for code:
 
 - Done: click selection, multi-select, Legend inspector sync, arrow navigation, `Escape` clear,
   preset-backed legend content overrides, active-key slot/value editing, bulk template changes,
   add/remove legend elements, reset selected edits, manual compensation overrides in px for text
   L/R slots, key width overrides with row flex recalculation including source flex keys,
   deleting/restoring individual keys, and adding blank individual keys before/after source keys
-  in flex-backed rows, moving keys left/right inside a row/block, and deleting/restoring whole
-  rows when the resulting layout has no overlaps.
-- Still remaining: adding whole rows, richer model export/import for edited keyboard data, and a
-  more explicit edited-keyboard model beyond the current preset override blobs.
+  in flex-backed rows, moving keys left/right inside a row/block, deleting/restoring whole rows
+  when the resulting layout has no overlaps, and adding/restoring blank duplicate rows below
+  original source rows.
+- Done: first model JSON export/import round-trip shape with `keyboarder.model.v1`, normalized
+  settings, explicit domain fields, and pure Node coverage in `analysis/model-io.mjs`.
+- Remaining manual QA note: the OS file picker itself still needs a human smoke check, because
+  Browser automation cannot select a local file there. The parsing/normalization path behind it
+  is covered in Node.
+
+Stage 5 is complete for code:
+
+- Done: built-in layout registry, Grid layout selector, active-layout render path, active-layout
+  JSON `layoutName`, language layer switching (`dual`/`latin`/`cyrillic`) without geometry
+  changes, generated labels for non-LCA layouts, shipped seed presets for `ANSI_TKL`, `ISO_TKL`,
+  `ANSI_65`, and `ANSI_60`, non-reference `Reference`/`Diff`/`Verify` guard, and warnings
+  readout.
+- Manual note: existing localStorage origins that were already seeded before this change may need
+  the preset menu's restore-default action, or a fresh origin, before the new shipped presets show
+  up. Non-LCA labels are generic generated labels, not designer-measured content.
+Stage 6 is started:
+
+- Done: first read-only SVG drawing ingestion/preview slice: strip Illustrator private payloads,
+  extract `blueprint`/`caps`, bucket line segments, cap calibration, candidate key rectangles
+  from paired horizontal edges, side-edge verification, nesting removal, Drawing panel, preview
+  layer, and Node/browser coverage.
+- Still remaining: suspicious-key heuristics/marking, conversion of recognized rectangles into
+  editable row/block layout JSON, and a workflow to accept/import that generated layout.
 
 ## Notes For The Next Assistant
 
@@ -270,4 +417,5 @@ Stage 4 is started, not complete:
 - `ui-framework/` is intended to be disposable; active code imports from `vendor/framework/`.
 - Defaults matter: at reference settings, numerical verification should stay green.
 - The tool currently starts from static LCAKB23 data and defaults to the `LCAKB23` preset.
-  Import/editing workflows are later stages.
+  Editing, model JSON import/export, Stage 5 layout-library workflows, and language layer
+  switching now exist; SVG drawing import has its first read-only ingestion/preview slice.

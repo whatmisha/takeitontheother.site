@@ -10,7 +10,7 @@
 import { defineTool } from '../vendor/framework/src/core/defineTool.js';
 import { buildLayout, gapOf, widthInU } from './kb/grid.js';
 import { attachGuides } from './kb/guides.js';
-import { LCAKB23 } from './kb/layouts.js';
+import { LAYOUT_OPTIONS, LAYOUTS, LCAKB23 } from './kb/layouts.js';
 import { toMm, toPx } from './kb/units.js';
 import { loadTypeface } from './kb/typography.js';
 import { Compensator, YS_TEXT_REGULAR } from './kb/compensate.js';
@@ -20,10 +20,24 @@ import {
     compareLegends, legendsReportHtml, GEOMETRY_TOLERANCE
 } from './kb/verify.js';
 import CONTENT from './kb/content/lcakb23.js';
+import { generatedContentForLayout } from './kb/content/generated-layouts.js';
 import ICONS from './kb/icons/lcakb23.js';
 import ICON_OPTICS from './kb/icons/lcakb23-optics.js';
+import {
+    buildKeyboardModel as buildKeyboardModelData,
+    cleanElements as cleanElementsData,
+    cleanOffset as cleanOffsetData,
+    clonePlain,
+    clamp,
+    finiteOr,
+    normalizedPresetBlob as normalizedPresetBlobData,
+    presetBlobFromKeyboardModel as presetBlobFromKeyboardModelData,
+    roundMm,
+    sanitizeContentEdits as sanitizeContentEditsData,
+    sanitizeLayoutEdits as sanitizeLayoutEditsData
+} from './kb/model-io.js';
+import { analyzeSvgBlueprint, blueprintSummaryLines } from './kb/svg-blueprint.js';
 
-const REF = LCAKB23.grid;
 const SIZE_EPS = 0.0001;
 const MIN_KEY_WIDTH_MM = 4;
 const MAX_KEY_WIDTH_MM = 80;
@@ -52,29 +66,49 @@ const SLIDER_BY_SETTING = {
     trackingOffset: 'trackingOffsetSlider'
 };
 
-const PRESET_KEYS = [
-    'colPitch', 'rowPitch', 'keyWidth1U', 'keyHeight', 'cornerRadius', 'guideInset',
-    'glyphSize', 'numpadSize', 'secondarySize', 'wordSize', 'leading', 'trackingOffset',
-    'compensationMode',
-    'showCaps', 'showGuides', 'showGlyphs', 'showIcons', 'showColumns', 'showIndex',
-    'showInk', 'showSlots', 'showRef', 'showDiff', 'showBlocks',
-    'capColor', 'guideColor', 'inkColor', 'bgColor',
-    'contentEdits', 'layoutEdits'
-];
-
+const ICON_OPTIONS = Object.keys(ICONS).sort((a, b) => a.localeCompare(b));
 const TEMPLATE_VARIANTS = buildTemplateVariants(CONTENT);
 const TEMPLATE_BY_ID = new Map(TEMPLATE_VARIANTS.map((v) => [v.id, v]));
-const ICON_OPTIONS = Object.keys(ICONS).sort((a, b) => a.localeCompare(b));
+const LANGUAGE_LAYERS = new Set(['dual', 'latin', 'cyrillic']);
+const CYRILLIC_RE = /[\u0400-\u04FF]/;
+const SINGLE_LATIN_RE = /^[A-Za-z]$/;
+
+function layoutByName(name) {
+    return LAYOUTS[String(name || '').trim()] || LCAKB23;
+}
+
+function normalizeLanguageLayer(value) {
+    const key = String(value || 'dual').trim();
+    return LANGUAGE_LAYERS.has(key) ? key : 'dual';
+}
+
+function sourceLayoutFor(s = {}) {
+    return layoutByName(s.layoutName || LCAKB23.meta.name);
+}
+
+function isReferenceLayout(layout) {
+    return layout?.meta?.name === LCAKB23.meta.name;
+}
+
+function contentForLayout(layout) {
+    if (isReferenceLayout(layout)) return CONTENT;
+    return generatedContentForLayout(layout, TYPE_DEFAULTS, CONTENT);
+}
+
+function gridMmFor(layout) {
+    const g = layout?.grid || LCAKB23.grid;
+    return {
+        colPitch: toMm(g.colPitch),
+        rowPitch: toMm(g.rowPitch),
+        keyWidth1U: toMm(g.keyWidth1U),
+        keyHeight: toMm(g.keyHeight),
+        cornerRadius: toMm(g.cornerRadius),
+        guideInset: toMm(g.guideInset)
+    };
+}
 
 /** Эталонная сетка в мм — то, что видит и правит пользователь. */
-const REF_MM = {
-    colPitch: toMm(REF.colPitch),
-    rowPitch: toMm(REF.rowPitch),
-    keyWidth1U: toMm(REF.keyWidth1U),
-    keyHeight: toMm(REF.keyHeight),
-    cornerRadius: toMm(REF.cornerRadius),
-    guideInset: toMm(REF.guideInset)
-};
+const REF_MM = gridMmFor(LCAKB23);
 
 /**
  * Эталонные прямоугольники для слоя «Эталон». Заполняется асинхронно в onReady.
@@ -92,6 +126,7 @@ let COMP_CACHE = new Map();
 let SELECTION = { active: 0, indices: [0] };
 let LAST_DELETED_EDIT_ID = null;
 let LAST_DELETED_ROW_ID = null;
+let BLUEPRINT_IMPORT = null;
 
 function compFor(s) {
     if (!TYPEFACE || s.compensationMode === 'off') return null;
@@ -106,15 +141,18 @@ function compFor(s) {
 }
 
 /** Значения сетки из настроек (мм) — в форму, которую ждёт buildLayout (px). */
-const gridFrom = (s) => ({
-    colPitch: toPx(s.colPitch),
-    rowPitch: toPx(s.rowPitch),
-    keyWidth1U: toPx(s.keyWidth1U),
-    keyHeight: toPx(s.keyHeight),
-    cornerRadius: toPx(s.cornerRadius),
-    guideInset: toPx(s.guideInset),
-    origin: REF.origin
-});
+function gridFrom(s) {
+    const sourceLayout = sourceLayoutFor(s);
+    return {
+        colPitch: toPx(s.colPitch),
+        rowPitch: toPx(s.rowPitch),
+        keyWidth1U: toPx(s.keyWidth1U),
+        keyHeight: toPx(s.keyHeight),
+        cornerRadius: toPx(s.cornerRadius),
+        guideInset: toPx(s.guideInset),
+        origin: sourceLayout.grid.origin
+    };
+}
 
 const typeSigFrom = (s) => JSON.stringify({
     glyphSize: s.glyphSize,
@@ -124,6 +162,7 @@ const typeSigFrom = (s) => JSON.stringify({
     leading: s.leading,
     trackingOffset: s.trackingOffset,
     compensationMode: s.compensationMode,
+    languageLayer: normalizeLanguageLayer(s.languageLayer),
     contentEdits: s.contentEdits || {}
 });
 
@@ -151,30 +190,53 @@ function applyTypeSettings(keys, s) {
     }
 }
 
+function keepElementForLanguage(el, layer) {
+    if (el.kind !== 'txt') return true;
+    const text = String(el.text || '');
+    if (layer === 'latin') return !CYRILLIC_RE.test(text);
+    if (layer === 'cyrillic') return !SINGLE_LATIN_RE.test(text);
+    return true;
+}
+
+function applyLanguageLayer(keys, s) {
+    const layer = normalizeLanguageLayer(s.languageLayer);
+    if (layer === 'dual') return;
+    for (const k of keys) {
+        const elements = (k.elements || []).filter((el) => keepElementForLanguage(el, layer));
+        if (elements.length === (k.elements || []).length) continue;
+        k.elements = elements;
+        if (k.content) {
+            k.content = { ...k.content, elements };
+        }
+    }
+}
+
 /**
  * Пересчёт раскладки. Кэшируется по подписи сетки: render вызывается и при смене цвета,
  * а геометрия при этом не меняется.
  */
 let cached = { sig: null, data: null };
 function layoutFor(s) {
+    const sourceLayout = sourceLayoutFor(s);
     const g = gridFrom(s);
-    const layoutEdits = sanitizeLayoutEdits(s.layoutEdits || {});
-    const sig = JSON.stringify(g) + JSON.stringify(layoutEdits) + typeSigFrom(s) + (TYPEFACE ? '·tf' : '');
+    const layoutEdits = sanitizeLayoutEditsForLayout(s.layoutEdits || {}, sourceLayout);
+    const sig = sourceLayout.meta.name + JSON.stringify(g) + JSON.stringify(layoutEdits) + typeSigFrom(s) + (TYPEFACE ? '·tf' : '');
     if (cached.sig !== sig) {
-        const editedLayout = layoutWithEdits(LCAKB23, layoutEdits, g);
+        const editedLayout = layoutWithEdits(sourceLayout, layoutEdits, g);
         let renderLayout = editedLayout;
         let data;
         try {
             data = buildLayout(renderLayout, g);
         } catch (e) {
             console.warn('Keyboarder: layout edits were ignored because the row no longer fits.', e);
-            renderLayout = LCAKB23;
+            renderLayout = sourceLayout;
             data = buildLayout(renderLayout, g);
         }
         assignEditIds(data.keys);
-        annotateGeometry(data.keys, LCAKB23, renderLayout, g, layoutEdits);
+        annotateGeometry(data.keys, sourceLayout, renderLayout, g, layoutEdits);
         attachGuides(data.keys, g.guideInset);
-        attachContent(data.keys, CONTENT);
+        attachContent(data.keys, contentForLayout(sourceLayout));
+        applyLanguageLayer(data.keys, s);
         captureBaseContent(data.keys);
         applyContentEdits(data.keys, s.contentEdits || {});
         applyTypeSettings(data.keys, s);
@@ -184,6 +246,8 @@ function layoutFor(s) {
                 interline: s.leading, iconOptics: ICON_OPTICS
             })
             : [];
+        data.sourceLayout = sourceLayout;
+        data.renderLayout = renderLayout;
         cached = { sig, data };
     }
     return cached.data;
@@ -202,6 +266,8 @@ const app = defineTool({
     zoom: { fitPadding: { top: 24, right: 335, bottom: 24, left: 335 } },
 
     settings: {
+        layoutName: LCAKB23.meta.name,
+
         // Сетка в мм. Четыре размера независимы: по X макет круглый, по Y сжат на 0.648 %.
         colPitch: REF_MM.colPitch,
         rowPitch: REF_MM.rowPitch,
@@ -223,6 +289,7 @@ const app = defineTool({
         showGuides: false,
         showGlyphs: true,
         showIcons: true,
+        showDrawing: true,
         showColumns: false,
         showIndex: false,
         showInk: false,
@@ -230,6 +297,7 @@ const app = defineTool({
         showRef: false,
         showDiff: false,
         showBlocks: false,
+        languageLayer: 'dual',
 
         capColor: '#1e1e1e',
         guideColor: '#2353db',
@@ -264,6 +332,7 @@ const app = defineTool({
         { id: 'gridPanel', headerId: 'gridPanelHeader', persistent: true },
         { id: 'layersPanel', headerId: 'layersPanelHeader', persistent: true },
         { id: 'typePanel', headerId: 'typePanelHeader', persistent: true },
+        { id: 'drawingPanel', headerId: 'drawingPanelHeader', persistent: true },
         { id: 'legendPanel', headerId: 'legendPanelHeader', persistent: true },
         { id: 'colorsPanel', headerId: 'colorsPanelHeader', persistent: true }
     ],
@@ -293,6 +362,10 @@ const app = defineTool({
     applyPreset(app, blob) {
         app.settingsStore.fromJSON(normalizedPresetBlob(blob, app.settingsStore.getDefaults()), true);
     },
+    syncControls(app) {
+        syncLayoutSelect(app.settings);
+        syncLanguageLayerSelect(app.settings);
+    },
     share: { quantizableFloatKeys: [] },
     export: { filename: 'keyboarder.svg' },
 
@@ -304,14 +377,16 @@ const app = defineTool({
 
     render(ctx) {
         const { svg, create, width, height, settings: s } = ctx;
-        const { keys, grid } = layoutFor(s);
+        const data = layoutFor(s);
+        const { keys, grid } = data;
         const gap = gapOf(grid);
+        const hasReference = isReferenceLayout(data.sourceLayout);
 
         svg.appendChild(create('rect', { x: 0, y: 0, width, height, fill: s.bgColor }));
 
         if (s.showBlocks) {
             const g = create('g', { id: 'blocks' });
-            for (const b of LCAKB23.blocks) {
+            for (const b of data.sourceLayout.blocks) {
                 if (b.width == null) continue;
                 g.appendChild(create('rect', {
                     x: b.x - gap / 2, y: grid.origin.y - gap / 2,
@@ -329,7 +404,7 @@ const app = defineTool({
                     x1: x, y1: 0, x2: x, y2: height, stroke: '#4a4f55', 'stroke-width': 0.3
                 }));
             }
-            for (let r = 0; r <= LCAKB23.rows.length; r++) {
+            for (let r = 0; r <= data.renderLayout.rows.length; r++) {
                 const y = grid.origin.y + r * grid.rowPitch;
                 g.appendChild(create('line', {
                     x1: 0, y1: y, x2: width, y2: y, stroke: '#4a4f55', 'stroke-width': 0.3
@@ -339,7 +414,7 @@ const app = defineTool({
         }
 
         // Эталон подложкой: пунктир поверх заливки, чтобы расхождение было видно сразу.
-        if (s.showRef && REFERENCE) {
+        if (s.showRef && hasReference && REFERENCE) {
             const g = create('g', { id: 'reference' });
             for (const r of REFERENCE) {
                 g.appendChild(create('rect', {
@@ -362,6 +437,11 @@ const app = defineTool({
             svg.appendChild(g);
         }
 
+        if (s.showDrawing && BLUEPRINT_IMPORT) {
+            const drawing = renderImportedBlueprint(create, BLUEPRINT_IMPORT.analysis);
+            if (drawing) svg.appendChild(drawing);
+        }
+
         if (s.showGuides) {
             const g = create('g', { id: 'guides' });
             for (const k of keys) {
@@ -373,7 +453,7 @@ const app = defineTool({
             svg.appendChild(g);
         }
 
-        if (s.showDiff && REFERENCE) {
+        if (s.showDiff && hasReference && REFERENCE) {
             svg.appendChild(renderGeometryDiff(create, keys, grid, REFERENCE));
         }
 
@@ -472,13 +552,35 @@ const app = defineTool({
         updateKeyGeometryEditor(s, keys);
         updateLegendEditor(s, keys);
         syncCompensationMode(s);
+        syncLayoutSelect(s);
+        syncLanguageLayerSelect(s);
+        syncDrawingImportStatus();
     },
 
     onReady(readyApp) {
         installCleanExports(readyApp);
+        initLayoutSelect(readyApp);
+        initLanguageLayerSelect(readyApp);
+        initDrawingImport(readyApp);
 
         document.getElementById('exportSvgBtn')?.addEventListener('click', () => readyApp.exportSVG());
         document.getElementById('exportPngBtn')?.addEventListener('click', () => readyApp.exportPNG());
+        document.getElementById('exportJsonBtn')?.addEventListener('click', () => {
+            exportModelJSON(readyApp);
+        });
+        document.getElementById('importJsonBtn')?.addEventListener('click', () => {
+            openModelJSONPicker();
+        });
+        document.getElementById('importJsonInput')?.addEventListener('change', (e) => {
+            const file = e.target.files?.[0] || null;
+            e.target.value = '';
+            void importModelJSONFile(readyApp, file);
+        });
+        document.getElementById('drawingSvgInput')?.addEventListener('change', (e) => {
+            const file = e.target.files?.[0] || null;
+            e.target.value = '';
+            void importDrawingSvgFile(readyApp, file);
+        });
 
         const syncSliders = (values) => {
             for (const [setting, value] of Object.entries(values)) {
@@ -488,10 +590,11 @@ const app = defineTool({
         };
 
         document.getElementById('resetGridBtn')?.addEventListener('click', () => {
+            const sourceLayout = sourceLayoutFor(readyApp.settings);
             const values = {
-                ...REF_MM,
+                ...gridMmFor(sourceLayout),
                 layoutEdits: {},
-                contentEdits: contentEditsWithoutAddedKeys(readyApp.settings.contentEdits || {})
+                contentEdits: contentEditsWithoutAddedKeys(readyApp.settings.contentEdits || {}, sourceLayout.rows.length)
             };
             readyApp.settingsStore.setMultiple(values);
             syncSliders(values);
@@ -547,6 +650,9 @@ const app = defineTool({
         });
         document.getElementById('addKeyBtn')?.addEventListener('click', () => {
             addKeyNearActive(readyApp, 'after');
+        });
+        document.getElementById('addRowBtn')?.addEventListener('click', () => {
+            addRowBelowActive(readyApp);
         });
         document.getElementById('deleteKeyBtn')?.addEventListener('click', () => {
             deleteActiveKey(readyApp);
@@ -642,7 +748,7 @@ const app = defineTool({
         // Эталон для подложки грузим заранее, чтобы тумблер срабатывал сразу.
         loadReference().then((r) => {
             REFERENCE = r;
-            if (readyApp.settings.showRef) readyApp.render();
+            if (readyApp.settings.showRef && isReferenceLayout(sourceLayoutFor(readyApp.settings))) readyApp.render();
         }).catch(() => { /* подложка необязательна */ });
 
         // Гарнитура: путь с пробелом обязан быть URL-энкоден, папка называется Fonts с большой.
@@ -666,55 +772,79 @@ function html(v) {
     })[ch]);
 }
 
-function clonePlain(v) {
-    if (v === undefined) return undefined;
-    return JSON.parse(JSON.stringify(v));
+function modelIOOptions(layout = LCAKB23) {
+    return {
+        layoutMeta: layout.meta,
+        sourceRowCount: layout.rows.length,
+        typeDefaults: TYPE_DEFAULTS,
+        iconOptions: ICON_OPTIONS,
+        minKeyWidthMm: MIN_KEY_WIDTH_MM,
+        maxKeyWidthMm: MAX_KEY_WIDTH_MM
+    };
+}
+
+function layoutFromPresetLike(input = {}, defaults = {}) {
+    const source = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
+    return layoutByName(
+        source.layoutName
+        || source.settings?.layoutName
+        || source.baseLayout
+        || source.keyboard?.meta?.name
+        || defaults.layoutName
+        || LCAKB23.meta.name
+    );
 }
 
 function normalizedPresetBlob(blob = {}, defaults = {}) {
-    const source = blob || {};
-    const clean = clonePlain(defaults);
-    for (const key of PRESET_KEYS) {
-        if (source[key] !== undefined) clean[key] = clonePlain(source[key]);
+    const layout = layoutFromPresetLike(blob, defaults);
+    const clean = normalizedPresetBlobData(blob, defaults, modelIOOptions(layout));
+    clean.layoutName = layout.meta.name;
+    clean.languageLayer = normalizeLanguageLayer(clean.languageLayer);
+    if (!isReferenceLayout(layout)) {
+        clean.showRef = false;
+        clean.showDiff = false;
     }
-    clean.contentEdits = sanitizeContentEdits(clean.contentEdits || {});
-    clean.layoutEdits = sanitizeLayoutEdits(clean.layoutEdits || {});
     return clean;
 }
 
-function sanitizeLayoutEdits(edits = {}) {
-    const out = {};
-    if (!edits || typeof edits !== 'object') return out;
-    for (const [id, edit] of Object.entries(edits)) {
-        if (!edit || typeof edit !== 'object') continue;
-        const clean = {};
-        const order = Array.isArray(edit.order)
-            ? [...new Set(edit.order.map((v) => String(v || '').trim()).filter(Boolean))]
-            : [];
-        if (order.length) clean.order = order;
-        if (edit.added === true) {
-            const after = String(edit.after || '').trim();
-            const before = String(edit.before || '').trim();
-            if (!after && !before) continue;
-            clean.added = true;
-            if (before) clean.before = before;
-            else clean.after = after;
-        }
-        if (edit.deleted === true) clean.deleted = true;
-        const widthMm = clamp(Number(edit.widthMm), MIN_KEY_WIDTH_MM, MAX_KEY_WIDTH_MM);
-        if (Number.isFinite(widthMm)) clean.widthMm = roundMm(widthMm);
-        if (Object.keys(clean).length) out[id] = clean;
+function buildKeyboardModel(blob = {}, defaults = {}) {
+    const layout = layoutFromPresetLike(blob, defaults);
+    const clean = normalizedPresetBlob(blob, defaults);
+    return buildKeyboardModelData(clean, defaults, modelIOOptions(layout));
+}
+
+function presetBlobFromKeyboardModel(input = {}, defaults = {}) {
+    const layout = layoutFromPresetLike(input, defaults);
+    const clean = presetBlobFromKeyboardModelData(input, defaults, modelIOOptions(layout));
+    clean.layoutName = layout.meta.name;
+    clean.languageLayer = normalizeLanguageLayer(clean.languageLayer);
+    if (!isReferenceLayout(layout)) {
+        clean.showRef = false;
+        clean.showDiff = false;
     }
-    return out;
+    return clean;
 }
 
-function roundMm(value) {
-    return Math.round(value * 1000) / 1000;
+function parseKeyboardModelJSONText(text = '', defaults = {}) {
+    let parsed;
+    try {
+        parsed = JSON.parse(String(text));
+    } catch (_) {
+        throw new Error('Could not parse JSON.');
+    }
+    return presetBlobFromKeyboardModel(parsed, defaults);
 }
 
-function clamp(value, min, max) {
-    if (!Number.isFinite(value)) return NaN;
-    return Math.min(max, Math.max(min, value));
+function sanitizeLayoutEditsForLayout(edits = {}, layout = LCAKB23) {
+    return sanitizeLayoutEditsData(edits, modelIOOptions(layout));
+}
+
+function sanitizeLayoutEditsForSettings(settings, edits = {}) {
+    return sanitizeLayoutEditsForLayout(edits, sourceLayoutFor(settings));
+}
+
+function sanitizeLayoutEdits(edits = {}) {
+    return sanitizeLayoutEditsForLayout(edits, LCAKB23);
 }
 
 function expandedLayoutItems(items) {
@@ -774,6 +904,47 @@ function rowEditId(rowIndex) {
 
 function isRowEditId(editId) {
     return String(editId || '').startsWith('row:');
+}
+
+function isAddedRowEditId(editId) {
+    return String(editId || '').startsWith('rowadd:');
+}
+
+function addedRowOrdinal(editId) {
+    const n = Number(String(editId || '').split(':')[1]);
+    return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+function addedRowSourceRow(editId, sourceRowCount = LCAKB23.rows.length) {
+    const n = addedRowOrdinal(editId);
+    return n == null ? null : sourceRowCount + n - 1;
+}
+
+function nextAddedRowId(edits) {
+    let n = 1;
+    while (edits[`rowadd:${n}`]) n++;
+    return `rowadd:${n}`;
+}
+
+function addedRowsAfter(edits, sourceRow, sourceRowCount = LCAKB23.rows.length) {
+    return Object.entries(edits)
+        .filter(([id, edit]) => isAddedRowEditId(id) && edit?.rowAdded && !edit.deleted && edit.afterRow === sourceRow)
+        .map(([id, edit]) => ({ id, edit, sourceRow: addedRowSourceRow(id, sourceRowCount) }))
+        .filter((entry) => Number.isInteger(entry.sourceRow) && !edits[rowEditId(entry.sourceRow)]?.deleted)
+        .sort((a, b) => (addedRowOrdinal(a.id) || 0) - (addedRowOrdinal(b.id) || 0));
+}
+
+function cloneAddedRowFromTemplate(row) {
+    const next = {};
+    for (const [blockId, items] of Object.entries(row || {})) {
+        next[blockId] = (items || []).map((it) => {
+            const item = { ...it };
+            delete item.id;
+            delete item.editId;
+            return item;
+        });
+    }
+    return next;
 }
 
 function sourceRowIndex(row, fallback) {
@@ -886,13 +1057,14 @@ function chooseFlexTarget(entries, sourceIndex, edits) {
 }
 
 function layoutWithEdits(layout, edits, grid) {
-    const clean = sanitizeLayoutEdits(edits);
+    const clean = sanitizeLayoutEditsForLayout(edits, layout);
     if (!Object.keys(clean).length) return layout;
 
+    const sourceRowCount = layout.rows.length;
     let applied = false;
     const rows = [];
-    layout.rows.forEach((row, rowIndex) => {
-        const srcRow = sourceRowIndex(row, rowIndex);
+
+    const processRow = (row, srcRow) => {
         if (clean[rowEditId(srcRow)]?.deleted) {
             applied = true;
             return;
@@ -954,6 +1126,21 @@ function layoutWithEdits(layout, edits, grid) {
             nextRow[blockId] = blockChanged ? nextItems : stableItems;
         }
         rows.push(cloneRowWithSource(nextRow, srcRow));
+    };
+
+    const pushAddedRowsAfter = (sourceRow) => {
+        for (const { edit, sourceRow: addedSourceRow } of addedRowsAfter(clean, sourceRow, sourceRowCount)) {
+            const template = layout.rows[edit.templateRow];
+            if (!template) continue;
+            processRow(cloneAddedRowFromTemplate(template), addedSourceRow);
+            applied = true;
+        }
+    };
+
+    layout.rows.forEach((row, rowIndex) => {
+        const srcRow = sourceRowIndex(row, rowIndex);
+        processRow(row, srcRow);
+        pushAddedRowsAfter(srcRow);
     });
 
     return applied ? { ...layout, rows, artboard: rows.length === layout.rows.length ? layout.artboard : null } : layout;
@@ -999,7 +1186,7 @@ function sourceGeometryMap(layout, grid) {
 function annotateGeometry(keys, sourceLayout, currentLayout, grid, edits) {
     const source = sourceGeometryMap(sourceLayout, grid);
     const current = geometrySpecMap(currentLayout);
-    const clean = sanitizeLayoutEdits(edits);
+    const clean = sanitizeLayoutEditsForLayout(edits, sourceLayout);
     const flexByRowBlock = new Map();
 
     for (const k of keys) {
@@ -1028,70 +1215,24 @@ function annotateGeometry(keys, sourceLayout, currentLayout, grid, edits) {
 }
 
 function cleanOffset(offset) {
-    if (!offset || typeof offset !== 'object') return null;
-    const out = {};
-    for (const key of ['x', 'y', 'bx', 'by']) {
-        const value = Number(offset[key]);
-        if (Number.isFinite(value) && value !== 0) out[key] = value;
-    }
-    return Object.keys(out).length ? out : null;
-}
-
-function cleanCompOverride(compOverride) {
-    if (!compOverride || typeof compOverride !== 'object') return null;
-    const px = Number(compOverride.px);
-    return Number.isFinite(px) ? { px } : null;
-}
-
-function cleanElement(el = {}) {
-    const slot = String(el.slot || 'BC').trim() || 'BC';
-    const kind = el.kind === 'ico' ? 'ico' : 'txt';
-    const out = { slot, kind };
-    if (kind === 'ico') {
-        out.icon = String(el.icon || ICON_OPTIONS[0] || '').trim();
-        out.w = finiteOr(el.w, 8);
-        out.h = finiteOr(el.h, 8);
-    } else {
-        out.text = String(el.text ?? '');
-        out.size = finiteOr(el.size, TYPE_DEFAULTS.wordSize);
-        const tracking = finiteOr(el.tracking, 0);
-        if (tracking !== 0) out.tracking = tracking;
-        const compOverride = cleanCompOverride(el.compOverride);
-        if (compOverride) out.compOverride = compOverride;
-    }
-    const offset = cleanOffset(el.offset);
-    if (offset) out.offset = offset;
-    return out;
+    return cleanOffsetData(offset);
 }
 
 function cleanElements(elements = []) {
-    return (Array.isArray(elements) ? elements : []).map(cleanElement);
+    return cleanElementsData(elements, modelIOOptions());
 }
 
 function sanitizeContentEdits(edits = {}) {
-    const out = {};
-    if (!edits || typeof edits !== 'object') return out;
-    for (const [id, edit] of Object.entries(edits)) {
-        if (!edit || typeof edit !== 'object') continue;
-        out[id] = {
-            tpl: String(edit.tpl || 'blank'),
-            elements: cleanElements(edit.elements)
-        };
-    }
-    return out;
+    return sanitizeContentEditsData(edits, modelIOOptions());
 }
 
-function contentEditsWithoutAddedKeys(edits = {}) {
+function contentEditsWithoutAddedKeys(edits = {}, sourceRowCount = LCAKB23.rows.length) {
     const clean = sanitizeContentEdits(edits);
     for (const id of Object.keys(clean)) {
-        if (isAddedEditId(id)) delete clean[id];
+        const row = rowBlockFromEditId(id).row;
+        if (isAddedEditId(id) || (Number.isInteger(row) && row >= sourceRowCount)) delete clean[id];
     }
     return clean;
-}
-
-function finiteOr(value, fallback) {
-    const n = Number(value);
-    return Number.isFinite(n) ? n : fallback;
 }
 
 function rowBlockKey(k) {
@@ -1290,6 +1431,193 @@ function optionEl(value, label) {
     return opt;
 }
 
+function syncLayoutSelect(s) {
+    const select = document.getElementById('layoutSelect');
+    if (!select) return;
+    const sig = LAYOUT_OPTIONS.map((v) => `${v.id}:${v.label}`).join('|');
+    if (select.dataset.sig !== sig) {
+        select.replaceChildren(...LAYOUT_OPTIONS.map((v) => optionEl(v.id, v.label)));
+        select.dataset.sig = sig;
+    }
+    select.value = sourceLayoutFor(s).meta.name;
+    syncReferenceToggles(s);
+}
+
+function syncReferenceToggles(s) {
+    const enabled = isReferenceLayout(sourceLayoutFor(s));
+    for (const id of ['showRef', 'showDiff']) {
+        const checkbox = document.getElementById(id);
+        const label = checkbox?.closest?.('label');
+        if (!checkbox) continue;
+        checkbox.disabled = !enabled;
+        if (label) label.classList.toggle('is-disabled', !enabled);
+    }
+}
+
+function initLayoutSelect(app) {
+    const select = document.getElementById('layoutSelect');
+    if (!select) return;
+    syncLayoutSelect(app.settings);
+    select.addEventListener('change', () => {
+        const nextLayout = layoutByName(select.value);
+        if (nextLayout.meta.name === sourceLayoutFor(app.settings).meta.name) return;
+        SELECTION = { active: 0, indices: [0] };
+        LAST_DELETED_EDIT_ID = null;
+        LAST_DELETED_ROW_ID = null;
+        const values = {
+            layoutName: nextLayout.meta.name,
+            layoutEdits: {},
+            contentEdits: {}
+        };
+        if (!isReferenceLayout(nextLayout)) {
+            values.showRef = false;
+            values.showDiff = false;
+        }
+        app.settingsStore.setMultiple(values);
+        syncLayoutSelect(app.settings);
+        app.renderNow();
+    });
+}
+
+function syncLanguageLayerSelect(s) {
+    const select = document.getElementById('languageLayerSelect');
+    if (!select) return;
+    select.value = normalizeLanguageLayer(s.languageLayer);
+}
+
+function initLanguageLayerSelect(app) {
+    const select = document.getElementById('languageLayerSelect');
+    if (!select) return;
+    syncLanguageLayerSelect(app.settings);
+    select.addEventListener('change', () => {
+        app.settingsStore.set('languageLayer', normalizeLanguageLayer(select.value));
+        syncLanguageLayerSelect(app.settings);
+        app.renderNow();
+    });
+}
+
+function initDrawingImport(app) {
+    const dropzone = document.getElementById('drawingDropzone');
+    const browse = document.getElementById('drawingBrowseBtn');
+    const clear = document.getElementById('drawingClearBtn');
+    browse?.addEventListener('click', () => openDrawingSvgPicker());
+    clear?.addEventListener('click', () => {
+        BLUEPRINT_IMPORT = null;
+        syncDrawingImportStatus();
+        app.renderNow();
+    });
+    if (dropzone) {
+        for (const eventName of ['dragenter', 'dragover']) {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropzone.classList.add('is-dragover');
+            });
+        }
+        for (const eventName of ['dragleave', 'drop']) {
+            dropzone.addEventListener(eventName, () => {
+                dropzone.classList.remove('is-dragover');
+            });
+        }
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const files = [...(e.dataTransfer?.files || [])];
+            const file = files.find((f) => /svg/i.test(f.type) || /\.svg$/i.test(f.name));
+            void importDrawingSvgFile(app, file || files[0] || null);
+        });
+    }
+    syncDrawingImportStatus();
+}
+
+function openDrawingSvgPicker() {
+    document.getElementById('drawingSvgInput')?.click();
+}
+
+async function importDrawingSvgFile(app, file) {
+    if (!file) return;
+    if (!/\.svg$/i.test(file.name || '') && !/svg/i.test(file.type || '')) {
+        await app.dialog?.alert({
+            title: 'Drawing import failed',
+            text: 'Choose an SVG drawing.',
+            okText: 'Close'
+        });
+        return;
+    }
+    try {
+        const analysis = analyzeSvgBlueprint(await file.text());
+        if (!analysis.elements.lines) throw new Error('No SVG lines were found in the blueprint group.');
+        BLUEPRINT_IMPORT = { name: file.name || 'drawing.svg', analysis };
+        app.settingsStore.set('showDrawing', true);
+        syncDrawingImportStatus();
+        app.renderNow();
+        app._showToast?.('SVG drawing analysed');
+    } catch (e) {
+        await app.dialog?.alert({
+            title: 'Drawing import failed',
+            text: e?.message || 'Could not read this SVG drawing.',
+            okText: 'Close'
+        });
+    }
+}
+
+function syncDrawingImportStatus() {
+    const status = document.getElementById('drawingImportStatus');
+    const clear = document.getElementById('drawingClearBtn');
+    if (clear) clear.disabled = !BLUEPRINT_IMPORT;
+    if (!status) return;
+    if (!BLUEPRINT_IMPORT) {
+        status.innerHTML = '<p class="drawing-empty">Drop an SVG drawing here, or browse for one.</p>';
+        return;
+    }
+    const lines = blueprintSummaryLines(BLUEPRINT_IMPORT.analysis);
+    status.innerHTML = `<dl class="drawing-summary">
+        <div><dt>File</dt><dd>${html(BLUEPRINT_IMPORT.name)}</dd></div>
+        ${lines.map((line, i) => `<div><dt>${i === 0 ? 'Data' : ''}</dt><dd>${html(line)}</dd></div>`).join('')}
+    </dl>`;
+}
+
+function renderImportedBlueprint(create, analysis) {
+    const buckets = analysis?.lineBuckets;
+    if (!buckets) return null;
+    const g = create('g', {
+        id: 'imported-blueprint',
+        'pointer-events': 'none',
+        'data-interactive': 'true'
+    });
+    appendImportedLines(create, g, buckets.horizontal || [], '#78a6ff', 0.5);
+    appendImportedLines(create, g, buckets.vertical || [], '#78d88f', 0.5);
+    appendImportedLines(create, g, buckets.diagonal || [], '#df7770', 0.25, '1.8 1.8');
+    const candidates = analysis?.recognized?.keys || [];
+    if (candidates.length) {
+        const cg = create('g', { id: 'imported-candidates' });
+        const rx = analysis?.calibration?.cornerRadius || 0;
+        for (const k of candidates) {
+            cg.appendChild(create('rect', {
+                x: k.x, y: k.y, width: k.w, height: k.h,
+                rx, ry: rx,
+                fill: 'none',
+                stroke: '#ffd36a',
+                'stroke-width': 0.65,
+                'vector-effect': 'non-scaling-stroke'
+            }));
+        }
+        g.appendChild(cg);
+    }
+    return g.childNodes.length ? g : null;
+}
+
+function appendImportedLines(create, group, lines, stroke, opacity, dasharray = null) {
+    for (const line of lines) {
+        group.appendChild(create('line', {
+            x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2,
+            stroke,
+            opacity,
+            'stroke-width': 0.35,
+            'stroke-dasharray': dasharray,
+            'vector-effect': 'non-scaling-stroke'
+        }));
+    }
+}
+
 function updateKeyGeometryEditor(s, keys) {
     const editor = document.getElementById('legendGeometryEditor');
     const input = document.getElementById('legendKeyWidthInput');
@@ -1299,14 +1627,16 @@ function updateKeyGeometryEditor(s, keys) {
     const moveRightButton = document.getElementById('moveKeyRightBtn');
     const deleteButton = document.getElementById('deleteKeyBtn');
     const restoreButton = document.getElementById('restoreKeyBtn');
+    const addRowButton = document.getElementById('addRowBtn');
     const deleteRowButton = document.getElementById('deleteRowBtn');
     const restoreRowButton = document.getElementById('restoreRowBtn');
     if (!editor || !input) return;
 
+    const sourceLayout = sourceLayoutFor(s);
     const active = activeKey(keys);
-    const edits = sanitizeLayoutEdits(s.layoutEdits || {});
-    const restoreId = restoreTargetEditId(edits);
-    const restoreRowId = restoreTargetRowId(edits);
+    const edits = sanitizeLayoutEditsForLayout(s.layoutEdits || {}, sourceLayout);
+    const restoreId = restoreTargetEditId(edits, sourceLayout);
+    const restoreRowId = restoreTargetRowId(edits, sourceLayout);
     const editable = !!active?.geometry?.widthEditable;
     const range = active?.geometry?.widthRange || { min: MIN_KEY_WIDTH_MM, max: MAX_KEY_WIDTH_MM };
     const value = active ? toMm(active.w).toFixed(3) : '';
@@ -1356,14 +1686,19 @@ function updateKeyGeometryEditor(s, keys) {
         restoreButton.disabled = !restoreId;
         restoreButton.title = restoreId ? `Restore ${editIdLabel(restoreId)}` : '';
     }
+    if (addRowButton) {
+        const canAddRow = canAddRowBelow(s, active);
+        addRowButton.disabled = !canAddRow;
+        addRowButton.title = canAddRow ? `Add row below ${rowEditLabel(rowEditId(sourceRowOfKey(active)), sourceLayout.rows.length)}` : '';
+    }
     if (deleteRowButton) {
         const canDelete = canDeleteActiveRow(s, active);
         deleteRowButton.disabled = !canDelete;
-        deleteRowButton.title = canDelete ? `Delete ${rowEditLabel(rowEditId(sourceRowOfKey(active)))}` : '';
+        deleteRowButton.title = canDelete ? `Delete ${rowEditLabel(rowEditId(sourceRowOfKey(active)), sourceLayout.rows.length)}` : '';
     }
     if (restoreRowButton) {
         restoreRowButton.disabled = !restoreRowId;
-        restoreRowButton.title = restoreRowId ? `Restore ${rowEditLabel(restoreRowId)}` : '';
+        restoreRowButton.title = restoreRowId ? `Restore ${rowEditLabel(restoreRowId, sourceLayout.rows.length)}` : '';
     }
 }
 
@@ -1385,7 +1720,7 @@ function applyKeyWidthEdit(app) {
     const widthMm = clamp(Number(input.value), range.min, range.max);
     if (!Number.isFinite(widthMm)) return;
     input.value = widthMm.toFixed(3);
-    const next = sanitizeLayoutEdits(app.settings.layoutEdits || {});
+    const next = sanitizeLayoutEditsForSettings(app.settings, app.settings.layoutEdits || {});
     writeKeyWidthEdit(next, active, widthMm);
     app.settingsStore.set('layoutEdits', next);
 }
@@ -1394,7 +1729,7 @@ function resetKeyWidthEdit(app) {
     const keys = layoutFor(app.settings).keys;
     const active = activeKey(keys);
     if (!active) return;
-    const next = sanitizeLayoutEdits(app.settings.layoutEdits || {});
+    const next = sanitizeLayoutEditsForSettings(app.settings, app.settings.layoutEdits || {});
     if (!next[active.editId]) return;
     delete next[active.editId].widthMm;
     if (!Object.keys(next[active.editId]).length) delete next[active.editId];
@@ -1418,8 +1753,8 @@ function selectKeyByEditId(app, editId) {
     if (index >= 0) selectKey(app, index);
 }
 
-function proposedAddKeyEdits(edits, k, side = 'after') {
-    const next = sanitizeLayoutEdits(edits);
+function proposedAddKeyEdits(edits, k, side = 'after', layout = LCAKB23) {
+    const next = sanitizeLayoutEditsForLayout(edits, layout);
     const id = nextAddedKeyId(next, k);
     next[id] = side === 'before'
         ? { added: true, before: k.editId }
@@ -1447,7 +1782,8 @@ function layoutKeysFit(keys) {
 
 function layoutEditsFit(settings, edits) {
     try {
-        const layout = layoutWithEdits(LCAKB23, edits, gridFrom(settings));
+        const sourceLayout = sourceLayoutFor(settings);
+        const layout = layoutWithEdits(sourceLayout, edits, gridFrom(settings));
         const { keys } = buildLayout(layout, gridFrom(settings));
         return layoutKeysFit(keys);
     } catch (_) {
@@ -1457,7 +1793,7 @@ function layoutEditsFit(settings, edits) {
 
 function canAddKeyNear(settings, active, side = 'after') {
     if (!active?.geometry?.rowHasFlex || isAddedEditId(active.editId)) return false;
-    const { edits } = proposedAddKeyEdits(settings.layoutEdits || {}, active, side);
+    const { edits } = proposedAddKeyEdits(settings.layoutEdits || {}, active, side, sourceLayoutFor(settings));
     return layoutEditsFit(settings, edits);
 }
 
@@ -1468,7 +1804,7 @@ function rowBlockKeys(keys, active) {
         .sort((a, b) => (a.x - b.x) || (a.i - b.i));
 }
 
-function proposedMoveKeyEdits(edits, keys, active, direction) {
+function proposedMoveKeyEdits(edits, keys, active, direction, layout = LCAKB23) {
     if (!active || !active.editId || ![-1, 1].includes(direction)) return null;
     const group = rowBlockKeys(keys, active);
     const pos = group.findIndex((k) => k.editId === active.editId);
@@ -1476,20 +1812,20 @@ function proposedMoveKeyEdits(edits, keys, active, direction) {
     if (pos < 0 || nextPos < 0 || nextPos >= group.length) return null;
     const order = group.map((k) => k.editId);
     [order[pos], order[nextPos]] = [order[nextPos], order[pos]];
-    const next = sanitizeLayoutEdits(edits);
+    const next = sanitizeLayoutEditsForLayout(edits, layout);
     next[rowOrderEditId(sourceRowOfKey(active), sourceBlockOfKey(active))] = { order };
     return { edits: next, editId: active.editId };
 }
 
 function canMoveKeyInRow(settings, keys, active, direction) {
-    const proposed = proposedMoveKeyEdits(settings.layoutEdits || {}, keys, active, direction);
+    const proposed = proposedMoveKeyEdits(settings.layoutEdits || {}, keys, active, direction, sourceLayoutFor(settings));
     return !!proposed && layoutEditsFit(settings, proposed.edits);
 }
 
 function moveActiveKeyInRow(app, direction) {
     const keys = layoutFor(app.settings).keys;
     const active = activeKey(keys);
-    const proposed = proposedMoveKeyEdits(app.settings.layoutEdits || {}, keys, active, direction);
+    const proposed = proposedMoveKeyEdits(app.settings.layoutEdits || {}, keys, active, direction, sourceLayoutFor(app.settings));
     if (!proposed || !layoutEditsFit(app.settings, proposed.edits)) return;
     app.settingsStore.set('layoutEdits', proposed.edits);
     setTimeout(() => selectKeyByEditId(app, proposed.editId), 0);
@@ -1499,36 +1835,38 @@ function addKeyNearActive(app, side = 'after') {
     const keys = layoutFor(app.settings).keys;
     const active = activeKey(keys);
     if (!canAddKeyNear(app.settings, active, side)) return;
-    const { id, edits } = proposedAddKeyEdits(app.settings.layoutEdits || {}, active, side);
+    const { id, edits } = proposedAddKeyEdits(app.settings.layoutEdits || {}, active, side, sourceLayoutFor(app.settings));
     app.settingsStore.set('layoutEdits', edits);
     setTimeout(() => selectKeyByEditId(app, id), 0);
 }
 
-function deletedEditIds(edits) {
-    const clean = sanitizeLayoutEdits(edits);
+function deletedEditIds(edits, layout = LCAKB23) {
+    const clean = sanitizeLayoutEditsForLayout(edits, layout);
     return Object.keys(clean).filter((id) => clean[id]?.deleted && !isRowEditId(id));
 }
 
-function restoreTargetEditId(edits) {
-    const ids = deletedEditIds(edits);
+function restoreTargetEditId(edits, layout = LCAKB23) {
+    const ids = deletedEditIds(edits, layout);
     if (LAST_DELETED_EDIT_ID && ids.includes(LAST_DELETED_EDIT_ID)) return LAST_DELETED_EDIT_ID;
     return ids[ids.length - 1] || null;
 }
 
-function deletedRowIds(edits) {
-    const clean = sanitizeLayoutEdits(edits);
+function deletedRowIds(edits, layout = LCAKB23) {
+    const clean = sanitizeLayoutEditsForLayout(edits, layout);
     return Object.keys(clean).filter((id) => clean[id]?.deleted && isRowEditId(id));
 }
 
-function restoreTargetRowId(edits) {
-    const ids = deletedRowIds(edits);
+function restoreTargetRowId(edits, layout = LCAKB23) {
+    const ids = deletedRowIds(edits, layout);
     if (LAST_DELETED_ROW_ID && ids.includes(LAST_DELETED_ROW_ID)) return LAST_DELETED_ROW_ID;
     return ids[ids.length - 1] || null;
 }
 
-function rowEditLabel(editId) {
+function rowEditLabel(editId, sourceRowCount = LCAKB23.rows.length) {
     const row = Number(String(editId || '').split(':')[1]);
-    return Number.isFinite(row) ? `R${row + 1}` : 'R?';
+    if (!Number.isFinite(row)) return 'R?';
+    if (row >= sourceRowCount) return `added row #${row - sourceRowCount + 1}`;
+    return `R${row + 1}`;
 }
 
 function editIdLabel(editId) {
@@ -1550,15 +1888,16 @@ function deleteActiveKey(app) {
     const keys = layoutFor(app.settings).keys;
     const active = activeKey(keys);
     if (!active) return;
-    const next = sanitizeLayoutEdits(app.settings.layoutEdits || {});
+    const next = sanitizeLayoutEditsForSettings(app.settings, app.settings.layoutEdits || {});
     next[active.editId] = { ...(next[active.editId] || {}), deleted: true };
     LAST_DELETED_EDIT_ID = active.editId;
     app.settingsStore.set('layoutEdits', next);
 }
 
 function restoreDeletedKey(app) {
-    const next = sanitizeLayoutEdits(app.settings.layoutEdits || {});
-    const editId = restoreTargetEditId(next);
+    const sourceLayout = sourceLayoutFor(app.settings);
+    const next = sanitizeLayoutEditsForLayout(app.settings.layoutEdits || {}, sourceLayout);
+    const editId = restoreTargetEditId(next, sourceLayout);
     if (!editId || !next[editId]) return;
     delete next[editId].deleted;
     if (!Object.keys(next[editId]).length) delete next[editId];
@@ -1566,28 +1905,43 @@ function restoreDeletedKey(app) {
     app.settingsStore.set('layoutEdits', next);
 }
 
-function proposedDeleteRowEdits(edits, sourceRow) {
+function proposedDeleteRowEdits(edits, sourceRow, layout = LCAKB23) {
     if (!Number.isInteger(sourceRow)) return null;
-    const next = sanitizeLayoutEdits(edits);
+    const next = sanitizeLayoutEditsForLayout(edits, layout);
     const id = rowEditId(sourceRow);
     next[id] = { ...(next[id] || {}), deleted: true };
     return { id, edits: next };
 }
 
-function visibleRowCountAfter(edits) {
-    const clean = sanitizeLayoutEdits(edits);
+function visibleRowCountAfter(edits, layout = LCAKB23) {
+    const clean = sanitizeLayoutEditsForLayout(edits, layout);
     let count = 0;
-    LCAKB23.rows.forEach((_, rowIndex) => {
+    layout.rows.forEach((_, rowIndex) => {
         if (!clean[rowEditId(rowIndex)]?.deleted) count++;
     });
     return count;
 }
 
 function canDeleteActiveRow(settings, active) {
+    const sourceLayout = sourceLayoutFor(settings);
     const sourceRow = sourceRowOfKey(active);
-    const proposed = proposedDeleteRowEdits(settings.layoutEdits || {}, sourceRow);
-    if (!proposed || visibleRowCountAfter(proposed.edits) < 1) return false;
+    const proposed = proposedDeleteRowEdits(settings.layoutEdits || {}, sourceRow, sourceLayout);
+    if (!proposed || visibleRowCountAfter(proposed.edits, sourceLayout) < 1) return false;
     return layoutEditsFit(settings, proposed.edits);
+}
+
+function proposedAddRowEdits(edits, active, layout = LCAKB23) {
+    const sourceRow = sourceRowOfKey(active);
+    if (!Number.isInteger(sourceRow) || sourceRow < 0 || sourceRow >= layout.rows.length) return null;
+    const next = sanitizeLayoutEditsForLayout(edits, layout);
+    const id = nextAddedRowId(next);
+    next[id] = { rowAdded: true, afterRow: sourceRow, templateRow: sourceRow };
+    return { id, sourceRow: addedRowSourceRow(id, layout.rows.length), edits: next };
+}
+
+function canAddRowBelow(settings, active) {
+    const proposed = proposedAddRowEdits(settings.layoutEdits || {}, active, sourceLayoutFor(settings));
+    return !!proposed && layoutEditsFit(settings, proposed.edits);
 }
 
 function selectFirstKeyInSourceRow(app, sourceRow) {
@@ -1601,7 +1955,7 @@ function deleteActiveRow(app) {
     const active = activeKey(keys);
     const sourceRow = sourceRowOfKey(active);
     if (!canDeleteActiveRow(app.settings, active)) return;
-    const { id, edits } = proposedDeleteRowEdits(app.settings.layoutEdits || {}, sourceRow);
+    const { id, edits } = proposedDeleteRowEdits(app.settings.layoutEdits || {}, sourceRow, sourceLayoutFor(app.settings));
     LAST_DELETED_ROW_ID = id;
     app.settingsStore.set('layoutEdits', edits);
     setTimeout(() => {
@@ -1610,9 +1964,19 @@ function deleteActiveRow(app) {
     }, 0);
 }
 
+function addRowBelowActive(app) {
+    const keys = layoutFor(app.settings).keys;
+    const active = activeKey(keys);
+    const proposed = proposedAddRowEdits(app.settings.layoutEdits || {}, active, sourceLayoutFor(app.settings));
+    if (!proposed || !layoutEditsFit(app.settings, proposed.edits)) return;
+    app.settingsStore.set('layoutEdits', proposed.edits);
+    setTimeout(() => selectFirstKeyInSourceRow(app, proposed.sourceRow), 0);
+}
+
 function restoreDeletedRow(app) {
-    const next = sanitizeLayoutEdits(app.settings.layoutEdits || {});
-    const editId = restoreTargetRowId(next);
+    const sourceLayout = sourceLayoutFor(app.settings);
+    const next = sanitizeLayoutEditsForLayout(app.settings.layoutEdits || {}, sourceLayout);
+    const editId = restoreTargetRowId(next, sourceLayout);
     if (!editId || !next[editId]) return;
     const sourceRow = Number(editId.split(':')[1]);
     delete next[editId].deleted;
@@ -1872,16 +2236,20 @@ function installCleanExports(app) {
         app[method] = async (...args) => {
             const previous = {
                 active: SELECTION.active,
-                indices: [...(SELECTION.indices || [])]
+                indices: [...(SELECTION.indices || [])],
+                blueprint: BLUEPRINT_IMPORT
             };
             const hasSelection = previous.active != null || previous.indices.length > 0;
-            if (!hasSelection) return original(...args);
+            const hasBlueprint = !!previous.blueprint;
+            if (!hasSelection && !hasBlueprint) return original(...args);
             SELECTION = { active: null, indices: [] };
+            BLUEPRINT_IMPORT = null;
             app.renderNow();
             try {
                 return await original(...args);
             } finally {
-                SELECTION = previous;
+                SELECTION = { active: previous.active, indices: previous.indices };
+                BLUEPRINT_IMPORT = previous.blueprint;
                 app.renderNow();
             }
         };
@@ -2052,14 +2420,17 @@ function compactLegendReport(r) {
 }
 
 async function buildVerificationReport(settingsSnapshot, settings) {
-    const { keys, legends } = layoutFor(settings);
+    const { keys, legends, sourceLayout } = layoutFor(settings);
+    if (!isReferenceLayout(sourceLayout)) {
+        throw new Error('Verification is available only for the LCAKB23 reference layout.');
+    }
     const geometryRaw = compare(keys, await loadReference());
     const legendsRaw = TYPEFACE
         ? compareLegends(legends, (await loadLegendReference()).keys)
         : null;
     return {
         generatedAt: new Date().toISOString(),
-        layout: LCAKB23.meta.name,
+        layout: sourceLayout.meta.name,
         settings: settingsSnapshot,
         typeface: TYPEFACE ? CONTENT.font : null,
         geometry: { raw: geometryRaw, export: compactGeometryReport(geometryRaw) },
@@ -2076,6 +2447,37 @@ function reportForExport(report) {
         geometry: report.geometry.export,
         legends: report.legends ? report.legends.export : null
     };
+}
+
+function exportModelJSON(app) {
+    const layoutName = String(sourceLayoutFor(app.settings).meta.name || 'layout')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+    downloadJSON(
+        `keyboarder-${layoutName}-model.json`,
+        buildKeyboardModel(app.settingsStore.toObject(), app.settingsStore.getDefaults())
+    );
+}
+
+function openModelJSONPicker() {
+    document.getElementById('importJsonInput')?.click();
+}
+
+async function importModelJSONFile(app, file) {
+    if (!file) return;
+    try {
+        const preset = parseKeyboardModelJSONText(await file.text(), app.settingsStore.getDefaults());
+        if (app.presets?.openShared) app.presets.openShared(preset);
+        else app.applyPresetBlob(preset);
+        app._showToast?.('JSON imported');
+    } catch (e) {
+        await app.dialog?.alert({
+            title: 'Import failed',
+            text: e?.message || 'Could not read this JSON file.',
+            okText: 'Close'
+        });
+    }
 }
 
 function downloadJSON(filename, data) {
@@ -2100,6 +2502,20 @@ function updateReadout(s, keys, grid, legends) {
     set('statLegends', TYPEFACE
         ? `${txt} strings, ${legends.length - txt} icons`
         : 'loading font');
+    set('statWarnings', layoutWarningText(keys, grid));
+}
+
+function layoutWarningText(keys, grid) {
+    const oddWidths = keys.filter((k) => {
+        const u = widthInU(k.w, grid);
+        const nearestQuarter = Math.round(u * 4) / 4;
+        return Math.abs(u - nearestQuarter) > 0.01;
+    }).length;
+    const blankLegends = keys.filter((k) => !k.content && !(k.elements || []).length).length;
+    const warnings = [];
+    if (oddWidths) warnings.push(`${oddWidths} non-standard widths`);
+    if (blankLegends) warnings.push(`${blankLegends} blank legends`);
+    return warnings.length ? warnings.join('; ') : 'none';
 }
 
 function compensationInfo(s, el) {
