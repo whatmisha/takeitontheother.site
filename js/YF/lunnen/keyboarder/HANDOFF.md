@@ -108,6 +108,9 @@ Important local entry points:
   - added keys start with no generated legend content, can be edited through the existing
     `contentEdits` Legend editor, and are not allowed to recursively add more keys after
     themselves yet;
+  - `Move left` / `Move right` swap the active key with its visible neighbor inside the same
+    row/block; the order is stored in `layoutEdits["order:row:block"].order` as stable `editId`
+    values, so legends and width/content overrides travel with the key;
   - `Reference grid` clears `layoutEdits` and also prunes `contentEdits` for added keys, so
     removed added-key legends do not come back later as orphaned content;
   - `Reset` removes the active key width override.
@@ -206,6 +209,13 @@ Browser QA on `http://127.0.0.1:8000/`:
   - F5 and F6 keep their own legends after the insertion;
   - selecting original F5 after the insertion shows both add buttons disabled because the row no
     longer has enough flex capacity for another 1U key.
+- Key reorder QA:
+  - moving F5 left swaps it with F4: the selector order becomes `brightness-up`,
+    `brightness-down`, `backlight`;
+  - F5 remains selected after moving, now at the new index;
+  - moving F5 right restores the original order;
+  - an added blank key can move right through F6 and remains selected;
+  - `Move left` is disabled on the first key (`esc`), while `Move right` remains enabled.
 
 Note: the Browser plugin's console log API kept an old error entry from an earlier failed reload
 after it was fixed. Current DOM probes confirmed the app initializes and renders.
@@ -232,10 +242,10 @@ Stage 4 is started, not complete:
   add/remove legend elements, reset selected edits, manual compensation overrides in px for text
   L/R slots, key width overrides with row flex recalculation including source flex keys,
   deleting/restoring individual keys, and adding blank individual keys before/after source keys
-  in flex-backed rows.
-- Still remaining: reordering keys if desired, adding/deleting/restoring whole rows, richer model
-  export/import for edited keyboard data, and a more explicit edited-keyboard model beyond the
-  current preset override blobs.
+  in flex-backed rows, and moving keys left/right inside a row/block.
+- Still remaining: adding/deleting/restoring whole rows, richer model export/import for edited
+  keyboard data, and a more explicit edited-keyboard model beyond the current preset override
+  blobs.
 
 ## Notes For The Next Assistant
 

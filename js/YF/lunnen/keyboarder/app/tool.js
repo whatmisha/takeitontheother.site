@@ -535,6 +535,12 @@ const app = defineTool({
         document.getElementById('resetKeyWidthBtn')?.addEventListener('click', () => {
             resetKeyWidthEdit(readyApp);
         });
+        document.getElementById('moveKeyLeftBtn')?.addEventListener('click', () => {
+            moveActiveKeyInRow(readyApp, -1);
+        });
+        document.getElementById('moveKeyRightBtn')?.addEventListener('click', () => {
+            moveActiveKeyInRow(readyApp, 1);
+        });
         document.getElementById('addKeyBeforeBtn')?.addEventListener('click', () => {
             addKeyNearActive(readyApp, 'before');
         });
@@ -675,6 +681,10 @@ function sanitizeLayoutEdits(edits = {}) {
     for (const [id, edit] of Object.entries(edits)) {
         if (!edit || typeof edit !== 'object') continue;
         const clean = {};
+        const order = Array.isArray(edit.order)
+            ? [...new Set(edit.order.map((v) => String(v || '').trim()).filter(Boolean))]
+            : [];
+        if (order.length) clean.order = order;
         if (edit.added === true) {
             const after = String(edit.after || '').trim();
             const before = String(edit.before || '').trim();
@@ -739,6 +749,14 @@ function rowBlockFromEditId(editId) {
     return { row: Number(parts[0]), block: parts[1] || '' };
 }
 
+function rowOrderEditId(rowIndex, blockId) {
+    return `order:${rowIndex}:${blockId || ''}`;
+}
+
+function rowOrderFromEdits(edits, rowIndex, blockId) {
+    return edits[rowOrderEditId(rowIndex, blockId)]?.order || [];
+}
+
 function addedOrdinal(editId) {
     const parts = String(editId || '').split(':');
     const n = parts[0] === 'add' ? Number(parts[3]) : NaN;
@@ -771,6 +789,44 @@ function insertedKeyItem(id, edit) {
     return next;
 }
 
+function applyRowOrder(items, order) {
+    if (!order.length) return { items, changed: false };
+    const rank = new Map(order.map((id, i) => [id, i]));
+    const out = [];
+    let changed = false;
+    let segment = [];
+
+    const flush = () => {
+        if (!segment.length) return;
+        const byId = new Map(segment.map((it) => [it.editId, it]));
+        const seen = new Set();
+        const ordered = [];
+        for (const id of order) {
+            const item = byId.get(id);
+            if (!item) continue;
+            ordered.push(item);
+            seen.add(id);
+        }
+        for (const item of segment) {
+            if (!seen.has(item.editId)) ordered.push(item);
+        }
+        if (ordered.some((it, i) => it !== segment[i])) changed = true;
+        out.push(...ordered);
+        segment = [];
+    };
+
+    for (const item of items) {
+        if (item.skip) {
+            flush();
+            out.push(item);
+        } else {
+            segment.push(item);
+        }
+    }
+    flush();
+    return { items: out, changed };
+}
+
 function chooseFlexTarget(entries, sourceIndex, edits) {
     const candidates = entries.filter((entry) =>
         entry.editId && entry.index !== sourceIndex && !entry.item.skip && !edits[entry.editId]?.deleted);
@@ -801,7 +857,7 @@ function layoutWithEdits(layout, edits, grid) {
                 ? chooseFlexTarget(entries, sourceFlex.index, clean)
                 : null;
             let blockChanged = false;
-            const nextItems = entries.flatMap(({ item: it, editId, index }) => {
+            const expandedItems = entries.flatMap(({ item: it, editId, index }) => {
                 const insertedBefore = (insertions.before.get(editId) || [])
                     .map(({ id, edit }) => insertedKeyItem(id, edit));
                 const insertedAfter = (insertions.after.get(editId) || [])
@@ -837,6 +893,12 @@ function layoutWithEdits(layout, edits, grid) {
                 }
                 return [...insertedBefore, item, ...insertedAfter];
             }).filter(Boolean);
+            const ordered = applyRowOrder(expandedItems, rowOrderFromEdits(clean, rowIndex, blockId));
+            if (ordered.changed) {
+                blockChanged = true;
+                applied = true;
+            }
+            const nextItems = ordered.items;
             nextRow[blockId] = blockChanged ? nextItems : items;
         }
         return nextRow;
@@ -1180,6 +1242,8 @@ function updateKeyGeometryEditor(s, keys) {
     const input = document.getElementById('legendKeyWidthInput');
     const apply = document.getElementById('applyKeyWidthBtn');
     const reset = document.getElementById('resetKeyWidthBtn');
+    const moveLeftButton = document.getElementById('moveKeyLeftBtn');
+    const moveRightButton = document.getElementById('moveKeyRightBtn');
     const deleteButton = document.getElementById('deleteKeyBtn');
     const restoreButton = document.getElementById('restoreKeyBtn');
     if (!editor || !input) return;
@@ -1209,6 +1273,16 @@ function updateKeyGeometryEditor(s, keys) {
     if (deleteButton) {
         deleteButton.disabled = !active;
         deleteButton.title = active ? `Delete ${keyLabel(active)}` : '';
+    }
+    if (moveLeftButton) {
+        const canMoveLeft = canMoveKeyInRow(s, keys, active, -1);
+        moveLeftButton.disabled = !canMoveLeft;
+        moveLeftButton.title = canMoveLeft ? `Move ${keyLabel(active)} left` : '';
+    }
+    if (moveRightButton) {
+        const canMoveRight = canMoveKeyInRow(s, keys, active, 1);
+        moveRightButton.disabled = !canMoveRight;
+        moveRightButton.title = canMoveRight ? `Move ${keyLabel(active)} right` : '';
     }
     if (addBeforeButton || addAfterButton) {
         const canAddBefore = canAddKeyNear(s, active, 'before');
@@ -1302,6 +1376,40 @@ function canAddKeyNear(settings, active, side = 'after') {
     if (!active?.geometry?.rowHasFlex || isAddedEditId(active.editId)) return false;
     const { edits } = proposedAddKeyEdits(settings.layoutEdits || {}, active, side);
     return layoutEditsFit(settings, edits);
+}
+
+function rowBlockKeys(keys, active) {
+    if (!active) return [];
+    return keys
+        .filter((k) => k.row === active.row && (k.block || '') === (active.block || ''))
+        .sort((a, b) => (a.x - b.x) || (a.i - b.i));
+}
+
+function proposedMoveKeyEdits(edits, keys, active, direction) {
+    if (!active || !active.editId || ![-1, 1].includes(direction)) return null;
+    const group = rowBlockKeys(keys, active);
+    const pos = group.findIndex((k) => k.editId === active.editId);
+    const nextPos = pos + direction;
+    if (pos < 0 || nextPos < 0 || nextPos >= group.length) return null;
+    const order = group.map((k) => k.editId);
+    [order[pos], order[nextPos]] = [order[nextPos], order[pos]];
+    const next = sanitizeLayoutEdits(edits);
+    next[rowOrderEditId(active.row, active.block || '')] = { order };
+    return { edits: next, editId: active.editId };
+}
+
+function canMoveKeyInRow(settings, keys, active, direction) {
+    const proposed = proposedMoveKeyEdits(settings.layoutEdits || {}, keys, active, direction);
+    return !!proposed && layoutEditsFit(settings, proposed.edits);
+}
+
+function moveActiveKeyInRow(app, direction) {
+    const keys = layoutFor(app.settings).keys;
+    const active = activeKey(keys);
+    const proposed = proposedMoveKeyEdits(app.settings.layoutEdits || {}, keys, active, direction);
+    if (!proposed || !layoutEditsFit(app.settings, proposed.edits)) return;
+    app.settingsStore.set('layoutEdits', proposed.edits);
+    setTimeout(() => selectKeyByEditId(app, proposed.editId), 0);
 }
 
 function addKeyNearActive(app, side = 'after') {
