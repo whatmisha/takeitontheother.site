@@ -111,6 +111,13 @@ Important local entry points:
   - `Move left` / `Move right` swap the active key with its visible neighbor inside the same
     row/block; the order is stored in `layoutEdits["order:row:block"].order` as stable `editId`
     values, so legends and width/content overrides travel with the key;
+  - `Delete row` stores `layoutEdits["row:N"].deleted = true`, removes that source row, compacts
+    rows below upward, and preserves each moved key's source-row `editId`;
+  - row delete/restore uses `sourceRow` metadata from `grid.js`; display `row` can change after
+    compaction, while edit/content identity stays tied to the original source row;
+  - row deletion runs the same layout fit guard plus a rectangle-overlap check, so rows involved
+    in numpad `rowSpan` collisions keep `Delete row` disabled;
+  - `Restore row` clears the last row delete flag and selects the first key in the restored row;
   - `Reference grid` clears `layoutEdits` and also prunes `contentEdits` for added keys, so
     removed added-key legends do not come back later as orphaned content;
   - `Reset` removes the active key width override.
@@ -216,6 +223,14 @@ Browser QA on `http://127.0.0.1:8000/`:
   - moving F5 right restores the original order;
   - an added blank key can move right through F6 and remains selected;
   - `Move left` is disabled on the first key (`esc`), while `Move right` remains enabled.
+- Row delete/restore QA:
+  - deleting the F-row changes rendered key count from 110 to 89;
+  - the number row compacts to the top (`firstRectY` stays at the top-row y);
+  - the first visible keys become `~`, `!`, `@`, `#`, `;`, confirming source-row content IDs
+    survived the display-row shift;
+  - `Restore row` returns the key count to 110 and restores `esc` as the first key;
+  - `Delete row` is disabled on the ASDF row because deleting it would create a numpad `rowSpan`
+    overlap.
 
 Note: the Browser plugin's console log API kept an old error entry from an earlier failed reload
 after it was fixed. Current DOM probes confirmed the app initializes and renders.
@@ -242,10 +257,10 @@ Stage 4 is started, not complete:
   add/remove legend elements, reset selected edits, manual compensation overrides in px for text
   L/R slots, key width overrides with row flex recalculation including source flex keys,
   deleting/restoring individual keys, and adding blank individual keys before/after source keys
-  in flex-backed rows, and moving keys left/right inside a row/block.
-- Still remaining: adding/deleting/restoring whole rows, richer model export/import for edited
-  keyboard data, and a more explicit edited-keyboard model beyond the current preset override
-  blobs.
+  in flex-backed rows, moving keys left/right inside a row/block, and deleting/restoring whole
+  rows when the resulting layout has no overlaps.
+- Still remaining: adding whole rows, richer model export/import for edited keyboard data, and a
+  more explicit edited-keyboard model beyond the current preset override blobs.
 
 ## Notes For The Next Assistant
 

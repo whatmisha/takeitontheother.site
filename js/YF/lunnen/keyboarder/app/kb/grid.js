@@ -105,12 +105,13 @@ export function buildLayout(layout, gridOverride) {
     const keys = [];
 
     layout.rows.forEach((row, r) => {
+        const sourceRow = Number.isInteger(row.__sourceRow) ? row.__sourceRow : r;
         const y = grid.origin.y + r * grid.rowPitch;
         for (const [blockId, items] of Object.entries(row)) {
             const block = blocks.get(blockId);
             if (!block) throw new Error(`buildLayout: неизвестный блок "${blockId}" в ряду ${r}`);
             for (const k of layoutRow(items, block, grid, y)) {
-                keys.push({ ...k, row: r, i: keys.length });
+                keys.push({ ...k, row: r, sourceRow, i: keys.length });
             }
         }
     });

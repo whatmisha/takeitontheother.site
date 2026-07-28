@@ -91,6 +91,7 @@ let TYPEFACE = null;
 let COMP_CACHE = new Map();
 let SELECTION = { active: 0, indices: [0] };
 let LAST_DELETED_EDIT_ID = null;
+let LAST_DELETED_ROW_ID = null;
 
 function compFor(s) {
     if (!TYPEFACE || s.compensationMode === 'off') return null;
@@ -553,6 +554,12 @@ const app = defineTool({
         document.getElementById('restoreKeyBtn')?.addEventListener('click', () => {
             restoreDeletedKey(readyApp);
         });
+        document.getElementById('deleteRowBtn')?.addEventListener('click', () => {
+            deleteActiveRow(readyApp);
+        });
+        document.getElementById('restoreRowBtn')?.addEventListener('click', () => {
+            restoreDeletedRow(readyApp);
+        });
         document.getElementById('legendKeyWidthInput')?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 applyKeyWidthEdit(readyApp);
@@ -743,10 +750,14 @@ function rowSpecEntries(rowIndex, blockId, items) {
 
 function rowBlockFromEditId(editId) {
     const parts = String(editId || '').split(':');
+    const row = parts[0] === 'add' ? Number(parts[1]) : Number(parts[0]);
+    const safeRow = Number.isFinite(row) && String(parts[0] === 'add' ? parts[1] : parts[0]).trim() !== ''
+        ? row
+        : NaN;
     if (parts.length >= 3 && parts[0] === 'add') {
-        return { row: Number(parts[1]), block: parts[2] || '' };
+        return { row: safeRow, block: parts[2] || '' };
     }
-    return { row: Number(parts[0]), block: parts[1] || '' };
+    return { row: safeRow, block: parts[1] || '' };
 }
 
 function rowOrderEditId(rowIndex, blockId) {
@@ -755,6 +766,39 @@ function rowOrderEditId(rowIndex, blockId) {
 
 function rowOrderFromEdits(edits, rowIndex, blockId) {
     return edits[rowOrderEditId(rowIndex, blockId)]?.order || [];
+}
+
+function rowEditId(rowIndex) {
+    return `row:${rowIndex}`;
+}
+
+function isRowEditId(editId) {
+    return String(editId || '').startsWith('row:');
+}
+
+function sourceRowIndex(row, fallback) {
+    return Number.isInteger(row?.__sourceRow) ? row.__sourceRow : fallback;
+}
+
+function cloneRowWithSource(row, sourceRow) {
+    const next = { ...row };
+    Object.defineProperty(next, '__sourceRow', {
+        value: sourceRow,
+        enumerable: false,
+        configurable: true
+    });
+    return next;
+}
+
+function sourceRowOfKey(k) {
+    const fromEditId = rowBlockFromEditId(k?.editId).row;
+    if (Number.isFinite(fromEditId)) return fromEditId;
+    if (Number.isInteger(k?.sourceRow)) return k.sourceRow;
+    return Number.isInteger(k?.row) ? k.row : null;
+}
+
+function sourceBlockOfKey(k) {
+    return rowBlockFromEditId(k?.editId).block || k?.block || '';
 }
 
 function addedOrdinal(editId) {
@@ -846,11 +890,17 @@ function layoutWithEdits(layout, edits, grid) {
     if (!Object.keys(clean).length) return layout;
 
     let applied = false;
-    const rows = layout.rows.map((row, rowIndex) => {
+    const rows = [];
+    layout.rows.forEach((row, rowIndex) => {
+        const srcRow = sourceRowIndex(row, rowIndex);
+        if (clean[rowEditId(srcRow)]?.deleted) {
+            applied = true;
+            return;
+        }
         const nextRow = {};
         for (const [blockId, items] of Object.entries(row)) {
-            const entries = rowSpecEntries(rowIndex, blockId, items);
-            const insertions = insertionMapForRow(clean, rowIndex, blockId);
+            const entries = rowSpecEntries(srcRow, blockId, items);
+            const insertions = insertionMapForRow(clean, srcRow, blockId);
             const sourceFlex = entries.find((entry) => entry.editId && entry.item.flex);
             const sourceFlexEdit = sourceFlex ? clean[sourceFlex.editId] : null;
             const flexTarget = sourceFlexEdit
@@ -893,25 +943,28 @@ function layoutWithEdits(layout, edits, grid) {
                 }
                 return [...insertedBefore, item, ...insertedAfter];
             }).filter(Boolean);
-            const ordered = applyRowOrder(expandedItems, rowOrderFromEdits(clean, rowIndex, blockId));
+            const ordered = applyRowOrder(expandedItems, rowOrderFromEdits(clean, srcRow, blockId));
             if (ordered.changed) {
                 blockChanged = true;
                 applied = true;
             }
             const nextItems = ordered.items;
-            nextRow[blockId] = blockChanged ? nextItems : items;
+            const stableItems = entries.map(({ item: it, editId }) =>
+                it.skip ? { ...it } : { ...it, editId });
+            nextRow[blockId] = blockChanged ? nextItems : stableItems;
         }
-        return nextRow;
+        rows.push(cloneRowWithSource(nextRow, srcRow));
     });
 
-    return applied ? { ...layout, rows } : layout;
+    return applied ? { ...layout, rows, artboard: rows.length === layout.rows.length ? layout.artboard : null } : layout;
 }
 
 function geometrySpecMap(layout) {
     const byId = new Map();
     layout.rows.forEach((row, rowIndex) => {
+        const srcRow = sourceRowIndex(row, rowIndex);
         for (const [blockId, items] of Object.entries(row)) {
-            for (const entry of rowSpecEntries(rowIndex, blockId, items)) {
+            for (const entry of rowSpecEntries(srcRow, blockId, items)) {
                 if (!entry.editId) continue;
                 byId.set(entry.editId, {
                     flex: !!entry.item.flex,
@@ -1246,11 +1299,14 @@ function updateKeyGeometryEditor(s, keys) {
     const moveRightButton = document.getElementById('moveKeyRightBtn');
     const deleteButton = document.getElementById('deleteKeyBtn');
     const restoreButton = document.getElementById('restoreKeyBtn');
+    const deleteRowButton = document.getElementById('deleteRowBtn');
+    const restoreRowButton = document.getElementById('restoreRowBtn');
     if (!editor || !input) return;
 
     const active = activeKey(keys);
     const edits = sanitizeLayoutEdits(s.layoutEdits || {});
     const restoreId = restoreTargetEditId(edits);
+    const restoreRowId = restoreTargetRowId(edits);
     const editable = !!active?.geometry?.widthEditable;
     const range = active?.geometry?.widthRange || { min: MIN_KEY_WIDTH_MM, max: MAX_KEY_WIDTH_MM };
     const value = active ? toMm(active.w).toFixed(3) : '';
@@ -1300,6 +1356,15 @@ function updateKeyGeometryEditor(s, keys) {
         restoreButton.disabled = !restoreId;
         restoreButton.title = restoreId ? `Restore ${editIdLabel(restoreId)}` : '';
     }
+    if (deleteRowButton) {
+        const canDelete = canDeleteActiveRow(s, active);
+        deleteRowButton.disabled = !canDelete;
+        deleteRowButton.title = canDelete ? `Delete ${rowEditLabel(rowEditId(sourceRowOfKey(active)))}` : '';
+    }
+    if (restoreRowButton) {
+        restoreRowButton.disabled = !restoreRowId;
+        restoreRowButton.title = restoreRowId ? `Restore ${rowEditLabel(restoreRowId)}` : '';
+    }
 }
 
 function writeKeyWidthEdit(edits, k, widthMm) {
@@ -1341,7 +1406,7 @@ function isAddedEditId(editId) {
 }
 
 function nextAddedKeyId(edits, k) {
-    const prefix = `add:${k.row}:${k.block || ''}:`;
+    const prefix = `add:${sourceRowOfKey(k)}:${sourceBlockOfKey(k)}:`;
     let n = 1;
     while (edits[`${prefix}${n}`]) n++;
     return `${prefix}${n}`;
@@ -1362,11 +1427,29 @@ function proposedAddKeyEdits(edits, k, side = 'after') {
     return { id, edits: next };
 }
 
+function rectsOverlap(a, b) {
+    const eps = 0.0005;
+    return a.x < b.x + b.w - eps
+        && a.x + a.w > b.x + eps
+        && a.y < b.y + b.h - eps
+        && a.y + a.h > b.y + eps;
+}
+
+function layoutKeysFit(keys) {
+    if (!keys.every((k) => toMm(k.w) >= MIN_KEY_WIDTH_MM - 0.0005)) return false;
+    for (let i = 0; i < keys.length; i++) {
+        for (let j = i + 1; j < keys.length; j++) {
+            if (rectsOverlap(keys[i], keys[j])) return false;
+        }
+    }
+    return true;
+}
+
 function layoutEditsFit(settings, edits) {
     try {
         const layout = layoutWithEdits(LCAKB23, edits, gridFrom(settings));
         const { keys } = buildLayout(layout, gridFrom(settings));
-        return keys.every((k) => toMm(k.w) >= MIN_KEY_WIDTH_MM - 0.0005);
+        return layoutKeysFit(keys);
     } catch (_) {
         return false;
     }
@@ -1394,7 +1477,7 @@ function proposedMoveKeyEdits(edits, keys, active, direction) {
     const order = group.map((k) => k.editId);
     [order[pos], order[nextPos]] = [order[nextPos], order[pos]];
     const next = sanitizeLayoutEdits(edits);
-    next[rowOrderEditId(active.row, active.block || '')] = { order };
+    next[rowOrderEditId(sourceRowOfKey(active), sourceBlockOfKey(active))] = { order };
     return { edits: next, editId: active.editId };
 }
 
@@ -1423,13 +1506,29 @@ function addKeyNearActive(app, side = 'after') {
 
 function deletedEditIds(edits) {
     const clean = sanitizeLayoutEdits(edits);
-    return Object.keys(clean).filter((id) => clean[id]?.deleted);
+    return Object.keys(clean).filter((id) => clean[id]?.deleted && !isRowEditId(id));
 }
 
 function restoreTargetEditId(edits) {
     const ids = deletedEditIds(edits);
     if (LAST_DELETED_EDIT_ID && ids.includes(LAST_DELETED_EDIT_ID)) return LAST_DELETED_EDIT_ID;
     return ids[ids.length - 1] || null;
+}
+
+function deletedRowIds(edits) {
+    const clean = sanitizeLayoutEdits(edits);
+    return Object.keys(clean).filter((id) => clean[id]?.deleted && isRowEditId(id));
+}
+
+function restoreTargetRowId(edits) {
+    const ids = deletedRowIds(edits);
+    if (LAST_DELETED_ROW_ID && ids.includes(LAST_DELETED_ROW_ID)) return LAST_DELETED_ROW_ID;
+    return ids[ids.length - 1] || null;
+}
+
+function rowEditLabel(editId) {
+    const row = Number(String(editId || '').split(':')[1]);
+    return Number.isFinite(row) ? `R${row + 1}` : 'R?';
 }
 
 function editIdLabel(editId) {
@@ -1465,6 +1564,63 @@ function restoreDeletedKey(app) {
     if (!Object.keys(next[editId]).length) delete next[editId];
     if (LAST_DELETED_EDIT_ID === editId) LAST_DELETED_EDIT_ID = null;
     app.settingsStore.set('layoutEdits', next);
+}
+
+function proposedDeleteRowEdits(edits, sourceRow) {
+    if (!Number.isInteger(sourceRow)) return null;
+    const next = sanitizeLayoutEdits(edits);
+    const id = rowEditId(sourceRow);
+    next[id] = { ...(next[id] || {}), deleted: true };
+    return { id, edits: next };
+}
+
+function visibleRowCountAfter(edits) {
+    const clean = sanitizeLayoutEdits(edits);
+    let count = 0;
+    LCAKB23.rows.forEach((_, rowIndex) => {
+        if (!clean[rowEditId(rowIndex)]?.deleted) count++;
+    });
+    return count;
+}
+
+function canDeleteActiveRow(settings, active) {
+    const sourceRow = sourceRowOfKey(active);
+    const proposed = proposedDeleteRowEdits(settings.layoutEdits || {}, sourceRow);
+    if (!proposed || visibleRowCountAfter(proposed.edits) < 1) return false;
+    return layoutEditsFit(settings, proposed.edits);
+}
+
+function selectFirstKeyInSourceRow(app, sourceRow) {
+    const keys = layoutFor(app.settings).keys;
+    const index = keys.findIndex((k) => sourceRowOfKey(k) === sourceRow);
+    if (index >= 0) selectKey(app, index);
+}
+
+function deleteActiveRow(app) {
+    const keys = layoutFor(app.settings).keys;
+    const active = activeKey(keys);
+    const sourceRow = sourceRowOfKey(active);
+    if (!canDeleteActiveRow(app.settings, active)) return;
+    const { id, edits } = proposedDeleteRowEdits(app.settings.layoutEdits || {}, sourceRow);
+    LAST_DELETED_ROW_ID = id;
+    app.settingsStore.set('layoutEdits', edits);
+    setTimeout(() => {
+        const nextKeys = layoutFor(app.settings).keys;
+        selectKey(app, Math.min(active?.i || 0, nextKeys.length - 1));
+    }, 0);
+}
+
+function restoreDeletedRow(app) {
+    const next = sanitizeLayoutEdits(app.settings.layoutEdits || {});
+    const editId = restoreTargetRowId(next);
+    if (!editId || !next[editId]) return;
+    const sourceRow = Number(editId.split(':')[1]);
+    delete next[editId].deleted;
+    if (!Object.keys(next[editId]).length) delete next[editId];
+    if (!layoutEditsFit(app.settings, next)) return;
+    if (LAST_DELETED_ROW_ID === editId) LAST_DELETED_ROW_ID = null;
+    app.settingsStore.set('layoutEdits', next);
+    setTimeout(() => selectFirstKeyInSourceRow(app, sourceRow), 0);
 }
 
 function updateLegendEditor(s, keys) {

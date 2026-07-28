@@ -280,14 +280,16 @@
     height: 26px;
 }
 
-.legend-key-actions {
+.legend-key-actions,
+.legend-row-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--spacing-sm);
     margin-top: var(--spacing-sm);
 }
 
-.legend-key-actions .btn-inline {
+.legend-key-actions .btn-inline,
+.legend-row-actions .btn-inline {
     height: 26px;
 }
 
@@ -359,6 +361,7 @@
 .legend-editor-actions .btn-inline:disabled,
 .legend-element-actions .btn-inline:disabled,
 .legend-key-actions .btn-inline:disabled,
+.legend-row-actions .btn-inline:disabled,
 .legend-geometry-row .btn-inline:disabled,
 .legend-geometry-row input:disabled,
 .select-control:disabled {
