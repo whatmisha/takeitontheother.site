@@ -67,6 +67,20 @@ Important local entry points:
   - `Shift`/`Cmd`/`Ctrl` click toggles multi-selection;
   - arrow keys move the active key, `Shift+Arrow` extends the selection, `Escape` clears it;
   - `exportSVG()` and `exportPNG()` temporarily hide the selection overlay, then restore it.
+- Added the first real legend/content editor:
+  - presets now include sanitized `contentEdits` overrides, layered on top of generated
+    `app/kb/content/lcakb23.js`;
+  - key edits are addressed by stable `row:block:ordinal`, so Grid slider changes do not orphan
+    edited legends;
+  - the Legend panel now has a template-variant selector, per-element slot/value/size/tracking
+    fields, `Apply`, and `Reset`;
+  - choosing a template retargets element slots from the selected template variant while preserving
+    text/icon payloads where possible;
+  - template changes apply to all selected keys, while detailed slot/value fields apply to the
+    active key;
+  - reset removes overrides for the selected keys and falls back to generated content.
+- Moved the collapsed Legend panel above the bottom export buttons; its header had overlapped the
+  `SVG` button at the old bottom position.
 
 ## Verification
 
@@ -112,6 +126,13 @@ Browser QA on `http://127.0.0.1:8000/`:
 - `Shift` click and `Shift+ArrowRight` both produce a 2-key selection.
 - Plain `ArrowRight` moves to the next key and collapses to one selected key.
 - `Escape` clears the selection and the Legend panel shows `No key selected.`
+- Legend editor QA:
+  - changing active `esc` text to `TEST` updates the selector label and inspector, and marks
+    preset `LCAKB23 *`;
+  - `Reset` restores `esc`;
+  - changing a single key to `word-center · MC` updates template and slot placement;
+  - multi-selecting F5/F6 and applying `word-center · MC` changes both keys;
+  - resetting the multi-selection restores the original `fkey-icon+label` content.
 
 Note: the Browser plugin's console log API kept an old error entry from an earlier failed reload
 after it was fixed. Current DOM probes confirmed the app initializes and renders.
@@ -133,9 +154,12 @@ Stages 0-3 are now effectively complete for beta generation and verification:
 
 Stage 4 is started, not complete:
 
-- Done: click selection, multi-select, Legend inspector sync, arrow navigation, `Escape` clear.
-- Still remaining: template/content edits, row/key edits, manual compensation overrides, and
-  persistence of edited keyboard content/model data.
+- Done: click selection, multi-select, Legend inspector sync, arrow navigation, `Escape` clear,
+  preset-backed legend content overrides, active-key slot/value editing, bulk template changes,
+  reset selected edits.
+- Still remaining: row/key edits, manual compensation overrides, richer model export/import for
+  edited keyboard data, and eventually adding/removing legend elements rather than only retargeting
+  existing template variants.
 
 ## Notes For The Next Assistant
 

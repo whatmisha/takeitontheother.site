@@ -224,6 +224,17 @@
                         <label for="legendKeySelect"><span>Key</span></label>
                         <select id="legendKeySelect" class="select-control" aria-label="Selected key"></select>
                     </div>
+                    <div class="legend-editor" id="legendEditor">
+                        <div class="control-group">
+                            <label for="legendTemplateSelect"><span>Template</span></label>
+                            <select id="legendTemplateSelect" class="select-control" aria-label="Legend template"></select>
+                        </div>
+                        <div id="legendElementEditor" class="legend-element-editor"></div>
+                        <div class="legend-editor-actions">
+                            <button type="button" class="btn-inline" id="applyLegendEditBtn">Apply</button>
+                            <button type="button" class="btn-inline" id="resetLegendEditBtn">Reset</button>
+                        </div>
+                    </div>
                     <div id="legendInspector" class="legend-inspector"></div>
                 </section>
             </div>

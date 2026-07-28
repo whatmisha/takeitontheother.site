@@ -50,6 +50,20 @@ const SLIDER_BY_SETTING = {
     trackingOffset: 'trackingOffsetSlider'
 };
 
+const PRESET_KEYS = [
+    'colPitch', 'rowPitch', 'keyWidth1U', 'keyHeight', 'cornerRadius', 'guideInset',
+    'glyphSize', 'numpadSize', 'secondarySize', 'wordSize', 'leading', 'trackingOffset',
+    'compensationMode',
+    'showCaps', 'showGuides', 'showGlyphs', 'showIcons', 'showColumns', 'showIndex',
+    'showInk', 'showSlots', 'showRef', 'showDiff', 'showBlocks',
+    'capColor', 'guideColor', 'inkColor', 'bgColor',
+    'contentEdits'
+];
+
+const TEMPLATE_VARIANTS = buildTemplateVariants(CONTENT);
+const TEMPLATE_BY_ID = new Map(TEMPLATE_VARIANTS.map((v) => [v.id, v]));
+const ICON_OPTIONS = Object.keys(ICONS).sort((a, b) => a.localeCompare(b));
+
 /** Эталонная сетка в мм — то, что видит и правит пользователь. */
 const REF_MM = {
     colPitch: toMm(REF.colPitch),
@@ -105,7 +119,8 @@ const typeSigFrom = (s) => JSON.stringify({
     wordSize: s.wordSize,
     leading: s.leading,
     trackingOffset: s.trackingOffset,
-    compensationMode: s.compensationMode
+    compensationMode: s.compensationMode,
+    contentEdits: s.contentEdits || {}
 });
 
 function sizeRole(size) {
@@ -142,8 +157,11 @@ function layoutFor(s) {
     const sig = JSON.stringify(g) + typeSigFrom(s) + (TYPEFACE ? '·tf' : '');
     if (cached.sig !== sig) {
         const data = buildLayout(LCAKB23, g);
+        assignEditIds(data.keys);
         attachGuides(data.keys, g.guideInset);
         attachContent(data.keys, CONTENT);
+        captureBaseContent(data.keys);
+        applyContentEdits(data.keys, s.contentEdits || {});
         applyTypeSettings(data.keys, s);
         data.legends = TYPEFACE
             ? buildLegends(data.keys, {
@@ -201,7 +219,9 @@ const app = defineTool({
         capColor: '#1e1e1e',
         guideColor: '#2353db',
         inkColor: '#aaaaaa',
-        bgColor: '#808080'
+        bgColor: '#808080',
+
+        contentEdits: {}
     },
 
     controls: {
@@ -250,6 +270,12 @@ const app = defineTool({
             { kind: 'solid', value: b.capColor || '#1e1e1e' },
             { kind: 'solid', value: b.bgColor || '#808080' }
         ]
+    },
+    collectPreset(app) {
+        return normalizedPresetBlob(app.settingsStore.toObject(), app.settingsStore.getDefaults());
+    },
+    applyPreset(app, blob) {
+        app.settingsStore.fromJSON(normalizedPresetBlob(blob, app.settingsStore.getDefaults()), true);
     },
     share: { quantizableFloatKeys: [] },
     export: { filename: 'keyboarder.svg' },
@@ -427,6 +453,7 @@ const app = defineTool({
 
         updateReadout(s, keys, grid, legends);
         updateLegendInspector(s, keys, grid, legends);
+        updateLegendEditor(s, keys);
         syncCompensationMode(s);
     },
 
@@ -460,6 +487,21 @@ const app = defineTool({
 
         document.getElementById('legendKeySelect')?.addEventListener('change', (e) => {
             selectKey(readyApp, Number(e.target.value) || 0);
+        });
+        document.getElementById('legendTemplateSelect')?.addEventListener('change', () => {
+            refreshLegendTemplateDraft(readyApp);
+        });
+        document.getElementById('applyLegendEditBtn')?.addEventListener('click', () => {
+            applyLegendEditor(readyApp);
+        });
+        document.getElementById('resetLegendEditBtn')?.addEventListener('click', () => {
+            resetSelectedLegendEdits(readyApp);
+        });
+        document.getElementById('legendEditor')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+                applyLegendEditor(readyApp);
+                e.preventDefault();
+            }
         });
 
         document.querySelectorAll('#compModeGroup [data-mode]').forEach((btn) => {
@@ -552,6 +594,199 @@ function html(v) {
     })[ch]);
 }
 
+function clonePlain(v) {
+    if (v === undefined) return undefined;
+    return JSON.parse(JSON.stringify(v));
+}
+
+function normalizedPresetBlob(blob = {}, defaults = {}) {
+    const source = blob || {};
+    const clean = clonePlain(defaults);
+    for (const key of PRESET_KEYS) {
+        if (source[key] !== undefined) clean[key] = clonePlain(source[key]);
+    }
+    clean.contentEdits = sanitizeContentEdits(clean.contentEdits || {});
+    return clean;
+}
+
+function cleanOffset(offset) {
+    if (!offset || typeof offset !== 'object') return null;
+    const out = {};
+    for (const key of ['x', 'y', 'bx', 'by']) {
+        const value = Number(offset[key]);
+        if (Number.isFinite(value) && value !== 0) out[key] = value;
+    }
+    return Object.keys(out).length ? out : null;
+}
+
+function cleanElement(el = {}) {
+    const slot = String(el.slot || 'BC').trim() || 'BC';
+    const kind = el.kind === 'ico' ? 'ico' : 'txt';
+    const out = { slot, kind };
+    if (kind === 'ico') {
+        out.icon = String(el.icon || ICON_OPTIONS[0] || '').trim();
+        out.w = finiteOr(el.w, 8);
+        out.h = finiteOr(el.h, 8);
+    } else {
+        out.text = String(el.text ?? '');
+        out.size = finiteOr(el.size, TYPE_DEFAULTS.wordSize);
+        const tracking = finiteOr(el.tracking, 0);
+        if (tracking !== 0) out.tracking = tracking;
+    }
+    const offset = cleanOffset(el.offset);
+    if (offset) out.offset = offset;
+    return out;
+}
+
+function cleanElements(elements = []) {
+    return (Array.isArray(elements) ? elements : []).map(cleanElement);
+}
+
+function sanitizeContentEdits(edits = {}) {
+    const out = {};
+    if (!edits || typeof edits !== 'object') return out;
+    for (const [id, edit] of Object.entries(edits)) {
+        if (!edit || typeof edit !== 'object') continue;
+        out[id] = {
+            tpl: String(edit.tpl || 'blank'),
+            elements: cleanElements(edit.elements)
+        };
+    }
+    return out;
+}
+
+function finiteOr(value, fallback) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+}
+
+function rowBlockKey(k) {
+    return `${k.row}:${k.block || ''}`;
+}
+
+function assignEditIds(keys) {
+    const groups = new Map();
+    for (const k of keys) {
+        const id = rowBlockKey(k);
+        if (!groups.has(id)) groups.set(id, []);
+        groups.get(id).push(k);
+    }
+    for (const group of groups.values()) {
+        group.sort((a, b) => a.x - b.x);
+        group.forEach((k, ordinal) => {
+            k.editId = `${k.row}:${k.block || ''}:${ordinal}`;
+        });
+    }
+}
+
+function captureBaseContent(keys) {
+    for (const k of keys) {
+        k.baseContent = {
+            tpl: k.tpl || 'blank',
+            elements: cleanElements(k.elements || [])
+        };
+    }
+}
+
+function applyContentEdits(keys, edits) {
+    const clean = sanitizeContentEdits(edits);
+    for (const k of keys) {
+        const edit = clean[k.editId];
+        if (!edit) continue;
+        k.tpl = edit.tpl || 'blank';
+        k.elements = cleanElements(edit.elements);
+        k.content = {
+            ...(k.content || {}),
+            row: k.row,
+            x: k.x,
+            block: k.block,
+            tpl: k.tpl,
+            elements: cleanElements(k.elements)
+        };
+        k.edited = true;
+    }
+}
+
+function sourceElements(k) {
+    return cleanElements(k?.content?.elements || k?.elements || []);
+}
+
+function contentEquals(a, b) {
+    return JSON.stringify({
+        tpl: a?.tpl || 'blank',
+        elements: cleanElements(a?.elements || [])
+    }) === JSON.stringify({
+        tpl: b?.tpl || 'blank',
+        elements: cleanElements(b?.elements || [])
+    });
+}
+
+function writeContentEdit(edits, k, tpl, elements) {
+    const payload = { tpl: tpl || 'blank', elements: cleanElements(elements) };
+    if (contentEquals(payload, k.baseContent)) delete edits[k.editId];
+    else edits[k.editId] = payload;
+}
+
+function elementSignature(elements = []) {
+    const parts = cleanElements(elements).map((el) => `${el.slot}:${el.kind}`);
+    return parts.length ? parts.join('|') : 'blank';
+}
+
+function templateVariantId(tpl, elements = []) {
+    return `${tpl || 'blank'}::${elementSignature(elements)}`;
+}
+
+function templateVariantLabel(v) {
+    const slots = v.elements.map((el) => el.slot).join(' / ');
+    return slots ? `${v.tpl} · ${slots}` : v.tpl;
+}
+
+function buildTemplateVariants(content) {
+    const byId = new Map();
+    for (const key of content.keys || []) {
+        const tpl = key.tpl || 'blank';
+        const elements = cleanElements(key.elements || []);
+        const id = templateVariantId(tpl, elements);
+        if (!byId.has(id)) {
+            byId.set(id, { id, tpl, elements, count: 0 });
+        }
+        byId.get(id).count++;
+    }
+    return [...byId.values()].sort((a, b) =>
+        a.tpl.localeCompare(b.tpl) || elementSignature(a.elements).localeCompare(elementSignature(b.elements)));
+}
+
+function variantForKey(k) {
+    return templateVariantId(k.tpl || 'blank', sourceElements(k));
+}
+
+function retargetElements(source, pattern) {
+    const from = cleanElements(source);
+    const pools = {
+        txt: from.filter((el) => el.kind === 'txt'),
+        ico: from.filter((el) => el.kind === 'ico')
+    };
+    const fallbackByKind = { txt: 0, ico: 0 };
+    return cleanElements(pattern).map((sample, index) => {
+        const match = pools[sample.kind].shift() || from[index] || {};
+        const next = { ...sample };
+        if (sample.kind === 'ico') {
+            next.icon = match.icon || sample.icon || ICON_OPTIONS[0] || '';
+            next.w = finiteOr(match.w, sample.w || 8);
+            next.h = finiteOr(match.h, sample.h || 8);
+        } else {
+            next.text = match.text ?? sample.text ?? '';
+            next.size = finiteOr(match.size, sample.size || TYPE_DEFAULTS.wordSize);
+            const tracking = finiteOr(match.tracking, finiteOr(sample.tracking, 0));
+            delete next.tracking;
+            if (tracking !== 0) next.tracking = tracking;
+        }
+        if (!next.text && sample.kind === 'txt' && fallbackByKind.txt++ > 0) next.text = '';
+        if (!next.icon && sample.kind === 'ico' && fallbackByKind.ico++ > 0) next.icon = ICON_OPTIONS[0] || '';
+        return cleanElement(next);
+    });
+}
+
 function activeKey(keys) {
     const sel = normalizedSelection(keys);
     return sel.active == null ? null : keys[sel.active] || null;
@@ -586,6 +821,173 @@ function syncCompensationMode(s) {
         btn.classList.toggle('is-active', active);
         btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
+}
+
+function syncTemplateSelect(keys) {
+    const select = document.getElementById('legendTemplateSelect');
+    if (!select) return;
+    const chosen = selectedKeys(keys);
+    const active = activeKey(keys);
+    const ids = chosen.map(variantForKey);
+    const common = ids.length && ids.every((id) => id === ids[0]) ? ids[0] : '';
+    const current = active ? variantForKey(active) : '';
+    const custom = current && !TEMPLATE_BY_ID.has(current)
+        ? { id: current, tpl: active.tpl || 'custom', elements: sourceElements(active), custom: true }
+        : null;
+    const sig = `${common}|${current}|${custom ? elementSignature(custom.elements) : ''}`;
+    if (select.dataset.sig !== sig) {
+        const opts = [];
+        if (!chosen.length) opts.push(optionEl('', 'No key selected'));
+        else if (!common) opts.push(optionEl('', 'Mixed'));
+        for (const v of TEMPLATE_VARIANTS) opts.push(optionEl(v.id, templateVariantLabel(v)));
+        if (custom) opts.push(optionEl(custom.id, `${custom.tpl} · custom`));
+        select.replaceChildren(...opts);
+        select.dataset.sig = sig;
+    }
+    select.disabled = !chosen.length;
+    select.value = common || '';
+}
+
+function optionEl(value, label) {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = label;
+    return opt;
+}
+
+function updateLegendEditor(s, keys) {
+    syncTemplateSelect(keys);
+    const editor = document.getElementById('legendElementEditor');
+    const apply = document.getElementById('applyLegendEditBtn');
+    const reset = document.getElementById('resetLegendEditBtn');
+    if (!editor) return;
+    const active = activeKey(keys);
+    const selected = selectedKeys(keys);
+    if (apply) apply.disabled = !selected.length;
+    if (reset) reset.disabled = !selected.some((k) => !!s.contentEdits?.[k.editId]);
+    if (!active) {
+        renderElementEditor([], { disabled: true, sig: 'none' });
+        return;
+    }
+    const elements = sourceElements(active);
+    const sig = `${active.editId}|${active.tpl}|${JSON.stringify(elements)}`;
+    renderElementEditor(elements, { disabled: false, sig, templateId: variantForKey(active) });
+}
+
+function renderElementEditor(elements, { disabled = false, sig = null, templateId = '' } = {}) {
+    const editor = document.getElementById('legendElementEditor');
+    if (!editor) return;
+    const nextSig = sig || JSON.stringify({ disabled, elements });
+    if (editor.dataset.sig === nextSig) return;
+    editor.dataset.sig = nextSig;
+    editor.dataset.templateId = templateId;
+    if (disabled) {
+        editor.innerHTML = '<p class="inspector-empty">No editable key.</p>';
+        return;
+    }
+    if (!elements.length) {
+        editor.innerHTML = '<p class="inspector-empty">No legend elements.</p>';
+        return;
+    }
+    editor.innerHTML = elements.map((el, i) => elementEditorHtml(el, i)).join('');
+}
+
+function elementEditorHtml(el, i) {
+    const offset = html(JSON.stringify(cleanOffset(el.offset) || {}));
+    if (el.kind === 'ico') {
+        const options = ICON_OPTIONS.map((name) =>
+            `<option value="${html(name)}"${name === el.icon ? ' selected' : ''}>${html(name)}</option>`).join('');
+        return '<div class="legend-edit-row" data-kind="ico" data-offset="' + offset + '">'
+            + `<label><span>Slot</span><input class="legend-slot-input" value="${html(el.slot)}" maxlength="2"></label>`
+            + `<label><span>Icon</span><select class="legend-icon-input">${options}</select></label>`
+            + `<label><span>W</span><input class="legend-width-input" type="number" step="0.001" value="${html(el.w)}"></label>`
+            + `<label><span>H</span><input class="legend-height-input" type="number" step="0.001" value="${html(el.h)}"></label>`
+            + '</div>';
+    }
+    return '<div class="legend-edit-row" data-kind="txt" data-offset="' + offset + '">'
+        + `<label><span>Slot</span><input class="legend-slot-input" value="${html(el.slot)}" maxlength="2"></label>`
+        + `<label><span>Text</span><input class="legend-text-input" value="${html(el.text)}"></label>`
+        + `<label><span>Size</span><input class="legend-size-input" type="number" step="0.001" value="${html(el.size)}"></label>`
+        + `<label><span>Track</span><input class="legend-track-input" type="number" step="0.001" value="${html(el.tracking || 0)}"></label>`
+        + '</div>';
+}
+
+function refreshLegendTemplateDraft(app) {
+    const keys = layoutFor(app.settings).keys;
+    const active = activeKey(keys);
+    if (!active) return;
+    const select = document.getElementById('legendTemplateSelect');
+    const variant = TEMPLATE_BY_ID.get(select?.value || '');
+    const elements = variant ? retargetElements(sourceElements(active), variant.elements) : sourceElements(active);
+    renderElementEditor(elements, {
+        disabled: false,
+        sig: `draft:${active.editId}:${select?.value || ''}:${JSON.stringify(elements)}`,
+        templateId: select?.value || variantForKey(active)
+    });
+}
+
+function readElementEditorElements() {
+    const rows = [...document.querySelectorAll('#legendElementEditor .legend-edit-row')];
+    return rows.map((row) => {
+        let offset = {};
+        try { offset = JSON.parse(row.dataset.offset || '{}'); } catch (_) { offset = {}; }
+        const base = {
+            slot: row.querySelector('.legend-slot-input')?.value || 'BC',
+            kind: row.dataset.kind === 'ico' ? 'ico' : 'txt',
+            offset
+        };
+        if (base.kind === 'ico') {
+            return cleanElement({
+                ...base,
+                icon: row.querySelector('.legend-icon-input')?.value || ICON_OPTIONS[0] || '',
+                w: row.querySelector('.legend-width-input')?.value,
+                h: row.querySelector('.legend-height-input')?.value
+            });
+        }
+        return cleanElement({
+            ...base,
+            text: row.querySelector('.legend-text-input')?.value || '',
+            size: row.querySelector('.legend-size-input')?.value,
+            tracking: row.querySelector('.legend-track-input')?.value
+        });
+    });
+}
+
+function applyLegendEditor(app) {
+    const keys = layoutFor(app.settings).keys;
+    const selected = selectedKeys(keys);
+    const active = activeKey(keys);
+    if (!selected.length) return;
+    const select = document.getElementById('legendTemplateSelect');
+    const variant = TEMPLATE_BY_ID.get(select?.value || '');
+    const editedElements = active ? readElementEditorElements() : null;
+    const editorTemplateId = document.getElementById('legendElementEditor')?.dataset.templateId || '';
+    const next = sanitizeContentEdits(app.settings.contentEdits || {});
+
+    for (const k of selected) {
+        let tpl = k.tpl || 'blank';
+        let elements = sourceElements(k);
+        if (variant) {
+            tpl = variant.tpl;
+            elements = retargetElements(elements, variant.elements);
+        }
+        if (active && k.editId === active.editId && editedElements && (!variant || editorTemplateId === variant.id)) {
+            elements = editedElements;
+            if (variant) tpl = variant.tpl;
+        }
+        writeContentEdit(next, k, tpl, elements);
+    }
+
+    app.settingsStore.set('contentEdits', next);
+}
+
+function resetSelectedLegendEdits(app) {
+    const keys = layoutFor(app.settings).keys;
+    const selected = selectedKeys(keys);
+    if (!selected.length) return;
+    const next = sanitizeContentEdits(app.settings.contentEdits || {});
+    for (const k of selected) delete next[k.editId];
+    app.settingsStore.set('contentEdits', next);
 }
 
 function normalizedSelection(keys) {

@@ -78,7 +78,13 @@
 .controls-panel-legend {
     top: auto;
     right: calc(var(--spacing-3xl) + 316px);
-    bottom: var(--spacing-3xl);
+    bottom: 74px;
+    max-height: min(520px, calc(100vh - 94px));
+}
+
+.controls-panel-legend .panel-content {
+    max-height: calc(min(520px, calc(100vh - 94px)) - 44px);
+    overflow-y: auto;
 }
 
 #typePanel .value-display {
@@ -218,8 +224,73 @@
 .modal-text { max-height: 62vh; overflow-y: auto; }
 
 .legend-inspector {
+    margin-top: var(--spacing-lg);
     color: var(--color-text-secondary);
     font-size: 11px;
+}
+
+.legend-editor {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-border);
+}
+
+.legend-element-editor {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.legend-edit-row {
+    display: grid;
+    grid-template-columns: minmax(36px, 0.55fr) minmax(0, 1.6fr) minmax(52px, 0.8fr) minmax(52px, 0.8fr);
+    gap: var(--spacing-xs);
+    align-items: end;
+}
+
+.legend-edit-row label {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.legend-edit-row span {
+    color: var(--color-text-dim);
+    font-size: 9px;
+}
+
+.legend-edit-row input,
+.legend-edit-row select {
+    width: 100%;
+    min-width: 0;
+    height: 26px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    background: var(--color-bg-input);
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 0 var(--spacing-sm);
+}
+
+.legend-edit-row select {
+    font-family: inherit;
+}
+
+.legend-editor-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+}
+
+.legend-editor-actions .btn-inline:disabled,
+.select-control:disabled {
+    cursor: default;
+    opacity: 0.45;
 }
 
 .legend-meta {
