@@ -598,7 +598,16 @@ content heuristics. Сейчас есть первые два shape profiles д�
 7. ✅ Add repeatable tests with synthetic S/M fixtures in `analysis/blueprint-import.mjs`:
    assert geometry count, block count, assigned ids, `alpha-dual` count, punctuation templates,
    nav labels, content diagnostics, and zero orphan content.
-8. Re-run manual QA on fresh exports:
+8. Partial: real SVG import QA now has a repeatable harness, `analysis/import-real-qa.mjs`.
+   It passed on `/Users/mishaivanov/Desktop/keyboarder test/test_layout_S.svg`,
+   `/Users/mishaivanov/Desktop/keyboarder test/test_layout_M.svg`, and
+   `/Users/mishaivanov/Desktop/test_layout_S.svg`: S -> `ANSI_COMPACT_78`, M -> `ANSI_NAV_89`,
+   full semantic coverage, `alpha-dual 26`, `punctuation-dual 8`, `f-icons 13`,
+   `placeholders 0`, and `attachContent` has zero orphans. Browser canvas smoke on fresh imports
+   also passed: S renders 78 caps / 13 `#f-icons`; M renders 89 caps / 13 `#f-icons`, `dual`
+   language, and success toasts report `0 placeholders`.
+   Remaining: actual downloaded SVG/PDF files still need manual Illustrator/PDF-viewer QA because
+   the current Browser runtime did not surface blob download events.
    - `result_test_layout_S`: no `main N`, no missing Cyrillic on alpha/punctuation keys, arrows
      still stacked correctly;
    - `result_test_layout_M`: no placeholder labels, nav block named, alpha and punctuation keys
@@ -839,6 +848,121 @@ Caveat: текущий локальный `opentype.js` читает `fvar`, н�
 contours. Поэтому variable axes/instances уже работают как UI/profile/cache/CSS-text workflow,
 а outline preview/export остаётся на контурах default instance до будущей замены или расширения
 font engine. Это явно показывается в font status.
+
+### Этап 9 — оптимизация приложения: от самого важного к второстепенному
+
+Оптимизация здесь не про «сделать быстрее вообще», а про дизайнерский цикл: загрузил чертёж,
+подкрутил сетку/легенды, проверил глазами, экспортировал. Поэтому приоритеты идут от того, что
+чаще всего мешает руке, к более техническим улучшениям.
+
+#### 9.1. Live-render latency: кэшировать дорогие outline paths
+
+Самый важный путь — перерисовка при смене цветов, слоёв, selection, language, type settings и
+мелких Grid-параметров. Сейчас geometry/layout уже кэшируются по `layoutFor()`, но outline mode
+всё равно может заново собирать SVG path data для каждой текстовой строки при каждом repaint:
+`tf.pathData()` проходит по глифам, вызывает `getPath()` и сериализует path `d`.
+
+План:
+
+1. Считать `pathD` один раз внутри `buildLegends()`, где уже есть placed text element, baseline,
+   `fontId`, size, tracking и выбранная гарнитура.
+2. В `render()` использовать готовый `el.pathD`, оставив fallback на `textPath()` только для
+   совместимости.
+3. Проверить, что `verify-legends` не меняется: координаты остаются прежними, меняется только
+   место, где рассчитывается строковый path.
+4. Следующий уровень: добавить browser-side micro benchmark для repaint без layout changes
+   (`inkColor`, layer toggles), чтобы фиксировать время до/после на LCAKB23, S и M.
+
+Первый срез Stage 9 готов: `buildLegends()` теперь кладёт `pathD` в каждый placed text element,
+renderer читает cached `pathD`, а `analysis/verify-legends.mjs` проверяет, что все text elements
+получили outline path. Это переносит дорогую генерацию glyph paths из каждого repaint в уже
+существующий layout/legend cache.
+
+#### 9.2. Разделить geometry/content/layout cache и legend placement cache
+
+Сейчас `layoutFor()` имеет один крупный cache signature: grid/layout edits/type/content/language/
+font registry. Это безопасно, но грубо. Некоторые настройки меняют только слой отображения или
+только текстовые элементы, а вынуждают пересобрать весь объект.
+
+План:
+
+1. Вынести `geometryFor(settings)` отдельно: source layout + grid + layout edits -> keys +
+   guides + geometry annotations.
+2. Вынести `contentForKeys(settings, keys)` отдельно: generated/reference content + language +
+   content edits + type sizes.
+3. Вынести `placedLegendsFor(settings, keys)` отдельно: only typeface/compensation/type settings.
+4. Оставить единый public `layoutFor()` wrapper, чтобы UI-код не расползся.
+5. Добавить счетчики/debug stats cache hits/misses для dev QA.
+
+Эффект: изменение цвета, visibility layers, selection и части inspector UI перестанет трогать
+geometry/content; изменение legends не будет пересчитывать key rects; изменение grid не будет
+пересчитывать static generated content больше необходимого.
+
+#### 9.3. SVG import performance на больших чертежах
+
+Импорт сейчас хорошо работает на S/M, но line/path анализ потенциально дорогой на чертежах с
+тысячами Illustrator объектов.
+
+План:
+
+1. Считать `countTags(source, 'path'/'rect'/'polygon')` один раз и переиспользовать в report.
+2. Ограничить expensive diagnostics preview данными из уже найденных candidates, без повторных
+   обходов SVG.
+3. Добавить timing breakdown в import report: strip/private data, parse lines, classify, caps,
+   candidates, diagnostics, draft/content.
+4. На больших SVG показывать report timings, чтобы было видно, где конкретный файл тормозит.
+5. При необходимости вынести import analysis в Web Worker: UI не должен зависать на сложном
+   Illustrator export.
+
+#### 9.4. Export performance и предсказуемость downloads
+
+Production export важнее micro-скорости: дизайнер должен понимать, что именно скачалось и какого
+физического размера файл.
+
+План:
+
+1. Добавить post-export toast/report: filename, format, artboard px/mm, text mode, icons count,
+   hidden interactive layers removed.
+2. Сделать внутренний `serializeCleanSVG()` helper, чтобы QA и export использовали один и тот же
+   clean clone без зависимости от browser download events.
+3. Добавить Node/browser harness для exported SVG string: слои `caps/guides/glyphs/icons/f-icons`,
+   no selection, правильный viewBox/width/height, expected key/icon counts.
+4. Для PDF: smoke-проверка создания blob/save path и page mm metadata, насколько это позволяет
+   текущий `jsPDF`.
+
+#### 9.5. Startup/bundle hygiene
+
+Стартовая страница сейчас тянет много модулей и локальных export libraries заранее. Это нормально
+для локального инструмента, но можно ускорить first interaction.
+
+План:
+
+1. Ленивая загрузка `jsPDF/svg2pdf` оставить только на PDF click, если статические script tags
+   уже не обязательны.
+2. Ленивая загрузка тяжелых font probing helpers для session font import, не для первого render.
+3. Проверить, что reference font load — единственный обязательный бинарный asset на старте.
+4. Добавить startup smoke metric: DOM ready -> first render -> font ready.
+
+#### 9.6. DOM/render batching
+
+После path caching основная цена repaint — количество SVG nodes и синхронизация side panels.
+
+План:
+
+1. Не обновлять тяжелые editor panels, если selection/signature не изменился.
+2. Разделить readout sync и editor sync: counters можно обновлять часто, DOM формы — только по
+   изменению соответствующей подписи.
+3. Для debug layers (`ink`, `slots`, `columns`, `diff`) рендерить только когда слой включен и
+   не держать их в main path.
+
+#### 9.7. Secondary polish
+
+1. Документировать performance budget: target import time, first render, repaint, export.
+2. Добавить manual QA checklist для Illustrator/PDF viewer.
+3. Сохранять последнюю import QA summary в session state, чтобы можно было открыть report после
+   успешного импорта.
+4. Оптимизировать только после измерений: не трогать формулы placement/compensation ради скорости,
+   пока verification остаётся главным guardrail.
 
 ---
 

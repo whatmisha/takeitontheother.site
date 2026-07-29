@@ -234,8 +234,12 @@ Important local entry points:
     get semantic ids/content through shape profiles. Import stats include `layoutProfile`,
     `semanticKeys`, and generated-content diagnostics (`alpha-dual`, `punctuation-dual`,
     `f-icons`, corner templates, placeholders); the success toast reports profile, `alpha-dual`,
-    `f-icons`, and placeholder count. Fresh manual re-export/visual QA of the real S/M files is
-    still pending;
+    `f-icons`, and placeholder count. Real-source import QA now has
+    `analysis/import-real-qa.mjs`; it passed on the available Desktop S/M SVGs with full semantic
+    coverage, `alpha-dual 26`, `punctuation-dual 8`, `f-icons 13`, `placeholders 0`, and zero
+    content orphans. Browser canvas smoke on fresh S/M imports also passed. Actual downloaded
+    SVG/PDF files still need manual Illustrator/PDF-viewer QA because the current Browser runtime
+    did not surface blob download events;
   - `keyboarder.model.v1` now preserves `customLayout` in settings, and custom layouts are also
     exposed in `keyboard.customLayout` on export.
 - Polished Stage 6 against `/Users/mishaivanov/Desktop/test_layout.svg`, a compact one-block
@@ -648,11 +652,11 @@ Stage 6 is started:
   diagnostics, conversion into `keyboarder.layoutDraft.v1`, and the current top-bar `New layout`
   workflow that creates a transient custom layout/preset without drawing an overlay on an opened
   preset.
-- Still remaining: deeper production polish for imported layouts, especially fresh manual
-  re-export QA on the real S/M drawings and additional layout profiles as new keyboard drawings
-  appear. Visual suspected-key review, compact `u`/`repeat` draft structure with semantic `ids`,
-  S/M profile matching, punctuation/number-row templates, F-row icon content, and content coverage
-  diagnostics are now implemented.
+- Still remaining: deeper production polish for imported layouts, especially actual downloaded
+  SVG/PDF file QA in Illustrator/PDF viewer and additional layout profiles as new keyboard
+  drawings appear. Visual suspected-key review, compact `u`/`repeat` draft structure with
+  semantic `ids`, S/M profile matching, punctuation/number-row templates, F-row icon content,
+  real-source import QA, and content coverage diagnostics are now implemented.
 
 Stage 7 main code items are complete:
 
@@ -674,6 +678,18 @@ Stage 8 main code items are complete:
 - Remaining caveats: downloaded PDF/SVG files generated with custom fonts still need manual
   Illustrator/PDF-viewer QA; true variable outline instancing needs a future font-engine upgrade
   because bundled `opentype.js` exposes `fvar` but does not apply `gvar` deltas to contours.
+
+Stage 9 optimization is started:
+
+- Added a prioritized optimization plan to `TOOL_PLAN.md`, ordered by impact on the designer loop:
+  live render latency, cache splitting, SVG import timings/worker path, export QA/serialization,
+  startup/bundle hygiene, DOM/render batching, and secondary QA polish.
+- First code slice is done: `buildLegends()` now computes cached `pathD` for every placed text
+  element, and `render()` reuses that `pathD` instead of regenerating glyph outlines on every
+  repaint. `analysis/verify-legends.mjs` asserts every text legend has a cached outline path,
+  and `analysis/preview.mjs` reuses the same cache.
+- Next Stage 9 work should add browser-side repaint/import/export timing harnesses, then split the
+  coarse `layoutFor()` cache into geometry/content/legend-placement layers.
 
 ## Notes For The Next Assistant
 

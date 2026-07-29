@@ -115,7 +115,14 @@ export function buildLegends(keys, ctx) {
         if (!k.elements || !k.elements.length) continue;
         const placed = placeKey(k, ctx);
         k.placed = placed;
-        for (const p of placed) out.push({ ...p, key: k });
+        for (const p of placed) {
+            const el = { ...p, key: k };
+            if (el.kind === 'txt') {
+                const tf = ctx.typefaceFor ? (ctx.typefaceFor(el, k) || ctx.tf) : ctx.tf;
+                el.pathD = tf ? textPath(tf, el) : '';
+            }
+            out.push(el);
+        }
     }
     return out;
 }

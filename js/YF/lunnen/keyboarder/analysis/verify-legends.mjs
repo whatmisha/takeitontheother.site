@@ -3,6 +3,7 @@
  * Запуск: node analysis/verify-legends.mjs [--all]
  */
 import { readFileSync } from 'node:fs';
+import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { LCAKB23 } from '../app/kb/layouts.js';
@@ -26,6 +27,7 @@ const link = attachContent(layout.keys, CONTENT);
 const placed = buildLegends(layout.keys, {
     tf, comp: new Compensator(tf), interline: CONTENT.interline, iconOptics: ICON_OPTICS
 });
+assert.equal(placed.filter((e) => e.kind === 'txt' && e.pathD).length, placed.filter((e) => e.kind === 'txt').length);
 const r = compareLegends(placed, ref.keys);
 
 console.log(`клавиш ${link.matched}/${link.total} получили содержимое`

@@ -615,8 +615,8 @@ const app = defineTool({
                     g.appendChild(renderLegendText(create, el, s.inkColor));
                     continue;
                 }
-                const tf = typefaceForElement(el);
-                const d = tf ? textPath(tf, el) : '';
+                const tf = el.pathD ? null : typefaceForElement(el);
+                const d = el.pathD || (tf ? textPath(tf, el) : '');
                 if (d) g.appendChild(create('path', { d }));
             }
             svg.appendChild(g);

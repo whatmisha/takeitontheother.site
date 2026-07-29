@@ -65,7 +65,7 @@ if (flag('guides')) {
 push('<g id="legends" fill="#1c1f22">');
 for (const el of placed) {
     if (el.kind === 'txt') {
-        push(`<path d="${textPath(tf, el)}"/>`);
+        push(`<path d="${el.pathD || textPath(tf, el)}"/>`);
     } else {
         const g = ICONS[el.icon];
         if (!g) continue;
