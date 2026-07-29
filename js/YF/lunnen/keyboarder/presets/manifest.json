@@ -1,40 +1,16 @@
 {
   "presets": [
     {
+      "name": "LCAKB21",
+      "file": "lcakb21.json"
+    },
+    {
+      "name": "LCAKB22",
+      "file": "lcakb22.json"
+    },
+    {
       "name": "LCAKB23",
       "file": "lcakb23.json"
-    },
-    {
-      "name": "Optical compensation",
-      "file": "lcakb23-optics.json"
-    },
-    {
-      "name": "Guide slots",
-      "file": "lcakb23-slots.json"
-    },
-    {
-      "name": "Guides only",
-      "file": "lcakb23-guides.json"
-    },
-    {
-      "name": "Round millimetres",
-      "file": "round-mm.json"
-    },
-    {
-      "name": "ANSI TKL",
-      "file": "ansi-tkl.json"
-    },
-    {
-      "name": "ISO TKL",
-      "file": "iso-tkl.json"
-    },
-    {
-      "name": "ANSI 65%",
-      "file": "ansi-65.json"
-    },
-    {
-      "name": "ANSI 60%",
-      "file": "ansi-60.json"
     }
   ]
 }

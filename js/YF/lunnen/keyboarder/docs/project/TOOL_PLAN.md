@@ -1205,8 +1205,15 @@ instead of length-based labels. `space` is `blank`; `left/up/down/right` are `ic
 from the LCAKB23 icon library; `esc/tab/caps lock/lshift/lctrl` use `word-outer` on `BL`;
 `backspace/enter/rshift/rctrl` use `word-outer` on `BR`; service words (`shift`, `ctrl`, `alt`,
 `fn`, `print`, `scroll`, `pause`, etc.) use the same `secondarySize` kegle as imported `esc`.
-`analysis/import-real-qa.mjs` now asserts these rules on the real S/M fixtures. `index.html`
-cache-busts the app module as `app/tool.js?v=20260729-service-templates`.
+`analysis/import-real-qa.mjs` now asserts these rules on the real S/M fixtures.
+
+Preset update after Illustrator QA: the real S/M layouts are now built-ins named `LCAKB21` and
+`LCAKB22`, generated from `/Users/mishaivanov/Desktop/keyboarder test/test_layout_S.svg` and
+`test_layout_M.svg`. Their source layout models live in `app/kb/layout-presets.js`; `LAYOUT_OPTIONS`
+now exposes only `LCAKB21`, `LCAKB22`, and `LCAKB23`; `presets/manifest.json` seeds only
+`lcakb21.json`, `lcakb22.json`, and `lcakb23.json`. Size smoke: `LCAKB21` = 275.887 × 114.862 mm /
+78 keys, `LCAKB22` = 334.504 × 114.855 mm / 89 keys, `LCAKB23` = 412.462 × 115.954 mm / 110 keys.
+`index.html` now cache-busts as `app/tool.js?v=20260729-lcakb21-22-presets`.
 
 ---
 

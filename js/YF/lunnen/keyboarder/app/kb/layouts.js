@@ -1,3 +1,5 @@
+import { LCAKB21, LCAKB22 } from './layout-presets.js';
+
 /**
  * Библиотека раскладок.
  *
@@ -225,6 +227,8 @@ const ANSI_60 = layout('ANSI_60', '60%', [COMPACT_MAIN], [
 ]);
 
 export const LAYOUTS = {
+    [LCAKB21.meta.name]: LCAKB21,
+    [LCAKB22.meta.name]: LCAKB22,
     [LCAKB23.meta.name]: LCAKB23,
     [ANSI_TKL.meta.name]: ANSI_TKL,
     [ISO_TKL.meta.name]: ISO_TKL,
@@ -233,9 +237,9 @@ export const LAYOUTS = {
 };
 
 export const LAYOUT_OPTIONS = [
-    { id: LCAKB23.meta.name, label: 'LCAKB23 · ANSI 96%' },
-    { id: ANSI_TKL.meta.name, label: 'ANSI TKL' },
-    { id: ISO_TKL.meta.name, label: 'ISO TKL' },
-    { id: ANSI_65.meta.name, label: 'ANSI 65%' },
-    { id: ANSI_60.meta.name, label: 'ANSI 60%' }
+    { id: LCAKB21.meta.name, label: 'LCAKB21 · Compact 78' },
+    { id: LCAKB22.meta.name, label: 'LCAKB22 · Nav 89' },
+    { id: LCAKB23.meta.name, label: 'LCAKB23 · ANSI 96%' }
 ];
+
+export { LCAKB21, LCAKB22 };

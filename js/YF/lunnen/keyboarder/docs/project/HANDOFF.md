@@ -814,8 +814,15 @@ Stage 9 optimization is started:
   `word-outer` at `BR`; service words such as `shift`, `ctrl`, `alt`, `fn`, `print`, `scroll`, and
   `pause` share the same `secondarySize` kegle as the imported `esc`. `analysis/import-real-qa.mjs`
   asserts these rules on the real S/M fixtures, and `analysis/render-import-export.mjs` can generate
-  fresh Illustrator QA SVGs without relying on the browser Downloads directory. `index.html` now
-  cache-busts the module as `app/tool.js?v=20260729-service-templates`.
+  fresh Illustrator QA SVGs without relying on the browser Downloads directory.
+- Preset update after Illustrator QA: the real S/M layouts are now built-ins named `LCAKB21`
+  and `LCAKB22`, generated from `/Users/mishaivanov/Desktop/keyboarder test/test_layout_S.svg`
+  and `test_layout_M.svg`. `app/kb/layout-presets.js` holds their source layout models;
+  `app/kb/layouts.js` exposes `LAYOUT_OPTIONS` as only `LCAKB21`, `LCAKB22`, `LCAKB23`;
+  `presets/manifest.json` seeds only `lcakb21.json`, `lcakb22.json`, and `lcakb23.json`.
+  Size smoke: `LCAKB21` = 275.887 x 114.862 mm / 78 keys, `LCAKB22` = 334.504 x 114.855 mm /
+  89 keys, `LCAKB23` = 412.462 x 115.954 mm / 110 keys. `index.html` now cache-busts as
+  `app/tool.js?v=20260729-lcakb21-22-presets`.
 - Cleanup pass 2026-07-29: project Markdown moved to `docs/project/`, documentation assets moved
   to `docs/assets/`, `analysis/preview.mjs` now writes `docs/assets/preview.svg` by default, and
   `analysis/font.py` reads the shared `Fonts/YS Text/YS Text-Regular.ttf`. Removed `ui-framework/`
