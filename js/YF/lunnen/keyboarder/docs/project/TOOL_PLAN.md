@@ -1170,15 +1170,16 @@ node analysis/export-artifact-qa.mjs ~/Downloads/result_test_layout_M.svg --ansi
 
 | Preset | Size mm | Caps | Glyph paths | Icons | F-icons |
 |---|---:|---:|---:|---:|---:|
-| `--ansi-compact-78` | 275.887 × 114.862 | 78 | 138 | 0 | 13 |
-| `--ansi-nav-89` | 334.504 × 114.855 | 89 | 149 | 0 | 13 |
+| `--ansi-compact-78` | 275.887 × 114.862 | 78 | 133 | 4 | 13 |
+| `--ansi-nav-89` | 334.504 × 114.855 | 89 | 144 | 4 | 13 |
 
 Проверка на старых скачанных `/Users/mishaivanov/Desktop/keyboarder test/result_test_layout_S.svg`
 и `result_test_layout_M.svg` намеренно падает: artboard/caps корректны, но старые файлы имеют
-`glyphPaths 104/89` и `fIcons 0` вместо ожидаемых `138/149` и `13`. Это подтверждает, что новый
-artifact QA ловит именно тот тип регрессии, который был виден в пользовательских результатах
-(латиница/плейсхолдеры вместо полного dual/f-icons content). Свежий re-export после текущих
-фиксов должен проходить эти presets; визуальная Illustrator/PDF-viewer проверка всё ещё полезна.
+`glyphPaths 104/89`, `icons 0` и `fIcons 0` вместо ожидаемых `133/144`, `4` и `13`. Это
+подтверждает, что новый artifact QA ловит именно тот тип регрессии, который был виден в
+пользовательских результатах (латиница/плейсхолдеры вместо полного dual/f-icons content). Свежий
+re-export после текущих фиксов должен проходить эти presets; визуальная Illustrator/PDF-viewer
+проверка всё ещё полезна.
 
 Срез 9.7 fresh imported export QA готов: импорт теперь имеет общий внутренний путь
 `createNewLayoutFromSvgSource()`, а human DevTools API получил
@@ -1186,18 +1187,26 @@ artifact QA ловит именно тот тип регрессии, котор
 picker. Штатный browser smoke всё равно прогнан через реальный `New layout` + file chooser:
 `test_layout_S.svg` импортировался как `ANSI_COMPACT_78` с 78 caps, `alpha-dual 26`, `f-icons 13`,
 `placeholders 0`, после обычного `SVG` export clean summary показал 275.887 × 114.862 mm,
-138 glyph paths, 13 f-icons, `selection 0`, `interactive 0`, а скачанный
+133 glyph paths, 4 regular icons, 13 f-icons, `selection 0`, `interactive 0`, а скачанный
 `/Users/mishaivanov/Downloads/keyboarder.svg` прошёл
 `node analysis/export-artifact-qa.mjs /Users/mishaivanov/Downloads/keyboarder.svg --ansi-compact-78`.
 `test_layout_M.svg` импортировался как `ANSI_NAV_89` с 89 caps, тем же полным dual/f-icons content,
-clean export 334.504 × 114.855 mm, 149 glyph paths, 13 f-icons, `selection 0`, `interactive 0`;
+clean export 334.504 × 114.855 mm, 144 glyph paths, 4 regular icons, 13 f-icons, `selection 0`, `interactive 0`;
 скачанный `/Users/mishaivanov/Downloads/keyboarder (1).svg` прошёл
 `node analysis/export-artifact-qa.mjs "/Users/mishaivanov/Downloads/keyboarder (1).svg" --ansi-nav-89`.
 После bump `index.html` на `app/tool.js?v=20260729-stage97-import-export` повторный cache-busted
 browser smoke подтвердил загрузку нового module URL и свежий S/M import без export: S даёт
-`ANSI_COMPACT_78`, 78 caps, 138 glyph paths, 13 f-icons, `semantic 78/78`, `warnings 0`;
-M даёт `ANSI_NAV_89`, 89 caps, 149 glyph paths, 13 f-icons, `semantic 89/89`, `warnings 0`.
+`ANSI_COMPACT_78`, 78 caps, 133 glyph paths, 4 icons, 13 f-icons, `semantic 78/78`, `warnings 0`;
+M даёт `ANSI_NAV_89`, 89 caps, 144 glyph paths, 4 icons, 13 f-icons, `semantic 89/89`, `warnings 0`.
 Browser console после fresh S/M smoke чистая.
+
+Post-Illustrator QA fix: generated content for imported layouts now uses semantic service templates
+instead of length-based labels. `space` is `blank`; `left/up/down/right` are `icon-center` arrows
+from the LCAKB23 icon library; `esc/tab/caps lock/lshift/lctrl` use `word-outer` on `BL`;
+`backspace/enter/rshift/rctrl` use `word-outer` on `BR`; service words (`shift`, `ctrl`, `alt`,
+`fn`, `print`, `scroll`, `pause`, etc.) use the same `secondarySize` kegle as imported `esc`.
+`analysis/import-real-qa.mjs` now asserts these rules on the real S/M fixtures. `index.html`
+cache-busts the app module as `app/tool.js?v=20260729-service-templates`.
 
 ---
 

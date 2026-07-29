@@ -22,9 +22,9 @@ export const EXPORT_QA_PRESETS = {
         mm: [275.887, 114.862],
         caps: 78,
         guides: 0,
-        glyphPaths: 138,
+        glyphPaths: 133,
         glyphTexts: 0,
-        icons: 0,
+        icons: 4,
         fIcons: 13,
         selection: 0,
         interactive: 0
@@ -33,9 +33,9 @@ export const EXPORT_QA_PRESETS = {
         mm: [334.504, 114.855],
         caps: 89,
         guides: 0,
-        glyphPaths: 149,
+        glyphPaths: 144,
         glyphTexts: 0,
-        icons: 0,
+        icons: 4,
         fIcons: 13,
         selection: 0,
         interactive: 0

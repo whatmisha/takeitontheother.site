@@ -35,7 +35,8 @@ const idsRepeatLayout = {
 const idsRepeatKeys = buildLayout(idsRepeatLayout).keys;
 assert.deepEqual(idsRepeatKeys.map((key) => key.id), ['esc', 'f1', 'a']);
 const idsRepeatContent = generatedContentForLayout(idsRepeatLayout, TYPE_DEFAULTS, CONTENT);
-assert.deepEqual(idsRepeatContent.keys.map((key) => key.tpl), ['generated-label', 'fkey-icon+label', 'alpha-dual']);
+assert.deepEqual(idsRepeatContent.keys.map((key) => key.tpl), ['word-outer', 'fkey-icon+label', 'alpha-dual']);
+assert.deepEqual(idsRepeatContent.keys[0].elements.map((element) => `${element.slot}:${element.text}:${element.size}`), ['BL:esc:12.0745']);
 assert.deepEqual(idsRepeatContent.keys[1].elements.map((element) => element.kind === 'ico' ? `${element.slot}:${element.icon}:${element.group}` : `${element.slot}:${element.text}`), ['FC:volume-mute:f-icons', 'BC:F1']);
 assert.deepEqual(idsRepeatContent.keys[2].elements.map((element) => `${element.slot}:${element.text}`), ['TL:A', 'BR:Ф']);
 assert.deepEqual(generatedContentStatsForLayout(idsRepeatLayout), {
@@ -57,6 +58,7 @@ assert.equal(ansiTklContent.keys[1].elements[0].icon, 'volume-mute');
 assert.equal(ansiTklContent.keys[10].tpl, 'icon+word-stack');
 assert.equal(ansiTklContent.keys[10].elements[0].icon, 'search');
 assert.equal(generatedContentStatsForLayout(LAYOUTS.ANSI_TKL).fIconKeys, 12);
+assert.equal(ansiTklContent.keys.find((key) => key.tpl === 'blank')?.elements.length, 0);
 
 for (const [name, layout] of Object.entries(LAYOUTS)) {
     if (name === LCAKB23.meta.name) continue;
@@ -65,7 +67,61 @@ for (const [name, layout] of Object.entries(LAYOUTS)) {
     const result = attachContent(keys, content);
     assert.equal(result.matched, keys.length, `${name}: every key should receive generated content`);
     assert.equal(result.orphans, 0, `${name}: generated content should not have orphan keys`);
-    assert.equal(keys.filter((k) => !(k.elements || []).length).length, 0, `${name}: no blank generated keys`);
+    assert.ok(keys.filter((k) => !(k.elements || []).length).length <= 1, `${name}: only space may be blank`);
 }
+
+const importLikeLayout = {
+    meta: { name: 'IMPORT_LIKE' },
+    grid: {
+        origin: { x: 0, y: 0 },
+        colPitch: 12,
+        rowPitch: 12,
+        keyWidth1U: 10,
+        keyHeight: 10
+    },
+    blocks: [{ id: 'main', x: 0, width: 120 }],
+    rows: [{
+        main: [
+            { id: 'esc' },
+            { id: 'tab' },
+            { id: 'caps' },
+            { id: 'backspace' },
+            { id: 'enter' },
+            { id: 'lshift' },
+            { id: 'rshift' },
+            { id: 'lctrl' },
+            { id: 'rctrl' },
+            { id: 'space' },
+            { id: 'left' },
+            { id: 'up' },
+            { id: 'down' },
+            { id: 'right' }
+        ]
+    }]
+};
+const importLikeContent = generatedContentForLayout(importLikeLayout, TYPE_DEFAULTS, CONTENT);
+const importLikeElements = importLikeContent.keys.map((key) => key.elements[0] || { kind: 'blank' });
+assert.deepEqual(importLikeElements.slice(0, 3).map((element) => `${element.slot}:${element.text}:${element.size}`), [
+    'BL:esc:12.0745',
+    'BL:tab:12.0745',
+    'BL:caps lock:12.0745'
+]);
+assert.deepEqual(importLikeElements.slice(3, 5).map((element) => `${element.slot}:${element.text}:${element.size}`), [
+    'BR:backspace:12.0745',
+    'BR:enter:12.0745'
+]);
+assert.deepEqual(importLikeElements.slice(5, 9).map((element) => `${element.slot}:${element.text}:${element.size}`), [
+    'BL:shift:12.0745',
+    'BR:shift:12.0745',
+    'BL:ctrl:12.0745',
+    'BR:ctrl:12.0745'
+]);
+assert.equal(importLikeContent.keys[9].tpl, 'blank');
+assert.deepEqual(importLikeContent.keys.slice(10, 14).map((key) => key.elements[0].icon), [
+    'arrow-left',
+    'arrow-up',
+    'arrow-down',
+    'arrow-right'
+]);
 
 console.log('generated layout content passed');

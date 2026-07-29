@@ -783,9 +783,9 @@ Stage 9 optimization is started:
   `KeyboarderExport.cleanSvgSnapshot()` and verifies serialized SVG size, `hasInteractive: false`,
   and parity between `layerCounts` and the actual clean SVG.
 - Stage 9.7 imported-layout artifact presets are added to `analysis/export-artifact-qa.mjs`:
-  `--ansi-compact-78` expects 275.887 x 114.862 mm, 78 caps, 138 glyph paths, 0 regular icons,
-  and 13 f-icons; `--ansi-nav-89` expects 334.504 x 114.855 mm, 89 caps, 149 glyph paths,
-  0 regular icons, and 13 f-icons. The old downloaded files in
+  `--ansi-compact-78` expects 275.887 x 114.862 mm, 78 caps, 133 glyph paths, 4 regular icons,
+  and 13 f-icons; `--ansi-nav-89` expects 334.504 x 114.855 mm, 89 caps, 144 glyph paths,
+  4 regular icons, and 13 f-icons. The old downloaded files in
   `/Users/mishaivanov/Desktop/keyboarder test/result_test_layout_S.svg` and
   `result_test_layout_M.svg` intentionally fail these stricter presets: their artboards and cap
   counts are fine, but they have only 104/89 glyph paths and 0 f-icons, confirming they predate the
@@ -795,19 +795,27 @@ Stage 9 optimization is started:
   `createNewLayoutFromSvgSource()` path, and human DevTools can call
   `KeyboarderImport.createFromSvgText()` / `createFromSvgString()` for file-picker-free smoke.
   Browser smoke through the real `New layout` file chooser imported copied temp fixtures from
-  `/private/tmp`: S rendered 78 caps, 138 glyph paths, 13 f-icons, profile `ANSI_COMPACT_78`,
+  `/private/tmp`: S rendered 78 caps, 133 glyph paths, 4 icons, 13 f-icons, profile `ANSI_COMPACT_78`,
   `alpha-dual 26`, `placeholders 0`, clean export selection/interactivity 0, and the downloaded
   `/Users/mishaivanov/Downloads/keyboarder.svg` passed
   `node analysis/export-artifact-qa.mjs /Users/mishaivanov/Downloads/keyboarder.svg --ansi-compact-78`.
-  M rendered 89 caps, 149 glyph paths, 13 f-icons, profile `ANSI_NAV_89`, `alpha-dual 26`,
+  M rendered 89 caps, 144 glyph paths, 4 icons, 13 f-icons, profile `ANSI_NAV_89`, `alpha-dual 26`,
   `placeholders 0`, clean export selection/interactivity 0, and the downloaded
   `/Users/mishaivanov/Downloads/keyboarder (1).svg` passed
   `node analysis/export-artifact-qa.mjs "/Users/mishaivanov/Downloads/keyboarder (1).svg" --ansi-nav-89`.
   `index.html` was then bumped to `app/tool.js?v=20260729-stage97-import-export`; a second
   cache-busted browser smoke confirmed that exact module URL and fresh S/M imports without
-  export: S -> `ANSI_COMPACT_78`, 78 caps, 138 glyph paths, 13 f-icons, `semantic 78/78`,
-  warnings 0; M -> `ANSI_NAV_89`, 89 caps, 149 glyph paths, 13 f-icons, `semantic 89/89`,
+  export: S -> `ANSI_COMPACT_78`, 78 caps, 133 glyph paths, 4 icons, 13 f-icons, `semantic 78/78`,
+  warnings 0; M -> `ANSI_NAV_89`, 89 caps, 144 glyph paths, 4 icons, 13 f-icons, `semantic 89/89`,
   warnings 0. Browser warn/error console was empty after the fresh S/M smoke.
+- Post-Illustrator QA fix: imported generated content now uses semantic templates for service keys.
+  `space` is `blank`; `left/up/down/right` are regular `icons` using the LCAKB23 `arrow-*` paths;
+  `esc/tab/caps lock/lshift/lctrl` are `word-outer` at `BL`; `backspace/enter/rshift/rctrl` are
+  `word-outer` at `BR`; service words such as `shift`, `ctrl`, `alt`, `fn`, `print`, `scroll`, and
+  `pause` share the same `secondarySize` kegle as the imported `esc`. `analysis/import-real-qa.mjs`
+  asserts these rules on the real S/M fixtures, and `analysis/render-import-export.mjs` can generate
+  fresh Illustrator QA SVGs without relying on the browser Downloads directory. `index.html` now
+  cache-busts the module as `app/tool.js?v=20260729-service-templates`.
 - Cleanup pass 2026-07-29: project Markdown moved to `docs/project/`, documentation assets moved
   to `docs/assets/`, `analysis/preview.mjs` now writes `docs/assets/preview.svg` by default, and
   `analysis/font.py` reads the shared `Fonts/YS Text/YS Text-Regular.ttf`. Removed `ui-framework/`

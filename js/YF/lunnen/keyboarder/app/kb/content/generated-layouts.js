@@ -42,6 +42,54 @@ const SEMANTIC_LABELS = {
     down: 'down'
 };
 
+const BLANK_IDS = new Set(['space']);
+
+const ARROW_ICON_BY_ID = {
+    up: 'arrow-up',
+    down: 'arrow-down',
+    left: 'arrow-left',
+    right: 'arrow-right'
+};
+
+const SERVICE_WORD_BY_ID = {
+    esc: 'esc',
+    tab: 'tab',
+    caps: 'caps lock',
+    'caps lock': 'caps lock',
+    backspace: 'backspace',
+    enter: 'enter',
+    shift: 'shift',
+    lshift: 'shift',
+    rshift: 'shift',
+    ctrl: 'ctrl',
+    lctrl: 'ctrl',
+    rctrl: 'ctrl',
+    win: 'win',
+    lmeta: 'win',
+    rmeta: 'win',
+    alt: 'alt',
+    lalt: 'alt',
+    ralt: 'alt',
+    fn: 'fn',
+    'fn-left': 'fn',
+    'fn-right': 'fn',
+    menu: 'menu',
+    print: 'print',
+    scroll: 'scroll',
+    pause: 'pause',
+    insert: 'insert',
+    home: 'home',
+    delete: 'delete',
+    end: 'end',
+    'pg up': 'pg up',
+    'pg-up': 'pg up',
+    'pg dn': 'pg dn',
+    'pg-down': 'pg dn'
+};
+
+const LEFT_OUTER_WORD_IDS = new Set(['esc', 'tab', 'caps', 'lshift', 'lctrl']);
+const RIGHT_OUTER_WORD_IDS = new Set(['backspace', 'enter', 'rshift', 'rctrl']);
+
 const CYRILLIC_BY_LATIN_ID = {
     q: 'Й',
     w: 'Ц',
@@ -173,6 +221,67 @@ function labelElement(label, typeDefaults = {}) {
     };
 }
 
+function serviceWordSize(typeDefaults = {}) {
+    return typeDefaults.secondarySize ?? typeDefaults.wordSize ?? glyphSize(typeDefaults);
+}
+
+function blankContentForId(id) {
+    return BLANK_IDS.has(String(id || '').trim().toLowerCase())
+        ? { tpl: 'blank', elements: [] }
+        : null;
+}
+
+function arrowIconContentForId(id) {
+    const iconName = ARROW_ICON_BY_ID[String(id || '').trim().toLowerCase()];
+    const icon = iconName ? ICONS[iconName] : null;
+    if (!icon) return null;
+    return {
+        tpl: 'icon-center',
+        elements: [{
+            slot: 'MC',
+            kind: 'ico',
+            icon: iconName,
+            group: 'icons',
+            w: icon.w,
+            h: icon.h
+        }]
+    };
+}
+
+function arrowStackContentForId(id) {
+    if (String(id || '').trim().toLowerCase() !== 'arrow-stack') return null;
+    const up = ICONS['arrow-up'];
+    const down = ICONS['arrow-down'];
+    if (!up || !down) return null;
+    return {
+        tpl: 'arrow-stack',
+        elements: [
+            { slot: 'TC', kind: 'ico', icon: 'arrow-up', group: 'icons', w: up.w, h: up.h },
+            { slot: 'BC', kind: 'ico', icon: 'arrow-down', group: 'icons', w: down.w, h: down.h }
+        ]
+    };
+}
+
+function serviceWordContentForId(id, typeDefaults = {}) {
+    const key = String(id || '').trim().toLowerCase();
+    const text = SERVICE_WORD_BY_ID[key];
+    if (!text) return null;
+    const slot = LEFT_OUTER_WORD_IDS.has(key)
+        ? 'BL'
+        : RIGHT_OUTER_WORD_IDS.has(key)
+            ? 'BR'
+            : 'BC';
+    return {
+        tpl: slot === 'BC' ? 'word-center' : 'word-outer',
+        elements: [{
+            slot,
+            kind: 'txt',
+            text,
+            size: serviceWordSize(typeDefaults)
+        }]
+    };
+}
+
 function glyphSize(typeDefaults = {}) {
     return typeDefaults.glyphSize ?? typeDefaults.secondarySize ?? typeDefaults.wordSize ?? 12;
 }
@@ -243,14 +352,22 @@ function generatedLabelContent(label, typeDefaults = {}) {
 }
 
 function genericContentForItem(item, fallbackLabel, typeDefaults = {}) {
-    return alphaDualContentForId(item?.id, typeDefaults)
+    return blankContentForId(item?.id)
+        || arrowIconContentForId(item?.id)
+        || arrowStackContentForId(item?.id)
+        || serviceWordContentForId(item?.id, typeDefaults)
+        || alphaDualContentForId(item?.id, typeDefaults)
         || cornerContentForId(item?.id, typeDefaults)
         || fKeyIconContentForId(item?.id, typeDefaults)
         || generatedLabelContent(userFacingId(item?.id) || fallbackLabel, typeDefaults);
 }
 
 function generatedContentForPresetLabel(label, typeDefaults = {}) {
-    return fKeyIconContentForId(semanticIdForPresetLabel(label), typeDefaults)
+    return blankContentForId(label)
+        || arrowIconContentForId(label)
+        || arrowStackContentForId(label)
+        || serviceWordContentForId(label, typeDefaults)
+        || fKeyIconContentForId(semanticIdForPresetLabel(label), typeDefaults)
         || generatedLabelContent(label, typeDefaults);
 }
 

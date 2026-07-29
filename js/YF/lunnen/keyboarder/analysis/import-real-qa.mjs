@@ -40,6 +40,7 @@ for (const file of files) {
     const attached = attachContent(built.keys, content);
     const labels = content.keys.map((key) => key.elements.map((element) => element.text || element.icon).join('/'));
     const placeholders = labels.filter((label) => /^main \d+(?:\.\d+)?$|^nav \d+(?:\.\d+)?$/.test(label));
+    const contentBySemanticId = contentByLayoutSemanticId(draft.layout, content);
 
     assert.equal(analysis.diagnostics.warnings.length, 0, `${file}: warnings`);
     assert.equal(draft.stats.semanticKeys, draft.stats.keys, `${file}: semantic coverage`);
@@ -50,6 +51,21 @@ for (const file of files) {
     assert.equal(placeholders.length, 0, `${file}: placeholder labels`);
     assert.equal(attached.matched, built.keys.length, `${file}: content attach coverage`);
     assert.equal(attached.orphans, 0, `${file}: content orphans`);
+    assertServiceKey(contentBySemanticId, 'esc', 'BL', 'esc', TYPE_DEFAULTS.secondarySize, file);
+    assertServiceKey(contentBySemanticId, 'tab', 'BL', 'tab', TYPE_DEFAULTS.secondarySize, file);
+    assertServiceKey(contentBySemanticId, 'caps', 'BL', 'caps lock', TYPE_DEFAULTS.secondarySize, file);
+    assertServiceKey(contentBySemanticId, 'backspace', 'BR', 'backspace', TYPE_DEFAULTS.secondarySize, file);
+    assertServiceKey(contentBySemanticId, 'enter', 'BR', 'enter', TYPE_DEFAULTS.secondarySize, file);
+    assertServiceKey(contentBySemanticId, 'lshift', 'BL', 'shift', TYPE_DEFAULTS.secondarySize, file);
+    assertServiceKey(contentBySemanticId, 'rshift', 'BR', 'shift', TYPE_DEFAULTS.secondarySize, file);
+    assertServiceKey(contentBySemanticId, 'lctrl', 'BL', 'ctrl', TYPE_DEFAULTS.secondarySize, file);
+    if (draft.stats.layoutProfile === 'ANSI_NAV_89') assertServiceKey(contentBySemanticId, 'rctrl', 'BR', 'ctrl', TYPE_DEFAULTS.secondarySize, file);
+    assert.equal(contentBySemanticId.get('space')?.tpl, 'blank', `${file}: space blank`);
+    assert.equal((contentBySemanticId.get('space')?.elements || []).length, 0, `${file}: space has no legend`);
+    assertArrowIcon(contentBySemanticId, 'left', 'arrow-left', file);
+    assertArrowIcon(contentBySemanticId, 'up', 'arrow-up', file);
+    assertArrowIcon(contentBySemanticId, 'down', 'arrow-down', file);
+    assertArrowIcon(contentBySemanticId, 'right', 'arrow-right', file);
 
     if (draft.stats.keys === 78) {
         assert.equal(draft.stats.layoutProfile, 'ANSI_COMPACT_78', `${file}: compact profile`);
@@ -70,3 +86,64 @@ for (const file of files) {
 }
 
 console.log('\nreal SVG import QA passed');
+
+function assertServiceKey(contentBySemanticId, id, slot, text, size, file) {
+    const key = contentBySemanticId.get(id);
+    const el = key?.elements?.[0];
+    assert.ok(key, `${file}: ${id} generated content`);
+    assert.equal(key.tpl, slot === 'BC' ? 'word-center' : 'word-outer', `${file}: ${id} template`);
+    assert.equal(el?.slot, slot, `${file}: ${id} slot`);
+    assert.equal(el?.text, text, `${file}: ${id} text`);
+    assert.equal(el?.size, size, `${file}: ${id} size`);
+}
+
+function assertArrowIcon(contentBySemanticId, id, icon, file) {
+    const key = contentBySemanticId.get(id);
+    const el = key?.elements?.[0];
+    assert.ok(key, `${file}: ${id} generated content`);
+    assert.equal(key.tpl, 'icon-center', `${file}: ${id} template`);
+    assert.equal(el?.slot, 'MC', `${file}: ${id} slot`);
+    assert.equal(el?.icon, icon, `${file}: ${id} icon`);
+    assert.equal(el?.group, 'icons', `${file}: ${id} icon group`);
+}
+
+function contentByLayoutSemanticId(layout, content) {
+    const out = new Map();
+    let contentIndex = 0;
+    for (const row of layout.rows || []) {
+        for (const items of Object.values(row || {})) {
+            for (const item of expandedItems(items)) {
+                if (item.skip) continue;
+                if (Array.isArray(item.stack) && item.stack.length) {
+                    for (const child of item.stack) {
+                        if (child.id) out.set(child.id, content.keys[contentIndex]);
+                        contentIndex += 1;
+                    }
+                    continue;
+                }
+                if (item.id) out.set(item.id, content.keys[contentIndex]);
+                contentIndex += 1;
+            }
+        }
+    }
+    return out;
+}
+
+function expandedItems(items = []) {
+    const out = [];
+    for (const item of items || []) {
+        const n = item.repeat || 1;
+        const ids = Array.isArray(item.ids) ? item.ids : null;
+        for (let i = 0; i < n; i++) {
+            const copy = { ...item };
+            delete copy.repeat;
+            delete copy.ids;
+            if (n > 1) {
+                if (ids && ids[i]) copy.id = ids[i];
+                else delete copy.id;
+            }
+            out.push(copy);
+        }
+    }
+    return out;
+}
