@@ -51,15 +51,24 @@ for (const file of files) {
     assert.equal(placeholders.length, 0, `${file}: placeholder labels`);
     assert.equal(attached.matched, built.keys.length, `${file}: content attach coverage`);
     assert.equal(attached.orphans, 0, `${file}: content orphans`);
-    assertServiceKey(contentBySemanticId, 'esc', 'BL', 'esc', TYPE_DEFAULTS.secondarySize, file);
-    assertServiceKey(contentBySemanticId, 'tab', 'BL', 'tab', TYPE_DEFAULTS.secondarySize, file);
-    assertServiceKey(contentBySemanticId, 'caps', 'BL', 'caps lock', TYPE_DEFAULTS.secondarySize, file);
-    assertServiceKey(contentBySemanticId, 'backspace', 'BR', 'backspace', TYPE_DEFAULTS.secondarySize, file);
-    assertServiceKey(contentBySemanticId, 'enter', 'BR', 'enter', TYPE_DEFAULTS.secondarySize, file);
-    assertServiceKey(contentBySemanticId, 'lshift', 'BL', 'shift', TYPE_DEFAULTS.secondarySize, file);
-    assertServiceKey(contentBySemanticId, 'rshift', 'BR', 'shift', TYPE_DEFAULTS.secondarySize, file);
-    assertServiceKey(contentBySemanticId, 'lctrl', 'BL', 'ctrl', TYPE_DEFAULTS.secondarySize, file);
-    if (draft.stats.layoutProfile === 'ANSI_NAV_89') assertServiceKey(contentBySemanticId, 'rctrl', 'BR', 'ctrl', TYPE_DEFAULTS.secondarySize, file);
+    assertServiceKey(contentBySemanticId, 'esc', 'BL', 'esc', TYPE_DEFAULTS.wordSize, file);
+    assertServiceKey(contentBySemanticId, 'tab', 'BL', 'tab', TYPE_DEFAULTS.wordSize, file);
+    assertServiceKey(contentBySemanticId, 'caps', 'BL', 'caps lock', TYPE_DEFAULTS.wordSize, file);
+    assertServiceKey(contentBySemanticId, 'backspace', 'BR', 'backspace', TYPE_DEFAULTS.wordSize, file);
+    assertServiceKey(contentBySemanticId, 'enter', 'BR', 'enter', TYPE_DEFAULTS.wordSize, file);
+    assertServiceKey(contentBySemanticId, 'lshift', 'BL', 'shift', TYPE_DEFAULTS.wordSize, file);
+    assertServiceKey(contentBySemanticId, 'rshift', 'BR', 'shift', TYPE_DEFAULTS.wordSize, file);
+    assertServiceKey(contentBySemanticId, 'lctrl', 'BL', 'ctrl', TYPE_DEFAULTS.wordSize, file);
+    assertServiceKey(contentBySemanticId, 'lalt', 'BC', 'alt', TYPE_DEFAULTS.wordSize, file);
+    assertServiceKey(contentBySemanticId, 'fn-left', 'BC', 'fn', TYPE_DEFAULTS.wordSize, file);
+    assertServiceKey(contentBySemanticId, 'ralt', 'BC', 'alt', TYPE_DEFAULTS.wordSize, file);
+    assertServiceKey(contentBySemanticId, 'fn-right', 'BC', 'fn', TYPE_DEFAULTS.wordSize, file);
+    if (draft.stats.layoutProfile === 'ANSI_NAV_89') {
+        assertServiceKey(contentBySemanticId, 'rctrl', 'BR', 'ctrl', TYPE_DEFAULTS.wordSize, file);
+        assertServiceKey(contentBySemanticId, 'print', 'BC', 'print', TYPE_DEFAULTS.wordSize, file);
+        assertServiceKey(contentBySemanticId, 'scroll', 'BC', 'scroll', TYPE_DEFAULTS.wordSize, file);
+        assertServiceKey(contentBySemanticId, 'pause', 'BC', 'pause', TYPE_DEFAULTS.wordSize, file);
+    }
     assert.equal(contentBySemanticId.get('space')?.tpl, 'blank', `${file}: space blank`);
     assert.equal((contentBySemanticId.get('space')?.elements || []).length, 0, `${file}: space has no legend`);
     assertArrowIcon(contentBySemanticId, 'left', 'arrow-left', file);

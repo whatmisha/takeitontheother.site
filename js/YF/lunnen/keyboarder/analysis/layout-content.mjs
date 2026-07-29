@@ -36,7 +36,7 @@ const idsRepeatKeys = buildLayout(idsRepeatLayout).keys;
 assert.deepEqual(idsRepeatKeys.map((key) => key.id), ['esc', 'f1', 'a']);
 const idsRepeatContent = generatedContentForLayout(idsRepeatLayout, TYPE_DEFAULTS, CONTENT);
 assert.deepEqual(idsRepeatContent.keys.map((key) => key.tpl), ['word-outer', 'fkey-icon+label', 'alpha-dual']);
-assert.deepEqual(idsRepeatContent.keys[0].elements.map((element) => `${element.slot}:${element.text}:${element.size}`), ['BL:esc:12.0745']);
+assert.deepEqual(idsRepeatContent.keys[0].elements.map((element) => `${element.slot}:${element.text}:${element.size}`), ['BL:esc:9.1199']);
 assert.deepEqual(idsRepeatContent.keys[1].elements.map((element) => element.kind === 'ico' ? `${element.slot}:${element.icon}:${element.group}` : `${element.slot}:${element.text}`), ['FC:volume-mute:f-icons', 'BC:F1']);
 assert.deepEqual(idsRepeatContent.keys[2].elements.map((element) => `${element.slot}:${element.text}`), ['TL:A', 'BR:Ф']);
 assert.deepEqual(generatedContentStatsForLayout(idsRepeatLayout), {
@@ -91,6 +91,13 @@ const importLikeLayout = {
             { id: 'rshift' },
             { id: 'lctrl' },
             { id: 'rctrl' },
+            { id: 'lalt' },
+            { id: 'fn-left' },
+            { id: 'ralt' },
+            { id: 'fn-right' },
+            { id: 'print' },
+            { id: 'scroll' },
+            { id: 'pause' },
             { id: 'space' },
             { id: 'left' },
             { id: 'up' },
@@ -102,22 +109,31 @@ const importLikeLayout = {
 const importLikeContent = generatedContentForLayout(importLikeLayout, TYPE_DEFAULTS, CONTENT);
 const importLikeElements = importLikeContent.keys.map((key) => key.elements[0] || { kind: 'blank' });
 assert.deepEqual(importLikeElements.slice(0, 3).map((element) => `${element.slot}:${element.text}:${element.size}`), [
-    'BL:esc:12.0745',
-    'BL:tab:12.0745',
-    'BL:caps lock:12.0745'
+    'BL:esc:9.1199',
+    'BL:tab:9.1199',
+    'BL:caps lock:9.1199'
 ]);
 assert.deepEqual(importLikeElements.slice(3, 5).map((element) => `${element.slot}:${element.text}:${element.size}`), [
-    'BR:backspace:12.0745',
-    'BR:enter:12.0745'
+    'BR:backspace:9.1199',
+    'BR:enter:9.1199'
 ]);
 assert.deepEqual(importLikeElements.slice(5, 9).map((element) => `${element.slot}:${element.text}:${element.size}`), [
-    'BL:shift:12.0745',
-    'BR:shift:12.0745',
-    'BL:ctrl:12.0745',
-    'BR:ctrl:12.0745'
+    'BL:shift:9.1199',
+    'BR:shift:9.1199',
+    'BL:ctrl:9.1199',
+    'BR:ctrl:9.1199'
 ]);
-assert.equal(importLikeContent.keys[9].tpl, 'blank');
-assert.deepEqual(importLikeContent.keys.slice(10, 14).map((key) => key.elements[0].icon), [
+assert.deepEqual(importLikeElements.slice(9, 16).map((element) => `${element.slot}:${element.text}:${element.size}`), [
+    'BC:alt:9.1199',
+    'BC:fn:9.1199',
+    'BC:alt:9.1199',
+    'BC:fn:9.1199',
+    'BC:print:9.1199',
+    'BC:scroll:9.1199',
+    'BC:pause:9.1199'
+]);
+assert.equal(importLikeContent.keys[16].tpl, 'blank');
+assert.deepEqual(importLikeContent.keys.slice(17, 21).map((key) => key.elements[0].icon), [
     'arrow-left',
     'arrow-up',
     'arrow-down',

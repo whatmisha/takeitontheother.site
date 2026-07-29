@@ -811,8 +811,9 @@ Stage 9 optimization is started:
 - Post-Illustrator QA fix: imported generated content now uses semantic templates for service keys.
   `space` is `blank`; `left/up/down/right` are regular `icons` using the LCAKB23 `arrow-*` paths;
   `esc/tab/caps lock/lshift/lctrl` are `word-outer` at `BL`; `backspace/enter/rshift/rctrl` are
-  `word-outer` at `BR`; service words such as `shift`, `ctrl`, `alt`, `fn`, `print`, `scroll`, and
-  `pause` share the same `secondarySize` kegle as the imported `esc`. `analysis/import-real-qa.mjs`
+  `word-outer` at `BR`; service words such as `esc`, `tab`, `caps lock`, `shift`, `ctrl`, `alt`,
+  `fn`, `enter`, `backspace`, `print`, `scroll`, and `pause` share the same `wordSize` kegle as
+  LCAKB23 service legends. `analysis/import-real-qa.mjs`
   asserts these rules on the real S/M fixtures, and `analysis/render-import-export.mjs` can generate
   fresh Illustrator QA SVGs without relying on the browser Downloads directory.
 - Preset update after Illustrator QA: the real S/M layouts are now built-ins named `LCAKB21`
@@ -823,6 +824,16 @@ Stage 9 optimization is started:
   Size smoke: `LCAKB21` = 275.887 x 114.862 mm / 78 keys, `LCAKB22` = 334.504 x 114.855 mm /
   89 keys, `LCAKB23` = 412.462 x 115.954 mm / 110 keys. `index.html` now cache-busts as
   `app/tool.js?v=20260729-lcakb21-22-presets`.
+- Service-word size follow-up: `app/kb/content/generated-layouts.js` now sizes generated service
+  legends with `wordSize`, matching LCAKB23 (`esc`, `tab`, `caps lock`, `shift`, `ctrl`, `alt`,
+  `fn`, `enter`, `backspace`, `print`, `scroll`, `pause`, etc.). The earlier `secondarySize`
+  expectation was wrong. `analysis/import-real-qa.mjs` and `analysis/layout-content.mjs` assert the
+  new size plus left/right outer alignment, centered service keys, blank `space`, and arrow icons.
+  `index.html` cache-bust is now `app/tool.js?v=20260729-service-wordsize`.
+- Production QA helper follow-up: `analysis/render-import-export.mjs` now supports
+  `--layout LCAKB21|LCAKB22|LCAKB23` in addition to `--input drawing.svg`. It renders LCAKB23 with
+  reference content and LCAKB21/22 with generated semantic content, so all three default layouts can
+  be exported to `/tmp` and checked with `analysis/export-artifact-qa.mjs` without browser downloads.
 - Cleanup pass 2026-07-29: project Markdown moved to `docs/project/`, documentation assets moved
   to `docs/assets/`, `analysis/preview.mjs` now writes `docs/assets/preview.svg` by default, and
   `analysis/font.py` reads the shared `Fonts/YS Text/YS Text-Regular.ttf`. Removed `ui-framework/`

@@ -222,7 +222,7 @@ function labelElement(label, typeDefaults = {}) {
 }
 
 function serviceWordSize(typeDefaults = {}) {
-    return typeDefaults.secondarySize ?? typeDefaults.wordSize ?? glyphSize(typeDefaults);
+    return typeDefaults.wordSize ?? typeDefaults.secondarySize ?? glyphSize(typeDefaults);
 }
 
 function blankContentForId(id) {

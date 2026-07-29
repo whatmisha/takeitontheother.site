@@ -8,6 +8,7 @@ import { parseFont } from '../app/kb/typography.js';
 import { Compensator, YS_TEXT_REGULAR } from '../app/kb/compensate.js';
 import { attachContent, buildLegends, textPath } from '../app/kb/legends.js';
 import { generatedContentForLayout, generatedContentStatsForLayout } from '../app/kb/content/generated-layouts.js';
+import { LAYOUTS, LCAKB23 } from '../app/kb/layouts.js';
 import CONTENT from '../app/kb/content/lcakb23.js';
 import ICONS from '../app/kb/icons/lcakb23.js';
 import ICON_OPTICS from '../app/kb/icons/lcakb23-optics.js';
@@ -23,12 +24,15 @@ const TYPE_DEFAULTS = {
 
 const args = parseArgs(process.argv.slice(2));
 
-if (!args.input || !args.output) {
+if ((!args.input && !args.layout) || !args.output) {
     console.error('Usage: node analysis/render-import-export.mjs --input drawing.svg --output layout.svg');
+    console.error('   or: node analysis/render-import-export.mjs --layout LCAKB21 --output layout.svg');
     process.exit(2);
 }
 
-const result = renderImportedSvg(args.input, args.output);
+const result = args.layout
+    ? renderBuiltInLayoutSvg(args.layout, args.output)
+    : renderImportedSvg(args.input, args.output);
 console.log(`${args.output}: ${result.caps} caps, ${result.glyphPaths} glyph paths, ${result.icons} icons, ${result.fIcons} f-icons, ${result.profile}`);
 
 export function renderImportedSvg(inputFile, outputFile) {
@@ -49,12 +53,27 @@ export function renderImportedSvg(inputFile, outputFile) {
     };
 }
 
+export function renderBuiltInLayoutSvg(layoutName, outputFile) {
+    const layout = LAYOUTS[layoutName];
+    if (!layout) throw new Error(`Unknown layout "${layoutName}". Known layouts: ${Object.keys(LAYOUTS).join(', ')}`);
+    const rendered = renderLayoutSvg(layout);
+    mkdirSync(dirname(resolve(outputFile)), { recursive: true });
+    writeFileSync(outputFile, rendered.svg, 'utf8');
+    return {
+        ...rendered.counts,
+        profile: layout.meta?.name || layoutName
+    };
+}
+
 function renderLayoutSvg(sourceLayout) {
     const font = readFileSync('Fonts/YS Text/YS Text-Regular.ttf');
     const tf = parseFont(font.buffer.slice(font.byteOffset, font.byteOffset + font.byteLength));
     const layout = buildLayout(sourceLayout);
     attachGuides(layout.keys, layout.grid.guideInset);
-    attachContent(layout.keys, generatedContentForLayout(sourceLayout, TYPE_DEFAULTS, CONTENT));
+    const content = sourceLayout?.meta?.name === LCAKB23.meta.name
+        ? CONTENT
+        : generatedContentForLayout(sourceLayout, TYPE_DEFAULTS, CONTENT);
+    attachContent(layout.keys, content);
     const legends = buildLegends(layout.keys, {
         tf,
         comp: new Compensator(tf, YS_TEXT_REGULAR),
@@ -117,6 +136,7 @@ function parseArgs(argv) {
     for (let i = 0; i < argv.length; i++) {
         const arg = argv[i];
         if (arg === '--input') out.input = argv[++i];
+        else if (arg === '--layout') out.layout = argv[++i];
         else if (arg === '--output') out.output = argv[++i];
         else if (!arg.startsWith('--') && !out.input) out.input = arg;
         else if (!arg.startsWith('--') && !out.output) out.output = arg;
