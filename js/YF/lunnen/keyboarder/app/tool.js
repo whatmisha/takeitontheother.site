@@ -8,6 +8,7 @@
  * по-прежнему в px (= pt = 1/72″), перевод через toPx / toMm.
  */
 import { defineTool } from '../vendor/framework/src/core/defineTool.js';
+import { installKeyboarderPerf, perfEnabled, perfNow, perfRecord, perfSince } from './perf.js';
 import { buildLayout, gapOf, widthInU } from './kb/grid.js';
 import { attachGuides } from './kb/guides.js';
 import { LAYOUT_OPTIONS, LAYOUTS, LCAKB23 } from './kb/layouts.js';
@@ -352,47 +353,183 @@ function applyLanguageLayer(keys, s) {
 }
 
 /**
- * Пересчёт раскладки. Кэшируется по подписи сетки: render вызывается и при смене цвета,
- * а геометрия при этом не меняется.
+ * Пересчёт раскладки разбит на три кеша: geometry -> content -> legend placement.
+ * Внешний `layoutFor()` остаётся единой точкой входа для UI.
  */
-let cached = { sig: null, data: null };
-function layoutFor(s) {
-    const sourceLayout = sourceLayoutFor(s);
-    const g = gridFrom(s);
-    const layoutEdits = sanitizeLayoutEditsForLayout(s.layoutEdits || {}, sourceLayout);
-    const sig = sourceLayout.meta.name + JSON.stringify(g) + JSON.stringify(layoutEdits) + typeSigFrom(s) + TYPEFACE_SIG;
-    if (cached.sig !== sig) {
-        const editedLayout = layoutWithEdits(sourceLayout, layoutEdits, g);
+let geometryCached = { sig: null, data: null };
+let contentCached = { sig: null, data: null };
+let legendCached = { sig: null, data: null };
+let layoutCached = { sig: null, data: null };
+const LAYOUT_SHAPE_SIG_CACHE = new WeakMap();
+
+function invalidateLayoutCaches() {
+    geometryCached.sig = null;
+    contentCached.sig = null;
+    legendCached.sig = null;
+    layoutCached.sig = null;
+}
+
+function layoutShapeSig(layout) {
+    if (layout && typeof layout === 'object' && LAYOUT_SHAPE_SIG_CACHE.has(layout)) {
+        return LAYOUT_SHAPE_SIG_CACHE.get(layout);
+    }
+    const sig = JSON.stringify({
+        name: layout?.meta?.name || '',
+        gridOrigin: layout?.grid?.origin || null,
+        blocks: layout?.blocks || [],
+        rows: layout?.rows || [],
+        artboard: layout?.artboard || null
+    });
+    if (layout && typeof layout === 'object') LAYOUT_SHAPE_SIG_CACHE.set(layout, sig);
+    return sig;
+}
+
+function geometrySigFrom(sourceLayout, grid, layoutEdits) {
+    return layoutShapeSig(sourceLayout) + JSON.stringify(grid) + JSON.stringify(layoutEdits || {});
+}
+
+function contentSigFrom(s, geometrySig) {
+    return geometrySig + JSON.stringify({
+        glyphSize: s.glyphSize,
+        numpadSize: s.numpadSize,
+        secondarySize: s.secondarySize,
+        wordSize: s.wordSize,
+        trackingOffset: s.trackingOffset,
+        languageLayer: normalizeLanguageLayer(s.languageLayer),
+        contentEdits: s.contentEdits || {}
+    });
+}
+
+function legendSigFrom(s, contentSig) {
+    return contentSig + TYPEFACE_SIG + JSON.stringify({
+        leading: s.leading,
+        compensationMode: s.compensationMode,
+        compensationTableEdits: s.compensationTableEdits || {}
+    });
+}
+
+function geometryFor(sourceLayout, grid, layoutEdits, sig) {
+    if (geometryCached.sig !== sig) {
+        const editedLayout = layoutWithEdits(sourceLayout, layoutEdits, grid);
         let renderLayout = editedLayout;
         let data;
         try {
-            data = buildLayout(renderLayout, g);
+            data = buildLayout(renderLayout, grid);
         } catch (e) {
             console.warn('Keyboarder: layout edits were ignored because the row no longer fits.', e);
             renderLayout = sourceLayout;
-            data = buildLayout(renderLayout, g);
+            data = buildLayout(renderLayout, grid);
         }
         assignEditIds(data.keys);
-        annotateGeometry(data.keys, sourceLayout, renderLayout, g, layoutEdits);
-        attachGuides(data.keys, g.guideInset);
+        annotateGeometry(data.keys, sourceLayout, renderLayout, grid, layoutEdits);
+        attachGuides(data.keys, grid.guideInset);
+        data.sourceLayout = sourceLayout;
+        data.renderLayout = renderLayout;
+        geometryCached = { sig, data };
+    }
+    return geometryCached.data;
+}
+
+function contentForGeometry(s, geometryData, sourceLayout, sig) {
+    if (contentCached.sig !== sig) {
+        const data = {
+            ...geometryData,
+            grid: clonePlain(geometryData.grid),
+            bounds: clonePlain(geometryData.bounds),
+            keys: geometryData.keys.map(cloneGeometryKey)
+        };
         attachContent(data.keys, contentForLayout(sourceLayout));
         applyLanguageLayer(data.keys, s);
         captureBaseContent(data.keys);
         applyContentEdits(data.keys, s.contentEdits || {});
         applyTypeSettings(data.keys, s);
-        data.legends = TYPEFACE
-            ? buildLegends(data.keys, {
-                tf: TYPEFACE, comp: compFor(s),
-                typefaceFor: (el) => typefaceForElement(el),
-                compForElement: (el) => compForFontId(s, elementFontId(el)),
-                interline: s.leading, iconOptics: ICON_OPTICS
-            })
-            : [];
-        data.sourceLayout = sourceLayout;
-        data.renderLayout = renderLayout;
-        cached = { sig, data };
+        contentCached = { sig, data };
     }
-    return cached.data;
+    return contentCached.data;
+}
+
+function legendsForContent(s, contentData, sig) {
+    if (legendCached.sig !== sig) {
+        legendCached = {
+            sig,
+            data: TYPEFACE
+                ? buildLegends(contentData.keys, {
+                    tf: TYPEFACE, comp: compFor(s),
+                    typefaceFor: (el) => typefaceForElement(el),
+                    compForElement: (el) => compForFontId(s, elementFontId(el)),
+                    interline: s.leading, iconOptics: ICON_OPTICS
+                })
+                : []
+        };
+    }
+    return legendCached.data;
+}
+
+function cloneGeometryKey(k) {
+    return {
+        ...k,
+        guide: k.guide ? { ...k.guide } : k.guide,
+        geometry: k.geometry ? clonePlain(k.geometry) : k.geometry
+    };
+}
+
+function layoutFor(s) {
+    const prof = perfEnabled();
+    const started = prof ? perfNow() : 0;
+    const sourceLayout = sourceLayoutFor(s);
+    const grid = gridFrom(s);
+    const layoutEdits = sanitizeLayoutEditsForLayout(s.layoutEdits || {}, sourceLayout);
+    const sigStarted = prof ? perfNow() : 0;
+    const geometrySig = geometrySigFrom(sourceLayout, grid, layoutEdits);
+    const contentSig = contentSigFrom(s, geometrySig);
+    const legendSig = legendSigFrom(s, contentSig);
+    const signatureMs = prof ? perfSince(sigStarted) : 0;
+    const geometryHit = geometryCached.sig === geometrySig;
+    const contentHit = contentCached.sig === contentSig;
+    const legendsHit = legendCached.sig === legendSig;
+    const hit = layoutCached.sig === legendSig;
+
+    let geometryMs = 0;
+    let contentMs = 0;
+    let legendsMs = 0;
+
+    const geometryStarted = prof && !geometryHit ? perfNow() : 0;
+    const geometryData = geometryFor(sourceLayout, grid, layoutEdits, geometrySig);
+    if (prof && !geometryHit) geometryMs = perfSince(geometryStarted);
+
+    const contentStarted = prof && !contentHit ? perfNow() : 0;
+    const contentData = contentForGeometry(s, geometryData, sourceLayout, contentSig);
+    if (prof && !contentHit) contentMs = perfSince(contentStarted);
+
+    const legendsStarted = prof && !legendsHit ? perfNow() : 0;
+    const legends = legendsForContent(s, contentData, legendSig);
+    if (prof && !legendsHit) legendsMs = perfSince(legendsStarted);
+
+    if (layoutCached.sig !== legendSig) {
+        layoutCached = {
+            sig: legendSig,
+            data: { ...contentData, legends }
+        };
+    }
+
+    if (prof) {
+        const data = layoutCached.data;
+        perfRecord('layout', {
+            ms: perfSince(started),
+            hit,
+            geometryHit,
+            contentHit,
+            legendsHit,
+            layout: sourceLayout.meta.name,
+            keys: data?.keys?.length || 0,
+            legends: data?.legends?.length || 0,
+            signatureMs,
+            geometryMs,
+            contentMs,
+            legendsMs
+        });
+    }
+    return layoutCached.data;
 }
 
 const app = defineTool({
@@ -524,9 +661,12 @@ const app = defineTool({
     },
 
     render(ctx) {
+        const prof = perfEnabled();
+        const started = prof ? perfNow() : 0;
         const { svg, create, width, height, settings: s } = ctx;
         const data = layoutFor(s);
         const { keys, grid } = data;
+        const legends = data.legends;
         const gap = gapOf(grid);
         const hasReference = isReferenceLayout(data.sourceLayout);
 
@@ -603,8 +743,6 @@ const app = defineTool({
 
         const selection = renderSelection(create, keys, grid);
         if (selection) svg.appendChild(selection);
-
-        const legends = layoutFor(s).legends;
 
         if (s.showGlyphs && TYPEFACE) {
             const textMode = normalizeLegendTextMode(s.legendTextMode);
@@ -709,9 +847,30 @@ const app = defineTool({
         syncCompensationTableEditor(s);
         syncLayoutSelect(s);
         syncLanguageLayerSelect(s);
+
+        if (prof) {
+            let textCount = 0;
+            let iconCount = 0;
+            for (const el of legends) {
+                if (el.kind === 'txt') textCount++;
+                else if (el.kind === 'ico') iconCount++;
+            }
+            perfRecord('render', {
+                ms: perfSince(started),
+                layout: data.sourceLayout?.meta?.name || '',
+                keys: keys.length,
+                legends: legends.length,
+                text: textCount,
+                icons: iconCount,
+                textMode: normalizeLegendTextMode(s.legendTextMode),
+                showGlyphs: !!s.showGlyphs,
+                showIcons: !!s.showIcons
+            });
+        }
     },
 
     onInit(readyApp) {
+        installKeyboarderPerf(readyApp);
         installPdfExport(readyApp);
         installCleanExports(readyApp);
         installSuggestedPresetSave(readyApp);
@@ -2013,7 +2172,7 @@ function setActiveFontId(app, id, options = {}) {
     TYPEFACE = activeFontEntry()?.tf || REFERENCE_TYPEFACE;
     TYPEFACE_SIG = fontRegistrySignature();
     COMP_CACHE.clear();
-    cached.sig = null;
+    invalidateLayoutCaches();
     syncFontImportStatus();
     syncCompensationTableEditor(app?.settings || app?.settingsStore?.toObject?.() || {});
     if (options.render !== false) app?.renderNow?.();
@@ -2215,7 +2374,7 @@ function applyFontInstance(app, index) {
     entry.instanceName = instance.name || '';
     TYPEFACE_SIG = fontRegistrySignature();
     COMP_CACHE.clear();
-    cached.sig = null;
+    invalidateLayoutCaches();
     syncFontImportStatus();
     app.renderNow();
 }
@@ -2232,7 +2391,7 @@ function updateFontAxis(app, axisTag, rawValue) {
         : '';
     TYPEFACE_SIG = fontRegistrySignature();
     COMP_CACHE.clear();
-    cached.sig = null;
+    invalidateLayoutCaches();
     syncFontImportStatus();
     app.renderNow();
 }
@@ -2372,12 +2531,30 @@ async function createNewLayoutFromSvgFile(app, file) {
         });
         return;
     }
+    const prof = perfEnabled();
+    const started = prof ? perfNow() : 0;
+    let analysis = null;
+    let readMs = 0;
+    let analyzeMs = 0;
+    let contentStatsMs = 0;
+    let pipelineMs = 0;
+    let guardMs = 0;
+    let commitMs = 0;
     try {
-        const analysis = analyzeSvgBlueprint(await file.text());
+        const readStarted = prof ? perfNow() : 0;
+        const svgText = await file.text();
+        readMs = prof ? perfSince(readStarted) : 0;
+
+        const analyzeStarted = prof ? perfNow() : 0;
+        analysis = analyzeSvgBlueprint(svgText);
+        analyzeMs = prof ? perfSince(analyzeStarted) : 0;
         if (!analysis.elements.lines) throw new Error('No SVG lines were found in the blueprint group.');
         const draft = analysis.layoutDraft;
         if (!draft?.layout) throw new Error('No usable keyboard layout draft was detected.');
+        const contentStarted = prof ? perfNow() : 0;
         addSvgImportContentStats(analysis);
+        contentStatsMs = prof ? perfSince(contentStarted) : 0;
+        pipelineMs = prof ? perfSince(started) : 0;
         const warnings = analysis.diagnostics?.warnings || [];
         if (warnings.length) {
             const result = await app.dialog?.show({
@@ -2392,19 +2569,93 @@ async function createNewLayoutFromSvgFile(app, file) {
                 ]
             });
             if (result?.action === 'report') exportSvgImportReport(file.name || 'drawing.svg', analysis);
+            recordSvgImportPerf(file, analysis, {
+                status: 'warnings',
+                ms: pipelineMs,
+                totalMs: prof ? perfSince(started) : 0,
+                readMs,
+                analyzeMs,
+                contentStatsMs
+            });
             return;
         }
-        if (!(await guardUnsavedBeforeNewLayout(app))) return;
+        const guardStarted = prof ? perfNow() : 0;
+        const canReplaceLayout = await guardUnsavedBeforeNewLayout(app);
+        guardMs = prof ? perfSince(guardStarted) : 0;
+        if (!canReplaceLayout) {
+            recordSvgImportPerf(file, analysis, {
+                status: 'cancelled',
+                ms: pipelineMs,
+                totalMs: prof ? perfSince(started) : 0,
+                readMs,
+                analyzeMs,
+                contentStatsMs,
+                guardMs
+            });
+            return;
+        }
         const customLayout = namedCustomLayout(draft.layout, file.name, app);
+        const commitStarted = prof ? perfNow() : 0;
         openImportedCustomLayout(app, customLayout);
+        commitMs = prof ? perfSince(commitStarted) : 0;
         app._showToast?.(svgImportToastText(customLayout.meta.name, draft.stats));
+        recordSvgImportPerf(file, analysis, {
+            status: 'created',
+            ms: pipelineMs,
+            totalMs: prof ? perfSince(started) : 0,
+            readMs,
+            analyzeMs,
+            contentStatsMs,
+            guardMs,
+            commitMs
+        });
     } catch (e) {
+        if (!pipelineMs) pipelineMs = prof ? perfSince(started) : 0;
+        recordSvgImportPerf(file, analysis, {
+            status: 'error',
+            error: e?.message || 'Could not read this SVG drawing.',
+            ms: pipelineMs,
+            totalMs: prof ? perfSince(started) : 0,
+            readMs,
+            analyzeMs,
+            contentStatsMs,
+            guardMs,
+            commitMs
+        });
         await app.dialog?.alert({
             title: 'Layout import failed',
             text: e?.message || 'Could not read this SVG drawing.',
             okText: 'Close'
         });
     }
+}
+
+function recordSvgImportPerf(file, analysis, details = {}) {
+    if (!perfEnabled()) return;
+    const draft = analysis?.layoutDraft?.stats || {};
+    const diagnostics = analysis?.diagnostics || {};
+    const timings = analysis?.timings || {};
+    perfRecord('import', {
+        file: file?.name || 'drawing.svg',
+        bytes: file?.size || 0,
+        keys: draft.keys || 0,
+        blocks: draft.blocks || 0,
+        rows: draft.rows || 0,
+        stacks: draft.stacks || 0,
+        profile: draft.layoutProfile || '',
+        warnings: diagnostics.warnings?.length || 0,
+        notices: diagnostics.notices?.length || 0,
+        stripMs: timings.stripMs || 0,
+        groupsMs: timings.groupsMs || 0,
+        parseLinesMs: timings.parseLinesMs || 0,
+        classifyLinesMs: timings.classifyLinesMs || 0,
+        pathArcsMs: timings.pathArcsMs || 0,
+        capsMs: timings.capsMs || 0,
+        detectMs: timings.detectMs || 0,
+        diagnosticsMs: timings.diagnosticsMs || 0,
+        draftMs: timings.draftMs || 0,
+        ...details
+    });
 }
 
 function addSvgImportContentStats(analysis) {
@@ -2546,10 +2797,33 @@ function svgImportReportHtml(fileName, analysis, options = {}) {
     return `<div class="svg-import-report">
         ${options.intro ? `<p>${html(options.intro)}</p>` : ''}
         <dl>${rows.map(([label, value]) => `<div><dt>${html(label)}</dt><dd>${html(value)}</dd></div>`).join('')}</dl>
+        ${svgImportTimingsHtml(analysis)}
         ${svgImportPreviewHtml(analysis)}
         ${svgImportIssueListHtml('Warnings', warnings, analysis)}
         ${svgImportIssueListHtml('Notes', notices, analysis, { limit: 8 })}
     </div>`;
+}
+
+function svgImportTimingsHtml(analysis) {
+    const t = analysis?.timings || null;
+    if (!t) return '';
+    const rows = [
+        ['Total', t.totalMs],
+        ['Strip private data', t.stripMs],
+        ['Find groups', t.groupsMs],
+        ['Count tags', t.tagCountsMs],
+        ['Parse lines', t.parseLinesMs],
+        ['Classify lines', t.classifyLinesMs],
+        ['Parse path arcs', t.pathArcsMs],
+        ['Parse caps', t.capsMs],
+        ['Detect keys', t.detectMs],
+        ['Diagnostics', t.diagnosticsMs],
+        ['Draft layout', t.draftMs]
+    ].filter(([, value]) => Number.isFinite(value));
+    if (!rows.length) return '';
+    return `<section><h3 class="verify-h">Timings</h3><dl>${rows
+        .map(([label, value]) => `<div><dt>${html(label)}</dt><dd>${html(Number(value).toFixed(2))} ms</dd></div>`)
+        .join('')}</dl></section>`;
 }
 
 function svgImportPreviewHtml(analysis) {
@@ -2662,7 +2936,8 @@ function svgImportReportData(fileName, analysis) {
             suspiciousKeyIndices: [...(diagnostics.suspiciousKeyIndices || [])],
             suspiciousKeys: diagnostics.suspiciousKeys || 0
         },
-        draft: clonePlain(analysis?.layoutDraft?.stats || null)
+        draft: clonePlain(analysis?.layoutDraft?.stats || null),
+        timings: clonePlain(analysis?.timings || null)
     };
 }
 
@@ -3369,19 +3644,44 @@ function installCleanExports(app) {
         if (typeof app[method] !== 'function') continue;
         const original = app[method].bind(app);
         app[method] = async (...args) => {
+            const prof = perfEnabled();
+            const started = prof ? perfNow() : 0;
+            let status = 'ok';
+            let error = '';
             const previous = {
                 active: SELECTION.active,
                 indices: [...(SELECTION.indices || [])]
             };
             const hasSelection = previous.active != null || previous.indices.length > 0;
-            if (!hasSelection) return original(...args);
-            SELECTION = { active: null, indices: [] };
-            app.renderNow();
+            if (hasSelection) {
+                SELECTION = { active: null, indices: [] };
+                app.renderNow();
+            }
             try {
                 return await original(...args);
+            } catch (e) {
+                status = 'error';
+                error = e?.message || String(e);
+                throw e;
             } finally {
-                SELECTION = { active: previous.active, indices: previous.indices };
-                app.renderNow();
+                if (hasSelection) {
+                    SELECTION = { active: previous.active, indices: previous.indices };
+                    app.renderNow();
+                }
+                if (prof) {
+                    const data = layoutFor(app.settings);
+                    perfRecord('export', {
+                        ms: perfSince(started),
+                        method,
+                        format: method.replace(/^export/, '').toLowerCase(),
+                        status,
+                        error,
+                        hadSelection: hasSelection,
+                        layout: data.sourceLayout?.meta?.name || '',
+                        keys: data.keys?.length || 0,
+                        legends: data.legends?.length || 0
+                    });
+                }
             }
         };
     }

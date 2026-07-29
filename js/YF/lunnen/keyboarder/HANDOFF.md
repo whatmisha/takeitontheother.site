@@ -688,8 +688,31 @@ Stage 9 optimization is started:
   element, and `render()` reuses that `pathD` instead of regenerating glyph outlines on every
   repaint. `analysis/verify-legends.mjs` asserts every text legend has a cached outline path,
   and `analysis/preview.mjs` reuses the same cache.
-- Next Stage 9 work should add browser-side repaint/import/export timing harnesses, then split the
-  coarse `layoutFor()` cache into geometry/content/legend-placement layers.
+- Second code slice is done: `app/perf.js` exposes `window.KeyboarderPerf`. Enable with `?perf=1`
+  or `KeyboarderPerf.enable()`, then use `KeyboarderPerf.benchRepaint(30)`,
+  `KeyboarderPerf.snapshot()`, or `KeyboarderPerf.log('render'|'layout'|'import'|'export')`.
+  `layoutFor()` now records cache hit/miss plus `signatureMs / geometryMs / contentMs / legendsMs`;
+  `render()` records frame time/counts; SVG import and clean export record status/timing samples.
+  For Codex Browser smoke tests, check `<html data-keyboarder-perf="on">`; the Browser evaluate
+  scope may not see page-added `window.*` globals.
+- Third code slice is done: perf now mirrors snapshots to
+  `<script id="keyboarderPerfState" type="application/json">`, so Codex Browser can read samples
+  from the DOM. Import timing now separates `ms` (pipeline), `totalMs`, `guardMs`, and `commitMs`.
+- Stage 9.2 cache split is done: `layoutFor()` wraps separate geometry/content/legend caches.
+  Perf samples now include `geometryHit`, `contentHit`, and `legendsHit`. Browser QA confirmed:
+  layer toggle `Guides` is a full hit; nudging `Column pitch` records one geometry/content/legend
+  miss followed by hits.
+- Browser baseline from `?perf=1`: LCAKB23 final render ~3.0 ms with 110 keys/176 text paths;
+  `test_layout_S.svg` import pipeline 27.5 ms, analysis 23.3 ms, final render ~1.5 ms;
+  `test_layout_M.svg` import pipeline 28.8 ms, analysis 24.7 ms, final render ~1.2 ms.
+- Stage 9.3 first slice is done: `analyzeSvgBlueprint()` counts SVG element tags once via
+  `countElementTags()` and exposes `analysis.timings` with strip/group/tag/line/classify/path/caps/
+  span/calibration/detect/diagnostics/draft/total timings. Import report HTML/JSON now includes a
+  Timings section, and `KeyboarderPerf` import samples include top-level breakdown fields such as
+  `parseLinesMs`, `detectMs`, and `draftMs`. Browser smoke on `test_layout_S.svg` confirmed
+  breakdown in `#keyboarderPerfState` (pipeline ~22 ms, parse lines ~3.9 ms, detect ~4.8 ms).
+- Next Stage 9 work should continue with larger/messier Illustrator exports and decide from real
+  stress data whether a Web Worker import path is needed.
 
 ## Notes For The Next Assistant
 

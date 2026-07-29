@@ -148,6 +148,8 @@ assert.deepEqual(syntheticAnalysis.calibration, {
 assert.equal(syntheticAnalysis.diagnostics.warnings.length, 1);
 assert.equal(syntheticAnalysis.diagnostics.warnings[0].code, 'no-keys');
 assert.equal(blueprintSummaryLines(syntheticAnalysis).length, 6);
+assert.ok(syntheticAnalysis.timings.totalMs >= 0);
+assert.ok(Number.isFinite(syntheticAnalysis.timings.parseLinesMs));
 
 const badDiagnostics = diagnoseRecognizedKeys({
     groups: { blueprint: true, caps: true },
@@ -174,6 +176,8 @@ assert.equal(real.lineBuckets.vertical.length, 1388);
 assert.equal(real.lineBuckets.diagonal.length, 884);
 assert.equal(real.elements.lines, 3930);
 assert.equal(real.elements.paths, 866);
+assert.ok(real.timings.detectMs >= 0);
+assert.ok(real.timings.draftMs >= 0);
 assert.equal(real.calibration.caps, 110);
 assert.equal(real.calibration.keyWidth1U, 46.4941);
 assert.equal(real.calibration.keyHeight, 46.1885);

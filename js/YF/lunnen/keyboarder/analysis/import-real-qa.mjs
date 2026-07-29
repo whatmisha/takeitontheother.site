@@ -64,6 +64,7 @@ for (const file of files) {
 
     console.log(`\n${basename(file)}`);
     console.log(blueprintSummaryLines(analysis).join('\n'));
+    console.log(`Timing: analyze ${analysis.timings.totalMs} ms, detect ${analysis.timings.detectMs} ms, lines ${analysis.timings.parseLinesMs} ms`);
     console.log(`Attach: matched ${attached.matched}/${built.keys.length}, orphans ${attached.orphans}`);
     console.log(`First row: ${labels.slice(0, 17).join(' | ')}`);
 }

@@ -878,6 +878,20 @@ renderer читает cached `pathD`, а `analysis/verify-legends.mjs` пров�
 получили outline path. Это переносит дорогую генерацию glyph paths из каждого repaint в уже
 существующий layout/legend cache.
 
+Второй срез Stage 9 готов: добавлен browser-side perf harness `window.KeyboarderPerf`. Включение:
+`?perf=1` в URL или `KeyboarderPerf.enable()` в консоли. Главные команды:
+`KeyboarderPerf.benchRepaint(30)` для repaint без layout changes, `KeyboarderPerf.snapshot()` для
+сводки и `KeyboarderPerf.log('render'|'layout'|'import'|'export')` для таблицы samples. `layoutFor()`
+пишет cache hit/miss и breakdown `signatureMs / geometryMs / contentMs / legendsMs`, `render()`
+пишет длительность кадра и counts, SVG import пишет `readMs / analyzeMs / contentStatsMs`, export
+пишет длительность clean export и статус. Это закрывает базовые счетчики/debug stats перед
+разделением кешей в 9.2 и даёт замеряемую базу для LCAKB23/S/M.
+
+DOM mirror готов: когда perf включён, `app/perf.js` поддерживает скрытый
+`<script id="keyboarderPerfState" type="application/json">…</script>` и
+`<html data-keyboarder-perf="on">`. Это нужно для Codex Browser и будущих smoke-тестов: они могут
+читать perf snapshot из DOM даже если изолированный browser scope не видит `window.KeyboarderPerf`.
+
 #### 9.2. Разделить geometry/content/layout cache и legend placement cache
 
 Сейчас `layoutFor()` имеет один крупный cache signature: grid/layout edits/type/content/language/
@@ -898,6 +912,24 @@ font registry. Это безопасно, но грубо. Некоторые н
 geometry/content; изменение legends не будет пересчитывать key rects; изменение grid не будет
 пересчитывать static generated content больше необходимого.
 
+Срез 9.2 готов: `layoutFor()` оставлен public wrapper, но внутри теперь три слоя:
+`geometryFor()` (source layout + grid + layout edits), `contentForGeometry()` (content/language/
+content edits/type sizes) и `legendsForContent()` (typeface/compensation/leading). Perf samples
+пишут `geometryHit`, `contentHit`, `legendsHit`; layer toggle `Guides` подтверждён как full cache
+hit, а изменение `Column pitch` даёт ожидаемый miss: geometry/content/legends пересчитались один
+раз, следующие вызовы стали hit. Shape signature rows/blocks кешируется через `WeakMap`.
+
+Baseline из Browser QA на локальной странице `?perf=1`:
+
+| Layout | Keys | Text paths | Final render | Import pipeline | SVG analysis |
+|---|---:|---:|---:|---:|---:|
+| LCAKB23 | 110 | 176 | ~3.0 ms | — | — |
+| `test_layout_S.svg` | 78 | 138 | ~1.5 ms | 27.5 ms | 23.3 ms |
+| `test_layout_M.svg` | 89 | 149 | ~1.2 ms | 28.8 ms | 24.7 ms |
+
+Для import `ms` теперь означает чистое pipeline-время; `totalMs`, `guardMs` и `commitMs` пишутся
+отдельно, чтобы пользовательское ожидание в диалоге Save/Discard не маскировало скорость парсера.
+
 #### 9.3. SVG import performance на больших чертежах
 
 Импорт сейчас хорошо работает на S/M, но line/path анализ потенциально дорогой на чертежах с
@@ -913,6 +945,20 @@ geometry/content; изменение legends не будет пересчиты�
 4. На больших SVG показывать report timings, чтобы было видно, где конкретный файл тормозит.
 5. При необходимости вынести import analysis в Web Worker: UI не должен зависать на сложном
    Illustrator export.
+
+Срез 9.3 готов: `analyzeSvgBlueprint()` теперь считает `line/path/rect/polygon` одним проходом
+через `countElementTags()` и переиспользует результат для diagnostics/report. В анализ добавлен
+`timings` breakdown: `stripMs`, `viewBoxMs`, `groupsMs`, `tagCountsMs`, `parseLinesMs`,
+`classifyLinesMs`, `pathArcsMs`, `capsMs`, `spanGroupsMs`, `calibrationMs`, `detectMs`,
+`diagnosticsMs`, `draftMs`, `totalMs`. HTML/JSON import report выводит секцию **Timings**, а
+`KeyboarderPerf` import samples пишут основные breakdown-поля на верхнем уровне. Browser smoke на
+`test_layout_S.svg` подтвердил breakdown в `#keyboarderPerfState`: pipeline ~22 ms, parse lines
+~3.9 ms, detect keys ~4.8 ms, draft ~1.1 ms. `analysis/import-real-qa.mjs` теперь печатает timing
+строку для S/M, а `analysis/blueprint-import.mjs` проверяет наличие timing data.
+
+Следующий подпункт 9.3: проверить действительно большие/грязные Illustrator exports и только после
+этого решать, нужен ли Web Worker. Текущие S/M файлы быстрые; риск зависания UI проявится скорее
+на чертежах с существенно большим количеством path/line/tag объектов.
 
 #### 9.4. Export performance и предсказуемость downloads
 

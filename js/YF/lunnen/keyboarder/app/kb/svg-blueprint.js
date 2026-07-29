@@ -227,37 +227,53 @@ export function horizontalSpanGroups(horizontal = [], decimals = 1) {
 }
 
 export function analyzeSvgBlueprint(svgText = '') {
-    const stripped = stripIllustratorPrivateData(svgText);
-    const viewBox = parseViewBox(stripped.svg);
-    const blueprint = extractSvgGroup(stripped.svg, 'blueprint');
-    const caps = extractSvgGroup(stripped.svg, 'caps');
+    const timings = {};
+    const totalStarted = nowMs();
+    const timed = (key, fn) => {
+        const started = nowMs();
+        const value = fn();
+        timings[key] = round(nowMs() - started, 4);
+        return value;
+    };
+
+    const stripped = timed('stripMs', () => stripIllustratorPrivateData(svgText));
+    const viewBox = timed('viewBoxMs', () => parseViewBox(stripped.svg));
+    const groups = timed('groupsMs', () => ({
+        blueprint: extractSvgGroup(stripped.svg, 'blueprint'),
+        caps: extractSvgGroup(stripped.svg, 'caps')
+    }));
+    const blueprint = groups.blueprint;
+    const caps = groups.caps;
     const source = blueprint || stripped.svg;
-    const lines = parseSvgLines(source);
-    const buckets = classifySvgLines(lines);
-    const pathCornerArcs = parseSvgPathCornerArcs(source);
-    const capRects = parseSvgRects(caps);
-    const spanGroups = horizontalSpanGroups(buckets.horizontal);
-    const calibration = calibrateFromCaps(capRects);
-    const recognized = detectKeyRectCandidates({
+    const sourceCounts = timed('tagCountsMs', () => countElementTags(source, ['line', 'path', 'rect', 'polygon']));
+    const lines = timed('parseLinesMs', () => parseSvgLines(source));
+    const buckets = timed('classifyLinesMs', () => classifySvgLines(lines));
+    const pathCornerArcs = timed('pathArcsMs', () => parseSvgPathCornerArcs(source));
+    const capRects = timed('capsMs', () => parseSvgRects(caps));
+    const spanGroups = timed('spanGroupsMs', () => horizontalSpanGroups(buckets.horizontal));
+    const calibration = timed('calibrationMs', () => calibrateFromCaps(capRects));
+    const elements = {
+        lines: lines.length,
+        paths: sourceCounts.path || 0,
+        pathCornerArcs: pathCornerArcs.length,
+        rects: sourceCounts.rect || 0,
+        polygons: sourceCounts.polygon || 0
+    };
+    const recognized = timed('detectMs', () => detectKeyRectCandidates({
         lineBuckets: buckets,
         pathCornerArcs,
         calibration,
         caps: capRects
-    });
-    const diagnostics = diagnoseRecognizedKeys({
+    }));
+    const diagnostics = timed('diagnosticsMs', () => diagnoseRecognizedKeys({
         groups: { blueprint: !!blueprint, caps: !!caps },
-        elements: {
-            lines: lines.length,
-            paths: countTags(source, 'path'),
-            pathCornerArcs: pathCornerArcs.length,
-            rects: countTags(source, 'rect'),
-            polygons: countTags(source, 'polygon')
-        },
+        elements,
         calibration,
         caps: capRects,
         recognized
-    });
-    const layoutDraft = layoutDraftFromRecognized({ calibration, recognized, diagnostics });
+    }));
+    const layoutDraft = timed('draftMs', () => layoutDraftFromRecognized({ calibration, recognized, diagnostics }));
+    timings.totalMs = round(nowMs() - totalStarted, 4);
 
     return {
         viewBox,
@@ -271,9 +287,9 @@ export function analyzeSvgBlueprint(svgText = '') {
         },
         elements: {
             lines: lines.length,
-            paths: countTags(source, 'path'),
-            rects: countTags(source, 'rect'),
-            polygons: countTags(source, 'polygon')
+            paths: sourceCounts.path || 0,
+            rects: sourceCounts.rect || 0,
+            polygons: sourceCounts.polygon || 0
         },
         lineBuckets: buckets,
         horizontalSpanGroups: spanGroups.length,
@@ -282,7 +298,8 @@ export function analyzeSvgBlueprint(svgText = '') {
         calibration,
         recognized,
         diagnostics,
-        layoutDraft
+        layoutDraft,
+        timings
     };
 }
 
@@ -1125,6 +1142,20 @@ function countTags(source, name) {
     return tags(source, name).length;
 }
 
+function countElementTags(source, names = []) {
+    const wanted = new Set(names.map((name) => String(name || '').toLowerCase()).filter(Boolean));
+    const counts = Object.fromEntries([...wanted].map((name) => [name, 0]));
+    if (!wanted.size) return counts;
+    const re = /<([A-Za-z][\w:.-]*)\b[^>]*>/g;
+    let m;
+    const svg = String(source || '');
+    while ((m = re.exec(svg))) {
+        const name = String(m[1] || '').toLowerCase();
+        if (wanted.has(name)) counts[name] += 1;
+    }
+    return counts;
+}
+
 function numberAttr(value) {
     if (value == null || value === '') return NaN;
     const m = String(value).match(NUM_RE);
@@ -1195,4 +1226,8 @@ function diffs(values) {
     const out = [];
     for (let i = 1; i < values.length; i++) out.push(values[i] - values[i - 1]);
     return out;
+}
+
+function nowMs() {
+    return globalThis.performance?.now ? globalThis.performance.now() : Date.now();
 }
