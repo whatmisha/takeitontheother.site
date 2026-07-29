@@ -168,7 +168,7 @@ assert.equal(badDiagnostics.ok, false);
 assert.equal(badDiagnostics.warnings.filter((issue) => issue.code === 'overlap').length, 2);
 assert.deepEqual(badDiagnostics.suspiciousKeyIndices, [0, 1]);
 
-const real = analyzeSvgBlueprint(readFileSync('LCAKB23.svg', 'utf8'));
+const real = analyzeSvgBlueprint(readFileSync('reference/lcakb23/LCAKB23.svg', 'utf8'));
 assert.equal(real.groups.blueprint, true);
 assert.equal(real.groups.caps, true);
 assert.equal(real.lineBuckets.horizontal.length, 1658);

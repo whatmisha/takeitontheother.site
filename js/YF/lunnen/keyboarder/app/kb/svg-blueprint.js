@@ -146,20 +146,21 @@ export function parseSvgRects(source = '') {
 }
 
 export function parseSvgPathCornerArcs(source = '') {
-    return tags(source, 'path').map((tag, i) => {
-        const a = parseSvgAttributes(tag);
-        const d = String(a.d || '').trim();
+    const out = [];
+    tags(source, 'path').forEach((tag, i) => {
+        if (!/[cC]/.test(tag)) return;
+        const d = pathDataAttr(tag);
         const cubic = d.match(/[cC]/)?.[0] || '';
-        if (!cubic) return null;
+        if (!cubic) return;
         const nums = numbers(d);
-        if (nums.length < 8) return null;
+        if (nums.length < 8) return;
         const x = nums[0];
         const y = nums[1];
         const ex = cubic === 'c' ? x + nums[6] : nums[6];
         const ey = cubic === 'c' ? y + nums[7] : nums[7];
         const dx = ex - x;
         const dy = ey - y;
-        if (Math.abs(dx) < 0.05 || Math.abs(dy) < 0.05) return null;
+        if (Math.abs(dx) < 0.05 || Math.abs(dy) < 0.05) return;
 
         const arc = {
             i,
@@ -171,19 +172,22 @@ export function parseSvgPathCornerArcs(source = '') {
             dy
         };
         if (dx < 0 && dy > 0) {
-            return { ...arc, kind: 'tl', x0: round(ex, 4), y0: round(y, 4) };
+            out.push({ ...arc, kind: 'tl', x0: round(ex, 4), y0: round(y, 4) });
+            return;
         }
         if (dx < 0 && dy < 0) {
-            return { ...arc, kind: 'tr', x1: round(x, 4), y0: round(ey, 4) };
+            out.push({ ...arc, kind: 'tr', x1: round(x, 4), y0: round(ey, 4) });
+            return;
         }
         if (dx > 0 && dy > 0) {
-            return { ...arc, kind: 'bl', x0: round(x, 4), y1: round(ey, 4) };
+            out.push({ ...arc, kind: 'bl', x0: round(x, 4), y1: round(ey, 4) });
+            return;
         }
         if (dx > 0 && dy < 0) {
-            return { ...arc, kind: 'br', x1: round(ex, 4), y1: round(y, 4) };
+            out.push({ ...arc, kind: 'br', x1: round(ex, 4), y1: round(y, 4) });
         }
-        return null;
-    }).filter(Boolean);
+    });
+    return out;
 }
 
 export function calibrateFromCaps(rects = []) {
@@ -1138,8 +1142,9 @@ function tags(source, name) {
     return String(source || '').match(re) || [];
 }
 
-function countTags(source, name) {
-    return tags(source, name).length;
+function pathDataAttr(tag) {
+    const m = String(tag || '').match(/\sd\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/i);
+    return String(m?.[1] ?? m?.[2] ?? m?.[3] ?? '').trim();
 }
 
 function countElementTags(source, names = []) {

@@ -4,7 +4,7 @@ from fontTools.ttLib import TTFont
 from fontTools.pens.boundsPen import BoundsPen
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FONT = os.path.join(ROOT, 'LCAKB23', 'Fonts', 'YS Text-Regular.ttf')
+FONT = os.path.join(ROOT, 'Fonts', 'YS Text', 'YS Text-Regular.ttf')
 _f = TTFont(FONT)
 UPM = _f['head'].unitsPerEm
 _cmap = _f.getBestCmap()

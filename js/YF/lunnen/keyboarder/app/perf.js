@@ -6,6 +6,7 @@ const state = {
     enabled: false,
     limit: DEFAULT_LIMIT,
     samples: {
+        startup: [],
         layout: [],
         render: [],
         import: [],
@@ -13,6 +14,8 @@ const state = {
     },
     counters: {}
 };
+
+const startupEvents = new Map();
 
 export function perfEnabled() {
     return !!state.enabled;
@@ -24,6 +27,16 @@ export function perfNow() {
 
 export function perfSince(start) {
     return roundMs(perfNow() - start);
+}
+
+export function perfMarkStartup(event, detail = {}) {
+    const key = String(event || '').trim();
+    if (!key) return null;
+    const at = perfNow();
+    startupEvents.set(key, { at, detail: { ...detail } });
+    const sample = buildStartupSample(key, detail, at);
+    if (state.enabled) perfRecord('startup', sample);
+    return sample;
 }
 
 export function perfRecord(kind, sample = {}) {
@@ -77,6 +90,7 @@ export function installKeyboarderPerf(app = null) {
         state.enabled = initialEnabled();
         state.initialized = true;
     }
+    replayStartupEvents();
     syncDocumentState();
     const api = {
         get enabled() {
@@ -122,6 +136,7 @@ function initialEnabled() {
 
 function setEnabled(value) {
     state.enabled = !!value;
+    replayStartupEvents();
     syncDocumentState();
     try {
         window.localStorage?.setItem('keyboarder.perf', state.enabled ? '1' : '0');
@@ -154,6 +169,68 @@ function benchRepaint(app, iterations = 30) {
         cacheHits: layoutRows.filter((row) => row.hit).length,
         cacheMisses: layoutRows.filter((row) => !row.hit).length
     };
+}
+
+function replayStartupEvents() {
+    if (!state.enabled) return;
+    const recorded = new Set((state.samples.startup || []).map((row) => row.event));
+    for (const [event, row] of startupEvents.entries()) {
+        if (!recorded.has(event)) perfRecord('startup', buildStartupSample(event, row.detail, row.at));
+    }
+}
+
+function buildStartupSample(event, detail = {}, at = perfNow()) {
+    const domReady = startupTime('dom-ready');
+    const firstRender = startupTime('first-render');
+    const appReady = startupTime('app-ready');
+    const fontStart = startupTime('font-load-start');
+    const fontReady = startupTime('font-ready');
+    return {
+        event,
+        ms: deltaFrom(domReady, at),
+        eventAtMs: roundMs(at),
+        domReadyMs: roundMaybe(domReady),
+        firstRenderMs: roundMaybe(firstRender),
+        appReadyMs: roundMaybe(appReady),
+        fontReadyMs: roundMaybe(fontReady),
+        domToFirstRenderMs: deltaBetween(domReady, firstRender),
+        domToAppReadyMs: deltaBetween(domReady, appReady),
+        domToFontReadyMs: deltaBetween(domReady, fontReady),
+        fontLoadMs: deltaBetween(fontStart, fontReady),
+        ...detail
+    };
+}
+
+function startupTime(event) {
+    return startupEvents.get(event)?.at ?? null;
+}
+
+function deltaFrom(from, to) {
+    return Number.isFinite(from) && Number.isFinite(to) ? roundMs(to - from) : roundMs(to);
+}
+
+function deltaBetween(from, to) {
+    return Number.isFinite(from) && Number.isFinite(to) ? roundMs(to - from) : null;
+}
+
+function roundMaybe(value) {
+    return Number.isFinite(value) ? roundMs(value) : null;
+}
+
+function markDomReady() {
+    if (!startupEvents.has('dom-ready')) perfMarkStartup('dom-ready');
+}
+
+try {
+    if (typeof document !== 'undefined') {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', markDomReady, { once: true });
+        } else {
+            markDomReady();
+        }
+    }
+} catch {
+    // Non-DOM contexts can still import the perf helpers.
 }
 
 function syncDocumentState() {

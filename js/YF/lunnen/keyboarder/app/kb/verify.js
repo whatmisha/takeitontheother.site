@@ -1,9 +1,9 @@
 /**
- * Сверка сгенерированной геометрии с эталоном (LCAKB23.layout.json).
+ * Сверка сгенерированной геометрии с эталоном (reference/lcakb23/LCAKB23.layout.json).
  *
- * Смысл — не «примерно похоже», а численный отчёт с порогами приёмки из PIPELINE.md.
+ * Смысл — не «примерно похоже», а численный отчёт с порогами приёмки из docs/project/PIPELINE.md.
  * Эталон берётся как есть, включая ручную работу: любое расхождение считается ошибкой
- * генератора, а не улучшением (решение 4 в TOOL_PLAN.md).
+ * генератора, а не улучшением (решение 4 в docs/project/TOOL_PLAN.md).
  */
 
 /** Порог приёмки геометрии, px. Эталон записан с 4 знаками, так что 0.001 — предел разрешения. */
@@ -21,10 +21,10 @@ async function loadOnce(url) {
 }
 
 /** Эталон геометрии: сводная таблица по клавишам. */
-export const loadReference = (url = 'LCAKB23.layout.json') => loadOnce(url);
+export const loadReference = (url = 'reference/lcakb23/LCAKB23.layout.json') => loadOnce(url);
 
 /** Эталон легенд: позиция пера каждой строки и габарит каждой иконки. */
-export const loadLegendReference = (url = 'LCAKB23.legends.json') => loadOnce(url);
+export const loadLegendReference = (url = 'reference/lcakb23/LCAKB23.legends.json') => loadOnce(url);
 
 /** Ключ сопоставления: ряд плюс округлённый x. Устойчив к невязке до 0.05 px. */
 const keyOf = (k) => `${k.row}|${Math.round(k.x * 10)}`;
@@ -105,7 +105,7 @@ export function compare(keys, ref) {
  *
  * Единого порога здесь быть не может: правила имеют разную заявленную точность, и требовать
  * от оптической компенсации того же, что от привязки к кромке, значит либо завалить хорошую
- * модель, либо пропустить плохую. Каждое число взято из измерений в PIPELINE.md, а не назначено.
+ * модель, либо пропустить плохую. Каждое число взято из измерений в docs/project/PIPELINE.md, а не назначено.
  */
 export const LEGEND_CLASSES = {
     'v-edge': { tol: 0.15, label: 'vertical: guide edge, letters, digits, icons',

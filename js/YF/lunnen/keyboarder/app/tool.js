@@ -8,14 +8,13 @@
  * по-прежнему в px (= pt = 1/72″), перевод через toPx / toMm.
  */
 import { defineTool } from '../vendor/framework/src/core/defineTool.js';
-import { installKeyboarderPerf, perfEnabled, perfNow, perfRecord, perfSince } from './perf.js';
+import { installKeyboarderPerf, perfEnabled, perfMarkStartup, perfNow, perfRecord, perfSince } from './perf.js';
 import { buildLayout, gapOf, widthInU } from './kb/grid.js';
 import { attachGuides } from './kb/guides.js';
 import { LAYOUT_OPTIONS, LAYOUTS, LCAKB23 } from './kb/layouts.js';
 import { toMm, toPx } from './kb/units.js';
 import { loadTypeface, parseFont } from './kb/typography.js';
 import { Compensator, YS_TEXT_REGULAR } from './kb/compensate.js';
-import { autoCompensationParams, probeTypeface, runCompensationInvariants } from './kb/fontprobe.js';
 import { attachContent, buildLegends, textPath } from './kb/legends.js';
 import {
     loadReference, loadLegendReference, compare, reportHtml,
@@ -85,6 +84,13 @@ const REFERENCE_FONT_FAMILY = 'YS Text';
 const CUSTOM_FONT_FAMILY_PREFIX = 'Keyboarder Session Font';
 const FONT_FILE_RE = /\.(otf|ttf|woff|woff2)$/i;
 const FONT_CONTROL_SHEET_CHARS = ['H', 'S', 'O', 'A', 'W', 'X', 'Ж', 'О', '@', '~', '№', ',', '.', '?', '!'];
+let FONT_PROBE_HELPERS = null;
+let STARTUP_FIRST_RENDER_RECORDED = false;
+
+function loadFontProbeHelpers() {
+    if (!FONT_PROBE_HELPERS) FONT_PROBE_HELPERS = import('./kb/fontprobe.js');
+    return FONT_PROBE_HELPERS;
+}
 
 function isLayoutLike(layout) {
     return !!layout
@@ -173,6 +179,7 @@ let SELECTION = { active: 0, indices: [0] };
 let LAST_DELETED_EDIT_ID = null;
 let LAST_DELETED_ROW_ID = null;
 let COMP_TABLE_SELECTED_CH = null;
+let LAST_SVG_IMPORT_REPORT = null;
 
 function cleanRuntimeFontId(value) {
     return String(value || '').trim().replace(/[^\w:.-]+/g, '-').slice(0, 96);
@@ -837,7 +844,7 @@ const app = defineTool({
             svg.appendChild(g);
         }
 
-        updateReadout(s, keys, grid, legends);
+        updateReadout(s, keys, grid, legends, data.bounds);
         updateLegendInspector(s, keys, grid, legends);
         updateKeyGeometryEditor(s, keys);
         updateLegendEditor(s, keys);
@@ -847,6 +854,17 @@ const app = defineTool({
         syncCompensationTableEditor(s);
         syncLayoutSelect(s);
         syncLanguageLayerSelect(s);
+
+        if (!STARTUP_FIRST_RENDER_RECORDED) {
+            STARTUP_FIRST_RENDER_RECORDED = true;
+            perfMarkStartup('first-render', {
+                layout: data.sourceLayout?.meta?.name || '',
+                keys: keys.length,
+                legends: legends.length,
+                textMode: normalizeLegendTextMode(s.legendTextMode),
+                fontReady: !!TYPEFACE
+            });
+        }
 
         if (prof) {
             let textCount = 0;
@@ -874,6 +892,7 @@ const app = defineTool({
         installPdfExport(readyApp);
         installCleanExports(readyApp);
         installSuggestedPresetSave(readyApp);
+        installImportDebugAPI(readyApp);
         initLayoutSelect(readyApp);
         initLanguageLayerSelect(readyApp);
         initFontImport(readyApp);
@@ -1096,20 +1115,38 @@ const app = defineTool({
         }).catch(() => { /* подложка необязательна */ });
 
         // Гарнитура: путь с пробелом обязан быть URL-энкоден, папка называется Fonts с большой.
-        loadTypeface(REFERENCE_FONT_URL).then((tf) => {
-            registerReferenceFont(tf);
+        perfMarkStartup('font-load-start', { font: 'YS Text Regular' });
+        loadTypeface(REFERENCE_FONT_URL).then(async (tf) => {
+            await registerReferenceFont(tf);
             COMP_CACHE = new Map();
             syncFontImportStatus();
             syncCompensationTableEditor(readyApp.settings);
             readyApp.render();
+            perfMarkStartup('font-ready', {
+                font: 'YS Text Regular',
+                registryFonts: FONT_REGISTRY.size
+            });
         }).catch((e) => {
             TYPEFACE_SIG = 'font:failed';
             syncFontImportStatus();
+            perfMarkStartup('font-failed', {
+                font: 'YS Text Regular',
+                error: e?.message || String(e)
+            });
             readyApp.dialog?.alert({
                 title: 'Font failed to load',
                 text: `${e.message}\n\nGeometry still works; legends will be missing.`,
                 okText: 'Close'
             });
+        });
+    },
+
+    onReady(readyApp) {
+        const data = layoutFor(readyApp.settings);
+        perfMarkStartup('app-ready', {
+            layout: data.sourceLayout?.meta?.name || '',
+            keys: data.keys?.length || 0,
+            legends: data.legends?.length || 0
         });
     }
 });
@@ -1123,6 +1160,52 @@ function html(v) {
 function round(value, decimals = 4) {
     const p = 10 ** decimals;
     return Math.round((Number(value) + Number.EPSILON) * p) / p;
+}
+
+function setTextIfChanged(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const text = String(value ?? '');
+    if (el.textContent !== text) el.textContent = text;
+}
+
+function setHtmlIfChanged(el, markup, sig) {
+    if (!el) return;
+    const nextSig = String(sig ?? markup ?? '');
+    if (el.dataset.sig === nextSig) return false;
+    el.dataset.sig = nextSig;
+    el.innerHTML = markup;
+    return true;
+}
+
+function setDisabledIfChanged(el, disabled) {
+    if (el && el.disabled !== !!disabled) el.disabled = !!disabled;
+}
+
+function setTitleIfChanged(el, title = '') {
+    if (el && el.title !== title) el.title = title;
+}
+
+function setClassIfChanged(el, className, active) {
+    if (el && el.classList.contains(className) !== !!active) el.classList.toggle(className, !!active);
+}
+
+function setAttrIfChanged(el, name, value) {
+    if (!el) return;
+    const next = String(value ?? '');
+    if (el.getAttribute(name) !== next) el.setAttribute(name, next);
+}
+
+function setSelectValueIfChanged(select, value) {
+    if (select && select.value !== String(value ?? '')) select.value = String(value ?? '');
+}
+
+function setInputValueForSig(input, value, sig) {
+    if (!input) return;
+    const nextSig = String(sig ?? '');
+    if (input.dataset.valueSig === nextSig) return;
+    input.value = String(value ?? '');
+    input.dataset.valueSig = nextSig;
 }
 
 function modelIOOptions(layout = LCAKB23) {
@@ -1776,23 +1859,25 @@ function syncLegendSelect(keys) {
         select.dataset.sig = sig;
     }
     const sel = normalizedSelection(keys);
-    select.value = sel.active == null ? '' : String(sel.active);
+    setSelectValueIfChanged(select, sel.active == null ? '' : String(sel.active));
 }
 
 function syncCompensationMode(s) {
-    document.querySelectorAll('#compModeGroup [data-mode]').forEach((btn) => {
-        const active = btn.dataset.mode === (s.compensationMode || 'table');
-        btn.classList.toggle('is-active', active);
-        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-    });
+    syncSegmentedButtons('compModeGroup', s.compensationMode || 'table');
 }
 
 function syncLegendTextMode(s) {
-    const mode = normalizeLegendTextMode(s.legendTextMode);
-    document.querySelectorAll('#legendTextModeGroup [data-mode]').forEach((btn) => {
-        const active = btn.dataset.mode === mode;
-        btn.classList.toggle('is-active', active);
-        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    syncSegmentedButtons('legendTextModeGroup', normalizeLegendTextMode(s.legendTextMode));
+}
+
+function syncSegmentedButtons(groupId, mode) {
+    const group = document.getElementById(groupId);
+    if (!group || group.dataset.mode === String(mode)) return;
+    group.dataset.mode = String(mode);
+    group.querySelectorAll('[data-mode]').forEach((btn) => {
+        const active = btn.dataset.mode === String(mode);
+        setClassIfChanged(btn, 'is-active', active);
+        setAttrIfChanged(btn, 'aria-pressed', active ? 'true' : 'false');
     });
 }
 
@@ -1851,15 +1936,18 @@ function syncCompensationTableEditor(s) {
     const edits = sanitizeCompensationTableEditsData(s.compensationTableEdits || {});
     const base = baseCompensationRow(COMP_TABLE_SELECTED_CH);
     const row = effectiveCompensationRow(s, COMP_TABLE_SELECTED_CH);
-    left.value = compSideText(row.L);
-    right.value = compSideText(row.R);
-    left.placeholder = compSideText(base.L);
-    right.placeholder = compSideText(base.R);
-    if (resetChar) resetChar.disabled = !edits[COMP_TABLE_SELECTED_CH];
-    if (resetTable) resetTable.disabled = !Object.keys(edits).length;
+    const selectedSig = `${COMP_TABLE_SELECTED_CH}:${JSON.stringify(row)}:${JSON.stringify(base)}`;
+    setSelectValueIfChanged(select, COMP_TABLE_SELECTED_CH);
+    setInputValueForSig(left, compSideText(row.L), `${selectedSig}:L`);
+    setInputValueForSig(right, compSideText(row.R), `${selectedSig}:R`);
+    setAttrIfChanged(left, 'placeholder', compSideText(base.L));
+    setAttrIfChanged(right, 'placeholder', compSideText(base.R));
+    setDisabledIfChanged(resetChar, !edits[COMP_TABLE_SELECTED_CH]);
+    setDisabledIfChanged(resetTable, !Object.keys(edits).length);
     if (status) {
         const changed = edits[COMP_TABLE_SELECTED_CH] ? 'edited' : 'reference';
-        status.textContent = `${changed} · L ${compSideText(row.L) || '-'} · R ${compSideText(row.R) || '-'}`;
+        const statusText = `${changed} · L ${compSideText(row.L) || '-'} · R ${compSideText(row.R) || '-'}`;
+        if (status.textContent !== statusText) status.textContent = statusText;
     }
 }
 
@@ -1933,8 +2021,8 @@ function syncTemplateSelect(keys) {
         select.replaceChildren(...opts);
         select.dataset.sig = sig;
     }
-    select.disabled = !chosen.length;
-    select.value = common || '';
+    setDisabledIfChanged(select, !chosen.length);
+    setSelectValueIfChanged(select, common || '');
 }
 
 function optionEl(value, label) {
@@ -1953,7 +2041,7 @@ function syncLayoutSelect(s) {
         select.replaceChildren(...options.map((v) => optionEl(v.id, v.label)));
         select.dataset.sig = sig;
     }
-    select.value = sourceLayoutFor(s).meta.name;
+    setSelectValueIfChanged(select, sourceLayoutFor(s).meta.name);
     syncReferenceToggles(s);
 }
 
@@ -1963,8 +2051,8 @@ function syncReferenceToggles(s) {
         const checkbox = document.getElementById(id);
         const label = checkbox?.closest?.('label');
         if (!checkbox) continue;
-        checkbox.disabled = !enabled;
-        if (label) label.classList.toggle('is-disabled', !enabled);
+        setDisabledIfChanged(checkbox, !enabled);
+        setClassIfChanged(label, 'is-disabled', !enabled);
     }
 }
 
@@ -1996,7 +2084,7 @@ function initLayoutSelect(app) {
 function syncLanguageLayerSelect(s) {
     const select = document.getElementById('languageLayerSelect');
     if (!select) return;
-    select.value = normalizeLanguageLayer(s.languageLayer);
+    setSelectValueIfChanged(select, normalizeLanguageLayer(s.languageLayer));
 }
 
 function initLanguageLayerSelect(app) {
@@ -2093,7 +2181,8 @@ function fontDataUrl(buf, file) {
     return `data:${fontMimeType(file)};base64,${btoa(binary)}`;
 }
 
-function registerReferenceFont(tf) {
+async function registerReferenceFont(tf) {
+    const { probeTypeface, runCompensationInvariants } = await loadFontProbeHelpers();
     const probe = probeTypeface(tf);
     const entry = {
         id: REFERENCE_FONT_ID,
@@ -2144,7 +2233,8 @@ function fontImportId(file, probe) {
     return `session:${slugId(probe?.id || file?.name)}:${file?.size || 0}:${file?.lastModified || 0}`;
 }
 
-function buildSessionFontEntry(file, tf, dataUrl) {
+async function buildSessionFontEntry(file, tf, dataUrl) {
+    const { autoCompensationParams, probeTypeface, runCompensationInvariants } = await loadFontProbeHelpers();
     const probe = probeTypeface(tf);
     const params = autoCompensationParams(tf, probe);
     const id = fontImportId(file, probe);
@@ -2191,7 +2281,7 @@ async function importFontFile(app, file) {
     try {
         const buf = await file.arrayBuffer();
         const tf = parseFont(buf);
-        const entry = buildSessionFontEntry(file, tf, fontDataUrl(buf, file));
+        const entry = await buildSessionFontEntry(file, tf, fontDataUrl(buf, file));
         releaseFontEntry(FONT_REGISTRY.get(entry.id));
         installSessionFontFace(entry, file);
         FONT_REGISTRY.set(entry.id, entry);
@@ -2293,7 +2383,7 @@ function syncFontSelect() {
         }));
         select.dataset.sig = sig;
     }
-    select.value = FONT_REGISTRY.has(ACTIVE_FONT_ID) ? ACTIVE_FONT_ID : REFERENCE_FONT_ID;
+    setSelectValueIfChanged(select, FONT_REGISTRY.has(ACTIVE_FONT_ID) ? ACTIVE_FONT_ID : REFERENCE_FONT_ID);
 }
 
 function syncFontInstanceControls() {
@@ -2302,8 +2392,7 @@ function syncFontInstanceControls() {
     const instances = entry?.probe?.variations?.instances || [];
     if (!box) return;
     if (!instances.length) {
-        box.innerHTML = '';
-        box.dataset.sig = 'none';
+        setHtmlIfChanged(box, '', 'none');
         return;
     }
     const current = matchingFontInstance(entry);
@@ -2332,8 +2421,7 @@ function syncFontAxisControls() {
     const axes = entry?.probe?.variations?.axes || [];
     if (!box) return;
     if (!axes.length) {
-        box.innerHTML = '';
-        box.dataset.sig = 'none';
+        setHtmlIfChanged(box, '', 'none');
         return;
     }
     const coordinates = entry.coordinates || {};
@@ -2426,12 +2514,12 @@ function syncFontImportStatus() {
     syncFontSelect();
     syncFontInstanceControls();
     syncFontAxisControls();
-    if (reference) reference.disabled = ACTIVE_FONT_ID === REFERENCE_FONT_ID || !REFERENCE_TYPEFACE;
-    if (applySelected) applySelected.disabled = !TYPEFACE || !SELECTION.indices?.length;
-    if (controlSheet) controlSheet.disabled = !TYPEFACE;
+    setDisabledIfChanged(reference, ACTIVE_FONT_ID === REFERENCE_FONT_ID || !REFERENCE_TYPEFACE);
+    setDisabledIfChanged(applySelected, !TYPEFACE || !SELECTION.indices?.length);
+    setDisabledIfChanged(controlSheet, !TYPEFACE);
     if (!status) return;
     if (!TYPEFACE) {
-        status.innerHTML = '<p class="font-empty">Loading reference font...</p>';
+        setHtmlIfChanged(status, '<p class="font-empty">Loading reference font...</p>', 'loading');
         return;
     }
     const probe = activeFontProbe();
@@ -2450,9 +2538,10 @@ function syncFontImportStatus() {
     if ((probe?.variations?.axes || []).length) {
         rows.push(['Note', 'SVG text receives CSS variation settings; outline contours use the loaded default instance.']);
     }
-    status.innerHTML = `<dl class="font-summary">
+    const sig = `${ACTIVE_FONT_ID}|${fontRegistrySignature()}|${JSON.stringify(rows)}`;
+    setHtmlIfChanged(status, `<dl class="font-summary">
         ${rows.map(([term, value]) => `<div><dt>${html(term)}</dt><dd>${html(value)}</dd></div>`).join('')}
-    </dl>`;
+    </dl>`, sig);
 }
 
 function controlSheetGlyph(entry, comp, ch, x, baseline, side, size) {
@@ -2523,7 +2612,7 @@ function openNewLayoutSvgPicker() {
 
 async function createNewLayoutFromSvgFile(app, file) {
     if (!file) return;
-    if (!/\.svg$/i.test(file.name || '') && !/svg/i.test(file.type || '')) {
+    if (!isSvgImportFile(file)) {
         await app.dialog?.alert({
             title: 'Layout import failed',
             text: 'Choose an SVG drawing.',
@@ -2531,6 +2620,46 @@ async function createNewLayoutFromSvgFile(app, file) {
         });
         return;
     }
+    return createNewLayoutFromSvgSource(app, svgImportSourceFromFile(file), {
+        guardUnsaved: true,
+        showDialogs: true
+    });
+}
+
+function isSvgImportFile(file) {
+    return !!file && (/\.svg$/i.test(file.name || '') || /svg/i.test(file.type || ''));
+}
+
+function svgImportSourceFromFile(file) {
+    return {
+        name: file?.name || 'drawing.svg',
+        size: file?.size || 0,
+        type: file?.type || '',
+        readText: () => file.text()
+    };
+}
+
+function svgImportSourceFromText(fileName, svgText, options = {}) {
+    const text = String(svgText ?? '');
+    return {
+        name: String(fileName || options.name || 'drawing.svg'),
+        size: Number.isFinite(options.bytes) ? options.bytes : byteLength(text),
+        type: options.type || 'image/svg+xml',
+        readText: async () => text
+    };
+}
+
+async function createNewLayoutFromSvgText(app, fileName, svgText, options = {}) {
+    return createNewLayoutFromSvgSource(app, svgImportSourceFromText(fileName, svgText, options), {
+        guardUnsaved: options.guardUnsaved === true,
+        showDialogs: options.showDialogs === true
+    });
+}
+
+async function createNewLayoutFromSvgSource(app, source, options = {}) {
+    const file = source || svgImportSourceFromText('drawing.svg', '');
+    const guardEnabled = options.guardUnsaved !== false;
+    const showDialogs = options.showDialogs !== false;
     const prof = perfEnabled();
     const started = prof ? perfNow() : 0;
     let analysis = null;
@@ -2542,7 +2671,7 @@ async function createNewLayoutFromSvgFile(app, file) {
     let commitMs = 0;
     try {
         const readStarted = prof ? perfNow() : 0;
-        const svgText = await file.text();
+        const svgText = await file.readText();
         readMs = prof ? perfSince(readStarted) : 0;
 
         const analyzeStarted = prof ? perfNow() : 0;
@@ -2557,33 +2686,37 @@ async function createNewLayoutFromSvgFile(app, file) {
         pipelineMs = prof ? perfSince(started) : 0;
         const warnings = analysis.diagnostics?.warnings || [];
         if (warnings.length) {
-            const result = await app.dialog?.show({
-                title: 'Layout not created',
-                text: svgImportReportHtml(file.name || 'drawing.svg', analysis, {
-                    intro: 'Keyboarder found warning-level issues in this drawing. Fix the SVG or inspect the draft before creating a preset.'
-                }),
-                html: true,
-                buttons: [
-                    { id: 'ok', text: 'Close', type: 'primary' },
-                    { id: 'report', text: 'Report JSON', type: 'secondary' }
-                ]
-            });
-            if (result?.action === 'report') exportSvgImportReport(file.name || 'drawing.svg', analysis);
-            recordSvgImportPerf(file, analysis, {
+            const details = {
                 status: 'warnings',
                 ms: pipelineMs,
                 totalMs: prof ? perfSince(started) : 0,
                 readMs,
                 analyzeMs,
                 contentStatsMs
+            };
+            const report = rememberSvgImportReport(app, file, analysis, details, {
+                intro: 'Keyboarder found warning-level issues in this drawing. Fix the SVG or inspect the draft before creating a preset.'
             });
-            return;
+            if (showDialogs) {
+                const result = await app.dialog?.show({
+                    title: 'Layout not created',
+                    text: report.html,
+                    html: true,
+                    buttons: [
+                        { id: 'ok', text: 'Close', type: 'primary' },
+                        { id: 'report', text: 'Report JSON', type: 'secondary' }
+                    ]
+                });
+                if (result?.action === 'report') exportLastSvgImportReport();
+            }
+            recordSvgImportPerf(file, analysis, details);
+            return svgImportResult(false, details.status, report);
         }
         const guardStarted = prof ? perfNow() : 0;
-        const canReplaceLayout = await guardUnsavedBeforeNewLayout(app);
+        const canReplaceLayout = guardEnabled ? await guardUnsavedBeforeNewLayout(app) : true;
         guardMs = prof ? perfSince(guardStarted) : 0;
         if (!canReplaceLayout) {
-            recordSvgImportPerf(file, analysis, {
+            const details = {
                 status: 'cancelled',
                 ms: pipelineMs,
                 totalMs: prof ? perfSince(started) : 0,
@@ -2591,16 +2724,21 @@ async function createNewLayoutFromSvgFile(app, file) {
                 analyzeMs,
                 contentStatsMs,
                 guardMs
+            };
+            rememberSvgImportReport(app, file, analysis, details, {
+                intro: 'Layout creation was cancelled. The detected draft remains available in this session report.'
             });
-            return;
+            recordSvgImportPerf(file, analysis, details);
+            return svgImportResult(false, details.status, LAST_SVG_IMPORT_REPORT);
         }
         const customLayout = namedCustomLayout(draft.layout, file.name, app);
         const commitStarted = prof ? perfNow() : 0;
         openImportedCustomLayout(app, customLayout);
         commitMs = prof ? perfSince(commitStarted) : 0;
         app._showToast?.(svgImportToastText(customLayout.meta.name, draft.stats));
-        recordSvgImportPerf(file, analysis, {
+        const details = {
             status: 'created',
+            layout: customLayout.meta.name,
             ms: pipelineMs,
             totalMs: prof ? perfSince(started) : 0,
             readMs,
@@ -2608,10 +2746,15 @@ async function createNewLayoutFromSvgFile(app, file) {
             contentStatsMs,
             guardMs,
             commitMs
+        };
+        rememberSvgImportReport(app, file, analysis, details, {
+            intro: `Layout ${customLayout.meta.name} was created from this SVG drawing.`
         });
+        recordSvgImportPerf(file, analysis, details);
+        return svgImportResult(true, details.status, LAST_SVG_IMPORT_REPORT);
     } catch (e) {
         if (!pipelineMs) pipelineMs = prof ? perfSince(started) : 0;
-        recordSvgImportPerf(file, analysis, {
+        const details = {
             status: 'error',
             error: e?.message || 'Could not read this SVG drawing.',
             ms: pipelineMs,
@@ -2621,13 +2764,31 @@ async function createNewLayoutFromSvgFile(app, file) {
             contentStatsMs,
             guardMs,
             commitMs
+        };
+        rememberSvgImportReport(app, file, analysis, details, {
+            intro: details.error
         });
-        await app.dialog?.alert({
-            title: 'Layout import failed',
-            text: e?.message || 'Could not read this SVG drawing.',
-            okText: 'Close'
-        });
+        recordSvgImportPerf(file, analysis, details);
+        if (showDialogs) {
+            await app.dialog?.alert({
+                title: 'Layout import failed',
+                text: e?.message || 'Could not read this SVG drawing.',
+                okText: 'Close'
+            });
+        }
+        return svgImportResult(false, details.status, LAST_SVG_IMPORT_REPORT, details.error);
     }
+}
+
+function svgImportResult(ok, status, report, error = '') {
+    const data = clonePlain(report?.data || null);
+    return {
+        ok: !!ok,
+        status,
+        error,
+        layout: data?.layout || '',
+        report: data
+    };
 }
 
 function recordSvgImportPerf(file, analysis, details = {}) {
@@ -2909,15 +3070,101 @@ function svgImportIssueKey(issue = {}, analysis) {
     return `key ${issue.keyIndex + 1}: x ${round(key.x, 2)}, y ${round(key.y, 2)}, w ${round(key.w, 2)}, h ${round(key.h, 2)}`;
 }
 
-function exportSvgImportReport(fileName, analysis) {
-    const base = layoutSlug(String(fileName || 'drawing').replace(/\.svg$/i, ''));
-    downloadJSON(`keyboarder-${base}-import-report.json`, svgImportReportData(fileName, analysis));
+function rememberSvgImportReport(app, file, analysis, details = {}, htmlOptions = {}) {
+    const fileName = file?.name || 'drawing.svg';
+    const data = svgImportReportData(fileName, analysis, {
+        ...details,
+        bytes: file?.size || 0,
+        type: file?.type || ''
+    });
+    const report = {
+        generatedAt: data.generatedAt,
+        file: data.file,
+        status: data.status,
+        layout: data.layout,
+        html: svgImportReportHtml(fileName, analysis, htmlOptions),
+        data
+    };
+    LAST_SVG_IMPORT_REPORT = report;
+    if (app) app.lastSvgImportReport = report;
+    if (typeof window !== 'undefined') window.KeyboarderLastImportReport = report;
+    syncSvgImportReportDocumentState(report);
+    return report;
 }
 
-function svgImportReportData(fileName, analysis) {
+function syncSvgImportReportDocumentState(report = LAST_SVG_IMPORT_REPORT) {
+    try {
+        let node = document.getElementById('keyboarderImportReportState');
+        if (!node) {
+            node = document.createElement('script');
+            node.id = 'keyboarderImportReportState';
+            node.type = 'application/json';
+            (document.head || document.documentElement).appendChild(node);
+        }
+        node.textContent = JSON.stringify(report?.data || null);
+    } catch {
+        // Non-DOM contexts can still run import analysis and report serialization.
+    }
+}
+
+async function showLastSvgImportReport(app) {
+    const report = LAST_SVG_IMPORT_REPORT;
+    if (!report) {
+        await app?.dialog?.alert({
+            title: 'Import report',
+            text: 'No SVG import report in this session.',
+            okText: 'Close'
+        });
+        return null;
+    }
+    const result = await app?.dialog?.show({
+        title: `Import report · ${report.status || 'unknown'}`,
+        text: report.html,
+        html: true,
+        buttons: [
+            { id: 'ok', text: 'Close', type: 'primary' },
+            { id: 'report', text: 'Report JSON', type: 'secondary' }
+        ]
+    });
+    if (result?.action === 'report') exportLastSvgImportReport();
+    return clonePlain(report.data);
+}
+
+function exportLastSvgImportReport() {
+    const report = LAST_SVG_IMPORT_REPORT;
+    if (!report) return false;
+    const base = layoutSlug(String(report.file || 'drawing').replace(/\.svg$/i, ''));
+    downloadJSON(`keyboarder-${base}-import-report.json`, report.data);
+    return true;
+}
+
+function installImportDebugAPI(app) {
+    if (typeof window === 'undefined') return;
+    const api = {
+        lastReport: () => clonePlain(LAST_SVG_IMPORT_REPORT?.data || null),
+        lastReportHtml: () => LAST_SVG_IMPORT_REPORT?.html || '',
+        lastReportJson: () => JSON.stringify(LAST_SVG_IMPORT_REPORT?.data || null, null, 2),
+        showLastReport: () => showLastSvgImportReport(app),
+        exportLastReport: exportLastSvgImportReport,
+        createFromSvgText: (fileName, svgText, options = {}) =>
+            createNewLayoutFromSvgText(app, fileName, svgText, options),
+        createFromSvgString: (fileName, svgText, options = {}) =>
+            createNewLayoutFromSvgText(app, fileName, svgText, options)
+    };
+    window.KeyboarderImport = api;
+    app.KeyboarderImport = api;
+}
+
+function svgImportReportData(fileName, analysis, details = {}) {
     const diagnostics = analysis?.diagnostics || {};
     return {
+        generatedAt: new Date().toISOString(),
         file: fileName || 'drawing.svg',
+        bytes: details.bytes || 0,
+        type: details.type || '',
+        status: details.status || '',
+        error: details.error || '',
+        layout: details.layout || analysis?.layoutDraft?.layout?.meta?.name || '',
         summary: blueprintSummaryLines(analysis),
         groups: clonePlain(analysis?.groups || {}),
         elements: clonePlain(analysis?.elements || {}),
@@ -2937,6 +3184,15 @@ function svgImportReportData(fileName, analysis) {
             suspiciousKeys: diagnostics.suspiciousKeys || 0
         },
         draft: clonePlain(analysis?.layoutDraft?.stats || null),
+        pipeline: {
+            ms: details.ms || 0,
+            totalMs: details.totalMs || 0,
+            readMs: details.readMs || 0,
+            analyzeMs: details.analyzeMs || 0,
+            contentStatsMs: details.contentStatsMs || 0,
+            guardMs: details.guardMs || 0,
+            commitMs: details.commitMs || 0
+        },
         timings: clonePlain(analysis?.timings || null)
     };
 }
@@ -3021,63 +3277,60 @@ function updateKeyGeometryEditor(s, keys) {
     const value = active ? toMm(active.w).toFixed(3) : '';
     const editId = active?.editId || '';
 
-    editor.classList.toggle('is-locked', !!active && !editable);
-    input.disabled = !editable;
-    input.min = String(roundMm(range.min));
-    input.max = String(roundMm(range.max));
-    input.dataset.editId = editId;
-    input.title = active && !editable ? 'Flex key: width is derived from the remaining row space.' : '';
-    if (document.activeElement !== input || input.dataset.valueEditId !== editId) {
-        input.value = value;
-        input.dataset.valueEditId = editId;
-    }
-    if (apply) apply.disabled = !editable;
-    if (reset) reset.disabled = !active || !Number.isFinite(edits[editId]?.widthMm);
+    setClassIfChanged(editor, 'is-locked', !!active && !editable);
+    setDisabledIfChanged(input, !editable);
+    setAttrIfChanged(input, 'min', roundMm(range.min));
+    setAttrIfChanged(input, 'max', roundMm(range.max));
+    if (input.dataset.editId !== editId) input.dataset.editId = editId;
+    setTitleIfChanged(input, active && !editable ? 'Flex key: width is derived from the remaining row space.' : '');
+    setInputValueForSig(input, value, `${editId}:${value}:${editable}`);
+    if (apply) setDisabledIfChanged(apply, !editable);
+    if (reset) setDisabledIfChanged(reset, !active || !Number.isFinite(edits[editId]?.widthMm));
     const addBeforeButton = document.getElementById('addKeyBeforeBtn');
     const addAfterButton = document.getElementById('addKeyBtn');
     if (deleteButton) {
-        deleteButton.disabled = !active || !!active.geometry?.layoutLocked;
-        deleteButton.title = active?.geometry?.layoutLocked ? 'Stacked imported key geometry is locked.' : active ? `Delete ${keyLabel(active)}` : '';
+        setDisabledIfChanged(deleteButton, !active || !!active.geometry?.layoutLocked);
+        setTitleIfChanged(deleteButton, active?.geometry?.layoutLocked ? 'Stacked imported key geometry is locked.' : active ? `Delete ${keyLabel(active)}` : '');
     }
     if (moveLeftButton) {
         const canMoveLeft = canMoveKeyInRow(s, keys, active, -1);
-        moveLeftButton.disabled = !canMoveLeft;
-        moveLeftButton.title = canMoveLeft ? `Move ${keyLabel(active)} left` : '';
+        setDisabledIfChanged(moveLeftButton, !canMoveLeft);
+        setTitleIfChanged(moveLeftButton, canMoveLeft ? `Move ${keyLabel(active)} left` : '');
     }
     if (moveRightButton) {
         const canMoveRight = canMoveKeyInRow(s, keys, active, 1);
-        moveRightButton.disabled = !canMoveRight;
-        moveRightButton.title = canMoveRight ? `Move ${keyLabel(active)} right` : '';
+        setDisabledIfChanged(moveRightButton, !canMoveRight);
+        setTitleIfChanged(moveRightButton, canMoveRight ? `Move ${keyLabel(active)} right` : '');
     }
     if (addBeforeButton || addAfterButton) {
         const canAddBefore = canAddKeyNear(s, active, 'before');
         const canAddAfter = canAddKeyNear(s, active, 'after');
         if (addBeforeButton) {
-            addBeforeButton.disabled = !canAddBefore;
-            addBeforeButton.title = canAddBefore ? `Add key before ${keyLabel(active)}` : '';
+            setDisabledIfChanged(addBeforeButton, !canAddBefore);
+            setTitleIfChanged(addBeforeButton, canAddBefore ? `Add key before ${keyLabel(active)}` : '');
         }
         if (addAfterButton) {
-            addAfterButton.disabled = !canAddAfter;
-            addAfterButton.title = canAddAfter ? `Add key after ${keyLabel(active)}` : '';
+            setDisabledIfChanged(addAfterButton, !canAddAfter);
+            setTitleIfChanged(addAfterButton, canAddAfter ? `Add key after ${keyLabel(active)}` : '');
         }
     }
     if (restoreButton) {
-        restoreButton.disabled = !restoreId;
-        restoreButton.title = restoreId ? `Restore ${editIdLabel(restoreId)}` : '';
+        setDisabledIfChanged(restoreButton, !restoreId);
+        setTitleIfChanged(restoreButton, restoreId ? `Restore ${editIdLabel(restoreId)}` : '');
     }
     if (addRowButton) {
         const canAddRow = canAddRowBelow(s, active);
-        addRowButton.disabled = !canAddRow;
-        addRowButton.title = canAddRow ? `Add row below ${rowEditLabel(rowEditId(sourceRowOfKey(active)), sourceLayout.rows.length)}` : '';
+        setDisabledIfChanged(addRowButton, !canAddRow);
+        setTitleIfChanged(addRowButton, canAddRow ? `Add row below ${rowEditLabel(rowEditId(sourceRowOfKey(active)), sourceLayout.rows.length)}` : '');
     }
     if (deleteRowButton) {
         const canDelete = canDeleteActiveRow(s, active);
-        deleteRowButton.disabled = !canDelete;
-        deleteRowButton.title = canDelete ? `Delete ${rowEditLabel(rowEditId(sourceRowOfKey(active)), sourceLayout.rows.length)}` : '';
+        setDisabledIfChanged(deleteRowButton, !canDelete);
+        setTitleIfChanged(deleteRowButton, canDelete ? `Delete ${rowEditLabel(rowEditId(sourceRowOfKey(active)), sourceLayout.rows.length)}` : '');
     }
     if (restoreRowButton) {
-        restoreRowButton.disabled = !restoreRowId;
-        restoreRowButton.title = restoreRowId ? `Restore ${rowEditLabel(restoreRowId, sourceLayout.rows.length)}` : '';
+        setDisabledIfChanged(restoreRowButton, !restoreRowId);
+        setTitleIfChanged(restoreRowButton, restoreRowId ? `Restore ${rowEditLabel(restoreRowId, sourceLayout.rows.length)}` : '');
     }
 }
 
@@ -3376,10 +3629,10 @@ function updateLegendEditor(s, keys) {
     if (!editor) return;
     const active = activeKey(keys);
     const selected = selectedKeys(keys);
-    if (apply) apply.disabled = !selected.length;
-    if (reset) reset.disabled = !selected.some((k) => !!s.contentEdits?.[k.editId]);
-    if (addText) addText.disabled = !active;
-    if (addIcon) addIcon.disabled = !active;
+    setDisabledIfChanged(apply, !selected.length);
+    setDisabledIfChanged(reset, !selected.some((k) => !!s.contentEdits?.[k.editId]));
+    setDisabledIfChanged(addText, !active);
+    setDisabledIfChanged(addIcon, !active);
     if (!active) {
         renderElementEditor([], { disabled: true, sig: 'none' });
         return;
@@ -3627,12 +3880,14 @@ function installPdfExport(app) {
                 unit: 'mm',
                 format
             });
+            return { ok: true, filename: name };
         } catch (e) {
             app.dialog?.alert({
                 title: 'PDF export failed',
                 text: e?.message || 'Could not export PDF.',
                 okText: 'Close'
             });
+            return { ok: false, error: e?.message || 'Could not export PDF.' };
         }
     };
     app.__keyboarderPdfExport = true;
@@ -3640,6 +3895,7 @@ function installPdfExport(app) {
 
 function installCleanExports(app) {
     if (app.__keyboarderCleanExports) return;
+    installExportDebugAPI(app);
     for (const method of ['exportSVG', 'exportPNG', 'exportPDF']) {
         if (typeof app[method] !== 'function') continue;
         const original = app[method].bind(app);
@@ -3648,6 +3904,8 @@ function installCleanExports(app) {
             const started = prof ? perfNow() : 0;
             let status = 'ok';
             let error = '';
+            let cleanSnapshot = null;
+            const filename = exportFilename(app, method, args);
             const previous = {
                 active: SELECTION.active,
                 indices: [...(SELECTION.indices || [])]
@@ -3658,34 +3916,151 @@ function installCleanExports(app) {
                 app.renderNow();
             }
             try {
-                return await original(...args);
+                const result = await original(...args);
+                if (result?.ok === false) {
+                    status = 'error';
+                    error = result.error || 'Export failed';
+                }
+                cleanSnapshot = cleanSvgSnapshot(app);
+                return result;
             } catch (e) {
                 status = 'error';
                 error = e?.message || String(e);
+                cleanSnapshot = cleanSvgSnapshot(app);
                 throw e;
             } finally {
                 if (hasSelection) {
                     SELECTION = { active: previous.active, indices: previous.indices };
                     app.renderNow();
                 }
+                const report = exportSummary(app, method, filename, {
+                    status,
+                    error,
+                    hadSelection: hasSelection,
+                    cleanSnapshot
+                });
                 if (prof) {
-                    const data = layoutFor(app.settings);
                     perfRecord('export', {
                         ms: perfSince(started),
-                        method,
-                        format: method.replace(/^export/, '').toLowerCase(),
-                        status,
-                        error,
-                        hadSelection: hasSelection,
-                        layout: data.sourceLayout?.meta?.name || '',
-                        keys: data.keys?.length || 0,
-                        legends: data.legends?.length || 0
+                        ...report
                     });
                 }
+                if (status === 'ok') app._showToast?.(exportToastText(report));
             }
         };
     }
     app.__keyboarderCleanExports = true;
+}
+
+function installExportDebugAPI(app) {
+    if (typeof window === 'undefined') return;
+    const api = {
+        cleanSvgSnapshot: () => cleanSvgSnapshot(app),
+        cleanSvgString: () => cleanSvgSnapshot(app).svg
+    };
+    window.KeyboarderExport = api;
+    app.KeyboarderExport = api;
+}
+
+function exportFilename(app, method, args = []) {
+    if (args[0]) return String(args[0]);
+    const base = app.config?.export?.filename || 'keyboarder.svg';
+    if (method === 'exportPNG') return base.replace(/\.svg$/i, '') + '.png';
+    if (method === 'exportPDF') return `keyboarder-${layoutSlug(sourceLayoutFor(app.settings).meta.name)}.pdf`;
+    return base;
+}
+
+function exportSummary(app, method, filename, options = {}) {
+    const data = layoutFor(app.settings);
+    const legends = data.legends || [];
+    const text = legends.filter((el) => el.kind === 'txt').length;
+    const icons = legends.filter((el) => el.kind === 'ico').length;
+    const widthPx = Number(data.bounds?.w) || 0;
+    const heightPx = Number(data.bounds?.h) || 0;
+    const clean = options.cleanSnapshot || cleanSvgSnapshot(app);
+    return {
+        method,
+        format: method.replace(/^export/, '').toLowerCase(),
+        filename,
+        status: options.status || 'ok',
+        error: options.error || '',
+        cleanedSelection: !!options.hadSelection,
+        interactiveRemoved: true,
+        layout: data.sourceLayout?.meta?.name || '',
+        keys: data.keys?.length || 0,
+        legends: legends.length,
+        text,
+        icons,
+        textMode: normalizeLegendTextMode(app.settings.legendTextMode),
+        artboardPx: {
+            width: round(widthPx, 3),
+            height: round(heightPx, 3)
+        },
+        artboardMm: {
+            width: round(toMm(widthPx), 3),
+            height: round(toMm(heightPx), 3)
+        },
+        cleanSvgBytes: clean.bytes,
+        cleanHasInteractive: clean.hasInteractive,
+        cleanLayerCounts: clean.layerCounts
+    };
+}
+
+function cleanSvgSnapshot(app) {
+    if (!app?.exporter || app.target?.type !== 'svg' || !app.target.element) {
+        return {
+            svg: '',
+            bytes: 0,
+            hasInteractive: false,
+            layerCounts: {}
+        };
+    }
+    try {
+        const cleanSvg = app.exporter.getCleanSVG(app.target.element);
+        const svg = new XMLSerializer().serializeToString(cleanSvg);
+        return {
+            svg,
+            bytes: byteLength(svg),
+            hasInteractive: !!cleanSvg.querySelector('[data-interactive="true"], #selection, .resize-handle, .hover-overlay'),
+            layerCounts: cleanSvgLayerCounts(cleanSvg)
+        };
+    } catch (e) {
+        console.warn('Keyboarder: clean SVG snapshot failed.', e);
+        return {
+            svg: '',
+            bytes: 0,
+            hasInteractive: false,
+            layerCounts: {},
+            error: e?.message || String(e)
+        };
+    }
+}
+
+function cleanSvgLayerCounts(svg) {
+    const count = (selector) => svg.querySelectorAll(selector).length;
+    return {
+        caps: count('#caps rect'),
+        guides: count('#guides rect'),
+        glyphPaths: count('#glyphs path'),
+        glyphTexts: count('#glyphs text'),
+        icons: count('#icons path'),
+        fIcons: count('#f-icons path'),
+        selection: count('#selection'),
+        interactive: count('[data-interactive="true"]')
+    };
+}
+
+function byteLength(text) {
+    if (typeof Blob !== 'undefined') return new Blob([text]).size;
+    if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(text).length;
+    return String(text || '').length;
+}
+
+function exportToastText(report) {
+    const format = String(report.format || 'export').toUpperCase();
+    const mm = `${round(report.artboardMm?.width || 0, 1)} × ${round(report.artboardMm?.height || 0, 1)} mm`;
+    const textMode = report.format === 'pdf' ? 'outlines' : report.textMode;
+    return `${format} exported · ${report.layout} · ${mm} · ${textMode} · ${report.keys} keys`;
 }
 
 function keyAtClientPoint(svg, keys, clientX, clientY) {
@@ -3944,17 +4319,16 @@ function downloadText(filename, text, type = 'text/plain') {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function updateReadout(s, keys, grid, legends) {
-    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    const { bounds } = layoutFor(s);
-    set('statKeys', String(keys.length));
-    set('statBoard', `${toMm(bounds.w).toFixed(1)} × ${toMm(bounds.h).toFixed(1)} mm`);
-    set('statGap', `${toMm(gapOf(grid)).toFixed(2)} mm`);
+function updateReadout(s, keys, grid, legends, bounds = null) {
+    const box = bounds || { w: 0, h: 0 };
+    setTextIfChanged('statKeys', String(keys.length));
+    setTextIfChanged('statBoard', `${toMm(box.w).toFixed(1)} × ${toMm(box.h).toFixed(1)} mm`);
+    setTextIfChanged('statGap', `${toMm(gapOf(grid)).toFixed(2)} mm`);
     const txt = legends.filter((e) => e.kind === 'txt').length;
-    set('statLegends', TYPEFACE
+    setTextIfChanged('statLegends', TYPEFACE
         ? `${txt} strings, ${legends.length - txt} icons`
         : 'loading font');
-    set('statWarnings', layoutWarningText(keys, grid));
+    setTextIfChanged('statWarnings', layoutWarningText(keys, grid));
 }
 
 function layoutWarningText(keys, grid) {
@@ -3990,10 +4364,28 @@ function updateLegendInspector(s, keys, grid, legends) {
     const sel = normalizedSelection(keys);
     const k = activeKey(keys);
     if (!k) {
-        box.innerHTML = '<p class="inspector-empty">No key selected.</p>';
+        setHtmlIfChanged(box, '<p class="inspector-empty">No key selected.</p>', 'none');
         return;
     }
     const items = legends.filter((el) => el.key === k);
+    const sig = [
+        k.editId,
+        k.tpl || '',
+        k.row,
+        k.block || '',
+        round(k.x, 3),
+        round(k.y, 3),
+        round(k.w, 3),
+        round(k.h, 3),
+        k.geometry?.widthEdited ? 'edited-width' : '',
+        sel.active ?? '',
+        sel.indices.join(','),
+        TYPEFACE_SIG,
+        fontRegistrySignature(),
+        s.compensationMode || '',
+        JSON.stringify(s.compensationTableEdits || {}),
+        legendInspectorItemSig(items)
+    ].join('|');
     const widthText = `${widthInU(k.w, grid).toFixed(2)}U · ${toMm(k.w).toFixed(3)} mm`
         + (k.geometry?.widthEdited ? ' *' : '');
     let out = '<dl class="legend-meta">'
@@ -4002,11 +4394,11 @@ function updateLegendInspector(s, keys, grid, legends) {
         + `<div><dt>Position</dt><dd>row ${k.row + 1}, ${html(k.block)}, ${widthText}</dd></div>`
         + '</dl>';
     if (!TYPEFACE) {
-        box.innerHTML = out + '<p class="inspector-empty">Font loading.</p>';
+        setHtmlIfChanged(box, out + '<p class="inspector-empty">Font loading.</p>', sig);
         return;
     }
     if (!items.length) {
-        box.innerHTML = out + '<p class="inspector-empty">No legend elements.</p>';
+        setHtmlIfChanged(box, out + '<p class="inspector-empty">No legend elements.</p>', sig);
         return;
     }
     out += '<table class="legend-elements"><tr><th>Slot</th><th>Element</th><th>Type</th><th>Font</th><th>Comp</th></tr>';
@@ -4036,7 +4428,24 @@ function updateLegendInspector(s, keys, grid, legends) {
         }
     }
     out += '</table>';
-    box.innerHTML = out;
+    setHtmlIfChanged(box, out, sig);
+}
+
+function legendInspectorItemSig(items) {
+    return items.map((el) => {
+        if (el.kind === 'txt') {
+            return [
+                el.kind,
+                el.slot,
+                el.text,
+                el.size,
+                el.tracking || 0,
+                elementFontId(el),
+                JSON.stringify(el.compOverride || null)
+            ].join(':');
+        }
+        return [el.kind, el.slot, el.icon, el.w, el.h].join(':');
+    }).join('|');
 }
 
 export default app;

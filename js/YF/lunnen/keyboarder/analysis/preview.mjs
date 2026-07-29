@@ -2,7 +2,7 @@
  * Превью раскладки в SVG вне браузера — тем же кодом, что и инструмент.
  *
  * Нужно для визуальной сверки: рядом с нашей отрисовкой можно положить эталонный
- * LCAKB23.svg и смотреть их наложением в любом векторном редакторе.
+ * reference/lcakb23/LCAKB23.svg и смотреть их наложением в любом векторном редакторе.
  *
  * Запуск: node analysis/preview.mjs [файл.svg] [--guides] [--ink] [--overlay]
  *   --guides   охранные поля
@@ -25,7 +25,7 @@ import ICON_OPTICS from '../app/kb/icons/lcakb23-optics.js';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(`--${n}`);
-const out = args.find((a) => !a.startsWith('--')) || join(ROOT, 'docs', 'preview.svg');
+const out = args.find((a) => !a.startsWith('--')) || join(ROOT, 'docs', 'assets', 'preview.svg');
 
 const buf = readFileSync(join(ROOT, 'Fonts', 'YS Text', 'YS Text-Regular.ttf'));
 const tf = parseFont(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
@@ -86,7 +86,7 @@ if (flag('ink')) {
 }
 
 if (flag('overlay')) {
-    const ref = JSON.parse(readFileSync(join(ROOT, 'LCAKB23.legends.json'), 'utf8'));
+    const ref = JSON.parse(readFileSync(join(ROOT, 'reference', 'lcakb23', 'LCAKB23.legends.json'), 'utf8'));
     push('<g id="ref" stroke="#e8c15a" stroke-width="0.2">');
     for (const k of ref.keys) {
         for (const e of k.elements) {

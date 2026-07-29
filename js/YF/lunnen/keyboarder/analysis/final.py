@@ -156,6 +156,8 @@ if __name__ == '__main__':
         print(f'{r["row"]:>3} {r["x"]:9.2f} {r["u"]:7.4f} {r["h"]/46.1885:4.0f} {r["block"]:>7} '
               f'{",".join(r["slots"]):>22} {r["tpl"]:22} {r["legend"]}'
               + (f'  +{r["icons"]}ico' if r['icons'] else ''))
-    out = os.path.join(kb.ROOT, 'LCAKB23.layout.json')
+    out_dir = os.path.join(kb.ROOT, 'reference', 'lcakb23')
+    os.makedirs(out_dir, exist_ok=True)
+    out = os.path.join(out_dir, 'LCAKB23.layout.json')
     json.dump(T, open(out, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print('\nзаписано:', out)

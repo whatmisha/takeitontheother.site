@@ -1,5 +1,5 @@
 /**
- * Сверка размещения легенд с эталоном LCAKB23.legends.json, вне браузера.
+ * Сверка размещения легенд с эталоном reference/lcakb23/LCAKB23.legends.json, вне браузера.
  * Запуск: node analysis/verify-legends.mjs [--all]
  */
 import { readFileSync } from 'node:fs';
@@ -17,7 +17,7 @@ import CONTENT from '../app/kb/content/lcakb23.js';
 import ICON_OPTICS from '../app/kb/icons/lcakb23-optics.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const ref = JSON.parse(readFileSync(join(ROOT, 'LCAKB23.legends.json'), 'utf8'));
+const ref = JSON.parse(readFileSync(join(ROOT, 'reference', 'lcakb23', 'LCAKB23.legends.json'), 'utf8'));
 const buf = readFileSync(join(ROOT, 'Fonts', 'YS Text', 'YS Text-Regular.ttf'));
 const tf = parseFont(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
 

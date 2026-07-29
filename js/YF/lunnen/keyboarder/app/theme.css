@@ -6,17 +6,14 @@
  */
 
 /**
- * CoFo Sans со своего же домена. Копия шрифта в css фреймворка ведёт на mishaivanov.ru,
- * а тот отдаёт файлы без Access-Control-Allow-Origin — для @font-face это отказ, и интерфейс
- * молча съезжает на системный sans. Файлы лежат в корне takeitontheother.site, берём оттуда:
- * тот же origin, лишних копий в проекте не появляется. CDN оставлен вторым источником —
- * если однажды на нём включат CORS, он и сработает.
+ * CoFo Sans is bundled here for local keyboarder-only dev servers. The framework stylesheet
+ * points at mishaivanov.ru, which can fail under @font-face CORS; keeping the UI font next to
+ * the tool avoids remote requests and keeps browser QA logs quiet.
  */
 @font-face {
     font-family: 'CoFo Sans';
-    src: url('../../../../../fonts/CoFoSans-Regular.woff2') format('woff2'),
-         url('../../../../../fonts/CoFoSans-Regular.woff') format('woff'),
-         url('https://mishaivanov.ru/fonts/CoFoSans-Regular.woff2') format('woff2');
+    src: url('../Fonts/CoFo%20Sans/CoFoSans-Regular.woff2') format('woff2'),
+         url('../Fonts/CoFo%20Sans/CoFoSans-Regular.woff') format('woff');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -24,9 +21,8 @@
 
 @font-face {
     font-family: 'CoFo Sans';
-    src: url('../../../../../fonts/CoFoSans-Medium.woff2') format('woff2'),
-         url('../../../../../fonts/CoFoSans-Medium.woff') format('woff'),
-         url('https://mishaivanov.ru/fonts/CoFoSans-Medium.woff2') format('woff2');
+    src: url('../Fonts/CoFo%20Sans/CoFoSans-Medium.woff2') format('woff2'),
+         url('../Fonts/CoFo%20Sans/CoFoSans-Medium.woff') format('woff');
     font-weight: 500;
     font-style: normal;
     font-display: swap;
