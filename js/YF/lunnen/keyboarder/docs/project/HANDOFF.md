@@ -834,6 +834,10 @@ Stage 9 optimization is started:
   `--layout LCAKB21|LCAKB22|LCAKB23` in addition to `--input drawing.svg`. It renders LCAKB23 with
   reference content and LCAKB21/22 with generated semantic content, so all three default layouts can
   be exported to `/tmp` and checked with `analysis/export-artifact-qa.mjs` without browser downloads.
+- Preset folder cleanup: `presets/` now contains only `manifest.json`, `lcakb21.json`,
+  `lcakb22.json`, and `lcakb23.json`. Removed obsolete unlisted seed JSON files for old ANSI/ISO
+  experiments and LCAKB23 variants. Keep `reference/lcakb23/`; `Verify`, `Diff`, and analysis
+  harnesses still depend on the canonical SVG/layout/legend references there.
 - Cleanup pass 2026-07-29: project Markdown moved to `docs/project/`, documentation assets moved
   to `docs/assets/`, `analysis/preview.mjs` now writes `docs/assets/preview.svg` by default, and
   `analysis/font.py` reads the shared `Fonts/YS Text/YS Text-Regular.ttf`. Removed `ui-framework/`

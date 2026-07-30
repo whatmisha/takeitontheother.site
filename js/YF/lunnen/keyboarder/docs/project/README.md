@@ -10,7 +10,7 @@ Repository structure:
 
 - `app/` - the Keyboarder application code.
 - `analysis/` - regression and measurement harnesses.
-- `presets/` - shipped app presets.
+- `presets/` - shipped app presets listed in `presets/manifest.json`.
 - `Fonts/` - YS Text reference and variable fonts used by the app/tests.
 - `vendor/` - required runtime third-party code: framework copy plus `opentype`, `jsPDF`, `svg2pdf`.
 - `docs/assets/` - screenshots, diagnostic images, and QA preview SVG.
@@ -20,3 +20,5 @@ Removed during cleanup:
 
 - `ui-framework/` - old source sandbox; active app uses `vendor/framework/`.
 - `LCAKB23/` - old Illustrator/source archive with duplicate SVG/font; active reference files are in `reference/lcakb23/`.
+- obsolete unlisted preset JSON files (`ansi-*`, `iso-tkl`, `round-mm`, `lcakb23-*` variants);
+  current shipped presets are only `LCAKB21`, `LCAKB22`, and `LCAKB23`.

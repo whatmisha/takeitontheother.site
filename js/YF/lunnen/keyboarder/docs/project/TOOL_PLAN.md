@@ -1230,6 +1230,11 @@ then writes the same `caps` / `glyphs` / `icons` / `f-icons` layer structure exp
 `analysis/export-artifact-qa.mjs`. Fresh `/tmp` smoke exports for `LCAKB21`, `LCAKB22`, and
 `LCAKB23` passed their artifact QA presets.
 
+Preset folder cleanup: `presets/` now contains only `manifest.json`, `lcakb21.json`,
+`lcakb22.json`, and `lcakb23.json`. Removed obsolete unlisted seed JSON files for old ANSI/ISO
+experiments and LCAKB23 variants; `reference/lcakb23/` remains because `Verify`, `Diff`, and
+regression/analysis harnesses use it as the canonical reference.
+
 ---
 
 ## 6. Порядок портирования Python → JS
