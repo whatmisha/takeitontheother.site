@@ -18,7 +18,14 @@ export class PlantGenerator {
     const seed = normalizeRange(settings.seed, 1207, 1, 999999);
     const rng = createRng(seed);
     const groupId = makeGroupId("flor", seed);
-    const factory = new StrokeFactory({ source: "flor", groupId, color, seed, roughness: normalizePercent(settings.roughness, 100) });
+    const factory = new StrokeFactory({
+      source: "flor",
+      groupId,
+      color,
+      seed,
+      scatter: normalizePercent(settings.scatter, 100),
+      roughness: normalizePercent(settings.roughness, 100)
+    });
     const strokes = [];
     const type = settings.type || "single";
     const scale = normalizePercent(settings.scale, 70);

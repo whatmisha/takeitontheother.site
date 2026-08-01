@@ -22,7 +22,14 @@ export class NuevoGenerator {
     const seed = normalizeRange(settings.seed, 3101, 1, 999999);
     const rng = createRng(seed);
     const groupId = makeGroupId("nuevo", seed);
-    const factory = new StrokeFactory({ source: "nuevo", groupId, color, seed, roughness: normalizePercent(settings.roughness, 100) });
+    const factory = new StrokeFactory({
+      source: "nuevo",
+      groupId,
+      color,
+      seed,
+      scatter: normalizePercent(settings.scatter, 100),
+      roughness: normalizePercent(settings.roughness, 100)
+    });
     const lineStrength = normalizePercent(settings.lineStrength, 50);
     const massOutline = normalizePercent(settings.massOutline, 50);
     const interiorDetail = normalizePercent(settings.interiorDetail, 50);

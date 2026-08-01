@@ -1,11 +1,11 @@
-import { getStrokeDensity, getStrokeDensityProfile, getStrokeRoughness, getStrokeSize, getStrokeSizeVariation, renderStroke } from "../brushes/BrushEngine.js?v=roughness-1";
-import { DENSITY_PROFILE_DEFAULT } from "../brushes/DensityProfiles.js";
+import { getStrokeDensity, getStrokeDensityProfile, getStrokeRoughness, getStrokeScatter, getStrokeSize, getStrokeSizeVariation, renderStroke } from "../brushes/BrushEngine.js?v=selection-2";
+import { DENSITY_PROFILE_DEFAULT } from "../brushes/DensityProfiles.js?v=selection-2";
 import { randomSeed } from "../brushes/random.js";
 import { exportGif, exportJson, exportPng } from "./Exporter.js";
-import { LINE_DENSITY_MAX_PERCENT, LINE_DENSITY_MIN_PERCENT } from "../utils/LineSettings.js?v=roughness-1";
+import { LINE_DENSITY_MAX_PERCENT, LINE_DENSITY_MIN_PERCENT } from "../utils/LineSettings.js?v=selection-2";
 
 const CANVAS_BACKGROUND = "#bbbbbb";
-const BRUSH_COLOR = "#000000";
+const BRUSH_COLOR = "#ffffff";
 const DEFAULT_EFFECTS = {
   wind: {
     enabled: false,
@@ -28,11 +28,13 @@ export class CanvasController extends EventTarget {
     this.generatedPreviewStrokes = [];
     this.currentStroke = null;
     this.selectedStrokeId = null;
+    this.selectedStrokeIds = new Set();
     this.hoveredStrokeId = null;
     this.tool = "dotted";
-    this.size = 60;
+    this.size = 100;
     this.sizeVariation = 0;
-    this.roughness = 1;
+    this.scatter = 0.3;
+    this.roughness = 0.7;
     this.density = 1;
     this.densityProfile = DENSITY_PROFILE_DEFAULT;
     this.pressureEnabled = true;
@@ -60,6 +62,7 @@ export class CanvasController extends EventTarget {
       settings: { ...this.animationSettings }
     };
     this.effectsEnabled = true;
+    this.outlineMode = false;
     this.previewPoint = null;
     this.selectDrag = null;
     this.renderNow();
@@ -70,7 +73,7 @@ export class CanvasController extends EventTarget {
     this.tool = tool;
     if (tool !== "select") {
       this.hoveredStrokeId = null;
-      this.selectedStrokeId = null;
+      this.clearSelectedStrokeIds();
       this.editSessionActive = false;
       this.selectDrag = null;
     }
@@ -114,6 +117,19 @@ export class CanvasController extends EventTarget {
       return;
     }
     this.sizeVariation = next;
+    this.emitChange();
+  }
+
+  setScatter(percent) {
+    const next = sanitizeNumber(percent, 100, 0, 100) / 100;
+    const selected = this.getSelectedStroke();
+    if (selected) {
+      if (!this.editSessionActive) this.commitHistory();
+      selected.settings.scatter = next;
+      this.queueRender();
+      return;
+    }
+    this.scatter = next;
     this.emitChange();
   }
 
@@ -214,6 +230,16 @@ export class CanvasController extends EventTarget {
     this.queueRender();
   }
 
+  setOutlineMode(enabled) {
+    this.outlineMode = Boolean(enabled);
+    this.queueRender();
+  }
+
+  toggleOutlineMode() {
+    this.setOutlineMode(!this.outlineMode);
+    return this.outlineMode;
+  }
+
   setAnimationSettings(settings = {}) {
     this.animationSettings = {
       ...this.animationSettings,
@@ -236,7 +262,7 @@ export class CanvasController extends EventTarget {
   }
 
   beginEditSession() {
-    if (!this.getSelectedStroke() || this.editSessionActive) return;
+    if (!this.hasSelection() || this.editSessionActive) return;
     this.commitHistory();
     this.editSessionActive = true;
     this.queueRender();
@@ -264,6 +290,7 @@ export class CanvasController extends EventTarget {
       settings: {
         size: this.size,
         sizeVariation: this.sizeVariation,
+        scatter: this.scatter,
         roughness: this.roughness,
         density: this.density,
         densityProfile: this.densityProfile,
@@ -274,7 +301,7 @@ export class CanvasController extends EventTarget {
       densityScale: 1,
       points: [point]
     };
-    this.selectedStrokeId = null;
+    this.clearSelectedStrokeIds();
     this.strokes.push(this.currentStroke);
     this.queueRender();
   }
@@ -314,7 +341,7 @@ export class CanvasController extends EventTarget {
     this.strokes = [];
     this.generatedPreviewStrokes = [];
     this.currentStroke = null;
-    this.selectedStrokeId = null;
+    this.clearSelectedStrokeIds();
     this.queueRender();
   }
 
@@ -327,7 +354,12 @@ export class CanvasController extends EventTarget {
     this.historyFuture = [];
     this.currentStroke = null;
     this.hoveredStrokeId = null;
-    this.selectedStrokeId = selectGroup ? nextStrokes.find((stroke) => stroke.tool !== "eraser")?.id ?? null : null;
+    if (selectGroup) {
+      const selected = nextStrokes.find((stroke) => stroke.tool !== "eraser");
+      this.setSelectedStrokeIds(selected ? [selected.id] : []);
+    } else {
+      this.clearSelectedStrokeIds();
+    }
     this.queueRender();
     return getGeneratedGroupId(nextStrokes[0]);
   }
@@ -344,7 +376,12 @@ export class CanvasController extends EventTarget {
     if (commitHistory) this.historyFuture = [];
     this.currentStroke = null;
     this.hoveredStrokeId = null;
-    this.selectedStrokeId = selectGroup ? nextStrokes.find((stroke) => stroke.tool !== "eraser")?.id ?? null : null;
+    if (selectGroup) {
+      const selected = nextStrokes.find((stroke) => stroke.tool !== "eraser");
+      this.setSelectedStrokeIds(selected ? [selected.id] : []);
+    } else {
+      this.clearSelectedStrokeIds();
+    }
     this.queueRender();
     return getGeneratedGroupId(nextStrokes[0]);
   }
@@ -416,7 +453,7 @@ export class CanvasController extends EventTarget {
 
   export({ transparent = false } = {}) {
     this.stopBoilPreview({ render: false });
-    this.renderNow({ showSelection: false, generatedPreviewAlpha: 1 });
+    this.renderNow({ showSelection: false, generatedPreviewAlpha: 1, forceBrushRender: true });
     exportPng(transparent ? this.strokeCanvas : this.canvas, { transparent });
     this.queueRender();
   }
@@ -439,6 +476,7 @@ export class CanvasController extends EventTarget {
         tool: this.tool,
         size: this.size,
         sizeVariation: this.sizeVariation,
+        scatter: this.scatter,
         roughness: this.roughness,
         density: this.density,
         densityProfile: this.densityProfile,
@@ -532,7 +570,7 @@ export class CanvasController extends EventTarget {
   }
 
   async copyTransparent() {
-    this.renderNow({ showSelection: false, generatedPreviewAlpha: 1 });
+    this.renderNow({ showSelection: false, generatedPreviewAlpha: 1, forceBrushRender: true });
     const blob = await canvasToBlob(this.strokeCanvas);
     if (!blob || !navigator.clipboard || !window.ClipboardItem) {
       exportPng(this.strokeCanvas, { transparent: true });
@@ -543,29 +581,52 @@ export class CanvasController extends EventTarget {
     this.queueRender();
   }
 
-  selectStrokeAt(point) {
+  selectStrokeAt(point, { additive = false } = {}) {
     const hit = this.findStrokeAt(point);
-    this.selectedStrokeId = hit?.id ?? null;
+    if (additive) {
+      if (hit) this.addStrokeToSelection(hit.id);
+    } else {
+      this.setSelectedStrokeIds(hit ? [hit.id] : []);
+    }
     this.queueRender();
   }
 
-  beginSelectDrag(point) {
+  beginSelectDrag(point, { additive = false } = {}) {
     const hit = this.findStrokeAt(point);
-    this.selectedStrokeId = hit?.id ?? null;
-    this.selectDrag = hit ? {
-      strokeId: hit.id,
-      groupId: getGeneratedGroupId(hit),
+    if (!hit) {
+      if (!additive) this.clearSelectedStrokeIds();
+      this.selectDrag = null;
+      this.queueRender();
+      return false;
+    }
+
+    if (additive) {
+      if (this.selectedStrokeIds.has(hit.id)) {
+        this.removeStrokeFromSelection(hit.id);
+        this.selectDrag = null;
+        this.queueRender();
+        return false;
+      }
+      this.addStrokeToSelection(hit.id);
+    } else if (this.selectedStrokeIds.has(hit.id) && this.selectedStrokeIds.size > 1) {
+      this.selectedStrokeId = hit.id;
+    } else {
+      this.setSelectedStrokeIds([hit.id], hit.id);
+    }
+
+    this.selectDrag = {
+      strokeIds: this.getDragStrokeIds(hit),
       lastPoint: point,
       hasMoved: false
-    } : null;
+    };
     this.queueRender();
-    return Boolean(hit);
+    return true;
   }
 
   dragSelectedStroke(point) {
     if (!this.selectDrag) return;
-    const stroke = this.strokes.find((item) => item.id === this.selectDrag.strokeId);
-    if (!stroke) return;
+    const draggedStrokes = this.strokes.filter((stroke) => this.selectDrag.strokeIds.includes(stroke.id));
+    if (!draggedStrokes.length) return;
 
     const dx = point.x - this.selectDrag.lastPoint.x;
     const dy = point.y - this.selectDrag.lastPoint.y;
@@ -576,10 +637,6 @@ export class CanvasController extends EventTarget {
       this.editSessionActive = true;
       this.selectDrag.hasMoved = true;
     }
-
-    const draggedStrokes = this.selectDrag.groupId
-      ? this.strokes.filter((item) => getGeneratedGroupId(item) === this.selectDrag.groupId)
-      : [stroke];
 
     for (const draggedStroke of draggedStrokes) {
       for (const strokePoint of draggedStroke.points) {
@@ -626,29 +683,35 @@ export class CanvasController extends EventTarget {
   }
 
   clearSelection() {
-    if (!this.selectedStrokeId) return;
-    this.selectedStrokeId = null;
+    if (!this.hasSelection()) return;
+    this.clearSelectedStrokeIds();
     this.editSessionActive = false;
     this.queueRender();
   }
 
   deleteSelectedStroke() {
-    if (!this.selectedStrokeId) return;
-    const strokeIndex = this.strokes.findIndex((stroke) => stroke.id === this.selectedStrokeId);
-    if (strokeIndex === -1) {
-      this.selectedStrokeId = null;
+    const selectedIds = this.getSelectedStrokeIds();
+    if (!selectedIds.length) return;
+
+    const selectedStrokes = this.strokes.filter((stroke) => selectedIds.includes(stroke.id));
+    if (!selectedStrokes.length) {
+      this.clearSelectedStrokeIds();
       this.queueRender();
       return;
     }
 
     this.commitHistory();
-    const groupId = getGeneratedGroupId(this.strokes[strokeIndex]);
-    if (groupId) {
-      this.strokes = this.strokes.filter((stroke) => getGeneratedGroupId(stroke) !== groupId);
-    } else {
-      this.strokes.splice(strokeIndex, 1);
+    const idsToDelete = new Set(selectedIds);
+    if (selectedStrokes.length === 1) {
+      const groupId = getGeneratedGroupId(selectedStrokes[0]);
+      if (groupId) {
+        for (const stroke of this.strokes) {
+          if (getGeneratedGroupId(stroke) === groupId) idsToDelete.add(stroke.id);
+        }
+      }
     }
-    this.selectedStrokeId = null;
+    this.strokes = this.strokes.filter((stroke) => !idsToDelete.has(stroke.id));
+    this.clearSelectedStrokeIds();
     this.hoveredStrokeId = null;
     this.editSessionActive = false;
     this.selectDrag = null;
@@ -658,6 +721,77 @@ export class CanvasController extends EventTarget {
   getSelectedStroke() {
     if (!this.selectedStrokeId) return null;
     return this.strokes.find((stroke) => stroke.id === this.selectedStrokeId) ?? null;
+  }
+
+  getSelectedStrokes() {
+    const selectedIds = new Set(this.getSelectedStrokeIds());
+    return this.strokes.filter((stroke) => selectedIds.has(stroke.id));
+  }
+
+  getSelectedStrokeIds() {
+    const validIds = [];
+    for (const id of this.selectedStrokeIds) {
+      const stroke = this.strokes.find((item) => item.id === id && item.tool !== "eraser");
+      if (stroke) validIds.push(id);
+    }
+    if (validIds.length !== this.selectedStrokeIds.size) {
+      this.selectedStrokeIds = new Set(validIds);
+      if (!this.selectedStrokeIds.has(this.selectedStrokeId)) {
+        this.selectedStrokeId = validIds[0] ?? null;
+      }
+    }
+    return validIds;
+  }
+
+  hasSelection() {
+    return this.getSelectedStrokeIds().length > 0;
+  }
+
+  setSelectedStrokeIds(ids = [], primaryId = null) {
+    const nextIds = [];
+    for (const id of ids) {
+      if (nextIds.includes(id)) continue;
+      const stroke = this.strokes.find((item) => item.id === id && item.tool !== "eraser");
+      if (stroke) nextIds.push(id);
+    }
+    this.selectedStrokeIds = new Set(nextIds);
+    this.selectedStrokeId = nextIds.includes(primaryId) ? primaryId : (nextIds[0] ?? null);
+  }
+
+  addStrokeToSelection(id) {
+    this.setSelectedStrokeIds([...this.getSelectedStrokeIds(), id], id);
+  }
+
+  removeStrokeFromSelection(id) {
+    const nextIds = this.getSelectedStrokeIds().filter((item) => item !== id);
+    this.setSelectedStrokeIds(nextIds, this.selectedStrokeId === id ? nextIds[0] : this.selectedStrokeId);
+  }
+
+  clearSelectedStrokeIds() {
+    this.selectedStrokeIds.clear();
+    this.selectedStrokeId = null;
+  }
+
+  selectAllStrokes() {
+    const ids = this.strokes
+      .filter((stroke) => stroke.tool !== "eraser")
+      .map((stroke) => stroke.id);
+    this.setSelectedStrokeIds(ids, ids[0] ?? null);
+    this.queueRender();
+  }
+
+  getDragStrokeIds(hit) {
+    const selectedIds = this.getSelectedStrokeIds();
+    if (selectedIds.length > 1) return selectedIds;
+
+    const groupId = getGeneratedGroupId(hit);
+    if (groupId) {
+      return this.strokes
+        .filter((stroke) => getGeneratedGroupId(stroke) === groupId)
+        .map((stroke) => stroke.id);
+    }
+
+    return [hit.id];
   }
 
   getPointFromEvent(event) {
@@ -680,10 +814,18 @@ export class CanvasController extends EventTarget {
     });
   }
 
-  renderNow({ showSelection = true, showGeneratedPreview = true, generatedPreviewAlpha = 0.68 } = {}) {
+  renderNow({ showSelection = true, showGeneratedPreview = true, generatedPreviewAlpha = 0.68, forceBrushRender = false } = {}) {
     this.ensureStrokeLayer();
     this.paintBackground();
     this.strokeCtx.clearRect(0, 0, this.strokeCanvas.width, this.strokeCanvas.height);
+
+    if (this.outlineMode && !forceBrushRender) {
+      this.renderOutlineLayer({ showGeneratedPreview, generatedPreviewAlpha });
+      this.ctx.drawImage(this.strokeCanvas, 0, 0);
+      if (showSelection) this.drawSelectionOverlay();
+      this.emitChange();
+      return;
+    }
 
     for (const stroke of this.strokes) {
       const isHovered = showSelection && this.tool === "select" && stroke.id === this.hoveredStrokeId && stroke.tool !== "eraser";
@@ -748,6 +890,52 @@ export class CanvasController extends EventTarget {
     }
 
     this.ctx.drawImage(this.strokeCanvas, 0, 0);
+  }
+
+  renderOutlineLayer({ showGeneratedPreview = true, generatedPreviewAlpha = 0.68 } = {}) {
+    for (const stroke of this.strokes) {
+      this.drawOutlineStroke(this.strokeCtx, stroke, 1);
+    }
+
+    if (showGeneratedPreview) {
+      for (const stroke of this.generatedPreviewStrokes) {
+        this.drawOutlineStroke(this.strokeCtx, stroke, generatedPreviewAlpha);
+      }
+    }
+  }
+
+  drawOutlineStroke(ctx, stroke, alpha = 1) {
+    if (stroke.tool === "eraser" || stroke.points.length < 1) return;
+
+    const color = normalizeHexColor(stroke.settings?.color, this.brushColor);
+    const lineWidth = this.getOutlineLineWidth(stroke);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.globalCompositeOperation = "source-over";
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    if (stroke.points.length === 1) {
+      const point = stroke.points[0];
+      const radius = Math.max(2.5, Math.min(10, getStrokeSize(stroke) * 0.08));
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+    for (let index = 1; index < stroke.points.length; index += 1) {
+      ctx.lineTo(stroke.points[index].x, stroke.points[index].y);
+    }
+    ctx.stroke();
+    ctx.restore();
   }
 
   getStrokeRenderOptions(options = {}) {
@@ -816,29 +1004,69 @@ export class CanvasController extends EventTarget {
   }
 
   drawSelectionOverlay() {
-    const stroke = this.getSelectedStroke();
-    if (!stroke || stroke.points.length < 1 || this.editSessionActive) return;
-
-    const firstPoint = stroke.points[0];
-    const lastPoint = stroke.points[stroke.points.length - 1];
-    const radius = Math.max(11, Math.min(26, getStrokeSize(stroke) * 0.46));
+    const selectedStrokes = this.getSelectedStrokes();
+    if (!selectedStrokes.length || this.editSessionActive) return;
 
     this.ctx.save();
-    this.ctx.shadowColor = "rgba(68, 255, 98, 0.42)";
-    this.ctx.shadowBlur = radius * 0.7;
-    this.ctx.fillStyle = "#43ff5f";
-    this.ctx.strokeStyle = "rgba(0, 0, 0, 0.86)";
-    this.ctx.lineWidth = Math.max(2, radius * 0.18);
-    this.drawEndpointDot(firstPoint, radius);
-    if (lastPoint !== firstPoint) this.drawEndpointDot(lastPoint, radius);
+
+    for (const stroke of selectedStrokes) {
+      if (stroke.points.length < 1) continue;
+      const firstPoint = stroke.points[0];
+      const lastPoint = stroke.points[stroke.points.length - 1];
+      const radius = Math.max(5.5, Math.min(13, getStrokeSize(stroke) * 0.23));
+      const pathWidth = this.outlineMode ? this.getOutlineLineWidth(stroke) : 1;
+      this.drawSelectedPath(stroke, pathWidth);
+      this.ctx.shadowColor = "rgba(68, 255, 98, 0.42)";
+      this.ctx.shadowBlur = radius * 0.7;
+      this.ctx.fillStyle = "#43ff5f";
+      this.ctx.strokeStyle = "rgba(0, 0, 0, 0.86)";
+      this.ctx.lineWidth = Math.max(2, radius * 0.18);
+      this.drawEndpointDot(firstPoint, radius, "S");
+      if (lastPoint !== firstPoint) this.drawEndpointDot(lastPoint, radius, "F");
+    }
     this.ctx.restore();
   }
 
-  drawEndpointDot(point, radius) {
+  drawSelectedPath(stroke, lineWidth) {
+    if (stroke.points.length < 2) return;
+
+    this.ctx.save();
+    this.ctx.shadowColor = "transparent";
+    this.ctx.shadowBlur = 0;
+    this.ctx.globalAlpha = 1;
+    this.ctx.strokeStyle = "#43ff5f";
+    this.ctx.lineWidth = lineWidth;
+    this.ctx.lineCap = "round";
+    this.ctx.lineJoin = "round";
+    this.ctx.beginPath();
+    this.ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+    for (let index = 1; index < stroke.points.length; index += 1) {
+      this.ctx.lineTo(stroke.points[index].x, stroke.points[index].y);
+    }
+    this.ctx.stroke();
+    this.ctx.restore();
+  }
+
+  drawEndpointDot(point, radius, label = "") {
     this.ctx.beginPath();
     this.ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
     this.ctx.fill();
     this.ctx.stroke();
+    if (!label) return;
+
+    this.ctx.save();
+    this.ctx.shadowColor = "transparent";
+    this.ctx.shadowBlur = 0;
+    this.ctx.fillStyle = "#000000";
+    this.ctx.font = `700 ${Math.max(8, radius * 1.05)}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+    this.ctx.textAlign = "center";
+    this.ctx.textBaseline = "middle";
+    this.ctx.fillText(label, point.x, point.y + (radius * 0.03));
+    this.ctx.restore();
+  }
+
+  getOutlineLineWidth(stroke) {
+    return Math.max(2, Math.min(8, getStrokeSize(stroke) * 0.035));
   }
 
   findStrokeAt(point) {
@@ -881,6 +1109,7 @@ export class CanvasController extends EventTarget {
       width: this.canvas.width,
       height: this.canvas.height,
       selectedStrokeId: this.selectedStrokeId,
+      selectedStrokeIds: this.getSelectedStrokeIds(),
       strokes: cloneStrokes(this.strokes)
     };
   }
@@ -890,7 +1119,7 @@ export class CanvasController extends EventTarget {
     this.canvas.height = state.height;
     this.ensureStrokeLayer();
     this.strokes = cloneStrokes(state.strokes);
-    this.selectedStrokeId = state.selectedStrokeId;
+    this.setSelectedStrokeIds(state.selectedStrokeIds || (state.selectedStrokeId ? [state.selectedStrokeId] : []), state.selectedStrokeId);
     this.hoveredStrokeId = null;
     this.currentStroke = null;
     this.editSessionActive = false;
@@ -901,6 +1130,7 @@ export class CanvasController extends EventTarget {
 
   emitChange() {
     const selected = this.getSelectedStroke();
+    const selectedCount = this.getSelectedStrokeIds().length;
     const selectableStrokes = this.strokes.filter((stroke) => stroke.tool !== "eraser");
     const selectedIndex = selected ? selectableStrokes.findIndex((stroke) => stroke.id === selected.id) + 1 : 0;
     this.dispatchEvent(new CustomEvent("change", {
@@ -911,9 +1141,12 @@ export class CanvasController extends EventTarget {
         tool: this.tool,
         size: this.size,
         density: this.density,
+        scatter: this.scatter,
         roughness: this.roughness,
+        outlineMode: this.outlineMode,
         activeSize: selected ? getStrokeSize(selected) : this.size,
         activeSizeVariation: selected ? getStrokeSizeVariation(selected) : this.sizeVariation,
+        activeScatter: selected ? getStrokeScatter(selected) : this.scatter,
         activeRoughness: selected ? getStrokeRoughness(selected) : this.roughness,
         activeDensity: selected ? getStrokeDensity(selected) : this.density,
         activeDensityProfile: selected ? getStrokeDensityProfile(selected) : this.densityProfile,
@@ -923,6 +1156,8 @@ export class CanvasController extends EventTarget {
         effects: cloneEffects(this.effects),
         animationSettings: { ...this.animationSettings },
         selectedStrokeId: selected?.id ?? null,
+        selectedStrokeIds: this.getSelectedStrokeIds(),
+        selectedStrokeCount: selectedCount,
         selectedStrokeIndex: selectedIndex,
         selectedStrokeTotal: selectableStrokes.length,
         canUndo: this.historyPast.length > 0,

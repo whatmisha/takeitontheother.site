@@ -3,8 +3,8 @@ import { DoodleFlorGenerator } from "../generators/DoodleFlorGenerator.js";
 import { NuevoGenerator } from "../generators/NuevoGenerator.js";
 import { PhotoGenerator } from "../generators/PhotoGenerator.js";
 import { PlantGenerator } from "../generators/PlantGenerator.js";
-import { createSvgLineStrokes } from "../importers/SvgLineImporter.js?v=roughness-1";
-import { LINE_DENSITY_MAX_PERCENT, LINE_DENSITY_MIN_PERCENT } from "../utils/LineSettings.js?v=roughness-1";
+import { createSvgLineStrokes } from "../importers/SvgLineImporter.js?v=selection-2";
+import { LINE_DENSITY_MAX_PERCENT, LINE_DENSITY_MIN_PERCENT } from "../utils/LineSettings.js?v=selection-2";
 
 export class Toolbar {
   constructor(controller) {
@@ -13,6 +13,8 @@ export class Toolbar {
     this.previousPintaTool = "dotted";
     this.activeBrushTool = "dotted";
     this.modeButtons = document.querySelectorAll("[data-mode-tab]");
+    this.generatorModeButtons = Array.from(this.modeButtons).filter((button) => button.dataset.modeTab !== "pinta");
+    this.generatorModesVisible = false;
     this.toolsPanel = document.getElementById("toolsPanel");
     this.linePanel = document.getElementById("linePanel");
     this.effectsPanel = document.getElementById("effectsPanel");
@@ -25,6 +27,8 @@ export class Toolbar {
     this.sizeOutput = document.getElementById("sizeOutput");
     this.sizeVariationInput = document.getElementById("sizeVariationInput");
     this.sizeVariationOutput = document.getElementById("sizeVariationOutput");
+    this.scatterInput = document.getElementById("scatterInput");
+    this.scatterOutput = document.getElementById("scatterOutput");
     this.roughnessInput = document.getElementById("roughnessInput");
     this.roughnessOutput = document.getElementById("roughnessOutput");
     this.densityInput = document.getElementById("densityInput");
@@ -38,6 +42,7 @@ export class Toolbar {
     this.canvasPresetText = document.getElementById("canvasPresetText");
     this.canvasPresetMenu = document.getElementById("canvasPresetMenu");
     this.canvasPresetItems = document.querySelectorAll("[data-canvas-preset]");
+    this.outlineModeButton = document.getElementById("outlineModeButton");
     this.undoButton = document.getElementById("undoButton");
     this.redoButton = document.getElementById("redoButton");
     this.clearButton = document.getElementById("clearButton");
@@ -124,7 +129,7 @@ export class Toolbar {
     });
     this.brushColorPicker = new BackgroundColorPicker(controller, {
       prefix: "brush",
-      initialColor: "#000000",
+      initialColor: "#ffffff",
       onChange: (color) => {
         controller.setBrushColor(color);
         this.queueActiveGeneratorRefresh();
@@ -135,6 +140,7 @@ export class Toolbar {
     this.applyParameterTooltips();
     this.backgroundColorPicker.init();
     this.brushColorPicker.init();
+    this.setGeneratorModesVisible(false);
     if (document.documentElement.classList.contains("is-etica-mobile") && this.mobileSizeInput) {
       this.applySize(this.mobileSizeInput.value);
     }
@@ -189,6 +195,17 @@ export class Toolbar {
       onApply: (value) => this.applySizeVariation(value)
     });
 
+    this.scatterInput.addEventListener("pointerdown", () => this.controller.beginEditSession());
+    this.scatterInput.addEventListener("input", () => this.applyScatter(this.scatterInput.value));
+    this.scatterInput.addEventListener("change", () => this.controller.endEditSession());
+    this.bindRangeKeyboard(this.scatterInput, {
+      min: 0,
+      max: 100,
+      baseStep: 1,
+      shiftStep: 10,
+      onApply: (value) => this.applyScatter(value)
+    });
+
     this.roughnessInput.addEventListener("pointerdown", () => this.controller.beginEditSession());
     this.roughnessInput.addEventListener("input", () => this.applyRoughness(this.roughnessInput.value));
     this.roughnessInput.addEventListener("change", () => this.controller.endEditSession());
@@ -230,6 +247,16 @@ export class Toolbar {
       onApply: (value) => this.applySizeVariation(value)
     });
 
+    this.bindValueInput(this.scatterOutput, this.scatterInput, {
+      min: 0,
+      max: 100,
+      baseStep: 1,
+      shiftStep: 10,
+      shiftSnap: true,
+      formatter: (value) => `${Math.round(value)}%`,
+      onApply: (value) => this.applyScatter(value)
+    });
+
     this.bindValueInput(this.roughnessOutput, this.roughnessInput, {
       min: 0,
       max: 100,
@@ -255,6 +282,9 @@ export class Toolbar {
     });
 
     this.bindCanvasPresetDropdown();
+    this.outlineModeButton?.addEventListener("click", () => {
+      this.controller.setOutlineMode(false);
+    });
 
     this.undoButton.addEventListener("click", () => {
       this.controller.undo();
@@ -303,7 +333,7 @@ export class Toolbar {
       });
     });
 
-    this.deselectButton.addEventListener("click", () => {
+    this.deselectButton?.addEventListener("click", () => {
       this.controller.clearSelection();
     });
 
@@ -336,7 +366,25 @@ export class Toolbar {
         return;
       }
 
+      if ((event.metaKey || event.ctrlKey) && code === "KeyA" && this.controller.tool === "select") {
+        event.preventDefault();
+        this.controller.selectAllStrokes();
+        return;
+      }
+
       if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+      if (code === "KeyP") {
+        event.preventDefault();
+        this.toggleGeneratorModes();
+        return;
+      }
+
+      if (code === "KeyY") {
+        event.preventDefault();
+        this.controller.toggleOutlineMode();
+        return;
+      }
 
       if (code === "KeyJ") {
         event.preventDefault();
@@ -401,6 +449,7 @@ export class Toolbar {
       sizeInput: "Base dot or brush size.",
       densityInput: "Dot density along a stroke.",
       sizeVariationInput: "Maximum random dot size difference.",
+      scatterInput: "How far dots can scatter from the stroke path.",
       roughnessInput: "How irregular each dot edge is.",
       densityProfileSelect: "How density changes along a stroke.",
       fotoRecognitionInput: "How closely the result follows the photo.",
@@ -488,6 +537,20 @@ export class Toolbar {
     });
   }
 
+  setGeneratorModesVisible(visible) {
+    this.generatorModesVisible = Boolean(visible);
+    this.generatorModeButtons.forEach((button) => {
+      button.hidden = !this.generatorModesVisible;
+    });
+    if (!this.generatorModesVisible && this.activeMode !== "pinta") {
+      this.setMode("pinta");
+    }
+  }
+
+  toggleGeneratorModes() {
+    this.setGeneratorModesVisible(!this.generatorModesVisible);
+  }
+
   setMode(mode) {
     if (!["pinta", "foto", "nuevo", "flor", "doodleFlor"].includes(mode)) return;
     const previousMode = this.activeMode;
@@ -560,6 +623,14 @@ export class Toolbar {
     this.sizeVariationOutput.value = `${Math.round(next)}%`;
     this.controller.setSizeVariation(next);
     this.queueSvgLineRefresh();
+  }
+
+  applyScatter(value) {
+    const next = clampNumber(value, 0, 100);
+    this.scatterInput.value = next;
+    this.scatterOutput.value = `${Math.round(next)}%`;
+    this.controller.setScatter(next);
+    this.queueActiveGeneratorRefresh();
   }
 
   applyRoughness(value) {
@@ -996,7 +1067,6 @@ export class Toolbar {
 
   async loadSvgLineFile(file) {
     if (!file) return;
-    if (this.svgLineMeta) this.svgLineMeta.textContent = "Importing…";
 
     try {
       this.svgLineSource = await file.text();
@@ -1006,7 +1076,6 @@ export class Toolbar {
       console.error(error);
       this.svgLineSource = null;
       this.svgLineName = "";
-      if (this.svgLineMeta) this.svgLineMeta.textContent = "Failed";
       if (this.svgLineReapplyButton) this.svgLineReapplyButton.disabled = true;
     }
   }
@@ -1022,6 +1091,7 @@ export class Toolbar {
         brush: this.activeBrushTool,
         size: this.controller.size,
         sizeVariation: this.controller.sizeVariation,
+        scatter: this.controller.scatter,
         roughness: this.controller.roughness,
         density: this.controller.density,
         densityProfile: this.controller.densityProfile,
@@ -1030,7 +1100,6 @@ export class Toolbar {
       });
 
       if (!strokes.length) {
-        if (this.svgLineMeta) this.svgLineMeta.textContent = "No lines found";
         if (this.svgLineReapplyButton) this.svgLineReapplyButton.disabled = true;
         return;
       }
@@ -1040,11 +1109,9 @@ export class Toolbar {
         selectGroup: false,
         commitHistory: commitHistory || !hasExistingGroup
       });
-      if (this.svgLineMeta) this.svgLineMeta.textContent = `${this.svgLineName} · ${strokes.length}`;
       if (this.svgLineReapplyButton) this.svgLineReapplyButton.disabled = false;
     } catch (error) {
       console.error(error);
-      if (this.svgLineMeta) this.svgLineMeta.textContent = "Failed";
       if (this.svgLineReapplyButton) this.svgLineReapplyButton.disabled = true;
     }
   }
@@ -1153,6 +1220,7 @@ export class Toolbar {
       density: valueOf("fotoDensityInput", 56),
       dotSize: valueOf("fotoDotSizeInput", 14),
       sizeVariation: valueOf("fotoSizeVariationInput", 0),
+      scatter: this.controller.scatter * 100,
       roughness: this.controller.roughness * 100,
       jitter: valueOf("fotoJitterInput", 44),
       maxPoints: valueOf("fotoMaxPointsInput", 2500),
@@ -1171,6 +1239,7 @@ export class Toolbar {
       spacing: valueOf("nuevoSpacingInput", 11),
       dotSize: valueOf("nuevoDotSizeInput", 22),
       sizeVariation: valueOf("nuevoSizeVariationInput", 0),
+      scatter: this.controller.scatter * 100,
       roughness: this.controller.roughness * 100,
       jitter: valueOf("nuevoJitterInput", 10),
       maxPoints: valueOf("nuevoMaxPointsInput", 1200),
@@ -1191,6 +1260,7 @@ export class Toolbar {
       mass: valueOf("florMassInput", 50),
       dotSize: valueOf("florDotSizeInput", 22),
       sizeVariation: valueOf("florSizeVariationInput", 0),
+      scatter: this.controller.scatter * 100,
       roughness: this.controller.roughness * 100,
       jitter: valueOf("florJitterInput", 46),
       maxPoints: valueOf("florMaxPointsInput", 1200),
@@ -1211,6 +1281,7 @@ export class Toolbar {
       density: valueOf("doodleFlorDensityInput", 78),
       dotSize: valueOf("doodleFlorDotSizeInput", 20),
       sizeVariation: valueOf("doodleFlorSizeVariationInput", 0),
+      scatter: this.controller.scatter * 100,
       roughness: this.controller.roughness * 100,
       jitter: valueOf("doodleFlorJitterInput", 16),
       maxStrokes: valueOf("doodleFlorMaxStrokesInput", 60),
@@ -1270,11 +1341,17 @@ export class Toolbar {
     this.redoButton.disabled = !detail.canRedo;
     if (this.mobileUndoButton) this.mobileUndoButton.disabled = !detail.canUndo;
     if (this.mobileRedoButton) this.mobileRedoButton.disabled = !detail.canRedo;
-    this.deselectButton.disabled = !detail.selectedStrokeId;
+    const selectedCount = detail.selectedStrokeCount ?? (detail.selectedStrokeId ? 1 : 0);
+    if (this.deselectButton) this.deselectButton.disabled = selectedCount === 0;
     this.clearBackgroundButton.disabled = !detail.backgroundName;
-    this.selectionMeta.textContent = detail.selectedStrokeId
-      ? `${detail.selectedStrokeIndex}/${detail.selectedStrokeTotal}`
-      : `0/${detail.selectedStrokeTotal}`;
+    const outlineMode = Boolean(detail.outlineMode);
+    document.documentElement.classList.toggle("is-outline-mode", outlineMode);
+    if (this.outlineModeButton) {
+      this.outlineModeButton.hidden = !outlineMode;
+      this.outlineModeButton.setAttribute("aria-pressed", String(outlineMode));
+    }
+    this.svgLineMeta.textContent = String(detail.selectedStrokeTotal);
+    this.selectionMeta.textContent = String(selectedCount);
     this.backgroundMeta.textContent = detail.backgroundName || "None";
 
     this.setCanvasPresetLabel(`${detail.width}x${detail.height}`);
@@ -1295,6 +1372,12 @@ export class Toolbar {
       const variationPercent = Math.round(detail.activeSizeVariation * 100);
       this.sizeVariationInput.value = variationPercent;
       this.sizeVariationOutput.value = `${variationPercent}%`;
+    }
+
+    if (!isActivelyEditing(this.scatterInput, this.scatterOutput)) {
+      const scatterPercent = Math.round(detail.activeScatter * 100);
+      this.scatterInput.value = scatterPercent;
+      this.scatterOutput.value = `${scatterPercent}%`;
     }
 
     if (!isActivelyEditing(this.roughnessInput, this.roughnessOutput)) {

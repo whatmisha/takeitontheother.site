@@ -17,7 +17,14 @@ export class DoodleFlorGenerator {
     const seed = normalizeRange(settings.seed, 2207, 1, 999999);
     const rng = createRng(seed);
     const groupId = makeGroupId("doodle-flor", seed);
-    const factory = new StrokeFactory({ source: "doodle-flor", groupId, color, seed, roughness: normalizePercent(settings.roughness, 100) });
+    const factory = new StrokeFactory({
+      source: "doodle-flor",
+      groupId,
+      color,
+      seed,
+      scatter: normalizePercent(settings.scatter, 100),
+      roughness: normalizePercent(settings.roughness, 100)
+    });
     const strokes = [];
 
     const shape = settings.shape === "mixed" ? pickShape(rng) : (settings.shape || "daisy");

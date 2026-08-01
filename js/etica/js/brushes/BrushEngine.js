@@ -1,7 +1,7 @@
 import { clamp, createRng, lerp } from "./random.js";
-import { DENSITY_PROFILE_DEFAULT, getDensityProfileMultiplier } from "./DensityProfiles.js";
-import { getStampSet } from "./stamps.js?v=roughness-1";
-import { LINE_DENSITY_MIN } from "../utils/LineSettings.js?v=roughness-1";
+import { DENSITY_PROFILE_DEFAULT, getDensityProfileMultiplier } from "./DensityProfiles.js?v=selection-2";
+import { getStampSet } from "./stamps.js?v=selection-2";
+import { LINE_DENSITY_MIN } from "../utils/LineSettings.js?v=selection-2";
 
 export function renderStroke(ctx, stroke, options = {}) {
   if (!stroke.points.length) return;
@@ -95,6 +95,7 @@ function drawSegment(ctx, stamps, from, to, stroke, baseDensity, rng, kind, rend
 function drawPoint(ctx, stamps, point, stroke, densityMultiplier, rng, kind, renderAlpha, wind, boil) {
   const size = getStrokeSize(stroke);
   const sizeVariation = getStrokeSizeVariation(stroke);
+  const scatter = getStrokeScatter(stroke);
   const pressureScale = stroke.settings.pressureEnabled ? lerp(0.72, 1.38, point.pressure) : 1;
   const clusterCount = kind === "ink" ? 3 : kind === "eraser" ? 2 : 1;
   const jitterBase = kind === "dotted" ? size * 0.62 : size * 0.32;
@@ -105,7 +106,7 @@ function drawPoint(ctx, stamps, point, stroke, densityMultiplier, rng, kind, ren
   for (let i = 0; i < total; i += 1) {
     const stamp = stamps[Math.floor(rng() * stamps.length)];
     const angle = rng() * Math.PI * 2;
-    const spread = jitterBase * (kind === "eraser" ? 0.5 : 1) * rng();
+    const spread = jitterBase * scatter * (kind === "eraser" ? 0.5 : 1) * rng();
     const radiusJitter = sizeVariation > 0
       ? Math.max(0.08, lerp(1 - sizeVariation, 1 + sizeVariation, rng()))
       : 1;
@@ -228,6 +229,10 @@ export function getStrokeSize(stroke) {
 
 export function getStrokeSizeVariation(stroke) {
   return clamp(Number(stroke.settings?.sizeVariation ?? 0), 0, 1);
+}
+
+export function getStrokeScatter(stroke) {
+  return clamp(Number(stroke.settings?.scatter ?? 1), 0, 1);
 }
 
 export function getStrokeRoughness(stroke) {

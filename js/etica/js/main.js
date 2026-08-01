@@ -1,6 +1,6 @@
-import { CanvasController } from "./canvas/CanvasController.js?v=roughness-1";
+import { CanvasController } from "./canvas/CanvasController.js?v=selection-2";
 import { PointerTracker } from "./input/PointerTracker.js";
-import { Toolbar } from "./ui/Toolbar.js?v=roughness-1";
+import { Toolbar } from "./ui/Toolbar.js?v=outline-button-1";
 import { PanelManager } from "./ui/PanelManager.js";
 
 const canvas = document.getElementById("drawingCanvas");

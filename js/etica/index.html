@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Etica Pinta</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="./css/styles.css?v=outline-button-1">
   </head>
   <body>
     <div class="container">
       <div class="top-links">
         <button class="yf-tools-link etica-title-button etica-tab-button active" type="button" data-mode-tab="pinta" aria-pressed="true">Etica Pinta</button>
-        <button class="yf-tools-link etica-title-button etica-tab-button" type="button" data-mode-tab="foto" aria-pressed="false">Foto</button>
-        <button class="yf-tools-link etica-title-button etica-tab-button" type="button" data-mode-tab="nuevo" aria-pressed="false">Nuevo</button>
-        <button class="yf-tools-link etica-title-button etica-tab-button" type="button" data-mode-tab="flor" aria-pressed="false">Flor</button>
-        <button class="yf-tools-link etica-title-button etica-tab-button" type="button" data-mode-tab="doodleFlor" aria-pressed="false">Doodle Flor</button>
+        <button class="yf-tools-link etica-title-button etica-tab-button" type="button" data-mode-tab="foto" aria-pressed="false" hidden>Foto</button>
+        <button class="yf-tools-link etica-title-button etica-tab-button" type="button" data-mode-tab="nuevo" aria-pressed="false" hidden>Nuevo</button>
+        <button class="yf-tools-link etica-title-button etica-tab-button" type="button" data-mode-tab="flor" aria-pressed="false" hidden>Flor</button>
+        <button class="yf-tools-link etica-title-button etica-tab-button" type="button" data-mode-tab="doodleFlor" aria-pressed="false" hidden>Doodle Flor</button>
         <div class="preset-dropdown etica-canvas-dropdown" id="canvasPresetDropdown">
           <button class="preset-dropdown-toggle" id="canvasPresetToggle" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="canvasPresetMenu">
             <span class="preset-dropdown-text" id="canvasPresetText">1:1</span>
@@ -30,6 +30,7 @@
             <li class="preset-dropdown-item" role="option" aria-selected="false" data-canvas-preset="1920x1080">16:9</li>
           </ul>
         </div>
+        <button class="preset-dropdown-toggle etica-outline-mode-button" id="outlineModeButton" type="button" aria-pressed="true" hidden>Outline mode</button>
       </div>
 
       <div class="main-content">
@@ -87,10 +88,10 @@
                 <label for="sizeInput">
                   <span>Size <span class="unit">px</span></span>
                   <div class="value-display-wrapper">
-                    <input type="text" class="value-display" id="sizeOutput" value="60" inputmode="numeric" aria-label="Brush size value">
+                    <input type="text" class="value-display" id="sizeOutput" value="100" inputmode="numeric" aria-label="Brush size value">
                   </div>
                 </label>
-                <input id="sizeInput" type="range" min="3" max="160" step="1" value="60">
+                <input id="sizeInput" type="range" min="3" max="160" step="1" value="100">
               </div>
 
               <div class="control-group">
@@ -114,13 +115,23 @@
               </div>
 
               <div class="control-group">
+                <label for="scatterInput">
+                  <span>Dot Scatter</span>
+                  <div class="value-display-wrapper">
+                    <input type="text" class="value-display etica-percent-value" id="scatterOutput" value="30%" inputmode="numeric" aria-label="Dot scatter value">
+                  </div>
+                </label>
+                <input id="scatterInput" type="range" min="0" max="100" step="1" value="30">
+              </div>
+
+              <div class="control-group">
                 <label for="roughnessInput">
                   <span>Dot Roughness</span>
                   <div class="value-display-wrapper">
-                    <input type="text" class="value-display etica-percent-value" id="roughnessOutput" value="100%" inputmode="numeric" aria-label="Dot roughness value">
+                    <input type="text" class="value-display etica-percent-value" id="roughnessOutput" value="70%" inputmode="numeric" aria-label="Dot roughness value">
                   </div>
                 </label>
-                <input id="roughnessInput" type="range" min="0" max="100" step="1" value="100">
+                <input id="roughnessInput" type="range" min="0" max="100" step="1" value="70">
               </div>
 
               <div class="control-group">
@@ -128,9 +139,9 @@
                   <span>Profile</span>
                 </label>
                 <select id="densityProfileSelect" class="style-select" aria-label="Density profile">
-                  <option value="flat">Flat</option>
+                  <option value="flat" selected>Flat</option>
                   <option value="fade-in">Fade In</option>
-                  <option value="fade-out" selected>Fade Out</option>
+                  <option value="fade-out">Fade Out</option>
                   <option value="in-out">In-Out</option>
                   <option value="soft-peak">Soft Peak</option>
                   <option value="hard-peak">Hard Peak</option>
@@ -139,21 +150,20 @@
                 </select>
               </div>
 
-              <div class="control-group etica-meta-row">
-                <span>SVG Lines</span>
-                <span id="svgLineMeta">None</span>
-              </div>
-              <input class="sr-only" id="svgLineInput" type="file" accept=".svg,image/svg+xml">
-              <div class="button-group etica-panel-buttons">
-                <button class="btn-secondary" type="button" id="svgLineUploadButton">Upload SVG</button>
-                <button class="btn-secondary" type="button" id="svgLineReapplyButton" disabled>Reapply</button>
-              </div>
+              <div class="etica-line-footer">
+                <div class="control-group etica-meta-row">
+                  <span>Lines</span>
+                  <span id="svgLineMeta">0</span>
+                </div>
 
-              <div class="control-group etica-meta-row">
-                <span>Selected</span>
-                <span id="selectionMeta">0/0</span>
+                <div class="control-group etica-meta-row">
+                  <span>Selected</span>
+                  <span id="selectionMeta">0</span>
+                </div>
+
+                <input class="sr-only" id="svgLineInput" type="file" accept=".svg,image/svg+xml">
+                <button class="btn-secondary etica-full-button etica-upload-svg-button" type="button" id="svgLineUploadButton">Upload SVG</button>
               </div>
-              <button class="btn-secondary etica-full-button" type="button" id="deselectButton" disabled>Deselect</button>
             </section>
           </div>
         </aside>
@@ -279,7 +289,7 @@
                   <div class="color-swatch-compact" id="backgroundColorItem">
                     <button type="button" class="color-dot color-dot--expandable" id="backgroundColorPreview" title="HSB" aria-label="Open background color controls"></button>
                     <span class="color-label">Background</span>
-                    <input type="text" class="color-swatch-hex" id="backgroundColorHex" value="#BBBBBB" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Background color hex">
+                    <input type="text" class="color-swatch-hex" id="backgroundColorHex" value="#bbbbbb" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Background color hex">
                   </div>
                   <div class="color-hsb-slot" id="backgroundColorHsbSlot">
                     <div class="etica-hsb-picker" id="backgroundColorPicker" hidden>
@@ -315,7 +325,7 @@
                   <div class="color-swatch-compact" id="brushColorItem">
                     <button type="button" class="color-dot color-dot--expandable" id="brushColorPreview" title="HSB" aria-label="Open brush color controls"></button>
                     <span class="color-label">Brush</span>
-                    <input type="text" class="color-swatch-hex" id="brushColorHex" value="#000000" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Brush color hex">
+                    <input type="text" class="color-swatch-hex" id="brushColorHex" value="#ffffff" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Brush color hex">
                   </div>
                   <div class="color-hsb-slot" id="brushColorHsbSlot">
                     <div class="etica-hsb-picker" id="brushColorPicker" hidden>
@@ -339,9 +349,9 @@
                         <div class="hsb-control-group">
                           <label for="brushBrightnessInput">
                             <span>Brightness</span>
-                            <input type="text" class="value-display hsb-value" id="brushBrightnessValue" value="0%" readonly>
+                            <input type="text" class="value-display hsb-value" id="brushBrightnessValue" value="100%" readonly>
                           </label>
-                          <input type="range" id="brushBrightnessInput" min="0" max="100" step="1" value="0">
+                          <input type="range" id="brushBrightnessInput" min="0" max="100" step="1" value="100">
                         </div>
                       </div>
                     </div>
@@ -811,6 +821,6 @@
       <button type="button" id="mobileCopyTransparentButton">Copy transparent</button>
     </div>
 
-    <script type="module" src="./js/main.js?v=roughness-1"></script>
+    <script type="module" src="./js/main.js?v=outline-button-1"></script>
   </body>
 </html>

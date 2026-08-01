@@ -4,11 +4,12 @@ import { point } from "./GeneratorUtils.js";
 let strokeCounter = 0;
 
 export class StrokeFactory {
-  constructor({ source, groupId, color, seed, roughness = 1 }) {
+  constructor({ source, groupId, color, seed, scatter = 1, roughness = 1 }) {
     this.source = source;
     this.groupId = groupId;
     this.color = color || "#000000";
     this.seed = seed ?? randomSeed();
+    this.scatter = scatter;
     this.roughness = roughness;
   }
 
@@ -33,6 +34,7 @@ export class StrokeFactory {
       settings: {
         size: options.size ?? 18,
         sizeVariation: options.sizeVariation ?? 0,
+        scatter: options.scatter ?? this.scatter,
         roughness: options.roughness ?? this.roughness,
         density: options.density ?? 1,
         densityProfile: options.densityProfile || "flat",

@@ -24,7 +24,14 @@ export class PhotoGenerator {
     const seed = normalizeRange(settings.seed, 2401, 1, 999999);
     const rng = createRng(seed);
     const groupId = makeGroupId("foto", seed);
-    const factory = new StrokeFactory({ source: "foto", groupId, color, seed, roughness: normalizePercent(settings.roughness, 100) });
+    const factory = new StrokeFactory({
+      source: "foto",
+      groupId,
+      color,
+      seed,
+      scatter: normalizePercent(settings.scatter, 100),
+      roughness: normalizePercent(settings.roughness, 100)
+    });
     const recognition = normalizePercent(settings.recognition, 70);
     const abstraction = normalizePercent(settings.abstraction, 34);
     const detail = normalizePercent(settings.detail, 52);

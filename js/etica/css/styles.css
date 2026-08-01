@@ -25,11 +25,30 @@ body {
   cursor: pointer;
 }
 
+.etica-tab-button[hidden],
+.yf-tools-link[hidden] {
+  display: none !important;
+}
+
 .etica-canvas-dropdown .preset-dropdown-toggle {
   padding: var(--spacing-md) var(--spacing-3xl);
   font-family: inherit;
   font-size: 1rem;
   font-weight: 500;
+}
+
+.etica-outline-mode-button {
+  display: none;
+  padding: var(--spacing-md) var(--spacing-3xl);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.is-outline-mode .etica-outline-mode-button {
+  display: flex;
 }
 
 .etica-canvas-dropdown .preset-dropdown-item {
@@ -151,6 +170,22 @@ body {
 
 .etica-panel-buttons .btn-secondary {
   flex: 1;
+}
+
+.etica-line-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+}
+
+.etica-line-footer .control-group {
+  margin-bottom: 0;
+}
+
+.etica-line-footer .etica-full-button {
+  margin-top: var(--spacing-sm);
 }
 
 .generator-actions {
@@ -531,7 +566,8 @@ button.color-dot--expandable:hover {
     top: var(--spacing-lg);
   }
 
-  .etica-canvas-dropdown .preset-dropdown-toggle {
+  .etica-canvas-dropdown .preset-dropdown-toggle,
+  .etica-outline-mode-button {
     max-width: 42vw;
     padding-left: var(--spacing-2xl);
     padding-right: var(--spacing-2xl);

@@ -11,7 +11,7 @@ export class PointerTracker {
       event.preventDefault();
       const point = this.controller.getPointFromEvent(event);
       if (this.controller.tool === "select") {
-        if (this.controller.beginSelectDrag(point)) {
+        if (this.controller.beginSelectDrag(point, { additive: event.shiftKey })) {
           this.activePointerId = event.pointerId;
           this.canvas.setPointerCapture(event.pointerId);
         }
