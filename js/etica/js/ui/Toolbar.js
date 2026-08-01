@@ -35,6 +35,7 @@ export class Toolbar {
     this.densityOutput = document.getElementById("densityOutput");
     this.densityProfileSelect = document.getElementById("densityProfileSelect");
     this.svgLineInput = document.getElementById("svgLineInput");
+    this.svgPresetSelect = document.getElementById("svgPresetSelect");
     this.svgLineUploadButton = document.getElementById("svgLineUploadButton");
     this.svgLineReapplyButton = document.getElementById("svgLineReapplyButton");
     this.svgLineMeta = document.getElementById("svgLineMeta");
@@ -273,6 +274,9 @@ export class Toolbar {
     });
 
     this.svgLineUploadButton?.addEventListener("click", () => this.svgLineInput?.click());
+    this.svgPresetSelect?.addEventListener("change", () => {
+      this.loadSvgLinePreset(this.svgPresetSelect.value, this.svgPresetSelect.selectedOptions[0]?.textContent || "");
+    });
     this.svgLineInput?.addEventListener("change", () => {
       this.loadSvgLineFile(this.svgLineInput.files?.[0]);
       this.svgLineInput.value = "";
@@ -1074,6 +1078,7 @@ export class Toolbar {
 
   async loadSvgLineFile(file) {
     if (!file) return;
+    if (this.svgPresetSelect) this.svgPresetSelect.value = "";
 
     try {
       this.svgLineSource = await file.text();
@@ -1083,6 +1088,24 @@ export class Toolbar {
       console.error(error);
       this.svgLineSource = null;
       this.svgLineName = "";
+      if (this.svgLineReapplyButton) this.svgLineReapplyButton.disabled = true;
+    }
+  }
+
+  async loadSvgLinePreset(path, name) {
+    if (!path) return;
+
+    try {
+      const response = await fetch(path);
+      if (!response.ok) throw new Error(`Failed to load SVG preset: ${path}`);
+      this.svgLineSource = await response.text();
+      this.svgLineName = name || path.split("/").pop()?.replace(/\.svg$/i, "") || "SVG preset";
+      this.regenerateSvgLines({ commitHistory: true });
+    } catch (error) {
+      console.error(error);
+      this.svgLineSource = null;
+      this.svgLineName = "";
+      if (this.svgPresetSelect) this.svgPresetSelect.value = "";
       if (this.svgLineReapplyButton) this.svgLineReapplyButton.disabled = true;
     }
   }
@@ -1360,6 +1383,7 @@ export class Toolbar {
     this.svgLineMeta.textContent = String(detail.selectedStrokeTotal);
     this.selectionMeta.textContent = String(selectedCount);
     this.backgroundMeta.textContent = detail.backgroundName || "None";
+    this.syncPageBackground(detail.backgroundColor);
 
     this.setCanvasPresetLabel(`${detail.width}x${detail.height}`);
 
@@ -1409,6 +1433,15 @@ export class Toolbar {
     });
     if (this.canvasPresetText) this.canvasPresetText.textContent = selectedItem.textContent;
   }
+
+  syncPageBackground(color) {
+    const background = normalizeHexColor(color, "#bbbbbb");
+    const outline = getRelativeLuminance(background) > 0.42
+      ? "rgba(0, 0, 0, 0.24)"
+      : "rgba(255, 255, 255, 0.34)";
+    document.documentElement.style.setProperty("--etica-page-bg", background);
+    document.documentElement.style.setProperty("--etica-canvas-outline", outline);
+  }
 }
 
 function isActivelyEditing(slider, textInput) {
@@ -1424,6 +1457,20 @@ function parseNumber(value, fallback) {
 function clampNumber(value, min, max) {
   const numeric = parseNumber(value, min);
   return Math.min(max, Math.max(min, numeric));
+}
+
+function normalizeHexColor(color, fallback) {
+  return /^#[0-9a-f]{6}$/i.test(color || "") ? color.toLowerCase() : fallback;
+}
+
+function getRelativeLuminance(hex) {
+  const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+  if (!match) return 1;
+  const [red, green, blue] = match.slice(1).map((channel) => {
+    const value = Number.parseInt(channel, 16) / 255;
+    return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  return (0.2126 * red) + (0.7152 * green) + (0.0722 * blue);
 }
 
 function snapByStep(value, direction, step) {

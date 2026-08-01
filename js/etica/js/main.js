@@ -1,6 +1,6 @@
 import { CanvasController } from "./canvas/CanvasController.js?v=layers-1";
 import { PointerTracker } from "./input/PointerTracker.js?v=clear-selection-1";
-import { Toolbar } from "./ui/Toolbar.js?v=layers-1";
+import { Toolbar } from "./ui/Toolbar.js?v=svg-presets-1";
 import { PanelManager } from "./ui/PanelManager.js";
 
 const canvas = document.getElementById("drawingCanvas");

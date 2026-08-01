@@ -1,0 +1,8 @@
+<svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M150 60L150 105" stroke="white"/>
+<path d="M89.5 135L89.5 180" stroke="white"/>
+<path d="M120 60C120 60 120 60 120 90C120 120 150.25 120.25 150.25 150C150.25 179.75 150.25 180 150.25 180" stroke="white"/>
+<path d="M89.75 60C89.75 60 89.7504 60 89.75 90C89.7496 120 120 120.25 120 150C120 179.75 120 180 120 180" stroke="white"/>
+<line x1="60.5" y1="60" x2="60.5" y2="180" stroke="white"/>
+<line x1="180.5" y1="60" x2="180.5" y2="180" stroke="white"/>
+</svg>

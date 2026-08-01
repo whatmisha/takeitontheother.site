@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Etica Pinta</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="./css/styles.css?v=rotate-2">
+    <link rel="stylesheet" href="./css/styles.css?v=tool-meta-1">
   </head>
   <body>
     <div class="container">
@@ -67,6 +67,17 @@
                     <label for="toolSelect">Select</label>
                   </div>
                 </fieldset>
+              </div>
+              <div class="etica-tools-meta">
+                <div class="control-group etica-meta-row">
+                  <span>Lines</span>
+                  <span id="svgLineMeta">0</span>
+                </div>
+
+                <div class="control-group etica-meta-row">
+                  <span>Selected</span>
+                  <span id="selectionMeta">0</span>
+                </div>
               </div>
             </section>
           </div>
@@ -151,14 +162,34 @@
               </div>
 
               <div class="etica-line-footer">
-                <div class="control-group etica-meta-row">
-                  <span>Lines</span>
-                  <span id="svgLineMeta">0</span>
-                </div>
-
-                <div class="control-group etica-meta-row">
-                  <span>Selected</span>
-                  <span id="selectionMeta">0</span>
+                <div class="control-group">
+                  <label for="svgPresetSelect">
+                    <span>Preset</span>
+                  </label>
+                  <select id="svgPresetSelect" class="style-select" aria-label="SVG preset">
+                    <option value="" selected>Samples</option>
+                    <option value="./samples/Bloom.svg">Bloom</option>
+                    <option value="./samples/Circle.svg">Circle</option>
+                    <option value="./samples/Clover.svg">Clover</option>
+                    <option value="./samples/Cluster.svg">Cluster</option>
+                    <option value="./samples/Comet.svg">Comet</option>
+                    <option value="./samples/Compass.svg">Compass</option>
+                    <option value="./samples/Cross.svg">Cross</option>
+                    <option value="./samples/Dot.svg">Dot</option>
+                    <option value="./samples/Egg.svg">Egg</option>
+                    <option value="./samples/Grid.svg">Grid</option>
+                    <option value="./samples/Heart.svg">Heart</option>
+                    <option value="./samples/Orbits.svg">Orbits</option>
+                    <option value="./samples/Petals.svg">Petals</option>
+                    <option value="./samples/Pinwheel.svg">Pinwheel</option>
+                    <option value="./samples/Rings.svg">Rings</option>
+                    <option value="./samples/Ripple.svg">Ripple</option>
+                    <option value="./samples/Scatter.svg">Scatter</option>
+                    <option value="./samples/Starburst.svg">Starburst</option>
+                    <option value="./samples/Stream.svg">Stream</option>
+                    <option value="./samples/Sunburst.svg">Sunburst</option>
+                    <option value="./samples/Waves.svg">Waves</option>
+                  </select>
                 </div>
 
                 <input class="sr-only" id="svgLineInput" type="file" accept=".svg,image/svg+xml">
@@ -821,6 +852,6 @@
       <button type="button" id="mobileCopyTransparentButton">Copy transparent</button>
     </div>
 
-    <script type="module" src="./js/main.js?v=layers-1"></script>
+    <script type="module" src="./js/main.js?v=svg-presets-1"></script>
   </body>
 </html>
