@@ -80,12 +80,14 @@ export function layoutRow(items, block, grid, y) {
     let x = block.x;
     list.forEach((it, i) => {
         const w = widths[i];
+        const keyX = Number.isFinite(it.x) ? it.x : x;
+        const keyY = Number.isFinite(it.y) ? it.y : y;
         if (!it.skip) {
             if (Array.isArray(it.stack) && it.stack.length) {
                 it.stack.forEach((child, stackIndex) => {
                     keys.push({
-                        x,
-                        y: y + (Number(child.yOffset) || 0),
+                        x: keyX,
+                        y: keyY + (Number(child.yOffset) || 0),
                         w: child.w ?? w,
                         h: child.h ?? spanHeight(child.rowSpan || 1, grid),
                         block: block.id,
@@ -99,8 +101,8 @@ export function layoutRow(items, block, grid, y) {
                 });
             } else {
                 keys.push({
-                    x, y, w,
-                    h: spanHeight(it.rowSpan || 1, grid),
+                    x: keyX, y: keyY, w,
+                    h: it.h ?? spanHeight(it.rowSpan || 1, grid),
                     block: block.id,
                     span: it.rowSpan || 1,
                     id: it.id || null,
@@ -108,7 +110,7 @@ export function layoutRow(items, block, grid, y) {
                 });
             }
         }
-        x += w + gap;
+        x = keyX + w + gap;
     });
     return keys;
 }
@@ -130,8 +132,9 @@ export function buildLayout(layout, gridOverride) {
 
     layout.rows.forEach((row, r) => {
         const sourceRow = Number.isInteger(row.__sourceRow) ? row.__sourceRow : r;
-        const y = grid.origin.y + r * grid.rowPitch;
+        const y = Number.isFinite(row.__y) ? row.__y : grid.origin.y + r * grid.rowPitch;
         for (const [blockId, items] of Object.entries(row)) {
+            if (blockId.startsWith('__') || !Array.isArray(items)) continue;
             const block = blocks.get(blockId);
             if (!block) throw new Error(`buildLayout: неизвестный блок "${blockId}" в ряду ${r}`);
             for (const k of layoutRow(items, block, grid, y)) {

@@ -11,6 +11,7 @@
   "showGuides": false,
   "showGlyphs": true,
   "showIcons": true,
+  "showDrawing": false,
   "showColumns": false,
   "showIndex": false,
   "showInk": false,

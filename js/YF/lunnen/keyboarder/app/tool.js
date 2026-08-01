@@ -78,6 +78,13 @@ const LEGEND_TEXT_MODES = new Set(['outlines', 'text']);
 const ICON_LAYER_IDS = ['icons', 'f-icons'];
 const CYRILLIC_RE = /[\u0400-\u04FF]/;
 const SINGLE_LATIN_RE = /^[A-Za-z]$/;
+const PRESET_NAME_MIGRATIONS = {
+    LCAKB23: 'Work 2.0 L',
+    LCAKB22: 'Work 2.0 M',
+    LCAKB21: 'Work 2.0 S',
+    Work_1_L_Pad: 'Work 1.0 L Pad',
+    'Work 1 L Pad': 'Work 1.0 L Pad'
+};
 const REFERENCE_FONT_ID = 'reference';
 const REFERENCE_FONT_URL = 'Fonts/YS%20Text/YS%20Text-Regular.ttf';
 const REFERENCE_FONT_FAMILY = 'YS Text';
@@ -113,6 +120,10 @@ function layoutOptionsFor(s = {}) {
     const custom = isLayoutLike(s.customLayout) ? s.customLayout : null;
     if (custom && !options.some((option) => option.id === custom.meta.name)) {
         options.push({ id: custom.meta.name, label: `${custom.meta.name} · custom` });
+    }
+    const current = sourceLayoutFor(s);
+    if (current && !options.some((option) => option.id === current.meta.name)) {
+        options.push({ id: current.meta.name, label: `${current.meta.name} · current preset` });
     }
     return options;
 }
@@ -638,7 +649,7 @@ const app = defineTool({
     presets: {
         storageKey: 'keyboarder',
         basePath: 'presets',
-        defaultName: 'LCAKB23',
+        defaultName: 'Work 2.0 L',
         suggestSaveName: (app) => suggestedPresetName(app),
         colorDots: (b) => [
             { kind: 'solid', value: b.capColor || '#1e1e1e' },
@@ -888,6 +899,7 @@ const app = defineTool({
     },
 
     onInit(readyApp) {
+        migrateShippedPresetNames(readyApp);
         installKeyboarderPerf(readyApp);
         installPdfExport(readyApp);
         installCleanExports(readyApp);
@@ -1142,6 +1154,7 @@ const app = defineTool({
     },
 
     onReady(readyApp) {
+        void ensureShippedPresetLibrary(readyApp);
         const data = layoutFor(readyApp.settings);
         perfMarkStartup('app-ready', {
             layout: data.sourceLayout?.meta?.name || '',
@@ -1290,6 +1303,52 @@ function parseKeyboardModelJSONText(text = '', defaults = {}) {
     return presetBlobFromKeyboardModel(parsed, defaults);
 }
 
+function migrateShippedPresetNames(app) {
+    const store = app?.presetStore;
+    if (!store) return '';
+    let targetAfterRename = '';
+    const current = app?.presets?.currentName || '';
+    const all = store.loadAll();
+    let changed = false;
+
+    for (const [oldName, newName] of Object.entries(PRESET_NAME_MIGRATIONS)) {
+        const oldPreset = all[oldName];
+        if (!oldPreset) continue;
+        if (!all[newName]) {
+            all[newName] = { ...oldPreset, updatedAt: Date.now() };
+            delete all[oldName];
+            changed = true;
+            if (current === oldName) targetAfterRename = newName;
+        } else if (oldPreset.seeded === true) {
+            delete all[oldName];
+            changed = true;
+            if (current === oldName) targetAfterRename = newName;
+        }
+    }
+
+    if (changed) store.saveAll(all);
+    return targetAfterRename;
+}
+
+async function ensureShippedPresetLibrary(app) {
+    const store = app?.presetStore;
+    if (!store || !app?.presets) return;
+    const targetAfterRename = migrateShippedPresetNames(app);
+
+    await store.loadSeed({
+        basePath: app.config?.presets?.basePath || 'presets',
+        force: true,
+        transform: app.config?.presets?.transform
+    });
+
+    const migratedCurrent = PRESET_NAME_MIGRATIONS[app.presets.currentName || ''] || targetAfterRename;
+    if (migratedCurrent && store.has(migratedCurrent)) {
+        app.presets.switchTo(migratedCurrent);
+        app.renderNow();
+    }
+    app._refreshChrome?.();
+}
+
 function sanitizeLayoutEditsForLayout(edits = {}, layout = LCAKB23) {
     return sanitizeLayoutEditsData(edits, modelIOOptions(layout));
 }
@@ -1397,6 +1456,10 @@ function addedRowsAfter(edits, sourceRow, sourceRowCount = LCAKB23.rows.length) 
 function cloneAddedRowFromTemplate(row) {
     const next = {};
     for (const [blockId, items] of Object.entries(row || {})) {
+        if (blockId.startsWith('__') || !Array.isArray(items)) {
+            next[blockId] = items;
+            continue;
+        }
         next[blockId] = (items || []).map((it) => {
             const item = { ...it };
             delete item.id;
@@ -1532,6 +1595,10 @@ function layoutWithEdits(layout, edits, grid) {
         }
         const nextRow = {};
         for (const [blockId, items] of Object.entries(row)) {
+            if (blockId.startsWith('__') || !Array.isArray(items)) {
+                nextRow[blockId] = items;
+                continue;
+            }
             const entries = rowSpecEntries(srcRow, blockId, items);
             const insertions = insertionMapForRow(clean, srcRow, blockId);
             const sourceFlex = entries.find((entry) => entry.editId && entry.item.flex);
@@ -1612,6 +1679,7 @@ function geometrySpecMap(layout) {
     layout.rows.forEach((row, rowIndex) => {
         const srcRow = sourceRowIndex(row, rowIndex);
         for (const [blockId, items] of Object.entries(row)) {
+            if (blockId.startsWith('__') || !Array.isArray(items)) continue;
             for (const entry of rowSpecEntries(srcRow, blockId, items)) {
                 if (!entry.editId) continue;
                 byId.set(entry.editId, {
@@ -2677,7 +2745,6 @@ async function createNewLayoutFromSvgSource(app, source, options = {}) {
         const analyzeStarted = prof ? perfNow() : 0;
         analysis = analyzeSvgBlueprint(svgText);
         analyzeMs = prof ? perfSince(analyzeStarted) : 0;
-        if (!analysis.elements.lines) throw new Error('No SVG lines were found in the blueprint group.');
         const draft = analysis.layoutDraft;
         if (!draft?.layout) throw new Error('No usable keyboard layout draft was detected.');
         const contentStarted = prof ? perfNow() : 0;
@@ -2889,7 +2956,7 @@ function namedCustomLayout(layout, fileName, app) {
         ...(customLayout.meta || {}),
         name: uniqueCustomLayoutName(proposed, app),
         formFactor: customLayout.meta?.formFactor || 'custom',
-        source: 'svg-blueprint'
+        source: customLayout.meta?.source || 'svg-blueprint'
     };
     return customLayout;
 }

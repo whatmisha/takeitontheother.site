@@ -1,0 +1,736 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 950.4746094 315.9628906">
+  <!-- Generator: Adobe Illustrator 30.5.1, SVG Export Plug-In . SVG Version: 2.1.4 Build 3)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: none;
+        stroke: #2353db;
+        stroke-miterlimit: 10;
+        stroke-width: .5px;
+      }
+
+      .st1 {
+        font-size: 14px;
+      }
+
+      .st1, .st2, .st3, .st4, .st5 {
+        isolation: isolate;
+      }
+
+      .st1, .st6, .st3, .st7, .st4, .st5 {
+        fill: #e6e7e8;
+      }
+
+      .st1, .st3, .st4, .st5 {
+        font-family: YSText-Regular, 'YS Text';
+      }
+
+      .st8, .st9 {
+        fill: #1e1e1e;
+      }
+
+      .st6, .st9 {
+        fill-rule: evenodd;
+      }
+
+      .st3 {
+        font-size: 8.6954298px;
+      }
+
+      .st10 {
+        fill: #50555b;
+      }
+
+      .st4 {
+        font-size: 12px;
+      }
+
+      .st5 {
+        font-size: 15px;
+      }
+    </style>
+  </defs>
+  <g id="background">
+    <rect class="st10" width="950.4746094" height="315.9628906"/>
+  </g>
+  <g id="caps">
+    <rect class="st8" x="7.1907434" y="7.4998379" width="44.8701582" height="29.4806232" rx="4.6431494" ry="4.6431494"/>
+    <rect class="st8" x="7.5065045" y="41.5157852" width="42.7119403" height="48.1888351" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="7.5065045" y="94.2593231" width="67.2663302" height="48.1888428" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="7.5065045" y="146.9637451" width="80.7875857" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="7.5065045" y="199.6881561" width="107.7450671" height="48.1888428" rx="4.6431499" ry="4.6431499"/>
+    <rect class="st8" x="7.5065045" y="252.417099" width="53.4898105" height="55.9816132" rx="4.6431499" ry="4.6431499"/>
+    <rect class="st8" x="65.5301361" y="252.417099" width="53.4898071" height="55.9816132" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="123.5557632" y="252.417099" width="53.4898148" height="55.9816132" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="181.5822906" y="252.417099" width="53.4898071" height="55.9816132" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="239.6092224" y="252.4809418" width="264.7991028" height="55.9816132" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="508.943573" y="252.4133453" width="53.4898376" height="55.9816132" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="566.9671631" y="252.417099" width="53.4898071" height="55.9816132" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="624.9927979" y="252.417099" width="53.4898071" height="55.9816132" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="741.0462646" y="252.4809418" width="53.4898071" height="55.9816132" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="119.7868042" y="199.7607727" width="49.4619293" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="173.7839661" y="199.7607727" width="49.4619293" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="227.7896423" y="199.7607727" width="49.4619141" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="281.7868042" y="199.7607727" width="49.4619141" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="335.7924805" y="199.7607727" width="49.4619141" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="389.7896423" y="199.7607727" width="49.4619141" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="443.7953186" y="199.7607727" width="49.4619141" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="497.7924805" y="199.7607727" width="49.4619141" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="551.7981567" y="199.7607727" width="49.4619141" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="605.7953491" y="199.7607727" width="49.4619141" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+    <g>
+      <rect class="st8" x="92.830246" y="147.000351" width="49.4619293" height="48.1888428" rx="4.6431503" ry="4.6431503"/>
+      <rect class="st8" x="146.8274078" y="147.000351" width="49.4619293" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+      <rect class="st8" x="200.8330841" y="147.000351" width="49.4619293" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+      <rect class="st8" x="254.830246" y="147.000351" width="49.4619293" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+      <rect class="st8" x="308.8359375" y="147.000351" width="49.4619141" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+      <rect class="st8" x="362.8330688" y="147.000351" width="49.4619141" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+      <rect class="st8" x="416.8387756" y="147.000351" width="49.4619141" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+      <rect class="st8" x="470.8359375" y="147.000351" width="49.4619141" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+      <rect class="st8" x="524.8416138" y="147.000351" width="49.4619141" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+      <rect class="st8" x="578.8387451" y="147.000351" width="49.4619141" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+    </g>
+    <rect class="st8" x="659.8017578" y="199.7607727" width="134.772644" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="632.8294678" y="147.000351" width="49.4619141" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="686.8358765" y="147.000351" width="107.7001953" height="48.1888428" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="79.3080673" y="94.2761993" width="49.4619217" height="48.1888428" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="133.3052216" y="94.2761993" width="49.4619293" height="48.1888428" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="187.3108978" y="94.2761993" width="49.4619293" height="48.1888428" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="241.3080597" y="94.2761993" width="49.4619293" height="48.1888428" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="295.3137512" y="94.2761993" width="49.4619141" height="48.1888428" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="349.3109131" y="94.2761993" width="49.4619141" height="48.1888428" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="403.3165894" y="94.2761993" width="49.4619141" height="48.1888428" rx="4.643158" ry="4.643158"/>
+    <rect class="st8" x="457.3137512" y="94.2761993" width="49.4619141" height="48.1888428" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="511.3194275" y="94.2761993" width="49.4619446" height="48.1888428" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="565.3165894" y="94.2761993" width="49.4619141" height="48.1888428" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="619.307251" y="94.2761993" width="49.4619141" height="48.1888428" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="673.3024292" y="94.2761993" width="49.4619141" height="48.1888428" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="727.2996216" y="94.2761993" width="67.2757568" height="48.1888428" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="54.7912178" y="41.5157852" width="49.4619255" height="48.1888351" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="108.7898636" y="41.5157852" width="49.4619217" height="48.1888351" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="162.7884979" y="41.5157852" width="49.4619293" height="48.1888351" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="270.7954712" y="41.5157852" width="49.4619141" height="48.1888351" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="324.7941284" y="41.5157852" width="49.4619141" height="48.1888351" rx="4.643158" ry="4.643158"/>
+    <rect class="st8" x="378.7927551" y="41.5157852" width="49.4619141" height="48.1888351" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="432.7914124" y="41.5157852" width="49.4619141" height="48.1888351" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="486.7900391" y="41.5157852" width="49.4619141" height="48.1888351" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="540.7886963" y="41.5157852" width="49.4619141" height="48.1888351" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="594.7873535" y="41.5157852" width="49.4619141" height="48.1888351" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="648.7859497" y="41.5157852" width="49.4619141" height="48.1888351" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="56.983799" y="7.4998379" width="44.8701591" height="29.4806232" rx="4.6441555" ry="4.6441555"/>
+    <rect class="st8" x="106.4610901" y="7.4998379" width="44.870163" height="29.4806232" rx="4.6441555" ry="4.6441555"/>
+    <rect class="st8" x="155.938385" y="7.4998379" width="44.870163" height="29.4806232" rx="4.6441555" ry="4.6441555"/>
+    <rect class="st8" x="205.4156799" y="7.4998379" width="44.870163" height="29.4806232" rx="4.6441555" ry="4.6441555"/>
+    <rect class="st8" x="254.8929749" y="7.4998379" width="44.8701477" height="29.4806232" rx="4.6441555" ry="4.6441555"/>
+    <rect class="st8" x="304.3702698" y="7.4998379" width="44.8701477" height="29.4806232" rx="4.6441555" ry="4.6441555"/>
+    <rect class="st8" x="353.8475647" y="7.4998379" width="44.8701477" height="29.4806232" rx="4.6441555" ry="4.6441555"/>
+    <rect class="st8" x="403.3248596" y="7.4998379" width="44.8701477" height="29.4806232" rx="4.6441555" ry="4.6441555"/>
+    <rect class="st8" x="452.8021545" y="7.4998379" width="44.8701477" height="29.4806232" rx="4.6441555" ry="4.6441555"/>
+    <rect class="st8" x="502.2794495" y="7.4998379" width="44.8701477" height="29.4806232" rx="4.6441555" ry="4.6441555"/>
+    <rect class="st8" x="551.7567749" y="7.4998379" width="44.8701782" height="29.4806232" rx="4.6441555" ry="4.6441555"/>
+    <rect class="st8" x="601.2340698" y="7.4998379" width="44.8701782" height="29.4806232" rx="4.6441555" ry="4.6441555"/>
+    <rect class="st8" x="650.8406982" y="7.4998379" width="45.0151978" height="29.4806232" rx="4.6516533" ry="4.6516533"/>
+    <rect class="st8" x="700.4630127" y="7.4998379" width="44.8701782" height="29.4806232" rx="4.6441555" ry="4.6441555"/>
+    <rect class="st8" x="216.8688354" y="41.5157852" width="49.4619141" height="48.1888351" rx="4.6431503" ry="4.6431503"/>
+    <g>
+      <rect class="st8" x="702.7749023" y="41.5157852" width="91.7611694" height="48.1888351" rx="4.6431503" ry="4.6431503"/>
+      <rect class="st8" x="749.9403076" y="7.4998379" width="44.8701782" height="29.4806232" rx="4.6431494" ry="4.6431494"/>
+    </g>
+    <rect class="st8" x="799.2867432" y="41.5157127" width="44.8701782" height="48.1890831" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="848.6922607" y="41.5866928" width="44.8701782" height="48.1890793" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="898.0974731" y="41.5307846" width="44.8701782" height="48.1890793" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="799.2866821" y="94.2478867" width="44.8701782" height="48.1890793" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="848.6922607" y="94.2478867" width="44.8701782" height="48.1890793" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="897.9375" y="94.2478867" width="44.8701782" height="48.1890793" rx="4.6431503" ry="4.6431503"/>
+    <rect class="st8" x="799.2867432" y="146.9800568" width="44.8701782" height="48.1890869" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="848.6922607" y="146.9800568" width="44.8701782" height="48.1890869" rx="4.6431427" ry="4.6431427"/>
+    <rect class="st8" x="898.0977783" y="146.9800568" width="44.8701782" height="48.1890869" rx="4.6431427" ry="4.6431427"/>
+    <g>
+      <rect class="st8" x="799.2867432" y="199.7605286" width="44.8701782" height="48.1890869" rx="4.6431427" ry="4.6431427"/>
+      <rect class="st8" x="848.6922607" y="199.7605286" width="44.8701782" height="48.1890869" rx="4.6431427" ry="4.6431427"/>
+      <rect class="st8" x="898.0977783" y="199.7605286" width="44.8701782" height="48.1890869" rx="4.6431427" ry="4.6431427"/>
+      <rect class="st8" x="799.2937622" y="252.4861298" width="44.8701782" height="55.9115448" rx="4.6431427" ry="4.6431427"/>
+      <rect class="st8" x="848.6992798" y="252.4861298" width="44.8701782" height="55.9115448" rx="4.6431427" ry="4.6431427"/>
+      <rect class="st8" x="898.1047974" y="252.4861298" width="44.8701782" height="55.9115448" rx="4.6431427" ry="4.6431427"/>
+    </g>
+    <rect class="st8" x="799.2867432" y="7.4998379" width="44.8701782" height="29.4806232" rx="4.6441555" ry="4.6441555"/>
+    <rect class="st8" x="849.5133667" y="7.4998379" width="44.8701782" height="29.4806232" rx="4.6441555" ry="4.6441555"/>
+    <rect class="st8" x="898.0977783" y="7.4998379" width="44.8701782" height="29.4806232" rx="4.6441555" ry="4.6441555"/>
+    <path class="st8" d="M731.8660278,252.4171143h-44.2035522c-2.5643311,0-4.6431274,2.0787964-4.6431274,4.6431274v23.9244385h53.4898071v-23.9244385c0-2.5643311-2.0787964-4.6431274-4.6431274-4.6431274Z"/>
+    <path class="st9" d="M80.6840286,155.9880676c0-.8779297-.710907-1.5888062-1.5891113-1.5888062-.8778992,0-1.5888062.7108765-1.5888062,1.5888062,0,.8781738.710907,1.5890503,1.5888062,1.5890503.8782043,0,1.5891113-.7108765,1.5891113-1.5890503"/>
+    <path class="st8" d="M683.0193481,280.9846802v22.770874c0,2.5643311,2.0787964,4.6431274,4.6431274,4.6431274h44.2035522c2.5643311,0,4.6431274-2.0787964,4.6431274-4.6431274v-22.770874h-53.4898071Z"/>
+  </g>
+  <g id="guides">
+    <rect class="st0" x="64.0561523" y="19.1273575" width="30.7254562" height="6.2255859"/>
+    <rect class="st0" x="14.2630968" y="19.1273575" width="30.7254553" height="6.2255859"/>
+    <rect class="st0" x="113.5334473" y="19.1273575" width="30.7254486" height="6.2255859"/>
+    <rect class="st0" x="163.0107422" y="19.1273575" width="30.7254486" height="6.2255859"/>
+    <rect class="st0" x="212.4880371" y="19.1273575" width="30.7254486" height="6.2255859"/>
+    <rect class="st0" x="261.965332" y="19.1273575" width="30.7254639" height="6.2255859"/>
+    <rect class="st0" x="311.442627" y="19.1273575" width="30.7254639" height="6.2255859"/>
+    <rect class="st0" x="360.9199219" y="19.1273575" width="30.7254639" height="6.2255859"/>
+    <rect class="st0" x="410.3972168" y="19.1273575" width="30.7254639" height="6.2255859"/>
+    <rect class="st0" x="459.8745117" y="19.1273575" width="30.7254639" height="6.2255859"/>
+    <rect class="st0" x="509.3518066" y="19.1273575" width="30.7254639" height="6.2255859"/>
+    <rect class="st0" x="558.8284912" y="19.1273575" width="30.7254639" height="6.2255859"/>
+    <rect class="st0" x="608.2932739" y="19.1273575" width="30.7254639" height="6.2255859"/>
+    <rect class="st0" x="657.9208984" y="19.1273575" width="30.7254639" height="6.2255859"/>
+    <rect class="st0" x="707.4980469" y="19.1273575" width="30.7254639" height="6.2255859"/>
+    <rect class="st0" x="756.9709473" y="19.1273575" width="30.7254639" height="6.2255859"/>
+    <rect class="st0" x="63.1057053" y="49.8302727" width="32.8329544" height="31.559864"/>
+    <rect class="st0" x="87.622551" y="102.5531006" width="32.8329544" height="31.5598602"/>
+    <rect class="st0" x="15.8098612" y="102.5531006" width="50.5649862" height="31.5598602"/>
+    <rect class="st0" x="15.8098612" y="155.3148499" width="50.5649862" height="31.5598602"/>
+    <rect class="st0" x="15.8098612" y="208.002655" width="50.5649862" height="31.5598602"/>
+    <rect class="st0" x="15.8098612" y="264.6279907" width="36.8762236" height="31.5598755"/>
+    <rect class="st0" x="101.1447296" y="155.3148499" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="128.1012878" y="208.002655" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="182.1027069" y="208.002655" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="236.104126" y="208.002655" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="290.1055603" y="208.002655" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="344.1069641" y="208.002655" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="398.1083984" y="208.002655" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="452.1098022" y="208.002655" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="506.1112366" y="208.002655" width="32.8329773" height="31.5598602"/>
+    <rect class="st0" x="560.1126709" y="208.002655" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="614.1140747" y="208.002655" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="155.1418915" y="155.3148499" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="209.1390533" y="155.3148499" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="263.1362" y="155.3148499" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="317.1333618" y="155.3148499" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="371.1305237" y="155.3148499" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="425.1276855" y="155.3148499" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="479.1248474" y="155.3445587" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="532.65625" y="155.3148499" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="586.5634766" y="155.3148499" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="640.6604614" y="155.3148499" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="141.6239777" y="102.5531006" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="195.6253967" y="102.5531006" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="249.6268158" y="102.5531006" width="32.832962" height="31.5598602"/>
+    <rect class="st0" x="303.6282349" y="102.5531006" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="357.6296387" y="102.5531006" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="411.631073" y="102.5531006" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="465.6325073" y="102.5531006" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="519.6339111" y="102.5531006" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="573.6353149" y="102.5531006" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="627.6367798" y="102.5531006" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="681.6381836" y="102.5531006" width="32.8329468" height="31.5598602"/>
+    <rect class="st0" x="117.1043472" y="49.8302727" width="32.8329544" height="31.559864"/>
+    <rect class="st0" x="171.1029968" y="49.8302727" width="32.8329468" height="31.559864"/>
+    <rect class="st0" x="225.1016388" y="49.8302727" width="32.832962" height="31.559864"/>
+    <rect class="st0" x="279.1002808" y="49.8302727" width="32.8329468" height="31.559864"/>
+    <rect class="st0" x="333.0989075" y="49.8302727" width="32.8329468" height="31.559864"/>
+    <rect class="st0" x="387.0975647" y="49.8302727" width="32.8329468" height="31.559864"/>
+    <rect class="st0" x="441.0961914" y="49.8302727" width="32.8329468" height="31.559864"/>
+    <rect class="st0" x="495.0948486" y="49.8302727" width="32.8329468" height="31.559864"/>
+    <rect class="st0" x="549.0935059" y="49.8302727" width="32.8329468" height="31.559864"/>
+    <rect class="st0" x="603.0921021" y="49.8302727" width="32.8329468" height="31.559864"/>
+    <rect class="st0" x="657.0907593" y="49.8302727" width="32.8329468" height="31.559864"/>
+    <rect class="st0" x="710.9499512" y="49.8302727" width="75.2905273" height="31.559864"/>
+    <rect class="st0" x="73.8403625" y="264.6279907" width="36.8693542" height="31.5598755"/>
+  </g>
+  <g id="glyphs">
+    <g class="st2">
+      <text class="st3" transform="translate(15.0568848 282.6646729)"><tspan x="0" y="0">ctrl</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(88.1584473 282.6646729)"><tspan x="0" y="0">fn</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(15.0568848 24.6119385)"><tspan x="0" y="0">esc</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(63.2949219 25.3532715)"><tspan x="0" y="0">F1</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(112.7724609 25.3532715)"><tspan x="0" y="0">F2</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(15.0568848 173.8776855)"><tspan x="0" y="0">caps lock</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(15.0563965 226.5061035)"><tspan x="0" y="0">shift</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(110.4916992 134.0727539)"><tspan x="0" y="0">Й</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(87.0808105 113.1605225)"><tspan x="0" y="0">Q</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(60.0302734 81.3023682)"><tspan x="0" y="0">1</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(64.1743164 59.5628662)"><tspan x="0" y="0">!</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(12.8037109 81.6276855)"><tspan x="0" y="0">`</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(35.128418 81.3824463)"><tspan x="0" y="0">Ё</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(13.953125 58.0098877)"><tspan x="0" y="0">~</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st4" transform="translate(146.1376953 58.0093994)"><tspan x="0" y="0">&quot;</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(116.3017578 81.3023682)"><tspan x="0" y="0">2</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(116.7209473 59.711792)"><tspan x="0" y="0">@</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(189.1486816 59.7332764)"><tspan x="0" y="0">№</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(170.3684082 81.2630615)"><tspan x="0" y="0">3</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(170.609375 59.5631104)"><tspan x="0" y="0">#</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(278.222168 81.1529541)"><tspan x="0" y="0">5</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(278.9067383 59.7591553)"><tspan x="0" y="0">%</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(363.3964844 56.7298584)"><tspan x="0" y="0">:</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(333.1987305 81.22229)"><tspan x="0" y="0">6</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(332.7890625 59.5628662)"><tspan x="0" y="0">^</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(413.7578125 59.7825928)"><tspan x="0" y="0">?</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(386.2880859 81.3223877)"><tspan x="0" y="0">7</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(386.6435547 59.7628174)"><tspan x="0" y="0">&amp;</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(440.9472656 81.2053223)"><tspan x="0" y="0">8</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(440.5146484 59.7866211)"><tspan x="0" y="0">*</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(495.309082 81.1322021)"><tspan x="0" y="0">9</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(494.0996094 60.1799316)"><tspan x="0" y="0">(</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(550.1835938 81.175293)"><tspan x="0" y="0">0</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(549.0727539 60.1798096)"><tspan x="0" y="0">)</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(657.3427734 81.3903809)"><tspan x="0" y="0">=</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(656.6069336 58.1600342)"><tspan x="0" y="0">+</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(255.3637695 56.7298584)"><tspan x="0" y="0">;</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(225.2514648 81.3322754)"><tspan x="0" y="0">4</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(224.6030273 61.3533936)"><tspan x="0" y="0">$</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(121.9501953 186.6368408)"><tspan x="0" y="0">Ф</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(100.9880371 165.8424072)"><tspan x="0" y="0">A</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(152.3425293 239.4772949)"><tspan x="0" y="0">Я</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(127.5498047 218.508667)"><tspan x="0" y="0">Z</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(205.9262695 239.4873047)"><tspan x="0" y="0">Ч</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(182.1228027 218.5687256)"><tspan x="0" y="0">X</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(259.6191406 239.2817383)"><tspan x="0" y="0">С</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(235.5693359 218.6489258)"><tspan x="0" y="0">C</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(310.9013672 239.4572754)"><tspan x="0" y="0">М</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(290.0371094 218.5390625)"><tspan x="0" y="0">V</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(366.9765625 239.4472656)"><tspan x="0" y="0">И</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(343.0292969 218.5087891)"><tspan x="0" y="0">B</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(422.3803711 239.4572754)"><tspan x="0" y="0">Т</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(397.0527344 218.5186768)"><tspan x="0" y="0">N</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(476.503418 239.4572754)"><tspan x="0" y="0">Ь</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(451.0400391 218.5290527)"><tspan x="0" y="0">M</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(530.3291016 239.4572754)"><tspan x="0" y="0">Б</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(505.5058594 216.3823242)"><tspan x="0" y="0">&lt;</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(578.9277344 239.2971191)"><tspan x="0" y="0">Ю</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(559.5488281 216.3818359)"><tspan x="0" y="0">&gt;</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(644.1030273 239.3671875)"><tspan x="0" y="0">.</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(643.8398438 209.7784424)"><tspan x="0" y="0">,</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(613.3701172 218.5987549)"><tspan x="0" y="0">?</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(505.2700195 237.932373)"><tspan x="0" y="0">,</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(559.5595703 239.3616943)"><tspan x="0" y="0">.</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(614.1333008 237.7320557)"><tspan x="0" y="0">/</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(176.4606934 186.7877197)"><tspan x="0" y="0">Ы</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(154.6311035 165.9954834)"><tspan x="0" y="0">S</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(232.918457 186.7869873)"><tspan x="0" y="0">В</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(208.0742188 165.8869629)"><tspan x="0" y="0">D</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(285.862793 186.8070068)"><tspan x="0" y="0">А</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(262.03125 165.8450928)"><tspan x="0" y="0">F</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(340.4521484 186.7769775)"><tspan x="0" y="0">П</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(316.5961914 165.9366455)"><tspan x="0" y="0">G</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(395.293457 186.8417969)"><tspan x="0" y="0">Р</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(370.0478516 165.8562012)"><tspan x="0" y="0">H</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(446.9287109 186.6468506)"><tspan x="0" y="0">О</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(424.8579102 165.8555908)"><tspan x="0" y="0">J</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(502.9296875 186.7469482)"><tspan x="0" y="0">Л</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(478.0527344 165.9151611)"><tspan x="0" y="0">K</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(554.5795898 186.8751221)"><tspan x="0" y="0">Д</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(531.5893555 165.8447266)"><tspan x="0" y="0">L</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(605.4404297 186.8483887)"><tspan x="0" y="0">Ж</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(586.6660156 163.2852783)"><tspan x="0" y="0">:</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(663.8583984 186.6368408)"><tspan x="0" y="0">Э</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(639.9453125 165.9249268)"><tspan x="0" y="0">“</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(586.6508789 185.3338623)"><tspan x="0" y="0">;</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(639.9453125 186.8668213)"><tspan x="0" y="0">‘</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(164.0698242 134.0860596)"><tspan x="0" y="0">Ц</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(141.3825684 113.0803223)"><tspan x="0" y="0">W</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(219.1010742 134.0527344)"><tspan x="0" y="0">У</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(194.5310059 113.0800781)"><tspan x="0" y="0">E</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(272.953125 134.0627441)"><tspan x="0" y="0">К</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(248.5380859 113.0803223)"><tspan x="0" y="0">R</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(328.4741211 134.0631104)"><tspan x="0" y="0">Е</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(303.2973633 113.0501709)"><tspan x="0" y="0">T</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(380.769043 134.0427246)"><tspan x="0" y="0">Н</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(357.3828125 113.09021)"><tspan x="0" y="0">Y</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(436.8510742 134.0527344)"><tspan x="0" y="0">Г</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(410.7636719 113.1002197)"><tspan x="0" y="0">U</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(485.3842773 134.0827637)"><tspan x="0" y="0">Ш</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(464.5625 113.0898438)"><tspan x="0" y="0">I</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(538.7456055 134.1131592)"><tspan x="0" y="0">Щ</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(519.0776367 113.2055664)"><tspan x="0" y="0">O</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(598.0771484 133.9025879)"><tspan x="0" y="0">З</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(572.487793 113.0701904)"><tspan x="0" y="0">P</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(650.8696289 134.1428223)"><tspan x="0" y="0">Х</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(626.7822266 112.9216309)"><tspan x="0" y="0">{</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(704.4770508 134.1428223)"><tspan x="0" y="0">Ъ</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(680.9887695 112.9216309)"><tspan x="0" y="0">}</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(817.3637695 113.4509277)"><tspan x="0" y="0">7</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(867.0024414 113.4509277)"><tspan x="0" y="0">8</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(916.2475586 113.4509277)"><tspan x="0" y="0">9</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(817.3642578 166.2033691)"><tspan x="0" y="0">4</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(867.0024414 166.2033691)"><tspan x="0" y="0">5</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(916.2480469 166.2033691)"><tspan x="0" y="0">6</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(817.3637695 219.0621338)"><tspan x="0" y="0">1</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(867.0024414 218.9837646)"><tspan x="0" y="0">2</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(916.2475586 218.3885498)"><tspan x="0" y="0">3</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(626.4404297 132.1434326)"><tspan x="0" y="0">[</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(681.2426758 132.1433105)"><tspan x="0" y="0">]</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(780.4145508 134.1434326)"><tspan x="0" y="0">/</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(602.4655762 57.3808594)"><tspan x="0" y="0">—</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st1" transform="translate(602.5292969 81.3825684)"><tspan x="0" y="0">-</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(162.2495117 25.3532715)"><tspan x="0" y="0">F3</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(211.7280273 25.3532715)"><tspan x="0" y="0">F4</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(261.2060547 25.3532715)"><tspan x="0" y="0">F5</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(310.6826172 25.3532715)"><tspan x="0" y="0">F6</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(360.1601562 25.3532715)"><tspan x="0" y="0">F7</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(409.637207 25.3532715)"><tspan x="0" y="0">F8</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(459.1147461 25.3532715)"><tspan x="0" y="0">F9</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(508.5922852 25.3532715)"><tspan x="0" y="0">F10</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(558.0483398 25.3532715)"><tspan x="0" y="0">F11</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(607.5200195 25.3531494)"><tspan x="0" y="0">F12</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(203.4233398 282.6646729)"><tspan x="0" y="0">alt</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(530.784668 282.6646729)"><tspan x="0" y="0">alt</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(587.3862305 282.6646729)"><tspan x="0" y="0">ctrl</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(769.1367188 226.5061035)"><tspan x="0" y="0">shift</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(766.1962891 173.8780518)"><tspan x="0" y="0">enter</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(911.5771484 63.0350342)"><tspan x="0" y="0">num</tspan></text>
+      <text class="st3" transform="translate(912.5991211 73.6629639)"><tspan x="0" y="0">lock</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(910.2358398 300.1812744)"><tspan x="0" y="0">enter</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(760.2368164 24.6126709)"><tspan x="0" y="0">delete</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(818.6958008 27.574585)"><tspan x="0" y="0">/</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(867.7207031 30.3643799)"><tspan x="0" y="0">*</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(818.7895508 70.423584)"><tspan x="0" y="0">-</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(867.0024414 70.822876)"><tspan x="0" y="0">+</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(711.7939453 24.6124268)"><tspan x="0" y="0">insert</tspan></text>
+    </g>
+    <path class="st7" d="M871.1275024,239.1713715c-.914917-1.2821045-1.8280029-2.5639038-2.7451172-3.8479614h5.4899902l-2.744873,3.8479614Z"/>
+    <path class="st7" d="M873.8724976,133.6575775l-2.7451172-3.8491211c-.9169922,1.2852173-1.8280029,2.5662231-2.7451172,3.8491211h5.4902344Z"/>
+    <path class="st7" d="M819.503479,183.6488953c1.3232422.9141846,2.6461182,1.8289185,3.9711914,2.7420044v-5.4869995c-1.3250732.914978-2.6479492,1.8300171-3.9711914,2.7449951"/>
+    <path class="st7" d="M918.3864746,180.901886v5.4890137c1.3251953-.9151001,2.6481934-1.8301392,3.972168-2.7443237-1.3239746-.9146729-2.6469727-1.8297119-3.972168-2.7446899"/>
+    <g class="st2">
+      <text class="st3" transform="translate(745.5976562 81.3897705)"><tspan x="0" y="0">backspace</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(909.4360352 134.1429443)"><tspan x="0" y="0">pg up</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(810.5986328 134.1429443)"><tspan x="0" y="0">home</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(909.3925781 239.6072998)"><tspan x="0" y="0">pg dn</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(814.3161621 239.6072998)"><tspan x="0" y="0">end</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(817.3642578 271.6984863)"><tspan x="0" y="0">0</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(869.3349609 271.6984863)"><tspan x="0" y="0">.</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(810.625 300.1820068)"><tspan x="0" y="0">insert</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(858.9958496 300.1818848)"><tspan x="0" y="0">delete</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(736.5087891 113.6196289)"><tspan x="0" y="0">|</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st5" transform="translate(737.5424805 134.1439209)"><tspan x="0" y="0">\</tspan></text>
+    </g>
+    <g class="st2">
+      <text class="st3" transform="translate(15.6835938 133.9715576)"><tspan x="0" y="0">tab</tspan></text>
+    </g>
+  </g>
+  <g id="icons">
+    <path class="st7" d="M709.7644043,298.7157593c-.914917-1.2821045-1.8280029-2.5639038-2.7451172-3.8479614h5.4899902l-2.744873,3.8479614Z"/>
+    <path class="st7" d="M712.5093994,267.0751953l-2.7451172-3.8491211c-.9169922,1.2852173-1.8280029,2.5662231-2.7451172,3.8491211h5.4902344Z"/>
+    <path class="st7" d="M648.9996338,280.4093933c1.3232422.9141846,2.6461182,1.8289185,3.9711914,2.7420044v-5.4869995c-1.3250732.914978-2.6479492,1.8300171-3.9711914,2.7449951"/>
+    <path class="st6" d="M150.6996613,286.2988586v-5.4921265h5.4918213v5.4921265h-5.4918213ZM144.4098663,274.5169373v5.4915161h5.4915161v-5.4915161h-5.4915161ZM150.6996613,274.5169373v5.4915161h5.4918213v-5.4915161h-5.4918213ZM149.9013824,286.2988586v-5.4921265h-5.4915161v5.4921265h5.4915161Z"/>
+    <path class="st7" d="M26.9692307,104.5870056l-1.9279099-1.9279022c-.1299706-.1299744-.3899136-.162468-.5415478,0-.1516323.1516342-.1516323.3790817,0,.5307159l1.3213768,1.321373h-9.7153625c-.2057886,0-.346591.162468-.346591.3465958s.1408024.3465958.346591.3465958h9.7370243l-1.3430386,1.3538666c-.0974789.0974731-.1083088.3899155,0,.4982224.1083107.1083145.3899155.1083145.4982243,0l1.9712334-1.9712296c.0649853-.0649872.0974789-.162468.0974789-.249115,0-.0974731-.0324917-.1841202-.0974789-.2491226ZM28.5288887,106.7856903v-3.8666534c0-.2057877-.1624641-.3790817-.3790836-.3790817s-.3790836.162468-.3790836.3790817v3.8666534c0,.2057877.1624641.3790817.3790836.3790817s.3790836-.162468.3790836-.3790817Z"/>
+    <path class="st7" d="M773.5682373,52.2997284l1.9279175,1.9279099c.1191406.1191368.3898926.1624641.5415649,0,.1516113-.1516342.1516113-.3790817,0-.5307198l-1.3213501-1.321373h11.1775513c.2058105,0,.3466187-.1624641.3466187-.3465919,0-.1841202-.1408081-.3465843-.3466187-.3465843h-11.1992188l1.3430176-1.3538704c.1191406-.1191444.1299438-.3682556,0-.4982262s-.3682251-.1299706-.49823,0l-1.9712524,1.9712296c-.0650024.0649834-.0974731.1516342-.0974731.2491112,0,.086647.0324707.1841278.0974731.249115Z"/>
+    <path class="st7" d="M770.5297241,280.4093933c-1.3232422.9141846-2.6461182,1.8289185-3.9711914,2.7420044v-5.4869995c1.3250732.914978,2.6479492,1.8300171,3.9711914,2.7449951"/>
+  </g>
+  <g id="f-icons">
+    <path class="st7" d="M92.3103638,23.7889805c.0974808,0,.2057877-.0758171.249115-.1191444l.9314651-.9314594.9314651.9314594c.0433273.0433273.1516342.1191444.249115.1191444.2166214,0,.368248-.1516323.368248-.3682575,0-.0974808-.0758133-.2057858-.1191406-.2491131l-.9314651-.9314594.9314651-.9314594c.0433273-.0433273.1191406-.1516323.1191406-.2491131,0-.2166233-.1516342-.3682575-.368248-.3682575-.0974808,0-.2057877.0758171-.249115.1191444l-.9314651.9314594-.9314651-.9314594c-.0433273-.0433273-.1516342-.1191444-.249115-.1191444-.2166214,0-.368248.1516323-.368248.3682575,0,.0974808.0758133.2057858.1191406.2491131l.9314651.9314594-.9314651.9314594c-.0433273.0433273-.1191406.1516323-.1191406.2491131,0,.2166233.1516342.3682575.368248.3682575ZM90.1441803,25.0561943l-1.9712296-1.5704784c-.0758209-.064991-.1732941-.0974808-.2707748-.0974808h-1.1047592c-.086647,0-.162468-.064991-.162468-.1624718v-1.9712238c0-.0974808.0758133-.1624718.162468-.1624718h1.1047592c.0974808,0,.1949539-.0324879.2707748-.0974808l1.9712296-1.5704784c.1191406-.0974808.281601-.0108395.281601.1407948v5.3504982c0,.1516323-.162468.2382736-.281601.1407928ZM90.4257812,25.890173c.3574219,0,.7581635-.2924271.7581635-.8339787v-5.6320858c0-.5415535-.4007416-.8339939-.7581635-.8339939-.2599411,0-.4440689.0758171-.6715164.2491131l-1.9495697,1.54883h-1.0072784c-.5632095,0-.9206314.3465919-.9206314.9206352v1.8629189c0,.5740414.3574219.9206352.9206314.9206352h1.0072784l1.9495697,1.5488281c.2166214.1732826.4115753.2490997.6715164.2490978Z"/>
+    <path class="st7" d="M143.3940125,23.7889805c.1083069,0,.1732941-.0216637.2382812-.064991.4873962-.3357544.7798309-.8773079.7798309-1.4838371s-.2924347-1.1480846-.7798309-1.4838371c-.0649872-.0433273-.1299744-.064991-.2382812-.064991-.1841278,0-.3357544.1408081-.3357544.3574181,0,.1191444.0649872.2274494.1841278.3141041.2274475.173296.4115753.5090504.4115753.8773079s-.1841278.70401-.4115753.8773079c-.1191406.0866413-.1841278.1949596-.1841278.3140907,0,.2166233.1516418.3574314.3357544.3574276ZM141.2603149,25.0561943l-1.9712372-1.5704784c-.0758209-.064991-.1732941-.0974808-.2707672-.0974808h-1.1047516c-.0866547,0-.1624603-.064991-.1624603-.1624718v-1.9712238c0-.0974808.0758209-.1624718.1624603-.1624718h1.1047516c.0974731,0,.1949615-.0324879.2707672-.0974808l1.9712372-1.5704784c.1191406-.0974808.281601-.0108395.281601.1407948v5.3504982c0,.1516323-.1624603.2382736-.281601.1407928ZM141.5419159,25.890173c.3574219,0,.7581635-.2924271.7581635-.8339787v-5.6320858c0-.5415535-.4007416-.8339939-.7581635-.8339939-.2599487,0-.4440613.0758171-.671524.2491131l-1.9495697,1.54883h-1.0072784c-.5632172,0-.9206238.3465919-.9206238.9206352v1.8629189c0,.5740414.3574219.9206352.9206238.9206352h1.0072784l1.9495697,1.5488281c.2166138.1732826.4115753.2490997.671524.2490978Z"/>
+    <path class="st7" d="M192.2243652,25.890173c.1299744,0,.2382812-.0649776.281601-.108305.8881378-.9422855,1.40802-2.1770229,1.40802-3.5417175,0-1.3647079-.5198822-2.599432-1.40802-3.5417175-.0649872-.064991-.1516418-.1083183-.281601-.1083183-.1949615,0-.3574219.1408081-.3574219.3141041,0,.1407948.0541534.2382736.1191406.3032646.7581635.7581635,1.1697388,1.8520947,1.1697388,3.0326672s-.4332428,2.296154-1.1697388,3.0326672c-.0433197.0433273-.1191406.1624584-.1191406.3032646,0,.173296.1624603.3140907.3574219.3140907ZM190.9788055,24.8504086c.0974731,0,.1841278-.0433273.2599487-.1191444.6498566-.6281948,1.0505981-1.5055008,1.0505981-2.4911137s-.4007416-1.8629189-1.0505981-2.4911137c-.0758209-.0758171-.1624603-.1191444-.2599487-.1191444-.2274475,0-.3790741.1407948-.3790741.3465939,0,.1191292.0541534.21661.1191406.281601.5090485.4982262.8339844,1.2022362.8339844,1.9820633s-.3249359,1.4838371-.8339844,1.9820633c-.0433197.0433273-.1191406.1624584-.1191406.281601,0,.2057858.1516266.3465919.3790741.3465939ZM189.6466064,23.7889805c.1083069,0,.1732941-.0216637.2382812-.064991.4873962-.3357544.7798309-.8773079.7798309-1.4838371s-.2924347-1.1480846-.7798309-1.4838371c-.0649872-.0433273-.1299744-.064991-.2382812-.064991-.1841278,0-.3357544.1408081-.3357544.3574181,0,.1191444.0649872.2274494.1841278.3141041.249115.173296.454895.5090504.454895.8773079s-.2057953.70401-.454895.8773079c-.1191406.0866413-.1841278.1949596-.1841278.3140907,0,.2166233.1516266.3574314.3357544.3574276ZM187.5129089,25.0561943l-1.9712372-1.5704784c-.0758209-.064991-.1732941-.0974808-.2707825-.0974808h-1.1047516c-.0866547,0-.1624603-.064991-.1624603-.1624718v-1.9712238c0-.0974808.0758209-.1624718.1624603-.1624718h1.1047516c.0974731,0,.1949615-.0324879.2707825-.0974808l1.9712372-1.5704784c.1191406-.0974808.281601-.0108395.281601.1407948v5.3504982c0,.1516323-.1624603.2382736-.281601.1407928ZM187.7945099,25.890173c.3574219,0,.7581635-.2924271.7581635-.8339787v-5.6320858c0-.5415535-.4007416-.8339939-.7581635-.8339939-.2599487,0-.4440765.0758171-.671524.2491131l-1.9495697,1.54883h-1.0072784c-.5632172,0-.9206238.3465919-.9206238.9206352v1.8629189c0,.5740414.3574219.9206352.9206238.9206352h1.0072784l1.9495697,1.5488281c.2166138.1732826.4115753.2490997.671524.2490978Z"/>
+    <path class="st7" d="M288.5100403,24.1355591c-1.0397644,0-1.8412476-.8231544-1.8412476-1.895422,0-1.0722542.8014832-1.8954086,1.8412476-1.8954086s1.8412476.8231544,1.8412476,1.8954086c0,1.0722675-.8014832,1.895422-1.8412476,1.895422ZM288.5100403,24.8395691c1.4621887,0,2.5994263-1.1372452,2.5994263-2.599432,0-1.4621735-1.1372375-2.5994186-2.5994263-2.5994186s-2.5994263,1.1372452-2.5994263,2.5994186c0,1.4621868,1.1372375,2.599432,2.5994263,2.599432ZM288.5100403,26.9191132c.2816162,0,.49823-.2166233.49823-.4982262s-.2166138-.4982262-.49823-.4982262-.49823.2166233-.49823.4982262.2166138.4982262.49823.4982262ZM291.4668884,19.7923508c.2816162,0,.49823-.2166233.49823-.4982262s-.2166138-.4982262-.49823-.4982262-.49823.2166233-.49823.4982262.2166138.4982262.49823.4982262ZM291.4668884,25.6843891c.2816162,0,.49823-.2166233.49823-.4982262s-.2166138-.4982262-.49823-.4982262-.49823.2166233-.49823.4982262.2166138.4982262.49823.4982262ZM285.5531921,19.7923508c.2816162,0,.49823-.2166233.49823-.4982262s-.2166138-.4982262-.49823-.4982262-.49823.2166233-.49823.4982262.2166138.4982262.49823.4982262ZM283.8310547,22.2401371c0,.2816162.2166138.4982262.49823.4982262s.49823-.21661.49823-.4982262c0-.281601-.2166138-.4982109-.49823-.4982109s-.49823.21661-.49823.4982109ZM292.1925659,22.2401371c0,.2816162.2166138.4982262.49823.4982262s.49823-.21661.49823-.4982262c0-.281601-.2166138-.4982109-.49823-.4982109s-.49823.21661-.49823.4982109ZM285.5531921,25.6843891c.2816162,0,.49823-.2166233.49823-.4982262s-.2166138-.4982262-.49823-.4982262-.49823.2166233-.49823.4982262.2166138.4982262.49823.4982262ZM288.5100403,18.5576267c.2816162,0,.49823-.2166233.49823-.4982262,0-.2816162-.2166138-.4982262-.49823-.4982262s-.49823.21661-.49823.4982262c0,.281601.2166138.4982262.49823.4982262Z"/>
+    <path class="st7" d="M337.272583,24.1355591c-1.0397644,0-1.8412476-.8231544-1.8412476-1.895422,0-1.0722542.8014832-1.8954086,1.8412476-1.8954086s1.8412476.8231544,1.8412476,1.8954086c0,1.0722675-.8014832,1.895422-1.8412476,1.895422ZM337.272583,24.8395691c1.4621887,0,2.5994263-1.1372452,2.5994263-2.599432,0-1.4621735-1.1372375-2.5994186-2.5994263-2.5994186s-2.5994263,1.1372452-2.5994263,2.5994186c0,1.4621868,1.1372375,2.599432,2.5994263,2.599432ZM337.272583,17.0196228c.20578,0,.3790894.173296.3790894.3790817v1.1047554c0,.2166233-.1733093.3790817-.3790894.3790817s-.3790894-.1624584-.3790894-.3790817v-1.1047554c0-.2057858.1733093-.3790817.3790894-.3790817ZM337.272583,25.5977325c.20578,0,.3790894.173296.3790894.3790817v1.1047707c0,.21661-.1733093.3790817-.3790894.3790817s-.3790894-.1624718-.3790894-.3790817v-1.1047707c0-.2057858.1733093-.3790817.3790894-.3790817ZM333.5792236,18.5467873c.1516418-.1408081.3899231-.1408081.5415344,0l.7798157.7798271c.1516418.1516323.1408081.3899212,0,.5415535-.1516418.1407948-.3899231.1516323-.5415344,0l-.7798157-.7798271c-.1408081-.1516323-.1408081-.3899212,0-.5415535ZM339.6445618,24.6121216c.1516418-.1408081.3899231-.1408081.5415649,0l.7798157.7798271c.1299744.1299686.1408081.3899212,0,.5415535-.1516418.1407948-.4115906.1299686-.5415344,0l-.7798462-.7798271c-.1408081-.1516323-.1408081-.3899212,0-.5415535ZM333.5792236,25.9335003c-.1408081-.1516323-.1408081-.3899212,0-.5415535l.7798157-.7798271c.1516418-.1516323.3899231-.1408081.5415344,0,.1408081.1516323.1516418.3899212,0,.5415535l-.7798157.7798271c-.1516418.1407948-.3899231.1407948-.5415344,0ZM339.6445618,19.8681679c-.1408081-.1516323-.1408081-.3899212,0-.5415535l.7798462-.7798271c.1516418-.1516323.3899231-.1408081.5415344,0,.1408081.1516323.1299744.4115849,0,.5415535l-.7798157.7798271c-.1516418.1407948-.3899231.1407948-.5415649,0ZM332.052063,22.2401371c0-.2057858.1733093-.3790817.3790894-.3790817h1.1047668c.2166138,0,.3790894.173296.3790894.3790817,0,.2057991-.1624756.3790951-.3790894.3790951h-1.1047668c-.20578,0-.3790894-.173296-.3790894-.3790951ZM340.630188,22.2401371c0-.2057858.1733093-.3790817.3790894-.3790817h1.1047668c.2166138,0,.3790894.173296.3790894.3790817,0,.2057991-.1624756.3790951-.3790894.3790951h-1.1047668c-.20578,0-.3790894-.173296-.3790894-.3790951Z"/>
+    <path class="st7" d="M389.6416321,20.3982849l.8881531-.8989716c.1516418-.1516323.3899231-.1407948.5198975-.0108242.1299744.1299686.1299744.3682423-.0108337.5198765l-.8881531.8989716c-.1516418.1516323-.3899231.1408081-.5198975.0108395s-.1299744-.3682575.0108337-.5198917ZM386.7714539,20.8098564c.20578,0,.3790894-.1732826.3790894-.3899059v-1.3105412c0-.2166233-.1733093-.3790817-.3790894-.3790817s-.3790894.1624584-.3790894.3790817v1.3105412c0,.2166233.1733093.3899059.3790894.3899059ZM390.7247314,24.243269h-7.9065857c-.0974731,0-.1624756-.0649776-.1624756-.1624584v-.3790817c0-.595705.3574219-.9856262.9206238-.9856262h6.3902588c.5632019,0,.9206238.3899212.9206238.9856262v.3790817c0,.0974808-.0650024.1624584-.1624756.1624584h.0000305ZM383.0131226,19.4993153l.8881226.8989716c.1408081.1516323.1516418.3790817.0108337.5198898-.1408081.1407948-.3682556.1407948-.5198975-.0108395l-.8881531-.8989716c-.1408081-.1516323-.1408081-.3899059-.0108337-.5198746s.3682556-.1408081.5198975.0108242h.0000305ZM382.8181458,24.947279h7.9065857c.5632019,0,.9206238-.3465786.9206238-.9097958v-.3357544c0-1.0289402-.660675-1.6896362-1.6788025-1.6896362h-6.3902588c-1.0180969,0-1.6788025.660696-1.6788025,1.6896362v.3357544c0,.5632172.3574219.9097958.9206238.9097958h.0000305Z"/>
+    <path class="st7" d="M676.0471802,20.8700314c-.6173706,0-1.0830688-.4982224-1.0830688-1.1372471s.4657593-1.1372471,1.0830688-1.1372471,1.0830688.4982224,1.0830688,1.1372471-.4657593,1.1372471-1.0830688,1.1372471ZM676.0580444,25.8847523c-.6173706,0-1.0830688-.4982224-1.0830688-1.1372471s.4657593-1.1372471,1.0830688-1.1372471,1.0830688.4982224,1.0830688,1.1372471-.4657593,1.1372471-1.0830688,1.1372471ZM676.0580444,26.5887642c1.0397949,0,1.8412476-.8014889,1.8412476-1.841259,0-.8014889-.4224243-1.4513454-1.4296875-1.8195972l-1.3213501-.4765606c-.1732788-.0649853-.4007568-.1083088-.5740356-.1516323-.043335-.0108318-.0541382-.0216618-.0541382-.0541553s.0108032-.0433235.0541382-.0541553c.1732788-.0433235.4007568-.086647.5740356-.1516323l1.3105469-.4873924c1.0072632-.3790817,1.4296875-1.0181084,1.4296875-1.8195972,0-1.0397701-.8015137-1.841259-1.8412476-1.841259s-1.8412476.8014889-1.8412476,1.841259c0,.6823483.3898926,1.2672195.953125,1.5488224l-1.5921631.5957012-4.2457275-1.5488224c-.2166138-.0758171-.4224243.0108318-.49823.2274494-.0758057.2057877.0216675.4115753.2382812.4873924l2.8268433,1.0289383c.1732788.0649853.4007568.1083088.5740356.1516323.043335.0108318.0541382.0216618.0541382.0541553s-.0108032.0433235-.0541382.0541553c-.1732788.0433235-.4007568.086647-.5740356.1516323l-2.8485107,1.0289383c-.1949463.0758171-.2924194.259943-.2166138.4440689.0650024.1949577.2599487.2924347.454895.2166195l4.2023926-1.5271606,1.6246338.5848694c-.5415649.3032665-.8881226.8556442-.8881226,1.5163307,0,1.0397701.8015137,1.841259,1.8412476,1.841259Z"/>
+    <path class="st7" d="M41.0361938,20.8014221v-.6693497c0-.6162281.41436-1.0305882,1.0305862-1.0305882s1.0305862.41436,1.0305862,1.0305882v.6693497s-2.0611763,0-2.0611725,0ZM40.0481071,24.8918972c-.0849953,0-.1593704-.0637474-.1593704-.1593685v-3.0811386c0-.0956211.0743713-.1593685.1593704-.1593685h4.0373535c.0849953,0,.1593704.0637474.1593704.1593685v3.0811386c0,.0956211-.0743713.1593685-.1593704.1593685h-4.0373535ZM40.0481071,25.5824966h4.0373535c.5524788,0,.9030914-.3399868.9030914-.9030914v-2.9748917c0-.5631046-.3506126-.9030914-.9030914-.9030914h-.2443657v-.6056023c0-1.0943356-.6906013-1.784935-1.784935-1.784935-1.0837097,0-1.7636871.6905994-1.7636871,1.784935v.6056023h-.2443657c-.5524788,0-.9030914.3399868-.9030914.9030914v2.9748917c0,.5631046.3506126.9030914.9030914.9030914Z"/>
+    <path class="st7" d="M487.1009521,20.3989925h-2.5798645v-1.3473949c0-.0939999.0731201-.1566658.1566772-.1566658h5.0344238c.0939941,0,.1566772.0626659.1566772.1566658v3.1021194c0,.0835667-.0626831.1566772-.1566772.1566772h-1.7233887v-1.0235958c0-.5535755-.3446655-.8878078-.8878174-.8878078l-.0000305.0000019ZM481.9411926,24.890274l.637146-.898262h4.835968l.637146.898262c.0835571.1148891.010437.2715664-.1357727.2715664h-5.8386536c-.1462402,0-.2193298-.1566772-.1357727-.2715664h-.000061ZM482.7349854,23.365324v-2.1307468c0-.0940113.0731201-.1566772.1566772-.1566772h4.2928467c.0835571,0,.1566772.0626659.1566772.1566772v2.1307468h-4.6062012ZM481.9829712,25.8407478h6.0266724c.5222473,0,.8042603-.3655663.8042603-.720686,0-.2088985-.0731201-.3969097-.2402344-.6058083l-.5848999-.7520294v-.8042526h1.7233887c.5431213,0,.8878174-.344677.8878174-.8878078v-2.9767761c0-.5431423-.3446655-.8773746-.8878174-.8773746h-5.0344238c-.5431213,0-.8878174.3446865-.8878174.8878174v1.2951603h-.8982544c-.5431213,0-.8878174.3342323-.8878174.8878078v2.4754238l-.5848999.7520294c-.1671143.2088985-.2402344.3969097-.2402344.6058083,0,.3551216.2820129.720686.8042603.7206879Z"/>
+    <path class="st7" d="M440.2348633,19.5767097h-7.3114014c-.0835571,0-.1566772.0626659-.1566772.1566772v5.0135231c0,.0939999.0731201.1566658.1566772.1566658h7.3114014c.0835571,0,.1566772-.0626659.1566772-.1566658v-5.0135231c0-.0940113-.0731201-.1566772-.1566772-.1566772ZM440.2348633,25.5824966h-7.3114014c-.5431213,0-.8878174-.3342323-.8878174-.8878078v-4.9090786c0-.5535755.344696-.8878174.8878174-.8878174h7.3114014c.5431213,0,.8878174.3342419.8878174.8878174v4.9090805c0,.5535755-.344696.8878078-.8878174.8878059ZM435.3985901,23.7889729c.0974731,0,.20578-.0758171.249115-.1191444l.9314575-.9314594.9314575.9314594c.043335.0433273.1516418.1191444.249115.1191444.2166138,0,.3682556-.1516323.3682556-.3682575,0-.0974808-.0758057-.2057858-.1191406-.2491131l-.9314575-.9314594.9314575-.9314594c.043335-.0433273.1191406-.1516323.1191406-.2491131,0-.2166233-.1516418-.3682575-.3682556-.3682575-.0974731,0-.20578.0758171-.249115.1191444l-.9314575.9314594-.9314575-.9314594c-.043335-.0433273-.1516418-.1191444-.249115-.1191444-.2166138,0-.3682556.1516323-.3682556.3682575,0,.0974808.0758057.2057858.1191406.2491131l.9314575.9314594-.9314575.9314594c-.043335.0433273-.1191406.1516323-.1191406.2491131,0,.2166233.1516418.3682575.3682556.3682575Z"/>
+    <path class="st7" d="M242.7691498,19.4160156c-.2734375-.1318359-.5917969-.0947266-.828125.0947266l-1.0180664.8128052v-.5379639c0-.5535278-.3447266-.8878174-.8876953-.8878174h-5.2227783c-.5432129,0-.8879395.3342896-.8879395.8878174v4.9091187c0,.5535278.3447266.8877563.8879395.8877563h5.2227783c.5429688,0,.8876953-.3342285.8876953-.8877563v-.5375366l1.0170898.812561c.1425781.1142578.3144531.1728516.4882812.1728516.1152344,0,.2314453-.0263672.3408203-.078125.2744141-.1318359.4443359-.4023438.4443359-.7070312v-4.234375c0-.3046875-.1699219-.5751953-.4443359-.7070312ZM240.1920013,24.7468872c0,.0939941-.0732422.1566772-.1567383.1566772h-5.2227783c-.0837402,0-.1567383-.0626831-.1567383-.1566772v-5.0134888c0-.0940552.072998-.1566772.1567383-.1566772h5.2227783c.0834961,0,.1567383.0626221.1567383.1566772v5.0134888ZM242.5337982,24.3574219c0,.0537109-.0322266.0810547-.0595703.09375-.0263672.0126953-.0673828.0214844-.109375-.0126953l-1.4418945-1.1512451v-2.0939941l1.4428711-1.1512451c.0400391-.0341797.0810547-.0253906.1083984-.0126953s.0595703.0400391.0595703.09375v4.234375ZM238.719162,21.3964233l-.8439941.843689.8439941.843689c.0393066.0392456.1079102.1373901.1079102.225647,0,.196228-.1374512.3335571-.3337402.3335571-.0881348,0-.1862793-.0686646-.2255859-.1079102l-.84375-.843689-.8439941.843689c-.0393066.0392456-.1374512.1079102-.2255859.1079102-.1962891,0-.3337402-.1373291-.3337402-.3335571,0-.0882568.0688477-.1864014.1079102-.225647l.8439941-.843689-.8439941-.843689c-.0390625-.0391846-.1079102-.1373291-.1079102-.2255859,0-.196228.1374512-.3335571.3337402-.3335571.0881348,0,.1862793.0686646.2255859.1079102l.8439941.843689.84375-.843689c.0393066-.0392456.1374512-.1079102.2255859-.1079102.1962891,0,.3337402.1373291.3337402.3335571,0,.0882568-.0686035.1864014-.1079102.2255859Z"/>
+  </g>
+</svg>

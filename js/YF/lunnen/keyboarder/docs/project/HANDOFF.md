@@ -854,6 +854,17 @@ Stage 9 optimization is started:
   Browser smoke from a keyboarder-root `python3 -m http.server` confirmed CoFo/YS fonts ready,
   110 caps, 176 glyph paths, 13 f-icons, empty warn/error console, and no `/fonts/CoFoSans-*` or
   `/favicon.ico` 404 in the server log.
+- Reference preset rebuild 2026-08-01: six new built-in layouts are generated from SVG `caps`
+  references via `analysis/generate-reference-layout-presets.mjs` into
+  `app/kb/reference-layout-presets.js`: `Perform_L` 104 keys, `Perform_S` 84, `Work_1_L_Pad` 110,
+  `Airis_14` 82, `Ground_14` 86, and `Ground_15` 98. `app/kb/layouts.js` exposes them in
+  `LAYOUTS`, while the top preset dropdown is seeded from `presets/manifest.json`: `Work 2.0 L`
+  (`LCAKB23`), `Work 2.0 M` (`LCAKB22`), `Work 2.0 S` (`LCAKB21`), `Perform L`, `Perform S`,
+  `Work 1.0 L Pad`, `Airis 14`, `Ground 14`, and `Ground 15`. `LAYOUT_OPTIONS` intentionally keeps
+  only the base layout-library choices for the Grid panel. Generated content covers all keys with
+  zero placeholders; f-row coverage is 12 f-icons for each reference preset by design. Export QA to
+  `/tmp/keyboarder-presets/*.svg` matched source `caps` counts exactly; max cap delta was 0.0171 px
+  on `Perform_L` and <=0.0003 px on the others.
 - Next Stage 9 work can move on to any remaining secondary polish or start the next planned stage.
 
 ## Notes For The Next Assistant

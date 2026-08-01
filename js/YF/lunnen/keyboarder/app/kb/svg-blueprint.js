@@ -145,6 +145,39 @@ export function parseSvgRects(source = '') {
     }).filter(Boolean);
 }
 
+export function parseSvgPathBounds(source = '') {
+    return tags(source, 'path').map((tag, i) => {
+        const bounds = pathDataBounds(pathDataAttr(tag));
+        if (!bounds) return null;
+        return { i, ...bounds };
+    }).filter(Boolean);
+}
+
+export function parseSvgCapShapes(source = '') {
+    const rects = parseSvgRects(source).map((rect) => ({
+        ...rect,
+        tagIndex: rect.i,
+        source: 'rect'
+    }));
+    const paths = parseSvgPathBounds(source).map((path) => ({
+        ...path,
+        tagIndex: path.i,
+        source: 'path',
+        rx: NaN,
+        ry: NaN
+    }));
+    if (!paths.length) return rects.map((rect, i) => ({ ...rect, i }));
+
+    const baseWidth = clusteredMode(rects.map((rect) => rect.w), 0.75, { tie: 'smallest' });
+    const baseHeight = clusteredMode(rects.map((rect) => rect.h), 0.75, { tie: 'smallest' });
+    const minWidth = rects.length ? Math.max(8, Number.isFinite(baseWidth) ? baseWidth * 0.35 : 12) : 8;
+    const minHeight = rects.length ? Math.max(8, Number.isFinite(baseHeight) ? baseHeight * 0.35 : 12) : 8;
+    const capPaths = paths.filter((path) => path.w >= minWidth && path.h >= minHeight);
+    return [...rects, ...capPaths]
+        .sort((a, b) => a.y - b.y || a.x - b.x || a.source.localeCompare(b.source) || a.tagIndex - b.tagIndex)
+        .map((shape, i) => ({ ...shape, i }));
+}
+
 export function parseSvgPathCornerArcs(source = '') {
     const out = [];
     tags(source, 'path').forEach((tag, i) => {
@@ -206,7 +239,7 @@ export function calibrateFromCaps(rects = []) {
         .map((r) => r.x), 0.01);
     const pitchDiffs = diffs(topXs).filter((v) => v > keyWidth1U * 0.75);
     const colPitch = pitchDiffs.length ? Math.min(...pitchDiffs) : null;
-    const rowPitch = rowDiffs.length ? Math.min(...rowDiffs) : null;
+    const rowPitch = rowDiffs.length ? clusteredMode(rowDiffs, 0.5, { tie: 'smallest' }) : null;
 
     return {
         caps: usable.length,
@@ -253,9 +286,9 @@ export function analyzeSvgBlueprint(svgText = '') {
     const lines = timed('parseLinesMs', () => parseSvgLines(source));
     const buckets = timed('classifyLinesMs', () => classifySvgLines(lines));
     const pathCornerArcs = timed('pathArcsMs', () => parseSvgPathCornerArcs(source));
-    const capRects = timed('capsMs', () => parseSvgRects(caps));
+    const capShapes = timed('capsMs', () => parseSvgCapShapes(caps));
     const spanGroups = timed('spanGroupsMs', () => horizontalSpanGroups(buckets.horizontal));
-    const calibration = timed('calibrationMs', () => calibrateFromCaps(capRects));
+    const calibration = timed('calibrationMs', () => calibrateFromCaps(capShapes));
     const elements = {
         lines: lines.length,
         paths: sourceCounts.path || 0,
@@ -263,17 +296,20 @@ export function analyzeSvgBlueprint(svgText = '') {
         rects: sourceCounts.rect || 0,
         polygons: sourceCounts.polygon || 0
     };
-    const recognized = timed('detectMs', () => detectKeyRectCandidates({
+    const detected = timed('detectMs', () => detectKeyRectCandidates({
         lineBuckets: buckets,
         pathCornerArcs,
         calibration,
-        caps: capRects
+        caps: capShapes
+    }));
+    const recognized = timed('sourceMs', () => chooseRecognizedKeySource(detected, capShapes, calibration, {
+        hasBlueprint: !!blueprint
     }));
     const diagnostics = timed('diagnosticsMs', () => diagnoseRecognizedKeys({
         groups: { blueprint: !!blueprint, caps: !!caps },
         elements,
         calibration,
-        caps: capRects,
+        caps: capShapes,
         recognized
     }));
     const layoutDraft = timed('draftMs', () => layoutDraftFromRecognized({ calibration, recognized, diagnostics }));
@@ -298,7 +334,7 @@ export function analyzeSvgBlueprint(svgText = '') {
         lineBuckets: buckets,
         horizontalSpanGroups: spanGroups.length,
         topHorizontalSpanGroups: spanGroups.slice(0, 8),
-        caps: capRects,
+        caps: capShapes,
         calibration,
         recognized,
         diagnostics,
@@ -402,12 +438,132 @@ export function detectKeyRectCandidates(analysis = {}, options = {}) {
         .map((k, i) => ({ i, ...k }));
     const estimatedGrid = estimateGridFromKeys(draftCellsFromRecognized(keys, { stackCells }), calibration);
     return {
+        source: 'blueprint',
         cornerOffset: round(cornerOffset, 4),
         raw: [...raw, ...stackedKeys],
         stackCells,
         estimatedGrid,
         keys
     };
+}
+
+function chooseRecognizedKeySource(detected = {}, caps = [], calibration = {}, options = {}) {
+    if (!shouldUseCapsAsKeySource(detected, caps, options)) {
+        return { source: 'blueprint', ...detected };
+    }
+    return recognizedKeysFromCaps(caps, calibration);
+}
+
+function shouldUseCapsAsKeySource(detected = {}, caps = [], options = {}) {
+    if (!caps.length) return false;
+    const detectedCount = detected.keys?.length || 0;
+    if (!detectedCount) return true;
+    const sparseCaps = caps.length <= Math.max(4, detectedCount * 0.1);
+    if (sparseCaps) return false;
+    if (!options.hasBlueprint) return true;
+    return caps.length !== detectedCount;
+}
+
+function recognizedKeysFromCaps(caps = [], calibration = {}) {
+    const stackCells = detectStackedKeyCellsFromCaps(caps, calibration).map((cell, stackId) => ({
+        ...cell,
+        stackId,
+        stack: cell.stack.map((key, stackIndex) => ({
+            ...key,
+            stackId,
+            stackIndex,
+            stackCount: cell.stack.length
+        }))
+    }));
+    const stackKeys = stackCells.flatMap((cell) => cell.stack);
+    const stackedSignatures = new Set(stackKeys.map(rectSignature));
+    const regularKeys = caps
+        .filter((cap) => !stackedSignatures.has(rectSignature(cap)))
+        .map(capShapeToKey);
+    const keys = [...regularKeys, ...stackKeys.map(capShapeToKey)]
+        .sort((a, b) => a.y - b.y || a.x - b.x || (a.stackIndex || 0) - (b.stackIndex || 0))
+        .map((key, i) => ({ i, ...key }));
+    const estimatedGrid = estimateGridFromKeys(draftCellsFromRecognized(keys, { stackCells }), calibration);
+    return {
+        source: 'caps',
+        cornerOffset: null,
+        raw: caps,
+        stackCells,
+        estimatedGrid,
+        keys
+    };
+}
+
+function detectStackedKeyCellsFromCaps(caps = [], calibration = {}) {
+    const keyHeight = finiteNumber(
+        calibration.keyHeight,
+        clusteredMode(caps.map((cap) => cap.h), 1, { tie: 'smallest' })
+    );
+    if (!Number.isFinite(keyHeight)) return [];
+    const xTolerance = 0.9;
+    const widthTolerance = 0.9;
+    const minPartHeight = keyHeight * 0.28;
+    const maxPartHeight = keyHeight * 0.85;
+    const minFootprintHeight = keyHeight * 0.72;
+    const maxFootprintHeight = keyHeight * 1.35;
+    const maxMiddleGap = keyHeight * 0.28;
+    const sorted = [...caps].sort((a, b) => a.y - b.y || a.x - b.x);
+    const used = new Set();
+    const cells = [];
+
+    for (let i = 0; i < sorted.length; i++) {
+        if (used.has(i)) continue;
+        const top = sorted[i];
+        if (top.h < minPartHeight || top.h > maxPartHeight) continue;
+        let mateIndex = -1;
+        for (let j = i + 1; j < sorted.length; j++) {
+            if (used.has(j)) continue;
+            const bottom = sorted[j];
+            if (bottom.h < minPartHeight || bottom.h > maxPartHeight) continue;
+            if (!closeEnough(top.x, bottom.x, xTolerance)) continue;
+            if (!closeEnough(top.w, bottom.w, widthTolerance)) continue;
+            const middleGap = bottom.y - (top.y + top.h);
+            if (middleGap < -0.5 || middleGap > maxMiddleGap) continue;
+            const footprintH = bottom.y + bottom.h - top.y;
+            if (footprintH < minFootprintHeight || footprintH > maxFootprintHeight) continue;
+            mateIndex = j;
+            break;
+        }
+        if (mateIndex < 0) continue;
+        const bottom = sorted[mateIndex];
+        used.add(i);
+        used.add(mateIndex);
+        cells.push({
+            x: round((top.x + bottom.x) / 2, 4),
+            y: round(top.y, 4),
+            w: round((top.w + bottom.w) / 2, 4),
+            h: round(bottom.y + bottom.h - top.y, 4),
+            stack: [
+                capShapeToKey(top),
+                capShapeToKey(bottom)
+            ]
+        });
+    }
+
+    return cells.sort((a, b) => a.y - b.y || a.x - b.x);
+}
+
+function capShapeToKey(shape = {}) {
+    const key = {
+        x: round(shape.x, 4),
+        y: round(shape.y, 4),
+        w: round(shape.w, 4),
+        h: round(shape.h, 4),
+        source: shape.source || 'caps'
+    };
+    for (const prop of ['rowSpan', 'stackId', 'stackIndex', 'stackCount', 'stackBaseY', 'stackBaseH']) {
+        if (shape[prop] != null) key[prop] = shape[prop];
+    }
+    return key;
+}
+
+function rectSignature(rect = {}) {
+    return `${round(rect.x, 3)}:${round(rect.y, 3)}:${round(rect.w, 3)}:${round(rect.h, 3)}`;
 }
 
 export function estimateCornerOffsetFromCaps(caps = [], horizontal = [], radius = null) {
@@ -601,11 +757,18 @@ export function diagnoseRecognizedKeys(analysis = {}, options = {}) {
         if (suspiciousKey && issue.keyIndex != null) suspicious.add(issue.keyIndex);
     };
 
-    if (!analysis.groups?.blueprint) add(warnings, { code: 'missing-blueprint', message: 'No blueprint group found.' });
+    const usingCapsSource = recognized.source === 'caps';
+    if (!analysis.groups?.blueprint && !usingCapsSource) add(warnings, { code: 'missing-blueprint', message: 'No blueprint group found.' });
     if (!analysis.groups?.caps) add(warnings, { code: 'missing-caps', message: 'No caps group found.' });
-    if (!analysis.elements?.lines) add(warnings, { code: 'no-lines', message: 'No line segments found.' });
+    if (!analysis.elements?.lines && !usingCapsSource) add(warnings, { code: 'no-lines', message: 'No line segments found.' });
     if (!calibration) add(warnings, { code: 'no-calibration', message: 'Could not calibrate from caps.' });
     if (!keys.length) add(warnings, { code: 'no-keys', message: 'No key rectangles detected.' });
+    if (usingCapsSource && keys.length) {
+        add(notices, {
+            code: 'caps-used-as-source',
+            message: `Used ${keys.length} caps shapes as keyboard geometry.`
+        }, { suspiciousKey: false });
+    }
     if (caps.length && keys.length && caps.length !== keys.length) {
         const sparseCaps = caps.length <= Math.max(4, keys.length * 0.1);
         add(sparseCaps ? notices : warnings, {
@@ -630,7 +793,7 @@ export function diagnoseRecognizedKeys(analysis = {}, options = {}) {
         if (key.w > hugeWidth) {
             add(warnings, { code: 'huge-key', keyIndex: key.i, message: `Key ${key.i + 1} is unusually wide.` });
         }
-        if (Number.isFinite(keyHeight)) {
+        if (!usingCapsSource && Number.isFinite(keyHeight)) {
             const expected = key.rowSpan === 2 && Number.isFinite(rowPitch)
                 ? keyHeight + rowPitch
                 : keyHeight;
@@ -638,7 +801,7 @@ export function diagnoseRecognizedKeys(analysis = {}, options = {}) {
                 add(warnings, { code: 'height-mismatch', keyIndex: key.i, message: `Key ${key.i + 1} height does not match the calibrated grid.` });
             }
         }
-        if (Number.isFinite(colPitch) && Number.isFinite(gap) && Number.isFinite(keyWidth1U)) {
+        if (!usingCapsSource && Number.isFinite(colPitch) && Number.isFinite(gap) && Number.isFinite(keyWidth1U)) {
             const u = (key.w + gap) / colPitch;
             const nearestQuarter = Math.round(u * 4) / 4;
             if (Math.abs(u - nearestQuarter) > 0.06) {
@@ -655,7 +818,7 @@ export function diagnoseRecognizedKeys(analysis = {}, options = {}) {
         }
     }
 
-    if (caps.length === keys.length && keys.length) {
+    if (!usingCapsSource && caps.length === keys.length && keys.length) {
         const sortedCaps = [...caps].sort((a, b) => a.y - b.y || a.x - b.x);
         let worst = null;
         for (let i = 0; i < keys.length; i++) {
@@ -704,9 +867,12 @@ export function layoutDraftFromRecognized(analysis = {}, options = {}) {
     if (!cells.length || !Number.isFinite(keyWidth1U) || !Number.isFinite(colPitch) || !Number.isFinite(gap) || !Number.isFinite(keyHeight) || !rowClusters.length) {
         return null;
     }
+    const irregularRows = rowClusters.some((rowY, rowIndex) =>
+        Math.abs(rowY - (rowClusters[0] + rowIndex * rowPitch)) > 0.05);
 
     const draftBlocks = detectDraftBlocks(cells, gap);
     const layoutProfile = assignDraftSemanticIds(cells, rowClusters, draftBlocks);
+    const explicitX = recognized.source === 'caps';
 
     const blocks = draftBlocks.map((block, index, list) => ({
         id: blockIdFor(index, list.length),
@@ -716,6 +882,7 @@ export function layoutDraftFromRecognized(analysis = {}, options = {}) {
     }));
     const draftRows = rowClusters.map((rowY, rowIndex) => {
         const row = {};
+        if (irregularRows) row.__y = round(rowY, 4);
         for (const block of blocks) {
             const blockKeys = cells
                 .filter((key) => nearestIndex(rowClusters, key.y) === rowIndex && block.keys.includes(key))
@@ -725,9 +892,9 @@ export function layoutDraftFromRecognized(analysis = {}, options = {}) {
             let cursor = block.x;
             let ordinal = 0;
             for (const key of blockKeys) {
-                const skip = normalizedSkip((key.x - cursor) / colPitch);
+                const skip = explicitX ? 0 : normalizedSkip((key.x - cursor) / colPitch);
                 if (skip > 0) items.push({ skip });
-                const item = draftItemForKey(key, { colPitch, gap });
+                const item = draftItemForKey(key, { colPitch, gap, keyHeight, rowPitch, explicitX });
                 if (item.stack) {
                     item.editId = `${rowIndex}:${block.id}:${ordinal}`;
                     item.stack = item.stack.map((child, stackIndex) => ({
@@ -748,7 +915,7 @@ export function layoutDraftFromRecognized(analysis = {}, options = {}) {
         meta: {
             name: options.name || 'IMPORTED_SVG',
             formFactor: options.formFactor || 'custom',
-            source: 'svg-blueprint',
+            source: recognized.source === 'caps' ? 'svg-caps' : 'svg-blueprint',
             layoutProfile: layoutProfile?.id || null
         },
         grid: {
@@ -779,6 +946,10 @@ export function layoutDraftFromRecognized(analysis = {}, options = {}) {
             skips: countDraftItems(draftRows, (item) => item.skip != null),
             rowSpans: countDraftItems(draftRows, (item) => item.rowSpan != null),
             stacks: countDraftItems(draftRows, (item) => Array.isArray(item.stack)),
+            explicitHeights: countDraftItems(draftRows, (item) => item.h != null),
+            explicitX: countDraftItems(draftRows, (item) => item.x != null),
+            explicitY: countDraftItems(draftRows, (item) => item.y != null),
+            explicitRows: draftRows.filter((row) => row.__y != null).length,
             layoutProfile: layoutProfile?.id || null,
             semanticKeys: countSemanticKeys(cells)
         }
@@ -800,7 +971,9 @@ export function blueprintSummaryLines(analysis) {
     }
     if (analysis.recognized?.keys?.length) {
         const stacks = analysis.recognized.stackCells?.length || 0;
-        lines.push(`Detected: ${analysis.recognized.keys.length} keys from ${analysis.recognized.raw.length} candidates, d ${analysis.recognized.cornerOffset}${stacks ? `, ${stacks} stack` : ''}`);
+        const source = analysis.recognized.source === 'caps' ? 'caps' : 'blueprint';
+        const d = analysis.recognized.cornerOffset == null ? '' : `, d ${analysis.recognized.cornerOffset}`;
+        lines.push(`Detected: ${analysis.recognized.keys.length} keys from ${analysis.recognized.raw.length} ${source}${d}${stacks ? `, ${stacks} stack` : ''}`);
     }
     if (analysis.diagnostics) {
         const warnings = analysis.diagnostics.warnings?.length || 0;
@@ -965,15 +1138,36 @@ function countSemanticKeys(cells = []) {
     return count;
 }
 
-function draftItemForKey(key, { colPitch, gap }) {
+function inferredRowSpanForKey(key = {}, metrics = {}) {
+    if (key.rowSpan && key.rowSpan > 1) return key.rowSpan;
+    const { keyHeight, rowPitch } = metrics;
+    if (!Number.isFinite(key.h) || !Number.isFinite(keyHeight) || !Number.isFinite(rowPitch)) return 1;
+    for (let span = 2; span <= 4; span++) {
+        const expected = keyHeight + (span - 1) * rowPitch;
+        if (Math.abs(key.h - expected) <= 0.08) return span;
+    }
+    return 1;
+}
+
+function draftItemForKey(key, metrics = {}) {
+    const { colPitch, gap, keyHeight, rowPitch, explicitX } = metrics;
     const item = {};
+    if (explicitX && Number.isFinite(key.x)) item.x = round(key.x, 4);
+    if (explicitX && Number.isFinite(key.y)) item.y = round(key.y, 4);
     const widthU = (key.w + gap) / colPitch;
     const quarter = Math.round(widthU * 4) / 4;
     const quarterWidth = quarter * colPitch - gap;
     if (Math.abs(key.w - quarterWidth) <= 0.02) item.u = normalizedUnit(quarter);
     else item.w = round(key.w, 4);
     if (key.id) item.id = key.id;
-    if (key.rowSpan && key.rowSpan > 1) item.rowSpan = key.rowSpan;
+    const rowSpan = inferredRowSpanForKey(key, metrics);
+    if (rowSpan > 1) item.rowSpan = rowSpan;
+    const expectedH = rowSpan > 1
+        ? keyHeight + (rowSpan - 1) * rowPitch
+        : keyHeight;
+    if (Number.isFinite(key.h) && (!Number.isFinite(expectedH) || Math.abs(key.h - expectedH) > 0.05)) {
+        item.h = round(key.h, 4);
+    }
     if (Array.isArray(key.stack) && key.stack.length) {
         item.stack = key.stack.map((child, stackIndex) => {
             const out = {
@@ -1006,6 +1200,9 @@ function canCompactRepeatDraftItem(item) {
     return !!item
         && item.u != null
         && item.w == null
+        && item.x == null
+        && item.y == null
+        && item.h == null
         && item.skip == null
         && item.flex == null
         && item.rowSpan == null
@@ -1063,6 +1260,7 @@ function countDraftItems(rows, predicate) {
     let count = 0;
     for (const row of rows) {
         for (const items of Object.values(row)) {
+            if (!Array.isArray(items)) continue;
             for (const item of items || []) {
                 if (predicate(item)) count += item.repeat || 1;
             }
@@ -1135,6 +1333,154 @@ function uniqueRects(rects, tolerance = 0.5) {
 
 function closeEnough(a, b, tolerance) {
     return Math.abs(a - b) <= tolerance;
+}
+
+function pathDataBounds(d = '') {
+    const tokens = String(d || '').match(/[AaCcHhLlMmQqSsTtVvZz]|[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?/g) || [];
+    if (!tokens.length) return null;
+    let i = 0;
+    let command = '';
+    let x = 0;
+    let y = 0;
+    let startX = 0;
+    let startY = 0;
+    const points = [];
+    const add = (px, py) => {
+        if (Number.isFinite(px) && Number.isFinite(py)) points.push({ x: px, y: py });
+    };
+    const isCommand = (token) => /^[A-Za-z]$/.test(token || '');
+    const hasNumber = () => i < tokens.length && !isCommand(tokens[i]);
+    const read = () => Number(tokens[i++]);
+    const point = (relative = false) => {
+        const px = read();
+        const py = read();
+        return relative ? { x: x + px, y: y + py } : { x: px, y: py };
+    };
+
+    while (i < tokens.length) {
+        const token = tokens[i++];
+        if (isCommand(token)) command = token;
+        else {
+            i -= 1;
+            if (!command) break;
+        }
+        const lower = command.toLowerCase();
+        const relative = command === lower;
+
+        if (lower === 'z') {
+            x = startX;
+            y = startY;
+            add(x, y);
+            continue;
+        }
+        if (lower === 'm') {
+            let first = true;
+            while (i + 1 < tokens.length && hasNumber()) {
+                const p = point(relative);
+                x = p.x;
+                y = p.y;
+                if (first) {
+                    startX = x;
+                    startY = y;
+                    first = false;
+                }
+                add(x, y);
+                command = relative ? 'l' : 'L';
+                if (i >= tokens.length || isCommand(tokens[i])) break;
+            }
+            continue;
+        }
+        if (lower === 'l' || lower === 't') {
+            while (i + 1 < tokens.length && hasNumber()) {
+                const p = point(relative);
+                x = p.x;
+                y = p.y;
+                add(x, y);
+                if (i >= tokens.length || isCommand(tokens[i])) break;
+            }
+            continue;
+        }
+        if (lower === 'h') {
+            while (hasNumber()) {
+                const value = read();
+                x = relative ? x + value : value;
+                add(x, y);
+                if (i >= tokens.length || isCommand(tokens[i])) break;
+            }
+            continue;
+        }
+        if (lower === 'v') {
+            while (hasNumber()) {
+                const value = read();
+                y = relative ? y + value : value;
+                add(x, y);
+                if (i >= tokens.length || isCommand(tokens[i])) break;
+            }
+            continue;
+        }
+        if (lower === 'c') {
+            while (i + 5 < tokens.length && hasNumber()) {
+                const c1 = point(relative);
+                const c2 = point(relative);
+                const end = point(relative);
+                add(c1.x, c1.y);
+                add(c2.x, c2.y);
+                add(end.x, end.y);
+                x = end.x;
+                y = end.y;
+                if (i >= tokens.length || isCommand(tokens[i])) break;
+            }
+            continue;
+        }
+        if (lower === 's' || lower === 'q') {
+            while (i + 3 < tokens.length && hasNumber()) {
+                const c = point(relative);
+                const end = point(relative);
+                add(c.x, c.y);
+                add(end.x, end.y);
+                x = end.x;
+                y = end.y;
+                if (i >= tokens.length || isCommand(tokens[i])) break;
+            }
+            continue;
+        }
+        if (lower === 'a') {
+            while (i + 6 < tokens.length && hasNumber()) {
+                const rx = Math.abs(read());
+                const ry = Math.abs(read());
+                read(); // x-axis-rotation
+                read(); // large-arc-flag
+                read(); // sweep-flag
+                const ex = read();
+                const ey = read();
+                const end = relative ? { x: x + ex, y: y + ey } : { x: ex, y: ey };
+                add(x - rx, y - ry);
+                add(x + rx, y + ry);
+                add(end.x - rx, end.y - ry);
+                add(end.x + rx, end.y + ry);
+                x = end.x;
+                y = end.y;
+                add(x, y);
+                if (i >= tokens.length || isCommand(tokens[i])) break;
+            }
+            continue;
+        }
+        break;
+    }
+
+    if (!points.length) return null;
+    const xs = points.map((p) => p.x);
+    const ys = points.map((p) => p.y);
+    const minX = Math.min(...xs);
+    const minY = Math.min(...ys);
+    const maxX = Math.max(...xs);
+    const maxY = Math.max(...ys);
+    return {
+        x: round(minX, 4),
+        y: round(minY, 4),
+        w: round(maxX - minX, 4),
+        h: round(maxY - minY, 4)
+    };
 }
 
 function tags(source, name) {

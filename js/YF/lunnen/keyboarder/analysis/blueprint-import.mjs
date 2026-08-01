@@ -145,11 +145,28 @@ assert.deepEqual(syntheticAnalysis.calibration, {
     rowPitch: 12,
     gap: 2
 });
-assert.equal(syntheticAnalysis.diagnostics.warnings.length, 1);
-assert.equal(syntheticAnalysis.diagnostics.warnings[0].code, 'no-keys');
-assert.equal(blueprintSummaryLines(syntheticAnalysis).length, 6);
+assert.equal(syntheticAnalysis.recognized.source, 'caps');
+assert.equal(syntheticAnalysis.recognized.keys.length, 3);
+assert.equal(syntheticAnalysis.diagnostics.warnings.length, 0);
+assert.equal(syntheticAnalysis.diagnostics.notices[0].code, 'caps-used-as-source');
+assert.ok(blueprintSummaryLines(syntheticAnalysis).some((line) => line.includes('from 3 caps')));
 assert.ok(syntheticAnalysis.timings.totalMs >= 0);
 assert.ok(Number.isFinite(syntheticAnalysis.timings.parseLinesMs));
+
+const capsOnlyPathSvg = `<?xml version="1.0"?>
+<svg viewBox="0 0 40 20" xmlns="http://www.w3.org/2000/svg">
+  <g id="caps">
+    <path d="M2,0h6c1,0 2,1 2,2v5c0,1 -1,2 -2,2h-6c-1,0 -2,-1 -2,-2v-5c0,-1 1,-2 2,-2Z"/>
+    <path d="M14,0h6c1,0 2,1 2,2v5c0,1 -1,2 -2,2h-6c-1,0 -2,-1 -2,-2v-5c0,-1 1,-2 2,-2Z"/>
+  </g>
+</svg>`;
+const capsOnlyPathAnalysis = analyzeSvgBlueprint(capsOnlyPathSvg);
+assert.equal(capsOnlyPathAnalysis.groups.blueprint, false);
+assert.equal(capsOnlyPathAnalysis.recognized.source, 'caps');
+assert.equal(capsOnlyPathAnalysis.recognized.keys.length, 2);
+assert.equal(capsOnlyPathAnalysis.caps.length, 2);
+assert.equal(capsOnlyPathAnalysis.diagnostics.warnings.length, 0);
+assert.equal(capsOnlyPathAnalysis.layoutDraft.stats.keys, 2);
 
 const badDiagnostics = diagnoseRecognizedKeys({
     groups: { blueprint: true, caps: true },
@@ -310,7 +327,9 @@ assert.deepEqual(
     ['TL::', 'BL:;', 'BR:Ж']
 );
 assert.deepEqual(
-    semanticNavContent.keys.find((key) => key.elements.some((element) => element.text === '/')).elements.map((element) => `${element.slot}:${element.text}`),
+    semanticNavContent.keys.find((key) =>
+        key.elements.some((element) => element.text === '?')
+        && key.elements.some((element) => element.text === '.')).elements.map((element) => `${element.slot}:${element.text}`),
     ['TL:?', 'FR:,', 'BL:/', 'BR:.']
 );
 const semanticNavContentResult = attachContent(semanticNavBuilt.keys, semanticNavContent);

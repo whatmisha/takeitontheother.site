@@ -1,4 +1,12 @@
 import { LCAKB21, LCAKB22 } from './layout-presets.js';
+import {
+    AIRIS_14,
+    GROUND_14,
+    GROUND_15,
+    PERFORM_L,
+    PERFORM_S,
+    WORK_1_L_PAD
+} from './reference-layout-presets.js';
 
 /**
  * Библиотека раскладок.
@@ -229,6 +237,12 @@ const ANSI_60 = layout('ANSI_60', '60%', [COMPACT_MAIN], [
 export const LAYOUTS = {
     [LCAKB21.meta.name]: LCAKB21,
     [LCAKB22.meta.name]: LCAKB22,
+    [PERFORM_L.meta.name]: PERFORM_L,
+    [PERFORM_S.meta.name]: PERFORM_S,
+    [WORK_1_L_PAD.meta.name]: WORK_1_L_PAD,
+    [AIRIS_14.meta.name]: AIRIS_14,
+    [GROUND_14.meta.name]: GROUND_14,
+    [GROUND_15.meta.name]: GROUND_15,
     [LCAKB23.meta.name]: LCAKB23,
     [ANSI_TKL.meta.name]: ANSI_TKL,
     [ISO_TKL.meta.name]: ISO_TKL,
@@ -242,4 +256,4 @@ export const LAYOUT_OPTIONS = [
     { id: LCAKB23.meta.name, label: 'LCAKB23 · ANSI 96%' }
 ];
 
-export { LCAKB21, LCAKB22 };
+export { AIRIS_14, GROUND_14, GROUND_15, LCAKB21, LCAKB22, PERFORM_L, PERFORM_S, WORK_1_L_PAD };

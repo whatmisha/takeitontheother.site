@@ -67,7 +67,10 @@ for (const [name, layout] of Object.entries(LAYOUTS)) {
     const result = attachContent(keys, content);
     assert.equal(result.matched, keys.length, `${name}: every key should receive generated content`);
     assert.equal(result.orphans, 0, `${name}: generated content should not have orphan keys`);
-    assert.ok(keys.filter((k) => !(k.elements || []).length).length <= 1, `${name}: only space may be blank`);
+    const blankIds = new Set(['space', 'blank', 'empty']);
+    const semanticBlanks = keys.filter((k) => blankIds.has(String(k.id || '').trim().toLowerCase())).length;
+    const renderedBlanks = keys.filter((k) => !(k.elements || []).length).length;
+    assert.ok(renderedBlanks <= Math.max(1, semanticBlanks), `${name}: only semantic blanks may be blank`);
 }
 
 const importLikeLayout = {

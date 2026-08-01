@@ -15,10 +15,13 @@ Repository structure:
 - `vendor/` - required runtime third-party code: framework copy plus `opentype`, `jsPDF`, `svg2pdf`.
 - `docs/assets/` - screenshots, diagnostic images, and QA preview SVG.
 - `reference/lcakb23/` - canonical LCAKB23 reference SVG and verification JSON artifacts.
+- `reference/keyboards/` and `reference/laptops/` - SVG references used to regenerate the
+  Perform/Work/Airis/Ground built-in layout presets.
 
 Removed during cleanup:
 
 - `ui-framework/` - old source sandbox; active app uses `vendor/framework/`.
 - `LCAKB23/` - old Illustrator/source archive with duplicate SVG/font; active reference files are in `reference/lcakb23/`.
 - obsolete unlisted preset JSON files (`ansi-*`, `iso-tkl`, `round-mm`, `lcakb23-*` variants);
-  current shipped presets are only `LCAKB21`, `LCAKB22`, and `LCAKB23`.
+  built-in app layouts are defined in JS, while `presets/manifest.json` keeps only persisted seed
+  JSON models.

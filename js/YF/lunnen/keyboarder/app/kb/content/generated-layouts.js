@@ -28,6 +28,12 @@ const SEMANTIC_LABELS = {
     rmeta: 'win',
     lalt: 'alt',
     ralt: 'alt',
+    'cmd-left': 'alt/cmd',
+    'cmd-right': 'alt/cmd',
+    'option-left': 'option',
+    'option-right': 'option',
+    'opt-left': 'opt',
+    'opt-right': 'opt',
     'fn-left': 'fn',
     'fn-right': 'fn',
     lshift: 'shift',
@@ -42,7 +48,7 @@ const SEMANTIC_LABELS = {
     down: 'down'
 };
 
-const BLANK_IDS = new Set(['space']);
+const BLANK_IDS = new Set(['space', 'blank', 'empty']);
 
 const ARROW_ICON_BY_ID = {
     up: 'arrow-up',
@@ -70,12 +76,20 @@ const SERVICE_WORD_BY_ID = {
     alt: 'alt',
     lalt: 'alt',
     ralt: 'alt',
+    'cmd-left': 'alt/cmd',
+    'cmd-right': 'alt/cmd',
+    'option-left': 'option',
+    'option-right': 'option',
+    'opt-left': 'opt',
+    'opt-right': 'opt',
     fn: 'fn',
     'fn-left': 'fn',
     'fn-right': 'fn',
     menu: 'menu',
     print: 'print',
+    'prt-sc': 'prt sc',
     scroll: 'scroll',
+    'scr-lock': 'scr lock',
     pause: 'pause',
     insert: 'insert',
     home: 'home',
@@ -140,7 +154,49 @@ const CORNER_TEXT_BY_ID = {
     comma: [['TL', '<'], ['BL', ','], ['BR', 'Б']],
     period: [['TL', '>'], ['BL', '.'], ['BR', 'Ю']],
     slash: [['TL', '?'], ['FR', ','], ['BL', '/'], ['BR', '.']],
-    backslash: [['TL', '|'], ['BL', '\\']]
+    backslash: [['TL', '|'], ['TR', '/'], ['BL', '\\']]
+};
+
+const CUSTOM_TEXT_BY_ID = {
+    '8-layer-1': { tpl: 'legend-corners', items: [['TL', '*'], ['BL', '8'], ['BR', '1']] },
+    '9-layer-2': { tpl: 'legend-corners', items: [['TL', '('], ['BL', '9'], ['BR', '2']] },
+    'minus-em': { tpl: 'legend-2corners', items: [['TL', '—'], ['BL', '-']] },
+    'equal-flipped': { tpl: 'legend-2corners', items: [['TL', '='], ['BL', '+']] },
+    'quote-acute': { tpl: 'legend-corners', items: [['TL', '˝'], ['BL', '´'], ['BR', 'Э']] },
+    'quote-short': { tpl: 'legend-corners', items: [['TL', '˝'], ['BR', 'Э']] },
+    'quote-curly': { tpl: 'legend-corners', items: [['TL', '“'], ['BL', '‘'], ['BR', 'Э']] },
+    'semicolon-no-bottom': { tpl: 'legend-corners', items: [['TL', ':'], ['BR', 'Ж']] },
+    'slash-acute': { tpl: 'legend-corners', items: [['TC', '´'], ['TL', '?'], ['FR', ','], ['BL', '/'], ['BR', '.']] },
+    'slash-dot-comma': { tpl: 'legend-corners', items: [['TL', '?'], ['TR', ','], ['BL', '/'], ['BR', '.']] },
+    'mode-2-4g': { tpl: 'legend-corners', items: [['TL', '2', 'numpad'], ['BC', '.', 'numpad'], ['BR', '4G', 'word']] },
+    'mode-1': { tpl: 'numpad-single', items: [['BC', '1', 'numpad']] },
+    'mode-2': { tpl: 'numpad-single', items: [['BC', '2', 'numpad']] },
+    'num-lock-clear': { tpl: 'word-stack', items: [['UC', 'nm lock', 'word'], ['BC', 'clear', 'word']] },
+    'num-lock': { tpl: 'word-stack', items: [['UC', 'num', 'word'], ['BC', 'lock', 'word']] },
+    'num-plus': { tpl: 'numpad-single', items: [['MC', '+', 'glyph']] },
+    'num-minus': { tpl: 'numpad-single', items: [['MC', '–', 'glyph']] },
+    'num-slash': { tpl: 'numpad-single', items: [['MC', '/', 'glyph']] },
+    'num-star': { tpl: 'numpad-single', items: [['MC', '*', 'glyph']] },
+    'num-enter': { tpl: 'word-center', items: [['BC', 'enter', 'word']] },
+    'num8': { tpl: 'numpad-single', items: [['BC', '8', 'numpad']] },
+    'num2': { tpl: 'numpad-single', items: [['BC', '2', 'numpad']] },
+    'num4': { tpl: 'numpad-single', items: [['BC', '4', 'numpad']] },
+    'num5': { tpl: 'numpad-single', items: [['BC', '5', 'numpad']] },
+    'num6': { tpl: 'numpad-single', items: [['BC', '6', 'numpad']] },
+    'num7-home': { tpl: 'numpad-dual', items: [['TL', 'home', 'word'], ['BL', '7', 'numpad']] },
+    'num9-pg-up': { tpl: 'numpad-dual', items: [['TL', 'pg up', 'word'], ['BL', '9', 'numpad']] },
+    'num1-end': { tpl: 'numpad-dual', items: [['TL', 'end', 'word'], ['BL', '1', 'numpad']] },
+    'num3-pg-down': { tpl: 'numpad-dual', items: [['TL', 'pg dn', 'word'], ['BL', '3', 'numpad']] },
+    'num0-insert': { tpl: 'numpad-dual', items: [['TL', 'insert', 'word'], ['BL', '0', 'numpad']] },
+    'num-decimal-delete': { tpl: 'numpad-dual', items: [['TL', 'delete', 'word'], ['BL', '.', 'numpad']] },
+    'scroll-lock': { tpl: 'word-stack', items: [['UC', 'scroll', 'word'], ['BC', 'lock', 'word']] }
+};
+
+const PLATFORM_ALPHA_BY_ID = {
+    'u-win': { base: 'u', platform: 'WIN' },
+    'i-mac': { base: 'i', platform: 'MAC' },
+    'o-ios': { base: 'o', platform: 'IOS' },
+    'p-and': { base: 'p', platform: 'AND' }
 };
 
 const PUNCTUATION_DUAL_IDS = new Set([
@@ -286,6 +342,42 @@ function glyphSize(typeDefaults = {}) {
     return typeDefaults.glyphSize ?? typeDefaults.secondarySize ?? typeDefaults.wordSize ?? 12;
 }
 
+function typedSize(kind, typeDefaults = {}) {
+    if (kind === 'word') return serviceWordSize(typeDefaults);
+    if (kind === 'secondary') return typeDefaults.secondarySize ?? glyphSize(typeDefaults);
+    if (kind === 'numpad') return typeDefaults.numpadSize ?? glyphSize(typeDefaults);
+    return glyphSize(typeDefaults);
+}
+
+function customTextContentForId(id, typeDefaults = {}) {
+    const spec = CUSTOM_TEXT_BY_ID[String(id || '').trim().toLowerCase()];
+    if (!spec) return null;
+    return {
+        tpl: spec.tpl || 'legend-corners',
+        elements: spec.items.map(([slot, text, kind]) => ({
+            slot,
+            kind: 'txt',
+            text,
+            size: typedSize(kind, typeDefaults)
+        }))
+    };
+}
+
+function platformAlphaContentForId(id, typeDefaults = {}) {
+    const spec = PLATFORM_ALPHA_BY_ID[String(id || '').trim().toLowerCase()];
+    const cyrillic = spec ? CYRILLIC_BY_LATIN_ID[spec.base] : null;
+    if (!spec || !cyrillic) return null;
+    const size = glyphSize(typeDefaults);
+    return {
+        tpl: 'alpha-platform',
+        elements: [
+            { slot: 'TC', kind: 'txt', text: spec.platform, size: serviceWordSize(typeDefaults) },
+            { slot: 'TL', kind: 'txt', text: spec.base.toUpperCase(), size },
+            { slot: 'BR', kind: 'txt', text: cyrillic, size }
+        ]
+    };
+}
+
 function alphaDualContentForId(id, typeDefaults = {}) {
     const key = String(id || '').trim().toLowerCase();
     const cyrillic = CYRILLIC_BY_LATIN_ID[key];
@@ -355,6 +447,8 @@ function genericContentForItem(item, fallbackLabel, typeDefaults = {}) {
     return blankContentForId(item?.id)
         || arrowIconContentForId(item?.id)
         || arrowStackContentForId(item?.id)
+        || customTextContentForId(item?.id, typeDefaults)
+        || platformAlphaContentForId(item?.id, typeDefaults)
         || serviceWordContentForId(item?.id, typeDefaults)
         || alphaDualContentForId(item?.id, typeDefaults)
         || cornerContentForId(item?.id, typeDefaults)
@@ -396,7 +490,13 @@ export function generatedContentStatsForLayout(layout) {
     for (const { item } of genericContentSlotsForLayout(layout)) {
         stats.keys += 1;
         const id = String(item?.id || '').trim().toLowerCase();
-        if (CYRILLIC_BY_LATIN_ID[id]) {
+        if (BLANK_IDS.has(id)) {
+            stats.generatedLabelKeys += 1;
+        } else if (PLATFORM_ALPHA_BY_ID[id]) {
+            stats.alphaDualKeys += 1;
+        } else if (CUSTOM_TEXT_BY_ID[id]) {
+            stats.cornerTemplateKeys += 1;
+        } else if (CYRILLIC_BY_LATIN_ID[id]) {
             stats.alphaDualKeys += 1;
         } else if (CORNER_TEXT_BY_ID[id]) {
             stats.cornerTemplateKeys += 1;
@@ -457,6 +557,7 @@ function genericKeysForLayout(layout, typeDefaults = {}) {
 function genericContentSlotsForLayout(layout) {
     return (layout?.rows || []).flatMap((row, rowIndex) =>
         Object.entries(row || {}).flatMap(([block, items]) => {
+            if (block.startsWith('__') || !Array.isArray(items)) return [];
             let ordinal = 0;
             return expandedItems(items).flatMap((item) => {
                 if (item.skip) return [];
