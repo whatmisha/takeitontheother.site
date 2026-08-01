@@ -1435,12 +1435,8 @@ export class Toolbar {
   }
 
   syncPageBackground(color) {
-    const background = normalizeHexColor(color, "#bbbbbb");
-    const outline = getRelativeLuminance(background) > 0.42
-      ? "rgba(0, 0, 0, 0.24)"
-      : "rgba(255, 255, 255, 0.34)";
-    document.documentElement.style.setProperty("--etica-page-bg", background);
-    document.documentElement.style.setProperty("--etica-canvas-outline", outline);
+    document.documentElement.style.removeProperty("--etica-page-bg");
+    document.documentElement.style.removeProperty("--etica-canvas-outline");
   }
 }
 
@@ -1457,20 +1453,6 @@ function parseNumber(value, fallback) {
 function clampNumber(value, min, max) {
   const numeric = parseNumber(value, min);
   return Math.min(max, Math.max(min, numeric));
-}
-
-function normalizeHexColor(color, fallback) {
-  return /^#[0-9a-f]{6}$/i.test(color || "") ? color.toLowerCase() : fallback;
-}
-
-function getRelativeLuminance(hex) {
-  const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
-  if (!match) return 1;
-  const [red, green, blue] = match.slice(1).map((channel) => {
-    const value = Number.parseInt(channel, 16) / 255;
-    return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-  });
-  return (0.2126 * red) + (0.7152 * green) + (0.0722 * blue);
 }
 
 function snapByStep(value, direction, step) {

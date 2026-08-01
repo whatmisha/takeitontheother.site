@@ -1,6 +1,6 @@
-import { CanvasController } from "./canvas/CanvasController.js?v=endpoints-no-shadow-1";
-import { PointerTracker } from "./input/PointerTracker.js?v=clear-selection-1";
-import { Toolbar } from "./ui/Toolbar.js?v=svg-presets-1";
+import { CanvasController } from "./canvas/CanvasController.js?v=select-brush-edit-1";
+import { PointerTracker } from "./input/PointerTracker.js?v=select-brush-edit-1";
+import { Toolbar } from "./ui/Toolbar.js?v=select-brush-edit-1";
 import { PanelManager } from "./ui/PanelManager.js";
 
 const canvas = document.getElementById("drawingCanvas");

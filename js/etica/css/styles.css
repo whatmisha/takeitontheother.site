@@ -2,12 +2,11 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background: var(--etica-page-bg, #bbbbbb);
-  transition: background-color var(--transition-normal);
+  background: #000;
 }
 
 .canvas-container {
-  background: var(--etica-page-bg, #bbbbbb);
+  background: #000;
 }
 
 .etica-title-button {
@@ -75,8 +74,8 @@ body {
   height: auto;
   max-width: min(100%, calc(100vw - 64px));
   max-height: calc(100vh - 160px);
-  background: var(--etica-page-bg, #bbbbbb);
-  border: 1px solid var(--etica-canvas-outline, rgba(0, 0, 0, 0.24));
+  background: transparent;
+  border: none;
   cursor: crosshair;
   touch-action: none;
   box-shadow: none;
@@ -96,6 +95,10 @@ body {
 
 #drawingCanvas.is-select-rotate {
   cursor: grab;
+}
+
+#drawingCanvas.is-select-resize {
+  cursor: nwse-resize;
 }
 
 .controls-panel {

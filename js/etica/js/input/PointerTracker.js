@@ -9,6 +9,7 @@ export class PointerTracker {
   bind() {
     document.addEventListener("pointerdown", (event) => {
       if (event.target === this.canvas) return;
+      if (shouldPreserveSelectionForTarget(event.target)) return;
       if (!this.controller.hasSelection()) return;
       this.controller.clearSelection();
     }, { capture: true });
@@ -72,4 +73,16 @@ export class PointerTracker {
     this.activePointerId = null;
     this.controller.setPreviewPoint(this.controller.getPointFromEvent(event));
   }
+}
+
+function shouldPreserveSelectionForTarget(target) {
+  if (!(target instanceof Element)) return false;
+  return Boolean(target.closest([
+    ".controls-panel",
+    ".top-links",
+    ".bottom-buttons",
+    ".etica-mobile-toolbar",
+    ".etica-mobile-brush-popover",
+    ".etica-mobile-sheet"
+  ].join(",")));
 }

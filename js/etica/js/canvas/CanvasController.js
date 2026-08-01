@@ -10,9 +10,22 @@ const SELECTION_COLOR = "#43ff5f";
 const ERASER_SELECTION_COLOR = "#ff3b30";
 const ROTATE_CURSOR_LOWER_LEFT_ANGLE = Math.atan2(1, -1);
 const ROTATE_CURSOR_CACHE = new Map();
+const SCALE_CURSOR_BASE_ANGLE = Math.atan2(-1, 1);
+const SCALE_CURSOR_CACHE = new Map();
 const SELECT_HIT_PADDING = 14;
 const SELECT_HIT_MIN_RADIUS = 16;
 const SELECT_HIT_MAX_RADIUS = 84;
+const RESIZE_HANDLE_SIZE = 11;
+const RESIZE_HANDLE_OUTSET = 10;
+const RESIZE_HANDLE_HIT_RADIUS = 13;
+const MIN_RESIZE_SCALE = 0.05;
+const MAX_RESIZE_SCALE = 12;
+const RESIZE_HANDLES = [
+  { id: "nw", x: -1, y: -1, cursor: "nwse-resize" },
+  { id: "ne", x: 1, y: -1, cursor: "nesw-resize" },
+  { id: "se", x: 1, y: 1, cursor: "nwse-resize" },
+  { id: "sw", x: -1, y: 1, cursor: "nesw-resize" }
+];
 const DEFAULT_EFFECTS = {
   wind: {
     enabled: false,
@@ -94,10 +107,12 @@ export class CanvasController extends EventTarget {
 
   setSize(size) {
     const next = sanitizeNumber(size, 18, 3, 160);
-    const selected = this.getSelectedStroke();
-    if (selected) {
+    const selectedStrokes = this.getSelectedStrokes();
+    if (selectedStrokes.length) {
       if (!this.editSessionActive) this.commitHistory();
-      selected.settings.size = next;
+      for (const stroke of selectedStrokes) {
+        stroke.settings.size = next;
+      }
       this.queueRender();
       return;
     }
@@ -107,10 +122,12 @@ export class CanvasController extends EventTarget {
 
   setDensity(percent) {
     const next = sanitizeNumber(percent, 100, LINE_DENSITY_MIN_PERCENT, LINE_DENSITY_MAX_PERCENT) / 100;
-    const selected = this.getSelectedStroke();
-    if (selected) {
+    const selectedStrokes = this.getSelectedStrokes();
+    if (selectedStrokes.length) {
       if (!this.editSessionActive) this.commitHistory();
-      selected.settings.density = next;
+      for (const stroke of selectedStrokes) {
+        stroke.settings.density = next;
+      }
       this.queueRender();
       return;
     }
@@ -120,10 +137,12 @@ export class CanvasController extends EventTarget {
 
   setSizeVariation(percent) {
     const next = sanitizeNumber(percent, 0, 0, 100) / 100;
-    const selected = this.getSelectedStroke();
-    if (selected) {
+    const selectedStrokes = this.getSelectedStrokes();
+    if (selectedStrokes.length) {
       if (!this.editSessionActive) this.commitHistory();
-      selected.settings.sizeVariation = next;
+      for (const stroke of selectedStrokes) {
+        stroke.settings.sizeVariation = next;
+      }
       this.queueRender();
       return;
     }
@@ -133,10 +152,12 @@ export class CanvasController extends EventTarget {
 
   setScatter(percent) {
     const next = sanitizeNumber(percent, 100, 0, 100) / 100;
-    const selected = this.getSelectedStroke();
-    if (selected) {
+    const selectedStrokes = this.getSelectedStrokes();
+    if (selectedStrokes.length) {
       if (!this.editSessionActive) this.commitHistory();
-      selected.settings.scatter = next;
+      for (const stroke of selectedStrokes) {
+        stroke.settings.scatter = next;
+      }
       this.queueRender();
       return;
     }
@@ -146,10 +167,12 @@ export class CanvasController extends EventTarget {
 
   setRoughness(percent) {
     const next = sanitizeNumber(percent, 100, 0, 100) / 100;
-    const selected = this.getSelectedStroke();
-    if (selected) {
+    const selectedStrokes = this.getSelectedStrokes();
+    if (selectedStrokes.length) {
       if (!this.editSessionActive) this.commitHistory();
-      selected.settings.roughness = next;
+      for (const stroke of selectedStrokes) {
+        stroke.settings.roughness = next;
+      }
       this.queueRender();
       return;
     }
@@ -159,10 +182,12 @@ export class CanvasController extends EventTarget {
 
   setDensityProfile(profile) {
     const next = sanitizeDensityProfile(profile);
-    const selected = this.getSelectedStroke();
-    if (selected) {
+    const selectedStrokes = this.getSelectedStrokes();
+    if (selectedStrokes.length) {
       if (!this.editSessionActive) this.commitHistory();
-      selected.settings.densityProfile = next;
+      for (const stroke of selectedStrokes) {
+        stroke.settings.densityProfile = next;
+      }
       this.queueRender();
       return;
     }
@@ -180,10 +205,12 @@ export class CanvasController extends EventTarget {
     if (!/^#[0-9a-f]{6}$/i.test(color)) return;
     const next = color.toLowerCase();
     this.brushColor = next;
-    const selected = this.getSelectedStroke();
-    if (selected && selected.tool !== "eraser") {
+    const selectedStrokes = this.getSelectedStrokes().filter((stroke) => stroke.tool !== "eraser");
+    if (selectedStrokes.length) {
       if (!this.editSessionActive) this.commitHistory();
-      selected.settings.color = next;
+      for (const stroke of selectedStrokes) {
+        stroke.settings.color = next;
+      }
       this.queueRender();
       return;
     }
@@ -603,6 +630,29 @@ export class CanvasController extends EventTarget {
   }
 
   beginSelectDrag(point, { additive = false } = {}) {
+    const resizeHit = !additive ? this.findResizeHandleAt(point) : null;
+    if (resizeHit) {
+      const selectedStrokes = this.getSelectedStrokes();
+      this.hoveredStrokeId = null;
+      this.selectDrag = {
+        mode: "resize",
+        strokeIds: selectedStrokes.map((stroke) => stroke.id),
+        center: resizeHit.center,
+        direction: resizeHit.direction,
+        cursor: resizeHit.cursor,
+        startProjection: Math.max(1, projectionFromCenter(resizeHit.point, resizeHit.center, resizeHit.direction)),
+        startStrokes: selectedStrokes.map((stroke) => ({
+          id: stroke.id,
+          sizeScale: Number(stroke.sizeScale ?? 1),
+          points: stroke.points.map((strokePoint) => ({ ...strokePoint }))
+        })),
+        hasMoved: false
+      };
+      this.setSelectCursorMode("resize", resizeHit);
+      this.queueRender();
+      return true;
+    }
+
     const hit = this.findStrokeAt(point);
     if (hit) {
       if (additive) {
@@ -656,6 +706,10 @@ export class CanvasController extends EventTarget {
     if (!this.selectDrag) return;
     if (this.selectDrag.mode === "rotate") {
       this.rotateSelectedStrokes(point);
+      return;
+    }
+    if (this.selectDrag.mode === "resize") {
+      this.resizeSelectedStrokes(point);
       return;
     }
 
@@ -714,6 +768,37 @@ export class CanvasController extends EventTarget {
     this.queueRender();
   }
 
+  resizeSelectedStrokes(point) {
+    const draggedStrokes = this.strokes.filter((stroke) => this.selectDrag.strokeIds.includes(stroke.id));
+    if (!draggedStrokes.length) return;
+    this.setSelectCursorMode("resize", this.selectDrag);
+
+    const currentProjection = projectionFromCenter(point, this.selectDrag.center, this.selectDrag.direction);
+    const scale = clamp(currentProjection / this.selectDrag.startProjection, MIN_RESIZE_SCALE, MAX_RESIZE_SCALE);
+    if (!this.selectDrag.hasMoved && Math.abs(scale - 1) < 0.003) return;
+
+    if (!this.selectDrag.hasMoved) {
+      this.commitHistory();
+      this.editSessionActive = true;
+      this.selectDrag.hasMoved = true;
+    }
+
+    for (const sourceStroke of this.selectDrag.startStrokes) {
+      const stroke = draggedStrokes.find((item) => item.id === sourceStroke.id);
+      if (!stroke) continue;
+      stroke.sizeScale = Math.max(MIN_RESIZE_SCALE, sourceStroke.sizeScale * scale);
+      for (let index = 0; index < stroke.points.length; index += 1) {
+        const sourcePoint = sourceStroke.points[index];
+        if (!sourcePoint) continue;
+        stroke.points[index].x = this.selectDrag.center.x + ((sourcePoint.x - this.selectDrag.center.x) * scale);
+        stroke.points[index].y = this.selectDrag.center.y + ((sourcePoint.y - this.selectDrag.center.y) * scale);
+      }
+    }
+
+    this.selectionCenter = { ...this.selectDrag.center };
+    this.queueRender();
+  }
+
   endSelectDrag() {
     if (!this.selectDrag) return;
     const shouldClearSelection = this.selectDrag.mode === "rotate" && !this.selectDrag.hasMoved;
@@ -728,6 +813,16 @@ export class CanvasController extends EventTarget {
     if (this.tool !== "select") {
       this.hoveredStrokeId = null;
       this.setSelectCursorMode("draw");
+      return;
+    }
+
+    const resizeHit = this.findResizeHandleAt(point);
+    if (resizeHit) {
+      if (this.hoveredStrokeId !== null) {
+        this.hoveredStrokeId = null;
+        this.queueRender();
+      }
+      this.setSelectCursorMode("resize", resizeHit);
       return;
     }
 
@@ -921,6 +1016,51 @@ export class CanvasController extends EventTarget {
     };
   }
 
+  findResizeHandleAt(point) {
+    const handles = this.getSelectionResizeHandles();
+    if (!handles.length) return null;
+
+    const threshold = RESIZE_HANDLE_HIT_RADIUS * this.getCanvasCssPixelScale();
+    let best = null;
+    let bestDistance = Infinity;
+    for (const handle of handles) {
+      const distance = Math.hypot(point.x - handle.point.x, point.y - handle.point.y);
+      if (distance <= threshold && distance < bestDistance) {
+        best = handle;
+        bestDistance = distance;
+      }
+    }
+    return best;
+  }
+
+  getSelectionResizeHandles(selectedStrokes = this.getSelectedStrokes()) {
+    if (!selectedStrokes.length) return [];
+    const center = this.getSelectionCenter(selectedStrokes);
+    if (!center) return [];
+
+    const pixelScale = this.getCanvasCssPixelScale();
+    const outset = RESIZE_HANDLE_OUTSET * pixelScale;
+    return RESIZE_HANDLES.map((handle) => {
+      const direction = normalizeVector(handle);
+      const support = findSupportPoint(selectedStrokes, center, direction);
+      const basePoint = support
+        ? support.point
+        : {
+            x: center.x + (direction.x * 32 * pixelScale),
+            y: center.y + (direction.y * 32 * pixelScale)
+          };
+      return {
+        ...handle,
+        center,
+        direction,
+        point: {
+          x: basePoint.x + (direction.x * outset),
+          y: basePoint.y + (direction.y * outset)
+        }
+      };
+    });
+  }
+
   getSelectionCenter(selectedStrokes = this.getSelectedStrokes()) {
     if (this.selectionCenter) return { ...this.selectionCenter };
     this.selectionCenter = this.computeSelectionCenter(selectedStrokes);
@@ -943,11 +1083,14 @@ export class CanvasController extends EventTarget {
     this.canvas.classList.toggle("is-select-move", isSelect && mode === "move");
     this.canvas.classList.toggle("is-select-dragging", isSelect && mode === "dragging");
     this.canvas.classList.toggle("is-select-rotate", isSelect && mode === "rotate");
+    this.canvas.classList.toggle("is-select-resize", isSelect && mode === "resize");
 
     if (!isSelect) {
       this.canvas.style.cursor = "";
     } else if (mode === "rotate" && rotation) {
       this.canvas.style.cursor = createRotateCursor(rotation.point, rotation.center);
+    } else if (mode === "resize") {
+      this.canvas.style.cursor = createScaleCursor(rotation?.direction, rotation?.cursor);
     } else if (mode === "move") {
       this.canvas.style.cursor = "grab";
     } else if (mode === "dragging") {
@@ -1193,6 +1336,12 @@ export class CanvasController extends EventTarget {
       this.drawEndpointDot(firstPoint, radius, "S");
       if (lastPoint !== firstPoint) this.drawEndpointDot(lastPoint, radius, "F");
     }
+    if (center) {
+      const handleColor = selectedStrokes.every((stroke) => stroke.tool === "eraser")
+        ? ERASER_SELECTION_COLOR
+        : SELECTION_COLOR;
+      this.drawResizeHandles(this.getSelectionResizeHandles(selectedStrokes), handleColor);
+    }
     this.ctx.restore();
   }
 
@@ -1250,6 +1399,28 @@ export class CanvasController extends EventTarget {
       this.ctx.textAlign = "center";
       this.ctx.textBaseline = "middle";
       this.ctx.fillText(label, point.x, point.y + (radius * 0.03));
+    }
+    this.ctx.restore();
+  }
+
+  drawResizeHandles(handles, color = SELECTION_COLOR) {
+    if (!handles.length) return;
+    const pixelScale = this.getCanvasCssPixelScale();
+    const size = RESIZE_HANDLE_SIZE * pixelScale;
+    const half = size / 2;
+
+    this.ctx.save();
+    this.ctx.shadowColor = "transparent";
+    this.ctx.shadowBlur = 0;
+    this.ctx.globalAlpha = 1;
+    this.ctx.fillStyle = "rgba(0, 0, 0, 0.86)";
+    this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = Math.max(1.2, pixelScale * 1.4);
+    for (const handle of handles) {
+      this.ctx.beginPath();
+      this.ctx.rect(handle.point.x - half, handle.point.y - half, size, size);
+      this.ctx.fill();
+      this.ctx.stroke();
     }
     this.ctx.restore();
   }
@@ -1428,6 +1599,39 @@ function getSelectionColor(stroke) {
   return stroke.tool === "eraser" ? ERASER_SELECTION_COLOR : SELECTION_COLOR;
 }
 
+function findSupportPoint(strokes, center, direction) {
+  let bestPoint = null;
+  let bestProjection = -Infinity;
+
+  for (const stroke of strokes) {
+    const radius = getStrokeHitRadius(stroke);
+    for (const point of stroke.points) {
+      const projection = projectionFromCenter(point, center, direction) + radius;
+      if (projection <= bestProjection) continue;
+      bestProjection = projection;
+      bestPoint = {
+        x: point.x + (direction.x * radius),
+        y: point.y + (direction.y * radius)
+      };
+    }
+  }
+
+  return bestPoint ? { point: bestPoint, projection: bestProjection } : null;
+}
+
+function projectionFromCenter(point, center, direction) {
+  return ((point.x - center.x) * direction.x) + ((point.y - center.y) * direction.y);
+}
+
+function normalizeVector(vector) {
+  const length = Math.hypot(vector.x, vector.y);
+  if (!length) return { x: 1, y: 0 };
+  return {
+    x: vector.x / length,
+    y: vector.y / length
+  };
+}
+
 function hexToRgba(hex, alpha) {
   const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!match) return `rgba(0, 0, 0, ${alpha})`;
@@ -1538,6 +1742,21 @@ function createRotateCursor(point, center) {
     );
   }
   return ROTATE_CURSOR_CACHE.get(normalizedDegrees);
+}
+
+function createScaleCursor(direction = { x: 1, y: -1 }, fallback = "nwse-resize") {
+  const targetAngle = Math.atan2(direction.y, direction.x);
+  const degrees = Math.round(((targetAngle - SCALE_CURSOR_BASE_ANGLE) * 180) / Math.PI);
+  const normalizedDegrees = ((degrees % 360) + 360) % 360;
+  const cacheKey = `${normalizedDegrees}-${fallback}`;
+  if (!SCALE_CURSOR_CACHE.has(cacheKey)) {
+    const svg = `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(${normalizedDegrees} 18 18)"><g transform="scale(1.5)"><path d="M19 4C19.5523 4 20 4.44772 20 5V9C20 9.55228 19.5523 10 19 10C18.4477 10 18 9.55228 18 9V7.41406L7.41406 18H10C10.5523 18 11 18.4477 11 19C11 19.5523 10.5523 20 10 20H5C4.44772 20 4 19.5523 4 19V14C4 13.4477 4.44772 13 5 13C5.55228 13 6 13.4477 6 14V16.5859L16.5859 6H15C14.4477 6 14 5.55228 14 5C14 4.44772 14.4477 4 15 4H19Z" fill="#00FF3D" stroke="black" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 5L5 19" stroke="#00FF3D" stroke-linecap="round"/><path d="M5 14V19H10" stroke="#00FF3D" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 9L19 5L15 5" stroke="#00FF3D" stroke-linecap="round" stroke-linejoin="round"/></g></g></svg>`;
+    SCALE_CURSOR_CACHE.set(
+      cacheKey,
+      `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}") 18 18, ${fallback}`
+    );
+  }
+  return SCALE_CURSOR_CACHE.get(cacheKey);
 }
 
 function rotatePoint(point, center, cos, sin) {
