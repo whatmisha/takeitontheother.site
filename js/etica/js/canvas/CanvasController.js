@@ -10,6 +10,9 @@ const SELECTION_COLOR = "#43ff5f";
 const ERASER_SELECTION_COLOR = "#ff3b30";
 const ROTATE_CURSOR_LOWER_LEFT_ANGLE = Math.atan2(1, -1);
 const ROTATE_CURSOR_CACHE = new Map();
+const SELECT_HIT_PADDING = 14;
+const SELECT_HIT_MIN_RADIUS = 16;
+const SELECT_HIT_MAX_RADIUS = 84;
 const DEFAULT_EFFECTS = {
   wind: {
     enabled: false,
@@ -1184,8 +1187,6 @@ export class CanvasController extends EventTarget {
       const radius = Math.max(5.5, Math.min(13, getStrokeSize(stroke) * 0.23));
       const pathWidth = this.outlineMode ? this.getOutlineLineWidth(stroke) : 1;
       this.drawSelectedPath(stroke, pathWidth, selectionColor);
-      this.ctx.shadowColor = getSelectionShadowColor(stroke);
-      this.ctx.shadowBlur = radius * 0.7;
       this.ctx.fillStyle = selectionColor;
       this.ctx.strokeStyle = "rgba(0, 0, 0, 0.86)";
       this.ctx.lineWidth = Math.max(2, radius * 0.18);
@@ -1236,20 +1237,20 @@ export class CanvasController extends EventTarget {
   }
 
   drawEndpointDot(point, radius, label = "") {
+    this.ctx.save();
+    this.ctx.shadowColor = "transparent";
+    this.ctx.shadowBlur = 0;
     this.ctx.beginPath();
     this.ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
     this.ctx.fill();
     this.ctx.stroke();
-    if (!label) return;
-
-    this.ctx.save();
-    this.ctx.shadowColor = "transparent";
-    this.ctx.shadowBlur = 0;
-    this.ctx.fillStyle = "#000000";
-    this.ctx.font = `700 ${Math.max(8, radius * 1.05)}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-    this.ctx.textAlign = "center";
-    this.ctx.textBaseline = "middle";
-    this.ctx.fillText(label, point.x, point.y + (radius * 0.03));
+    if (label) {
+      this.ctx.fillStyle = "#000000";
+      this.ctx.font = `700 ${Math.max(8, radius * 1.05)}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+      this.ctx.textAlign = "center";
+      this.ctx.textBaseline = "middle";
+      this.ctx.fillText(label, point.x, point.y + (radius * 0.03));
+    }
     this.ctx.restore();
   }
 
@@ -1271,7 +1272,7 @@ export class CanvasController extends EventTarget {
       const stroke = this.strokes[index];
       if (stroke.points.length < 1) continue;
 
-      const threshold = Math.max(18, getStrokeSize(stroke) * 1.75);
+      const threshold = getStrokeHitRadius(stroke);
       const distance = stroke.points.length === 1
         ? Math.hypot(point.x - stroke.points[0].x, point.y - stroke.points[0].y)
         : distanceToStroke(point, stroke);
@@ -1427,10 +1428,6 @@ function getSelectionColor(stroke) {
   return stroke.tool === "eraser" ? ERASER_SELECTION_COLOR : SELECTION_COLOR;
 }
 
-function getSelectionShadowColor(stroke) {
-  return stroke.tool === "eraser" ? "rgba(255, 59, 48, 0.42)" : "rgba(68, 255, 98, 0.42)";
-}
-
 function hexToRgba(hex, alpha) {
   const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!match) return `rgba(0, 0, 0, ${alpha})`;
@@ -1557,6 +1554,16 @@ function distanceToStroke(point, stroke) {
     if (distance < best) best = distance;
   }
   return best;
+}
+
+function getStrokeHitRadius(stroke) {
+  const brushRadius = getStrokeSize(stroke) * 0.5;
+  const scatterRadius = getStrokeSize(stroke) * 0.32 * getStrokeScatter(stroke);
+  return clamp(brushRadius + scatterRadius + SELECT_HIT_PADDING, SELECT_HIT_MIN_RADIUS, SELECT_HIT_MAX_RADIUS);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }
 
 function distanceToSegment(point, a, b) {
