@@ -7,6 +7,12 @@ export class PointerTracker {
   }
 
   bind() {
+    document.addEventListener("pointerdown", (event) => {
+      if (event.target === this.canvas) return;
+      if (!this.controller.hasSelection()) return;
+      this.controller.clearSelection();
+    }, { capture: true });
+
     this.canvas.addEventListener("pointerdown", (event) => {
       event.preventDefault();
       const point = this.controller.getPointFromEvent(event);

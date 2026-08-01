@@ -1,5 +1,5 @@
-import { CanvasController } from "./canvas/CanvasController.js?v=selection-2";
-import { PointerTracker } from "./input/PointerTracker.js";
+import { CanvasController } from "./canvas/CanvasController.js?v=stable-center-1";
+import { PointerTracker } from "./input/PointerTracker.js?v=clear-selection-1";
 import { Toolbar } from "./ui/Toolbar.js?v=outline-button-1";
 import { PanelManager } from "./ui/PanelManager.js";
 

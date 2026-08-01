@@ -6,6 +6,8 @@ import { LINE_DENSITY_MAX_PERCENT, LINE_DENSITY_MIN_PERCENT } from "../utils/Lin
 
 const CANVAS_BACKGROUND = "#bbbbbb";
 const BRUSH_COLOR = "#ffffff";
+const ROTATE_CURSOR_LOWER_LEFT_ANGLE = Math.atan2(1, -1);
+const ROTATE_CURSOR_CACHE = new Map();
 const DEFAULT_EFFECTS = {
   wind: {
     enabled: false,
@@ -29,6 +31,7 @@ export class CanvasController extends EventTarget {
     this.currentStroke = null;
     this.selectedStrokeId = null;
     this.selectedStrokeIds = new Set();
+    this.selectionCenter = null;
     this.hoveredStrokeId = null;
     this.tool = "dotted";
     this.size = 100;
@@ -65,6 +68,8 @@ export class CanvasController extends EventTarget {
     this.outlineMode = false;
     this.previewPoint = null;
     this.selectDrag = null;
+    this.selectCursorMode = "draw";
+    this.setSelectCursorMode("draw");
     this.renderNow();
   }
 
@@ -78,6 +83,7 @@ export class CanvasController extends EventTarget {
       this.selectDrag = null;
     }
     if (tool === "select") this.previewPoint = null;
+    this.setSelectCursorMode(tool === "select" ? "default" : "draw");
     this.queueRender();
   }
 
@@ -593,38 +599,61 @@ export class CanvasController extends EventTarget {
 
   beginSelectDrag(point, { additive = false } = {}) {
     const hit = this.findStrokeAt(point);
-    if (!hit) {
-      if (!additive) this.clearSelectedStrokeIds();
-      this.selectDrag = null;
-      this.queueRender();
-      return false;
-    }
-
-    if (additive) {
-      if (this.selectedStrokeIds.has(hit.id)) {
-        this.removeStrokeFromSelection(hit.id);
-        this.selectDrag = null;
-        this.queueRender();
-        return false;
+    if (hit) {
+      if (additive) {
+        if (this.selectedStrokeIds.has(hit.id)) {
+          this.removeStrokeFromSelection(hit.id);
+          this.selectDrag = null;
+          this.queueRender();
+          return false;
+        }
+        this.addStrokeToSelection(hit.id);
+      } else if (this.selectedStrokeIds.has(hit.id) && this.selectedStrokeIds.size > 1) {
+        this.selectedStrokeId = hit.id;
+      } else {
+        this.setSelectedStrokeIds([hit.id], hit.id);
       }
-      this.addStrokeToSelection(hit.id);
-    } else if (this.selectedStrokeIds.has(hit.id) && this.selectedStrokeIds.size > 1) {
-      this.selectedStrokeId = hit.id;
-    } else {
-      this.setSelectedStrokeIds([hit.id], hit.id);
+
+      this.selectDrag = {
+        mode: "move",
+        strokeIds: this.getDragStrokeIds(hit),
+        lastPoint: point,
+        hasMoved: false
+      };
+      this.setSelectCursorMode("dragging");
+      this.queueRender();
+      return true;
     }
 
-    this.selectDrag = {
-      strokeIds: this.getDragStrokeIds(hit),
-      lastPoint: point,
-      hasMoved: false
-    };
+    const rotationHit = !additive ? this.getRotationHit(point) : null;
+    if (rotationHit) {
+      this.hoveredStrokeId = null;
+      this.selectDrag = {
+        mode: "rotate",
+        strokeIds: rotationHit.strokeIds,
+        center: rotationHit.center,
+        lastAngle: angleFromCenter(point, rotationHit.center),
+        hasMoved: false
+      };
+      this.setSelectCursorMode("rotate", { point, center: rotationHit.center });
+      this.queueRender();
+      return true;
+    }
+
+    if (!additive) this.clearSelectedStrokeIds();
+    this.selectDrag = null;
+    this.setSelectCursorMode(this.tool === "select" ? "default" : "draw");
     this.queueRender();
-    return true;
+    return false;
   }
 
   dragSelectedStroke(point) {
     if (!this.selectDrag) return;
+    if (this.selectDrag.mode === "rotate") {
+      this.rotateSelectedStrokes(point);
+      return;
+    }
+
     const draggedStrokes = this.strokes.filter((stroke) => this.selectDrag.strokeIds.includes(stroke.id));
     if (!draggedStrokes.length) return;
 
@@ -644,27 +673,87 @@ export class CanvasController extends EventTarget {
         strokePoint.y += dy;
       }
     }
+    if (this.selectionCenter) {
+      this.selectionCenter.x += dx;
+      this.selectionCenter.y += dy;
+    }
 
     this.selectDrag.lastPoint = point;
     this.queueRender();
   }
 
+  rotateSelectedStrokes(point) {
+    const draggedStrokes = this.strokes.filter((stroke) => this.selectDrag.strokeIds.includes(stroke.id));
+    if (!draggedStrokes.length) return;
+    this.setSelectCursorMode("rotate", { point, center: this.selectDrag.center });
+
+    const angle = angleFromCenter(point, this.selectDrag.center);
+    const delta = normalizeAngleDelta(angle - this.selectDrag.lastAngle);
+    if (Math.abs(delta) < 0.001) return;
+
+    if (!this.selectDrag.hasMoved) {
+      this.commitHistory();
+      this.editSessionActive = true;
+      this.selectDrag.hasMoved = true;
+    }
+
+    const cos = Math.cos(delta);
+    const sin = Math.sin(delta);
+    for (const draggedStroke of draggedStrokes) {
+      for (const strokePoint of draggedStroke.points) {
+        rotatePoint(strokePoint, this.selectDrag.center, cos, sin);
+      }
+    }
+
+    this.selectDrag.lastAngle = angle;
+    this.queueRender();
+  }
+
   endSelectDrag() {
     if (!this.selectDrag) return;
+    const shouldClearSelection = this.selectDrag.mode === "rotate" && !this.selectDrag.hasMoved;
     this.selectDrag = null;
     this.editSessionActive = false;
+    if (shouldClearSelection) this.clearSelectedStrokeIds();
+    this.setSelectCursorMode(this.tool === "select" ? "default" : "draw");
     this.queueRender();
   }
 
   hoverStrokeAt(point) {
-    const hit = this.tool === "select" ? this.findStrokeAt(point) : null;
+    if (this.tool !== "select") {
+      this.hoveredStrokeId = null;
+      this.setSelectCursorMode("draw");
+      return;
+    }
+
+    const hit = this.findStrokeAt(point);
     const nextId = hit?.id ?? null;
+    if (hit) {
+      this.setSelectCursorMode("move");
+      if (nextId === this.hoveredStrokeId) return;
+      this.hoveredStrokeId = nextId;
+      this.queueRender();
+      return;
+    }
+
+    const rotationHit = this.getRotationHit(point);
+    if (rotationHit) {
+      if (this.hoveredStrokeId !== null) {
+        this.hoveredStrokeId = null;
+        this.queueRender();
+      }
+      this.setSelectCursorMode("rotate", { point, center: rotationHit.center });
+      return;
+    }
+
+    this.setSelectCursorMode("default");
     if (nextId === this.hoveredStrokeId) return;
     this.hoveredStrokeId = nextId;
     this.queueRender();
   }
 
   clearHover() {
+    this.setSelectCursorMode(this.tool === "select" ? "default" : "draw");
     if (!this.hoveredStrokeId) return;
     this.hoveredStrokeId = null;
     this.queueRender();
@@ -686,6 +775,7 @@ export class CanvasController extends EventTarget {
     if (!this.hasSelection()) return;
     this.clearSelectedStrokeIds();
     this.editSessionActive = false;
+    this.setSelectCursorMode(this.tool === "select" ? "default" : "draw");
     this.queueRender();
   }
 
@@ -756,6 +846,7 @@ export class CanvasController extends EventTarget {
     }
     this.selectedStrokeIds = new Set(nextIds);
     this.selectedStrokeId = nextIds.includes(primaryId) ? primaryId : (nextIds[0] ?? null);
+    this.selectionCenter = this.computeSelectionCenter();
   }
 
   addStrokeToSelection(id) {
@@ -770,6 +861,7 @@ export class CanvasController extends EventTarget {
   clearSelectedStrokeIds() {
     this.selectedStrokeIds.clear();
     this.selectedStrokeId = null;
+    this.selectionCenter = null;
   }
 
   selectAllStrokes() {
@@ -792,6 +884,56 @@ export class CanvasController extends EventTarget {
     }
 
     return [hit.id];
+  }
+
+  getRotationHit(point) {
+    const selectedStrokes = this.getSelectedStrokes();
+    if (!selectedStrokes.length) return null;
+
+    const center = this.getSelectionCenter(selectedStrokes);
+    if (!center) return null;
+    if (Math.hypot(point.x - center.x, point.y - center.y) < 8) return null;
+
+    return {
+      center,
+      strokeIds: selectedStrokes.map((stroke) => stroke.id)
+    };
+  }
+
+  getSelectionCenter(selectedStrokes = this.getSelectedStrokes()) {
+    if (this.selectionCenter) return { ...this.selectionCenter };
+    this.selectionCenter = this.computeSelectionCenter(selectedStrokes);
+    return this.selectionCenter ? { ...this.selectionCenter } : null;
+  }
+
+  computeSelectionCenter(selectedStrokes = this.getSelectedStrokes()) {
+    const bounds = getStrokesBounds(selectedStrokes);
+    if (!bounds) return null;
+    return {
+      x: bounds.minX + bounds.width / 2,
+      y: bounds.minY + bounds.height / 2
+    };
+  }
+
+  setSelectCursorMode(mode, rotation = null) {
+    this.selectCursorMode = mode;
+    const isSelect = this.tool === "select";
+    this.canvas.classList.toggle("is-select-tool", isSelect);
+    this.canvas.classList.toggle("is-select-move", isSelect && mode === "move");
+    this.canvas.classList.toggle("is-select-dragging", isSelect && mode === "dragging");
+    this.canvas.classList.toggle("is-select-rotate", isSelect && mode === "rotate");
+
+    if (!isSelect) {
+      this.canvas.style.cursor = "";
+    } else if (mode === "rotate" && rotation) {
+      this.canvas.style.cursor = createRotateCursor(rotation.point, rotation.center);
+    } else if (mode === "move") {
+      this.canvas.style.cursor = "grab";
+    } else if (mode === "dragging") {
+      this.canvas.style.cursor = "grabbing";
+    } else {
+      this.canvas.style.cursor = "default";
+    }
   }
 
   getPointFromEvent(event) {
@@ -1005,9 +1147,11 @@ export class CanvasController extends EventTarget {
 
   drawSelectionOverlay() {
     const selectedStrokes = this.getSelectedStrokes();
-    if (!selectedStrokes.length || this.editSessionActive) return;
+    if (!selectedStrokes.length || (this.editSessionActive && !this.selectDrag)) return;
+    const center = this.getSelectionCenter(selectedStrokes);
 
     this.ctx.save();
+    if (center) this.drawSelectionCenterCross(center);
 
     for (const stroke of selectedStrokes) {
       if (stroke.points.length < 1) continue;
@@ -1024,6 +1168,26 @@ export class CanvasController extends EventTarget {
       this.drawEndpointDot(firstPoint, radius, "S");
       if (lastPoint !== firstPoint) this.drawEndpointDot(lastPoint, radius, "F");
     }
+    this.ctx.restore();
+  }
+
+  drawSelectionCenterCross(center) {
+    const pixelScale = this.getCanvasCssPixelScale();
+    const halfSize = 12 * pixelScale;
+
+    this.ctx.save();
+    this.ctx.shadowColor = "transparent";
+    this.ctx.shadowBlur = 0;
+    this.ctx.globalAlpha = 1;
+    this.ctx.strokeStyle = "#43ff5f";
+    this.ctx.lineWidth = Math.max(1, pixelScale);
+    this.ctx.lineCap = "butt";
+    this.ctx.beginPath();
+    this.ctx.moveTo(center.x - halfSize, center.y);
+    this.ctx.lineTo(center.x + halfSize, center.y);
+    this.ctx.moveTo(center.x, center.y - halfSize);
+    this.ctx.lineTo(center.x, center.y + halfSize);
+    this.ctx.stroke();
     this.ctx.restore();
   }
 
@@ -1067,6 +1231,12 @@ export class CanvasController extends EventTarget {
 
   getOutlineLineWidth(stroke) {
     return Math.max(2, Math.min(8, getStrokeSize(stroke) * 0.035));
+  }
+
+  getCanvasCssPixelScale() {
+    const rect = this.canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return 1;
+    return Math.max(this.canvas.width / rect.width, this.canvas.height / rect.height);
   }
 
   findStrokeAt(point) {
@@ -1249,6 +1419,68 @@ function containRect(sourceWidth, sourceHeight, targetWidth, targetHeight, mode 
     width,
     height
   };
+}
+
+function getStrokesBounds(strokes) {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  for (const stroke of strokes) {
+    for (const point of stroke.points) {
+      if (point.x < minX) minX = point.x;
+      if (point.y < minY) minY = point.y;
+      if (point.x > maxX) maxX = point.x;
+      if (point.y > maxY) maxY = point.y;
+    }
+  }
+
+  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+    return null;
+  }
+
+  return {
+    minX,
+    minY,
+    maxX,
+    maxY,
+    width: Math.max(0, maxX - minX),
+    height: Math.max(0, maxY - minY)
+  };
+}
+
+function angleFromCenter(point, center) {
+  return Math.atan2(point.y - center.y, point.x - center.x);
+}
+
+function normalizeAngleDelta(angle) {
+  if (!Number.isFinite(angle)) return 0;
+  let next = angle;
+  while (next > Math.PI) next -= Math.PI * 2;
+  while (next < -Math.PI) next += Math.PI * 2;
+  return next;
+}
+
+function createRotateCursor(point, center) {
+  const targetAngle = Math.atan2(center.y - point.y, center.x - point.x);
+  const degrees = Math.round(((targetAngle - ROTATE_CURSOR_LOWER_LEFT_ANGLE) * 180) / Math.PI);
+  const normalizedDegrees = ((degrees % 360) + 360) % 360;
+  if (!ROTATE_CURSOR_CACHE.has(normalizedDegrees)) {
+    const svg = `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(${normalizedDegrees} 18 18)"><g transform="scale(1.5)"><path d="M8.79297 0.792969C9.18349 0.402444 9.81651 0.402444 10.207 0.792969C10.5974 1.18345 10.5976 1.81648 10.207 2.20703L8.91406 3.5H9.5C15.5751 3.50002 20.5 8.42488 20.5 14.5V15.0859L21.793 13.793C22.1835 13.4026 22.8165 13.4024 23.207 13.793C23.5731 14.1591 23.5957 14.7381 23.2754 15.1309L23.207 15.207L20.207 18.207C19.8165 18.5975 19.1835 18.5975 18.793 18.207L15.793 15.207C15.4024 14.8165 15.4024 14.1835 15.793 13.793C16.1835 13.4026 16.8165 13.4024 17.207 13.793L18.5 15.0859V14.5C18.5 9.52945 14.4705 5.50002 9.5 5.5H8.91406L10.207 6.79297C10.573 7.15905 10.5958 7.73808 10.2754 8.13086L10.207 8.20703C9.81648 8.59758 9.18345 8.59743 8.79297 8.20703L5.79297 5.20703C5.40244 4.81651 5.40244 4.18349 5.79297 3.79297L8.79297 0.792969Z" fill="#00FF3D" stroke="black" stroke-linecap="round" stroke-linejoin="round"/><path d="M19.5 17.5V14.5C19.5 8.97715 15.0228 4.5 9.5 4.5H6.5" stroke="#00FF3D"/><path d="M9.5 1.5L6.5 4.5L9.5 7.5" stroke="#00FF3D"/><path d="M16.5 14.5L19.5 17.5L22.5 14.5" stroke="#00FF3D"/></g></g></svg>`;
+    ROTATE_CURSOR_CACHE.set(
+      normalizedDegrees,
+      `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}") 18 18, grab`
+    );
+  }
+  return ROTATE_CURSOR_CACHE.get(normalizedDegrees);
+}
+
+function rotatePoint(point, center, cos, sin) {
+  const dx = point.x - center.x;
+  const dy = point.y - center.y;
+  point.x = center.x + dx * cos - dy * sin;
+  point.y = center.y + dx * sin + dy * cos;
 }
 
 function distanceToStroke(point, stroke) {
