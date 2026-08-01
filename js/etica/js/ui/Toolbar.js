@@ -372,6 +372,13 @@ export class Toolbar {
         return;
       }
 
+      if ((event.metaKey || event.ctrlKey) && (code === "BracketLeft" || code === "BracketRight") && this.controller.tool === "select") {
+        event.preventDefault();
+        const direction = code === "BracketRight" ? 1 : -1;
+        this.controller.moveSelectedLayer(direction, { toEdge: event.shiftKey });
+        return;
+      }
+
       if (event.metaKey || event.ctrlKey || event.altKey) return;
 
       if (code === "KeyP") {

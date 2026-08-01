@@ -6,6 +6,8 @@ import { LINE_DENSITY_MAX_PERCENT, LINE_DENSITY_MIN_PERCENT } from "../utils/Lin
 
 const CANVAS_BACKGROUND = "#bbbbbb";
 const BRUSH_COLOR = "#ffffff";
+const SELECTION_COLOR = "#43ff5f";
+const ERASER_SELECTION_COLOR = "#ff3b30";
 const ROTATE_CURSOR_LOWER_LEFT_ANGLE = Math.atan2(1, -1);
 const ROTATE_CURSOR_CACHE = new Map();
 const DEFAULT_EFFECTS = {
@@ -361,7 +363,7 @@ export class CanvasController extends EventTarget {
     this.currentStroke = null;
     this.hoveredStrokeId = null;
     if (selectGroup) {
-      const selected = nextStrokes.find((stroke) => stroke.tool !== "eraser");
+      const selected = nextStrokes[0];
       this.setSelectedStrokeIds(selected ? [selected.id] : []);
     } else {
       this.clearSelectedStrokeIds();
@@ -383,7 +385,7 @@ export class CanvasController extends EventTarget {
     this.currentStroke = null;
     this.hoveredStrokeId = null;
     if (selectGroup) {
-      const selected = nextStrokes.find((stroke) => stroke.tool !== "eraser");
+      const selected = nextStrokes[0];
       this.setSelectedStrokeIds(selected ? [selected.id] : []);
     } else {
       this.clearSelectedStrokeIds();
@@ -821,7 +823,7 @@ export class CanvasController extends EventTarget {
   getSelectedStrokeIds() {
     const validIds = [];
     for (const id of this.selectedStrokeIds) {
-      const stroke = this.strokes.find((item) => item.id === id && item.tool !== "eraser");
+      const stroke = this.strokes.find((item) => item.id === id);
       if (stroke) validIds.push(id);
     }
     if (validIds.length !== this.selectedStrokeIds.size) {
@@ -841,7 +843,7 @@ export class CanvasController extends EventTarget {
     const nextIds = [];
     for (const id of ids) {
       if (nextIds.includes(id)) continue;
-      const stroke = this.strokes.find((item) => item.id === id && item.tool !== "eraser");
+      const stroke = this.strokes.find((item) => item.id === id);
       if (stroke) nextIds.push(id);
     }
     this.selectedStrokeIds = new Set(nextIds);
@@ -866,10 +868,26 @@ export class CanvasController extends EventTarget {
 
   selectAllStrokes() {
     const ids = this.strokes
-      .filter((stroke) => stroke.tool !== "eraser")
       .map((stroke) => stroke.id);
     this.setSelectedStrokeIds(ids, ids[0] ?? null);
     this.queueRender();
+  }
+
+  moveSelectedLayer(direction, { toEdge = false } = {}) {
+    const selectedIds = new Set(this.getSelectedStrokeIds());
+    if (!selectedIds.size) return false;
+
+    const nextStrokes = toEdge
+      ? moveStrokesToLayerEdge(this.strokes, selectedIds, direction)
+      : moveStrokesOneLayer(this.strokes, selectedIds, direction);
+
+    if (sameStrokeOrder(this.strokes, nextStrokes)) return false;
+
+    this.commitHistory();
+    this.strokes = nextStrokes;
+    this.hoveredStrokeId = null;
+    this.queueRender();
+    return true;
   }
 
   getDragStrokeIds(hit) {
@@ -970,7 +988,7 @@ export class CanvasController extends EventTarget {
     }
 
     for (const stroke of this.strokes) {
-      const isHovered = showSelection && this.tool === "select" && stroke.id === this.hoveredStrokeId && stroke.tool !== "eraser";
+      const isHovered = showSelection && this.tool === "select" && stroke.id === this.hoveredStrokeId;
       renderStroke(this.strokeCtx, stroke, this.getStrokeRenderOptions({ alpha: isHovered ? 0.7 : 1 }));
     }
 
@@ -1047,7 +1065,7 @@ export class CanvasController extends EventTarget {
   }
 
   drawOutlineStroke(ctx, stroke, alpha = 1) {
-    if (stroke.tool === "eraser" || stroke.points.length < 1) return;
+    if (stroke.points.length < 1) return;
 
     const color = normalizeHexColor(stroke.settings?.color, this.brushColor);
     const lineWidth = this.getOutlineLineWidth(stroke);
@@ -1151,18 +1169,24 @@ export class CanvasController extends EventTarget {
     const center = this.getSelectionCenter(selectedStrokes);
 
     this.ctx.save();
-    if (center) this.drawSelectionCenterCross(center);
+    if (center) {
+      const centerColor = selectedStrokes.every((stroke) => stroke.tool === "eraser")
+        ? ERASER_SELECTION_COLOR
+        : SELECTION_COLOR;
+      this.drawSelectionCenterCross(center, centerColor);
+    }
 
     for (const stroke of selectedStrokes) {
       if (stroke.points.length < 1) continue;
+      const selectionColor = getSelectionColor(stroke);
       const firstPoint = stroke.points[0];
       const lastPoint = stroke.points[stroke.points.length - 1];
       const radius = Math.max(5.5, Math.min(13, getStrokeSize(stroke) * 0.23));
       const pathWidth = this.outlineMode ? this.getOutlineLineWidth(stroke) : 1;
-      this.drawSelectedPath(stroke, pathWidth);
-      this.ctx.shadowColor = "rgba(68, 255, 98, 0.42)";
+      this.drawSelectedPath(stroke, pathWidth, selectionColor);
+      this.ctx.shadowColor = getSelectionShadowColor(stroke);
       this.ctx.shadowBlur = radius * 0.7;
-      this.ctx.fillStyle = "#43ff5f";
+      this.ctx.fillStyle = selectionColor;
       this.ctx.strokeStyle = "rgba(0, 0, 0, 0.86)";
       this.ctx.lineWidth = Math.max(2, radius * 0.18);
       this.drawEndpointDot(firstPoint, radius, "S");
@@ -1171,7 +1195,7 @@ export class CanvasController extends EventTarget {
     this.ctx.restore();
   }
 
-  drawSelectionCenterCross(center) {
+  drawSelectionCenterCross(center, color = SELECTION_COLOR) {
     const pixelScale = this.getCanvasCssPixelScale();
     const halfSize = 12 * pixelScale;
 
@@ -1179,7 +1203,7 @@ export class CanvasController extends EventTarget {
     this.ctx.shadowColor = "transparent";
     this.ctx.shadowBlur = 0;
     this.ctx.globalAlpha = 1;
-    this.ctx.strokeStyle = "#43ff5f";
+    this.ctx.strokeStyle = color;
     this.ctx.lineWidth = Math.max(1, pixelScale);
     this.ctx.lineCap = "butt";
     this.ctx.beginPath();
@@ -1191,14 +1215,14 @@ export class CanvasController extends EventTarget {
     this.ctx.restore();
   }
 
-  drawSelectedPath(stroke, lineWidth) {
+  drawSelectedPath(stroke, lineWidth, color = SELECTION_COLOR) {
     if (stroke.points.length < 2) return;
 
     this.ctx.save();
     this.ctx.shadowColor = "transparent";
     this.ctx.shadowBlur = 0;
     this.ctx.globalAlpha = 1;
-    this.ctx.strokeStyle = "#43ff5f";
+    this.ctx.strokeStyle = color;
     this.ctx.lineWidth = lineWidth;
     this.ctx.lineCap = "round";
     this.ctx.lineJoin = "round";
@@ -1245,7 +1269,7 @@ export class CanvasController extends EventTarget {
 
     for (let index = this.strokes.length - 1; index >= 0; index -= 1) {
       const stroke = this.strokes[index];
-      if (stroke.tool === "eraser" || stroke.points.length < 1) continue;
+      if (stroke.points.length < 1) continue;
 
       const threshold = Math.max(18, getStrokeSize(stroke) * 1.75);
       const distance = stroke.points.length === 1
@@ -1301,7 +1325,7 @@ export class CanvasController extends EventTarget {
   emitChange() {
     const selected = this.getSelectedStroke();
     const selectedCount = this.getSelectedStrokeIds().length;
-    const selectableStrokes = this.strokes.filter((stroke) => stroke.tool !== "eraser");
+    const selectableStrokes = this.strokes;
     const selectedIndex = selected ? selectableStrokes.findIndex((stroke) => stroke.id === selected.id) + 1 : 0;
     this.dispatchEvent(new CustomEvent("change", {
       detail: {
@@ -1362,6 +1386,49 @@ function cloneEffects(effects) {
 
 function getGeneratedGroupId(stroke) {
   return stroke?.meta?.generated ? stroke.meta.groupId : null;
+}
+
+function moveStrokesOneLayer(strokes, selectedIds, direction) {
+  const next = [...strokes];
+  if (direction > 0) {
+    for (let index = next.length - 2; index >= 0; index -= 1) {
+      if (!selectedIds.has(next[index].id) || selectedIds.has(next[index + 1].id)) continue;
+      [next[index], next[index + 1]] = [next[index + 1], next[index]];
+    }
+    return next;
+  }
+
+  for (let index = 1; index < next.length; index += 1) {
+    if (!selectedIds.has(next[index].id) || selectedIds.has(next[index - 1].id)) continue;
+    [next[index - 1], next[index]] = [next[index], next[index - 1]];
+  }
+  return next;
+}
+
+function moveStrokesToLayerEdge(strokes, selectedIds, direction) {
+  const selected = [];
+  const rest = [];
+  for (const stroke of strokes) {
+    if (selectedIds.has(stroke.id)) {
+      selected.push(stroke);
+    } else {
+      rest.push(stroke);
+    }
+  }
+  return direction > 0 ? [...rest, ...selected] : [...selected, ...rest];
+}
+
+function sameStrokeOrder(a, b) {
+  if (a.length !== b.length) return false;
+  return a.every((stroke, index) => stroke.id === b[index]?.id);
+}
+
+function getSelectionColor(stroke) {
+  return stroke.tool === "eraser" ? ERASER_SELECTION_COLOR : SELECTION_COLOR;
+}
+
+function getSelectionShadowColor(stroke) {
+  return stroke.tool === "eraser" ? "rgba(255, 59, 48, 0.42)" : "rgba(68, 255, 98, 0.42)";
 }
 
 function hexToRgba(hex, alpha) {
