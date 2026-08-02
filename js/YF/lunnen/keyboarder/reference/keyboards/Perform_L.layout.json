@@ -1,0 +1,1641 @@
+[
+ {
+  "row": 0,
+  "x": 25.87,
+  "y": 23.9271,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "esc",
+  "icons": 0,
+  "slots": [
+   "BL"
+  ],
+  "tpl": "word-outer"
+ },
+ {
+  "row": 0,
+  "x": 133.3821,
+  "y": 23.9271,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "f1",
+  "icons": 1,
+  "slots": [
+   "FC",
+   "BC"
+  ],
+  "tpl": "fkey-icon+label"
+ },
+ {
+  "row": 0,
+  "x": 187.1775,
+  "y": 23.9271,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "f2",
+  "icons": 1,
+  "slots": [
+   "FC",
+   "BC"
+  ],
+  "tpl": "fkey-icon+label"
+ },
+ {
+  "row": 0,
+  "x": 240.9729,
+  "y": 23.9271,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "f3",
+  "icons": 1,
+  "slots": [
+   "FC",
+   "BC"
+  ],
+  "tpl": "fkey-icon+label"
+ },
+ {
+  "row": 0,
+  "x": 294.7682,
+  "y": 23.9271,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "f4",
+  "icons": 1,
+  "slots": [
+   "FC",
+   "BC"
+  ],
+  "tpl": "fkey-icon+label"
+ },
+ {
+  "row": 0,
+  "x": 375.3615,
+  "y": 23.9271,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "f5",
+  "icons": 1,
+  "slots": [
+   "FC",
+   "BC"
+  ],
+  "tpl": "fkey-icon+label"
+ },
+ {
+  "row": 0,
+  "x": 429.1568,
+  "y": 23.9271,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "f6",
+  "icons": 1,
+  "slots": [
+   "FC",
+   "BC"
+  ],
+  "tpl": "fkey-icon+label"
+ },
+ {
+  "row": 0,
+  "x": 482.9522,
+  "y": 23.9271,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "f7",
+  "icons": 1,
+  "slots": [
+   "FC",
+   "BC"
+  ],
+  "tpl": "fkey-icon+label"
+ },
+ {
+  "row": 0,
+  "x": 536.7476,
+  "y": 23.9271,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "f8",
+  "icons": 1,
+  "slots": [
+   "FC",
+   "BC"
+  ],
+  "tpl": "fkey-icon+label"
+ },
+ {
+  "row": 0,
+  "x": 617.4406,
+  "y": 23.9271,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "f9",
+  "icons": 1,
+  "slots": [
+   "FC",
+   "BC"
+  ],
+  "tpl": "fkey-icon+label"
+ },
+ {
+  "row": 0,
+  "x": 671.2693,
+  "y": 23.9271,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "f10",
+  "icons": 1,
+  "slots": [
+   "Fr",
+   "BC"
+  ],
+  "tpl": "icon+word-stack"
+ },
+ {
+  "row": 0,
+  "x": 725.098,
+  "y": 23.9271,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "f11",
+  "icons": 1,
+  "slots": [
+   "FC",
+   "BC"
+  ],
+  "tpl": "fkey-icon+label"
+ },
+ {
+  "row": 0,
+  "x": 778.9266,
+  "y": 23.9271,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "f12",
+  "icons": 1,
+  "slots": [
+   "FC",
+   "BC"
+  ],
+  "tpl": "fkey-icon+label"
+ },
+ {
+  "row": 0,
+  "x": 846.7368,
+  "y": 23.9271,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "nav",
+  "legend": "print",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "word-center"
+ },
+ {
+  "row": 0,
+  "x": 900.5156,
+  "y": 23.9271,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "nav",
+  "legend": "scroll",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "word-center"
+ },
+ {
+  "row": 0,
+  "x": 954.2943,
+  "y": 23.9271,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "nav",
+  "legend": "pause",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "word-center"
+ },
+ {
+  "row": 1,
+  "x": 25.87,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "grave",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL",
+   "BR"
+  ],
+  "tpl": "legend-corners"
+ },
+ {
+  "row": 1,
+  "x": 79.6533,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "1",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL"
+  ],
+  "tpl": "legend-2corners"
+ },
+ {
+  "row": 1,
+  "x": 133.4366,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "2",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "TR",
+   "BL"
+  ],
+  "tpl": "legend-corners"
+ },
+ {
+  "row": 1,
+  "x": 187.2199,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "3",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "TR",
+   "BL"
+  ],
+  "tpl": "legend-corners"
+ },
+ {
+  "row": 1,
+  "x": 241.0031,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "4",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "TR",
+   "BL"
+  ],
+  "tpl": "legend-corners"
+ },
+ {
+  "row": 1,
+  "x": 294.7864,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "5",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL"
+  ],
+  "tpl": "legend-2corners"
+ },
+ {
+  "row": 1,
+  "x": 348.5697,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "6",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "TR",
+   "BL"
+  ],
+  "tpl": "legend-corners"
+ },
+ {
+  "row": 1,
+  "x": 402.3529,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "7",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "TR",
+   "BL"
+  ],
+  "tpl": "legend-corners"
+ },
+ {
+  "row": 1,
+  "x": 456.1362,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "8",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL"
+  ],
+  "tpl": "legend-2corners"
+ },
+ {
+  "row": 1,
+  "x": 509.9195,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "9",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL"
+  ],
+  "tpl": "legend-2corners"
+ },
+ {
+  "row": 1,
+  "x": 563.7028,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "0",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL"
+  ],
+  "tpl": "legend-2corners"
+ },
+ {
+  "row": 1,
+  "x": 617.486,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "minus",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL"
+  ],
+  "tpl": "legend-2corners"
+ },
+ {
+  "row": 1,
+  "x": 671.2693,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "equal",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL"
+  ],
+  "tpl": "legend-2corners"
+ },
+ {
+  "row": 1,
+  "x": 725.0526,
+  "y": 91.8372,
+  "w": 93.5541,
+  "h": 39.68,
+  "u": 2.0018,
+  "block": "main",
+  "legend": "backspace",
+  "icons": 0,
+  "slots": [
+   "BR"
+  ],
+  "tpl": "word-outer"
+ },
+ {
+  "row": 1,
+  "x": 846.7368,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "nav",
+  "legend": "insert",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "word-center"
+ },
+ {
+  "row": 1,
+  "x": 900.5156,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "nav",
+  "legend": "home",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "word-center"
+ },
+ {
+  "row": 1,
+  "x": 954.2943,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "nav",
+  "legend": "pg-up",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "word-center"
+ },
+ {
+  "row": 1,
+  "x": 1022.3042,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "numpad",
+  "legend": "num-lock-clear",
+  "icons": 0,
+  "slots": [
+   "UC",
+   "BC"
+  ],
+  "tpl": "word-stack"
+ },
+ {
+  "row": 1,
+  "x": 1076.0829,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "numpad",
+  "legend": "num-slash",
+  "icons": 0,
+  "slots": [
+   "MC"
+  ],
+  "tpl": "numpad-single"
+ },
+ {
+  "row": 1,
+  "x": 1129.8617,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "numpad",
+  "legend": "num-star",
+  "icons": 0,
+  "slots": [
+   "MC"
+  ],
+  "tpl": "numpad-single"
+ },
+ {
+  "row": 1,
+  "x": 1183.6404,
+  "y": 91.8372,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "numpad",
+  "legend": "num-minus",
+  "icons": 0,
+  "slots": [
+   "MC"
+  ],
+  "tpl": "numpad-single"
+ },
+ {
+  "row": 2,
+  "x": 25.87,
+  "y": 145.6658,
+  "w": 66.5353,
+  "h": 39.68,
+  "u": 1.4994,
+  "block": "main",
+  "legend": "tab",
+  "icons": 0,
+  "slots": [
+   "BL"
+  ],
+  "tpl": "word-outer"
+ },
+ {
+  "row": 2,
+  "x": 106.5177,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "q",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 2,
+  "x": 160.3101,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "w",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 2,
+  "x": 214.1024,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "e",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 2,
+  "x": 267.8948,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "r",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 2,
+  "x": 321.6872,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "t",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 2,
+  "x": 375.4795,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "y",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 2,
+  "x": 429.2719,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "u",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 2,
+  "x": 483.0642,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "i",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 2,
+  "x": 536.8566,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "o",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 2,
+  "x": 590.6489,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "p",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 2,
+  "x": 644.4413,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "left-bracket",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL",
+   "BR"
+  ],
+  "tpl": "legend-corners"
+ },
+ {
+  "row": 2,
+  "x": 698.2336,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "right-bracket",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL",
+   "BR"
+  ],
+  "tpl": "legend-corners"
+ },
+ {
+  "row": 2,
+  "x": 752.026,
+  "y": 145.6658,
+  "w": 66.5693,
+  "h": 39.68,
+  "u": 1.5,
+  "block": "main",
+  "legend": "backslash",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "TR",
+   "BL"
+  ],
+  "tpl": "legend-corners"
+ },
+ {
+  "row": 2,
+  "x": 846.7368,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "nav",
+  "legend": "delete",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "word-center"
+ },
+ {
+  "row": 2,
+  "x": 900.5156,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "nav",
+  "legend": "end",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "word-center"
+ },
+ {
+  "row": 2,
+  "x": 954.2943,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "nav",
+  "legend": "pg-down",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "word-center"
+ },
+ {
+  "row": 2,
+  "x": 1022.3042,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "numpad",
+  "legend": "num7-home",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL"
+  ],
+  "tpl": "numpad-dual"
+ },
+ {
+  "row": 2,
+  "x": 1076.0829,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "numpad",
+  "legend": "num8",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "numpad-single"
+ },
+ {
+  "row": 2,
+  "x": 1129.8617,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "numpad",
+  "legend": "num9-pg-up",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL"
+  ],
+  "tpl": "numpad-dual"
+ },
+ {
+  "row": 2,
+  "x": 1183.6404,
+  "y": 145.6658,
+  "w": 39.68,
+  "h": 93.5087,
+  "u": 1,
+  "block": "numpad",
+  "legend": "num-plus",
+  "icons": 0,
+  "slots": [
+   "MC"
+  ],
+  "tpl": "numpad-single"
+ },
+ {
+  "row": 3,
+  "x": 25.87,
+  "y": 199.4945,
+  "w": 80.014,
+  "h": 39.68,
+  "u": 1.75,
+  "block": "main",
+  "legend": "caps",
+  "icons": 0,
+  "slots": [
+   "BL"
+  ],
+  "tpl": "word-outer"
+ },
+ {
+  "row": 3,
+  "x": 119.9998,
+  "y": 199.4945,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "a",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 3,
+  "x": 173.7786,
+  "y": 199.4945,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "s",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 3,
+  "x": 227.5573,
+  "y": 199.4945,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "d",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 3,
+  "x": 281.3361,
+  "y": 199.4945,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "f",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 3,
+  "x": 335.1148,
+  "y": 199.4945,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "g",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 3,
+  "x": 388.8935,
+  "y": 199.4945,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "h",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 3,
+  "x": 442.6722,
+  "y": 199.4945,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "j",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 3,
+  "x": 496.451,
+  "y": 199.4945,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "k",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 3,
+  "x": 550.2297,
+  "y": 199.4945,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "l",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 3,
+  "x": 604.0084,
+  "y": 199.4945,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "semicolon",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL",
+   "BR"
+  ],
+  "tpl": "legend-corners"
+ },
+ {
+  "row": 3,
+  "x": 657.7872,
+  "y": 199.4945,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "quote-acute",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL",
+   "BR"
+  ],
+  "tpl": "legend-corners"
+ },
+ {
+  "row": 3,
+  "x": 711.5659,
+  "y": 199.4945,
+  "w": 107.0407,
+  "h": 39.68,
+  "u": 2.2526,
+  "block": "main",
+  "legend": "enter",
+  "icons": 0,
+  "slots": [
+   "BR"
+  ],
+  "tpl": "word-outer"
+ },
+ {
+  "row": 3,
+  "x": 1022.3042,
+  "y": 199.4945,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "numpad",
+  "legend": "num4",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "numpad-single"
+ },
+ {
+  "row": 3,
+  "x": 1076.0829,
+  "y": 199.4945,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "numpad",
+  "legend": "num5",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "numpad-single"
+ },
+ {
+  "row": 3,
+  "x": 1129.8617,
+  "y": 199.4945,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "numpad",
+  "legend": "num6",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "numpad-single"
+ },
+ {
+  "row": 4,
+  "x": 25.87,
+  "y": 253.2233,
+  "w": 106.9034,
+  "h": 39.68,
+  "u": 2.25,
+  "block": "main",
+  "legend": "lshift",
+  "icons": 0,
+  "slots": [
+   "BL"
+  ],
+  "tpl": "word-outer"
+ },
+ {
+  "row": 4,
+  "x": 146.8642,
+  "y": 253.2233,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "z",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 4,
+  "x": 200.6485,
+  "y": 253.2233,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "x",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 4,
+  "x": 254.4328,
+  "y": 253.2233,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "c",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 4,
+  "x": 308.2171,
+  "y": 253.2233,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "v",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 4,
+  "x": 362.0014,
+  "y": 253.2233,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "b",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 4,
+  "x": 415.7857,
+  "y": 253.2233,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "n",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 4,
+  "x": 469.5699,
+  "y": 253.2233,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "m",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BR"
+  ],
+  "tpl": "alpha-dual"
+ },
+ {
+  "row": 4,
+  "x": 523.3542,
+  "y": 253.2233,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "comma",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL",
+   "BR"
+  ],
+  "tpl": "legend-corners"
+ },
+ {
+  "row": 4,
+  "x": 577.1385,
+  "y": 253.2233,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "period",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL",
+   "BR"
+  ],
+  "tpl": "legend-corners"
+ },
+ {
+  "row": 4,
+  "x": 630.9228,
+  "y": 253.2233,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "main",
+  "legend": "slash",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "FR",
+   "BL",
+   "BR"
+  ],
+  "tpl": "legend-corners"
+ },
+ {
+  "row": 4,
+  "x": 684.7071,
+  "y": 253.2233,
+  "w": 133.8995,
+  "h": 39.68,
+  "u": 2.752,
+  "block": "main",
+  "legend": "rshift",
+  "icons": 0,
+  "slots": [
+   "BR"
+  ],
+  "tpl": "word-outer"
+ },
+ {
+  "row": 4,
+  "x": 900.5156,
+  "y": 253.2233,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "nav",
+  "legend": "up",
+  "icons": 1,
+  "slots": [
+   "MC"
+  ],
+  "tpl": "icon-center"
+ },
+ {
+  "row": 4,
+  "x": 1022.3042,
+  "y": 253.2233,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "numpad",
+  "legend": "num1-end",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL"
+  ],
+  "tpl": "numpad-dual"
+ },
+ {
+  "row": 4,
+  "x": 1076.0829,
+  "y": 253.2233,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "numpad",
+  "legend": "num2",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "numpad-single"
+ },
+ {
+  "row": 4,
+  "x": 1129.8617,
+  "y": 253.2233,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "numpad",
+  "legend": "num3-pg-down",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL"
+  ],
+  "tpl": "numpad-dual"
+ },
+ {
+  "row": 4,
+  "x": 1183.6404,
+  "y": 253.2233,
+  "w": 39.68,
+  "h": 93.5087,
+  "u": 1,
+  "block": "numpad",
+  "legend": "num-enter",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "word-center"
+ },
+ {
+  "row": 5,
+  "x": 25.87,
+  "y": 307.052,
+  "w": 53.2619,
+  "h": 39.68,
+  "u": 1.2526,
+  "block": "main",
+  "legend": "lctrl",
+  "icons": 0,
+  "slots": [
+   "BL"
+  ],
+  "tpl": "word-outer"
+ },
+ {
+  "row": 5,
+  "x": 93.1143,
+  "y": 307.052,
+  "w": 53.2619,
+  "h": 39.68,
+  "u": 1.2526,
+  "block": "main",
+  "legend": "option-left",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "word-center"
+ },
+ {
+  "row": 5,
+  "x": 160.3585,
+  "y": 307.052,
+  "w": 53.2619,
+  "h": 39.68,
+  "u": 1.2526,
+  "block": "main",
+  "legend": "cmd-left",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "word-center"
+ },
+ {
+  "row": 5,
+  "x": 227.6028,
+  "y": 307.052,
+  "w": 322.0182,
+  "h": 39.68,
+  "u": 6.25,
+  "block": "main",
+  "legend": "space",
+  "icons": 0,
+  "slots": [],
+  "tpl": "blank"
+ },
+ {
+  "row": 5,
+  "x": 563.6121,
+  "y": 307.052,
+  "w": 53.2618,
+  "h": 39.68,
+  "u": 1.2525,
+  "block": "main",
+  "legend": "cmd-right",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "word-center"
+ },
+ {
+  "row": 5,
+  "x": 630.8563,
+  "y": 307.052,
+  "w": 53.2618,
+  "h": 39.68,
+  "u": 1.2525,
+  "block": "main",
+  "legend": "fn-right",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "word-center"
+ },
+ {
+  "row": 5,
+  "x": 698.1005,
+  "y": 307.052,
+  "w": 53.2618,
+  "h": 39.68,
+  "u": 1.2525,
+  "block": "main",
+  "legend": "option-right",
+  "icons": 0,
+  "slots": [
+   "BC"
+  ],
+  "tpl": "word-center"
+ },
+ {
+  "row": 5,
+  "x": 765.3448,
+  "y": 307.052,
+  "w": 53.2618,
+  "h": 39.68,
+  "u": 1.2525,
+  "block": "main",
+  "legend": "rctrl",
+  "icons": 0,
+  "slots": [
+   "BR"
+  ],
+  "tpl": "word-outer"
+ },
+ {
+  "row": 5,
+  "x": 846.7368,
+  "y": 307.052,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "nav",
+  "legend": "left",
+  "icons": 1,
+  "slots": [
+   "MC"
+  ],
+  "tpl": "icon-center"
+ },
+ {
+  "row": 5,
+  "x": 900.5156,
+  "y": 307.052,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "nav",
+  "legend": "down",
+  "icons": 1,
+  "slots": [
+   "MC"
+  ],
+  "tpl": "icon-center"
+ },
+ {
+  "row": 5,
+  "x": 954.2943,
+  "y": 307.052,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "nav",
+  "legend": "right",
+  "icons": 1,
+  "slots": [
+   "MC"
+  ],
+  "tpl": "icon-center"
+ },
+ {
+  "row": 5,
+  "x": 1022.3042,
+  "y": 307.052,
+  "w": 93.4587,
+  "h": 39.68,
+  "u": 2,
+  "block": "numpad",
+  "legend": "num0-insert",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL"
+  ],
+  "tpl": "numpad-dual"
+ },
+ {
+  "row": 5,
+  "x": 1129.8617,
+  "y": 307.052,
+  "w": 39.68,
+  "h": 39.68,
+  "u": 1,
+  "block": "numpad",
+  "legend": "num-decimal-delete",
+  "icons": 0,
+  "slots": [
+   "TL",
+   "BL"
+  ],
+  "tpl": "numpad-dual"
+ }
+]

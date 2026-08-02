@@ -865,6 +865,12 @@ Stage 9 optimization is started:
   zero placeholders; f-row coverage is 12 f-icons for each reference preset by design. Export QA to
   `/tmp/keyboarder-presets/*.svg` matched source `caps` counts exactly; max cap delta was 0.0171 px
   on `Perform_L` and <=0.0003 px on the others.
+- Reference verification overlay 2026-08-02: `app/kb/reference-assets.js` maps layout names to
+  `.layout.json`, optional `.legends.json`, and `_curv.svg` assets. The Layers `Reference` toggle
+  now renders the green `_curv` visual overlay for Work 2.0 L plus the six new reference presets;
+  `Diff` and `Verify` load the current layout's geometry JSON instead of hard-coding LCAKB23.
+  `analysis/generate-reference-verification-assets.mjs --write` regenerates these layout JSONs
+  and copies `reference/lcakb23/LCAKB23.legends.json` to `reference/keyboards/Work_2_L.legends.json`.
 - Next Stage 9 work can move on to any remaining secondary polish or start the next planned stage.
 
 ## Notes For The Next Assistant

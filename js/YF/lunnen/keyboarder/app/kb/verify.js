@@ -1,5 +1,5 @@
 /**
- * Сверка сгенерированной геометрии с эталоном (reference/lcakb23/LCAKB23.layout.json).
+ * Сверка сгенерированной геометрии с эталоном layout-specific `.layout.json`.
  *
  * Смысл — не «примерно похоже», а численный отчёт с порогами приёмки из docs/project/PIPELINE.md.
  * Эталон берётся как есть, включая ручную работу: любое расхождение считается ошибкой
@@ -55,7 +55,12 @@ function ordinalsByRowBlock(items) {
  * @returns {{count, refCount, missing, extra, max, worst, pass}}
  */
 export function compare(keys, ref) {
-    const mine = new Map(keys.map((k) => [keyOf(k), k]));
+    const mine = new Map();
+    for (const k of keys) {
+        const id = keyOf(k);
+        if (!mine.has(id)) mine.set(id, []);
+        mine.get(id).push(k);
+    }
     const mineByRowBlock = groupedByRowBlock(keys);
     const refOrdinals = ordinalsByRowBlock(ref);
     const seen = new Set();
@@ -65,25 +70,25 @@ export function compare(keys, ref) {
 
     for (const r of ref) {
         const k = keyOf(r);
-        let m = mine.get(k);
-        if (m && seen.has(keyOf(m))) m = null;
+        const exact = mine.get(k) || [];
+        let m = exact.find((item) => !seen.has(item)) || null;
         if (!m) {
             const group = mineByRowBlock.get(rowBlockOf(r));
             const fallback = group && group[refOrdinals.get(r)];
-            if (fallback && !seen.has(keyOf(fallback))) m = fallback;
+            if (fallback && !seen.has(fallback)) m = fallback;
         }
         if (!m) {
             missing.push(`row ${r.row}, x=${r.x} (${r.legend || r.tpl})`);
             continue;
         }
-        seen.add(keyOf(m));
+        seen.add(m);
         const d = { x: m.x - r.x, y: m.y - r.y, w: m.w - r.w, h: m.h - r.h };
         for (const p of ['x', 'y', 'w', 'h']) max[p] = Math.max(max[p], Math.abs(d[p]));
         rows.push({ ref: r, mine: m, d, worst: Math.max(...Object.values(d).map(Math.abs)) });
     }
 
     rows.sort((a, b) => b.worst - a.worst);
-    const extra = keys.filter((k) => !seen.has(keyOf(k)))
+    const extra = keys.filter((k) => !seen.has(k))
         .map((k) => `row ${k.row}, x=${k.x.toFixed(4)}`);
 
     const worstOverall = Math.max(...Object.values(max));

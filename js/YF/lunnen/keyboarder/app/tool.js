@@ -20,6 +20,7 @@ import {
     loadReference, loadLegendReference, compare, reportHtml,
     compareLegends, legendsReportHtml, GEOMETRY_TOLERANCE
 } from './kb/verify.js';
+import { referenceAssetsForLayout, hasReferenceAssets } from './kb/reference-assets.js';
 import CONTENT from './kb/content/lcakb23.js';
 import { generatedContentForLayout, generatedContentStatsForLayout } from './kb/content/generated-layouts.js';
 import ICONS from './kb/icons/lcakb23.js';
@@ -151,6 +152,54 @@ function contentForLayout(layout) {
     return generatedContentForLayout(layout, TYPE_DEFAULTS, CONTENT);
 }
 
+function referenceLayoutFor(layout) {
+    const url = referenceAssetsForLayout(layout)?.layout;
+    return url ? REFERENCE_LAYOUTS.get(url) || null : null;
+}
+
+function referenceVisualFor(layout) {
+    const visual = referenceAssetsForLayout(layout)?.visual;
+    return visual?.url ? REFERENCE_VISUALS.get(visual.url) || null : null;
+}
+
+function ensureReferenceAssetsLoaded(assets, app = null) {
+    if (!assets) return;
+    if (assets.layout) ensureReferenceJSONLoaded(assets.layout, app);
+    if (assets.visual?.url) ensureReferenceVisualLoaded(assets.visual.url, app);
+}
+
+function ensureReferenceJSONLoaded(url, app = null) {
+    if (REFERENCE_LAYOUTS.has(url) || REFERENCE_PENDING.has(url)) return;
+    const pending = loadReference(url)
+        .then((data) => {
+            REFERENCE_LAYOUTS.set(url, data);
+            if (app?.settings && referenceAssetsForLayout(sourceLayoutFor(app.settings))?.layout === url) {
+                app.render();
+            }
+        })
+        .catch(() => { /* reference data is optional for rendering */ })
+        .finally(() => REFERENCE_PENDING.delete(url));
+    REFERENCE_PENDING.set(url, pending);
+}
+
+function ensureReferenceVisualLoaded(url, app = null) {
+    if (REFERENCE_VISUALS.has(url) || REFERENCE_PENDING.has(url)) return;
+    const pending = fetch(url)
+        .then((res) => {
+            if (!res.ok) throw new Error(`Failed to load reference ${url}: ${res.status} ${res.statusText}`);
+            return res.text();
+        })
+        .then((svgText) => {
+            REFERENCE_VISUALS.set(url, svgText);
+            if (app?.settings && referenceAssetsForLayout(sourceLayoutFor(app.settings))?.visual?.url === url) {
+                app.render();
+            }
+        })
+        .catch(() => { /* visual overlay is optional */ })
+        .finally(() => REFERENCE_PENDING.delete(url));
+    REFERENCE_PENDING.set(url, pending);
+}
+
 function gridMmFor(layout) {
     const g = layout?.grid || LCAKB23.grid;
     return {
@@ -166,12 +215,9 @@ function gridMmFor(layout) {
 /** Эталонная сетка в мм — то, что видит и правит пользователь. */
 const REF_MM = gridMmFor(LCAKB23);
 
-/**
- * Эталонные прямоугольники для слоя «Эталон». Заполняется асинхронно в onReady.
- * Объявление обязано быть выше render(): при уже загруженном DOM defineTool вызывает init()
- * синхронно, и обращение к переменной в её temporal dead zone уронило бы первый кадр.
- */
-let REFERENCE = null;
+const REFERENCE_LAYOUTS = new Map();
+const REFERENCE_VISUALS = new Map();
+const REFERENCE_PENDING = new Map();
 
 /**
  * Гарнитура. До её загрузки инструмент рисует геометрию без надписей: шрифт весит 200 КБ,
@@ -686,7 +732,10 @@ const app = defineTool({
         const { keys, grid } = data;
         const legends = data.legends;
         const gap = gapOf(grid);
-        const hasReference = isReferenceLayout(data.sourceLayout);
+        const referenceAssets = referenceAssetsForLayout(data.sourceLayout);
+        if ((s.showRef || s.showDiff) && referenceAssets) ensureReferenceAssetsLoaded(referenceAssets, ctx.app);
+        const referenceLayout = referenceLayoutFor(data.sourceLayout);
+        const referenceVisualText = referenceVisualFor(data.sourceLayout);
 
         svg.appendChild(create('rect', { x: 0, y: 0, width, height, fill: s.bgColor }));
         appendSessionFontDefs(create, svg, s);
@@ -720,10 +769,10 @@ const app = defineTool({
             svg.appendChild(g);
         }
 
-        // Эталон подложкой: пунктир поверх заливки, чтобы расхождение было видно сразу.
-        if (s.showRef && hasReference && REFERENCE) {
+        // Fallback for layouts that do not yet have a flattened visual reference.
+        if (s.showRef && referenceLayout && !referenceVisualText) {
             const g = create('g', { id: 'reference' });
-            for (const r of REFERENCE) {
+            for (const r of referenceLayout) {
                 g.appendChild(create('rect', {
                     x: r.x, y: r.y, width: r.w, height: r.h,
                     rx: grid.cornerRadius, ry: grid.cornerRadius,
@@ -755,8 +804,8 @@ const app = defineTool({
             svg.appendChild(g);
         }
 
-        if (s.showDiff && hasReference && REFERENCE) {
-            svg.appendChild(renderGeometryDiff(create, keys, grid, REFERENCE));
+        if (s.showDiff && referenceLayout) {
+            svg.appendChild(renderGeometryDiff(create, keys, grid, referenceLayout));
         }
 
         const selection = renderSelection(create, keys, grid);
@@ -794,6 +843,11 @@ const app = defineTool({
                 const g = iconGroups.get(id);
                 if (g?.childNodes.length) svg.appendChild(g);
             }
+        }
+
+        if (s.showRef && referenceAssets?.visual && referenceVisualText) {
+            const referenceVisual = renderReferenceVisual(create, referenceVisualText, referenceAssets.visual);
+            if (referenceVisual) svg.appendChild(referenceVisual);
         }
 
         // Диагностика: чернильный габарит показывает, насколько знак выпущен за кромку поля.
@@ -1086,7 +1140,7 @@ const app = defineTool({
                 let html = '<h3 class="verify-h">Geometry</h3>' + reportHtml(report.geometry.raw);
                 html += '<h3 class="verify-h">Legends</h3>' + (report.legends
                     ? legendsReportHtml(report.legends.raw)
-                    : '<p>Typeface is still loading — nothing to verify yet.</p>');
+                    : `<p>${escapeHtml(report.legendStatus || 'No legend reference is available for this layout yet.')}</p>`);
                 // alert() does not pass the html flag, so go through show().
                 const result = await readyApp.dialog?.show({
                     title: 'Verify against reference',
@@ -1115,16 +1169,13 @@ const app = defineTool({
                     + 'safety guide is a coordinate system, a slot picks an anchor pair, and a '
                     + 'glyph at the guide edge is released outward by optical compensation — '
                     + 'computed from the contour edge shape, not from sidebearings. Verify '
-                    + 'shows how close this matches LCAKB23.',
+                    + 'shows how close this matches the active reference.',
                 okText: 'Close'
             });
         });
 
-        // Эталон для подложки грузим заранее, чтобы тумблер срабатывал сразу.
-        loadReference().then((r) => {
-            REFERENCE = r;
-            if (readyApp.settings.showRef && isReferenceLayout(sourceLayoutFor(readyApp.settings))) readyApp.render();
-        }).catch(() => { /* подложка необязательна */ });
+        // Reference assets are optional and layout-specific; preload the startup layout only.
+        ensureReferenceAssetsLoaded(referenceAssetsForLayout(sourceLayoutFor(readyApp.settings)), readyApp);
 
         // Гарнитура: путь с пробелом обязан быть URL-энкоден, папка называется Fonts с большой.
         perfMarkStartup('font-load-start', { font: 'YS Text Regular' });
@@ -1264,10 +1315,8 @@ function normalizedPresetBlob(blob = {}, defaults = {}) {
     if (!LAYOUTS[layout.meta.name]) clean.customLayout = clonePlain(layout);
     clean.showDrawing = false;
     clean.languageLayer = normalizeLanguageLayer(clean.languageLayer);
-    if (!isReferenceLayout(layout)) {
-        clean.showRef = false;
-        clean.showDiff = false;
-    }
+    if (!hasReferenceAssets(layout)) clean.showRef = false;
+    if (!hasReferenceAssets(layout, 'layout')) clean.showDiff = false;
     return clean;
 }
 
@@ -1286,10 +1335,8 @@ function presetBlobFromKeyboardModel(input = {}, defaults = {}) {
     if (!LAYOUTS[layout.meta.name]) clean.customLayout = clonePlain(layout);
     clean.showDrawing = false;
     clean.languageLayer = normalizeLanguageLayer(clean.languageLayer);
-    if (!isReferenceLayout(layout)) {
-        clean.showRef = false;
-        clean.showDiff = false;
-    }
+    if (!hasReferenceAssets(layout)) clean.showRef = false;
+    if (!hasReferenceAssets(layout, 'layout')) clean.showDiff = false;
     return clean;
 }
 
@@ -2114,8 +2161,13 @@ function syncLayoutSelect(s) {
 }
 
 function syncReferenceToggles(s) {
-    const enabled = isReferenceLayout(sourceLayoutFor(s));
+    const layout = sourceLayoutFor(s);
+    const enabledById = {
+        showRef: hasReferenceAssets(layout),
+        showDiff: hasReferenceAssets(layout, 'layout')
+    };
     for (const id of ['showRef', 'showDiff']) {
+        const enabled = enabledById[id];
         const checkbox = document.getElementById(id);
         const label = checkbox?.closest?.('label');
         if (!checkbox) continue;
@@ -2139,10 +2191,8 @@ function initLayoutSelect(app) {
             layoutEdits: {},
             contentEdits: {}
         };
-        if (!isReferenceLayout(nextLayout)) {
-            values.showRef = false;
-            values.showDiff = false;
-        }
+        if (!hasReferenceAssets(nextLayout)) values.showRef = false;
+        if (!hasReferenceAssets(nextLayout, 'layout')) values.showDiff = false;
         app.settingsStore.setMultiple(values);
         syncLayoutSelect(app.settings);
         app.renderNow();
@@ -4214,6 +4264,42 @@ function diffStroke(worst) {
     return '#d9736f';
 }
 
+function parseViewBoxValue(value = '') {
+    const parts = String(value).trim().split(/[\s,]+/).map(Number);
+    return parts.length === 4 && parts.every(Number.isFinite)
+        ? { x: parts[0], y: parts[1], w: parts[2], h: parts[3] }
+        : null;
+}
+
+function renderReferenceVisual(create, svgText, visual = {}) {
+    if (typeof DOMParser !== 'function' || typeof document === 'undefined') return null;
+    const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
+    const source = doc.documentElement;
+    if (!source || source.nodeName.toLowerCase() !== 'svg' || source.querySelector('parsererror')) return null;
+
+    const node = document.importNode(source, true);
+    const viewBox = visual.viewBox || parseViewBoxValue(node.getAttribute('viewBox')) || { x: 0, y: 0, w: 0, h: 0 };
+    const box = visual.box || { x: 0, y: 0 };
+    node.removeAttribute('id');
+    node.setAttribute('x', 0);
+    node.setAttribute('y', 0);
+    node.setAttribute('width', viewBox.w);
+    node.setAttribute('height', viewBox.h);
+    node.setAttribute('overflow', 'visible');
+    node.setAttribute('preserveAspectRatio', 'xMinYMin meet');
+
+    const dx = box.x - viewBox.x;
+    const dy = box.y - viewBox.y;
+    const g = create('g', {
+        id: 'reference-curves',
+        opacity: 0.68,
+        'pointer-events': 'none',
+        transform: `translate(${dx.toFixed(4)} ${dy.toFixed(4)})`
+    });
+    g.appendChild(node);
+    return g;
+}
+
 function renderGeometryDiff(create, keys, grid, ref) {
     const report = compare(keys, ref);
     const g = create('g', { id: 'diff', 'pointer-events': 'none' });
@@ -4292,6 +4378,14 @@ function compactLegendReport(r) {
     };
 }
 
+function escapeHtml(value = '') {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
 function activeTypefaceReportMeta() {
     if (!TYPEFACE) return null;
     const entry = activeFontEntry();
@@ -4307,20 +4401,34 @@ function activeTypefaceReportMeta() {
 
 async function buildVerificationReport(settingsSnapshot, settings) {
     const { keys, legends, sourceLayout } = layoutFor(settings);
-    if (!isReferenceLayout(sourceLayout)) {
-        throw new Error('Verification is available only for the LCAKB23 reference layout.');
+    const assets = referenceAssetsForLayout(sourceLayout);
+    if (!assets?.layout) {
+        throw new Error(`No geometry reference is available for ${sourceLayout.meta.name}.`);
     }
-    const geometryRaw = compare(keys, await loadReference());
-    const legendsRaw = TYPEFACE
-        ? compareLegends(legends, (await loadLegendReference()).keys)
-        : null;
+    const geometryRaw = compare(keys, await loadReference(assets.layout));
+    let legendsRaw = null;
+    let legendStatus = '';
+    if (!assets.legends) {
+        legendStatus = 'No legend reference is available for this layout yet.';
+    } else if (!TYPEFACE) {
+        legendStatus = 'Typeface is still loading — nothing to verify yet.';
+    } else {
+        legendsRaw = compareLegends(legends, (await loadLegendReference(assets.legends)).keys);
+    }
     return {
         generatedAt: new Date().toISOString(),
         layout: sourceLayout.meta.name,
+        reference: {
+            label: assets.label || sourceLayout.meta.name,
+            layout: assets.layout,
+            legends: assets.legends || null,
+            visual: assets.visual?.url || null
+        },
         settings: settingsSnapshot,
         typeface: activeTypefaceReportMeta(),
         geometry: { raw: geometryRaw, export: compactGeometryReport(geometryRaw) },
-        legends: legendsRaw ? { raw: legendsRaw, export: compactLegendReport(legendsRaw) } : null
+        legends: legendsRaw ? { raw: legendsRaw, export: compactLegendReport(legendsRaw) } : null,
+        legendStatus
     };
 }
 
@@ -4328,10 +4436,12 @@ function reportForExport(report) {
     return {
         generatedAt: report.generatedAt,
         layout: report.layout,
+        reference: report.reference || null,
         settings: report.settings,
         typeface: report.typeface,
         geometry: report.geometry.export,
-        legends: report.legends ? report.legends.export : null
+        legends: report.legends ? report.legends.export : null,
+        legendStatus: report.legendStatus || ''
     };
 }
 

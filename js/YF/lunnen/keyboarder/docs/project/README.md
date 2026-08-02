@@ -15,8 +15,8 @@ Repository structure:
 - `vendor/` - required runtime third-party code: framework copy plus `opentype`, `jsPDF`, `svg2pdf`.
 - `docs/assets/` - screenshots, diagnostic images, and QA preview SVG.
 - `reference/lcakb23/` - canonical LCAKB23 reference SVG and verification JSON artifacts.
-- `reference/keyboards/` and `reference/laptops/` - SVG references used to regenerate the
-  Perform/Work/Airis/Ground built-in layout presets.
+- `reference/keyboards/` and `reference/laptops/` - SVG references, `_curv` visual overlays,
+  and `.layout.json` geometry refs for the Perform/Work/Airis/Ground built-in presets.
 
 Removed during cleanup:
 
