@@ -58,9 +58,9 @@ def dump():
 
 if __name__ == '__main__':
     d = dump()
-    out_dir = os.path.join(kb.ROOT, 'reference', 'lcakb23')
+    out_dir = os.path.join(kb.ROOT, 'reference', 'keyboards')
     os.makedirs(out_dir, exist_ok=True)
-    out = os.path.join(out_dir, 'LCAKB23.legends.json')
+    out = os.path.join(out_dir, 'Work_2_L.legends.json')
     json.dump(d, open(out, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     n_txt = sum(1 for k in d['keys'] for e in k['elements'] if e['kind'] == 'txt')
     n_ico = sum(1 for k in d['keys'] for e in k['elements'] if e['kind'] == 'ico')

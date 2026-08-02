@@ -23,8 +23,7 @@ const SPECS = [
     {
         layoutName: 'LCAKB23',
         output: 'reference/keyboards/Work_2_L.layout.json',
-        legendsFrom: 'reference/lcakb23/LCAKB23.legends.json',
-        legendsOutput: 'reference/keyboards/Work_2_L.legends.json'
+        preserveExisting: true
     },
     { layoutName: 'Perform_L', output: 'reference/keyboards/Perform_L.layout.json' },
     { layoutName: 'Perform_S', output: 'reference/keyboards/Perform_S.layout.json' },
@@ -39,17 +38,13 @@ const write = process.argv.includes('--write');
 for (const spec of SPECS) {
     const layout = LAYOUTS[spec.layoutName];
     if (!layout) throw new Error(`Unknown layout ${spec.layoutName}`);
-    const rows = layoutReferenceRows(layout);
-    if (write) {
+    const rows = spec.preserveExisting
+        ? JSON.parse(readFileSync(join(ROOT, spec.output), 'utf8'))
+        : layoutReferenceRows(layout);
+    if (write && !spec.preserveExisting) {
         writeJSON(join(ROOT, spec.output), rows);
-        if (spec.legendsFrom && spec.legendsOutput) {
-            writeFileSync(
-                join(ROOT, spec.legendsOutput),
-                readFileSync(join(ROOT, spec.legendsFrom), 'utf8')
-            );
-        }
     }
-    console.log(`${spec.output}: ${rows.length} keys`);
+    console.log(`${spec.output}: ${rows.length} keys${spec.preserveExisting ? ' (preserved)' : ''}`);
 }
 
 function layoutReferenceRows(layout) {

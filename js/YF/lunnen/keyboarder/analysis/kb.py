@@ -1,8 +1,8 @@
-"""Извлечение и анализ геометрии раскладки из reference/lcakb23/LCAKB23.svg."""
+"""Извлечение и анализ геометрии раскладки из reference/keyboards/Work_2_L.svg."""
 import os, re, math
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SVG = os.path.join(ROOT, 'reference', 'lcakb23', 'LCAKB23.svg')
+SVG = os.path.join(ROOT, 'reference', 'keyboards', 'Work_2_L.svg')
 
 
 def load(path=SVG):

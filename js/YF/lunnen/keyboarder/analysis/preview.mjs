@@ -2,7 +2,7 @@
  * Превью раскладки в SVG вне браузера — тем же кодом, что и инструмент.
  *
  * Нужно для визуальной сверки: рядом с нашей отрисовкой можно положить эталонный
- * reference/lcakb23/LCAKB23.svg и смотреть их наложением в любом векторном редакторе.
+ * reference/keyboards/Work_2_L.svg и смотреть их наложением в любом векторном редакторе.
  *
  * Запуск: node analysis/preview.mjs [файл.svg] [--guides] [--ink] [--overlay]
  *   --guides   охранные поля
@@ -86,7 +86,7 @@ if (flag('ink')) {
 }
 
 if (flag('overlay')) {
-    const ref = JSON.parse(readFileSync(join(ROOT, 'reference', 'lcakb23', 'LCAKB23.legends.json'), 'utf8'));
+    const ref = JSON.parse(readFileSync(join(ROOT, 'reference', 'keyboards', 'Work_2_L.legends.json'), 'utf8'));
     push('<g id="ref" stroke="#e8c15a" stroke-width="0.2">');
     for (const k of ref.keys) {
         for (const e of k.elements) {

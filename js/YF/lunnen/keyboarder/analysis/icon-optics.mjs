@@ -22,7 +22,7 @@ import { attachContent, buildLegends } from '../app/kb/legends.js';
 import CONTENT from '../app/kb/content/lcakb23.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const ref = JSON.parse(readFileSync(join(ROOT, 'reference', 'lcakb23', 'LCAKB23.legends.json'), 'utf8'));
+const ref = JSON.parse(readFileSync(join(ROOT, 'reference', 'keyboards', 'Work_2_L.legends.json'), 'utf8'));
 const buf = readFileSync(join(ROOT, 'Fonts', 'YS Text', 'YS Text-Regular.ttf'));
 const tf = parseFont(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
 

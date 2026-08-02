@@ -16,7 +16,7 @@ Important local entry points:
 - `app/kb/*` - pure keyboard/domain modules.
 - `app/kb/model-io.js` - pure editable-keyboard JSON import/export/sanitize helpers.
 - `analysis/*` - Python/Node reference harnesses and source-of-truth measurements.
-- `reference/lcakb23/LCAKB23.layout.json` and `reference/lcakb23/LCAKB23.legends.json` -
+- `reference/keyboards/Work_2_L.layout.json` and `reference/keyboards/Work_2_L.legends.json` -
   reference outputs for verification.
 
 ## Status Before This Handoff
@@ -188,7 +188,7 @@ Important local entry points:
   - `layoutDraftFromRecognized()` converts detected rectangles into `keyboarder.layoutDraft.v1`,
     a row/block layout draft that can be rendered by the existing `buildLayout()` engine;
   - added `analysis/blueprint-import.mjs`, covering a synthetic SVG and the real
-    `reference/lcakb23/LCAKB23.svg`;
+    `reference/keyboards/Work_2_L.svg`;
   - real LCAKB23 drawing import currently sees 1658 horizontal lines, 1388 vertical lines,
     884 diagonal lines, 866 paths, 487 horizontal span groups, 110 cap rects, 220 raw key
     candidates, 110 final recognized key rectangles, two double-height keys, zero warnings,
@@ -387,13 +387,13 @@ PYTHONPYCACHEPREFIX=/tmp/keyboarder-pycache python3 -m py_compile analysis/expor
 git diff --check
 ```
 
-Geometry check against `reference/lcakb23/LCAKB23.layout.json`:
+Geometry check against `reference/keyboards/Work_2_L.layout.json`:
 
 - 110 generated keys vs 110 reference keys.
 - Pass.
 - Worst geometry delta: `0.0000876 px`.
 
-Legend check against `reference/lcakb23/LCAKB23.legends.json`:
+Legend check against `reference/keyboards/Work_2_L.legends.json`:
 
 - 110/110 keys received content.
 - 204 legend elements, 408 checked coordinates.
@@ -573,7 +573,7 @@ Browser QA on `http://127.0.0.1:8000/`:
     warnings;
   - current-port console logs for the fresh smoke had no warnings or errors.
 - Historical Stage 6 Drawing-panel smoke, superseded by the current `New layout` flow:
-  - on `http://127.0.0.1:8007/`, `Browse SVG` accepted local `reference/lcakb23/LCAKB23.svg`;
+  - on `http://127.0.0.1:8007/`, `Browse SVG` accepted local `reference/keyboards/Work_2_L.svg`;
   - the Drawing status reported `blueprint yes`, `caps yes`, 1658 H lines, 1388 V lines,
     884 diagonal lines, 866 paths, 487 span groups, 110 caps, 1U width `46.4941`, height
     `46.1885`, pitch `53.861 × 53.5121`, `Detected: 110 keys from 220 candidates, d 3.3779`,
@@ -714,7 +714,7 @@ Stage 9 optimization is started:
   `parseLinesMs`, `detectMs`, and `draftMs`. Browser smoke on `test_layout_S.svg` confirmed
   breakdown in `#keyboarderPerfState` (pipeline ~22 ms, parse lines ~3.9 ms, detect ~4.8 ms).
 - Stage 9.3 stress QA is added: `analysis/import-stress.mjs` inflates real
-  `reference/lcakb23/LCAKB23.svg` with
+  `reference/keyboards/Work_2_L.svg` with
   non-cubic paths, tiny cubic paths, diagonal lines, and Illustrator private metadata. It verifies
   110 keys, zero warnings, and prints timing rows. Current synthetic worst cases stay below ~40 ms
   on Node (threshold note: 250 ms), so a Web Worker is not justified by current stress data.
@@ -836,17 +836,17 @@ Stage 9 optimization is started:
   be exported to `/tmp` and checked with `analysis/export-artifact-qa.mjs` without browser downloads.
 - Preset folder cleanup: `presets/` now contains only `manifest.json`, `lcakb21.json`,
   `lcakb22.json`, and `lcakb23.json`. Removed obsolete unlisted seed JSON files for old ANSI/ISO
-  experiments and LCAKB23 variants. Keep `reference/lcakb23/`; `Verify`, `Diff`, and analysis
-  harnesses still depend on the canonical SVG/layout/legend references there.
+  experiments and LCAKB23 variants. The canonical former LCAKB23 assets now live as
+  `reference/keyboards/Work_2_L.svg`, `Work_2_L.layout.json`, and `Work_2_L.legends.json`.
 - Cleanup pass 2026-07-29: project Markdown moved to `docs/project/`, documentation assets moved
   to `docs/assets/`, `analysis/preview.mjs` now writes `docs/assets/preview.svg` by default, and
   `analysis/font.py` reads the shared `Fonts/YS Text/YS Text-Regular.ttf`. Removed `ui-framework/`
   (old source sandbox duplicated by `vendor/framework/`) and `LCAKB23/` (old Illustrator/source
   archive with duplicate SVG/font). Keep `vendor/`: app runtime imports `vendor/framework`, CSS,
   `opentype.module.js`, `jsPDF`, and `svg2pdf` from there.
-- Cleanup pass 2026-07-29 follow-up: root reference artifacts moved to `reference/lcakb23/`.
-  Browser `Verify` now fetches `reference/lcakb23/LCAKB23.layout.json` and
-  `reference/lcakb23/LCAKB23.legends.json`; Node/Python analysis harnesses read/write the same
+- Cleanup pass 2026-07-29 follow-up: root reference artifacts moved into `reference/`.
+  Browser `Verify` now fetches `reference/keyboards/Work_2_L.layout.json` and
+  `reference/keyboards/Work_2_L.legends.json`; Node/Python analysis harnesses read/write the same
   folder. Root now keeps only `index.html`, `.gitignore`, and top-level app folders.
 - Local asset cleanup 2026-07-29: CoFo Sans UI fonts are now bundled in `Fonts/CoFo Sans/`, and
   `app/theme.css` loads them via `../Fonts/CoFo%20Sans/...` instead of climbing to the parent
@@ -869,8 +869,10 @@ Stage 9 optimization is started:
   `.layout.json`, optional `.legends.json`, and `_curv.svg` assets. The Layers `Reference` toggle
   now renders the green `_curv` visual overlay for Work 2.0 L plus the six new reference presets;
   `Diff` and `Verify` load the current layout's geometry JSON instead of hard-coding LCAKB23.
-  `analysis/generate-reference-verification-assets.mjs --write` regenerates these layout JSONs
-  and copies `reference/lcakb23/LCAKB23.legends.json` to `reference/keyboards/Work_2_L.legends.json`.
+  `analysis/generate-reference-verification-assets.mjs --write` regenerates the derived layout JSONs
+  while preserving canonical `reference/keyboards/Work_2_L.*` files.
+- Reference cleanup 2026-08-02: the old LCAKB23 reference folder was removed after confirming byte-identical
+  copies at `reference/keyboards/Work_2_L.svg`, `Work_2_L.layout.json`, and `Work_2_L.legends.json`.
 - Next Stage 9 work can move on to any remaining secondary polish or start the next planned stage.
 
 ## Notes For The Next Assistant

@@ -153,15 +153,17 @@
 │   ├── project/               ← PIPELINE.md, TOOL_PLAN.md, HANDOFF.md
 │   └── assets/                ← диагностические картинки и preview.svg
 │
-└── reference/lcakb23/         ← эталонный SVG + JSON для Verify/QA
-    ├── LCAKB23.svg
-    ├── LCAKB23.layout.json
-    └── LCAKB23.legends.json
+└── reference/
+    ├── keyboards/            ← эталонные SVG/JSON для keyboard presets и Verify/QA
+    │   ├── Work_2_L.svg
+    │   ├── Work_2_L.layout.json
+    │   └── Work_2_L.legends.json
+    └── laptops/              ← эталонные SVG/JSON для laptop presets
 ```
 
 Cleanup 2026-07-29: `ui-framework/` удалён как дублирующая песочница, `LCAKB23/` удалён как
-архивная папка с duplicate SVG/font/AI. Рабочие эталоны переехали в
-`reference/lcakb23/`; шрифты — в `Fonts/`;
+архивная папка с duplicate SVG/font/AI. Рабочие эталоны лежат в
+`reference/keyboards/` и `reference/laptops/`; шрифты — в `Fonts/`;
 документация — в `docs/project/`; диагностические картинки и preview — в `docs/assets/`.
 `vendor/` удалять нельзя: это runtime-зависимость приложения.
 
@@ -272,7 +274,7 @@ outline instancing.
 - артборд считается из раскладки хуком `size(settings)`;
 - экспорт SVG, пресеты, история, шаринг — из коробки.
 
-**Критерий готовности:** 110 клавиш и 110 полей совпадают с `reference/lcakb23/LCAKB23.svg` покоординатно
+**Критерий готовности:** 110 клавиш и 110 полей совпадают с `reference/keyboards/Work_2_L.svg` покоординатно
 с допуском 0.01 px. Достигнуто: максимальная невязка **0.00009 px** по `x`, `y`, ширине и высоте;
 артборд 1169.1846855 × 328.6893243 совпадает с эталоном.
 
@@ -314,7 +316,7 @@ outline instancing.
 
 Это ответ на вопрос «как справился анализ». Инструмент должен сам себя проверить.
 
-- `verify.js`: грузит `reference/lcakb23/LCAKB23.layout.json` и эталонные координаты из `reference/lcakb23/LCAKB23.svg`,
+- `verify.js`: грузит `reference/keyboards/Work_2_L.layout.json` и эталонные координаты из `reference/keyboards/Work_2_L.svg`,
   сопоставляет с тем, что сгенерировал инструмент;
 - режим **Diff**: эталон подложкой, сгенерированное поверх, невязки цветом;
 - таблица невязок: по клавишам, по слотам, по знакам — медиана, максимум, худшие 10;
@@ -471,7 +473,7 @@ vertical / diagonal, считает SVG primitives, группирует horizon
 пунктиром, нормальные recognized keys остаются жёлтыми. `layoutDraftFromRecognized()` переводит
 detected rectangles в `keyboarder.layoutDraft.v1`: row/block JSON, который уже рендерится
 существующим `buildLayout()` с drift < 0.03 px к detected bounds.
-`analysis/blueprint-import.mjs` проверяет synthetic SVG и реальный `reference/lcakb23/LCAKB23.svg`: 1658 H,
+`analysis/blueprint-import.mjs` проверяет synthetic SVG и реальный `reference/keyboards/Work_2_L.svg`: 1658 H,
 1388 V, 884 diagonal, 866 paths, 487 horizontal span groups, 110 caps, `d = 3.3779`,
 220 raw candidates, 110 final recognized keys, из них 2 double-height; worst drift до designer
 caps < 0.03 px; diagnostics на нём даёт 0 warnings, 4 notes, 0 suspicious; draft даёт
@@ -979,7 +981,7 @@ Baseline из Browser QA на локальной странице `?perf=1`:
 на чертежах с существенно большим количеством path/line/tag объектов.
 
 Срез 9.3 stress QA готов: добавлен `analysis/import-stress.mjs`. Harness берёт реальный
-`reference/lcakb23/LCAKB23.svg`, добавляет шумовые Illustrator-like объекты в `blueprint` и проверяет, что importer
+`reference/keyboards/Work_2_L.svg`, добавляет шумовые Illustrator-like объекты в `blueprint` и проверяет, что importer
 по-прежнему находит 110 клавиш без warnings. Сценарии: `base`, `path-heavy` (+8000 non-cubic paths,
 +1000 tiny cubic paths, +256 KB private metadata), `line-heavy` (+6000 diagonal lines, +256 KB
 private metadata), `mixed-heavy` (+4000 paths, +500 cubic paths, +2500 diagonal lines, +512 KB
@@ -1232,8 +1234,8 @@ then writes the same `caps` / `glyphs` / `icons` / `f-icons` layer structure exp
 
 Preset folder cleanup: `presets/` now contains only `manifest.json`, `lcakb21.json`,
 `lcakb22.json`, and `lcakb23.json`. Removed obsolete unlisted seed JSON files for old ANSI/ISO
-experiments and LCAKB23 variants; `reference/lcakb23/` remains because `Verify`, `Diff`, and
-regression/analysis harnesses use it as the canonical reference.
+experiments and LCAKB23 variants; the canonical former LCAKB23 reference is now
+`reference/keyboards/Work_2_L.*`, used by `Verify`, `Diff`, and regression/analysis harnesses.
 
 ---
 
@@ -1300,7 +1302,7 @@ regression/analysis harnesses use it as the canonical reference.
 | 1 | Вертикальное сжатие 0.648 % | **Воспроизводить как есть** — это данность чертежа. Шаг Y и высота клавиши задаются независимо от X, никакого «квадратим клавишу» |
 | 2 | Текст в превью и экспорте | **Превью кривыми** через opentype.js, **экспорт на выбор**: живой `<text>` или кривые |
 | 3 | Объём беты | **Генерация из модели + верификация**, без редактирования мышью. Клик-редактирование — этап 4 |
-| 4 | Эталон верификации | **`reference/lcakb23/LCAKB23.svg` как есть**, включая ручную компенсацию. Любое расхождение — ошибка модели, а не улучшение |
+| 4 | Эталон верификации | **`reference/keyboards/Work_2_L.svg` как есть**, включая ручную компенсацию. Любое расхождение — ошибка модели, а не улучшение |
 | 5 | Шрифты (бета) | **Не копировать**, читать `Fonts/YS Text/YS Text-Regular.ttf` напрямую. Только Regular |
 | 6 | Шрифты (про, этап 8) | **Любой файл**: полный съём метрик → автокалибровка компенсации. YS Text остаётся регрессионным эталоном, не единственным поддерживаемым шрифтом |
 | 7 | Единицы в UI | **Размеры — только мм, кегли — только pt.** Внутри по-прежнему px (= pt). Двойного вывода px/мм в панелях нет |
@@ -1341,7 +1343,7 @@ Work 2.0 L and the six reference rebuilds to `.layout.json` geometry files and `
 overlays; the `Reference` layer shows the green flattened artwork, while `Diff`/`Verify` compare
 against the active layout's geometry JSON.
 
-**1. Иконки.** 28 пиктограмм в макете. Вытащить из `reference/lcakb23/LCAKB23.svg` как готовые пути и сложить
+**1. Иконки.** 28 пиктограмм в макете. Вытащить из `reference/keyboards/Work_2_L.svg` как готовые пути и сложить
 в библиотеку, или сделать параметрическими (стрелка строится по размеру)? Параметрические гибче
 при смене размера клавиши, но 13 f-иконок так не опишешь — они рисованные. Предлагаю гибрид:
 стрелки и `tab` / `backspace` параметрические, f-иконки — путями.

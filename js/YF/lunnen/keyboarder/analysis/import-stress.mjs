@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { analyzeSvgBlueprint } from '../app/kb/svg-blueprint.js';
 
-const BASE = readFileSync('reference/lcakb23/LCAKB23.svg', 'utf8');
+const BASE = readFileSync('reference/keyboards/Work_2_L.svg', 'utf8');
 const WORKER_CANDIDATE_MS = 250;
 
 const scenarios = [

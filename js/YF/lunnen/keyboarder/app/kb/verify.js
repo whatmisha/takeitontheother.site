@@ -21,10 +21,10 @@ async function loadOnce(url) {
 }
 
 /** Эталон геометрии: сводная таблица по клавишам. */
-export const loadReference = (url = 'reference/lcakb23/LCAKB23.layout.json') => loadOnce(url);
+export const loadReference = (url = 'reference/keyboards/Work_2_L.layout.json') => loadOnce(url);
 
 /** Эталон легенд: позиция пера каждой строки и габарит каждой иконки. */
-export const loadLegendReference = (url = 'reference/lcakb23/LCAKB23.legends.json') => loadOnce(url);
+export const loadLegendReference = (url = 'reference/keyboards/Work_2_L.legends.json') => loadOnce(url);
 
 /** Ключ сопоставления: ряд плюс округлённый x. Устойчив к невязке до 0.05 px. */
 const keyOf = (k) => `${k.row}|${Math.round(k.x * 10)}`;
