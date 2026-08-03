@@ -3,9 +3,16 @@ import opentypeModule from './vendor/lib/opentype.module.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const PATTERN_FONT_URL = './fonts/Yandex%20Sans/YS%20Text%20Variable/YSText-Upright-weight-VF.ttf';
+const STATIC_PATTERN_FONT_URLS = new Map(
+    Array.from({ length: 9 }, (_, index) => {
+        const weight = (index + 1) * 100;
+        return [weight, `./assets/pattern-fonts/YSText-Upright-wght-${weight}.ttf`];
+    })
+);
 const DEFAULT_IMAGE_URL = './assets/default-image.png';
 const DEFAULT_FORM_URL = './assets/default-form.svg';
 const DEFAULT_PATTERN_TEXT = `Чтение может стать золотым часом дня — временем, когда всё погружается в цельную особенную атсмосферу и можно вернуться к себе и пережить что-то новое, погрузившись в книгу. В дизайне мы тоже подсвечиваем этот путь — иммерсивность погружения в книгу от лица читателя. Мы показываем именно этот момент перехода — резкость и холод внешнего мира растворяются в тёплом камерном пространстве чтения`;
+const DITHER_EMPTY_TONE = 0.035;
 
 const state = {
     sourceImage: null,
@@ -20,7 +27,8 @@ const state = {
     formMask: null,
     formMaskKey: '',
     formBoundary: [],
-    patternFont: null,
+    staticFonts: new Map(),
+    staticFontPromises: new Map(),
     opentypePromise: null,
     fontPromise: null
 };
@@ -61,6 +69,15 @@ function makeResolutionGrid(width, height, resolution) {
 
 function baseSizeFromGrid(grid, ratio = 0.74) {
     return Math.max(1, Math.min(grid.cellW, grid.cellH) * ratio);
+}
+
+function relativeSizeRange(settings) {
+    const min = clamp(Number(settings.sizeMin ?? 36) / 100, 0.01, 4);
+    const max = clamp(Number(settings.sizeMax ?? 96) / 100, 0.01, 4);
+    return {
+        min: Math.min(min, max),
+        max: Math.max(min, max)
+    };
 }
 
 function createSvgElement(tag, attrs = {}) {
@@ -204,6 +221,10 @@ function applyBayerDither(raw, cols, rows) {
     for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
             const idx = y * cols + x;
+            if (raw[idx] <= DITHER_EMPTY_TONE) {
+                out[idx] = 0;
+                continue;
+            }
             const threshold = (matrix[y % 8][x % 8] + 0.5) / 64;
             const bit = raw[idx] >= threshold ? 1 : 0;
             out[idx] = clamp(raw[idx] * 0.32 + bit * 0.68);
@@ -218,6 +239,11 @@ function applyFloydSteinbergDither(raw, cols, rows) {
     for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
             const idx = y * cols + x;
+            if (raw[idx] <= DITHER_EMPTY_TONE) {
+                working[idx] = 0;
+                out[idx] = 0;
+                continue;
+            }
             const oldValue = clamp(working[idx]);
             const bit = oldValue >= 0.5 ? 1 : 0;
             const error = oldValue - bit;
@@ -261,10 +287,11 @@ function getDitherTones(settings, grid) {
 
 function typographyFromTone(settings, base, minWeight, maxWeight, tone) {
     const response = settings.toneResponse || 'both';
+    const sizeRange = relativeSizeRange(settings);
     const sizeTone = response === 'weight' ? 0.68 : tone;
     const weightTone = response === 'size' ? 1 : tone;
     return {
-        size: base * lerp(0.36, 0.96, sizeTone),
+        size: base * lerp(sizeRange.min, sizeRange.max, sizeTone),
         weight: lerp(minWeight, maxWeight, weightTone)
     };
 }
@@ -280,6 +307,7 @@ function renderDither(ctx) {
 
     grid.points.forEach((point, index) => {
         const tone = tones[point.row * grid.cols + point.col] ?? 0;
+        if (tone <= DITHER_EMPTY_TONE) return;
         const char = chars[index % chars.length];
         const type = typographyFromTone(settings, base, minWeight, maxWeight, tone);
         drawLetter(ctx, {
@@ -334,6 +362,7 @@ function renderFields(ctx) {
     const base = baseSizeFromGrid(grid, 0.68);
     const minWeight = Math.min(settings.weightMin, settings.weightMax);
     const maxWeight = Math.max(settings.weightMin, settings.weightMax);
+    const sizeRange = relativeSizeRange(settings);
 
     grid.points.forEach((point, index) => {
         const field = magneticFieldAt(point.x, point.y, settings);
@@ -343,7 +372,7 @@ function renderFields(ctx) {
         const offsetScale = settings.fieldRadius * 0.48;
         const x = clamp(point.x + field.vx * offsetScale, 0, width);
         const y = clamp(point.y + field.vy * offsetScale, 0, height);
-        let size = base * lerp(1, 0.34, field.influence);
+        let size = base * lerp(sizeRange.max, sizeRange.min, field.influence);
         let weight = lerp(neutralWeight, minWeight, field.influence);
         let rotation = 0;
 
@@ -351,7 +380,7 @@ function renderFields(ctx) {
             rotation = Math.atan2(field.vy, field.vx) * 180 / Math.PI;
         }
         if (response === 'size' || response === 'all') {
-            size = base * lerp(1, 0.34, field.influence);
+            size = base * lerp(sizeRange.max, sizeRange.min, field.influence);
         }
         if (response === 'weight' || response === 'all') {
             weight = lerp(neutralWeight, minWeight, field.influence);
@@ -535,6 +564,7 @@ function renderForms(ctx) {
     const base = baseSizeFromGrid(grid, 0.7);
     const minWeight = Math.min(settings.weightMin, settings.weightMax);
     const maxWeight = Math.max(settings.weightMin, settings.weightMax);
+    const sizeRange = relativeSizeRange(settings);
     const fillInside = settings.formFill === 'inside';
     const precision = settings.formPrecision / 100;
     const leak = (1 - precision) * Math.min(width, height) * 0.28;
@@ -581,7 +611,7 @@ function renderForms(ctx) {
             char: chars[index % chars.length],
             x,
             y,
-            size: lerp(type.size, base * 0.32, gravityInfluence),
+            size: lerp(type.size, base * sizeRange.min, gravityInfluence),
             weight: lerp(type.weight, minWeight, gravityInfluence),
             rotation,
             fill: settings.inkColor
@@ -886,26 +916,28 @@ async function loadOpentype() {
     return window.opentype;
 }
 
-async function loadPatternFont() {
-    if (state.patternFont) return state.patternFont;
-    if (state.fontPromise) return state.fontPromise;
-    state.fontPromise = loadOpentype().then((opentype) => new Promise((resolve, reject) => {
-        opentype.load(PATTERN_FONT_URL, (error, font) => {
+async function loadStaticPatternFont(weight) {
+    const roundedWeight = roundWeight(weight);
+    if (state.staticFonts.has(roundedWeight)) return state.staticFonts.get(roundedWeight);
+    if (state.staticFontPromises.has(roundedWeight)) return state.staticFontPromises.get(roundedWeight);
+    const fontUrl = STATIC_PATTERN_FONT_URLS.get(roundedWeight) || STATIC_PATTERN_FONT_URLS.get(400);
+    const promise = loadOpentype().then((opentype) => new Promise((resolve, reject) => {
+        opentype.load(fontUrl, (error, font) => {
             if (error) reject(error);
             else {
-                state.patternFont = font;
+                state.staticFonts.set(roundedWeight, font);
                 resolve(font);
             }
         });
     }));
-    return state.fontPromise;
+    state.staticFontPromises.set(roundedWeight, promise);
+    return promise;
 }
 
 function replaceTextWithPath(textElement, font) {
     const text = textElement.textContent || '';
     if (!text) return null;
     const fontSize = parseFloat(textElement.getAttribute('font-size') || '16');
-    const weight = parseFloat(textElement.getAttribute('data-weight') || textElement.getAttribute('font-weight') || '400');
     const fill = textElement.getAttribute('fill') || '#000';
     const opacity = textElement.getAttribute('opacity');
     const transform = textElement.getAttribute('transform');
@@ -920,20 +952,12 @@ function replaceTextWithPath(textElement, font) {
         transform,
         opacity
     });
-    const strokeWidth = Math.max(0, (weight - 360) / 540 * fontSize * 0.08);
-    if (strokeWidth > 0.05) {
-        pathElement.setAttribute('stroke', fill);
-        pathElement.setAttribute('stroke-width', strokeWidth.toFixed(3));
-        pathElement.setAttribute('stroke-linejoin', 'round');
-        pathElement.setAttribute('stroke-linecap', 'round');
-    }
     return pathElement;
 }
 
 async function exportCurvedSvg(app) {
     try {
         window.wordplayerLastAction = 'curves-export-start';
-        const font = await loadPatternFont();
         const live = app.target.element;
         const clone = live.cloneNode(true);
         clone.setAttribute('xmlns', SVG_NS);
@@ -941,7 +965,15 @@ async function exportCurvedSvg(app) {
         clone.setAttribute('height', app.settings.height);
         clone.setAttribute('viewBox', `0 0 ${app.settings.width} ${app.settings.height}`);
         clone.querySelectorAll('[data-interactive="true"]').forEach((node) => node.remove());
-        clone.querySelectorAll('text.pattern-letter').forEach((textElement) => {
+        const textElements = Array.from(clone.querySelectorAll('text.pattern-letter'));
+        const usedWeights = Array.from(new Set(textElements.map((textElement) => {
+            const weight = parseFloat(textElement.getAttribute('data-weight') || textElement.getAttribute('font-weight') || '400');
+            return roundWeight(weight);
+        })));
+        await Promise.all(usedWeights.map((weight) => loadStaticPatternFont(weight)));
+        textElements.forEach((textElement) => {
+            const weight = parseFloat(textElement.getAttribute('data-weight') || textElement.getAttribute('font-weight') || '400');
+            const font = state.staticFonts.get(roundWeight(weight)) || state.staticFonts.get(400);
             const path = replaceTextWithPath(textElement, font);
             if (path) textElement.replaceWith(path);
         });
@@ -1010,6 +1042,8 @@ const app = defineTool({
         patternText: DEFAULT_PATTERN_TEXT,
         weightMin: 100,
         weightMax: 500,
+        sizeMin: 36,
+        sizeMax: 96,
         toneResponse: 'both',
         resolution: 72,
         inkColor: '#ffffff',
@@ -1036,6 +1070,8 @@ const app = defineTool({
             { id: 'heightSlider', valueId: 'heightValue', setting: 'height', min: 200, max: 2000, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'weightMinSlider', valueId: 'weightMinValue', setting: 'weightMin', min: 100, max: 900, decimals: 0, baseStep: 10, shiftStep: 100 },
             { id: 'weightMaxSlider', valueId: 'weightMaxValue', setting: 'weightMax', min: 100, max: 900, decimals: 0, baseStep: 10, shiftStep: 100 },
+            { id: 'sizeMinSlider', valueId: 'sizeMinValue', setting: 'sizeMin', min: 5, max: 200, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'sizeMaxSlider', valueId: 'sizeMaxValue', setting: 'sizeMax', min: 5, max: 200, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'resolutionSlider', valueId: 'resolutionValue', setting: 'resolution', min: 8, max: 180, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'contrastSlider', valueId: 'contrastValue', setting: 'contrast', min: 0.2, max: 3, decimals: 2, baseStep: 0.01, shiftStep: 0.1 },
             { id: 'blackPointSlider', valueId: 'blackPointValue', setting: 'blackPoint', min: 0, max: 250, decimals: 0, baseStep: 1, shiftStep: 10 },
@@ -1063,7 +1099,7 @@ const app = defineTool({
         ]
     },
     presets: {
-        storageKey: 'wordplayerPresetsV4',
+        storageKey: 'wordplayerPresetsV5',
         basePath: 'presets',
         colorDots,
         hasRandom: () => false
