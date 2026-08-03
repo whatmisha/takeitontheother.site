@@ -1,0 +1,30 @@
+{
+  "settings": {
+    "width": 430,
+    "height": 574,
+    "mode": "forms",
+    "patternText": "Чтение может стать золотым часом дня — временем, когда всё погружается в цельную особенную атсмосферу и можно вернуться к себе и пережить что-то новое, погрузившись в книгу. В дизайне мы тоже подсвечиваем этот путь — иммерсивность погружения в книгу от лица читателя. Мы показываем именно этот момент перехода — резкость и холод внешнего мира растворяются в тёплом камерном пространстве чтения",
+    "weightMin": 100,
+    "weightMax": 500,
+    "toneResponse": "both",
+    "resolution": 72,
+    "inkColor": "#e8f4ff",
+    "bgColor": "#080706",
+    "showGuides": false,
+    "exportTransparent": false,
+    "ditherAlgorithm": "bayer",
+    "contrast": 2,
+    "blackPoint": 40,
+    "whitePoint": 200,
+    "fieldResponse": "rotate",
+    "fieldForce": 58,
+    "fieldRadius": 150,
+    "formFill": "inside",
+    "formAttraction": 54,
+    "formGravity": 18,
+    "formPrecision": 100,
+    "gravityX": 48,
+    "gravityY": 42
+  },
+  "magneticPoints": []
+}

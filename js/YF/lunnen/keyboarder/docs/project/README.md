@@ -4,6 +4,7 @@ This folder keeps the project documentation and AI handoff files together.
 
 - `PIPELINE.md` describes the design workflow and measured layout rules.
 - `TOOL_PLAN.md` tracks implementation stages and current engineering status.
+- `UX_SIMPLIFICATION_PLAN.md` prioritizes the drawing-first UI simplification work.
 - `HANDOFF.md` is the factual handoff for the next AI session.
 
 Repository structure:

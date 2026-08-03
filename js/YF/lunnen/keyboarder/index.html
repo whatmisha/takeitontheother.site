@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="vendor/framework/css/othersite-styles.css">
     <link rel="stylesheet" href="app/theme.css">
 </head>
-<body>
+<body class="ui-simple">
 <div class="container">
 
     <div class="top-links">
@@ -57,26 +57,26 @@
             </div>
             <div class="panel-content">
                 <section class="control-section">
-                    <div class="control-group">
+                    <div class="control-group" data-advanced-only>
                         <label for="layoutSelect"><span>Layout</span></label>
                         <select id="layoutSelect" class="select-control" aria-label="Keyboard layout"></select>
                     </div>
-                    <div class="control-group">
+                    <div class="control-group" data-advanced-only>
                         <label for="colPitchSlider"><span>Column pitch</span>
                             <input type="text" class="value-display" id="colPitchValue" inputmode="decimal" aria-label="Column pitch, mm"></label>
                         <input type="range" id="colPitchSlider" min="10" max="28" step="0.001">
                     </div>
-                    <div class="control-group">
+                    <div class="control-group" data-advanced-only>
                         <label for="rowPitchSlider"><span>Row pitch</span>
                             <input type="text" class="value-display" id="rowPitchValue" inputmode="decimal" aria-label="Row pitch, mm"></label>
                         <input type="range" id="rowPitchSlider" min="10" max="28" step="0.001">
                     </div>
-                    <div class="control-group">
+                    <div class="control-group" data-advanced-only>
                         <label for="keyWidthSlider"><span>1U width</span>
                             <input type="text" class="value-display" id="keyWidthValue" inputmode="decimal" aria-label="1U width, mm"></label>
                         <input type="range" id="keyWidthSlider" min="7" max="26" step="0.001">
                     </div>
-                    <div class="control-group">
+                    <div class="control-group" data-advanced-only>
                         <label for="keyHeightSlider"><span>Key height</span>
                             <input type="text" class="value-display" id="keyHeightValue" inputmode="decimal" aria-label="Key height, mm"></label>
                         <input type="range" id="keyHeightSlider" min="7" max="26" step="0.001">
@@ -92,7 +92,7 @@
                         <input type="range" id="insetSlider" min="0" max="6.5" step="0.001">
                     </div>
 
-                    <div class="control-group pill-toggle-row">
+                    <div class="control-group pill-toggle-row" data-advanced-only>
                         <button type="button" class="btn-inline" id="resetGridBtn"
                                 data-tooltip="Restore values measured from the drawing">Reference grid</button>
                     </div>
@@ -150,20 +150,20 @@
                             <input type="text" class="value-display" id="trackingOffsetValue" inputmode="decimal" aria-label="Tracking offset, em"></label>
                         <input type="range" id="trackingOffsetSlider" min="-0.08" max="0.08" step="0.001">
                     </div>
-                    <div class="control-group">
+                    <div class="control-group" data-advanced-only>
                         <div class="segmented-control" id="compModeGroup" role="group" aria-label="Compensation mode">
                             <button type="button" data-mode="off" aria-pressed="false">Off</button>
                             <button type="button" data-mode="model" aria-pressed="false">Model</button>
                             <button type="button" data-mode="table" aria-pressed="true">Model + table</button>
                         </div>
                     </div>
-                    <div class="control-group">
+                    <div class="control-group" data-advanced-only>
                         <div class="segmented-control" id="legendTextModeGroup" role="group" aria-label="Legend text mode">
                             <button type="button" data-mode="outlines" aria-pressed="true">Outlines</button>
                             <button type="button" data-mode="text" aria-pressed="false">Text</button>
                         </div>
                     </div>
-                    <div class="font-import" id="fontImport">
+                    <div class="font-import" id="fontImport" data-advanced-only>
                         <div class="font-dropzone" id="fontDropzone">
                             <span>Drop font file</span>
                         </div>
@@ -181,7 +181,7 @@
                         </div>
                         <div class="font-status" id="fontProbeStatus"></div>
                     </div>
-                    <div class="comp-table-editor" id="compTableEditor">
+                    <div class="comp-table-editor" id="compTableEditor" data-advanced-only>
                         <div class="comp-table-row">
                             <label for="compTableCharSelect">
                                 <span>Comp char</span>
@@ -203,7 +203,7 @@
                         </div>
                         <div class="comp-table-status" id="compTableStatus"></div>
                     </div>
-                    <div class="control-group pill-toggle-row">
+                    <div class="control-group pill-toggle-row" data-advanced-only>
                         <button type="button" class="btn-inline" id="resetTypeBtn"
                                 data-tooltip="Restore measured type settings">Reference type</button>
                     </div>
@@ -223,7 +223,7 @@
             </div>
             <div class="panel-content">
                 <section class="control-section">
-                    <div class="control-group">
+                    <div class="control-group" data-advanced-only>
                         <label for="languageLayerSelect"><span>Language</span></label>
                         <select id="languageLayerSelect" class="select-control" aria-label="Language layer">
                             <option value="dual">Latin + Cyrillic</option>
@@ -244,25 +244,25 @@
                         <label class="pill-toggle" for="showGuides" data-tooltip="Safety guides — coordinate system for legends">
                             <input type="checkbox" id="showGuides" class="sr-only" data-setting="showGuides"><span>Guides</span>
                         </label>
-                        <label class="pill-toggle" for="showColumns" data-tooltip="Grid columns">
+                        <label class="pill-toggle" for="showColumns" data-tooltip="Grid columns" data-advanced-only>
                             <input type="checkbox" id="showColumns" class="sr-only" data-setting="showColumns"><span>Columns</span>
                         </label>
-                        <label class="pill-toggle" for="showIndex" data-tooltip="Row index and width in U">
+                        <label class="pill-toggle" for="showIndex" data-tooltip="Row index and width in U" data-advanced-only>
                             <input type="checkbox" id="showIndex" class="sr-only" data-setting="showIndex"><span>Index</span>
                         </label>
                         <label class="pill-toggle" for="showInk" data-tooltip="Ink bounds of labels — shows how compensation works">
                             <input type="checkbox" id="showInk" class="sr-only" data-setting="showInk"><span>Ink boxes</span>
                         </label>
-                        <label class="pill-toggle" for="showSlots" data-tooltip="Slot code on every element">
+                        <label class="pill-toggle" for="showSlots" data-tooltip="Slot code on every element" data-advanced-only>
                             <input type="checkbox" id="showSlots" class="sr-only" data-setting="showSlots"><span>Slots</span>
                         </label>
                         <label class="pill-toggle" for="showRef" data-tooltip="Current reference overlay">
                             <input type="checkbox" id="showRef" class="sr-only" data-setting="showRef"><span>Reference</span>
                         </label>
-                        <label class="pill-toggle" for="showDiff" data-tooltip="Geometry diff against current reference">
+                        <label class="pill-toggle" for="showDiff" data-tooltip="Geometry diff against current reference" data-advanced-only>
                             <input type="checkbox" id="showDiff" class="sr-only" data-setting="showDiff"><span>Diff</span>
                         </label>
-                        <label class="pill-toggle" for="showBlocks" data-tooltip="Boundaries of main / nav / numpad blocks">
+                        <label class="pill-toggle" for="showBlocks" data-tooltip="Boundaries of main / nav / numpad blocks" data-advanced-only>
                             <input type="checkbox" id="showBlocks" class="sr-only" data-setting="showBlocks"><span>Blocks</span>
                         </label>
                     </div>
@@ -286,7 +286,7 @@
                         <label for="legendKeySelect"><span>Key</span></label>
                         <select id="legendKeySelect" class="select-control" aria-label="Selected key"></select>
                     </div>
-                    <div class="legend-geometry-editor" id="legendGeometryEditor">
+                    <div class="legend-geometry-editor" id="legendGeometryEditor" data-advanced-only>
                         <div class="legend-geometry-row">
                             <label for="legendKeyWidthInput">
                                 <span>Width</span>
@@ -313,6 +313,13 @@
                         <div class="control-group">
                             <label for="legendTemplateSelect"><span>Template</span></label>
                             <select id="legendTemplateSelect" class="select-control" aria-label="Legend template"></select>
+                        </div>
+                        <div class="legend-key-style">
+                            <label for="legendKeyColorInput">
+                                <span>Key color</span>
+                                <input id="legendKeyColorInput" class="legend-key-color-input" maxlength="7" spellcheck="false" autocomplete="off" placeholder="Global">
+                            </label>
+                            <button type="button" class="btn-inline" id="resetKeyColorBtn">Reset color</button>
                         </div>
                         <div class="legend-element-actions">
                             <button type="button" class="btn-inline" id="addLegendTextBtn">Add text</button>
@@ -386,13 +393,14 @@
 
     <nav class="bottom-buttons">
         <button class="btn-fixed btn-intro-help" id="aboutBtn" type="button" aria-label="About" data-tooltip="About">?</button>
-        <button class="btn-fixed" id="verifyBtn" type="button" data-tooltip="Compare geometry to the reference">Verify</button>
+        <button class="btn-fixed" id="verifyBtn" type="button" data-tooltip="Compare geometry to the reference" data-advanced-only>Verify</button>
         <button class="btn-fixed" id="exportJsonBtn" type="button" aria-label="Export model JSON" data-tooltip="Export model JSON">JSON</button>
-        <button class="btn-fixed" id="importJsonBtn" type="button" aria-label="Import model JSON" data-tooltip="Import model JSON">Import</button>
+        <button class="btn-fixed" id="importJsonBtn" type="button" aria-label="Import model JSON" data-tooltip="Import model JSON" data-advanced-only>Import</button>
         <button class="btn-fixed" id="exportPdfBtn" type="button">PDF</button>
         <button class="btn-fixed" id="exportPngBtn" type="button">PNG</button>
         <button class="btn-fixed" id="exportSvgBtn" type="button">SVG ⌘E</button>
     </nav>
+    <input id="newLayoutInput" type="file" accept="image/svg+xml,.svg,application/json,.json" hidden>
     <input id="importJsonInput" type="file" accept="application/json,.json" hidden>
     <input id="drawingSvgInput" type="file" accept="image/svg+xml,.svg" hidden>
     <input id="fontFileInput" type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden>
@@ -407,6 +415,6 @@
     </dialog>
 </div>
 
-<script type="module" src="app/tool.js?v=20260802-reference-curves"></script>
+<script type="module" src="app/tool.js?v=20260802-ux-fix-template-order"></script>
 </body>
 </html>

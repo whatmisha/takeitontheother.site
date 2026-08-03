@@ -29,6 +29,7 @@ import {
     buildKeyboardModel as buildKeyboardModelData,
     cleanElement as cleanElementData,
     cleanElements as cleanElementsData,
+    cleanHexColor,
     cleanIconGroup,
     cleanOffset as cleanOffsetData,
     clonePlain,
@@ -72,6 +73,42 @@ const SLIDER_BY_SETTING = {
 };
 
 const ICON_OPTIONS = Object.keys(ICONS).sort((a, b) => a.localeCompare(b));
+const TEMPLATE_LABELS = {
+    blank: 'Blank',
+    'alpha-dual': 'Letters',
+    'corner-icon+word': 'Corner icon + label',
+    'fkey-icon+label': 'F-row icon + label',
+    'icon+word-stack': 'Icon + stacked text',
+    'icon-center': 'Centered icon',
+    'legend-2corners': 'Two corner labels',
+    'legend-corners': 'Corner labels',
+    'numpad-tier': 'Numpad tier',
+    'other:top-center': 'Top-center text',
+    'other:top-left+bot-center': 'Top-left + bottom-center text',
+    'status-pair': 'Status pair',
+    'word-2line': 'Two-line text',
+    'word-bottom': 'Bottom text',
+    'word-center': 'Centered text',
+    'word-outer': 'Outer text',
+    'word-stack': 'Stacked text'
+};
+const TEMPLATE_ORDER = [
+    'blank',
+    'alpha-dual',
+    'legend-corners',
+    'legend-2corners',
+    'word-center',
+    'word-bottom',
+    'word-outer',
+    'word-2line',
+    'word-stack',
+    'icon-center',
+    'fkey-icon+label',
+    'corner-icon+word',
+    'icon+word-stack',
+    'numpad-tier',
+    'status-pair'
+];
 const TEMPLATE_VARIANTS = buildTemplateVariants(CONTENT);
 const TEMPLATE_BY_ID = new Map(TEMPLATE_VARIANTS.map((v) => [v.id, v]));
 const LANGUAGE_LAYERS = new Set(['dual', 'latin', 'cyrillic']);
@@ -88,6 +125,8 @@ const PRESET_NAME_MIGRATIONS = {
 };
 const REFERENCE_FONT_ID = 'reference';
 const REFERENCE_FONT_URL = 'Fonts/YS%20Text/YS%20Text-Regular.ttf';
+const UI_MODE_STORAGE_KEY = 'keyboarder.uiMode';
+let UI_ADVANCED = false;
 const REFERENCE_FONT_FAMILY = 'YS Text';
 const CUSTOM_FONT_FAMILY_PREFIX = 'Keyboarder Session Font';
 const FONT_FILE_RE = /\.(otf|ttf|woff|woff2)$/i;
@@ -733,14 +772,15 @@ const app = defineTool({
         const legends = data.legends;
         const gap = gapOf(grid);
         const referenceAssets = referenceAssetsForLayout(data.sourceLayout);
-        if ((s.showRef || s.showDiff) && referenceAssets) ensureReferenceAssetsLoaded(referenceAssets, ctx.app);
+        const advanced = isAdvancedUiMode();
+        if ((s.showRef || (advanced && s.showDiff)) && referenceAssets) ensureReferenceAssetsLoaded(referenceAssets, ctx.app);
         const referenceLayout = referenceLayoutFor(data.sourceLayout);
         const referenceVisualText = referenceVisualFor(data.sourceLayout);
 
         svg.appendChild(create('rect', { x: 0, y: 0, width, height, fill: s.bgColor }));
         appendSessionFontDefs(create, svg, s);
 
-        if (s.showBlocks) {
+        if (advanced && s.showBlocks) {
             const g = create('g', { id: 'blocks' });
             for (const b of data.sourceLayout.blocks) {
                 if (b.width == null) continue;
@@ -753,7 +793,7 @@ const app = defineTool({
             svg.appendChild(g);
         }
 
-        if (s.showColumns) {
+        if (advanced && s.showColumns) {
             const g = create('g', { id: 'columns', opacity: 0.35 });
             for (let x = grid.origin.x; x < width; x += grid.colPitch) {
                 g.appendChild(create('line', {
@@ -787,7 +827,7 @@ const app = defineTool({
             for (const k of keys) {
                 g.appendChild(create('rect', {
                     x: k.x, y: k.y, width: k.w, height: k.h,
-                    rx: grid.cornerRadius, ry: grid.cornerRadius, fill: s.capColor
+                    rx: grid.cornerRadius, ry: grid.cornerRadius, fill: k.keyColor || s.capColor
                 }));
             }
             svg.appendChild(g);
@@ -804,7 +844,7 @@ const app = defineTool({
             svg.appendChild(g);
         }
 
-        if (s.showDiff && referenceLayout) {
+        if (advanced && s.showDiff && referenceLayout) {
             svg.appendChild(renderGeometryDiff(create, keys, grid, referenceLayout));
         }
 
@@ -884,7 +924,7 @@ const app = defineTool({
             svg.appendChild(g);
         }
 
-        if (s.showSlots) {
+        if (advanced && s.showSlots) {
             const g = create('g', {
                 id: 'slot-codes', 'font-size': 2.6, fill: '#3d7fd9', 'font-family': 'monospace'
             });
@@ -899,7 +939,7 @@ const app = defineTool({
             svg.appendChild(g);
         }
 
-        if (s.showIndex) {
+        if (advanced && s.showIndex) {
             const g = create('g', { id: 'labels', 'font-size': 4, fill: '#1c1f22', 'font-family': 'monospace' });
             for (const k of keys) {
                 const t = create('text', { x: k.guide.x0, y: k.guide.y0 + 4 });
@@ -953,6 +993,7 @@ const app = defineTool({
     },
 
     onInit(readyApp) {
+        initUiMode(readyApp);
         migrateShippedPresetNames(readyApp);
         installKeyboarderPerf(readyApp);
         installPdfExport(readyApp);
@@ -980,6 +1021,11 @@ const app = defineTool({
             const file = e.target.files?.[0] || null;
             e.target.value = '';
             void importModelJSONFile(readyApp, file);
+        });
+        document.getElementById('newLayoutInput')?.addEventListener('change', (e) => {
+            const file = e.target.files?.[0] || null;
+            e.target.value = '';
+            void createNewLayoutFromFile(readyApp, file);
         });
         document.getElementById('drawingSvgInput')?.addEventListener('change', (e) => {
             const file = e.target.files?.[0] || null;
@@ -1032,6 +1078,10 @@ const app = defineTool({
         document.getElementById('addLegendIconBtn')?.addEventListener('click', () => {
             addLegendElementDraft(readyApp, 'ico');
         });
+        document.getElementById('resetKeyColorBtn')?.addEventListener('click', () => {
+            const input = document.getElementById('legendKeyColorInput');
+            if (input) input.value = '';
+        });
         document.getElementById('legendElementEditor')?.addEventListener('click', (e) => {
             const button = e.target.closest('.legend-remove-element-btn');
             if (!button) return;
@@ -1083,6 +1133,12 @@ const app = defineTool({
                 e.preventDefault();
             }
         });
+        document.getElementById('legendPanelHeader')?.addEventListener('click', (e) => {
+            if (isAdvancedUiMode()) return;
+            e.preventDefault();
+            e.stopPropagation();
+            void closeLegendPopoverIfAllowed(readyApp);
+        }, true);
 
         document.querySelectorAll('#compModeGroup [data-mode]').forEach((btn) => {
             btn.addEventListener('click', () => {
@@ -1114,20 +1170,35 @@ const app = defineTool({
             }
         });
 
-        readyApp.dom?.surface?.addEventListener('click', (e) => {
+        readyApp.dom?.surface?.addEventListener('click', async (e) => {
             const key = keyAtClientPoint(readyApp.dom.surface, layoutFor(readyApp.settings).keys, e.clientX, e.clientY);
             if (key) {
-                expandLegendPanel();
-                selectKey(readyApp, key.i, { toggle: e.shiftKey || e.metaKey || e.ctrlKey });
+                const toggle = e.shiftKey || e.metaKey || e.ctrlKey;
+                if (isAdvancedUiMode()) {
+                    expandLegendPanel();
+                    selectKey(readyApp, key.i, { toggle });
+                    return;
+                }
+                if (legendSelectionWouldChange(key.i, { toggle }) && !(await confirmDiscardLegendDraft(readyApp))) return;
+                selectKey(readyApp, key.i, { toggle });
+                openLegendPopoverAt(e.clientX, e.clientY);
             }
-            else if (!e.shiftKey) selectKey(readyApp, null);
+            else if (!e.shiftKey) {
+                if (isAdvancedUiMode()) selectKey(readyApp, null);
+                else await closeLegendPopoverIfAllowed(readyApp);
+            }
         });
 
-        document.addEventListener('keydown', (e) => {
+        document.addEventListener('keydown', async (e) => {
             if (isTypingTarget(e.target)) return;
             if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Escape'].includes(e.key)) return;
             if (e.key === 'Escape') {
-                selectKey(readyApp, null);
+                if (isAdvancedUiMode()) selectKey(readyApp, null);
+                else await closeLegendPopoverIfAllowed(readyApp);
+                e.preventDefault();
+                return;
+            }
+            if (!isAdvancedUiMode() && legendEditorDirty(readyApp) && !(await confirmDiscardLegendDraft(readyApp))) {
                 e.preventDefault();
                 return;
             }
@@ -1224,6 +1295,54 @@ function html(v) {
 function round(value, decimals = 4) {
     const p = 10 ** decimals;
     return Math.round((Number(value) + Number.EPSILON) * p) / p;
+}
+
+function isAdvancedUiMode() {
+    return !!UI_ADVANCED;
+}
+
+function initUiMode(app) {
+    UI_ADVANCED = readUiModePreference();
+    applyUiModeClass();
+    installUiModeDebugAPI(app);
+}
+
+function readUiModePreference() {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search || '');
+    const requested = params.get('advanced') ?? params.get('ui');
+    if (requested != null) {
+        const advanced = /^(1|true|yes|advanced)$/i.test(requested);
+        try { window.localStorage?.setItem(UI_MODE_STORAGE_KEY, advanced ? 'advanced' : 'simple'); } catch (_) {}
+        return advanced;
+    }
+    try {
+        return window.localStorage?.getItem(UI_MODE_STORAGE_KEY) === 'advanced';
+    } catch (_) {
+        return false;
+    }
+}
+
+function setUiMode(advanced, app = null) {
+    UI_ADVANCED = !!advanced;
+    try { window.localStorage?.setItem(UI_MODE_STORAGE_KEY, UI_ADVANCED ? 'advanced' : 'simple'); } catch (_) {}
+    applyUiModeClass();
+    app?.render?.();
+    return UI_ADVANCED ? 'advanced' : 'simple';
+}
+
+function applyUiModeClass() {
+    if (typeof document === 'undefined') return;
+    document.body?.classList.toggle('ui-advanced', UI_ADVANCED);
+    document.body?.classList.toggle('ui-simple', !UI_ADVANCED);
+}
+
+function installUiModeDebugAPI(app) {
+    if (typeof window === 'undefined') return;
+    window.KeyboarderUI = {
+        mode: () => isAdvancedUiMode() ? 'advanced' : 'simple',
+        setAdvanced: (value = true) => setUiMode(!!value, app)
+    };
 }
 
 function setTextIfChanged(id, value) {
@@ -1844,7 +1963,8 @@ function captureBaseContent(keys) {
     for (const k of keys) {
         k.baseContent = {
             tpl: k.tpl || 'blank',
-            elements: cleanElements(k.elements || [])
+            elements: cleanElements(k.elements || []),
+            keyColor: cleanHexColor(k.keyColor)
         };
     }
 }
@@ -1856,13 +1976,15 @@ function applyContentEdits(keys, edits) {
         if (!edit) continue;
         k.tpl = edit.tpl || 'blank';
         k.elements = cleanElements(edit.elements);
+        k.keyColor = edit.keyColor || '';
         k.content = {
             ...(k.content || {}),
             row: k.row,
             x: k.x,
             block: k.block,
             tpl: k.tpl,
-            elements: cleanElements(k.elements)
+            elements: cleanElements(k.elements),
+            keyColor: k.keyColor
         };
         k.edited = true;
     }
@@ -1875,15 +1997,19 @@ function sourceElements(k) {
 function contentEquals(a, b) {
     return JSON.stringify({
         tpl: a?.tpl || 'blank',
-        elements: cleanElements(a?.elements || [])
+        elements: cleanElements(a?.elements || []),
+        keyColor: cleanHexColor(a?.keyColor)
     }) === JSON.stringify({
         tpl: b?.tpl || 'blank',
-        elements: cleanElements(b?.elements || [])
+        elements: cleanElements(b?.elements || []),
+        keyColor: cleanHexColor(b?.keyColor)
     });
 }
 
-function writeContentEdit(edits, k, tpl, elements) {
+function writeContentEdit(edits, k, tpl, elements, keyColor = '') {
     const payload = { tpl: tpl || 'blank', elements: cleanElements(elements) };
+    const cleanColor = cleanHexColor(keyColor);
+    if (cleanColor) payload.keyColor = cleanColor;
     if (contentEquals(payload, k.baseContent)) delete edits[k.editId];
     else edits[k.editId] = payload;
 }
@@ -1898,8 +2024,37 @@ function templateVariantId(tpl, elements = []) {
 }
 
 function templateVariantLabel(v) {
-    const slots = v.elements.map((el) => el.slot).join(' / ');
-    return slots ? `${v.tpl} · ${slots}` : v.tpl;
+    const base = TEMPLATE_LABELS[v.tpl] || humanizeTemplateId(v.tpl);
+    const detail = templateVariantDetail(v);
+    return detail ? `${base} · ${detail}` : base;
+}
+
+function humanizeTemplateId(id = '') {
+    return String(id || 'Custom')
+        .replace(/^other:/, '')
+        .replace(/[+_-]+/g, ' ')
+        .replace(/\b\w/g, (ch) => ch.toUpperCase());
+}
+
+function templateVariantDetail(v) {
+    const elements = cleanElements(v.elements || []);
+    if (!elements.length) return '';
+    const slots = elements.map((el) => el.slot).filter(Boolean);
+    const signature = elementSignature(elements);
+    if (v.tpl === 'alpha-dual' && signature === 'TL:txt|BR:txt') return 'Latin TL + Cyrillic BR';
+    if (v.tpl === 'fkey-icon+label') return 'icon FC + label BC';
+    if (v.tpl === 'icon-center') return slots.join(' / ');
+    if (v.tpl === 'word-center') return slots.join(' / ');
+    if (v.tpl === 'word-bottom') return slots.join(' / ');
+    if (v.tpl === 'word-outer') return slots.join(' / ');
+    if (v.tpl === 'word-stack' || v.tpl === 'word-2line') return slots.join(' / ');
+    if (v.tpl === 'legend-corners') return slots.length === 4 ? `4 slots ${slots.join(' / ')}` : slots.join(' / ');
+    if (v.tpl === 'legend-2corners') return slots.join(' / ');
+    if (v.tpl === 'numpad-tier') return 'text UC + icon BC';
+    if (v.tpl === 'icon+word-stack') return slots.join(' / ');
+    if (v.tpl === 'corner-icon+word') return slots.join(' / ');
+    if (v.tpl === 'status-pair') return 'icon Ml + number Mr';
+    return slots.join(' / ');
 }
 
 function buildTemplateVariants(content) {
@@ -1913,8 +2068,17 @@ function buildTemplateVariants(content) {
         }
         byId.get(id).count++;
     }
-    return [...byId.values()].sort((a, b) =>
-        a.tpl.localeCompare(b.tpl) || elementSignature(a.elements).localeCompare(elementSignature(b.elements)));
+    return [...byId.values()].sort(compareTemplateVariants);
+}
+
+function compareTemplateVariants(a, b) {
+    const orderA = TEMPLATE_ORDER.indexOf(a.tpl);
+    const orderB = TEMPLATE_ORDER.indexOf(b.tpl);
+    const rankA = orderA >= 0 ? orderA : TEMPLATE_ORDER.length;
+    const rankB = orderB >= 0 ? orderB : TEMPLATE_ORDER.length;
+    return rankA - rankB
+        || a.tpl.localeCompare(b.tpl)
+        || elementSignature(a.elements).localeCompare(elementSignature(b.elements));
 }
 
 function variantForKey(k) {
@@ -2610,7 +2774,7 @@ function applyActiveFontToSelection(app) {
     for (const k of selected) {
         const elements = sourceElements(k).map((el) =>
             el.kind === 'txt' ? cleanElement({ ...el, fontId: ACTIVE_FONT_ID }) : el);
-        writeContentEdit(next, k, k.tpl || 'blank', elements);
+        writeContentEdit(next, k, k.tpl || 'blank', elements, cleanHexColor(k.keyColor));
     }
     app.settingsStore.set('contentEdits', next);
     app._showToast?.('Font applied');
@@ -2719,24 +2883,75 @@ ${rows.join('\n')}
 }
 
 function initNewLayoutImport(app) {
-    document.getElementById('newLayoutBtn')?.addEventListener('click', () => {
-        openNewLayoutSvgPicker();
+    document.getElementById('newLayoutBtn')?.addEventListener('click', async () => {
+        await showNewLayoutIntro(app);
     });
 }
 
+async function showNewLayoutIntro(app) {
+    const result = await app.dialog?.show({
+        title: 'New layout',
+        text: newLayoutIntroHtml(),
+        html: true,
+        buttons: [
+            { id: 'choose', text: 'Choose file', type: 'primary' },
+            { id: 'cancel', text: 'Cancel', type: 'ghost' }
+        ]
+    });
+    if (result?.action === 'choose') openNewLayoutFilePicker();
+    return result;
+}
+
+function newLayoutIntroHtml() {
+    return `<div class="new-layout-intro">
+        <p>Upload an SVG factory drawing or a Keyboarder JSON model. A valid SVG is created immediately.</p>
+        ${newLayoutRequirementsHtml()}
+        <p><a class="new-layout-sample-link" href="app/assets/new-layout-sample.svg" download>Download sample SVG</a></p>
+    </div>`;
+}
+
+function newLayoutRequirementsHtml() {
+    return `<ul class="new-layout-requirements">
+        <li>Required layer: <code>caps</code> with readable key contours.</li>
+        <li>Optional layer: <code>blueprint</code> with the factory drawing.</li>
+        <li>Optional layer: <code>guides</code> for future guide-inset detection.</li>
+        <li>Layer names are case-insensitive: <code>Caps</code> works like <code>caps</code>.</li>
+        <li>If <code>caps</code> exists, missing <code>blueprint</code> is valid.</li>
+    </ul>`;
+}
+
+function openNewLayoutFilePicker() {
+    document.getElementById('newLayoutInput')?.click();
+}
+
 function openNewLayoutSvgPicker() {
-    document.getElementById('drawingSvgInput')?.click();
+    openNewLayoutFilePicker();
+}
+
+async function createNewLayoutFromFile(app, file) {
+    if (!file) return;
+    if (isKeyboardModelJSONFile(file)) return importModelJSONFile(app, file);
+    if (isSvgImportFile(file)) {
+        return createNewLayoutFromSvgSource(app, svgImportSourceFromFile(file), {
+            guardUnsaved: true,
+            showDialogs: true
+        });
+    }
+    await showNewLayoutProblemDialog(app, file, null, {
+        status: 'error',
+        error: 'Choose an SVG drawing or a Keyboarder JSON model.'
+    }, ['Unsupported file type. Upload an SVG drawing or JSON model exported by Keyboarder.']);
+    return svgImportResult(false, 'error', LAST_SVG_IMPORT_REPORT, 'Unsupported file type.');
 }
 
 async function createNewLayoutFromSvgFile(app, file) {
     if (!file) return;
     if (!isSvgImportFile(file)) {
-        await app.dialog?.alert({
-            title: 'Layout import failed',
-            text: 'Choose an SVG drawing.',
-            okText: 'Close'
-        });
-        return;
+        await showNewLayoutProblemDialog(app, file, null, {
+            status: 'error',
+            error: 'Choose an SVG drawing.'
+        }, ['Unsupported file type. Upload an SVG drawing.']);
+        return svgImportResult(false, 'error', LAST_SVG_IMPORT_REPORT, 'Unsupported file type.');
     }
     return createNewLayoutFromSvgSource(app, svgImportSourceFromFile(file), {
         guardUnsaved: true,
@@ -2746,6 +2961,10 @@ async function createNewLayoutFromSvgFile(app, file) {
 
 function isSvgImportFile(file) {
     return !!file && (/\.svg$/i.test(file.name || '') || /svg/i.test(file.type || ''));
+}
+
+function isKeyboardModelJSONFile(file) {
+    return !!file && (/\.json$/i.test(file.name || '') || /json/i.test(file.type || ''));
 }
 
 function svgImportSourceFromFile(file) {
@@ -2796,15 +3015,12 @@ async function createNewLayoutFromSvgSource(app, source, options = {}) {
         analysis = analyzeSvgBlueprint(svgText);
         analyzeMs = prof ? perfSince(analyzeStarted) : 0;
         const draft = analysis.layoutDraft;
-        if (!draft?.layout) throw new Error('No usable keyboard layout draft was detected.');
-        const contentStarted = prof ? perfNow() : 0;
-        addSvgImportContentStats(analysis);
-        contentStatsMs = prof ? perfSince(contentStarted) : 0;
-        pipelineMs = prof ? perfSince(started) : 0;
-        const warnings = analysis.diagnostics?.warnings || [];
-        if (warnings.length) {
+        const blockers = svgImportBlockers(analysis);
+        if (blockers.length) {
+            pipelineMs = prof ? perfSince(started) : 0;
             const details = {
-                status: 'warnings',
+                status: 'blocked',
+                error: blockers.join(' '),
                 ms: pipelineMs,
                 totalMs: prof ? perfSince(started) : 0,
                 readMs,
@@ -2812,23 +3028,17 @@ async function createNewLayoutFromSvgSource(app, source, options = {}) {
                 contentStatsMs
             };
             const report = rememberSvgImportReport(app, file, analysis, details, {
-                intro: 'Keyboarder found warning-level issues in this drawing. Fix the SVG or inspect the draft before creating a preset.'
+                intro: 'Layout was not created because the SVG is missing required drawing data.'
             });
-            if (showDialogs) {
-                const result = await app.dialog?.show({
-                    title: 'Layout not created',
-                    text: report.html,
-                    html: true,
-                    buttons: [
-                        { id: 'ok', text: 'Close', type: 'primary' },
-                        { id: 'report', text: 'Report JSON', type: 'secondary' }
-                    ]
-                });
-                if (result?.action === 'report') exportLastSvgImportReport();
-            }
             recordSvgImportPerf(file, analysis, details);
-            return svgImportResult(false, details.status, report);
+            if (showDialogs) await showNewLayoutProblemDialog(app, file, analysis, details, blockers);
+            return svgImportResult(false, details.status, report, details.error);
         }
+        const contentStarted = prof ? perfNow() : 0;
+        addSvgImportContentStats(analysis);
+        contentStatsMs = prof ? perfSince(contentStarted) : 0;
+        pipelineMs = prof ? perfSince(started) : 0;
+        const warnings = analysis.diagnostics?.warnings || [];
         const guardStarted = prof ? perfNow() : 0;
         const canReplaceLayout = guardEnabled ? await guardUnsavedBeforeNewLayout(app) : true;
         guardMs = prof ? perfSince(guardStarted) : 0;
@@ -2852,9 +3062,12 @@ async function createNewLayoutFromSvgSource(app, source, options = {}) {
         const commitStarted = prof ? perfNow() : 0;
         openImportedCustomLayout(app, customLayout);
         commitMs = prof ? perfSince(commitStarted) : 0;
-        app._showToast?.(svgImportToastText(customLayout.meta.name, draft.stats));
+        app._showToast?.(svgImportToastText(customLayout.meta.name, {
+            ...(draft.stats || {}),
+            warnings: warnings.length
+        }));
         const details = {
-            status: 'created',
+            status: warnings.length ? 'created-with-warnings' : 'created',
             layout: customLayout.meta.name,
             ms: pipelineMs,
             totalMs: prof ? perfSince(started) : 0,
@@ -2862,7 +3075,8 @@ async function createNewLayoutFromSvgSource(app, source, options = {}) {
             analyzeMs,
             contentStatsMs,
             guardMs,
-            commitMs
+            commitMs,
+            warnings: warnings.length
         };
         rememberSvgImportReport(app, file, analysis, details, {
             intro: `Layout ${customLayout.meta.name} was created from this SVG drawing.`
@@ -2887,14 +3101,59 @@ async function createNewLayoutFromSvgSource(app, source, options = {}) {
         });
         recordSvgImportPerf(file, analysis, details);
         if (showDialogs) {
-            await app.dialog?.alert({
-                title: 'Layout import failed',
-                text: e?.message || 'Could not read this SVG drawing.',
-                okText: 'Close'
-            });
+            await showNewLayoutProblemDialog(app, file, analysis, details, [details.error]);
         }
         return svgImportResult(false, details.status, LAST_SVG_IMPORT_REPORT, details.error);
     }
+}
+
+function svgImportBlockers(analysis) {
+    const blockers = [];
+    if (!analysis?.groups?.caps) {
+        blockers.push('No `caps` layer found. Add a group or layer named `caps` with readable key contours.');
+    } else if (!(analysis?.caps || []).length) {
+        blockers.push('The `caps` layer was found, but it does not contain readable key contours.');
+    }
+    if (!analysis?.layoutDraft?.layout) {
+        blockers.push('Keyboarder could not build a layout from the detected contours.');
+    }
+    return blockers;
+}
+
+async function showNewLayoutProblemDialog(app, file, analysis, details = {}, blockers = []) {
+    const report = analysis
+        ? rememberSvgImportReport(app, file, analysis, details, {
+            intro: details.error || 'Layout was not created.'
+        })
+        : null;
+    const buttons = [
+        { id: 'choose', text: 'Choose another file', type: 'primary' },
+        { id: 'close', text: 'Close', type: 'ghost' }
+    ];
+    if (isAdvancedUiMode() && report) buttons.splice(1, 0, { id: 'report', text: 'Report JSON', type: 'secondary' });
+    const result = await app.dialog?.show({
+        title: 'Layout not created',
+        text: newLayoutProblemHtml(file?.name || 'drawing.svg', analysis, blockers, details.error),
+        html: true,
+        buttons
+    });
+    if (result?.action === 'choose') openNewLayoutFilePicker();
+    if (result?.action === 'report') exportLastSvgImportReport();
+    return result;
+}
+
+function newLayoutProblemHtml(fileName, analysis, blockers = [], fallback = '') {
+    const issues = blockers.length ? blockers : [fallback || 'The file could not be imported.'];
+    const summary = analysis ? `<section>${svgImportPreviewHtml(analysis)}</section>` : '';
+    return `<div class="new-layout-problem">
+        <p><strong>${html(fileName)}</strong> is not ready for import.</p>
+        <ul class="new-layout-blockers">${issues.map((issue) => `<li>${html(issue)}</li>`).join('')}</ul>
+        <section>
+            <h3 class="verify-h">Required SVG structure</h3>
+            ${newLayoutRequirementsHtml()}
+        </section>
+        ${summary}
+    </div>`;
 }
 
 function svgImportResult(ok, status, report, error = '') {
@@ -2957,6 +3216,7 @@ function svgImportToastText(layoutName, stats = {}) {
     if (Number.isFinite(content.alphaDualKeys)) parts.push(`${content.alphaDualKeys} alpha-dual`);
     if (Number.isFinite(content.fIconKeys) && content.fIconKeys) parts.push(`${content.fIconKeys} f-icons`);
     if (Number.isFinite(content.placeholderKeys)) parts.push(`${content.placeholderKeys} placeholders`);
+    if (Number.isFinite(stats.warnings) && stats.warnings) parts.push(`${stats.warnings} warnings`);
     return parts.join(' · ');
 }
 
@@ -3743,6 +4003,8 @@ function updateLegendEditor(s, keys) {
     const reset = document.getElementById('resetLegendEditBtn');
     const addText = document.getElementById('addLegendTextBtn');
     const addIcon = document.getElementById('addLegendIconBtn');
+    const keyColorInput = document.getElementById('legendKeyColorInput');
+    const resetKeyColor = document.getElementById('resetKeyColorBtn');
     if (!editor) return;
     const active = activeKey(keys);
     const selected = selectedKeys(keys);
@@ -3750,10 +4012,23 @@ function updateLegendEditor(s, keys) {
     setDisabledIfChanged(reset, !selected.some((k) => !!s.contentEdits?.[k.editId]));
     setDisabledIfChanged(addText, !active);
     setDisabledIfChanged(addIcon, !active);
+    setDisabledIfChanged(keyColorInput, !active);
+    setDisabledIfChanged(resetKeyColor, !active || !cleanHexColor(active.keyColor));
+    setAttrIfChanged(keyColorInput, 'placeholder', s.capColor || 'Global');
     if (!active) {
+        setInputValueForSig(keyColorInput, '', 'none');
+        delete editor.dataset.activeEditId;
         renderElementEditor([], { disabled: true, sig: 'none' });
         return;
     }
+    if (!isAdvancedUiMode()
+        && !document.getElementById('legendPanel')?.classList.contains('panel-collapsed')
+        && editor.dataset.activeEditId === active.editId
+        && legendDraftDiffersFromActive(active)) {
+        return;
+    }
+    editor.dataset.activeEditId = active.editId;
+    setInputValueForSig(keyColorInput, cleanHexColor(active.keyColor), `${active.editId}:${cleanHexColor(active.keyColor)}`);
     const elements = sourceElements(active);
     const sig = `${active.editId}|${active.tpl}|${JSON.stringify(elements)}|${fontRegistrySignature()}`;
     renderElementEditor(elements, { disabled: false, sig, templateId: variantForKey(active) });
@@ -3906,6 +4181,7 @@ function applyLegendEditor(app) {
     const select = document.getElementById('legendTemplateSelect');
     const variant = TEMPLATE_BY_ID.get(select?.value || '');
     const editedElements = active ? readElementEditorElements() : null;
+    const activeKeyColor = active ? readLegendKeyColor() : '';
     const editorTemplateId = document.getElementById('legendElementEditor')?.dataset.templateId || '';
     const next = sanitizeContentEdits(app.settings.contentEdits || {});
 
@@ -3920,9 +4196,11 @@ function applyLegendEditor(app) {
             elements = editedElements;
             if (variant) tpl = variant.tpl;
         }
-        writeContentEdit(next, k, tpl, elements);
+        const keyColor = active && k.editId === active.editId ? activeKeyColor : cleanHexColor(k.keyColor);
+        writeContentEdit(next, k, tpl, elements, keyColor);
     }
 
+    clearLegendDraftState();
     app.settingsStore.set('contentEdits', next);
 }
 
@@ -3932,7 +4210,19 @@ function resetSelectedLegendEdits(app) {
     if (!selected.length) return;
     const next = sanitizeContentEdits(app.settings.contentEdits || {});
     for (const k of selected) delete next[k.editId];
+    clearLegendDraftState();
     app.settingsStore.set('contentEdits', next);
+}
+
+function clearLegendDraftState() {
+    const editor = document.getElementById('legendElementEditor');
+    if (!editor) return;
+    delete editor.dataset.activeEditId;
+    delete editor.dataset.sig;
+}
+
+function readLegendKeyColor() {
+    return cleanHexColor(document.getElementById('legendKeyColorInput')?.value || '');
 }
 
 function normalizedSelection(keys) {
@@ -3972,6 +4262,87 @@ function selectKey(app, index, { toggle = false } = {}) {
     }
     SELECTION = { active: index, indices: [...current].sort((a, b) => a - b) };
     app.renderNow();
+}
+
+function legendSelectionWouldChange(index, { toggle = false } = {}) {
+    if (!Number.isInteger(index)) return !!SELECTION.indices?.length;
+    if (toggle) return true;
+    return SELECTION.active !== index || (SELECTION.indices || []).length !== 1 || SELECTION.indices[0] !== index;
+}
+
+function legendEditorDirty(app) {
+    if (isAdvancedUiMode()) return false;
+    const panel = document.getElementById('legendPanel');
+    if (!panel || panel.classList.contains('panel-collapsed')) return false;
+    const keys = layoutFor(app.settings).keys;
+    const active = activeKey(keys);
+    if (!active) return false;
+    return legendDraftDiffersFromActive(active);
+}
+
+function legendDraftDiffersFromActive(active) {
+    if (!active) return false;
+    const editor = document.getElementById('legendElementEditor');
+    if (!editor || editor.dataset.activeEditId !== active.editId) return false;
+    const currentTemplate = editor?.dataset.templateId || variantForKey(active);
+    const baseTemplate = variantForKey(active);
+    return currentTemplate !== baseTemplate
+        || readLegendKeyColor() !== cleanHexColor(active.keyColor)
+        || JSON.stringify(readElementEditorElements()) !== JSON.stringify(sourceElements(active));
+}
+
+async function confirmDiscardLegendDraft(app) {
+    if (!legendEditorDirty(app)) return true;
+    return await app.dialog?.confirm({
+        title: 'Discard unapplied edits?',
+        text: 'This key has changes that have not been applied.',
+        confirmText: 'Discard',
+        cancelText: 'Keep editing',
+        danger: true
+    }) === true;
+}
+
+async function closeLegendPopoverIfAllowed(app) {
+    if (!(await confirmDiscardLegendDraft(app))) return false;
+    closeLegendPopover(app);
+    selectKey(app, null);
+    return true;
+}
+
+function closeLegendPopover(app = null) {
+    const panel = document.getElementById('legendPanel');
+    if (!panel) return;
+    clearLegendDraftState();
+    panel.classList.add('panel-collapsed');
+    panel.querySelector('.collapse-icon')?.classList.add('collapsed');
+    panel.style.left = '';
+    panel.style.top = '';
+    if (app && legendEditorDirty(app)) updateLegendEditor(app.settings, layoutFor(app.settings).keys);
+}
+
+function openLegendPopoverAt(clientX, clientY) {
+    const panel = document.getElementById('legendPanel');
+    if (!panel) return;
+    panel.classList.remove('panel-collapsed');
+    panel.querySelector('.collapse-icon')?.classList.remove('collapsed');
+    requestAnimationFrame(() => positionLegendPopover(panel, clientX, clientY));
+}
+
+function positionLegendPopover(panel, clientX, clientY) {
+    const margin = 14;
+    const gap = 12;
+    const width = panel.offsetWidth || 390;
+    const height = panel.offsetHeight || 420;
+    const vw = window.innerWidth || 1280;
+    const vh = window.innerHeight || 800;
+    let left = clientX + gap;
+    let top = clientY + gap;
+    if (left + width + margin > vw) left = clientX - width - gap;
+    if (top + height + margin > vh) top = vh - height - margin;
+    left = clamp(left, margin, Math.max(margin, vw - width - margin));
+    top = clamp(top, margin, Math.max(margin, vh - height - margin));
+    panel.style.left = `${Math.round(left)}px`;
+    panel.style.top = `${Math.round(top)}px`;
 }
 
 function expandLegendPanel() {

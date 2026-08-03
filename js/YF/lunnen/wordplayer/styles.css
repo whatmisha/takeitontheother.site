@@ -1,0 +1,235 @@
+@font-face {
+    font-family: "YSTextPattern";
+    src: url("./fonts/Yandex Sans/YS Text Variable/YSText-Upright-weight-VF.ttf") format("truetype");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: block;
+}
+
+@font-face {
+    font-family: "CoFo Sans";
+    src: url("./ui-framework/fonts/TT_Commons_Classic_Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+}
+
+@font-face {
+    font-family: "CoFo Sans";
+    src: url("./ui-framework/fonts/TT_Commons_Classic_Medium.woff2") format("woff2");
+    font-weight: 500;
+    font-style: normal;
+    font-display: block;
+}
+
+:root {
+    --word-ui-panel-width: 306px;
+}
+
+body {
+    letter-spacing: 0;
+}
+
+.preset-toolbar-cluster {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.word-canvas {
+    background: #050505;
+}
+
+.word-canvas svg {
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.pattern-letter {
+    font-family: "YSTextPattern", sans-serif;
+    font-variation-settings: "wght" var(--pattern-weight, 400);
+    letter-spacing: 0;
+    paint-order: stroke fill;
+    user-select: none;
+}
+
+.form-boundary-dot,
+.magnet-ui,
+.gravity-ui {
+    pointer-events: none;
+}
+
+#textPanel,
+#canvasPanel {
+    left: var(--spacing-3xl);
+    right: auto;
+    width: var(--word-ui-panel-width);
+}
+
+#textPanel {
+    top: 74px;
+    max-height: calc(100vh - 94px);
+}
+
+#canvasPanel {
+    top: auto;
+    bottom: 74px;
+    max-height: calc(100vh - 160px);
+}
+
+.mode-panel {
+    top: 74px;
+    right: var(--spacing-3xl);
+    width: var(--word-ui-panel-width);
+}
+
+.container[data-mode="dither"] [data-mode-panel]:not([data-mode-panel="dither"]),
+.container[data-mode="fields"] [data-mode-panel]:not([data-mode-panel="fields"]),
+.container[data-mode="forms"] [data-mode-panel]:not([data-mode-panel="forms"]) {
+    display: none;
+}
+
+.container[data-mode="dither"] .dither-hidden {
+    display: none;
+}
+
+.pattern-text-input {
+    min-height: 74px;
+    resize: vertical;
+    line-height: 1.28;
+}
+
+.file-status {
+    margin-top: var(--spacing-sm);
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mode-control {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.response-control {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.tone-response-control {
+    gap: 6px;
+}
+
+.tone-response-control .pill-toggle {
+    flex: 1 1 auto;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.response-control label,
+.mode-control label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.outline-export-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 44px;
+    padding: 0 15px;
+    border-radius: 22px;
+    background: var(--color-bg-panel);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+}
+
+.outline-export-toggle input {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    accent-color: #fff;
+}
+
+.btn-full {
+    width: 100%;
+}
+
+.text-input {
+    width: 100%;
+    min-width: 0;
+}
+
+.control-section + .control-section {
+    margin-top: var(--spacing-lg);
+}
+
+#textPanel .panel-content,
+#canvasPanel .panel-content,
+.mode-panel .panel-content {
+    overflow-y: auto;
+}
+
+#textPanel .panel-content {
+    max-height: calc(100vh - 150px);
+}
+
+#canvasPanel .panel-content {
+    max-height: calc(100vh - 220px);
+}
+
+.mode-panel .panel-content {
+    max-height: calc(100vh - 160px);
+}
+
+#textPanel.panel-collapsed .panel-content,
+#canvasPanel.panel-collapsed .panel-content,
+.mode-panel.panel-collapsed .panel-content {
+    max-height: 0;
+}
+
+@media (max-height: 820px) and (min-width: 981px) {
+    #canvasPanel {
+        bottom: 74px;
+        max-height: 206px;
+    }
+
+    #canvasPanel .panel-content {
+        max-height: 150px;
+    }
+}
+
+@media (max-width: 980px) {
+    #textPanel,
+    #canvasPanel,
+    .mode-panel {
+        position: fixed;
+        left: var(--spacing-md);
+        right: var(--spacing-md);
+        width: auto;
+        max-height: 38vh;
+    }
+
+    #textPanel {
+        top: 64px;
+        max-height: calc(100vh - 140px);
+    }
+
+    #canvasPanel {
+        display: none;
+    }
+
+    .mode-panel {
+        top: auto;
+        bottom: 74px;
+    }
+
+    .bottom-buttons {
+        gap: var(--spacing-sm);
+    }
+}

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dither</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="main-content">
+            <div class="canvas-container">
+                <canvas id="canvas"></canvas>
+                <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            </div>
+
+            <div class="controls-panel" id="controlsPanel">
+                <div class="panel-header" id="panelHeader">
+                    <span class="drag-icon">⋮⋮</span>
+                    <span>Settings</span>
+                </div>
+                <div class="panel-content">
+                <div class="control-section">
+                    <h3>Image Preprocessing</h3>
+                    
+                    <div class="control-group">
+                        <label for="blur">
+                            <span>Blur</span>
+                            <span class="value-display" id="blurValue">0</span>
+                        </label>
+                        <input type="range" id="blur" min="0" max="10" step="0.1" value="0">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="grain">
+                            <span>Grain</span>
+                            <span class="value-display" id="grainValue">0</span>
+                        </label>
+                        <input type="range" id="grain" min="0" max="100" step="1" value="0">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="gamma">
+                            <span>Gamma</span>
+                            <span class="value-display" id="gammaValue">1.0</span>
+                        </label>
+                        <input type="range" id="gamma" min="0.1" max="3" step="0.1" value="1">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="blackPoint">
+                            <span>Black Point</span>
+                            <span class="value-display" id="blackPointValue">0</span>
+                        </label>
+                        <input type="range" id="blackPoint" min="0" max="255" step="1" value="0">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="whitePoint">
+                            <span>White Point</span>
+                            <span class="value-display" id="whitePointValue">255</span>
+                        </label>
+                        <input type="range" id="whitePoint" min="0" max="255" step="1" value="255">
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Dithering Settings</h3>
+                    
+                    <div class="control-group">
+                        <label>Pattern</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="pattern" value="floyd-steinberg" checked>
+                                <span>Floyd-Steinberg</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="pattern" value="bayer">
+                                <span>Bayer</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="pattern" value="random">
+                                <span>Random</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="pixelSize">
+                            <span>Pixel Size</span>
+                            <span class="value-display" id="pixelSizeValue">1</span>
+                        </label>
+                        <input type="range" id="pixelSize" min="1" max="16" step="1" value="1">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="threshold">
+                            <span>Threshold</span>
+                            <span class="value-display" id="thresholdValue">128</span>
+                        </label>
+                        <input type="range" id="threshold" min="0" max="255" step="1" value="128">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Color Mode</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="colorMode" value="monochrome" checked>
+                                <span>Monochrome</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="colorMode" value="grayscale">
+                                <span>Grayscale</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="colorMode" value="color">
+                                <span>Color</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="invertImage">
+                            <span>Invert Image</span>
+                        </label>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="showEffect" checked>
+                            <span>Show Effect</span>
+                        </label>
+                    </div>
+                </div>
+
+                
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-buttons">
+        <button class="btn-fixed" id="uploadBtnFixed" onclick="document.getElementById('imageInput').click()">
+            + Add Image (⌘O)
+        </button>
+        <button class="btn-fixed btn-export" id="exportBtn" disabled>
+            Export (⌘E)
+        </button>
+    </div>
+
+    <script src="dither.js"></script>
+</body>
+</html>

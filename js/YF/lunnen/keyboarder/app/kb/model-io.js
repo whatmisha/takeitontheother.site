@@ -80,6 +80,14 @@ export function cleanCompOverride(compOverride) {
     return Number.isFinite(px) ? { px } : null;
 }
 
+export function cleanHexColor(value) {
+    const raw = String(value || '').trim().toLowerCase();
+    const short = raw.match(/^#?([a-f0-9]{3})$/i);
+    if (short) return '#' + short[1].split('').map((ch) => ch + ch).join('');
+    const full = raw.match(/^#?([a-f0-9]{6})$/i);
+    return full ? `#${full[1]}` : '';
+}
+
 function roundCompensationEm(value) {
     return Math.round(value * 100) / 100;
 }
@@ -150,10 +158,13 @@ export function sanitizeContentEdits(edits = {}, options = {}) {
     if (!edits || typeof edits !== 'object') return out;
     for (const [id, edit] of Object.entries(edits)) {
         if (!edit || typeof edit !== 'object') continue;
-        out[id] = {
+        const clean = {
             tpl: String(edit.tpl || 'blank'),
             elements: cleanElements(edit.elements, options)
         };
+        const keyColor = cleanHexColor(edit.keyColor);
+        if (keyColor) clean.keyColor = keyColor;
+        out[id] = clean;
     }
     return out;
 }

@@ -40,14 +40,14 @@ export function parseSvgAttributes(source = '') {
 
 export function extractSvgGroup(svgText = '', id = '') {
     const svg = String(svgText || '');
-    const wanted = String(id || '');
+    const wanted = normalizeSvgGroupId(id);
     if (!wanted) return '';
     const tagRe = /<\/?g\b[^>]*>/gi;
     let m;
     while ((m = tagRe.exec(svg))) {
         const tag = m[0];
         if (/^<\//.test(tag)) continue;
-        if (parseSvgAttributes(tag).id !== wanted) continue;
+        if (normalizeSvgGroupId(parseSvgAttributes(tag).id) !== wanted) continue;
         const start = m.index;
         let depth = /\/\s*>$/.test(tag) ? 0 : 1;
         if (depth === 0) return tag;
@@ -63,6 +63,10 @@ export function extractSvgGroup(svgText = '', id = '') {
         return svg.slice(start);
     }
     return '';
+}
+
+function normalizeSvgGroupId(id = '') {
+    return String(id || '').trim().toLowerCase();
 }
 
 export function parseViewBox(svgText = '') {
@@ -277,10 +281,12 @@ export function analyzeSvgBlueprint(svgText = '') {
     const viewBox = timed('viewBoxMs', () => parseViewBox(stripped.svg));
     const groups = timed('groupsMs', () => ({
         blueprint: extractSvgGroup(stripped.svg, 'blueprint'),
-        caps: extractSvgGroup(stripped.svg, 'caps')
+        caps: extractSvgGroup(stripped.svg, 'caps'),
+        guides: extractSvgGroup(stripped.svg, 'guides')
     }));
     const blueprint = groups.blueprint;
     const caps = groups.caps;
+    const guides = groups.guides;
     const source = blueprint || stripped.svg;
     const sourceCounts = timed('tagCountsMs', () => countElementTags(source, ['line', 'path', 'rect', 'polygon']));
     const lines = timed('parseLinesMs', () => parseSvgLines(source));
@@ -306,7 +312,7 @@ export function analyzeSvgBlueprint(svgText = '') {
         hasBlueprint: !!blueprint
     }));
     const diagnostics = timed('diagnosticsMs', () => diagnoseRecognizedKeys({
-        groups: { blueprint: !!blueprint, caps: !!caps },
+        groups: { blueprint: !!blueprint, caps: !!caps, guides: !!guides },
         elements,
         calibration,
         caps: capShapes,
@@ -323,7 +329,8 @@ export function analyzeSvgBlueprint(svgText = '') {
         },
         groups: {
             blueprint: !!blueprint,
-            caps: !!caps
+            caps: !!caps,
+            guides: !!guides
         },
         elements: {
             lines: lines.length,
@@ -961,7 +968,7 @@ export function blueprintSummaryLines(analysis) {
     const b = analysis.lineBuckets || {};
     const c = analysis.calibration;
     const lines = [
-        `Groups: blueprint ${analysis.groups?.blueprint ? 'yes' : 'no'}, caps ${analysis.groups?.caps ? 'yes' : 'no'}`,
+        `Groups: blueprint ${analysis.groups?.blueprint ? 'yes' : 'no'}, caps ${analysis.groups?.caps ? 'yes' : 'no'}, guides ${analysis.groups?.guides ? 'yes' : 'no'}`,
         `Lines: ${b.horizontal?.length || 0} H, ${b.vertical?.length || 0} V, ${b.diagonal?.length || 0} diagonal`,
         `Paths: ${analysis.elements?.paths || 0}; span groups: ${analysis.horizontalSpanGroups || 0}`
     ];
