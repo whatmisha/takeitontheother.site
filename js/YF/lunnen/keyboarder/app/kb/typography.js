@@ -5,6 +5,7 @@
  * Ось Y направлена вниз, как в SVG: ink.y0 = baseline − yMax.
  */
 import opentype from '../../vendor/lib/opentype.module.js';
+import { createVariationModel } from './variations.js';
 
 /** Метрики, снятые из файла. Геометрический замер приоритетнее объявленного в OS/2. */
 function readMetrics(font) {
@@ -92,27 +93,76 @@ function exactBounds(commands) {
     return Number.isFinite(x0) ? [x0, y0, x1, y1] : null;
 }
 
+function compactPathNumber(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return '0';
+    return n.toFixed(4).replace(/\.?0+$/, '') || '0';
+}
+
+function pathDataFromCommands(commands, x, y, scale) {
+    const out = [];
+    for (const cmd of commands || []) {
+        if (cmd.type === 'M') {
+            out.push(`M${compactPathNumber(x + cmd.x * scale)} ${compactPathNumber(y - cmd.y * scale)}`);
+        } else if (cmd.type === 'L') {
+            out.push(`L${compactPathNumber(x + cmd.x * scale)} ${compactPathNumber(y - cmd.y * scale)}`);
+        } else if (cmd.type === 'Q') {
+            out.push(`Q${compactPathNumber(x + cmd.x1 * scale)} ${compactPathNumber(y - cmd.y1 * scale)} ${compactPathNumber(x + cmd.x * scale)} ${compactPathNumber(y - cmd.y * scale)}`);
+        } else if (cmd.type === 'C') {
+            out.push(`C${compactPathNumber(x + cmd.x1 * scale)} ${compactPathNumber(y - cmd.y1 * scale)} ${compactPathNumber(x + cmd.x2 * scale)} ${compactPathNumber(y - cmd.y2 * scale)} ${compactPathNumber(x + cmd.x * scale)} ${compactPathNumber(y - cmd.y * scale)}`);
+        } else if (cmd.type === 'Z') {
+            out.push('Z');
+        }
+    }
+    return out.join('');
+}
+
 export class Typeface {
-    constructor(font) {
+    constructor(font, buffer = null) {
         this.font = font;
+        this.variationModel = createVariationModel(font, buffer);
+        this.variationCoordinates = {};
+        this.variationNormalized = this.variationModel?.normalize({}) || {};
+        this.variationSig = 'default';
         Object.assign(this, readMetrics(font));
         this._glyphs = new Map();
     }
 
+    setVariations(coordinates = {}) {
+        if (!this.variationModel) return false;
+        const next = {};
+        for (const axis of this.variationModel.axes || []) {
+            const value = Number(coordinates[axis.tag]);
+            next[axis.tag] = Number.isFinite(value) ? value : axis.defaultValue;
+        }
+        const sig = JSON.stringify(next);
+        if (sig === this.variationSig) return false;
+        this.variationCoordinates = next;
+        this.variationNormalized = this.variationModel.normalize(next);
+        this.variationSig = sig;
+        this._glyphs.clear();
+        return true;
+    }
+
     /** Глиф с кэшированным ink-боксом; null, если знака нет в cmap. */
     glyph(ch) {
-        if (this._glyphs.has(ch)) return this._glyphs.get(ch);
+        const key = `${this.variationSig}\n${ch}`;
+        if (this._glyphs.has(key)) return this._glyphs.get(key);
         let out = null;
         if (this.font.charToGlyphIndex(ch) > 0) {
             const g = this.font.charToGlyph(ch);
+            const instance = this.variationModel
+                ? this.variationModel.instantiateGlyph(g, this.variationNormalized)
+                : { commands: g.path.commands, advance: g.advanceWidth };
             out = {
                 glyph: g,
-                advance: g.advanceWidth,
+                commands: instance.commands,
+                advance: instance.advance,
                 // [xMin, yMin, xMax, yMax] в em-units, Y вверх — порядок как в fontTools
-                bbox: exactBounds(g.path.commands)
+                bbox: exactBounds(instance.commands)
             };
         }
-        this._glyphs.set(ch, out);
+        this._glyphs.set(key, out);
         return out;
     }
 
@@ -178,8 +228,7 @@ export class Typeface {
         for (const ch of text) {
             const g = this.glyph(ch);
             if (g) {
-                const p = g.glyph.getPath(start[0] + pen * k, start[1], size);
-                const d = p.toPathData(4);
+                const d = pathDataFromCommands(g.commands, start[0] + pen * k, start[1], k);
                 if (d) out.push(d);
             }
             pen += this.advance(ch) + tracking * this.upm;
@@ -189,7 +238,7 @@ export class Typeface {
 }
 
 /** Разбор шрифта из ArrayBuffer. */
-export const parseFont = (buf) => new Typeface(opentype.parse(buf));
+export const parseFont = (buf) => new Typeface(opentype.parse(buf), buf);
 
 /** Загрузка шрифта по URL (браузер). */
 export async function loadTypeface(url) {

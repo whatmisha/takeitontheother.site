@@ -3,7 +3,7 @@ export const MODEL_SCHEMA = 'keyboarder.model.v1';
 export const PRESET_KEYS = [
     'layoutName', 'customLayout',
     'colPitch', 'rowPitch', 'keyWidth1U', 'keyHeight', 'cornerRadius', 'guideInset',
-    'glyphSize', 'numpadSize', 'secondarySize', 'wordSize', 'leading', 'trackingOffset',
+    'glyphSize', 'fontWeight', 'numpadSize', 'secondarySize', 'wordSize', 'leading', 'trackingOffset',
     'compensationMode', 'legendTextMode', 'compensationTableEdits',
     'showCaps', 'showGuides', 'showGlyphs', 'showIcons', 'showDrawing', 'showColumns', 'showIndex',
     'showInk', 'showSlots', 'showRef', 'showDiff', 'showBlocks', 'languageLayer',
@@ -13,7 +13,7 @@ export const PRESET_KEYS = [
 
 export const GRID_SETTING_KEYS = ['colPitch', 'rowPitch', 'keyWidth1U', 'keyHeight', 'cornerRadius', 'guideInset'];
 export const TYPE_SETTING_KEYS = [
-    'glyphSize', 'numpadSize', 'secondarySize', 'wordSize', 'leading', 'trackingOffset',
+    'glyphSize', 'fontWeight', 'numpadSize', 'secondarySize', 'wordSize', 'leading', 'trackingOffset',
     'compensationMode', 'legendTextMode', 'compensationTableEdits'
 ];
 export const LAYER_SETTING_KEYS = [
@@ -236,6 +236,7 @@ export function buildKeyboardModel(blob = {}, defaults = {}, options = {}) {
         units: {
             grid: 'mm',
             type: 'pt',
+            fontWeight: 'wght',
             trackingOffset: 'em',
             compensationTable: 'em/1000',
             compensationOverride: 'px'

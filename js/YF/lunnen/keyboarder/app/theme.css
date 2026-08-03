@@ -30,8 +30,8 @@
 
 @font-face {
     font-family: 'YS Text';
-    src: url('../Fonts/YS Text/YS Text-Regular.ttf') format('truetype');
-    font-weight: 400;
+    src: url('../Fonts/YS%20Text%20Variable/YSText-Upright-weight-VF.ttf') format('truetype');
+    font-weight: 100 900;
     font-style: normal;
     font-display: swap;
 }

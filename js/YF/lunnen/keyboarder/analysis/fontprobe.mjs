@@ -39,11 +39,45 @@ const variable = loadTypeface('../Fonts/YS Text Variable/YSText-Upright-weight-V
 const variableProbe = probeTypeface(variable);
 const variableParams = autoCompensationParams(variable, variableProbe);
 const variableInvariants = runCompensationInvariants(variable, variableParams);
+variable.setVariations({ wght: 100, wdth: 100 });
+const variableLightH = {
+    advance: variable.advance('H'),
+    path: variable.pathData('H', 72, 0, [0, 72])
+};
+variable.setVariations({ wght: 900, wdth: 100 });
+const variableBlackH = {
+    advance: variable.advance('H'),
+    path: variable.pathData('H', 72, 0, [0, 72])
+};
+const cyrillicCompositePairs = [
+    ['К', 'K'],
+    ['Е', 'E'],
+    ['Н', 'H'],
+    ['Х', 'X'],
+    ['В', 'B'],
+    ['А', 'A'],
+    ['Р', 'P'],
+    ['О', 'O'],
+    ['С', 'C'],
+    ['М', 'M'],
+    ['Т', 'T']
+];
+const variableBlackCompositePaths = cyrillicCompositePairs.map(([cyrillic, latin]) => ({
+    cyrillic,
+    latin,
+    samePath: variable.pathData(cyrillic, 72, 0, [0, 72]) === variable.pathData(latin, 72, 0, [0, 72]),
+    box: variable.box(cyrillic)
+}));
+variable.setVariations({ wght: 400, wdth: 100 });
 
 assert.equal(variableProbe.variations.axes.length, 2);
 assert.deepEqual(variableProbe.variations.axes.map((axis) => axis.tag), ['wght', 'wdth']);
 assert.deepEqual(variableProbe.variations.axes.map((axis) => axis.default), [400, 100]);
 assert.ok(variableProbe.variations.instances.length >= 1, 'variable font should expose named instances');
+assert.notEqual(variableLightH.path, variableBlackH.path, 'wght axis should change outline path data');
+assert.ok(variableBlackH.advance > variableLightH.advance, 'wght axis should update advance width');
+assert.ok(variableBlackCompositePaths.every((sample) => sample.samePath), 'Cyrillic composite outlines should follow their Latin base glyphs');
+assert.ok(variableBlackCompositePaths.every((sample) => sample.box?.[3] < 820), 'Cyrillic composite outlines should not spike outside the cap zone');
 assert.equal(variableParams.eps, YS_TEXT_REGULAR.eps);
 assert.equal(variableInvariants.pass, true);
 

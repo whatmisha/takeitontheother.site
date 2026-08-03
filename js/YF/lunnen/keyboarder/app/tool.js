@@ -50,6 +50,7 @@ const MAX_KEY_WIDTH_MM = 80;
 
 const TYPE_DEFAULTS = {
     glyphSize: 15.1999,
+    fontWeight: 400,
     numpadSize: 13.1732,
     secondarySize: 12.0745,
     wordSize: 9.1199,
@@ -65,6 +66,7 @@ const SLIDER_BY_SETTING = {
     cornerRadius: 'radiusSlider',
     guideInset: 'insetSlider',
     glyphSize: 'glyphSizeSlider',
+    fontWeight: 'fontWeightSlider',
     numpadSize: 'numpadSizeSlider',
     secondarySize: 'secondarySizeSlider',
     wordSize: 'wordSizeSlider',
@@ -124,7 +126,7 @@ const PRESET_NAME_MIGRATIONS = {
     'Work 1 L Pad': 'Work 1.0 L Pad'
 };
 const REFERENCE_FONT_ID = 'reference';
-const REFERENCE_FONT_URL = 'Fonts/YS%20Text/YS%20Text-Regular.ttf';
+const REFERENCE_FONT_URL = 'Fonts/YS%20Text%20Variable/YSText-Upright-weight-VF.ttf';
 const UI_MODE_STORAGE_KEY = 'keyboarder.uiMode';
 let UI_ADVANCED = false;
 const REFERENCE_FONT_FAMILY = 'YS Text';
@@ -339,6 +341,34 @@ function fontVariationSettings(entry) {
     return parts.length ? parts.join(', ') : '';
 }
 
+function fontWeightFromSettings(s = {}) {
+    return clamp(finiteOr(s.fontWeight, TYPE_DEFAULTS.fontWeight), 100, 900);
+}
+
+function weightAxisFor(entry) {
+    return entry?.probe?.variations?.axes?.find((axis) => axis.tag === 'wght') || null;
+}
+
+function syncFontWeightSetting(s = {}) {
+    let changed = false;
+    for (const entry of FONT_REGISTRY.values()) {
+        const axis = weightAxisFor(entry);
+        if (!axis) continue;
+        const value = clamp(fontWeightFromSettings(s), axis.min, axis.max);
+        if (!Number.isFinite(value)) continue;
+        if (Math.abs((entry.coordinates?.[axis.tag] ?? axis.default ?? 0) - value) < 0.001) continue;
+        entry.coordinates = { ...(entry.coordinates || {}), [axis.tag]: value };
+        entry.tf?.setVariations?.(entry.coordinates);
+        entry.instanceName = matchingFontInstance(entry)
+            ? entry.probe.variations.instances[Number(matchingFontInstance(entry))]?.name || ''
+            : '';
+        changed = true;
+    }
+    if (!changed) return;
+    TYPEFACE_SIG = fontRegistrySignature();
+    COMP_CACHE.clear();
+}
+
 function fontRegistrySignature() {
     const entries = [...FONT_REGISTRY.values()]
         .map((entry) => `${entry.id}:${entry.signature}:${JSON.stringify(entry.coordinates || {})}`)
@@ -399,6 +429,7 @@ function gridFrom(s) {
 
 const typeSigFrom = (s) => JSON.stringify({
     glyphSize: s.glyphSize,
+    fontWeight: s.fontWeight,
     numpadSize: s.numpadSize,
     secondarySize: s.secondarySize,
     wordSize: s.wordSize,
@@ -494,6 +525,7 @@ function geometrySigFrom(sourceLayout, grid, layoutEdits) {
 function contentSigFrom(s, geometrySig) {
     return geometrySig + JSON.stringify({
         glyphSize: s.glyphSize,
+        fontWeight: s.fontWeight,
         numpadSize: s.numpadSize,
         secondarySize: s.secondarySize,
         wordSize: s.wordSize,
@@ -505,6 +537,7 @@ function contentSigFrom(s, geometrySig) {
 
 function legendSigFrom(s, contentSig) {
     return contentSig + TYPEFACE_SIG + JSON.stringify({
+        fontWeight: s.fontWeight,
         leading: s.leading,
         compensationMode: s.compensationMode,
         compensationTableEdits: s.compensationTableEdits || {}
@@ -577,6 +610,7 @@ function cloneGeometryKey(k) {
 }
 
 function layoutFor(s) {
+    syncFontWeightSetting(s);
     const prof = perfEnabled();
     const started = prof ? perfNow() : 0;
     const sourceLayout = sourceLayoutFor(s);
@@ -661,6 +695,7 @@ const app = defineTool({
 
         // Type sizes are pt. Internally 1 px = 1 pt, so no conversion is needed.
         glyphSize: TYPE_DEFAULTS.glyphSize,
+        fontWeight: TYPE_DEFAULTS.fontWeight,
         numpadSize: TYPE_DEFAULTS.numpadSize,
         secondarySize: TYPE_DEFAULTS.secondarySize,
         wordSize: TYPE_DEFAULTS.wordSize,
@@ -704,6 +739,7 @@ const app = defineTool({
             { id: 'insetSlider', valueId: 'insetValue', setting: 'guideInset', min: 0, max: 6.5, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
 
             { id: 'glyphSizeSlider', valueId: 'glyphSizeValue', setting: 'glyphSize', min: 6, max: 24, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' pt' },
+            { id: 'fontWeightSlider', valueId: 'fontWeightValue', setting: 'fontWeight', min: 100, max: 900, decimals: 0, baseStep: 1, shiftStep: 10, suffix: '' },
             { id: 'numpadSizeSlider', valueId: 'numpadSizeValue', setting: 'numpadSize', min: 6, max: 24, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' pt' },
             { id: 'secondarySizeSlider', valueId: 'secondarySizeValue', setting: 'secondarySize', min: 6, max: 24, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' pt' },
             { id: 'wordSizeSlider', valueId: 'wordSizeValue', setting: 'wordSize', min: 5, max: 18, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' pt' },
@@ -857,7 +893,7 @@ const app = defineTool({
             for (const el of legends) {
                 if (el.kind !== 'txt') continue;
                 if (textMode === 'text') {
-                    g.appendChild(renderLegendText(create, el, s.inkColor));
+                    g.appendChild(renderLegendText(create, el, s.inkColor, s));
                     continue;
                 }
                 const tf = el.pathD ? null : typefaceForElement(el);
@@ -1249,7 +1285,7 @@ const app = defineTool({
         ensureReferenceAssetsLoaded(referenceAssetsForLayout(sourceLayoutFor(readyApp.settings)), readyApp);
 
         // Гарнитура: путь с пробелом обязан быть URL-энкоден, папка называется Fonts с большой.
-        perfMarkStartup('font-load-start', { font: 'YS Text Regular' });
+        perfMarkStartup('font-load-start', { font: 'YS Text Variable' });
         loadTypeface(REFERENCE_FONT_URL).then(async (tf) => {
             await registerReferenceFont(tf);
             COMP_CACHE = new Map();
@@ -1257,14 +1293,14 @@ const app = defineTool({
             syncCompensationTableEditor(readyApp.settings);
             readyApp.render();
             perfMarkStartup('font-ready', {
-                font: 'YS Text Regular',
+                font: 'YS Text Variable',
                 registryFonts: FONT_REGISTRY.size
             });
         }).catch((e) => {
             TYPEFACE_SIG = 'font:failed';
             syncFontImportStatus();
             perfMarkStartup('font-failed', {
-                font: 'YS Text Regular',
+                font: 'YS Text Variable',
                 error: e?.message || String(e)
             });
             readyApp.dialog?.alert({
@@ -2469,8 +2505,8 @@ async function registerReferenceFont(tf) {
     const entry = {
         id: REFERENCE_FONT_ID,
         kind: 'reference',
-        name: 'YS Text Regular',
-        fileName: 'YS Text-Regular.ttf',
+        name: 'YS Text Variable',
+        fileName: 'YSText-Upright-weight-VF.ttf',
         size: 0,
         tf,
         probe,
@@ -2478,8 +2514,9 @@ async function registerReferenceFont(tf) {
         invariants: runCompensationInvariants(tf, YS_TEXT_REGULAR),
         coordinates: defaultVariationCoordinates(probe),
         cssFamily: REFERENCE_FONT_FAMILY,
-        signature: 'font:reference:ys-text-regular'
+        signature: 'font:reference:ys-text-variable'
     };
+    entry.tf?.setVariations?.(entry.coordinates);
     FONT_REGISTRY.set(entry.id, entry);
     REFERENCE_TYPEFACE = tf;
     REFERENCE_FONT_PROBE = probe;
@@ -2520,7 +2557,7 @@ async function buildSessionFontEntry(file, tf, dataUrl) {
     const probe = probeTypeface(tf);
     const params = autoCompensationParams(tf, probe);
     const id = fontImportId(file, probe);
-    return {
+    const entry = {
         id,
         kind: 'session',
         name: fontDisplayName(probe, file.name || 'Session font'),
@@ -2536,6 +2573,8 @@ async function buildSessionFontEntry(file, tf, dataUrl) {
         dataUrl,
         signature: `font:session:${id}`
     };
+    entry.tf?.setVariations?.(entry.coordinates);
+    return entry;
 }
 
 function setActiveFontId(app, id, options = {}) {
@@ -2741,6 +2780,11 @@ function applyFontInstance(app, index) {
         ...defaultVariationCoordinates(entry.probe),
         ...(instance.coordinates || {})
     };
+    entry.tf?.setVariations?.(entry.coordinates);
+    if (Number.isFinite(entry.coordinates.wght)) {
+        app.settingsStore?.set('fontWeight', entry.coordinates.wght);
+        syncSliderValues(app, { fontWeight: entry.coordinates.wght });
+    }
     entry.instanceName = instance.name || '';
     TYPEFACE_SIG = fontRegistrySignature();
     COMP_CACHE.clear();
@@ -2756,6 +2800,11 @@ function updateFontAxis(app, axisTag, rawValue) {
     const value = clamp(Number(rawValue), axis.min, axis.max);
     if (!Number.isFinite(value)) return;
     entry.coordinates = { ...(entry.coordinates || {}), [axis.tag]: value };
+    entry.tf?.setVariations?.(entry.coordinates);
+    if (axis.tag === 'wght') {
+        app.settingsStore?.set('fontWeight', value);
+        syncSliderValues(app, { fontWeight: value });
+    }
     entry.instanceName = matchingFontInstance(entry)
         ? entry.probe.variations.instances[Number(matchingFontInstance(entry))]?.name || ''
         : '';
@@ -2808,8 +2857,8 @@ function syncFontImportStatus() {
     const entry = activeFontEntry();
     const isReference = entry?.kind === 'reference';
     const rows = [
-        ['Font', fontDisplayName(probe, entry?.name || 'YS Text Regular')],
-        ['File', isReference ? 'YS Text Regular · reference' : `${entry.fileName} · ${fontBytes(entry.size)}`],
+        ['Font', fontDisplayName(probe, entry?.name || 'YS Text Variable')],
+        ['File', isReference ? 'YSText-Upright-weight-VF.ttf · reference' : `${entry.fileName} · ${fontBytes(entry.size)}`],
         ['Data', fontMetricText(probe)],
         ['Axes', fontAxisText(probe)],
         ['Coords', activeFontCoordinatesText(entry)],
@@ -2818,7 +2867,7 @@ function syncFontImportStatus() {
         ['Loaded', `${FONT_REGISTRY.size} font${FONT_REGISTRY.size === 1 ? '' : 's'}`]
     ];
     if ((probe?.variations?.axes || []).length) {
-        rows.push(['Note', 'SVG text receives CSS variation settings; outline contours use the loaded default instance.']);
+        rows.push(['Note', 'SVG text and outline contours use the active variation coordinates.']);
     }
     const sig = `${ACTIVE_FONT_ID}|${fontRegistrySignature()}|${JSON.stringify(rows)}`;
     setHtmlIfChanged(status, `<dl class="font-summary">
@@ -3609,16 +3658,17 @@ function appendSessionFontDefs(create, svg, s) {
     svg.appendChild(defs);
 }
 
-function renderLegendText(create, el, fill) {
+function renderLegendText(create, el, fill, s = {}) {
     const entry = fontEntryForElement(el);
     const variation = fontVariationSettings(entry);
+    const weight = weightAxisFor(entry) ? fontWeightFromSettings(s) : 400;
     const text = create('text', {
         x: el.bx,
         y: el.by,
         fill,
         'font-family': legendFontFamilyForElement(el),
         'font-size': el.size,
-        'font-weight': 400,
+        'font-weight': weight,
         'letter-spacing': `${el.tracking || 0}em`,
         'font-kerning': 'normal',
         'text-rendering': 'geometricPrecision',
@@ -4760,7 +4810,15 @@ function escapeHtml(value = '') {
 function activeTypefaceReportMeta() {
     if (!TYPEFACE) return null;
     const entry = activeFontEntry();
-    if (!entry || entry.kind === 'reference') return CONTENT.font;
+    if (!entry) return CONTENT.font;
+    if (entry.kind === 'reference') {
+        return {
+            family: REFERENCE_FONT_FAMILY,
+            style: 'Variable',
+            file: 'Fonts/YS Text Variable/YSText-Upright-weight-VF.ttf',
+            coordinates: clonePlain(entry.coordinates || {})
+        };
+    }
     return {
         family: fontDisplayName(entry.probe, entry.name),
         file: entry.fileName,
