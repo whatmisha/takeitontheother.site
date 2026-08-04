@@ -59,21 +59,44 @@ const TYPE_DEFAULTS = {
     trackingOffset: 0
 };
 
-const SLIDER_BY_SETTING = {
-    colPitch: 'colPitchSlider',
-    rowPitch: 'rowPitchSlider',
-    keyWidth1U: 'keyWidthSlider',
-    keyHeight: 'keyHeightSlider',
-    cornerRadius: 'radiusSlider',
-    guideInset: 'insetSlider',
-    glyphSize: 'glyphSizeSlider',
-    fontWeight: 'fontWeightSlider',
-    numpadSize: 'numpadSizeSlider',
-    secondarySize: 'secondarySizeSlider',
-    wordSize: 'wordSizeSlider',
-    leading: 'leadingSlider',
-    trackingOffset: 'trackingOffsetSlider'
+const TEXT_STYLE_IDS = ['main', 'symbols01', 'symbols02', 'label', 'function'];
+const TEXT_STYLE_NAMES = {
+    main: 'Main',
+    symbols01: 'Symbols 01',
+    symbols02: 'Symbols 02',
+    label: 'Label',
+    function: 'Function'
 };
+const STYLE_BY_LEGACY_SIZE = {
+    glyphSize: 'main',
+    secondarySize: 'symbols01',
+    numpadSize: 'symbols02',
+    wordSize: 'label'
+};
+const LEGACY_SIZE_BY_STYLE = {
+    main: 'glyphSize',
+    symbols01: 'secondarySize',
+    symbols02: 'numpadSize',
+    label: 'wordSize',
+    function: 'wordSize'
+};
+const STYLE_SCRIPT_KEYS = ['latin', 'cyrillic'];
+const TEXT_STYLE_NUMERIC = {
+    size: { min: 5, max: 36, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' pt' },
+    weight: { min: 100, max: 900, decimals: 0, baseStep: 1, shiftStep: 10, suffix: '' },
+    tracking: { min: -0.2, max: 0.2, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' em' },
+    leading: { min: 4, max: 36, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' pt' }
+};
+
+const NUMERIC_CONTROLS = [
+    { inputId: 'colPitchValue', setting: 'colPitch', min: 10, max: 28, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
+    { inputId: 'rowPitchValue', setting: 'rowPitch', min: 10, max: 28, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
+    { inputId: 'keyWidthValue', setting: 'keyWidth1U', min: 7, max: 26, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
+    { inputId: 'keyHeightValue', setting: 'keyHeight', min: 7, max: 26, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
+    { inputId: 'radiusValue', setting: 'cornerRadius', min: 0, max: 7, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
+    { inputId: 'insetValue', setting: 'guideInset', min: 0, max: 6.5, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' }
+];
+const NUMERIC_CONTROL_BY_SETTING = Object.fromEntries(NUMERIC_CONTROLS.map((def) => [def.setting, def]));
 
 const BASE_ICON_OPTIONS = Object.keys(ICONS).sort((a, b) => a.localeCompare(b));
 const CUSTOM_ICON_PREFIX = 'custom:';
@@ -117,6 +140,12 @@ const TEMPLATE_ORDER = [
 ];
 const TEMPLATE_VARIANTS = buildTemplateVariants(CONTENT);
 const TEMPLATE_BY_ID = new Map(TEMPLATE_VARIANTS.map((v) => [v.id, v]));
+const SLOT_GRID_OPTIONS = [
+    ['TL', 'TC', 'TR'],
+    ['ML', 'MC', 'MR'],
+    ['BL', 'BC', 'BR']
+];
+const SLOT_SPECIAL_OPTIONS = ['FC', 'UC', 'FL', 'FR', 'tC', 'bC', 'tL', 'bL', 'Ml', 'Mr', 'Tr', 'Tl', 'Fr'];
 const LANGUAGE_LAYERS = new Set(['dual', 'latin', 'cyrillic']);
 const LEGEND_TEXT_MODES = new Set(['outlines', 'text']);
 const ICON_LAYER_IDS = ['icons', 'f-icons'];
@@ -285,6 +314,9 @@ let LAST_DELETED_EDIT_ID = null;
 let LAST_DELETED_ROW_ID = null;
 let COMP_TABLE_SELECTED_CH = null;
 let LAST_SVG_IMPORT_REPORT = null;
+let TEXT_STYLE_OPEN = new Set(['main']);
+let LEGEND_DRAFT = null;
+let LEGEND_POPOVER_DRAG = null;
 
 function cleanRuntimeFontId(value) {
     return String(value || '').trim().replace(/[^\w:.-]+/g, '-').slice(0, 96);
@@ -316,7 +348,9 @@ function fontEntryForElement(el = {}) {
 }
 
 function typefaceForElement(el = {}) {
-    return fontEntryForElement(el)?.tf || TYPEFACE;
+    const entry = fontEntryForElement(el);
+    applyElementFontCoordinates(entry, el);
+    return entry?.tf || TYPEFACE;
 }
 
 function activeCompensationBase() {
@@ -348,8 +382,152 @@ function fontVariationSettings(entry) {
     return parts.length ? parts.join(', ') : '';
 }
 
+function defaultTextStyle(id) {
+    const sizeKey = LEGACY_SIZE_BY_STYLE[id] || 'wordSize';
+    return {
+        name: TEXT_STYLE_NAMES[id] || id,
+        fontId: '',
+        size: TYPE_DEFAULTS[sizeKey] ?? TYPE_DEFAULTS.wordSize,
+        weight: TYPE_DEFAULTS.fontWeight,
+        tracking: TYPE_DEFAULTS.trackingOffset,
+        leading: TYPE_DEFAULTS.leading,
+        splitScripts: false,
+        latin: null,
+        cyrillic: null
+    };
+}
+
+function defaultTextStyles() {
+    return Object.fromEntries(TEXT_STYLE_IDS.map((id) => [id, defaultTextStyle(id)]));
+}
+
+function normalizeStyleBranch(branch = {}, fallback = {}) {
+    const source = branch && typeof branch === 'object' && !Array.isArray(branch) ? branch : {};
+    const fontId = cleanRuntimeFontId(source.fontId ?? fallback.fontId ?? '');
+    return {
+        fontId,
+        size: clamp(finiteOr(source.size, fallback.size), TEXT_STYLE_NUMERIC.size.min, TEXT_STYLE_NUMERIC.size.max),
+        weight: clamp(finiteOr(source.weight ?? source.fontWeight, fallback.weight), TEXT_STYLE_NUMERIC.weight.min, TEXT_STYLE_NUMERIC.weight.max),
+        tracking: clamp(finiteOr(source.tracking, fallback.tracking), TEXT_STYLE_NUMERIC.tracking.min, TEXT_STYLE_NUMERIC.tracking.max),
+        leading: clamp(finiteOr(source.leading, fallback.leading), TEXT_STYLE_NUMERIC.leading.min, TEXT_STYLE_NUMERIC.leading.max)
+    };
+}
+
+function legacyTextStyleFallback(id, legacy = {}) {
+    const base = defaultTextStyle(id);
+    const sizeKey = LEGACY_SIZE_BY_STYLE[id] || '';
+    if (Number.isFinite(Number(legacy[sizeKey]))) base.size = Number(legacy[sizeKey]);
+    if (Number.isFinite(Number(legacy.fontWeight))) base.weight = Number(legacy.fontWeight);
+    if (Number.isFinite(Number(legacy.trackingOffset))) base.tracking = Number(legacy.trackingOffset);
+    if (Number.isFinite(Number(legacy.leading))) base.leading = Number(legacy.leading);
+    return base;
+}
+
+function normalizeTextStyles(input = {}, legacy = {}) {
+    const source = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
+    const out = {};
+    for (const id of TEXT_STYLE_IDS) {
+        const fallback = legacyTextStyleFallback(id, legacy);
+        const raw = source[id] && typeof source[id] === 'object' && !Array.isArray(source[id]) ? source[id] : {};
+        const base = normalizeStyleBranch(raw, fallback);
+        out[id] = {
+            ...base,
+            name: String(raw.name || fallback.name || TEXT_STYLE_NAMES[id]).trim().slice(0, 48) || TEXT_STYLE_NAMES[id],
+            splitScripts: raw.splitScripts === true,
+            latin: null,
+            cyrillic: null
+        };
+        if (out[id].splitScripts) {
+            out[id].latin = normalizeStyleBranch(raw.latin, base);
+            out[id].cyrillic = normalizeStyleBranch(raw.cyrillic, base);
+        }
+    }
+    return out;
+}
+
+function legacyTypeSettingsFromTextStyles(styles = {}) {
+    const normalized = normalizeTextStyles(styles, TYPE_DEFAULTS);
+    const legacy = {
+        glyphSize: normalized.main.size,
+        secondarySize: normalized.symbols01.size,
+        numpadSize: normalized.symbols02.size,
+        wordSize: normalized.label.size,
+        fontWeight: normalized.main.weight,
+        leading: normalized.label.leading,
+        trackingOffset: 0
+    };
+    return legacy;
+}
+
+function textStylesForSettings(s = {}) {
+    return normalizeTextStyles(s.textStyles || {}, s);
+}
+
+function validTextStyleId(value) {
+    const id = String(value || '').trim();
+    return TEXT_STYLE_IDS.includes(id) ? id : '';
+}
+
+function scriptForText(text = '') {
+    return CYRILLIC_RE.test(String(text || '')) ? 'cyrillic' : 'latin';
+}
+
+function inferTextStyleId(el = {}, key = null) {
+    const explicit = validTextStyleId(el.styleId);
+    if (explicit) return explicit;
+    if (isFunctionTextElement(el, key)) return 'function';
+    const legacy = sizeRole(finiteOr(el.size, NaN));
+    return STYLE_BY_LEGACY_SIZE[legacy] || 'label';
+}
+
+function isFunctionTextElement(el = {}, key = null) {
+    const text = String(el.text || '').trim();
+    if (/^F\d{1,2}$/i.test(text)) return true;
+    return !!key && key.row === 0 && String(key.block || '') === 'main' && /^F\d{1,2}$/i.test(text);
+}
+
+function textStyleForElement(s = {}, el = {}, key = null) {
+    const styles = textStylesForSettings(s);
+    const id = inferTextStyleId(el, key);
+    const base = styles[id] || defaultTextStyle(id);
+    const script = scriptForText(el.text || '');
+    const branch = base.splitScripts ? base[script] : null;
+    return {
+        ...base,
+        ...(branch || {}),
+        id,
+        script,
+        name: base.name || TEXT_STYLE_NAMES[id]
+    };
+}
+
+function fontCoordinatesForElement(entry, el = {}) {
+    const coordinates = { ...(entry?.coordinates || {}) };
+    const axis = weightAxisFor(entry);
+    const weight = finiteOr(el.fontWeight, NaN);
+    if (axis && Number.isFinite(weight)) {
+        coordinates[axis.tag] = clamp(weight, axis.min, axis.max);
+    }
+    return coordinates;
+}
+
+function applyElementFontCoordinates(entry, el = {}) {
+    if (!entry?.tf?.setVariations) return;
+    entry.tf.setVariations(fontCoordinatesForElement(entry, el));
+}
+
+function fontVariationSettingsForElement(entry, el = {}) {
+    const axes = entry?.probe?.variations?.axes || [];
+    const coordinates = fontCoordinatesForElement(entry, el);
+    const parts = axes
+        .filter((axis) => Number.isFinite(coordinates[axis.tag]))
+        .map((axis) => `"${axis.tag}" ${Number(coordinates[axis.tag]).toFixed(3).replace(/\.?0+$/, '')}`);
+    return parts.length ? parts.join(', ') : '';
+}
+
 function fontWeightFromSettings(s = {}) {
-    return clamp(finiteOr(s.fontWeight, TYPE_DEFAULTS.fontWeight), 100, 900);
+    const styles = textStylesForSettings(s);
+    return clamp(finiteOr(styles.main?.weight, finiteOr(s.fontWeight, TYPE_DEFAULTS.fontWeight)), 100, 900);
 }
 
 function weightAxisFor(entry) {
@@ -398,26 +576,33 @@ function compensationTableWithEdits(baseTable = activeCompensationTable(), edits
     return table;
 }
 
-function compForFontId(s, fontId = ACTIVE_FONT_ID) {
+function compForFontId(s, fontId = ACTIVE_FONT_ID, el = null) {
     if (!TYPEFACE || s.compensationMode === 'off') return null;
     const id = FONT_REGISTRY.has(fontId) ? fontId : ACTIVE_FONT_ID;
     const entry = fontEntry(id) || activeFontEntry();
     if (!entry?.tf) return null;
     const mode = s.compensationMode || 'table';
     const edits = mode === 'table' ? sanitizeCompensationTableEditsData(s.compensationTableEdits || {}) : {};
-    const sig = `${entry.signature}:${JSON.stringify(entry.coordinates || {})}:${mode}:${JSON.stringify(edits)}`;
+    const coordinates = el ? fontCoordinatesForElement(entry, el) : (entry.coordinates || {});
+    const sig = `${entry.signature}:${JSON.stringify(coordinates)}:${mode}:${JSON.stringify(edits)}`;
     if (!COMP_CACHE.has(sig)) {
+        entry.tf.setVariations?.(coordinates);
         const base = compensationBaseForFontId(id);
         const params = mode === 'model'
             ? { ...base, table: {} }
             : { ...base, table: compensationTableWithEdits(base.table || {}, edits) };
         COMP_CACHE.set(sig, new Compensator(entry.tf, params));
     }
+    entry.tf.setVariations?.(coordinates);
     return COMP_CACHE.get(sig);
 }
 
 function compFor(s) {
     return compForFontId(s, ACTIVE_FONT_ID);
+}
+
+function compForElement(s, el = {}) {
+    return compForFontId(s, elementFontId(el), el);
 }
 
 /** Значения сетки из настроек (мм) — в форму, которую ждёт buildLayout (px). */
@@ -442,6 +627,7 @@ const typeSigFrom = (s) => JSON.stringify({
     wordSize: s.wordSize,
     leading: s.leading,
     trackingOffset: s.trackingOffset,
+    textStyles: textStylesForSettings(s),
     compensationMode: s.compensationMode,
     compensationTableEdits: s.compensationTableEdits || {},
     languageLayer: normalizeLanguageLayer(s.languageLayer),
@@ -460,11 +646,19 @@ function applyTypeSettings(keys, s) {
     for (const k of keys) {
         k.elements = (k.elements || []).map((el) => {
             if (el.kind !== 'txt') return el;
-            const role = sizeRole(el.size);
+            const style = textStyleForElement(s, el, k);
+            const role = STYLE_BY_LEGACY_SIZE[sizeRole(el.size)] || style.id || 'custom';
+            const fontId = cleanRuntimeFontId(style.fontId) || cleanRuntimeFontId(el.fontId);
             return {
                 ...el,
-                size: role ? s[role] : el.size,
-                tracking: (el.tracking || 0) + (s.trackingOffset || 0),
+                styleId: style.id,
+                styleName: style.name,
+                script: style.script,
+                fontId,
+                fontWeight: style.weight,
+                size: style.size,
+                tracking: (el.tracking || 0) + (style.tracking || 0),
+                leading: style.leading,
                 baseSize: el.size,
                 role: role || 'custom'
             };
@@ -537,8 +731,10 @@ function contentSigFrom(s, geometrySig) {
         secondarySize: s.secondarySize,
         wordSize: s.wordSize,
         trackingOffset: s.trackingOffset,
+        textStyles: textStylesForSettings(s),
         languageLayer: normalizeLanguageLayer(s.languageLayer),
-        contentEdits: s.contentEdits || {}
+        contentEdits: s.contentEdits || {},
+        legendDraft: legendDraftSignature()
     });
 }
 
@@ -585,6 +781,7 @@ function contentForGeometry(s, geometryData, sourceLayout, sig) {
         applyLanguageLayer(data.keys, s);
         captureBaseContent(data.keys);
         applyContentEdits(data.keys, s.contentEdits || {});
+        applyLegendDraft(data.keys);
         applyTypeSettings(data.keys, s);
         contentCached = { sig, data };
     }
@@ -599,7 +796,7 @@ function legendsForContent(s, contentData, sig) {
                 ? buildLegends(contentData.keys, {
                     tf: TYPEFACE, comp: compFor(s),
                     typefaceFor: (el) => typefaceForElement(el),
-                    compForElement: (el) => compForFontId(s, elementFontId(el)),
+                    compForElement: (el) => compForElement(s, el),
                     interline: s.leading, iconOptics: ICON_OPTICS
                 })
                 : []
@@ -708,6 +905,7 @@ const app = defineTool({
         wordSize: TYPE_DEFAULTS.wordSize,
         leading: TYPE_DEFAULTS.leading,
         trackingOffset: TYPE_DEFAULTS.trackingOffset,
+        textStyles: defaultTextStyles(),
         compensationMode: 'table',
         legendTextMode: 'outlines',
         compensationTableEdits: {},
@@ -737,23 +935,6 @@ const app = defineTool({
     },
 
     controls: {
-        // Ranges and steps in mm; value-display shows “N.NNN mm”, no px duplicate.
-        sliders: [
-            { id: 'colPitchSlider', valueId: 'colPitchValue', setting: 'colPitch', min: 10, max: 28, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
-            { id: 'rowPitchSlider', valueId: 'rowPitchValue', setting: 'rowPitch', min: 10, max: 28, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
-            { id: 'keyWidthSlider', valueId: 'keyWidthValue', setting: 'keyWidth1U', min: 7, max: 26, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
-            { id: 'keyHeightSlider', valueId: 'keyHeightValue', setting: 'keyHeight', min: 7, max: 26, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
-            { id: 'radiusSlider', valueId: 'radiusValue', setting: 'cornerRadius', min: 0, max: 7, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
-            { id: 'insetSlider', valueId: 'insetValue', setting: 'guideInset', min: 0, max: 6.5, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' mm' },
-
-            { id: 'glyphSizeSlider', valueId: 'glyphSizeValue', setting: 'glyphSize', min: 6, max: 24, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' pt' },
-            { id: 'fontWeightSlider', valueId: 'fontWeightValue', setting: 'fontWeight', min: 100, max: 900, decimals: 0, baseStep: 1, shiftStep: 10, suffix: '' },
-            { id: 'numpadSizeSlider', valueId: 'numpadSizeValue', setting: 'numpadSize', min: 6, max: 24, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' pt' },
-            { id: 'secondarySizeSlider', valueId: 'secondarySizeValue', setting: 'secondarySize', min: 6, max: 24, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' pt' },
-            { id: 'wordSizeSlider', valueId: 'wordSizeValue', setting: 'wordSize', min: 5, max: 18, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' pt' },
-            { id: 'leadingSlider', valueId: 'leadingValue', setting: 'leading', min: 6, max: 24, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' pt' },
-            { id: 'trackingOffsetSlider', valueId: 'trackingOffsetValue', setting: 'trackingOffset', min: -0.08, max: 0.08, decimals: 3, baseStep: 0.001, shiftStep: 0.01, suffix: ' em' }
-        ],
         toggles: true
     },
 
@@ -792,6 +973,8 @@ const app = defineTool({
         app.settingsStore.fromJSON(normalizedPresetBlob(blob, app.settingsStore.getDefaults()), true);
     },
     syncControls(app) {
+        syncNumericControlValues(app);
+        syncTextStyleList(app);
         syncLayoutSelect(app.settings);
         syncLanguageLayerSelect(app.settings);
         syncLegendTextMode(app.settings);
@@ -1007,6 +1190,7 @@ const app = defineTool({
         syncCompensationTableEditor(s);
         syncLayoutSelect(s);
         syncLanguageLayerSelect(s);
+        syncTextStyleList(ctx.app);
 
         if (!STARTUP_FIRST_RENDER_RECORDED) {
             STARTUP_FIRST_RENDER_RECORDED = true;
@@ -1048,8 +1232,11 @@ const app = defineTool({
         installCleanExports(readyApp);
         installSuggestedPresetSave(readyApp);
         installImportDebugAPI(readyApp);
+        initNumericInputs(readyApp);
+        initTextStyleList(readyApp);
         installFunctionDrag(readyApp);
         installFunctionDragDebugAPI(readyApp);
+        installLegendPopoverDrag(readyApp);
         initLayoutSelect(readyApp);
         initLanguageLayerSelect(readyApp);
         initFontImport(readyApp);
@@ -1100,12 +1287,15 @@ const app = defineTool({
         });
 
         document.getElementById('resetTypeBtn')?.addEventListener('click', () => {
+            const textStyles = defaultTextStyles();
             const values = {
                 ...TYPE_DEFAULTS,
+                textStyles,
                 compensationMode: 'table',
                 legendTextMode: 'outlines',
                 compensationTableEdits: {}
             };
+            Object.assign(values, legacyTypeSettingsFromTextStyles(textStyles));
             readyApp.settingsStore.setMultiple(values);
             syncSliderValues(readyApp, values);
         });
@@ -1139,12 +1329,29 @@ const app = defineTool({
         document.getElementById('resetKeyColorBtn')?.addEventListener('click', () => {
             const input = document.getElementById('legendKeyColorInput');
             if (input) input.value = '';
+            updateLegendDraftPreview(readyApp);
+        });
+        document.getElementById('legendKeyColorInput')?.addEventListener('input', () => {
+            updateLegendDraftPreview(readyApp);
+        });
+        document.getElementById('legendEditor')?.addEventListener('input', (e) => {
+            if (e.target.closest('.legend-slot-popover')) return;
+            updateLegendDraftPreview(readyApp);
+        });
+        document.getElementById('legendEditor')?.addEventListener('change', (e) => {
+            if (handleSlotSpecialChange(readyApp, e)) return;
+            updateLegendDraftPreview(readyApp);
         });
         document.getElementById('legendElementEditor')?.addEventListener('click', (e) => {
+            if (handleSlotPickerClick(readyApp, e)) return;
             const button = e.target.closest('.legend-remove-element-btn');
             if (!button) return;
             removeLegendElementDraft(readyApp, button);
             e.preventDefault();
+        });
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.legend-slot-field')) return;
+            document.querySelectorAll('.legend-slot-field.is-open').forEach((item) => item.classList.remove('is-open'));
         });
         document.getElementById('applyKeyWidthBtn')?.addEventListener('click', () => {
             applyKeyWidthEdit(readyApp);
@@ -1455,6 +1662,391 @@ function setInputValueForSig(input, value, sig) {
     input.dataset.valueSig = nextSig;
 }
 
+function decimalsFromStep(step) {
+    const value = Number(step);
+    if (!Number.isFinite(value) || value >= 1) return 0;
+    const text = String(value);
+    if (text.includes('e-')) return Number(text.split('e-')[1]) || 0;
+    const dot = text.indexOf('.');
+    return dot >= 0 ? text.length - dot - 1 : 0;
+}
+
+function formatNumericValue(value, config = {}) {
+    const n = Number(value);
+    const decimals = Number.isInteger(config.decimals) ? config.decimals : 3;
+    const suffix = config.suffix || '';
+    if (!Number.isFinite(n)) return '';
+    return `${n.toFixed(decimals)}${suffix}`;
+}
+
+function parseNumericInputValue(input) {
+    return Number.parseFloat(String(input?.value || '').replace(',', '.'));
+}
+
+function clampNumericValue(value, config = {}) {
+    return clamp(value, config.min ?? Number.NEGATIVE_INFINITY, config.max ?? Number.POSITIVE_INFINITY);
+}
+
+function roundedStepValue(currentValue, key, shiftKey, config = {}) {
+    const baseStep = config.baseStep || 0;
+    const shiftStep = config.shiftStep || 0;
+    const step = shiftKey && shiftStep > 0 ? shiftStep : baseStep;
+    const stepDecimals = step > 0 ? decimalsFromStep(step) : (config.decimals || 0);
+    const roundedCurrent = stepDecimals > 0
+        ? Number(currentValue.toFixed(stepDecimals))
+        : Math.round(currentValue);
+    if (key === 'ArrowUp') {
+        if (shiftKey && shiftStep > 0) {
+            const k = roundedCurrent / shiftStep;
+            return Math.abs(k - Math.round(k)) < 1e-6
+                ? roundedCurrent + shiftStep
+                : Math.ceil(k) * shiftStep;
+        }
+        return roundedCurrent + baseStep;
+    }
+    if (key === 'ArrowDown') {
+        if (shiftKey && shiftStep > 0) {
+            const k = roundedCurrent / shiftStep;
+            return Math.abs(k - Math.round(k)) < 1e-6
+                ? roundedCurrent - shiftStep
+                : Math.floor(k) * shiftStep;
+        }
+        return roundedCurrent - baseStep;
+    }
+    return currentValue;
+}
+
+function finalizeNumericValue(value, config = {}) {
+    const step = config.baseStep || 0;
+    const decimals = step > 0 ? decimalsFromStep(step) : (config.decimals || 0);
+    const rounded = decimals > 0 ? Number(value.toFixed(decimals)) : Math.round(value);
+    return clampNumericValue(rounded, config);
+}
+
+function initNumericInputs(app) {
+    if (app.__keyboarderNumericInputs) return;
+    app.__keyboarderNumericInputs = true;
+    for (const config of NUMERIC_CONTROLS) {
+        const input = document.getElementById(config.inputId);
+        if (!input) continue;
+        input.dataset.numericSetting = config.setting;
+        input.addEventListener('keydown', (e) => handleBoundNumericKeydown(app, input, config, e));
+        input.addEventListener('focus', () => input.select());
+        input.addEventListener('blur', () => commitBoundNumericInput(app, input, config));
+    }
+    syncNumericControlValues(app);
+}
+
+function handleBoundNumericKeydown(app, input, config, event) {
+    if (event.key === 'Enter') {
+        commitBoundNumericInput(app, input, config);
+        input.blur();
+        event.preventDefault();
+        return;
+    }
+    if (event.key === 'Escape') {
+        syncNumericInput(input, app.settingsStore.get(config.setting), config, true);
+        input.blur();
+        event.preventDefault();
+        return;
+    }
+    if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+    const current = parseNumericInputValue(input);
+    if (!Number.isFinite(current)) return;
+    const next = finalizeNumericValue(roundedStepValue(current, event.key, event.shiftKey, config), config);
+    syncNumericInput(input, next, config, true);
+    app.settingsStore.set(config.setting, next);
+    event.preventDefault();
+}
+
+function commitBoundNumericInput(app, input, config) {
+    const current = parseNumericInputValue(input);
+    const fallback = app.settingsStore.get(config.setting);
+    const next = finalizeNumericValue(Number.isFinite(current) ? current : Number(fallback), config);
+    syncNumericInput(input, next, config, true);
+    app.settingsStore.set(config.setting, next);
+}
+
+function syncNumericInput(input, value, config = {}, force = false) {
+    if (!input) return;
+    const next = formatNumericValue(clampNumericValue(Number(value), config), config);
+    const sig = `${config.setting || input.id}:${next}`;
+    if (!force && document.activeElement === input) return;
+    if (!force && input.dataset.valueSig === sig) return;
+    input.value = next;
+    input.dataset.valueSig = sig;
+}
+
+function syncNumericControlValues(app, values = null) {
+    const source = values || app?.settings || app?.settingsStore?.toObject?.() || {};
+    for (const config of NUMERIC_CONTROLS) {
+        syncNumericInput(document.getElementById(config.inputId), source[config.setting], config);
+    }
+}
+
+function initTextStyleList(app) {
+    const list = document.getElementById('textStyleList');
+    if (!list || app.__keyboarderTextStyles) return;
+    app.__keyboarderTextStyles = true;
+    list.addEventListener('click', (e) => {
+        const summary = e.target.closest('.text-style-summary');
+        const split = e.target.closest('[data-style-action="split"]');
+        const merge = e.target.closest('[data-style-action="merge"]');
+        const reset = e.target.closest('[data-style-action="reset"]');
+        if (split || merge || reset) {
+            const id = validTextStyleId((split || merge || reset).dataset.styleId);
+            if (!id) return;
+            if (split) splitTextStyle(app, id);
+            else if (merge) void mergeTextStyle(app, id);
+            else resetTextStyle(app, id);
+            e.preventDefault();
+            return;
+        }
+        if (!summary) return;
+        const id = validTextStyleId(summary.dataset.styleId);
+        if (!id) return;
+        if (TEXT_STYLE_OPEN.has(id)) TEXT_STYLE_OPEN.delete(id);
+        else TEXT_STYLE_OPEN.add(id);
+        syncTextStyleList(app, { force: true });
+    });
+    list.addEventListener('change', (e) => {
+        const select = e.target.closest('[data-style-prop="fontId"]');
+        if (!select) return;
+        updateTextStyleFromControl(app, select);
+    });
+    list.addEventListener('blur', (e) => {
+        const control = e.target.closest('[data-style-prop]');
+        if (control) updateTextStyleFromControl(app, control);
+    }, true);
+    list.addEventListener('keydown', (e) => {
+        const control = e.target.closest('[data-style-prop]');
+        if (!control) return;
+        if (control.dataset.styleProp === 'name') {
+            if (e.key === 'Enter') {
+                updateTextStyleFromControl(app, control);
+                control.blur();
+                e.preventDefault();
+            } else if (e.key === 'Escape') {
+                syncTextStyleList(app, { force: true });
+                e.preventDefault();
+            }
+            return;
+        }
+        handleTextStyleNumericKeydown(app, control, e);
+    });
+    syncTextStyleList(app, { force: true });
+}
+
+function syncTextStyleList(app, { force = false } = {}) {
+    const list = document.getElementById('textStyleList');
+    if (!list || !app?.settings) return;
+    const styles = textStylesForSettings(app.settings);
+    const sig = JSON.stringify({
+        styles,
+        open: [...TEXT_STYLE_OPEN].sort(),
+        fonts: [...FONT_REGISTRY.keys()]
+    });
+    if (!force && list.dataset.sig === sig) return;
+    if (!force && list.contains(document.activeElement)) return;
+    list.dataset.sig = sig;
+    list.innerHTML = TEXT_STYLE_IDS.map((id) => textStyleRowHtml(id, styles[id])).join('');
+}
+
+function textStyleRowHtml(id, style) {
+    const open = TEXT_STYLE_OPEN.has(id);
+    const common = style.splitScripts
+        ? textStyleNameFieldHtml(id, style)
+        : textStyleBranchHtml(id, '', style);
+    const scripts = style.splitScripts
+        ? STYLE_SCRIPT_KEYS.map((script) => (
+            `<div class="text-style-script-block">`
+            + `<p class="text-style-script-title">${script === 'latin' ? 'Latin' : 'Cyrillic'}</p>`
+            + textStyleBranchHtml(id, script, style[script] || style, { includeName: false })
+            + '</div>'
+        )).join('')
+        : '';
+    const action = style.splitScripts
+        ? `<button type="button" class="btn-inline" data-style-action="merge" data-style-id="${html(id)}">Merge</button>`
+        : `<button type="button" class="btn-inline" data-style-action="split" data-style-id="${html(id)}">Split</button>`;
+    return `<div class="text-style-row${open ? ' is-open' : ''}" data-style-id="${html(id)}">`
+        + `<button type="button" class="text-style-summary" data-style-id="${html(id)}" aria-expanded="${open ? 'true' : 'false'}">`
+        + `<span class="text-style-name">${html(style.name)}</span>`
+        + `<span class="text-style-metrics">${formatStyleMetric(style.size)} pt / ${formatStyleWeight(style.weight)}</span>`
+        + '<span class="text-style-chevron">›</span>'
+        + '</button>'
+        + '<div class="text-style-body">'
+        + common
+        + scripts
+        + `<div class="text-style-actions">${action}<button type="button" class="btn-inline" data-style-action="reset" data-style-id="${html(id)}">Reset</button></div>`
+        + '</div>'
+        + '</div>';
+}
+
+function textStyleNameFieldHtml(id, style) {
+    return '<div class="text-style-fields">'
+        + `<label><span>Name</span><input data-style-id="${html(id)}" data-style-prop="name" value="${html(style.name)}" autocomplete="off" spellcheck="false"></label>`
+        + '</div>';
+}
+
+function textStyleBranchHtml(id, script, style, options = {}) {
+    const includeName = options.includeName !== false;
+    const prefix = script ? `${id}:${script}` : id;
+    const cls = script ? 'text-style-script-fields' : 'text-style-fields';
+    return `<div class="${cls}">`
+        + (includeName ? `<label><span>Name</span><input data-style-id="${html(id)}" data-style-prop="name" value="${html(style.name)}" autocomplete="off" spellcheck="false"></label>` : '')
+        + `<label><span>Font</span><select data-style-id="${html(id)}" data-style-script="${html(script)}" data-style-prop="fontId">${fontOptionsHtml(style.fontId || '')}</select></label>`
+        + styleNumericFieldHtml(prefix, id, script, 'size', style.size, 'Size')
+        + styleNumericFieldHtml(prefix, id, script, 'weight', style.weight, 'Weight')
+        + styleNumericFieldHtml(prefix, id, script, 'tracking', style.tracking, 'Tracking')
+        + styleNumericFieldHtml(prefix, id, script, 'leading', style.leading, 'Leading')
+        + '</div>';
+}
+
+function styleNumericFieldHtml(prefix, id, script, prop, value, label) {
+    const config = TEXT_STYLE_NUMERIC[prop];
+    return `<label><span>${html(label)}</span><input data-style-id="${html(id)}" data-style-script="${html(script)}" data-style-prop="${html(prop)}" inputmode="decimal" value="${html(formatNumericValue(value, config))}" aria-label="${html(`${TEXT_STYLE_NAMES[id] || id} ${label}`)}"></label>`;
+}
+
+function formatStyleMetric(value) {
+    return Number(value).toFixed(1);
+}
+
+function formatStyleWeight(value) {
+    return String(Math.round(Number(value)));
+}
+
+function handleTextStyleNumericKeydown(app, control, event) {
+    const prop = control.dataset.styleProp;
+    const config = TEXT_STYLE_NUMERIC[prop];
+    if (!config) return;
+    if (event.key === 'Enter') {
+        updateTextStyleFromControl(app, control);
+        control.blur();
+        event.preventDefault();
+        return;
+    }
+    if (event.key === 'Escape') {
+        syncTextStyleList(app, { force: true });
+        event.preventDefault();
+        return;
+    }
+    if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+    const current = parseNumericInputValue(control);
+    if (!Number.isFinite(current)) return;
+    const next = finalizeNumericValue(roundedStepValue(current, event.key, event.shiftKey, config), config);
+    control.value = formatNumericValue(next, config);
+    writeTextStyleValue(app, control, next);
+    event.preventDefault();
+}
+
+function updateTextStyleFromControl(app, control) {
+    const prop = control.dataset.styleProp;
+    if (!prop) return;
+    let value;
+    if (prop === 'name') {
+        value = String(control.value || '').trim().replace(/\s+/g, ' ').slice(0, 48);
+    } else if (prop === 'fontId') {
+        value = cleanRuntimeFontId(control.value || '');
+    } else {
+        const config = TEXT_STYLE_NUMERIC[prop];
+        if (!config) return;
+        const current = parseNumericInputValue(control);
+        value = finalizeNumericValue(Number.isFinite(current) ? current : 0, config);
+        control.value = formatNumericValue(value, config);
+    }
+    writeTextStyleValue(app, control, value);
+}
+
+function writeTextStyleValue(app, control, value) {
+    const id = validTextStyleId(control.dataset.styleId);
+    const prop = control.dataset.styleProp;
+    const script = STYLE_SCRIPT_KEYS.includes(control.dataset.styleScript) ? control.dataset.styleScript : '';
+    if (!id || !prop) return;
+    const styles = textStylesForSettings(app.settings);
+    const current = styles[id] || defaultTextStyle(id);
+    const next = clonePlain(styles);
+    if (script) {
+        const branch = normalizeStyleBranch(current[script], current);
+        next[id] = {
+            ...current,
+            splitScripts: true,
+            [script]: { ...branch, [prop]: value }
+        };
+    } else {
+        next[id] = { ...current, [prop]: value };
+        if (prop !== 'name' && current.splitScripts) {
+            next[id].latin = normalizeStyleBranch(current.latin, next[id]);
+            next[id].cyrillic = normalizeStyleBranch(current.cyrillic, next[id]);
+        }
+    }
+    commitTextStyles(app, next);
+}
+
+function commitTextStyles(app, styles) {
+    const normalized = normalizeTextStyles(styles, app.settings);
+    const legacy = legacyTypeSettingsFromTextStyles(normalized);
+    app.settingsStore.setMultiple({ textStyles: normalized, ...legacy });
+    syncNumericControlValues(app);
+    syncTextStyleList(app);
+}
+
+function splitTextStyle(app, id) {
+    const styles = textStylesForSettings(app.settings);
+    const current = styles[id] || defaultTextStyle(id);
+    if (current.splitScripts) return;
+    const next = clonePlain(styles);
+    next[id] = {
+        ...current,
+        splitScripts: true,
+        latin: normalizeStyleBranch(current, current),
+        cyrillic: normalizeStyleBranch(current, current)
+    };
+    TEXT_STYLE_OPEN.add(id);
+    commitTextStyles(app, next);
+}
+
+async function mergeTextStyle(app, id) {
+    const styles = textStylesForSettings(app.settings);
+    const current = styles[id] || defaultTextStyle(id);
+    if (!current.splitScripts) return;
+    const result = await app.dialog?.show({
+        title: 'Merge text style',
+        text: `Which ${current.name || TEXT_STYLE_NAMES[id]} branch should become the shared style?`,
+        buttons: [
+            { id: 'latin', text: 'Latin', type: 'primary' },
+            { id: 'cyrillic', text: 'Cyrillic', type: 'secondary' },
+            { id: 'cancel', text: 'Cancel', type: 'ghost' }
+        ]
+    });
+    if (result?.action !== 'latin' && result?.action !== 'cyrillic') return;
+    const winner = normalizeStyleBranch(current[result.action], current);
+    const next = clonePlain(styles);
+    next[id] = {
+        ...current,
+        ...winner,
+        splitScripts: false,
+        latin: null,
+        cyrillic: null
+    };
+    commitTextStyles(app, next);
+}
+
+function resetTextStyle(app, id) {
+    const styles = textStylesForSettings(app.settings);
+    const next = clonePlain(styles);
+    next[id] = defaultTextStyle(id);
+    TEXT_STYLE_OPEN.add(id);
+    commitTextStyles(app, next);
+}
+
+function setMainTextStyleWeight(app, weight) {
+    const value = clamp(finiteOr(weight, TYPE_DEFAULTS.fontWeight), 100, 900);
+    const styles = textStylesForSettings(app.settings);
+    const next = clonePlain(styles);
+    next.main = { ...(next.main || defaultTextStyle('main')), weight: value };
+    commitTextStyles(app, next);
+}
+
 function customIconsForSettings(settings = {}) {
     return sanitizeCustomIconsData(settings.customIcons || {});
 }
@@ -1507,9 +2099,10 @@ function modelIOOptions(layout = LCAKB23, settings = null) {
 
 function syncSliderValues(app, values) {
     for (const [setting, value] of Object.entries(values || {})) {
-        const id = SLIDER_BY_SETTING[setting];
-        if (id) app.sliders?.setValue(id, value, false);
+        const config = NUMERIC_CONTROL_BY_SETTING[setting];
+        if (config) syncNumericInput(document.getElementById(config.inputId), value, config, true);
     }
+    syncTextStyleList(app);
 }
 
 function layoutFromPresetLike(input = {}, defaults = {}) {
@@ -1537,6 +2130,8 @@ function normalizedPresetBlob(blob = {}, defaults = {}) {
     if (!LAYOUTS[layout.meta.name]) clean.customLayout = clonePlain(layout);
     clean.showDrawing = false;
     clean.languageLayer = normalizeLanguageLayer(clean.languageLayer);
+    clean.textStyles = normalizeTextStyles(clean.textStyles || {}, clean);
+    Object.assign(clean, legacyTypeSettingsFromTextStyles(clean.textStyles));
     if (!hasReferenceAssets(layout)) clean.showRef = false;
     if (!hasReferenceAssets(layout, 'layout')) clean.showDiff = false;
     return clean;
@@ -2093,6 +2688,41 @@ function applyContentEdits(keys, edits) {
     }
 }
 
+function legendDraftSignature() {
+    return LEGEND_DRAFT ? JSON.stringify(LEGEND_DRAFT) : '';
+}
+
+function applyLegendDraft(keys) {
+    if (!LEGEND_DRAFT?.editId) return;
+    const draft = {
+        tpl: LEGEND_DRAFT.tpl || 'blank',
+        elements: cleanElements(LEGEND_DRAFT.elements || []),
+        keyColor: cleanHexColor(LEGEND_DRAFT.keyColor)
+    };
+    for (const k of keys) {
+        if (k.editId !== LEGEND_DRAFT.editId) continue;
+        k.savedContent = {
+            tpl: k.tpl || 'blank',
+            elements: cleanElements(k.elements || []),
+            keyColor: cleanHexColor(k.keyColor)
+        };
+        k.tpl = draft.tpl;
+        k.elements = draft.elements;
+        k.keyColor = draft.keyColor;
+        k.content = {
+            ...(k.content || {}),
+            row: k.row,
+            x: k.x,
+            block: k.block,
+            tpl: k.tpl,
+            elements: cleanElements(k.elements),
+            keyColor: k.keyColor
+        };
+        k.edited = true;
+        return;
+    }
+}
+
 function sourceElements(k) {
     return cleanElements(k?.content?.elements || k?.elements || []);
 }
@@ -2209,6 +2839,7 @@ function retargetElements(source, pattern) {
             delete next.tracking;
             if (tracking !== 0) next.tracking = tracking;
             if (match.fontId || sample.fontId) next.fontId = match.fontId || sample.fontId;
+            if (match.styleId || sample.styleId) next.styleId = match.styleId || sample.styleId;
         }
         if (!next.text && sample.kind === 'txt' && fallbackByKind.txt++ > 0) next.text = '';
         if (!next.icon && sample.kind === 'ico' && fallbackByKind.ico++ > 0) next.icon = firstIconOption();
@@ -2826,7 +3457,6 @@ function syncFontAxisControls() {
         const step = axisStep(axis);
         return `<div class="font-axis-row" data-axis="${html(axis.tag)}">`
             + `<label><span>${html(axis.tag)}</span><input class="font-axis-value" type="number" step="${step}" min="${html(axis.min)}" max="${html(axis.max)}" value="${html(compactNumber(value, 3))}" aria-label="${html(axis.name || axis.tag)} axis value"></label>`
-            + `<input class="font-axis-slider" type="range" step="${step}" min="${html(axis.min)}" max="${html(axis.max)}" value="${html(value)}" aria-label="${html(axis.name || axis.tag)} axis">`
             + '</div>';
     }).join('');
 }
@@ -2854,7 +3484,7 @@ function applyFontInstance(app, index) {
     };
     entry.tf?.setVariations?.(entry.coordinates);
     if (Number.isFinite(entry.coordinates.wght)) {
-        app.settingsStore?.set('fontWeight', entry.coordinates.wght);
+        setMainTextStyleWeight(app, entry.coordinates.wght);
         syncSliderValues(app, { fontWeight: entry.coordinates.wght });
     }
     entry.instanceName = instance.name || '';
@@ -2874,7 +3504,7 @@ function updateFontAxis(app, axisTag, rawValue) {
     entry.coordinates = { ...(entry.coordinates || {}), [axis.tag]: value };
     entry.tf?.setVariations?.(entry.coordinates);
     if (axis.tag === 'wght') {
-        app.settingsStore?.set('fontWeight', value);
+        setMainTextStyleWeight(app, value);
         syncSliderValues(app, { fontWeight: value });
     }
     entry.instanceName = matchingFontInstance(entry)
@@ -3732,8 +4362,10 @@ function appendSessionFontDefs(create, svg, s) {
 
 function renderLegendText(create, el, fill, s = {}) {
     const entry = fontEntryForElement(el);
-    const variation = fontVariationSettings(entry);
-    const weight = weightAxisFor(entry) ? fontWeightFromSettings(s) : 400;
+    const variation = fontVariationSettingsForElement(entry, el);
+    const weight = weightAxisFor(entry)
+        ? clamp(finiteOr(el.fontWeight, fontWeightFromSettings(s)), 100, 900)
+        : 400;
     const text = create('text', {
         x: el.bx,
         y: el.by,
@@ -4269,6 +4901,12 @@ function updateLegendEditor(s, keys) {
     if (!isAdvancedUiMode()
         && !document.getElementById('legendPanel')?.classList.contains('panel-collapsed')
         && editor.dataset.activeEditId === active.editId
+        && LEGEND_DRAFT?.editId === active.editId) {
+        return;
+    }
+    if (!isAdvancedUiMode()
+        && !document.getElementById('legendPanel')?.classList.contains('panel-collapsed')
+        && editor.dataset.activeEditId === active.editId
         && legendDraftDiffersFromActive(active)) {
         return;
     }
@@ -4307,7 +4945,7 @@ function elementEditorHtml(el, i, settings = {}) {
         const options = iconOptions.map((name) =>
             `<option value="${html(name)}"${name === el.icon ? ' selected' : ''}>${html(iconOptionLabel(name, library))}</option>`).join('');
         return '<div class="legend-edit-row" data-kind="ico" data-group="' + html(iconLayerId(el)) + '" data-offset="' + offset + '">'
-            + `<label><span>Slot</span><input class="legend-slot-input" value="${html(el.slot)}" maxlength="2"></label>`
+            + slotPickerHtml(el.slot)
             + `<label><span>Icon</span><select class="legend-icon-input">${options}</select></label>`
             + `<label><span>W</span><input class="legend-width-input" type="number" step="0.001" value="${html(el.w)}"></label>`
             + `<label><span>H</span><input class="legend-height-input" type="number" step="0.001" value="${html(el.h)}"></label>`
@@ -4315,15 +4953,126 @@ function elementEditorHtml(el, i, settings = {}) {
             + '</div>';
     }
     const compValue = Number.isFinite(el.compOverride?.px) ? String(el.compOverride.px) : '';
-    return '<div class="legend-edit-row" data-kind="txt" data-offset="' + offset + '">'
-        + `<label><span>Slot</span><input class="legend-slot-input" value="${html(el.slot)}" maxlength="2"></label>`
+    return '<div class="legend-edit-row" data-kind="txt" data-offset="' + offset + '" data-size="' + html(el.size) + '" data-tracking="' + html(el.tracking || 0) + '">'
+        + slotPickerHtml(el.slot)
         + `<label><span>Text</span><input class="legend-text-input" value="${html(el.text)}"></label>`
-        + `<label><span>Font</span><select class="legend-font-input">${fontOptionsHtml(el.fontId || '')}</select></label>`
-        + `<label><span>Size</span><input class="legend-size-input" type="number" step="0.001" value="${html(el.size)}"></label>`
-        + `<label><span>Track</span><input class="legend-track-input" type="number" step="0.001" value="${html(el.tracking || 0)}"></label>`
+        + `<label><span>Style</span><select class="legend-style-input">${textStyleOptionsHtml(el.styleId || inferTextStyleId(el), settings)}</select></label>`
         + `<label><span>Comp</span><input class="legend-comp-input" type="number" step="0.001" value="${html(compValue)}"></label>`
         + remove
         + '</div>';
+}
+
+function slotPickerHtml(slot = 'BC') {
+    const current = String(slot || 'BC').trim() || 'BC';
+    const gridSlots = SLOT_GRID_OPTIONS.flat();
+    const isSpecial = !gridSlots.includes(current);
+    const grid = gridSlots.map((value) =>
+        `<button type="button" class="legend-slot-option${value === current ? ' is-active' : ''}" data-slot-value="${html(value)}">${html(slotSymbol(value))}</button>`).join('');
+    const specialValues = [...new Set([...SLOT_SPECIAL_OPTIONS, ...(isSpecial ? [current] : [])])];
+    const specialOptions = ['<option value="">Choose special…</option>']
+        .concat(specialValues.map((value) =>
+            `<option value="${html(value)}"${value === current ? ' selected' : ''}>${html(`${value} · ${slotLabel(value)}`)}</option>`))
+        .join('');
+    return '<div class="legend-slot-field">'
+        + '<span>Slot</span>'
+        + `<input class="legend-slot-input" type="hidden" value="${html(current)}">`
+        + `<button type="button" class="legend-slot-button"><span>${html(slotLabel(current))}</span><span>${html(current)}</span></button>`
+        + '<div class="legend-slot-popover">'
+        + `<div class="legend-slot-grid">${grid}</div>`
+        + `<details class="legend-slot-special-details"${isSpecial ? ' open' : ''}>`
+        + `<summary>Special <span>${html(isSpecial ? current : '')}</span></summary>`
+        + `<select class="legend-slot-special-select" aria-label="Special slot">${specialOptions}</select>`
+        + '</details>'
+        + '</div>'
+        + '</div>';
+}
+
+function slotSymbol(slot = '') {
+    const map = {
+        TL: '↖', TC: '↑', TR: '↗',
+        ML: '←', MC: '•', MR: '→',
+        BL: '↙', BC: '↓', BR: '↘'
+    };
+    return map[slot] || slot;
+}
+
+function slotLabel(slot = '') {
+    const map = {
+        TL: 'Top left', TC: 'Top', TR: 'Top right',
+        ML: 'Left', MC: 'Center', MR: 'Right',
+        BL: 'Bottom left', BC: 'Bottom', BR: 'Bottom right',
+        FC: 'Function', UC: 'Upper',
+        FL: 'Func left', FR: 'Func right',
+        tC: 'Free top', bC: 'Free bottom',
+        tL: 'Free top L', bL: 'Free bottom L',
+        Ml: 'Mid free L', Mr: 'Mid free R',
+        Tr: 'Top free R', Tl: 'Top free L', Fr: 'Func free R'
+    };
+    return map[slot] || slot || 'Slot';
+}
+
+function textStyleOptionsHtml(selectedId = '', settings = {}) {
+    const selected = validTextStyleId(selectedId) || 'label';
+    const styles = textStylesForSettings(settings || {});
+    return TEXT_STYLE_IDS.map((id) =>
+        `<option value="${html(id)}"${id === selected ? ' selected' : ''}>${html(styles[id]?.name || TEXT_STYLE_NAMES[id])}</option>`).join('');
+}
+
+function handleSlotPickerClick(app, event) {
+    const button = event.target.closest('.legend-slot-button');
+    if (button) {
+        const field = button.closest('.legend-slot-field');
+        document.querySelectorAll('.legend-slot-field.is-open').forEach((item) => {
+            if (item !== field) item.classList.remove('is-open');
+        });
+        field?.classList.toggle('is-open');
+        event.preventDefault();
+        return true;
+    }
+    const option = event.target.closest('[data-slot-value]');
+    if (!option) return false;
+    const field = option.closest('.legend-slot-field');
+    const value = option.dataset.slotValue || 'BC';
+    const input = field?.querySelector('.legend-slot-input');
+    const label = field?.querySelector('.legend-slot-button span:first-child');
+    const code = field?.querySelector('.legend-slot-button span:last-child');
+    if (input) input.value = value;
+    if (label) label.textContent = slotLabel(value);
+    if (code) code.textContent = value;
+    const specialSelect = field?.querySelector('.legend-slot-special-select');
+    const specialSummary = field?.querySelector('.legend-slot-special-details summary span');
+    const specialDetails = field?.querySelector('.legend-slot-special-details');
+    if (specialSelect) specialSelect.value = '';
+    if (specialSummary) specialSummary.textContent = '';
+    if (specialDetails) specialDetails.open = false;
+    field?.querySelectorAll('[data-slot-value]').forEach((el) => {
+        el.classList.toggle('is-active', el.dataset.slotValue === value);
+    });
+    field?.classList.remove('is-open');
+    updateLegendDraftPreview(app);
+    event.preventDefault();
+    return true;
+}
+
+function handleSlotSpecialChange(app, event) {
+    const select = event.target.closest?.('.legend-slot-special-select');
+    if (!select) return false;
+    const value = String(select.value || '').trim();
+    if (!value) return true;
+    const field = select.closest('.legend-slot-field');
+    const input = field?.querySelector('.legend-slot-input');
+    const label = field?.querySelector('.legend-slot-button span:first-child');
+    const code = field?.querySelector('.legend-slot-button span:last-child');
+    const specialSummary = field?.querySelector('.legend-slot-special-details summary span');
+    if (input) input.value = value;
+    if (label) label.textContent = slotLabel(value);
+    if (code) code.textContent = value;
+    if (specialSummary) specialSummary.textContent = value;
+    field?.querySelectorAll('[data-slot-value]').forEach((el) => el.classList.remove('is-active'));
+    field?.classList.remove('is-open');
+    updateLegendDraftPreview(app);
+    event.preventDefault();
+    return true;
 }
 
 function defaultLegendElement(kind, settings = {}) {
@@ -4341,6 +5090,7 @@ function defaultLegendElement(kind, settings = {}) {
         slot: 'BC',
         kind: 'txt',
         text: '',
+        styleId: 'label',
         size: TYPE_DEFAULTS.wordSize,
         tracking: 0
     });
@@ -4358,6 +5108,7 @@ function renderLegendDraft(app, elements) {
         templateId,
         settings: app.settings
     });
+    updateLegendDraftPreview(app);
 }
 
 function addLegendElementDraft(app, kind) {
@@ -4388,6 +5139,25 @@ function refreshLegendTemplateDraft(app) {
         templateId: select?.value || variantForKey(active),
         settings: app.settings
     });
+    updateLegendDraftPreview(app);
+}
+
+function updateLegendDraftPreview(app) {
+    const keys = layoutFor(app.settings).keys;
+    const active = activeKey(keys);
+    if (!active) return;
+    const select = document.getElementById('legendTemplateSelect');
+    const variant = TEMPLATE_BY_ID.get(select?.value || '');
+    const editorTemplateId = document.getElementById('legendElementEditor')?.dataset.templateId || variantForKey(active);
+    const tpl = variant && editorTemplateId === variant.id ? variant.tpl : (active.tpl || 'blank');
+    LEGEND_DRAFT = {
+        editId: active.editId,
+        tpl,
+        elements: readElementEditorElements(),
+        keyColor: readLegendKeyColor()
+    };
+    invalidateLayoutCaches();
+    app.renderNow();
 }
 
 function readElementEditorElements() {
@@ -4409,12 +5179,16 @@ function readElementEditorElements() {
                 h: row.querySelector('.legend-height-input')?.value
             });
         }
+        const text = row.querySelector('.legend-text-input')?.value || '';
+        const size = row.querySelector('.legend-size-input')?.value || row.dataset.size || TYPE_DEFAULTS.wordSize;
+        const selectedStyle = validTextStyleId(row.querySelector('.legend-style-input')?.value || '');
+        const inferredStyle = inferTextStyleId({ ...base, text, size });
         return cleanElement({
             ...base,
-            text: row.querySelector('.legend-text-input')?.value || '',
-            fontId: row.querySelector('.legend-font-input')?.value || '',
-            size: row.querySelector('.legend-size-input')?.value,
-            tracking: row.querySelector('.legend-track-input')?.value,
+            text,
+            styleId: selectedStyle && selectedStyle !== inferredStyle ? selectedStyle : '',
+            size,
+            tracking: row.querySelector('.legend-track-input')?.value || row.dataset.tracking || 0,
             compOverride: (() => {
                 const raw = row.querySelector('.legend-comp-input')?.value;
                 return raw === '' || raw == null ? null : { px: raw };
@@ -4674,9 +5448,12 @@ function iconForDestination(incoming, destination) {
 
 function clearLegendDraftState() {
     const editor = document.getElementById('legendElementEditor');
-    if (!editor) return;
-    delete editor.dataset.activeEditId;
-    delete editor.dataset.sig;
+    if (editor) {
+        delete editor.dataset.activeEditId;
+        delete editor.dataset.sig;
+    }
+    LEGEND_DRAFT = null;
+    invalidateLayoutCaches();
 }
 
 function readLegendKeyColor() {
@@ -4743,10 +5520,15 @@ function legendDraftDiffersFromActive(active) {
     const editor = document.getElementById('legendElementEditor');
     if (!editor || editor.dataset.activeEditId !== active.editId) return false;
     const currentTemplate = editor?.dataset.templateId || variantForKey(active);
-    const baseTemplate = variantForKey(active);
+    const saved = active.savedContent || {
+        tpl: active.tpl || 'blank',
+        elements: sourceElements(active),
+        keyColor: cleanHexColor(active.keyColor)
+    };
+    const baseTemplate = templateVariantId(saved.tpl || 'blank', saved.elements || []);
     return currentTemplate !== baseTemplate
-        || readLegendKeyColor() !== cleanHexColor(active.keyColor)
-        || JSON.stringify(readElementEditorElements()) !== JSON.stringify(sourceElements(active));
+        || readLegendKeyColor() !== cleanHexColor(saved.keyColor)
+        || JSON.stringify(readElementEditorElements()) !== JSON.stringify(cleanElements(saved.elements || []));
 }
 
 async function confirmDiscardLegendDraft(app) {
@@ -4776,6 +5558,67 @@ function closeLegendPopover(app = null) {
     panel.style.left = '';
     panel.style.top = '';
     if (app && legendEditorDirty(app)) updateLegendEditor(app.settings, layoutFor(app.settings).keys);
+}
+
+function installLegendPopoverDrag(app) {
+    const panel = document.getElementById('legendPanel');
+    const header = document.getElementById('legendPanelHeader');
+    if (!panel || !header || app.__keyboarderLegendPopoverDrag) return;
+    app.__keyboarderLegendPopoverDrag = true;
+
+    header.addEventListener('pointerdown', (e) => {
+        if (isAdvancedUiMode() || e.button !== 0) return;
+        if (panel.classList.contains('panel-collapsed')) return;
+        const rect = panel.getBoundingClientRect();
+        LEGEND_POPOVER_DRAG = {
+            pointerId: e.pointerId,
+            startClientX: e.clientX,
+            startClientY: e.clientY,
+            left: rect.left,
+            top: rect.top,
+            moved: false
+        };
+        try { header.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+
+    header.addEventListener('pointermove', (e) => {
+        if (!LEGEND_POPOVER_DRAG || LEGEND_POPOVER_DRAG.pointerId !== e.pointerId) return;
+        const dx = e.clientX - LEGEND_POPOVER_DRAG.startClientX;
+        const dy = e.clientY - LEGEND_POPOVER_DRAG.startClientY;
+        if (!LEGEND_POPOVER_DRAG.moved && Math.hypot(dx, dy) < CONTENT_DRAG_START_PX) return;
+        LEGEND_POPOVER_DRAG.moved = true;
+        const margin = 14;
+        const width = panel.offsetWidth || 390;
+        const height = panel.offsetHeight || 420;
+        const vw = window.innerWidth || 1280;
+        const vh = window.innerHeight || 800;
+        const left = clamp(LEGEND_POPOVER_DRAG.left + dx, margin, Math.max(margin, vw - width - margin));
+        const top = clamp(LEGEND_POPOVER_DRAG.top + dy, margin, Math.max(margin, vh - height - margin));
+        panel.style.left = `${Math.round(left)}px`;
+        panel.style.top = `${Math.round(top)}px`;
+        SUPPRESS_NEXT_SURFACE_CLICK = true;
+        e.preventDefault();
+    });
+
+    header.addEventListener('pointerup', (e) => {
+        if (!LEGEND_POPOVER_DRAG || LEGEND_POPOVER_DRAG.pointerId !== e.pointerId) return;
+        if (LEGEND_POPOVER_DRAG.moved) SUPPRESS_NEXT_SURFACE_CLICK = true;
+        LEGEND_POPOVER_DRAG = null;
+        try { header.releasePointerCapture(e.pointerId); } catch (_) {}
+    });
+
+    header.addEventListener('pointercancel', (e) => {
+        if (!LEGEND_POPOVER_DRAG || LEGEND_POPOVER_DRAG.pointerId !== e.pointerId) return;
+        LEGEND_POPOVER_DRAG = null;
+        try { header.releasePointerCapture(e.pointerId); } catch (_) {}
+    });
+
+    header.addEventListener('click', (e) => {
+        if (!SUPPRESS_NEXT_SURFACE_CLICK) return;
+        SUPPRESS_NEXT_SURFACE_CLICK = false;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+    }, true);
 }
 
 function openLegendPopoverAt(clientX, clientY) {
@@ -5365,8 +6208,10 @@ function downloadText(filename, text, type = 'text/plain') {
 
 function updateReadout(s, keys, grid, legends, bounds = null) {
     const box = bounds || { w: 0, h: 0 };
+    const fit = bounds?.fit || rectBounds(keys) || { w: 0, h: 0 };
     setTextIfChanged('statKeys', String(keys.length));
     setTextIfChanged('statBoard', `${toMm(box.w).toFixed(1)} × ${toMm(box.h).toFixed(1)} mm`);
+    setTextIfChanged('statKeyBounds', `${toMm(fit.w).toFixed(1)} × ${toMm(fit.h).toFixed(1)} mm`);
     setTextIfChanged('statGap', `${toMm(gapOf(grid)).toFixed(2)} mm`);
     const txt = legends.filter((e) => e.kind === 'txt').length;
     setTextIfChanged('statLegends', TYPEFACE

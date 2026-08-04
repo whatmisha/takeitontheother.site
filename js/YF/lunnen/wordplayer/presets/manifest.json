@@ -1,7 +1,5 @@
 {
   "presets": [
-    { "name": "Default", "file": "default.json" },
-    { "name": "Field Pull", "file": "field-pull.json" },
-    { "name": "Soft Form", "file": "soft-form.json" }
+    { "name": "Default", "file": "default.json" }
   ]
 }

@@ -26,6 +26,13 @@
     --word-ui-panel-width: 306px;
 }
 
+html,
+body,
+.container,
+.main-content {
+    background: #000;
+}
+
 body {
     letter-spacing: 0;
 }
@@ -37,7 +44,7 @@ body {
 }
 
 .word-canvas {
-    background: #050505;
+    background: #000;
 }
 
 .word-canvas svg {
@@ -49,7 +56,6 @@ body {
     font-family: "YSTextPattern", sans-serif;
     font-variation-settings: "wght" var(--pattern-weight, 400);
     letter-spacing: 0;
-    paint-order: stroke fill;
     user-select: none;
 }
 
@@ -60,27 +66,37 @@ body {
 }
 
 #textPanel,
-#canvasPanel {
+#ditherPanel {
     left: var(--spacing-3xl);
     right: auto;
     width: var(--word-ui-panel-width);
+    min-height: 0;
 }
 
 #textPanel {
     top: 74px;
-    max-height: calc(100vh - 94px);
+    max-height: clamp(96px, calc(100vh - 584px), 430px);
 }
 
-#canvasPanel {
-    top: auto;
-    bottom: 74px;
-    max-height: calc(100vh - 160px);
+#pixelsPanel {
+    top: 74px;
+    right: var(--spacing-3xl);
+    left: auto;
+    width: var(--word-ui-panel-width);
+    max-height: calc(100vh - 94px);
+    min-height: 0;
 }
 
 .mode-panel {
     top: 74px;
     right: var(--spacing-3xl);
     width: var(--word-ui-panel-width);
+}
+
+#ditherPanel {
+    top: auto;
+    bottom: 74px;
+    max-height: min(420px, calc(100vh - 148px));
 }
 
 .container[data-mode="dither"] [data-mode-panel]:not([data-mode-panel="dither"]),
@@ -108,22 +124,30 @@ body {
     white-space: nowrap;
 }
 
-.mode-control {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
 .response-control {
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.tone-response-control {
-    gap: 6px;
+#fieldsPanel,
+#formsPanel {
+    display: none !important;
 }
 
-.tone-response-control .pill-toggle {
-    flex: 1 1 auto;
-    padding-left: 10px;
-    padding-right: 10px;
+.tone-param-group {
+    border: 0;
+    padding: 0;
+    margin: var(--spacing-lg) 0 0;
+}
+
+.tone-param-group legend {
+    margin-bottom: var(--spacing-md);
+    color: var(--color-text);
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+.tone-param-group .control-group:last-child {
+    margin-bottom: 0;
 }
 
 .response-control label,
@@ -133,27 +157,14 @@ body {
     text-overflow: ellipsis;
 }
 
-.outline-export-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    height: 44px;
-    padding: 0 15px;
-    border-radius: 22px;
-    background: var(--color-bg-panel);
-    color: var(--color-text);
-    font-family: inherit;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    user-select: none;
+.bottom-buttons .toggle-label {
+    gap: var(--spacing-md);
 }
 
-.outline-export-toggle input {
-    width: 14px;
-    height: 14px;
-    margin: 0;
-    accent-color: #fff;
+.bottom-buttons .toggle-label-text {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--color-text-secondary);
 }
 
 .btn-full {
@@ -165,22 +176,98 @@ body {
     min-width: 0;
 }
 
+.dimension-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.density-control {
+    display: none;
+}
+
+.dimension-field {
+    min-width: 0;
+}
+
+.dimension-field label {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-text-secondary);
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+.dimension-input {
+    height: 34px;
+    padding: 0 10px;
+    text-align: right;
+}
+
+.pill-toggle-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.pill-toggle-row .pill-toggle {
+    flex: 1 0 auto;
+    width: auto;
+    min-width: max-content;
+    justify-content: center;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.pill-toggle-row .pill-toggle span {
+    white-space: nowrap;
+}
+
+.pill-toggle-row .pill-toggle.pill-toggle--single-last-row {
+    flex-grow: 0;
+}
+
+.image-load-section {
+    margin-bottom: 0 !important;
+}
+
+.algorithm-control {
+    margin-bottom: var(--spacing-lg);
+}
+
+#ditherPanel .control-group {
+    margin-bottom: 14px;
+}
+
+#ditherPanel .control-group:last-child {
+    margin-bottom: 0;
+}
+
 .control-section + .control-section {
     margin-top: var(--spacing-lg);
 }
 
 #textPanel .panel-content,
-#canvasPanel .panel-content,
+#pixelsPanel .panel-content,
+#ditherPanel .panel-content,
 .mode-panel .panel-content {
     overflow-y: auto;
+    min-height: 0;
 }
 
 #textPanel .panel-content {
+    max-height: none;
+}
+
+#pixelsPanel .panel-content {
     max-height: calc(100vh - 150px);
 }
 
-#canvasPanel .panel-content {
-    max-height: calc(100vh - 220px);
+#ditherPanel .panel-content {
+    max-height: min(364px, calc(100vh - 204px));
 }
 
 .mode-panel .panel-content {
@@ -188,25 +275,43 @@ body {
 }
 
 #textPanel.panel-collapsed .panel-content,
-#canvasPanel.panel-collapsed .panel-content,
+#pixelsPanel.panel-collapsed .panel-content,
+#ditherPanel.panel-collapsed .panel-content,
 .mode-panel.panel-collapsed .panel-content {
     max-height: 0;
 }
 
 @media (max-height: 820px) and (min-width: 981px) {
-    #canvasPanel {
-        bottom: 74px;
-        max-height: 206px;
+    #textPanel {
+        max-height: clamp(96px, calc(100vh - 584px), 344px);
     }
 
-    #canvasPanel .panel-content {
-        max-height: 150px;
+    #textPanel .panel-content {
+        max-height: none;
+    }
+
+    #pixelsPanel {
+        top: 74px;
+        max-height: calc(100vh - 94px);
+    }
+
+    #pixelsPanel .panel-content {
+        max-height: calc(100vh - 150px);
+    }
+
+    #ditherPanel {
+        max-height: 405px;
+    }
+
+    #ditherPanel .panel-content {
+        max-height: 349px;
     }
 }
 
 @media (max-width: 980px) {
     #textPanel,
-    #canvasPanel,
+    #pixelsPanel,
+    #ditherPanel,
     .mode-panel {
         position: fixed;
         left: var(--spacing-md);
@@ -220,8 +325,16 @@ body {
         max-height: calc(100vh - 140px);
     }
 
-    #canvasPanel {
-        display: none;
+    #pixelsPanel {
+        top: 42vh;
+        bottom: auto;
+        max-height: calc(100vh - 42vh - 84px);
+    }
+
+    #ditherPanel {
+        top: auto;
+        bottom: 74px;
+        max-height: 34vh;
     }
 
     .mode-panel {

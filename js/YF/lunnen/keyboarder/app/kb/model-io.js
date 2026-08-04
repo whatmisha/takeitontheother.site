@@ -4,6 +4,7 @@ export const PRESET_KEYS = [
     'layoutName', 'customLayout',
     'colPitch', 'rowPitch', 'keyWidth1U', 'keyHeight', 'cornerRadius', 'guideInset',
     'glyphSize', 'fontWeight', 'numpadSize', 'secondarySize', 'wordSize', 'leading', 'trackingOffset',
+    'textStyles',
     'compensationMode', 'legendTextMode', 'compensationTableEdits',
     'showCaps', 'showGuides', 'showGlyphs', 'showIcons', 'showDrawing', 'showColumns', 'showIndex',
     'showInk', 'showSlots', 'showRef', 'showDiff', 'showBlocks', 'languageLayer',
@@ -14,6 +15,7 @@ export const PRESET_KEYS = [
 export const GRID_SETTING_KEYS = ['colPitch', 'rowPitch', 'keyWidth1U', 'keyHeight', 'cornerRadius', 'guideInset'];
 export const TYPE_SETTING_KEYS = [
     'glyphSize', 'fontWeight', 'numpadSize', 'secondarySize', 'wordSize', 'leading', 'trackingOffset',
+    'textStyles',
     'compensationMode', 'legendTextMode', 'compensationTableEdits'
 ];
 export const LAYER_SETTING_KEYS = [
@@ -185,6 +187,8 @@ export function cleanElement(el = {}, options = {}) {
         out.h = finiteOr(el.h, 8);
     } else {
         out.text = String(el.text ?? '');
+        const styleId = String(el.styleId || '').trim().replace(/[^\w.-]+/g, '').slice(0, 48);
+        if (styleId) out.styleId = styleId;
         out.size = finiteOr(el.size, opts.typeDefaults.wordSize ?? 9);
         const tracking = finiteOr(el.tracking, 0);
         if (tracking !== 0) out.tracking = tracking;

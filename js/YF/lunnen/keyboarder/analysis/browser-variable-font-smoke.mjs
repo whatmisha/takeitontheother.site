@@ -91,32 +91,34 @@ function defaultBrowserExecutable() {
     return candidates.find((path) => existsSync(path)) || '';
 }
 
-async function setSlider(page, value) {
-    await page.locator('#fontWeightSlider').evaluate((slider, next) => {
-        slider.value = String(next);
-        slider.dispatchEvent(new Event('input', { bubbles: true }));
-        slider.dispatchEvent(new Event('change', { bubbles: true }));
-    }, value);
+const MAIN_WEIGHT_INPUT = '[data-style-id="main"][data-style-prop="weight"][data-style-script=""]';
+
+async function setMainWeight(page, value) {
+    const input = page.locator(MAIN_WEIGHT_INPUT).first();
+    await input.fill(String(value));
+    await input.press('Enter');
     await page.waitForFunction((next) =>
-        document.querySelector('#fontWeightSlider')?.value === String(next), value);
+        document.querySelector('[data-style-id="main"][data-style-prop="weight"][data-style-script=""]')?.value === String(next), value);
 }
 
 async function snapshot(page) {
     return page.evaluate(() => {
         const clean = window.KeyboarderExport?.cleanSvgSnapshot?.() || {};
-        const boxes = [...document.querySelectorAll('#glyphs path')]
+        const paths = [...document.querySelectorAll('#glyphs path')];
+        const boxes = paths
             .map((path) => {
                 const box = path.getBBox();
                 return { x: box.x, y: box.y, width: box.width, height: box.height };
             })
             .filter((box) => Number.isFinite(box.width) && Number.isFinite(box.height));
         return {
-            slider: document.querySelector('#fontWeightSlider')?.value || '',
-            valueText: document.querySelector('#fontWeightValue')?.value || '',
+            slider: document.querySelector('[data-style-id="main"][data-style-prop="weight"][data-style-script=""]')?.value || '',
+            valueText: document.querySelector('[data-style-id="main"][data-style-prop="weight"][data-style-script=""]')?.value || '',
             status: document.querySelector('#fontProbeStatus')?.textContent || '',
             liveGlyphPaths: document.querySelectorAll('#glyphs path').length,
             liveGlyphTexts: document.querySelectorAll('#glyphs text').length,
             firstPath: document.querySelector('#glyphs path')?.getAttribute('d') || '',
+            pathSignature: paths.map((path) => path.getAttribute('d') || '').join('|'),
             maxGlyphHeight: Math.max(...boxes.map((box) => box.height), 0),
             cleanBytes: clean.bytes || 0,
             cleanHasInteractive: !!clean.hasInteractive,
@@ -181,16 +183,16 @@ const browser = await chromium.launch({
 try {
     const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
     await page.goto(server.url, { waitUntil: 'networkidle' });
-    await page.waitForSelector('#fontWeightSlider');
+    await page.waitForSelector(MAIN_WEIGHT_INPUT);
     await page.waitForFunction(() =>
         !!window.KeyboarderExport?.cleanSvgSnapshot
         && document.querySelectorAll('#glyphs path').length >= 170
         && /YS Text Variable/.test(document.querySelector('#fontProbeStatus')?.textContent || ''));
 
     const regular = await snapshot(page);
-    await setSlider(page, 100);
+    await setMainWeight(page, 100);
     const light = await snapshot(page);
-    await setSlider(page, 900);
+    await setMainWeight(page, 900);
     const black = await snapshot(page);
     const customIcon = await uploadCustomIcon(page);
 
@@ -208,7 +210,7 @@ try {
     assert.equal(regular.slider, '400');
     assert.equal(light.slider, '100');
     assert.equal(black.slider, '900');
-    assert.notEqual(light.firstPath, black.firstPath, 'wght axis should change live path data');
+    assert.notEqual(light.pathSignature, black.pathSignature, 'wght axis should change live path data');
     assert.match(black.status, /wght 900\b/, 'font status should reflect wght=900');
     assert.equal(customIcon.optionVisible, true, 'uploaded SVG icon should appear in icon picker');
     assert.ok(

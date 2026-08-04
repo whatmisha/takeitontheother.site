@@ -12,7 +12,9 @@ const STATIC_PATTERN_FONT_URLS = new Map(
 const DEFAULT_IMAGE_URL = './assets/default-image.png';
 const DEFAULT_FORM_URL = './assets/default-form.svg';
 const DEFAULT_PATTERN_TEXT = `Чтение может стать золотым часом дня — временем, когда всё погружается в цельную особенную атсмосферу и можно вернуться к себе и пережить что-то новое, погрузившись в книгу. В дизайне мы тоже подсвечиваем этот путь — иммерсивность погружения в книгу от лица читателя. Мы показываем именно этот момент перехода — резкость и холод внешнего мира растворяются в тёплом камерном пространстве чтения`;
-const DITHER_EMPTY_TONE = 0.035;
+const DITHER_EMPTY_TONE = 0.05;
+const ACTIVE_MODE = 'dither';
+let pillToggleResizeObserver = null;
 
 const state = {
     sourceImage: null,
@@ -41,30 +43,50 @@ function roundWeight(value) {
     return clamp(Math.round(value / 100) * 100, 100, 900);
 }
 
-function cleanPatternText(text) {
-    const chars = Array.from(String(text || '').replace(/\s+/g, ''));
-    return chars.length ? chars : Array.from(DEFAULT_PATTERN_TEXT.replace(/\s+/g, ''));
+function cleanPatternText(text, allCaps = false) {
+    const source = allCaps
+        ? String(text || '').toLocaleUpperCase('ru-RU')
+        : String(text || '');
+    const fallback = allCaps
+        ? DEFAULT_PATTERN_TEXT.toLocaleUpperCase('ru-RU')
+        : DEFAULT_PATTERN_TEXT;
+    const chars = Array.from(source.replace(/\s+/g, ''));
+    return chars.length ? chars : Array.from(fallback.replace(/\s+/g, ''));
 }
 
-function makeResolutionGrid(width, height, resolution) {
+function densityPitchScale(density) {
+    const value = clamp(Number(density ?? 0) / 100, -1, 1);
+    return value >= 0
+        ? lerp(1, 0.62, value)
+        : lerp(1, 1.28, -value);
+}
+
+function makeResolutionGrid(width, height, resolution, density = 0) {
     const cols = Math.max(1, Math.round(resolution));
     const rows = Math.max(1, Math.round(cols * height / width));
     const cellW = width / cols;
     const cellH = height / rows;
+    const pitchScale = densityPitchScale(density);
+    const pitchW = cellW * pitchScale;
+    const pitchH = cellH * pitchScale;
+    const originX = width / 2 - ((cols - 1) * pitchW) / 2;
+    const originY = height / 2 - ((rows - 1) * pitchH) / 2;
     const points = [];
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
             points.push({
                 col,
                 row,
-                x: col * cellW + cellW / 2,
-                y: row * cellH + cellH / 2,
+                x: originX + col * pitchW,
+                y: originY + row * pitchH,
                 cellW,
-                cellH
+                cellH,
+                pitchW,
+                pitchH
             });
         }
     }
-    return { cols, rows, cellW, cellH, points };
+    return { cols, rows, cellW, cellH, pitchW, pitchH, points };
 }
 
 function baseSizeFromGrid(grid, ratio = 0.74) {
@@ -78,6 +100,18 @@ function relativeSizeRange(settings) {
         min: Math.min(min, max),
         max: Math.max(min, max)
     };
+}
+
+function relativeNoiseRange(settings) {
+    return {
+        min: clamp(Number(settings.noiseMin ?? 0) / 100, 0, 4),
+        max: clamp(Number(settings.noiseMax ?? 0) / 100, 0, 4)
+    };
+}
+
+function signedNoise(index, salt) {
+    const value = Math.sin((index + 1) * 127.1 + salt * 311.7) * 43758.5453123;
+    return (value - Math.floor(value)) * 2 - 1;
 }
 
 function createSvgElement(tag, attrs = {}) {
@@ -158,7 +192,8 @@ function processedToneFromRgb(r, g, b, settings) {
     const range = Math.max(1, settings.whitePoint - settings.blackPoint);
     let value = clamp((luminance - settings.blackPoint) / range);
     value = clamp((value - 0.5) * settings.contrast + 0.5);
-    return 1 - value;
+    const tone = 1 - value;
+    return settings.invertDither ? 1 - tone : tone;
 }
 
 function drawImageCover(ctx, image, destW, destH) {
@@ -187,7 +222,8 @@ function buildRawToneGrid(settings, cols, rows) {
             for (let x = 0; x < cols; x++) {
                 const dx = x / Math.max(1, cols - 1);
                 const dy = y / Math.max(1, rows - 1);
-                tones[y * cols + x] = clamp((dx * 0.6 + dy * 0.4));
+                const tone = clamp((dx * 0.6 + dy * 0.4));
+                tones[y * cols + x] = settings.invertDither ? 1 - tone : tone;
             }
         }
         return tones;
@@ -206,7 +242,7 @@ function buildRawToneGrid(settings, cols, rows) {
     return tones;
 }
 
-function applyBayerDither(raw, cols, rows) {
+function applyBayerDither(raw, cols, rows, hideTiny) {
     const matrix = [
         [0, 32, 8, 40, 2, 34, 10, 42],
         [48, 16, 56, 24, 50, 18, 58, 26],
@@ -221,7 +257,7 @@ function applyBayerDither(raw, cols, rows) {
     for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
             const idx = y * cols + x;
-            if (raw[idx] <= DITHER_EMPTY_TONE) {
+            if (hideTiny && raw[idx] <= DITHER_EMPTY_TONE) {
                 out[idx] = 0;
                 continue;
             }
@@ -233,13 +269,13 @@ function applyBayerDither(raw, cols, rows) {
     return out;
 }
 
-function applyFloydSteinbergDither(raw, cols, rows) {
+function applyFloydSteinbergDither(raw, cols, rows, hideTiny) {
     const working = new Float32Array(raw);
     const out = new Float32Array(raw.length);
     for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
             const idx = y * cols + x;
-            if (raw[idx] <= DITHER_EMPTY_TONE) {
+            if (hideTiny && raw[idx] <= DITHER_EMPTY_TONE) {
                 working[idx] = 0;
                 out[idx] = 0;
                 continue;
@@ -260,6 +296,7 @@ function applyFloydSteinbergDither(raw, cols, rows) {
 }
 
 function getDitherTones(settings, grid) {
+    const hideTiny = settings.hideTinyLetters !== false;
     const key = [
         state.sourceImageKey,
         settings.width,
@@ -269,7 +306,9 @@ function getDitherTones(settings, grid) {
         settings.ditherAlgorithm,
         settings.contrast,
         settings.blackPoint,
-        settings.whitePoint
+        settings.whitePoint,
+        settings.invertDither,
+        hideTiny
     ].join('|');
 
     if (state.ditherCache.key === key && state.ditherCache.tones) {
@@ -278,44 +317,55 @@ function getDitherTones(settings, grid) {
 
     const raw = buildRawToneGrid(settings, grid.cols, grid.rows);
     const tones = settings.ditherAlgorithm === 'bayer'
-        ? applyBayerDither(raw, grid.cols, grid.rows)
-        : applyFloydSteinbergDither(raw, grid.cols, grid.rows);
+        ? applyBayerDither(raw, grid.cols, grid.rows, hideTiny)
+        : applyFloydSteinbergDither(raw, grid.cols, grid.rows, hideTiny);
 
     state.ditherCache = { key, tones };
     return tones;
 }
 
 function typographyFromTone(settings, base, minWeight, maxWeight, tone) {
-    const response = settings.toneResponse || 'both';
     const sizeRange = relativeSizeRange(settings);
-    const sizeTone = response === 'weight' ? 0.68 : tone;
-    const weightTone = response === 'size' ? 1 : tone;
+    const sizeEnabled = settings.sizeEnabled !== false;
+    const weightEnabled = settings.weightEnabled !== false;
+    const rotationEnabled = settings.rotationEnabled !== false;
     return {
-        size: base * lerp(sizeRange.min, sizeRange.max, sizeTone),
-        weight: lerp(minWeight, maxWeight, weightTone)
+        size: base * (sizeEnabled ? lerp(sizeRange.min, sizeRange.max, tone) : sizeRange.max),
+        weight: weightEnabled ? lerp(minWeight, maxWeight, tone) : maxWeight,
+        rotation: rotationEnabled ? lerp(Number(settings.rotationMin ?? 0), Number(settings.rotationMax ?? 0), tone) : 0
     };
 }
 
 function renderDither(ctx) {
     const { settings, width, height } = ctx;
-    const chars = cleanPatternText(settings.patternText);
-    const grid = makeResolutionGrid(width, height, settings.resolution);
+    const chars = cleanPatternText(settings.patternText, settings.allCaps);
+    const grid = makeResolutionGrid(width, height, settings.resolution, settings.density);
     const tones = getDitherTones(settings, grid);
     const base = baseSizeFromGrid(grid, 0.74);
     const minWeight = Math.min(settings.weightMin, settings.weightMax);
     const maxWeight = Math.max(settings.weightMin, settings.weightMax);
+    const noiseRange = relativeNoiseRange(settings);
+    const hideTiny = settings.hideTinyLetters !== false;
 
     grid.points.forEach((point, index) => {
         const tone = tones[point.row * grid.cols + point.col] ?? 0;
-        if (tone <= DITHER_EMPTY_TONE) return;
+        if (hideTiny && tone <= DITHER_EMPTY_TONE) return;
         const char = chars[index % chars.length];
         const type = typographyFromTone(settings, base, minWeight, maxWeight, tone);
+        const noise = settings.noiseEnabled !== false
+            ? lerp(noiseRange.min, noiseRange.max, tone)
+            : 0;
+        const offset = Math.min(point.cellW, point.cellH) * noise;
+        const x = point.x + signedNoise(index, 1) * offset;
+        const y = point.y + signedNoise(index, 2) * offset;
+        if (x < 0 || x > width || y < 0 || y > height) return;
         drawLetter(ctx, {
             char,
-            x: point.x,
-            y: point.y,
+            x,
+            y,
             size: type.size,
             weight: type.weight,
+            rotation: type.rotation,
             fill: settings.inkColor
         });
     });
@@ -357,7 +407,7 @@ function magneticFieldAt(x, y, settings) {
 
 function renderFields(ctx) {
     const { settings, width, height } = ctx;
-    const chars = cleanPatternText(settings.patternText);
+    const chars = cleanPatternText(settings.patternText, settings.allCaps);
     const grid = makeResolutionGrid(width, height, settings.resolution);
     const base = baseSizeFromGrid(grid, 0.68);
     const minWeight = Math.min(settings.weightMin, settings.weightMax);
@@ -559,7 +609,7 @@ function nearestBoundaryPoint(x, y) {
 function renderForms(ctx) {
     const { settings, width, height } = ctx;
     const mask = ensureFormMask(settings);
-    const chars = cleanPatternText(settings.patternText);
+    const chars = cleanPatternText(settings.patternText, settings.allCaps);
     const grid = makeResolutionGrid(width, height, settings.resolution);
     const base = baseSizeFromGrid(grid, 0.7);
     const minWeight = Math.min(settings.weightMin, settings.weightMax);
@@ -751,19 +801,74 @@ function syncStatusLabels() {
     if (formStatus) formStatus.textContent = state.formLabel;
 }
 
+function syncPixelParameterControls(settings) {
+    const groups = {
+        sizeEnabled: ['sizeMin', 'sizeMax'],
+        weightEnabled: ['weightMin', 'weightMax'],
+        rotationEnabled: ['rotationMin', 'rotationMax'],
+        noiseEnabled: ['noiseMin', 'noiseMax']
+    };
+    Object.entries(groups).forEach(([setting, prefixes]) => {
+        const disabled = settings[setting] === false;
+        prefixes.forEach((prefix) => {
+            const slider = document.getElementById(`${prefix}Slider`);
+            const value = document.getElementById(`${prefix}Value`);
+            [slider, value].forEach((el) => {
+                if (el) el.disabled = disabled;
+            });
+            slider?.closest('.control-group')?.classList.toggle('disabled', disabled);
+        });
+    });
+}
+
+function updatePillToggleRows() {
+    document.querySelectorAll('.pill-toggle-row').forEach((row) => {
+        const toggles = Array.from(row.children)
+            .filter((child) => child.classList?.contains('pill-toggle'))
+            .filter((child) => getComputedStyle(child).display !== 'none');
+        toggles.forEach((toggle) => toggle.classList.remove('pill-toggle--single-last-row'));
+        const last = toggles[toggles.length - 1];
+        if (!last) return;
+        const lastTop = last.offsetTop;
+        const lastRow = toggles.filter((toggle) => Math.abs(toggle.offsetTop - lastTop) < 2);
+        if (lastRow.length === 1) last.classList.add('pill-toggle--single-last-row');
+    });
+}
+
+function schedulePillToggleRowsUpdate() {
+    requestAnimationFrame(updatePillToggleRows);
+}
+
+function initPillToggleRows() {
+    pillToggleResizeObserver?.disconnect();
+    pillToggleResizeObserver = typeof ResizeObserver === 'function'
+        ? new ResizeObserver(schedulePillToggleRowsUpdate)
+        : null;
+    document.querySelectorAll('.pill-toggle-row').forEach((row) => {
+        pillToggleResizeObserver?.observe(row);
+    });
+    window.addEventListener('resize', schedulePillToggleRowsUpdate);
+    schedulePillToggleRowsUpdate();
+}
+
 function syncCustomControls(app) {
     const settings = app.settingsStore.toObject();
+    if (settings.mode !== ACTIVE_MODE) {
+        app.settingsStore.set('mode', ACTIVE_MODE);
+        return;
+    }
     document.querySelector('.container')?.setAttribute('data-mode', settings.mode);
     const textInput = document.getElementById('patternTextInput');
     if (textInput && textInput.value !== settings.patternText) textInput.value = settings.patternText;
+    const widthInput = document.getElementById('widthValue');
+    if (widthInput && widthInput.value !== String(settings.width)) widthInput.value = String(settings.width);
+    const heightInput = document.getElementById('heightValue');
+    if (heightInput && heightInput.value !== String(settings.height)) heightInput.value = String(settings.height);
     document.querySelectorAll('input[name="mode"]').forEach((input) => {
         input.checked = input.value === settings.mode;
     });
     document.querySelectorAll('input[name="ditherAlgorithm"]').forEach((input) => {
         input.checked = input.value === settings.ditherAlgorithm;
-    });
-    document.querySelectorAll('input[name="toneResponse"]').forEach((input) => {
-        input.checked = input.value === settings.toneResponse;
     });
     document.querySelectorAll('input[name="fieldResponse"]').forEach((input) => {
         input.checked = input.value === settings.fieldResponse;
@@ -771,15 +876,44 @@ function syncCustomControls(app) {
     document.querySelectorAll('input[name="formFill"]').forEach((input) => {
         input.checked = input.value === settings.formFill;
     });
+    syncPixelParameterControls(settings);
     syncStatusLabels();
+    schedulePillToggleRowsUpdate();
 }
 
 function bindCustomControls(app) {
     const setSetting = (key, value) => app.settingsStore.set(key, value);
+    const bindNumericInput = (id, setting, min, max) => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        const sync = (value) => {
+            const rounded = Math.round(Number(value));
+            input.value = String(Number.isFinite(rounded) ? rounded : app.settingsStore.get(setting));
+        };
+        const commit = () => {
+            const parsed = Number.parseFloat(String(input.value).replace(',', '.'));
+            const fallback = Number(app.settingsStore.get(setting));
+            const next = clamp(Number.isFinite(parsed) ? Math.round(parsed) : fallback, min, max);
+            input.value = String(next);
+            setSetting(setting, next);
+        };
+        input.addEventListener('change', commit);
+        input.addEventListener('blur', commit);
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                input.blur();
+            }
+        });
+        app.settingsStore.subscribe(setting, sync);
+        sync(app.settingsStore.get(setting));
+    };
 
     document.getElementById('patternTextInput')?.addEventListener('input', (event) => {
         setSetting('patternText', event.target.value);
     });
+    bindNumericInput('widthValue', 'width', 200, 2000);
+    bindNumericInput('heightValue', 'height', 200, 2000);
     document.querySelectorAll('input[name="mode"]').forEach((input) => {
         input.addEventListener('change', () => {
             if (input.checked) {
@@ -793,11 +927,6 @@ function bindCustomControls(app) {
             if (input.checked) setSetting('ditherAlgorithm', input.value);
         });
     });
-    document.querySelectorAll('input[name="toneResponse"]').forEach((input) => {
-        input.addEventListener('change', () => {
-            if (input.checked) setSetting('toneResponse', input.value);
-        });
-    });
     document.querySelectorAll('input[name="fieldResponse"]').forEach((input) => {
         input.addEventListener('change', () => {
             if (input.checked) setSetting('fieldResponse', input.value);
@@ -807,6 +936,9 @@ function bindCustomControls(app) {
         input.addEventListener('change', () => {
             if (input.checked) setSetting('formFill', input.value);
         });
+    });
+    ['sizeEnabled', 'weightEnabled', 'rotationEnabled', 'noiseEnabled'].forEach((key) => {
+        app.settingsStore.subscribe(key, () => syncPixelParameterControls(app.settingsStore.toObject()));
     });
 
     const imageInput = document.getElementById('imageInput');
@@ -885,6 +1017,7 @@ function appSnapshot(app) {
 
 function appRestore(app, snapshot) {
     const settings = snapshot?.settings || snapshot || {};
+    settings.mode = ACTIVE_MODE;
     app.settingsStore.fromJSON(settings, true);
     state.magneticPoints = Array.isArray(snapshot?.magneticPoints)
         ? snapshot.magneticPoints.map((point) => ({ ...point }))
@@ -906,7 +1039,7 @@ function colorDots(blob) {
     const settings = blob?.settings || blob || {};
     return [
         { kind: 'solid', value: settings.inkColor || '#ffffff' },
-        { kind: 'solid', value: settings.bgColor || '#050505' }
+        { kind: 'solid', value: settings.bgColor || '#0d0d0d' }
     ];
 }
 
@@ -1044,12 +1177,23 @@ const app = defineTool({
         weightMax: 500,
         sizeMin: 36,
         sizeMax: 96,
-        toneResponse: 'both',
+        rotationMin: 0,
+        rotationMax: 0,
+        noiseMin: 0,
+        noiseMax: 0,
         resolution: 72,
+        density: 0,
         inkColor: '#ffffff',
-        bgColor: '#050505',
+        bgColor: '#0d0d0d',
+        allCaps: true,
+        sizeEnabled: true,
+        weightEnabled: true,
+        rotationEnabled: true,
+        noiseEnabled: true,
+        hideTinyLetters: true,
+        invertDither: false,
         showGuides: false,
-        exportTransparent: false,
+        exportTransparent: true,
         ditherAlgorithm: 'floyd',
         contrast: 2,
         blackPoint: 40,
@@ -1066,13 +1210,16 @@ const app = defineTool({
     },
     controls: {
         sliders: [
-            { id: 'widthSlider', valueId: 'widthValue', setting: 'width', min: 200, max: 2000, decimals: 0, baseStep: 1, shiftStep: 10 },
-            { id: 'heightSlider', valueId: 'heightValue', setting: 'height', min: 200, max: 2000, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'weightMinSlider', valueId: 'weightMinValue', setting: 'weightMin', min: 100, max: 900, decimals: 0, baseStep: 10, shiftStep: 100 },
             { id: 'weightMaxSlider', valueId: 'weightMaxValue', setting: 'weightMax', min: 100, max: 900, decimals: 0, baseStep: 10, shiftStep: 100 },
             { id: 'sizeMinSlider', valueId: 'sizeMinValue', setting: 'sizeMin', min: 5, max: 200, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'sizeMaxSlider', valueId: 'sizeMaxValue', setting: 'sizeMax', min: 5, max: 200, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'rotationMinSlider', valueId: 'rotationMinValue', setting: 'rotationMin', min: -180, max: 180, decimals: 0, baseStep: 1, shiftStep: 15 },
+            { id: 'rotationMaxSlider', valueId: 'rotationMaxValue', setting: 'rotationMax', min: -180, max: 180, decimals: 0, baseStep: 1, shiftStep: 15 },
+            { id: 'noiseMinSlider', valueId: 'noiseMinValue', setting: 'noiseMin', min: 0, max: 200, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'noiseMaxSlider', valueId: 'noiseMaxValue', setting: 'noiseMax', min: 0, max: 200, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'resolutionSlider', valueId: 'resolutionValue', setting: 'resolution', min: 8, max: 180, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'densitySlider', valueId: 'densityValue', setting: 'density', min: -100, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'contrastSlider', valueId: 'contrastValue', setting: 'contrast', min: 0.2, max: 3, decimals: 2, baseStep: 0.01, shiftStep: 0.1 },
             { id: 'blackPointSlider', valueId: 'blackPointValue', setting: 'blackPoint', min: 0, max: 250, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'whitePointSlider', valueId: 'whitePointValue', setting: 'whitePoint', min: 5, max: 255, decimals: 0, baseStep: 1, shiftStep: 10 },
@@ -1086,7 +1233,7 @@ const app = defineTool({
     },
     panels: [
         { id: 'textPanel', headerId: 'textPanelHeader', persistent: true },
-        { id: 'canvasPanel', headerId: 'canvasPanelHeader', persistent: true },
+        { id: 'pixelsPanel', headerId: 'pixelsPanelHeader', persistent: true },
         { id: 'ditherPanel', headerId: 'ditherPanelHeader', persistent: true },
         { id: 'fieldsPanel', headerId: 'fieldsPanelHeader', persistent: true },
         { id: 'formsPanel', headerId: 'formsPanelHeader', persistent: true }
@@ -1099,7 +1246,7 @@ const app = defineTool({
         ]
     },
     presets: {
-        storageKey: 'wordplayerPresetsV5',
+        storageKey: 'wordplayerPresetsV12',
         basePath: 'presets',
         colorDots,
         hasRandom: () => false
@@ -1131,6 +1278,7 @@ const app = defineTool({
     },
     onReady(appInstance) {
         bindCustomControls(appInstance);
+        initPillToggleRows();
         syncCustomControls(appInstance);
         window.wordplayer = {
             app: appInstance,

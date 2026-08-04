@@ -45,10 +45,10 @@
             <svg id="mainSvg" role="img" aria-label="Keyboard layout"></svg>
         </div>
 
-        <!-- GRID -->
+        <!-- GENERAL -->
         <aside class="controls-panel controls-panel-left" id="gridPanel">
             <div class="panel-header" id="gridPanelHeader">
-                <span>Grid</span>
+                <span>General</span>
                 <span class="collapse-icon">
                     <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -62,34 +62,28 @@
                         <select id="layoutSelect" class="select-control" aria-label="Keyboard layout"></select>
                     </div>
                     <div class="control-group" data-advanced-only>
-                        <label for="colPitchSlider"><span>Column pitch</span>
+                        <label for="colPitchValue"><span>Column pitch</span>
                             <input type="text" class="value-display" id="colPitchValue" inputmode="decimal" aria-label="Column pitch, mm"></label>
-                        <input type="range" id="colPitchSlider" min="10" max="28" step="0.001">
                     </div>
                     <div class="control-group" data-advanced-only>
-                        <label for="rowPitchSlider"><span>Row pitch</span>
+                        <label for="rowPitchValue"><span>Row pitch</span>
                             <input type="text" class="value-display" id="rowPitchValue" inputmode="decimal" aria-label="Row pitch, mm"></label>
-                        <input type="range" id="rowPitchSlider" min="10" max="28" step="0.001">
                     </div>
                     <div class="control-group" data-advanced-only>
-                        <label for="keyWidthSlider"><span>1U width</span>
+                        <label for="keyWidthValue"><span>1U width</span>
                             <input type="text" class="value-display" id="keyWidthValue" inputmode="decimal" aria-label="1U width, mm"></label>
-                        <input type="range" id="keyWidthSlider" min="7" max="26" step="0.001">
                     </div>
                     <div class="control-group" data-advanced-only>
-                        <label for="keyHeightSlider"><span>Key height</span>
+                        <label for="keyHeightValue"><span>Key height</span>
                             <input type="text" class="value-display" id="keyHeightValue" inputmode="decimal" aria-label="Key height, mm"></label>
-                        <input type="range" id="keyHeightSlider" min="7" max="26" step="0.001">
                     </div>
                     <div class="control-group">
-                        <label for="radiusSlider"><span>Corner radius</span>
+                        <label for="radiusValue"><span>Corner radius</span>
                             <input type="text" class="value-display" id="radiusValue" inputmode="decimal" aria-label="Corner radius, mm"></label>
-                        <input type="range" id="radiusSlider" min="0" max="7" step="0.001">
                     </div>
                     <div class="control-group">
-                        <label for="insetSlider"><span>Guide inset</span>
+                        <label for="insetValue"><span>Guide inset</span>
                             <input type="text" class="value-display" id="insetValue" inputmode="decimal" aria-label="Guide inset, mm"></label>
-                        <input type="range" id="insetSlider" min="0" max="6.5" step="0.001">
                     </div>
 
                     <div class="control-group pill-toggle-row" data-advanced-only>
@@ -100,6 +94,7 @@
                     <dl class="readout" id="statsReadout">
                         <div><dt>Keys</dt><dd id="statKeys">—</dd></div>
                         <div><dt>Artboard</dt><dd id="statBoard">—</dd></div>
+                        <div><dt>Key bounds</dt><dd id="statKeyBounds">—</dd></div>
                         <div><dt>Gap</dt><dd id="statGap">—</dd></div>
                         <div><dt>Legends</dt><dd id="statLegends">—</dd></div>
                         <div><dt>Warnings</dt><dd id="statWarnings">—</dd></div>
@@ -120,41 +115,7 @@
             </div>
             <div class="panel-content">
                 <section class="control-section">
-                    <div class="control-group">
-                        <label for="glyphSizeSlider"><span>Glyph size</span>
-                            <input type="text" class="value-display" id="glyphSizeValue" inputmode="decimal" aria-label="Glyph size, pt"></label>
-                        <input type="range" id="glyphSizeSlider" min="6" max="24" step="0.001">
-                    </div>
-                    <div class="control-group">
-                        <label for="fontWeightSlider"><span>Font weight</span>
-                            <input type="text" class="value-display" id="fontWeightValue" inputmode="decimal" aria-label="Font weight"></label>
-                        <input type="range" id="fontWeightSlider" min="100" max="900" step="1">
-                    </div>
-                    <div class="control-group">
-                        <label for="numpadSizeSlider"><span>Numpad size</span>
-                            <input type="text" class="value-display" id="numpadSizeValue" inputmode="decimal" aria-label="Numpad size, pt"></label>
-                        <input type="range" id="numpadSizeSlider" min="6" max="24" step="0.001">
-                    </div>
-                    <div class="control-group">
-                        <label for="secondarySizeSlider"><span>Secondary size</span>
-                            <input type="text" class="value-display" id="secondarySizeValue" inputmode="decimal" aria-label="Secondary size, pt"></label>
-                        <input type="range" id="secondarySizeSlider" min="6" max="24" step="0.001">
-                    </div>
-                    <div class="control-group">
-                        <label for="wordSizeSlider"><span>Word size</span>
-                            <input type="text" class="value-display" id="wordSizeValue" inputmode="decimal" aria-label="Word size, pt"></label>
-                        <input type="range" id="wordSizeSlider" min="5" max="18" step="0.001">
-                    </div>
-                    <div class="control-group">
-                        <label for="leadingSlider"><span>Leading</span>
-                            <input type="text" class="value-display" id="leadingValue" inputmode="decimal" aria-label="Leading, pt"></label>
-                        <input type="range" id="leadingSlider" min="6" max="24" step="0.001">
-                    </div>
-                    <div class="control-group">
-                        <label for="trackingOffsetSlider"><span>Tracking offset</span>
-                            <input type="text" class="value-display" id="trackingOffsetValue" inputmode="decimal" aria-label="Tracking offset, em"></label>
-                        <input type="range" id="trackingOffsetSlider" min="-0.08" max="0.08" step="0.001">
-                    </div>
+                    <div class="text-style-list" id="textStyleList"></div>
                     <div class="control-group" data-advanced-only>
                         <div class="segmented-control" id="compModeGroup" role="group" aria-label="Compensation mode">
                             <button type="button" data-mode="off" aria-pressed="false">Off</button>

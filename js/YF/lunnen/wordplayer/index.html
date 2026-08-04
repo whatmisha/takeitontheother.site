@@ -44,7 +44,7 @@
 
             <aside class="controls-panel controls-panel-left" id="textPanel">
                 <div class="panel-header" id="textPanelHeader">
-                    <span>Text</span>
+                    <span>General</span>
                     <span class="collapse-icon">
                         <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -54,95 +54,29 @@
                 <div class="panel-content">
                     <section class="control-section">
                         <div class="control-group">
-                            <label><span>Mode</span></label>
-                            <fieldset>
-                                <legend class="sr-only">Mode</legend>
-                                <div class="segmented-control mode-control" role="radiogroup" aria-label="Mode">
-                                    <input type="radio" name="mode" value="dither" id="modeDither" checked>
-                                    <label for="modeDither">Dither</label>
-                                    <input type="radio" name="mode" value="fields" id="modeFields">
-                                    <label for="modeFields">Fields</label>
-                                    <input type="radio" name="mode" value="forms" id="modeForms">
-                                    <label for="modeForms">Forms</label>
-                                </div>
-                            </fieldset>
-                        </div>
-                        <div class="control-group">
                             <label for="patternTextInput"><span>Pattern text</span></label>
                             <textarea id="patternTextInput" class="text-input pattern-text-input" spellcheck="false">Чтение может стать золотым часом дня — временем, когда всё погружается в цельную особенную атсмосферу и можно вернуться к себе и пережить что-то новое, погрузившись в книгу. В дизайне мы тоже подсвечиваем этот путь — иммерсивность погружения в книгу от лица читателя. Мы показываем именно этот момент перехода — резкость и холод внешнего мира растворяются в тёплом камерном пространстве чтения</textarea>
-                        </div>
-                        <div class="control-group">
-                            <label for="weightMinSlider"><span>Light weight</span>
-                                <input type="text" class="value-display" id="weightMinValue" value="100"></label>
-                            <input type="range" id="weightMinSlider" min="100" max="900" value="100" step="10">
-                        </div>
-                        <div class="control-group">
-                            <label for="weightMaxSlider"><span>Heavy weight</span>
-                                <input type="text" class="value-display" id="weightMaxValue" value="500"></label>
-                            <input type="range" id="weightMaxSlider" min="100" max="900" value="500" step="10">
-                        </div>
-                        <div class="control-group">
-                            <label for="sizeMinSlider"><span>Min size <span class="unit">%</span></span>
-                                <input type="text" class="value-display" id="sizeMinValue" value="36"></label>
-                            <input type="range" id="sizeMinSlider" min="5" max="200" value="36" step="1">
-                        </div>
-                        <div class="control-group">
-                            <label for="sizeMaxSlider"><span>Max size <span class="unit">%</span></span>
-                                <input type="text" class="value-display" id="sizeMaxValue" value="96"></label>
-                            <input type="range" id="sizeMaxSlider" min="5" max="200" value="96" step="1">
-                        </div>
-                        <div class="control-group">
-                            <label><span>Pixel brightness</span></label>
-                            <fieldset>
-                                <legend class="sr-only">Pixel brightness response</legend>
-                                <div class="pill-toggle-row tone-response-control" role="radiogroup" aria-label="Pixel brightness response">
-                                    <label class="pill-toggle" for="toneBoth">
-                                        <input type="radio" id="toneBoth" name="toneResponse" value="both" class="sr-only" checked>
-                                        <span>Size + weight</span>
-                                    </label>
-                                    <label class="pill-toggle" for="toneWeight">
-                                        <input type="radio" id="toneWeight" name="toneResponse" value="weight" class="sr-only">
-                                        <span>Weight</span>
-                                    </label>
-                                    <label class="pill-toggle" for="toneSize">
-                                        <input type="radio" id="toneSize" name="toneResponse" value="size" class="sr-only">
-                                        <span>Size</span>
-                                    </label>
-                                </div>
-                            </fieldset>
                         </div>
                         <div class="control-group">
                             <label for="resolutionSlider"><span>Resolution</span>
                                 <input type="text" class="value-display" id="resolutionValue" value="72"></label>
                             <input type="range" id="resolutionSlider" min="8" max="180" value="72" step="1">
                         </div>
-                    </section>
-                </div>
-            </aside>
-
-            <aside class="controls-panel controls-panel-left lower-panel panel-collapsed" id="canvasPanel">
-                <div class="panel-header" id="canvasPanelHeader">
-                    <span>Canvas</span>
-                    <span class="collapse-icon collapsed">
-                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </span>
-                </div>
-                <div class="panel-content">
-                    <section class="control-section">
-                        <div class="control-group">
-                            <label for="widthSlider"><span>Width <span class="unit">px</span></span>
-                                <input type="text" class="value-display" id="widthValue" value="430"></label>
-                            <input type="range" id="widthSlider" min="200" max="2000" value="430" step="1">
+                        <div class="control-group density-control">
+                            <label for="densitySlider"><span>Density</span>
+                                <input type="text" class="value-display" id="densityValue" value="0"></label>
+                            <input type="range" id="densitySlider" min="-100" max="100" value="0" step="1">
                         </div>
-                        <div class="control-group">
-                            <label for="heightSlider"><span>Height <span class="unit">px</span></span>
-                                <input type="text" class="value-display" id="heightValue" value="574"></label>
-                            <input type="range" id="heightSlider" min="200" max="2000" value="574" step="1">
+                        <div class="dimension-row">
+                            <div class="dimension-field">
+                                <label for="widthValue">Width <span class="unit">px</span></label>
+                                <input type="text" class="text-input dimension-input" id="widthValue" value="430" inputmode="numeric" autocomplete="off">
+                            </div>
+                            <div class="dimension-field">
+                                <label for="heightValue">Height <span class="unit">px</span></label>
+                                <input type="text" class="text-input dimension-input" id="heightValue" value="574" inputmode="numeric" autocomplete="off">
+                            </div>
                         </div>
-                    </section>
-                    <section class="control-section">
                         <div class="control-group">
                             <div class="color-swatches-compact" id="colorPickersGroup">
                                 <div class="color-swatch-row">
@@ -159,12 +93,103 @@
                                     <div class="color-swatch-compact" id="bgColorItem" data-color-type="bg">
                                         <button type="button" class="color-dot color-dot--expandable" id="bgColorPreview" aria-label="Open Background color controls"></button>
                                         <span class="color-label">Background</span>
-                                        <input type="text" class="color-swatch-hex" id="bgColorHex" value="#050505" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Background color hex">
+                                        <input type="text" class="color-swatch-hex" id="bgColorHex" value="#0d0d0d" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Background color hex">
                                     </div>
                                     <div class="color-hsb-slot" id="bgColorHsbSlot"></div>
                                 </div>
                             </div>
                         </div>
+                    </section>
+                </div>
+            </aside>
+
+            <aside class="controls-panel controls-panel-left" id="pixelsPanel">
+                <div class="panel-header" id="pixelsPanelHeader">
+                    <span>Pixels</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group pill-toggle-row pixel-toggle-row">
+                            <label class="pill-toggle" for="allCapsToggle" data-tooltip="Render generated text as uppercase">
+                                <input type="checkbox" id="allCapsToggle" class="sr-only" data-setting="allCaps" checked>
+                                <span>Caps</span>
+                            </label>
+                            <label class="pill-toggle" for="sizeEnabledToggle" data-tooltip="Use pixel brightness for letter size">
+                                <input type="checkbox" id="sizeEnabledToggle" class="sr-only" data-setting="sizeEnabled" checked>
+                                <span>Size</span>
+                            </label>
+                            <label class="pill-toggle" for="weightEnabledToggle" data-tooltip="Use pixel brightness for letter weight">
+                                <input type="checkbox" id="weightEnabledToggle" class="sr-only" data-setting="weightEnabled" checked>
+                                <span>Weight</span>
+                            </label>
+                            <label class="pill-toggle" for="rotationEnabledToggle" data-tooltip="Use pixel brightness for letter rotation">
+                                <input type="checkbox" id="rotationEnabledToggle" class="sr-only" data-setting="rotationEnabled" checked>
+                                <span>Rotation</span>
+                            </label>
+                            <label class="pill-toggle" for="noiseEnabledToggle" data-tooltip="Use pixel brightness for position noise">
+                                <input type="checkbox" id="noiseEnabledToggle" class="sr-only" data-setting="noiseEnabled" checked>
+                                <span>Noise</span>
+                            </label>
+                            <label class="pill-toggle" for="hideTinyLettersToggle" data-tooltip="Hide critically small letters">
+                                <input type="checkbox" id="hideTinyLettersToggle" class="sr-only" data-setting="hideTinyLetters" checked>
+                                <span>Hide tiny</span>
+                            </label>
+                            <label class="pill-toggle" for="invertDitherToggle" data-tooltip="Invert dither brightness">
+                                <input type="checkbox" id="invertDitherToggle" class="sr-only" data-setting="invertDither">
+                                <span>Invert</span>
+                            </label>
+                        </div>
+                        <fieldset class="tone-param-group">
+                            <legend>Light pixels</legend>
+                            <div class="control-group">
+                                <label for="weightMinSlider"><span>Light weight</span>
+                                    <input type="text" class="value-display" id="weightMinValue" value="100"></label>
+                                <input type="range" id="weightMinSlider" min="100" max="900" value="100" step="10">
+                            </div>
+                            <div class="control-group">
+                                <label for="sizeMinSlider"><span>Min size <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="sizeMinValue" value="36"></label>
+                                <input type="range" id="sizeMinSlider" min="5" max="200" value="36" step="1">
+                            </div>
+                            <div class="control-group">
+                                <label for="rotationMinSlider"><span>Rotation <span class="unit">°</span></span>
+                                    <input type="text" class="value-display" id="rotationMinValue" value="0"></label>
+                                <input type="range" id="rotationMinSlider" min="-180" max="180" value="0" step="1">
+                            </div>
+                            <div class="control-group">
+                                <label for="noiseMinSlider"><span>Noise <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="noiseMinValue" value="0"></label>
+                                <input type="range" id="noiseMinSlider" min="0" max="200" value="0" step="1">
+                            </div>
+                        </fieldset>
+                        <fieldset class="tone-param-group">
+                            <legend>Dark pixels</legend>
+                            <div class="control-group">
+                                <label for="weightMaxSlider"><span>Heavy weight</span>
+                                    <input type="text" class="value-display" id="weightMaxValue" value="500"></label>
+                                <input type="range" id="weightMaxSlider" min="100" max="900" value="500" step="10">
+                            </div>
+                            <div class="control-group">
+                                <label for="sizeMaxSlider"><span>Max size <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="sizeMaxValue" value="96"></label>
+                                <input type="range" id="sizeMaxSlider" min="5" max="200" value="96" step="1">
+                            </div>
+                            <div class="control-group">
+                                <label for="rotationMaxSlider"><span>Rotation <span class="unit">°</span></span>
+                                    <input type="text" class="value-display" id="rotationMaxValue" value="0"></label>
+                                <input type="range" id="rotationMaxSlider" min="-180" max="180" value="0" step="1">
+                            </div>
+                            <div class="control-group">
+                                <label for="noiseMaxSlider"><span>Noise <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="noiseMaxValue" value="0"></label>
+                                <input type="range" id="noiseMaxSlider" min="0" max="200" value="0" step="1">
+                            </div>
+                        </fieldset>
                     </section>
                 </div>
             </aside>
@@ -179,14 +204,13 @@
                     </span>
                 </div>
                 <div class="panel-content">
-                    <section class="control-section">
+                    <section class="control-section image-load-section">
                         <input type="file" id="imageInput" accept="image/*" hidden>
                         <button type="button" class="btn-secondary btn-full" id="imageLoadBtn">Load image</button>
                         <div class="file-status" id="imageStatus">sample.png</div>
                     </section>
                     <section class="control-section">
-                        <div class="control-group">
-                            <label><span>Algorithm</span></label>
+                        <div class="control-group algorithm-control">
                             <fieldset>
                                 <legend class="sr-only">Dither algorithm</legend>
                                 <div class="segmented-control" role="radiogroup" aria-label="Dither algorithm">
@@ -308,16 +332,22 @@
 
         <nav class="bottom-buttons">
             <button class="btn-fixed btn-intro-help" id="introHelpBtn" type="button" aria-label="About" data-tooltip="About">?</button>
-            <label class="outline-export-toggle" data-tooltip="Convert text to outlines on SVG export">
-                <input type="checkbox" id="convertToOutlinesCheckbox" checked>
-                <span>Curves</span>
-            </label>
-            <label class="outline-export-toggle" data-tooltip="Transparent background on PNG export">
-                <input type="checkbox" id="transparentPngCheckbox" data-setting="exportTransparent">
-                <span>Transparent PNG</span>
-            </label>
             <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
             <button class="btn-fixed" id="exportSvgBtn" type="button">Export SVG</button>
+            <label class="toggle-label" data-tooltip="Convert text to outlines on SVG export">
+                <span class="toggle-switch">
+                    <input type="checkbox" id="convertToOutlinesCheckbox" checked aria-label="Curves">
+                    <span class="toggle-slider"></span>
+                </span>
+                <span class="toggle-label-text">Curves</span>
+            </label>
+            <label class="toggle-label" data-tooltip="Transparent background on PNG export">
+                <span class="toggle-switch">
+                    <input type="checkbox" id="transparentPngCheckbox" data-setting="exportTransparent" aria-label="Transparent PNG" checked>
+                    <span class="toggle-slider"></span>
+                </span>
+                <span class="toggle-label-text">Transparent PNG</span>
+            </label>
         </nav>
 
         <dialog id="dialog" class="modal">

@@ -100,7 +100,14 @@ export function penXFor(code, ctx) {
 export function placeText(el, ctx) {
     const g = ctx.guide;
     const [vCode, hCode] = el.slot;
-    const c = { ...ctx, text: el.text, size: el.size, tracking: el.tracking || 0, compOverride: el.compOverride };
+    const c = {
+        ...ctx,
+        text: el.text,
+        size: el.size,
+        tracking: el.tracking || 0,
+        interline: Number.isFinite(el.leading) ? el.leading : ctx.interline,
+        compOverride: el.compOverride
+    };
     let by = baselineFor(vCode, c);
     let bx = penXFor(hCode, c);
     const anchored = { v: by !== null, h: bx !== null };
