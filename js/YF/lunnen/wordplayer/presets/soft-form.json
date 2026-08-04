@@ -10,7 +10,7 @@
     "sizeMax": 96,
     "rotationMin": 0,
     "rotationMax": 0,
-    "noiseMin": 0,
+    "noiseMin": 100,
     "noiseMax": 0,
     "resolution": 72,
     "density": 0,

@@ -1277,7 +1277,7 @@ const app = defineTool({
         sizeMax: 96,
         rotationMin: 0,
         rotationMax: 0,
-        noiseMin: 0,
+        noiseMin: 100,
         noiseMax: 0,
         resolution: 72,
         density: 0,
@@ -1349,7 +1349,7 @@ const app = defineTool({
         ]
     },
     presets: {
-        storageKey: 'wordplayerPresetsV15',
+        storageKey: 'wordplayerPresetsV16',
         basePath: 'presets',
         colorDots,
         hasRandom: () => false
