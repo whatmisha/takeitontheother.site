@@ -13,7 +13,7 @@ const DEFAULT_IMAGE_URL = './assets/default-image.png';
 const DEFAULT_FORM_URL = './assets/default-form.svg';
 const DEFAULT_PATTERN_TEXT = `Чтение может стать золотым часом дня — временем, когда всё погружается в цельную особенную атсмосферу и можно вернуться к себе и пережить что-то новое, погрузившись в книгу. В дизайне мы тоже подсвечиваем этот путь — иммерсивность погружения в книгу от лица читателя. Мы показываем именно этот момент перехода — резкость и холод внешнего мира растворяются в тёплом камерном пространстве чтения`;
 const DITHER_EMPTY_TONE = 0.05;
-const ACTIVE_MODE = 'dither';
+const AVAILABLE_MODES = new Set(['dither', 'forms']);
 let pillToggleResizeObserver = null;
 
 const state = {
@@ -29,6 +29,7 @@ const state = {
     formMask: null,
     formMaskKey: '',
     formBoundary: [],
+    formSampleCache: { key: '', samples: null },
     staticFonts: new Map(),
     staticFontPromises: new Map(),
     opentypePromise: null,
@@ -38,6 +39,10 @@ const state = {
 const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, value));
 const lerp = (a, b, t) => a + (b - a) * t;
 const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
+
+function normalizeMode(mode) {
+    return AVAILABLE_MODES.has(mode) ? mode : 'dither';
+}
 
 function roundWeight(value) {
     return clamp(Math.round(value / 100) * 100, 100, 900);
@@ -563,14 +568,16 @@ function ensureFormMask(settings) {
     }
 
     const boundary = [];
-    const sampleEvery = 2;
+    const sampleEvery = 1;
     for (let y = 1; y < maskH - 1; y += sampleEvery) {
         for (let x = 1; x < maskW - 1; x += sampleEvery) {
             const idx = y * maskW + x;
             if (!inside[idx]) continue;
             const hasOutsideNeighbor =
                 !inside[idx - 1] || !inside[idx + 1] ||
-                !inside[idx - maskW] || !inside[idx + maskW];
+                !inside[idx - maskW] || !inside[idx + maskW] ||
+                !inside[idx - maskW - 1] || !inside[idx - maskW + 1] ||
+                !inside[idx + maskW - 1] || !inside[idx + maskW + 1];
             if (hasOutsideNeighbor) {
                 boundary.push({
                     x: x / (maskW - 1) * settings.width,
@@ -583,6 +590,7 @@ function ensureFormMask(settings) {
     state.formMask = { width: maskW, height: maskH, inside };
     state.formBoundary = boundary;
     state.formMaskKey = key;
+    state.formSampleCache = { key: '', samples: null };
     return state.formMask;
 }
 
@@ -606,69 +614,102 @@ function nearestBoundaryPoint(x, y) {
     return best ? { ...best, distance: Math.sqrt(bestD) } : null;
 }
 
+function getFormSamples(settings, grid, mask) {
+    const key = [
+        state.formMaskKey,
+        settings.width,
+        settings.height,
+        grid.cols,
+        grid.rows,
+        grid.pitchW.toFixed(4),
+        grid.pitchH.toFixed(4)
+    ].join('|');
+    if (state.formSampleCache.key === key && state.formSampleCache.samples) {
+        return state.formSampleCache.samples;
+    }
+
+    const samples = grid.points.map((point) => {
+        const nearest = nearestBoundaryPoint(point.x, point.y);
+        if (!nearest) return null;
+        return {
+            inside: insideFormMask(mask, point.x, point.y, settings),
+            nearX: nearest.x,
+            nearY: nearest.y,
+            distance: nearest.distance
+        };
+    });
+    state.formSampleCache = { key, samples };
+    return samples;
+}
+
+function formEdgeSpread(settings, width, height) {
+    return Math.max(1, Math.min(width, height) * clamp(Number(settings.formEdgeSpread ?? 34) / 100, 0.02, 1));
+}
+
+function toneFromFormDistance(distanceToEdge, edgeSpread, settings) {
+    const edgeTone = 1 - clamp(distanceToEdge / Math.max(1, edgeSpread));
+    return settings.invertDither ? 1 - edgeTone : edgeTone;
+}
+
 function renderForms(ctx) {
     const { settings, width, height } = ctx;
     const mask = ensureFormMask(settings);
+    if (!mask || !state.formBoundary.length) return;
+
     const chars = cleanPatternText(settings.patternText, settings.allCaps);
-    const grid = makeResolutionGrid(width, height, settings.resolution);
-    const base = baseSizeFromGrid(grid, 0.7);
+    const grid = makeResolutionGrid(width, height, settings.resolution, settings.density);
+    const samples = getFormSamples(settings, grid, mask);
+    const base = baseSizeFromGrid(grid, 0.74);
     const minWeight = Math.min(settings.weightMin, settings.weightMax);
     const maxWeight = Math.max(settings.weightMin, settings.weightMax);
-    const sizeRange = relativeSizeRange(settings);
-    const fillInside = settings.formFill === 'inside';
-    const precision = settings.formPrecision / 100;
-    const leak = (1 - precision) * Math.min(width, height) * 0.28;
-    const gravityX = width * settings.gravityX / 100;
-    const gravityY = height * settings.gravityY / 100;
+    const noiseRange = relativeNoiseRange(settings);
+    const hideTiny = settings.hideTinyLetters !== false;
+    const edgeSpread = formEdgeSpread(settings, width, height);
+    const lineGravity = clamp(Number(settings.formAttraction ?? 45) / 100);
+    const globalGravity = clamp(Number(settings.formGravity ?? 12) / 100);
+    const gravityAngle = Number(settings.formGravityDirection ?? 90) * Math.PI / 180;
+    const gravityShift = Math.min(width, height) * 0.18 * globalGravity;
+    const gravityX = Math.cos(gravityAngle) * gravityShift;
+    const gravityY = Math.sin(gravityAngle) * gravityShift;
 
     grid.points.forEach((point, index) => {
-        const inside = insideFormMask(mask, point.x, point.y, settings);
-        const match = fillInside ? inside : !inside;
-        const near = nearestBoundaryPoint(point.x, point.y);
-        if (!near) return;
+        const sample = samples[index];
+        if (!sample || !sample.inside) return;
 
-        const canLeak = leak > 0 && near.distance <= leak;
-        if (!match && !canLeak) return;
+        const edgeTone = 1 - clamp(sample.distance / edgeSpread);
+        const tone = toneFromFormDistance(sample.distance, edgeSpread, settings);
+        if (hideTiny && tone <= DITHER_EMPTY_TONE) return;
 
-        const leakTone = match ? 1 : clamp(1 - near.distance / Math.max(1, leak));
+        const type = typographyFromTone(settings, base, minWeight, maxWeight, tone);
+        const noise = settings.noiseEnabled !== false
+            ? lerp(noiseRange.min, noiseRange.max, tone)
+            : 0;
+        const noiseOffset = Math.min(point.cellW, point.cellH) * noise;
         let x = point.x;
         let y = point.y;
-        const attraction = settings.formAttraction / 100 * lerp(0.25, 1, leakTone);
-        x += (near.x - x) * attraction;
-        y += (near.y - y) * attraction;
 
-        const gravityStrength = settings.formGravity / 100;
-        const gravity = gravityStrength * 0.3;
-        x += (gravityX - x) * gravity;
-        y += (gravityY - y) * gravity;
-
-        if (precision > 0.92) {
-            const stillInside = insideFormMask(mask, x, y, settings);
-            if ((fillInside && !stillInside) || (!fillInside && stillInside)) {
-                x = point.x;
-                y = point.y;
-            }
+        if (lineGravity > 0 && sample.distance > 0.001) {
+            const lineFalloff = lerp(0.22, 1, Math.pow(edgeTone, 0.7));
+            const maxLineShift = edgeSpread * 0.76 * lineGravity * lineFalloff;
+            const lineShift = Math.min(sample.distance, maxLineShift);
+            x += (sample.nearX - point.x) / sample.distance * lineShift;
+            y += (sample.nearY - point.y) / sample.distance * lineShift;
         }
 
-        const dx = near.x - point.x;
-        const dy = near.y - point.y;
-        const rotation = Math.atan2(dy, dx) * 180 / Math.PI + 90;
-        const gravityRadius = Math.min(width, height) * 0.72;
-        const gravityInfluence = Math.pow(clamp(1 - dist(x, y, gravityX, gravityY) / Math.max(1, gravityRadius)), 1.45) * gravityStrength;
-        const tone = clamp(lerp(0.35, 0.96, leakTone));
-        const type = typographyFromTone(settings, base, minWeight, maxWeight, tone);
+        x += gravityX + signedNoise(index, 5) * noiseOffset;
+        y += gravityY + signedNoise(index, 6) * noiseOffset;
+        if (x < 0 || x > width || y < 0 || y > height) return;
+
         drawLetter(ctx, {
             char: chars[index % chars.length],
             x,
             y,
-            size: lerp(type.size, base * sizeRange.min, gravityInfluence),
-            weight: lerp(type.weight, minWeight, gravityInfluence),
-            rotation,
+            size: type.size,
+            weight: type.weight,
+            rotation: type.rotation,
             fill: settings.inkColor
         });
     });
-
-    if (settings.showGuides) drawFormGuides(ctx, mask, gravityX, gravityY);
 }
 
 function drawFormGuides(ctx, mask, gravityX, gravityY) {
@@ -716,6 +757,7 @@ function loadFormFromSvgText(svgText, label, app) {
         state.formImageKey = `${label}:${Date.now()}`;
         state.formLabel = label;
         state.formMaskKey = '';
+        state.formSampleCache = { key: '', samples: null };
         URL.revokeObjectURL(url);
         syncStatusLabels();
         app.renderNow();
@@ -853,11 +895,12 @@ function initPillToggleRows() {
 
 function syncCustomControls(app) {
     const settings = app.settingsStore.toObject();
-    if (settings.mode !== ACTIVE_MODE) {
-        app.settingsStore.set('mode', ACTIVE_MODE);
+    const mode = normalizeMode(settings.mode);
+    if (settings.mode !== mode) {
+        app.settingsStore.set('mode', mode);
         return;
     }
-    document.querySelector('.container')?.setAttribute('data-mode', settings.mode);
+    document.querySelector('.container')?.setAttribute('data-mode', mode);
     const textInput = document.getElementById('patternTextInput');
     if (textInput && textInput.value !== settings.patternText) textInput.value = settings.patternText;
     const widthInput = document.getElementById('widthValue');
@@ -865,7 +908,7 @@ function syncCustomControls(app) {
     const heightInput = document.getElementById('heightValue');
     if (heightInput && heightInput.value !== String(settings.height)) heightInput.value = String(settings.height);
     document.querySelectorAll('input[name="mode"]').forEach((input) => {
-        input.checked = input.value === settings.mode;
+        input.checked = input.value === mode;
     });
     document.querySelectorAll('input[name="ditherAlgorithm"]').forEach((input) => {
         input.checked = input.value === settings.ditherAlgorithm;
@@ -917,7 +960,7 @@ function bindCustomControls(app) {
     document.querySelectorAll('input[name="mode"]').forEach((input) => {
         input.addEventListener('change', () => {
             if (input.checked) {
-                setSetting('mode', input.value);
+                setSetting('mode', normalizeMode(input.value));
                 syncCustomControls(app);
             }
         });
@@ -976,7 +1019,7 @@ function bindCustomControls(app) {
     document.getElementById('introHelpBtn')?.addEventListener('click', () => {
         app.dialog?.alert({
             title: 'Wordplayer',
-            text: 'Click the artboard in Magnetic Fields to place attraction points. In Magnetic Forms, click to move the gravity point.'
+            text: 'Dither maps an image through text. Forms fills an SVG shape with text driven by distance to the vector edge.'
         });
     });
 
@@ -997,14 +1040,15 @@ function bindCustomControls(app) {
         if (!point) return;
         if (app.settings.mode === 'fields') {
             addMagneticPoint(app, point);
-        } else if (app.settings.mode === 'forms') {
-            setGravityPoint(app, point);
         }
     });
 
     app.settingsStore.subscribe('mode', () => syncCustomControls(app));
     app.settingsStore.subscribe('*', (_next, _prev, key) => {
-        if (key === 'width' || key === 'height') state.formMaskKey = '';
+        if (key === 'width' || key === 'height') {
+            state.formMaskKey = '';
+            state.formSampleCache = { key: '', samples: null };
+        }
     });
 }
 
@@ -1017,7 +1061,7 @@ function appSnapshot(app) {
 
 function appRestore(app, snapshot) {
     const settings = snapshot?.settings || snapshot || {};
-    settings.mode = ACTIVE_MODE;
+    settings.mode = normalizeMode(settings.mode);
     app.settingsStore.fromJSON(settings, true);
     state.magneticPoints = Array.isArray(snapshot?.magneticPoints)
         ? snapshot.magneticPoints.map((point) => ({ ...point }))
@@ -1202,8 +1246,10 @@ const app = defineTool({
         fieldForce: 58,
         fieldRadius: 150,
         formFill: 'inside',
+        formEdgeSpread: 34,
         formAttraction: 45,
         formGravity: 12,
+        formGravityDirection: 90,
         formPrecision: 100,
         gravityX: 50,
         gravityY: 50
@@ -1225,9 +1271,10 @@ const app = defineTool({
             { id: 'whitePointSlider', valueId: 'whitePointValue', setting: 'whitePoint', min: 5, max: 255, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'fieldForceSlider', valueId: 'fieldForceValue', setting: 'fieldForce', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'fieldRadiusSlider', valueId: 'fieldRadiusValue', setting: 'fieldRadius', min: 20, max: 700, decimals: 0, baseStep: 1, shiftStep: 25 },
+            { id: 'formEdgeSpreadSlider', valueId: 'formEdgeSpreadValue', setting: 'formEdgeSpread', min: 2, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'formAttractionSlider', valueId: 'formAttractionValue', setting: 'formAttraction', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'formGravitySlider', valueId: 'formGravityValue', setting: 'formGravity', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
-            { id: 'formPrecisionSlider', valueId: 'formPrecisionValue', setting: 'formPrecision', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 }
+            { id: 'formGravityDirectionSlider', valueId: 'formGravityDirectionValue', setting: 'formGravityDirection', min: -180, max: 180, decimals: 0, baseStep: 1, shiftStep: 15 }
         ],
         toggles: true
     },
@@ -1246,7 +1293,7 @@ const app = defineTool({
         ]
     },
     presets: {
-        storageKey: 'wordplayerPresetsV12',
+        storageKey: 'wordplayerPresetsV13',
         basePath: 'presets',
         colorDots,
         hasRandom: () => false
@@ -1272,8 +1319,7 @@ const app = defineTool({
     render(ctx) {
         addSvgDefs(ctx.svg, ctx.create);
         drawBackground(ctx);
-        if (ctx.settings.mode === 'fields') renderFields(ctx);
-        else if (ctx.settings.mode === 'forms') renderForms(ctx);
+        if (ctx.settings.mode === 'forms') renderForms(ctx);
         else renderDither(ctx);
     },
     onReady(appInstance) {

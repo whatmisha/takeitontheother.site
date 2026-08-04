@@ -43,6 +43,13 @@ body {
     gap: var(--spacing-md);
 }
 
+.mode-toolbar {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    width: 168px;
+}
+
 .word-canvas {
     background: #000;
 }
@@ -66,7 +73,8 @@ body {
 }
 
 #textPanel,
-#ditherPanel {
+#ditherPanel,
+#formsPanel {
     left: var(--spacing-3xl);
     right: auto;
     width: var(--word-ui-panel-width);
@@ -93,7 +101,8 @@ body {
     width: var(--word-ui-panel-width);
 }
 
-#ditherPanel {
+#ditherPanel,
+#formsPanel {
     top: auto;
     bottom: 74px;
     max-height: min(420px, calc(100vh - 148px));
@@ -128,8 +137,7 @@ body {
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-#fieldsPanel,
-#formsPanel {
+#fieldsPanel {
     display: none !important;
 }
 
@@ -238,11 +246,13 @@ body {
     margin-bottom: var(--spacing-lg);
 }
 
-#ditherPanel .control-group {
+#ditherPanel .control-group,
+#formsPanel .control-group {
     margin-bottom: 14px;
 }
 
-#ditherPanel .control-group:last-child {
+#ditherPanel .control-group:last-child,
+#formsPanel .control-group:last-child {
     margin-bottom: 0;
 }
 
@@ -253,6 +263,7 @@ body {
 #textPanel .panel-content,
 #pixelsPanel .panel-content,
 #ditherPanel .panel-content,
+#formsPanel .panel-content,
 .mode-panel .panel-content {
     overflow-y: auto;
     min-height: 0;
@@ -266,7 +277,8 @@ body {
     max-height: calc(100vh - 150px);
 }
 
-#ditherPanel .panel-content {
+#ditherPanel .panel-content,
+#formsPanel .panel-content {
     max-height: min(364px, calc(100vh - 204px));
 }
 
@@ -277,6 +289,7 @@ body {
 #textPanel.panel-collapsed .panel-content,
 #pixelsPanel.panel-collapsed .panel-content,
 #ditherPanel.panel-collapsed .panel-content,
+#formsPanel.panel-collapsed .panel-content,
 .mode-panel.panel-collapsed .panel-content {
     max-height: 0;
 }
@@ -299,11 +312,13 @@ body {
         max-height: calc(100vh - 150px);
     }
 
-    #ditherPanel {
+    #ditherPanel,
+    #formsPanel {
         max-height: 405px;
     }
 
-    #ditherPanel .panel-content {
+    #ditherPanel .panel-content,
+    #formsPanel .panel-content {
         max-height: 349px;
     }
 }
@@ -312,6 +327,7 @@ body {
     #textPanel,
     #pixelsPanel,
     #ditherPanel,
+    #formsPanel,
     .mode-panel {
         position: fixed;
         left: var(--spacing-md);
@@ -331,7 +347,8 @@ body {
         max-height: calc(100vh - 42vh - 84px);
     }
 
-    #ditherPanel {
+    #ditherPanel,
+    #formsPanel {
         top: auto;
         bottom: 74px;
         max-height: 34vh;

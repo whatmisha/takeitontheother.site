@@ -12,6 +12,15 @@
     <div class="container" data-mode="dither">
         <div class="top-links">
             <a href="/js/YF/" class="top-link">YF Tools</a>
+            <fieldset class="mode-toolbar">
+                <legend class="sr-only">Mode</legend>
+                <div class="segmented-control mode-control" role="radiogroup" aria-label="Mode">
+                    <input type="radio" name="mode" value="dither" id="modeDither" checked>
+                    <label for="modeDither">Dither</label>
+                    <input type="radio" name="mode" value="forms" id="modeForms">
+                    <label for="modeForms">Forms</label>
+                </div>
+            </fieldset>
             <div class="preset-toolbar-cluster">
                 <div class="preset-dropdown" id="presetDropdown">
                     <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button"
@@ -139,7 +148,7 @@
                                 <input type="checkbox" id="hideTinyLettersToggle" class="sr-only" data-setting="hideTinyLetters" checked>
                                 <span>Hide tiny</span>
                             </label>
-                            <label class="pill-toggle" for="invertDitherToggle" data-tooltip="Invert dither brightness">
+                            <label class="pill-toggle" for="invertDitherToggle" data-tooltip="Invert tone mapping">
                                 <input type="checkbox" id="invertDitherToggle" class="sr-only" data-setting="invertDither">
                                 <span>Invert</span>
                             </label>
@@ -284,7 +293,7 @@
 
             <aside class="controls-panel mode-panel" id="formsPanel" data-mode-panel="forms">
                 <div class="panel-header" id="formsPanelHeader">
-                    <span>Magnetic Forms</span>
+                    <span>Forms</span>
                     <span class="collapse-icon">
                         <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -299,31 +308,24 @@
                     </section>
                     <section class="control-section">
                         <div class="control-group">
-                            <label><span>Fill</span></label>
-                            <fieldset>
-                                <legend class="sr-only">Form fill</legend>
-                                <div class="segmented-control" role="radiogroup" aria-label="Form fill">
-                                    <input type="radio" name="formFill" value="inside" id="formInside" checked>
-                                    <label for="formInside">Inside</label>
-                                    <input type="radio" name="formFill" value="outside" id="formOutside">
-                                    <label for="formOutside">Outside</label>
-                                </div>
-                            </fieldset>
+                            <label for="formEdgeSpreadSlider"><span>Edge range <span class="unit">%</span></span>
+                                <input type="text" class="value-display" id="formEdgeSpreadValue" value="34"></label>
+                            <input type="range" id="formEdgeSpreadSlider" min="2" max="100" value="34" step="1">
                         </div>
                         <div class="control-group">
-                            <label for="formAttractionSlider"><span>Line attraction</span>
+                            <label for="formAttractionSlider"><span>Line gravity</span>
                                 <input type="text" class="value-display" id="formAttractionValue" value="45"></label>
                             <input type="range" id="formAttractionSlider" min="0" max="100" value="45" step="1">
                         </div>
                         <div class="control-group">
-                            <label for="formGravitySlider"><span>Gravity</span>
+                            <label for="formGravitySlider"><span>Gravity force</span>
                                 <input type="text" class="value-display" id="formGravityValue" value="12"></label>
                             <input type="range" id="formGravitySlider" min="0" max="100" value="12" step="1">
                         </div>
                         <div class="control-group">
-                            <label for="formPrecisionSlider"><span>Precision</span>
-                                <input type="text" class="value-display" id="formPrecisionValue" value="100"></label>
-                            <input type="range" id="formPrecisionSlider" min="0" max="100" value="100" step="1">
+                            <label for="formGravityDirectionSlider"><span>Gravity direction <span class="unit">°</span></span>
+                                <input type="text" class="value-display" id="formGravityDirectionValue" value="90"></label>
+                            <input type="range" id="formGravityDirectionSlider" min="-180" max="180" value="90" step="1">
                         </div>
                     </section>
                 </div>
