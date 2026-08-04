@@ -8,7 +8,7 @@ export const PRESET_KEYS = [
     'showCaps', 'showGuides', 'showGlyphs', 'showIcons', 'showDrawing', 'showColumns', 'showIndex',
     'showInk', 'showSlots', 'showRef', 'showDiff', 'showBlocks', 'languageLayer',
     'capColor', 'guideColor', 'inkColor', 'bgColor',
-    'contentEdits', 'layoutEdits'
+    'customIcons', 'contentEdits', 'layoutEdits'
 ];
 
 export const GRID_SETTING_KEYS = ['colPitch', 'rowPitch', 'keyWidth1U', 'keyHeight', 'cornerRadius', 'guideInset'];
@@ -24,6 +24,8 @@ export const COLOR_SETTING_KEYS = ['capColor', 'guideColor', 'inkColor', 'bgColo
 
 const DEFAULT_MIN_KEY_WIDTH_MM = 4;
 const DEFAULT_MAX_KEY_WIDTH_MM = 80;
+const CUSTOM_ICON_PREFIX = 'custom:';
+const ICON_PATH_DATA_RE = /^[MmZzLlHhVvCcSsQqTtAaEe0-9+\-.,\s]+$/;
 
 function ioOptions(options = {}) {
     const sourceRowCount = Number.isInteger(options.sourceRowCount)
@@ -116,6 +118,53 @@ export function sanitizeCompensationTableEdits(edits = {}) {
 
 export function cleanIconGroup(group) {
     return String(group || '').trim() === 'f-icons' ? 'f-icons' : 'icons';
+}
+
+export function cleanCustomIconId(value) {
+    const raw = String(value || '').trim();
+    const name = raw.startsWith(CUSTOM_ICON_PREFIX) ? raw.slice(CUSTOM_ICON_PREFIX.length) : raw;
+    const slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9._-]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 72);
+    return slug ? `${CUSTOM_ICON_PREFIX}${slug}` : '';
+}
+
+function cleanCustomIconName(value, fallback = '') {
+    return String(value || fallback || 'Custom icon')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .slice(0, 80) || 'Custom icon';
+}
+
+export function cleanCustomIconDefinition(icon = {}, fallbackName = '') {
+    if (!icon || typeof icon !== 'object' || Array.isArray(icon)) return null;
+    const d = String(icon.d || '').trim();
+    if (!d || d.length > 60000 || !ICON_PATH_DATA_RE.test(d)) return null;
+    const w = clamp(finiteOr(icon.w, 8), 0.1, 80);
+    const h = clamp(finiteOr(icon.h, 8), 0.1, 80);
+    const ox = clamp(finiteOr(icon.ox, 0), -10000, 10000);
+    const oy = clamp(finiteOr(icon.oy, 0), -10000, 10000);
+    return {
+        name: cleanCustomIconName(icon.name, fallbackName),
+        w: roundMm(w),
+        h: roundMm(h),
+        ox: roundMm(ox),
+        oy: roundMm(oy),
+        d
+    };
+}
+
+export function sanitizeCustomIcons(icons = {}) {
+    const out = {};
+    if (!icons || typeof icons !== 'object' || Array.isArray(icons)) return out;
+    for (const [rawId, icon] of Object.entries(icons)) {
+        const id = cleanCustomIconId(rawId);
+        const clean = cleanCustomIconDefinition(icon, rawId);
+        if (id && clean) out[id] = clean;
+    }
+    return out;
 }
 
 function cleanFontId(value) {
@@ -214,6 +263,7 @@ export function normalizedPresetBlob(blob = {}, defaults = {}, options = {}) {
     clean.contentEdits = sanitizeContentEdits(clean.contentEdits || {}, options);
     clean.layoutEdits = sanitizeLayoutEdits(clean.layoutEdits || {}, options);
     clean.compensationTableEdits = sanitizeCompensationTableEdits(clean.compensationTableEdits || {});
+    clean.customIcons = sanitizeCustomIcons(clean.customIcons || {});
     return clean;
 }
 
@@ -247,6 +297,9 @@ export function buildKeyboardModel(blob = {}, defaults = {}, options = {}) {
             grid: pickSettings(settings, GRID_SETTING_KEYS),
             type: pickSettings(settings, TYPE_SETTING_KEYS),
             appearance: pickSettings(settings, [...LAYER_SETTING_KEYS, ...COLOR_SETTING_KEYS]),
+            assets: {
+                icons: settings.customIcons
+            },
             edits: {
                 layout: settings.layoutEdits,
                 content: settings.contentEdits
@@ -276,6 +329,7 @@ export function presetBlobFromKeyboardModel(input = {}, defaults = {}, options =
         ...(keyboard.grid || {}),
         ...(keyboard.type || {}),
         ...(keyboard.appearance || {}),
+        customIcons: keyboard.assets?.icons || keyboard.icons || {},
         layoutEdits: edits.layout || {},
         contentEdits: edits.content || {}
     }, defaults, options);

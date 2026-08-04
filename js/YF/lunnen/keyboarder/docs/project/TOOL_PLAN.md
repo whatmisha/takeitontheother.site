@@ -240,13 +240,13 @@ Local asset cleanup 2026-07-29: CoFo Sans UI fonts скопированы в `Fo
 
 Статус: **этапы 0–5 сделаны по коду**. Этап 6 имеет рабочий importable draft slice и остаётся
 открыт для дальнейшей production-полировки imported/custom layouts. Этап 7 закрыт по основным
-кодовым пунктам: послойный SVG, PDF в мм, локальные export libs, text/outlines mode,
-compensation table editor и batch SVG. Этап 8 закрыт по основным кодовым пунктам: font registry,
+кодовым пунктам: послойный SVG, PDF в мм, локальные export libs, text/outlines mode и
+compensation table editor. Этап 8 закрыт по основным кодовым пунктам: font registry,
 UI-загрузка нескольких сессионных шрифтов, variable axes/instances, per-element `fontId`,
-автопараметры компенсации для активной гарнитуры, статус probe/invariants, control sheet и
-расширенный Node harness по нескольким локальным весам. Остаётся ручной production QA скачанных
-SVG/PDF в Illustrator/PDF viewer и возможный будущий upgrade font engine для настоящего `gvar`
-outline instancing.
+автопараметры компенсации для активной гарнитуры, статус probe/invariants, control sheet,
+настоящий `gvar` outline instancing для TrueType variable fonts и расширенный QA harness.
+Остаётся ручной production QA скачанных SVG/PDF в Illustrator/PDF viewer и добавление новых
+layout profiles по мере появления новых чертежей.
 
 ### Этап 0 — каркас ✅ сделано
 
@@ -864,10 +864,26 @@ SVG с контрольными знаками по всем загруженн�
 проверяет рост `eps` вместе с весом, стабильность flat-stem invariant и допускает diagnostic
 `check` на тяжёлых весах, где строгий порядок `H < S < O < A < W` может честно флагнуть модель.
 
-Caveat: текущий локальный `opentype.js` читает `fvar`, но не применяет `gvar`-дельты к outline
-contours. Поэтому variable axes/instances уже работают как UI/profile/cache/CSS-text workflow,
-а outline preview/export остаётся на контурах default instance до будущей замены или расширения
-font engine. Это явно показывается в font status.
+Update 2026-08-03: `gvar` outline instancing реализован локально в `app/kb/variations.js`.
+`typography.js` применяет выбранные координаты вариативного шрифта к advance, bbox и SVG path data,
+а composite glyphs обрабатываются через variation deltas на component positions и phantom points.
+Это закрывает старый caveat, где `opentype.js` показывал `fvar`, но не менял outline contours.
+Регрессия проверяет весь `YSText-Upright-weight-VF.ttf` против `fontTools`:
+912 glyphs × 7 axis locations, плюс отдельный export guard для кириллических composite-букв
+`КЕНХВАРОСМТ` на весах `100/250/400/700/900`.
+
+Команды:
+
+```bash
+node analysis/variable-font-qa.mjs
+node analysis/export-variable-font-regression.mjs
+NODE_PATH=/Users/mishaivanov/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules \
+  /Users/mishaivanov/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node \
+  analysis/browser-variable-font-smoke.mjs --url http://127.0.0.1:8001/
+```
+
+Ограничение: browser smoke требует доступный Playwright + Chromium/Google Chrome. В обычном Node
+можно запускать остальные проверки без браузера через `node analysis/variable-font-qa.mjs`.
 
 ### Этап 9 — оптимизация приложения: от самого важного к второстепенному
 
@@ -1268,7 +1284,7 @@ experiments and LCAKB23 variants; the canonical former LCAKB23 reference is now
 | Шрифт YS Text под лицензией с `fsType=4` | требует решения | см. вопрос 6 |
 | Коэффициенты компенсации не переносятся на другие гарнитуры | **высокий** | этап 8: самокалибровка по полуапрошам гарнитуры плюс четыре инварианта, которые не требуют эталона (§ 8.4). Риск нельзя закрыть заранее — только измерением на нескольких шрифтах |
 | Шрифты врут в `OS/2` (cap-height, x-height) | средний | всегда мерить геометрически по ink-боксу `H` и `x`, объявленные значения только как подсказку (§ 8.1) |
-| Вариативные шрифты: метрики дефолтного инстанса не равны выбранному | средний | снимать метрики и контуры после применения координат по осям, кэшировать на инстанс |
+| Вариативные шрифты: метрики дефолтного инстанса не равны выбранному | закрыт для YS Text VF | `app/kb/variations.js` применяет `gvar` deltas к simple/composite glyph outlines и phantom advances; `analysis/verify-variable-font.mjs` сверяет результат с `fontTools` |
 
 ---
 
@@ -1303,7 +1319,7 @@ experiments and LCAKB23 variants; the canonical former LCAKB23 reference is now
 | 2 | Текст в превью и экспорте | **Превью кривыми** через opentype.js, **экспорт на выбор**: живой `<text>` или кривые |
 | 3 | Объём беты | **Генерация из модели + верификация**, без редактирования мышью. Клик-редактирование — этап 4 |
 | 4 | Эталон верификации | **`reference/keyboards/Work_2_L.svg` как есть**, включая ручную компенсацию. Любое расхождение — ошибка модели, а не улучшение |
-| 5 | Шрифты (бета) | **Не копировать**, читать `Fonts/YS Text/YS Text-Regular.ttf` напрямую. Только Regular |
+| 5 | Шрифты (историческая бета) | Изначально Regular читался из `Fonts/YS Text/YS Text-Regular.ttf`; текущий reference font для приложения — `Fonts/YS Text Variable/YSText-Upright-weight-VF.ttf` с default `wght=400` |
 | 6 | Шрифты (про, этап 8) | **Любой файл**: полный съём метрик → автокалибровка компенсации. YS Text остаётся регрессионным эталоном, не единственным поддерживаемым шрифтом |
 | 7 | Единицы в UI | **Размеры — только мм, кегли — только pt.** Внутри по-прежнему px (= pt). Двойного вывода px/мм в панелях нет |
 | 8 | Название | **Keyboarder.** `storageKey` пресетов — `keyboarder`, экспорт — `keyboarder.svg` |
@@ -1319,9 +1335,10 @@ experiments and LCAKB23 variants; the canonical former LCAKB23 reference is now
 - **Решение 4** задаёт жёсткий критерий приёмки этапа 3 и запрещает соблазн «подкрутить эталон
   под модель». Худшие знаки (`Т` справа, 0.286 px) останутся в отчёте красными — так и надо,
   это честный индикатор незакрытого признака «где по высоте расположен просвет».
-- **Решение 5**: путь содержит пробелы, значит в `fontPaths` он должен быть
-  URL-энкоден — `Fonts/YS%20Text/YS%20Text-Regular.ttf`. На регистр тоже внимание: папка
-  называется `Fonts` с большой буквы, а веб-сервер регистрозависим.
+- **Решение 5**: пути со шрифтами содержат пробелы, значит в browser URL они должны быть
+  URL-энкодены. Текущий reference font: `Fonts/YS%20Text%20Variable/YSText-Upright-weight-VF.ttf`.
+  На регистр тоже внимание: папка называется `Fonts` с большой буквы, а веб-сервер
+  регистрозависим.
 - **Решение 6**: `compensate.js` уже принимает `params` снаружи — на этапе 8 достаточно
   собрать тот же объект из `fontprobe`, не меняя формулу. Бета остаётся на `YS_TEXT_REGULAR`.
 - **Решение 7**: настройки сетки в `settings` хранятся в мм, в `buildLayout` уходят через `toPx`.

@@ -6,6 +6,7 @@ import {
     buildKeyboardModel,
     parseKeyboardModelJSONText,
     presetBlobFromKeyboardModel,
+    sanitizeCustomIcons,
     sanitizeCompensationTableEdits,
     sanitizeContentEdits,
     sanitizeLayoutEdits
@@ -50,6 +51,7 @@ const defaults = {
     guideColor: '#2353db',
     inkColor: '#aaaaaa',
     bgColor: '#808080',
+    customIcons: {},
     contentEdits: {},
     layoutEdits: {}
 };
@@ -71,6 +73,10 @@ const edited = {
         '~': { L: '12.345', R: null },
         '№': { R: 49.991 },
         'bad': { L: 'oops' }
+    },
+    customIcons: {
+        'custom:Spark Upload': { name: 'Spark Upload', w: '24.4999', h: 24, ox: 0, oy: '-1', d: 'M0 0L10 0L10 10Z' },
+        'custom:bad': { name: 'Bad', w: 12, h: 12, d: 'M0 0L url(bad)' }
     },
     showSlots: true,
     layoutEdits: {
@@ -115,6 +121,17 @@ assert.deepEqual(cleanCompTable['~'], { L: 12.35, R: null });
 assert.deepEqual(cleanCompTable['№'], { R: 49.99 });
 assert.equal(cleanCompTable.b, undefined);
 
+const cleanIcons = sanitizeCustomIcons(edited.customIcons);
+assert.deepEqual(cleanIcons['custom:spark-upload'], {
+    name: 'Spark Upload',
+    w: 24.5,
+    h: 24,
+    ox: 0,
+    oy: -1,
+    d: 'M0 0L10 0L10 10Z'
+});
+assert.equal(cleanIcons['custom:bad'], undefined);
+
 const cleanContent = sanitizeContentEdits(edited.contentEdits, options);
 assert.deepEqual(cleanContent['0:main:0'].elements[0], {
     slot: 'BL',
@@ -142,8 +159,10 @@ assert.equal(model.settings.layoutName, 'LCAKB23');
 assert.equal(model.settings.languageLayer, 'dual');
 assert.equal(model.settings.legendTextMode, 'text');
 assert.deepEqual(model.settings.compensationTableEdits, cleanCompTable);
+assert.deepEqual(model.settings.customIcons, cleanIcons);
 assert.equal(model.keyboard.type.legendTextMode, 'text');
 assert.deepEqual(model.keyboard.type.compensationTableEdits, cleanCompTable);
+assert.deepEqual(model.keyboard.assets.icons, cleanIcons);
 assert.equal(model.units.compensationTable, 'em/1000');
 assert.deepEqual(model.keyboard.edits.layout, cleanLayout);
 assert.deepEqual(model.keyboard.edits.content, cleanContent);

@@ -354,24 +354,28 @@ Acceptance checks:
 
 ## Priority 4 - Function Reordering Without Geometry Changes
 
+Status 2026-08-04: first implementation is done for F-row icon dragging, bottom main-row
+function swaps, and numpad function swaps.
+
 Goal: allow practical layout variations by moving content/function assignments, never physical keys.
 
 Bottom row and numpad:
 
-1. Drag-and-drop moves or swaps key function/content between physical keys.
+1. Done: drag-and-drop swaps key function/content between physical keys in the bottom main row
+   and numpad.
 
-2. Geometry remains unchanged:
+2. Done: geometry remains unchanged:
    - x/y/w/h do not change;
    - guide positions follow the physical key;
    - only function/content assignment changes.
 
-3. This should be modelled as content/function mapping, not as layout mutation.
+3. Done: this is modelled as `contentEdits`, not as `layoutEdits`.
 
 F-row icons:
 
-1. Dragging within the top row changes icon assignments only.
+1. Done: dragging within the top row changes icon assignments only.
 
-2. Text labels stay on their original physical keys.
+2. Done: text labels stay on their original physical keys.
 
 3. Example behavior:
    - Drag F1's icon onto `esc`: the icon moves/swaps, while `esc` and `F1` labels stay where they
@@ -379,42 +383,51 @@ F-row icons:
    - Drag F12 onto the icon-only key to its right: icons swap, and each icon uses the destination
      key's composition/alignment rules.
 
-4. Restrict this first implementation to the top/F row.
+4. Done: the first implementation covers the top/F row; it also covers bottom main-row and numpad
+   function swaps.
 
 Acceptance checks:
 
-- Dragging bottom-row functions changes content but not geometry.
-- Dragging numpad functions changes content but not geometry.
-- Dragging F-row icons preserves F-label and esc/service labels.
-- Export reflects the changed content assignments.
+- Done: dragging bottom-row functions changes content but not geometry.
+- Done: dragging numpad functions changes content but not geometry.
+- Done: dragging F-row icons preserves F-label and esc/service labels.
+- Done: export reflects the changed content assignments.
 
 ## Priority 5 - SVG Icon Library And Upload
+
+Status 2026-08-03: first slice is done.
 
 Goal: support replacing and extending icon content without touching geometry.
 
 Implementation:
 
-1. Add an icon picker in the key popover.
+1. Done: the key popover has an icon picker for icon rows.
 
-2. Existing icons are selectable by name/preview.
+2. Partial: existing and uploaded icons are selectable by name. Visual previews are still open.
 
-3. Upload accepts SVG only.
+3. Done: upload accepts SVG only from the key popover.
 
-4. Uploaded SVG should be sanitized and normalized:
+4. Done for path-only SVG: uploaded SVG is sanitized and normalized into `customIcons`:
    - no scripts;
    - no external images;
-   - path/shape data converted to the internal icon representation if possible;
+   - self-contained `<path d="...">` data only;
+   - `viewBox` or numeric `width`/`height` becomes icon `w/h/ox/oy`;
    - clear error if the SVG cannot be used.
 
-5. Uploaded icons become session/project assets and can be assigned to other keys.
+   Still open: shape conversion (`rect`, `circle`, `polygon`, text) and SVG transforms. For now,
+   flatten/expand artwork to paths before upload.
 
-6. Icon assignment should use the destination key's template and alignment rules.
+5. Done: uploaded icons become session/project assets in JSON/presets and can be assigned to other
+   keys.
+
+6. Done: uploaded icons render through the same icon placement and clean SVG export path. Icon
+   `W/H` now scales path geometry against each icon's natural `w/h`.
 
 Acceptance checks:
 
-- Uploading a valid simple SVG icon makes it available in the picker.
-- Invalid SVG icon shows a clear error.
-- Assigned uploaded icons export correctly.
+- Done: uploading a valid simple SVG icon makes it available in the picker.
+- Done: invalid SVG icon shows a clear error for unsupported SVG structures.
+- Done: assigned uploaded icons export correctly; covered by `analysis/browser-variable-font-smoke.mjs`.
 
 ## Priority 6 - Typography Styles, Latin/Cyrillic Split, And Per-Symbol Overrides
 
@@ -549,11 +562,12 @@ These are useful, but secondary to the main workflow.
 
 11. Add custom key mode and per-key color override.
 
-12. Add SVG-only icon upload and icon picker.
+12. Done: add SVG-only path icon upload and icon picker. Remaining refinement: icon previews and
+    path conversion for basic SVG shapes/transforms.
 
-13. Add F-row icon drag-and-drop with labels fixed in place.
+13. Done: add F-row icon drag-and-drop with labels fixed in place.
 
-14. Add bottom-row and numpad function drag-and-drop.
+14. Done: add bottom-row and numpad function drag-and-drop.
 
 15. Add per-symbol lock and relative X/Y optical offsets.
 
@@ -575,13 +589,14 @@ Automated checks:
 - Existing model IO round-trip.
 - Existing preset manifest check.
 - Existing SVG import stress check.
+- Existing browser smoke now covers valid path-only SVG icon upload into the picker and clean SVG
+  export.
 - New import fixture checks:
   - valid `caps` + `blueprint`;
   - valid `Caps` + `Blueprint`;
   - valid `caps` only;
   - missing `caps`;
-  - invalid SVG icon upload;
-  - valid SVG icon upload.
+  - invalid SVG icon upload.
 - UI state checks:
   - clean load shows `Work 2.0 L`;
   - simple mode hides geometry mutation controls;

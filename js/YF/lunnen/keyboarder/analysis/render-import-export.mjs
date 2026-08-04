@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { basename, dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { analyzeSvgBlueprint } from '../app/kb/svg-blueprint.js';
 import { buildLayout } from '../app/kb/grid.js';
 import { attachGuides } from '../app/kb/guides.js';
@@ -15,6 +16,7 @@ import ICON_OPTICS from '../app/kb/icons/lcakb23-optics.js';
 
 const TYPE_DEFAULTS = {
     glyphSize: 15.1999,
+    fontWeight: 400,
     numpadSize: 13.1732,
     secondarySize: 12.0745,
     wordSize: 9.1199,
@@ -22,20 +24,28 @@ const TYPE_DEFAULTS = {
     trackingOffset: 0
 };
 
-const args = parseArgs(process.argv.slice(2));
+if (isCliEntrypoint()) runCli(process.argv.slice(2));
 
-if ((!args.input && !args.layout) || !args.output) {
-    console.error('Usage: node analysis/render-import-export.mjs --input drawing.svg --output layout.svg');
-    console.error('   or: node analysis/render-import-export.mjs --layout LCAKB21 --output layout.svg');
-    process.exit(2);
+export function runCli(argv = process.argv.slice(2)) {
+    const args = parseArgs(argv);
+
+    if ((!args.input && !args.layout) || !args.output) {
+        console.error('Usage: node analysis/render-import-export.mjs --input drawing.svg --output layout.svg [--font-weight 100..900] [--font-width 70..150]');
+        console.error('   or: node analysis/render-import-export.mjs --layout LCAKB21 --output layout.svg [--font-weight 100..900] [--font-width 70..150]');
+        process.exit(2);
+    }
+
+    const renderOptions = {
+        fontWeight: args.fontWeight,
+        fontWidth: args.fontWidth
+    };
+    const result = args.layout
+        ? renderBuiltInLayoutSvg(args.layout, args.output, renderOptions)
+        : renderImportedSvg(args.input, args.output, renderOptions);
+    console.log(`${args.output}: ${result.caps} caps, ${result.glyphPaths} glyph paths, ${result.icons} icons, ${result.fIcons} f-icons, ${result.profile}, wght ${result.fontWeight}, wdth ${result.fontWidth}`);
 }
 
-const result = args.layout
-    ? renderBuiltInLayoutSvg(args.layout, args.output)
-    : renderImportedSvg(args.input, args.output);
-console.log(`${args.output}: ${result.caps} caps, ${result.glyphPaths} glyph paths, ${result.icons} icons, ${result.fIcons} f-icons, ${result.profile}`);
-
-export function renderImportedSvg(inputFile, outputFile) {
+export function renderImportedSvg(inputFile, outputFile, options = {}) {
     const svgText = readFileSync(inputFile, 'utf8');
     const analysis = analyzeSvgBlueprint(svgText);
     const draft = analysis.layoutDraft;
@@ -44,30 +54,36 @@ export function renderImportedSvg(inputFile, outputFile) {
         throw new Error(`SVG import has warnings: ${analysis.diagnostics.warnings.map((row) => row.message || row.code).join('; ')}`);
     }
 
-    const rendered = renderLayoutSvg(draft.layout);
+    const rendered = renderLayoutSvg(draft.layout, options);
     mkdirSync(dirname(resolve(outputFile)), { recursive: true });
     writeFileSync(outputFile, rendered.svg, 'utf8');
     return {
         ...rendered.counts,
+        fontWeight: rendered.font.coordinates.wght,
+        fontWidth: rendered.font.coordinates.wdth,
         profile: draft.stats?.layoutProfile || generatedContentStatsForLayout(draft.layout).profile || 'custom'
     };
 }
 
-export function renderBuiltInLayoutSvg(layoutName, outputFile) {
+export function renderBuiltInLayoutSvg(layoutName, outputFile, options = {}) {
     const layout = LAYOUTS[layoutName];
     if (!layout) throw new Error(`Unknown layout "${layoutName}". Known layouts: ${Object.keys(LAYOUTS).join(', ')}`);
-    const rendered = renderLayoutSvg(layout);
+    const rendered = renderLayoutSvg(layout, options);
     mkdirSync(dirname(resolve(outputFile)), { recursive: true });
     writeFileSync(outputFile, rendered.svg, 'utf8');
     return {
         ...rendered.counts,
+        fontWeight: rendered.font.coordinates.wght,
+        fontWidth: rendered.font.coordinates.wdth,
         profile: layout.meta?.name || layoutName
     };
 }
 
-function renderLayoutSvg(sourceLayout) {
-    const font = readFileSync('Fonts/YS Text/YS Text-Regular.ttf');
+export function renderLayoutSvg(sourceLayout, options = {}) {
+    const font = readFileSync(resolve('Fonts/YS Text Variable/YSText-Upright-weight-VF.ttf'));
     const tf = parseFont(font.buffer.slice(font.byteOffset, font.byteOffset + font.byteLength));
+    const coordinates = variationCoordinates(tf, options);
+    tf.setVariations(coordinates);
     const layout = buildLayout(sourceLayout);
     attachGuides(layout.keys, layout.grid.guideInset);
     const content = sourceLayout?.meta?.name === LCAKB23.meta.name
@@ -122,6 +138,9 @@ function renderLayoutSvg(sourceLayout) {
     push('</svg>');
     return {
         svg: `${parts.join('\n')}\n`,
+        font: { coordinates },
+        typeface: tf,
+        legends,
         counts: {
             caps: layout.keys.length,
             glyphPaths,
@@ -138,12 +157,42 @@ function parseArgs(argv) {
         if (arg === '--input') out.input = argv[++i];
         else if (arg === '--layout') out.layout = argv[++i];
         else if (arg === '--output') out.output = argv[++i];
+        else if (arg === '--font-weight') out.fontWeight = Number(argv[++i]);
+        else if (arg === '--font-width') out.fontWidth = Number(argv[++i]);
         else if (!arg.startsWith('--') && !out.input) out.input = arg;
         else if (!arg.startsWith('--') && !out.output) out.output = arg;
     }
     if (out.input) out.input = resolve(out.input);
     if (out.output) out.output = resolve(out.output);
     return out;
+}
+
+function variationCoordinates(tf, options = {}) {
+    const axes = tf.variationModel?.axes || [];
+    const coordinates = {};
+    for (const axis of axes) {
+        const optionKey = axis.tag === 'wght' ? 'fontWeight' : axis.tag === 'wdth' ? 'fontWidth' : axis.tag;
+        const value = Number(options[optionKey]);
+        const min = axisNumber(axis, 'min');
+        const max = axisNumber(axis, 'max');
+        const def = axisNumber(axis, 'default');
+        coordinates[axis.tag] = Number.isFinite(value) ? clamp(value, min, max) : def;
+    }
+    return coordinates;
+}
+
+function axisNumber(axis, key) {
+    const longKey = key === 'default' ? 'defaultValue' : `${key}Value`;
+    const value = Number(axis?.[longKey] ?? axis?.[key]);
+    return Number.isFinite(value) ? value : 0;
+}
+
+function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+}
+
+function isCliEntrypoint() {
+    return process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 }
 
 function f(value) {

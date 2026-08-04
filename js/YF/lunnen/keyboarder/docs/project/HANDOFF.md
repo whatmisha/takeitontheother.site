@@ -356,10 +356,9 @@ Important local entry points:
   - imported font binaries are session-only and are not persisted into presets or
     `keyboarder.model.v1` JSON. Their in-memory data URLs are used only for current text-mode
     SVG export.
-  - caveat: the bundled `opentype.js` reads `fvar` axes/instances but does not apply `gvar`
-    deltas to outline contours. Variable axes therefore affect UI/profile/cache and SVG text CSS;
-    outline preview/export still uses the loaded default contours until the font engine is
-    upgraded.
+  - update 2026-08-03: variable axes now affect outline preview/export too. `app/kb/variations.js`
+    applies `gvar` deltas to TrueType variable glyph outlines and advances, including composite
+    Cyrillic glyphs.
 
 ## Verification
 
@@ -677,9 +676,15 @@ Stage 8 main code items are complete:
   and axis controls, active-font autocompensation, per-element `fontId` assignment in Legend
   editor and model IO, session font SVG text export defs, visual control sheet generation, and
   probe/invariant status.
-- Remaining caveats: downloaded PDF/SVG files generated with custom fonts still need manual
-  Illustrator/PDF-viewer QA; true variable outline instancing needs a future font-engine upgrade
-  because bundled `opentype.js` exposes `fvar` but does not apply `gvar` deltas to contours.
+- Remaining caveat: downloaded PDF/SVG files generated with custom fonts still need manual
+  Illustrator/PDF-viewer QA.
+- Update 2026-08-03: true variable outline instancing is now implemented locally for TrueType
+  variable fonts. `app/kb/variations.js` parses `avar`/`gvar`, applies tuple deltas, IUP
+  interpolation, phantom advance deltas, and composite component-position deltas. `analysis/verify-variable-font.mjs`
+  compares all 912 glyphs of `YSText-Upright-weight-VF.ttf` against `fontTools` across 7 axis
+  locations. `analysis/export-variable-font-regression.mjs` guards exported outline paths for
+  Cyrillic composite letters `КЕНХВАРОСМТ` across weights `100/250/400/700/900`, and
+  `analysis/browser-variable-font-smoke.mjs` checks the live UI slider plus clean SVG snapshot.
 
 Stage 9 optimization is started:
 
@@ -886,8 +891,8 @@ Stage 9 optimization is started:
 - The tool currently starts from static LCAKB23 data and defaults to the `LCAKB23` preset.
   Editing, model JSON import/export, Stage 5 layout-library workflows, and language layer
   switching now exist; SVG drawing import has its first importable draft slice; Stage 7 export
-  polish has local PDF/outline libraries, a mm-sized PDF button, and selectable legend output as
-  outlines or SVG text, plus editable punctuation compensation table overrides and language-layer
-  batch SVG export. Stage 8 has font probing/autocalibration, session font registry, variable
-  controls, multi-font text assignment, and control sheet export; only manual export QA and the
-  future `gvar` outline-engine upgrade remain as caveats.
+  polish has local PDF/outline libraries, a mm-sized PDF button, selectable legend output as
+  outlines or SVG text, and editable punctuation compensation table overrides. Stage 8 has font
+  probing/autocalibration, session font registry, variable
+  controls, true `gvar` outline instancing, multi-font text assignment, and control sheet export;
+  only manual export QA remains as a caveat.

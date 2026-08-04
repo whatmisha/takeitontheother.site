@@ -4,10 +4,12 @@
  * Нужно для визуальной сверки: рядом с нашей отрисовкой можно положить эталонный
  * reference/keyboards/Work_2_L.svg и смотреть их наложением в любом векторном редакторе.
  *
- * Запуск: node analysis/preview.mjs [файл.svg] [--guides] [--ink] [--overlay]
- *   --guides   охранные поля
- *   --ink      ink-боксы строк
- *   --overlay  эталонные позиции легенд крестиками
+ * Запуск: node analysis/preview.mjs [файл.svg] [--font-weight 900] [--font-width 100] [--guides] [--ink] [--overlay]
+ *   --font-weight N  значение оси wght
+ *   --font-width N   значение оси wdth
+ *   --guides         охранные поля
+ *   --ink            ink-боксы строк
+ *   --overlay        эталонные позиции легенд крестиками
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -24,11 +26,16 @@ import ICON_OPTICS from '../app/kb/icons/lcakb23-optics.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
-const flag = (n) => args.includes(`--${n}`);
-const out = args.find((a) => !a.startsWith('--')) || join(ROOT, 'docs', 'assets', 'preview.svg');
+const options = parseArgs(args);
+const flag = (n) => !!options[n];
+const out = options.out || join(ROOT, 'docs', 'assets', 'preview.svg');
 
-const buf = readFileSync(join(ROOT, 'Fonts', 'YS Text', 'YS Text-Regular.ttf'));
+const buf = readFileSync(join(ROOT, 'Fonts', 'YS Text Variable', 'YSText-Upright-weight-VF.ttf'));
 const tf = parseFont(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
+tf.setVariations({
+    wght: finiteOr(options.fontWeight, 400),
+    wdth: finiteOr(options.fontWidth, 100)
+});
 
 const layout = buildLayout(LCAKB23);
 attachGuides(layout.keys, layout.grid.guideInset);
@@ -101,3 +108,19 @@ push('</svg>');
 writeFileSync(out, parts.join('\n') + '\n', 'utf8');
 const txt = placed.filter((e) => e.kind === 'txt').length;
 console.log(`${out}: клавиш ${layout.keys.length}, строк ${txt}, иконок ${placed.length - txt}`);
+
+function parseArgs(argv = []) {
+    const out = {};
+    for (let i = 0; i < argv.length; i++) {
+        const arg = argv[i];
+        if (arg === '--font-weight') out.fontWeight = Number(argv[++i]);
+        else if (arg === '--font-width') out.fontWidth = Number(argv[++i]);
+        else if (arg.startsWith('--')) out[arg.slice(2)] = true;
+        else if (!out.out) out.out = arg;
+    }
+    return out;
+}
+
+function finiteOr(value, fallback) {
+    return Number.isFinite(value) ? value : fallback;
+}

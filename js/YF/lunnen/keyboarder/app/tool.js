@@ -38,6 +38,7 @@ import {
     normalizedPresetBlob as normalizedPresetBlobData,
     presetBlobFromKeyboardModel as presetBlobFromKeyboardModelData,
     roundMm,
+    sanitizeCustomIcons as sanitizeCustomIconsData,
     sanitizeContentEdits as sanitizeContentEditsData,
     sanitizeCompensationTableEdits as sanitizeCompensationTableEditsData,
     sanitizeLayoutEdits as sanitizeLayoutEditsData
@@ -74,7 +75,10 @@ const SLIDER_BY_SETTING = {
     trackingOffset: 'trackingOffsetSlider'
 };
 
-const ICON_OPTIONS = Object.keys(ICONS).sort((a, b) => a.localeCompare(b));
+const BASE_ICON_OPTIONS = Object.keys(ICONS).sort((a, b) => a.localeCompare(b));
+const CUSTOM_ICON_PREFIX = 'custom:';
+const SVG_ICON_MAX_BYTES = 200000;
+const SVG_ICON_PATH_DATA_RE = /^[MmZzLlHhVvCcSsQqTtAaEe0-9+\-.,\s]+$/;
 const TEMPLATE_LABELS = {
     blank: 'Blank',
     'alpha-dual': 'Letters',
@@ -135,6 +139,9 @@ const FONT_FILE_RE = /\.(otf|ttf|woff|woff2)$/i;
 const FONT_CONTROL_SHEET_CHARS = ['H', 'S', 'O', 'A', 'W', 'X', 'Ж', 'О', '@', '~', '№', ',', '.', '?', '!'];
 let FONT_PROBE_HELPERS = null;
 let STARTUP_FIRST_RENDER_RECORDED = false;
+let CONTENT_DRAG = null;
+let SUPPRESS_NEXT_SURFACE_CLICK = false;
+const CONTENT_DRAG_START_PX = 6;
 
 function loadFontProbeHelpers() {
     if (!FONT_PROBE_HELPERS) FONT_PROBE_HELPERS = import('./kb/fontprobe.js');
@@ -724,6 +731,7 @@ const app = defineTool({
         inkColor: '#aaaaaa',
         bgColor: '#808080',
 
+        customIcons: {},
         contentEdits: {},
         layoutEdits: {}
     },
@@ -887,6 +895,9 @@ const app = defineTool({
         const selection = renderSelection(create, keys, grid);
         if (selection) svg.appendChild(selection);
 
+        const dragOverlay = renderFunctionDragOverlay(create, keys, grid);
+        if (dragOverlay) svg.appendChild(dragOverlay);
+
         if (s.showGlyphs && TYPEFACE) {
             const textMode = normalizeLegendTextMode(s.legendTextMode);
             const g = create('g', { id: 'glyphs', fill: s.inkColor });
@@ -905,12 +916,13 @@ const app = defineTool({
 
         if (s.showIcons) {
             const iconGroups = new Map(ICON_LAYER_IDS.map((id) => [id, create('g', { id, fill: s.inkColor })]));
+            const iconLibrary = iconLibraryForSettings(s);
             for (const el of legends) {
                 if (el.kind !== 'ico') continue;
-                const ico = ICONS[el.icon];
+                const ico = iconLibrary[el.icon];
                 if (!ico) continue;
                 const wrap = create('g', {
-                    transform: `translate(${el.x - ico.ox} ${el.y - ico.oy})`
+                    transform: iconTransform(el, ico)
                 });
                 wrap.appendChild(create('path', { d: ico.d }));
                 iconGroups.get(iconLayerId(el)).appendChild(wrap);
@@ -1036,6 +1048,8 @@ const app = defineTool({
         installCleanExports(readyApp);
         installSuggestedPresetSave(readyApp);
         installImportDebugAPI(readyApp);
+        installFunctionDrag(readyApp);
+        installFunctionDragDebugAPI(readyApp);
         initLayoutSelect(readyApp);
         initLanguageLayerSelect(readyApp);
         initFontImport(readyApp);
@@ -1113,6 +1127,14 @@ const app = defineTool({
         });
         document.getElementById('addLegendIconBtn')?.addEventListener('click', () => {
             addLegendElementDraft(readyApp, 'ico');
+        });
+        document.getElementById('uploadLegendIconBtn')?.addEventListener('click', () => {
+            document.getElementById('legendIconFileInput')?.click();
+        });
+        document.getElementById('legendIconFileInput')?.addEventListener('change', (e) => {
+            const file = e.target.files?.[0] || null;
+            e.target.value = '';
+            void importLegendIconFile(readyApp, file);
         });
         document.getElementById('resetKeyColorBtn')?.addEventListener('click', () => {
             const input = document.getElementById('legendKeyColorInput');
@@ -1207,6 +1229,12 @@ const app = defineTool({
         });
 
         readyApp.dom?.surface?.addEventListener('click', async (e) => {
+            if (SUPPRESS_NEXT_SURFACE_CLICK) {
+                SUPPRESS_NEXT_SURFACE_CLICK = false;
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
             const key = keyAtClientPoint(readyApp.dom.surface, layoutFor(readyApp.settings).keys, e.clientX, e.clientY);
             if (key) {
                 const toggle = e.shiftKey || e.metaKey || e.ctrlKey;
@@ -1427,12 +1455,51 @@ function setInputValueForSig(input, value, sig) {
     input.dataset.valueSig = nextSig;
 }
 
-function modelIOOptions(layout = LCAKB23) {
+function customIconsForSettings(settings = {}) {
+    return sanitizeCustomIconsData(settings.customIcons || {});
+}
+
+function iconLibraryForSettings(settings = {}) {
+    return { ...ICONS, ...customIconsForSettings(settings) };
+}
+
+function iconOptionsForSettings(settings = {}) {
+    const custom = Object.keys(customIconsForSettings(settings)).sort((a, b) => a.localeCompare(b));
+    return [...BASE_ICON_OPTIONS, ...custom];
+}
+
+function firstIconOption(settings = {}) {
+    return iconOptionsForSettings(settings)[0] || BASE_ICON_OPTIONS[0] || '';
+}
+
+function iconOptionLabel(name, library = ICONS) {
+    const icon = library[name];
+    return name.startsWith(CUSTOM_ICON_PREFIX) ? (icon?.name || name.slice(CUSTOM_ICON_PREFIX.length) || name) : name;
+}
+
+function customIconLibrarySignature(settings = {}) {
+    return JSON.stringify(customIconsForSettings(settings));
+}
+
+function iconTransform(el, icon) {
+    const naturalW = finiteOr(icon.w, 0);
+    const naturalH = finiteOr(icon.h, 0);
+    const sx = naturalW > 0 ? finiteOr(el.w, naturalW) / naturalW : 1;
+    const sy = naturalH > 0 ? finiteOr(el.h, naturalH) / naturalH : 1;
+    if (Math.abs(sx - 1) < 0.000001 && Math.abs(sy - 1) < 0.000001) {
+        return `translate(${el.x - icon.ox} ${el.y - icon.oy})`;
+    }
+    const tx = el.x - icon.ox * sx;
+    const ty = el.y - icon.oy * sy;
+    return `matrix(${sx} 0 0 ${sy} ${tx} ${ty})`;
+}
+
+function modelIOOptions(layout = LCAKB23, settings = null) {
     return {
         layoutMeta: layout.meta,
         sourceRowCount: layout.rows.length,
         typeDefaults: TYPE_DEFAULTS,
-        iconOptions: ICON_OPTIONS,
+        iconOptions: settings ? iconOptionsForSettings(settings) : BASE_ICON_OPTIONS,
         minKeyWidthMm: MIN_KEY_WIDTH_MM,
         maxKeyWidthMm: MAX_KEY_WIDTH_MM
     };
@@ -2132,7 +2199,7 @@ function retargetElements(source, pattern) {
         const match = pools[sample.kind].shift() || from[index] || {};
         const next = { ...sample };
         if (sample.kind === 'ico') {
-            next.icon = match.icon || sample.icon || ICON_OPTIONS[0] || '';
+            next.icon = match.icon || sample.icon || firstIconOption();
             next.w = finiteOr(match.w, sample.w || 8);
             next.h = finiteOr(match.h, sample.h || 8);
         } else {
@@ -2144,7 +2211,7 @@ function retargetElements(source, pattern) {
             if (match.fontId || sample.fontId) next.fontId = match.fontId || sample.fontId;
         }
         if (!next.text && sample.kind === 'txt' && fallbackByKind.txt++ > 0) next.text = '';
-        if (!next.icon && sample.kind === 'ico' && fallbackByKind.ico++ > 0) next.icon = ICON_OPTIONS[0] || '';
+        if (!next.icon && sample.kind === 'ico' && fallbackByKind.ico++ > 0) next.icon = firstIconOption();
         return cleanElement(next);
     });
 }
@@ -2634,6 +2701,11 @@ function fontDisplayName(probe, fallback = 'Unknown Typeface') {
     return names.fullName || names.postScriptName || names.family || probe?.id || fallback;
 }
 
+function fontEntryDisplayName(entry) {
+    if (entry?.kind === 'reference' && entry.name) return entry.name;
+    return fontDisplayName(entry?.probe, entry?.name || 'Unknown Typeface');
+}
+
 function compactNumber(value, digits = 2) {
     if (!Number.isFinite(value)) return '-';
     const text = Number(value).toFixed(digits);
@@ -2687,7 +2759,7 @@ function fontInvariantText(invariants) {
 function fontOptionLabel(entry) {
     const suffix = entry.kind === 'reference' ? 'reference' : entry.fileName || 'session';
     const axes = entry.probe?.variations?.axes?.length ? ` · ${activeFontCoordinatesText(entry)}` : '';
-    return `${fontDisplayName(entry.probe, entry.name)} · ${suffix}${axes}`;
+    return `${fontEntryDisplayName(entry)} · ${suffix}${axes}`;
 }
 
 function syncFontSelect() {
@@ -2857,7 +2929,7 @@ function syncFontImportStatus() {
     const entry = activeFontEntry();
     const isReference = entry?.kind === 'reference';
     const rows = [
-        ['Font', fontDisplayName(probe, entry?.name || 'YS Text Variable')],
+        ['Font', fontEntryDisplayName(entry)],
         ['File', isReference ? 'YSText-Upright-weight-VF.ttf · reference' : `${entry.fileName} · ${fontBytes(entry.size)}`],
         ['Data', fontMetricText(probe)],
         ['Axes', fontAxisText(probe)],
@@ -2906,7 +2978,7 @@ function exportFontControlSheet(app) {
     entries.forEach((entry, row) => {
         const y = 72 + row * rowH;
         const comp = new Compensator(entry.tf, entry.params || YS_TEXT_REGULAR);
-        const title = fontDisplayName(entry.probe, entry.name);
+        const title = fontEntryDisplayName(entry);
         const meta = `${entry.kind === 'reference' ? 'reference' : entry.fileName} · ${fontMetricText(entry.probe)} · ${fontInvariantText(entry.invariants)}`;
         rows.push(`<text x="24" y="${y}" font-family="Arial, sans-serif" font-size="12" fill="#222">${html(title)}</text>`);
         rows.push(`<text x="24" y="${y + 16}" font-family="Arial, sans-serif" font-size="8.5" fill="#666">${html(meta)}</text>`);
@@ -4046,6 +4118,127 @@ function restoreDeletedRow(app) {
     setTimeout(() => selectFirstKeyInSourceRow(app, sourceRow), 0);
 }
 
+async function importLegendIconFile(app, file) {
+    if (!file) return;
+    try {
+        const existing = customIconsForSettings(app.settingsStore.toObject());
+        const parsed = parseUploadedSvgIcon(await file.text(), file.name || 'icon.svg', existing);
+        const customIcons = sanitizeCustomIconsData({ ...existing, [parsed.id]: parsed.icon });
+        const savedIcon = customIcons[parsed.id];
+        if (!savedIcon) throw new Error('Could not sanitize this SVG path.');
+        const hasActiveKey = !!activeKey(layoutFor(app.settings).keys);
+        const nextDraft = hasActiveKey
+            ? [...readElementEditorElements(), cleanElement({
+                slot: 'FC',
+                kind: 'ico',
+                group: 'icons',
+                icon: parsed.id,
+                w: savedIcon.w,
+                h: savedIcon.h
+            })]
+            : null;
+        app.settingsStore.set('customIcons', customIcons);
+        if (nextDraft) requestAnimationFrame(() => renderLegendDraft(app, nextDraft));
+        app._showToast?.(`${savedIcon.name} uploaded`);
+    } catch (e) {
+        await app.dialog?.alert({
+            title: 'SVG icon import failed',
+            text: e?.message || 'Could not import this SVG icon.',
+            okText: 'Close'
+        });
+    }
+}
+
+function parseUploadedSvgIcon(svgText = '', fileName = 'icon.svg', existing = {}) {
+    const text = String(svgText || '');
+    if (!text.trim()) throw new Error('The SVG file is empty.');
+    if (text.length > SVG_ICON_MAX_BYTES) throw new Error('The SVG file is too large for an icon.');
+    if (typeof DOMParser !== 'function') throw new Error('This browser cannot parse SVG files.');
+
+    const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+    if (doc.querySelector('parsererror')) throw new Error('The SVG file is not valid XML.');
+    const svg = doc.documentElement;
+    if (!svg || svg.localName.toLowerCase() !== 'svg') throw new Error('The file root must be an <svg> element.');
+    if (svg.querySelector('script, foreignObject, image, use, iframe, object, embed, audio, video, canvas')) {
+        throw new Error('Only self-contained path SVG icons are supported.');
+    }
+    if (svg.querySelector('[transform]')) {
+        throw new Error('SVG transforms are not imported yet. Expand/flatten the icon to paths first.');
+    }
+    if (svg.querySelector('rect, circle, ellipse, line, polyline, polygon, text')) {
+        throw new Error('Only <path> geometry is supported. Convert shapes/text to paths first.');
+    }
+
+    const paths = [...svg.querySelectorAll('path')]
+        .map((path) => String(path.getAttribute('d') || '').trim())
+        .filter(Boolean);
+    if (!paths.length) throw new Error('No <path d="..."> geometry was found.');
+    const d = paths.join(' ');
+    if (d.length > 60000 || !SVG_ICON_PATH_DATA_RE.test(d)) {
+        throw new Error('The SVG path data contains unsupported commands.');
+    }
+
+    const viewBox = parseSvgViewBox(svg) || fallbackSvgViewBox(svg);
+    if (!viewBox) throw new Error('The SVG needs a valid viewBox or numeric width/height.');
+    const id = uniqueCustomIconId(fileName, existing);
+    return {
+        id,
+        icon: {
+            name: customIconDisplayName(fileName),
+            w: roundMm(clamp(viewBox.w, 0.1, 80)),
+            h: roundMm(clamp(viewBox.h, 0.1, 80)),
+            ox: roundMm(clamp(viewBox.x, -10000, 10000)),
+            oy: roundMm(clamp(viewBox.y, -10000, 10000)),
+            d
+        }
+    };
+}
+
+function parseSvgViewBox(svg) {
+    const raw = String(svg.getAttribute('viewBox') || '').trim();
+    if (!raw) return null;
+    const parts = raw.split(/[\s,]+/).map(Number);
+    if (parts.length !== 4 || !parts.every(Number.isFinite) || parts[2] <= 0 || parts[3] <= 0) return null;
+    return { x: parts[0], y: parts[1], w: parts[2], h: parts[3] };
+}
+
+function fallbackSvgViewBox(svg) {
+    const w = parseSvgLength(svg.getAttribute('width'));
+    const h = parseSvgLength(svg.getAttribute('height'));
+    return Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0 ? { x: 0, y: 0, w, h } : null;
+}
+
+function parseSvgLength(value) {
+    const match = String(value || '').trim().match(/^([+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)(?:px|pt|mm|cm|in)?$/i);
+    return match ? Number(match[1]) : NaN;
+}
+
+function uniqueCustomIconId(fileName, existing = {}) {
+    const used = new Set([...Object.keys(ICONS), ...Object.keys(existing || {})]);
+    const base = customIconSlug(fileName);
+    let id = `${CUSTOM_ICON_PREFIX}${base}`;
+    for (let index = 2; used.has(id); index++) id = `${CUSTOM_ICON_PREFIX}${base}-${index}`;
+    return id;
+}
+
+function customIconSlug(fileName) {
+    return String(fileName || 'icon')
+        .replace(/\.[^.]+$/, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9._-]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 60) || 'icon';
+}
+
+function customIconDisplayName(fileName) {
+    return String(fileName || 'Custom icon')
+        .replace(/\.[^.]+$/, '')
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 80) || 'Custom icon';
+}
+
 function updateLegendEditor(s, keys) {
     syncTemplateSelect(keys);
     const editor = document.getElementById('legendElementEditor');
@@ -4053,6 +4246,7 @@ function updateLegendEditor(s, keys) {
     const reset = document.getElementById('resetLegendEditBtn');
     const addText = document.getElementById('addLegendTextBtn');
     const addIcon = document.getElementById('addLegendIconBtn');
+    const uploadIcon = document.getElementById('uploadLegendIconBtn');
     const keyColorInput = document.getElementById('legendKeyColorInput');
     const resetKeyColor = document.getElementById('resetKeyColorBtn');
     if (!editor) return;
@@ -4062,6 +4256,7 @@ function updateLegendEditor(s, keys) {
     setDisabledIfChanged(reset, !selected.some((k) => !!s.contentEdits?.[k.editId]));
     setDisabledIfChanged(addText, !active);
     setDisabledIfChanged(addIcon, !active);
+    setDisabledIfChanged(uploadIcon, !active);
     setDisabledIfChanged(keyColorInput, !active);
     setDisabledIfChanged(resetKeyColor, !active || !cleanHexColor(active.keyColor));
     setAttrIfChanged(keyColorInput, 'placeholder', s.capColor || 'Global');
@@ -4080,11 +4275,11 @@ function updateLegendEditor(s, keys) {
     editor.dataset.activeEditId = active.editId;
     setInputValueForSig(keyColorInput, cleanHexColor(active.keyColor), `${active.editId}:${cleanHexColor(active.keyColor)}`);
     const elements = sourceElements(active);
-    const sig = `${active.editId}|${active.tpl}|${JSON.stringify(elements)}|${fontRegistrySignature()}`;
-    renderElementEditor(elements, { disabled: false, sig, templateId: variantForKey(active) });
+    const sig = `${active.editId}|${active.tpl}|${JSON.stringify(elements)}|${fontRegistrySignature()}|${customIconLibrarySignature(s)}`;
+    renderElementEditor(elements, { disabled: false, sig, templateId: variantForKey(active), settings: s });
 }
 
-function renderElementEditor(elements, { disabled = false, sig = null, templateId = '' } = {}) {
+function renderElementEditor(elements, { disabled = false, sig = null, templateId = '', settings = null } = {}) {
     const editor = document.getElementById('legendElementEditor');
     if (!editor) return;
     const nextSig = sig || JSON.stringify({ disabled, elements });
@@ -4099,15 +4294,18 @@ function renderElementEditor(elements, { disabled = false, sig = null, templateI
         editor.innerHTML = '<p class="inspector-empty">No legend elements.</p>';
         return;
     }
-    editor.innerHTML = elements.map((el, i) => elementEditorHtml(el, i)).join('');
+    editor.innerHTML = elements.map((el, i) => elementEditorHtml(el, i, settings || {})).join('');
 }
 
-function elementEditorHtml(el, i) {
+function elementEditorHtml(el, i, settings = {}) {
     const offset = html(JSON.stringify(cleanOffset(el.offset) || {}));
     const remove = '<button type="button" class="btn-inline legend-remove-element-btn">Remove</button>';
     if (el.kind === 'ico') {
-        const options = ICON_OPTIONS.map((name) =>
-            `<option value="${html(name)}"${name === el.icon ? ' selected' : ''}>${html(name)}</option>`).join('');
+        const library = iconLibraryForSettings(settings);
+        const iconOptions = iconOptionsForSettings(settings);
+        if (el.icon && !iconOptions.includes(el.icon)) iconOptions.push(el.icon);
+        const options = iconOptions.map((name) =>
+            `<option value="${html(name)}"${name === el.icon ? ' selected' : ''}>${html(iconOptionLabel(name, library))}</option>`).join('');
         return '<div class="legend-edit-row" data-kind="ico" data-group="' + html(iconLayerId(el)) + '" data-offset="' + offset + '">'
             + `<label><span>Slot</span><input class="legend-slot-input" value="${html(el.slot)}" maxlength="2"></label>`
             + `<label><span>Icon</span><select class="legend-icon-input">${options}</select></label>`
@@ -4128,13 +4326,13 @@ function elementEditorHtml(el, i) {
         + '</div>';
 }
 
-function defaultLegendElement(kind) {
+function defaultLegendElement(kind, settings = {}) {
     if (kind === 'ico') {
         return cleanElement({
             slot: 'FC',
             kind: 'ico',
             group: 'icons',
-            icon: ICON_OPTIONS[0] || '',
+            icon: firstIconOption(settings),
             w: 8,
             h: 8
         });
@@ -4157,7 +4355,8 @@ function renderLegendDraft(app, elements) {
     renderElementEditor(elements, {
         disabled: false,
         sig: `draft:manual:${active.editId}:${JSON.stringify(elements)}`,
-        templateId
+        templateId,
+        settings: app.settings
     });
 }
 
@@ -4165,7 +4364,7 @@ function addLegendElementDraft(app, kind) {
     const keys = layoutFor(app.settings).keys;
     if (!activeKey(keys)) return;
     const elements = readElementEditorElements();
-    elements.push(defaultLegendElement(kind));
+    elements.push(defaultLegendElement(kind, app.settings));
     renderLegendDraft(app, elements);
 }
 
@@ -4186,7 +4385,8 @@ function refreshLegendTemplateDraft(app) {
     renderElementEditor(elements, {
         disabled: false,
         sig: `draft:${active.editId}:${select?.value || ''}:${JSON.stringify(elements)}`,
-        templateId: select?.value || variantForKey(active)
+        templateId: select?.value || variantForKey(active),
+        settings: app.settings
     });
 }
 
@@ -4204,7 +4404,7 @@ function readElementEditorElements() {
             return cleanElement({
                 ...base,
                 group: row.dataset.group || 'icons',
-                icon: row.querySelector('.legend-icon-input')?.value || ICON_OPTIONS[0] || '',
+                icon: row.querySelector('.legend-icon-input')?.value || firstIconOption(app?.settings || {}),
                 w: row.querySelector('.legend-width-input')?.value,
                 h: row.querySelector('.legend-height-input')?.value
             });
@@ -4262,6 +4462,214 @@ function resetSelectedLegendEdits(app) {
     for (const k of selected) delete next[k.editId];
     clearLegendDraftState();
     app.settingsStore.set('contentEdits', next);
+}
+
+function installFunctionDrag(app) {
+    const surface = app.dom?.surface;
+    if (!surface || app.__keyboarderFunctionDrag) return;
+    app.__keyboarderFunctionDrag = true;
+
+    surface.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0 || e.altKey || e.metaKey || e.ctrlKey || e.shiftKey) return;
+        if (legendEditorDirty(app)) return;
+        const keys = layoutFor(app.settings).keys;
+        const key = keyAtClientPoint(surface, keys, e.clientX, e.clientY);
+        const profile = dragProfileForKey(key, keys);
+        if (!profile) return;
+        CONTENT_DRAG = {
+            pointerId: e.pointerId,
+            sourceEditId: key.editId,
+            mode: profile.mode,
+            region: profile.region,
+            startClientX: e.clientX,
+            startClientY: e.clientY,
+            overEditId: null,
+            dragging: false
+        };
+        try { surface.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+
+    surface.addEventListener('pointermove', (e) => {
+        if (!CONTENT_DRAG || CONTENT_DRAG.pointerId !== e.pointerId) return;
+        const dx = e.clientX - CONTENT_DRAG.startClientX;
+        const dy = e.clientY - CONTENT_DRAG.startClientY;
+        if (!CONTENT_DRAG.dragging && Math.hypot(dx, dy) < CONTENT_DRAG_START_PX) return;
+        if (!CONTENT_DRAG.dragging) {
+            CONTENT_DRAG.dragging = true;
+            SUPPRESS_NEXT_SURFACE_CLICK = true;
+        }
+        const keys = layoutFor(app.settings).keys;
+        const over = keyAtClientPoint(surface, keys, e.clientX, e.clientY);
+        const compatible = compatibleDragTarget(CONTENT_DRAG, over, keys);
+        const nextOver = compatible?.editId || null;
+        if (CONTENT_DRAG.overEditId !== nextOver) {
+            CONTENT_DRAG.overEditId = nextOver;
+            app.renderNow();
+        }
+        e.preventDefault();
+    });
+
+    surface.addEventListener('pointerup', (e) => {
+        if (!CONTENT_DRAG || CONTENT_DRAG.pointerId !== e.pointerId) return;
+        const drag = CONTENT_DRAG;
+        const keys = layoutFor(app.settings).keys;
+        const over = keyAtClientPoint(surface, keys, e.clientX, e.clientY);
+        const target = compatibleDragTarget(drag, over, keys);
+        CONTENT_DRAG = null;
+        try { surface.releasePointerCapture(e.pointerId); } catch (_) {}
+        if (drag.dragging) {
+            SUPPRESS_NEXT_SURFACE_CLICK = true;
+            if (target) performFunctionDrag(app, drag.sourceEditId, target.editId, drag.mode);
+            else app.renderNow();
+            e.preventDefault();
+        }
+    });
+
+    surface.addEventListener('pointercancel', (e) => {
+        if (!CONTENT_DRAG || CONTENT_DRAG.pointerId !== e.pointerId) return;
+        CONTENT_DRAG = null;
+        try { surface.releasePointerCapture(e.pointerId); } catch (_) {}
+        app.renderNow();
+    });
+}
+
+function installFunctionDragDebugAPI(app) {
+    if (typeof window === 'undefined') return;
+    window.KeyboarderFunctionDrag = {
+        keys: () => layoutFor(app.settings).keys.map((k) => ({
+            editId: k.editId,
+            row: k.row,
+            block: k.block || '',
+            x: k.x,
+            y: k.y,
+            w: k.w,
+            h: k.h,
+            tpl: k.tpl || 'blank',
+            text: sourceElements(k).filter((el) => el.kind === 'txt').map((el) => el.text),
+            icons: sourceElements(k).filter((el) => el.kind === 'ico').map((el) => el.icon)
+        })),
+        centerOf: (editId) => {
+            const key = keyByEditId(layoutFor(app.settings).keys, editId);
+            if (!key || !app.dom?.surface?.createSVGPoint) return null;
+            const point = app.dom.surface.createSVGPoint();
+            point.x = key.x + key.w / 2;
+            point.y = key.y + key.h / 2;
+            const ctm = app.dom.surface.getScreenCTM();
+            if (!ctm) return null;
+            const screen = point.matrixTransform(ctm);
+            return { x: screen.x, y: screen.y };
+        }
+    };
+}
+
+function dragProfileForKey(key, keys) {
+    if (!key) return null;
+    if (isFRowKey(key) && firstIconElementIndex(sourceElements(key)) >= 0) {
+        return { mode: 'f-row-icon', region: 'f-row' };
+    }
+    const region = functionDragRegion(key, keys);
+    return region ? { mode: 'function', region } : null;
+}
+
+function compatibleDragTarget(drag, key, keys) {
+    if (!drag || !key || key.editId === drag.sourceEditId) return null;
+    if (drag.mode === 'f-row-icon') return isFRowKey(key) ? key : null;
+    if (drag.mode === 'function') return functionDragRegion(key, keys) === drag.region ? key : null;
+    return null;
+}
+
+function isFRowKey(key) {
+    return !!key && key.row === 0 && String(key.block || '') === 'main';
+}
+
+function functionDragRegion(key, keys) {
+    if (!key) return null;
+    if (String(key.block || '') === 'numpad') return 'numpad';
+    const maxMainRow = Math.max(-1, ...keys
+        .filter((k) => String(k.block || '') === 'main')
+        .map((k) => k.row));
+    return String(key.block || '') === 'main' && key.row === maxMainRow ? 'bottom-main' : null;
+}
+
+function performFunctionDrag(app, sourceEditId, targetEditId, mode) {
+    const keys = layoutFor(app.settings).keys;
+    const source = keyByEditId(keys, sourceEditId);
+    const target = keyByEditId(keys, targetEditId);
+    if (!source || !target || source.editId === target.editId) {
+        app.renderNow();
+        return false;
+    }
+    const next = sanitizeContentEdits(app.settings.contentEdits || {});
+    const changed = mode === 'f-row-icon'
+        ? writeFRowIconSwap(next, source, target)
+        : writeFunctionContentSwap(next, source, target);
+    if (!changed) {
+        app.renderNow();
+        return false;
+    }
+    clearLegendDraftState();
+    app.settingsStore.set('contentEdits', next);
+    selectKey(app, target.i);
+    app._showToast?.(mode === 'f-row-icon' ? 'Icon moved' : 'Function moved');
+    return true;
+}
+
+function keyByEditId(keys, editId) {
+    return keys.find((k) => k.editId === editId) || null;
+}
+
+function contentPayloadForKey(k) {
+    return {
+        tpl: k.tpl || 'blank',
+        elements: sourceElements(k),
+        keyColor: cleanHexColor(k.keyColor)
+    };
+}
+
+function writeFunctionContentSwap(edits, source, target) {
+    const sourcePayload = contentPayloadForKey(source);
+    const targetPayload = contentPayloadForKey(target);
+    if (JSON.stringify(sourcePayload) === JSON.stringify(targetPayload)) return false;
+    writeContentEdit(edits, source, targetPayload.tpl, targetPayload.elements, targetPayload.keyColor);
+    writeContentEdit(edits, target, sourcePayload.tpl, sourcePayload.elements, sourcePayload.keyColor);
+    return true;
+}
+
+function writeFRowIconSwap(edits, source, target) {
+    const sourcePayload = contentPayloadForKey(source);
+    const targetPayload = contentPayloadForKey(target);
+    const sourceElementsNext = cleanElements(sourcePayload.elements);
+    const targetElementsNext = cleanElements(targetPayload.elements);
+    const sourceIconIndex = firstIconElementIndex(sourceElementsNext);
+    const targetIconIndex = firstIconElementIndex(targetElementsNext);
+    if (sourceIconIndex < 0) return false;
+
+    const sourceIcon = sourceElementsNext[sourceIconIndex];
+    const targetIcon = targetIconIndex >= 0 ? targetElementsNext[targetIconIndex] : null;
+    if (targetIcon && sourceIcon.icon === targetIcon.icon) return false;
+
+    if (targetIcon) {
+        sourceElementsNext[sourceIconIndex] = iconForDestination(targetIcon, sourceIcon);
+        targetElementsNext[targetIconIndex] = iconForDestination(sourceIcon, targetIcon);
+    } else {
+        sourceElementsNext.splice(sourceIconIndex, 1);
+        targetElementsNext.push(cleanElement({ ...sourceIcon }));
+    }
+
+    writeContentEdit(edits, source, sourcePayload.tpl, sourceElementsNext, sourcePayload.keyColor);
+    writeContentEdit(edits, target, targetPayload.tpl, targetElementsNext, targetPayload.keyColor);
+    return true;
+}
+
+function firstIconElementIndex(elements = []) {
+    return cleanElements(elements).findIndex((el) => el.kind === 'ico');
+}
+
+function iconForDestination(incoming, destination) {
+    return cleanElement({
+        ...destination,
+        icon: incoming.icon
+    });
 }
 
 function clearLegendDraftState() {
@@ -4629,6 +5037,36 @@ function renderSelection(create, keys, grid) {
             stroke: active ? '#ffffff' : '#b7c7ff',
             'stroke-width': active ? 1.2 : 0.75,
             'stroke-dasharray': active ? null : '3 1.6',
+            'vector-effect': 'non-scaling-stroke'
+        }));
+    }
+    return g;
+}
+
+function renderFunctionDragOverlay(create, keys, grid) {
+    if (!CONTENT_DRAG?.dragging) return null;
+    const source = keyByEditId(keys, CONTENT_DRAG.sourceEditId);
+    const target = keyByEditId(keys, CONTENT_DRAG.overEditId);
+    if (!source && !target) return null;
+    const g = create('g', { id: 'function-drag', 'pointer-events': 'none', 'data-interactive': 'true' });
+    if (source) {
+        g.appendChild(create('rect', {
+            x: source.x - 1.4, y: source.y - 1.4, width: source.w + 2.8, height: source.h + 2.8,
+            rx: grid.cornerRadius + 1.4, ry: grid.cornerRadius + 1.4,
+            fill: 'none',
+            stroke: '#8fb7ff',
+            'stroke-width': 0.9,
+            'stroke-dasharray': '2.5 1.8',
+            'vector-effect': 'non-scaling-stroke'
+        }));
+    }
+    if (target) {
+        g.appendChild(create('rect', {
+            x: target.x - 2, y: target.y - 2, width: target.w + 4, height: target.h + 4,
+            rx: grid.cornerRadius + 2, ry: grid.cornerRadius + 2,
+            fill: 'rgb(120 166 255 / 0.18)',
+            stroke: '#ffffff',
+            'stroke-width': 1.2,
             'vector-effect': 'non-scaling-stroke'
         }));
     }
