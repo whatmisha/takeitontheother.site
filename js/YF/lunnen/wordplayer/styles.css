@@ -47,7 +47,40 @@ body {
     border: 0;
     margin: 0;
     padding: 0;
-    width: 168px;
+}
+
+.mode-toolbar .mode-control {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+}
+
+.mode-toolbar .mode-control label {
+    flex: 0 0 auto;
+    height: var(--button-height);
+    padding: var(--spacing-md) var(--spacing-3xl);
+    border-radius: var(--radius-button);
+    background: var(--color-bg-panel);
+    color: var(--color-text);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color var(--transition-slow), color var(--transition-slow);
+}
+
+.mode-toolbar .mode-control label:hover {
+    background: #2a2a2a;
+    color: var(--color-text);
+}
+
+.mode-toolbar .mode-control input[type="radio"]:checked + label {
+    background: var(--color-text);
+    color: var(--color-bg);
+    font-weight: 500;
 }
 
 .word-canvas {

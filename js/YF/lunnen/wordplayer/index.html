@@ -11,7 +11,7 @@
 <body>
     <div class="container" data-mode="dither">
         <div class="top-links">
-            <a href="/js/YF/" class="top-link">YF Tools</a>
+            <a href="/js/YF/" class="top-link">←YF Tools</a>
             <fieldset class="mode-toolbar">
                 <legend class="sr-only">Mode</legend>
                 <div class="segmented-control mode-control" role="radiogroup" aria-label="Mode">
@@ -313,6 +313,11 @@
                             <input type="range" id="formEdgeSpreadSlider" min="2" max="100" value="34" step="1">
                         </div>
                         <div class="control-group">
+                            <label for="formOverflowSlider"><span>Overflow <span class="unit">%</span></span>
+                                <input type="text" class="value-display" id="formOverflowValue" value="24"></label>
+                            <input type="range" id="formOverflowSlider" min="0" max="100" value="24" step="1">
+                        </div>
+                        <div class="control-group">
                             <label for="formAttractionSlider"><span>Line gravity</span>
                                 <input type="text" class="value-display" id="formAttractionValue" value="45"></label>
                             <input type="range" id="formAttractionSlider" min="0" max="100" value="45" step="1">
@@ -324,8 +329,8 @@
                         </div>
                         <div class="control-group">
                             <label for="formGravityDirectionSlider"><span>Gravity direction <span class="unit">°</span></span>
-                                <input type="text" class="value-display" id="formGravityDirectionValue" value="90"></label>
-                            <input type="range" id="formGravityDirectionSlider" min="-180" max="180" value="90" step="1">
+                                <input type="text" class="value-display" id="formGravityDirectionValue" value="0"></label>
+                            <input type="range" id="formGravityDirectionSlider" min="-180" max="180" value="0" step="1">
                         </div>
                     </section>
                 </div>

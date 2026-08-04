@@ -34,9 +34,10 @@
     "fieldRadius": 145,
     "formFill": "inside",
     "formEdgeSpread": 34,
+    "formOverflow": 24,
     "formAttraction": 45,
     "formGravity": 12,
-    "formGravityDirection": 90,
+    "formGravityDirection": 0,
     "formPrecision": 100,
     "gravityX": 50,
     "gravityY": 50

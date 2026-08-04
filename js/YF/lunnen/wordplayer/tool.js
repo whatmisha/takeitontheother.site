@@ -10,7 +10,7 @@ const STATIC_PATTERN_FONT_URLS = new Map(
     })
 );
 const DEFAULT_IMAGE_URL = './assets/default-image.png';
-const DEFAULT_FORM_URL = './assets/default-form.svg';
+const DEFAULT_FORM_URL = './assets/default-form.svg?v=2';
 const DEFAULT_PATTERN_TEXT = `Чтение может стать золотым часом дня — временем, когда всё погружается в цельную особенную атсмосферу и можно вернуться к себе и пережить что-то новое, погрузившись в книгу. В дизайне мы тоже подсвечиваем этот путь — иммерсивность погружения в книгу от лица читателя. Мы показываем именно этот момент перехода — резкость и холод внешнего мира растворяются в тёплом камерном пространстве чтения`;
 const DITHER_EMPTY_TONE = 0.05;
 const AVAILABLE_MODES = new Set(['dither', 'forms']);
@@ -169,6 +169,7 @@ function drawLetter(ctx, options) {
         weight,
         rotation = 0,
         fill,
+        baseline = 'central',
         extraClass = ''
     } = options;
     if (!Number.isFinite(size) || size <= 0) return;
@@ -184,7 +185,7 @@ function drawLetter(ctx, options) {
         'font-weight': roundedWeight,
         'data-weight': roundedWeight,
         'text-anchor': 'middle',
-        'dominant-baseline': 'central',
+        'dominant-baseline': baseline,
         transform: `translate(${x.toFixed(3)} ${y.toFixed(3)}) rotate(${rotation.toFixed(3)})`,
         style: `--pattern-weight:${roundedWeight};font-variation-settings:"wght" ${roundedWeight};`
     });
@@ -646,9 +647,40 @@ function formEdgeSpread(settings, width, height) {
     return Math.max(1, Math.min(width, height) * clamp(Number(settings.formEdgeSpread ?? 34) / 100, 0.02, 1));
 }
 
+function formOverflowDistance(settings, width, height) {
+    return Math.min(width, height) * clamp(Number(settings.formOverflow ?? 24) / 100, 0, 1);
+}
+
 function toneFromFormDistance(distanceToEdge, edgeSpread, settings) {
     const edgeTone = 1 - clamp(distanceToEdge / Math.max(1, edgeSpread));
     return settings.invertDither ? 1 - edgeTone : edgeTone;
+}
+
+function gravityDirectionVector(degrees) {
+    const angle = Number(degrees ?? 0) * Math.PI / 180;
+    return {
+        x: Math.sin(angle),
+        y: Math.cos(angle)
+    };
+}
+
+function canvasEdgeAttractor(x, y, width, height, direction) {
+    const epsilon = 0.0001;
+    let distanceToEdge = Infinity;
+    if (direction.x > epsilon) distanceToEdge = Math.min(distanceToEdge, (width - x) / direction.x);
+    else if (direction.x < -epsilon) distanceToEdge = Math.min(distanceToEdge, -x / direction.x);
+    if (direction.y > epsilon) distanceToEdge = Math.min(distanceToEdge, (height - y) / direction.y);
+    else if (direction.y < -epsilon) distanceToEdge = Math.min(distanceToEdge, -y / direction.y);
+    if (!Number.isFinite(distanceToEdge)) distanceToEdge = 0;
+    distanceToEdge = Math.max(0, distanceToEdge);
+
+    const maxDistance = Math.max(1, Math.abs(direction.x) * width + Math.abs(direction.y) * height);
+    return {
+        x: x + direction.x * distanceToEdge,
+        y: y + direction.y * distanceToEdge,
+        distance: distanceToEdge,
+        closeness: clamp(1 - distanceToEdge / maxDistance)
+    };
 }
 
 function renderForms(ctx) {
@@ -665,16 +697,17 @@ function renderForms(ctx) {
     const noiseRange = relativeNoiseRange(settings);
     const hideTiny = settings.hideTinyLetters !== false;
     const edgeSpread = formEdgeSpread(settings, width, height);
+    const overflowDistance = formOverflowDistance(settings, width, height);
     const lineGravity = clamp(Number(settings.formAttraction ?? 45) / 100);
     const globalGravity = clamp(Number(settings.formGravity ?? 12) / 100);
-    const gravityAngle = Number(settings.formGravityDirection ?? 90) * Math.PI / 180;
-    const gravityShift = Math.min(width, height) * 0.18 * globalGravity;
-    const gravityX = Math.cos(gravityAngle) * gravityShift;
-    const gravityY = Math.sin(gravityAngle) * gravityShift;
+    const gravityDirection = gravityDirectionVector(settings.formGravityDirection);
+    const canvasGravityScale = Math.min(width, height) * 0.54;
+    const canvasGravityOvershoot = Math.min(width, height) * 0.18 * globalGravity;
 
     grid.points.forEach((point, index) => {
         const sample = samples[index];
-        if (!sample || !sample.inside) return;
+        if (!sample) return;
+        if (!sample.inside) return;
 
         const edgeTone = 1 - clamp(sample.distance / edgeSpread);
         const tone = toneFromFormDistance(sample.distance, edgeSpread, settings);
@@ -687,18 +720,35 @@ function renderForms(ctx) {
         const noiseOffset = Math.min(point.cellW, point.cellH) * noise;
         let x = point.x;
         let y = point.y;
+        let forceX = 0;
+        let forceY = 0;
 
         if (lineGravity > 0 && sample.distance > 0.001) {
             const lineFalloff = lerp(0.22, 1, Math.pow(edgeTone, 0.7));
             const maxLineShift = edgeSpread * 0.76 * lineGravity * lineFalloff;
-            const lineShift = Math.min(sample.distance, maxLineShift);
-            x += (sample.nearX - point.x) / sample.distance * lineShift;
-            y += (sample.nearY - point.y) / sample.distance * lineShift;
+            const lineOverflow = sample.inside ? overflowDistance * lineGravity : 0;
+            const lineShift = Math.min(sample.distance + lineOverflow, maxLineShift);
+            forceX += (sample.nearX - point.x) / sample.distance * lineShift;
+            forceY += (sample.nearY - point.y) / sample.distance * lineShift;
         }
 
-        x += gravityX + signedNoise(index, 5) * noiseOffset;
-        y += gravityY + signedNoise(index, 6) * noiseOffset;
+        if (globalGravity > 0) {
+            const attractor = canvasEdgeAttractor(point.x, point.y, width, height, gravityDirection);
+            const edgeInfluence = lerp(0.16, 1, Math.pow(1 - attractor.closeness, 1.35));
+            const gravityShift = canvasGravityScale * globalGravity * edgeInfluence;
+            const cappedShift = Math.min(gravityShift, attractor.distance + canvasGravityOvershoot);
+            forceX += gravityDirection.x * cappedShift;
+            forceY += gravityDirection.y * cappedShift;
+        }
+
+        x += forceX + signedNoise(index, 5) * noiseOffset;
+        y += forceY + signedNoise(index, 6) * noiseOffset;
         if (x < 0 || x > width || y < 0 || y > height) return;
+
+        const forceMagnitude = Math.hypot(forceX, forceY);
+        const attractionRotation = forceMagnitude > 0.001
+            ? Math.atan2(forceY, forceX) * 180 / Math.PI
+            : 0;
 
         drawLetter(ctx, {
             char: chars[index % chars.length],
@@ -706,7 +756,8 @@ function renderForms(ctx) {
             y,
             size: type.size,
             weight: type.weight,
-            rotation: type.rotation,
+            rotation: attractionRotation + type.rotation,
+            baseline: 'alphabetic',
             fill: settings.inkColor
         });
     });
@@ -1121,7 +1172,10 @@ function replaceTextWithPath(textElement, font) {
     const glyph = font.charToGlyph(text);
     const scale = fontSize / font.unitsPerEm;
     const advance = (glyph.advanceWidth || font.unitsPerEm * 0.5) * scale;
-    const baseline = (font.ascender + font.descender) * scale / 2;
+    const dominantBaseline = textElement.getAttribute('dominant-baseline');
+    const baseline = dominantBaseline === 'alphabetic'
+        ? 0
+        : (font.ascender + font.descender) * scale / 2;
     const path = glyph.getPath(-advance / 2, baseline, fontSize);
     const pathElement = createSvgElement('path', {
         d: path.toPathData(2),
@@ -1247,9 +1301,10 @@ const app = defineTool({
         fieldRadius: 150,
         formFill: 'inside',
         formEdgeSpread: 34,
+        formOverflow: 24,
         formAttraction: 45,
         formGravity: 12,
-        formGravityDirection: 90,
+        formGravityDirection: 0,
         formPrecision: 100,
         gravityX: 50,
         gravityY: 50
@@ -1272,6 +1327,7 @@ const app = defineTool({
             { id: 'fieldForceSlider', valueId: 'fieldForceValue', setting: 'fieldForce', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'fieldRadiusSlider', valueId: 'fieldRadiusValue', setting: 'fieldRadius', min: 20, max: 700, decimals: 0, baseStep: 1, shiftStep: 25 },
             { id: 'formEdgeSpreadSlider', valueId: 'formEdgeSpreadValue', setting: 'formEdgeSpread', min: 2, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'formOverflowSlider', valueId: 'formOverflowValue', setting: 'formOverflow', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'formAttractionSlider', valueId: 'formAttractionValue', setting: 'formAttraction', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'formGravitySlider', valueId: 'formGravityValue', setting: 'formGravity', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'formGravityDirectionSlider', valueId: 'formGravityDirectionValue', setting: 'formGravityDirection', min: -180, max: 180, decimals: 0, baseStep: 1, shiftStep: 15 }
@@ -1293,7 +1349,7 @@ const app = defineTool({
         ]
     },
     presets: {
-        storageKey: 'wordplayerPresetsV13',
+        storageKey: 'wordplayerPresetsV15',
         basePath: 'presets',
         colorDots,
         hasRandom: () => false
