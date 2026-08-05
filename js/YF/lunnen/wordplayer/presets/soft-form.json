@@ -23,24 +23,16 @@
     "noiseEnabled": true,
     "hideTinyLetters": true,
     "invertDither": false,
-    "showGuides": false,
     "exportTransparent": true,
     "ditherAlgorithm": "bayer",
     "contrast": 2,
     "blackPoint": 40,
     "whitePoint": 200,
-    "fieldResponse": "rotate",
-    "fieldForce": 58,
-    "fieldRadius": 150,
-    "formFill": "inside",
     "formEdgeSpread": 34,
-    "formOverflow": 24,
     "formAttraction": 54,
+    "formStickiness": 62,
+    "formFriction": 48,
     "formGravity": 18,
-    "formGravityDirection": 0,
-    "formPrecision": 100,
-    "gravityX": 48,
-    "gravityY": 42
-  },
-  "magneticPoints": []
+    "formGravityDirection": 0
+  }
 }

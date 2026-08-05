@@ -13,23 +13,25 @@ const DEFAULT_IMAGE_URL = './assets/default-image.png';
 const DEFAULT_FORM_URL = './assets/default-form.svg?v=2';
 const DEFAULT_PATTERN_TEXT = `Чтение может стать золотым часом дня — временем, когда всё погружается в цельную особенную атсмосферу и можно вернуться к себе и пережить что-то новое, погрузившись в книгу. В дизайне мы тоже подсвечиваем этот путь — иммерсивность погружения в книгу от лица читателя. Мы показываем именно этот момент перехода — резкость и холод внешнего мира растворяются в тёплом камерном пространстве чтения`;
 const DITHER_EMPTY_TONE = 0.05;
+const FORM_SETTLE_STEPS = 72;
+const FORM_SETTLE_MIN = 12;
+const FORM_SETTLE_MAX = 180;
+const FORM_MASK_BASE = 540;
 const AVAILABLE_MODES = new Set(['dither', 'forms']);
 let pillToggleResizeObserver = null;
+let glyphMeasureContext = null;
 
 const state = {
     sourceImage: null,
     sourceImageKey: 'gradient',
     imageLabel: 'sample.png',
     ditherCache: { key: '', tones: null },
-    magneticPoints: [],
-    hoverPoint: null,
     formImage: null,
     formImageKey: '',
     formLabel: 'sample.svg',
     formMask: null,
     formMaskKey: '',
-    formBoundary: [],
-    formSampleCache: { key: '', samples: null },
+    formPhysicsCache: { key: '', letters: null },
     staticFonts: new Map(),
     staticFontPromises: new Map(),
     opentypePromise: null,
@@ -38,7 +40,6 @@ const state = {
 
 const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, value));
 const lerp = (a, b, t) => a + (b - a) * t;
-const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
 
 function normalizeMode(mode) {
     return AVAILABLE_MODES.has(mode) ? mode : 'dither';
@@ -377,124 +378,6 @@ function renderDither(ctx) {
     });
 }
 
-function currentMagneticSources(settings, includeHover = true) {
-    const sources = state.magneticPoints.slice();
-    if (includeHover && state.hoverPoint) {
-        sources.push({
-            x: state.hoverPoint.x,
-            y: state.hoverPoint.y,
-            force: settings.fieldForce,
-            radius: settings.fieldRadius,
-            preview: true
-        });
-    }
-    return sources;
-}
-
-function magneticFieldAt(x, y, settings) {
-    let vx = 0;
-    let vy = 0;
-    let influence = 0;
-    const sources = currentMagneticSources(settings);
-    sources.forEach((source) => {
-        const d = dist(x, y, source.x, source.y);
-        if (d > source.radius) return;
-        if (d <= 0.001) {
-            influence = Math.max(influence, source.force / 100);
-            return;
-        }
-        const amount = Math.pow(1 - d / source.radius, 2) * source.force / 100;
-        vx += (source.x - x) / d * amount;
-        vy += (source.y - y) / d * amount;
-        influence = Math.max(influence, amount);
-    });
-    return { vx, vy, influence: clamp(influence) };
-}
-
-function renderFields(ctx) {
-    const { settings, width, height } = ctx;
-    const chars = cleanPatternText(settings.patternText, settings.allCaps);
-    const grid = makeResolutionGrid(width, height, settings.resolution);
-    const base = baseSizeFromGrid(grid, 0.68);
-    const minWeight = Math.min(settings.weightMin, settings.weightMax);
-    const maxWeight = Math.max(settings.weightMin, settings.weightMax);
-    const sizeRange = relativeSizeRange(settings);
-
-    grid.points.forEach((point, index) => {
-        const field = magneticFieldAt(point.x, point.y, settings);
-        const hasDirection = Math.hypot(field.vx, field.vy) > 0.0001;
-        const response = settings.fieldResponse;
-        const neutralWeight = lerp(minWeight, maxWeight, 0.72);
-        const offsetScale = settings.fieldRadius * 0.48;
-        const x = clamp(point.x + field.vx * offsetScale, 0, width);
-        const y = clamp(point.y + field.vy * offsetScale, 0, height);
-        let size = base * lerp(sizeRange.max, sizeRange.min, field.influence);
-        let weight = lerp(neutralWeight, minWeight, field.influence);
-        let rotation = 0;
-
-        if ((response === 'rotate' || response === 'all') && hasDirection) {
-            rotation = Math.atan2(field.vy, field.vx) * 180 / Math.PI;
-        }
-        if (response === 'size' || response === 'all') {
-            size = base * lerp(sizeRange.max, sizeRange.min, field.influence);
-        }
-        if (response === 'weight' || response === 'all') {
-            weight = lerp(neutralWeight, minWeight, field.influence);
-        }
-
-        drawLetter(ctx, {
-            char: chars[index % chars.length],
-            x,
-            y,
-            size,
-            weight,
-            rotation,
-            fill: settings.inkColor
-        });
-    });
-
-    if (settings.showGuides) drawMagneticGuides(ctx);
-}
-
-function drawMagneticGuides(ctx) {
-    const { svg, create, settings } = ctx;
-    state.magneticPoints.forEach((point) => {
-        svg.appendChild(create('circle', {
-            class: 'magnet-ui',
-            'data-interactive': 'true',
-            cx: point.x,
-            cy: point.y,
-            r: 4,
-            fill: '#ff4242',
-            opacity: 0.9
-        }));
-        svg.appendChild(create('circle', {
-            class: 'magnet-ui',
-            'data-interactive': 'true',
-            cx: point.x,
-            cy: point.y,
-            r: point.radius,
-            fill: 'none',
-            stroke: '#ff4242',
-            'stroke-width': 1,
-            opacity: 0.25
-        }));
-    });
-    if (state.hoverPoint) {
-        svg.appendChild(create('circle', {
-            class: 'magnet-ui',
-            'data-interactive': 'true',
-            cx: state.hoverPoint.x,
-            cy: state.hoverPoint.y,
-            r: settings.fieldRadius,
-            fill: 'none',
-            stroke: '#ffffff',
-            'stroke-width': 1,
-            opacity: 0.22
-        }));
-    }
-}
-
 function loadImageFromUrl(url, label, app) {
     const image = new Image();
     image.onload = () => {
@@ -553,9 +436,8 @@ function ensureFormMask(settings) {
     if (state.formMaskKey === key && state.formMask) return state.formMask;
 
     const aspect = settings.width / settings.height;
-    const maskBase = 720;
-    const maskW = aspect >= 1 ? maskBase : Math.max(240, Math.round(maskBase * aspect));
-    const maskH = aspect >= 1 ? Math.max(240, Math.round(maskBase / aspect)) : maskBase;
+    const maskW = aspect >= 1 ? FORM_MASK_BASE : Math.max(220, Math.round(FORM_MASK_BASE * aspect));
+    const maskH = aspect >= 1 ? Math.max(220, Math.round(FORM_MASK_BASE / aspect)) : FORM_MASK_BASE;
     const canvas = document.createElement('canvas');
     canvas.width = maskW;
     canvas.height = maskH;
@@ -568,87 +450,187 @@ function ensureFormMask(settings) {
         inside[p] = imageData.data[i + 3] > 12 ? 1 : 0;
     }
 
-    const boundary = [];
-    const sampleEvery = 1;
-    for (let y = 1; y < maskH - 1; y += sampleEvery) {
-        for (let x = 1; x < maskW - 1; x += sampleEvery) {
-            const idx = y * maskW + x;
-            if (!inside[idx]) continue;
-            const hasOutsideNeighbor =
-                !inside[idx - 1] || !inside[idx + 1] ||
-                !inside[idx - maskW] || !inside[idx + maskW] ||
-                !inside[idx - maskW - 1] || !inside[idx - maskW + 1] ||
-                !inside[idx + maskW - 1] || !inside[idx + maskW + 1];
-            if (hasOutsideNeighbor) {
-                boundary.push({
-                    x: x / (maskW - 1) * settings.width,
-                    y: y / (maskH - 1) * settings.height
-                });
+    const nearest = buildNearestBoundaryMap(inside, maskW, maskH);
+    state.formMask = nearest ? {
+        width: maskW,
+        height: maskH,
+        inside,
+        nearestX: nearest.x,
+        nearestY: nearest.y
+    } : null;
+    state.formMaskKey = key;
+    state.formPhysicsCache = { key: '', letters: null };
+    return state.formMask;
+}
+
+function buildNearestBoundaryMap(inside, width, height) {
+    const length = width * height;
+    let sourceX = new Int16Array(length);
+    let sourceY = new Int16Array(length);
+    let targetX = new Int16Array(length);
+    let targetY = new Int16Array(length);
+    sourceX.fill(-1);
+    sourceY.fill(-1);
+    let boundaryCount = 0;
+
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const index = y * width + x;
+            const value = inside[index];
+            let isBoundary = false;
+            for (let offsetY = -1; offsetY <= 1 && !isBoundary; offsetY++) {
+                for (let offsetX = -1; offsetX <= 1; offsetX++) {
+                    if (offsetX === 0 && offsetY === 0) continue;
+                    const nextX = x + offsetX;
+                    const nextY = y + offsetY;
+                    if (nextX < 0 || nextX >= width || nextY < 0 || nextY >= height) {
+                        if (value) isBoundary = true;
+                        continue;
+                    }
+                    if (inside[nextY * width + nextX] !== value) {
+                        isBoundary = true;
+                        break;
+                    }
+                }
+            }
+            if (isBoundary) {
+                sourceX[index] = x;
+                sourceY[index] = y;
+                boundaryCount++;
             }
         }
     }
+    if (!boundaryCount) return null;
 
-    state.formMask = { width: maskW, height: maskH, inside };
-    state.formBoundary = boundary;
-    state.formMaskKey = key;
-    state.formSampleCache = { key: '', samples: null };
-    return state.formMask;
+    let jump = 1;
+    while (jump < Math.max(width, height)) jump *= 2;
+    for (jump /= 2; jump >= 1; jump /= 2) {
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const index = y * width + x;
+                let bestX = sourceX[index];
+                let bestY = sourceY[index];
+                let bestDistance = bestX >= 0
+                    ? (bestX - x) ** 2 + (bestY - y) ** 2
+                    : Infinity;
+
+                for (let offsetY = -jump; offsetY <= jump; offsetY += jump) {
+                    for (let offsetX = -jump; offsetX <= jump; offsetX += jump) {
+                        const nextX = x + offsetX;
+                        const nextY = y + offsetY;
+                        if (nextX < 0 || nextX >= width || nextY < 0 || nextY >= height) continue;
+                        const nextIndex = nextY * width + nextX;
+                        const candidateX = sourceX[nextIndex];
+                        const candidateY = sourceY[nextIndex];
+                        if (candidateX < 0) continue;
+                        const candidateDistance = (candidateX - x) ** 2 + (candidateY - y) ** 2;
+                        if (candidateDistance < bestDistance) {
+                            bestDistance = candidateDistance;
+                            bestX = candidateX;
+                            bestY = candidateY;
+                        }
+                    }
+                }
+                targetX[index] = bestX;
+                targetY[index] = bestY;
+            }
+        }
+        [sourceX, targetX] = [targetX, sourceX];
+        [sourceY, targetY] = [targetY, sourceY];
+    }
+
+    return { x: sourceX, y: sourceY };
 }
 
 function insideFormMask(mask, x, y, settings) {
     if (!mask) return false;
-    const mx = clamp(Math.floor(x / settings.width * mask.width), 0, mask.width - 1);
-    const my = clamp(Math.floor(y / settings.height * mask.height), 0, mask.height - 1);
+    const mx = clamp(Math.round(x / settings.width * (mask.width - 1)), 0, mask.width - 1);
+    const my = clamp(Math.round(y / settings.height * (mask.height - 1)), 0, mask.height - 1);
     return !!mask.inside[my * mask.width + mx];
 }
 
-function nearestBoundaryPoint(x, y) {
-    let best = null;
-    let bestD = Infinity;
-    for (const point of state.formBoundary) {
-        const d = (point.x - x) ** 2 + (point.y - y) ** 2;
-        if (d < bestD) {
-            bestD = d;
-            best = point;
-        }
-    }
-    return best ? { ...best, distance: Math.sqrt(bestD) } : null;
+function signedMaskDistance(mask, x, y, settings) {
+    const px = clamp(x, 0, mask.width - 1);
+    const py = clamp(y, 0, mask.height - 1);
+    const index = py * mask.width + px;
+    const nearestX = mask.nearestX[index];
+    const nearestY = mask.nearestY[index];
+    if (nearestX < 0) return 0;
+    const scaleX = settings.width / Math.max(1, mask.width - 1);
+    const scaleY = settings.height / Math.max(1, mask.height - 1);
+    const distance = Math.hypot((nearestX - px) * scaleX, (nearestY - py) * scaleY);
+    return mask.inside[index] ? distance : -distance;
 }
 
-function getFormSamples(settings, grid, mask) {
-    const key = [
-        state.formMaskKey,
-        settings.width,
-        settings.height,
-        grid.cols,
-        grid.rows,
-        grid.pitchW.toFixed(4),
-        grid.pitchH.toFixed(4)
-    ].join('|');
-    if (state.formSampleCache.key === key && state.formSampleCache.samples) {
-        return state.formSampleCache.samples;
+function sampleFormField(mask, x, y, settings) {
+    if (!mask) return null;
+    const px = clamp(Math.round(x / settings.width * (mask.width - 1)), 0, mask.width - 1);
+    const py = clamp(Math.round(y / settings.height * (mask.height - 1)), 0, mask.height - 1);
+    const index = py * mask.width + px;
+    const nearestPixelX = mask.nearestX[index];
+    const nearestPixelY = mask.nearestY[index];
+    if (nearestPixelX < 0) return null;
+
+    const nearX = nearestPixelX / Math.max(1, mask.width - 1) * settings.width;
+    const nearY = nearestPixelY / Math.max(1, mask.height - 1) * settings.height;
+    const dx = nearX - x;
+    const dy = nearY - y;
+    const distance = Math.hypot(dx, dy);
+    let normalX = 0;
+    let normalY = 1;
+    if (distance > 0.0001) {
+        normalX = dx / distance;
+        normalY = dy / distance;
+    } else {
+        const left = signedMaskDistance(mask, Math.max(0, px - 1), py, settings);
+        const right = signedMaskDistance(mask, Math.min(mask.width - 1, px + 1), py, settings);
+        const top = signedMaskDistance(mask, px, Math.max(0, py - 1), settings);
+        const bottom = signedMaskDistance(mask, px, Math.min(mask.height - 1, py + 1), settings);
+        const gradientX = right - left;
+        const gradientY = bottom - top;
+        const gradientLength = Math.hypot(gradientX, gradientY);
+        if (gradientLength > 0.0001) {
+            const direction = mask.inside[index] ? -1 : 1;
+            normalX = gradientX / gradientLength * direction;
+            normalY = gradientY / gradientLength * direction;
+        }
     }
 
-    const samples = grid.points.map((point) => {
-        const nearest = nearestBoundaryPoint(point.x, point.y);
-        if (!nearest) return null;
-        return {
-            inside: insideFormMask(mask, point.x, point.y, settings),
-            nearX: nearest.x,
-            nearY: nearest.y,
-            distance: nearest.distance
-        };
-    });
-    state.formSampleCache = { key, samples };
-    return samples;
+    return {
+        kind: 'form',
+        x: nearX,
+        y: nearY,
+        distance,
+        normalX,
+        normalY,
+        inside: !!mask.inside[index]
+    };
+}
+
+function sampleCanvasField(x, y, width, height) {
+    const candidates = [
+        { kind: 'canvas', x: 0, y: clamp(y, 0, height), distance: Math.abs(x), normalX: -1, normalY: 0 },
+        { kind: 'canvas', x: width, y: clamp(y, 0, height), distance: Math.abs(width - x), normalX: 1, normalY: 0 },
+        { kind: 'canvas', x: clamp(x, 0, width), y: 0, distance: Math.abs(y), normalX: 0, normalY: -1 },
+        { kind: 'canvas', x: clamp(x, 0, width), y: height, distance: Math.abs(height - y), normalX: 0, normalY: 1 }
+    ];
+    return candidates.reduce((best, candidate) => candidate.distance < best.distance ? candidate : best);
+}
+
+function nearestLineAttractor(mask, x, y, settings, preferredKind = null) {
+    const form = sampleFormField(mask, x, y, settings);
+    const canvas = settings.formCanvasEdges !== false
+        ? sampleCanvasField(x, y, settings.width, settings.height)
+        : null;
+    if (preferredKind === 'form') return form;
+    if (preferredKind === 'canvas') return canvas;
+    if (!form) return canvas;
+    if (!canvas) return form;
+    return form.distance <= canvas.distance ? form : canvas;
 }
 
 function formEdgeSpread(settings, width, height) {
-    return Math.max(1, Math.min(width, height) * clamp(Number(settings.formEdgeSpread ?? 34) / 100, 0.02, 1));
-}
-
-function formOverflowDistance(settings, width, height) {
-    return Math.min(width, height) * clamp(Number(settings.formOverflow ?? 24) / 100, 0, 1);
+    return Math.max(1, Math.min(width, height) * clamp(Number(settings.formEdgeSpread ?? 15) / 100, 0.02, 1));
 }
 
 function toneFromFormDistance(distanceToEdge, edgeSpread, settings) {
@@ -664,131 +646,451 @@ function gravityDirectionVector(degrees) {
     };
 }
 
-function canvasEdgeAttractor(x, y, width, height, direction) {
-    const epsilon = 0.0001;
-    let distanceToEdge = Infinity;
-    if (direction.x > epsilon) distanceToEdge = Math.min(distanceToEdge, (width - x) / direction.x);
-    else if (direction.x < -epsilon) distanceToEdge = Math.min(distanceToEdge, -x / direction.x);
-    if (direction.y > epsilon) distanceToEdge = Math.min(distanceToEdge, (height - y) / direction.y);
-    else if (direction.y < -epsilon) distanceToEdge = Math.min(distanceToEdge, -y / direction.y);
-    if (!Number.isFinite(distanceToEdge)) distanceToEdge = 0;
-    distanceToEdge = Math.max(0, distanceToEdge);
+function hashString(value) {
+    let hash = 2166136261;
+    for (let index = 0; index < value.length; index++) {
+        hash ^= value.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+}
 
-    const maxDistance = Math.max(1, Math.abs(direction.x) * width + Math.abs(direction.y) * height);
-    return {
-        x: x + direction.x * distanceToEdge,
-        y: y + direction.y * distanceToEdge,
-        distance: distanceToEdge,
-        closeness: clamp(1 - distanceToEdge / maxDistance)
+function seededRandom(seed) {
+    let value = seed >>> 0;
+    return () => {
+        value += 0x6D2B79F5;
+        let result = value;
+        result = Math.imul(result ^ result >>> 15, result | 1);
+        result ^= result + Math.imul(result ^ result >>> 7, result | 61);
+        return ((result ^ result >>> 14) >>> 0) / 4294967296;
     };
+}
+
+function formPhysicsKey(settings) {
+    return [
+        state.formMaskKey,
+        settings.width,
+        settings.height,
+        settings.patternText,
+        settings.allCaps,
+        settings.resolution,
+        settings.density,
+        settings.weightMin,
+        settings.weightMax,
+        settings.sizeMin,
+        settings.sizeMax,
+        settings.rotationMin,
+        settings.rotationMax,
+        settings.noiseMin,
+        settings.noiseMax,
+        settings.sizeEnabled,
+        settings.weightEnabled,
+        settings.rotationEnabled,
+        settings.noiseEnabled,
+        settings.hideTinyLetters,
+        settings.invertDither,
+        settings.formEdgeSpread,
+        settings.formAttraction,
+        settings.formStickiness,
+        settings.formFriction,
+        settings.formSettlingTime,
+        settings.formGravity,
+        settings.formGravityDirection,
+        settings.formCanvasEdges
+    ].join('|');
+}
+
+function glyphCollisionMetrics(char, size, weight) {
+    if (!glyphMeasureContext) {
+        glyphMeasureContext = document.createElement('canvas').getContext('2d');
+        glyphMeasureContext.textAlign = 'center';
+        glyphMeasureContext.textBaseline = 'alphabetic';
+    }
+    glyphMeasureContext.font = `${roundWeight(weight)} ${Math.max(1, size)}px "YSTextPattern"`;
+    const metrics = glyphMeasureContext.measureText(char);
+    const width = Math.max(size * 0.16,
+        (metrics.actualBoundingBoxLeft || 0) + (metrics.actualBoundingBoxRight || 0) || metrics.width);
+    const ascent = metrics.actualBoundingBoxAscent || size * 0.76;
+    const descent = metrics.actualBoundingBoxDescent || size * 0.2;
+    const padding = Math.max(0.08, size * 0.035);
+    return {
+        halfWidth: width / 2 + padding,
+        halfHeight: (ascent + descent) / 2 + padding,
+        anchorOffset: Math.max(0.2, (ascent - descent) / 2)
+    };
+}
+
+function makeFormParticles(settings, mask) {
+    const grid = makeResolutionGrid(settings.width, settings.height, settings.resolution, settings.density);
+    const base = baseSizeFromGrid(grid, 0.74);
+    const chars = cleanPatternText(settings.patternText, settings.allCaps);
+    const minWeight = Math.min(settings.weightMin, settings.weightMax);
+    const maxWeight = Math.max(settings.weightMin, settings.weightMax);
+    const noiseRange = relativeNoiseRange(settings);
+    const edgeSpread = formEdgeSpread(settings, settings.width, settings.height);
+    const hideTiny = settings.hideTinyLetters !== false;
+    const particles = [];
+
+    grid.points.forEach((point, sourceIndex) => {
+        if (!insideFormMask(mask, point.x, point.y, settings)) return;
+        const initialField = sampleFormField(mask, point.x, point.y, settings);
+        if (!initialField) return;
+        const initialTone = toneFromFormDistance(initialField.distance, edgeSpread, settings);
+        const noise = settings.noiseEnabled !== false
+            ? lerp(noiseRange.min, noiseRange.max, initialTone)
+            : 0;
+        const pitch = Math.min(point.pitchW, point.pitchH);
+        const jitter = pitch * clamp(0.28 + noise * 0.36, 0.28, 0.95);
+        let baselineX = point.x;
+        let baselineY = point.y;
+        for (let attempt = 0; attempt < 6; attempt++) {
+            const candidateX = point.x + signedNoise(sourceIndex, 31 + attempt * 2) * jitter;
+            const candidateY = point.y + signedNoise(sourceIndex, 32 + attempt * 2) * jitter;
+            if (insideFormMask(mask, candidateX, candidateY, settings)) {
+                baselineX = candidateX;
+                baselineY = candidateY;
+                break;
+            }
+        }
+
+        const styleField = sampleFormField(mask, baselineX, baselineY, settings);
+        if (!styleField) return;
+        const tone = toneFromFormDistance(styleField.distance, edgeSpread, settings);
+        const type = typographyFromTone(settings, base, minWeight, maxWeight, tone);
+        if (hideTiny && type.size <= Math.max(0.35, base * DITHER_EMPTY_TONE)) return;
+
+        const char = chars[sourceIndex % chars.length];
+        const styleRotation = type.rotation * Math.PI / 180;
+        const collision = glyphCollisionMetrics(char, type.size, type.weight);
+        const anchorOffset = collision.anchorOffset;
+        const collisionRadius = Math.hypot(collision.halfWidth, collision.halfHeight);
+        const weightMass = lerp(0.62, 1.38, clamp((type.weight - 100) / 800));
+        const mass = clamp((type.size / Math.max(0.1, base)) ** 2 * weightMass, 0.35, 3.5);
+        particles.push({
+            sourceIndex,
+            char,
+            size: type.size,
+            weight: type.weight,
+            styleRotation,
+            angle: styleRotation,
+            angularVelocity: 0,
+            anchorOffset,
+            halfWidth: collision.halfWidth,
+            halfHeight: collision.halfHeight,
+            collisionRadius,
+            mass,
+            x: baselineX + Math.sin(styleRotation) * anchorOffset,
+            y: baselineY - Math.cos(styleRotation) * anchorOffset,
+            vx: 0,
+            vy: 0,
+            attachedTo: null,
+            attachCooldown: 0,
+            bondNormalX: 0,
+            bondNormalY: 1,
+            orientationX: 0,
+            orientationY: 1
+        });
+    });
+    return { particles, grid };
+}
+
+function particleAnchor(particle) {
+    return {
+        x: particle.x - Math.sin(particle.angle) * particle.anchorOffset,
+        y: particle.y + Math.cos(particle.angle) * particle.anchorOffset
+    };
+}
+
+function createFormPhysicsForce(settings, mask) {
+    let particles = [];
+    const attractionRange = formEdgeSpread(settings, settings.width, settings.height);
+    const lineGravity = clamp(Number(settings.formAttraction ?? 25) / 100);
+    const stickiness = clamp(Number(settings.formStickiness ?? 25) / 100);
+    const friction = clamp(Number(settings.formFriction ?? 50) / 100);
+    const gravityLevel = clamp(Number(settings.formGravity ?? 50) / 100);
+    const gravityDirection = gravityDirectionVector(settings.formGravityDirection);
+    const gravityAcceleration = gravityLevel * 0.15;
+    const lineForceLimit = lineGravity * 0.24;
+    const maximumBondForce = lineForceLimit * 0.45 + Math.pow(stickiness, 1.45) * 0.22;
+    const springStrength = 0.055 + stickiness * 0.12;
+    const contactDamping = 0.18;
+    const tangentialFriction = friction * 0.22;
+
+    function force() {
+        particles.forEach((particle) => {
+            if (particle.attachCooldown > 0) particle.attachCooldown--;
+            const anchor = particleAnchor(particle);
+            let attractor = nearestLineAttractor(mask, anchor.x, anchor.y, settings, particle.attachedTo);
+            let forceX = gravityDirection.x * gravityAcceleration * particle.mass;
+            let forceY = gravityDirection.y * gravityAcceleration * particle.mass;
+            let lineIntentX = 0;
+            let lineIntentY = 0;
+
+            if (particle.attachedTo && attractor) {
+                const dx = attractor.x - anchor.x;
+                const dy = attractor.y - anchor.y;
+                const distance = Math.hypot(dx, dy);
+                let normalX = distance > 0.0001 ? dx / distance : particle.bondNormalX;
+                let normalY = distance > 0.0001 ? dy / distance : particle.bondNormalY;
+                if (distance > 0.0001) {
+                    particle.bondNormalX = normalX;
+                    particle.bondNormalY = normalY;
+                }
+
+                const anchorVelocityX = particle.vx - Math.cos(particle.angle) * particle.anchorOffset * particle.angularVelocity;
+                const anchorVelocityY = particle.vy - Math.sin(particle.angle) * particle.anchorOffset * particle.angularVelocity;
+                const normalVelocity = anchorVelocityX * normalX + anchorVelocityY * normalY;
+                const springForce = distance * springStrength - normalVelocity * particle.mass * contactDamping;
+
+                if (Math.abs(springForce) > maximumBondForce || distance > Math.max(3, particle.size * 1.1)) {
+                    particle.attachedTo = null;
+                    particle.attachCooldown = 12;
+                    attractor = nearestLineAttractor(mask, anchor.x, anchor.y, settings);
+                } else {
+                    const tangentX = -normalY;
+                    const tangentY = normalX;
+                    const tangentVelocity = anchorVelocityX * tangentX + anchorVelocityY * tangentY;
+                    forceX += normalX * springForce - tangentX * tangentVelocity * particle.mass * tangentialFriction;
+                    forceY += normalY * springForce - tangentY * tangentVelocity * particle.mass * tangentialFriction;
+                    const intent = lineForceLimit + maximumBondForce * 0.5;
+                    lineIntentX = normalX * intent;
+                    lineIntentY = normalY * intent;
+                }
+            }
+
+            if (!particle.attachedTo && attractor) {
+                const dx = attractor.x - anchor.x;
+                const dy = attractor.y - anchor.y;
+                const distance = Math.hypot(dx, dy);
+                const normalX = distance > 0.0001 ? dx / distance : attractor.normalX;
+                const normalY = distance > 0.0001 ? dy / distance : attractor.normalY;
+                const falloff = distance < attractionRange
+                    ? Math.pow(1 - distance / attractionRange, 2.2)
+                    : 0;
+                const lineForce = lineForceLimit * falloff;
+                forceX += normalX * lineForce;
+                forceY += normalY * lineForce;
+                lineIntentX = normalX * lineForce;
+                lineIntentY = normalY * lineForce;
+
+                const contactDistance = Math.max(0.9, particle.size * 0.18);
+                if (stickiness > 0 && particle.attachCooldown === 0 && distance <= contactDistance) {
+                    particle.attachedTo = attractor.kind;
+                    particle.bondNormalX = normalX;
+                    particle.bondNormalY = normalY;
+                }
+            }
+
+            particle.orientationX = gravityDirection.x * gravityAcceleration * particle.mass + lineIntentX;
+            particle.orientationY = gravityDirection.y * gravityAcceleration * particle.mass + lineIntentY;
+            particle.vx += forceX / particle.mass;
+            particle.vy += forceY / particle.mass;
+        });
+    }
+
+    force.initialize = (nextParticles) => {
+        particles = nextParticles;
+    };
+    return force;
+}
+
+function normalizeAngle(angle) {
+    let result = angle;
+    while (result > Math.PI) result -= Math.PI * 2;
+    while (result < -Math.PI) result += Math.PI * 2;
+    return result;
+}
+
+function settleParticleAngles(particles) {
+    particles.forEach((particle) => {
+        const forceLength = Math.hypot(particle.orientationX, particle.orientationY);
+        if (forceLength <= 0.0001) return;
+        const targetAngle = Math.atan2(-particle.orientationX, particle.orientationY) + particle.styleRotation;
+        const difference = normalizeAngle(targetAngle - particle.angle);
+        particle.angularVelocity += difference * 0.075 / Math.sqrt(particle.mass);
+        particle.angularVelocity *= 0.72;
+        particle.angle = normalizeAngle(particle.angle + particle.angularVelocity);
+    });
+}
+
+function rectangleProjectionRadius(particle, axisX, axisY) {
+    const cos = Math.cos(particle.angle);
+    const sin = Math.sin(particle.angle);
+    const horizontal = Math.abs(cos * axisX + sin * axisY) * particle.halfWidth;
+    const vertical = Math.abs(-sin * axisX + cos * axisY) * particle.halfHeight;
+    return horizontal + vertical;
+}
+
+function rectangleContact(first, second) {
+    const deltaX = second.x + second.vx - first.x - first.vx;
+    const deltaY = second.y + second.vy - first.y - first.vy;
+    const firstCos = Math.cos(first.angle);
+    const firstSin = Math.sin(first.angle);
+    const secondCos = Math.cos(second.angle);
+    const secondSin = Math.sin(second.angle);
+    const axes = [
+        [firstCos, firstSin],
+        [-firstSin, firstCos],
+        [secondCos, secondSin],
+        [-secondSin, secondCos]
+    ];
+    let minimumOverlap = Infinity;
+    let normalX = 0;
+    let normalY = 0;
+
+    for (const [axisX, axisY] of axes) {
+        const centerDistance = deltaX * axisX + deltaY * axisY;
+        const overlap = rectangleProjectionRadius(first, axisX, axisY)
+            + rectangleProjectionRadius(second, axisX, axisY)
+            - Math.abs(centerDistance);
+        if (overlap <= 0) return null;
+        if (overlap < minimumOverlap) {
+            minimumOverlap = overlap;
+            const direction = centerDistance < 0 ? -1 : 1;
+            normalX = axisX * direction;
+            normalY = axisY * direction;
+        }
+    }
+    return { overlap: minimumOverlap, normalX, normalY };
+}
+
+function createRectangleCollisionForce(strength = 0.78) {
+    let particles = [];
+    let cellSize = 1;
+
+    function force() {
+        const buckets = new Map();
+        particles.forEach((particle) => {
+            const cellX = Math.floor((particle.x + particle.vx) / cellSize);
+            const cellY = Math.floor((particle.y + particle.vy) / cellSize);
+            const key = `${cellX},${cellY}`;
+            if (!buckets.has(key)) buckets.set(key, []);
+            buckets.get(key).push(particle);
+        });
+
+        particles.forEach((first) => {
+            const cellX = Math.floor((first.x + first.vx) / cellSize);
+            const cellY = Math.floor((first.y + first.vy) / cellSize);
+            for (let offsetY = -1; offsetY <= 1; offsetY++) {
+                for (let offsetX = -1; offsetX <= 1; offsetX++) {
+                    const nearby = buckets.get(`${cellX + offsetX},${cellY + offsetY}`);
+                    if (!nearby) continue;
+                    nearby.forEach((second) => {
+                        if (second.index <= first.index) return;
+                        const dx = second.x + second.vx - first.x - first.vx;
+                        const dy = second.y + second.vy - first.y - first.vy;
+                        const broadRadius = first.collisionRadius + second.collisionRadius;
+                        if (dx * dx + dy * dy >= broadRadius * broadRadius) return;
+                        const contact = rectangleContact(first, second);
+                        if (!contact) return;
+
+                        const inverseFirst = 1 / first.mass;
+                        const inverseSecond = 1 / second.mass;
+                        const inverseTotal = inverseFirst + inverseSecond;
+                        const correction = Math.min(contact.overlap, Math.min(first.halfHeight, second.halfHeight)) * strength;
+                        const firstShare = inverseFirst / inverseTotal;
+                        const secondShare = inverseSecond / inverseTotal;
+                        first.x -= contact.normalX * correction * firstShare;
+                        first.y -= contact.normalY * correction * firstShare;
+                        second.x += contact.normalX * correction * secondShare;
+                        second.y += contact.normalY * correction * secondShare;
+
+                        const relativeVelocity = (second.vx - first.vx) * contact.normalX
+                            + (second.vy - first.vy) * contact.normalY;
+                        if (relativeVelocity < 0) {
+                            const impulse = -relativeVelocity / inverseTotal;
+                            first.vx -= contact.normalX * impulse * inverseFirst;
+                            first.vy -= contact.normalY * impulse * inverseFirst;
+                            second.vx += contact.normalX * impulse * inverseSecond;
+                            second.vy += contact.normalY * impulse * inverseSecond;
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    force.initialize = (nextParticles) => {
+        particles = nextParticles;
+        const largestRadius = particles.reduce((largest, particle) => Math.max(largest, particle.collisionRadius), 0.5);
+        cellSize = Math.max(1, largestRadius * 2);
+    };
+    return force;
+}
+
+function constrainFormParticles(particles, width, height, enabled) {
+    if (!enabled) return;
+    particles.forEach((particle) => {
+        const extentX = Math.min(rectangleProjectionRadius(particle, 1, 0), width / 2);
+        const extentY = Math.min(rectangleProjectionRadius(particle, 0, 1), height / 2);
+        if (particle.x < extentX) {
+            particle.x = extentX;
+            particle.vx = Math.max(0, particle.vx) * 0.08;
+        } else if (particle.x > width - extentX) {
+            particle.x = width - extentX;
+            particle.vx = Math.min(0, particle.vx) * 0.08;
+        }
+        if (particle.y < extentY) {
+            particle.y = extentY;
+            particle.vy = Math.max(0, particle.vy) * 0.08;
+        } else if (particle.y > height - extentY) {
+            particle.y = height - extentY;
+            particle.vy = Math.min(0, particle.vy) * 0.08;
+        }
+    });
+}
+
+function settleFormParticles(settings, mask) {
+    const key = formPhysicsKey(settings);
+    if (state.formPhysicsCache.key === key && state.formPhysicsCache.letters) {
+        return state.formPhysicsCache.letters;
+    }
+    const d3 = window.d3;
+    if (!d3?.forceSimulation) return [];
+
+    const { particles } = makeFormParticles(settings, mask);
+    const settlingSteps = clamp(
+        Math.round(Number(settings.formSettlingTime ?? FORM_SETTLE_STEPS)),
+        FORM_SETTLE_MIN,
+        FORM_SETTLE_MAX
+    );
+    const simulation = d3.forceSimulation(particles)
+        .stop()
+        .randomSource(seededRandom(hashString(key)))
+        .alpha(1)
+        .alphaDecay(0)
+        .velocityDecay(0.105)
+        .force('form-physics', createFormPhysicsForce(settings, mask))
+        .force('letter-collision', createRectangleCollisionForce());
+
+    for (let step = 0; step < settlingSteps; step++) {
+        simulation.tick();
+        settleParticleAngles(particles);
+        constrainFormParticles(particles, settings.width, settings.height, settings.formCanvasEdges !== false);
+    }
+    simulation.stop();
+    state.formPhysicsCache = { key, letters: particles };
+    return particles;
 }
 
 function renderForms(ctx) {
     const { settings, width, height } = ctx;
     const mask = ensureFormMask(settings);
-    if (!mask || !state.formBoundary.length) return;
+    if (!mask) return;
 
-    const chars = cleanPatternText(settings.patternText, settings.allCaps);
-    const grid = makeResolutionGrid(width, height, settings.resolution, settings.density);
-    const samples = getFormSamples(settings, grid, mask);
-    const base = baseSizeFromGrid(grid, 0.74);
-    const minWeight = Math.min(settings.weightMin, settings.weightMax);
-    const maxWeight = Math.max(settings.weightMin, settings.weightMax);
-    const noiseRange = relativeNoiseRange(settings);
-    const hideTiny = settings.hideTinyLetters !== false;
-    const edgeSpread = formEdgeSpread(settings, width, height);
-    const overflowDistance = formOverflowDistance(settings, width, height);
-    const lineGravity = clamp(Number(settings.formAttraction ?? 45) / 100);
-    const globalGravity = clamp(Number(settings.formGravity ?? 12) / 100);
-    const gravityDirection = gravityDirectionVector(settings.formGravityDirection);
-    const canvasGravityScale = Math.min(width, height) * 0.54;
-    const canvasGravityOvershoot = Math.min(width, height) * 0.18 * globalGravity;
-
-    grid.points.forEach((point, index) => {
-        const sample = samples[index];
-        if (!sample) return;
-        if (!sample.inside) return;
-
-        const edgeTone = 1 - clamp(sample.distance / edgeSpread);
-        const tone = toneFromFormDistance(sample.distance, edgeSpread, settings);
-        if (hideTiny && tone <= DITHER_EMPTY_TONE) return;
-
-        const type = typographyFromTone(settings, base, minWeight, maxWeight, tone);
-        const noise = settings.noiseEnabled !== false
-            ? lerp(noiseRange.min, noiseRange.max, tone)
-            : 0;
-        const noiseOffset = Math.min(point.cellW, point.cellH) * noise;
-        let x = point.x;
-        let y = point.y;
-        let forceX = 0;
-        let forceY = 0;
-
-        if (lineGravity > 0 && sample.distance > 0.001) {
-            const lineFalloff = lerp(0.22, 1, Math.pow(edgeTone, 0.7));
-            const maxLineShift = edgeSpread * 0.76 * lineGravity * lineFalloff;
-            const lineOverflow = sample.inside ? overflowDistance * lineGravity : 0;
-            const lineShift = Math.min(sample.distance + lineOverflow, maxLineShift);
-            forceX += (sample.nearX - point.x) / sample.distance * lineShift;
-            forceY += (sample.nearY - point.y) / sample.distance * lineShift;
-        }
-
-        if (globalGravity > 0) {
-            const attractor = canvasEdgeAttractor(point.x, point.y, width, height, gravityDirection);
-            const edgeInfluence = lerp(0.16, 1, Math.pow(1 - attractor.closeness, 1.35));
-            const gravityShift = canvasGravityScale * globalGravity * edgeInfluence;
-            const cappedShift = Math.min(gravityShift, attractor.distance + canvasGravityOvershoot);
-            forceX += gravityDirection.x * cappedShift;
-            forceY += gravityDirection.y * cappedShift;
-        }
-
-        x += forceX + signedNoise(index, 5) * noiseOffset;
-        y += forceY + signedNoise(index, 6) * noiseOffset;
-        if (x < 0 || x > width || y < 0 || y > height) return;
-
-        const forceMagnitude = Math.hypot(forceX, forceY);
-        const attractionRotation = forceMagnitude > 0.001
-            ? Math.atan2(forceY, forceX) * 180 / Math.PI
-            : 0;
-
+    settleFormParticles(settings, mask).forEach((particle) => {
+        const anchor = particleAnchor(particle);
         drawLetter(ctx, {
-            char: chars[index % chars.length],
-            x,
-            y,
-            size: type.size,
-            weight: type.weight,
-            rotation: attractionRotation + type.rotation,
+            char: particle.char,
+            x: anchor.x,
+            y: anchor.y,
+            size: particle.size,
+            weight: particle.weight,
+            rotation: particle.angle * 180 / Math.PI,
             baseline: 'alphabetic',
             fill: settings.inkColor
         });
     });
-}
-
-function drawFormGuides(ctx, mask, gravityX, gravityY) {
-    if (!mask) return;
-    const { svg, create, settings } = ctx;
-    state.formBoundary.forEach((point, index) => {
-        if (index % 4 !== 0) return;
-        svg.appendChild(create('circle', {
-            class: 'form-boundary-dot',
-            'data-interactive': 'true',
-            cx: point.x,
-            cy: point.y,
-            r: 1.15,
-            fill: '#49a8ff',
-            opacity: 0.45
-        }));
-    });
-    svg.appendChild(create('circle', {
-        class: 'gravity-ui',
-        'data-interactive': 'true',
-        cx: gravityX,
-        cy: gravityY,
-        r: 6,
-        fill: 'none',
-        stroke: settings.inkColor,
-        'stroke-width': 1.5,
-        opacity: 0.65
-    }));
 }
 
 function loadFormFromSvgText(svgText, label, app) {
@@ -805,10 +1107,10 @@ function loadFormFromSvgText(svgText, label, app) {
     const image = new Image();
     image.onload = () => {
         state.formImage = image;
-        state.formImageKey = `${label}:${Date.now()}`;
+        state.formImageKey = `svg:${hashString(normalizedSvg)}`;
         state.formLabel = label;
         state.formMaskKey = '';
-        state.formSampleCache = { key: '', samples: null };
+        state.formPhysicsCache = { key: '', letters: null };
         URL.revokeObjectURL(url);
         syncStatusLabels();
         app.renderNow();
@@ -844,47 +1146,6 @@ function loadFormFile(file, app) {
     const reader = new FileReader();
     reader.onload = () => loadFormFromSvgText(String(reader.result), file.name, app);
     reader.readAsText(file);
-}
-
-function getPointerInSvg(event, app) {
-    const svg = app.target.element;
-    const matrix = svg.getScreenCTM();
-    if (!matrix) return null;
-    const point = svg.createSVGPoint();
-    point.x = event.clientX;
-    point.y = event.clientY;
-    const local = point.matrixTransform(matrix.inverse());
-    return { x: local.x, y: local.y };
-}
-
-function commitCustomChange(app, label) {
-    app.presets?.markDirty();
-    app.history?.beginTransaction(label);
-    app.history?.endTransaction();
-    app.renderNow();
-    app.presets?.markDirty();
-}
-
-function addMagneticPoint(app, point) {
-    app.history?.beginTransaction('add magnetic point');
-    state.magneticPoints.push({
-        x: clamp(point.x, 0, app.settings.width),
-        y: clamp(point.y, 0, app.settings.height),
-        force: app.settings.fieldForce,
-        radius: app.settings.fieldRadius
-    });
-    app.history?.endTransaction();
-    app.presets?.markDirty();
-    app.renderNow();
-}
-
-function setGravityPoint(app, point) {
-    app.history?.beginTransaction('set gravity');
-    app.settingsStore.set('gravityX', clamp(point.x / app.settings.width * 100, 0, 100));
-    app.settingsStore.set('gravityY', clamp(point.y / app.settings.height * 100, 0, 100));
-    app.history?.endTransaction();
-    app.presets?.markDirty();
-    app.renderNow();
 }
 
 function syncStatusLabels() {
@@ -964,12 +1225,10 @@ function syncCustomControls(app) {
     document.querySelectorAll('input[name="ditherAlgorithm"]').forEach((input) => {
         input.checked = input.value === settings.ditherAlgorithm;
     });
-    document.querySelectorAll('input[name="fieldResponse"]').forEach((input) => {
-        input.checked = input.value === settings.fieldResponse;
-    });
-    document.querySelectorAll('input[name="formFill"]').forEach((input) => {
-        input.checked = input.value === settings.formFill;
-    });
+    const lightGroupLabel = document.getElementById('lightToneGroupLabel');
+    if (lightGroupLabel) lightGroupLabel.textContent = mode === 'forms' ? 'Far from edge' : 'Light pixels';
+    const darkGroupLabel = document.getElementById('darkToneGroupLabel');
+    if (darkGroupLabel) darkGroupLabel.textContent = mode === 'forms' ? 'Near edge' : 'Dark pixels';
     syncPixelParameterControls(settings);
     syncStatusLabels();
     schedulePillToggleRowsUpdate();
@@ -1021,16 +1280,6 @@ function bindCustomControls(app) {
             if (input.checked) setSetting('ditherAlgorithm', input.value);
         });
     });
-    document.querySelectorAll('input[name="fieldResponse"]').forEach((input) => {
-        input.addEventListener('change', () => {
-            if (input.checked) setSetting('fieldResponse', input.value);
-        });
-    });
-    document.querySelectorAll('input[name="formFill"]').forEach((input) => {
-        input.addEventListener('change', () => {
-            if (input.checked) setSetting('formFill', input.value);
-        });
-    });
     ['sizeEnabled', 'weightEnabled', 'rotationEnabled', 'noiseEnabled'].forEach((key) => {
         app.settingsStore.subscribe(key, () => syncPixelParameterControls(app.settingsStore.toObject()));
     });
@@ -1049,14 +1298,6 @@ function bindCustomControls(app) {
         event.target.value = '';
     });
 
-    document.getElementById('clearFieldsBtn')?.addEventListener('click', () => {
-        app.history?.beginTransaction('clear magnetic points');
-        state.magneticPoints = [];
-        app.history?.endTransaction();
-        app.presets?.markDirty();
-        app.renderNow();
-    });
-
     document.getElementById('exportPngBtn')?.addEventListener('click', () => {
         window.wordplayerLastAction = 'png-export-click';
         void exportPng(app);
@@ -1070,56 +1311,30 @@ function bindCustomControls(app) {
     document.getElementById('introHelpBtn')?.addEventListener('click', () => {
         app.dialog?.alert({
             title: 'Wordplayer',
-            text: 'Dither maps an image through text. Forms fills an SVG shape with text driven by distance to the vector edge.'
+            text: 'Dither maps an image through text. Forms settles letters inside an SVG with gravity, contour attraction, adhesion and friction.'
         });
-    });
-
-    const svg = app.target.element;
-    svg.addEventListener('pointermove', (event) => {
-        if (app.settings.mode !== 'fields') return;
-        state.hoverPoint = getPointerInSvg(event, app);
-        app.render();
-    });
-    svg.addEventListener('pointerleave', () => {
-        if (!state.hoverPoint) return;
-        state.hoverPoint = null;
-        app.render();
-    });
-    svg.addEventListener('pointerdown', (event) => {
-        if (event.button !== 0) return;
-        const point = getPointerInSvg(event, app);
-        if (!point) return;
-        if (app.settings.mode === 'fields') {
-            addMagneticPoint(app, point);
-        }
     });
 
     app.settingsStore.subscribe('mode', () => syncCustomControls(app));
     app.settingsStore.subscribe('*', (_next, _prev, key) => {
         if (key === 'width' || key === 'height') {
             state.formMaskKey = '';
-            state.formSampleCache = { key: '', samples: null };
+            state.formPhysicsCache = { key: '', letters: null };
         }
     });
 }
 
 function appSnapshot(app) {
-    return {
-        settings: app.settingsStore.toObject(),
-        magneticPoints: state.magneticPoints.map((point) => ({ ...point }))
-    };
+    return { settings: app.settingsStore.toObject() };
 }
 
 function appRestore(app, snapshot) {
     const settings = snapshot?.settings || snapshot || {};
     settings.mode = normalizeMode(settings.mode);
     app.settingsStore.fromJSON(settings, true);
-    state.magneticPoints = Array.isArray(snapshot?.magneticPoints)
-        ? snapshot.magneticPoints.map((point) => ({ ...point }))
-        : [];
-    state.hoverPoint = null;
     state.ditherCache.key = '';
     state.formMaskKey = '';
+    state.formPhysicsCache = { key: '', letters: null };
 }
 
 function presetBlob(app) {
@@ -1290,24 +1505,19 @@ const app = defineTool({
         noiseEnabled: true,
         hideTinyLetters: true,
         invertDither: false,
-        showGuides: false,
         exportTransparent: true,
         ditherAlgorithm: 'floyd',
         contrast: 2,
         blackPoint: 40,
         whitePoint: 200,
-        fieldResponse: 'rotate',
-        fieldForce: 58,
-        fieldRadius: 150,
-        formFill: 'inside',
-        formEdgeSpread: 34,
-        formOverflow: 24,
-        formAttraction: 45,
-        formGravity: 12,
-        formGravityDirection: 0,
-        formPrecision: 100,
-        gravityX: 50,
-        gravityY: 50
+        formEdgeSpread: 15,
+        formAttraction: 25,
+        formStickiness: 25,
+        formFriction: 50,
+        formSettlingTime: 72,
+        formGravity: 50,
+        formGravityDirection: 135,
+        formCanvasEdges: true
     },
     controls: {
         sliders: [
@@ -1324,11 +1534,11 @@ const app = defineTool({
             { id: 'contrastSlider', valueId: 'contrastValue', setting: 'contrast', min: 0.2, max: 3, decimals: 2, baseStep: 0.01, shiftStep: 0.1 },
             { id: 'blackPointSlider', valueId: 'blackPointValue', setting: 'blackPoint', min: 0, max: 250, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'whitePointSlider', valueId: 'whitePointValue', setting: 'whitePoint', min: 5, max: 255, decimals: 0, baseStep: 1, shiftStep: 10 },
-            { id: 'fieldForceSlider', valueId: 'fieldForceValue', setting: 'fieldForce', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
-            { id: 'fieldRadiusSlider', valueId: 'fieldRadiusValue', setting: 'fieldRadius', min: 20, max: 700, decimals: 0, baseStep: 1, shiftStep: 25 },
             { id: 'formEdgeSpreadSlider', valueId: 'formEdgeSpreadValue', setting: 'formEdgeSpread', min: 2, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
-            { id: 'formOverflowSlider', valueId: 'formOverflowValue', setting: 'formOverflow', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'formAttractionSlider', valueId: 'formAttractionValue', setting: 'formAttraction', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'formStickinessSlider', valueId: 'formStickinessValue', setting: 'formStickiness', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'formFrictionSlider', valueId: 'formFrictionValue', setting: 'formFriction', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'formSettlingTimeSlider', valueId: 'formSettlingTimeValue', setting: 'formSettlingTime', min: 12, max: 180, decimals: 0, baseStep: 1, shiftStep: 12 },
             { id: 'formGravitySlider', valueId: 'formGravityValue', setting: 'formGravity', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'formGravityDirectionSlider', valueId: 'formGravityDirectionValue', setting: 'formGravityDirection', min: -180, max: 180, decimals: 0, baseStep: 1, shiftStep: 15 }
         ],
@@ -1338,7 +1548,6 @@ const app = defineTool({
         { id: 'textPanel', headerId: 'textPanelHeader', persistent: true },
         { id: 'pixelsPanel', headerId: 'pixelsPanelHeader', persistent: true },
         { id: 'ditherPanel', headerId: 'ditherPanelHeader', persistent: true },
-        { id: 'fieldsPanel', headerId: 'fieldsPanelHeader', persistent: true },
         { id: 'formsPanel', headerId: 'formsPanelHeader', persistent: true }
     ],
     colorPickers: {
@@ -1349,7 +1558,7 @@ const app = defineTool({
         ]
     },
     presets: {
-        storageKey: 'wordplayerPresetsV16',
+        storageKey: 'wordplayerPresetsV18',
         basePath: 'presets',
         colorDots,
         hasRandom: () => false
@@ -1390,6 +1599,10 @@ const app = defineTool({
         };
         loadImageFromUrl(DEFAULT_IMAGE_URL, 'sample.png', appInstance);
         loadFormFromUrl(DEFAULT_FORM_URL, 'sample.svg', appInstance);
+        document.fonts?.load('400 16px "YSTextPattern"').then(() => {
+            state.formPhysicsCache = { key: '', letters: null };
+            if (appInstance.settings.mode === 'forms') appInstance.renderNow();
+        });
     }
 });
 

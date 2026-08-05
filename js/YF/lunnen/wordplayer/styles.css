@@ -88,7 +88,7 @@ body {
 }
 
 .word-canvas svg {
-    cursor: crosshair;
+    cursor: default;
     touch-action: none;
 }
 
@@ -97,12 +97,6 @@ body {
     font-variation-settings: "wght" var(--pattern-weight, 400);
     letter-spacing: 0;
     user-select: none;
-}
-
-.form-boundary-dot,
-.magnet-ui,
-.gravity-ui {
-    pointer-events: none;
 }
 
 #textPanel,
@@ -115,16 +109,16 @@ body {
 }
 
 #textPanel {
-    top: 74px;
+    top: 20px;
     max-height: clamp(96px, calc(100vh - 584px), 430px);
 }
 
 #pixelsPanel {
-    top: 74px;
+    top: 20px;
     right: var(--spacing-3xl);
     left: auto;
     width: var(--word-ui-panel-width);
-    max-height: calc(100vh - 94px);
+    max-height: calc(100vh - 40px);
     min-height: 0;
 }
 
@@ -134,15 +128,19 @@ body {
     width: var(--word-ui-panel-width);
 }
 
-#ditherPanel,
-#formsPanel {
+#ditherPanel {
     top: auto;
     bottom: 74px;
     max-height: min(420px, calc(100vh - 148px));
 }
 
+#formsPanel {
+    top: auto;
+    bottom: 74px;
+    max-height: calc(100vh - 148px);
+}
+
 .container[data-mode="dither"] [data-mode-panel]:not([data-mode-panel="dither"]),
-.container[data-mode="fields"] [data-mode-panel]:not([data-mode-panel="fields"]),
 .container[data-mode="forms"] [data-mode-panel]:not([data-mode-panel="forms"]) {
     display: none;
 }
@@ -166,14 +164,6 @@ body {
     white-space: nowrap;
 }
 
-.response-control {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-#fieldsPanel {
-    display: none !important;
-}
-
 .tone-param-group {
     border: 0;
     padding: 0;
@@ -191,7 +181,6 @@ body {
     margin-bottom: 0;
 }
 
-.response-control label,
 .mode-control label {
     min-width: 0;
     overflow: hidden;
@@ -271,6 +260,10 @@ body {
     flex-grow: 0;
 }
 
+.container[data-mode="dither"] .forms-only-toggle {
+    display: none;
+}
+
 .image-load-section {
     margin-bottom: 0 !important;
 }
@@ -307,12 +300,15 @@ body {
 }
 
 #pixelsPanel .panel-content {
-    max-height: calc(100vh - 150px);
+    max-height: calc(100vh - 96px);
 }
 
-#ditherPanel .panel-content,
-#formsPanel .panel-content {
+#ditherPanel .panel-content {
     max-height: min(364px, calc(100vh - 204px));
+}
+
+#formsPanel .panel-content {
+    max-height: calc(100vh - 196px);
 }
 
 .mode-panel .panel-content {
@@ -337,22 +333,28 @@ body {
     }
 
     #pixelsPanel {
-        top: 74px;
-        max-height: calc(100vh - 94px);
+        top: 20px;
+        max-height: calc(100vh - 40px);
     }
 
     #pixelsPanel .panel-content {
-        max-height: calc(100vh - 150px);
+        max-height: calc(100vh - 96px);
     }
 
-    #ditherPanel,
-    #formsPanel {
+    #ditherPanel {
         max-height: 405px;
     }
 
-    #ditherPanel .panel-content,
-    #formsPanel .panel-content {
+    #ditherPanel .panel-content {
         max-height: 349px;
+    }
+
+    #formsPanel {
+        max-height: calc(100vh - 148px);
+    }
+
+    #formsPanel .panel-content {
+        max-height: calc(100vh - 196px);
     }
 }
 
@@ -380,11 +382,20 @@ body {
         max-height: calc(100vh - 42vh - 84px);
     }
 
-    #ditherPanel,
-    #formsPanel {
+    #ditherPanel {
         top: auto;
         bottom: 74px;
         max-height: 34vh;
+    }
+
+    #formsPanel {
+        top: auto;
+        bottom: 74px;
+        max-height: calc(100vh - 148px);
+    }
+
+    #formsPanel .panel-content {
+        max-height: calc(100vh - 196px);
     }
 
     .mode-panel {

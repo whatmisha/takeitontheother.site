@@ -1,14 +1,81 @@
 {
   "layoutName": "Work_1_L_Pad",
-  "languageLayer": "dual",
+  "customLayout": null,
   "colPitch": 19.0478480556,
   "rowPitch": 19.0530691667,
   "keyWidth1U": 16.4441011111,
   "keyHeight": 16.4441011111,
   "cornerRadius": 1.2000088889,
   "guideInset": 2.3528161111,
+  "glyphSize": 15.1999,
+  "fontWeight": 400,
+  "numpadSize": 13.1732,
+  "secondarySize": 12.0745,
+  "wordSize": 9.1199,
+  "leading": 13.5279,
+  "trackingOffset": 0,
+  "textStyles": {
+    "main": {
+      "fontId": "",
+      "size": 15.1999,
+      "weight": 400,
+      "tracking": 0,
+      "leading": 13.5279,
+      "name": "Main",
+      "splitScripts": false,
+      "latin": null,
+      "cyrillic": null
+    },
+    "symbols01": {
+      "fontId": "",
+      "size": 12.0745,
+      "weight": 400,
+      "tracking": 0,
+      "leading": 13.5279,
+      "name": "Symbols 01",
+      "splitScripts": false,
+      "latin": null,
+      "cyrillic": null
+    },
+    "symbols02": {
+      "fontId": "",
+      "size": 13.1732,
+      "weight": 400,
+      "tracking": 0,
+      "leading": 13.5279,
+      "name": "Symbols 02",
+      "splitScripts": false,
+      "latin": null,
+      "cyrillic": null
+    },
+    "label": {
+      "fontId": "",
+      "size": 9.1199,
+      "weight": 400,
+      "tracking": 0,
+      "leading": 13.5279,
+      "name": "Label",
+      "splitScripts": false,
+      "latin": null,
+      "cyrillic": null
+    },
+    "function": {
+      "fontId": "",
+      "size": 9.1199,
+      "weight": 400,
+      "tracking": 0,
+      "leading": 13.5279,
+      "name": "Function",
+      "splitScripts": false,
+      "latin": null,
+      "cyrillic": null
+    }
+  },
+  "compensationMode": "table",
+  "legendTextMode": "outlines",
+  "compensationTableEdits": {},
   "showCaps": true,
-  "showGuides": false,
+  "showGuides": true,
   "showGlyphs": true,
   "showIcons": true,
   "showDrawing": false,
@@ -19,8 +86,269 @@
   "showRef": false,
   "showDiff": false,
   "showBlocks": false,
+  "languageLayer": "dual",
   "capColor": "#1e1e1e",
   "guideColor": "#2353db",
   "inkColor": "#aaaaaa",
-  "bgColor": "#808080"
+  "bgColor": "#808080",
+  "customIcons": {},
+  "contentEdits": {
+    "0:main:1": {
+      "tpl": "fkey-icon+label",
+      "elements": [
+        {
+          "slot": "TR",
+          "kind": "ico",
+          "icon": "volume-mute",
+          "group": "f-icons",
+          "w": 10.108,
+          "h": 8.053
+        },
+        {
+          "slot": "BL",
+          "kind": "txt",
+          "text": "F1",
+          "size": 9.1199,
+          "tracking": 0.0199705
+        }
+      ]
+    },
+    "0:main:2": {
+      "tpl": "fkey-icon+label",
+      "elements": [
+        {
+          "slot": "TR",
+          "kind": "ico",
+          "icon": "volume-down",
+          "group": "f-icons",
+          "w": 8.1844,
+          "h": 8.053
+        },
+        {
+          "slot": "BL",
+          "kind": "txt",
+          "text": "F2",
+          "size": 9.1199,
+          "tracking": 0.0199705
+        }
+      ]
+    },
+    "0:main:3": {
+      "tpl": "fkey-icon+label",
+      "elements": [
+        {
+          "slot": "TR",
+          "kind": "ico",
+          "icon": "volume-up",
+          "group": "f-icons",
+          "w": 11.7688,
+          "h": 8.053
+        },
+        {
+          "slot": "BL",
+          "kind": "txt",
+          "text": "F3",
+          "size": 9.1199,
+          "tracking": 0.0199705
+        }
+      ]
+    },
+    "0:main:4": {
+      "tpl": "fkey-icon+label",
+      "elements": [
+        {
+          "slot": "TR",
+          "kind": "ico",
+          "icon": "brightness-down",
+          "group": "f-icons",
+          "w": 10.3231,
+          "h": 10.3231
+        },
+        {
+          "slot": "BL",
+          "kind": "txt",
+          "text": "F4",
+          "size": 9.1199,
+          "tracking": 0.0199705
+        }
+      ]
+    },
+    "0:main:5": {
+      "tpl": "fkey-icon+label",
+      "elements": [
+        {
+          "slot": "TR",
+          "kind": "ico",
+          "icon": "brightness-up",
+          "group": "f-icons",
+          "w": 11.5179,
+          "h": 11.5179
+        },
+        {
+          "slot": "BL",
+          "kind": "txt",
+          "text": "F5",
+          "size": 9.1199,
+          "tracking": 0.0199705
+        }
+      ]
+    },
+    "0:main:6": {
+      "tpl": "fkey-icon+label",
+      "elements": [
+        {
+          "slot": "TR",
+          "kind": "ico",
+          "icon": "backlight",
+          "group": "f-icons",
+          "w": 10.7532,
+          "h": 6.8581
+        },
+        {
+          "slot": "BL",
+          "kind": "txt",
+          "text": "F6",
+          "size": 9.1199,
+          "tracking": 0.0199705
+        }
+      ]
+    },
+    "0:main:7": {
+      "tpl": "fkey-icon+label",
+      "elements": [
+        {
+          "slot": "TR",
+          "kind": "ico",
+          "icon": "lock",
+          "group": "f-icons",
+          "w": 6.7019,
+          "h": 8.225
+        },
+        {
+          "slot": "BL",
+          "kind": "txt",
+          "text": "F7",
+          "size": 9.1199,
+          "tracking": 0.0199705
+        }
+      ]
+    },
+    "0:main:8": {
+      "tpl": "fkey-icon+label",
+      "elements": [
+        {
+          "slot": "TR",
+          "kind": "ico",
+          "icon": "calculator",
+          "group": "f-icons",
+          "w": 8.5947,
+          "h": 8.7692
+        },
+        {
+          "slot": "BL",
+          "kind": "txt",
+          "text": "F8",
+          "size": 9.1199,
+          "tracking": 0.0199705
+        }
+      ]
+    },
+    "0:main:9": {
+      "tpl": "fkey-icon+label",
+      "elements": [
+        {
+          "slot": "TR",
+          "kind": "ico",
+          "icon": "cut",
+          "group": "f-icons",
+          "w": 10.4391,
+          "h": 9.9748
+        },
+        {
+          "slot": "BL",
+          "kind": "txt",
+          "text": "F9",
+          "size": 9.1199,
+          "tracking": 0.0199705
+        }
+      ]
+    },
+    "0:main:10": {
+      "tpl": "icon+word-stack",
+      "elements": [
+        {
+          "slot": "TR",
+          "kind": "ico",
+          "icon": "search",
+          "group": "f-icons",
+          "w": 8.8705,
+          "h": 8.8942,
+          "offset": {
+            "x": 12.7739
+          }
+        },
+        {
+          "slot": "BL",
+          "kind": "txt",
+          "text": "F10",
+          "size": 9.1199,
+          "tracking": 0.0199705
+        }
+      ]
+    },
+    "0:main:11": {
+      "tpl": "fkey-icon+label",
+      "elements": [
+        {
+          "slot": "TR",
+          "kind": "ico",
+          "icon": "window-split",
+          "group": "f-icons",
+          "w": 11.2423,
+          "h": 8.4473
+        },
+        {
+          "slot": "BL",
+          "kind": "txt",
+          "text": "F11",
+          "size": 9.1199,
+          "tracking": 0.0199705
+        }
+      ]
+    },
+    "0:main:12": {
+      "tpl": "fkey-icon+label",
+      "elements": [
+        {
+          "slot": "TR",
+          "kind": "ico",
+          "icon": "display",
+          "group": "f-icons",
+          "w": 9.7009,
+          "h": 8.4176
+        },
+        {
+          "slot": "BL",
+          "kind": "txt",
+          "text": "F12",
+          "size": 9.1199,
+          "tracking": 0.0199705
+        }
+      ]
+    },
+    "0:main:13": {
+      "tpl": "blank",
+      "elements": [
+        {
+          "slot": "MC",
+          "kind": "ico",
+          "icon": "emoji",
+          "group": "icons",
+          "w": 8,
+          "h": 8
+        }
+      ]
+    }
+  },
+  "layoutEdits": {}
 }

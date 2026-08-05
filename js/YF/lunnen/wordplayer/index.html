@@ -144,6 +144,10 @@
                                 <input type="checkbox" id="noiseEnabledToggle" class="sr-only" data-setting="noiseEnabled" checked>
                                 <span>Noise</span>
                             </label>
+                            <label class="pill-toggle forms-only-toggle" for="formCanvasEdgesToggle" data-tooltip="Use canvas edges as attracting lines">
+                                <input type="checkbox" id="formCanvasEdgesToggle" class="sr-only" data-setting="formCanvasEdges" checked>
+                                <span>Edges</span>
+                            </label>
                             <label class="pill-toggle" for="hideTinyLettersToggle" data-tooltip="Hide critically small letters">
                                 <input type="checkbox" id="hideTinyLettersToggle" class="sr-only" data-setting="hideTinyLetters" checked>
                                 <span>Hide tiny</span>
@@ -154,7 +158,7 @@
                             </label>
                         </div>
                         <fieldset class="tone-param-group">
-                            <legend>Light pixels</legend>
+                            <legend id="lightToneGroupLabel">Light pixels</legend>
                             <div class="control-group">
                                 <label for="weightMinSlider"><span>Light weight</span>
                                     <input type="text" class="value-display" id="weightMinValue" value="100"></label>
@@ -177,7 +181,7 @@
                             </div>
                         </fieldset>
                         <fieldset class="tone-param-group">
-                            <legend>Dark pixels</legend>
+                            <legend id="darkToneGroupLabel">Dark pixels</legend>
                             <div class="control-group">
                                 <label for="weightMaxSlider"><span>Heavy weight</span>
                                     <input type="text" class="value-display" id="weightMaxValue" value="500"></label>
@@ -249,48 +253,6 @@
                 </div>
             </aside>
 
-            <aside class="controls-panel mode-panel" id="fieldsPanel" data-mode-panel="fields">
-                <div class="panel-header" id="fieldsPanelHeader">
-                    <span>Magnetic Fields</span>
-                    <span class="collapse-icon">
-                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </span>
-                </div>
-                <div class="panel-content">
-                    <section class="control-section">
-                        <div class="control-group">
-                            <label><span>Attraction</span></label>
-                            <fieldset>
-                                <legend class="sr-only">Magnetic response</legend>
-                                <div class="segmented-control response-control" role="radiogroup" aria-label="Magnetic response">
-                                    <input type="radio" name="fieldResponse" value="rotate" id="responseRotate" checked>
-                                    <label for="responseRotate">Rotate</label>
-                                    <input type="radio" name="fieldResponse" value="size" id="responseSize">
-                                    <label for="responseSize">Size</label>
-                                    <input type="radio" name="fieldResponse" value="weight" id="responseWeight">
-                                    <label for="responseWeight">Weight</label>
-                                    <input type="radio" name="fieldResponse" value="all" id="responseAll">
-                                    <label for="responseAll">All</label>
-                                </div>
-                            </fieldset>
-                        </div>
-                        <div class="control-group">
-                            <label for="fieldForceSlider"><span>Force</span>
-                                <input type="text" class="value-display" id="fieldForceValue" value="58"></label>
-                            <input type="range" id="fieldForceSlider" min="0" max="100" value="58" step="1">
-                        </div>
-                        <div class="control-group">
-                            <label for="fieldRadiusSlider"><span>Radius <span class="unit">px</span></span>
-                                <input type="text" class="value-display" id="fieldRadiusValue" value="150"></label>
-                            <input type="range" id="fieldRadiusSlider" min="20" max="700" value="150" step="1">
-                        </div>
-                        <button type="button" class="btn-secondary btn-full" id="clearFieldsBtn">Clear points</button>
-                    </section>
-                </div>
-            </aside>
-
             <aside class="controls-panel mode-panel" id="formsPanel" data-mode-panel="forms">
                 <div class="panel-header" id="formsPanelHeader">
                     <span>Forms</span>
@@ -308,29 +270,39 @@
                     </section>
                     <section class="control-section">
                         <div class="control-group">
-                            <label for="formEdgeSpreadSlider"><span>Edge range <span class="unit">%</span></span>
-                                <input type="text" class="value-display" id="formEdgeSpreadValue" value="34"></label>
-                            <input type="range" id="formEdgeSpreadSlider" min="2" max="100" value="34" step="1">
-                        </div>
-                        <div class="control-group">
-                            <label for="formOverflowSlider"><span>Overflow <span class="unit">%</span></span>
-                                <input type="text" class="value-display" id="formOverflowValue" value="24"></label>
-                            <input type="range" id="formOverflowSlider" min="0" max="100" value="24" step="1">
+                            <label for="formEdgeSpreadSlider"><span>Attraction range <span class="unit">%</span></span>
+                                <input type="text" class="value-display" id="formEdgeSpreadValue" value="15"></label>
+                            <input type="range" id="formEdgeSpreadSlider" min="2" max="100" value="15" step="1">
                         </div>
                         <div class="control-group">
                             <label for="formAttractionSlider"><span>Line gravity</span>
-                                <input type="text" class="value-display" id="formAttractionValue" value="45"></label>
-                            <input type="range" id="formAttractionSlider" min="0" max="100" value="45" step="1">
+                                <input type="text" class="value-display" id="formAttractionValue" value="25"></label>
+                            <input type="range" id="formAttractionSlider" min="0" max="100" value="25" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="formStickinessSlider"><span>Stickiness</span>
+                                <input type="text" class="value-display" id="formStickinessValue" value="25"></label>
+                            <input type="range" id="formStickinessSlider" min="0" max="100" value="25" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="formFrictionSlider"><span>Friction</span>
+                                <input type="text" class="value-display" id="formFrictionValue" value="50"></label>
+                            <input type="range" id="formFrictionSlider" min="0" max="100" value="50" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="formSettlingTimeSlider"><span>Settling time</span>
+                                <input type="text" class="value-display" id="formSettlingTimeValue" value="72"></label>
+                            <input type="range" id="formSettlingTimeSlider" min="12" max="180" value="72" step="1">
                         </div>
                         <div class="control-group">
                             <label for="formGravitySlider"><span>Gravity force</span>
-                                <input type="text" class="value-display" id="formGravityValue" value="12"></label>
-                            <input type="range" id="formGravitySlider" min="0" max="100" value="12" step="1">
+                                <input type="text" class="value-display" id="formGravityValue" value="50"></label>
+                            <input type="range" id="formGravitySlider" min="0" max="100" value="50" step="1">
                         </div>
                         <div class="control-group">
                             <label for="formGravityDirectionSlider"><span>Gravity direction <span class="unit">°</span></span>
-                                <input type="text" class="value-display" id="formGravityDirectionValue" value="0"></label>
-                            <input type="range" id="formGravityDirectionSlider" min="-180" max="180" value="0" step="1">
+                                <input type="text" class="value-display" id="formGravityDirectionValue" value="135"></label>
+                            <input type="range" id="formGravityDirectionSlider" min="-180" max="180" value="135" step="1">
                         </div>
                     </section>
                 </div>
@@ -367,6 +339,7 @@
         </dialog>
     </div>
 
+    <script src="./vendor/lib/d3.min.js"></script>
     <script type="module" src="./tool.js"></script>
 </body>
 </html>
