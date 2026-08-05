@@ -137,7 +137,7 @@ body {
 #formsPanel {
     top: auto;
     bottom: 74px;
-    max-height: calc(100vh - 148px);
+    max-height: calc(100vh - 94px);
 }
 
 .container[data-mode="dither"] [data-mode-panel]:not([data-mode-panel="dither"]),
@@ -164,20 +164,38 @@ body {
     white-space: nowrap;
 }
 
+#formStatus {
+    text-align: center;
+}
+
 .tone-param-group {
     border: 0;
     padding: 0;
-    margin: var(--spacing-lg) 0 0;
+    margin: 0;
 }
 
-.tone-param-group legend {
-    margin-bottom: var(--spacing-md);
+.tone-param-group + .tone-param-group {
+    margin-top: 16px;
+}
+
+.tone-param-group .tone-group-heading {
+    display: block;
+    margin: 16px calc(-1 * var(--spacing-3xl)) 0;
+    padding: 14px var(--spacing-3xl) 16px;
+    border-top: 1px solid var(--color-border);
     color: var(--color-text);
-    font-size: 0.82rem;
+    font-size: 0.7rem;
     font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0;
 }
 
 .tone-param-group .control-group:last-child {
+    margin-bottom: 0;
+}
+
+.pixel-toggle-row {
+    margin-top: var(--spacing-3xl);
     margin-bottom: 0;
 }
 
@@ -308,7 +326,7 @@ body {
 }
 
 #formsPanel .panel-content {
-    max-height: calc(100vh - 196px);
+    max-height: calc(100vh - 141px);
 }
 
 .mode-panel .panel-content {
@@ -350,11 +368,11 @@ body {
     }
 
     #formsPanel {
-        max-height: calc(100vh - 148px);
+        max-height: calc(100vh - 94px);
     }
 
     #formsPanel .panel-content {
-        max-height: calc(100vh - 196px);
+        max-height: calc(100vh - 141px);
     }
 }
 
@@ -391,11 +409,11 @@ body {
     #formsPanel {
         top: auto;
         bottom: 74px;
-        max-height: calc(100vh - 148px);
+        max-height: calc(100vh - 94px);
     }
 
     #formsPanel .panel-content {
-        max-height: calc(100vh - 196px);
+        max-height: calc(100vh - 141px);
     }
 
     .mode-panel {

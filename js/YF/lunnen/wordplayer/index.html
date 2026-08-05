@@ -123,6 +123,52 @@
                 </div>
                 <div class="panel-content">
                     <section class="control-section">
+                        <section class="tone-param-group" role="group" aria-labelledby="lightToneGroupLabel">
+                            <div class="tone-group-heading" id="lightToneGroupLabel">Light pixels</div>
+                            <div class="control-group">
+                                <label for="weightMinSlider"><span>Light weight</span>
+                                    <input type="text" class="value-display" id="weightMinValue" value="100"></label>
+                                <input type="range" id="weightMinSlider" min="100" max="900" value="100" step="10">
+                            </div>
+                            <div class="control-group">
+                                <label for="sizeMinSlider"><span>Min size <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="sizeMinValue" value="36"></label>
+                                <input type="range" id="sizeMinSlider" min="5" max="200" value="36" step="1">
+                            </div>
+                            <div class="control-group">
+                                <label for="rotationMinSlider"><span>Rotation <span class="unit">°</span></span>
+                                    <input type="text" class="value-display" id="rotationMinValue" value="0"></label>
+                                <input type="range" id="rotationMinSlider" min="-180" max="180" value="0" step="1">
+                            </div>
+                            <div class="control-group">
+                                <label for="noiseMinSlider"><span>Noise <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="noiseMinValue" value="100"></label>
+                                <input type="range" id="noiseMinSlider" min="0" max="200" value="100" step="1">
+                            </div>
+                        </section>
+                        <section class="tone-param-group" role="group" aria-labelledby="darkToneGroupLabel">
+                            <div class="tone-group-heading" id="darkToneGroupLabel">Dark pixels</div>
+                            <div class="control-group">
+                                <label for="weightMaxSlider"><span>Heavy weight</span>
+                                    <input type="text" class="value-display" id="weightMaxValue" value="500"></label>
+                                <input type="range" id="weightMaxSlider" min="100" max="900" value="500" step="10">
+                            </div>
+                            <div class="control-group">
+                                <label for="sizeMaxSlider"><span>Max size <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="sizeMaxValue" value="96"></label>
+                                <input type="range" id="sizeMaxSlider" min="5" max="200" value="96" step="1">
+                            </div>
+                            <div class="control-group">
+                                <label for="rotationMaxSlider"><span>Rotation <span class="unit">°</span></span>
+                                    <input type="text" class="value-display" id="rotationMaxValue" value="0"></label>
+                                <input type="range" id="rotationMaxSlider" min="-180" max="180" value="0" step="1">
+                            </div>
+                            <div class="control-group">
+                                <label for="noiseMaxSlider"><span>Noise <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="noiseMaxValue" value="0"></label>
+                                <input type="range" id="noiseMaxSlider" min="0" max="200" value="0" step="1">
+                            </div>
+                        </section>
                         <div class="control-group pill-toggle-row pixel-toggle-row">
                             <label class="pill-toggle" for="allCapsToggle" data-tooltip="Render generated text as uppercase">
                                 <input type="checkbox" id="allCapsToggle" class="sr-only" data-setting="allCaps" checked>
@@ -157,52 +203,6 @@
                                 <span>Invert</span>
                             </label>
                         </div>
-                        <fieldset class="tone-param-group">
-                            <legend id="lightToneGroupLabel">Light pixels</legend>
-                            <div class="control-group">
-                                <label for="weightMinSlider"><span>Light weight</span>
-                                    <input type="text" class="value-display" id="weightMinValue" value="100"></label>
-                                <input type="range" id="weightMinSlider" min="100" max="900" value="100" step="10">
-                            </div>
-                            <div class="control-group">
-                                <label for="sizeMinSlider"><span>Min size <span class="unit">%</span></span>
-                                    <input type="text" class="value-display" id="sizeMinValue" value="36"></label>
-                                <input type="range" id="sizeMinSlider" min="5" max="200" value="36" step="1">
-                            </div>
-                            <div class="control-group">
-                                <label for="rotationMinSlider"><span>Rotation <span class="unit">°</span></span>
-                                    <input type="text" class="value-display" id="rotationMinValue" value="0"></label>
-                                <input type="range" id="rotationMinSlider" min="-180" max="180" value="0" step="1">
-                            </div>
-                            <div class="control-group">
-                                <label for="noiseMinSlider"><span>Noise <span class="unit">%</span></span>
-                                    <input type="text" class="value-display" id="noiseMinValue" value="100"></label>
-                                <input type="range" id="noiseMinSlider" min="0" max="200" value="100" step="1">
-                            </div>
-                        </fieldset>
-                        <fieldset class="tone-param-group">
-                            <legend id="darkToneGroupLabel">Dark pixels</legend>
-                            <div class="control-group">
-                                <label for="weightMaxSlider"><span>Heavy weight</span>
-                                    <input type="text" class="value-display" id="weightMaxValue" value="500"></label>
-                                <input type="range" id="weightMaxSlider" min="100" max="900" value="500" step="10">
-                            </div>
-                            <div class="control-group">
-                                <label for="sizeMaxSlider"><span>Max size <span class="unit">%</span></span>
-                                    <input type="text" class="value-display" id="sizeMaxValue" value="96"></label>
-                                <input type="range" id="sizeMaxSlider" min="5" max="200" value="96" step="1">
-                            </div>
-                            <div class="control-group">
-                                <label for="rotationMaxSlider"><span>Rotation <span class="unit">°</span></span>
-                                    <input type="text" class="value-display" id="rotationMaxValue" value="0"></label>
-                                <input type="range" id="rotationMaxSlider" min="-180" max="180" value="0" step="1">
-                            </div>
-                            <div class="control-group">
-                                <label for="noiseMaxSlider"><span>Noise <span class="unit">%</span></span>
-                                    <input type="text" class="value-display" id="noiseMaxValue" value="0"></label>
-                                <input type="range" id="noiseMaxSlider" min="0" max="200" value="0" step="1">
-                            </div>
-                        </fieldset>
                     </section>
                 </div>
             </aside>
@@ -290,9 +290,14 @@
                             <input type="range" id="formFrictionSlider" min="0" max="100" value="50" step="1">
                         </div>
                         <div class="control-group">
+                            <label for="formLetterSpacingSlider"><span>Letter spacing <span class="unit">%</span></span>
+                                <input type="text" class="value-display" id="formLetterSpacingValue" value="25"></label>
+                            <input type="range" id="formLetterSpacingSlider" min="0" max="100" value="25" step="1">
+                        </div>
+                        <div class="control-group">
                             <label for="formSettlingTimeSlider"><span>Settling time</span>
-                                <input type="text" class="value-display" id="formSettlingTimeValue" value="72"></label>
-                            <input type="range" id="formSettlingTimeSlider" min="12" max="180" value="72" step="1">
+                                <input type="text" class="value-display" id="formSettlingTimeValue" value="75"></label>
+                            <input type="range" id="formSettlingTimeSlider" min="12" max="180" value="75" step="1">
                         </div>
                         <div class="control-group">
                             <label for="formGravitySlider"><span>Gravity force</span>

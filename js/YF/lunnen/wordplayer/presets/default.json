@@ -32,7 +32,8 @@
     "formAttraction": 25,
     "formStickiness": 25,
     "formFriction": 50,
-    "formSettlingTime": 72,
+    "formLetterSpacing": 25,
+    "formSettlingTime": 75,
     "formGravity": 50,
     "formGravityDirection": 135,
     "formCanvasEdges": true

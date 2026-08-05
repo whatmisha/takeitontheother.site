@@ -13,7 +13,7 @@ const DEFAULT_IMAGE_URL = './assets/default-image.png';
 const DEFAULT_FORM_URL = './assets/default-form.svg?v=2';
 const DEFAULT_PATTERN_TEXT = `Чтение может стать золотым часом дня — временем, когда всё погружается в цельную особенную атсмосферу и можно вернуться к себе и пережить что-то новое, погрузившись в книгу. В дизайне мы тоже подсвечиваем этот путь — иммерсивность погружения в книгу от лица читателя. Мы показываем именно этот момент перехода — резкость и холод внешнего мира растворяются в тёплом камерном пространстве чтения`;
 const DITHER_EMPTY_TONE = 0.05;
-const FORM_SETTLE_STEPS = 72;
+const FORM_SETTLE_STEPS = 75;
 const FORM_SETTLE_MIN = 12;
 const FORM_SETTLE_MAX = 180;
 const FORM_MASK_BASE = 540;
@@ -693,6 +693,7 @@ function formPhysicsKey(settings) {
         settings.formAttraction,
         settings.formStickiness,
         settings.formFriction,
+        settings.formLetterSpacing,
         settings.formSettlingTime,
         settings.formGravity,
         settings.formGravityDirection,
@@ -712,10 +713,9 @@ function glyphCollisionMetrics(char, size, weight) {
         (metrics.actualBoundingBoxLeft || 0) + (metrics.actualBoundingBoxRight || 0) || metrics.width);
     const ascent = metrics.actualBoundingBoxAscent || size * 0.76;
     const descent = metrics.actualBoundingBoxDescent || size * 0.2;
-    const padding = Math.max(0.08, size * 0.035);
     return {
-        halfWidth: width / 2 + padding,
-        halfHeight: (ascent + descent) / 2 + padding,
+        halfWidth: Math.max(0.08, width / 2),
+        halfHeight: Math.max(0.08, (ascent + descent) / 2),
         anchorOffset: Math.max(0.2, (ascent - descent) / 2)
     };
 }
@@ -762,8 +762,11 @@ function makeFormParticles(settings, mask) {
         const char = chars[sourceIndex % chars.length];
         const styleRotation = type.rotation * Math.PI / 180;
         const collision = glyphCollisionMetrics(char, type.size, type.weight);
+        const spacingPadding = type.size * clamp(Number(settings.formLetterSpacing ?? 25) / 100) / 2;
         const anchorOffset = collision.anchorOffset;
-        const collisionRadius = Math.hypot(collision.halfWidth, collision.halfHeight);
+        const halfWidth = collision.halfWidth + spacingPadding;
+        const halfHeight = collision.halfHeight + spacingPadding;
+        const collisionRadius = Math.hypot(halfWidth, halfHeight);
         const weightMass = lerp(0.62, 1.38, clamp((type.weight - 100) / 800));
         const mass = clamp((type.size / Math.max(0.1, base)) ** 2 * weightMass, 0.35, 3.5);
         particles.push({
@@ -775,8 +778,10 @@ function makeFormParticles(settings, mask) {
             angle: styleRotation,
             angularVelocity: 0,
             anchorOffset,
-            halfWidth: collision.halfWidth,
-            halfHeight: collision.halfHeight,
+            visualHalfWidth: collision.halfWidth,
+            visualHalfHeight: collision.halfHeight,
+            halfWidth,
+            halfHeight,
             collisionRadius,
             mass,
             x: baselineX + Math.sin(styleRotation) * anchorOffset,
@@ -913,11 +918,13 @@ function settleParticleAngles(particles) {
     });
 }
 
-function rectangleProjectionRadius(particle, axisX, axisY) {
+function rectangleProjectionRadius(particle, axisX, axisY, collisionBounds = true) {
     const cos = Math.cos(particle.angle);
     const sin = Math.sin(particle.angle);
-    const horizontal = Math.abs(cos * axisX + sin * axisY) * particle.halfWidth;
-    const vertical = Math.abs(-sin * axisX + cos * axisY) * particle.halfHeight;
+    const halfWidth = collisionBounds ? particle.halfWidth : particle.visualHalfWidth;
+    const halfHeight = collisionBounds ? particle.halfHeight : particle.visualHalfHeight;
+    const horizontal = Math.abs(cos * axisX + sin * axisY) * halfWidth;
+    const vertical = Math.abs(-sin * axisX + cos * axisY) * halfHeight;
     return horizontal + vertical;
 }
 
@@ -1021,8 +1028,8 @@ function createRectangleCollisionForce(strength = 0.78) {
 function constrainFormParticles(particles, width, height, enabled) {
     if (!enabled) return;
     particles.forEach((particle) => {
-        const extentX = Math.min(rectangleProjectionRadius(particle, 1, 0), width / 2);
-        const extentY = Math.min(rectangleProjectionRadius(particle, 0, 1), height / 2);
+        const extentX = Math.min(rectangleProjectionRadius(particle, 1, 0, false), width / 2);
+        const extentY = Math.min(rectangleProjectionRadius(particle, 0, 1, false), height / 2);
         if (particle.x < extentX) {
             particle.x = extentX;
             particle.vx = Math.max(0, particle.vx) * 0.08;
@@ -1514,7 +1521,8 @@ const app = defineTool({
         formAttraction: 25,
         formStickiness: 25,
         formFriction: 50,
-        formSettlingTime: 72,
+        formLetterSpacing: 25,
+        formSettlingTime: 75,
         formGravity: 50,
         formGravityDirection: 135,
         formCanvasEdges: true
@@ -1538,6 +1546,7 @@ const app = defineTool({
             { id: 'formAttractionSlider', valueId: 'formAttractionValue', setting: 'formAttraction', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'formStickinessSlider', valueId: 'formStickinessValue', setting: 'formStickiness', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'formFrictionSlider', valueId: 'formFrictionValue', setting: 'formFriction', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'formLetterSpacingSlider', valueId: 'formLetterSpacingValue', setting: 'formLetterSpacing', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'formSettlingTimeSlider', valueId: 'formSettlingTimeValue', setting: 'formSettlingTime', min: 12, max: 180, decimals: 0, baseStep: 1, shiftStep: 12 },
             { id: 'formGravitySlider', valueId: 'formGravityValue', setting: 'formGravity', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'formGravityDirectionSlider', valueId: 'formGravityDirectionValue', setting: 'formGravityDirection', min: -180, max: 180, decimals: 0, baseStep: 1, shiftStep: 15 }
