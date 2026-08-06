@@ -26,15 +26,33 @@ export function drawScene(context, scene, { transparent = false } = {}) {
     }
     context.textAlign = 'center';
     context.textRendering = 'geometricPrecision';
+    let activeFont = '';
+    let activeFill = '';
+    let activeBaseline = '';
     for (const glyph of scene.glyphs) {
-        context.save();
-        context.translate(glyph.x, glyph.y);
-        if (glyph.rotation) context.rotate(glyph.rotation * Math.PI / 180);
-        context.font = fontFor(glyph);
-        context.textBaseline = glyph.baseline === 'alphabetic' ? 'alphabetic' : 'middle';
-        context.fillStyle = glyph.fill;
-        context.fillText(glyph.char, 0, 0);
-        context.restore();
+        const font = fontFor(glyph);
+        const baseline = glyph.baseline === 'alphabetic' ? 'alphabetic' : 'middle';
+        if (font !== activeFont) {
+            context.font = font;
+            activeFont = font;
+        }
+        if (baseline !== activeBaseline) {
+            context.textBaseline = baseline;
+            activeBaseline = baseline;
+        }
+        if (glyph.fill !== activeFill) {
+            context.fillStyle = glyph.fill;
+            activeFill = glyph.fill;
+        }
+        if (glyph.rotation) {
+            context.save();
+            context.translate(glyph.x, glyph.y);
+            context.rotate(glyph.rotation * Math.PI / 180);
+            context.fillText(glyph.char, 0, 0);
+            context.restore();
+        } else {
+            context.fillText(glyph.char, glyph.x, glyph.y);
+        }
     }
     context.restore();
 }

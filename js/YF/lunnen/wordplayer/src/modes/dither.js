@@ -40,25 +40,50 @@ function drawImageCover(ctx, image, width, height) {
 }
 
 export class DitherEngine {
-    constructor() {
+    constructor(onUpdate = () => {}) {
+        this.onUpdate = onUpdate;
         this.sourceImage = null;
         this.sourceKey = 'gradient';
-        this.toneCache = { key: '', tones: null };
+        this.worker = null;
+        this.requestId = 0;
+        this.activeRequestId = 0;
+        this.requestedKey = '';
+        this.geometryKey = '';
+        this.geometry = null;
+        this.inFlight = false;
+        this.pendingRequest = null;
+        this.sentSampleKey = '';
         this.gridCache = { key: '', grid: null };
         this.sceneCache = { key: '', scene: null };
         this.sampleCanvas = document.createElement('canvas');
         this.sampleContext = this.sampleCanvas.getContext('2d', { willReadFrequently: true });
     }
 
+    ensureWorker() {
+        if (this.worker) return this.worker;
+        this.worker = new Worker(new URL('../workers/dither.worker.js', import.meta.url), { type: 'module' });
+        this.worker.onmessage = (event) => this.handleWorkerMessage(event.data);
+        this.worker.onerror = (event) => {
+            console.error('Dither worker failed:', event.message || event);
+            this.inFlight = false;
+            this.requestedKey = '';
+            this.flushRequest();
+        };
+        return this.worker;
+    }
+
     setImage(image, key) {
         this.sourceImage = image;
         this.sourceKey = key;
-        this.toneCache.key = '';
-        this.sceneCache.key = '';
+        this.sentSampleKey = '';
+        this.invalidate();
     }
 
     invalidate() {
-        this.toneCache.key = '';
+        this.requestedKey = '';
+        this.geometryKey = '';
+        this.geometry = null;
+        this.pendingRequest = null;
         this.gridCache.key = '';
         this.sceneCache.key = '';
     }
@@ -74,133 +99,113 @@ export class DitherEngine {
         return this.gridCache.grid;
     }
 
-    buildRawTones(settings, cols, rows) {
-        const tones = new Float32Array(cols * rows);
+    createSample(settings) {
         if (!this.sourceImage) {
-            for (let y = 0; y < rows; y++) {
-                for (let x = 0; x < cols; x++) {
-                    const tone = clamp(x / Math.max(1, cols - 1) * 0.6 + y / Math.max(1, rows - 1) * 0.4);
-                    tones[y * cols + x] = settings.invertDither ? 1 - tone : tone;
-                }
-            }
-            return tones;
+            this.sentSampleKey = 'gradient';
+            return { key: 'gradient', source: null, transfer: [] };
         }
+        const grid = this.getGrid(settings);
+        const key = `${this.sourceKey}|${settings.width}|${settings.height}|${grid.cols}|${grid.rows}`;
+        if (this.sentSampleKey === key) return { key, source: null, transfer: [] };
 
-        this.sampleCanvas.width = cols;
-        this.sampleCanvas.height = rows;
-        this.sampleContext.clearRect(0, 0, cols, rows);
-        drawImageCover(this.sampleContext, this.sourceImage, cols, rows);
-        const data = this.sampleContext.getImageData(0, 0, cols, rows).data;
-        for (let index = 0, pixel = 0; index < data.length; index += 4, pixel++) {
-            tones[pixel] = processedTone(data[index], data[index + 1], data[index + 2], settings);
-        }
-        return tones;
+        this.sampleCanvas.width = grid.cols;
+        this.sampleCanvas.height = grid.rows;
+        this.sampleContext.clearRect(0, 0, grid.cols, grid.rows);
+        drawImageCover(this.sampleContext, this.sourceImage, grid.cols, grid.rows);
+        const pixels = this.sampleContext.getImageData(0, 0, grid.cols, grid.rows).data;
+        this.sentSampleKey = key;
+        return {
+            key,
+            source: { width: grid.cols, height: grid.rows, pixels: pixels.buffer },
+            transfer: [pixels.buffer]
+        };
     }
 
-    getTones(settings, grid) {
-        const hideTiny = settings.hideTinyLetters !== false;
-        const key = [
-            this.sourceKey,
-            settings.width,
-            settings.height,
-            grid.cols,
-            grid.rows,
-            settings.ditherAlgorithm,
-            settings.contrast,
-            settings.blackPoint,
-            settings.whitePoint,
-            settings.invertDither,
-            hideTiny
-        ].join('|');
-        if (this.toneCache.key === key) return this.toneCache.tones;
-        const raw = this.buildRawTones(settings, grid.cols, grid.rows);
-        const tones = settings.ditherAlgorithm === 'bayer'
-            ? applyBayer(raw, grid.cols, grid.rows, hideTiny)
-            : applyFloydSteinberg(raw, grid.cols, grid.rows, hideTiny);
-        this.toneCache = { key, tones };
-        return tones;
+    queueRequest(settings, key) {
+        const snapshot = Object.fromEntries(DITHER_SETTINGS_KEYS.map((name) => [name, settings[name]]));
+        this.requestedKey = key;
+        this.pendingRequest = {
+            key,
+            settings: snapshot,
+            chars: cleanPatternText(snapshot.patternText, snapshot.allCaps)
+        };
+        this.flushRequest();
+    }
+
+    flushRequest() {
+        if (this.inFlight || !this.pendingRequest) return;
+        const request = this.pendingRequest;
+        this.pendingRequest = null;
+        this.requestedKey = request.key;
+        const sample = this.createSample(request.settings);
+        const id = ++this.requestId;
+        this.activeRequestId = id;
+        this.inFlight = true;
+        this.ensureWorker().postMessage({
+            type: 'compute',
+            id,
+            key: request.key,
+            sampleKey: sample.key,
+            sampleSource: sample.source,
+            settings: request.settings,
+            chars: request.chars
+        }, sample.transfer);
+    }
+
+    handleWorkerMessage(message) {
+        if (message.id !== this.activeRequestId) return;
+        this.inFlight = false;
+        let accepted = false;
+        if (message.type === 'result' && message.key === this.requestedKey) {
+            const weights = new Uint16Array(message.weights);
+            const values = new Float32Array(message.values);
+            this.geometry = message.chars.map((char, index) => ({
+                char,
+                x: values[index * 4],
+                y: values[index * 4 + 1],
+                size: values[index * 4 + 2],
+                rotation: values[index * 4 + 3],
+                weight: weights[index],
+                baseline: 'middle'
+            }));
+            this.geometryKey = message.key;
+            this.sceneCache.key = '';
+            accepted = true;
+        } else if (message.type === 'error') {
+            console.error(`Dither worker: ${message.message || 'unknown error'}`);
+            this.requestedKey = '';
+        }
+        this.flushRequest();
+        if (accepted) this.onUpdate();
     }
 
     compute(settings) {
-        const sceneKey = [
+        const key = [
             this.sourceKey,
-            settings.width,
-            settings.height,
-            settings.patternText,
-            settings.allCaps,
-            settings.resolution,
-            settings.density,
-            settings.ditherAlgorithm,
-            settings.contrast,
-            settings.blackPoint,
-            settings.whitePoint,
-            settings.invertDither,
-            settings.sizeMin,
-            settings.sizeMax,
-            settings.weightMin,
-            settings.weightMax,
-            settings.rotationMin,
-            settings.rotationMax,
-            settings.noiseMin,
-            settings.noiseMax,
-            settings.sizeEnabled,
-            settings.weightEnabled,
-            settings.rotationEnabled,
-            settings.noiseEnabled,
-            settings.hideTinyLetters,
-            settings.inkColor,
-            settings.bgColor
+            ...DITHER_SETTINGS_KEYS.map((name) => settings[name])
         ].join('|');
-        if (this.sceneCache.key === sceneKey) return this.sceneCache.scene;
-
-        const grid = this.getGrid(settings);
-        const tones = this.getTones(settings, grid);
-        const chars = cleanPatternText(settings.patternText, settings.allCaps);
-        const base = Math.max(1, Math.min(grid.cellW, grid.cellH) * 0.74);
-        const sizeMin = clamp(Math.min(settings.sizeMin, settings.sizeMax) / 100, 0.01, 4);
-        const sizeMax = clamp(Math.max(settings.sizeMin, settings.sizeMax) / 100, 0.01, 4);
-        const weightMin = Math.min(settings.weightMin, settings.weightMax);
-        const weightMax = Math.max(settings.weightMin, settings.weightMax);
-        const noiseMin = clamp(Number(settings.noiseMin ?? 0) / 100, 0, 4);
-        const noiseMax = clamp(Number(settings.noiseMax ?? 0) / 100, 0, 4);
-        const hideTiny = settings.hideTinyLetters !== false;
-        const glyphs = [];
-        let sourceIndex = 0;
-
-        for (let row = 0; row < grid.rows; row++) {
-            for (let col = 0; col < grid.cols; col++, sourceIndex++) {
-                const tone = tones[row * grid.cols + col] || 0;
-                if (hideTiny && tone <= EMPTY_TONE) continue;
-                const size = base * (settings.sizeEnabled === false ? sizeMax : lerp(sizeMin, sizeMax, tone));
-                const weight = settings.weightEnabled === false ? weightMax : lerp(weightMin, weightMax, tone);
-                const rotation = settings.rotationEnabled === false
-                    ? 0
-                    : lerp(Number(settings.rotationMin || 0), Number(settings.rotationMax || 0), tone);
-                const noise = settings.noiseEnabled === false ? 0 : lerp(noiseMin, noiseMax, tone);
-                const offset = Math.min(grid.cellW, grid.cellH) * noise;
-                const x = grid.originX + col * grid.pitchW + signedNoise(sourceIndex, 1) * offset;
-                const y = grid.originY + row * grid.pitchH + signedNoise(sourceIndex, 2) * offset;
-                if (x < 0 || x > settings.width || y < 0 || y > settings.height) continue;
-                glyphs.push({
-                    char: chars[sourceIndex % chars.length],
-                    x,
-                    y,
-                    size,
-                    weight: roundWeight(weight),
-                    rotation,
-                    baseline: 'middle',
-                    fill: settings.inkColor
-                });
-            }
+        if (key !== this.geometryKey && key !== this.requestedKey) {
+            this.queueRequest(settings, key);
         }
 
+        const sceneKey = `${key}|${settings.inkColor}|${settings.bgColor}|${this.geometryKey}`;
+        if (this.sceneCache.key === sceneKey) return this.sceneCache.scene;
+        const glyphs = this.geometry
+            ? this.geometry.map((glyph) => ({ ...glyph, fill: settings.inkColor }))
+            : [];
         const scene = {
             width: settings.width,
             height: settings.height,
             bgColor: settings.bgColor,
-            glyphs
+            glyphs,
+            pending: key !== this.geometryKey
         };
         this.sceneCache = { key: sceneKey, scene };
         return scene;
+    }
+
+    destroy() {
+        this.worker?.terminate();
+        this.worker = null;
     }
 }

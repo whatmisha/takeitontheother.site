@@ -7,9 +7,9 @@ import { FormsEngine } from './src/modes/forms.js';
 import { drawScene } from './src/render/canvas-renderer.js';
 import { normalizeMode, WordplayerUI } from './src/ui/controls.js';
 
-const ditherEngine = new DitherEngine();
 let app = null;
 let currentScene = null;
+const ditherEngine = new DitherEngine(() => app?.renderNow());
 const formsEngine = new FormsEngine(() => app?.renderNow());
 const exporter = new WordplayerExporter();
 const assets = new AssetController({ ditherEngine, formsEngine, getApp: () => app });

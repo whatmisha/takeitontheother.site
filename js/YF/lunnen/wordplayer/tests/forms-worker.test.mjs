@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import vm from 'node:vm';
+import { performance } from 'node:perf_hooks';
 
 const workerSource = await fs.readFile(
     new URL('../src/workers/forms.worker.js', import.meta.url),
@@ -104,4 +105,73 @@ const invertedInside = invertedPositions.filter(({ x, y }) => isInsideForm(x, y,
 assert.ok(invertedPositions.length > normalPositions.length, 'inside-out should use the remaining canvas area');
 assert.equal(invertedInside, 0, 'inside-out glyph anchors should stay outside the form');
 
-console.log(`forms-worker: inside=${normalPositions.length}, outside=${invertedPositions.length}`);
+const complexWidth = 144;
+const complexHeight = 192;
+const complexMask = new Uint8Array(complexWidth * complexHeight);
+for (let y = 0; y < complexHeight; y++) {
+    for (let x = 0; x < complexWidth; x++) {
+        const nx = (x - complexWidth / 2) / (complexWidth * 0.42);
+        const ny = (y - complexHeight / 2) / (complexHeight * 0.42);
+        const outer = nx * nx + ny * ny < 1;
+        const hole = ((x - complexWidth * 0.54) / 18) ** 2 + ((y - complexHeight * 0.46) / 24) ** 2 < 1;
+        complexMask[y * complexWidth + x] = outer && !hole ? 1 : 0;
+    }
+}
+
+const complexStartedAt = performance.now();
+const complex = await new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Complex Forms worker timed out')), 8000);
+    workerSelf.postMessage = (message) => {
+        clearTimeout(timeout);
+        resolve(message);
+    };
+    workerSelf.onmessage({
+        data: {
+            type: 'compute',
+            id: 3,
+            key: 'complex-form',
+            maskKey: 'complex-mask',
+            maskSource: { width: complexWidth, height: complexHeight, inside: complexMask.buffer },
+            settings: {
+                width: 430,
+                height: 574,
+                resolution: 64,
+                density: 0,
+                weightMin: 500,
+                weightMax: 500,
+                sizeMin: 48,
+                sizeMax: 48,
+                rotationMin: 0,
+                rotationMax: 0,
+                noiseMin: 0,
+                noiseMax: 0,
+                sizeEnabled: false,
+                weightEnabled: false,
+                rotationEnabled: false,
+                noiseEnabled: false,
+                hideTinyLetters: false,
+                invertDither: false,
+                formEdgeSpread: 15,
+                formAttraction: 25,
+                formStickiness: 25,
+                formFriction: 50,
+                formLetterSpacing: 15,
+                formSettlingTime: 12,
+                formGravity: 50,
+                formGravityDirection: 135,
+                formCanvasEdges: true,
+                formInsideOut: false
+            },
+            chars: ['A'],
+            fontMetrics: { 'A|500': [0.25, 0.45, 0.25] }
+        }
+    });
+});
+const complexDuration = performance.now() - complexStartedAt;
+assert.ok(complex.chars.length > 1000, 'complex form should create a substantial glyph field');
+assert.ok(complexDuration < 5000, `complex Forms calculation took too long: ${complexDuration.toFixed(1)}ms`);
+
+console.log(
+    `forms-worker: inside=${normalPositions.length}, outside=${invertedPositions.length}, ` +
+    `complex=${complex.chars.length} in ${complexDuration.toFixed(1)}ms`
+);
