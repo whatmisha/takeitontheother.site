@@ -36,6 +36,7 @@
     "formSettlingTime": 75,
     "formGravity": 50,
     "formGravityDirection": 135,
-    "formCanvasEdges": true
+    "formCanvasEdges": true,
+    "formInsideOut": false
   }
 }

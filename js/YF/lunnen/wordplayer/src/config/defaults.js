@@ -1,0 +1,77 @@
+export const DEFAULT_PATTERN_TEXT = `Чтение может стать золотым часом дня — временем, когда всё погружается в цельную особенную атсмосферу и можно вернуться к себе и пережить что-то новое, погрузившись в книгу. В дизайне мы тоже подсвечиваем этот путь — иммерсивность погружения в книгу от лица читателя. Мы показываем именно этот момент перехода — резкость и холод внешнего мира растворяются в тёплом камерном пространстве чтения`;
+
+export const DEFAULT_IMAGE_URL = new URL('../../assets/default-image.avif', import.meta.url).href;
+export const DEFAULT_FORM_URL = new URL('../../assets/default-form.svg?v=2', import.meta.url).href;
+
+export const DEFAULT_SETTINGS = {
+    width: 430,
+    height: 574,
+    mode: 'dither',
+    patternText: DEFAULT_PATTERN_TEXT,
+    weightMin: 100,
+    weightMax: 500,
+    sizeMin: 36,
+    sizeMax: 96,
+    rotationMin: 0,
+    rotationMax: 0,
+    noiseMin: 100,
+    noiseMax: 0,
+    resolution: 72,
+    density: 0,
+    inkColor: '#ffffff',
+    bgColor: '#0d0d0d',
+    allCaps: true,
+    sizeEnabled: true,
+    weightEnabled: true,
+    rotationEnabled: true,
+    noiseEnabled: true,
+    hideTinyLetters: true,
+    invertDither: false,
+    exportTransparent: true,
+    ditherAlgorithm: 'floyd',
+    contrast: 2,
+    blackPoint: 40,
+    whitePoint: 200,
+    formEdgeSpread: 15,
+    formAttraction: 25,
+    formStickiness: 25,
+    formFriction: 50,
+    formLetterSpacing: 25,
+    formSettlingTime: 75,
+    formGravity: 50,
+    formGravityDirection: 135,
+    formCanvasEdges: true,
+    formInsideOut: false
+};
+
+export const SLIDER_DEFINITIONS = [
+    ['weightMin', 100, 900, 0, 10, 100],
+    ['weightMax', 100, 900, 0, 10, 100],
+    ['sizeMin', 5, 200, 0, 1, 10],
+    ['sizeMax', 5, 200, 0, 1, 10],
+    ['rotationMin', -180, 180, 0, 1, 15],
+    ['rotationMax', -180, 180, 0, 1, 15],
+    ['noiseMin', 0, 200, 0, 1, 10],
+    ['noiseMax', 0, 200, 0, 1, 10],
+    ['density', -100, 100, 0, 1, 10],
+    ['contrast', 0.2, 3, 2, 0.01, 0.1],
+    ['blackPoint', 0, 250, 0, 1, 10],
+    ['whitePoint', 5, 255, 0, 1, 10],
+    ['formEdgeSpread', 2, 100, 0, 1, 10],
+    ['formAttraction', 0, 100, 0, 1, 10],
+    ['formStickiness', 0, 100, 0, 1, 10],
+    ['formFriction', 0, 100, 0, 1, 10],
+    ['formLetterSpacing', 0, 100, 0, 1, 10],
+    ['formSettlingTime', 12, 180, 0, 1, 12],
+    ['formGravity', 0, 100, 0, 1, 10],
+    ['formGravityDirection', -180, 180, 0, 1, 15]
+].map(([setting, min, max, decimals, baseStep, shiftStep]) => ({
+    id: `${setting}Slider`,
+    valueId: `${setting}Value`,
+    setting,
+    min,
+    max,
+    decimals,
+    baseStep,
+    shiftStep
+}));

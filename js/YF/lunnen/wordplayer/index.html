@@ -5,22 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Wordplayer</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="ui-framework/css/othersite-styles.css">
+    <link rel="preload" href="./fonts/CoFo%20Sans/CoFoSans-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="./fonts/CoFo%20Sans/CoFoSans-Medium.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="foundation.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container" data-mode="dither">
         <div class="top-links">
-            <a href="/js/YF/" class="top-link">←YF Tools</a>
-            <fieldset class="mode-toolbar">
-                <legend class="sr-only">Mode</legend>
-                <div class="segmented-control mode-control" role="radiogroup" aria-label="Mode">
+            <nav class="mode-navigation" aria-label="Tool and mode navigation">
+                <a href="../../" class="mode-nav-button mode-nav-back">←YF Tools</a>
+                <div class="mode-nav-options" role="radiogroup" aria-label="Wordplayer mode">
                     <input type="radio" name="mode" value="dither" id="modeDither" checked>
-                    <label for="modeDither">Dither</label>
+                    <label class="mode-nav-button" for="modeDither">Dither</label>
                     <input type="radio" name="mode" value="forms" id="modeForms">
-                    <label for="modeForms">Forms</label>
+                    <label class="mode-nav-button" for="modeForms">Forms</label>
                 </div>
-            </fieldset>
+            </nav>
             <div class="preset-toolbar-cluster">
                 <div class="preset-dropdown" id="presetDropdown">
                     <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button"
@@ -48,7 +49,7 @@
         <main class="main-content" id="mainContent">
             <h1 class="sr-only">Wordplayer</h1>
             <div class="canvas-container word-canvas" id="canvasContainer">
-                <svg id="mainSvg" role="img" aria-label="Generated letter pattern"></svg>
+                <canvas id="mainCanvas" role="img" aria-label="Generated letter pattern"></canvas>
             </div>
 
             <aside class="controls-panel controls-panel-left" id="textPanel">
@@ -63,27 +64,26 @@
                 <div class="panel-content">
                     <section class="control-section">
                         <div class="control-group">
-                            <label for="patternTextInput"><span>Pattern text</span></label>
+                            <label class="pattern-text-label" for="patternTextInput"><span>Pattern text</span></label>
                             <textarea id="patternTextInput" class="text-input pattern-text-input" spellcheck="false">Чтение может стать золотым часом дня — временем, когда всё погружается в цельную особенную атсмосферу и можно вернуться к себе и пережить что-то новое, погрузившись в книгу. В дизайне мы тоже подсвечиваем этот путь — иммерсивность погружения в книгу от лица читателя. Мы показываем именно этот момент перехода — резкость и холод внешнего мира растворяются в тёплом камерном пространстве чтения</textarea>
-                        </div>
-                        <div class="control-group">
-                            <label for="resolutionSlider"><span>Resolution</span>
-                                <input type="text" class="value-display" id="resolutionValue" value="72"></label>
-                            <input type="range" id="resolutionSlider" min="8" max="180" value="72" step="1">
                         </div>
                         <div class="control-group density-control">
                             <label for="densitySlider"><span>Density</span>
                                 <input type="text" class="value-display" id="densityValue" value="0"></label>
                             <input type="range" id="densitySlider" min="-100" max="100" value="0" step="1">
                         </div>
-                        <div class="dimension-row">
-                            <div class="dimension-field">
+                        <div class="canvas-metrics-row">
+                            <div class="canvas-metric-field">
                                 <label for="widthValue">Width <span class="unit">px</span></label>
-                                <input type="text" class="text-input dimension-input" id="widthValue" value="430" inputmode="numeric" autocomplete="off">
+                                <input type="text" class="canvas-metric-input" id="widthValue" value="430" inputmode="numeric" autocomplete="off" spellcheck="false">
                             </div>
-                            <div class="dimension-field">
+                            <div class="canvas-metric-field">
                                 <label for="heightValue">Height <span class="unit">px</span></label>
-                                <input type="text" class="text-input dimension-input" id="heightValue" value="574" inputmode="numeric" autocomplete="off">
+                                <input type="text" class="canvas-metric-input" id="heightValue" value="574" inputmode="numeric" autocomplete="off" spellcheck="false">
+                            </div>
+                            <div class="canvas-metric-field">
+                                <label for="resolutionValue">Resolution</label>
+                                <input type="text" class="canvas-metric-input" id="resolutionValue" value="72" inputmode="numeric" autocomplete="off" spellcheck="false">
                             </div>
                         </div>
                         <div class="control-group">
@@ -190,9 +190,17 @@
                                 <input type="checkbox" id="noiseEnabledToggle" class="sr-only" data-setting="noiseEnabled" checked>
                                 <span>Noise</span>
                             </label>
+                            <label class="pill-toggle dither-only-toggle" for="bayerToggle" data-tooltip="Use Bayer ordered dithering instead of Floyd–Steinberg">
+                                <input type="checkbox" id="bayerToggle" class="sr-only">
+                                <span>Bayer</span>
+                            </label>
                             <label class="pill-toggle forms-only-toggle" for="formCanvasEdgesToggle" data-tooltip="Use canvas edges as attracting lines">
                                 <input type="checkbox" id="formCanvasEdgesToggle" class="sr-only" data-setting="formCanvasEdges" checked>
                                 <span>Edges</span>
+                            </label>
+                            <label class="pill-toggle forms-only-toggle" for="formInsideOutToggle" data-tooltip="Fill the canvas outside the loaded form">
+                                <input type="checkbox" id="formInsideOutToggle" class="sr-only" data-setting="formInsideOut">
+                                <span>Inside-out</span>
                             </label>
                             <label class="pill-toggle" for="hideTinyLettersToggle" data-tooltip="Hide critically small letters">
                                 <input type="checkbox" id="hideTinyLettersToggle" class="sr-only" data-setting="hideTinyLetters" checked>
@@ -220,20 +228,9 @@
                     <section class="control-section image-load-section">
                         <input type="file" id="imageInput" accept="image/*" hidden>
                         <button type="button" class="btn-secondary btn-full" id="imageLoadBtn">Load image</button>
-                        <div class="file-status" id="imageStatus">sample.png</div>
+                        <div class="file-status" id="imageStatus">default-image.avif</div>
                     </section>
                     <section class="control-section">
-                        <div class="control-group algorithm-control">
-                            <fieldset>
-                                <legend class="sr-only">Dither algorithm</legend>
-                                <div class="segmented-control" role="radiogroup" aria-label="Dither algorithm">
-                                    <input type="radio" name="ditherAlgorithm" value="floyd" id="algoFloyd" checked>
-                                    <label for="algoFloyd">FS</label>
-                                    <input type="radio" name="ditherAlgorithm" value="bayer" id="algoBayer">
-                                    <label for="algoBayer">Bayer</label>
-                                </div>
-                            </fieldset>
-                        </div>
                         <div class="control-group">
                             <label for="contrastSlider"><span>Contrast</span>
                                 <input type="text" class="value-display" id="contrastValue" value="2.00"></label>
@@ -263,52 +260,67 @@
                     </span>
                 </div>
                 <div class="panel-content">
-                    <section class="control-section">
+                    <section class="control-section image-load-section">
                         <input type="file" id="formInput" accept=".svg,image/svg+xml" hidden>
-                        <button type="button" class="btn-secondary btn-full" id="formLoadBtn">Load SVG form</button>
-                        <div class="file-status" id="formStatus">sample.svg</div>
+                        <button type="button" class="btn-secondary btn-full" id="formLoadBtn">Load SVG</button>
+                        <div class="file-status" id="formStatus">default-form.svg</div>
                     </section>
-                    <section class="control-section">
-                        <div class="control-group">
-                            <label for="formEdgeSpreadSlider"><span>Attraction range <span class="unit">%</span></span>
-                                <input type="text" class="value-display" id="formEdgeSpreadValue" value="15"></label>
-                            <input type="range" id="formEdgeSpreadSlider" min="2" max="100" value="15" step="1">
-                        </div>
-                        <div class="control-group">
-                            <label for="formAttractionSlider"><span>Line gravity</span>
-                                <input type="text" class="value-display" id="formAttractionValue" value="25"></label>
-                            <input type="range" id="formAttractionSlider" min="0" max="100" value="25" step="1">
-                        </div>
-                        <div class="control-group">
-                            <label for="formStickinessSlider"><span>Stickiness</span>
-                                <input type="text" class="value-display" id="formStickinessValue" value="25"></label>
-                            <input type="range" id="formStickinessSlider" min="0" max="100" value="25" step="1">
-                        </div>
-                        <div class="control-group">
-                            <label for="formFrictionSlider"><span>Friction</span>
-                                <input type="text" class="value-display" id="formFrictionValue" value="50"></label>
-                            <input type="range" id="formFrictionSlider" min="0" max="100" value="50" step="1">
-                        </div>
-                        <div class="control-group">
-                            <label for="formLetterSpacingSlider"><span>Letter spacing <span class="unit">%</span></span>
-                                <input type="text" class="value-display" id="formLetterSpacingValue" value="25"></label>
-                            <input type="range" id="formLetterSpacingSlider" min="0" max="100" value="25" step="1">
-                        </div>
-                        <div class="control-group">
-                            <label for="formSettlingTimeSlider"><span>Settling time</span>
-                                <input type="text" class="value-display" id="formSettlingTimeValue" value="75"></label>
-                            <input type="range" id="formSettlingTimeSlider" min="12" max="180" value="75" step="1">
-                        </div>
-                        <div class="control-group">
-                            <label for="formGravitySlider"><span>Gravity force</span>
-                                <input type="text" class="value-display" id="formGravityValue" value="50"></label>
-                            <input type="range" id="formGravitySlider" min="0" max="100" value="50" step="1">
-                        </div>
-                        <div class="control-group">
-                            <label for="formGravityDirectionSlider"><span>Gravity direction <span class="unit">°</span></span>
-                                <input type="text" class="value-display" id="formGravityDirectionValue" value="135"></label>
-                            <input type="range" id="formGravityDirectionSlider" min="-180" max="180" value="135" step="1">
-                        </div>
+                    <section class="control-section forms-groups">
+                        <section class="tone-param-group" role="group" aria-labelledby="formBoundaryGroupLabel">
+                            <div class="tone-group-heading" id="formBoundaryGroupLabel">Form boundary</div>
+                            <div class="compact-slider-grid">
+                                <div class="control-group compact-slider-control" data-tooltip="Attraction range">
+                                    <label for="formEdgeSpreadSlider"><span>Range <span class="unit">%</span></span>
+                                        <input type="text" class="value-display" id="formEdgeSpreadValue" value="15"></label>
+                                    <input type="range" id="formEdgeSpreadSlider" min="2" max="100" value="15" step="1">
+                                </div>
+                                <div class="control-group compact-slider-control" data-tooltip="Line gravity">
+                                    <label for="formAttractionSlider"><span>Line grav.</span>
+                                        <input type="text" class="value-display" id="formAttractionValue" value="25"></label>
+                                    <input type="range" id="formAttractionSlider" min="0" max="100" value="25" step="1">
+                                </div>
+                                <div class="control-group compact-slider-control" data-tooltip="Stickiness">
+                                    <label for="formStickinessSlider"><span>Stick</span>
+                                        <input type="text" class="value-display" id="formStickinessValue" value="25"></label>
+                                    <input type="range" id="formStickinessSlider" min="0" max="100" value="25" step="1">
+                                </div>
+                                <div class="control-group compact-slider-control" data-tooltip="Friction">
+                                    <label for="formFrictionSlider"><span>Friction</span>
+                                        <input type="text" class="value-display" id="formFrictionValue" value="50"></label>
+                                    <input type="range" id="formFrictionSlider" min="0" max="100" value="50" step="1">
+                                </div>
+                            </div>
+                        </section>
+                        <section class="tone-param-group" role="group" aria-labelledby="formFlowGroupLabel">
+                            <div class="tone-group-heading" id="formFlowGroupLabel">Letter flow</div>
+                            <div class="compact-slider-grid">
+                                <div class="control-group compact-slider-control" data-tooltip="Letter spacing">
+                                    <label for="formLetterSpacingSlider"><span>Spacing <span class="unit">%</span></span>
+                                        <input type="text" class="value-display" id="formLetterSpacingValue" value="25"></label>
+                                    <input type="range" id="formLetterSpacingSlider" min="0" max="100" value="25" step="1">
+                                </div>
+                                <div class="control-group compact-slider-control" data-tooltip="Settling time">
+                                    <label for="formSettlingTimeSlider"><span>Settle</span>
+                                        <input type="text" class="value-display" id="formSettlingTimeValue" value="75"></label>
+                                    <input type="range" id="formSettlingTimeSlider" min="12" max="180" value="75" step="1">
+                                </div>
+                            </div>
+                        </section>
+                        <section class="tone-param-group" role="group" aria-labelledby="formGravityGroupLabel">
+                            <div class="tone-group-heading" id="formGravityGroupLabel">Gravity</div>
+                            <div class="compact-slider-grid">
+                                <div class="control-group compact-slider-control" data-tooltip="Gravity force">
+                                    <label for="formGravitySlider"><span>Force</span>
+                                        <input type="text" class="value-display" id="formGravityValue" value="50"></label>
+                                    <input type="range" id="formGravitySlider" min="0" max="100" value="50" step="1">
+                                </div>
+                                <div class="control-group compact-slider-control" data-tooltip="Gravity direction">
+                                    <label for="formGravityDirectionSlider"><span>Direction <span class="unit">°</span></span>
+                                        <input type="text" class="value-display" id="formGravityDirectionValue" value="135"></label>
+                                    <input type="range" id="formGravityDirectionSlider" min="-180" max="180" value="135" step="1">
+                                </div>
+                            </div>
+                        </section>
                     </section>
                 </div>
             </aside>
@@ -318,19 +330,12 @@
             <button class="btn-fixed btn-intro-help" id="introHelpBtn" type="button" aria-label="About" data-tooltip="About">?</button>
             <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
             <button class="btn-fixed" id="exportSvgBtn" type="button">Export SVG</button>
-            <label class="toggle-label" data-tooltip="Convert text to outlines on SVG export">
-                <span class="toggle-switch">
-                    <input type="checkbox" id="convertToOutlinesCheckbox" checked aria-label="Curves">
-                    <span class="toggle-slider"></span>
-                </span>
-                <span class="toggle-label-text">Curves</span>
-            </label>
             <label class="toggle-label" data-tooltip="Transparent background on PNG export">
                 <span class="toggle-switch">
-                    <input type="checkbox" id="transparentPngCheckbox" data-setting="exportTransparent" aria-label="Transparent PNG" checked>
+                    <input type="checkbox" id="transparentPngCheckbox" data-setting="exportTransparent" aria-label="Transparent" checked>
                     <span class="toggle-slider"></span>
                 </span>
-                <span class="toggle-label-text">Transparent PNG</span>
+                <span class="toggle-label-text">Transparent</span>
             </label>
         </nav>
 
@@ -344,7 +349,6 @@
         </dialog>
     </div>
 
-    <script src="./vendor/lib/d3.min.js"></script>
     <script type="module" src="./tool.js"></script>
 </body>
 </html>

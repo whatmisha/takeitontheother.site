@@ -33,6 +33,7 @@
     "formStickiness": 55,
     "formFriction": 42,
     "formGravity": 12,
-    "formGravityDirection": 0
+    "formGravityDirection": 0,
+    "formInsideOut": false
   }
 }
