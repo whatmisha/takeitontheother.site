@@ -28,6 +28,10 @@
       "file": "Ground 8.4\" Front.json"
     },
     {
+      "name": "E-ink",
+      "file": "E-ink.json"
+    },
+    {
       "name": "- - - - - - - - - - - - -",
       "file": null
     },
