@@ -1,12 +1,74 @@
 {
   "presetName": "Outer 16\" Back",
-  "version": "1.0",
+  "version": "1.1",
   "timestamp": "2026-01-19T23:29:25.258Z",
   "dimensions": {
     "width": 387,
     "height": 382,
     "thickness": 36,
     "unit": "mm"
+  },
+  "surfaces": {
+    "front": {
+      "visible": true,
+      "rotation": 0,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.8991,
+        "margins": 3.3809,
+        "columns": 12,
+        "rows": 18,
+        "rowHeight": 6
+      }
+    },
+    "left": {
+      "visible": true,
+      "rotation": 270,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.8991,
+        "margins": 3.3809,
+        "columns": 12,
+        "rows": 18,
+        "rowHeight": 6
+      }
+    },
+    "right": {
+      "visible": true,
+      "rotation": 90,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.8991,
+        "margins": 3.3809,
+        "columns": 12,
+        "rows": 18,
+        "rowHeight": 6
+      }
+    },
+    "top": {
+      "visible": true,
+      "rotation": 0,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.8991,
+        "margins": 3.3809,
+        "columns": 12,
+        "rows": 18,
+        "rowHeight": 6
+      }
+    },
+    "bottom": {
+      "visible": true,
+      "rotation": 180,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.8991,
+        "margins": 3.3809,
+        "columns": 12,
+        "rows": 18,
+        "rowHeight": 6
+      }
+    }
   },
   "texts": [
     {
@@ -79,7 +141,7 @@
     },
     {
       "id": "origin",
-      "content": "Импортёр/Организация, принимающая претензии на\u00A0территории РФ: ООО «Маркет. Трейд». Адрес: 121099, Россия, г. Москва, Новинский б-р, д. 8.\nInfo@lunnen.pro",
+      "content": "Импортёр/Организация, принимающая претензии на территории РФ: ООО «Маркет. Трейд». Адрес: 121099, Россия, г. Москва, Новинский б-р, д. 8.\nInfo@lunnen.pro",
       "style": "text",
       "position": {
         "column": 10,

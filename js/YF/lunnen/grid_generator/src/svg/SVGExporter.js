@@ -312,6 +312,9 @@ export class SVGExporter {
                 thickness: settings.thickness,
                 unit: 'mm'
             },
+
+            // Ориентация, видимость и независимые сетки поверхностей
+            surfaces: settings.surfaceSettings || null,
             
             // 3. Все текстовые блоки (удобно для копирайтера)
             texts: textBlocks.map((block, index) => ({
@@ -409,6 +412,7 @@ export class SVGExporter {
                         baseline: iconsBlock.baselineOffset || 0
                     },
                     height: iconsBlock.heightInModules || 3,
+                    surface: iconsBlock.surface || 'front',
                     visible: iconsBlock.visible !== undefined ? iconsBlock.visible : true,
                     svg: iconsBlock.svgContent || ''
                 } : null,
@@ -419,6 +423,7 @@ export class SVGExporter {
                         baseline: claimBlock.baselineOffset || 0
                     },
                     height: claimBlock.heightInModules || 3,
+                    surface: claimBlock.surface || 'front',
                     visible: claimBlock.visible !== undefined ? claimBlock.visible : true,
                     svg: claimBlock.svgContent || ''
                 } : null
@@ -562,7 +567,8 @@ export class SVGExporter {
             showDimensions: newData.display?.dimensions,
             showLabels: newData.display?.labels,
             showSidePanels: newData.display?.sidePanels,
-            showObjects: newData.display?.objects
+            showObjects: newData.display?.objects,
+            surfaceSettings: newData.surfaces || undefined
         };
 
         // Текстовые блоки (маппинг полей для внутренней структуры приложения)
@@ -619,6 +625,7 @@ export class SVGExporter {
                 x: newData.graphics.icons.position?.column || 1,
                 row: newData.graphics.icons.position?.row || 0,
                 baselineOffset: newData.graphics.icons.position?.baseline || 0,
+                surface: newData.graphics.icons.surface || 'front',
                 showBounds: false,
                 visible: newData.graphics.icons.visible !== undefined ? newData.graphics.icons.visible : true,
                 originalWidth: 204.0944882,
@@ -637,6 +644,7 @@ export class SVGExporter {
                 x: newData.graphics.claim.position?.column || 7,
                 row: newData.graphics.claim.position?.row || 0,
                 baselineOffset: newData.graphics.claim.position?.baseline || 0,
+                surface: newData.graphics.claim.surface || 'front',
                 showBounds: false,
                 visible: newData.graphics.claim.visible !== undefined ? newData.graphics.claim.visible : true,
                 originalWidth: 186.2242584,
@@ -654,4 +662,3 @@ export class SVGExporter {
         };
     }
 }
-

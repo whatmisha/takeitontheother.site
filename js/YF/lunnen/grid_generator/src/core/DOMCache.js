@@ -59,6 +59,20 @@ export class DOMCache {
             showRows: document.getElementById('showRows'),
             showBaseline: document.getElementById('showBaseline'),
             showObjects: document.getElementById('showObjects'),
+
+            // ============================================
+            // Side surface settings
+            // ============================================
+            surfaceSettingsSelect: document.getElementById('surfaceSettingsSelect'),
+            surfaceVisibleToggle: document.getElementById('surfaceVisibleToggle'),
+            surfaceOwnGridToggle: document.getElementById('surfaceOwnGridToggle'),
+            surfaceRotationOptions: document.getElementById('surfaceRotationOptions'),
+            surfaceOwnGridControls: document.getElementById('surfaceOwnGridControls'),
+            surfaceGridModuleInput: document.getElementById('surfaceGridModuleInput'),
+            surfaceGridMarginsInput: document.getElementById('surfaceGridMarginsInput'),
+            surfaceGridColumnsInput: document.getElementById('surfaceGridColumnsInput'),
+            surfaceGridRowsInput: document.getElementById('surfaceGridRowsInput'),
+            surfaceGridRowHeightInput: document.getElementById('surfaceGridRowHeightInput'),
             
             // ============================================
             // Link mode
@@ -217,6 +231,7 @@ export class DOMCache {
             // Zoom indicator
             // ============================================
             zoomIndicator: document.getElementById('zoomIndicator'),
+            canvasRotateLeftBtn: document.getElementById('canvasRotateLeftBtn'),
             
             // ============================================
             // Panel params displays

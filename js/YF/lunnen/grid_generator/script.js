@@ -40,6 +40,9 @@ import { PresetManager } from './src/preset/PresetManager.js';
 // Итерация 9: History Management
 import { HistoryManager } from './src/history/HistoryManager.js';
 
+// Surface model
+import { SurfaceManager, SURFACE_IDS, SIDE_SURFACE_IDS } from './src/surfaces/SurfaceManager.js';
+
 const TEXT_PRESETS = [
     { id: 'brand',        label: 'Brand',         text: 'Lunnen — бренд компьютерной техники и аксессуаров, придуманный в Яндекс Фабрике. Сопровождает в исследованиях, работе и развлечениях.' },
     { id: 'outer',        label: 'Outer',         text: 'Продвинутая линейка Lunnen Outer для исследований неизведанного. Эффективные технологии для работы с графикой или развлечений разного уровня сложностей.' },
@@ -780,6 +783,14 @@ class GridGenerator {
                 return true;
             }
         });
+
+        // ============================================
+        // Surface model
+        // ============================================
+        this.surfaceManager = new SurfaceManager(this.settingsModule);
+        this.surfaceManager.initialize('+ New');
+        this.activeSurfaceSettings = 'left';
+        this.currentSurfaceLayout = null;
         
         // ============================================
         // Grid Calculator (Итерация 3)
@@ -840,6 +851,7 @@ class GridGenerator {
             heightInModules: 3,
             widthInColumns: 4,  // Will be recalculated based on aspect ratio
             alignment: 'left',  // 'left' or 'right'
+            surface: 'front',
             x: 1,
             row: 0,  // Will be calculated
             baselineOffset: 0,  // Will be calculated
@@ -860,6 +872,7 @@ class GridGenerator {
             heightInModules: 3,
             widthInColumns: 4,  // Will be recalculated based on aspect ratio
             alignment: 'left',  // 'left' or 'right'
+            surface: 'front',
             x: 7,
             row: 0,  // Will be calculated
             baselineOffset: 0,  // Will be calculated
@@ -988,6 +1001,7 @@ class GridGenerator {
         
         // Initialize
         this.initEventListeners();
+        this.initSurfaceControls();
         
         // ============================================
         // Initialize UI Controllers (Итерация 5.2 & 5.3)
@@ -1300,8 +1314,9 @@ class GridGenerator {
         this.dom.showSidePanels.addEventListener('change', (e) => {
             this.historyManager.beginAction('toggle side panels', this.getStateSnapshot());
             this.markAsChanged();
-            this.settings.showSidePanels = e.target.checked;
+            this.surfaceManager.setAllSideVisibility(e.target.checked);
             this.updateEyeIcon(e.target);
+            this.syncSurfaceControls();
             this.updateGrid();
             this.historyManager.commitAction(this.getStateSnapshot());
         });
@@ -1805,6 +1820,162 @@ class GridGenerator {
     // Panel Collapse Functionality
     // ============================================
     
+    /**
+     * Инициализация управления отдельными боковыми поверхностями.
+     */
+    initSurfaceControls() {
+        if (!this.dom.surfaceSettingsSelect) return;
+
+        this.dom.surfaceSettingsSelect.addEventListener('change', () => {
+            this.activeSurfaceSettings = this.dom.surfaceSettingsSelect.value;
+            this.syncSurfaceControls();
+        });
+
+        this.dom.surfaceVisibleToggle?.addEventListener('change', (event) => {
+            this.historyManager.beginAction('toggle surface visibility', this.getStateSnapshot());
+            this.surfaceManager.update(this.activeSurfaceSettings, { visible: event.target.checked });
+            this.markAsChanged();
+            this.syncSurfaceControls();
+            this.updateGrid();
+            this.historyManager.commitAction(this.getStateSnapshot());
+        });
+
+        this.dom.surfaceOwnGridToggle?.addEventListener('change', (event) => {
+            this.historyManager.beginAction('change surface grid mode', this.getStateSnapshot());
+            this.surfaceManager.update(this.activeSurfaceSettings, {
+                gridMode: event.target.checked ? 'own' : 'main'
+            });
+            this.markAsChanged();
+            this.syncSurfaceControls();
+            this.constrainAllObjectsToGrid();
+            this.updateGrid();
+            this.historyManager.commitAction(this.getStateSnapshot());
+        });
+
+        this.dom.surfaceRotationOptions?.querySelectorAll('[data-rotation]').forEach(button => {
+            button.addEventListener('click', () => {
+                const rotation = Number(button.dataset.rotation);
+                const current = this.surfaceManager.get(this.activeSurfaceSettings);
+                if (current.rotation === rotation) return;
+                this.historyManager.beginAction('rotate surface', this.getStateSnapshot());
+                this.surfaceManager.update(this.activeSurfaceSettings, { rotation });
+                this.markAsChanged();
+                this.syncSurfaceControls();
+                this.constrainAllObjectsToGrid();
+                this.updateGrid();
+                this.historyManager.commitAction(this.getStateSnapshot());
+            });
+        });
+
+        const gridInputs = [
+            this.dom.surfaceGridModuleInput,
+            this.dom.surfaceGridMarginsInput,
+            this.dom.surfaceGridColumnsInput,
+            this.dom.surfaceGridRowsInput,
+            this.dom.surfaceGridRowHeightInput
+        ].filter(Boolean);
+
+        gridInputs.forEach(input => {
+            const commit = () => this.applySurfaceGridInputs();
+            input.addEventListener('change', commit);
+            input.addEventListener('keydown', event => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    input.blur();
+                }
+            });
+        });
+
+        this.syncSurfaceControls();
+    }
+
+    applySurfaceGridInputs() {
+        const current = this.surfaceManager.get(this.activeSurfaceSettings);
+        const read = (element, fallback, integer = false) => {
+            const value = Number.parseFloat(element?.value);
+            if (!Number.isFinite(value)) return fallback;
+            const normalized = integer ? Math.round(value) : value;
+            return Math.max(integer ? 1 : 0, normalized);
+        };
+
+        const grid = {
+            module: Math.max(0.1, read(this.dom.surfaceGridModuleInput, current.grid.module)),
+            margins: read(this.dom.surfaceGridMarginsInput, current.grid.margins),
+            columns: read(this.dom.surfaceGridColumnsInput, current.grid.columns, true),
+            rows: read(this.dom.surfaceGridRowsInput, current.grid.rows, true),
+            rowHeight: read(this.dom.surfaceGridRowHeightInput, current.grid.rowHeight, true)
+        };
+
+        this.historyManager.beginAction('edit surface grid', this.getStateSnapshot());
+        this.surfaceManager.update(this.activeSurfaceSettings, { gridMode: 'own', grid });
+        this.markAsChanged();
+        this.syncSurfaceControls();
+        this.constrainAllObjectsToGrid();
+        this.updateGrid();
+        this.historyManager.commitAction(this.getStateSnapshot());
+    }
+
+    syncSurfaceControls() {
+        if (!this.dom.surfaceSettingsSelect) return;
+        if (!SIDE_SURFACE_IDS.includes(this.activeSurfaceSettings)) {
+            this.activeSurfaceSettings = 'left';
+        }
+
+        this.dom.surfaceSettingsSelect.value = this.activeSurfaceSettings;
+        const settings = this.surfaceManager.get(this.activeSurfaceSettings);
+        if (this.dom.surfaceVisibleToggle) this.dom.surfaceVisibleToggle.checked = settings.visible !== false;
+        if (this.dom.surfaceOwnGridToggle) this.dom.surfaceOwnGridToggle.checked = settings.gridMode === 'own';
+        if (this.dom.surfaceOwnGridControls) this.dom.surfaceOwnGridControls.hidden = settings.gridMode !== 'own';
+
+        this.dom.surfaceRotationOptions?.querySelectorAll('[data-rotation]').forEach(button => {
+            const isActive = Number(button.dataset.rotation) === settings.rotation;
+            button.classList.toggle('active', isActive);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+
+        const values = [
+            [this.dom.surfaceGridModuleInput, settings.grid.module],
+            [this.dom.surfaceGridMarginsInput, settings.grid.margins],
+            [this.dom.surfaceGridColumnsInput, settings.grid.columns],
+            [this.dom.surfaceGridRowsInput, settings.grid.rows],
+            [this.dom.surfaceGridRowHeightInput, settings.grid.rowHeight]
+        ];
+        values.forEach(([element, value]) => {
+            if (element && document.activeElement !== element) element.value = value;
+        });
+
+        if (this.dom.showSidePanels) {
+            this.dom.showSidePanels.checked = SIDE_SURFACE_IDS.some(surface => this.surfaceManager.isVisible(surface));
+            this.updateEyeIcon(this.dom.showSidePanels);
+        }
+
+        [this.dom.paragraphSurfaceSelect, this.dom.graphicsSurfaceSelect].forEach(select => {
+            if (!select) return;
+            Array.from(select.options).forEach(option => {
+                option.disabled = option.value !== 'front' && !this.surfaceManager.isVisible(option.value);
+            });
+        });
+    }
+
+    moveBlockToSurface(block, surface) {
+        if (!block || !SURFACE_IDS.includes(surface)) return;
+        block.surface = surface;
+        block.x = 1;
+        block.row = 0;
+        block.baselineOffset = 0;
+        this.constrainAllObjectsToGrid();
+        if (this.currentEditingBlock?.id === block.id) {
+            if (this.dom.paragraphXInput) this.dom.paragraphXInput.value = 1;
+            if (this.dom.paragraphRowInput) this.dom.paragraphRowInput.value = 1;
+            if (this.dom.paragraphBaselineInput) this.dom.paragraphBaselineInput.value = 1;
+        }
+        if (this.currentEditingGraphicsId === block.id) {
+            if (this.dom.graphicsXInput) this.dom.graphicsXInput.value = 1;
+            if (this.dom.graphicsRowInput) this.dom.graphicsRowInput.value = 1;
+            if (this.dom.graphicsBaselineInput) this.dom.graphicsBaselineInput.value = 1;
+        }
+    }
+
     initPanelCollapse() {
         // Storage for text styles state
         this.textStylesState = {
@@ -2412,6 +2583,7 @@ class GridGenerator {
                     this.settingsModule.set('lineHeightUnit', 'mod');
                 }
             }
+            this.surfaceManager.initialize(presetName, normalizedData.settings?.surfaceSettings);
             
             // Apply text blocks
             if (normalizedData.textBlocks) {
@@ -2687,6 +2859,7 @@ class GridGenerator {
         
         // Generate row presets
         this.generateRowPresets();
+        this.syncSurfaceControls();
     }
     
     updateLinkedControlsVisual() {
@@ -2867,16 +3040,18 @@ class GridGenerator {
                 if (this.currentEditingBlock) {
                     this.markAsChanged();
                     let newX = parseInt(this.dom.paragraphXInput.value);
+                    const surface = this.currentEditingBlock.surface || 'front';
+                    const { columnCount } = this.getSurfaceGridContext(surface);
                     
                     // Ограничиваем X в зависимости от alignment
                     const alignment = this.currentEditingBlock.alignment || 'left';
                     if (alignment === 'right') {
                         // For right-aligned: минимум = ceil(width), максимум = columnCount
                         const minX = Math.ceil(this.currentEditingBlock.width);
-                        newX = Math.max(minX, Math.min(newX, this.settings.columnCount));
+                        newX = Math.max(minX, Math.min(newX, columnCount));
                     } else {
                         // For left-aligned: минимум = 1, максимум зависит от ширины
-                        newX = Math.max(1, Math.min(newX, this.settings.columnCount));
+                        newX = Math.max(1, Math.min(newX, columnCount));
                     }
                     
                     // Устанавливаем новое значение X
@@ -2892,8 +3067,8 @@ class GridGenerator {
                     } else {
                         // For left-aligned: block grows right
                         // x начинается с 1, поэтому последняя занятая колонка = x + width - 1
-                        if (this.currentEditingBlock.x + this.currentEditingBlock.width - 1 > this.settings.columnCount) {
-                            this.currentEditingBlock.width = Math.max(0.25, this.settings.columnCount - this.currentEditingBlock.x + 1);
+                        if (this.currentEditingBlock.x + this.currentEditingBlock.width - 1 > columnCount) {
+                            this.currentEditingBlock.width = Math.max(0.25, columnCount - this.currentEditingBlock.x + 1);
                             this.dom.paragraphWidthInput.value = this.currentEditingBlock.width.toFixed(2);
                         }
                     }
@@ -2914,18 +3089,20 @@ class GridGenerator {
                 if (this.currentEditingBlock) {
                     this.markAsChanged();
                     const newRow = parseInt(this.dom.paragraphRowInput.value) - 1;
+                    const surface = this.currentEditingBlock.surface || 'front';
+                    const context = this.getSurfaceGridContext(surface);
                     
                     // Calculate max allowed row based on content height and text block height
-                    const module = this.settings.gridModule;
-                    const margins = this.settings.margins;
-                    const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+                    const module = context.gridModule;
+                    const margins = context.margins;
+                    const contentHeightMm = context.frontHeight - 2 * margins * module;
                     const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                     // Ограничиваем по стартовой позиции: первая строка блока должна быть
                     // в пределах контентной области. Остальное (lineHeight) может выходить за поля.
                     const maxY = maxYInBaseline - 1;
                     
                     // Calculate Y position from row (baselineOffset всегда сбрасывается в 0)
-                    const rowHeight = this.settings.rowHeight;
+                    const rowHeight = context.rowHeight;
                     const yPos = newRow * (rowHeight + 1);
                     
                     // Constrain Y
@@ -2942,7 +3119,7 @@ class GridGenerator {
                     
                     // Update baseline input if needed
                     if (this.dom.paragraphBaselineInput) {
-                        const globalBaseline = this.rowBaselineToY(this.currentEditingBlock.row, this.currentEditingBlock.baselineOffset);
+                        const globalBaseline = this.rowBaselineToY(this.currentEditingBlock.row, this.currentEditingBlock.baselineOffset, surface);
                         this.dom.paragraphBaselineInput.value = globalBaseline + 1;
                     }
                     
@@ -2955,31 +3132,18 @@ class GridGenerator {
             });
         }
         
-        // Обработчик для Column (всегда целое число)
-        if (this.dom.paragraphXInput) {
-            this.dom.paragraphXInput.addEventListener('change', () => {
-                if (this.currentEditingBlock) {
-                    this.markAsChanged();
-                    const newX = parseFloat(this.dom.paragraphXInput.value);
-                    // Column всегда целое число
-                    this.currentEditingBlock.x = Math.max(1, Math.round(newX));
-                    this.dom.paragraphXInput.value = this.currentEditingBlock.x;
-                    this.updateGrid();
-                }
-            });
-        }
-        
         if (this.dom.paragraphBaselineInput) {
             this.dom.paragraphBaselineInput.addEventListener('change', () => {
                 if (this.currentEditingBlock) {
                     this.markAsChanged();
                     const globalBaseline = parseInt(this.dom.paragraphBaselineInput.value) - 1;
-                    const rowHeight = this.settings.rowHeight;
+                    const surface = this.currentEditingBlock.surface || 'front';
+                    const context = this.getSurfaceGridContext(surface);
                     
                     // Calculate max allowed baseline based on content height and text block height
-                    const module = this.settings.gridModule;
-                    const margins = this.settings.margins;
-                    const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+                    const module = context.gridModule;
+                    const margins = context.margins;
+                    const contentHeightMm = context.frontHeight - 2 * margins * module;
                     const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                     // Ограничиваем по стартовой позиции первой строки
                     const maxY = maxYInBaseline - 1;
@@ -2989,13 +3153,13 @@ class GridGenerator {
                     
                     // Преобразуем глобальный номер baseline в row и baselineOffset
                     // Используем yToRowBaseline для правильного учета gutter между rows
-                    const { row: newRow, baselineOffset: newBaselineOffset } = this.yToRowBaseline(constrainedBaseline);
+                    const { row: newRow, baselineOffset: newBaselineOffset } = this.yToRowBaseline(constrainedBaseline, surface);
                     
                     this.currentEditingBlock.row = Math.max(0, newRow);
                     this.currentEditingBlock.baselineOffset = newBaselineOffset;
                     
                     // Обновляем отображение (на случай коррекции)
-                    const correctedGlobalBaseline = this.rowBaselineToY(this.currentEditingBlock.row, this.currentEditingBlock.baselineOffset);
+                    const correctedGlobalBaseline = this.rowBaselineToY(this.currentEditingBlock.row, this.currentEditingBlock.baselineOffset, surface);
                     this.dom.paragraphBaselineInput.value = correctedGlobalBaseline + 1;
                     this.dom.paragraphRowInput.value = this.currentEditingBlock.row + 1;
                     
@@ -3010,11 +3174,13 @@ class GridGenerator {
                     const delta = e.key === 'ArrowUp' ? 1 : -1;
                     const step = e.shiftKey ? 10 : 1;
                     let newGlobalBaseline = globalBaseline + delta * step;
+                    const surface = this.currentEditingBlock.surface || 'front';
+                    const context = this.getSurfaceGridContext(surface);
                     
                     // Calculate max allowed baseline
-                    const module = this.settings.gridModule;
-                    const margins = this.settings.margins;
-                    const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+                    const module = context.gridModule;
+                    const margins = context.margins;
+                    const contentHeightMm = context.frontHeight - 2 * margins * module;
                     const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                     // Ограничиваем по стартовой позиции первой строки
                     const maxY = maxYInBaseline - 1;
@@ -3022,12 +3188,12 @@ class GridGenerator {
                     newGlobalBaseline = Math.max(0, Math.min(newGlobalBaseline, maxY));
                     
                     // Используем yToRowBaseline для правильного учета gutter между rows
-                    const { row: newRow, baselineOffset: newBaselineOffset } = this.yToRowBaseline(newGlobalBaseline);
+                    const { row: newRow, baselineOffset: newBaselineOffset } = this.yToRowBaseline(newGlobalBaseline, surface);
                     this.currentEditingBlock.row = Math.max(0, newRow);
                     this.currentEditingBlock.baselineOffset = newBaselineOffset;
                     
                     // Обновляем отображение с правильным значением
-                    const correctedGlobalBaseline = this.rowBaselineToY(this.currentEditingBlock.row, this.currentEditingBlock.baselineOffset);
+                    const correctedGlobalBaseline = this.rowBaselineToY(this.currentEditingBlock.row, this.currentEditingBlock.baselineOffset, surface);
                     this.dom.paragraphBaselineInput.value = correctedGlobalBaseline + 1;
                     this.dom.paragraphRowInput.value = this.currentEditingBlock.row + 1;
                     this.updateGrid();
@@ -3041,6 +3207,7 @@ class GridGenerator {
                 if (this.currentEditingBlock) {
                     const newWidth = parseFloat(this.dom.paragraphWidthInput.value);
                     const alignment = this.currentEditingBlock.alignment || 'left';
+                    const { columnCount } = this.getSurfaceGridContext(this.currentEditingBlock.surface || 'front');
                     
                     // Округляем до ближайшего кратного 0.25
                     const roundedWidth = Math.round(newWidth * 4) / 4;
@@ -3052,7 +3219,7 @@ class GridGenerator {
                         maxWidth = this.currentEditingBlock.x;
                     } else {
                         // For left-aligned: max width = columns available to the right
-                        maxWidth = this.settings.columnCount - this.currentEditingBlock.x + 1;
+                        maxWidth = columnCount - this.currentEditingBlock.x + 1;
                     }
                     
                     this.currentEditingBlock.width = Math.max(0.25, Math.min(roundedWidth, maxWidth));
@@ -3153,9 +3320,12 @@ class GridGenerator {
         if (this.dom.paragraphSurfaceSelect) {
             this.dom.paragraphSurfaceSelect.addEventListener('change', () => {
                 if (this.currentEditingBlock) {
-                    this.currentEditingBlock.surface = this.dom.paragraphSurfaceSelect.value;
+                    this.historyManager.beginAction('move text to surface', this.getStateSnapshot());
+                    this.moveBlockToSurface(this.currentEditingBlock, this.dom.paragraphSurfaceSelect.value);
+                    this.markAsChanged();
                     this.updateElementsNavigator();
                     this.updateGrid();
+                    this.historyManager.commitAction(this.getStateSnapshot());
                 }
             });
         }
@@ -3462,38 +3632,56 @@ class GridGenerator {
     
     // Ограничить позиции элементов в пределах сетки
     constrainElementsToBounds() {
-        const totalColumns = this.settings.columnCount;
-        const totalRows = this.settings.rowCount;
-        
-        // Ограничиваем позиции текстовых блоков
-        this.textBlocks.forEach(block => {
-            if (block.lockPosition) {
-                // Ограничиваем колонку в пределах сетки
-                block.x = Math.max(1, Math.min(totalColumns, block.x));
-                
-                // Ограничиваем row в пределах сетки
-                block.row = Math.max(0, Math.min(totalRows - 1, block.row));
-                
-                // Ограничиваем baselineOffset в пределах row
-                const rowHeight = this.settings.rowHeight;
-                block.baselineOffset = Math.max(0, Math.min(rowHeight, block.baselineOffset));
+        this.textBlocks.forEach(block => this.constrainBlockToSurface(block, 'text'));
+        (this.graphicsBlocks || []).forEach(block => this.constrainBlockToSurface(block, 'graphics'));
+    }
+
+    constrainBlockToSurface(block, type) {
+        if (!block || !block.lockPosition) return;
+        const surface = block.surface || 'front';
+        const context = this.getSurfaceGridContext(surface);
+        const module = context.gridModule;
+        const margins = context.margins;
+        const columnCount = context.columnCount;
+        const rowHeight = context.rowHeight;
+        const contentHeightMm = Math.max(module, context.frontHeight - 2 * margins * module);
+        const maxYInBaseline = Math.max(1, Math.floor(contentHeightMm / module + 1e-9));
+
+        block.surface = surface;
+        block.baselineOffset = Math.max(0, Math.min(rowHeight, Number(block.baselineOffset) || 0));
+
+        if (type === 'text') {
+            block.width = Math.max(0.25, Math.min(Number(block.width) || 1, columnCount));
+            const alignment = block.alignment || 'left';
+            const minX = alignment === 'right' ? Math.ceil(block.width) : 1;
+            const maxX = alignment === 'right'
+                ? columnCount
+                : Math.max(1, columnCount - block.width + 1);
+            block.x = Math.max(minX, Math.min(Number(block.x) || 1, maxX));
+        } else {
+            const columnWidth = Math.max(
+                module * 0.1,
+                (context.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount
+            );
+            let widthInColumns = Number(block.widthInColumns) || 1;
+            if (block.sizeMode !== 'width') {
+                const aspectRatio = block.originalWidth && block.originalHeight
+                    ? block.originalWidth / block.originalHeight
+                    : 1;
+                const widthInMm = module * (Number(block.heightInModules) || 3) * aspectRatio;
+                widthInColumns = Math.max(1, (widthInMm + module) / (columnWidth + module));
             }
-        });
-        
-        // Ограничиваем позиции графических блоков
-        this.graphicsBlocks.forEach(block => {
-            if (block.lockPosition) {
-                // Ограничиваем колонку в пределах сетки
-                block.x = Math.max(1, Math.min(totalColumns, block.x));
-                
-                // Ограничиваем row в пределах сетки
-                block.row = Math.max(0, Math.min(totalRows - 1, block.row));
-                
-                // Ограничиваем baselineOffset в пределах row
-                const rowHeight = this.settings.rowHeight;
-                block.baselineOffset = Math.max(0, Math.min(rowHeight, block.baselineOffset));
-            }
-        });
+            const maxX = Math.max(1, Math.floor(columnCount - widthInColumns) + 1);
+            block.x = Math.max(1, Math.min(Number(block.x) || 1, maxX));
+        }
+
+        const elementHeight = type === 'graphics' ? Number(block.heightInModules) || 3 : 1;
+        const maxY = Math.max(0, maxYInBaseline - elementHeight);
+        const currentY = this.getBlockY(block);
+        const constrainedY = Math.max(0, Math.min(currentY, maxY));
+        const rowPosition = this.yToRowBaseline(constrainedY, surface);
+        block.row = Math.max(0, Math.min(context.rowCount - 1, rowPosition.row));
+        block.baselineOffset = Math.max(0, Math.min(rowHeight, rowPosition.baselineOffset));
     }
     
     // Инициализация панели настроек иконок
@@ -4173,14 +4361,15 @@ class GridGenerator {
                     shiftStep: 5,
                     decimals: 0,
                     applyConstraints: (value) => {
-                        const maxColumns = this.settings.columnCount;
-                        const module = this.settings.gridModule;
-                        const margins = this.settings.margins;
+                        const context = this.getSurfaceGridContext(block.surface || 'front');
+                        const maxColumns = context.columnCount;
+                        const module = context.gridModule;
+                        const margins = context.margins;
                         const heightInMm = module * block.heightInModules;
                         const aspectRatio = block.originalWidth / block.originalHeight;
                         const widthInMm = heightInMm * aspectRatio;
                         
-                        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (maxColumns - 1)) / maxColumns;
+                        const columnWidth = (context.frontWidth - module * margins * 2 - module * (maxColumns - 1)) / maxColumns;
                         const gutter = module;
                         const graphicsWidthInColumns = Math.ceil(widthInMm / (columnWidth + gutter));
                         const maxX = Math.max(1, maxColumns - graphicsWidthInColumns + 1);
@@ -4197,15 +4386,16 @@ class GridGenerator {
                     applyConstraints: (value) => {
                         // Convert from 1-based display value to 0-based internal value
                         const row0based = value - 1;
+                        const context = this.getSurfaceGridContext(block.surface || 'front');
                         
-                        const module = this.settings.gridModule;
-                        const margins = this.settings.margins;
-                        const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+                        const module = context.gridModule;
+                        const margins = context.margins;
+                        const contentHeightMm = context.frontHeight - 2 * margins * module;
                         const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                         const graphicsHeightModules = block.heightInModules;
                         const maxY = maxYInBaseline - graphicsHeightModules;
                         
-                        const rowHeight = this.settings.rowHeight;
+                        const rowHeight = context.rowHeight;
                         const yPos = row0based * (rowHeight + 1); // baselineOffset сбрасывается в 0
                         const constrainedY = Math.max(0, Math.min(yPos, maxY));
                         
@@ -4217,7 +4407,7 @@ class GridGenerator {
                         // Сбрасываем baselineOffset в 0 при изменении row
                         block.baselineOffset = 0;
                         if (this.dom.graphicsBaselineInput) {
-                            const globalBaseline = this.rowBaselineToY(finalRow, 0);
+                            const globalBaseline = this.rowBaselineToY(finalRow, 0, block.surface || 'front');
                             this.dom.graphicsBaselineInput.value = globalBaseline + 1;
                         }
                         
@@ -4234,18 +4424,19 @@ class GridGenerator {
                     applyConstraints: (value) => {
                         // Convert from 1-based display value to 0-based internal value
                         const baseline0based = value - 1;
+                        const surface = block.surface || 'front';
+                        const context = this.getSurfaceGridContext(surface);
                         
-                        const module = this.settings.gridModule;
-                        const margins = this.settings.margins;
-                        const rowHeight = this.settings.rowHeight;
-                        const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+                        const module = context.gridModule;
+                        const margins = context.margins;
+                        const contentHeightMm = context.frontHeight - 2 * margins * module;
                         const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                         const graphicsHeightModules = block.heightInModules;
                         const maxY = maxYInBaseline - graphicsHeightModules;
                         
                         // Constrain the value directly
                         const constrainedY = Math.max(0, Math.min(Math.round(baseline0based), maxY));
-                        const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
+                        const { row, baselineOffset } = this.yToRowBaseline(constrainedY, surface);
                         
                         // Update row and baselineOffset
                         block.row = Math.max(0, row);
@@ -4265,16 +4456,18 @@ class GridGenerator {
                     shiftStep: 1,
                     decimals: 2,
                     applyConstraints: (value) => {
-                        const maxColumns = this.settings.columnCount;
+                        const surface = block.surface || 'front';
+                        const context = this.getSurfaceGridContext(surface);
+                        const maxColumns = context.columnCount;
                         
                         // Constrain to available columns
                         const constrainedValue = Math.max(0.25, Math.min(value, maxColumns));
                         
                         // Recalculate height to maintain aspect ratio
                         const aspectRatio = block.originalWidth / block.originalHeight;
-                        const widthInMm = this.columnsToMm(constrainedValue);
+                        const widthInMm = this.columnsToMm(constrainedValue, surface);
                         const heightInMm = widthInMm / aspectRatio;
-                        const module = this.settings.gridModule;
+                        const module = context.gridModule;
                         const heightInModules = heightInMm / module;
                         
                         // Update height
@@ -4286,21 +4479,21 @@ class GridGenerator {
                         }
                         
                         // After changing height, recheck vertical position constraints
-                        const margins = this.settings.margins;
-                        const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+                        const margins = context.margins;
+                        const contentHeightMm = context.frontHeight - 2 * margins * module;
                         const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                         const maxY = maxYInBaseline - heightInModules;
                         
                         const currentY = this.getBlockY(block);
                         if (currentY > maxY) {
                             const adjustedY = Math.max(0, maxY);
-                            const { row, baselineOffset } = this.yToRowBaseline(adjustedY);
+                            const { row, baselineOffset } = this.yToRowBaseline(adjustedY, surface);
                             block.row = row;
                             block.baselineOffset = baselineOffset;
                             
                             if (this.dom.graphicsRowInput) this.dom.graphicsRowInput.value = row + 1;
                             if (this.dom.graphicsBaselineInput) {
-                                const globalBaseline = this.rowBaselineToY(row, baselineOffset);
+                                const globalBaseline = this.rowBaselineToY(row, baselineOffset, surface);
                                 this.dom.graphicsBaselineInput.value = globalBaseline + 1;
                             }
                         }
@@ -4315,8 +4508,10 @@ class GridGenerator {
                     shiftStep: 1,
                     decimals: 2,
                     applyConstraints: (value) => {
-                        const module = this.settings.gridModule;
-                        const margins = this.settings.margins;
+                        const surface = block.surface || 'front';
+                        const context = this.getSurfaceGridContext(surface);
+                        const module = context.gridModule;
+                        const margins = context.margins;
                         
                         // Max height: 20 modules
                         const maxValue = 20;
@@ -4326,7 +4521,7 @@ class GridGenerator {
                         const aspectRatio = block.originalWidth / block.originalHeight;
                         const heightInMm = constrainedValue * module;
                         const widthInMm = heightInMm * aspectRatio;
-                        const widthInColumns = this.mmToColumns(widthInMm);
+                        const widthInColumns = this.mmToColumns(widthInMm, surface);
                         
                         // Update width
                         block.widthInColumns = parseFloat(widthInColumns.toFixed(2));
@@ -4337,20 +4532,20 @@ class GridGenerator {
                         }
                         
                         // After changing height, recheck vertical position constraints
-                        const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+                        const contentHeightMm = context.frontHeight - 2 * margins * module;
                         const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
                         const maxY = maxYInBaseline - constrainedValue;
                         
                         const currentY = this.getBlockY(block);
                         if (currentY > maxY) {
                             const adjustedY = Math.max(0, maxY);
-                            const { row, baselineOffset } = this.yToRowBaseline(adjustedY);
+                            const { row, baselineOffset } = this.yToRowBaseline(adjustedY, surface);
                             block.row = row;
                             block.baselineOffset = baselineOffset;
                             
                             if (this.dom.graphicsRowInput) this.dom.graphicsRowInput.value = row + 1;
                             if (this.dom.graphicsBaselineInput) {
-                                const globalBaseline = this.rowBaselineToY(row, baselineOffset);
+                                const globalBaseline = this.rowBaselineToY(row, baselineOffset, surface);
                                 this.dom.graphicsBaselineInput.value = globalBaseline + 1;
                             }
                         }
@@ -4388,7 +4583,7 @@ class GridGenerator {
                     let value = parseFloat(newInput.value);
                     if (isNaN(value)) {
                         value = propName === 'baseline' 
-                            ? (this.rowBaselineToY(block.row, block.baselineOffset) + 1)
+                            ? (this.rowBaselineToY(block.row, block.baselineOffset, block.surface || 'front') + 1)
                             : block[propName];
                     }
                     
@@ -4424,8 +4619,7 @@ class GridGenerator {
                         // Restore original value
                         const originalValue = parseFloat(newInput.dataset.originalValue);
                         if (propName === 'baseline') {
-                            const rowHeight = this.settings.rowHeight;
-                            const { row, baselineOffset } = this.yToRowBaseline(originalValue - 1);
+                            const { row, baselineOffset } = this.yToRowBaseline(originalValue - 1, block.surface || 'front');
                             block.row = row;
                             block.baselineOffset = baselineOffset;
                         } else {
@@ -4440,7 +4634,7 @@ class GridGenerator {
                         let currentValue = parseFloat(newInput.value);
                         if (isNaN(currentValue)) {
                             currentValue = propName === 'baseline' 
-                                ? (this.rowBaselineToY(block.row, block.baselineOffset) + 1)
+                                ? (this.rowBaselineToY(block.row, block.baselineOffset, block.surface || 'front') + 1)
                                 : block[propName];
                         }
                         
@@ -4500,6 +4694,8 @@ class GridGenerator {
         if (!this.currentEditingBlock) return;
         
         e.preventDefault();
+        const surface = this.currentEditingBlock.surface || 'front';
+        const context = this.getSurfaceGridContext(surface);
         
         // Для width используем шаг 0.25
         const baseStep = property === 'width' ? 0.25 : 1;
@@ -4519,7 +4715,7 @@ class GridGenerator {
         // Применяем ограничения в зависимости от поля
         if (property === 'x') {
             // Ограничиваем X: минимум 1, максимум columnCount
-            newValue = Math.max(1, Math.min(newValue, this.settings.columnCount));
+            newValue = Math.max(1, Math.min(newValue, context.columnCount));
             
             // Устанавливаем новое значение X
             this.currentEditingBlock.x = newValue;
@@ -4527,21 +4723,21 @@ class GridGenerator {
             
             // Корректируем width если блок выходит за пределы
             // x начинается с 1, поэтому последняя занятая колонка = x + width - 1
-            if (this.currentEditingBlock.x + this.currentEditingBlock.width - 1 > this.settings.columnCount) {
-                this.currentEditingBlock.width = Math.max(0.25, this.settings.columnCount - this.currentEditingBlock.x + 1);
+            if (this.currentEditingBlock.x + this.currentEditingBlock.width - 1 > context.columnCount) {
+                this.currentEditingBlock.width = Math.max(0.25, context.columnCount - this.currentEditingBlock.x + 1);
                 this.dom.paragraphWidthInput.value = this.currentEditingBlock.width.toFixed(2);
             }
         } else if (property === 'row') {
             // Calculate max allowed row based on content height and text block height
-            const module = this.settings.gridModule;
-            const margins = this.settings.margins;
-            const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
+            const module = context.gridModule;
+            const margins = context.margins;
+            const contentHeightMm = context.frontHeight - 2 * margins * module;
             const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
             // Ограничиваем по стартовой позиции первой строки
             const maxY = maxYInBaseline - 1;
             
             // Calculate Y position from row (baselineOffset всегда сбрасывается в 0)
-            const rowHeight = this.settings.rowHeight;
+            const rowHeight = context.rowHeight;
             const yPos = newValue * (rowHeight + 1);
             
             // Constrain Y
@@ -4558,11 +4754,11 @@ class GridGenerator {
             
             // Update baseline input if needed
             if (this.dom.paragraphBaselineInput) {
-                const globalBaseline = this.rowBaselineToY(this.currentEditingBlock.row, this.currentEditingBlock.baselineOffset);
+                const globalBaseline = this.rowBaselineToY(this.currentEditingBlock.row, this.currentEditingBlock.baselineOffset, surface);
                 this.dom.paragraphBaselineInput.value = globalBaseline + 1;
             }
         } else if (property === 'width') {
-            const maxWidth = this.settings.columnCount;
+            const maxWidth = context.columnCount;
             // Округляем до ближайшего кратного 0.25
             newValue = Math.round(newValue * 4) / 4;
             newValue = Math.max(0.25, Math.min(newValue, maxWidth));
@@ -4570,7 +4766,7 @@ class GridGenerator {
             this.dom[inputId].value = newValue.toFixed(2);
             
             // Корректируем X если блок вышел за пределы
-            const maxX = this.settings.columnCount - this.currentEditingBlock.width;
+            const maxX = context.columnCount - this.currentEditingBlock.width;
             if (this.currentEditingBlock.x > maxX) {
                 this.currentEditingBlock.x = Math.max(1, Math.floor(maxX + 1));
             }
@@ -4626,7 +4822,7 @@ class GridGenerator {
         }
         if (this.dom.paragraphBaselineInput) {
             // Показываем глобальный номер baseline на всей сетке (с учетом гутеров между rows)
-            const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
+            const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset, block.surface || 'front');
             this.dom.paragraphBaselineInput.value = globalBaseline + 1;
         }
         if (this.dom.paragraphWidthInput) {
@@ -4865,6 +5061,20 @@ class GridGenerator {
     
     // Initialize Graphics Panel
     initGraphicsPanel() {
+        if (this.dom.graphicsSurfaceSelect) {
+            this.dom.graphicsSurfaceSelect.addEventListener('change', () => {
+                const block = this.getGraphicsBlock(this.currentEditingGraphicsId);
+                if (!block) return;
+                this.historyManager.beginAction('move graphics to surface', this.getStateSnapshot());
+                this.moveBlockToSurface(block, this.dom.graphicsSurfaceSelect.value);
+                this.initGraphicsInputsWithArrows();
+                this.markAsChanged();
+                this.updateElementsNavigator();
+                this.updateGrid();
+                this.historyManager.commitAction(this.getStateSnapshot());
+            });
+        }
+
         // File upload area click handler
         if (this.dom.fileUploadArea) {
             this.dom.fileUploadArea.addEventListener('click', () => {
@@ -6270,75 +6480,8 @@ class GridGenerator {
     
     // Функция для ограничения всех объектов в пределах сетки
     constrainAllObjectsToGrid() {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const maxColumns = this.settings.columnCount;
-        const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-        const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
-        const rowHeight = this.settings.rowHeight;
-        
-        // Ограничение текстовых блоков
-        this.textBlocks.forEach(block => {
-            // Горизонтальные ограничения
-            // Клампируем позицию X: максимум columnCount - 1 (чтобы width был минимум 1)
-            if (block.x > maxColumns - 1) {
-                block.x = maxColumns - 1;
-            }
-            
-            // Клампируем ширину если она превышает количество колонок
-            if (block.width > maxColumns) {
-                block.width = maxColumns;
-            }
-            
-            // Клампируем позицию + ширину чтобы блок не выходил за пределы
-            if (block.x + block.width > maxColumns) {
-                block.width = Math.max(1, maxColumns - block.x);
-            }
-            
-            // Вертикальные ограничения: первая строка блока должна быть в пределах контентной области
-            const maxY = maxYInBaseline - 1;
-            const currentY = this.getBlockY(block);
-            
-            if (currentY > maxY) {
-                // Корректируем позицию если блок вышел за пределы
-                const constrainedY = Math.max(0, maxY);
-                const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
-                block.row = Math.max(0, row);
-                block.baselineOffset = baselineOffset;
-            }
-        });
-        
-        // Ограничение графических блоков (icons, claim, custom graphics)
-        if (this.graphicsBlocks) {
-            this.graphicsBlocks.forEach(block => {
-                // Вертикальные ограничения
-                const graphicsHeightModules = block.heightInModules || 3;
-                const maxY = maxYInBaseline - graphicsHeightModules;
-                const currentY = this.getBlockY(block);
-                
-                if (currentY > maxY) {
-                    const constrainedY = Math.max(0, maxY);
-                    const { row, baselineOffset } = this.yToRowBaseline(constrainedY);
-                    block.row = Math.max(0, row);
-                    block.baselineOffset = baselineOffset;
-                }
-                
-                // Горизонтальные ограничения
-                const heightInMm = module * graphicsHeightModules;
-                const aspectRatio = (block.originalWidth && block.originalHeight) 
-                    ? block.originalWidth / block.originalHeight 
-                    : 1;
-                const widthInMm = heightInMm * aspectRatio;
-                const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (maxColumns - 1)) / maxColumns;
-                const gutter = module;
-                const widthInColumns = Math.ceil(widthInMm / (columnWidth + gutter));
-                const maxX = Math.max(1, maxColumns - widthInColumns + 1);
-                
-                if (block.x > maxX) {
-                    block.x = maxX;
-                }
-            });
-        }
+        this.textBlocks.forEach(block => this.constrainBlockToSurface(block, 'text'));
+        (this.graphicsBlocks || []).forEach(block => this.constrainBlockToSurface(block, 'graphics'));
     }
     
     // Обратная совместимость - alias для старого названия
@@ -6426,18 +6569,30 @@ class GridGenerator {
         }
         return blockIdOrBlock?.isBuiltIn === true;
     }
+
+    getSurfaceGridContext(surface = 'front') {
+        const layout = {
+            x: 0,
+            y: 0,
+            frontWidth: this.settings.frontWidth,
+            frontHeight: this.settings.frontHeight,
+            thickness: this.settings.thickness
+        };
+        const geometry = this.surfaceManager.getGeometry(surface, layout);
+        return this.surfaceManager.getGridContext(surface, geometry.localWidth, geometry.localHeight);
+    }
     
     // Конвертировать Row + BaselineOffset в Y (позиция в baseline модулях)
-    rowBaselineToY(row, baselineOffset) {
-        const rowHeight = this.settings.rowHeight;
+    rowBaselineToY(row, baselineOffset, surface = 'front') {
+        const rowHeight = this.getSurfaceGridContext(surface).rowHeight;
         // Формула: row * (rowHeight + 1) + baselineOffset
         // +1 это gutter между rows (1 модуль baseline)
         return row * (rowHeight + 1) + baselineOffset;
     }
     
     // Конвертировать Y (позиция в baseline модулях) в Row + BaselineOffset
-    yToRowBaseline(y) {
-        const rowHeight = this.settings.rowHeight;
+    yToRowBaseline(y, surface = 'front') {
+        const rowHeight = this.getSurfaceGridContext(surface).rowHeight;
         const rowWithGutter = rowHeight + 1;
         
         const row = Math.floor(y / rowWithGutter);
@@ -6448,7 +6603,7 @@ class GridGenerator {
     
     // Получить Y позицию блока в baseline модулях
     getBlockY(block) {
-        return this.rowBaselineToY(block.row, block.baselineOffset);
+        return this.rowBaselineToY(block.row, block.baselineOffset, block.surface || 'front');
     }
     
     /**
@@ -6466,32 +6621,111 @@ class GridGenerator {
         }
         return 1;
     }
-    
-    // Конвертировать колонки в мм
-    columnsToMm(columns) {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (this.settings.columnCount - 1)) / this.settings.columnCount;
-        const gutter = module;
-        
-        // Ширина в мм = (количество колонок * ширина колонки) + (количество промежутков * промежуток)
-        // Количество промежутков = количество колонок - 1
-        return columns * columnWidth + (columns - 1) * gutter;
+
+    clientToSvgPoint(clientX, clientY) {
+        const svg = this.dom.svg;
+        const matrix = svg?.getScreenCTM();
+        if (!svg || !matrix) return null;
+        let screenX = clientX;
+        let screenY = clientY;
+        const rotation = this.zoomPanManager?.rotation || 0;
+
+        // Safari and Chromium differ on whether getScreenCTM() includes a CSS
+        // transform applied to the root SVG. If it is absent from the matrix,
+        // undo the view-only rotation before converting to SVG coordinates.
+        const offDiagonal = Math.abs(matrix.b) + Math.abs(matrix.c);
+        const diagonal = Math.abs(matrix.a) + Math.abs(matrix.d);
+        const matrixIncludesRotation = rotation === 90 || rotation === 270
+            ? offDiagonal > diagonal
+            : rotation === 180
+                ? matrix.a < 0 && matrix.d < 0
+                : true;
+        if (rotation !== 0 && !matrixIncludesRotation) {
+            const bounds = svg.getBoundingClientRect();
+            const centerX = bounds.left + bounds.width / 2;
+            const centerY = bounds.top + bounds.height / 2;
+            const angle = -rotation * Math.PI / 180;
+            const dx = clientX - centerX;
+            const dy = clientY - centerY;
+            screenX = centerX + dx * Math.cos(angle) - dy * Math.sin(angle);
+            screenY = centerY + dx * Math.sin(angle) + dy * Math.cos(angle);
+        }
+        const point = svg.createSVGPoint();
+        point.x = screenX;
+        point.y = screenY;
+        try {
+            const result = point.matrixTransform(matrix.inverse());
+            return { x: result.x, y: result.y };
+        } catch (error) {
+            return null;
+        }
     }
-    
-    // Конвертировать мм в колонки
-    mmToColumns(widthMm) {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (this.settings.columnCount - 1)) / this.settings.columnCount;
-        const gutter = module;
-        
-        // Решаем уравнение: widthMm = columns * columnWidth + (columns - 1) * gutter
-        // widthMm = columns * columnWidth + columns * gutter - gutter
-        // widthMm = columns * (columnWidth + gutter) - gutter
-        // widthMm + gutter = columns * (columnWidth + gutter)
-        // columns = (widthMm + gutter) / (columnWidth + gutter)
-        return (widthMm + gutter) / (columnWidth + gutter);
+
+    getSurfacePointer(clientX, clientY) {
+        if (!this.currentSurfaceLayout) return null;
+        const point = this.clientToSvgPoint(clientX, clientY);
+        if (!point) return null;
+        const surface = this.surfaceManager.surfaceAtPoint(point, this.currentSurfaceLayout);
+        if (!surface) return null;
+        const local = this.surfaceManager.globalToLocal(surface, point, this.currentSurfaceLayout);
+        const scale = this.currentSurfaceLayout.scale || 1;
+        return {
+            point,
+            surface,
+            local: { x: local.x / scale, y: local.y / scale },
+            context: this.getSurfaceGridContext(surface)
+        };
+    }
+
+    getBlockPointerOffset(block, clientX, clientY) {
+        const pointer = this.getSurfacePointer(clientX, clientY);
+        if (!pointer || pointer.surface !== (block.surface || 'front')) return { x: 0, y: 0 };
+        const context = pointer.context;
+        const position = this.calculateBlockPosition(block, 1);
+        return {
+            x: pointer.local.x - position.x,
+            y: pointer.local.y - (position.y + context.gridModule * context.margins)
+        };
+    }
+
+    positionBlockAtPointer(block, clientX, clientY, type, offset = { x: 0, y: 0 }) {
+        const pointer = this.getSurfacePointer(clientX, clientY);
+        if (!pointer) return false;
+        const { context, surface } = pointer;
+        const module = context.gridModule;
+        const margin = module * context.margins;
+        const columnWidth = Math.max(
+            module * 0.1,
+            (context.frontWidth - 2 * margin - (context.columnCount - 1) * module) / context.columnCount
+        );
+        const localX = pointer.local.x - offset.x;
+        const localY = pointer.local.y - offset.y;
+
+        block.surface = surface;
+        block.x = Math.round((localX - margin) / (columnWidth + module)) + 1;
+        const yInBaseline = Math.round((localY - margin) / module);
+        const rowPosition = this.yToRowBaseline(Math.max(0, yInBaseline), surface);
+        block.row = rowPosition.row;
+        block.baselineOffset = rowPosition.baselineOffset;
+        this.constrainBlockToSurface(block, type);
+
+        if (type === 'text' && this.currentEditingBlock?.id === block.id) {
+            if (this.dom.paragraphSurfaceSelect) this.dom.paragraphSurfaceSelect.value = surface;
+            if (this.dom.paragraphXInput) this.dom.paragraphXInput.value = Math.round(block.x);
+            if (this.dom.paragraphRowInput) this.dom.paragraphRowInput.value = block.row + 1;
+            if (this.dom.paragraphBaselineInput) {
+                this.dom.paragraphBaselineInput.value = this.rowBaselineToY(block.row, block.baselineOffset, surface) + 1;
+            }
+        }
+        if (type === 'graphics' && this.currentEditingGraphicsId === block.id) {
+            if (this.dom.graphicsSurfaceSelect) this.dom.graphicsSurfaceSelect.value = surface;
+            if (this.dom.graphicsXInput) this.dom.graphicsXInput.value = Math.round(block.x);
+            if (this.dom.graphicsRowInput) this.dom.graphicsRowInput.value = block.row + 1;
+            if (this.dom.graphicsBaselineInput) {
+                this.dom.graphicsBaselineInput.value = this.rowBaselineToY(block.row, block.baselineOffset, surface) + 1;
+            }
+        }
+        return true;
     }
     
     // Get font metrics for a specific style
@@ -6791,13 +7025,14 @@ class GridGenerator {
     
     // Calculate text block width in mm based on columns
     calculateBlockWidth(block) {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const columnCount = this.settings.columnCount;
+        const context = this.getSurfaceGridContext(block.surface || 'front');
+        const module = context.gridModule;
+        const margins = context.margins;
+        const columnCount = context.columnCount;
         const widthInColumns = block.width;
         
         // Calculate column width (same formula as in drawColumns)
-        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
+        const columnWidth = (context.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
         
         // Text width = column width × number of columns + gutters between them
         const textWidth = columnWidth * widthInColumns + module * (widthInColumns - 1);
@@ -6806,21 +7041,23 @@ class GridGenerator {
     }
     
     // Конвертировать колонки в мм
-    columnsToMm(columns) {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (this.settings.columnCount - 1)) / this.settings.columnCount;
+    columnsToMm(columns, surface = 'front') {
+        const context = this.getSurfaceGridContext(surface);
+        const module = context.gridModule;
+        const margins = context.margins;
+        const columnWidth = (context.frontWidth - module * margins * 2 - module * (context.columnCount - 1)) / context.columnCount;
         const gutter = module;
         return columnWidth * columns + gutter * (columns - 1);
     }
     
     // Конвертировать мм в колонки
-    mmToColumns(widthMm) {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (this.settings.columnCount - 1)) / this.settings.columnCount;
+    mmToColumns(widthMm, surface = 'front') {
+        const context = this.getSurfaceGridContext(surface);
+        const module = context.gridModule;
+        const margins = context.margins;
+        const columnWidth = (context.frontWidth - module * margins * 2 - module * (context.columnCount - 1)) / context.columnCount;
         const gutter = module;
-        return widthMm / (columnWidth + gutter);
+        return (widthMm + gutter) / (columnWidth + gutter);
     }
     
     // Пересчитать ширину графического блока из высоты (для нормализации при загрузке пресетов)
@@ -6831,21 +7068,23 @@ class GridGenerator {
             return;
         }
         
-        const module = this.settings.gridModule;
+        const context = this.getSurfaceGridContext(block.surface || 'front');
+        const module = context.gridModule;
         const aspectRatio = block.originalWidth / block.originalHeight;
         const heightInMm = module * (block.heightInModules || 3);
         const widthInMm = heightInMm * aspectRatio;
-        block.widthInColumns = parseFloat(this.mmToColumns(widthInMm).toFixed(2));
+        block.widthInColumns = parseFloat(this.mmToColumns(widthInMm, block.surface || 'front').toFixed(2));
     }
     
     // Calculate text block position in mm
     calculateBlockPosition(block, scale = 1) {
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const columnCount = this.settings.columnCount;
+        const context = this.getSurfaceGridContext(block.surface || 'front');
+        const module = context.gridModule;
+        const margins = context.margins;
+        const columnCount = context.columnCount;
         
         // Calculate column width
-        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
+        const columnWidth = (context.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
         const gutter = module;
         
         // Position based on column and row
@@ -7406,7 +7645,6 @@ class GridGenerator {
     // Attach resize handle for text block width
     attachResizeHandle(handle, block, frontX, frontY, scale) {
         let isResizing = false;
-        let startX = 0;
         let startWidth = 0;
         
         handle.addEventListener('mousedown', (e) => {
@@ -7418,8 +7656,8 @@ class GridGenerator {
             this.historyManager.beginAction('resize text block', this.getStateSnapshot());
             
             isResizing = true;
-            startX = e.clientX;
             startWidth = block.width || 1;
+            const startPointer = this.getSurfacePointer(e.clientX, e.clientY);
             
             // Show handle during resize
             handle.setAttribute('fill-opacity', '0.3');
@@ -7430,18 +7668,19 @@ class GridGenerator {
                 moveEvent.stopPropagation();
                 moveEvent.preventDefault();
                 
-                // Конвертируем экранные пиксели в SVG-координаты с учётом зума
-                const screenToSvg = this.getScreenToSvgScale();
-                const dx = (moveEvent.clientX - startX) * screenToSvg;
-                const module = this.settings.gridModule;
-                const margins = this.settings.margins;
-                const columnCount = this.settings.columnCount;
-                const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
+                const currentPointer = this.getSurfacePointer(moveEvent.clientX, moveEvent.clientY);
+                const surface = block.surface || 'front';
+                if (!startPointer || !currentPointer || currentPointer.surface !== surface) return;
+                const dx = currentPointer.local.x - startPointer.local.x;
+                const context = this.getSurfaceGridContext(surface);
+                const module = context.gridModule;
+                const margins = context.margins;
+                const columnCount = context.columnCount;
+                const columnWidth = (context.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
                 const gutter = module;
                 
                 // Convert pixel movement to columns
-                const effectiveScale = scale;
-                const columnWithGutter = (columnWidth + gutter) * effectiveScale;
+                const columnWithGutter = columnWidth + gutter;
                 
                 // For right-aligned text, handle is on the left, so invert the delta
                 const alignment = block.alignment || 'left';
@@ -7711,6 +7950,7 @@ class GridGenerator {
             this.textDragState.frontY = frontY;
             this.textDragState.scale = scale;
             this.textDragState.duplicated = false; // Флаг для отслеживания, была ли создана копия
+            this.textDragState.pointerOffset = this.getBlockPointerOffset(block, e.clientX, e.clientY);
             
             // Show bounds during drag
             if (graphicsGroup.boundsElement) {
@@ -7747,65 +7987,14 @@ class GridGenerator {
                 // Get the current block being dragged (might be different if duplicated)
                 const currentBlock = this.getGraphicsBlock(this.textDragState.blockId);
                 if (!currentBlock) return;
-                
-                // Конвертируем экранные пиксели в SVG-координаты с учётом зума
-                const screenToSvg = this.getScreenToSvgScale();
-                const dx = (e.clientX - this.textDragState.startMouseX) * screenToSvg;
-                const dy = (e.clientY - this.textDragState.startMouseY) * screenToSvg;
-                
-                const module = this.settings.gridModule;
-                const margins = this.settings.margins;
-                const columnCount = this.settings.columnCount;
-                
-                // Calculate column width
-                const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
-                const gutter = module;
-                
-                // Convert pixel movement to grid units
-                const effectiveScale = scale;
-                const columnWithGutter = (columnWidth + gutter) * effectiveScale;
-                const moduleScaled = module * effectiveScale;
-                
-                let newX = Math.round((this.textDragState.startBlockX * columnWithGutter + dx) / columnWithGutter);
-                let newY = Math.round((this.textDragState.startBlockY * moduleScaled + dy) / moduleScaled);
-                
-                // Calculate graphics width considering aspect ratio
-                const heightInMm = module * currentBlock.heightInModules;
-                const aspectRatio = currentBlock.originalWidth / currentBlock.originalHeight;
-                const widthInMm = heightInMm * aspectRatio;
-                const widthInColumns = widthInMm / (columnWidth + gutter);
-                
-                // Constrain within grid boundaries only if lockPosition is enabled
-                if (currentBlock.lockPosition) {
-                    const minX = 1;
-                    const maxX = Math.max(1, Math.floor(columnCount - widthInColumns) + 1);
-                    newX = Math.max(minX, Math.min(maxX, newX));
-                    
-                    // Constrain Y: минимум 0 (не выходим за верхний margin)
-                    newY = Math.max(0, newY);
-                }
-                
-                // Convert Y from baseline grid to row and baseline offset
-                const { row, baselineOffset } = this.yToRowBaseline(newY);
-                
-                currentBlock.x = newX;
-                if (currentBlock.lockPosition) {
-                    currentBlock.row = Math.max(0, row);
-                    currentBlock.baselineOffset = Math.max(0, baselineOffset);
-                } else {
-                    currentBlock.row = row;
-                    currentBlock.baselineOffset = baselineOffset;
-                }
-                
-                // Update panel inputs if open
-                if (this.dom.graphicsPanel && this.dom.graphicsPanel.classList.contains('active')) {
-                    if (this.dom.graphicsXInput) this.dom.graphicsXInput.value = currentBlock.x;
-                    if (this.dom.graphicsRowInput) this.dom.graphicsRowInput.value = currentBlock.row + 1;
-                    if (this.dom.graphicsBaselineInput) {
-                        const globalBaseline = this.rowBaselineToY(currentBlock.row, currentBlock.baselineOffset);
-                        this.dom.graphicsBaselineInput.value = globalBaseline + 1;
-                    }
-                }
+
+                this.positionBlockAtPointer(
+                    currentBlock,
+                    e.clientX,
+                    e.clientY,
+                    'graphics',
+                    this.textDragState.pointerOffset
+                );
                 
                 // Перерисовываем сетку (throttled для плавности drag)
                 this.updateGridThrottled();
@@ -7818,6 +8007,7 @@ class GridGenerator {
                 }
                 
                 this.textDragState.isDragging = false;
+                this.updateGrid();
                 
                 // Check if it was a click (not a drag)
                 const timeDiff = Date.now() - mouseDownTime;
@@ -7874,11 +8064,12 @@ class GridGenerator {
         
         // Initialize widthInColumns if not set (for backward compatibility with old presets)
         if (block.widthInColumns === undefined || block.widthInColumns === null) {
-            const module = this.settings.gridModule;
+            const surface = block.surface || 'front';
+            const module = this.getSurfaceGridContext(surface).gridModule;
             const aspectRatio = block.originalWidth / block.originalHeight;
             const heightInMm = module * (block.heightInModules || 3);
             const widthInMm = heightInMm * aspectRatio;
-            block.widthInColumns = parseFloat(this.mmToColumns(widthInMm).toFixed(2));
+            block.widthInColumns = parseFloat(this.mmToColumns(widthInMm, surface).toFixed(2));
         }
         
         // Set panel title
@@ -7891,6 +8082,9 @@ class GridGenerator {
         }
         
         // Fill panel fields
+        if (this.dom.graphicsSurfaceSelect) {
+            this.dom.graphicsSurfaceSelect.value = block.surface || 'front';
+        }
         if (this.dom.graphicsXInput) {
             this.dom.graphicsXInput.value = block.x;
         }
@@ -7898,7 +8092,7 @@ class GridGenerator {
             this.dom.graphicsRowInput.value = block.row + 1;
         }
         if (this.dom.graphicsBaselineInput) {
-            const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
+            const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset, block.surface || 'front');
             this.dom.graphicsBaselineInput.value = globalBaseline + 1;
         }
         
@@ -8396,6 +8590,7 @@ class GridGenerator {
             this.textDragState.frontY = frontY;
             this.textDragState.scale = scale;
             this.textDragState.duplicated = false; // Флаг для отслеживания, была ли создана копия
+            this.textDragState.pointerOffset = this.getBlockPointerOffset(block, e.clientX, e.clientY);
             
             // Show bounds during drag
             if (iconsGroup.boundsElement) {
@@ -8427,83 +8622,13 @@ class GridGenerator {
                 const currentBlock = this.getGraphicsBlock(this.textDragState.blockId);
                 if (!currentBlock) return;
                 
-                // Конвертируем экранные пиксели в SVG-координаты с учётом зума
-                const screenToSvg = this.getScreenToSvgScale();
-                const dx = (e.clientX - this.textDragState.startMouseX) * screenToSvg;
-                const dy = (e.clientY - this.textDragState.startMouseY) * screenToSvg;
-                
-                const module = this.settings.gridModule;
-                const margins = this.settings.margins;
-                const columnCount = this.settings.columnCount;
-                
-                // Calculate column width
-                const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
-                const gutter = module;
-                
-                // Convert pixel movement to grid units
-                const effectiveScale = scale;
-                const columnWithGutter = (columnWidth + gutter) * effectiveScale;
-                const moduleScaled = module * effectiveScale;
-                
-                const newX = Math.round((this.textDragState.startBlockX * columnWithGutter + dx) / columnWithGutter);
-                let newY = Math.round((this.textDragState.startBlockY * moduleScaled + dy) / moduleScaled);
-                
-                // Calculate icon width considering aspect ratio
-                const heightInMm = module * currentBlock.heightInModules;
-                const aspectRatio = currentBlock.originalWidth / currentBlock.originalHeight;
-                const widthInMm = heightInMm * aspectRatio;
-                
-                // Calculate content area width and check if icon fits
-                const contentWidthMm = this.settings.frontWidth - 2 * margins * module;
-                
-                // Calculate position in mm and check right boundary
-                const columnWidthMm = (contentWidthMm - (columnCount - 1) * module) / columnCount;
-                // newX начинается с 1, поэтому вычитаем 1 для расчета физической позиции
-                const xPositionMm = (newX - 1) * (columnWidthMm + module);
-                const rightEdgeMm = xPositionMm + widthInMm;
-                
-                // Constrain X and Y only if lockPosition is enabled
-                let constrainedX = newX;
-                if (currentBlock.lockPosition) {
-                    // Constrain X so icon doesn't exceed right margin
-                    if (rightEdgeMm > contentWidthMm) {
-                        // Calculate max X position where icon fits
-                        const maxPositionMm = contentWidthMm - widthInMm;
-                        constrainedX = Math.floor(maxPositionMm / (columnWidthMm + module)) + 1;
-                    }
-                    constrainedX = Math.max(1, constrainedX);
-                    
-                    // Calculate content area in baseline modules
-                    const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
-                    
-                    // Constrain vertical position considering icon height
-                    const iconHeightModules = currentBlock.heightInModules;
-                    const maxY = maxYInBaseline - iconHeightModules;
-                    newY = Math.max(0, Math.min(newY, maxY));
-                }
-                
-                // Constrain to grid bounds
-                currentBlock.x = constrainedX;
-                
-                const { row, baselineOffset } = this.yToRowBaseline(newY);
-                if (currentBlock.lockPosition) {
-                    currentBlock.row = Math.max(0, row);
-                    currentBlock.baselineOffset = Math.max(0, baselineOffset);
-                } else {
-                    currentBlock.row = row;
-                    currentBlock.baselineOffset = baselineOffset;
-                }
-                
-                // Update panel inputs if open
-                if (this.dom.iconsPanel && this.dom.iconsPanel.classList.contains('active')) {
-                    if (this.dom.iconsXInput) this.dom.iconsXInput.value = currentBlock.x;
-                    if (this.dom.iconsRowInput) this.dom.iconsRowInput.value = currentBlock.row + 1;
-                    if (this.dom.iconsBaselineInput) {
-                        const globalBaseline = this.rowBaselineToY(currentBlock.row, currentBlock.baselineOffset);
-                        this.dom.iconsBaselineInput.value = globalBaseline + 1;
-                    }
-                }
+                this.positionBlockAtPointer(
+                    currentBlock,
+                    e.clientX,
+                    e.clientY,
+                    'graphics',
+                    this.textDragState.pointerOffset
+                );
                 
                 // Перерисовываем сетку (throttled для плавности drag)
                 this.updateGridThrottled();
@@ -8516,6 +8641,7 @@ class GridGenerator {
                 }
                 
                 this.textDragState.isDragging = false;
+                this.updateGrid();
                 
                 // Check if it was a click (not a drag)
                 const timeDiff = Date.now() - mouseDownTime;
@@ -8586,6 +8712,7 @@ class GridGenerator {
             this.textDragState.frontY = frontY;
             this.textDragState.scale = scale;
             this.textDragState.duplicated = false; // Флаг для отслеживания, была ли создана копия
+            this.textDragState.pointerOffset = this.getBlockPointerOffset(block, e.clientX, e.clientY);
             
             // Show bounds during drag
             if (claimGroup.boundsElement) {
@@ -8616,86 +8743,16 @@ class GridGenerator {
                 // Get the current block being dragged (might be different if duplicated)
                 const currentBlock = this.getGraphicsBlock(this.textDragState.blockId);
                 if (!currentBlock) return;
-                
-                // Конвертируем экранные пиксели в SVG-координаты с учётом зума
-                const screenToSvg = this.getScreenToSvgScale();
-                const dx = (e.clientX - this.textDragState.startMouseX) * screenToSvg;
-                const dy = (e.clientY - this.textDragState.startMouseY) * screenToSvg;
-                
-                const module = this.settings.gridModule;
-                const margins = this.settings.margins;
-                const columnCount = this.settings.columnCount;
-                
-                // Calculate column width
-                const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
-                const gutter = module;
-                
-                // Convert pixel movement to grid units
-                const effectiveScale = scale;
-                const columnWithGutter = (columnWidth + gutter) * effectiveScale;
-                const moduleScaled = module * effectiveScale;
-                
-                const newX = Math.round((this.textDragState.startBlockX * columnWithGutter + dx) / columnWithGutter);
-                let newY = Math.round((this.textDragState.startBlockY * moduleScaled + dy) / moduleScaled);
-                
-                // Calculate claim width considering aspect ratio
-                const heightInMm = module * currentBlock.heightInModules;
-                const aspectRatio = currentBlock.originalWidth / currentBlock.originalHeight;
-                const widthInMm = heightInMm * aspectRatio;
-                
-                // Calculate content area width and check if claim fits
-                const contentWidthMm = this.settings.frontWidth - 2 * margins * module;
-                
-                // Calculate position in mm and check right boundary
-                const columnWidthMm = (contentWidthMm - (columnCount - 1) * module) / columnCount;
-                // newX начинается с 1, поэтому вычитаем 1 для расчета физической позиции
-                const xPositionMm = (newX - 1) * (columnWidthMm + module);
-                const rightEdgeMm = xPositionMm + widthInMm;
-                
-                // Constrain X and Y only if lockPosition is enabled
-                let constrainedX = newX;
-                if (currentBlock.lockPosition) {
-                    // Constrain X so claim doesn't exceed right margin
-                    if (rightEdgeMm > contentWidthMm) {
-                        // Calculate max X position where claim fits
-                        const maxPositionMm = contentWidthMm - widthInMm;
-                        constrainedX = Math.floor(maxPositionMm / (columnWidthMm + module)) + 1;
-                    }
-                    constrainedX = Math.max(1, constrainedX);
-                    
-                    // Calculate content area in baseline modules
-                    const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-                    const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
-                    
-                    // Constrain vertical position considering claim height
-                    const claimHeightModules = currentBlock.heightInModules;
-                    const maxY = maxYInBaseline - claimHeightModules;
-                    newY = Math.max(0, Math.min(newY, maxY));
-                }
-                
-                // Constrain to grid bounds
-                currentBlock.x = constrainedX;
-                
-                const { row, baselineOffset } = this.yToRowBaseline(newY);
-                if (currentBlock.lockPosition) {
-                    currentBlock.row = Math.max(0, row);
-                    currentBlock.baselineOffset = Math.max(0, baselineOffset);
-                } else {
-                    currentBlock.row = row;
-                    currentBlock.baselineOffset = baselineOffset;
-                }
-                
-                // Update panel inputs if open
-                if (this.dom.claimPanel && this.dom.claimPanel.classList.contains('active')) {
-                    if (this.dom.claimXInput) this.dom.claimXInput.value = currentBlock.x;
-                    if (this.dom.claimRowInput) this.dom.claimRowInput.value = currentBlock.row + 1;
-                    if (this.dom.claimBaselineInput) {
-                        const globalBaseline = this.rowBaselineToY(currentBlock.row, currentBlock.baselineOffset);
-                        this.dom.claimBaselineInput.value = globalBaseline + 1;
-                    }
-                }
-                
-                this.updateGrid();
+
+                this.positionBlockAtPointer(
+                    currentBlock,
+                    e.clientX,
+                    e.clientY,
+                    'graphics',
+                    this.textDragState.pointerOffset
+                );
+
+                this.updateGridThrottled();
             };
             
             const mouseUpHandler = (e) => {
@@ -8705,6 +8762,7 @@ class GridGenerator {
                 }
                 
                 this.textDragState.isDragging = false;
+                this.updateGrid();
                 
                 // Check if it was a click (not a drag)
                 const timeDiff = Date.now() - mouseDownTime;
@@ -9224,11 +9282,7 @@ class GridGenerator {
                 visible: true
             };
             
-            // Ensure new position is within bounds
-            const columnCount = this.settings.columnCount;
-            if (newBlock.x > columnCount - newBlock.width + 1) {
-                newBlock.x = Math.max(1, columnCount - newBlock.width + 1);
-            }
+            this.constrainBlockToSurface(newBlock, 'text');
             
             this.textBlocks.push(newBlock);
             this.updateElementsNavigator();
@@ -9261,20 +9315,7 @@ class GridGenerator {
                 isBuiltIn: false // Duplicated graphics are always custom
             };
             
-            // Ensure new position is within bounds
-            const columnCount = this.settings.columnCount;
-            const module = this.settings.gridModule;
-            const margins = this.settings.margins;
-            const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
-            const gutter = module;
-            const heightInMm = module * newBlock.heightInModules;
-            const aspectRatio = newBlock.originalWidth / newBlock.originalHeight;
-            const widthInMm = heightInMm * aspectRatio;
-            const widthInColumns = widthInMm / (columnWidth + gutter);
-            
-            if (newBlock.x > columnCount - widthInColumns + 1) {
-                newBlock.x = Math.max(1, Math.floor(columnCount - widthInColumns) + 1);
-            }
+            this.constrainBlockToSurface(newBlock, 'graphics');
             
             this.graphicsBlocks.push(newBlock);
             this.updateElementsNavigator();
@@ -9434,6 +9475,7 @@ class GridGenerator {
             width: 3,
             alignment: 'left',
             textAlign: 'left', // Text alignment inside paragraph: 'left', 'center', 'right'
+            surface: 'front',
             showBounds: false,
             visible: true,
             alignmentMode: 'baseline' // Default alignment mode
@@ -9474,6 +9516,7 @@ class GridGenerator {
             heightInModules: 3,
             widthInColumns: 4,  // Will be recalculated based on aspect ratio
             alignment: 'left',
+            surface: 'front',
             x: 1,
             row: 0,
             baselineOffset: 0,
@@ -9951,6 +9994,7 @@ class GridGenerator {
             frontX: frontX,
             frontY: frontY,
             scale: scale,
+            pointerOffset: this.getBlockPointerOffset(block, mouseX, mouseY),
             duplicated: false // Флаг для отслеживания, была ли создана копия
         };
         
@@ -9988,85 +10032,13 @@ class GridGenerator {
         const block = this.getTextBlock(this.textDragState.blockId);
         if (!block) return;
         
-        const { startMouseX, startMouseY, startBlockX, startBlockRow, startBlockBaselineOffset, frontX, frontY, scale } = this.textDragState;
-        
-        // Вычисляем смещение мыши в экранных пикселях, затем конвертируем в SVG-координаты
-        // с учётом текущего зума (viewBox). При зуме 2x один экранный пиксель = 0.5 SVG-единицы.
-        const screenToSvg = this.getScreenToSvgScale();
-        const deltaX = (e.clientX - startMouseX) * screenToSvg;
-        const deltaY = (e.clientY - startMouseY) * screenToSvg;
-        
-        // Преобразуем смещение в колонки и baseline модули
-        const module = this.settings.gridModule;
-        const margins = this.settings.margins;
-        const columnCount = this.settings.columnCount;
-        
-        // Вычисляем ширину колонки и gutter
-        const columnWidth = (this.settings.frontWidth - module * margins * 2 - module * (columnCount - 1)) / columnCount;
-        const gutter = module;
-        
-        const effectiveScale = scale;
-        const columnWithGutter = (columnWidth + gutter) * effectiveScale;
-        const baselineUnit = module * effectiveScale;
-        
-        // Новая позиция в колонках
-        let newX = startBlockX + Math.round(deltaX / columnWithGutter);
-        
-        // Новая позиция в baseline модулях
-        const startY = this.rowBaselineToY(startBlockRow, startBlockBaselineOffset);
-        const deltaYInBaseline = Math.round(deltaY / baselineUnit);
-        let newY = startY + deltaYInBaseline;
-        
-        // Ограничиваем позицию только если lockPosition включен
-        if (block.lockPosition) {
-            // Ограничение по X (колонки), x начинается с 1
-            const alignment = block.alignment || 'left';
-            if (alignment === 'right') {
-                // For right-aligned: x is the column where right edge is anchored
-                // Min: ceil(block.width) (block can't extend left beyond column 1)
-                // Max: columnCount (right edge can be on any column)
-                newX = Math.max(Math.ceil(block.width), Math.min(newX, columnCount));
-            } else {
-                // For left-aligned: x is the column where left edge is anchored
-                // Последняя занятая колонка = x + width - 1, должна быть <= columnCount
-                newX = Math.max(1, Math.min(newX, columnCount - block.width + 1));
-            }
-            
-            // Ограничиваем Y: минимум 0 (не выходим за верхний margin)
-            // Максимум - первая строка блока должна быть в пределах контентной области
-            const contentHeightMm = this.settings.frontHeight - 2 * margins * module;
-            const maxYInBaseline = Math.floor(contentHeightMm / module + 1e-9);
-            const maxY = maxYInBaseline - 1;
-            newY = Math.max(0, Math.min(newY, maxY));
-        }
-        
-        // Конвертируем Y обратно в row + baselineOffset
-        const { row, baselineOffset } = this.yToRowBaseline(newY);
-        
-        // Дополнительные проверки: row и baselineOffset не могут быть отрицательными
-        const finalRow = Math.max(0, row);
-        const finalBaselineOffset = Math.max(0, baselineOffset);
-        
-        // Обновляем позицию блока
-        block.x = newX;
-        block.row = finalRow;
-        block.baselineOffset = finalBaselineOffset;
-        
-        // Если панель настроек открыта для этого блока, обновляем значения в полях
-        if (this.currentEditingBlock && this.currentEditingBlock.id === block.id) {
-            if (this.dom.paragraphXInput) {
-                // Column всегда целое число
-                this.dom.paragraphXInput.value = Math.round(block.x);
-            }
-            if (this.dom.paragraphRowInput) {
-                this.dom.paragraphRowInput.value = block.row + 1;
-            }
-            if (this.dom.paragraphBaselineInput) {
-                // Показываем глобальный номер baseline на всей сетке (с учетом гутеров)
-                const globalBaseline = this.rowBaselineToY(block.row, block.baselineOffset);
-                this.dom.paragraphBaselineInput.value = globalBaseline + 1;
-            }
-        }
+        this.positionBlockAtPointer(
+            block,
+            e.clientX,
+            e.clientY,
+            'text',
+            this.textDragState.pointerOffset
+        );
         
         // Перерисовываем сетку (throttled для плавности drag)
         this.updateGridThrottled();
@@ -10095,6 +10067,7 @@ class GridGenerator {
         
         this.textDragState.isDragging = false;
         this.textDragState.blockId = null;
+        this.updateGrid();
     }
     
     showTextEditor(blockId, frontX, frontY, scale) {
@@ -10214,6 +10187,144 @@ class GridGenerator {
     updateGridThrottled() {
         this._throttledUpdateGridCore();
     }
+
+    withSurfaceGridContext(surface, callback) {
+        const context = this.getSurfaceGridContext(surface);
+        const keys = ['gridModule', 'margins', 'columnCount', 'rowCount', 'rowHeight', 'frontWidth', 'frontHeight'];
+        const previous = Object.fromEntries(keys.map(key => [key, this.settingsModule.get(key)]));
+        try {
+            keys.forEach(key => this.settingsModule.set(key, context[key], true));
+            return callback(context);
+        } finally {
+            keys.forEach(key => this.settingsModule.set(key, previous[key], true));
+        }
+    }
+
+    createSurfaceLayer(container, surface, layout, scale, suffix = 'display') {
+        const geometry = this.surfaceManager.getGeometry(surface, layout);
+        const clipId = `surface-clip-${suffix}-${surface}`;
+        let defs = container.querySelector(':scope > defs[data-surface-defs]');
+        if (!defs) {
+            defs = this.createSVGElement('defs', { 'data-surface-defs': suffix }, container);
+        }
+        const clipPath = this.createSVGElement('clipPath', {
+            id: clipId,
+            clipPathUnits: 'userSpaceOnUse'
+        }, defs);
+        this.createSVGElement('rect', {
+            x: 0,
+            y: 0,
+            width: geometry.localWidth,
+            height: geometry.localHeight
+        }, clipPath);
+
+        const layer = this.createSVGElement('g', {
+            id: `surface-${suffix}-${surface}`,
+            transform: geometry.transform,
+            'clip-path': `url(#${clipId})`,
+            'data-surface': surface
+        }, container);
+
+        return { layer, geometry, scale };
+    }
+
+    drawSurfaceGrid(container, surface, geometry, scale) {
+        const context = this.getSurfaceGridContext(surface);
+        const module = context.gridModule * scale;
+        const margins = context.margins * module;
+        const width = geometry.localWidth;
+        const height = geometry.localHeight;
+        const gridColor = this.getContrastColor();
+        const opacity = this.getGridOpacity(0.08);
+        const baselineOpacity = this.getGridOpacity(0.15);
+        const strokeWidth = scale === 1 ? '0.088194444' : '1';
+        const contentWidth = Math.max(0, width - 2 * margins);
+        const contentHeight = Math.max(0, height - 2 * margins);
+
+        if (this.settings.showColumns && contentWidth > 0) {
+            const gutter = module;
+            const columnWidth = Math.max(0, (contentWidth - (context.columnCount - 1) * gutter) / context.columnCount);
+            for (let index = 0; index < context.columnCount; index++) {
+                const x = margins + index * (columnWidth + gutter);
+                if (x >= width - margins + 1e-6) break;
+                this.createSVGElement('rect', {
+                    x,
+                    y: margins,
+                    width: Math.min(columnWidth, width - margins - x),
+                    height: contentHeight,
+                    fill: gridColor,
+                    'fill-opacity': opacity,
+                    stroke: 'none'
+                }, container);
+            }
+        }
+
+        if (this.settings.showRows && contentHeight > 0) {
+            const rowHeight = context.rowHeight * module;
+            for (let index = 0; index < context.rowCount; index++) {
+                const y = margins + index * (rowHeight + module);
+                if (y + rowHeight > height - margins + 1e-6) break;
+                this.createSVGElement('rect', {
+                    x: margins,
+                    y,
+                    width: contentWidth,
+                    height: rowHeight,
+                    fill: gridColor,
+                    'fill-opacity': opacity,
+                    stroke: 'none'
+                }, container);
+            }
+        }
+
+        if (this.settings.showBaseline && contentHeight > 0) {
+            for (let y = margins; y + module <= height - margins + 1e-6; y += module) {
+                this.createSVGElement('rect', {
+                    x: margins,
+                    y,
+                    width: contentWidth,
+                    height: module,
+                    fill: 'none',
+                    stroke: gridColor,
+                    'stroke-width': strokeWidth,
+                    'stroke-opacity': baselineOpacity,
+                    'vector-effect': 'non-scaling-stroke'
+                }, container);
+            }
+        }
+    }
+
+    drawSurfaceObjects(container, surface, geometry, scale, forExport = false) {
+        if (!this.settings.showObjects && !forExport) return;
+        this.withSurfaceGridContext(surface, () => {
+            this.textBlocks.forEach(block => {
+                if ((block.surface || 'front') !== surface || block.visible === false || block.deleting) return;
+                this.drawTextBlock(container, block, 0, 0, geometry.localWidth, geometry.localHeight, scale);
+            });
+            (this.graphicsBlocks || []).forEach(block => {
+                if ((block.surface || 'front') !== surface || block.visible === false || block.deleting || !block.svgContent) return;
+                if (forExport) {
+                    this.drawGraphicsBlockForExport(container, block, 0, 0, geometry.localWidth, geometry.localHeight, scale);
+                } else {
+                    this.drawGraphicsBlock(container, block, 0, 0, geometry.localWidth, geometry.localHeight, scale);
+                }
+            });
+        });
+    }
+
+    drawSideSurfaceLayers(container, layout, scale, { forExport = false } = {}) {
+        SIDE_SURFACE_IDS.forEach(surface => {
+            if (!this.surfaceManager.isVisible(surface)) return;
+            const { layer, geometry } = this.createSurfaceLayer(
+                container,
+                surface,
+                layout,
+                scale,
+                forExport ? 'export' : 'display'
+            );
+            this.drawSurfaceGrid(layer, surface, geometry, scale);
+            this.drawSurfaceObjects(layer, surface, geometry, scale, forExport);
+        });
+    }
     
     /**
      * Внутренний метод обновления сетки
@@ -10270,6 +10381,14 @@ class GridGenerator {
         const scaledFrontWidth = frontWidth * scale;
         const scaledFrontHeight = frontHeight * scale;
         const scaledThickness = thickness * scale;
+        this.currentSurfaceLayout = {
+            x: startX,
+            y: startY,
+            frontWidth: scaledFrontWidth,
+            frontHeight: scaledFrontHeight,
+            thickness: scaledThickness,
+            scale
+        };
         
         // Draw rectangles
         this.drawRectangles(this.dom.svg, startX, startY, scaledFrontWidth, scaledFrontHeight, scaledThickness, scale);
@@ -10296,37 +10415,11 @@ class GridGenerator {
         // Draw baseline if enabled
         if (this.settings.showBaseline) {
             this.gridRenderer.drawBaseline(this.dom.svg, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
-            
-            // Draw baseline on side panels if they are visible
-            if (this.settings.showSidePanels) {
-                // Left panel - vertical baseline (margin from right side where it touches front)
-                this.drawBaselineVerticalLeftRight(this.dom.svg, startX, frontY, scaledThickness, scaledFrontHeight, scale, 'left');
-                
-                // Right panel - vertical baseline (margin from left side where it touches front)
-                this.drawBaselineVerticalLeftRight(this.dom.svg, startX + scaledThickness + scaledFrontWidth, frontY, scaledThickness, scaledFrontHeight, scale, 'right');
-                
-                // Top panel - horizontal baseline (margin from bottom where it touches front)
-                this.drawBaselineTopBottom(this.dom.svg, frontX, startY, scaledFrontWidth, scaledThickness, scale, 'top');
-                
-                // Bottom panel - horizontal baseline (margin from top where it touches front)
-                this.drawBaselineTopBottom(this.dom.svg, frontX, startY + scaledThickness + scaledFrontHeight, scaledFrontWidth, scaledThickness, scale, 'bottom');
-            }
         }
-        
-        // Draw columns on side panels if they are visible and columns are enabled
-        if (this.settings.showColumns && this.settings.showSidePanels) {
-            // Left panel - vertical columns (using rows parameters from front)
-            this.drawColumnsVerticalLeftRight(this.dom.svg, startX, frontY, scaledThickness, scaledFrontHeight, scale, 'left');
-            
-            // Right panel - vertical columns (using rows parameters from front)
-            this.drawColumnsVerticalLeftRight(this.dom.svg, startX + scaledThickness + scaledFrontWidth, frontY, scaledThickness, scaledFrontHeight, scale, 'right');
-            
-            // Top panel - horizontal columns (using columns parameters from front)
-            this.drawColumnsTopBottom(this.dom.svg, frontX, startY, scaledFrontWidth, scaledThickness, scale, 'top');
-            
-            // Bottom panel - horizontal columns (using columns parameters from front)
-            this.drawColumnsTopBottom(this.dom.svg, frontX, startY + scaledThickness + scaledFrontHeight, scaledFrontWidth, scaledThickness, scale, 'bottom');
-        }
+
+        // Боковые поверхности используют локальные координаты, собственную
+        // ориентацию и, при необходимости, независимую сетку.
+        this.drawSideSurfaceLayers(this.dom.svg, this.currentSurfaceLayout, scale);
         
         // Draw text blocks, icons and claim on front panel (if enabled)
         if (this.settings.showObjects) {
@@ -10338,7 +10431,7 @@ class GridGenerator {
             
             // Draw text blocks on front panel (only visible and not deleting)
             this.textBlocks.forEach(block => {
-                if (block.visible !== false && !block.deleting) {
+                if ((block.surface || 'front') === 'front' && block.visible !== false && !block.deleting) {
                     this.drawTextBlock(this.dom.svg, block, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
                 }
             });
@@ -10347,7 +10440,7 @@ class GridGenerator {
             if (this.graphicsBlocks) {
                 this.graphicsBlocks.forEach(block => {
                     // Only draw if visible and not being deleted
-                    if (block.visible !== false && !block.deleting) {
+                    if ((block.surface || 'front') === 'front' && block.visible !== false && !block.deleting) {
                         this.drawGraphicsBlock(this.dom.svg, block, frontX, frontY, scaledFrontWidth, scaledFrontHeight, scale);
                     }
                 });
@@ -10400,48 +10493,56 @@ class GridGenerator {
         // Side panels - only if showSidePanels is enabled
         if (this.settings.showSidePanels) {
             // Left
-            this.createSVGElement('rect', {
-                x: x,
-                y: y + thickness,
-                width: thickness,
-                height: frontH,
-                fill: this.settings.boxColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
+            if (this.surfaceManager.isVisible('left')) {
+                this.createSVGElement('rect', {
+                    x: x,
+                    y: y + thickness,
+                    width: thickness,
+                    height: frontH,
+                    fill: this.settings.boxColor,
+                    stroke: '#000000',
+                    'stroke-width': strokeWidth
+                }, container);
+            }
             
             // Right
-            this.createSVGElement('rect', {
-                x: x + thickness + frontW,
-                y: y + thickness,
-                width: thickness,
-                height: frontH,
-                fill: this.settings.boxColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
+            if (this.surfaceManager.isVisible('right')) {
+                this.createSVGElement('rect', {
+                    x: x + thickness + frontW,
+                    y: y + thickness,
+                    width: thickness,
+                    height: frontH,
+                    fill: this.settings.boxColor,
+                    stroke: '#000000',
+                    'stroke-width': strokeWidth
+                }, container);
+            }
             
             // Top
-            this.createSVGElement('rect', {
-                x: x + thickness,
-                y: y,
-                width: frontW,
-                height: thickness,
-                fill: this.settings.boxColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
+            if (this.surfaceManager.isVisible('top')) {
+                this.createSVGElement('rect', {
+                    x: x + thickness,
+                    y: y,
+                    width: frontW,
+                    height: thickness,
+                    fill: this.settings.boxColor,
+                    stroke: '#000000',
+                    'stroke-width': strokeWidth
+                }, container);
+            }
             
             // Bottom
-            this.createSVGElement('rect', {
-                x: x + thickness,
-                y: y + thickness + frontH,
-                width: frontW,
-                height: thickness,
-                fill: this.settings.boxColor,
-                stroke: '#000000',
-                'stroke-width': strokeWidth
-            }, container);
+            if (this.surfaceManager.isVisible('bottom')) {
+                this.createSVGElement('rect', {
+                    x: x + thickness,
+                    y: y + thickness + frontH,
+                    width: frontW,
+                    height: thickness,
+                    fill: this.settings.boxColor,
+                    stroke: '#000000',
+                    'stroke-width': strokeWidth
+                }, container);
+            }
         }
     }
     
@@ -10510,16 +10611,24 @@ class GridGenerator {
         this.createLabel(container, x + thickness + frontW / 2, y + thickness + frontH / 2, 'FRONT', false, fontSize);
         
         // Left label
-        this.createLabel(container, x + thickness / 2, y + thickness + frontH / 2, 'LEFT', true, fontSize);
+        if (this.surfaceManager.isVisible('left')) {
+            this.createLabel(container, x + thickness / 2, y + thickness + frontH / 2, 'LEFT', true, fontSize);
+        }
         
         // Right label
-        this.createLabel(container, x + thickness + frontW + thickness / 2, y + thickness + frontH / 2, 'RIGHT', true, fontSize);
+        if (this.surfaceManager.isVisible('right')) {
+            this.createLabel(container, x + thickness + frontW + thickness / 2, y + thickness + frontH / 2, 'RIGHT', true, fontSize);
+        }
         
         // Top label
-        this.createLabel(container, x + thickness + frontW / 2, y + thickness / 2, 'TOP', false, fontSize);
+        if (this.surfaceManager.isVisible('top')) {
+            this.createLabel(container, x + thickness + frontW / 2, y + thickness / 2, 'TOP', false, fontSize);
+        }
         
         // Bottom label
-        this.createLabel(container, x + thickness + frontW / 2, y + thickness + frontH + thickness / 2, 'BOTTOM', false, fontSize);
+        if (this.surfaceManager.isVisible('bottom')) {
+            this.createLabel(container, x + thickness + frontW / 2, y + thickness + frontH + thickness / 2, 'BOTTOM', false, fontSize);
+        }
     }
     
     createLabel(container, x, y, text, rotate = false, fontSize = null) {
@@ -11044,20 +11153,6 @@ class GridGenerator {
             gridGroup.appendChild(columnsGroup);
             this.gridRenderer.drawColumns(columnsGroup, frontX, frontY, frontWidth, frontHeight, scale);
             
-            // Draw columns on side panels if enabled
-            if (this.settings.showSidePanels) {
-                // Left panel - vertical columns (using rows parameters from front)
-                this.drawColumnsVerticalLeftRight(columnsGroup, 0, frontY, thickness, frontHeight, scale, 'left');
-                
-                // Right panel - vertical columns (using rows parameters from front)
-                this.drawColumnsVerticalLeftRight(columnsGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
-                
-                // Top panel - horizontal columns (using columns parameters from front)
-                this.drawColumnsTopBottom(columnsGroup, frontX, 0, frontWidth, thickness, scale, 'top');
-                
-                // Bottom panel - horizontal columns (using columns parameters from front)
-                this.drawColumnsTopBottom(columnsGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
-            }
         }
         
         // Draw rows (only if visible)
@@ -11077,21 +11172,16 @@ class GridGenerator {
             // Front panel baseline
             this.gridRenderer.drawBaseline(baselineGroup, frontX, frontY, frontWidth, frontHeight, scale);
             
-            // Side panels baseline if enabled
-            if (this.settings.showSidePanels) {
-                // Left panel - vertical baseline (margin from right side where it touches front)
-                this.drawBaselineVerticalLeftRight(baselineGroup, 0, frontY, thickness, frontHeight, scale, 'left');
-                
-                // Right panel - vertical baseline (margin from left side where it touches front)
-                this.drawBaselineVerticalLeftRight(baselineGroup, thickness + frontWidth, frontY, thickness, frontHeight, scale, 'right');
-                
-                // Top panel - horizontal baseline (margin from bottom where it touches front)
-                this.drawBaselineTopBottom(baselineGroup, frontX, 0, frontWidth, thickness, scale, 'top');
-                
-                // Bottom panel - horizontal baseline (margin from top where it touches front)
-                this.drawBaselineTopBottom(baselineGroup, frontX, thickness + frontHeight, frontWidth, thickness, scale, 'bottom');
-            }
         }
+
+        this.drawSideSurfaceLayers(exportSvg, {
+            x: 0,
+            y: 0,
+            frontWidth,
+            frontHeight,
+            thickness,
+            scale
+        }, scale, { forExport: true });
         
         // Add labels if enabled (in separate group)
         if (this.settings.showLabels) {
@@ -11103,7 +11193,7 @@ class GridGenerator {
         
         // Add text blocks (in separate groups, only if visible)
         this.textBlocks.forEach(block => {
-            if (block.visible !== false) {
+            if ((block.surface || 'front') === 'front' && block.visible !== false) {
                 const textGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
                 textGroup.setAttribute('id', `text-${block.id}`);
                 exportSvg.appendChild(textGroup);
@@ -11114,7 +11204,7 @@ class GridGenerator {
         // Add graphics blocks (in separate groups)
         if (this.graphicsBlocks) {
             this.graphicsBlocks.forEach(block => {
-                if (block.visible !== false && block.svgContent) {
+                if ((block.surface || 'front') === 'front' && block.visible !== false && block.svgContent) {
                     const graphicsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
                     // Use simple id for built-in blocks (icons, claim) without prefix
                     graphicsGroup.setAttribute('id', block.isBuiltIn ? block.id : `graphics-${block.id}`);
@@ -11411,7 +11501,7 @@ class GridGenerator {
         const { frontWidth, frontHeight, thickness, gridModule, columnCount, rowCount, margins, marginsUnit, showSidePanels } = this.settings;
         
         const data = {
-            version: '1.0',
+            version: '1.1',
             timestamp: new Date().toISOString(),
             settings: this.settingsModule.getAll(),
             textBlocks: this.textBlocks,
@@ -11526,6 +11616,7 @@ class GridGenerator {
             } else if (data.settings && data.settings.presetName) {
                 presetName = data.settings.presetName;
             }
+            this.surfaceManager.initialize(presetName, data.settings?.surfaceSettings);
             
             const displayName = `Custom — ${presetName}`;
             
@@ -11631,6 +11722,7 @@ class GridGenerator {
             // silent=true, чтобы не тригерить subscribers во время восстановления —
             // UI обновится ниже через updateAllSliders() и updateGrid()
             this.settingsModule.setMultiple(snapshot.settings, true);
+            this.surfaceManager.initialize(this.currentPresetName, snapshot.settings?.surfaceSettings);
             
             // Восстанавливаем text blocks
             this.textBlocks = JSON.parse(JSON.stringify(snapshot.textBlocks));
@@ -11650,6 +11742,7 @@ class GridGenerator {
             this.updateLockButtons();
             this.updateAllSliders();
             this.updateElementsNavigator();
+            this.syncSurfaceControls();
             
             // Пересчитываем с учетом блокировок
             if (this.settings.lockedModule) {
@@ -11973,6 +12066,10 @@ class GridGenerator {
         // Клик на индикатор зума - сброс в 100%
         this.dom.zoomIndicator.addEventListener('click', () => {
             this.zoomPanManager.resetZoom();
+        });
+
+        this.dom.canvasRotateLeftBtn?.addEventListener('click', () => {
+            this.zoomPanManager.rotateLeft();
         });
         
         console.log('✅ ZoomPanManager initialized');

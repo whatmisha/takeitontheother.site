@@ -1,12 +1,74 @@
 {
   "presetName": "Ground 10.4\" Back",
-  "version": "1.0",
+  "version": "1.1",
   "timestamp": "2026-02-04T07:47:07.800Z",
   "dimensions": {
     "width": 288.5,
     "height": 269.5,
     "thickness": 33,
     "unit": "mm"
+  },
+  "surfaces": {
+    "front": {
+      "visible": true,
+      "rotation": 0,
+      "gridMode": "main",
+      "grid": {
+        "module": 3.1942,
+        "margins": 2.6846,
+        "columns": 12,
+        "rows": 16,
+        "rowHeight": 4
+      }
+    },
+    "left": {
+      "visible": true,
+      "rotation": 270,
+      "gridMode": "main",
+      "grid": {
+        "module": 3.1942,
+        "margins": 2.6846,
+        "columns": 12,
+        "rows": 16,
+        "rowHeight": 4
+      }
+    },
+    "right": {
+      "visible": true,
+      "rotation": 90,
+      "gridMode": "main",
+      "grid": {
+        "module": 3.1942,
+        "margins": 2.6846,
+        "columns": 12,
+        "rows": 16,
+        "rowHeight": 4
+      }
+    },
+    "top": {
+      "visible": true,
+      "rotation": 0,
+      "gridMode": "main",
+      "grid": {
+        "module": 3.1942,
+        "margins": 2.6846,
+        "columns": 12,
+        "rows": 16,
+        "rowHeight": 4
+      }
+    },
+    "bottom": {
+      "visible": true,
+      "rotation": 180,
+      "gridMode": "main",
+      "grid": {
+        "module": 3.1942,
+        "margins": 2.6846,
+        "columns": 12,
+        "rows": 16,
+        "rowHeight": 4
+      }
+    }
   },
   "texts": [
     {

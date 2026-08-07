@@ -1,12 +1,74 @@
 {
   "presetName": "Ground 14\" Back",
-  "version": "1.0",
+  "version": "1.1",
   "timestamp": "2026-04-01T17:27:42.717Z",
   "dimensions": {
     "width": 356,
     "height": 369,
     "thickness": 36,
     "unit": "mm"
+  },
+  "surfaces": {
+    "front": {
+      "visible": true,
+      "rotation": 0,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.7958677318302034,
+        "margins": 3.4902,
+        "columns": 12,
+        "rows": 18,
+        "rowHeight": 6
+      }
+    },
+    "left": {
+      "visible": true,
+      "rotation": 270,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.7958677318302034,
+        "margins": 3.4902,
+        "columns": 12,
+        "rows": 18,
+        "rowHeight": 6
+      }
+    },
+    "right": {
+      "visible": true,
+      "rotation": 90,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.7958677318302034,
+        "margins": 3.4902,
+        "columns": 12,
+        "rows": 18,
+        "rowHeight": 6
+      }
+    },
+    "top": {
+      "visible": true,
+      "rotation": 0,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.7958677318302034,
+        "margins": 3.4902,
+        "columns": 12,
+        "rows": 18,
+        "rowHeight": 6
+      }
+    },
+    "bottom": {
+      "visible": true,
+      "rotation": 180,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.7958677318302034,
+        "margins": 3.4902,
+        "columns": 12,
+        "rows": 18,
+        "rowHeight": 6
+      }
+    }
   },
   "texts": [
     {

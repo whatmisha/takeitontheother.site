@@ -1,12 +1,74 @@
 {
   "presetName": "Work S",
-  "version": "1.0",
+  "version": "1.1",
   "timestamp": "2026-06-02T21:44:43.311Z",
   "dimensions": {
     "width": 300,
     "height": 127,
     "thickness": 32,
     "unit": "mm"
+  },
+  "surfaces": {
+    "front": {
+      "visible": true,
+      "rotation": 0,
+      "gridMode": "main",
+      "grid": {
+        "module": 4.272066738428418,
+        "margins": 1.364,
+        "columns": 4,
+        "rows": 4,
+        "rowHeight": 6
+      }
+    },
+    "left": {
+      "visible": true,
+      "rotation": 270,
+      "gridMode": "main",
+      "grid": {
+        "module": 4.272066738428418,
+        "margins": 1.364,
+        "columns": 4,
+        "rows": 4,
+        "rowHeight": 6
+      }
+    },
+    "right": {
+      "visible": true,
+      "rotation": 90,
+      "gridMode": "main",
+      "grid": {
+        "module": 4.272066738428418,
+        "margins": 1.364,
+        "columns": 4,
+        "rows": 4,
+        "rowHeight": 6
+      }
+    },
+    "top": {
+      "visible": true,
+      "rotation": 0,
+      "gridMode": "main",
+      "grid": {
+        "module": 4.272066738428418,
+        "margins": 1.364,
+        "columns": 4,
+        "rows": 4,
+        "rowHeight": 6
+      }
+    },
+    "bottom": {
+      "visible": true,
+      "rotation": 180,
+      "gridMode": "main",
+      "grid": {
+        "module": 4.272066738428418,
+        "margins": 1.364,
+        "columns": 4,
+        "rows": 4,
+        "rowHeight": 6
+      }
+    }
   },
   "texts": [
     {

@@ -341,6 +341,100 @@ body {
     background-color: #2a2a2a;
 }
 
+.canvas-rotate-btn {
+    width: var(--button-height);
+    height: var(--button-height);
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 var(--button-height);
+    border: none;
+    border-radius: 50%;
+    background: var(--color-bg-panel);
+    color: var(--color-text);
+    cursor: pointer;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.canvas-rotate-btn:hover {
+    background-color: #2a2a2a;
+}
+
+.canvas-rotate-btn:active {
+    transform: scale(0.94);
+}
+
+.canvas-rotate-btn:focus-visible {
+    outline: 2px solid var(--color-text);
+    outline-offset: 2px;
+}
+
+.surface-settings-section h3 {
+    margin-bottom: var(--spacing-lg);
+}
+
+.surface-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xl);
+}
+
+.surface-toggle-row .checkbox-label {
+    flex: 1;
+}
+
+.surface-rotation-options {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    margin-top: var(--spacing-sm);
+}
+
+.surface-rotation-options button {
+    min-width: 0;
+    padding: 7px 4px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-text-dim);
+    font: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.surface-rotation-options button:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--color-text);
+}
+
+.surface-rotation-options button.active {
+    background: var(--color-text);
+    color: var(--color-bg);
+}
+
+.surface-own-grid-controls {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.surface-own-grid-controls[hidden] {
+    display: none;
+}
+
+.surface-grid-pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-md);
+}
+
+.surface-grid-pair .control-group {
+    min-width: 0;
+}
+
 .main-content {
     display: flex;
     align-items: center;
@@ -2493,4 +2587,3 @@ legend {
         margin-bottom: var(--spacing-3xl);
     }
 }
-

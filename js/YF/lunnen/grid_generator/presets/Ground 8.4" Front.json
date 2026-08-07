@@ -1,12 +1,74 @@
 {
   "presetName": "Ground 8.4\" Front",
-  "version": "1.0",
+  "version": "1.1",
   "timestamp": "2025-12-09T04:17:59.805Z",
   "dimensions": {
     "width": 238,
     "height": 238,
     "thickness": 33,
     "unit": "mm"
+  },
+  "surfaces": {
+    "front": {
+      "visible": true,
+      "rotation": 0,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.5297,
+        "margins": 5.0402,
+        "columns": 12,
+        "rows": 17,
+        "rowHeight": 4
+      }
+    },
+    "left": {
+      "visible": true,
+      "rotation": 90,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.5297,
+        "margins": 5.0402,
+        "columns": 12,
+        "rows": 17,
+        "rowHeight": 4
+      }
+    },
+    "right": {
+      "visible": true,
+      "rotation": 270,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.5297,
+        "margins": 5.0402,
+        "columns": 12,
+        "rows": 17,
+        "rowHeight": 4
+      }
+    },
+    "top": {
+      "visible": true,
+      "rotation": 180,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.5297,
+        "margins": 5.0402,
+        "columns": 12,
+        "rows": 17,
+        "rowHeight": 4
+      }
+    },
+    "bottom": {
+      "visible": true,
+      "rotation": 0,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.5297,
+        "margins": 5.0402,
+        "columns": 12,
+        "rows": 17,
+        "rowHeight": 4
+      }
+    }
   },
   "texts": [
     {

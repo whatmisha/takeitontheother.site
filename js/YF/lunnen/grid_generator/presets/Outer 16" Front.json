@@ -1,12 +1,74 @@
 {
   "presetName": "Outer 16\" Front",
-  "version": "1.0",
+  "version": "1.1",
   "timestamp": "2025-12-03T02:02:21.414Z",
   "dimensions": {
     "width": 390.5,
     "height": 395.5,
     "thickness": 39,
     "unit": "mm"
+  },
+  "surfaces": {
+    "front": {
+      "visible": true,
+      "rotation": 0,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.7883,
+        "margins": 4.9202,
+        "columns": 12,
+        "rows": 19,
+        "rowHeight": 6
+      }
+    },
+    "left": {
+      "visible": true,
+      "rotation": 90,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.7883,
+        "margins": 4.9202,
+        "columns": 12,
+        "rows": 19,
+        "rowHeight": 6
+      }
+    },
+    "right": {
+      "visible": true,
+      "rotation": 270,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.7883,
+        "margins": 4.9202,
+        "columns": 12,
+        "rows": 19,
+        "rowHeight": 6
+      }
+    },
+    "top": {
+      "visible": true,
+      "rotation": 180,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.7883,
+        "margins": 4.9202,
+        "columns": 12,
+        "rows": 19,
+        "rowHeight": 6
+      }
+    },
+    "bottom": {
+      "visible": true,
+      "rotation": 0,
+      "gridMode": "main",
+      "grid": {
+        "module": 2.7883,
+        "margins": 4.9202,
+        "columns": 12,
+        "rows": 19,
+        "rowHeight": 6
+      }
+    }
   },
   "texts": [
     {

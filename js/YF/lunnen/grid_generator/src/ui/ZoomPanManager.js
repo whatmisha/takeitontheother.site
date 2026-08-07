@@ -22,6 +22,7 @@ export class ZoomPanManager {
         this.maxZoom = 10;
         this.panX = 0;
         this.panY = 0;
+        this.rotation = 0;
         
         // Исходные размеры SVG
         this.originalWidth = 0;
@@ -87,6 +88,8 @@ export class ZoomPanManager {
         // Улучшаем качество рендеринга для четкости векторной графики
         this.svg.style.shapeRendering = 'geometricPrecision';
         this.svg.style.textRendering = 'geometricPrecision';
+        this.svg.style.transformOrigin = '50% 50%';
+        this.svg.style.transformBox = 'fill-box';
         
         // Делаем container позиционированным для правильной работы
         this.container.style.position = 'relative';
@@ -335,6 +338,18 @@ export class ZoomPanManager {
         const centerY = rect.height / 2;
         this.zoomTo(this.zoom / 1.2, centerX, centerY);
     }
+
+    /**
+     * Повернуть только представление канваса. SVG-данные и экспорт не меняются.
+     */
+    rotateLeft() {
+        this.rotation = (this.rotation + 270) % 360;
+        this.svg.style.transform = this.rotation === 0 ? '' : `rotate(${this.rotation}deg)`;
+        this.container.dispatchEvent(new CustomEvent('canvasrotationchange', {
+            detail: { rotation: this.rotation }
+        }));
+        return this.rotation;
+    }
     
     /**
      * Сброс зума в 100% (возврат к baseZoom) с центрированием и отступами
@@ -457,4 +472,3 @@ export class ZoomPanManager {
         document.removeEventListener('mouseup', this.handleMouseUp);
     }
 }
-
