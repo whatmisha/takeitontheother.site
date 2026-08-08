@@ -9,7 +9,7 @@ import { TextToPath } from './src/utils/TextToPath.js';
 
 // Итерация 2: Core
 import { Settings } from './src/core/Settings.js';
-import { DOMCache } from './src/core/DOMCache.js?v=1.12.4';
+import { DOMCache } from './src/core/DOMCache.js?v=1.12.9';
 
 // Итерация 3: Grid
 import { GridCalculator } from './src/grid/GridCalculator.js';
@@ -22,7 +22,7 @@ import { SLIDER_CONFIG } from './src/config/SliderConfig.js';
 import { SliderController } from './src/ui/SliderController.js';
 import { ColorPicker } from './src/ui/ColorPicker.js';
 import { PanelManager } from './src/ui/PanelManager.js';
-import { ZoomPanManager } from './src/ui/ZoomPanManager.js?v=1.12.4';
+import { ZoomPanManager } from './src/ui/ZoomPanManager.js?v=1.12.9';
 
 // Итерация 6: Elements
 import { TextBlockManager } from './src/elements/TextBlockManager.js';
@@ -41,7 +41,7 @@ import { PresetManager } from './src/preset/PresetManager.js';
 import { HistoryManager } from './src/history/HistoryManager.js';
 
 // Surface model
-import { SurfaceManager, SURFACE_IDS, SIDE_SURFACE_IDS } from './src/surfaces/SurfaceManager.js?v=1.12.4';
+import { SurfaceManager, SURFACE_IDS, SIDE_SURFACE_IDS } from './src/surfaces/SurfaceManager.js?v=1.12.9';
 
 const TEXT_PRESETS = [
     { id: 'brand',        label: 'Brand',         text: 'Lunnen — бренд компьютерной техники и аксессуаров, придуманный в Яндекс Фабрике. Сопровождает в исследованиях, работе и развлечениях.' },
@@ -12149,8 +12149,7 @@ class GridGenerator {
         // Регистрируем все панели через PanelManager
         const panels = [
             { id: 'controlsPanel', headerId: 'panelHeader', draggable: true },
-            { id: 'gridPanel', headerId: 'gridPanelHeader', draggable: true },
-            { id: 'surfacePanel', headerId: 'surfacePanelHeader', draggable: true },
+            { id: 'rightSettingsStack', headerId: 'gridPanelHeader', draggable: true },
             { id: 'textPanel', headerId: 'textPanelHeader', draggable: true },
             { id: 'paragraphPanel', headerId: 'paragraphPanelHeader', draggable: true },
             { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true },

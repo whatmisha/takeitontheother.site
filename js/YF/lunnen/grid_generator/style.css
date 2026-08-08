@@ -371,19 +371,6 @@ body {
     outline-offset: 2px;
 }
 
-.controls-panel.controls-panel-surface {
-    width: 300px;
-    right: calc(var(--spacing-3xl) + 320px);
-    max-height: calc(100vh - 2 * var(--spacing-3xl));
-}
-
-@media (max-width: 1400px) {
-    .controls-panel.controls-panel-surface {
-        top: calc(var(--spacing-3xl) + var(--button-height) + var(--spacing-lg));
-        max-height: calc(100vh - var(--spacing-3xl) - var(--button-height) - 2 * var(--spacing-lg));
-    }
-}
-
 .surface-panel-content {
     gap: 0;
 }
@@ -416,8 +403,8 @@ body {
 .surface-quick-controls {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 6px;
+    justify-content: flex-start;
+    gap: var(--spacing-sm);
 }
 
 .surface-quick-controls .toggle-chip-group {
@@ -444,7 +431,7 @@ body {
     align-items: center;
     gap: 2px;
     height: 28px;
-    padding: 0 5px;
+    padding: 0 8px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-button);
     background: var(--color-bg-input);
@@ -563,6 +550,40 @@ body {
     z-index: 999;
     display: flex;
     flex-direction: column;
+}
+
+.controls-panel-stack {
+    position: fixed;
+    top: var(--spacing-3xl);
+    right: var(--spacing-3xl);
+    width: 300px;
+    max-height: calc(100vh - 2 * var(--spacing-3xl) - var(--button-height) - var(--spacing-lg) - var(--spacing-sm));
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    z-index: 999;
+}
+
+.controls-panel-stack > .controls-panel {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    min-height: var(--button-height);
+    max-height: none;
+    flex: 1 1 auto;
+    z-index: auto;
+}
+
+.controls-panel-stack > .controls-panel.panel-collapsed {
+    flex: 0 0 auto;
+}
+
+.controls-panel-stack > #gridPanel {
+    flex: 0 0 auto;
+}
+
+.controls-panel-stack #surfacePanelHeader {
+    cursor: default;
 }
 
 .panel-content {
@@ -2330,22 +2351,28 @@ legend {
 }
 
 /* Scrollbar styling */
+.panel-content {
+    scrollbar-width: thin;
+    scrollbar-color: #000 transparent;
+}
+
 .panel-content::-webkit-scrollbar {
-    width: var(--spacing-md);
+    width: 6px;
 }
 
 .panel-content::-webkit-scrollbar-track {
-    background: var(--color-bg-panel);
-    border-radius: var(--radius);
+    background: transparent;
 }
 
 .panel-content::-webkit-scrollbar-thumb {
-    background: var(--color-text);
-    border-radius: var(--radius);
+    background: #000;
+    border-radius: 3px;
+    border-right: 1px solid #1a1a1a;
 }
 
 .panel-content::-webkit-scrollbar-thumb:hover {
-    background: var(--color-text);
+    background: #000;
+    border-right: 1px solid #1a1a1a;
 }
 
 /* Help Button */
@@ -2631,6 +2658,10 @@ legend {
     .controls-panel {
         width: 280px;
     }
+
+    .controls-panel-stack {
+        width: 280px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -2638,6 +2669,13 @@ legend {
         width: 260px;
         top: var(--spacing-lg);
         right: var(--spacing-lg);
+    }
+
+    .controls-panel-stack {
+        top: var(--spacing-lg);
+        right: var(--spacing-lg);
+        width: 260px;
+        max-height: calc(100vh - 3 * var(--spacing-lg) - var(--button-height) - var(--spacing-sm));
     }
     
     .controls-panel-text {
