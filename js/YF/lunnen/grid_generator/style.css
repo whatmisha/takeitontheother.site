@@ -371,52 +371,120 @@ body {
     outline-offset: 2px;
 }
 
-.surface-settings-section h3 {
-    margin-bottom: var(--spacing-lg);
+.controls-panel.controls-panel-surface {
+    width: 300px;
+    right: calc(var(--spacing-3xl) + 320px);
+    max-height: calc(100vh - 2 * var(--spacing-3xl));
 }
 
-.surface-toggle-row {
+@media (max-width: 1400px) {
+    .controls-panel.controls-panel-surface {
+        top: calc(var(--spacing-3xl) + var(--button-height) + var(--spacing-lg));
+        max-height: calc(100vh - var(--spacing-3xl) - var(--button-height) - 2 * var(--spacing-lg));
+    }
+}
+
+.surface-panel-content {
+    gap: 0;
+}
+
+.surface-panel-section {
+    min-width: 0;
+    padding: var(--spacing-lg) 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.surface-panel-section:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.surface-tabs.segmented-control {
+    display: flex;
+    width: 100%;
+    margin-top: 0;
+}
+
+.surface-tabs.segmented-control label {
+    min-width: 0;
+    padding: var(--spacing-lg) var(--spacing-sm);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.surface-quick-controls {
     display: flex;
     align-items: center;
-    gap: var(--spacing-xl);
+    justify-content: space-between;
+    gap: 6px;
 }
 
-.surface-toggle-row .checkbox-label {
-    flex: 1;
+.surface-quick-controls .toggle-chip-group {
+    flex: 0 0 auto;
 }
 
-.surface-rotation-options {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 4px;
-    margin-top: var(--spacing-sm);
+.surface-visible-chip span {
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
 }
 
-.surface-rotation-options button {
-    min-width: 0;
-    padding: 7px 4px;
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--color-text-dim);
-    font: inherit;
-    font-size: 0.78rem;
+.surface-own-grid-chip {
+    flex: 0 0 auto;
+}
+
+.surface-own-grid-chip span {
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
+}
+
+.surface-orientation-control {
+    display: inline-flex;
+    flex: 0 0 66px;
+    align-items: center;
+    gap: 2px;
+    height: 28px;
+    padding: 0 5px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-button);
+    background: var(--color-bg-input);
+    color: var(--color-text-secondary);
     cursor: pointer;
-    transition: background-color var(--transition-fast), color var(--transition-fast);
+    transition: border-color var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
 }
 
-.surface-rotation-options button:hover {
-    background: rgba(255, 255, 255, 0.12);
+.surface-orientation-control:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
     color: var(--color-text);
 }
 
-.surface-rotation-options button.active {
-    background: var(--color-text);
-    color: var(--color-bg);
+.surface-orientation-control:focus-within {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
+.surface-orientation-control svg {
+    flex: 0 0 14px;
+}
+
+.surface-orientation-control select {
+    width: 43px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    appearance: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.75rem;
+    text-align: right;
+    cursor: pointer;
 }
 
 .surface-own-grid-controls {
-    margin-top: var(--spacing-md);
+    min-width: 0;
     padding-top: var(--spacing-lg);
     border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -425,14 +493,30 @@ body {
     display: none;
 }
 
-.surface-grid-pair {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--spacing-md);
+.surface-own-grid-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: var(--spacing-lg);
+    color: var(--color-text);
+    font-size: 0.82rem;
 }
 
-.surface-grid-pair .control-group {
+.surface-own-grid-heading small {
+    color: var(--color-text-dim);
+    font-size: 0.7rem;
+}
+
+.surface-grid-controls {
     min-width: 0;
+}
+
+.surface-grid-controls .control-group {
+    margin-bottom: var(--spacing-xl);
+}
+
+.surface-grid-controls .control-group:last-child {
+    margin-bottom: 0;
 }
 
 .main-content {

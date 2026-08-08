@@ -63,16 +63,26 @@ export class DOMCache {
             // ============================================
             // Side surface settings
             // ============================================
-            surfaceSettingsSelect: document.getElementById('surfaceSettingsSelect'),
+            surfaceSettingsTabs: document.getElementById('surfaceSettingsTabs'),
+            surfacePanelParams: document.getElementById('surfacePanelParams'),
             surfaceVisibleToggle: document.getElementById('surfaceVisibleToggle'),
             surfaceOwnGridToggle: document.getElementById('surfaceOwnGridToggle'),
-            surfaceRotationOptions: document.getElementById('surfaceRotationOptions'),
+            surfaceRotationSelect: document.getElementById('surfaceRotationSelect'),
             surfaceOwnGridControls: document.getElementById('surfaceOwnGridControls'),
             surfaceGridModuleInput: document.getElementById('surfaceGridModuleInput'),
+            surfaceGridModuleSlider: document.getElementById('surfaceGridModuleSlider'),
             surfaceGridMarginsInput: document.getElementById('surfaceGridMarginsInput'),
+            surfaceGridMarginsSlider: document.getElementById('surfaceGridMarginsSlider'),
             surfaceGridColumnsInput: document.getElementById('surfaceGridColumnsInput'),
+            surfaceGridColumnsSlider: document.getElementById('surfaceGridColumnsSlider'),
             surfaceGridRowsInput: document.getElementById('surfaceGridRowsInput'),
+            surfaceGridRowsSlider: document.getElementById('surfaceGridRowsSlider'),
             surfaceGridRowHeightInput: document.getElementById('surfaceGridRowHeightInput'),
+            surfaceGridRowHeightSlider: document.getElementById('surfaceGridRowHeightSlider'),
+            surfaceMarginsUnitMod: document.getElementById('surfaceMarginsUnitMod'),
+            surfaceMarginsUnitMm: document.getElementById('surfaceMarginsUnitMm'),
+            surfaceLockModuleBtn: document.getElementById('surfaceLockModuleBtn'),
+            surfaceLockMarginsBtn: document.getElementById('surfaceLockMarginsBtn'),
             
             // ============================================
             // Link mode

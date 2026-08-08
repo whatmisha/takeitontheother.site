@@ -9,7 +9,7 @@ import { TextToPath } from './src/utils/TextToPath.js';
 
 // Итерация 2: Core
 import { Settings } from './src/core/Settings.js';
-import { DOMCache } from './src/core/DOMCache.js';
+import { DOMCache } from './src/core/DOMCache.js?v=1.12.4';
 
 // Итерация 3: Grid
 import { GridCalculator } from './src/grid/GridCalculator.js';
@@ -22,7 +22,7 @@ import { SLIDER_CONFIG } from './src/config/SliderConfig.js';
 import { SliderController } from './src/ui/SliderController.js';
 import { ColorPicker } from './src/ui/ColorPicker.js';
 import { PanelManager } from './src/ui/PanelManager.js';
-import { ZoomPanManager } from './src/ui/ZoomPanManager.js';
+import { ZoomPanManager } from './src/ui/ZoomPanManager.js?v=1.12.4';
 
 // Итерация 6: Elements
 import { TextBlockManager } from './src/elements/TextBlockManager.js';
@@ -41,7 +41,7 @@ import { PresetManager } from './src/preset/PresetManager.js';
 import { HistoryManager } from './src/history/HistoryManager.js';
 
 // Surface model
-import { SurfaceManager, SURFACE_IDS, SIDE_SURFACE_IDS } from './src/surfaces/SurfaceManager.js';
+import { SurfaceManager, SURFACE_IDS, SIDE_SURFACE_IDS } from './src/surfaces/SurfaceManager.js?v=1.12.4';
 
 const TEXT_PRESETS = [
     { id: 'brand',        label: 'Brand',         text: 'Lunnen — бренд компьютерной техники и аксессуаров, придуманный в Яндекс Фабрике. Сопровождает в исследованиях, работе и развлечениях.' },
@@ -348,6 +348,56 @@ class GridGenerator {
                     this.updatePresetButtons();
                     this.updateGridDebounced();
                 }
+            },
+            surfaceGridModuleSlider: {
+                valueId: 'surfaceGridModuleInput',
+                setting: null,
+                min: 0.1,
+                max: 100,
+                decimals: 4,
+                baseStep: 0.1,
+                shiftStep: 1,
+                onUpdate: value => this.applySurfaceGridSliderValue('module', value)
+            },
+            surfaceGridMarginsSlider: {
+                valueId: 'surfaceGridMarginsInput',
+                setting: null,
+                min: 0,
+                max: 10,
+                decimals: 4,
+                baseStep: 0.0001,
+                shiftStep: 0.1,
+                onUpdate: value => this.applySurfaceGridSliderValue('margins', value)
+            },
+            surfaceGridColumnsSlider: {
+                valueId: 'surfaceGridColumnsInput',
+                setting: null,
+                min: 1,
+                max: 128,
+                decimals: 0,
+                baseStep: 1,
+                shiftStep: 10,
+                onUpdate: value => this.applySurfaceGridSliderValue('columns', value)
+            },
+            surfaceGridRowsSlider: {
+                valueId: 'surfaceGridRowsInput',
+                setting: null,
+                min: 1,
+                max: 128,
+                decimals: 0,
+                baseStep: 1,
+                shiftStep: 10,
+                onUpdate: value => this.applySurfaceGridSliderValue('rows', value)
+            },
+            surfaceGridRowHeightSlider: {
+                valueId: 'surfaceGridRowHeightInput',
+                setting: null,
+                min: 1,
+                max: 64,
+                decimals: 0,
+                baseStep: 1,
+                shiftStep: 10,
+                onUpdate: value => this.applySurfaceGridSliderValue('rowHeight', value)
             },
             hueSlider: {
                 valueId: 'hueValue',
@@ -1824,11 +1874,14 @@ class GridGenerator {
      * Инициализация управления отдельными боковыми поверхностями.
      */
     initSurfaceControls() {
-        if (!this.dom.surfaceSettingsSelect) return;
+        if (!this.dom.surfaceSettingsTabs) return;
 
-        this.dom.surfaceSettingsSelect.addEventListener('change', () => {
-            this.activeSurfaceSettings = this.dom.surfaceSettingsSelect.value;
-            this.syncSurfaceControls();
+        this.dom.surfaceSettingsTabs?.querySelectorAll('[data-surface]').forEach(input => {
+            input.addEventListener('change', () => {
+                if (!input.checked) return;
+                this.activeSurfaceSettings = input.dataset.surface;
+                this.syncSurfaceControls();
+            });
         });
 
         this.dom.surfaceVisibleToggle?.addEventListener('change', (event) => {
@@ -1852,97 +1905,144 @@ class GridGenerator {
             this.historyManager.commitAction(this.getStateSnapshot());
         });
 
-        this.dom.surfaceRotationOptions?.querySelectorAll('[data-rotation]').forEach(button => {
-            button.addEventListener('click', () => {
-                const rotation = Number(button.dataset.rotation);
-                const current = this.surfaceManager.get(this.activeSurfaceSettings);
-                if (current.rotation === rotation) return;
-                this.historyManager.beginAction('rotate surface', this.getStateSnapshot());
-                this.surfaceManager.update(this.activeSurfaceSettings, { rotation });
-                this.markAsChanged();
-                this.syncSurfaceControls();
-                this.constrainAllObjectsToGrid();
-                this.updateGrid();
-                this.historyManager.commitAction(this.getStateSnapshot());
-            });
+        this.dom.surfaceRotationSelect?.addEventListener('change', (event) => {
+            const rotation = Number(event.target.value);
+            const current = this.surfaceManager.get(this.activeSurfaceSettings);
+            if (current.rotation === rotation) return;
+            this.historyManager.beginAction('rotate surface', this.getStateSnapshot());
+            this.surfaceManager.update(this.activeSurfaceSettings, { rotation });
+            this.markAsChanged();
+            this.syncSurfaceControls();
+            this.constrainAllObjectsToGrid();
+            this.updateGrid();
+            this.historyManager.commitAction(this.getStateSnapshot());
         });
 
-        const gridInputs = [
-            this.dom.surfaceGridModuleInput,
-            this.dom.surfaceGridMarginsInput,
-            this.dom.surfaceGridColumnsInput,
-            this.dom.surfaceGridRowsInput,
-            this.dom.surfaceGridRowHeightInput
-        ].filter(Boolean);
-
-        gridInputs.forEach(input => {
-            const commit = () => this.applySurfaceGridInputs();
-            input.addEventListener('change', commit);
-            input.addEventListener('keydown', event => {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    input.blur();
-                }
-            });
+        this.dom.surfaceMarginsUnitMod?.addEventListener('click', event => {
+            event.preventDefault();
+            this.switchSurfaceMarginsUnit('mod');
+        });
+        this.dom.surfaceMarginsUnitMm?.addEventListener('click', event => {
+            event.preventDefault();
+            this.switchSurfaceMarginsUnit('mm');
+        });
+        this.dom.surfaceLockModuleBtn?.addEventListener('click', event => {
+            event.preventDefault();
+            this.toggleSurfaceGridLock('module');
+        });
+        this.dom.surfaceLockMarginsBtn?.addEventListener('click', event => {
+            event.preventDefault();
+            this.toggleSurfaceGridLock('margins');
         });
 
         this.syncSurfaceControls();
     }
 
-    applySurfaceGridInputs() {
+    applySurfaceGridSliderValue(key, displayValue) {
         const current = this.surfaceManager.get(this.activeSurfaceSettings);
-        const read = (element, fallback, integer = false) => {
-            const value = Number.parseFloat(element?.value);
-            if (!Number.isFinite(value)) return fallback;
-            const normalized = integer ? Math.round(value) : value;
-            return Math.max(integer ? 1 : 0, normalized);
-        };
+        if (!current || !Number.isFinite(Number(displayValue))) return;
+        if ((key === 'module' && current.grid.lockedModule) ||
+            (key === 'margins' && current.grid.lockedMargins)) {
+            this.syncSurfaceGridSliders(current);
+            return;
+        }
 
-        const grid = {
-            module: Math.max(0.1, read(this.dom.surfaceGridModuleInput, current.grid.module)),
-            margins: read(this.dom.surfaceGridMarginsInput, current.grid.margins),
-            columns: read(this.dom.surfaceGridColumnsInput, current.grid.columns, true),
-            rows: read(this.dom.surfaceGridRowsInput, current.grid.rows, true),
-            rowHeight: read(this.dom.surfaceGridRowHeightInput, current.grid.rowHeight, true)
-        };
+        let value = Number(displayValue);
+        if (key === 'margins' && current.grid.marginsUnit === 'mm') {
+            value = current.grid.module > 0 ? value / current.grid.module : 0;
+        }
+        if (key === 'columns' || key === 'rows' || key === 'rowHeight') {
+            value = Math.max(1, Math.round(value));
+        }
 
-        this.historyManager.beginAction('edit surface grid', this.getStateSnapshot());
+        const grid = { ...current.grid, [key]: value };
         this.surfaceManager.update(this.activeSurfaceSettings, { gridMode: 'own', grid });
         this.markAsChanged();
-        this.syncSurfaceControls();
         this.constrainAllObjectsToGrid();
-        this.updateGrid();
+        this.updateGridDebounced();
+
+        if (key === 'module' && grid.marginsUnit === 'mm') {
+            this.syncSurfaceGridSliders(this.surfaceManager.get(this.activeSurfaceSettings));
+        }
+    }
+
+    switchSurfaceMarginsUnit(unit) {
+        const current = this.surfaceManager.get(this.activeSurfaceSettings);
+        const nextUnit = unit === 'mm' ? 'mm' : 'mod';
+        if (!current || current.grid.marginsUnit === nextUnit) return;
+        this.historyManager.beginAction('switch surface margins unit', this.getStateSnapshot());
+        this.surfaceManager.update(this.activeSurfaceSettings, {
+            grid: { ...current.grid, marginsUnit: nextUnit }
+        });
+        this.markAsChanged();
+        this.syncSurfaceControls();
         this.historyManager.commitAction(this.getStateSnapshot());
     }
 
+    toggleSurfaceGridLock(type) {
+        const current = this.surfaceManager.get(this.activeSurfaceSettings);
+        if (!current) return;
+        this.historyManager.beginAction(`toggle surface ${type} lock`, this.getStateSnapshot());
+        const grid = { ...current.grid };
+        if (type === 'module') {
+            grid.lockedModule = !grid.lockedModule;
+            if (grid.lockedModule) grid.lockedMargins = false;
+        } else {
+            grid.lockedMargins = !grid.lockedMargins;
+            if (grid.lockedMargins) {
+                grid.lockedModule = false;
+                grid.marginsUnit = 'mm';
+            }
+        }
+        this.surfaceManager.update(this.activeSurfaceSettings, { grid });
+        this.markAsChanged();
+        this.syncSurfaceControls();
+        this.historyManager.commitAction(this.getStateSnapshot());
+    }
+
+    syncSurfaceGridSliders(settings) {
+        if (!settings?.grid || !this.sliderController) return;
+        const grid = settings.grid;
+        const marginsUnit = grid.marginsUnit === 'mm' ? 'mm' : 'mod';
+        const marginsDisplay = marginsUnit === 'mm' ? grid.margins * grid.module : grid.margins;
+        this.sliderController.updateLimits('surfaceGridMarginsSlider', 0, marginsUnit === 'mm' ? 250 : 10);
+        this.sliderController.setValue('surfaceGridModuleSlider', grid.module, false);
+        this.sliderController.setValue('surfaceGridMarginsSlider', marginsDisplay, false);
+        this.sliderController.setValue('surfaceGridColumnsSlider', grid.columns, false);
+        this.sliderController.setValue('surfaceGridRowsSlider', grid.rows, false);
+        this.sliderController.setValue('surfaceGridRowHeightSlider', grid.rowHeight, false);
+        this.dom.surfaceMarginsUnitMod?.classList.toggle('active', marginsUnit === 'mod');
+        this.dom.surfaceMarginsUnitMm?.classList.toggle('active', marginsUnit === 'mm');
+        this.dom.surfaceLockModuleBtn?.classList.toggle('locked', grid.lockedModule === true);
+        this.dom.surfaceLockMarginsBtn?.classList.toggle('locked', grid.lockedMargins === true);
+        this.dom.surfaceLockModuleBtn?.setAttribute('aria-pressed', grid.lockedModule === true ? 'true' : 'false');
+        this.dom.surfaceLockMarginsBtn?.setAttribute('aria-pressed', grid.lockedMargins === true ? 'true' : 'false');
+    }
+
     syncSurfaceControls() {
-        if (!this.dom.surfaceSettingsSelect) return;
+        if (!this.dom.surfaceSettingsTabs) return;
         if (!SIDE_SURFACE_IDS.includes(this.activeSurfaceSettings)) {
             this.activeSurfaceSettings = 'left';
         }
 
-        this.dom.surfaceSettingsSelect.value = this.activeSurfaceSettings;
         const settings = this.surfaceManager.get(this.activeSurfaceSettings);
-        if (this.dom.surfaceVisibleToggle) this.dom.surfaceVisibleToggle.checked = settings.visible !== false;
+        const surfaceLabel = this.activeSurfaceSettings.charAt(0).toUpperCase() + this.activeSurfaceSettings.slice(1);
+        if (this.dom.surfacePanelParams) this.dom.surfacePanelParams.textContent = surfaceLabel;
+        this.dom.surfaceSettingsTabs?.querySelectorAll('[data-surface]').forEach(input => {
+            input.checked = input.dataset.surface === this.activeSurfaceSettings;
+        });
+        if (this.dom.surfaceVisibleToggle) {
+            this.dom.surfaceVisibleToggle.checked = settings.visible !== false;
+            this.updateEyeIcon(this.dom.surfaceVisibleToggle);
+        }
         if (this.dom.surfaceOwnGridToggle) this.dom.surfaceOwnGridToggle.checked = settings.gridMode === 'own';
         if (this.dom.surfaceOwnGridControls) this.dom.surfaceOwnGridControls.hidden = settings.gridMode !== 'own';
 
-        this.dom.surfaceRotationOptions?.querySelectorAll('[data-rotation]').forEach(button => {
-            const isActive = Number(button.dataset.rotation) === settings.rotation;
-            button.classList.toggle('active', isActive);
-            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-        });
+        if (this.dom.surfaceRotationSelect) {
+            this.dom.surfaceRotationSelect.value = String(settings.rotation);
+        }
 
-        const values = [
-            [this.dom.surfaceGridModuleInput, settings.grid.module],
-            [this.dom.surfaceGridMarginsInput, settings.grid.margins],
-            [this.dom.surfaceGridColumnsInput, settings.grid.columns],
-            [this.dom.surfaceGridRowsInput, settings.grid.rows],
-            [this.dom.surfaceGridRowHeightInput, settings.grid.rowHeight]
-        ];
-        values.forEach(([element, value]) => {
-            if (element && document.activeElement !== element) element.value = value;
-        });
+        this.syncSurfaceGridSliders(settings);
 
         if (this.dom.showSidePanels) {
             this.dom.showSidePanels.checked = SIDE_SURFACE_IDS.some(surface => this.surfaceManager.isVisible(surface));
@@ -6623,42 +6723,7 @@ class GridGenerator {
     }
 
     clientToSvgPoint(clientX, clientY) {
-        const svg = this.dom.svg;
-        const matrix = svg?.getScreenCTM();
-        if (!svg || !matrix) return null;
-        let screenX = clientX;
-        let screenY = clientY;
-        const rotation = this.zoomPanManager?.rotation || 0;
-
-        // Safari and Chromium differ on whether getScreenCTM() includes a CSS
-        // transform applied to the root SVG. If it is absent from the matrix,
-        // undo the view-only rotation before converting to SVG coordinates.
-        const offDiagonal = Math.abs(matrix.b) + Math.abs(matrix.c);
-        const diagonal = Math.abs(matrix.a) + Math.abs(matrix.d);
-        const matrixIncludesRotation = rotation === 90 || rotation === 270
-            ? offDiagonal > diagonal
-            : rotation === 180
-                ? matrix.a < 0 && matrix.d < 0
-                : true;
-        if (rotation !== 0 && !matrixIncludesRotation) {
-            const bounds = svg.getBoundingClientRect();
-            const centerX = bounds.left + bounds.width / 2;
-            const centerY = bounds.top + bounds.height / 2;
-            const angle = -rotation * Math.PI / 180;
-            const dx = clientX - centerX;
-            const dy = clientY - centerY;
-            screenX = centerX + dx * Math.cos(angle) - dy * Math.sin(angle);
-            screenY = centerY + dx * Math.sin(angle) + dy * Math.cos(angle);
-        }
-        const point = svg.createSVGPoint();
-        point.x = screenX;
-        point.y = screenY;
-        try {
-            const result = point.matrixTransform(matrix.inverse());
-            return { x: result.x, y: result.y };
-        } catch (error) {
-            return null;
-        }
+        return this.zoomPanManager?.clientToSvgPoint(clientX, clientY) || null;
     }
 
     getSurfacePointer(clientX, clientY) {
@@ -9254,6 +9319,7 @@ class GridGenerator {
             this.dom.showRows,
             this.dom.showBaseline,
             this.dom.showSidePanels,
+            this.dom.surfaceVisibleToggle,
             this.dom.showObjects
         ];
         
@@ -12084,6 +12150,7 @@ class GridGenerator {
         const panels = [
             { id: 'controlsPanel', headerId: 'panelHeader', draggable: true },
             { id: 'gridPanel', headerId: 'gridPanelHeader', draggable: true },
+            { id: 'surfacePanel', headerId: 'surfacePanelHeader', draggable: true },
             { id: 'textPanel', headerId: 'textPanelHeader', draggable: true },
             { id: 'paragraphPanel', headerId: 'paragraphPanelHeader', draggable: true },
             { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true },

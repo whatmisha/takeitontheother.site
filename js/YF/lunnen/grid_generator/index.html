@@ -7,7 +7,7 @@
     <meta name="keywords" content="grid generator, packaging, print design, Adobe Illustrator, SVG">
     
     <title>Pizza Boxer — Packaging Layout Tool</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=1.12.4">
 </head>
 <body>
     <div class="container">
@@ -28,9 +28,10 @@
             </div>
             <button class="zoom-indicator" id="zoomIndicator" aria-label="Reset zoom to 100%">100%</button>
             <button class="canvas-rotate-btn" id="canvasRotateLeftBtn" type="button" aria-label="Rotate canvas left" title="Rotate canvas left">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <rect x="5.5" y="7.5" width="13" height="13" rx="2.25" stroke="currentColor" stroke-width="1.8"/>
-                    <path d="M19 8.25A7.5 7.5 0 0 0 6.25 3.5M6.25 3.5H10M6.25 3.5V7.25" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <svg width="20" height="20" viewBox="0 0 18.7106995 20.8883214" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <rect x=".8106995" y="8.3675181" width="11.7101038" height="11.7101038" rx="2.0267487" stroke="currentColor" stroke-width="1.6213989"/>
+                    <polyline points="8.3995105 5.2552439 6.2218885 3.077622 8.3995105 .9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M17.8106995,13.577622v-4.2500063c0-3.4517762-2.7982175-6.2499937-6.2499938-6.2499937h-4.2500063" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </button>
         </div>
@@ -180,74 +181,109 @@
                         </div>
                     </section>
 
-                    <section class="control-section surface-settings-section" aria-labelledby="surfaceSettingsTitle">
-                        <h3 id="surfaceSettingsTitle">Side Surface</h3>
+                </div>
+            </aside>
 
-                        <div class="control-group">
-                            <label for="surfaceSettingsSelect">
-                                <span>Surface</span>
-                                <select id="surfaceSettingsSelect" class="style-select" aria-label="Side surface">
-                                    <option value="left">Left</option>
-                                    <option value="right">Right</option>
-                                    <option value="top">Top</option>
-                                    <option value="bottom">Bottom</option>
-                                </select>
-                            </label>
-                        </div>
+            <aside class="controls-panel controls-panel-surface" id="surfacePanel" role="complementary" aria-label="Side surface settings">
+                <div class="panel-header" id="surfacePanelHeader">
+                    <span>Side Surfaces <span class="panel-params" id="surfacePanelParams">Left</span></span>
+                    <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content surface-panel-content">
+                    <section class="surface-panel-section">
+                        <fieldset>
+                            <legend class="sr-only">Side surface selection</legend>
+                            <div class="segmented-control surface-tabs" id="surfaceSettingsTabs" role="radiogroup" aria-label="Side surface selection">
+                                <input type="radio" name="surfaceSettings" value="left" id="surfaceSettingsLeft" data-surface="left" checked>
+                                <label for="surfaceSettingsLeft">Left</label>
+                                <input type="radio" name="surfaceSettings" value="right" id="surfaceSettingsRight" data-surface="right">
+                                <label for="surfaceSettingsRight">Right</label>
+                                <input type="radio" name="surfaceSettings" value="top" id="surfaceSettingsTop" data-surface="top">
+                                <label for="surfaceSettingsTop">Top</label>
+                                <input type="radio" name="surfaceSettings" value="bottom" id="surfaceSettingsBottom" data-surface="bottom">
+                                <label for="surfaceSettingsBottom">Bottom</label>
+                            </div>
+                        </fieldset>
+                    </section>
 
-                        <div class="control-group surface-toggle-row">
-                            <label class="checkbox-label">
+                    <section class="surface-panel-section surface-quick-controls" aria-label="Surface behavior and orientation">
+                        <div class="toggle-chip-group" role="group" aria-label="Surface visibility">
+                            <label class="toggle-chip surface-visible-chip">
                                 <input type="checkbox" id="surfaceVisibleToggle" checked aria-label="Show selected surface">
-                                <span>Visible</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="surfaceOwnGridToggle" aria-label="Use own grid on selected surface">
-                                <span>Own Grid</span>
+                                <span>
+                                    <span class="toggle-chip-icon-wrapper">
+                                        <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                                        <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                    </span>
+                                    Visible
+                                </span>
                             </label>
                         </div>
+                        <label class="toggle-chip surface-own-grid-chip">
+                            <input type="checkbox" id="surfaceOwnGridToggle" aria-label="Use own grid on selected surface">
+                            <span>Own Grid</span>
+                        </label>
+                        <label class="surface-orientation-control" title="Orientation">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M4.25 4.5H1.75V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2 4.25A6 6 0 1 1 2.75 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                            <select id="surfaceRotationSelect" aria-label="Surface orientation">
+                                <option value="0">0°</option>
+                                <option value="90">90°</option>
+                                <option value="180">180°</option>
+                                <option value="270">270°</option>
+                            </select>
+                        </label>
+                    </section>
 
-                        <div class="control-group">
-                            <span class="control-label">Orientation</span>
-                            <div class="surface-rotation-options" id="surfaceRotationOptions" role="group" aria-label="Surface orientation">
-                                <button type="button" data-rotation="0">0°</button>
-                                <button type="button" data-rotation="90">90°</button>
-                                <button type="button" data-rotation="180">180°</button>
-                                <button type="button" data-rotation="270">270°</button>
-                            </div>
+                    <section id="surfaceOwnGridControls" class="surface-own-grid-controls" aria-labelledby="surfaceGridTitle" hidden>
+                        <div class="surface-own-grid-heading">
+                            <span id="surfaceGridTitle">Independent Grid</span>
+                            <small>Overrides the Front grid</small>
                         </div>
-
-                        <div id="surfaceOwnGridControls" class="surface-own-grid-controls" hidden>
-                            <div class="control-group">
-                                <label for="surfaceGridModuleInput">
+                        <div class="surface-grid-controls">
+                            <div class="control-group" id="surfaceGridModuleGroup">
+                                <label for="surfaceGridModuleSlider">
                                     <span>Module <span class="unit">mm</span></span>
-                                    <input type="text" class="value-display" id="surfaceGridModuleInput" value="5" data-min="0.1" aria-label="Surface grid module">
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" inputmode="decimal" id="surfaceGridModuleInput" value="5.0000" data-min="0.1" data-max="100" aria-label="Surface grid module">
+                                        <button type="button" class="lock-btn" id="surfaceLockModuleBtn" aria-label="Lock surface module" title="Lock surface module">
+                                            <svg class="lock-icon lock-icon-open" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6M3.5 6H10.5C11.3284 6 12 6.67157 12 7.5V11.5C12 12.3284 11.3284 13 10.5 13H3.5C2.67157 13 2 12.3284 2 11.5V7.5C2 6.67157 2.67157 6 3.5 6Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                            <svg class="lock-icon lock-icon-locked" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;"><rect x="2" y="6" width="10" height="7" rx="1.5" fill="currentColor" stroke="currentColor" stroke-width="1.2"/><path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                        </button>
+                                    </div>
                                 </label>
+                                <input type="range" id="surfaceGridModuleSlider" min="0.1" max="100" step="0.1" value="5" aria-label="Surface grid module slider">
+                            </div>
+                            <div class="control-group" id="surfaceGridMarginsGroup">
+                                <label for="surfaceGridMarginsSlider">
+                                    <span>Margins <span class="unit-buttons"><button type="button" class="unit-btn active" id="surfaceMarginsUnitMod">mod</button><button type="button" class="unit-btn" id="surfaceMarginsUnitMm">mm</button></span></span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" inputmode="decimal" id="surfaceGridMarginsInput" value="2.0000" data-min="0" data-max="10" aria-label="Surface grid margins">
+                                        <button type="button" class="lock-btn" id="surfaceLockMarginsBtn" aria-label="Lock surface margins" title="Lock surface margins">
+                                            <svg class="lock-icon lock-icon-open" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6M3.5 6H10.5C11.3284 6 12 6.67157 12 7.5V11.5C12 12.3284 11.3284 13 10.5 13H3.5C2.67157 13 2 12.3284 2 11.5V7.5C2 6.67157 2.67157 6 3.5 6Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                            <svg class="lock-icon lock-icon-locked" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;"><rect x="2" y="6" width="10" height="7" rx="1.5" fill="currentColor" stroke="currentColor" stroke-width="1.2"/><path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                        </button>
+                                    </div>
+                                </label>
+                                <input type="range" id="surfaceGridMarginsSlider" min="0" max="10" step="0.0001" value="2" aria-label="Surface grid margins slider">
                             </div>
                             <div class="control-group">
-                                <label for="surfaceGridMarginsInput">
-                                    <span>Margins <span class="unit">mod</span></span>
-                                    <input type="text" class="value-display" id="surfaceGridMarginsInput" value="2" data-min="0" aria-label="Surface grid margins">
-                                </label>
-                            </div>
-                            <div class="surface-grid-pair">
-                                <div class="control-group">
-                                    <label for="surfaceGridColumnsInput">
-                                        <span>Columns</span>
-                                        <input type="text" class="value-display" id="surfaceGridColumnsInput" value="4" data-min="1" aria-label="Surface grid columns">
-                                    </label>
-                                </div>
-                                <div class="control-group">
-                                    <label for="surfaceGridRowsInput">
-                                        <span>Rows</span>
-                                        <input type="text" class="value-display" id="surfaceGridRowsInput" value="4" data-min="1" aria-label="Surface grid rows">
-                                    </label>
-                                </div>
+                                <label for="surfaceGridColumnsSlider"><span>Columns</span><input type="text" class="value-display" inputmode="numeric" id="surfaceGridColumnsInput" value="4" data-min="1" data-max="128" aria-label="Surface grid columns"></label>
+                                <input type="range" id="surfaceGridColumnsSlider" min="1" max="128" step="1" value="4" aria-label="Surface grid columns slider">
                             </div>
                             <div class="control-group">
-                                <label for="surfaceGridRowHeightInput">
-                                    <span>Row Height <span class="unit">mod</span></span>
-                                    <input type="text" class="value-display" id="surfaceGridRowHeightInput" value="4" data-min="1" aria-label="Surface grid row height">
-                                </label>
+                                <label for="surfaceGridRowsSlider"><span>Rows</span><input type="text" class="value-display" inputmode="numeric" id="surfaceGridRowsInput" value="4" data-min="1" data-max="128" aria-label="Surface grid rows"></label>
+                                <input type="range" id="surfaceGridRowsSlider" min="1" max="128" step="1" value="4" aria-label="Surface grid rows slider">
+                            </div>
+                            <div class="control-group">
+                                <label for="surfaceGridRowHeightSlider"><span>Row Height <span class="unit">mod</span></span><input type="text" class="value-display" inputmode="numeric" id="surfaceGridRowHeightInput" value="4" data-min="1" data-max="64" aria-label="Surface grid row height"></label>
+                                <input type="range" id="surfaceGridRowHeightSlider" min="1" max="64" step="1" value="4" aria-label="Surface grid row height slider">
                             </div>
                         </div>
                     </section>
@@ -1045,6 +1081,6 @@
         </div>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <script type="module" src="script.js?v=1.12.4"></script>
 </body>
 </html>

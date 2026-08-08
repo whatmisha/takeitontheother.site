@@ -60,7 +60,10 @@ export function createDefaultSurfaceSettings(profile = 'front', mainGrid = {}) {
         margins: finiteNonNegative(mainGrid.margins, 2),
         columns: Math.max(1, Math.round(finitePositive(mainGrid.columns, 4))),
         rows: Math.max(1, Math.round(finitePositive(mainGrid.rows, 4))),
-        rowHeight: Math.max(1, Math.round(finitePositive(mainGrid.rowHeight, 4)))
+        rowHeight: Math.max(1, Math.round(finitePositive(mainGrid.rowHeight, 4))),
+        marginsUnit: 'mod',
+        lockedModule: false,
+        lockedMargins: false
     };
 
     return Object.fromEntries(SURFACE_IDS.map(surface => [surface, {
@@ -116,7 +119,10 @@ export class SurfaceManager {
                     margins: finiteNonNegative(incomingGrid.margins, defaultSurface.grid.margins),
                     columns: Math.max(1, Math.round(finitePositive(incomingGrid.columns, defaultSurface.grid.columns))),
                     rows: Math.max(1, Math.round(finitePositive(incomingGrid.rows, defaultSurface.grid.rows))),
-                    rowHeight: Math.max(1, Math.round(finitePositive(incomingGrid.rowHeight, defaultSurface.grid.rowHeight)))
+                    rowHeight: Math.max(1, Math.round(finitePositive(incomingGrid.rowHeight, defaultSurface.grid.rowHeight))),
+                    marginsUnit: incomingGrid.marginsUnit === 'mm' ? 'mm' : 'mod',
+                    lockedModule: incomingGrid.lockedModule === true,
+                    lockedMargins: incomingGrid.lockedMargins === true
                 }
             };
         });
@@ -166,7 +172,10 @@ export class SurfaceManager {
                 margins: finiteNonNegative(patch.grid.margins, current.grid.margins),
                 columns: Math.max(1, Math.round(finitePositive(patch.grid.columns, current.grid.columns))),
                 rows: Math.max(1, Math.round(finitePositive(patch.grid.rows, current.grid.rows))),
-                rowHeight: Math.max(1, Math.round(finitePositive(patch.grid.rowHeight, current.grid.rowHeight)))
+                rowHeight: Math.max(1, Math.round(finitePositive(patch.grid.rowHeight, current.grid.rowHeight))),
+                marginsUnit: patch.grid.marginsUnit === 'mm' ? 'mm' : (patch.grid.marginsUnit === 'mod' ? 'mod' : current.grid.marginsUnit),
+                lockedModule: typeof patch.grid.lockedModule === 'boolean' ? patch.grid.lockedModule : current.grid.lockedModule,
+                lockedMargins: typeof patch.grid.lockedMargins === 'boolean' ? patch.grid.lockedMargins : current.grid.lockedMargins
             };
         }
 

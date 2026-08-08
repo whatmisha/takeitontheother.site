@@ -35,12 +35,14 @@ export class ZoomPanManager {
         this.startY = 0;
         this.lastX = 0;
         this.lastY = 0;
+        this.boundResize = () => this.updateViewRotation();
         
         // Инициализируем SVG для векторного зума
         this.initializeSVG();
         
         // Инициализируем обработчики
         this.initEventListeners();
+        window.addEventListener('resize', this.boundResize);
     }
     
     /**
@@ -144,10 +146,12 @@ export class ZoomPanManager {
         } else {
             // Иначе - панорамирование (для Apple Magic Mouse и трекпадов)
             const viewBox = this.getViewBox();
-            
-            // Преобразуем движение в координаты SVG
-            const deltaXSvg = (e.deltaX / rect.width) * viewBox.width;
-            const deltaYSvg = (e.deltaY / rect.height) * viewBox.height;
+            const { x: deltaXSvg, y: deltaYSvg } = this.screenDeltaToSvg(
+                e.deltaX,
+                e.deltaY,
+                rect,
+                viewBox
+            );
             
             // Обновляем позицию viewBox
             this.panX += deltaXSvg;
@@ -273,11 +277,16 @@ export class ZoomPanManager {
             const dxPixels = e.clientX - this.startX;
             const dyPixels = e.clientY - this.startY;
             
-            // Преобразуем перемещение в координаты SVG
+            // Преобразуем экранное перемещение в локальные координаты SVG.
+            // Так направление drag остается естественным после поворота canvas.
             const rect = this.container.getBoundingClientRect();
             const viewBox = this.getViewBox();
-            const dxSvg = (dxPixels / rect.width) * viewBox.width;
-            const dySvg = (dyPixels / rect.height) * viewBox.height;
+            const { x: dxSvg, y: dySvg } = this.screenDeltaToSvg(
+                dxPixels,
+                dyPixels,
+                rect,
+                viewBox
+            );
             
             // Обновляем позицию (при панорамировании двигаем viewBox в обратную сторону)
             this.panX = this.lastX - dxSvg;
@@ -307,6 +316,78 @@ export class ZoomPanManager {
         }
         const [x, y, width, height] = viewBoxAttr.split(' ').map(Number);
         return { x, y, width, height };
+    }
+
+    /**
+     * Переводит экранный вектор движения в локальные оси SVG.
+     * CSS-поворот меняет только представление, поэтому для viewBox нужен
+     * обратный поворот: жесты при этом остаются привязаны к экрану.
+     */
+    screenDeltaToSvg(deltaX, deltaY, rect = this.container.getBoundingClientRect(), viewBox = this.getViewBox()) {
+        const normalizedRotation = ((this.rotation % 360) + 360) % 360;
+        let localX = deltaX;
+        let localY = deltaY;
+
+        switch (normalizedRotation) {
+            case 90:
+                localX = deltaY;
+                localY = -deltaX;
+                break;
+            case 180:
+                localX = -deltaX;
+                localY = -deltaY;
+                break;
+            case 270:
+                localX = -deltaY;
+                localY = deltaX;
+                break;
+        }
+
+        return {
+            x: localX / this.getSvgRenderScale(rect, viewBox),
+            y: localY / this.getSvgRenderScale(rect, viewBox)
+        };
+    }
+
+    getSvgRenderScale(rect = this.container.getBoundingClientRect(), viewBox = this.getViewBox()) {
+        const viewport = this.getSvgViewportSize(rect);
+        return Math.min(viewport.width / viewBox.width, viewport.height / viewBox.height) || 1;
+    }
+
+    getSvgViewportSize(rect = this.container.getBoundingClientRect()) {
+        const swapsAxes = this.rotation === 90 || this.rotation === 270;
+        return swapsAxes
+            ? { width: rect.height, height: rect.width }
+            : { width: rect.width, height: rect.height };
+    }
+
+    /**
+     * Конвертирует экранную точку в координаты viewBox независимо от того,
+     * учитывает ли браузер CSS transform в getScreenCTM().
+     */
+    clientToSvgPoint(clientX, clientY) {
+        const rect = this.container.getBoundingClientRect();
+        const viewBox = this.getViewBox();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const angle = -this.rotation * Math.PI / 180;
+        const dx = clientX - centerX;
+        const dy = clientY - centerY;
+        const localScreenX = centerX + dx * Math.cos(angle) - dy * Math.sin(angle);
+        const localScreenY = centerY + dx * Math.sin(angle) + dy * Math.cos(angle);
+        const viewport = this.getSvgViewportSize(rect);
+        const viewportLeft = centerX - viewport.width / 2;
+        const viewportTop = centerY - viewport.height / 2;
+        const renderScale = this.getSvgRenderScale(rect, viewBox);
+        const renderedWidth = viewBox.width * renderScale;
+        const renderedHeight = viewBox.height * renderScale;
+        const offsetX = (viewport.width - renderedWidth) / 2;
+        const offsetY = (viewport.height - renderedHeight) / 2;
+
+        return {
+            x: viewBox.x + (localScreenX - viewportLeft - offsetX) / renderScale,
+            y: viewBox.y + (localScreenY - viewportTop - offsetY) / renderScale
+        };
     }
     
     /**
@@ -344,11 +425,19 @@ export class ZoomPanManager {
      */
     rotateLeft() {
         this.rotation = (this.rotation + 270) % 360;
-        this.svg.style.transform = this.rotation === 0 ? '' : `rotate(${this.rotation}deg)`;
+        this.updateViewRotation();
         this.container.dispatchEvent(new CustomEvent('canvasrotationchange', {
             detail: { rotation: this.rotation }
         }));
         return this.rotation;
+    }
+
+    updateViewRotation() {
+        const rect = this.container.getBoundingClientRect();
+        const swapsAxes = this.rotation === 90 || this.rotation === 270;
+        this.svg.style.width = swapsAxes ? `${rect.height}px` : '100%';
+        this.svg.style.height = swapsAxes ? `${rect.width}px` : '100%';
+        this.svg.style.transform = this.rotation === 0 ? '' : `rotate(${this.rotation}deg)`;
     }
     
     /**
@@ -464,6 +553,7 @@ export class ZoomPanManager {
      * Очистка обработчиков
      */
     destroy() {
+        window.removeEventListener('resize', this.boundResize);
         this.container.removeEventListener('wheel', this.handleWheel);
         document.removeEventListener('keydown', this.handleKeyDown);
         document.removeEventListener('keyup', this.handleKeyUp);
