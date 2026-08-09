@@ -1,313 +1,165 @@
-/**
- * GraphicsRenderer - Отрисовка графических элементов в SVG
- */
-import { DOMUtils } from '../utils/DOMUtils.js';
 import { MathUtils } from '../utils/MathUtils.js';
 
+/**
+ * Owns graphics-object geometry and SVG rendering for both the editor and export.
+ * Editor state and pointer interactions stay in their dedicated controllers.
+ */
 export class GraphicsRenderer {
-    constructor(settings, gridCalculator) {
+    constructor({
+        settings,
+        createSvgElement,
+        getContrastColor,
+        getBlockY,
+        attachInteractions = () => {}
+    }) {
         this.settings = settings;
-        this.gridCalculator = gridCalculator;
+        this.createSvgElement = createSvgElement;
+        this.getContrastColor = getContrastColor;
+        this.getBlockY = getBlockY;
+        this.attachInteractions = attachInteractions;
     }
 
-    /**
-     * Отрисовка всех графических блоков
-     */
-    renderAll(container, graphicsBlocks, scale = 1) {
-        const graphicsGroup = DOMUtils.createSVGElement('g', {
-            id: 'graphicsBlocks',
-            class: 'graphics-blocks'
-        });
-
-        graphicsBlocks.forEach(block => {
-            if (block.visible) {
-                const blockElement = this.renderBlock(block, scale);
-                if (blockElement) {
-                    graphicsGroup.appendChild(blockElement);
-                }
-            }
-        });
-
-        container.appendChild(graphicsGroup);
-    }
-
-    /**
-     * Отрисовка одного графического блока
-     */
-    renderBlock(block, scale = 1) {
-        if (!block.svgContent && !block.svgPath) return null;
-
-        // Вычисляем позицию на сетке
-        const position = this.calculatePosition(block);
-        
-        // Вычисляем размеры
-        const dimensions = this.calculateDimensions(block);
-
-        // Получаем угол поворота для поверхности
-        const surface = block.surface || 'front';
-        const rotation = this.getSurfaceRotation(surface);
-
-        // Создаем группу для блока
-        const blockGroup = DOMUtils.createSVGElement('g', {
-            id: block.id,
-            class: `graphics-block surface-${surface}`,
-            'data-block-id': block.id,
-            'data-type': block.type,
-            'data-surface': surface,
-            transform: this.buildTransform(position, rotation, scale)
-        });
-
-        // Парсим SVG контент
-        const svgElement = this.parseSVGContent(block.svgContent);
-        if (svgElement) {
-            // Масштабируем SVG
-            const scaledSVG = this.scaleSVG(
-                svgElement,
-                dimensions.width * scale,
-                dimensions.height * scale,
-                block.originalWidth,
-                block.originalHeight
-            );
-            
-            blockGroup.appendChild(scaledSVG);
-        }
-
-        // Рендерим границы если нужно
-        if (block.showBounds) {
-            const bounds = this.renderBounds(
-                dimensions.width * scale,
-                dimensions.height * scale,
-                scale
-            );
-            blockGroup.insertBefore(bounds, blockGroup.firstChild);
-        }
-
-        return blockGroup;
-    }
-
-    /**
-     * Получить угол поворота для поверхности
-     */
-    getSurfaceRotation(surface) {
-        const surfaceConfig = this.gridCalculator.getSurfaceConfig(surface);
-        return surfaceConfig.rotation || 0;
-    }
-
-    /**
-     * Построить строку трансформации с учетом позиции и поворота
-     */
-    buildTransform(position, rotation, scale) {
-        let transform = `translate(${position.x * scale}, ${position.y * scale})`;
-        
-        if (rotation !== 0) {
-            // Применяем поворот для торцов
-            transform += ` rotate(${rotation})`;
-        }
-        
-        return transform;
-    }
-
-    /**
-     * Парсинг SVG контента
-     */
-    parseSVGContent(svgContent) {
-        if (!svgContent) return null;
-
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(svgContent, 'image/svg+xml');
-        const svg = doc.querySelector('svg');
-
-        if (!svg) return null;
-
-        // Создаем группу для содержимого SVG
-        const group = DOMUtils.createSVGElement('g', {
-            class: 'svg-content'
-        });
-
-        // Копируем все дочерние элементы SVG
-        Array.from(svg.children).forEach(child => {
-            const clonedChild = child.cloneNode(true);
-            group.appendChild(clonedChild);
-        });
-
-        return group;
-    }
-
-    /**
-     * Масштабирование SVG
-     */
-    scaleSVG(svgGroup, targetWidth, targetHeight, originalWidth, originalHeight) {
-        if (!svgGroup) return svgGroup;
-
-        // Вычисляем масштаб
-        const scaleX = targetWidth / originalWidth;
-        const scaleY = targetHeight / originalHeight;
-        
-        // Используем меньший масштаб чтобы сохранить пропорции
-        const scale = Math.min(scaleX, scaleY);
-
-        // Применяем трансформацию
-        const currentTransform = svgGroup.getAttribute('transform') || '';
-        svgGroup.setAttribute('transform', `${currentTransform} scale(${scale})`);
-
-        return svgGroup;
-    }
-
-    /**
-     * Отрисовка границ блока
-     */
-    renderBounds(width, height, scale) {
-        const rect = DOMUtils.createSVGElement('rect', {
-            class: 'graphics-bounds',
-            x: 0,
-            y: 0,
-            width: width,
-            height: height,
-            fill: 'none',
-            stroke: 'rgba(0, 0, 255, 0.3)',
-            'stroke-width': 1 / scale,
-            'stroke-dasharray': '4,4'
-        });
-
-        return rect;
-    }
-
-    /**
-     * Расчет позиции блока на сетке
-     */
-    calculatePosition(block) {
-        // Конвертируем позицию сетки в координаты с учетом поверхности
-        return this.gridCalculator.gridPositionToXY(
-            block.x,
-            block.row,
-            block.baselineOffset,
-            block.surface || 'front'
-        );
-    }
-
-    /**
-     * Расчет размеров блока в пикселях
-     */
     calculateDimensions(block) {
         const module = this.settings.get('gridModule');
         const aspectRatio = block.originalWidth / block.originalHeight;
-        
-        let widthInPt, heightInPt;
-        
-        // Проверяем режим назначения размера
+        let widthInMm;
+        let heightInMm;
+
         if (block.sizeMode === 'width') {
-            // Режим по ширине: используем widthInColumns
-            // Размер рассчитывается с учетом полей и межколонников
             const frontWidth = this.settings.get('frontWidth');
             const margins = this.settings.get('margins');
             const columnCount = this.settings.get('columnCount');
-            
-            // Вычисляем ширину контентной области (убираем поля с обеих сторон)
             const contentWidth = frontWidth - 2 * margins * module;
-            
-            // Вычисляем ширину одной колонки
-            // Формула: (контентная область - промежутки) / количество колонок
             const columnWidth = (contentWidth - (columnCount - 1) * module) / columnCount;
-            
-            // Вычисляем ширину графики: N колонок + (N-1) промежутков
-            // Пример для 12 col из 12: 12 * columnWidth + 11 * gutter = вся контентная область
-            const widthInMm = block.widthInColumns * columnWidth + (block.widthInColumns - 1) * module;
-            widthInPt = MathUtils.mmToPt(widthInMm);
-            
-            // Вычисляем высоту пропорционально
-            heightInPt = widthInPt / aspectRatio;
+            widthInMm = block.widthInColumns * columnWidth
+                + (block.widthInColumns - 1) * module;
+            heightInMm = widthInMm / aspectRatio;
         } else {
-            // Режим по высоте (по умолчанию): используем heightInModules
-            const heightInMm = block.heightInModules * module;
-            heightInPt = MathUtils.mmToPt(heightInMm);
-            
-            // Вычисляем ширину пропорционально
-            widthInPt = heightInPt * aspectRatio;
+            heightInMm = block.heightInModules * module;
+            widthInMm = heightInMm * aspectRatio;
         }
 
         return {
-            width: widthInPt,
-            height: heightInPt
+            width: MathUtils.mmToPt(widthInMm),
+            height: MathUtils.mmToPt(heightInMm)
         };
     }
 
-    /**
-     * Обновление отображения одного блока
-     */
-    updateBlock(blockId, block, scale = 1) {
-        const existingElement = document.getElementById(blockId);
-        if (!existingElement) return null;
+    calculateLayout(block, frontX, frontY, frontWidth, scale) {
+        const module = this.settings.get('gridModule');
+        const margins = this.settings.get('margins');
+        const columnCount = this.settings.get('columnCount');
+        const dimensions = this.calculateDimensions(block);
+        const widthInMm = MathUtils.ptToMm(dimensions.width);
+        const heightInMm = MathUtils.ptToMm(dimensions.height);
+        const columnWidth = (
+            frontWidth / scale
+            - module * margins * 2
+            - module * (columnCount - 1)
+        ) / columnCount;
+        const graphicsWidthInColumns = Math.ceil(widthInMm / (columnWidth + module));
+        const columnX = frontX
+            + module * margins * scale
+            + (block.x - 1) * (columnWidth + module) * scale;
 
-        const newElement = this.renderBlock(block, scale);
-        if (!newElement) return null;
-
-        existingElement.replaceWith(newElement);
-        return newElement;
-    }
-
-    /**
-     * Удаление блока из SVG
-     */
-    removeBlock(blockId) {
-        const element = document.getElementById(blockId);
-        if (element) {
-            element.remove();
-            return true;
+        let x = columnX;
+        if ((block.alignment || 'left') === 'right') {
+            const areaRightColumn = block.x + graphicsWidthInColumns - 1;
+            const areaRightEdge = frontX
+                + module * margins * scale
+                + (areaRightColumn - 1) * (columnWidth + module) * scale
+                + columnWidth * scale;
+            x = areaRightEdge - widthInMm * scale;
         }
-        return false;
-    }
-
-    /**
-     * Подсветка блока
-     */
-    highlightBlock(blockId, highlight = true) {
-        const element = document.getElementById(blockId);
-        if (!element) return;
-
-        if (highlight) {
-            element.classList.add('highlighted');
-        } else {
-            element.classList.remove('highlighted');
-        }
-    }
-
-    /**
-     * Получение информации о блоке для экспорта
-     */
-    getBlockInfo(blockId) {
-        const element = document.getElementById(blockId);
-        if (!element) return null;
-
-        const bbox = element.getBBox();
-        const transform = element.getAttribute('transform');
 
         return {
-            id: blockId,
-            bbox: {
-                x: bbox.x,
-                y: bbox.y,
-                width: bbox.width,
-                height: bbox.height
-            },
-            transform: transform
+            x,
+            y: frontY
+                + this.getBlockY(block) * module * scale
+                + module * margins * scale,
+            width: widthInMm * scale,
+            height: heightInMm * scale
         };
     }
 
-    /**
-     * Загрузка внешнего SVG файла и отрисовка
-     */
-    async renderFromFile(block, svgPath, scale = 1) {
-        try {
-            const response = await fetch(svgPath);
-            const svgContent = await response.text();
-            
-            block.svgContent = svgContent;
-            
-            return this.renderBlock(block, scale);
-        } catch (error) {
-            console.error(`Failed to load SVG from ${svgPath}:`, error);
-            return null;
-        }
+    draw(container, block, frontX, frontY, frontWidth, frontHeight, scale) {
+        if (!block.svgContent) return null;
+
+        const color = this.getContrastColor();
+        const layout = this.calculateLayout(block, frontX, frontY, frontWidth, scale);
+        const group = this.createSvgElement('g', {
+            id: `graphics-group-${block.id}`,
+            style: 'cursor: move;',
+            'data-block-id': block.id
+        }, container);
+        const bounds = this.createSvgElement('rect', {
+            x: layout.x,
+            y: layout.y,
+            width: layout.width,
+            height: layout.height,
+            fill: color,
+            'fill-opacity': '0',
+            stroke: color,
+            'stroke-width': scale === 1 ? '0.5' : '1',
+            'stroke-opacity': '0',
+            style: 'pointer-events: all; transition: opacity 0.2s;',
+            'data-block-id': block.id
+        }, group);
+        group.boundsElement = bounds;
+
+        const svg = this.createGraphicSvg(group, block, layout, color, true);
+        svg.innerHTML = block.svgContent;
+        this.attachInteractions(group, block);
+        return group;
+    }
+
+    drawForExport(container, block, frontX, frontY, frontWidth, frontHeight, scale) {
+        if (!block.svgContent) return null;
+
+        const color = this.getContrastColor();
+        const layout = this.calculateLayout(block, frontX, frontY, frontWidth, scale);
+        const svg = this.createGraphicSvg(container, block, layout, color, false);
+        svg.innerHTML = block.svgContent;
+        this.applyContrastColor(svg, color);
+        return svg;
+    }
+
+    createGraphicSvg(container, block, layout, color, disablePointerEvents) {
+        return this.createSvgElement('svg', {
+            x: layout.x,
+            y: layout.y,
+            width: layout.width,
+            height: layout.height,
+            viewBox: `0 0 ${block.originalWidth} ${block.originalHeight}`,
+            preserveAspectRatio: 'xMinYMin meet',
+            style: `color: ${color}; overflow: visible;${disablePointerEvents ? ' pointer-events: none;' : ''}`
+        }, container);
+    }
+
+    applyContrastColor(svgElement, color) {
+        svgElement.querySelectorAll('style').forEach(styleElement => {
+            const value = this.replaceMonochromeColors(styleElement.textContent || '', color);
+            styleElement.textContent = value;
+        });
+
+        svgElement.querySelectorAll('*').forEach(element => {
+            for (const attribute of ['fill', 'stroke']) {
+                const value = element.getAttribute(attribute);
+                if (this.isMonochromeColor(value)) {
+                    element.setAttribute(attribute, color);
+                }
+            }
+        });
+    }
+
+    replaceMonochromeColors(value, color) {
+        return value.replace(
+            /(fill|stroke):\s*(?:#fff(?:fff)?|white|#000(?:000)?|black)/gi,
+            `$1: ${color}`
+        );
+    }
+
+    isMonochromeColor(value) {
+        return /^(?:#fff(?:fff)?|white|#000(?:000)?|black)$/i.test(value?.trim() || '');
     }
 }
-

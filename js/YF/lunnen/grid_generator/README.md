@@ -155,27 +155,30 @@ grid_generator/
 #### 📐 grid/ - Модульная сетка
 - **GridCalculator.js** - Расчеты сетки
 - **GridRenderer.js** - Отрисовка сетки
-- **GridPresets.js** - Пресеты комбинаций
 
 #### 📤 svg/ - SVG экспорт
 - **SVGExporter.js** - Экспорт в SVG и JSON
-- **SVGUtils.js** - Утилиты для SVG
 
 #### 🎛️ ui/ - Интерфейс
 - **SliderController.js** - Управление слайдерами
-- **ColorPicker.js** - HSB color picker
 - **PanelManager.js** - Drag & drop панелей
-- **DragDropManager.js** - Базовый drag & drop
+- **TypographyUnitController.js** - синхронизация `mod/pt`, слайдеров и подписей стилей
 
 #### 📦 surfaces/ - Грани развёртки
 - **SurfaceManager.js** - ориентация, видимость, локальная геометрия и сетки граней
+- **SurfacePanelController.js** - интерфейс настроек боковых граней
+- **SurfaceCoordinateMapper.js** - преобразование координат между гранями
+- **SurfaceRenderer.js** - отрисовка боковых граней
 
 #### 📝 elements/ - Элементы
-- **TextBlockManager.js** - Управление текстом
-- **TextRenderer.js** - Отрисовка текста
-- **GraphicsManager.js** - Управление графикой
-- **GraphicsRenderer.js** - Отрисовка графики
-- **ElementsNavigator.js** - Навигатор элементов
+- **GraphicsRenderer.js** - геометрия и SVG-отрисовка графики в редакторе и экспорте
+- **TextBlockRenderer.js** - SVG-отрисовка и вертикальный layout текстовых блоков
+- **TextLayout.js** - surface-local геометрия, измерение и перенос строк
+- **TextStyleResolver.js** - метрики шрифтов и единый расчёт текстовых стилей
+- **ObjectEditorPanelController.js** - жизненный цикл панелей текстовых и графических объектов
+- **ObjectEditorInputController.js** - числовые поля, клавиатурные шаги и ограничения объектов
+- **ObjectNavigatorController.js** - список Objects, выбор и действия над объектами
+- **ObjectDragController.js** - drag/resize объектов и перенос между гранями
 
 ---
 

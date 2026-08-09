@@ -56,7 +56,10 @@ export class SliderController {
         slider.addEventListener('input', (e) => this.handleSliderInput(sliderId, e));
         // Убрали обработчик input для valueInput - изменения применяются только при blur или Enter
         valueInput.addEventListener('keydown', (e) => this.handleKeyDown(sliderId, e));
-        valueInput.addEventListener('focus', (e) => e.target.select());
+        valueInput.addEventListener('focus', event => {
+            event.target.dataset.originalValue = event.target.value;
+            event.target.select();
+        });
         valueInput.addEventListener('blur', (e) => this.handleValueBlur(sliderId, e));
     }
 
@@ -184,16 +187,13 @@ export class SliderController {
         switch (event.key) {
             case 'ArrowUp':
                 if (event.shiftKey && shiftStep > 0) {
-                    // С Shift: прилипание к ближайшему большому шагу вверх
-                    // Сначала округляем текущее значение до количества знаков шага
-                    const roundedCurrent = stepDecimals > 0 
-                        ? parseFloat(currentValue.toFixed(stepDecimals))
-                        : Math.round(currentValue);
-                    const k = roundedCurrent / shiftStep;
+                    // Snap to the next large-step boundary without rounding a
+                    // fractional current value past that boundary first.
+                    const k = currentValue / shiftStep;
                     const nearest = Math.round(k);
                     const isMultiple = Math.abs(k - nearest) < 1e-6;
                     if (isMultiple) {
-                        newValue = roundedCurrent + shiftStep;
+                        newValue = currentValue + shiftStep;
                     } else {
                         newValue = Math.ceil(k) * shiftStep;
                     }
@@ -208,16 +208,11 @@ export class SliderController {
                 break;
             case 'ArrowDown':
                 if (event.shiftKey && shiftStep > 0) {
-                    // С Shift: прилипание к ближайшему большому шагу вниз
-                    // Сначала округляем текущее значение до количества знаков шага
-                    const roundedCurrent = stepDecimals > 0 
-                        ? parseFloat(currentValue.toFixed(stepDecimals))
-                        : Math.round(currentValue);
-                    const k = roundedCurrent / shiftStep;
+                    const k = currentValue / shiftStep;
                     const nearest = Math.round(k);
                     const isMultiple = Math.abs(k - nearest) < 1e-6;
                     if (isMultiple) {
-                        newValue = roundedCurrent - shiftStep;
+                        newValue = currentValue - shiftStep;
                     } else {
                         newValue = Math.floor(k) * shiftStep;
                     }
@@ -235,9 +230,12 @@ export class SliderController {
                 handled = true;
                 break;
             case 'Escape':
-                // Восстановить значение из настроек
-                if (config.setting) {
-                    newValue = this.settings.get(config.setting);
+                // setting:null controls (margins, units, HSB) also restore the
+                // value captured on focus instead of committing partial input.
+                newValue = config.setting
+                    ? this.settings.get(config.setting)
+                    : Number.parseFloat(valueInput.dataset.originalValue ?? element.value);
+                if (Number.isFinite(newValue)) {
                     this.updateValueDisplay(valueInput, newValue, config);
                     element.value = newValue;
                 }

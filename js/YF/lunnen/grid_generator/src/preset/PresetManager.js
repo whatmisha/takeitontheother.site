@@ -321,8 +321,32 @@ export class PresetManager {
      * @param {string} name - Отображаемое имя
      */
     async selectPreset(file, name) {
-        // Update selected state in menu
-        const items = this.dropdownMenu.querySelectorAll('.preset-dropdown-item');
+        const previous = {
+            file: this.currentPreset,
+            name: this.currentPresetName,
+            hasChanges: this.hasChanges
+        };
+        this.applySelection(file, name);
+
+        try {
+            if (file.startsWith('imported-')) {
+                await this.loadImportedPreset(file);
+            } else {
+                await this.loadPreset(file);
+            }
+            this.onPresetSelect(file, name);
+            return true;
+        } catch (error) {
+            this.applySelection(previous.file, previous.name);
+            this.hasChanges = previous.hasChanges;
+            console.error('Failed to load preset:', error);
+            alert(`Failed to load preset: ${error.message}`);
+            return false;
+        }
+    }
+
+    applySelection(file, name) {
+        const items = this.dropdownMenu?.querySelectorAll('.preset-dropdown-item') || [];
         items.forEach(item => {
             if (item.dataset.file === file) {
                 item.classList.add('selected');
@@ -340,22 +364,13 @@ export class PresetManager {
         this.hasChanges = false;
         
         // Set button width to match current preset (when closed)
-        if (this.presetWidths[file]) {
+        if (this.dropdownToggle && this.presetWidths[file]) {
             const isOpen = this.dropdownToggle.getAttribute('aria-expanded') === 'true';
             if (!isOpen) {
                 this.dropdownToggle.style.width = `${this.presetWidths[file]}px`;
             }
         }
         
-        // Notify about selection
-        this.onPresetSelect(file, name);
-        
-        // Load preset data
-        if (file.startsWith('imported-')) {
-            await this.loadImportedPreset(file);
-        } else {
-            await this.loadPreset(file);
-        }
     }
 
     /**
@@ -363,25 +378,14 @@ export class PresetManager {
      * @param {string} filename
      */
     async loadPreset(filename) {
-        try {
-            console.log(`Loading preset: ${filename}`);
-            
-            // Fetch preset file from presets folder
-            // Encode filename to handle special characters like quotes
-            const encodedFilename = encodeURIComponent(filename);
-            const response = await fetch(`presets/${encodedFilename}`);
-            if (!response.ok) {
-                throw new Error(`Failed to load preset: ${response.statusText}`);
-            }
-            
-            const data = await response.json();
-            
-            // Notify about loaded data
-            this.onPresetLoad(data, this.currentPresetName);
-        } catch (error) {
-            console.error('Failed to load preset:', error);
-            alert(`Failed to load preset: ${error.message}`);
+        console.log(`Loading preset: ${filename}`);
+        const encodedFilename = encodeURIComponent(filename);
+        const response = await fetch(`presets/${encodedFilename}`);
+        if (!response.ok) {
+            throw new Error(`Failed to load preset: ${response.statusText}`);
         }
+        const data = await response.json();
+        await this.onPresetLoad(data, this.currentPresetName);
     }
 
     /**
@@ -391,15 +395,13 @@ export class PresetManager {
     async loadImportedPreset(presetId) {
         const importedPreset = this.importedPresets.find(p => p.id === presetId);
         if (!importedPreset) {
-            console.error(`Imported preset not found: ${presetId}`);
-            alert(`Импортированный пресет не найден: ${presetId}`);
-            return;
+            throw new Error(`Imported preset not found: ${presetId}`);
         }
         
         console.log(`Loading imported preset: ${presetId}`);
         
         // Notify about loaded data
-        this.onPresetLoad(importedPreset.data, importedPreset.displayName);
+        await this.onPresetLoad(importedPreset.data, importedPreset.displayName);
     }
 
     /**
