@@ -64,7 +64,6 @@ export class DOMCache {
             // Side surface settings
             // ============================================
             surfaceSettingsTabs: document.getElementById('surfaceSettingsTabs'),
-            surfacePanelParams: document.getElementById('surfacePanelParams'),
             surfaceVisibleToggle: document.getElementById('surfaceVisibleToggle'),
             surfaceOwnGridToggle: document.getElementById('surfaceOwnGridToggle'),
             surfaceRotationSelect: document.getElementById('surfaceRotationSelect'),
@@ -281,41 +280,10 @@ export class DOMCache {
     }
 
     /**
-     * Получить весь кэш (для обратной совместимости)
+     * Получить объект кэшированных DOM-ссылок.
      * @returns {Object}
      */
     getAll() {
         return this._cache || {};
-    }
-
-    /**
-     * Добавить или обновить элемент в кэше
-     * @param {string} key - ключ элемента
-     * @param {HTMLElement|null} value - элемент
-     */
-    set(key, value) {
-        if (!this._cache) {
-            console.warn('DOMCache not initialized. Call init() first.');
-            return;
-        }
-        this._cache[key] = value;
-    }
-
-    /**
-     * Proxy для доступа к элементам как к свойствам (для обратной совместимости с this.dom.element)
-     * @returns {Proxy}
-     */
-    createProxy() {
-        const cache = this;
-        return new Proxy({}, {
-            get(target, prop) {
-                return cache.get(prop);
-            },
-            set(target, prop, value) {
-                // Позволяем динамическое добавление элементов в кэш
-                cache.set(prop, value);
-                return true;
-            }
-        });
     }
 }

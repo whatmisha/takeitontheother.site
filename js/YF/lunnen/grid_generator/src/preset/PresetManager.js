@@ -407,20 +407,20 @@ export class PresetManager {
      * @param {Object} data - Нормализованные данные пресета
      * @param {string} displayName - Отображаемое имя
      */
-    addImportedPreset(data, displayName) {
-        const presetId = 'imported-' + Date.now();
+    async addImportedPreset(data, displayName) {
+        const presetId = `imported-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
         
         const importedPreset = {
             id: presetId,
             displayName: displayName,
-            data: data
+            data: JSON.parse(JSON.stringify(data))
         };
         
         this.importedPresets.push(importedPreset);
         this.addImportedPresetToDropdown(importedPreset);
         
         // Select the imported preset
-        this.selectPreset(presetId, displayName);
+        await this.selectPreset(presetId, displayName);
         
         return presetId;
     }
@@ -433,6 +433,10 @@ export class PresetManager {
             this.hasChanges = true;
             // Можно добавить визуальную индикацию изменений
         }
+    }
+
+    markAsSaved() {
+        this.hasChanges = false;
     }
 
     /**

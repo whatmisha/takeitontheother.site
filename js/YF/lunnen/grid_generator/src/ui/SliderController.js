@@ -37,7 +37,11 @@ export class SliderController {
         this.sliders.set(sliderId, {
             element: slider,
             valueInput: valueInput,
-            config: config
+            config: config,
+            defaultLimits: {
+                min: config.min,
+                max: config.max
+            }
         });
 
         // Приводим текущее значение к диапазону и форматируем отображение
@@ -383,6 +387,17 @@ export class SliderController {
     }
 
     /**
+     * Восстановление исходного диапазона из конфигурации слайдера.
+     */
+    resetLimits(sliderId) {
+        const sliderData = this.sliders.get(sliderId);
+        if (!sliderData) return;
+
+        const { min, max } = sliderData.defaultLimits;
+        this.updateLimits(sliderId, min, max);
+    }
+
+    /**
      * Вспомогательная функция - ограничение значения
      */
     clamp(value, min, max) {
@@ -413,4 +428,3 @@ export class SliderController {
         sliderData.valueInput.disabled = !enabled;
     }
 }
-

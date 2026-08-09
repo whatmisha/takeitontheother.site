@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pizza Boxer Browser Smoke</title>
+    <style>
+        :root { color-scheme: dark; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        body { margin: 0; padding: 24px; background: #111; color: #eee; }
+        h1 { margin: 0 0 16px; font: 600 20px/1.2 system-ui, sans-serif; }
+        #result { min-height: 80px; margin: 0 0 16px; white-space: pre-wrap; color: #aaa; }
+        body[data-status="passed"] #result { color: #7ee787; }
+        body[data-status="failed"] #result { color: #ff7b72; }
+        iframe { display: block; width: 1440px; max-width: 100%; height: 900px; border: 1px solid #333; background: #000; }
+    </style>
+</head>
+<body data-status="running">
+    <h1>Pizza Boxer browser smoke</h1>
+    <pre id="result" role="status">Running…</pre>
+    <iframe id="appFrame" title="Application under test"></iframe>
+    <script type="module" src="browser-smoke.mjs?v=1.0.5"></script>
+</body>
+</html>

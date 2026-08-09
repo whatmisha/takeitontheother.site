@@ -48,7 +48,8 @@ function finiteNonNegative(value, fallback) {
 
 export function getPresetOrientationProfile(presetName = '') {
     const name = String(presetName).trim();
-    return name.startsWith('+ New') || name.startsWith('+New') || /Front/i.test(name)
+    const isNewPreset = /^\+?\s*New(?:\b|$)/i.test(name);
+    return isNewPreset || /Front/i.test(name)
         ? 'front'
         : 'reverse';
 }
