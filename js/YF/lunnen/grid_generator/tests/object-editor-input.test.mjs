@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { ObjectEditorInputController } from '../src/elements/ObjectEditorInputController.js';
 import { GraphicsEditorInputController } from '../src/elements/GraphicsEditorInputController.js';
+import { TextEditorPositionController } from '../src/elements/TextEditorPositionController.js';
 
 function createHost() {
     const context = {
@@ -38,6 +38,7 @@ function createHost() {
         columnsToMm: columns => columns * 10,
         mmToColumns: millimeters => millimeters / 10,
         getBlockY: block => block.row * (context.rowHeight + 1) + block.baselineOffset,
+        markAsChanged() {},
         updateGrid() {}
     };
 }
@@ -60,17 +61,17 @@ test('text editor arrows keep quarter-column width and surface bounds', () => {
         baselineOffset: 3,
         width: 2.5
     };
-    const controller = new ObjectEditorInputController(host);
+    const controller = new TextEditorPositionController(host);
 
     const widthEvent = arrow('ArrowUp');
-    controller.handleTextArrow(widthEvent, 'width', 'paragraphWidthInput');
+    controller.handleArrow(widthEvent, 'width', 'paragraphWidthInput');
     assert.equal(widthEvent.prevented, true);
     assert.equal(host.currentEditingBlock.width, 2.75);
     assert.equal(host.dom.paragraphWidthInput.value, '2.75');
     assert.equal(host.currentEditingBlock.x, 10);
 
     const xEvent = arrow('ArrowUp', true);
-    controller.handleTextArrow(xEvent, 'x', 'paragraphXInput');
+    controller.handleArrow(xEvent, 'x', 'paragraphXInput');
     assert.equal(host.currentEditingBlock.x, 12);
     assert.equal(host.currentEditingBlock.width, 1);
     assert.equal(host.dom.paragraphWidthInput.value, '1.00');

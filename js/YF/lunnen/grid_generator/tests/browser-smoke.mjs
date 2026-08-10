@@ -183,6 +183,39 @@ async function run() {
     }));
     await waitFor(() => Number(paragraphWidthInput.value) !== paragraphWidthBefore, 'text width keyboard update');
     assert(Number(paragraphWidthInput.value) !== paragraphWidthBefore, 'text width responds in quarter-column steps');
+    const paragraphStyleSelect = appDocument.getElementById('paragraphStyleSelect');
+    const originalTextStyle = paragraphStyleSelect.value;
+    paragraphStyleSelect.value = 'lunnenDisplay';
+    paragraphStyleSelect.dispatchEvent(new appWindow.Event('change', { bubbles: true }));
+    await waitFor(
+        () => appDocument.getElementById('lunnenDisplayFeaturesSection').style.display === 'block',
+        'Lunnen Display editor controls'
+    );
+    assert(
+        appDocument.getElementById('lunnenDisplayFeaturesSection').style.display === 'block',
+        'Lunnen Display style reveals its dedicated controls'
+    );
+    const lunnenWeightSlider = appDocument.getElementById('lunnenDisplayWeightSlider');
+    lunnenWeightSlider.focus();
+    lunnenWeightSlider.value = '275';
+    lunnenWeightSlider.dispatchEvent(new appWindow.Event('input', { bubbles: true }));
+    lunnenWeightSlider.blur();
+    const saltControl = appDocument.getElementById('featureSalt');
+    saltControl.checked = true;
+    saltControl.dispatchEvent(new appWindow.Event('change', { bubbles: true }));
+    await waitFor(() => {
+        const text = appDocument.querySelector(`#text-group-${editedTextId} text`);
+        return text?.getAttribute('font-weight') === '275' &&
+            text.getAttribute('font-feature-settings')?.includes("'salt' 1");
+    }, 'Lunnen Display weight and feature rendering');
+    assert(
+        appDocument.querySelector(`#text-group-${editedTextId} text`)?.getAttribute('font-weight') === '275' &&
+            appDocument.querySelector(`#text-group-${editedTextId} text`)
+                ?.getAttribute('font-feature-settings')?.includes("'salt' 1"),
+        'Lunnen Display weight and OpenType features update the canvas'
+    );
+    paragraphStyleSelect.value = originalTextStyle;
+    paragraphStyleSelect.dispatchEvent(new appWindow.Event('change', { bubbles: true }));
     appDocument.getElementById('canvasContainer').click();
     await waitFor(() => !appDocument.getElementById('paragraphPanel').classList.contains('active'), 'text editor closing');
     assert(appDocument.getElementById('paragraphPanel').style.display === 'none', 'outside click closes the text editor panel');
@@ -300,6 +333,30 @@ async function run() {
     appDocument.getElementById('canvasRotateLeftBtn').click();
     await waitFor(() => appDocument.getElementById('gridSvg').style.transform.includes('270deg'), 'canvas rotation');
     assert(appDocument.getElementById('gridSvg').style.transform.includes('270deg'), 'canvas rotates left without changing document data');
+
+    const rotatedCanvas = appDocument.getElementById('canvasContainer');
+    const viewBoxBeforeWheel = appDocument.getElementById('gridSvg').viewBox.baseVal;
+    const panBeforeWheel = { x: viewBoxBeforeWheel.x, y: viewBoxBeforeWheel.y };
+    const dispatchRotatedWheel = deltaY => rotatedCanvas.dispatchEvent(new appWindow.WheelEvent('wheel', {
+        deltaX: 0,
+        deltaY,
+        clientX: rotatedCanvas.getBoundingClientRect().left + 100,
+        clientY: rotatedCanvas.getBoundingClientRect().top + 100,
+        bubbles: true,
+        cancelable: true
+    }));
+    dispatchRotatedWheel(40);
+    await waitFor(
+        () => appDocument.getElementById('gridSvg').viewBox.baseVal.x < panBeforeWheel.x,
+        'rotated wheel pan'
+    );
+    const viewBoxAfterWheel = appDocument.getElementById('gridSvg').viewBox.baseVal;
+    assert(
+        viewBoxAfterWheel.x < panBeforeWheel.x &&
+            Math.abs(viewBoxAfterWheel.y - panBeforeWheel.y) < 1e-6,
+        'vertical wheel pan follows the visible canvas axis after rotation'
+    );
+    dispatchRotatedWheel(-40);
 
     const dragSource = appDocument.querySelector('#gridSvg [id^="hover-area-"]');
     const draggedBlockId = dragSource.dataset.blockId;

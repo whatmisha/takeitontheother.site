@@ -13,18 +13,18 @@ import { ApplicationStartupController } from './src/core/ApplicationStartupContr
 
 // Итерация 3: Grid
 import { GridCalculator } from './src/grid/GridCalculator.js?v=1.12.28';
-import { GridRenderer } from './src/grid/GridRenderer.js';
+import { GridRenderer } from './src/grid/GridRenderer.js?v=1.12.46';
 import { CanvasRendererController } from './src/grid/CanvasRendererController.js?v=1.12.38';
 
 // Итерация 4: Config
 import { createSliderConfig } from './src/config/SliderConfigFactory.js?v=1.12.38';
 
 // Итерация 5: UI Controllers
-import { SliderController } from './src/ui/SliderController.js?v=1.12.31';
+import { SliderController } from './src/ui/SliderController.js?v=1.12.50';
 import { PanelManager } from './src/ui/PanelManager.js';
-import { ZoomPanManager } from './src/ui/ZoomPanManager.js?v=1.12.10';
+import { ZoomPanManager } from './src/ui/ZoomPanManager.js?v=1.12.47';
 import { TypographyUnitController } from './src/ui/TypographyUnitController.js?v=1.12.29';
-import { GridSettingsController } from './src/ui/GridSettingsController.js?v=1.12.31';
+import { GridSettingsController } from './src/ui/GridSettingsController.js?v=1.12.48';
 import { ColorPanelController } from './src/ui/ColorPanelController.js?v=1.12.38';
 import { SliderHistoryController } from './src/ui/SliderHistoryController.js?v=1.12.38';
 import { ApplicationEventController } from './src/ui/ApplicationEventController.js?v=1.12.39';
@@ -36,10 +36,12 @@ import { TextBlockRenderer } from './src/elements/TextBlockRenderer.js?v=1.12.27
 import { TextLayout } from './src/elements/TextLayout.js?v=1.12.27';
 import { TextStyleResolver } from './src/elements/TextStyleResolver.js?v=1.12.28';
 import { ObjectEditorPanelController } from './src/elements/ObjectEditorPanelController.js?v=1.12.43';
-import { ObjectEditorInputController } from './src/elements/ObjectEditorInputController.js?v=1.12.44';
+import { ObjectEditorInputController } from './src/elements/ObjectEditorInputController.js?v=1.12.45';
+import { TextEditorPositionController } from './src/elements/TextEditorPositionController.js?v=1.12.45';
+import { LunnenDisplayEditorController } from './src/elements/LunnenDisplayEditorController.js?v=1.12.45';
 import { GraphicsEditorInputController } from './src/elements/GraphicsEditorInputController.js?v=1.12.44';
 import { GraphicsEditorEventController } from './src/elements/GraphicsEditorEventController.js?v=1.12.44';
-import { ObjectNavigatorController } from './src/elements/ObjectNavigatorController.js?v=1.12.38';
+import { ObjectNavigatorController } from './src/elements/ObjectNavigatorController.js?v=1.12.52';
 import { ObjectDragController } from './src/elements/ObjectDragController.js?v=1.12.35';
 import { ObjectDocumentController } from './src/elements/ObjectDocumentController.js?v=1.12.39';
 import { ObjectPlacementController } from './src/elements/ObjectPlacementController.js?v=1.12.35';
@@ -47,12 +49,12 @@ import { GraphicsAssetController } from './src/elements/GraphicsAssetController.
 import { BuiltInGraphicsController } from './src/elements/BuiltInGraphicsController.js?v=1.12.40';
 
 // Итерация 7: SVG Export
-import { SVGExporter } from './src/svg/SVGExporter.js?v=1.12.42';
+import { SVGExporter } from './src/svg/SVGExporter.js?v=1.12.51';
 import { ExportController } from './src/svg/ExportController.js?v=1.12.42';
 import { ExportDocumentBuilder } from './src/svg/ExportDocumentBuilder.js?v=1.12.36';
 
 // Итерация 8: Preset Management
-import { PresetManager } from './src/preset/PresetManager.js?v=1.12.41';
+import { PresetManager } from './src/preset/PresetManager.js?v=1.12.49';
 import { PresetApplicationController } from './src/preset/PresetApplicationController.js?v=1.12.42';
 
 // Итерация 9: History Management
@@ -232,6 +234,8 @@ class GridGenerator {
         });
         this.objectEditorPanelController = new ObjectEditorPanelController(this);
         this.objectEditorInputController = new ObjectEditorInputController(this);
+        this.textEditorPositionController = new TextEditorPositionController(this);
+        this.lunnenDisplayEditorController = new LunnenDisplayEditorController(this);
         this.graphicsEditorInputController = new GraphicsEditorInputController(this);
         this.graphicsEditorEventController = new GraphicsEditorEventController(this);
         this.graphicsAssetController = new GraphicsAssetController(this);
@@ -331,6 +335,8 @@ class GridGenerator {
         this.typographyUnitController.sync();
         this.panelUiController.bindDropdowns();
         this.objectEditorInputController.initTextEditor();
+        this.textEditorPositionController.init();
+        this.lunnenDisplayEditorController.init();
         this.graphicsEditorEventController.init();
         this.objectEditorPanelController.initOutsideClickHandler();
         this.objectNavigatorController.init();

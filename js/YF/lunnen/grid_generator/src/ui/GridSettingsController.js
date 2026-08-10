@@ -1,93 +1,23 @@
-import { getSlidersByGroup } from '../config/SliderConfig.js';
+import { createGridSliderConfigs, isGridSlider } from './GridSliderConfig.js';
+import { GridSettingsView } from './GridSettingsView.js';
 
-const GRID_SLIDER_IDS = new Set([
-    'frontWidthSlider',
-    'frontHeightSlider',
-    'thicknessSlider',
-    'gridModuleSlider',
-    'marginsSlider',
-    'columnCountSlider',
-    'rowCountSlider',
-    'rowHeightSlider'
-]);
-
-/** Owns Dimensions/Grid interaction, linkage, units, locks and UI sync. */
+/** Coordinates Grid/Dimensions commands, calculations and history. */
 export class GridSettingsController {
     constructor(host) {
         this.host = host;
-        this.bound = false;
+        this.view = new GridSettingsView(host, this);
     }
 
     getSliderConfigs() {
-        const definitions = {
-            ...getSlidersByGroup('dimensions'),
-            ...getSlidersByGroup('grid')
-        };
-        return {
-            ...definitions,
-            frontWidthSlider: {
-                ...definitions.frontWidthSlider,
-                onUpdate: () => this.handleWidthChange()
-            },
-            frontHeightSlider: {
-                ...definitions.frontHeightSlider,
-                onUpdate: () => this.handleVerticalGeometryChange(true)
-            },
-            thicknessSlider: {
-                ...definitions.thicknessSlider,
-                onUpdate: () => this.handleThicknessChange()
-            },
-            gridModuleSlider: {
-                ...definitions.gridModuleSlider,
-                onUpdate: () => this.handleModuleChange()
-            },
-            marginsSlider: {
-                ...definitions.marginsSlider,
-                onUpdate: value => this.handleMarginsChange(value)
-            },
-            columnCountSlider: {
-                ...definitions.columnCountSlider,
-                onUpdate: () => this.handleColumnCountChange()
-            },
-            rowCountSlider: {
-                ...definitions.rowCountSlider,
-                onUpdate: () => this.handleRowCountChange()
-            },
-            rowHeightSlider: {
-                ...definitions.rowHeightSlider,
-                onUpdate: () => this.handleRowHeightChange()
-            }
-        };
+        return createGridSliderConfigs(this);
     }
 
     isGridSlider(sliderId) {
-        return GRID_SLIDER_IDS.has(sliderId);
+        return isGridSlider(sliderId);
     }
 
     bind() {
-        if (this.bound) return;
-        this.bound = true;
-        const { dom } = this.host;
-        const linkModeHandler = event => this.setLinkMode(event.target.value);
-        dom.linkModeOff?.addEventListener('change', linkModeHandler);
-        dom.linkModeRowsHeight?.addEventListener('change', linkModeHandler);
-        dom.linkModeModule?.addEventListener('change', linkModeHandler);
-        dom.marginsUnitMod?.addEventListener('click', event => {
-            event.preventDefault();
-            if (this.host.settingsModule.get('marginsUnit') !== 'mod') this.switchMarginsUnit('mod');
-        });
-        dom.marginsUnitMm?.addEventListener('click', event => {
-            event.preventDefault();
-            if (this.host.settingsModule.get('marginsUnit') !== 'mm') this.switchMarginsUnit('mm');
-        });
-        dom.lockModuleBtn?.addEventListener('click', event => {
-            event.preventDefault();
-            this.toggleLockModule();
-        });
-        dom.lockMarginsBtn?.addEventListener('click', event => {
-            event.preventDefault();
-            this.toggleLockMargins();
-        });
+        this.view.bind();
     }
 
     begin(label) {
@@ -106,9 +36,7 @@ export class GridSettingsController {
     }
 
     handleThicknessChange() {
-        this.host.markAsChanged();
-        this.host.constrainAllObjectsToGrid();
-        this.host.updateGridDebounced();
+        this.handleWidthChange();
     }
 
     handleVerticalGeometryChange(generatePresets = false) {
@@ -177,9 +105,7 @@ export class GridSettingsController {
     }
 
     handleColumnCountChange() {
-        this.host.markAsChanged();
-        this.host.constrainAllObjectsToGrid();
-        this.host.updateGridDebounced();
+        this.handleWidthChange();
     }
 
     handleRowCountChange() {
@@ -314,8 +240,7 @@ export class GridSettingsController {
         if (!settings.get('lockedModule') || value == null) return;
         settings.set('gridModule', value);
         this.host.sliderController.setValue('gridModuleSlider', value, false);
-        const margins = this.host.gridCalculator.calculateMargins();
-        settings.set('margins', margins);
+        settings.set('margins', this.host.gridCalculator.calculateMargins());
         this.syncMarginsSlider();
     }
 
@@ -330,105 +255,32 @@ export class GridSettingsController {
         this.host.sliderController.setValue('marginsSlider', this.round(value), false);
     }
 
-    sync(settings = this.host.settingsModule.getAll()) {
-        const sliders = {
-            frontWidthSlider: settings.frontWidth,
-            frontHeightSlider: settings.frontHeight,
-            thicknessSlider: settings.thickness,
-            gridModuleSlider: settings.gridModule,
-            columnCountSlider: settings.columnCount,
-            rowCountSlider: settings.rowCount,
-            rowHeightSlider: settings.rowHeight
-        };
-        Object.entries(sliders).forEach(([id, value]) => {
-            if (value !== undefined) this.host.sliderController.setValue(id, value, false);
-        });
-        this.host.sliderController.updateLimits(
-            'marginsSlider',
-            0,
-            settings.marginsUnit === 'mm' ? 250 : 10
-        );
-        this.syncMarginsSlider(settings);
-
-        const toggles = {
-            showSidePanels: settings.showSidePanels !== false,
-            showColumns: settings.showColumns !== false,
-            showRows: settings.showRows !== false,
-            showBaseline: settings.showBaseline !== false,
-            showObjects: settings.showObjects !== false
-        };
-        Object.entries(toggles).forEach(([key, checked]) => {
-            if (this.host.dom[key]) this.host.dom[key].checked = checked;
-        });
-
-        const radio = {
-            off: this.host.dom.linkModeOff,
-            'rows-height': this.host.dom.linkModeRowsHeight,
-            module: this.host.dom.linkModeModule
-        }[settings.linkMode];
-        if (radio) radio.checked = true;
-        this.syncMarginsUnitButtons(settings.marginsUnit || 'mod');
-        this.syncLocks();
-        this.updateLinkedControlsVisual();
+    sync(settings) {
+        this.view.sync(settings);
     }
 
-    syncMarginsSlider(settings = this.host.settingsModule.getAll()) {
-        const value = settings.marginsUnit === 'mm'
-            ? settings.margins * settings.gridModule
-            : settings.margins;
-        this.host.sliderController.setValue('marginsSlider', this.round(value), false);
+    syncMarginsSlider(settings) {
+        this.view.syncMarginsSlider(settings);
     }
 
     syncMarginsUnitButtons(unit) {
-        this.host.dom.marginsUnitMod?.classList.toggle('active', unit === 'mod');
-        this.host.dom.marginsUnitMm?.classList.toggle('active', unit === 'mm');
+        this.view.syncMarginsUnitButtons(unit);
     }
 
     syncLocks() {
-        const settings = this.host.settingsModule;
-        this.syncLockButton(
-            this.host.dom.lockModuleBtn,
-            settings.get('lockedModule'),
-            'locked-module'
-        );
-        this.syncLockButton(
-            this.host.dom.lockMarginsBtn,
-            settings.get('lockedMargins'),
-            'locked-margins'
-        );
+        this.view.syncLocks();
     }
 
     syncLockButton(button, locked, groupClass) {
-        if (!button) return;
-        button.classList.toggle('locked', Boolean(locked));
-        button.closest('.control-group')?.classList.toggle(groupClass, Boolean(locked));
+        this.view.syncLockButton(button, locked, groupClass);
     }
 
     updateLinkedControlsVisual() {
-        this.host.dom.linkedControlsContainer?.classList.toggle(
-            'linked-controls-group',
-            this.host.settingsModule.get('linkMode') !== 'off'
-        );
+        this.view.updateLinkedControlsVisual();
     }
 
     generateRowPresets() {
-        const container = document.getElementById('rowPresetsContainer');
-        if (!container) return;
-        container.innerHTML = '';
-
-        this.host.gridCalculator.findPerfectRowCombinations().forEach(combo => {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'row-preset-btn';
-            button.textContent = `${combo.rowCount}:${combo.rowHeight}`;
-            button.setAttribute(
-                'aria-label',
-                `Set ${combo.rowCount} rows with height ${combo.rowHeight}`
-            );
-            button.addEventListener('click', () => this.applyRowPreset(combo));
-            container.appendChild(button);
-        });
-        this.updatePresetButtons();
+        this.view.generateRowPresets();
     }
 
     applyRowPreset(combo) {
@@ -462,19 +314,7 @@ export class GridSettingsController {
     }
 
     updatePresetButtons() {
-        const container = document.getElementById('rowPresetsContainer');
-        if (!container) return;
-        const rowCount = this.host.settingsModule.get('rowCount');
-        const rowHeight = this.host.settingsModule.get('rowHeight');
-        container.querySelectorAll('.row-preset-btn').forEach(button => {
-            const [candidateRows, candidateHeight] = button.textContent
-                .split(':')
-                .map(Number);
-            button.classList.toggle(
-                'active',
-                candidateRows === rowCount && candidateHeight === rowHeight
-            );
-        });
+        this.view.updatePresetButtons();
     }
 
     round(value) {
