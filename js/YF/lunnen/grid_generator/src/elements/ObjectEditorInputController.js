@@ -10,285 +10,18 @@ const TEXT_PRESETS = [
 ].map(preset => ({ ...preset, text: preset.text.replace(/ {2,}/g, ' ') }));
 
 /**
- * Numeric input behavior shared by the text and graphics object editors.
- * Position math remains delegated to the surface-aware controllers.
+ * Owns text-editor inputs and the remaining graphics-editor UI lifecycle.
+ * Surface-aware numeric graphics inputs live in GraphicsEditorInputController.
  */
 export class ObjectEditorInputController {
     constructor(host) {
         this.host = host;
     }
 
-    initGraphicsInputs() {
-        const block = this.host.objectDocument.getGraphicsBlock(
-            this.host.currentEditingGraphicsId
-        );
-        if (!block) return;
-
-        this.getGraphicsInputConfigs(block).forEach(config => {
-            this.bindGraphicsInput(block, config);
-        });
-    }
-
-    getGraphicsInputConfigs(block) {
-        return [
-            {
-                id: 'graphicsXInput',
-                property: 'x',
-                baseStep: 1,
-                shiftStep: 5,
-                decimals: 0,
-                constrain: value => this.constrainGraphicsX(block, value)
-            },
-            {
-                id: 'graphicsRowInput',
-                property: 'row',
-                assign: false,
-                baseStep: 1,
-                shiftStep: 5,
-                decimals: 0,
-                constrain: value => this.constrainGraphicsRow(block, value)
-            },
-            {
-                id: 'graphicsBaselineInput',
-                property: 'baseline',
-                assign: false,
-                baseStep: 1,
-                shiftStep: 5,
-                decimals: 0,
-                constrain: value => this.constrainGraphicsBaseline(block, value)
-            },
-            {
-                id: 'graphicsWidthInput',
-                property: 'widthInColumns',
-                baseStep: 0.25,
-                shiftStep: 1,
-                decimals: 2,
-                constrain: value => this.constrainGraphicsWidth(block, value)
-            },
-            {
-                id: 'graphicsHeightInput',
-                property: 'heightInModules',
-                baseStep: 0.25,
-                shiftStep: 1,
-                decimals: 2,
-                constrain: value => this.constrainGraphicsHeight(block, value)
-            }
-        ];
-    }
-
-    bindGraphicsInput(block, config) {
-        const input = this.host.dom[config.id];
-        if (!input?.parentNode) return;
-
-        // Reopening the editor replaces previous handlers instead of stacking them.
-        const replacement = input.cloneNode(true);
-        input.parentNode.replaceChild(replacement, input);
-        this.host.dom[config.id] = replacement;
-
-        replacement.addEventListener('focus', () => {
-            replacement.dataset.originalValue = replacement.value;
-            replacement.select();
-            this.host.historyManager.beginAction(
-                `edit graphics ${config.id}`,
-                this.host.getStateSnapshot()
-            );
-        });
-
-        replacement.addEventListener('blur', () => {
-            this.host.historyManager.commitAction(this.host.getStateSnapshot());
-        });
-
-        replacement.addEventListener('change', () => {
-            const value = this.readGraphicsValue(block, replacement, config);
-            this.applyGraphicsValue(block, replacement, config, value);
-        });
-
-        replacement.addEventListener('keydown', event => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                replacement.blur();
-                return;
-            }
-
-            if (event.key === 'Escape') {
-                event.preventDefault();
-                this.restoreGraphicsValue(block, replacement, config);
-                replacement.blur();
-                this.host.updateGrid();
-                return;
-            }
-
-            if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
-
-            event.preventDefault();
-            const currentValue = this.readGraphicsValue(block, replacement, config);
-            const step = event.shiftKey ? config.shiftStep : config.baseStep;
-            const roundedValue = this.roundGraphicsValue(currentValue, step, config);
-            const direction = event.key === 'ArrowUp' ? 1 : -1;
-            const value = this.roundToDecimals(
-                roundedValue + step * direction,
-                this.host.getDecimalsFromStep(step) || config.decimals
-            );
-            this.applyGraphicsValue(block, replacement, config, value);
-        });
-    }
-
-    readGraphicsValue(block, input, config) {
-        const parsed = Number.parseFloat(input.value);
-        if (!Number.isNaN(parsed)) return parsed;
-        if (config.property === 'baseline') {
-            return this.host.rowBaselineToY(
-                block.row,
-                block.baselineOffset,
-                block.surface || 'front'
-            ) + 1;
-        }
-        return block[config.property];
-    }
-
-    applyGraphicsValue(block, input, config, value) {
-        const constrained = config.constrain ? config.constrain(value) : value;
-        if (config.assign !== false) {
-            block[config.property] = constrained;
-        }
-        input.value = config.decimals > 0
-            ? constrained.toFixed(config.decimals)
-            : Math.round(constrained);
-        this.host.updateGrid();
-    }
-
-    restoreGraphicsValue(block, input, config) {
-        input.value = input.dataset.originalValue;
-        const originalValue = Number.parseFloat(input.dataset.originalValue);
-        if (Number.isNaN(originalValue)) return;
-
-        if (config.property === 'baseline') {
-            const position = this.host.yToRowBaseline(
-                originalValue - 1,
-                block.surface || 'front'
-            );
-            block.row = position.row;
-            block.baselineOffset = position.baselineOffset;
-        } else if (config.property === 'row') {
-            block.row = Math.max(0, Math.round(originalValue) - 1);
-            block.baselineOffset = 0;
-        } else {
-            block[config.property] = originalValue;
-        }
-    }
-
-    roundGraphicsValue(value, step, config) {
-        if (config.id === 'graphicsWidthInput' && config.baseStep === 0.25) {
-            return Math.round(value / 0.25) * 0.25;
-        }
-        return this.roundToDecimals(value, this.host.getDecimalsFromStep(step));
-    }
-
     roundToDecimals(value, decimals = 0) {
         return decimals > 0
             ? Number.parseFloat(value.toFixed(decimals))
             : Math.round(value);
-    }
-
-    getGraphicsVerticalLimit(block, heightInModules = block.heightInModules) {
-        const surface = block.surface || 'front';
-        const context = this.host.getSurfaceGridContext(surface);
-        const contentHeight = context.frontHeight - 2 * context.margins * context.gridModule;
-        const totalBaselines = Math.floor(contentHeight / context.gridModule + 1e-9);
-        return {
-            surface,
-            context,
-            maxY: totalBaselines - heightInModules
-        };
-    }
-
-    constrainGraphicsX(block, value) {
-        const context = this.host.getSurfaceGridContext(block.surface || 'front');
-        const height = context.gridModule * block.heightInModules;
-        const width = height * (block.originalWidth / block.originalHeight);
-        const columnWidth = (
-            context.frontWidth -
-            context.gridModule * context.margins * 2 -
-            context.gridModule * (context.columnCount - 1)
-        ) / context.columnCount;
-        const occupiedColumns = Math.ceil(width / (columnWidth + context.gridModule));
-        const maxX = Math.max(1, context.columnCount - occupiedColumns + 1);
-        return Math.max(1, Math.min(value, maxX));
-    }
-
-    constrainGraphicsRow(block, value) {
-        const { surface, context, maxY } = this.getGraphicsVerticalLimit(block);
-        const y = (value - 1) * (context.rowHeight + 1);
-        const constrainedY = Math.max(0, Math.min(y, maxY));
-        const row = Math.floor(constrainedY / (context.rowHeight + 1));
-
-        block.row = Math.max(0, row);
-        block.baselineOffset = 0;
-        if (this.host.dom.graphicsBaselineInput) {
-            this.host.dom.graphicsBaselineInput.value =
-                this.host.rowBaselineToY(row, 0, surface) + 1;
-        }
-        return block.row + 1;
-    }
-
-    constrainGraphicsBaseline(block, value) {
-        const { surface, maxY } = this.getGraphicsVerticalLimit(block);
-        const constrainedY = Math.max(0, Math.min(Math.round(value - 1), maxY));
-        const position = this.host.yToRowBaseline(constrainedY, surface);
-
-        block.row = Math.max(0, position.row);
-        block.baselineOffset = position.baselineOffset;
-        if (this.host.dom.graphicsRowInput) {
-            this.host.dom.graphicsRowInput.value = block.row + 1;
-        }
-        return constrainedY + 1;
-    }
-
-    constrainGraphicsWidth(block, value) {
-        const surface = block.surface || 'front';
-        const context = this.host.getSurfaceGridContext(surface);
-        const width = Math.max(0.25, Math.min(value, context.columnCount));
-        const widthMm = this.host.columnsToMm(width, surface);
-        const height = widthMm / (block.originalWidth / block.originalHeight) / context.gridModule;
-
-        block.heightInModules = Number.parseFloat(height.toFixed(2));
-        if (this.host.dom.graphicsHeightInput) {
-            this.host.dom.graphicsHeightInput.value = height.toFixed(2);
-        }
-        this.constrainGraphicsVerticalPosition(block, height, surface);
-        return width;
-    }
-
-    constrainGraphicsHeight(block, value) {
-        const surface = block.surface || 'front';
-        const context = this.host.getSurfaceGridContext(surface);
-        const height = Math.max(0.25, Math.min(value, 20));
-        const widthMm = height * context.gridModule * (block.originalWidth / block.originalHeight);
-        const width = this.host.mmToColumns(widthMm, surface);
-
-        block.widthInColumns = Number.parseFloat(width.toFixed(2));
-        if (this.host.dom.graphicsWidthInput) {
-            this.host.dom.graphicsWidthInput.value = width.toFixed(2);
-        }
-        this.constrainGraphicsVerticalPosition(block, height, surface);
-        return height;
-    }
-
-    constrainGraphicsVerticalPosition(block, height, surface) {
-        const { maxY } = this.getGraphicsVerticalLimit(block, height);
-        const currentY = this.host.getBlockY(block);
-        if (currentY <= maxY) return;
-
-        const position = this.host.yToRowBaseline(Math.max(0, maxY), surface);
-        block.row = position.row;
-        block.baselineOffset = position.baselineOffset;
-        if (this.host.dom.graphicsRowInput) {
-            this.host.dom.graphicsRowInput.value = position.row + 1;
-        }
-        if (this.host.dom.graphicsBaselineInput) {
-            this.host.dom.graphicsBaselineInput.value =
-                this.host.rowBaselineToY(position.row, position.baselineOffset, surface) + 1;
-        }
     }
 
     handleTextArrow(event, property, inputId) {
@@ -304,7 +37,7 @@ export class ObjectEditorInputController {
         const direction = event.key === 'ArrowUp' ? 1 : -1;
         let value = this.roundToDecimals(
             block[property],
-            this.host.getDecimalsFromStep(step)
+            this.host.sliderController.getDecimalsFromStep(step)
         ) + step * direction;
 
         if (property === 'x') {
@@ -667,7 +400,9 @@ export class ObjectEditorInputController {
                         this.host.currentEditingBlock.id
                     );
                     // Update button icon based on visibility
-                    const block = this.host.textBlocks.find(b => b.id === this.host.currentEditingBlock.id);
+                    const block = this.host.objectDocument.textBlocks.find(
+                        b => b.id === this.host.currentEditingBlock.id
+                    );
                     if (block) {
                         const svg = paragraphHideBtn.querySelector('svg');
                         if (svg) {
@@ -703,7 +438,7 @@ export class ObjectEditorInputController {
             paragraphDeleteBtn.addEventListener('click', () => {
                 if (this.host.currentEditingBlock) {
                     const blockId = this.host.currentEditingBlock.id;
-                    const block = this.host.textBlocks.find(b => b.id === blockId);
+                    const block = this.host.objectDocument.textBlocks.find(b => b.id === blockId);
                     if (block) {
                         const name = block.content.substring(0, 30) + (block.content.length > 30 ? '...' : '');
 
@@ -900,32 +635,6 @@ export class ObjectEditorInputController {
             }
         });
 
-        // Graphics Lock Position toggle
-        if (this.host.dom.graphicsLockPositionToggle) {
-            this.host.dom.graphicsLockPositionToggle.addEventListener('change', () => {
-                const block = this.host.graphicsBlocks?.find(b => b.id === this.host.currentEditingGraphicsId);
-                if (block) {
-                    block.lockPosition = this.host.dom.graphicsLockPositionToggle.checked;
-                    this.host.updateGrid();
-                }
-            });
-        }
-
-        // Graphics Align Right toggle
-        if (this.host.dom.graphicsAlignRightToggle) {
-            this.host.dom.graphicsAlignRightToggle.addEventListener('change', () => {
-                const block = this.host.graphicsBlocks?.find(b => b.id === this.host.currentEditingGraphicsId);
-                if (block) {
-                    const wasRight = block.alignment === 'right';
-                    const nowRight = this.host.dom.graphicsAlignRightToggle.checked;
-
-                    // Don't adjust X position - just change alignment mode
-                    // The rendering code will handle positioning correctly based on alignment
-                    block.alignment = nowRight ? 'right' : 'left';
-                    this.host.updateGrid();
-                }
-            });
-        }
     }
 
 
@@ -960,193 +669,4 @@ export class ObjectEditorInputController {
         });
     }
 
-    // Обновить счетчик символов
-
-    initGraphicsEditor() {
-        if (this.host.dom.graphicsSurfaceSelect) {
-            this.host.dom.graphicsSurfaceSelect.addEventListener('change', () => {
-                const block = this.host.objectDocument.getGraphicsBlock(this.host.currentEditingGraphicsId);
-                if (!block) return;
-                this.host.historyManager.beginAction('move graphics to surface', this.host.getStateSnapshot());
-                this.host.moveBlockToSurface(block, this.host.dom.graphicsSurfaceSelect.value);
-                this.initGraphicsInputs();
-                this.host.markAsChanged();
-                this.host.objectNavigatorController.render();
-                this.host.updateGrid();
-                this.host.historyManager.commitAction(this.host.getStateSnapshot());
-            });
-        }
-
-        // File upload area click handler
-        if (this.host.dom.fileUploadArea) {
-            this.host.dom.fileUploadArea.addEventListener('click', () => {
-                if (this.host.dom.svgFileInput) {
-                    this.host.dom.svgFileInput.click();
-                }
-            });
-
-            // Drag and drop handlers
-            this.host.dom.fileUploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.host.dom.fileUploadArea.classList.add('dragover');
-            });
-
-            this.host.dom.fileUploadArea.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.host.dom.fileUploadArea.classList.remove('dragover');
-            });
-
-            this.host.dom.fileUploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.host.dom.fileUploadArea.classList.remove('dragover');
-
-                const files = e.dataTransfer.files;
-                if (files.length > 0 && files[0].type === 'image/svg+xml') {
-                    this.host.graphicsAssetController.handleFile(files[0]);
-                }
-            });
-        }
-
-        // File input change handler
-        if (this.host.dom.svgFileInput) {
-            this.host.dom.svgFileInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    this.host.graphicsAssetController.handleFile(e.target.files[0]);
-                }
-            });
-        }
-
-        // Hide button handler
-        const graphicsHideBtn = document.getElementById('graphicsHideBtn');
-        if (graphicsHideBtn) {
-            graphicsHideBtn.addEventListener('click', () => {
-                if (this.host.currentEditingGraphicsId) {
-                    this.host.objectNavigatorController.toggleVisibility(
-                        'graphics',
-                        this.host.currentEditingGraphicsId
-                    );
-                    // Update button icon based on visibility
-                    const block = this.host.graphicsBlocks?.find(b => b.id === this.host.currentEditingGraphicsId);
-                    if (block) {
-                        const svg = graphicsHideBtn.querySelector('svg');
-                        if (svg) {
-                            if (block.visible) {
-                                // Show hide icon (eye with slash)
-                                svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>';
-                            } else {
-                                // Show visible icon (eye without slash)
-                                svg.innerHTML = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>';
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Duplicate button handler
-        const graphicsDuplicateBtn = document.getElementById('graphicsDuplicateBtn');
-        if (graphicsDuplicateBtn) {
-            graphicsDuplicateBtn.addEventListener('click', () => {
-                if (this.host.currentEditingGraphicsId) {
-                    const block = this.host.objectDocument.getGraphicsBlock(this.host.currentEditingGraphicsId);
-                    if (block) {
-                        // Determine element type
-                        let elementType = 'graphics';
-                        if (block.isBuiltIn) {
-                            if (block.id === 'icons') elementType = 'icons';
-                            else if (block.id === 'claim') elementType = 'claim';
-                        }
-                        this.host.objectNavigatorController.duplicate(
-                            elementType,
-                            this.host.currentEditingGraphicsId
-                        );
-                    }
-                }
-            });
-        }
-
-        // Delete button handler
-        const graphicsDeleteBtn = document.getElementById('graphicsDeleteBtn');
-        if (graphicsDeleteBtn) {
-            graphicsDeleteBtn.addEventListener('click', () => {
-                if (this.host.currentEditingGraphicsId) {
-                    const blockId = this.host.currentEditingGraphicsId;
-                    const block = this.host.objectDocument.getGraphicsBlock(blockId);
-                    if (block) {
-                        const name = block.name || 'Graphic';
-
-                        // Close panel first
-                        this.host.objectEditorPanelController.closeGraphicsPanel();
-
-                        // Find the delete button in elements list and trigger delete
-                        const elementButton = this.host.dom.elementsList.querySelector(`[data-element-id="${blockId}"]`);
-                        if (elementButton) {
-                            const deleteBtn = elementButton.parentElement.querySelector('.element-action-btn:last-child');
-                            if (deleteBtn) {
-                                this.host.objectNavigatorController.startDelete(
-                                    deleteBtn,
-                                    'graphics',
-                                    blockId,
-                                    name
-                                );
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Size mode radio buttons handler
-        if (this.host.dom.graphicsSizeModeWidth && this.host.dom.graphicsSizeModeHeight) {
-            const handleSizeModeChange = () => {
-                if (!this.host.currentEditingGraphicsId) return;
-
-                const block = this.host.graphicsBlocks?.find(b => b.id === this.host.currentEditingGraphicsId);
-                if (!block) return;
-
-                // Update sizeMode
-                block.sizeMode = this.host.dom.graphicsSizeModeWidth.checked ? 'width' : 'height';
-
-                // Show/hide width or height input based on sizeMode
-                if (this.host.dom.graphicsWidthGroup) {
-                    this.host.dom.graphicsWidthGroup.style.display = block.sizeMode === 'width' ? 'flex' : 'none';
-                }
-                if (this.host.dom.graphicsHeightGroup) {
-                    this.host.dom.graphicsHeightGroup.style.display = block.sizeMode === 'height' ? 'flex' : 'none';
-                }
-
-                // Если переключились на режим по ширине, нужно рассчитать widthInColumns из текущих размеров
-                if (block.sizeMode === 'width') {
-                    const module = this.host.settingsModule.get('gridModule');
-                    const aspectRatio = block.originalWidth / block.originalHeight;
-                    const heightInMm = module * block.heightInModules;
-                    const widthInMm = heightInMm * aspectRatio;
-                    block.widthInColumns = parseFloat(this.host.mmToColumns(widthInMm).toFixed(2));
-                    if (this.host.dom.graphicsWidthInput) {
-                        this.host.dom.graphicsWidthInput.value = block.widthInColumns.toFixed(2);
-                    }
-                } else {
-                    // Если переключились на режим по высоте, нужно рассчитать heightInModules из текущих размеров
-                    const module = this.host.settingsModule.get('gridModule');
-                    const aspectRatio = block.originalWidth / block.originalHeight;
-                    const widthInMm = this.host.columnsToMm(block.widthInColumns);
-                    const heightInMm = widthInMm / aspectRatio;
-                    block.heightInModules = parseFloat((heightInMm / module).toFixed(2));
-                    if (this.host.dom.graphicsHeightInput) {
-                        this.host.dom.graphicsHeightInput.value = block.heightInModules.toFixed(2);
-                    }
-                }
-
-                this.host.updateGrid();
-            };
-
-            this.host.dom.graphicsSizeModeWidth.addEventListener('change', handleSizeModeChange);
-            this.host.dom.graphicsSizeModeHeight.addEventListener('change', handleSizeModeChange);
-        }
-    }
-
-    // Initialize click outside handler for closing panels
 }

@@ -1,3 +1,5 @@
+import { PresetFormatAdapter } from '../src/preset/PresetFormatAdapter.js?v=1.12.42';
+
 const resultElement = document.getElementById('result');
 const appFrame = document.getElementById('appFrame');
 const checks = [];
@@ -30,6 +32,13 @@ async function loadApplication() {
         applicationErrors.push(event.error?.stack || event.message);
     });
     await waitFor(
+        () => ['true', 'error'].includes(appDocument.documentElement.dataset.appReady),
+        'deterministic application startup'
+    );
+    if (appDocument.documentElement.dataset.appReady === 'error') {
+        throw new Error('Application reported a startup error');
+    }
+    await waitFor(
         () => appDocument.getElementById('gridSvg')?.childElementCount > 0,
         'application initialization'
     );
@@ -41,8 +50,89 @@ async function loadApplication() {
 }
 
 async function run() {
+    const presetFormat = new PresetFormatAdapter();
+    const presetRoundTrip = presetFormat.normalize(JSON.parse(JSON.stringify(
+        presetFormat.organize({
+            version: '1.2',
+            settings: {
+                fontSizeUnit: 'pt',
+                lineHeightUnit: 'pt',
+                lockedModule: true,
+                lockedModuleValue: 4.25,
+                captionSize: 0.37,
+                captionLineHeight: 1.25,
+                captionTracking: 0.045,
+                useXHeightCaption: true,
+                captionFontWeight: 350,
+                lunnenDisplaySize: 2.7,
+                lunnenDisplayLineHeight: 3.6,
+                lunnenDisplayTracking: 0.02,
+                useXHeightLunnenDisplay: true
+            },
+            textBlocks: [{
+                id: 'display',
+                styleRef: 'lunnenDisplay',
+                lockPosition: false,
+                fontWeight: 275,
+                fontFeatures: { salt: true }
+            }],
+            graphicsBlocks: [{
+                id: 'icons',
+                isBuiltIn: true,
+                sizeMode: 'width',
+                widthInColumns: 4.5,
+                alignment: 'right',
+                lockPosition: false
+            }]
+        }, { presetName: 'Browser round trip' })
+    )));
+    assert(
+        presetRoundTrip.settings.captionSize === 0.37 &&
+            presetRoundTrip.settings.captionFontWeight === 350,
+        'Caption typography survives JSON round-trip'
+    );
+    assert(
+        presetRoundTrip.settings.lunnenDisplaySize === 2.7 &&
+            presetRoundTrip.textBlocks[0].fontFeatures.salt,
+        'Lunnen Display settings and features survive JSON round-trip'
+    );
+    assert(
+        presetRoundTrip.settings.fontSizeUnit === 'pt' &&
+            presetRoundTrip.settings.lockedModuleValue === 4.25,
+        'Typography units and grid locks survive JSON round-trip'
+    );
+    assert(
+        presetRoundTrip.graphicsBlocks[0].sizeMode === 'width' &&
+            presetRoundTrip.graphicsBlocks[0].lockPosition === false,
+        'Built-in graphics sizing and constraints survive JSON round-trip'
+    );
+
     const appDocument = await loadApplication();
     const appWindow = appFrame.contentWindow;
+    const builtInAssetUrls = ['graphics/icons.svg', 'graphics/yf_claim.svg'].map(
+        path => new URL(path, appWindow.location.href).href
+    );
+
+    await waitFor(
+        () => builtInAssetUrls.every(url => appWindow.performance.getEntriesByName(url).length > 0),
+        'built-in graphics loading'
+    );
+    assert(
+        builtInAssetUrls.every(url => appWindow.performance.getEntriesByName(url).length > 0),
+        'both built-in SVG assets load during bootstrap'
+    );
+    const initialPresetEntry = appWindow.performance.getEntriesByType('resource').find(entry => (
+        decodeURIComponent(new URL(entry.name).pathname).endsWith('/presets/New.json')
+    ));
+    const builtInAssetEntries = builtInAssetUrls.map(
+        url => appWindow.performance.getEntriesByName(url)[0]
+    );
+    assert(
+        initialPresetEntry && builtInAssetEntries.every(
+            entry => entry.startTime >= initialPresetEntry.responseEnd
+        ),
+        'built-in SVG assets load after the default preset finishes'
+    );
 
     await waitFor(
         () => appDocument.querySelectorAll('#gridSvg [id^="text-group-"]').length > 0,
@@ -103,6 +193,32 @@ async function run() {
     graphicsItem.click();
     await waitFor(() => appDocument.getElementById('graphicsPanel').classList.contains('active'), 'graphics editor opening');
     assert(appDocument.getElementById('graphicsPanel').style.display === 'flex', 'graphics object opens its editor panel');
+    const editedGraphicsId = graphicsItem.dataset.elementId;
+    const graphicsSurfaceSelect = appDocument.getElementById('graphicsSurfaceSelect');
+    graphicsSurfaceSelect.value = 'left';
+    graphicsSurfaceSelect.dispatchEvent(new appWindow.Event('change', { bubbles: true }));
+    await waitFor(
+        () => appDocument.querySelector(
+            `#surface-display-left #graphics-group-${editedGraphicsId}`
+        ),
+        'graphics surface transfer'
+    );
+    assert(
+        Boolean(appDocument.querySelector(
+            `#surface-display-left #graphics-group-${editedGraphicsId}`
+        )),
+        'graphics surface selector moves the object exactly to the selected side'
+    );
+    appDocument.getElementById('graphicsSizeModeHeight').click();
+    await waitFor(
+        () => appDocument.getElementById('graphicsHeightGroup').style.display === 'flex',
+        'graphics height mode'
+    );
+    assert(
+        appDocument.getElementById('graphicsWidthGroup').style.display === 'none' &&
+            appDocument.getElementById('graphicsHeightGroup').style.display === 'flex',
+        'graphics size mode switches the visible surface-aware control'
+    );
     const graphicsHeightInput = appDocument.getElementById('graphicsHeightInput');
     const graphicsHeightBefore = Number(graphicsHeightInput.value);
     graphicsHeightInput.focus();
@@ -239,6 +355,32 @@ async function run() {
     const gridContent = appDocument.querySelector('#gridPanel > .panel-content');
     assert(gridContent.scrollHeight <= gridContent.clientHeight, 'Own Grid does not add overflow to Grid panel');
 
+    const hexColorInput = appDocument.getElementById('hexColorInput');
+    const colorBeforeInvalidInput = hexColorInput.value;
+    hexColorInput.focus();
+    hexColorInput.value = 'invalid';
+    hexColorInput.dispatchEvent(new appWindow.Event('input', { bubbles: true }));
+    hexColorInput.blur();
+    await waitFor(
+        () => hexColorInput.value === colorBeforeInvalidInput,
+        'invalid color restoration'
+    );
+    assert(
+        hexColorInput.value === colorBeforeInvalidInput,
+        'Invalid HEX input restores the current document color'
+    );
+
+    appDocument.getElementById('lunnenBlue').click();
+    await waitFor(() => hexColorInput.value === '#2353DB', 'Lunnen Blue color preset');
+    assert(hexColorInput.value === '#2353DB', 'Lunnen Blue updates the shared color state');
+
+    const hueSlider = appDocument.getElementById('hueSlider');
+    const colorBeforeHsb = hexColorInput.value;
+    hueSlider.value = (Number(hueSlider.value) + 20) % 360;
+    hueSlider.dispatchEvent(new appWindow.Event('input', { bubbles: true }));
+    await waitFor(() => hexColorInput.value !== colorBeforeHsb, 'HSB color update');
+    assert(hexColorInput.value !== colorBeforeHsb, 'HSB sliders update the document color');
+
     const moduleInput = appDocument.getElementById('gridModuleValue');
     const moduleBefore = Number(moduleInput.value);
     moduleInput.focus();
@@ -358,6 +500,33 @@ async function run() {
     await waitFor(() => presetToggle.textContent.includes('+ New'), 'first preset history loading');
     await waitFor(() => Number(widthInput.value) === rememberedWidth, 'per-preset history restoration');
     assert(Number(widthInput.value) === rememberedWidth, 'Returning to a preset restores its latest history state');
+
+    presetToggle.click();
+    appDocument.querySelector(
+        '#presetDropdownMenu .preset-dropdown-item[data-file="E-ink.json"]'
+    ).click();
+    await waitFor(() => presetToggle.textContent.includes('E-ink'), 'updated E-ink preset loading');
+    await waitFor(() => Number(widthInput.value) === 148.5, 'updated E-ink dimensions');
+    assert(Number(widthInput.value) === 148.5, 'Updated E-ink preset applies its approved dimensions');
+    assert(
+        Math.abs(Number(moduleInput.value) - 2.6743) < 0.0001,
+        'Updated E-ink preset applies its approved module'
+    );
+    assert(
+        appDocument.getElementById('surfaceRotationSelect').value === '270',
+        'Updated E-ink preset keeps the reverse left-side orientation'
+    );
+    assert(
+        Number(appDocument.getElementById('captionSizeValue').value) === 0.7 &&
+            Number(appDocument.getElementById('captionLineHeightValue').value) === 1.25,
+        'Updated E-ink preset applies its approved Caption size and line height'
+    );
+    assert(
+        appDocument.getElementById('captionStyleDropdown').value === '500' &&
+            Number(appDocument.getElementById('captionTrackingValue').value) === 0 &&
+            !appDocument.getElementById('useXHeightCaption').checked,
+        'Updated E-ink preset applies its approved Caption weight and metrics'
+    );
 
     document.body.dataset.status = 'passed';
     resultElement.textContent = `${checks.join('\n')}\n\nPASS — ${checks.length} checks`;

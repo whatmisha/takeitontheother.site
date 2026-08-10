@@ -35,7 +35,8 @@ export class PresetApplicationController {
             data.presetName ||
             data.settings?.presetName ||
             'Custom';
-        const displayName = `Custom — ${presetName}`;
+        const normalizedName = presetName.replace(/^(?:Custom\s+—\s*)+/i, '') || 'Custom';
+        const displayName = `Custom — ${normalizedName}`;
         await this.host.presetManager.addImportedPreset(clone(data), displayName);
         return { data, displayName };
     }
@@ -97,13 +98,9 @@ export class PresetApplicationController {
     }
 
     createSnapshot() {
-        const document = this.host.objectDocument;
         return clone({
             settings: this.host.settingsModule.getAll(),
-            textBlocks: document ? document.textBlocks : this.host.textBlocks,
-            graphicsBlocks: document ? document.graphicsBlocks : this.host.graphicsBlocks,
-            iconsBlock: this.host.iconsBlock ?? null,
-            claimBlock: this.host.claimBlock ?? null
+            document: this.host.objectDocument.createSnapshot()
         });
     }
 
@@ -136,18 +133,13 @@ export class PresetApplicationController {
             settings.surfaceSettings
         );
 
-        if (hasOwn(state, 'textBlocks')) {
-            const blocks = this.normalizeTextBlocks(state.textBlocks);
-            if (this.host.objectDocument) this.host.objectDocument.replaceTextBlocks(blocks);
-            else this.host.textBlocks = blocks;
+        const documentState = this.getDocumentState(state);
+        if (documentState) {
+            this.host.objectDocument.replaceDocument({
+                textBlocks: this.normalizeTextBlocks(documentState.textBlocks),
+                graphicsBlocks: this.normalizeGraphicsBlocks(documentState.graphicsBlocks)
+            });
         }
-        if (hasOwn(state, 'graphicsBlocks')) {
-            const blocks = this.normalizeGraphicsBlocks(state.graphicsBlocks);
-            if (this.host.objectDocument) this.host.objectDocument.replaceGraphicsBlocks(blocks);
-            else this.host.graphicsBlocks = blocks;
-        }
-        if (hasOwn(state, 'iconsBlock')) this.host.iconsBlock = clone(state.iconsBlock);
-        if (hasOwn(state, 'claimBlock')) this.host.claimBlock = clone(state.claimBlock);
 
         this.host.syncApplicationUI();
         this.recalculateGrid();
@@ -166,6 +158,41 @@ export class PresetApplicationController {
             lockPosition: block.lockPosition ?? true,
             textAlign: block.textAlign ?? 'left'
         }));
+    }
+
+    getDocumentState(state) {
+        const nested = state.document;
+        const hasTopLevelCollections = hasOwn(state, 'textBlocks') ||
+            hasOwn(state, 'graphicsBlocks');
+        const hasLegacyBuiltIns = hasOwn(state, 'iconsBlock') || hasOwn(state, 'claimBlock');
+        if (!nested && !hasTopLevelCollections && !hasLegacyBuiltIns) return null;
+
+        const current = this.host.objectDocument;
+        const source = nested || state;
+        const textBlocks = hasOwn(source, 'textBlocks')
+            ? clone(source.textBlocks)
+            : clone(current.textBlocks);
+        let graphicsBlocks = hasOwn(source, 'graphicsBlocks')
+            ? clone(source.graphicsBlocks)
+            : clone(current.graphicsBlocks);
+
+        if (!nested && hasLegacyBuiltIns) {
+            graphicsBlocks = this.migrateLegacyBuiltIns(graphicsBlocks, state);
+        }
+        return { textBlocks, graphicsBlocks };
+    }
+
+    migrateLegacyBuiltIns(graphicsBlocks, state) {
+        const migrated = clone(graphicsBlocks);
+        [['iconsBlock', 'icons'], ['claimBlock', 'claim']].forEach(([key, id]) => {
+            if (!hasOwn(state, key)) return;
+            const index = migrated.findIndex(block => block.id === id);
+            if (index >= 0) migrated.splice(index, 1);
+            if (state[key] != null) {
+                migrated.push({ ...clone(state[key]), id, isBuiltIn: true });
+            }
+        });
+        return migrated;
     }
 
     normalizeGraphicsBlocks(blocks = []) {

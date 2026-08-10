@@ -41,7 +41,7 @@ export class PresetManager {
      * Инициализация менеджера пресетов
      */
     async init() {
-        await this.loadPresetsManifest();
+        return this.loadPresetsManifest();
     }
 
     /**
@@ -58,7 +58,7 @@ export class PresetManager {
             if (!response.ok) {
                 console.warn('No presets manifest found');
                 this.updateDropdownText('No presets available');
-                return;
+                return false;
             }
             
             const manifest = await response.json();
@@ -67,23 +67,27 @@ export class PresetManager {
             if (presetsFromManifest.length === 0) {
                 console.warn('No presets available in manifest');
                 this.updateDropdownText('No presets available');
-                return;
+                return false;
             }
             
             // Use presets in the order they appear in manifest.json
             this.availablePresets = presetsFromManifest;
-            this.initializeDropdown();
+            await this.initializeDropdown();
+            return true;
         } catch (error) {
             console.warn('Failed to load presets manifest:', error);
             this.updateDropdownText('Error loading presets');
+            return false;
         }
     }
 
     /**
      * Инициализация dropdown меню
      */
-    initializeDropdown() {
-        if (!this.dropdownToggle || !this.dropdownMenu || this.availablePresets.length === 0) return;
+    async initializeDropdown() {
+        if (!this.dropdownToggle || !this.dropdownMenu || this.availablePresets.length === 0) {
+            return false;
+        }
         
         // Get text element
         this.dropdownText = this.dropdownToggle.querySelector('.preset-dropdown-text');
@@ -150,8 +154,9 @@ export class PresetManager {
         // Load first preset by default (skip dividers)
         const firstPreset = this.availablePresets.find(preset => preset.file && preset.file !== null && preset.file !== '');
         if (firstPreset) {
-            this.selectPreset(firstPreset.file, firstPreset.name);
+            return this.selectPreset(firstPreset.file, firstPreset.name);
         }
+        return true;
     }
 
     /**

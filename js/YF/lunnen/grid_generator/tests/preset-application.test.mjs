@@ -59,24 +59,6 @@ const createHost = () => {
     host.objectPlacementController = {
         recalculateGraphicsWidthFromHeight: block => host.recalculateGraphicsWidthFromHeight(block)
     };
-    Object.defineProperties(host, {
-        textBlocks: {
-            get: () => objectDocument.textBlocks,
-            set: value => objectDocument.replaceTextBlocks(value)
-        },
-        graphicsBlocks: {
-            get: () => objectDocument.graphicsBlocks,
-            set: value => objectDocument.replaceGraphicsBlocks(value)
-        },
-        iconsBlock: {
-            get: () => objectDocument.getGraphicsBlock('icons'),
-            set: value => objectDocument.setBuiltInBlock('icons', value)
-        },
-        claimBlock: {
-            get: () => objectDocument.getGraphicsBlock('claim'),
-            set: value => objectDocument.setBuiltInBlock('claim', value)
-        }
-    });
     return host;
 };
 
@@ -102,10 +84,12 @@ test('preset application clones input and applies backward-compatible defaults',
     assert.equal(host.currentPresetName, 'Front test');
     assert.equal(host.settingsModule.get('lineHeightUnit'), 'mod');
     assert.deepEqual(host.surfaceInit, ['Front test', preset.settings.surfaceSettings]);
-    assert.equal(host.textBlocks[0].lockPosition, true);
-    assert.equal(host.textBlocks[0].textAlign, 'left');
-    assert.equal(host.graphicsBlocks[0].lockPosition, true);
-    assert.equal(host.graphicsBlocks[0].widthInColumns, 5);
+    assert.equal(host.objectDocument.textBlocks[0].lockPosition, true);
+    assert.equal(host.objectDocument.textBlocks[0].textAlign, 'left');
+    assert.equal(host.objectDocument.graphicsBlocks[0].lockPosition, true);
+    assert.equal(host.objectDocument.graphicsBlocks[0].widthInColumns, 5);
+    assert.equal(host.objectDocument.getGraphicsBlock('icons'), null);
+    assert.equal(host.objectDocument.getGraphicsBlock('claim').isBuiltIn, true);
     assert.equal(preset.textBlocks[0].lockPosition, undefined);
     assert.equal(preset.graphicsBlocks[0].widthInColumns, undefined);
     assert.equal(host.historyManager.history.length, 1);
@@ -118,13 +102,13 @@ test('snapshot round-trip restores independent document data', () => {
     const snapshot = controller.createSnapshot();
 
     host.settingsModule.set('frontWidth', 900);
-    host.textBlocks[0].text = 'Changed';
+    host.objectDocument.textBlocks[0].text = 'Changed';
     controller.applySnapshot(snapshot);
 
     assert.equal(host.settingsModule.get('frontWidth'), 500);
     assert.equal(host.settingsModule.get('rowCount'), 12);
-    assert.equal(host.textBlocks[0].text, 'Hello');
-    assert.notEqual(host.textBlocks, snapshot.textBlocks);
+    assert.equal(host.objectDocument.textBlocks[0].text, 'Hello');
+    assert.notEqual(host.objectDocument.textBlocks, snapshot.document.textBlocks);
     assert.equal(host.historyManager.isRestoring, false);
     assert.equal(host.closeCount, 2);
 });
@@ -205,6 +189,23 @@ test('import keeps normalized JSON independent from the source of truth', async 
     assert.equal(normalized.textBlocks[0].text, 'Hello');
 });
 
+test('re-importing a custom preset does not stack synthetic name prefixes', async () => {
+    const host = createHost();
+    host.svgExporter.importSettings = async () => ({
+        ...preset,
+        presetName: 'Custom — Custom — E-ink, 148.5×203×43.5mm — 26.08.10, 11:07'
+    });
+    let importedName;
+    host.presetManager.addImportedPreset = async (_data, displayName) => {
+        importedName = displayName;
+    };
+    const controller = new PresetApplicationController(host);
+
+    await controller.importFile({});
+
+    assert.equal(importedName, 'Custom — E-ink, 148.5×203×43.5mm — 26.08.10, 11:07');
+});
+
 test('PresetManager awaits application and rolls selection back on failure', async () => {
     const originalAlert = globalThis.alert;
     const originalConsoleError = console.error;
@@ -232,5 +233,30 @@ test('PresetManager awaits application and rolls selection back on failure', asy
     } finally {
         globalThis.alert = originalAlert;
         console.error = originalConsoleError;
+    }
+});
+
+test('PresetManager initialization awaits the default preset selection', async () => {
+    const originalFetch = globalThis.fetch;
+    let selectionFinished = false;
+    globalThis.fetch = async () => ({
+        ok: true,
+        json: async () => ({ presets: [{ name: '+ New', file: 'New.json' }] })
+    });
+    try {
+        const manager = new PresetManager();
+        manager.selectPreset = async () => {
+            await Promise.resolve();
+            selectionFinished = true;
+            return true;
+        };
+        manager.initializeDropdown = async () => manager.selectPreset('New.json', '+ New');
+
+        const initialized = await manager.init();
+
+        assert.equal(initialized, true);
+        assert.equal(selectionFinished, true);
+    } finally {
+        globalThis.fetch = originalFetch;
     }
 });

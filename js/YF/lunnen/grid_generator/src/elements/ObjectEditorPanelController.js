@@ -190,7 +190,7 @@ export class ObjectEditorPanelController {
             this.positionNextToBlock(dom.graphicsPanel, blockId, 'graphics');
         }
         this.host.currentEditingGraphicsId = blockId;
-        this.host.objectEditorInputController.initGraphicsInputs();
+        this.host.graphicsEditorInputController.initGraphicsInputs();
         return true;
     }
 

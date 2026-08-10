@@ -2,7 +2,6 @@
 // Импорты модулей
 // ============================================
 // Итерация 1: Утилиты
-import { ColorUtils } from './src/utils/ColorUtils.js';
 import { MathUtils } from './src/utils/MathUtils.js';
 import { DOMUtils } from './src/utils/DOMUtils.js';
 import { TextToPath } from './src/utils/TextToPath.js';
@@ -10,14 +9,15 @@ import { TextToPath } from './src/utils/TextToPath.js';
 // Итерация 2: Core
 import { Settings } from './src/core/Settings.js';
 import { DOMCache } from './src/core/DOMCache.js?v=1.12.17';
+import { ApplicationStartupController } from './src/core/ApplicationStartupController.js?v=1.12.41';
 
 // Итерация 3: Grid
 import { GridCalculator } from './src/grid/GridCalculator.js?v=1.12.28';
 import { GridRenderer } from './src/grid/GridRenderer.js';
-import { CanvasRendererController } from './src/grid/CanvasRendererController.js?v=1.12.36';
+import { CanvasRendererController } from './src/grid/CanvasRendererController.js?v=1.12.38';
 
 // Итерация 4: Config
-import { createSliderConfig } from './src/config/SliderConfigFactory.js?v=1.12.37';
+import { createSliderConfig } from './src/config/SliderConfigFactory.js?v=1.12.38';
 
 // Итерация 5: UI Controllers
 import { SliderController } from './src/ui/SliderController.js?v=1.12.31';
@@ -25,28 +25,35 @@ import { PanelManager } from './src/ui/PanelManager.js';
 import { ZoomPanManager } from './src/ui/ZoomPanManager.js?v=1.12.10';
 import { TypographyUnitController } from './src/ui/TypographyUnitController.js?v=1.12.29';
 import { GridSettingsController } from './src/ui/GridSettingsController.js?v=1.12.31';
+import { ColorPanelController } from './src/ui/ColorPanelController.js?v=1.12.38';
+import { SliderHistoryController } from './src/ui/SliderHistoryController.js?v=1.12.38';
+import { ApplicationEventController } from './src/ui/ApplicationEventController.js?v=1.12.39';
+import { PanelUiController } from './src/ui/PanelUiController.js?v=1.12.39';
 
 // Итерация 6: Elements
 import { GraphicsRenderer } from './src/elements/GraphicsRenderer.js?v=1.12.25';
 import { TextBlockRenderer } from './src/elements/TextBlockRenderer.js?v=1.12.27';
 import { TextLayout } from './src/elements/TextLayout.js?v=1.12.27';
 import { TextStyleResolver } from './src/elements/TextStyleResolver.js?v=1.12.28';
-import { ObjectEditorPanelController } from './src/elements/ObjectEditorPanelController.js?v=1.12.35';
-import { ObjectEditorInputController } from './src/elements/ObjectEditorInputController.js?v=1.12.35';
-import { ObjectNavigatorController } from './src/elements/ObjectNavigatorController.js?v=1.12.35';
+import { ObjectEditorPanelController } from './src/elements/ObjectEditorPanelController.js?v=1.12.43';
+import { ObjectEditorInputController } from './src/elements/ObjectEditorInputController.js?v=1.12.44';
+import { GraphicsEditorInputController } from './src/elements/GraphicsEditorInputController.js?v=1.12.44';
+import { GraphicsEditorEventController } from './src/elements/GraphicsEditorEventController.js?v=1.12.44';
+import { ObjectNavigatorController } from './src/elements/ObjectNavigatorController.js?v=1.12.38';
 import { ObjectDragController } from './src/elements/ObjectDragController.js?v=1.12.35';
-import { ObjectDocumentController } from './src/elements/ObjectDocumentController.js?v=1.12.35';
+import { ObjectDocumentController } from './src/elements/ObjectDocumentController.js?v=1.12.39';
 import { ObjectPlacementController } from './src/elements/ObjectPlacementController.js?v=1.12.35';
 import { GraphicsAssetController } from './src/elements/GraphicsAssetController.js?v=1.12.35';
+import { BuiltInGraphicsController } from './src/elements/BuiltInGraphicsController.js?v=1.12.40';
 
 // Итерация 7: SVG Export
-import { SVGExporter } from './src/svg/SVGExporter.js';
-import { ExportController } from './src/svg/ExportController.js?v=1.12.36';
+import { SVGExporter } from './src/svg/SVGExporter.js?v=1.12.42';
+import { ExportController } from './src/svg/ExportController.js?v=1.12.42';
 import { ExportDocumentBuilder } from './src/svg/ExportDocumentBuilder.js?v=1.12.36';
 
 // Итерация 8: Preset Management
-import { PresetManager } from './src/preset/PresetManager.js?v=1.12.32';
-import { PresetApplicationController } from './src/preset/PresetApplicationController.js?v=1.12.35';
+import { PresetManager } from './src/preset/PresetManager.js?v=1.12.41';
+import { PresetApplicationController } from './src/preset/PresetApplicationController.js?v=1.12.42';
 
 // Итерация 9: History Management
 import { HistoryManager } from './src/history/HistoryManager.js';
@@ -59,6 +66,7 @@ import { SurfaceRenderer } from './src/surfaces/SurfaceRenderer.js?v=1.12.11';
 
 class GridGenerator {
     constructor() {
+        this.isInitializing = true;
         this.SLIDER_CONFIG = createSliderConfig(this);
         this.settingsModule = new Settings({
             frontWidth: 500,
@@ -132,8 +140,8 @@ class GridGenerator {
             ),
             getContrastColor: () => this.canvasRenderer.getContrastColor(),
             getGridOpacity: opacity => this.canvasRenderer.getGridOpacity(opacity),
-            getTextBlocks: () => this.textBlocks || [],
-            getGraphicsBlocks: () => this.graphicsBlocks || [],
+            getTextBlocks: () => this.objectDocument.textBlocks,
+            getGraphicsBlocks: () => this.objectDocument.graphicsBlocks,
             drawTextBlock: (...args) => this.textRenderer.draw(...args),
             drawGraphicsBlock: (...args) => this.graphicsRenderer?.draw(...args),
             drawGraphicsBlockForExport: (...args) => this.graphicsRenderer?.drawForExport(...args)
@@ -213,10 +221,29 @@ class GridGenerator {
         // ============================================
         this.domCache = new DOMCache().init();
         this.dom = this.domCache.getAll();
+        this.panelUiController = new PanelUiController(this);
+        this.colorPanelController = new ColorPanelController({
+            settings: this.settingsModule,
+            dom: this.dom,
+            beginAction: label => this.historyManager.beginAction(label, this.getStateSnapshot()),
+            commitAction: () => this.historyManager.commitAction(this.getStateSnapshot()),
+            markChanged: () => this.markAsChanged(),
+            render: () => this.updateGrid()
+        });
         this.objectEditorPanelController = new ObjectEditorPanelController(this);
         this.objectEditorInputController = new ObjectEditorInputController(this);
+        this.graphicsEditorInputController = new GraphicsEditorInputController(this);
+        this.graphicsEditorEventController = new GraphicsEditorEventController(this);
         this.graphicsAssetController = new GraphicsAssetController(this);
         this.objectNavigatorController = new ObjectNavigatorController(this);
+        this.builtInGraphicsController = new BuiltInGraphicsController({
+            assetController: this.graphicsAssetController,
+            objectDocument: this.objectDocument,
+            onReady: () => {
+                this.objectPlacementController.updateBuiltInPositions();
+                this.initGraphicsRenderer();
+            }
+        });
         this.objectDragController = new ObjectDragController(this);
         this.objectDragController.init();
         this.initTextLayout();
@@ -246,6 +273,7 @@ class GridGenerator {
         this.exportDocumentBuilder = new ExportDocumentBuilder(this);
         this.exportController = new ExportController(this);
         this.presetApplicationController = new PresetApplicationController(this);
+        this.applicationEventController = new ApplicationEventController(this);
 
         // ============================================
         // Presets (Итерация 10: PresetManager модуль)
@@ -260,7 +288,12 @@ class GridGenerator {
                 this.hasUnsavedChanges = false;
             }
         });
-        this.presetManager.init();
+        this.startupController = new ApplicationStartupController({
+            loadPresets: () => this.presetManager.init(),
+            loadBuiltInGraphics: () => this.builtInGraphicsController.initialize(),
+            finalize: () => this.finalizeInitialization(),
+            fit: () => this.zoomPanManager?.fitToScreen()
+        });
 
         // Предупреждение при закрытии вкладки с несохраненными изменениями
         window.addEventListener('beforeunload', (e) => {
@@ -291,39 +324,35 @@ class GridGenerator {
         this.initPanels();
         console.log('✅ PanelManager initialized with all panels');
 
-        // НЕ сохраняем начальное состояние здесь — SVG иконок, claim и пресет
-        // загружаются асинхронно. Первое состояние в истории будет создано
-        // автоматически при первом beginAction/commitAction (загрузка пресета).
-        this.initCollapsibleSections();
+        // Initial history is created when the awaited default preset is applied.
+        this.panelUiController.bindCollapsibleSections();
 
         // Initialize font size unit buttons state
         this.typographyUnitController.sync();
-        this.initDropdowns();
+        this.panelUiController.bindDropdowns();
         this.objectEditorInputController.initTextEditor();
-        this.objectEditorInputController.initGraphicsEditor();
+        this.graphicsEditorEventController.init();
         this.objectEditorPanelController.initOutsideClickHandler();
         this.objectNavigatorController.init();
         this.gridSettingsController.updateLinkedControlsVisual();
-        this.initColorPreview();
-        this.constrainAllObjectsToGrid();
+        this.colorPanelController.initialize();
         this.updateCanvasSize();
         this.initEyeIcons();
-        this.updateGrid();
-
-        // Автоматический fit to screen при загрузке (с задержкой для отрисовки SVG)
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                if (this.zoomPanManager) {
-                    this.zoomPanManager.fitToScreen();
-                }
-            }, 100);
-        });
 
         // Update canvas size on window resize
         window.addEventListener('resize', () => {
             this.updateCanvasSize();
             this.updateGrid();
         });
+    }
+
+    finalizeInitialization() {
+        this.constrainAllObjectsToGrid();
+        this.objectNavigatorController.render();
+        this.updateCanvasSize();
+        this.isInitializing = false;
+        this.updateGrid();
+        document.documentElement.dataset.appReady = 'true';
     }
 
     // Отметить, что были внесены изменения
@@ -340,362 +369,10 @@ class GridGenerator {
         this.presetManager?.markAsSaved();
     }
 
-    get textBlocks() {
-        return this.objectDocument.textBlocks;
-    }
-
-    set textBlocks(value) {
-        this.objectDocument.replaceTextBlocks(value);
-    }
-
-    get graphicsBlocks() {
-        return this.objectDocument.graphicsBlocks;
-    }
-
-    set graphicsBlocks(value) {
-        this.objectDocument.replaceGraphicsBlocks(value);
-    }
-
-    get iconsBlock() {
-        return this.objectDocument.getGraphicsBlock('icons');
-    }
-
-    set iconsBlock(value) {
-        this.objectDocument.setBuiltInBlock('icons', value);
-    }
-
-    get claimBlock() {
-        return this.objectDocument.getGraphicsBlock('claim');
-    }
-
-    set claimBlock(value) {
-        this.objectDocument.setBuiltInBlock('claim', value);
-    }
-
-
     initEventListeners() {
-        // ============================================
-        // NOTE: Slider initialization moved to initUIControllers()
-        // ============================================
-
-        // Show side panels checkbox
-        this.dom.showSidePanels.addEventListener('change', (e) => {
-            this.historyManager.beginAction('toggle side panels', this.getStateSnapshot());
-            this.markAsChanged();
-            this.surfaceManager.setAllSideVisibility(e.target.checked);
-            this.updateEyeIcon(e.target);
-            this.syncSurfaceControls();
-            this.updateGrid();
-            this.historyManager.commitAction(this.getStateSnapshot());
-        });
-
-        this.gridSettingsController.bind();
-
-        // Show columns checkbox
-        this.dom.showColumns.addEventListener('change', (e) => {
-            this.historyManager.beginAction('toggle columns', this.getStateSnapshot());
-            this.markAsChanged();
-            this.settingsModule.set('showColumns', e.target.checked);
-            this.updateEyeIcon(e.target);
-            this.updateGrid();
-            this.historyManager.commitAction(this.getStateSnapshot());
-        });
-
-        // Show rows checkbox
-        this.dom.showRows.addEventListener('change', (e) => {
-            this.historyManager.beginAction('toggle rows', this.getStateSnapshot());
-            this.markAsChanged();
-            this.settingsModule.set('showRows', e.target.checked);
-            this.updateEyeIcon(e.target);
-            this.updateGrid();
-            this.historyManager.commitAction(this.getStateSnapshot());
-        });
-
-        // Show baseline checkbox
-        this.dom.showBaseline.addEventListener('change', (e) => {
-            this.historyManager.beginAction('toggle baseline', this.getStateSnapshot());
-            this.markAsChanged();
-            this.settingsModule.set('showBaseline', e.target.checked);
-            this.updateEyeIcon(e.target);
-            this.updateGrid();
-            this.historyManager.commitAction(this.getStateSnapshot());
-        });
-
-        // Show objects checkbox
-        this.dom.showObjects.addEventListener('change', (e) => {
-            this.historyManager.beginAction('toggle objects', this.getStateSnapshot());
-            this.markAsChanged();
-            this.settingsModule.set('showObjects', e.target.checked);
-            this.updateEyeIcon(e.target);
-            this.updateGrid();
-            this.historyManager.commitAction(this.getStateSnapshot());
-        });
-
-        // Use x-height checkbox
-        this.dom.useXHeight.addEventListener('change', (e) => {
-            this.historyManager.beginAction('toggle x-height', this.getStateSnapshot());
-            this.markAsChanged();
-            this.settingsModule.set('useXHeight', e.target.checked);
-            this.updateGrid();
-            this.historyManager.commitAction(this.getStateSnapshot());
-        });
-
-        // Use x-height 2 checkbox
-        this.dom.useXHeight2.addEventListener('change', (e) => {
-            this.historyManager.beginAction('toggle x-height 2', this.getStateSnapshot());
-            this.markAsChanged();
-            this.settingsModule.set('useXHeight2', e.target.checked);
-            this.updateGrid();
-            this.historyManager.commitAction(this.getStateSnapshot());
-        });
-
-        // Use x-height Caption checkbox
-        if (this.dom.useXHeightCaption) {
-            this.dom.useXHeightCaption.addEventListener('change', (e) => {
-                this.historyManager.beginAction('toggle x-height caption', this.getStateSnapshot());
-                this.markAsChanged();
-                this.settingsModule.set('useXHeightCaption', e.target.checked);
-                this.updateGrid();
-                this.historyManager.commitAction(this.getStateSnapshot());
-            });
-        }
-
-
-        this.typographyUnitController.bindButtons();
-
-        // Style dropdowns в панели Text Styles - изменяют начертание (font-weight)
-        const headlineStyleDropdown = document.getElementById('headlineStyleDropdown');
-        const textStyleDropdown = document.getElementById('textStyleDropdown');
-
-        if (headlineStyleDropdown) {
-            headlineStyleDropdown.addEventListener('change', (e) => {
-                this.historyManager.beginAction('change headline font weight', this.getStateSnapshot());
-                this.settingsModule.set('headlineFontWeight', parseInt(e.target.value));
-                this.objectNavigatorController.render();
-                this.updateGrid();
-                this.historyManager.commitAction(this.getStateSnapshot());
-            });
-        }
-
-        if (textStyleDropdown) {
-            textStyleDropdown.addEventListener('change', (e) => {
-                this.historyManager.beginAction('change text font weight', this.getStateSnapshot());
-                this.settingsModule.set('textFontWeight', parseInt(e.target.value));
-                this.objectNavigatorController.render();
-                this.updateGrid();
-                this.historyManager.commitAction(this.getStateSnapshot());
-            });
-        }
-
-        const captionStyleDropdown = document.getElementById('captionStyleDropdown');
-        if (captionStyleDropdown) {
-            captionStyleDropdown.addEventListener('change', (e) => {
-                this.historyManager.beginAction('change caption font weight', this.getStateSnapshot());
-                this.settingsModule.set('captionFontWeight', parseInt(e.target.value));
-                this.objectNavigatorController.render();
-                this.updateGrid();
-                this.historyManager.commitAction(this.getStateSnapshot());
-            });
-        }
-
-        // Lunnen Display doesn't have font weight dropdown (always Regular)
-
-        // Color preview button - toggle HSB picker
-        this.dom.colorPreview.addEventListener('click', () => {
-            const isVisible = this.dom.hsbPicker.style.display !== 'none';
-            this.dom.hsbPicker.style.display = isVisible ? 'none' : 'block';
-            if (!isVisible) {
-                this.updateHSBFromHex(this.settingsModule.get('boxColor'));
-            }
-        });
-
-        // Lunnen Blue preset
-        this.dom.lunnenBlue.addEventListener('click', () => {
-            this.historyManager.beginAction('apply Lunnen Blue color', this.getStateSnapshot());
-            this.markAsChanged();
-            const lunnenBlueColor = '#2353DB';
-            this.settingsModule.set('boxColor', lunnenBlueColor);
-            this.dom.hexColorInput.value = lunnenBlueColor;
-            this.dom.colorPreview.style.backgroundColor = lunnenBlueColor;
-            this.updateHSBFromHex(lunnenBlueColor);
-            this.updateGrid();
-            this.historyManager.commitAction(this.getStateSnapshot());
-        });
-
-        // Hex color input - history tracking
-        this.dom.hexColorInput.addEventListener('focus', () => {
-            this.historyManager.beginAction('edit hex color', this.getStateSnapshot());
-        });
-
-        // Hex color input - только форматирование при вводе, без применения изменений
-        this.dom.hexColorInput.addEventListener('input', (e) => {
-            let hexValue = e.target.value;
-
-            // Remove all # symbols and add one at the start
-            hexValue = hexValue.replace(/#/g, '');
-            if (hexValue) {
-                hexValue = '#' + hexValue;
-                e.target.value = hexValue;
-            }
-        });
-
-        // Обработка Enter для hexColorInput
-        this.dom.hexColorInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                this.dom.hexColorInput.blur();
-            }
-        });
-
-        // Validate hex input when focus is lost
-        this.dom.hexColorInput.addEventListener('blur', (e) => {
-            let hexValue = e.target.value;
-
-            if (!hexValue.match(/^#[0-9A-Fa-f]{6}$/)) {
-                // Если некорректный, берем текущий цвет из настроек вместо дефолтного
-                hexValue = this.settingsModule.get('boxColor') || '#dadde6';
-            }
-
-            // Проверяем, изменился ли цвет
-            const currentColor = this.settingsModule.get('boxColor');
-            if (hexValue !== currentColor) {
-                this.markAsChanged();
-            }
-
-            e.target.value = hexValue;
-            this.settingsModule.set('boxColor', hexValue);
-            this.dom.colorPreview.style.backgroundColor = hexValue;
-            this.updateHSBFromHex(hexValue);
-            this.updateGrid();
-            this.historyManager.commitAction(this.getStateSnapshot());
-        });
-
-        // Export button
-        this.dom.exportBtn.addEventListener('click', () => this.exportController.exportSvg());
-
-        // Export PDF button
-        if (this.dom.exportPDFBtn) {
-            this.dom.exportPDFBtn.addEventListener('click', () => this.exportController.exportPdf());
-        }
-
-        // Export Settings button
-        this.dom.exportSettingsBtn.addEventListener(
-            'click',
-            () => this.exportController.exportSettings()
-        );
-
-        // Import Settings button (Итерация 7)
-        if (this.dom.importSettingsBtn) {
-            this.dom.importSettingsBtn.addEventListener('click', () => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = '.json';
-                input.onchange = (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        this.importSettings(file);
-                    }
-                };
-                input.click();
-            });
-        }
-
-        // Help button removed
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            // Cmd+E / Ctrl+E - Export SVG
-            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
-                e.preventDefault();
-                this.exportController.exportSvg();
-            }
-            // Cmd+Z / Ctrl+Z - Undo, Cmd+Shift+Z / Ctrl+Shift+Z - Redo
-            // Используем toLowerCase() т.к. при зажатом Shift e.key может быть 'Z' (заглавная)
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-                e.preventDefault();
-                // Если пользователь в инпуте — сначала коммитим текущие изменения (blur),
-                // а потом выполняем undo/redo
-                const activeEl = document.activeElement;
-                if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
-                    activeEl.blur();
-                }
-                if (e.shiftKey) {
-                    this.redo();
-                } else {
-                    this.undo();
-                }
-            }
-            // Delete / Backspace - Delete selected element
-            if ((e.key === 'Delete' || e.key === 'Backspace') && !e.ctrlKey && !e.metaKey) {
-                // Проверяем, что пользователь не находится в поле ввода
-                const activeElement = document.activeElement;
-                const isInputFocused = activeElement && (
-                    activeElement.tagName === 'INPUT' ||
-                    activeElement.tagName === 'TEXTAREA' ||
-                    activeElement.isContentEditable
-                );
-
-                if (!isInputFocused) {
-                    // Проверяем, есть ли выделенный текстовый блок
-                    if (this.currentEditingBlock) {
-                        e.preventDefault();
-                        const blockId = this.currentEditingBlock.id;
-                        const block = this.textBlocks.find(b => b.id === blockId);
-                        if (block) {
-                            const name = block.content.substring(0, 30) + (block.content.length > 30 ? '...' : '');
-
-                            // Close panel first
-                            this.objectEditorPanelController.closeTextPanel();
-
-                            // Find the delete button in elements list and trigger delete
-                            const elementButton = this.dom.elementsList.querySelector(`[data-element-id="${blockId}"]`);
-                            if (elementButton) {
-                                const deleteBtn = elementButton.parentElement.querySelector('.element-action-btn:last-child');
-                                if (deleteBtn) {
-                                    this.objectNavigatorController.startDelete(
-                                        deleteBtn,
-                                        'text',
-                                        blockId,
-                                        name
-                                    );
-                                }
-                            }
-                        }
-                    }
-                    // Проверяем, есть ли выделенный графический блок
-                    else if (this.currentEditingGraphicsId) {
-                        e.preventDefault();
-                        const blockId = this.currentEditingGraphicsId;
-                        const block = this.objectDocument.getGraphicsBlock(blockId);
-                        if (block) {
-                            const name = block.name || 'Graphic';
-
-                            // Close panel first
-                            this.objectEditorPanelController.closeGraphicsPanel();
-
-                            // Find the delete button in elements list and trigger delete
-                            const elementButton = this.dom.elementsList.querySelector(`[data-element-id="${blockId}"]`);
-                            if (elementButton) {
-                                const deleteBtn = elementButton.parentElement.querySelector('.element-action-btn:last-child');
-                                if (deleteBtn) {
-                                    this.objectNavigatorController.startDelete(
-                                        deleteBtn,
-                                        'graphics',
-                                        blockId,
-                                        name
-                                    );
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        // Initialize panel collapse functionality
-        this.initPanelCollapse();
+        this.applicationEventController.bind();
+        this.panelUiController.bindPanelCollapse();
     }
-
 
     // ============================================
     // Panel Collapse Functionality
@@ -742,225 +419,6 @@ class GridGenerator {
             if (this.dom.graphicsRowInput) this.dom.graphicsRowInput.value = 1;
             if (this.dom.graphicsBaselineInput) this.dom.graphicsBaselineInput.value = 1;
         }
-    }
-
-    initPanelCollapse() {
-        // Storage for text styles state
-        this.textStylesState = {
-            headline: false, // false = collapsed
-            text: false,
-            caption: false,
-            lunnenDisplay: false
-        };
-
-        // Find all collapse icons
-        const collapseIcons = document.querySelectorAll('.collapse-icon');
-
-        collapseIcons.forEach(icon => {
-            const panel = icon.closest('.controls-panel');
-            if (!panel) return;
-
-            const header = icon.closest('.panel-header');
-            const content = panel.querySelector('.panel-content');
-
-            if (!header || !content) return;
-
-            const isInitiallyCollapsed = panel.classList.contains('panel-collapsed');
-            icon.classList.toggle('collapsed', isInitiallyCollapsed);
-            icon.setAttribute('aria-expanded', String(!isInitiallyCollapsed));
-            icon.setAttribute('aria-label', isInitiallyCollapsed ? 'Expand panel' : 'Collapse panel');
-
-            // Check if panel is bottom-anchored (like elements-navigator and text panel)
-            const isBottomAnchored = panel.classList.contains('elements-navigator') || panel.classList.contains('controls-panel-text');
-
-            // Check if this is the text styles panel
-            const isTextPanel = panel.classList.contains('controls-panel-text');
-
-            // Store original position for bottom-anchored panels
-            if (isBottomAnchored && !panel.dataset.originalTop) {
-                // Save the initial top position when panel is first loaded
-                const rect = panel.getBoundingClientRect();
-                panel.dataset.originalTop = rect.top;
-            }
-
-            // Click handler
-            const toggleCollapse = (e) => {
-                e.stopPropagation(); // Prevent drag from triggering
-
-                const isCollapsed = panel.classList.contains('panel-collapsed');
-
-                if (isCollapsed) {
-                    // Expand
-                    panel.classList.remove('panel-collapsed');
-                    icon.classList.remove('collapsed');
-                    icon.setAttribute('aria-label', 'Collapse panel');
-                    icon.setAttribute('aria-expanded', 'true');
-
-                    // For bottom-anchored panels, keep the top position (don't switch back to bottom)
-                    // This prevents the panel from jumping
-
-                    // Restore text styles state if this is text panel
-                    if (isTextPanel) {
-                        this.restoreTextStylesState();
-                    }
-                } else {
-                    // Collapse
-                    // Save text styles state if this is text panel
-                    if (isTextPanel) {
-                        this.saveTextStylesState();
-                    }
-
-                    // For bottom-anchored panels, switch to top anchor before collapsing
-                    if (isBottomAnchored) {
-                        const rect = panel.getBoundingClientRect();
-                        panel.style.top = `${rect.top}px`;
-                        panel.style.bottom = 'auto';
-                    }
-
-                    panel.classList.add('panel-collapsed');
-                    icon.classList.add('collapsed');
-                    icon.setAttribute('aria-label', 'Expand panel');
-                    icon.setAttribute('aria-expanded', 'false');
-                }
-
-                // Update panel params display
-                this.updatePanelParams();
-            };
-
-            icon.addEventListener('click', toggleCollapse);
-
-            // Keyboard support
-            icon.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    toggleCollapse(e);
-                }
-            });
-        });
-    }
-
-    saveTextStylesState() {
-        // Save current state of all text style collapsible sections
-        const headlineToggle = document.querySelector('#headlineHeader .collapse-toggle');
-        const textToggle = document.querySelector('#textHeader .collapse-toggle');
-        const captionToggle = document.querySelector('#captionHeader .collapse-toggle');
-        const lunnenDisplayToggle = document.querySelector('#lunnenDisplayHeader .collapse-toggle');
-
-        if (headlineToggle) {
-            this.textStylesState.headline = headlineToggle.getAttribute('aria-expanded') === 'true';
-        }
-        if (textToggle) {
-            this.textStylesState.text = textToggle.getAttribute('aria-expanded') === 'true';
-        }
-        if (captionToggle) {
-            this.textStylesState.caption = captionToggle.getAttribute('aria-expanded') === 'true';
-        }
-        if (lunnenDisplayToggle) {
-            this.textStylesState.lunnenDisplay = lunnenDisplayToggle.getAttribute('aria-expanded') === 'true';
-        }
-    }
-
-    restoreTextStylesState() {
-        // Restore saved state of all text style collapsible sections
-        const headlineToggle = document.querySelector('#headlineHeader .collapse-toggle');
-        const textToggle = document.querySelector('#textHeader .collapse-toggle');
-        const captionToggle = document.querySelector('#captionHeader .collapse-toggle');
-        const lunnenDisplayToggle = document.querySelector('#lunnenDisplayHeader .collapse-toggle');
-
-        const headlineContent = document.getElementById('headlineContent');
-        const textContent = document.getElementById('textContent');
-        const captionContent = document.getElementById('captionContent');
-        const lunnenDisplayContent = document.getElementById('lunnenDisplayContent');
-
-        if (headlineToggle && headlineContent) {
-            if (this.textStylesState.headline) {
-                headlineToggle.setAttribute('aria-expanded', 'true');
-                headlineContent.classList.remove('collapsed');
-            } else {
-                headlineToggle.setAttribute('aria-expanded', 'false');
-                headlineContent.classList.add('collapsed');
-            }
-        }
-
-        if (textToggle && textContent) {
-            if (this.textStylesState.text) {
-                textToggle.setAttribute('aria-expanded', 'true');
-                textContent.classList.remove('collapsed');
-            } else {
-                textToggle.setAttribute('aria-expanded', 'false');
-                textContent.classList.add('collapsed');
-            }
-        }
-
-        if (captionToggle && captionContent) {
-            if (this.textStylesState.caption) {
-                captionToggle.setAttribute('aria-expanded', 'true');
-                captionContent.classList.remove('collapsed');
-            } else {
-                captionToggle.setAttribute('aria-expanded', 'false');
-                captionContent.classList.add('collapsed');
-            }
-        }
-
-        if (lunnenDisplayToggle && lunnenDisplayContent) {
-            if (this.textStylesState.lunnenDisplay) {
-                lunnenDisplayToggle.setAttribute('aria-expanded', 'true');
-                lunnenDisplayContent.classList.remove('collapsed');
-            } else {
-                lunnenDisplayToggle.setAttribute('aria-expanded', 'false');
-                lunnenDisplayContent.classList.add('collapsed');
-            }
-        }
-    }
-
-    // Update panel parameters display in collapsed state
-    updatePanelParams() {
-        // Grid panel
-        const gridParams = document.getElementById('gridParams');
-        if (gridParams) {
-            const mod = this.settingsModule.get('gridModule').toFixed(2);
-            const col = this.settingsModule.get('columnCount');
-            const row = this.settingsModule.get('rowCount');
-            gridParams.textContent = `Mod ${mod}  •  Col ${col}  •  Row ${row}`;
-        }
-
-        // Dimensions panel
-        const dimensionsParams = document.getElementById('dimensionsParams');
-        if (dimensionsParams) {
-            const w = Math.round(this.settingsModule.get('frontWidth'));
-            const h = Math.round(this.settingsModule.get('frontHeight'));
-            const t = Math.round(this.settingsModule.get('thickness'));
-            dimensionsParams.textContent = `${w}\u2009×\u2009${h}\u2009×\u2009${t} mm`;
-        }
-
-        // Objects panel
-        const objectsParams = document.getElementById('objectsParams');
-        if (objectsParams) {
-            const textCount = this.textBlocks.length;
-            const graphicsCount = this.graphicsBlocks.length;
-            objectsParams.textContent = `Txt ${textCount}  •  Obj ${graphicsCount}`;
-        }
-
-        // Text styles panel
-        const textStylesParams = document.getElementById('textStylesParams');
-        if (textStylesParams) {
-            const stylesCount = this.getTextStylesCount();
-            textStylesParams.textContent = `${stylesCount} styles`;
-        }
-    }
-
-    getTextStylesCount() {
-        if (!Array.isArray(this.textBlocks)) return 0;
-
-        const uniqueStyles = new Set();
-
-        this.textBlocks.forEach(block => {
-            if (block.styleRef) {
-                uniqueStyles.add(block.styleRef);
-            }
-        });
-
-        return uniqueStyles.size;
     }
 
     // ============================================
@@ -1027,259 +485,11 @@ class GridGenerator {
         }
 
         this.typographyUnitController.syncButtons(settings);
-        if (settings.boxColor) {
-            if (this.dom.colorPreview) this.dom.colorPreview.style.backgroundColor = settings.boxColor;
-            if (this.dom.hexColorInput) this.dom.hexColorInput.value = settings.boxColor;
-            this.updateHSBFromHex(settings.boxColor);
-        }
+        this.panelUiController.syncFontWeights(settings);
+        this.colorPanelController.sync(settings.boxColor);
 
         this.gridSettingsController.generateRowPresets();
         this.syncSurfaceControls();
-    }
-
-    initColorPreview() {
-        // Set initial color preview
-        this.dom.colorPreview.style.backgroundColor = this.settingsModule.get('boxColor');
-        this.updateHSBFromHex(this.settingsModule.get('boxColor'));
-    }
-
-    initCollapsibleSections() {
-        // Initialize collapsible sections (like Headline settings)
-        const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
-
-        collapsibleHeaders.forEach(header => {
-            const toggle = header.querySelector('.collapse-toggle');
-            const contentId = header.id.replace('Header', 'Content');
-            const content = document.getElementById(contentId);
-
-            if (!toggle || !content) return;
-
-            // Handle click on header or toggle button
-            const handleToggle = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
-                const newState = !isExpanded;
-
-                // Update aria-expanded attribute
-                toggle.setAttribute('aria-expanded', newState);
-
-                // Toggle collapsed class
-                if (newState) {
-                    content.classList.remove('collapsed');
-                } else {
-                    content.classList.add('collapsed');
-                }
-            };
-
-            // Click on entire header toggles
-            header.addEventListener('click', handleToggle);
-
-            // Prevent dragging when clicking on collapsible header
-            header.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-            });
-        });
-    }
-
-    initDropdowns() {
-        // Initialize dropdown menus for value inputs
-        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-
-        dropdownToggles.forEach(toggle => {
-            const targetId = toggle.getAttribute('data-target');
-            const dropdown = document.getElementById(targetId);
-
-            if (!dropdown) return;
-
-            // Get the input field (sibling of toggle)
-            const container = toggle.closest('.value-input-with-dropdown');
-            const input = container.querySelector('.value-display');
-            const sliderId = input.id.replace('Value', 'Slider');
-
-            // Toggle dropdown on button click
-            toggle.addEventListener('click', (e) => {
-                e.stopPropagation();
-
-                // Close all other dropdowns
-                document.querySelectorAll('.dropdown-menu.active').forEach(menu => {
-                    if (menu !== dropdown) {
-                        menu.classList.remove('active');
-                    }
-                });
-
-                // Toggle this dropdown
-                dropdown.classList.toggle('active');
-
-                // Update selected state
-                this.updateDropdownSelection(dropdown, input.value);
-            });
-
-            // Handle item selection
-            const items = dropdown.querySelectorAll('.dropdown-item');
-            items.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.historyManager.beginAction(`select ${sliderId} dropdown`, this.getStateSnapshot());
-                    const value = parseFloat(item.getAttribute('data-value'));
-
-                    // Update slider using universal method
-                    this.updateSliderValue(sliderId, value);
-
-                    // Close dropdown
-                    dropdown.classList.remove('active');
-                    this.historyManager.commitAction(this.getStateSnapshot());
-                });
-            });
-        });
-
-        // Close dropdowns when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.value-input-with-dropdown')) {
-                document.querySelectorAll('.dropdown-menu.active').forEach(menu => {
-                    menu.classList.remove('active');
-                });
-            }
-        });
-
-        // Initialize font weight dropdowns in Text Styles panel
-        const headlineStyleDropdown = document.getElementById('headlineStyleDropdown');
-        const textStyleDropdown = document.getElementById('textStyleDropdown');
-
-        if (headlineStyleDropdown) {
-            headlineStyleDropdown.value = this.settingsModule.get('headlineFontWeight').toString();
-        }
-
-        if (textStyleDropdown) {
-            textStyleDropdown.value = this.settingsModule.get('textFontWeight').toString();
-        }
-    }
-
-    updateDropdownSelection(dropdown, currentValue) {
-        // Update selected state for dropdown items
-        const items = dropdown.querySelectorAll('.dropdown-item');
-        const numValue = parseFloat(currentValue);
-
-        items.forEach(item => {
-            const itemValue = parseFloat(item.getAttribute('data-value'));
-            if (Math.abs(itemValue - numValue) < 0.01) {
-                item.classList.add('selected');
-            } else {
-                item.classList.remove('selected');
-            }
-        });
-    }
-
-    // Инициализация панели настроек параграфа
-    constrainElementsToBounds() {
-        this.objectPlacementController.constrainAll();
-    }
-
-    // Инициализация панели настроек иконок
-    updateHSBFromHex(hex) {
-        const rgb = ColorUtils.hexToRgb(hex);
-        if (rgb) {
-            const hsb = ColorUtils.rgbToHsb(rgb.r, rgb.g, rgb.b);
-            this.dom.hueSlider.value = hsb.h;
-            this.dom.saturationSlider.value = hsb.s;
-            this.dom.brightnessSlider.value = hsb.b;
-            this.dom.hueValue.value = hsb.h;
-            this.dom.saturationValue.value = hsb.s;
-            this.dom.brightnessValue.value = hsb.b;
-            this.updateSaturationGradient();
-            this.updateBrightnessGradient();
-        }
-    }
-
-    updateColorFromHSB() {
-        this.markAsChanged();
-        const h = parseInt(this.dom.hueSlider.value);
-        const s = parseInt(this.dom.saturationSlider.value);
-        const b = parseInt(this.dom.brightnessSlider.value);
-
-        const rgb = ColorUtils.hsbToRgb(h, s, b);
-        const hex = ColorUtils.rgbToHex(rgb.r, rgb.g, rgb.b);
-
-        this.settingsModule.set('boxColor', hex);
-        this.dom.hexColorInput.value = hex;
-        this.dom.colorPreview.style.backgroundColor = hex;
-        this.updateGrid();
-    }
-
-    updateSaturationGradient() {
-        const h = parseInt(this.dom.hueSlider.value);
-        const b = parseInt(this.dom.brightnessSlider.value);
-
-        const leftColor = ColorUtils.hsbToRgb(h, 0, b);
-        const rightColor = ColorUtils.hsbToRgb(h, 100, b);
-
-        const leftHex = ColorUtils.rgbToHex(leftColor.r, leftColor.g, leftColor.b);
-        const rightHex = ColorUtils.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
-
-        const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
-        // Применяем градиент к широким дорожкам через динамические стили для псевдоэлементов
-        this.updateSliderWideTrackGradient('saturationSlider', gradient);
-    }
-
-    updateBrightnessGradient() {
-        const h = parseInt(this.dom.hueSlider.value);
-        const s = parseInt(this.dom.saturationSlider.value);
-
-        const leftColor = ColorUtils.hsbToRgb(h, s, 0);
-        const rightColor = ColorUtils.hsbToRgb(h, s, 100);
-
-        const leftHex = ColorUtils.rgbToHex(leftColor.r, leftColor.g, leftColor.b);
-        const rightHex = ColorUtils.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
-
-        const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
-        // Применяем градиент к широким дорожкам через динамические стили для псевдоэлементов
-        this.updateSliderWideTrackGradient('brightnessSlider', gradient);
-    }
-
-    updateSliderWideTrackGradient(sliderId, gradient) {
-        // Remove existing style if present
-        let styleId = `${sliderId}-wide-track-style`;
-        let existingStyle = document.getElementById(styleId);
-        if (existingStyle) {
-            existingStyle.remove();
-        }
-
-        // Create new style element для широких дорожек (высота 10px вместо 1px)
-        // Центрируем ползунок: (10px - 8px) / 2 = 1px
-        // Используем конкретное значение 8px вместо CSS переменной для надежности
-        const style = document.createElement('style');
-        style.id = styleId;
-        style.textContent = `
-            #${sliderId}::-webkit-slider-runnable-track {
-                background: ${gradient} !important;
-                height: 10px !important;
-            }
-            #${sliderId}::-moz-range-track {
-                background: ${gradient} !important;
-                height: 10px !important;
-            }
-            #${sliderId}::-webkit-slider-thumb {
-                width: 8px !important;
-                height: 8px !important;
-                margin-top: 1px !important;
-            }
-            #${sliderId}::-moz-range-thumb {
-                width: 8px !important;
-                height: 8px !important;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    // ============================================
-    // Universal method to update slider value based on configuration
-    updateSliderValue(sliderId, newValue) {
-        this.sliderController.setValue(sliderId, newValue, true);
-    }
-
-    getDecimalsFromStep(step) {
-        return this.sliderController.getDecimalsFromStep(step);
     }
 
     updateCanvasSize() {
@@ -1358,75 +568,6 @@ class GridGenerator {
         return this.surfaceCoordinates.mmToColumns(widthMm, surface);
     }
 
-    // Load SVG files from graphics folder (works only over HTTP, not file://)
-    // This function MUST be called to load SVG content for icons and claim
-    async initializeBuiltInGraphics() {
-        // Load icons.svg from graphics folder
-        try {
-            const iconsData = await this.graphicsAssetController.load('graphics/icons.svg');
-            if (iconsData) {
-                const iconsBlock = this.objectDocument.getGraphicsBlock('icons');
-                if (iconsBlock) {
-                    iconsBlock.originalWidth = iconsData.width;
-                    iconsBlock.originalHeight = iconsData.height;
-                    // Always update SVG content from file
-                    if (iconsData.content) {
-                        iconsBlock.svgContent = iconsData.content;
-                        console.log(`Icons loaded from graphics/icons.svg: ${iconsData.width} × ${iconsData.height}`);
-                    } else {
-                        console.warn('Icons SVG content is empty after loading');
-                    }
-                }
-            } else {
-                console.error('Failed to load icons.svg - file not found or empty');
-            }
-        } catch (e) {
-            console.error('Error loading icons.svg:', e);
-            // Try to show error to user
-            const iconsBlock = this.objectDocument.getGraphicsBlock('icons');
-            if (iconsBlock && !iconsBlock.svgContent) {
-                console.error('Icons block has no SVG content - file graphics/icons.svg must be loaded');
-            }
-        }
-
-        // Load yf_claim.svg from graphics folder
-        try {
-            const claimData = await this.graphicsAssetController.load('graphics/yf_claim.svg');
-            if (claimData) {
-                const claimBlock = this.objectDocument.getGraphicsBlock('claim');
-                if (claimBlock) {
-                    claimBlock.originalWidth = claimData.width;
-                    claimBlock.originalHeight = claimData.height;
-                    // Always update SVG content from file
-                    if (claimData.content) {
-                        claimBlock.svgContent = claimData.content;
-                        console.log(`Claim loaded from graphics/yf_claim.svg: ${claimData.width} × ${claimData.height}`);
-                    } else {
-                        console.warn('Claim SVG content is empty after loading');
-                    }
-                }
-            } else {
-                console.error('Failed to load yf_claim.svg - file not found or empty');
-            }
-        } catch (e) {
-            console.error('Error loading yf_claim.svg:', e);
-            // Try to show error to user
-            const claimBlock = this.objectDocument.getGraphicsBlock('claim');
-            if (claimBlock && !claimBlock.svgContent) {
-                console.error('Claim block has no SVG content - file graphics/yf_claim.svg must be loaded');
-            }
-        }
-
-        // Update positions after dimensions are loaded (or use existing)
-        this.objectPlacementController.updateBuiltInPositions();
-
-        this.initGraphicsRenderer();
-
-        // Update navigator and redraw grid
-        this.objectNavigatorController.render();
-        this.updateGrid();
-    }
-
     // Update eye icon for toggle-chip and checkbox-label elements
     updateEyeIcon(checkbox) {
         const label = checkbox.closest('label');
@@ -1467,6 +608,7 @@ class GridGenerator {
      * Используйте updateGridDebounced() для слайдеров
      */
     updateGrid() {
+        if (this.isInitializing) return;
         this.canvasRenderer.render();
     }
 
@@ -1475,6 +617,7 @@ class GridGenerator {
      * Откладывает рендеринг до прекращения ввода
      */
     updateGridDebounced() {
+        if (this.isInitializing) return;
         this._debouncedUpdateGridCore();
     }
 
@@ -1483,6 +626,7 @@ class GridGenerator {
      * Ограничивает частоту обновлений до ~60fps
      */
     updateGridThrottled() {
+        if (this.isInitializing) return;
         this._throttledUpdateGridCore();
     }
 
@@ -1513,80 +657,6 @@ class GridGenerator {
         }
     }
 
-    initSliderHistoryHandlers() {
-        // Map для отслеживания активных транзакций слайдеров
-        this.activeSliderTransactions = new Map();
-        // Set для отслеживания транзакций по вводу значений с клавиатуры
-        this.activeInputTransactions = new Set();
-
-        // Добавляем обработчики для каждого слайдера
-        this.sliderController.sliders.forEach((sliderData, sliderId) => {
-            const slider = sliderData.element;
-            const valueInput = sliderData.valueInput;
-
-            // ===== Обработчики для перетаскивания слайдера мышью =====
-
-            // Начало перетаскивания - начинаем транзакцию
-            slider.addEventListener('mousedown', (e) => {
-                // Только левая кнопка мыши
-                if (e.button !== 0) return;
-
-                // Сохраняем состояние "до" изменений
-                this.historyManager.beginAction(`adjust ${sliderId}`, this.getStateSnapshot());
-                this.activeSliderTransactions.set(sliderId, true);
-            });
-
-            // Окончание перетаскивания - завершаем транзакцию
-            slider.addEventListener('mouseup', (e) => {
-                // Только левая кнопка мыши
-                if (e.button !== 0) return;
-
-                if (this.activeSliderTransactions.has(sliderId)) {
-                    // Сохраняем состояние "после" изменений
-                    this.historyManager.commitAction(this.getStateSnapshot());
-                    this.activeSliderTransactions.delete(sliderId);
-                }
-            });
-
-            // Обработка случая, когда мышь уходит за пределы слайдера во время перетаскивания
-            slider.addEventListener('mouseleave', (e) => {
-                // Если кнопка мыши все еще зажата, это означает, что перетаскивание продолжается
-                // Мы не завершаем транзакцию здесь, а ждем mouseup
-            });
-
-            // ===== Обработчики для ввода значений с клавиатуры =====
-            // Паттерн: focus → beginAction, blur → commitAction
-            // Группирует все изменения (набор текста, стрелки) в одно действие
-
-            if (valueInput) {
-                valueInput.addEventListener('focus', () => {
-                    if (!this.activeInputTransactions.has(sliderId)) {
-                        this.historyManager.beginAction(`type ${sliderId}`, this.getStateSnapshot());
-                        this.activeInputTransactions.add(sliderId);
-                    }
-                });
-
-                valueInput.addEventListener('blur', () => {
-                    if (this.activeInputTransactions.has(sliderId)) {
-                        this.historyManager.commitAction(this.getStateSnapshot());
-                        this.activeInputTransactions.delete(sliderId);
-                    }
-                });
-            }
-        });
-
-        // Глобальный обработчик mouseup на случай, если мышь отпущена вне слайдера
-        document.addEventListener('mouseup', (e) => {
-            if (this.activeSliderTransactions.size > 0) {
-                // Завершаем все активные транзакции
-                this.activeSliderTransactions.forEach((_, sliderId) => {
-                    this.historyManager.commitAction(this.getStateSnapshot());
-                });
-                this.activeSliderTransactions.clear();
-            }
-        });
-    }
-
     // ============================================
     // UI Controllers initialization (Итерация 5)
     // ============================================
@@ -1604,8 +674,12 @@ class GridGenerator {
             this.sliderController.initSlider(sliderId, config);
         });
 
-        // Добавляем обработчики mousedown/mouseup для группировки действий слайдеров
-        this.initSliderHistoryHandlers();
+        this.sliderHistoryController = new SliderHistoryController({
+            sliderController: this.sliderController,
+            beginAction: label => this.historyManager.beginAction(label, this.getStateSnapshot()),
+            commitAction: () => this.historyManager.commitAction(this.getStateSnapshot())
+        });
+        this.sliderHistoryController.bind();
 
         console.log('✅ SliderController initialized with', this.sliderController.sliders.size, 'sliders');
 
@@ -1743,10 +817,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn('Font loading warning:', e);
     }
 
-    // Небольшая дополнительная задержка для уверенности
-    setTimeout(async () => {
+    try {
         const generator = new GridGenerator();
-        // Load built-in graphics dimensions from SVG files
-        await generator.initializeBuiltInGraphics();
-    }, 50);
+        await generator.startupController.initialize();
+    } catch (error) {
+        document.documentElement.dataset.appReady = 'error';
+        console.error('Application initialization failed:', error);
+    }
 });

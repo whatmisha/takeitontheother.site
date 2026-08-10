@@ -45,6 +45,12 @@ test('New and Custom filenames omit the synthetic preset name', () => {
         extension: 'json',
         date
     }), expected);
+    assert.equal(ExportController.buildFilename({
+        settings: withoutSides,
+        presetName: 'Custom — E-ink, 148.5×203×43.5mm — 26.08.10, 11:07',
+        extension: 'json',
+        date
+    }), expected);
 });
 
 test('SVG export forwards outline mode and generated document once', async () => {
@@ -82,8 +88,7 @@ test('JSON export reads object data from the document source of truth', () => {
         currentPresetName: 'Front Retail',
         objectDocument: {
             textBlocks,
-            graphicsBlocks,
-            getGraphicsBlock: id => graphicsBlocks.find(block => block.id === id) || null
+            graphicsBlocks
         },
         svgExporter: {
             exportSettings: (data, filename) => { exported = { data, filename }; }
@@ -94,8 +99,10 @@ test('JSON export reads object data from the document source of truth', () => {
     const data = controller.exportSettings();
 
     assert.equal(data, exported.data);
+    assert.equal(data.version, '1.2');
     assert.equal(data.textBlocks, textBlocks);
     assert.equal(data.graphicsBlocks, graphicsBlocks);
-    assert.equal(data.iconsBlock.id, 'icons');
+    assert.equal('iconsBlock' in data, false);
+    assert.equal('claimBlock' in data, false);
     assert.match(exported.filename, /\.json$/);
 });

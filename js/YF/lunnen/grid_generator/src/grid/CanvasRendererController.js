@@ -31,7 +31,7 @@ export class CanvasRendererController {
 
     render() {
         const host = this.host;
-        host.constrainElementsToBounds();
+        host.objectPlacementController.constrainAll();
 
         const zoomState = host.zoomPanManager ? {
             zoom: host.zoomPanManager.zoom,

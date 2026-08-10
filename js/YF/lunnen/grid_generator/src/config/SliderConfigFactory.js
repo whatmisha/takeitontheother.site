@@ -124,19 +124,13 @@ export function createSliderConfig(host) {
         };
     });
 
-    config.hueSlider.onUpdate = () => {
-        host.updateColorFromHSB();
-        host.updateSaturationGradient();
-        host.updateBrightnessGradient();
-    };
-    config.saturationSlider.onUpdate = () => {
-        host.updateColorFromHSB();
-        host.updateBrightnessGradient();
-    };
-    config.brightnessSlider.onUpdate = () => {
-        host.updateColorFromHSB();
-        host.updateSaturationGradient();
-    };
+    config.hueSlider.onUpdate = () => host.colorPanelController?.handleHsbSlider('hue');
+    config.saturationSlider.onUpdate = () => (
+        host.colorPanelController?.handleHsbSlider('saturation')
+    );
+    config.brightnessSlider.onUpdate = () => (
+        host.colorPanelController?.handleHsbSlider('brightness')
+    );
 
     Object.entries(SIZE_SLIDERS).forEach(([sliderId, [setting, style]]) => {
         config[sliderId].onUpdate = value => (

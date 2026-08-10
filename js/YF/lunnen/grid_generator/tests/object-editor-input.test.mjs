@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { ObjectEditorInputController } from '../src/elements/ObjectEditorInputController.js';
+import { GraphicsEditorInputController } from '../src/elements/GraphicsEditorInputController.js';
 
 function createHost() {
     const context = {
@@ -23,9 +24,11 @@ function createHost() {
             graphicsBaselineInput: { value: '' }
         },
         getSurfaceGridContext: () => context,
-        getDecimalsFromStep: step => {
-            const text = String(step);
-            return text.includes('.') ? text.length - text.indexOf('.') - 1 : 0;
+        sliderController: {
+            getDecimalsFromStep: step => {
+                const text = String(step);
+                return text.includes('.') ? text.length - text.indexOf('.') - 1 : 0;
+            }
         },
         rowBaselineToY: (row, baselineOffset) => row * (context.rowHeight + 1) + baselineOffset,
         yToRowBaseline: y => ({
@@ -84,14 +87,14 @@ test('graphics width and height controls preserve aspect ratio', () => {
         row: 1,
         baselineOffset: 0
     };
-    const controller = new ObjectEditorInputController(host);
+    const controller = new GraphicsEditorInputController(host);
 
-    const width = controller.constrainGraphicsWidth(block, 3);
+    const width = controller.constrainWidth(block, 3);
     assert.equal(width, 3);
     assert.equal(block.heightInModules, 3);
     assert.equal(host.dom.graphicsHeightInput.value, '3.00');
 
-    const height = controller.constrainGraphicsHeight(block, 4);
+    const height = controller.constrainHeight(block, 4);
     assert.equal(height, 4);
     assert.equal(block.widthInColumns, 4);
     assert.equal(host.dom.graphicsWidthInput.value, '4.00');
@@ -105,9 +108,9 @@ test('graphics baseline input updates row-local coordinates', () => {
         row: 0,
         baselineOffset: 0
     };
-    const controller = new ObjectEditorInputController(host);
+    const controller = new GraphicsEditorInputController(host);
 
-    const displayValue = controller.constrainGraphicsBaseline(block, 11);
+    const displayValue = controller.constrainBaseline(block, 11);
     assert.equal(displayValue, 11);
     assert.equal(block.row, 1);
     assert.equal(block.baselineOffset, 2);
@@ -122,9 +125,9 @@ test('graphics row keeps one-based display separate from zero-based model data',
         row: 0,
         baselineOffset: 4
     };
-    const controller = new ObjectEditorInputController(host);
+    const controller = new GraphicsEditorInputController(host);
 
-    const displayValue = controller.constrainGraphicsRow(block, 2);
+    const displayValue = controller.constrainRow(block, 2);
     assert.equal(displayValue, 2);
     assert.equal(block.row, 1);
     assert.equal(block.baselineOffset, 0);

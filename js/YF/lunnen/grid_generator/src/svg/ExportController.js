@@ -16,7 +16,11 @@ export class ExportController {
 
     static buildFilename({ settings, presetName = 'Custom', extension, date }) {
         const parts = [];
-        if (!/^\+\s*New/i.test(presetName) && presetName !== 'Custom') {
+        if (
+            !/^\+\s*New/i.test(presetName) &&
+            presetName !== 'Custom' &&
+            !/^Custom\s+—\s*/i.test(presetName)
+        ) {
             parts.push(presetName.replace(/\s+/g, '_'));
         }
 
@@ -72,13 +76,11 @@ export class ExportController {
     exportSettings() {
         const host = this.host;
         const data = {
-            version: '1.1',
+            version: '1.2',
             timestamp: this.now().toISOString(),
             settings: host.settingsModule.getAll(),
             textBlocks: host.objectDocument.textBlocks,
             graphicsBlocks: host.objectDocument.graphicsBlocks,
-            iconsBlock: host.objectDocument.getGraphicsBlock('icons'),
-            claimBlock: host.objectDocument.getGraphicsBlock('claim'),
             currentPresetName: host.currentPresetName || 'Custom'
         };
         host.svgExporter.exportSettings(data, this.filename('json'));

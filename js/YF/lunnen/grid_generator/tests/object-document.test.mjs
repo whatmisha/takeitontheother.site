@@ -21,6 +21,24 @@ test('replacing document collections clones source-of-truth data', () => {
     assert.equal(source[0].content, 'Original');
 });
 
+test('document snapshot round-trip keeps both collections independent', () => {
+    const document = new ObjectDocumentController({ includeBuiltIns: false });
+    document.replaceDocument({
+        textBlocks: [{ id: 'text-1', content: 'Original' }],
+        graphicsBlocks: [{ id: 'graphic-1', name: 'Original' }]
+    });
+    const snapshot = document.createSnapshot();
+
+    document.textBlocks[0].content = 'Changed';
+    document.graphicsBlocks[0].name = 'Changed';
+    document.restoreSnapshot(snapshot);
+
+    assert.equal(document.textBlocks[0].content, 'Original');
+    assert.equal(document.graphicsBlocks[0].name, 'Original');
+    assert.notEqual(document.textBlocks, snapshot.textBlocks);
+    assert.notEqual(document.graphicsBlocks, snapshot.graphicsBlocks);
+});
+
 test('new text blocks are constrained by default', () => {
     const document = new ObjectDocumentController({ includeBuiltIns: false, now: () => 10 });
     const block = document.addTextBlock();
@@ -47,17 +65,4 @@ test('duplicate deep-clones data, declassifies built-ins and avoids id collision
     assert.equal(second.id, 'graphics-10-1');
     assert.equal(first.isBuiltIn, false);
     assert.equal(document.getGraphicsBlock('icons').metadata.source, 'built-in');
-});
-
-test('legacy built-in setter can insert, replace and remove a block', () => {
-    const document = new ObjectDocumentController({ includeBuiltIns: false });
-
-    document.setBuiltInBlock('claim', { name: 'Old claim', visible: true });
-    document.setBuiltInBlock('claim', { name: 'New claim', visible: false });
-    assert.equal(document.graphicsBlocks.length, 1);
-    assert.equal(document.getGraphicsBlock('claim').name, 'New claim');
-    assert.equal(document.getGraphicsBlock('claim').isBuiltIn, true);
-
-    document.setBuiltInBlock('claim', null);
-    assert.equal(document.getGraphicsBlock('claim'), null);
 });

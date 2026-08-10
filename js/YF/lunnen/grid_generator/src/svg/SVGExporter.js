@@ -1,3 +1,5 @@
+import { PresetFormatAdapter } from '../preset/PresetFormatAdapter.js';
+
 /**
  * Экспорт SVG в файл
  */
@@ -5,6 +7,7 @@ export class SVGExporter {
     constructor(settings, textToPath = null) {
         this.settings = settings;
         this.textToPath = textToPath;
+        this.presetFormat = new PresetFormatAdapter();
         // Загружаем библиотеки для PDF экспорта динамически
         this.pdfLibsLoaded = false;
     }
@@ -288,147 +291,11 @@ export class SVGExporter {
      */
     organizeSettingsForExport(data) {
         const settings = data.settings || {};
-        const textBlocks = data.textBlocks || [];
-        const graphicsBlocks = data.graphicsBlocks || [];
-        
-        // Извлекаем iconsBlock и claimBlock из graphicsBlocks (они там встроенные)
-        const iconsBlock = graphicsBlocks.find(b => b.id === 'icons');
-        const claimBlock = graphicsBlocks.find(b => b.id === 'claim');
-
-        // Генерируем название пресета на основе параметров
-        const currentPresetName = data.currentPresetName || 'Custom';
-        const presetName = this.generatePresetName(settings, currentPresetName);
-
-        return {
-            // 1. Мета-информация и название пресета
-            presetName: presetName,
-            version: data.version || '1.0',
-            timestamp: data.timestamp,
-            
-            // 2. Размеры макета
-            dimensions: {
-                width: settings.frontWidth,
-                height: settings.frontHeight,
-                thickness: settings.thickness,
-                unit: 'mm'
-            },
-
-            // Ориентация, видимость и независимые сетки поверхностей
-            surfaces: settings.surfaceSettings || null,
-            
-            // 3. Все текстовые блоки (удобно для копирайтера)
-            texts: textBlocks.map((block, index) => ({
-                id: block.id || `text_${index + 1}`,
-                content: block.content || '',
-                style: block.styleRef || 'headline',
-                position: {
-                    column: block.x || 1,
-                    row: block.row || 0,
-                    baseline: block.baselineOffset || 0
-                },
-                width: block.width || 3,
-                alignment: block.alignment || 'left',
-                textAlign: block.textAlign || 'left', // Выравнивание текста внутри абзаца: 'left', 'center', 'right'
-                alignmentMode: block.alignmentMode || 'baseline',
-                surface: block.surface || 'front',
-                showBounds: block.showBounds || false,
-                visible: block.visible !== undefined ? block.visible : true
-            })),
-            
-            // 4. Настройки сетки
-            grid: {
-                module: settings.gridModule,
-                margins: settings.margins,
-                marginsUnit: settings.marginsUnit || 'mod',
-                columns: settings.columnCount,
-                rows: settings.rowCount,
-                rowHeight: settings.rowHeight,
-                linkMode: settings.linkMode,
-                visibility: {
-                    columns: settings.showColumns,
-                    rows: settings.showRows,
-                    baseline: settings.showBaseline
-                }
-            },
-            
-            // 5. Настройки цвета
-            colors: {
-                background: settings.boxColor
-            },
-            
-            // 6. Настройки типографики
-            typography: {
-                headline: {
-                    size: settings.headlineSize,
-                    lineHeight: settings.lineHeight,
-                    tracking: settings.tracking,
-                    useXHeight: settings.useXHeight,
-                    fontWeight: settings.headlineFontWeight
-                },
-                text: {
-                    size: settings.textSize,
-                    lineHeight: settings.textLineHeight,
-                    tracking: settings.textTracking,
-                    useXHeight: settings.useXHeight2,
-                    fontWeight: settings.textFontWeight
-                }
-            },
-            
-            // 7. Настройки отображения
-            display: {
-                dimensions: settings.showDimensions,
-                labels: settings.showLabels,
-                sidePanels: settings.showSidePanels,
-                objects: settings.showObjects
-            },
-            
-            // 8. Графика (в конце, чтобы не мешать редактированию)
-            graphics: {
-                blocks: graphicsBlocks
-                    .filter(block => !block.isBuiltIn) // Исключаем встроенные (icons, claim)
-                    .map((block, index) => ({
-                        id: block.id || `graphic_${index + 1}`,
-                        name: block.name || `Graphic ${index + 1}`,
-                        position: {
-                            column: block.x || 1,
-                            row: block.row || 0,
-                            baseline: block.baselineOffset || 0
-                        },
-                        height: block.heightInModules || 3,
-                        widthInColumns: block.widthInColumns !== undefined ? block.widthInColumns : undefined,
-                        sizeMode: block.sizeMode || 'height',
-                        originalWidth: block.originalWidth,
-                        originalHeight: block.originalHeight,
-                        alignment: block.alignment || 'left',
-                        surface: block.surface || 'front',
-                        visible: block.visible !== undefined ? block.visible : true,
-                        // SVG код в самом конце
-                        svg: block.svgContent || ''
-                    })),
-                icons: iconsBlock ? {
-                    position: {
-                        column: iconsBlock.x || 1,
-                        row: iconsBlock.row || 0,
-                        baseline: iconsBlock.baselineOffset || 0
-                    },
-                    height: iconsBlock.heightInModules || 3,
-                    surface: iconsBlock.surface || 'front',
-                    visible: iconsBlock.visible !== undefined ? iconsBlock.visible : true,
-                    svg: iconsBlock.svgContent || ''
-                } : null,
-                claim: claimBlock ? {
-                    position: {
-                        column: claimBlock.x || 7,
-                        row: claimBlock.row || 0,
-                        baseline: claimBlock.baselineOffset || 0
-                    },
-                    height: claimBlock.heightInModules || 3,
-                    surface: claimBlock.surface || 'front',
-                    visible: claimBlock.visible !== undefined ? claimBlock.visible : true,
-                    svg: claimBlock.svgContent || ''
-                } : null
-            }
-        };
+        const presetName = this.generatePresetName(
+            settings,
+            data.currentPresetName || 'Custom'
+        );
+        return this.presetFormat.organize(data, { presetName });
     }
 
     /**
@@ -438,10 +305,10 @@ export class SVGExporter {
      * @returns {string}
      */
     generatePresetName(settings, currentPresetName = 'Custom') {
-        const width = settings.frontWidth || 0;
-        const height = settings.frontHeight || 0;
-        const thickness = settings.thickness || 0;
-        const showSidePanels = settings.showSidePanels || false;
+        const width = settings.frontWidth ?? 0;
+        const height = settings.frontHeight ?? 0;
+        const thickness = settings.thickness ?? 0;
+        const showSidePanels = settings.showSidePanels ?? false;
         
         // Формируем строку размеров
         let dimensionsStr;
@@ -460,8 +327,15 @@ export class SVGExporter {
         const minutes = String(now.getMinutes()).padStart(2, '0');
         const dateTimeStr = `${year}.${month}.${day}, ${hours}:${minutes}`;
         
-        // Если пресет не Custom и не начинается с "+New", используем его название
-        if (currentPresetName !== 'Custom' && !currentPresetName.startsWith('+New')) {
+        // Imported presets have a synthetic UI prefix. Their embedded name is
+        // already descriptive, so appending dimensions and a date again would
+        // make the name grow after every import/export cycle.
+        if (/^Custom\s+—\s*/i.test(currentPresetName)) {
+            return currentPresetName.replace(/^(?:Custom\s+—\s*)+/i, '');
+        }
+
+        // Если пресет не Custom и не начинается с "+ New", используем его название
+        if (currentPresetName !== 'Custom' && !/^\+\s*New/i.test(currentPresetName)) {
             return `${currentPresetName}, ${dimensionsStr} — ${dateTimeStr}`;
         }
         
@@ -511,13 +385,7 @@ export class SVGExporter {
      * @returns {Object} - Данные в старом формате для совместимости
      */
     normalizeImportedData(data) {
-        // Если это новый формат (с организованной структурой)
-        if (data.dimensions && data.grid && data.typography) {
-            return this.convertNewFormatToOld(data);
-        }
-        
-        // Если это старый формат - возвращаем как есть
-        return data;
+        return this.presetFormat.normalize(data);
     }
 
     /**
@@ -526,139 +394,6 @@ export class SVGExporter {
      * @returns {Object} - Данные в старом формате
      */
     convertNewFormatToOld(newData) {
-        // ВАЖНО: margins в JSON всегда сохраняется в модулях (как во внутренней системе),
-        // независимо от marginsUnit. marginsUnit - это только единица отображения в интерфейсе.
-        const settings = {
-            // Размеры
-            frontWidth: newData.dimensions?.width,
-            frontHeight: newData.dimensions?.height,
-            thickness: newData.dimensions?.thickness,
-            
-            // Сетка
-            gridModule: newData.grid?.module,
-            margins: newData.grid?.margins, // Всегда в модулях в JSON
-            marginsUnit: newData.grid?.marginsUnit || 'mod',
-            columnCount: newData.grid?.columns,
-            rowCount: newData.grid?.rows,
-            rowHeight: newData.grid?.rowHeight,
-            linkMode: newData.grid?.linkMode,
-            showColumns: newData.grid?.visibility?.columns,
-            showRows: newData.grid?.visibility?.rows,
-            showBaseline: newData.grid?.visibility?.baseline,
-            
-            // Цвета
-            boxColor: newData.colors?.background,
-            
-            // Типографика - Headline
-            headlineSize: newData.typography?.headline?.size,
-            lineHeight: newData.typography?.headline?.lineHeight,
-            tracking: newData.typography?.headline?.tracking,
-            useXHeight: newData.typography?.headline?.useXHeight,
-            headlineFontWeight: newData.typography?.headline?.fontWeight,
-            
-            // Типографика - Text
-            textSize: newData.typography?.text?.size,
-            textLineHeight: newData.typography?.text?.lineHeight,
-            textTracking: newData.typography?.text?.tracking,
-            useXHeight2: newData.typography?.text?.useXHeight,
-            textFontWeight: newData.typography?.text?.fontWeight,
-            
-            // Отображение
-            showDimensions: newData.display?.dimensions,
-            showLabels: newData.display?.labels,
-            showSidePanels: newData.display?.sidePanels,
-            showObjects: newData.display?.objects,
-            surfaceSettings: newData.surfaces || undefined
-        };
-
-        // Текстовые блоки (маппинг полей для внутренней структуры приложения)
-        const textBlocks = (newData.texts || []).map(text => ({
-            id: text.id || 'text_' + Date.now(),
-            content: text.content,
-            styleRef: text.style,
-            x: text.position?.column || 1,
-            row: text.position?.row || 0,
-            baselineOffset: text.position?.baseline || 0,
-            width: text.width || 3,
-            alignment: text.alignment || 'left',
-            textAlign: text.textAlign || text.alignment || 'left', // Выравнивание текста внутри абзаца
-            alignmentMode: text.alignmentMode || 'baseline',
-            surface: text.surface || 'front',
-            showBounds: text.showBounds || false,
-            visible: text.visible !== undefined ? text.visible : true
-        }));
-
-        // Графические блоки (маппинг полей для внутренней структуры приложения)
-        const graphicsBlocks = [];
-        
-        // Добавляем пользовательские графические блоки
-        (newData.graphics?.blocks || []).forEach(graphic => {
-            graphicsBlocks.push({
-                id: graphic.id || 'graphic_' + Date.now(),
-                name: graphic.name || 'Graphic',
-                isBuiltIn: false,
-                svgContent: graphic.svg || '',
-                heightInModules: graphic.height || 3,
-                widthInColumns: graphic.widthInColumns !== undefined ? graphic.widthInColumns : null,
-                widthInModules: graphic.widthInModules !== undefined ? graphic.widthInModules : null, // Для обратной совместимости
-                sizeMode: graphic.sizeMode || 'height',
-                x: graphic.position?.column || 1,
-                row: graphic.position?.row || 0,
-                baselineOffset: graphic.position?.baseline || 0,
-                alignment: graphic.alignment || 'left',
-                surface: graphic.surface || 'front',
-                showBounds: false,
-                visible: graphic.visible !== undefined ? graphic.visible : true,
-                originalWidth: graphic.originalWidth || 100,
-                originalHeight: graphic.originalHeight || 100
-            });
-        });
-
-        // Добавляем Icons (встроенный блок)
-        if (newData.graphics?.icons) {
-            graphicsBlocks.push({
-                id: 'icons',
-                name: 'Icons',
-                isBuiltIn: true,
-                svgContent: newData.graphics.icons.svg || '',
-                heightInModules: newData.graphics.icons.height || 3,
-                x: newData.graphics.icons.position?.column || 1,
-                row: newData.graphics.icons.position?.row || 0,
-                baselineOffset: newData.graphics.icons.position?.baseline || 0,
-                surface: newData.graphics.icons.surface || 'front',
-                showBounds: false,
-                visible: newData.graphics.icons.visible !== undefined ? newData.graphics.icons.visible : true,
-                originalWidth: 204.0944882,
-                originalHeight: 28.3464567
-            });
-        }
-
-        // Добавляем Claim (встроенный блок)
-        if (newData.graphics?.claim) {
-            graphicsBlocks.push({
-                id: 'claim',
-                name: 'Claim',
-                isBuiltIn: true,
-                svgContent: newData.graphics.claim.svg || '',
-                heightInModules: newData.graphics.claim.height || 3,
-                x: newData.graphics.claim.position?.column || 7,
-                row: newData.graphics.claim.position?.row || 0,
-                baselineOffset: newData.graphics.claim.position?.baseline || 0,
-                surface: newData.graphics.claim.surface || 'front',
-                showBounds: false,
-                visible: newData.graphics.claim.visible !== undefined ? newData.graphics.claim.visible : true,
-                originalWidth: 186.2242584,
-                originalHeight: 28.3464565
-            });
-        }
-
-        return {
-            version: newData.version,
-            timestamp: newData.timestamp,
-            presetName: newData.presetName,
-            settings: settings,
-            textBlocks: textBlocks,
-            graphicsBlocks: graphicsBlocks
-        };
+        return this.presetFormat.fromOrganized(newData);
     }
 }

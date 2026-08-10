@@ -65,6 +65,23 @@ export class ObjectDocumentController {
         return this.graphicsBlocks;
     }
 
+    replaceDocument({ textBlocks = [], graphicsBlocks = [] } = {}) {
+        this.replaceTextBlocks(textBlocks);
+        this.replaceGraphicsBlocks(graphicsBlocks);
+        return this.createSnapshot();
+    }
+
+    createSnapshot() {
+        return clone({
+            textBlocks: this.textBlocks,
+            graphicsBlocks: this.graphicsBlocks
+        });
+    }
+
+    restoreSnapshot(snapshot = {}) {
+        return this.replaceDocument(snapshot);
+    }
+
     getTextBlock(id) {
         return this.textBlocks.find(block => block.id === id) || null;
     }
@@ -104,19 +121,6 @@ export class ObjectDocumentController {
             ? this.getGraphicsBlock(blockOrId)
             : blockOrId;
         return block?.isBuiltIn === true;
-    }
-
-    setBuiltInBlock(id, value) {
-        const index = this.graphicsBlocks.findIndex(block => block.id === id);
-        if (value == null) {
-            if (index >= 0) this.graphicsBlocks.splice(index, 1);
-            return null;
-        }
-
-        const next = { ...clone(value), id, isBuiltIn: true };
-        if (index >= 0) this.graphicsBlocks.splice(index, 1, next);
-        else this.graphicsBlocks.push(next);
-        return next;
     }
 
     addTextBlock(overrides = {}) {

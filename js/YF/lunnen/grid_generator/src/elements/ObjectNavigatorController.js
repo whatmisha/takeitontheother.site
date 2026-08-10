@@ -67,7 +67,7 @@ export class ObjectNavigatorController {
             });
         });
 
-        this.host.updatePanelParams();
+        this.host.panelUiController.updatePanelParams();
     }
 
     getTextName(block) {

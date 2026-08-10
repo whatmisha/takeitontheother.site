@@ -50,6 +50,40 @@ test('checked-in presets follow the orientation naming contract', async () => {
     }
 });
 
+test('E-ink preset keeps the approved 2026-08-10 parameters', async () => {
+    const data = JSON.parse(
+        await readFile(new URL('../presets/E-ink.json', import.meta.url), 'utf8')
+    );
+
+    assert.equal(data.presetName, 'E-ink');
+    assert.equal(data.version, '1.2');
+    assert.equal(data.timestamp, '2026-08-10T09:07:58.010Z');
+    assert.deepEqual(data.typography.caption, {
+        size: 0.7,
+        lineHeight: 1.25,
+        tracking: 0,
+        useXHeight: false,
+        fontWeight: 500
+    });
+    for (const surface of ['front', 'left', 'right', 'top', 'bottom']) {
+        assert.deepEqual(data.surfaces[surface].grid, {
+            module: 2.6743,
+            margins: 2.4521,
+            columns: 12,
+            rows: 12,
+            rowHeight: 5,
+            marginsUnit: 'mod',
+            lockedModule: false,
+            lockedMargins: false
+        });
+    }
+    assert.equal(
+        data.texts.find(block => block.id === 'text-1786014872486').width,
+        4.75
+    );
+    assert.equal(data.graphics.claim.surface, 'front');
+});
+
 test('surface coordinate mapper keeps grid and pointer math surface-local', () => {
     const settings = new Settings({
         frontWidth: 500,
@@ -144,6 +178,14 @@ test('surface settings and object surfaces survive JSON export/import', () => {
     assert.equal(normalized.graphicsBlocks.find(block => block.id === 'graphic').surface, 'bottom');
     assert.equal(normalized.graphicsBlocks.find(block => block.id === 'icons').surface, 'right');
     assert.equal(normalized.graphicsBlocks.find(block => block.id === 'claim').surface, 'left');
+});
+
+test('re-exporting an imported preset keeps its descriptive name stable', () => {
+    const exporter = new SVGExporter({});
+    const importedName = 'Custom — E-ink, 148.5×203×43.5mm — 26.08.10, 11:07';
+
+    assert.equal(exporter.generatePresetName({}, importedName), importedName.replace('Custom — ', ''));
+    assert.doesNotMatch(exporter.generatePresetName({}, '+ New'), /^\+\s*New/);
 });
 
 test('imported presets are cloned and selected through PresetManager', async () => {

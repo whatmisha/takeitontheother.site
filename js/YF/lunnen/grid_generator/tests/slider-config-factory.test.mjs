@@ -24,9 +24,9 @@ function createHost(overrides = {}) {
         },
         updateGridDebounced: () => calls.push(['render']),
         markAsChanged: () => calls.push(['changed']),
-        updateColorFromHSB: () => calls.push(['color']),
-        updateSaturationGradient: () => calls.push(['saturation']),
-        updateBrightnessGradient: () => calls.push(['brightness']),
+        colorPanelController: {
+            handleHsbSlider: channel => calls.push(['color', channel])
+        },
         surfacePanelController: {
             applyGridValue: (field, value) => calls.push(['surface', field, value])
         },
@@ -75,8 +75,7 @@ test('color and side-grid callbacks preserve their specific update fan-out', () 
     config.surfaceGridRowsSlider.onUpdate(18);
 
     assert.deepEqual(host.calls, [
-        ['color'],
-        ['brightness'],
+        ['color', 'saturation'],
         ['surface', 'rows', 18]
     ]);
 });

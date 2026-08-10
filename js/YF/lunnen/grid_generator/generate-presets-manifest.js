@@ -7,11 +7,14 @@
  * Usage: node generate-presets-manifest.js
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const PRESETS_DIR = path.join(__dirname, 'presets');
+const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
+const PRESETS_DIR = path.join(SCRIPT_DIR, 'presets');
 const MANIFEST_PATH = path.join(PRESETS_DIR, 'manifest.json');
+const CHECK_ONLY = process.argv.includes('--check');
 
 function generateManifest() {
     console.log('🔍 Scanning presets folder...');
@@ -44,6 +47,7 @@ function generateManifest() {
     
     // Read each preset file and extract name
     const presets = [];
+    let hasReadErrors = false;
     
     for (const file of presetFiles) {
         const filePath = path.join(PRESETS_DIR, file);
@@ -63,13 +67,60 @@ function generateManifest() {
             console.log(`  ✓ ${file} → "${name}"`);
             
         } catch (error) {
+            hasReadErrors = true;
             console.error(`  ✗ Error reading ${file}:`, error.message);
         }
     }
-    
+
+    if (hasReadErrors) {
+        console.error('❌ Manifest was not changed because one or more presets are invalid');
+        process.exitCode = 1;
+        return;
+    }
+
+    let currentManifest = null;
+    if (fs.existsSync(MANIFEST_PATH)) {
+        try {
+            currentManifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
+        } catch (error) {
+            console.warn(`⚠️  Existing manifest could not be read: ${error.message}`);
+        }
+    }
+    const remainingPresets = new Map(presets.map(preset => [preset.file, preset]));
+    const manifestPresets = [];
+    (currentManifest?.presets || []).forEach(currentPreset => {
+        if (!currentPreset.file) {
+            manifestPresets.push(currentPreset);
+            return;
+        }
+        const updatedPreset = remainingPresets.get(currentPreset.file);
+        if (!updatedPreset) return;
+        manifestPresets.push(updatedPreset);
+        remainingPresets.delete(currentPreset.file);
+    });
+    const newPresets = Array.from(remainingPresets.values()).sort((first, second) => {
+        if (first.file === 'New.json') return -1;
+        if (second.file === 'New.json') return 1;
+        return first.name.localeCompare(second.name, 'en');
+    });
+    manifestPresets.push(...newPresets);
+
+    if (CHECK_ONLY) {
+        const matches = currentManifest &&
+            JSON.stringify(currentManifest.presets) === JSON.stringify(manifestPresets) &&
+            currentManifest.count === presets.length;
+        if (!matches) {
+            console.error('❌ manifest.json is out of date. Run npm run presets');
+            process.exitCode = 1;
+            return;
+        }
+        console.log(`✅ manifest.json matches ${presets.length} preset file(s)`);
+        return;
+    }
+
     // Create manifest object
     const manifest = {
-        presets: presets,
+        presets: manifestPresets,
         generated: new Date().toISOString(),
         count: presets.length
     };
@@ -88,29 +139,3 @@ try {
     console.error('❌ Fatal error:', error.message);
     process.exit(1);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

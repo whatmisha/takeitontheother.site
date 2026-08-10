@@ -40,7 +40,7 @@ function createHost() {
         },
         getStateSnapshot: () => ({}),
         updateGrid() {},
-        updatePanelParams() {},
+        panelUiController: { updatePanelParams() {} },
         getStyleFontWeight: () => 500,
         getBlockNumber: () => 1,
         history

@@ -69,7 +69,7 @@ test('canvas renderer composes grid, side layers, objects and restores zoom', ()
             render: () => calls.push('navigator')
         },
         typographyUnitController: { updateDisplays: () => calls.push('typography') },
-        constrainElementsToBounds: () => calls.push('constrain')
+        objectPlacementController: { constrainAll: () => calls.push('constrain') }
     };
     const controller = new CanvasRendererController(host);
     controller.drawBoxSurfaces = () => calls.push('box');

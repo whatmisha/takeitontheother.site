@@ -2,10 +2,12 @@
   "name": "pizza-boxer",
   "version": "1.10.0",
   "description": "Packaging Layout Tool based on Lunnen system",
+  "type": "module",
   "main": "script.js",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
     "presets": "node generate-presets-manifest.js",
+    "presets:check": "node generate-presets-manifest.js --check",
     "update-presets": "node generate-presets-manifest.js"
   },
   "keywords": [
@@ -17,28 +19,3 @@
   "author": "Pizza Boxer Team",
   "license": "ISC"
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
