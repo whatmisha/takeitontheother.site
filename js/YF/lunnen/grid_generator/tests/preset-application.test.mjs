@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { HistoryManager } from '../src/history/HistoryManager.js';
+import { ObjectDocumentController } from '../src/elements/ObjectDocumentController.js';
 import { PresetApplicationController } from '../src/preset/PresetApplicationController.js';
 import { PresetManager } from '../src/preset/PresetManager.js';
 
@@ -14,6 +15,7 @@ class TestSettings {
 }
 
 const createHost = () => {
+    const objectDocument = new ObjectDocumentController({ includeBuiltIns: false });
     const host = {
         settingsModule: new TestSettings({
             gridModule: 5,
@@ -22,10 +24,7 @@ const createHost = () => {
             lockedModule: false,
             lockedMargins: false
         }),
-        textBlocks: [],
-        graphicsBlocks: [],
-        iconsBlock: null,
-        claimBlock: null,
+        objectDocument,
         presetHistories: new Map(),
         historyManager: new HistoryManager({ maxSize: 50 }),
         currentPresetName: null,
@@ -39,9 +38,13 @@ const createHost = () => {
         closeCount: 0,
         syncApplicationUI: () => { host.syncCount += 1; },
         updateGrid: () => { host.gridCount += 1; },
-        updateElementsNavigator: () => { host.navigatorCount += 1; },
-        closeParagraphPanel: () => { host.closeCount += 1; },
-        closeGraphicsPanel: () => { host.closeCount += 1; },
+        objectNavigatorController: {
+            render: () => { host.navigatorCount += 1; }
+        },
+        objectEditorPanelController: {
+            closeTextPanel: () => { host.closeCount += 1; },
+            closeGraphicsPanel: () => { host.closeCount += 1; }
+        },
         resetChangesFlag: () => { host.resetCount = (host.resetCount || 0) + 1; },
         mmToColumns: millimeters => millimeters / 2,
         recalculateGraphicsWidthFromHeight: block => { block.widthInColumns = 3; },
@@ -53,6 +56,27 @@ const createHost = () => {
         recalculateWithLockedMargins: () => {},
         generateRowPresets: () => {}
     };
+    host.objectPlacementController = {
+        recalculateGraphicsWidthFromHeight: block => host.recalculateGraphicsWidthFromHeight(block)
+    };
+    Object.defineProperties(host, {
+        textBlocks: {
+            get: () => objectDocument.textBlocks,
+            set: value => objectDocument.replaceTextBlocks(value)
+        },
+        graphicsBlocks: {
+            get: () => objectDocument.graphicsBlocks,
+            set: value => objectDocument.replaceGraphicsBlocks(value)
+        },
+        iconsBlock: {
+            get: () => objectDocument.getGraphicsBlock('icons'),
+            set: value => objectDocument.setBuiltInBlock('icons', value)
+        },
+        claimBlock: {
+            get: () => objectDocument.getGraphicsBlock('claim'),
+            set: value => objectDocument.setBuiltInBlock('claim', value)
+        }
+    });
     return host;
 };
 

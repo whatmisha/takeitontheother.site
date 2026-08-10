@@ -51,7 +51,7 @@ export class ObjectDragController {
                 document.removeEventListener('mousemove', onMove);
                 document.removeEventListener('mouseup', onUp);
                 if (!moved && Date.now() - startedAt < 300) {
-                    this.host.showParagraphPanel(block.id);
+                    this.host.objectEditorPanelController.openTextPanel(block.id);
                 }
             };
 
@@ -61,7 +61,7 @@ export class ObjectDragController {
     }
 
     startText(blockId, clientX, clientY) {
-        const block = this.host.getTextBlock(blockId);
+        const block = this.host.objectDocument.getTextBlock(blockId);
         if (!block) return false;
 
         this.host.historyManager.beginAction('drag text block', this.host.getStateSnapshot());
@@ -72,7 +72,7 @@ export class ObjectDragController {
             startBlockX: block.x,
             startBlockRow: block.row,
             startBlockBaselineOffset: block.baselineOffset,
-            pointerOffset: this.host.getBlockPointerOffset(block, clientX, clientY),
+            pointerOffset: this.host.objectPlacementController.getPointerOffset(block, clientX, clientY),
             duplicated: false,
             moved: false
         };
@@ -85,9 +85,13 @@ export class ObjectDragController {
         const state = this.host.textDragState;
 
         if ((event.altKey || event.metaKey) && !state.duplicated) {
-            const original = this.host.getTextBlock(state.blockId);
+            const original = this.host.objectDocument.getTextBlock(state.blockId);
             if (original) {
-                const duplicate = this.host.duplicateElement('text', original.id, true);
+                const duplicate = this.host.objectNavigatorController.duplicate(
+                    'text',
+                    original.id,
+                    true
+                );
                 if (duplicate) {
                     state.blockId = duplicate.id;
                     state.duplicated = true;
@@ -95,9 +99,9 @@ export class ObjectDragController {
             }
         }
 
-        const block = this.host.getTextBlock(state.blockId);
+        const block = this.host.objectDocument.getTextBlock(state.blockId);
         if (!block) return false;
-        const positioned = this.host.positionBlockAtPointer(
+        const positioned = this.host.objectPlacementController.positionAtPointer(
             block,
             event.clientX,
             event.clientY,
@@ -216,7 +220,7 @@ export class ObjectDragController {
                     upEvent.clientY - startY
                 );
                 if (Date.now() - startedAt < 300 && distance < 10) {
-                    this.host.showGraphicsEditPanel(block.id);
+                    this.host.objectEditorPanelController.openGraphicsPanel(block.id);
                 }
                 this.setGraphicsBounds(group, 0, 0);
             };
@@ -243,7 +247,7 @@ export class ObjectDragController {
             kind: 'graphics',
             isDragging: true,
             blockId: block.id,
-            pointerOffset: this.host.getBlockPointerOffset(block, clientX, clientY),
+            pointerOffset: this.host.objectPlacementController.getPointerOffset(block, clientX, clientY),
             duplicated: false,
             moved: false
         };
@@ -259,16 +263,20 @@ export class ObjectDragController {
             state.blockId === originalBlock.id
         ) {
             const type = originalBlock.isBuiltIn ? originalBlock.id : 'graphics';
-            const duplicate = this.host.duplicateElement(type, originalBlock.id, true);
+            const duplicate = this.host.objectNavigatorController.duplicate(
+                type,
+                originalBlock.id,
+                true
+            );
             if (duplicate) {
                 state.blockId = duplicate.id;
                 state.duplicated = true;
             }
         }
 
-        const block = this.host.getGraphicsBlock(state.blockId);
+        const block = this.host.objectDocument.getGraphicsBlock(state.blockId);
         if (!block) return false;
-        const positioned = this.host.positionBlockAtPointer(
+        const positioned = this.host.objectPlacementController.positionAtPointer(
             block,
             event.clientX,
             event.clientY,

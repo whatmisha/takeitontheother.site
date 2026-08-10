@@ -161,6 +161,26 @@ async function run() {
         'Objects Undo restores the pending object'
     );
 
+    const textItemsBeforeAdd = appDocument.querySelectorAll(textItemSelector).length;
+    appDocument.getElementById('addTextBtn').click();
+    await waitFor(
+        () => appDocument.querySelectorAll(textItemSelector).length === textItemsBeforeAdd + 1,
+        'new text object creation'
+    );
+    await waitFor(
+        () => appDocument.getElementById('paragraphPanel').classList.contains('active'),
+        'new text editor opening'
+    );
+    assert(
+        appDocument.getElementById('paragraphLockPositionToggle').checked,
+        'new text objects are constrained to their surface by default'
+    );
+    appDocument.getElementById('canvasContainer').click();
+    await waitFor(
+        () => !appDocument.getElementById('paragraphPanel').classList.contains('active'),
+        'new text editor closing'
+    );
+
     appDocument.getElementById('canvasRotateLeftBtn').click();
     await waitFor(() => appDocument.getElementById('gridSvg').style.transform.includes('270deg'), 'canvas rotation');
     assert(appDocument.getElementById('gridSvg').style.transform.includes('270deg'), 'canvas rotates left without changing document data');

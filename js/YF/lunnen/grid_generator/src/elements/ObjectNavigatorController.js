@@ -1,4 +1,4 @@
-const GRAPHICS_TYPES = new Set(['graphics', 'icons', 'claim']);
+import { GRAPHICS_TYPES } from './ObjectDocumentController.js';
 
 const EYE_VISIBLE_PATHS = '<path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>';
 const EYE_HIDDEN_PATHS = `${EYE_VISIBLE_PATHS}<line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>`;
@@ -7,7 +7,7 @@ const EYE_HIDDEN = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" 
 
 /**
  * Renders the Objects panel and owns its item actions.
- * Object arrays and surface constraints stay on GridGenerator during migration.
+ * Collection mutations are delegated to the document model.
  */
 export class ObjectNavigatorController {
     constructor(host) {
@@ -16,8 +16,30 @@ export class ObjectNavigatorController {
 
     init() {
         this.render();
-        this.host.dom.addTextBtn?.addEventListener('click', () => this.host.addTextBlock());
-        this.host.dom.addGraphicsBtn?.addEventListener('click', () => this.host.showGraphicsPanel());
+        this.host.dom.addTextBtn?.addEventListener('click', () => this.addText());
+        this.host.dom.addGraphicsBtn?.addEventListener(
+            'click',
+            () => this.host.objectEditorPanelController.openNewGraphicsPanel()
+        );
+    }
+
+    addText(overrides = {}) {
+        this.host.historyManager.beginAction('add text block', this.host.getStateSnapshot());
+        const block = this.host.objectDocument.addTextBlock(overrides);
+        this.render();
+        this.host.updateGrid();
+        this.host.historyManager.commitAction(this.host.getStateSnapshot());
+        setTimeout(() => this.select('text', block.id), 100);
+        return block;
+    }
+
+    addGraphics(asset = {}) {
+        this.host.historyManager.beginAction('add graphics block', this.host.getStateSnapshot());
+        const block = this.host.objectDocument.addGraphicsBlock(asset);
+        this.render();
+        this.host.updateGrid();
+        this.host.historyManager.commitAction(this.host.getStateSnapshot());
+        return block;
     }
 
     render() {
@@ -25,7 +47,7 @@ export class ObjectNavigatorController {
         if (!list) return;
         list.innerHTML = '';
 
-        this.host.textBlocks.forEach(block => {
+        this.host.objectDocument.textBlocks.forEach(block => {
             this.createItem({
                 name: this.getTextName(block),
                 type: 'text',
@@ -35,7 +57,7 @@ export class ObjectNavigatorController {
             });
         });
 
-        (this.host.graphicsBlocks || []).forEach(block => {
+        this.host.objectDocument.graphicsBlocks.forEach(block => {
             this.createItem({
                 name: block.name || 'Graphic',
                 type: this.getGraphicsType(block),
@@ -52,7 +74,7 @@ export class ObjectNavigatorController {
         const content = block.content.trim();
         if (content) return content;
         const weight = this.host.getStyleFontWeight(block.styleRef);
-        const number = this.host.getBlockNumber(block.id).toString().padStart(2, '0');
+        const number = this.host.objectDocument.getBlockNumber(block.id).toString().padStart(2, '0');
         return `${weight} ${number}`;
     }
 
@@ -168,13 +190,7 @@ export class ObjectNavigatorController {
     }
 
     getBlock(type, blockId) {
-        if (type === 'text') {
-            return this.host.textBlocks.find(block => block.id === blockId) || null;
-        }
-        if (GRAPHICS_TYPES.has(type)) {
-            return this.host.getGraphicsBlock(blockId) || null;
-        }
-        return null;
+        return this.host.objectDocument.getBlock(type, blockId);
     }
 
     toggleVisibility(type, blockId) {
@@ -209,28 +225,26 @@ export class ObjectNavigatorController {
     }
 
     duplicate(type, blockId, skipSelection = false) {
-        const original = this.getBlock(type, blockId);
-        if (!original) return null;
-
         this.host.historyManager.beginAction(`duplicate ${type}`, this.host.getStateSnapshot());
         const isText = type === 'text';
-        const id = `${isText ? 'text' : 'graphics'}-${Date.now()}`;
-        const duplicate = {
-            ...original,
-            id,
-            x: original.x + 1,
-            visible: true,
-            ...(isText ? {} : { isBuiltIn: false })
-        };
-
-        this.host.constrainBlockToSurface(duplicate, isText ? 'text' : 'graphics');
-        (isText ? this.host.textBlocks : this.host.graphicsBlocks).push(duplicate);
+        const duplicate = this.host.objectDocument.duplicate(
+            type,
+            blockId,
+            block => this.host.objectPlacementController.constrain(
+                block,
+                isText ? 'text' : 'graphics'
+            )
+        );
+        if (!duplicate) {
+            this.host.historyManager.cancelAction?.();
+            return null;
+        }
         this.render();
         this.host.updateGrid();
         this.host.historyManager.commitAction(this.host.getStateSnapshot());
 
         if (!skipSelection && !this.host.textDragState.isDragging) {
-            setTimeout(() => this.select(isText ? 'text' : 'graphics', id), 100);
+            setTimeout(() => this.select(isText ? 'text' : 'graphics', duplicate.id), 100);
         }
         return duplicate;
     }
@@ -247,9 +261,9 @@ export class ObjectNavigatorController {
 
         block.deleting = true;
         if (type === 'text' && this.host.currentEditingBlock?.id === blockId) {
-            this.host.closeParagraphPanel();
+            this.host.objectEditorPanelController.closeTextPanel();
         } else if (GRAPHICS_TYPES.has(type) && this.host.currentEditingGraphicsId === blockId) {
-            this.host.closeGraphicsPanel();
+            this.host.objectEditorPanelController.closeGraphicsPanel();
         }
 
         this.host.updateGrid();
@@ -276,13 +290,7 @@ export class ObjectNavigatorController {
     }
 
     delete(type, blockId) {
-        const blocks = type === 'text'
-            ? this.host.textBlocks
-            : (GRAPHICS_TYPES.has(type) ? this.host.graphicsBlocks : null);
-        if (!blocks) return false;
-        const index = blocks.findIndex(block => block.id === blockId);
-        if (index < 0) return false;
-        blocks.splice(index, 1);
+        if (!this.host.objectDocument.remove(type, blockId)) return false;
         this.render();
         this.host.updateGrid();
         return true;
@@ -295,11 +303,11 @@ export class ObjectNavigatorController {
         this.highlight(type, blockId);
 
         if (type === 'text' && blockId) {
-            this.host.showParagraphPanel(blockId);
+            this.host.objectEditorPanelController.openTextPanel(blockId);
         } else if (type === 'graphics') {
-            this.host.showGraphicsEditPanel(blockId || type);
+            this.host.objectEditorPanelController.openGraphicsPanel(blockId || type);
         } else if (type === 'icons' || type === 'claim') {
-            this.host.showGraphicsEditPanel(type);
+            this.host.objectEditorPanelController.openGraphicsPanel(type);
         }
 
         const selector = blockId

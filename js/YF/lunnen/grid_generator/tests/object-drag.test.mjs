@@ -29,14 +29,18 @@ function createHost() {
         get updates() { return updates; },
         get changes() { return changes; },
         textDragState: { kind: null, isDragging: false },
-        getTextBlock: id => id === text.id ? text : null,
-        getGraphicsBlock: id => id === graphics.id ? graphics : null,
-        getBlockPointerOffset: () => ({ x: 2, y: 3 }),
-        positionBlockAtPointer(block, clientX, clientY, type) {
-            block.surface = type === 'text' ? 'left' : 'right';
-            block.x = Math.round(clientX / 10);
-            block.row = Math.round(clientY / 10);
-            return true;
+        objectDocument: {
+            getTextBlock: id => id === text.id ? text : null,
+            getGraphicsBlock: id => id === graphics.id ? graphics : null
+        },
+        objectPlacementController: {
+            getPointerOffset: () => ({ x: 2, y: 3 }),
+            positionAtPointer(block, clientX, clientY, type) {
+                block.surface = type === 'text' ? 'left' : 'right';
+                block.x = Math.round(clientX / 10);
+                block.row = Math.round(clientY / 10);
+                return true;
+            }
         },
         historyManager: {
             beginAction: label => history.push(`begin:${label}`),
@@ -46,7 +50,7 @@ function createHost() {
         updateGridThrottled: () => { updates += 1; },
         updateGrid: () => { updates += 1; },
         markAsChanged: () => { changes += 1; },
-        duplicateElement: () => null
+        objectNavigatorController: { duplicate: () => null }
     };
 }
 

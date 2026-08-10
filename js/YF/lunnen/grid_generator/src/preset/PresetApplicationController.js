@@ -97,10 +97,11 @@ export class PresetApplicationController {
     }
 
     createSnapshot() {
+        const document = this.host.objectDocument;
         return clone({
             settings: this.host.settingsModule.getAll(),
-            textBlocks: this.host.textBlocks,
-            graphicsBlocks: this.host.graphicsBlocks,
+            textBlocks: document ? document.textBlocks : this.host.textBlocks,
+            graphicsBlocks: document ? document.graphicsBlocks : this.host.graphicsBlocks,
             iconsBlock: this.host.iconsBlock ?? null,
             claimBlock: this.host.claimBlock ?? null
         });
@@ -136,22 +137,26 @@ export class PresetApplicationController {
         );
 
         if (hasOwn(state, 'textBlocks')) {
-            this.host.textBlocks = this.normalizeTextBlocks(state.textBlocks);
+            const blocks = this.normalizeTextBlocks(state.textBlocks);
+            if (this.host.objectDocument) this.host.objectDocument.replaceTextBlocks(blocks);
+            else this.host.textBlocks = blocks;
         }
         if (hasOwn(state, 'graphicsBlocks')) {
-            this.host.graphicsBlocks = this.normalizeGraphicsBlocks(state.graphicsBlocks);
+            const blocks = this.normalizeGraphicsBlocks(state.graphicsBlocks);
+            if (this.host.objectDocument) this.host.objectDocument.replaceGraphicsBlocks(blocks);
+            else this.host.graphicsBlocks = blocks;
         }
         if (hasOwn(state, 'iconsBlock')) this.host.iconsBlock = clone(state.iconsBlock);
         if (hasOwn(state, 'claimBlock')) this.host.claimBlock = clone(state.claimBlock);
 
         this.host.syncApplicationUI();
         this.recalculateGrid();
-        this.host.updateElementsNavigator();
+        this.host.objectNavigatorController.render();
         this.host.updateGrid();
 
         if (options.closeEditors) {
-            this.host.closeParagraphPanel();
-            this.host.closeGraphicsPanel();
+            this.host.objectEditorPanelController.closeTextPanel();
+            this.host.objectEditorPanelController.closeGraphicsPanel();
         }
     }
 
@@ -175,17 +180,25 @@ export class PresetApplicationController {
                 if (columns > 0 && columns <= maxColumns * 2) {
                     block.widthInColumns = Number.parseFloat(columns.toFixed(2));
                 } else {
-                    this.host.recalculateGraphicsWidthFromHeight(block);
+                    this.recalculateGraphicsWidthFromHeight(block);
                 }
             } else if (
                 block.widthInColumns == null ||
                 block.widthInColumns <= 0 ||
                 block.widthInColumns > maxColumns * 2
             ) {
-                this.host.recalculateGraphicsWidthFromHeight(block);
+                this.recalculateGraphicsWidthFromHeight(block);
             }
         });
         return normalized;
+    }
+
+    recalculateGraphicsWidthFromHeight(block) {
+        if (this.host.objectPlacementController) {
+            this.host.objectPlacementController.recalculateGraphicsWidthFromHeight(block);
+        } else {
+            this.host.recalculateGraphicsWidthFromHeight(block);
+        }
     }
 
     normalizeLocks(settings) {
