@@ -1,7 +1,8 @@
+import { cloneJson } from '../utils/cloneJson.js';
 import { HistoryTransaction } from './HistoryTransaction.js';
 import { SnapshotHistory } from './SnapshotHistory.js';
 
-const serialize = state => JSON.parse(JSON.stringify(state));
+const serialize = cloneJson;
 const compare = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 
 /** Public undo/redo facade coordinating snapshots and semantic transactions. */

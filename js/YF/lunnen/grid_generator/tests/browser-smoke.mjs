@@ -118,6 +118,42 @@ async function run() {
 
     const appDocument = await loadApplication();
     const appWindow = appFrame.contentWindow;
+    const application = appWindow[Symbol.for('lunnen.grid-generator.application')];
+    assert(
+        appDocument.documentElement.dataset.applicationShell === 'ready',
+        'modular HTML shell assembles before application startup'
+    );
+    assert(
+        application?.getPerformanceMetrics().render.count > 0,
+        'render performance metrics record application startup'
+    );
+    const exportMetricsBefore = application.getPerformanceMetrics().export;
+    await application.exportDocumentBuilder.build(false);
+    const exportMetricsAfter = application.getPerformanceMetrics().export;
+    assert(
+        exportMetricsAfter.count === exportMetricsBefore.count + 1 &&
+            exportMetricsAfter.lastMs >= 0,
+        'export performance metrics record a real document build'
+    );
+    const cacheBefore = application.getPerformanceMetrics().export.assets;
+    await application.exportDocumentBuilder.loadSvgAsset('lunnen_logo.svg');
+    await application.exportDocumentBuilder.loadSvgAsset('lunnen_logo.svg');
+    const cacheAfter = application.getPerformanceMetrics().export.assets;
+    assert(
+        cacheAfter.requests === cacheBefore.requests + 1 &&
+            cacheAfter.hits === cacheBefore.hits + 1,
+        'export SVG template cache reuses parsed design-kit assets'
+    );
+    application.errorPresenter.show(new Error('Smoke notification'), {
+        title: 'Smoke',
+        timeoutMs: 60_000
+    });
+    const errorNotification = appDocument.querySelector('.app-notification-error');
+    assert(
+        errorNotification?.hidden === false && errorNotification.getAttribute('role') === 'alert',
+        'application errors use a non-blocking accessible notification'
+    );
+    application.errorPresenter.clear();
     const builtInAssetUrls = ['graphics/icons.svg', 'graphics/yf_claim.svg'].map(
         path => new URL(path, appWindow.location.href).href
     );
@@ -593,6 +629,7 @@ async function run() {
             !appDocument.getElementById('useXHeightCaption').checked,
         'Updated E-ink preset applies its approved Caption weight and metrics'
     );
+    assert(applicationErrors.length === 0, 'application emits no uncaught browser errors');
 
     document.body.dataset.status = 'passed';
     resultElement.textContent = `${checks.join('\n')}\n\nPASS — ${checks.length} checks`;

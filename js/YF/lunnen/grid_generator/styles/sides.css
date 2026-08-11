@@ -1,0 +1,134 @@
+.surface-panel-content {
+    gap: 0;
+}
+
+.surface-panel-section {
+    min-width: 0;
+    padding: var(--spacing-lg) 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.surface-panel-section:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.surface-tabs.segmented-control {
+    display: flex;
+    width: 100%;
+    margin-top: 0;
+}
+
+.surface-tabs.segmented-control label {
+    min-width: 0;
+    padding: var(--spacing-lg) var(--spacing-sm);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.surface-quick-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--spacing-sm);
+}
+
+.surface-quick-controls .toggle-chip-group {
+    flex: 0 0 auto;
+}
+
+.surface-visible-chip span {
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
+}
+
+.surface-own-grid-chip {
+    flex: 0 0 auto;
+}
+
+.surface-own-grid-chip span {
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
+}
+
+.surface-orientation-control {
+    display: inline-flex;
+    flex: 0 0 66px;
+    align-items: center;
+    gap: 2px;
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-button);
+    background: var(--color-bg-input);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: border-color var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.surface-orientation-control:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-text);
+}
+
+.surface-orientation-control:focus-within {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
+.surface-orientation-control svg {
+    flex: 0 0 14px;
+}
+
+.surface-orientation-control select {
+    width: 43px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    appearance: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.75rem;
+    text-align: right;
+    cursor: pointer;
+}
+
+.surface-own-grid-controls {
+    min-width: 0;
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.surface-own-grid-controls[hidden] {
+    display: none;
+}
+
+.surface-own-grid-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: var(--spacing-lg);
+    color: var(--color-text);
+    font-size: 0.82rem;
+}
+
+.surface-own-grid-heading small {
+    color: var(--color-text-dim);
+    font-size: 0.7rem;
+}
+
+.surface-grid-controls {
+    min-width: 0;
+}
+
+.surface-grid-controls .control-group {
+    margin-bottom: var(--spacing-xl);
+}
+
+.surface-grid-controls .control-group:last-child {
+    margin-bottom: 0;
+}

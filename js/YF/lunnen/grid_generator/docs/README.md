@@ -15,7 +15,7 @@ npm --prefix tools run dev
 ## Основные команды
 
 ```bash
-npm --prefix tools test                 # 135 unit/regression checks + schema freshness
+npm --prefix tools test                 # 141 unit/regression checks + schema freshness
 npm --prefix tools run schema           # пересобрать runtime-валидатор из JSON Schema
 npm --prefix tools run presets:check    # проверить manifest пресетов
 npm --prefix tools run presets          # пересобрать manifest
@@ -23,7 +23,7 @@ npm --prefix tools run build            # production-сборка в build/
 npm --prefix tools run preview          # проверить production-сборку
 ```
 
-Браузерный набор находится в `tests/browser-smoke.html` и выполняет 64 проверки
+Браузерный набор находится в `tests/browser-smoke.html` и выполняет 70 проверок
 редактора. Подробности о сборке и зависимостях: `tools/README.md`.
 
 ## Возможности
@@ -53,6 +53,8 @@ JSON-файлы в `presets/` — источник истины. `presets/manife
 - `src/svg` — SVG/PDF/JSON, санитайзер и файловый экспорт.
 - `src/history` — snapshot history и транзакции.
 - `src/ui` — панели, слайдеры и zoom/pan.
+- `src/ui/fragments` — синхронно собираемые части интерфейса.
+- `styles` — тематические CSS-модули; корневой `style.css` задаёт их порядок.
 - `schemas` — единственный контракт формата пресета.
 - `tools` — Vite, локальные зависимости, генераторы manifest и валидатора.
 
@@ -63,7 +65,8 @@ opentype.js закреплены в `tools/package-lock.json` и грузятс�
 
 ## Совместимость
 
-Автоматически проверяются модульная логика и Chromium-совместимый UI flow.
+Автоматически проверяются модульная логика и Chromium-совместимый UI flow,
+включая кеш ассетов и метрики рендера/экспорта.
 Перед релизом вручную проверить Safari, macOS Quick Look и Illustrator:
 см. `docs/guides/RELEASE_CHECKLIST.md`.
 

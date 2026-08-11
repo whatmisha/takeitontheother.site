@@ -1,0 +1,247 @@
+    <aside class="controls-panel controls-panel-text" id="textPanel" role="complementary" aria-label="Text styles settings">
+        <div class="panel-header" id="textPanelHeader">
+            <span>Text Styles <span class="panel-params" id="textStylesParams"></span></span>
+            <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
+                <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+        </div>
+        <div class="panel-content">
+            <section class="control-section">
+                <h3 class="collapsible-header" id="headlineHeader">
+                    <span>Headline <span class="font-size-display" id="headlineFontSize">0/0 pt</span></span>
+                    <button type="button" class="collapse-toggle" aria-label="Toggle headline settings" aria-expanded="false">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </h3>
+                
+                <div class="collapsible-content collapsed" id="headlineContent">
+                <div class="control-group">
+                    <label for="headlineStyleDropdown">
+                        <select id="headlineStyleDropdown" class="style-select" aria-label="Select font weight">
+                            <option value="500">Medium</option>
+                            <option value="400">Regular</option>
+                        </select>
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="headlineSizeSlider">
+                        <span>Size 
+                            <span class="unit-buttons">
+                                <button type="button" class="unit-btn active" data-unit="mod" id="headlineSizeUnitMod">mod</button>
+                                <button type="button" class="unit-btn" data-unit="pt" id="headlineSizeUnitPt">pt</button>
+                            </span>
+                        </span>
+                            <input type="text" class="value-display" id="headlineSizeValue" value="1.00" data-min="0.25" data-max="10" aria-label="Headline size in modules">
+                    </label>
+                    <input type="range" id="headlineSizeSlider" min="0.25" max="10" step="0.25" value="1" aria-label="Headline size slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="lineHeightSlider">
+                        <span>Line Height 
+                            <span class="unit-buttons">
+                                <button type="button" class="unit-btn active" data-unit="mod" id="headlineLineHeightUnitMod">mod</button>
+                                <button type="button" class="unit-btn" data-unit="pt" id="headlineLineHeightUnitPt">pt</button>
+                            </span>
+                        </span>
+                        <input type="text" class="value-display" id="lineHeightValue" value="2.00" data-min="0.25" data-max="10" aria-label="Line height in modules">
+                    </label>
+                    <input type="range" id="lineHeightSlider" min="0.25" max="10" step="0.25" value="2" aria-label="Line height slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="trackingSlider">
+                        <span>Tracking <span class="unit">em</span></span>
+                        <input type="text" class="value-display" id="trackingValue" value="-0.015" data-min="-0.05" data-max="0.05" aria-label="Tracking in em units">
+                    </label>
+                    <input type="range" id="trackingSlider" min="-0.05" max="0.05" step="0.005" value="-0.015" aria-label="Tracking slider">
+                </div>
+                
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="useXHeight" checked aria-label="Use x-height for measurement">
+                        <span>x-height</span>
+                    </label>
+                </div>
+                </div>
+            </section>
+            
+            <section class="control-section">
+                <h3 class="collapsible-header" id="textHeader">
+                    <span>Text <span class="font-size-display" id="textFontSize">0/0 pt</span></span>
+                    <button type="button" class="collapse-toggle" aria-label="Toggle text settings" aria-expanded="false">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </h3>
+                
+                <div class="collapsible-content collapsed" id="textContent">
+                <div class="control-group">
+                    <label for="textStyleDropdown">
+                        <select id="textStyleDropdown" class="style-select" aria-label="Select font weight">
+                            <option value="500" selected>Medium</option>
+                            <option value="400">Regular</option>
+                        </select>
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="textSizeSlider">
+                        <span>Size 
+                            <span class="unit-buttons">
+                                <button type="button" class="unit-btn active" data-unit="mod" id="textSizeUnitMod">mod</button>
+                                <button type="button" class="unit-btn" data-unit="pt" id="textSizeUnitPt">pt</button>
+                            </span>
+                        </span>
+                            <input type="text" class="value-display" id="textSizeValue" value="1.00" data-min="0.25" data-max="10" aria-label="Text size in modules">
+                    </label>
+                    <input type="range" id="textSizeSlider" min="0.25" max="10" step="0.25" value="1" aria-label="Text size slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="textLineHeightSlider">
+                        <span>Line Height 
+                            <span class="unit-buttons">
+                                <button type="button" class="unit-btn active" data-unit="mod" id="textLineHeightUnitMod">mod</button>
+                                <button type="button" class="unit-btn" data-unit="pt" id="textLineHeightUnitPt">pt</button>
+                            </span>
+                        </span>
+                        <input type="text" class="value-display" id="textLineHeightValue" value="2.00" data-min="0.25" data-max="10" aria-label="Text line height in modules">
+                    </label>
+                    <input type="range" id="textLineHeightSlider" min="0.25" max="10" step="0.25" value="2" aria-label="Text line height slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="textTrackingSlider">
+                        <span>Tracking <span class="unit">em</span></span>
+                        <input type="text" class="value-display" id="textTrackingValue" value="0.00" data-min="-0.05" data-max="0.05" aria-label="Text tracking in em units">
+                    </label>
+                    <input type="range" id="textTrackingSlider" min="-0.05" max="0.05" step="0.01" value="0" aria-label="Text tracking slider">
+                </div>
+                
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="useXHeight2" aria-label="Use x-height for measurement">
+                        <span>x-height</span>
+                    </label>
+                </div>
+                </div>
+            </section>
+            
+            <section class="control-section">
+                <h3 class="collapsible-header" id="captionHeader">
+                    <span>Caption <span class="font-size-display" id="captionFontSize">0/0 pt</span></span>
+                    <button type="button" class="collapse-toggle" aria-label="Toggle caption settings" aria-expanded="false">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </h3>
+                
+                <div class="collapsible-content collapsed" id="captionContent">
+                <div class="control-group">
+                    <label for="captionStyleDropdown">
+                        <select id="captionStyleDropdown" class="style-select" aria-label="Select font weight">
+                            <option value="500" selected>Medium</option>
+                            <option value="400">Regular</option>
+                        </select>
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label for="captionSizeSlider">
+                        <span>Size 
+                            <span class="unit-buttons">
+                                <button type="button" class="unit-btn active" data-unit="mod" id="captionSizeUnitMod">mod</button>
+                                <button type="button" class="unit-btn" data-unit="pt" id="captionSizeUnitPt">pt</button>
+                            </span>
+                        </span>
+                            <input type="text" class="value-display" id="captionSizeValue" value="0.50" data-min="0.25" data-max="10" aria-label="Caption size in modules">
+                    </label>
+                    <input type="range" id="captionSizeSlider" min="0.25" max="10" step="0.25" value="0.5" aria-label="Caption size slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="captionLineHeightSlider">
+                        <span>Line Height 
+                            <span class="unit-buttons">
+                                <button type="button" class="unit-btn active" data-unit="mod" id="captionLineHeightUnitMod">mod</button>
+                                <button type="button" class="unit-btn" data-unit="pt" id="captionLineHeightUnitPt">pt</button>
+                            </span>
+                        </span>
+                        <input type="text" class="value-display" id="captionLineHeightValue" value="1.00" data-min="0.25" data-max="10" aria-label="Caption line height in modules">
+                    </label>
+                    <input type="range" id="captionLineHeightSlider" min="0.25" max="10" step="0.25" value="1" aria-label="Caption line height slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="captionTrackingSlider">
+                        <span>Tracking <span class="unit">em</span></span>
+                        <input type="text" class="value-display" id="captionTrackingValue" value="0.00" data-min="-0.05" data-max="0.05" aria-label="Caption tracking in em units">
+                    </label>
+                    <input type="range" id="captionTrackingSlider" min="-0.05" max="0.05" step="0.01" value="0" aria-label="Caption tracking slider">
+                </div>
+                
+                <div class="control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="useXHeightCaption" aria-label="Use x-height for measurement">
+                        <span>x-height</span>
+                    </label>
+                </div>
+                </div>
+            </section>
+            
+            <section class="control-section">
+                <h3 class="collapsible-header" id="lunnenDisplayHeader">
+                    <span>Lunnen Display <span class="font-size-display" id="lunnenDisplayFontSize">0/0 pt</span></span>
+                    <button type="button" class="collapse-toggle" aria-label="Toggle Lunnen Display settings" aria-expanded="false">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </h3>
+                
+                <div class="collapsible-content collapsed" id="lunnenDisplayContent">
+                <div class="control-group">
+                    <label for="lunnenDisplaySizeSlider">
+                        <span>Size 
+                            <span class="unit-buttons">
+                                <button type="button" class="unit-btn active" data-unit="mod" id="lunnenDisplaySizeUnitMod">mod</button>
+                                <button type="button" class="unit-btn" data-unit="pt" id="lunnenDisplaySizeUnitPt">pt</button>
+                            </span>
+                        </span>
+                            <input type="text" class="value-display" id="lunnenDisplaySizeValue" value="3.00" data-min="0.25" data-max="10" aria-label="Lunnen Display size in modules">
+                    </label>
+                    <input type="range" id="lunnenDisplaySizeSlider" min="0.25" max="10" step="0.25" value="3" aria-label="Lunnen Display size slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="lunnenDisplayLineHeightSlider">
+                        <span>Line Height 
+                            <span class="unit-buttons">
+                                <button type="button" class="unit-btn active" data-unit="mod" id="lunnenDisplayLineHeightUnitMod">mod</button>
+                                <button type="button" class="unit-btn" data-unit="pt" id="lunnenDisplayLineHeightUnitPt">pt</button>
+                            </span>
+                        </span>
+                        <input type="text" class="value-display" id="lunnenDisplayLineHeightValue" value="4.00" data-min="0.25" data-max="10" aria-label="Lunnen Display line height in modules">
+                    </label>
+                    <input type="range" id="lunnenDisplayLineHeightSlider" min="0.25" max="10" step="0.25" value="4" aria-label="Lunnen Display line height slider">
+                </div>
+                
+                <div class="control-group">
+                    <label for="lunnenDisplayTrackingSlider">
+                        <span>Tracking <span class="unit">em</span></span>
+                        <input type="text" class="value-display" id="lunnenDisplayTrackingValue" value="0.00" data-min="-0.05" data-max="0.05" aria-label="Lunnen Display tracking in em units">
+                    </label>
+                    <input type="range" id="lunnenDisplayTrackingSlider" min="-0.05" max="0.05" step="0.01" value="0" aria-label="Lunnen Display tracking slider">
+                </div>
+                </div>
+            </section>
+        </div>
+    </aside>

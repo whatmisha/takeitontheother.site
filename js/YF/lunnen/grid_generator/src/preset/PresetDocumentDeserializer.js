@@ -1,4 +1,4 @@
-const clone = value => value == null ? value : JSON.parse(JSON.stringify(value));
+import { cloneJson as clone } from '../utils/cloneJson.js';
 const compact = object => Object.fromEntries(
     Object.entries(object).filter(([, value]) => value !== undefined)
 );

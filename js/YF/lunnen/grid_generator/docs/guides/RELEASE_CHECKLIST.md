@@ -1,28 +1,40 @@
 # Release checklist
 
-## Автоматически
+Updated: 2026-08-12.
 
-```bash
-npm --prefix tools test
-npm --prefix tools run presets:check
-npm --prefix tools audit --audit-level=low
-npm --prefix tools run build
-```
+## Automated — completed
 
-Открыть `tests/browser-smoke.html` через dev-сервер и получить `PASS — 64 checks`.
+- [x] `npm --prefix tools test` — 141/141 tests.
+- [x] `npm --prefix tools run presets:check` — 19/19 presets and manifest.
+- [x] `npm --prefix tools audit --audit-level=low` — 0 vulnerabilities.
+- [x] `npm --prefix tools run build` — 371 transformed modules.
+- [x] `tests/browser-smoke.html` — `PASS — 70 checks` in the local Chromium
+  browser, with no uncaught application errors.
 
-## Chrome и Safari
+The browser suite covers JSON round-trip, New/Front/reverse presets, Caption,
+Sides, own grids, all canvas rotations, screen-axis pan, Fit/zoom, rotated
+cross-surface dragging, object editors, locks/units, modular shell assembly,
+performance metrics, SVG template caching and accessible error presentation.
 
-- Открыть `New`, Front-пресет и Back-пресет.
-- Проверить Fit, zoom, четыре поворота и панорамирование по экранным осям.
-- Перетащить текст и графику между Front и каждой боковой гранью.
-- Включить Own Grid, сменить единицы, lock и orientation.
-- Выполнить JSON export/import и сверить Caption/Lunnen Display/side settings.
+## macOS Quick Look — completed for the reported regression
 
-## macOS Quick Look и Illustrator
+- [x] The supplied Airis baseline with the repaired BOM/XML encoding header
+  renders Cyrillic correctly through the system Quick Look generator.
+- [x] Automated SVG tests preserve that UTF-8 header independently of baseline
+  visibility.
 
-- Экспортировать SVG с baseline и без baseline.
-- Открыть оба файла Quick Look: кириллица должна отображаться без mojibake.
-- Открыть SVG в Illustrator с текстом и с Outline fonts.
-- Проверить размеры artboard, ориентацию граней, объекты и clipping.
-- Экспортировать PDF и сверить размеры и кривые.
+## Safari — manual release acceptance
+
+- [ ] Open `New`, one Front preset and one Back preset.
+- [ ] Check Fit, zoom, four rotations and screen-axis pan.
+- [ ] Drag text and graphics between Front and every side.
+- [ ] Enable Own Grid; change units, lock and orientation.
+- [ ] Export/import JSON and compare Caption, Lunnen Display and Sides.
+
+## Adobe Illustrator — manual release acceptance
+
+- [ ] Open SVG exports with baseline on and off, both as text and with Outline
+  fonts.
+- [ ] Verify artboard millimeters, Cyrillic, surface orientation, objects and
+  clipping.
+- [ ] Open the PDF export and verify artboard size and outlined text.

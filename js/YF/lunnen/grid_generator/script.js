@@ -1,4 +1,5 @@
 import { GridGenerator } from './src/core/GridGenerator.js';
+import { loadApplicationShell } from './src/ui/ApplicationShellLoader.js';
 
 const APPLICATION_INSTANCE = Symbol.for('lunnen.grid-generator.application');
 
@@ -11,14 +12,15 @@ async function loadApplicationFonts() {
 }
 
 async function startApplication() {
-    try {
-        await loadApplicationFonts();
-    } catch (error) {
-        console.warn('Font loading warning:', error);
-    }
-
     let application = null;
     try {
+        loadApplicationShell();
+        try {
+            await loadApplicationFonts();
+        } catch (error) {
+            console.warn('Font loading warning:', error);
+        }
+
         globalThis[APPLICATION_INSTANCE]?.dispose?.();
         application = new GridGenerator();
         globalThis[APPLICATION_INSTANCE] = application;

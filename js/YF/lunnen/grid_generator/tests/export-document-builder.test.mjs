@@ -66,7 +66,8 @@ function createHost() {
 
 test('export document builder creates exact millimeter artboard without references', async () => {
     const host = createHost();
-    const builder = new ExportDocumentBuilder(host);
+    const clock = [10, 17];
+    const builder = new ExportDocumentBuilder(host, { now: () => clock.shift() });
 
     const svg = await builder.build(false);
 
@@ -76,6 +77,14 @@ test('export document builder creates exact millimeter artboard without referenc
     assert.equal(svg.attributes.viewBox, '0 0 600 500');
     assert.deepEqual(svg.children.map(child => child.attributes.id), ['box', 'grid']);
     assert.deepEqual(host.calls, ['box', 'sides']);
+    assert.deepEqual(builder.getPerformanceMetrics(), {
+        count: 1,
+        totalMs: 7,
+        lastMs: 7,
+        maxMs: 7,
+        averageMs: 7,
+        assets: { entries: 0, requests: 0, hits: 0 }
+    });
 });
 
 test('export text-style reference reuses the shared typography resolver', () => {
@@ -87,4 +96,32 @@ test('export text-style reference reuses the shared typography resolver', () => 
         { name: 'Caption', fontSize: '14.2', lineHeight: '14.2' },
         { name: 'Lunnen Display', fontSize: '85.0', lineHeight: '56.7' }
     ]);
+});
+
+test('export document builder caches parsed immutable SVG assets', async () => {
+    let fetches = 0;
+    const svg = {
+        getAttribute: name => name === 'viewBox' ? '0 0 120 40' : null
+    };
+    const builder = new ExportDocumentBuilder(createHost(), {
+        fetchImpl: async (_url, options) => {
+            fetches += 1;
+            assert.deepEqual(options, { cache: 'force-cache' });
+            return { ok: true, text: async () => '<svg viewBox="0 0 120 40" />' };
+        },
+        parseSvg: () => ({ querySelector: () => svg })
+    });
+
+    assert.deepEqual(await builder.loadSvgAsset('logo.svg'), {
+        element: svg,
+        width: 120,
+        height: 40
+    });
+    assert.equal((await builder.loadSvgAsset('logo.svg')).element, svg);
+    assert.equal(fetches, 1);
+    assert.deepEqual(builder.getPerformanceMetrics().assets, {
+        entries: 1,
+        requests: 1,
+        hits: 1
+    });
 });

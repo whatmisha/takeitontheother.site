@@ -17,3 +17,7 @@ copied into that output. PDF and outlined-SVG dependencies are pinned locally in
 `package-lock.json` and loaded lazily as separate chunks. Ajv is a build-only
 dependency that generates `src/preset/generated/validatePreset12.js`; `test`
 and `build` verify that it still matches the checked-in schema.
+
+Vite также импортирует HTML-фрагменты как raw-строки и объединяет восемь
+CSS-модулей из корневого `style.css`. Поэтому и dev-сервер, и production build
+проверяют ту же модульную оболочку интерфейса.

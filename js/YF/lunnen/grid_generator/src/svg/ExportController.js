@@ -69,8 +69,10 @@ export class ExportController {
             });
         } catch (error) {
             console.error('Error exporting PDF:', error);
-            alert(`Ошибка при экспорте PDF: ${error.message}`);
+            this.host.errorPresenter?.show(error, { title: 'PDF export failed' });
+            return false;
         }
+        return true;
     }
 
     exportSettings() {

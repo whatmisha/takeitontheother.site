@@ -208,9 +208,8 @@ test('re-importing a custom preset does not stack synthetic name prefixes', asyn
 });
 
 test('PresetManager awaits application and rolls selection back on failure', async () => {
-    const originalAlert = globalThis.alert;
     const originalConsoleError = console.error;
-    globalThis.alert = () => {};
+    const reportedErrors = [];
     console.error = () => {};
     try {
         const manager = new PresetManager({
@@ -219,7 +218,8 @@ test('PresetManager awaits application and rolls selection back on failure', asy
                 getAttribute: () => 'false',
                 style: {}
             },
-            onPresetLoad: async () => { throw new Error('application failed'); }
+            onPresetLoad: async () => { throw new Error('application failed'); },
+            onError: error => reportedErrors.push(error.message)
         });
         manager.currentPreset = 'old.json';
         manager.currentPresetName = 'Old';
@@ -231,8 +231,8 @@ test('PresetManager awaits application and rolls selection back on failure', asy
         assert.equal(selected, false);
         assert.equal(manager.currentPreset, 'old.json');
         assert.equal(manager.currentPresetName, 'Old');
+        assert.deepEqual(reportedErrors, ['application failed']);
     } finally {
-        globalThis.alert = originalAlert;
         console.error = originalConsoleError;
     }
 });

@@ -6,6 +6,7 @@ export class PresetManager {
     constructor(options = {}) {
         this.onPresetLoad = options.onPresetLoad || (() => {});
         this.onPresetSelect = options.onPresetSelect || (() => {});
+        this.onError = options.onError || (() => {});
         this.repository = options.repository || new PresetRepository({
             fetchImpl: options.fetchImpl,
             now: options.now,
@@ -113,7 +114,7 @@ export class PresetManager {
             this.applySelection(previous.file, previous.name);
             this.hasChanges = previous.hasChanges;
             console.error('Failed to load preset:', error);
-            globalThis.alert?.(`Failed to load preset: ${error.message}`);
+            this.onError(error);
             return false;
         }
     }

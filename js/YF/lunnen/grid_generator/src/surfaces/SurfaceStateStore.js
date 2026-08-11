@@ -1,3 +1,5 @@
+import { cloneJson } from '../utils/cloneJson.js';
+
 export const SURFACE_IDS = Object.freeze(['front', 'left', 'right', 'top', 'bottom']);
 export const SIDE_SURFACE_IDS = Object.freeze(['left', 'right', 'top', 'bottom']);
 export const SURFACE_ROTATIONS = Object.freeze([0, 90, 180, 270]);
@@ -6,7 +8,7 @@ const ORIENTATION_PROFILES = Object.freeze({
     front: Object.freeze({ front: 0, left: 90, right: 270, top: 180, bottom: 0 }),
     reverse: Object.freeze({ front: 0, left: 270, right: 90, top: 0, bottom: 180 })
 });
-const clone = value => JSON.parse(JSON.stringify(value));
+const clone = cloneJson;
 const finitePositive = (value, fallback) => Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : fallback;
 const finiteNonNegative = (value, fallback) => Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : fallback;
 

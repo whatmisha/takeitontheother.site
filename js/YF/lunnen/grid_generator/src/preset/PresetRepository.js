@@ -1,4 +1,4 @@
-const clone = value => JSON.parse(JSON.stringify(value));
+import { cloneJson as clone } from '../utils/cloneJson.js';
 
 /** Owns preset transport and the in-memory imported-preset registry. */
 export class PresetRepository {

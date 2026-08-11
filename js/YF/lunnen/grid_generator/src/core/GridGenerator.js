@@ -5,6 +5,14 @@ import { DOMCache } from './DOMCache.js';
 import { ApplicationStartupController } from './ApplicationStartupController.js';
 import { ApplicationUiSynchronizer } from './ApplicationUiSynchronizer.js';
 import { ApplicationLifecycle } from './ApplicationLifecycle.js';
+import {
+    createApplicationEventPort,
+    createExportDocumentPort,
+    createExportPort,
+    createGridSettingsPort,
+    createObjectEditorPort,
+    createPresetApplicationPort
+} from './ApplicationPorts.js';
 import { ListenerScope } from './ListenerScope.js';
 import { RenderScheduler } from './RenderScheduler.js';
 
@@ -24,6 +32,7 @@ import { SliderHistoryController } from '../ui/SliderHistoryController.js';
 import { ApplicationEventController } from '../ui/ApplicationEventController.js';
 import { PanelUiController } from '../ui/PanelUiController.js';
 import { ZoomToolbarController } from '../ui/ZoomToolbarController.js';
+import { ErrorPresenter } from '../ui/ErrorPresenter.js';
 
 import { GraphicsRenderer } from '../elements/GraphicsRenderer.js';
 import { TextBlockRenderer } from '../elements/TextBlockRenderer.js';
@@ -105,7 +114,9 @@ export class GridGenerator {
 
         // ============================================
         this.gridCalculator = new GridCalculator(this.settingsModule);
-        this.gridSettingsController = this.lifecycle.own(new GridSettingsController(this));
+        this.gridSettingsController = this.lifecycle.own(
+            new GridSettingsController(createGridSettingsPort(this))
+        );
         Object.assign(this.sliderConfig, this.gridSettingsController.getSliderConfigs());
 
         // ============================================
@@ -161,6 +172,7 @@ export class GridGenerator {
         // ============================================
         this.domCache = new DOMCache().init();
         this.dom = this.domCache.getAll();
+        this.errorPresenter = this.lifecycle.own(new ErrorPresenter());
         this.panelUiController = this.lifecycle.own(new PanelUiController(this));
         this.applicationUi = new ApplicationUiSynchronizer(this);
         this.colorPanelController = this.lifecycle.own(new ColorPanelController({
@@ -171,12 +183,23 @@ export class GridGenerator {
             markChanged: () => this.markAsChanged(),
             render: () => this.updateGrid()
         }));
-        this.objectEditorPanelController = this.lifecycle.own(new ObjectEditorPanelController(this));
-        this.objectEditorInputController = this.lifecycle.own(new ObjectEditorInputController(this));
-        this.textEditorPositionController = this.lifecycle.own(new TextEditorPositionController(this));
-        this.lunnenDisplayEditorController = this.lifecycle.own(new LunnenDisplayEditorController(this));
-        this.graphicsEditorInputController = new GraphicsEditorInputController(this);
-        this.graphicsEditorEventController = this.lifecycle.own(new GraphicsEditorEventController(this));
+        const objectEditorPort = createObjectEditorPort(this);
+        this.objectEditorPanelController = this.lifecycle.own(
+            new ObjectEditorPanelController(objectEditorPort)
+        );
+        this.objectEditorInputController = this.lifecycle.own(
+            new ObjectEditorInputController(objectEditorPort)
+        );
+        this.textEditorPositionController = this.lifecycle.own(
+            new TextEditorPositionController(objectEditorPort)
+        );
+        this.lunnenDisplayEditorController = this.lifecycle.own(
+            new LunnenDisplayEditorController(objectEditorPort)
+        );
+        this.graphicsEditorInputController = new GraphicsEditorInputController(objectEditorPort);
+        this.graphicsEditorEventController = this.lifecycle.own(
+            new GraphicsEditorEventController(objectEditorPort)
+        );
         this.svgSanitizer = new SvgSanitizer();
         this.graphicsAssetController = new GraphicsAssetController(this, {
             sanitizer: this.svgSanitizer
@@ -212,10 +235,14 @@ export class GridGenerator {
         // ============================================
         this.textToPath = new TextToPath();
         this.svgExporter = new SVGExporter(this.settingsModule, this.textToPath);
-        this.exportDocumentBuilder = new ExportDocumentBuilder(this);
-        this.exportController = new ExportController(this);
-        this.presetApplicationController = new PresetApplicationController(this);
-        this.applicationEventController = this.lifecycle.own(new ApplicationEventController(this));
+        this.exportDocumentBuilder = new ExportDocumentBuilder(createExportDocumentPort(this));
+        this.exportController = new ExportController(createExportPort(this));
+        this.presetApplicationController = new PresetApplicationController(
+            createPresetApplicationPort(this)
+        );
+        this.applicationEventController = this.lifecycle.own(
+            new ApplicationEventController(createApplicationEventPort(this))
+        );
 
         // ============================================
         this.hasUnsavedChanges = false; // Флаг наличия несохраненных изменений
@@ -226,7 +253,8 @@ export class GridGenerator {
             onPresetLoad: (data, name) => this.handlePresetLoad(data, name),
             onPresetSelect: (file, name) => {
                 this.hasUnsavedChanges = false;
-            }
+            },
+            onError: error => this.errorPresenter.show(error, { title: 'Preset loading failed' })
         }));
         this.startupController = new ApplicationStartupController({
             loadPresets: () => this.presetManager.init(),
@@ -476,12 +504,19 @@ export class GridGenerator {
             await this.presetApplicationController.importFile(file);
         } catch (error) {
             console.error('❌ Failed to import settings:', error);
-            alert('Ошибка при импорте настроек: ' + error.message);
+            this.errorPresenter.show(error, { title: 'Import failed' });
         }
     }
 
     getStateSnapshot() {
         return this.presetApplicationController.createSnapshot();
+    }
+
+    getPerformanceMetrics() {
+        return Object.freeze({
+            render: this.renderScheduler.getMetrics(),
+            export: this.exportDocumentBuilder.getPerformanceMetrics()
+        });
     }
 
     undo() {

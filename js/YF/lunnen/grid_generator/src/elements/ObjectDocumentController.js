@@ -1,6 +1,8 @@
+import { cloneJson } from '../utils/cloneJson.js';
+
 const GRAPHICS_TYPES = new Set(['graphics', 'icons', 'claim']);
 
-const clone = value => value == null ? value : JSON.parse(JSON.stringify(value));
+const clone = cloneJson;
 
 const BUILT_IN_GRAPHICS = Object.freeze([
     Object.freeze({

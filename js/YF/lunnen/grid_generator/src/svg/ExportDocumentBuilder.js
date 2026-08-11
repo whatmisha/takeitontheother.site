@@ -1,3 +1,5 @@
+import { SvgAssetTemplateCache } from './SvgAssetTemplateCache.js';
+
 const STYLE_REFERENCES = Object.freeze([
     Object.freeze({ name: 'Headline', style: 'headline', size: 'headlineSize', lineHeight: 'lineHeight', fallbackSize: 1, fallbackLineHeight: 2 }),
     Object.freeze({ name: 'Text', style: 'text', size: 'textSize', lineHeight: 'textLineHeight', fallbackSize: 1, fallbackLineHeight: 2 }),
@@ -18,8 +20,18 @@ const DESIGN_KIT_ASSETS = Object.freeze([
 
 /** Builds Illustrator-friendly SVG documents independently from editor rendering. */
 export class ExportDocumentBuilder {
-    constructor(host) {
+    constructor(host, {
+        fetchImpl = (...args) => globalThis.fetch(...args),
+        parseSvg = source => new DOMParser().parseFromString(source, 'image/svg+xml'),
+        assetCache = new SvgAssetTemplateCache(),
+        now = () => globalThis.performance?.now?.() ?? Date.now()
+    } = {}) {
         this.host = host;
+        this.fetch = fetchImpl;
+        this.parseSvg = parseSvg;
+        this.assetCache = assetCache;
+        this.now = now;
+        this.metrics = { count: 0, totalMs: 0, lastMs: 0, maxMs: 0 };
     }
 
     createElement(type, attributes = {}, container = null) {
@@ -31,6 +43,19 @@ export class ExportDocumentBuilder {
     }
 
     async build(includeReferenceElements = true) {
+        const startedAt = this.now();
+        try {
+            return await this.buildDocument(includeReferenceElements);
+        } finally {
+            const duration = Math.max(0, this.now() - startedAt);
+            this.metrics.count += 1;
+            this.metrics.totalMs += duration;
+            this.metrics.lastMs = duration;
+            this.metrics.maxMs = Math.max(this.metrics.maxMs, duration);
+        }
+    }
+
+    async buildDocument(includeReferenceElements = true) {
         const host = this.host;
         const { frontWidth, frontHeight, thickness } = host.settingsModule.getAll();
         const totalWidth = frontWidth + 2 * thickness;
@@ -250,25 +275,36 @@ export class ExportDocumentBuilder {
     }
 
     async loadSvgAsset(filename) {
-        const response = await fetch(`graphics/${filename}`);
-        if (!response.ok) {
-            console.warn(`Failed to load ${filename}`);
-            return null;
-        }
-        const document = new DOMParser().parseFromString(
-            await response.text(),
-            'image/svg+xml'
-        );
-        const element = document.querySelector('svg');
-        const viewBox = element?.getAttribute('viewBox')
-            ?.trim()
-            .split(/[ ,]+/)
-            .map(Number);
-        if (!element || viewBox?.length !== 4 || !viewBox.every(Number.isFinite)) {
-            console.warn(`Invalid SVG structure for ${filename}`);
-            return null;
-        }
-        return { element, width: viewBox[2], height: viewBox[3] };
+        return this.assetCache.load(filename, async () => {
+            const response = await this.fetch(`graphics/${filename}`, { cache: 'force-cache' });
+            if (!response.ok) {
+                console.warn(`Failed to load ${filename}`);
+                return null;
+            }
+            const document = this.parseSvg(await response.text());
+            const element = document.querySelector('svg');
+            const viewBox = element?.getAttribute('viewBox')
+                ?.trim()
+                .split(/[ ,]+/)
+                .map(Number);
+            if (!element || viewBox?.length !== 4 || !viewBox.every(Number.isFinite)) {
+                console.warn(`Invalid SVG structure for ${filename}`);
+                return null;
+            }
+            return { element, width: viewBox[2], height: viewBox[3] };
+        });
+    }
+
+    getPerformanceMetrics() {
+        const { count, totalMs, lastMs, maxMs } = this.metrics;
+        return Object.freeze({
+            count,
+            totalMs,
+            lastMs,
+            maxMs,
+            averageMs: count ? totalMs / count : 0,
+            assets: this.assetCache.getMetrics()
+        });
     }
 }
 

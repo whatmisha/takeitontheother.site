@@ -1,7 +1,7 @@
 import { HistoryManager } from '../history/HistoryManager.js';
 import { SvgSanitizer } from '../svg/SvgSanitizer.js';
+import { cloneJson as clone } from '../utils/cloneJson.js';
 
-const clone = value => value == null ? value : JSON.parse(JSON.stringify(value));
 const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 
 /**
