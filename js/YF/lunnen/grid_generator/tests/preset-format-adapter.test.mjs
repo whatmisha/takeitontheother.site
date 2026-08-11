@@ -226,31 +226,19 @@ test('organized preset JSON round-trips every editable document setting', () => 
     assert.equal(icons.showBounds, true);
 });
 
-test('legacy organized presets import with deterministic compatibility defaults', async () => {
-    const legacy = JSON.parse(
+test('legacy and incomplete preset documents are rejected explicitly', async () => {
+    const current = JSON.parse(
         await readFile(new URL('../presets/E-ink.json', import.meta.url), 'utf8')
     );
-    delete legacy.grid.locks;
-    delete legacy.typography.units;
-    delete legacy.typography.caption;
-    delete legacy.typography.lunnenDisplay;
-    const normalized = adapter.normalize(legacy);
-
-    assert.equal(normalized.settings.fontSizeUnit, 'mod');
-    assert.equal(normalized.settings.lineHeightUnit, 'mod');
-    assert.equal(normalized.settings.lockedModule, false);
-    assert.equal(normalized.settings.lockedMargins, false);
-    assert.equal(normalized.settings.captionSize, 0.5);
-    assert.equal(normalized.settings.captionLineHeight, 1);
-    assert.equal(normalized.settings.captionTracking, 0);
-    assert.equal(normalized.settings.useXHeightCaption, false);
-    assert.equal(normalized.settings.captionFontWeight, 500);
-    assert.equal(normalized.settings.lunnenDisplaySize, 3);
-    assert.equal(normalized.settings.lunnenDisplayLineHeight, 4);
-    assert.equal(normalized.textBlocks.some(block => 'lockPosition' in block), false);
-});
-
-test('flat legacy documents remain untouched', () => {
-    const legacy = { settings: { gridModule: 5 }, textBlocks: [] };
-    assert.equal(adapter.normalize(legacy), legacy);
+    assert.throws(
+        () => adapter.normalize({ settings: { gridModule: 5 }, textBlocks: [] }),
+        /Unsupported preset format/
+    );
+    assert.throws(
+        () => adapter.normalize({ ...current, version: '1.1' }),
+        /version must be 1\.2/
+    );
+    const incomplete = structuredClone(current);
+    delete incomplete.typography.caption;
+    assert.throws(() => adapter.normalize(incomplete), /typography\.caption/);
 });

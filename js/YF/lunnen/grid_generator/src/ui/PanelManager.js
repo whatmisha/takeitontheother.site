@@ -86,4 +86,10 @@ export class PanelManager {
     center(panelId) {
         return this.registry.center(panelId);
     }
+
+    dispose() {
+        const disposed = this.dragController.dispose();
+        this.panels.clear();
+        return disposed;
+    }
 }

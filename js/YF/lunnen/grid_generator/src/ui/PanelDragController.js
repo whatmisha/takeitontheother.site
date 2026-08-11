@@ -1,3 +1,5 @@
+import { ListenerScope } from '../core/ListenerScope.js';
+
 const EMPTY_DRAG_STATE = Object.freeze({
     isDragging: false,
     panel: null,
@@ -14,10 +16,11 @@ export class PanelDragController {
         this.window = windowRef;
         this.state = { ...EMPTY_DRAG_STATE };
         this.bindings = new Map();
+        this.listeners = new ListenerScope();
         this.onMove = event => this.move(event);
         this.onStop = () => this.stop();
-        this.document.addEventListener('mousemove', this.onMove);
-        this.document.addEventListener('mouseup', this.onStop);
+        this.listeners.listen(this.document, 'mousemove', this.onMove);
+        this.listeners.listen(this.document, 'mouseup', this.onStop);
     }
 
     bind(panelId) {
@@ -25,7 +28,7 @@ export class PanelDragController {
         if (!panel || this.bindings.has(panelId)) return;
 
         const raise = () => this.registry.bringToFront(panelId);
-        panel.element.addEventListener('mousedown', raise);
+        this.listeners.listen(panel.element, 'mousedown', raise);
 
         let begin = null;
         if (panel.config.draggable && panel.header) {
@@ -35,7 +38,7 @@ export class PanelDragController {
                 if (event.target.closest('.collapse-toggle, .collapse-icon, .modal-close')) return;
                 this.start(panelId, event);
             };
-            panel.header.addEventListener('mousedown', begin);
+            this.listeners.listen(panel.header, 'mousedown', begin);
         }
         this.bindings.set(panelId, { panel, raise, begin });
     }
@@ -78,5 +81,11 @@ export class PanelDragController {
         if (panel?.header) panel.header.style.cursor = 'grab';
         if (panel?.element) panel.element.style.transition = '';
         this.state = { ...EMPTY_DRAG_STATE };
+    }
+
+    dispose() {
+        this.stop();
+        this.bindings.clear();
+        return this.listeners.dispose();
     }
 }

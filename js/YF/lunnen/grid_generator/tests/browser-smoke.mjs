@@ -1,4 +1,4 @@
-import { PresetFormatAdapter } from '../src/preset/PresetFormatAdapter.js?v=1.12.55';
+import { PresetFormatAdapter } from '../src/preset/PresetFormatAdapter.js';
 
 const resultElement = document.getElementById('result');
 const appFrame = document.getElementById('appFrame');
@@ -55,6 +55,15 @@ async function run() {
         presetFormat.organize({
             version: '1.2',
             settings: {
+                frontWidth: 500,
+                frontHeight: 500,
+                thickness: 50,
+                surfaceSettings: { front: { visible: true, rotation: 0, gridMode: 'main' } },
+                gridModule: 5,
+                margins: 2.5,
+                columnCount: 12,
+                rowCount: 12,
+                rowHeight: 7,
                 fontSizeUnit: 'pt',
                 lineHeightUnit: 'pt',
                 lockedModule: true,

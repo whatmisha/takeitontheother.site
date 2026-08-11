@@ -1,4 +1,5 @@
 import { MathUtils } from '../utils/MathUtils.js';
+import { ListenerScope } from '../core/ListenerScope.js';
 
 const CONTROL_CONFIG = Object.freeze({
     headline: Object.freeze({
@@ -81,6 +82,7 @@ export class TypographyUnitController {
         this.commitAction = commitAction;
         this.markChanged = markChanged;
         this.buttonsBound = false;
+        this.listeners = new ListenerScope();
     }
 
     bindButtons() {
@@ -92,7 +94,7 @@ export class TypographyUnitController {
                 const control = config[property];
                 for (const unit of ['mod', 'pt']) {
                     const button = this.dom[unit === 'mod' ? control.modButton : control.ptButton];
-                    button?.addEventListener('click', event => {
+                    this.listeners.listen(button, 'click', event => {
                         event.preventDefault();
                         const setting = property === 'size' ? 'fontSizeUnit' : 'lineHeightUnit';
                         if ((this.settings.get(setting) || 'mod') !== unit) {
@@ -102,6 +104,7 @@ export class TypographyUnitController {
                 }
             }
         }
+        return true;
     }
 
     switchUnit(style, property, unit) {
@@ -146,7 +149,12 @@ export class TypographyUnitController {
             for (const property of ['size', 'lineHeight']) {
                 if (propertyFilter && property !== propertyFilter) continue;
                 const control = config[property];
-                const valueInModules = this.settings.get(control.setting);
+                let valueInModules = Number(this.settings.get(control.setting));
+                if (!Number.isFinite(valueInModules)) {
+                    valueInModules = this.sliderController.getValue(control.slider);
+                    if (!Number.isFinite(valueInModules)) continue;
+                    this.settings.set(control.setting, valueInModules, true);
+                }
                 const unit = this.settings.get(
                     property === 'size' ? 'fontSizeUnit' : 'lineHeightUnit'
                 ) || 'mod';
@@ -189,5 +197,9 @@ export class TypographyUnitController {
 
     roundPt(valueInMm) {
         return Math.round(MathUtils.mmToPt(valueInMm) * 10) / 10;
+    }
+
+    dispose() {
+        return this.listeners.dispose();
     }
 }

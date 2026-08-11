@@ -4,8 +4,15 @@
  */
 
 export class TextToPath {
-    constructor() {
+    constructor({
+        dependencyLoader = async () => {
+            const module = await import('@vendor/opentype');
+            return module.default || module;
+        }
+    } = {}) {
         this.fonts = new Map(); // Кэш загруженных шрифтов
+        this.dependencyLoader = dependencyLoader;
+        this.opentype = null;
         this.fontPaths = {
             'TT Commons Classic-400': 'fonts/TT Commons Classic Regular.otf',
             'TT Commons Classic-500': 'fonts/TT Commons Classic Medium.otf',
@@ -25,25 +32,16 @@ export class TextToPath {
             return this.loadingPromise;
         }
 
-        this.loadingPromise = new Promise((resolve, reject) => {
-            // Проверяем, не загружена ли уже библиотека
-            if (window.opentype) {
+        this.loadingPromise = this.dependencyLoader()
+            .then(opentype => {
+                this.opentype = opentype;
                 this.opentypeLoaded = true;
-                resolve(true);
-                return;
-            }
-
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js';
-            script.onload = () => {
-                this.opentypeLoaded = true;
-                resolve(true);
-            };
-            script.onerror = () => {
-                reject(new Error('Failed to load opentype.js'));
-            };
-            document.head.appendChild(script);
-        });
+                return true;
+            })
+            .catch(error => {
+                this.loadingPromise = null;
+                throw new Error(`Failed to load opentype.js: ${error.message}`);
+            });
 
         return this.loadingPromise;
     }
@@ -67,7 +65,7 @@ export class TextToPath {
 
         try {
             const font = await new Promise((resolve, reject) => {
-                window.opentype.load(fontPath, (err, font) => {
+                this.opentype.load(fontPath, (err, font) => {
                     if (err) {
                         reject(err);
                     } else {
@@ -264,4 +262,3 @@ export class TextToPath {
         return Object.keys(this.fontPaths);
     }
 }
-

@@ -1,63 +1,69 @@
-import { TextToPath } from './src/utils/TextToPath.js';
+import { TextToPath } from '../utils/TextToPath.js';
 
-import { Settings } from './src/core/Settings.js?v=1.12.64';
-import { DOMCache } from './src/core/DOMCache.js?v=1.12.63';
-import { ApplicationStartupController } from './src/core/ApplicationStartupController.js?v=1.12.41';
-import { ApplicationUiSynchronizer } from './src/core/ApplicationUiSynchronizer.js?v=1.12.64';
-import { RenderScheduler } from './src/core/RenderScheduler.js?v=1.12.64';
+import { Settings } from './Settings.js';
+import { DOMCache } from './DOMCache.js';
+import { ApplicationStartupController } from './ApplicationStartupController.js';
+import { ApplicationUiSynchronizer } from './ApplicationUiSynchronizer.js';
+import { ApplicationLifecycle } from './ApplicationLifecycle.js';
+import { ListenerScope } from './ListenerScope.js';
+import { RenderScheduler } from './RenderScheduler.js';
 
-import { GridCalculator } from './src/grid/GridCalculator.js?v=1.12.28';
-import { GridRenderer } from './src/grid/GridRenderer.js?v=1.12.46';
-import { CanvasRendererController } from './src/grid/CanvasRendererController.js?v=1.12.38';
+import { GridCalculator } from '../grid/GridCalculator.js';
+import { GridRenderer } from '../grid/GridRenderer.js';
+import { CanvasRendererController } from '../grid/CanvasRendererController.js';
 
-import { createSliderConfig } from './src/config/SliderConfigFactory.js?v=1.12.64';
+import { createSliderConfig } from '../config/SliderConfigFactory.js';
 
-import { SliderController } from './src/ui/SliderController.js?v=1.12.50';
-import { PanelManager } from './src/ui/PanelManager.js?v=1.12.61';
-import { ZoomPanManager } from './src/ui/ZoomPanManager.js?v=1.12.47';
-import { TypographyUnitController } from './src/ui/TypographyUnitController.js?v=1.12.29';
-import { GridSettingsController } from './src/ui/GridSettingsController.js?v=1.12.59';
-import { ColorPanelController } from './src/ui/ColorPanelController.js?v=1.12.38';
-import { SliderHistoryController } from './src/ui/SliderHistoryController.js?v=1.12.38';
-import { ApplicationEventController } from './src/ui/ApplicationEventController.js?v=1.12.39';
-import { PanelUiController } from './src/ui/PanelUiController.js?v=1.12.61';
-import { ZoomToolbarController } from './src/ui/ZoomToolbarController.js?v=1.12.64';
+import { SliderController } from '../ui/SliderController.js';
+import { PanelManager } from '../ui/PanelManager.js';
+import { ZoomPanManager } from '../ui/ZoomPanManager.js';
+import { TypographyUnitController } from '../ui/TypographyUnitController.js';
+import { GridSettingsController } from '../ui/GridSettingsController.js';
+import { ColorPanelController } from '../ui/ColorPanelController.js';
+import { SliderHistoryController } from '../ui/SliderHistoryController.js';
+import { ApplicationEventController } from '../ui/ApplicationEventController.js';
+import { PanelUiController } from '../ui/PanelUiController.js';
+import { ZoomToolbarController } from '../ui/ZoomToolbarController.js';
 
-import { GraphicsRenderer } from './src/elements/GraphicsRenderer.js?v=1.12.25';
-import { TextBlockRenderer } from './src/elements/TextBlockRenderer.js?v=1.12.57';
-import { TextLayout } from './src/elements/TextLayout.js?v=1.12.27';
-import { TextStyleResolver } from './src/elements/TextStyleResolver.js?v=1.12.28';
-import { ObjectEditorPanelController } from './src/elements/ObjectEditorPanelController.js?v=1.12.53';
-import { ObjectEditorInputController } from './src/elements/ObjectEditorInputController.js?v=1.12.45';
-import { TextEditorPositionController } from './src/elements/TextEditorPositionController.js?v=1.12.60';
-import { LunnenDisplayEditorController } from './src/elements/LunnenDisplayEditorController.js?v=1.12.45';
-import { GraphicsEditorInputController } from './src/elements/GraphicsEditorInputController.js?v=1.12.44';
-import { GraphicsEditorEventController } from './src/elements/GraphicsEditorEventController.js?v=1.12.44';
-import { ObjectNavigatorController } from './src/elements/ObjectNavigatorController.js?v=1.12.52';
-import { ObjectDragController } from './src/elements/ObjectDragController.js?v=1.12.58';
-import { ObjectDocumentController } from './src/elements/ObjectDocumentController.js?v=1.12.39';
-import { ObjectPlacementController } from './src/elements/ObjectPlacementController.js?v=1.12.35';
-import { GraphicsAssetController } from './src/elements/GraphicsAssetController.js?v=1.12.35';
-import { BuiltInGraphicsController } from './src/elements/BuiltInGraphicsController.js?v=1.12.54';
+import { GraphicsRenderer } from '../elements/GraphicsRenderer.js';
+import { TextBlockRenderer } from '../elements/TextBlockRenderer.js';
+import { TextLayout } from '../elements/TextLayout.js';
+import { TextStyleResolver } from '../elements/TextStyleResolver.js';
+import { ObjectEditorPanelController } from '../elements/ObjectEditorPanelController.js';
+import { ObjectEditorInputController } from '../elements/ObjectEditorInputController.js';
+import { TextEditorPositionController } from '../elements/TextEditorPositionController.js';
+import { LunnenDisplayEditorController } from '../elements/LunnenDisplayEditorController.js';
+import { GraphicsEditorInputController } from '../elements/GraphicsEditorInputController.js';
+import { GraphicsEditorEventController } from '../elements/GraphicsEditorEventController.js';
+import { ObjectNavigatorController } from '../elements/ObjectNavigatorController.js';
+import { ObjectDragController } from '../elements/ObjectDragController.js';
+import { ObjectDocumentController } from '../elements/ObjectDocumentController.js';
+import { ObjectPlacementController } from '../elements/ObjectPlacementController.js';
+import { GraphicsAssetController } from '../elements/GraphicsAssetController.js';
+import { BuiltInGraphicsController } from '../elements/BuiltInGraphicsController.js';
 
-import { SVGExporter } from './src/svg/SVGExporter.js?v=1.12.66';
-import { ExportController } from './src/svg/ExportController.js?v=1.12.42';
-import { ExportDocumentBuilder } from './src/svg/ExportDocumentBuilder.js?v=1.12.36';
+import { SVGExporter } from '../svg/SVGExporter.js';
+import { ExportController } from '../svg/ExportController.js';
+import { ExportDocumentBuilder } from '../svg/ExportDocumentBuilder.js';
+import { SvgSanitizer } from '../svg/SvgSanitizer.js';
 
-import { PresetManager } from './src/preset/PresetManager.js?v=1.12.49';
-import { PresetApplicationController } from './src/preset/PresetApplicationController.js?v=1.12.42';
+import { PresetManager } from '../preset/PresetManager.js';
+import { PresetApplicationController } from '../preset/PresetApplicationController.js';
 
-import { HistoryManager } from './src/history/HistoryManager.js?v=1.12.56';
+import { HistoryManager } from '../history/HistoryManager.js';
 
 // Surface model
-import { SurfaceManager, SURFACE_IDS, SIDE_SURFACE_IDS } from './src/surfaces/SurfaceManager.js?v=1.12.62';
-import { SurfacePanelController } from './src/surfaces/SurfacePanelController.js?v=1.12.62';
-import { SurfaceCoordinateMapper } from './src/surfaces/SurfaceCoordinateMapper.js?v=1.12.11';
-import { SurfaceRenderer } from './src/surfaces/SurfaceRenderer.js?v=1.12.62';
+import { SurfaceManager, SURFACE_IDS, SIDE_SURFACE_IDS } from '../surfaces/SurfaceManager.js';
+import { SurfacePanelController } from '../surfaces/SurfacePanelController.js';
+import { SurfaceCoordinateMapper } from '../surfaces/SurfaceCoordinateMapper.js';
+import { SurfaceRenderer } from '../surfaces/SurfaceRenderer.js';
 
 export class GridGenerator {
     constructor() {
         this.isInitializing = true;
+        this.disposed = false;
+        this.lifecycle = new ApplicationLifecycle();
+        this.globalListeners = this.lifecycle.own(new ListenerScope());
         this.sliderConfig = createSliderConfig(this);
         this.settingsModule = new Settings();
         this.textStyleResolver = new TextStyleResolver(this.settingsModule);
@@ -99,7 +105,7 @@ export class GridGenerator {
 
         // ============================================
         this.gridCalculator = new GridCalculator(this.settingsModule);
-        this.gridSettingsController = new GridSettingsController(this);
+        this.gridSettingsController = this.lifecycle.own(new GridSettingsController(this));
         Object.assign(this.sliderConfig, this.gridSettingsController.getSliderConfigs());
 
         // ============================================
@@ -147,32 +153,35 @@ export class GridGenerator {
         this.PADDING = 60; // padding around the grid (increased for dimensions)
 
         // ============================================
-        this.renderScheduler = new RenderScheduler({
+        this.renderScheduler = this.lifecycle.own(new RenderScheduler({
             render: () => this.canvasRenderer.render(),
             canRender: () => !this.isInitializing
-        });
+        }));
 
         // ============================================
         this.domCache = new DOMCache().init();
         this.dom = this.domCache.getAll();
-        this.panelUiController = new PanelUiController(this);
+        this.panelUiController = this.lifecycle.own(new PanelUiController(this));
         this.applicationUi = new ApplicationUiSynchronizer(this);
-        this.colorPanelController = new ColorPanelController({
+        this.colorPanelController = this.lifecycle.own(new ColorPanelController({
             settings: this.settingsModule,
             dom: this.dom,
             beginAction: label => this.historyManager.beginAction(label, this.getStateSnapshot()),
             commitAction: () => this.historyManager.commitAction(this.getStateSnapshot()),
             markChanged: () => this.markAsChanged(),
             render: () => this.updateGrid()
-        });
-        this.objectEditorPanelController = new ObjectEditorPanelController(this);
-        this.objectEditorInputController = new ObjectEditorInputController(this);
-        this.textEditorPositionController = new TextEditorPositionController(this);
-        this.lunnenDisplayEditorController = new LunnenDisplayEditorController(this);
+        }));
+        this.objectEditorPanelController = this.lifecycle.own(new ObjectEditorPanelController(this));
+        this.objectEditorInputController = this.lifecycle.own(new ObjectEditorInputController(this));
+        this.textEditorPositionController = this.lifecycle.own(new TextEditorPositionController(this));
+        this.lunnenDisplayEditorController = this.lifecycle.own(new LunnenDisplayEditorController(this));
         this.graphicsEditorInputController = new GraphicsEditorInputController(this);
-        this.graphicsEditorEventController = new GraphicsEditorEventController(this);
-        this.graphicsAssetController = new GraphicsAssetController(this);
-        this.objectNavigatorController = new ObjectNavigatorController(this);
+        this.graphicsEditorEventController = this.lifecycle.own(new GraphicsEditorEventController(this));
+        this.svgSanitizer = new SvgSanitizer();
+        this.graphicsAssetController = new GraphicsAssetController(this, {
+            sanitizer: this.svgSanitizer
+        });
+        this.objectNavigatorController = this.lifecycle.own(new ObjectNavigatorController(this));
         this.builtInGraphicsController = new BuiltInGraphicsController({
             assetController: this.graphicsAssetController,
             objectDocument: this.objectDocument,
@@ -181,14 +190,14 @@ export class GridGenerator {
                 this.initGraphicsRenderer();
             }
         });
-        this.objectDragController = new ObjectDragController(this);
+        this.objectDragController = this.lifecycle.own(new ObjectDragController(this));
         this.objectDragController.init();
         this.initTextLayout();
         this.initTextRenderer();
 
         // ============================================
         this.initUIControllers();
-        this.typographyUnitController = new TypographyUnitController({
+        this.typographyUnitController = this.lifecycle.own(new TypographyUnitController({
             settings: this.settingsModule,
             dom: this.dom,
             sliderController: this.sliderController,
@@ -198,7 +207,7 @@ export class GridGenerator {
             ),
             commitAction: () => this.historyManager.commitAction(this.getStateSnapshot()),
             markChanged: () => this.markAsChanged()
-        });
+        }));
 
         // ============================================
         this.textToPath = new TextToPath();
@@ -206,11 +215,11 @@ export class GridGenerator {
         this.exportDocumentBuilder = new ExportDocumentBuilder(this);
         this.exportController = new ExportController(this);
         this.presetApplicationController = new PresetApplicationController(this);
-        this.applicationEventController = new ApplicationEventController(this);
+        this.applicationEventController = this.lifecycle.own(new ApplicationEventController(this));
 
         // ============================================
         this.hasUnsavedChanges = false; // Флаг наличия несохраненных изменений
-        this.presetManager = new PresetManager({
+        this.presetManager = this.lifecycle.own(new PresetManager({
             dropdownToggle: this.dom.presetDropdownToggle,
             dropdownMenu: this.dom.presetDropdownMenu,
             dropdown: this.dom.presetDropdown,
@@ -218,7 +227,7 @@ export class GridGenerator {
             onPresetSelect: (file, name) => {
                 this.hasUnsavedChanges = false;
             }
-        });
+        }));
         this.startupController = new ApplicationStartupController({
             loadPresets: () => this.presetManager.init(),
             loadBuiltInGraphics: () => this.builtInGraphicsController.initialize(),
@@ -227,7 +236,7 @@ export class GridGenerator {
         });
 
         // Предупреждение при закрытии вкладки с несохраненными изменениями
-        window.addEventListener('beforeunload', (e) => {
+        this.globalListeners.listen(globalThis.window, 'beforeunload', e => {
             if (this.hasUnsavedChanges) {
                 // Стандартный диалог браузера
                 e.preventDefault();
@@ -272,19 +281,21 @@ export class GridGenerator {
         this.applicationUi.initializeEyeIcons();
 
         // Update canvas size on window resize
-        window.addEventListener('resize', () => {
+        this.globalListeners.listen(globalThis.window, 'resize', () => {
             this.applicationUi.updateViewportSize();
             this.updateGrid();
         });
     }
 
     finalizeInitialization() {
+        if (this.disposed) return false;
         this.constrainAllObjectsToGrid();
         this.objectNavigatorController.render();
         this.applicationUi.updateViewportSize();
         this.isInitializing = false;
         this.updateGrid();
         document.documentElement.dataset.appReady = 'true';
+        return true;
     }
 
     // Отметить, что были внесены изменения
@@ -314,7 +325,7 @@ export class GridGenerator {
      * Инициализация управления отдельными боковыми поверхностями.
      */
     initSurfaceControls() {
-        this.surfacePanelController = new SurfacePanelController({
+        this.surfacePanelController = this.lifecycle.own(new SurfacePanelController({
             dom: this.dom,
             surfaceManager: this.surfaceManager,
             sliderController: this.sliderController,
@@ -326,7 +337,7 @@ export class GridGenerator {
             onRender: () => this.updateGrid(),
             onRenderDebounced: () => this.updateGridDebounced(),
             onUpdateEyeIcon: input => this.updateEyeIcon(input)
-        });
+        }));
         this.surfacePanelController.init();
     }
 
@@ -486,31 +497,31 @@ export class GridGenerator {
     }
 
     initUIControllers() {
-        this.sliderController = new SliderController(this.settingsModule);
+        this.sliderController = this.lifecycle.own(new SliderController(this.settingsModule));
 
         Object.keys(this.sliderConfig).forEach(sliderId => {
             const config = this.sliderConfig[sliderId];
             this.sliderController.initSlider(sliderId, config);
         });
 
-        this.sliderHistoryController = new SliderHistoryController({
+        this.sliderHistoryController = this.lifecycle.own(new SliderHistoryController({
             sliderController: this.sliderController,
             beginAction: label => this.historyManager.beginAction(label, this.getStateSnapshot()),
             commitAction: () => this.historyManager.commitAction(this.getStateSnapshot())
-        });
+        }));
         this.sliderHistoryController.bind();
 
-        this.panelManager = new PanelManager();
+        this.panelManager = this.lifecycle.own(new PanelManager());
 
-        this.zoomPanManager = new ZoomPanManager(
+        this.zoomPanManager = this.lifecycle.own(new ZoomPanManager(
             this.dom.canvasContainer,
             this.dom.svg
-        );
+        ));
 
-        this.zoomToolbarController = new ZoomToolbarController({
+        this.zoomToolbarController = this.lifecycle.own(new ZoomToolbarController({
             dom: this.dom,
             zoomPanManager: this.zoomPanManager
-        });
+        }));
         this.zoomToolbarController.bind();
 
     }
@@ -542,6 +553,7 @@ export class GridGenerator {
             ),
             getContrastColor: () => this.canvasRenderer.getContrastColor(),
             getBlockY: block => this.getBlockY(block),
+            sanitizeSvgContent: content => this.svgSanitizer.sanitizeFragment(content),
             attachInteractions: (group, block) => (
                 this.objectDragController.attachGraphics(group, block)
             )
@@ -574,5 +586,19 @@ export class GridGenerator {
             getSurfaceGridContext: surface => this.getSurfaceGridContext(surface),
             getBlockY: block => this.getBlockY(block)
         });
+    }
+
+    dispose() {
+        if (this.disposed) return false;
+        this.disposed = true;
+        this.isInitializing = true;
+        Object.values(this.deletionTimers).forEach(timer => clearTimeout(timer));
+        this.deletionTimers = {};
+        this.historyManager?.cancelAction?.();
+        this.lifecycle.dispose();
+        if (globalThis.document?.documentElement?.dataset.appReady === 'true') {
+            globalThis.document.documentElement.dataset.appReady = 'disposed';
+        }
+        return true;
     }
 }

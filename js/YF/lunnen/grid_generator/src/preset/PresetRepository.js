@@ -25,7 +25,9 @@ export class PresetRepository {
     }
 
     async loadBuiltIn(filename) {
-        const response = await this.fetch(`presets/${encodeURIComponent(filename)}`);
+        const response = await this.fetch(`presets/${encodeURIComponent(filename)}`, {
+            cache: 'no-store'
+        });
         if (!response.ok) {
             throw new Error(`Failed to load preset: ${response.statusText}`);
         }

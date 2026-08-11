@@ -162,4 +162,5 @@ export class TextEditorPositionController {
     bindConstraintToggle() { return this.bindings.bindConstraintToggle(); }
     bindAnchorAlignment() { return this.bindings.bindAnchorAlignment(); }
     bindTextAlignment() { return this.bindings.bindTextAlignment(); }
+    dispose() { return this.bindings.dispose?.() ?? false; }
 }

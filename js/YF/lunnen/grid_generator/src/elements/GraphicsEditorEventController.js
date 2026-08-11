@@ -1,16 +1,23 @@
+import { ListenerScope } from '../core/ListenerScope.js';
+
 /** Owns graphics-panel events that mutate the editable graphics document. */
 export class GraphicsEditorEventController {
     constructor(host, { documentRef = globalThis.document } = {}) {
         this.host = host;
         this.document = documentRef;
+        this.listeners = new ListenerScope();
+        this.initialized = false;
     }
 
     init() {
+        if (this.initialized) return false;
+        this.initialized = true;
         this.bindSurfaceSelection();
         this.bindConstraintControls();
         this.bindFileUpload();
         this.bindObjectActions();
         this.bindSizeMode();
+        return true;
     }
 
     getEditingBlock() {
@@ -36,7 +43,7 @@ export class GraphicsEditorEventController {
         const select = this.host.dom.graphicsSurfaceSelect;
         if (!select) return;
 
-        select.addEventListener('change', () => {
+        this.listeners.listen(select, 'change', () => {
             const moved = this.mutate('move graphics to surface', block => {
                 this.host.moveBlockToSurface(block, select.value);
                 this.host.graphicsEditorInputController.initGraphicsInputs();
@@ -47,14 +54,14 @@ export class GraphicsEditorEventController {
 
     bindConstraintControls() {
         const lockToggle = this.host.dom.graphicsLockPositionToggle;
-        lockToggle?.addEventListener('change', () => {
+        this.listeners.listen(lockToggle, 'change', () => {
             this.mutate('toggle graphics constraint', block => {
                 block.lockPosition = lockToggle.checked;
             });
         });
 
         const alignRightToggle = this.host.dom.graphicsAlignRightToggle;
-        alignRightToggle?.addEventListener('change', () => {
+        this.listeners.listen(alignRightToggle, 'change', () => {
             this.mutate('change graphics alignment', block => {
                 block.alignment = alignRightToggle.checked ? 'right' : 'left';
             });
@@ -64,18 +71,18 @@ export class GraphicsEditorEventController {
     bindFileUpload() {
         const { fileUploadArea, svgFileInput } = this.host.dom;
         if (fileUploadArea) {
-            fileUploadArea.addEventListener('click', () => svgFileInput?.click());
-            fileUploadArea.addEventListener('dragover', event => {
+            this.listeners.listen(fileUploadArea, 'click', () => svgFileInput?.click());
+            this.listeners.listen(fileUploadArea, 'dragover', event => {
                 event.preventDefault();
                 event.stopPropagation();
                 fileUploadArea.classList.add('dragover');
             });
-            fileUploadArea.addEventListener('dragleave', event => {
+            this.listeners.listen(fileUploadArea, 'dragleave', event => {
                 event.preventDefault();
                 event.stopPropagation();
                 fileUploadArea.classList.remove('dragover');
             });
-            fileUploadArea.addEventListener('drop', event => {
+            this.listeners.listen(fileUploadArea, 'drop', event => {
                 event.preventDefault();
                 event.stopPropagation();
                 fileUploadArea.classList.remove('dragover');
@@ -86,14 +93,14 @@ export class GraphicsEditorEventController {
             });
         }
 
-        svgFileInput?.addEventListener('change', event => {
+        this.listeners.listen(svgFileInput, 'change', event => {
             const file = event.target.files?.[0];
             if (file) this.host.graphicsAssetController.handleFile(file);
         });
     }
 
     bindObjectActions() {
-        this.document?.getElementById('graphicsHideBtn')?.addEventListener('click', () => {
+        this.listeners.listen(this.document?.getElementById('graphicsHideBtn'), 'click', () => {
             if (!this.host.currentEditingGraphicsId) return;
             this.host.objectNavigatorController.toggleVisibility(
                 'graphics',
@@ -101,7 +108,7 @@ export class GraphicsEditorEventController {
             );
         });
 
-        this.document?.getElementById('graphicsDuplicateBtn')?.addEventListener('click', () => {
+        this.listeners.listen(this.document?.getElementById('graphicsDuplicateBtn'), 'click', () => {
             const block = this.getEditingBlock();
             if (!block) return;
             const type = block.isBuiltIn && (block.id === 'icons' || block.id === 'claim')
@@ -110,7 +117,7 @@ export class GraphicsEditorEventController {
             this.host.objectNavigatorController.duplicate(type, block.id);
         });
 
-        this.document?.getElementById('graphicsDeleteBtn')?.addEventListener('click', () => {
+        this.listeners.listen(this.document?.getElementById('graphicsDeleteBtn'), 'click', () => {
             const block = this.getEditingBlock();
             if (!block) return;
 
@@ -145,8 +152,8 @@ export class GraphicsEditorEventController {
                 this.recalculateSizeMode(block);
             });
         };
-        graphicsSizeModeWidth.addEventListener('change', handleChange);
-        graphicsSizeModeHeight.addEventListener('change', handleChange);
+        this.listeners.listen(graphicsSizeModeWidth, 'change', handleChange);
+        this.listeners.listen(graphicsSizeModeHeight, 'change', handleChange);
     }
 
     syncSizeModeGroups(sizeMode) {
@@ -186,5 +193,9 @@ export class GraphicsEditorEventController {
         if (this.host.dom.graphicsHeightInput) {
             this.host.dom.graphicsHeightInput.value = block.heightInModules.toFixed(2);
         }
+    }
+
+    dispose() {
+        return this.listeners.dispose();
     }
 }

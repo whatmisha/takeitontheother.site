@@ -1,5 +1,8 @@
 # Full code audit — 2026-08-11
 
+Historical snapshot. The post-refactor follow-up is
+`FULL_CODE_AUDIT_2026-08-12.md`.
+
 ## Scope
 
 The audit covered the complete application entry path, all source modules,

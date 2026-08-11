@@ -1,15 +1,17 @@
 import { PresetDocumentDeserializer } from './PresetDocumentDeserializer.js';
 import { PresetDocumentSerializer } from './PresetDocumentSerializer.js';
+import { PresetSchemaValidator } from './PresetSchemaValidator.js';
 
-/** Detects the external preset format and coordinates its conversion. */
+/** Coordinates the single supported preset format and document conversion. */
 export class PresetFormatAdapter {
-    constructor({ serializer = new PresetDocumentSerializer(), deserializer = new PresetDocumentDeserializer() } = {}) {
+    constructor({
+        serializer = new PresetDocumentSerializer(),
+        deserializer = new PresetDocumentDeserializer(),
+        validator = new PresetSchemaValidator()
+    } = {}) {
         this.serializer = serializer;
         this.deserializer = deserializer;
-    }
-
-    isOrganized(data) {
-        return Boolean(data?.dimensions && data?.grid && data?.typography);
+        this.validator = validator;
     }
 
     organize(data = {}, options = {}) {
@@ -17,10 +19,7 @@ export class PresetFormatAdapter {
     }
 
     normalize(data) {
-        return this.isOrganized(data) ? this.fromOrganized(data) : data;
-    }
-
-    fromOrganized(data) {
+        this.validator.assert(data);
         return this.deserializer.deserialize(data);
     }
 }

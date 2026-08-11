@@ -7,7 +7,7 @@
     <meta name="keywords" content="grid generator, packaging, print design, Adobe Illustrator, SVG">
     
     <title>Pizza Boxer — Packaging Layout Tool</title>
-    <link rel="stylesheet" href="style.css?v=1.12.10">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
@@ -1083,6 +1083,14 @@
         </div>
     </div>
 
-    <script type="module" src="script.js?v=1.12.66"></script>
+    <script>
+        window.addEventListener('error', event => {
+            document.documentElement.dataset.moduleError = event.message || 'Unknown module error';
+        });
+        window.addEventListener('unhandledrejection', event => {
+            document.documentElement.dataset.moduleError = event.reason?.message || String(event.reason);
+        });
+    </script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>

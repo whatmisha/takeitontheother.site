@@ -1,3 +1,5 @@
+import { ListenerScope } from '../core/ListenerScope.js';
+
 /** Owns preset dropdown rendering, sizing, selection and document events. */
 export class PresetDropdownView {
     constructor({
@@ -19,6 +21,7 @@ export class PresetDropdownView {
         this.maxPresetWidth = 0;
         this.currentPreset = null;
         this.bound = false;
+        this.listeners = new ListenerScope();
         this.handlers = {
             toggle: event => {
                 event.stopPropagation();
@@ -67,7 +70,7 @@ export class PresetDropdownView {
     makeSelectable(item, file, name) {
         item.dataset.file = file;
         item.setAttribute('role', 'option');
-        item.addEventListener('click', () => {
+        this.listeners.listen(item, 'click', () => {
             this.onSelect(file, name);
             this.close(file);
         });
@@ -101,9 +104,9 @@ export class PresetDropdownView {
 
     bind() {
         if (this.bound) return;
-        this.toggleElement.addEventListener('click', this.handlers.toggle);
-        this.document?.addEventListener('click', this.handlers.documentClick);
-        this.document?.addEventListener('keydown', this.handlers.documentKeydown);
+        this.listeners.listen(this.toggleElement, 'click', this.handlers.toggle);
+        this.listeners.listen(this.document, 'click', this.handlers.documentClick);
+        this.listeners.listen(this.document, 'keydown', this.handlers.documentKeydown);
         this.bound = true;
     }
 
@@ -189,5 +192,10 @@ export class PresetDropdownView {
         ) {
             this.toggleElement.style.width = `${this.presetWidths[file]}px`;
         }
+    }
+
+    dispose() {
+        this.bound = false;
+        return this.listeners.dispose();
     }
 }

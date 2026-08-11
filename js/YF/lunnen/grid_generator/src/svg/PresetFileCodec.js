@@ -1,4 +1,4 @@
-import { PresetFormatAdapter } from '../preset/PresetFormatAdapter.js?v=1.12.55';
+import { PresetFormatAdapter } from '../preset/PresetFormatAdapter.js';
 
 /** Owns the human-editable JSON preset representation and descriptive name. */
 export class PresetFileCodec {
@@ -39,5 +39,4 @@ export class PresetFileCodec {
 
     stringify(data) { return JSON.stringify(data, null, 2); }
     normalize(data) { return this.adapter.normalize(data); }
-    fromOrganized(data) { return this.adapter.fromOrganized(data); }
 }

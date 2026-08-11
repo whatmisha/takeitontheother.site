@@ -1,3 +1,4 @@
+import { ListenerScope } from '../core/ListenerScope.js';
 import { ObjectEditorPanelView } from './ObjectEditorPanelView.js';
 import { PanelPositioner } from './PanelPositioner.js';
 
@@ -7,6 +8,26 @@ export class ObjectEditorPanelController {
         this.host = host;
         this.view = view || new ObjectEditorPanelView(host);
         this.positioner = positioner || new PanelPositioner();
+        this.listeners = new ListenerScope();
+        this.outsideClickBound = false;
+        this.handleOutsideClick = event => {
+            const target = event.target;
+            const { paragraphPanel, graphicsPanel } = this.host.dom;
+            if (
+                paragraphPanel?.classList.contains('active')
+                && !paragraphPanel.contains(target)
+                && !target.closest('[data-block-id], [data-element-type="text"], .element-button')
+            ) {
+                this.closeTextPanel();
+            }
+            if (
+                graphicsPanel?.classList.contains('active')
+                && !graphicsPanel.contains(target)
+                && !target.closest('[data-block-id], [data-element-type="graphics"], #addGraphicsBtn, .element-button')
+            ) {
+                this.closeGraphicsPanel();
+            }
+        };
     }
 
     saveInitialTextState(block) {
@@ -75,24 +96,10 @@ export class ObjectEditorPanelController {
     }
 
     initOutsideClickHandler() {
-        this.view.document.addEventListener('click', event => {
-            const target = event.target;
-            const { paragraphPanel, graphicsPanel } = this.host.dom;
-            if (
-                paragraphPanel?.classList.contains('active')
-                && !paragraphPanel.contains(target)
-                && !target.closest('[data-block-id], [data-element-type="text"], .element-button')
-            ) {
-                this.closeTextPanel();
-            }
-            if (
-                graphicsPanel?.classList.contains('active')
-                && !graphicsPanel.contains(target)
-                && !target.closest('[data-block-id], [data-element-type="graphics"], #addGraphicsBtn, .element-button')
-            ) {
-                this.closeGraphicsPanel();
-            }
-        });
+        if (this.outsideClickBound) return false;
+        this.outsideClickBound = true;
+        this.listeners.listen(this.view.document, 'click', this.handleOutsideClick);
+        return true;
     }
 
     syncTextStyleSections(block) {
@@ -129,5 +136,9 @@ export class ObjectEditorPanelController {
 
     setChecked(control, checked) {
         return this.view.setChecked(control, checked);
+    }
+
+    dispose() {
+        return this.listeners.dispose();
     }
 }

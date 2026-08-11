@@ -31,7 +31,8 @@ export class ZoomPanManager {
     }
 
     initializeSVG() {
-        requestAnimationFrame(() => {
+        this.initializeFrame = requestAnimationFrame(() => {
+            this.initializeFrame = null;
             try {
                 const width = parseFloat(this.svg.getAttribute('width')) || 0;
                 const height = parseFloat(this.svg.getAttribute('height')) || 0;
@@ -219,6 +220,14 @@ export class ZoomPanManager {
     }
 
     destroy() {
+        if (this.initializeFrame != null) {
+            cancelAnimationFrame(this.initializeFrame);
+            this.initializeFrame = null;
+        }
         this.eventController.destroy();
+    }
+
+    dispose() {
+        return this.destroy();
     }
 }

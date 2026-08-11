@@ -19,7 +19,7 @@ test('SVG file export serializes outlined, interaction-free Illustrator markup',
     globalThis.XMLSerializer = class {
         serializeToString(node) {
             assert.equal(node, clone);
-            return '<svg xmlns="http://www.w3.org/2000/svg" width="600mm" height="500mm" viewBox="0 0 600 500"><path d="M0 0"/></svg>';
+            return '<svg xmlns="http://www.w3.org/2000/svg" width="600mm" height="500mm" viewBox="0 0 600 500"><text>\u041dоутбук</text><path d="M0 0"/></svg>';
         }
     };
     try {
@@ -34,8 +34,7 @@ test('SVG file export serializes outlined, interaction-free Illustrator markup',
                 organize: value => value,
                 generateName: () => '',
                 stringify: JSON.stringify,
-                normalize: value => value,
-                fromOrganized: value => value
+                normalize: value => value
             },
             pdfExporter: {}
         });
@@ -50,6 +49,8 @@ test('SVG file export serializes outlined, interaction-free Illustrator markup',
         const download = calls.find(call => call[0] === 'download');
         assert.equal(download[2], 'packaging.svg');
         assert.equal(download[3], 'image/svg+xml;charset=utf-8');
+        assert.ok(download[1].startsWith('\uFEFF<?xml version="1.0" encoding="UTF-8"?>\n'));
+        assert.match(download[1], />Ноутбук<\/text>/);
         assert.match(download[1], /width="600mm" height="500mm" viewBox="0 0 600 500"/);
     } finally {
         globalThis.XMLSerializer = previousSerializer;

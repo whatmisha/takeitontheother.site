@@ -10,6 +10,7 @@ export class ObjectNavigatorView {
         this.host = host;
         this.actions = actions;
         this.document = documentRef;
+        this.highlightTimers = new Set();
     }
 
     render(items) {
@@ -139,7 +140,11 @@ export class ObjectNavigatorView {
         const bounds = this.getBounds(type, blockId);
         if (!bounds) return;
         this.setBoundsOpacity(bounds, 0.8, 0.1);
-        setTimeout(() => this.setBoundsOpacity(bounds, 0, 0), 2000);
+        const timer = setTimeout(() => {
+            this.highlightTimers.delete(timer);
+            if (bounds.isConnected !== false) this.setBoundsOpacity(bounds, 0, 0);
+        }, 2000);
+        this.highlightTimers.add(timer);
     }
 
     showBounds(type, blockId = null) {
@@ -163,5 +168,11 @@ export class ObjectNavigatorView {
     setBoundsOpacity(bounds, stroke, fill) {
         bounds.setAttribute('stroke-opacity', String(stroke));
         bounds.setAttribute('fill-opacity', String(fill));
+    }
+
+    dispose() {
+        this.highlightTimers.forEach(timer => clearTimeout(timer));
+        this.highlightTimers.clear();
+        return true;
     }
 }

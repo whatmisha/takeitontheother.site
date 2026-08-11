@@ -1,3 +1,5 @@
+import { ListenerScope } from '../core/ListenerScope.js';
+
 const TEXT_STYLE_SECTIONS = [
     ['headline', 'headlineHeader', 'headlineContent'],
     ['text', 'textHeader', 'textContent'],
@@ -16,12 +18,16 @@ export class PanelUiController {
         this.host = host;
         this.document = documentRef;
         this.window = windowRef;
+        this.listeners = new ListenerScope();
+        this.boundGroups = new Set();
         this.textStylesState = Object.fromEntries(
             TEXT_STYLE_SECTIONS.map(([style]) => [style, false])
         );
     }
 
     bindPanelCollapse() {
+        if (this.boundGroups.has('panels')) return false;
+        this.boundGroups.add('panels');
         this.document.querySelectorAll('.collapse-icon').forEach(icon => {
             const panel = icon.closest('.controls-panel');
             const header = icon.closest('.panel-header');
@@ -29,7 +35,7 @@ export class PanelUiController {
             if (!panel || !header || !content) return;
 
             const initiallyCollapsed = panel.classList.contains('panel-collapsed');
-            this.host.panelManager?.setCollapsed(panel.id, initiallyCollapsed);
+            this.host.panelManager?.setCollapsed?.(panel.id, initiallyCollapsed);
             this.syncCollapseIcon(icon, initiallyCollapsed);
 
             const bottomAnchored = panel.classList.contains('elements-navigator') ||
@@ -59,17 +65,18 @@ export class PanelUiController {
                 this.updatePanelParams();
             };
 
-            icon.addEventListener('click', toggle);
-            icon.addEventListener('keydown', event => {
+            this.listeners.listen(icon, 'click', toggle);
+            this.listeners.listen(icon, 'keydown', event => {
                 if (event.key !== 'Enter' && event.key !== ' ') return;
                 event.preventDefault();
                 toggle(event);
             });
         });
+        return true;
     }
 
     setPanelCollapsed(panel, collapsed) {
-        if (!this.host.panelManager?.setCollapsed(panel.id, collapsed)) {
+        if (!this.host.panelManager?.setCollapsed?.(panel.id, collapsed)) {
             panel.classList.toggle('panel-collapsed', collapsed);
         }
     }
@@ -133,23 +140,28 @@ export class PanelUiController {
     }
 
     bindCollapsibleSections() {
+        if (this.boundGroups.has('sections')) return false;
+        this.boundGroups.add('sections');
         this.document.querySelectorAll('.collapsible-header').forEach(header => {
             const toggle = header.querySelector('.collapse-toggle');
             const content = this.document.getElementById(header.id.replace('Header', 'Content'));
             if (!toggle || !content) return;
 
-            header.addEventListener('click', event => {
+            this.listeners.listen(header, 'click', event => {
                 event.preventDefault();
                 event.stopPropagation();
                 const expanded = toggle.getAttribute('aria-expanded') !== 'true';
                 toggle.setAttribute('aria-expanded', String(expanded));
                 content.classList.toggle('collapsed', !expanded);
             });
-            header.addEventListener('mousedown', event => event.stopPropagation());
+            this.listeners.listen(header, 'mousedown', event => event.stopPropagation());
         });
+        return true;
     }
 
     bindDropdowns() {
+        if (this.boundGroups.has('dropdowns')) return false;
+        this.boundGroups.add('dropdowns');
         this.document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
             const dropdown = this.document.getElementById(toggle.getAttribute('data-target'));
             const container = toggle.closest('.value-input-with-dropdown');
@@ -157,7 +169,7 @@ export class PanelUiController {
             if (!dropdown || !input) return;
             const sliderId = input.id.replace('Value', 'Slider');
 
-            toggle.addEventListener('click', event => {
+            this.listeners.listen(toggle, 'click', event => {
                 event.stopPropagation();
                 this.document.querySelectorAll('.dropdown-menu.active').forEach(menu => {
                     if (menu !== dropdown) menu.classList.remove('active');
@@ -167,7 +179,7 @@ export class PanelUiController {
             });
 
             dropdown.querySelectorAll('.dropdown-item').forEach(item => {
-                item.addEventListener('click', event => {
+                this.listeners.listen(item, 'click', event => {
                     event.stopPropagation();
                     this.host.historyManager.beginAction(
                         `select ${sliderId} dropdown`,
@@ -184,7 +196,7 @@ export class PanelUiController {
             });
         });
 
-        this.document.addEventListener('click', event => {
+        this.listeners.listen(this.document, 'click', event => {
             if (event.target.closest('.value-input-with-dropdown')) return;
             this.document.querySelectorAll('.dropdown-menu.active').forEach(menu => {
                 menu.classList.remove('active');
@@ -192,6 +204,7 @@ export class PanelUiController {
         });
 
         this.syncFontWeights();
+        return true;
     }
 
     updateDropdownSelection(dropdown, currentValue) {
@@ -209,5 +222,10 @@ export class PanelUiController {
                 select.value = String(settings[setting]);
             }
         });
+    }
+
+    dispose() {
+        this.boundGroups.clear();
+        return this.listeners.dispose();
     }
 }

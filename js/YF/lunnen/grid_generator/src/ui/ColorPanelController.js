@@ -1,4 +1,5 @@
 import { ColorUtils } from '../utils/ColorUtils.js';
+import { ListenerScope } from '../core/ListenerScope.js';
 
 const DEFAULT_COLOR = '#dadde6';
 const LUNNEN_BLUE = '#2353DB';
@@ -20,23 +21,28 @@ export class ColorPanelController {
         this.commitAction = commitAction;
         this.markChanged = markChanged;
         this.render = render;
+        this.listeners = new ListenerScope();
+        this.bound = false;
     }
 
     bind() {
-        this.dom.colorPreview?.addEventListener('click', () => this.togglePicker());
-        this.dom.lunnenBlue?.addEventListener('click', () => this.applyPreset(LUNNEN_BLUE));
+        if (this.bound) return false;
+        this.bound = true;
+        this.listeners.listen(this.dom.colorPreview, 'click', () => this.togglePicker());
+        this.listeners.listen(this.dom.lunnenBlue, 'click', () => this.applyPreset(LUNNEN_BLUE));
 
         const input = this.dom.hexColorInput;
         if (!input) return;
 
-        input.addEventListener('focus', () => this.beginAction('edit hex color'));
-        input.addEventListener('input', event => this.formatHexInput(event.target));
-        input.addEventListener('keydown', event => {
+        this.listeners.listen(input, 'focus', () => this.beginAction('edit hex color'));
+        this.listeners.listen(input, 'input', event => this.formatHexInput(event.target));
+        this.listeners.listen(input, 'keydown', event => {
             if (event.key !== 'Enter') return;
             event.preventDefault();
             input.blur();
         });
-        input.addEventListener('blur', event => this.commitHexInput(event.target));
+        this.listeners.listen(input, 'blur', event => this.commitHexInput(event.target));
+        return true;
     }
 
     initialize() {
@@ -177,5 +183,11 @@ export class ColorPanelController {
             }
         `;
         this.document.head.appendChild(style);
+    }
+
+    dispose() {
+        this.document.getElementById('saturationSlider-wide-track-style')?.remove();
+        this.document.getElementById('brightnessSlider-wide-track-style')?.remove();
+        return this.listeners.dispose();
     }
 }

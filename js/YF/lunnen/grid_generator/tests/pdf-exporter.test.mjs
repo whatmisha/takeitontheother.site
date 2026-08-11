@@ -73,24 +73,22 @@ test('PDF export fails explicitly when mandatory font outlining is unavailable',
     );
 });
 
-test('PDF dependency loading restores only the missing library', async () => {
+test('PDF dependency loading is local, lazy and cached', async () => {
     class FakePdf {}
-    const loadedScripts = [];
-    const windowRef = { jspdf: { jsPDF: FakePdf } };
+    const loads = [];
     const exporter = new PDFExporter({
         textToPath: {},
         cleanSvg: () => {},
-        documentRef: {},
-        windowRef
+        windowRef: {},
+        dependencyLoader: async () => {
+            loads.push('load');
+            return { jsPDF: FakePdf, svg2pdf: () => {} };
+        }
     });
-    exporter.loadScript = async src => {
-        loadedScripts.push(src);
-        windowRef.svg2pdf = () => {};
-    };
 
     await exporter.loadLibraries();
+    await exporter.loadLibraries();
 
-    assert.equal(loadedScripts.length, 1);
-    assert.match(loadedScripts[0], /svg2pdf/);
+    assert.deepEqual(loads, ['load']);
     assert.equal(exporter.libsLoaded, true);
 });

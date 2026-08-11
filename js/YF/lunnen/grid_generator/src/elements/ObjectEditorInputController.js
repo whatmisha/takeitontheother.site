@@ -1,3 +1,5 @@
+import { ListenerScope } from '../core/ListenerScope.js';
+
 const TEXT_PRESETS = [
     { label: 'Brand', text: 'Lunnen — бренд компьютерной техники и аксессуаров, придуманный в Яндекс Фабрике. Сопровождает в исследованиях, работе и развлечениях.' },
     { label: 'Outer', text: 'Продвинутая линейка Lunnen Outer для исследований неизведанного. Эффективные технологии для работы с графикой или развлечений разного уровня сложностей.' },
@@ -14,13 +16,19 @@ export class ObjectEditorInputController {
     constructor(host, { documentRef = globalThis.document } = {}) {
         this.host = host;
         this.document = documentRef;
+        this.listeners = new ListenerScope();
+        this.generatedPresetChips = [];
+        this.initialized = false;
     }
 
     initTextEditor() {
+        if (this.initialized) return false;
         this.bindTextArea();
         this.initTextPresetChips();
         this.bindStyleSelect();
         this.bindObjectActions();
+        this.initialized = true;
+        return true;
     }
 
     mutate(label, callback, { renderNavigator = false } = {}) {
@@ -39,13 +47,13 @@ export class ObjectEditorInputController {
         const textarea = this.host.dom.paragraphTextArea;
         if (!textarea) return;
 
-        textarea.addEventListener('focus', () => {
+        this.listeners.listen(textarea, 'focus', () => {
             this.host.historyManager.beginAction(
                 'edit text content',
                 this.host.getStateSnapshot()
             );
         });
-        textarea.addEventListener('keydown', event => {
+        this.listeners.listen(textarea, 'keydown', event => {
             if ((event.key === 'Enter' || event.key === ' ') && event.shiftKey) {
                 event.preventDefault();
                 this.insertAtSelection(textarea, '\n');
@@ -57,7 +65,7 @@ export class ObjectEditorInputController {
                 textarea.blur();
             }
         });
-        textarea.addEventListener('blur', () => {
+        this.listeners.listen(textarea, 'blur', () => {
             const block = this.host.currentEditingBlock;
             if (block) {
                 block.content = textarea.value;
@@ -82,7 +90,7 @@ export class ObjectEditorInputController {
 
     bindStyleSelect() {
         const select = this.host.dom.paragraphStyleSelect;
-        select?.addEventListener('change', () => {
+        this.listeners.listen(select, 'change', () => {
             this.mutate('change text style', block => {
                 block.styleRef = select.value;
                 this.syncStyleSections(select.value);
@@ -102,7 +110,7 @@ export class ObjectEditorInputController {
 
     bindObjectActions() {
         const hideButton = this.document?.getElementById('paragraphHideBtn');
-        hideButton?.addEventListener('click', () => {
+        this.listeners.listen(hideButton, 'click', () => {
             const block = this.host.currentEditingBlock;
             if (!block) return;
             this.host.objectNavigatorController.toggleVisibility('text', block.id);
@@ -112,7 +120,8 @@ export class ObjectEditorInputController {
             );
         });
 
-        this.document?.getElementById('paragraphDuplicateBtn')?.addEventListener(
+        this.listeners.listen(
+            this.document?.getElementById('paragraphDuplicateBtn'),
             'click',
             () => {
                 const block = this.host.currentEditingBlock;
@@ -120,7 +129,8 @@ export class ObjectEditorInputController {
             }
         );
 
-        this.document?.getElementById('paragraphDeleteBtn')?.addEventListener(
+        this.listeners.listen(
+            this.document?.getElementById('paragraphDeleteBtn'),
             'click',
             () => this.deleteCurrentBlock()
         );
@@ -159,7 +169,7 @@ export class ObjectEditorInputController {
             button.type = 'button';
             button.setAttribute('aria-label', `Insert text: ${preset.label}`);
             button.innerHTML = `${plusSvg}<span>${preset.label}</span>`;
-            button.addEventListener('click', () => {
+            this.listeners.listen(button, 'click', () => {
                 if (!this.host.dom.paragraphTextArea) return;
                 this.mutate(`insert text preset: ${preset.label}`, block => {
                     this.host.dom.paragraphTextArea.value = preset.text;
@@ -168,6 +178,14 @@ export class ObjectEditorInputController {
                 }, { renderNavigator: true });
             });
             container.appendChild(button);
+            this.generatedPresetChips.push(button);
         });
+    }
+
+    dispose() {
+        const removedListeners = this.listeners.dispose();
+        this.generatedPresetChips.forEach(button => button.remove());
+        this.generatedPresetChips = [];
+        return removedListeners > 0;
     }
 }

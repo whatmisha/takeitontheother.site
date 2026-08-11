@@ -118,4 +118,10 @@ export class ObjectDragController {
         group.boundsElement.setAttribute('stroke-opacity', String(stroke));
         group.boundsElement.setAttribute('fill-opacity', String(fill));
     }
+
+    dispose() {
+        this.resetState();
+        this.textResize.dispose?.();
+        return this.events.dispose?.() ?? false;
+    }
 }

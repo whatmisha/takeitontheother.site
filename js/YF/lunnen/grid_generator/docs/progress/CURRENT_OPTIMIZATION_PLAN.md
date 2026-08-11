@@ -1,48 +1,46 @@
 # Current stabilization and refactoring plan
 
-Updated: 2026-08-11.
+Updated: 2026-08-12.
 
-JSON files in `presets/` remain the source of truth. Refactoring must preserve
-Chrome/Safari behavior, Illustrator-compatible export, canvas-only rotation,
-surface-local grids and cross-surface object dragging.
+JSON files in `presets/` remain the source of truth. Chrome/Safari behavior,
+Illustrator-compatible output, canvas-only rotation, surface-local grids and
+cross-surface dragging are release invariants.
 
 ## Completed
 
-- Regression foundation and deterministic browser smoke suite.
-- Surface orientation, visibility and independent grid model/UI/import/export.
-- Canvas rotation, screen-axis panning, zoom/Fit and rotated object dragging.
-- Grid rendering, settings, sliders, presets and text-editor decomposition.
-- SVG/PDF/JSON export service decomposition.
-- Objects navigator and object editor panel decomposition.
-- Preset format serialization and current/legacy deserialization split.
-- Snapshot history and semantic action transaction split.
-- Text block render-model and SVG view split.
-- Object drag pointer binding, shared drag state and text resize split.
-- Grid mutation commands separated from Grid DOM synchronization.
-- Text position bindings separated from surface-aware constraints.
-- Panel registry, lifecycle and shared pointer-drag controller unified.
-- Surface persistence, geometry, panel commands, layers and grid painting split.
-- DOM indexing, generated slider definitions and default settings simplified.
-- `script.js` reduced to bootstrap; application composition moved to
-  `GridGenerator.js`.
-- Application UI synchronization, render scheduling and zoom toolbar split into
-  dedicated owners.
-- Unused alternate settings serialization and the divergent Python preset
-  manifest generator removed.
-- Final SVG/PDF/JSON, preset, file-transfer and browser regressions completed.
-- Full code, markup, style, test, tooling and repository audit completed.
+- Surface orientation, visibility, own grid, panel UI and persistence.
+- Canvas rotation, screen-axis pan, Fit/zoom and rotated dragging.
+- Full JSON round-trip, including locks, units, Caption, Lunnen Display,
+  graphics constraints and all side settings.
+- Preset contract fixed at version 1.2; all 19 source presets migrated and
+  legacy import branches removed.
+- Runtime preset validation and public JSON Schema 1.2.
+- One application disposal lifecycle for global listeners, gesture handlers,
+  timers and scheduled renders, with a double-bootstrap regression test.
+- JSON Schema 1.2 is the single validation contract. Ajv compiles it into a
+  checked-in standalone browser validator; tests and builds reject stale code.
+- SVG ingress sanitizer with defense-in-depth before `innerHTML` rendering.
+- UTF-8 BOM plus XML encoding declaration for macOS Quick Look SVG parsing.
+- Local pinned jsPDF, svg2pdf.js and opentype.js; no export CDN dependency.
+- Vite build with hashed production assets and no manual module `?v=` strings.
+- Root cleanup: visible files are only `index.html`, `script.js`, `style.css`;
+  tooling, documentation and composition code live in subdirectories. The
+  hidden root `.gitignore` is intentionally retained.
+- Release checklist, current format/startup documentation and archived history.
+- 135 unit/regression checks, 64 browser checks, production build and zero
+  known npm vulnerabilities.
 
-## Recommended next sequence
+## Proposed next sequence
 
-1. Sanitize imported/uploaded SVG at the ingress boundary.
-2. Replace distributed manual module cache-busting.
-3. Make PDF and text-outline dependencies local and offline-capable.
-4. Add a versioned validated preset schema and explicit migrations.
-5. Narrow remaining whole-host controller dependencies and add disposal
-   lifecycle.
-6. Split the monolithic HTML/CSS into stable panel/control components.
-7. Complete Safari/Illustrator acceptance and repository/documentation cleanup.
+1. Replace the busiest whole-host controller dependencies with narrow ports,
+   starting with preset application, export, grid commands and object editors.
+2. Split `style.css` into tokens/shared controls/panel modules, then split the
+   large panel markup while preserving the three-file root shell.
+3. Cache immutable design-kit SVG assets and measure render/export performance
+   before changing canvas algorithms.
+4. Consolidate clone helpers and replace blocking import/export alerts with a
+   non-blocking error surface.
+5. Complete the manual Chrome/Safari/Quick Look/Illustrator matrix in
+   `docs/guides/RELEASE_CHECKLIST.md`.
 
-The evidence, risks and decision points are recorded in
-`FULL_CODE_AUDIT_2026-08-11.md`. Every implementation stage must end with focused
-unit tests, the complete test suite and browser smoke.
+Evidence and risks: `FULL_CODE_AUDIT_2026-08-12.md`.

@@ -148,7 +148,7 @@ test('surface settings and object surfaces survive JSON export/import', () => {
     };
 
     const organized = exporter.organizeSettingsForExport({
-        version: 'test',
+        version: '1.2',
         timestamp: 'test',
         currentPresetName: 'New',
         settings: {

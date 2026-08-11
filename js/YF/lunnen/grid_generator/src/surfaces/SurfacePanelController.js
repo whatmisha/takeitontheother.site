@@ -1,3 +1,4 @@
+import { ListenerScope } from '../core/ListenerScope.js';
 import { SurfacePanelCommands } from './SurfacePanelCommands.js';
 
 const DEFAULT_SIDE_SURFACES = Object.freeze(['left', 'right', 'top', 'bottom']);
@@ -27,6 +28,8 @@ export class SurfacePanelController {
         this.sliderController = sliderController;
         this.sideSurfaces = sideSurfaces;
         this.activeSurface = sideSurfaces[0];
+        this.listeners = new ListenerScope();
+        this.initialized = false;
         this.onUpdateEyeIcon = onUpdateEyeIcon;
         this.commands = new SurfacePanelCommands({
             surfaceManager,
@@ -41,49 +44,52 @@ export class SurfacePanelController {
 
     init() {
         if (!this.dom.surfaceSettingsTabs) return;
+        if (this.initialized) return false;
+        this.initialized = true;
 
         this.dom.surfaceSettingsTabs.querySelectorAll('[data-surface]').forEach(input => {
-            input.addEventListener('change', () => {
+            this.listeners.listen(input, 'change', () => {
                 if (!input.checked || !this.sideSurfaces.includes(input.dataset.surface)) return;
                 this.activeSurface = input.dataset.surface;
                 this.sync();
             });
         });
 
-        this.dom.surfaceVisibleToggle?.addEventListener('change', event => {
+        this.listeners.listen(this.dom.surfaceVisibleToggle, 'change', event => {
             this.commands.setVisibility(this.activeSurface, event.target.checked);
             this.sync();
         });
 
-        this.dom.surfaceOwnGridToggle?.addEventListener('change', event => {
+        this.listeners.listen(this.dom.surfaceOwnGridToggle, 'change', event => {
             this.commands.setGridMode(this.activeSurface, event.target.checked);
             this.sync();
         });
 
-        this.dom.surfaceRotationSelect?.addEventListener('change', event => {
+        this.listeners.listen(this.dom.surfaceRotationSelect, 'change', event => {
             const rotation = Number(event.target.value);
             this.commands.setRotation(this.activeSurface, rotation);
             this.sync();
         });
 
-        this.dom.surfaceMarginsUnitMod?.addEventListener('click', event => {
+        this.listeners.listen(this.dom.surfaceMarginsUnitMod, 'click', event => {
             event.preventDefault();
             this.switchMarginsUnit('mod');
         });
-        this.dom.surfaceMarginsUnitMm?.addEventListener('click', event => {
+        this.listeners.listen(this.dom.surfaceMarginsUnitMm, 'click', event => {
             event.preventDefault();
             this.switchMarginsUnit('mm');
         });
-        this.dom.surfaceLockModuleBtn?.addEventListener('click', event => {
+        this.listeners.listen(this.dom.surfaceLockModuleBtn, 'click', event => {
             event.preventDefault();
             this.toggleGridLock('module');
         });
-        this.dom.surfaceLockMarginsBtn?.addEventListener('click', event => {
+        this.listeners.listen(this.dom.surfaceLockMarginsBtn, 'click', event => {
             event.preventDefault();
             this.toggleGridLock('margins');
         });
 
         this.sync();
+        return true;
     }
 
     applyGridValue(key, displayValue) {
@@ -156,5 +162,10 @@ export class SurfacePanelController {
                 option.disabled = option.value !== 'front' && !this.surfaceManager.isVisible(option.value);
             });
         });
+    }
+
+    dispose() {
+        this.initialized = false;
+        return this.listeners.dispose();
     }
 }

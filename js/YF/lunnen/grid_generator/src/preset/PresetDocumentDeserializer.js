@@ -3,11 +3,6 @@ const compact = object => Object.fromEntries(
     Object.entries(object).filter(([, value]) => value !== undefined)
 );
 
-const TYPOGRAPHY_DEFAULTS = Object.freeze({
-    caption: Object.freeze({ size: 0.5, lineHeight: 1, tracking: 0, useXHeight: false, fontWeight: 500 }),
-    lunnenDisplay: Object.freeze({ size: 3, lineHeight: 4, tracking: 0, useXHeight: false })
-});
-
 const BUILT_IN_DEFAULTS = Object.freeze({
     icons: Object.freeze({ name: 'Icons', x: 1, originalWidth: 204.0944882, originalHeight: 28.3464567 }),
     claim: Object.freeze({ name: 'Claim', x: 7, originalWidth: 186.2242584, originalHeight: 28.3464565 })
@@ -82,40 +77,40 @@ function deserializeBuiltIn(graphic, id) {
     });
 }
 
-/** Normalizes current and legacy organized preset JSON into the document model. */
+/** Converts the validated current preset JSON into the document model. */
 export class PresetDocumentDeserializer {
     deserialize(data) {
         const grid = data.grid || {};
         const typography = data.typography || {};
         const units = typography.units || {};
         const locks = grid.locks || {};
-        const caption = typography.caption || TYPOGRAPHY_DEFAULTS.caption;
-        const display = typography.lunnenDisplay || TYPOGRAPHY_DEFAULTS.lunnenDisplay;
+        const caption = typography.caption;
+        const display = typography.lunnenDisplay;
         const settings = compact({
             frontWidth: data.dimensions?.width,
             frontHeight: data.dimensions?.height,
             thickness: data.dimensions?.thickness,
             gridModule: grid.module,
             margins: grid.margins,
-            marginsUnit: grid.marginsUnit ?? 'mod',
+            marginsUnit: grid.marginsUnit,
             columnCount: grid.columns,
             rowCount: grid.rows,
             rowHeight: grid.rowHeight,
             linkMode: grid.linkMode,
-            lockedModule: locks.module ?? grid.lockedModule ?? false,
-            lockedMargins: locks.margins ?? grid.lockedMargins ?? false,
-            lockedModuleValue: locks.moduleValue ?? grid.lockedModuleValue ?? null,
-            lockedMarginsValue: locks.marginsValue ?? grid.lockedMarginsValue ?? null,
+            lockedModule: locks.module,
+            lockedMargins: locks.margins,
+            lockedModuleValue: locks.moduleValue,
+            lockedMarginsValue: locks.marginsValue,
             showColumns: grid.visibility?.columns,
             showRows: grid.visibility?.rows,
             showBaseline: grid.visibility?.baseline,
             boxColor: data.colors?.background,
-            fontSizeUnit: units.size ?? typography.fontSizeUnit ?? 'mod',
-            lineHeightUnit: units.lineHeight ?? typography.lineHeightUnit ?? 'mod',
+            fontSizeUnit: units.size,
+            lineHeightUnit: units.lineHeight,
             ...this.deserializeStyle(typography.headline, 'headline'),
             ...this.deserializeStyle(typography.text, 'text'),
-            ...this.deserializeStyle(caption, 'caption', TYPOGRAPHY_DEFAULTS.caption),
-            ...this.deserializeStyle(display, 'lunnenDisplay', TYPOGRAPHY_DEFAULTS.lunnenDisplay),
+            ...this.deserializeStyle(caption, 'caption'),
+            ...this.deserializeStyle(display, 'lunnenDisplay'),
             showDimensions: data.display?.dimensions,
             showLabels: data.display?.labels,
             showSidePanels: data.display?.sidePanels,

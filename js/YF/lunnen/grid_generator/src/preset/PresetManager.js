@@ -160,4 +160,8 @@ export class PresetManager {
     hasUnsavedChanges() {
         return this.hasChanges;
     }
+
+    dispose() {
+        return this.view.dispose?.() ?? false;
+    }
 }

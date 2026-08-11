@@ -1,3 +1,5 @@
+import { ListenerScope } from '../core/ListenerScope.js';
+
 export class SliderHistoryController {
     constructor({
         sliderController,
@@ -11,27 +13,33 @@ export class SliderHistoryController {
         this.commitAction = commitAction;
         this.activeSliders = new Set();
         this.activeInputs = new Set();
+        this.listeners = new ListenerScope();
+        this.bound = false;
+        this.handleDocumentMouseUp = () => this.commitAllSliders();
     }
 
     bind() {
+        if (this.bound) return false;
+        this.bound = true;
         this.sliderController.sliders.forEach((sliderData, sliderId) => {
             const slider = sliderData.element;
             const input = sliderData.valueInput;
 
-            slider.addEventListener('mousedown', event => {
+            this.listeners.listen(slider, 'mousedown', event => {
                 if (event.button !== 0) return;
                 this.beginSlider(sliderId);
             });
-            slider.addEventListener('mouseup', event => {
+            this.listeners.listen(slider, 'mouseup', event => {
                 if (event.button !== 0) return;
                 this.commitSlider(sliderId);
             });
 
-            input?.addEventListener('focus', () => this.beginInput(sliderId));
-            input?.addEventListener('blur', () => this.commitInput(sliderId));
+            this.listeners.listen(input, 'focus', () => this.beginInput(sliderId));
+            this.listeners.listen(input, 'blur', () => this.commitInput(sliderId));
         });
 
-        this.document.addEventListener('mouseup', () => this.commitAllSliders());
+        this.listeners.listen(this.document, 'mouseup', this.handleDocumentMouseUp);
+        return true;
     }
 
     beginSlider(sliderId) {
@@ -62,5 +70,11 @@ export class SliderHistoryController {
         for (const sliderId of [...this.activeSliders]) {
             this.commitSlider(sliderId);
         }
+    }
+
+    dispose() {
+        this.commitAllSliders();
+        this.activeInputs.clear();
+        return this.listeners.dispose();
     }
 }

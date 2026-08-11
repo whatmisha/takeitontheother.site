@@ -1,5 +1,5 @@
 import { MathUtils } from '../utils/MathUtils.js';
-import { SLIDER_CONFIG } from './SliderConfig.js?v=1.12.64';
+import { SLIDER_CONFIG } from './SliderConfig.js';
 
 const SIZE_SLIDERS = {
     headlineSizeSlider: ['headlineSize', 'headline'],

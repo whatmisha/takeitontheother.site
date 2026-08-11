@@ -20,4 +20,9 @@ export class RenderScheduler {
     duringGesture() {
         if (this.canRender()) this.throttled();
     }
+
+    dispose() {
+        this.debounced.cancel?.();
+        this.throttled.cancel?.();
+    }
 }

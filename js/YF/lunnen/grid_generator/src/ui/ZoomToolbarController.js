@@ -1,3 +1,5 @@
+import { ListenerScope } from '../core/ListenerScope.js';
+
 /** Binds the Fit/zoom indicator and canvas-only rotation controls. */
 export class ZoomToolbarController {
     constructor({ dom, zoomPanManager }) {
@@ -5,26 +7,37 @@ export class ZoomToolbarController {
         this.zoomPanManager = zoomPanManager;
         this.hovered = false;
         this.percent = 100;
+        this.listeners = new ListenerScope();
+        this.bound = false;
     }
 
     bind() {
+        if (this.bound) return false;
+        this.bound = true;
         const indicator = this.dom.zoomIndicator;
-        this.dom.canvasContainer.addEventListener('zoomchange', event => {
+        this.listeners.listen(this.dom.canvasContainer, 'zoomchange', event => {
             this.percent = event.detail.percent;
             if (!this.hovered && indicator) indicator.textContent = `${this.percent}%`;
         });
-        indicator?.addEventListener('mouseenter', () => {
+        this.listeners.listen(indicator, 'mouseenter', () => {
             this.hovered = true;
             indicator.textContent = 'Fit';
         });
-        indicator?.addEventListener('mouseleave', () => {
+        this.listeners.listen(indicator, 'mouseleave', () => {
             this.hovered = false;
             indicator.textContent = `${this.percent}%`;
         });
-        indicator?.addEventListener('click', () => this.zoomPanManager.resetZoom());
-        this.dom.canvasRotateLeftBtn?.addEventListener(
+        this.listeners.listen(indicator, 'click', () => this.zoomPanManager.resetZoom());
+        this.listeners.listen(
+            this.dom.canvasRotateLeftBtn,
             'click',
             () => this.zoomPanManager.rotateLeft()
         );
+        return true;
+    }
+
+    dispose() {
+        this.bound = false;
+        return this.listeners.dispose();
     }
 }

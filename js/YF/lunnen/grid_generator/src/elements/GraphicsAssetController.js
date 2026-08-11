@@ -1,7 +1,10 @@
+import { SvgSanitizer } from '../svg/SvgSanitizer.js';
+
 /** Loads, normalizes and applies SVG assets used by graphics objects. */
 export class GraphicsAssetController {
-    constructor(host) {
+    constructor(host, { sanitizer = new SvgSanitizer() } = {}) {
         this.host = host;
+        this.sanitizer = sanitizer;
     }
 
     async load(filePath) {
@@ -53,6 +56,7 @@ export class GraphicsAssetController {
         const parser = new DOMParser();
         const svg = parser.parseFromString(svgContent, 'image/svg+xml').querySelector('svg');
         if (!svg) return null;
+        this.sanitizer.sanitizeElement(svg);
         const viewBox = svg.getAttribute('viewBox')?.trim().split(/[ ,]+/).map(Number);
         const width = viewBox?.length === 4 && Number.isFinite(viewBox[2])
             ? viewBox[2]

@@ -1,3 +1,5 @@
+import { ListenerScope } from '../core/ListenerScope.js';
+
 const round = value => Number.parseFloat(Number(value).toFixed(4));
 
 /** Owns Grid/Dimensions DOM bindings, visual state and row-preset buttons. */
@@ -7,6 +9,8 @@ export class GridSettingsView {
         this.actions = actions;
         this.document = documentRef;
         this.bound = false;
+        this.listeners = new ListenerScope();
+        this.presetListeners = new ListenerScope();
         this.handlers = {
             linkMode: event => this.actions.setLinkMode(event.target.value),
             marginsMod: event => this.handleMarginsUnit(event, 'mod'),
@@ -19,14 +23,15 @@ export class GridSettingsView {
     bind() {
         if (this.bound) return;
         const { dom } = this.host;
-        dom.linkModeOff?.addEventListener('change', this.handlers.linkMode);
-        dom.linkModeRowsHeight?.addEventListener('change', this.handlers.linkMode);
-        dom.linkModeModule?.addEventListener('change', this.handlers.linkMode);
-        dom.marginsUnitMod?.addEventListener('click', this.handlers.marginsMod);
-        dom.marginsUnitMm?.addEventListener('click', this.handlers.marginsMm);
-        dom.lockModuleBtn?.addEventListener('click', this.handlers.lockModule);
-        dom.lockMarginsBtn?.addEventListener('click', this.handlers.lockMargins);
+        this.listeners.listen(dom.linkModeOff, 'change', this.handlers.linkMode);
+        this.listeners.listen(dom.linkModeRowsHeight, 'change', this.handlers.linkMode);
+        this.listeners.listen(dom.linkModeModule, 'change', this.handlers.linkMode);
+        this.listeners.listen(dom.marginsUnitMod, 'click', this.handlers.marginsMod);
+        this.listeners.listen(dom.marginsUnitMm, 'click', this.handlers.marginsMm);
+        this.listeners.listen(dom.lockModuleBtn, 'click', this.handlers.lockModule);
+        this.listeners.listen(dom.lockMarginsBtn, 'click', this.handlers.lockMargins);
         this.bound = true;
+        return true;
     }
 
     handleMarginsUnit(event, unit) {
@@ -125,6 +130,8 @@ export class GridSettingsView {
     generateRowPresets() {
         const container = this.document?.getElementById('rowPresetsContainer');
         if (!container) return;
+        this.presetListeners.dispose();
+        this.presetListeners = new ListenerScope();
         container.innerHTML = '';
 
         this.host.gridCalculator.findPerfectRowCombinations().forEach(combo => {
@@ -136,7 +143,7 @@ export class GridSettingsView {
                 'aria-label',
                 `Set ${combo.rowCount} rows with height ${combo.rowHeight}`
             );
-            button.addEventListener('click', () => this.actions.applyRowPreset(combo));
+            this.presetListeners.listen(button, 'click', () => this.actions.applyRowPreset(combo));
             container.appendChild(button);
         });
         this.updatePresetButtons();
@@ -154,5 +161,10 @@ export class GridSettingsView {
                 candidateRows === rowCount && candidateHeight === rowHeight
             );
         });
+    }
+
+    dispose() {
+        this.presetListeners.dispose();
+        return this.listeners.dispose();
     }
 }

@@ -1,7 +1,7 @@
 /**
  * Управление настройками приложения
  */
-import { DEFAULT_SETTINGS } from './Constants.js?v=1.12.64';
+import { DEFAULT_SETTINGS } from './Constants.js';
 
 export class Settings {
     constructor(initialSettings = {}) {

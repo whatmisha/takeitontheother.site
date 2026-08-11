@@ -117,6 +117,7 @@ test('preset repository owns manifest transport and cloned imported data', async
     assert.equal(requests[0].options.cache, 'no-store');
     assert.deepEqual(await repository.loadBuiltIn('A B.json'), { presetName: 'A B' });
     assert.equal(requests[1].url, 'presets/A%20B.json');
+    assert.equal(requests[1].options.cache, 'no-store');
 
     const source = { settings: { gridModule: 5 } };
     const imported = repository.addImported(source, 'Custom');

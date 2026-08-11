@@ -1,3 +1,5 @@
+import { ListenerScope } from '../core/ListenerScope.js';
+
 const VISIBILITY_CONTROLS = [
     ['showColumns', 'showColumns', 'toggle columns'],
     ['showRows', 'showRows', 'toggle rows'],
@@ -21,9 +23,14 @@ export class ApplicationEventController {
     constructor(host, documentRef = document) {
         this.host = host;
         this.document = documentRef;
+        this.listeners = new ListenerScope();
+        this.bound = false;
+        this.handleDocumentKeydown = event => this.handleKeyboard(event);
     }
 
     bind() {
+        if (this.bound) return false;
+        this.bound = true;
         this.bindSideVisibility();
         this.host.gridSettingsController.bind();
 
@@ -38,11 +45,12 @@ export class ApplicationEventController {
         this.bindFontWeights();
         this.host.colorPanelController.bind();
         this.bindActionButtons();
-        this.document.addEventListener('keydown', event => this.handleKeyboard(event));
+        this.listeners.listen(this.document, 'keydown', this.handleDocumentKeydown);
+        return true;
     }
 
     bindSideVisibility() {
-        this.host.dom.showSidePanels?.addEventListener('change', event => {
+        this.listeners.listen(this.host.dom.showSidePanels, 'change', event => {
             this.runAction('toggle side panels', () => {
                 this.host.markAsChanged();
                 this.host.surfaceManager.setAllSideVisibility(event.target.checked);
@@ -54,7 +62,7 @@ export class ApplicationEventController {
     }
 
     bindSettingToggle(input, setting, label, updateEyeIcon) {
-        input?.addEventListener('change', event => {
+        this.listeners.listen(input, 'change', event => {
             this.runAction(label, () => {
                 this.host.markAsChanged();
                 this.host.settingsModule.set(setting, event.target.checked);
@@ -66,7 +74,7 @@ export class ApplicationEventController {
 
     bindFontWeights() {
         FONT_WEIGHT_CONTROLS.forEach(([elementId, setting, label]) => {
-            this.document.getElementById(elementId)?.addEventListener('change', event => {
+            this.listeners.listen(this.document.getElementById(elementId), 'change', event => {
                 this.runAction(label, () => {
                     this.host.settingsModule.set(setting, Number.parseInt(event.target.value, 10));
                     this.host.objectNavigatorController.render();
@@ -77,19 +85,26 @@ export class ApplicationEventController {
     }
 
     bindActionButtons() {
-        this.host.dom.exportBtn?.addEventListener(
+        this.listeners.listen(
+            this.host.dom.exportBtn,
             'click',
             () => this.host.exportController.exportSvg()
         );
-        this.host.dom.exportPDFBtn?.addEventListener(
+        this.listeners.listen(
+            this.host.dom.exportPDFBtn,
             'click',
             () => this.host.exportController.exportPdf()
         );
-        this.host.dom.exportSettingsBtn?.addEventListener(
+        this.listeners.listen(
+            this.host.dom.exportSettingsBtn,
             'click',
             () => this.host.exportController.exportSettings()
         );
-        this.host.dom.importSettingsBtn?.addEventListener('click', () => this.openImportPicker());
+        this.listeners.listen(
+            this.host.dom.importSettingsBtn,
+            'click',
+            () => this.openImportPicker()
+        );
     }
 
     openImportPicker() {
@@ -184,5 +199,10 @@ export class ApplicationEventController {
         this.host.historyManager.beginAction(label, this.host.getStateSnapshot());
         mutation();
         this.host.historyManager.commitAction(this.host.getStateSnapshot());
+    }
+
+    dispose() {
+        this.bound = false;
+        return this.listeners.dispose();
     }
 }

@@ -10,12 +10,14 @@ export class GraphicsRenderer {
         createSvgElement,
         getContrastColor,
         getBlockY,
+        sanitizeSvgContent = content => content,
         attachInteractions = () => {}
     }) {
         this.settings = settings;
         this.createSvgElement = createSvgElement;
         this.getContrastColor = getContrastColor;
         this.getBlockY = getBlockY;
+        this.sanitizeSvgContent = sanitizeSvgContent;
         this.attachInteractions = attachInteractions;
     }
 
@@ -108,7 +110,7 @@ export class GraphicsRenderer {
         group.boundsElement = bounds;
 
         const svg = this.createGraphicSvg(group, block, layout, color, true);
-        svg.innerHTML = block.svgContent;
+        svg.innerHTML = this.sanitizeSvgContent(block.svgContent);
         this.attachInteractions(group, block);
         return group;
     }
@@ -119,7 +121,7 @@ export class GraphicsRenderer {
         const color = this.getContrastColor();
         const layout = this.calculateLayout(block, frontX, frontY, frontWidth, scale);
         const svg = this.createGraphicSvg(container, block, layout, color, false);
-        svg.innerHTML = block.svgContent;
+        svg.innerHTML = this.sanitizeSvgContent(block.svgContent);
         this.applyContrastColor(svg, color);
         return svg;
     }

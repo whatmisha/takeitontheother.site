@@ -1,100 +1,24 @@
-# How to Add Presets — Quick Guide
+# Как добавить пресет
 
-## Automatic Method (Recommended) 🚀
+1. Соберите макет в редакторе и нажмите **Export Setup**.
+2. Дайте JSON-файлу понятное имя — оно станет названием в меню.
+3. Поместите файл в `presets/`.
+4. Проверьте и пересоберите manifest:
 
-### 1️⃣ Create Your Layout
-Open Pizza Boxer and set up everything:
-- Dimensions, grid, colors
-- Add text blocks with content
-- Add graphics if needed
-- Position everything
-
-### 2️⃣ Export Settings
-Click **"Export Settings"** button → JSON file downloads
-
-### 3️⃣ Rename File
-Give it a meaningful name:
-- Example: `grid-settings_2025-11-14.json` → `Outer 16" Back.json`
-- The filename will be the preset name in dropdown
-
-### 4️⃣ Move to Presets Folder
-Place your JSON file in: `presets/`
-
-### 5️⃣ Run Auto-Generator Script
 ```bash
-python3 generate-presets-manifest.py
+npm --prefix tools run presets
+npm --prefix tools run presets:check
 ```
 
-Or if you have Node.js:
-```bash
-npm run presets
-```
+5. Перезагрузите приложение и проверьте пресет в интерфейсе.
 
-### 6️⃣ Refresh Browser
-Reload the page → Your preset appears in the dropdown!
+## Требования
 
----
+- Единственный поддерживаемый формат — полный JSON версии `1.2`.
+- JSON-файлы в `presets/` являются источником истины.
+- `presets/manifest.json` не редактируется вручную: его создаёт
+  `tools/generate-presets-manifest.js`.
+- Перед коммитом выполните `npm --prefix tools test`.
 
-## Manual Method (If needed)
-
-If you can't run the script, manually edit `presets/manifest.json`:
-
-```json
-{
-  "presets": [
-    {
-      "name": "Outer 16\" Back",
-      "file": "Outer 16\" Back.json"
-    },
-    {
-      "name": "Your New Preset",
-      "file": "Your New Preset.json"
-    }
-  ]
-}
-```
-
----
-
-## Important Rules
-
-✅ **DO:**
-- Always use "Export Settings" to create presets
-- Add each preset to `manifest.json`
-- Use descriptive names
-- Test before sharing
-
-❌ **DON'T:**
-- Manually create preset files
-- Edit exported JSON (unless you know the format)
-- Forget to update `manifest.json`
-
----
-
-## Example manifest.json
-
-```json
-{
-  "presets": [
-    {
-      "name": "Product A - Front",
-      "file": "product-a-front.json"
-    },
-    {
-      "name": "Product A - Back", 
-      "file": "product-a-back.json"
-    },
-    {
-      "name": "Product B - Square",
-      "file": "product-b-square.json"
-    }
-  ]
-}
-```
-
----
-
-## Need More Help?
-
-See full documentation: `presets/README.md`
-
+Если пресет не проходит проверку, заново экспортируйте его текущей версией
+редактора. Автоматического импорта старых плоских или неполных форматов нет.

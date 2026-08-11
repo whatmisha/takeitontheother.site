@@ -12,7 +12,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
-const PRESETS_DIR = path.join(SCRIPT_DIR, 'presets');
+const PRESETS_DIR = path.join(SCRIPT_DIR, '..', 'presets');
 const MANIFEST_PATH = path.join(PRESETS_DIR, 'manifest.json');
 const CHECK_ONLY = process.argv.includes('--check');
 

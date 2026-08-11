@@ -71,12 +71,13 @@ const preset = {
         surfaceSettings: { left: { visible: true } }
     },
     textBlocks: [{ id: 'text-1', text: 'Hello' }],
-    graphicsBlocks: [{ id: 'graphic-1', widthInModules: 2 }],
-    iconsBlock: null,
-    claimBlock: { id: 'claim' }
+    graphicsBlocks: [
+        { id: 'graphic-1', widthInModules: 2 },
+        { id: 'claim', isBuiltIn: true }
+    ]
 };
 
-test('preset application clones input and applies backward-compatible defaults', () => {
+test('preset application clones input and applies document defaults', () => {
     const host = createHost();
     const controller = new PresetApplicationController(host);
     controller.applyPreset(preset, 'Front test');
@@ -87,7 +88,7 @@ test('preset application clones input and applies backward-compatible defaults',
     assert.equal(host.objectDocument.textBlocks[0].lockPosition, true);
     assert.equal(host.objectDocument.textBlocks[0].textAlign, 'left');
     assert.equal(host.objectDocument.graphicsBlocks[0].lockPosition, true);
-    assert.equal(host.objectDocument.graphicsBlocks[0].widthInColumns, 5);
+    assert.equal(host.objectDocument.getGraphicsBlock('graphic-1').widthInColumns, 5);
     assert.equal(host.objectDocument.getGraphicsBlock('icons'), null);
     assert.equal(host.objectDocument.getGraphicsBlock('claim').isBuiltIn, true);
     assert.equal(preset.textBlocks[0].lockPosition, undefined);

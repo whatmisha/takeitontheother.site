@@ -172,4 +172,9 @@ export class SliderController {
         data.element.disabled = !enabled;
         data.valueInput.disabled = !enabled;
     }
+
+    dispose() {
+        this.sliders.clear();
+        return this.binding.dispose() > 0;
+    }
 }

@@ -1,4 +1,5 @@
-import { HistoryManager } from '../history/HistoryManager.js?v=1.12.56';
+import { HistoryManager } from '../history/HistoryManager.js';
+import { SvgSanitizer } from '../svg/SvgSanitizer.js';
 
 const clone = value => value == null ? value : JSON.parse(JSON.stringify(value));
 const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
@@ -9,8 +10,9 @@ const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key
  * through a small host adapter so persistence stays independent from the UI.
  */
 export class PresetApplicationController {
-    constructor(host) {
+    constructor(host, { sanitizer = host.svgSanitizer || new SvgSanitizer() } = {}) {
         this.host = host;
+        this.sanitizer = sanitizer;
         this.currentHistoryKey = null;
     }
 
@@ -164,35 +166,17 @@ export class PresetApplicationController {
         const nested = state.document;
         const hasTopLevelCollections = hasOwn(state, 'textBlocks') ||
             hasOwn(state, 'graphicsBlocks');
-        const hasLegacyBuiltIns = hasOwn(state, 'iconsBlock') || hasOwn(state, 'claimBlock');
-        if (!nested && !hasTopLevelCollections && !hasLegacyBuiltIns) return null;
+        if (!nested && !hasTopLevelCollections) return null;
 
         const current = this.host.objectDocument;
         const source = nested || state;
         const textBlocks = hasOwn(source, 'textBlocks')
             ? clone(source.textBlocks)
             : clone(current.textBlocks);
-        let graphicsBlocks = hasOwn(source, 'graphicsBlocks')
+        const graphicsBlocks = hasOwn(source, 'graphicsBlocks')
             ? clone(source.graphicsBlocks)
             : clone(current.graphicsBlocks);
-
-        if (!nested && hasLegacyBuiltIns) {
-            graphicsBlocks = this.migrateLegacyBuiltIns(graphicsBlocks, state);
-        }
         return { textBlocks, graphicsBlocks };
-    }
-
-    migrateLegacyBuiltIns(graphicsBlocks, state) {
-        const migrated = clone(graphicsBlocks);
-        [['iconsBlock', 'icons'], ['claimBlock', 'claim']].forEach(([key, id]) => {
-            if (!hasOwn(state, key)) return;
-            const index = migrated.findIndex(block => block.id === id);
-            if (index >= 0) migrated.splice(index, 1);
-            if (state[key] != null) {
-                migrated.push({ ...clone(state[key]), id, isBuiltIn: true });
-            }
-        });
-        return migrated;
     }
 
     normalizeGraphicsBlocks(blocks = []) {
@@ -201,6 +185,9 @@ export class PresetApplicationController {
         const gridModule = this.host.settingsModule.get('gridModule');
 
         normalized.forEach(block => {
+            if (block.svgContent) {
+                block.svgContent = this.sanitizer.sanitizeFragment(block.svgContent);
+            }
             block.lockPosition ??= true;
             if (block.widthInColumns == null && block.widthInModules != null) {
                 const columns = this.host.mmToColumns(block.widthInModules * gridModule);

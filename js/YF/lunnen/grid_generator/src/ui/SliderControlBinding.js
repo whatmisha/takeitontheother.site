@@ -1,9 +1,11 @@
 import { clampSliderValue, formatSliderValue } from './SliderValueMath.js';
+import { ListenerScope } from '../core/ListenerScope.js';
 
 /** Resolves and binds one range/input pair. */
 export class SliderControlBinding {
     constructor({ documentRef = globalThis.document } = {}) {
         this.document = documentRef;
+        this.listeners = new ListenerScope();
     }
 
     create(sliderId, config, handlers) {
@@ -33,13 +35,17 @@ export class SliderControlBinding {
             valueInput.value = formatSliderValue(value, config);
         }
 
-        element.addEventListener('input', handlers.sliderInput);
-        valueInput.addEventListener('keydown', handlers.keydown);
-        valueInput.addEventListener('focus', event => {
+        this.listeners.listen(element, 'input', handlers.sliderInput);
+        this.listeners.listen(valueInput, 'keydown', handlers.keydown);
+        this.listeners.listen(valueInput, 'focus', event => {
             event.target.dataset.originalValue = event.target.value;
             event.target.select();
         });
-        valueInput.addEventListener('blur', handlers.blur);
+        this.listeners.listen(valueInput, 'blur', handlers.blur);
         return data;
+    }
+
+    dispose() {
+        return this.listeners.dispose();
     }
 }

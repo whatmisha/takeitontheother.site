@@ -47,4 +47,5 @@ export class GridSettingsController {
     recalculateWithLockedMargins() { return this.commands.recalculateWithLockedMargins(); }
     applyRowPreset(combo) { return this.commands.applyRowPreset(combo); }
     round(value) { return this.commands.round(value); }
+    dispose() { return this.view.dispose?.() ?? false; }
 }

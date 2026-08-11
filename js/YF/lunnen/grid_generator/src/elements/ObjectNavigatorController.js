@@ -1,10 +1,14 @@
 import { GRAPHICS_TYPES } from './ObjectDocumentController.js';
 import { ObjectNavigatorView } from './ObjectNavigatorView.js';
+import { ListenerScope } from '../core/ListenerScope.js';
 
 /** Owns Objects-panel commands while ObjectNavigatorView owns DOM rendering. */
 export class ObjectNavigatorController {
     constructor(host, view = null) {
         this.host = host;
+        this.listeners = new ListenerScope();
+        this.selectionTimers = new Set();
+        this.initialized = false;
         this.view = view || new ObjectNavigatorView(host, {
             restorePendingDelete: (...args) => this.restorePendingDelete(...args),
             select: (...args) => this.select(...args),
@@ -17,9 +21,16 @@ export class ObjectNavigatorController {
     }
 
     init() {
+        if (this.initialized) return false;
         this.render();
-        this.host.dom.addTextBtn?.addEventListener('click', () => this.addText());
-        this.host.dom.addGraphicsBtn?.addEventListener('click', () => this.host.objectEditorPanelController.openNewGraphicsPanel());
+        this.listeners.listen(this.host.dom.addTextBtn, 'click', () => this.addText());
+        this.listeners.listen(
+            this.host.dom.addGraphicsBtn,
+            'click',
+            () => this.host.objectEditorPanelController.openNewGraphicsPanel()
+        );
+        this.initialized = true;
+        return true;
     }
 
     addText(overrides = {}) {
@@ -28,7 +39,7 @@ export class ObjectNavigatorController {
         this.render();
         this.host.updateGrid();
         this.host.historyManager.commitAction(this.host.getStateSnapshot());
-        setTimeout(() => this.select('text', block.id), 100);
+        this.scheduleSelection(() => this.select('text', block.id));
         return block;
     }
 
@@ -95,7 +106,7 @@ export class ObjectNavigatorController {
         this.host.updateGrid();
         this.host.historyManager.commitAction(this.host.getStateSnapshot());
         if (!skipSelection && !this.host.textDragState.isDragging) {
-            setTimeout(() => this.select(isText ? 'text' : 'graphics', duplicate.id), 100);
+            this.scheduleSelection(() => this.select(isText ? 'text' : 'graphics', duplicate.id));
         }
         return duplicate;
     }
@@ -165,4 +176,22 @@ export class ObjectNavigatorController {
     createItem(options) { return this.view.createItem(options); }
     createActions(options) { return this.view.createActions(options); }
     createActionButton(title, content) { return this.view.createActionButton(title, content); }
+
+    scheduleSelection(callback) {
+        let timer;
+        let completedSynchronously = false;
+        timer = setTimeout(() => {
+            completedSynchronously = true;
+            this.selectionTimers.delete(timer);
+            callback();
+        }, 100);
+        if (!completedSynchronously) this.selectionTimers.add(timer);
+    }
+
+    dispose() {
+        this.selectionTimers.forEach(timer => clearTimeout(timer));
+        this.selectionTimers.clear();
+        this.view.dispose?.();
+        return this.listeners.dispose();
+    }
 }

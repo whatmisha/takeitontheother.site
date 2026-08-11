@@ -3,6 +3,7 @@ export class TextResizeController {
     constructor(host, documentRef = globalThis.document) {
         this.host = host;
         this.document = documentRef;
+        this.pendingGestureCleanups = new Set();
     }
 
     attach(handle, block) {
@@ -45,11 +46,16 @@ export class TextResizeController {
                 if (!resizing) return;
                 resizing = false;
                 handle.setAttribute('fill-opacity', '0');
-                this.document.removeEventListener('mousemove', onMove);
-                this.document.removeEventListener('mouseup', onUp);
+                cleanup();
                 this.host.markAsChanged();
                 this.host.historyManager.commitAction(this.host.getStateSnapshot());
             };
+            const cleanup = () => {
+                this.document.removeEventListener('mousemove', onMove);
+                this.document.removeEventListener('mouseup', onUp);
+                this.pendingGestureCleanups.delete(cleanup);
+            };
+            this.pendingGestureCleanups.add(cleanup);
             this.document.addEventListener('mousemove', onMove);
             this.document.addEventListener('mouseup', onUp);
         });
@@ -61,5 +67,10 @@ export class TextResizeController {
             event.stopPropagation();
             if (!resizing) handle.setAttribute('fill-opacity', '0.2');
         });
+    }
+
+    dispose() {
+        for (const cleanup of [...this.pendingGestureCleanups]) cleanup();
+        return true;
     }
 }
