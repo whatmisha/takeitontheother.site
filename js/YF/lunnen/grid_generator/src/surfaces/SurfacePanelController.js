@@ -1,3 +1,5 @@
+import { SurfacePanelCommands } from './SurfacePanelCommands.js';
+
 const DEFAULT_SIDE_SURFACES = Object.freeze(['left', 'right', 'top', 'bottom']);
 
 /**
@@ -25,13 +27,16 @@ export class SurfacePanelController {
         this.sliderController = sliderController;
         this.sideSurfaces = sideSurfaces;
         this.activeSurface = sideSurfaces[0];
-        this.onBeginAction = onBeginAction;
-        this.onCommitAction = onCommitAction;
-        this.onMarkChanged = onMarkChanged;
-        this.onConstrainObjects = onConstrainObjects;
-        this.onRender = onRender;
-        this.onRenderDebounced = onRenderDebounced;
         this.onUpdateEyeIcon = onUpdateEyeIcon;
+        this.commands = new SurfacePanelCommands({
+            surfaceManager,
+            onBeginAction,
+            onCommitAction,
+            onMarkChanged,
+            onConstrainObjects,
+            onRender,
+            onRenderDebounced
+        });
     }
 
     init() {
@@ -46,38 +51,19 @@ export class SurfacePanelController {
         });
 
         this.dom.surfaceVisibleToggle?.addEventListener('change', event => {
-            this.onBeginAction('toggle surface visibility');
-            this.surfaceManager.update(this.activeSurface, { visible: event.target.checked });
-            this.onMarkChanged();
+            this.commands.setVisibility(this.activeSurface, event.target.checked);
             this.sync();
-            this.onRender();
-            this.onCommitAction();
         });
 
         this.dom.surfaceOwnGridToggle?.addEventListener('change', event => {
-            this.onBeginAction('change surface grid mode');
-            this.surfaceManager.update(this.activeSurface, {
-                gridMode: event.target.checked ? 'own' : 'main'
-            });
-            this.onMarkChanged();
+            this.commands.setGridMode(this.activeSurface, event.target.checked);
             this.sync();
-            this.onConstrainObjects();
-            this.onRender();
-            this.onCommitAction();
         });
 
         this.dom.surfaceRotationSelect?.addEventListener('change', event => {
             const rotation = Number(event.target.value);
-            const current = this.surfaceManager.get(this.activeSurface);
-            if (current.rotation === rotation) return;
-
-            this.onBeginAction('rotate surface');
-            this.surfaceManager.update(this.activeSurface, { rotation });
-            this.onMarkChanged();
+            this.commands.setRotation(this.activeSurface, rotation);
             this.sync();
-            this.onConstrainObjects();
-            this.onRender();
-            this.onCommitAction();
         });
 
         this.dom.surfaceMarginsUnitMod?.addEventListener('click', event => {
@@ -101,67 +87,16 @@ export class SurfacePanelController {
     }
 
     applyGridValue(key, displayValue) {
-        const current = this.surfaceManager.get(this.activeSurface);
-        if (!current || !Number.isFinite(Number(displayValue))) return;
-        if ((key === 'module' && current.grid.lockedModule) ||
-            (key === 'margins' && current.grid.lockedMargins)) {
-            this.syncGridSliders(current);
-            return;
-        }
-
-        let value = Number(displayValue);
-        if (key === 'margins' && current.grid.marginsUnit === 'mm') {
-            value = current.grid.module > 0 ? value / current.grid.module : 0;
-        }
-        if (key === 'columns' || key === 'rows' || key === 'rowHeight') {
-            value = Math.max(1, Math.round(value));
-        }
-
-        const grid = { ...current.grid, [key]: value };
-        this.surfaceManager.update(this.activeSurface, { gridMode: 'own', grid });
-        this.onMarkChanged();
-        this.onConstrainObjects();
-        this.onRenderDebounced();
-
-        if (key === 'module' && grid.marginsUnit === 'mm') {
-            this.syncGridSliders(this.surfaceManager.get(this.activeSurface));
-        }
+        this.commands.applyGridValue(this.activeSurface, key, displayValue);
+        this.syncGridSliders(this.surfaceManager.get(this.activeSurface));
     }
 
     switchMarginsUnit(unit) {
-        const current = this.surfaceManager.get(this.activeSurface);
-        const nextUnit = unit === 'mm' ? 'mm' : 'mod';
-        if (!current || current.grid.marginsUnit === nextUnit) return;
-
-        this.onBeginAction('switch surface margins unit');
-        this.surfaceManager.update(this.activeSurface, {
-            grid: { ...current.grid, marginsUnit: nextUnit }
-        });
-        this.onMarkChanged();
-        this.sync();
-        this.onCommitAction();
+        if (this.commands.switchMarginsUnit(this.activeSurface, unit)) this.sync();
     }
 
     toggleGridLock(type) {
-        const current = this.surfaceManager.get(this.activeSurface);
-        if (!current) return;
-
-        this.onBeginAction(`toggle surface ${type} lock`);
-        const grid = { ...current.grid };
-        if (type === 'module') {
-            grid.lockedModule = !grid.lockedModule;
-            if (grid.lockedModule) grid.lockedMargins = false;
-        } else {
-            grid.lockedMargins = !grid.lockedMargins;
-            if (grid.lockedMargins) {
-                grid.lockedModule = false;
-                grid.marginsUnit = 'mm';
-            }
-        }
-        this.surfaceManager.update(this.activeSurface, { grid });
-        this.onMarkChanged();
-        this.sync();
-        this.onCommitAction();
+        if (this.commands.toggleGridLock(this.activeSurface, type)) this.sync();
     }
 
     syncGridSliders(settings) {

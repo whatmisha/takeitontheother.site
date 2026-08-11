@@ -1,58 +1,12 @@
 /**
  * Управление настройками приложения
  */
-import { DEFAULTS } from './Constants.js';
+import { DEFAULT_SETTINGS } from './Constants.js?v=1.12.64';
 
 export class Settings {
     constructor(initialSettings = {}) {
         // Объединяем дефолтные настройки с переданными
-        this.data = {
-            // Размеры коробки
-            frontWidth: DEFAULTS.FRONT_WIDTH,
-            frontHeight: DEFAULTS.FRONT_HEIGHT,
-            thickness: DEFAULTS.THICKNESS,
-            boxColor: DEFAULTS.BOX_COLOR,
-            
-            // Параметры сетки
-            gridModule: DEFAULTS.GRID_MODULE,
-            margins: DEFAULTS.MARGINS,
-            marginsUnit: DEFAULTS.MARGINS_UNIT,
-            columnCount: DEFAULTS.COLUMN_COUNT,
-            rowCount: DEFAULTS.ROW_COUNT,
-            rowHeight: DEFAULTS.ROW_HEIGHT,
-            linkMode: DEFAULTS.LINK_MODE,
-            
-            // Блокировки параметров
-            lockedModule: DEFAULTS.LOCKED_MODULE,
-            lockedMargins: DEFAULTS.LOCKED_MARGINS,
-            lockedModuleValue: DEFAULTS.LOCKED_MODULE_VALUE,
-            lockedMarginsValue: DEFAULTS.LOCKED_MARGINS_VALUE,
-            
-            // Стили текста - Headline
-            headlineSize: DEFAULTS.HEADLINE_SIZE,
-            lineHeight: DEFAULTS.LINE_HEIGHT,
-            tracking: DEFAULTS.TRACKING,
-            useXHeight: DEFAULTS.USE_X_HEIGHT,
-            headlineFontWeight: DEFAULTS.HEADLINE_FONT_WEIGHT,
-            
-            // Стили текста - Text
-            textSize: DEFAULTS.TEXT_SIZE,
-            textLineHeight: DEFAULTS.TEXT_LINE_HEIGHT,
-            textTracking: DEFAULTS.TEXT_TRACKING,
-            useXHeight2: DEFAULTS.USE_X_HEIGHT_2,
-            textFontWeight: DEFAULTS.TEXT_FONT_WEIGHT,
-            
-            // Видимость элементов
-            showDimensions: DEFAULTS.SHOW_DIMENSIONS,
-            showLabels: DEFAULTS.SHOW_LABELS,
-            showSidePanels: DEFAULTS.SHOW_SIDE_PANELS,
-            showColumns: DEFAULTS.SHOW_COLUMNS,
-            showRows: DEFAULTS.SHOW_ROWS,
-            showBaseline: DEFAULTS.SHOW_BASELINE,
-            showObjects: DEFAULTS.SHOW_OBJECTS,
-            
-            ...initialSettings
-        };
+        this.data = { ...DEFAULT_SETTINGS, ...initialSettings };
         
         // Подписчики на изменения
         this.listeners = {};
@@ -145,63 +99,10 @@ export class Settings {
      * Сброс до дефолтных значений
      */
     reset() {
-        this.data = {
-            frontWidth: DEFAULTS.FRONT_WIDTH,
-            frontHeight: DEFAULTS.FRONT_HEIGHT,
-            thickness: DEFAULTS.THICKNESS,
-            boxColor: DEFAULTS.BOX_COLOR,
-            gridModule: DEFAULTS.GRID_MODULE,
-            margins: DEFAULTS.MARGINS,
-            marginsUnit: DEFAULTS.MARGINS_UNIT,
-            columnCount: DEFAULTS.COLUMN_COUNT,
-            rowCount: DEFAULTS.ROW_COUNT,
-            rowHeight: DEFAULTS.ROW_HEIGHT,
-            linkMode: DEFAULTS.LINK_MODE,
-            lockedModule: DEFAULTS.LOCKED_MODULE,
-            lockedMargins: DEFAULTS.LOCKED_MARGINS,
-            lockedModuleValue: DEFAULTS.LOCKED_MODULE_VALUE,
-            lockedMarginsValue: DEFAULTS.LOCKED_MARGINS_VALUE,
-            headlineSize: DEFAULTS.HEADLINE_SIZE,
-            lineHeight: DEFAULTS.LINE_HEIGHT,
-            tracking: DEFAULTS.TRACKING,
-            useXHeight: DEFAULTS.USE_X_HEIGHT,
-            headlineFontWeight: DEFAULTS.HEADLINE_FONT_WEIGHT,
-            textSize: DEFAULTS.TEXT_SIZE,
-            textLineHeight: DEFAULTS.TEXT_LINE_HEIGHT,
-            textTracking: DEFAULTS.TEXT_TRACKING,
-            useXHeight2: DEFAULTS.USE_X_HEIGHT_2,
-            textFontWeight: DEFAULTS.TEXT_FONT_WEIGHT,
-            showDimensions: DEFAULTS.SHOW_DIMENSIONS,
-            showLabels: DEFAULTS.SHOW_LABELS,
-            showSidePanels: DEFAULTS.SHOW_SIDE_PANELS,
-            showColumns: DEFAULTS.SHOW_COLUMNS,
-            showRows: DEFAULTS.SHOW_ROWS,
-            showBaseline: DEFAULTS.SHOW_BASELINE,
-            showObjects: DEFAULTS.SHOW_OBJECTS
-        };
+        const previous = this.data;
+        this.data = { ...DEFAULT_SETTINGS };
         
-        this.notify('*', this.data, {});
+        this.notify('*', this.data, previous);
     }
 
-    /**
-     * Экспорт настроек в JSON
-     * @returns {string}
-     */
-    toJSON() {
-        return JSON.stringify(this.data, null, 2);
-    }
-
-    /**
-     * Импорт настроек из JSON
-     * @param {string} json
-     */
-    fromJSON(json) {
-        try {
-            const imported = JSON.parse(json);
-            this.setMultiple(imported);
-        } catch (e) {
-            console.error('Failed to import settings:', e);
-        }
-    }
 }
-

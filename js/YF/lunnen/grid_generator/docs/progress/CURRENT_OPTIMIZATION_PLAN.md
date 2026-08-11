@@ -17,16 +17,32 @@ surface-local grids and cross-surface object dragging.
 - Preset format serialization and current/legacy deserialization split.
 - Snapshot history and semantic action transaction split.
 - Text block render-model and SVG view split.
+- Object drag pointer binding, shared drag state and text resize split.
+- Grid mutation commands separated from Grid DOM synchronization.
+- Text position bindings separated from surface-aware constraints.
+- Panel registry, lifecycle and shared pointer-drag controller unified.
+- Surface persistence, geometry, panel commands, layers and grid painting split.
+- DOM indexing, generated slider definitions and default settings simplified.
+- `script.js` reduced to bootstrap; application composition moved to
+  `GridGenerator.js`.
+- Application UI synchronization, render scheduling and zoom toolbar split into
+  dedicated owners.
+- Unused alternate settings serialization and the divergent Python preset
+  manifest generator removed.
+- Final SVG/PDF/JSON, preset, file-transfer and browser regressions completed.
+- Full code, markup, style, test, tooling and repository audit completed.
 
-## Remaining sequence
+## Recommended next sequence
 
-1. Split `ObjectDragController` into pointer events, drag state and cross-surface transfer.
-2. Finish separating `GridSettingsController` commands from UI synchronization.
-3. Split `TextEditorPositionController` input binding from surface-aware constraints.
-4. Unify `PanelManager` and `PanelUiController` lifecycle responsibilities.
-5. Split `SurfaceManager`, `SurfacePanelController` and `SurfaceRenderer` state/UI/rendering.
-6. Simplify `DOMCache`, static configuration and remaining large services.
-7. Reduce `script.js` to the application composition root and remove remaining legacy paths.
-8. Run final import/export, preset, Chrome/Safari-compatible UI and Illustrator SVG/PDF regression.
+1. Sanitize imported/uploaded SVG at the ingress boundary.
+2. Replace distributed manual module cache-busting.
+3. Make PDF and text-outline dependencies local and offline-capable.
+4. Add a versioned validated preset schema and explicit migrations.
+5. Narrow remaining whole-host controller dependencies and add disposal
+   lifecycle.
+6. Split the monolithic HTML/CSS into stable panel/control components.
+7. Complete Safari/Illustrator acceptance and repository/documentation cleanup.
 
-Every stage ends with focused unit tests, the complete test suite and browser smoke.
+The evidence, risks and decision points are recorded in
+`FULL_CODE_AUDIT_2026-08-11.md`. Every implementation stage must end with focused
+unit tests, the complete test suite and browser smoke.

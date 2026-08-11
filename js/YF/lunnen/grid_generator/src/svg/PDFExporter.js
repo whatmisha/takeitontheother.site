@@ -15,13 +15,20 @@ export class PDFExporter {
 
     async loadLibraries() {
         if (this.libsLoaded) return;
-        if (this.window.jspdf) {
-            this.libsLoaded = true;
-            return;
+        if (!this.window.jspdf?.jsPDF) {
+            await this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', 'jsPDF');
         }
-        await this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', 'jsPDF');
-        await this.loadScript('https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.3/dist/svg2pdf.umd.min.js', 'svg2pdf.js');
+        if (!this.getSvg2PdfConverter()) {
+            await this.loadScript('https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.3/dist/svg2pdf.umd.min.js', 'svg2pdf.js');
+        }
+        if (!this.window.jspdf?.jsPDF || !this.getSvg2PdfConverter()) {
+            throw new Error('Не удалось инициализировать библиотеки PDF-экспорта');
+        }
         this.libsLoaded = true;
+    }
+
+    getSvg2PdfConverter() {
+        return this.window.svg2pdf?.svg2pdf || this.window.svg2pdf;
     }
 
     loadScript(src, name) {
@@ -35,12 +42,12 @@ export class PDFExporter {
     }
 
     async export(svgElement, filename = 'grid.pdf', options = {}) {
-        await this.loadLibraries();
-        const svg = svgElement.cloneNode(true);
-        if (options.removeInteractive !== false) this.cleanSvg(svg);
         if (!this.textToPath) {
             throw new Error('TextToPath не доступен. Конвертация текста в кривые обязательна для PDF экспорта.');
         }
+        await this.loadLibraries();
+        const svg = svgElement.cloneNode(true);
+        if (options.removeInteractive !== false) this.cleanSvg(svg);
         try {
             await this.textToPath.convertAllTextToPaths(svg);
         } catch (error) {
@@ -61,7 +68,7 @@ export class PDFExporter {
             pdf.internal.pageSize.setWidth(pageWidth);
             pdf.internal.pageSize.setHeight(pageHeight);
         }
-        const converter = this.window.svg2pdf?.svg2pdf || this.window.svg2pdf;
+        const converter = this.getSvg2PdfConverter();
         if (!converter) throw new Error('Ошибка при экспорте PDF: svg2pdf не найден');
         try {
             await converter(svg, pdf, { xOffset: 0, yOffset: 0, width: pageWidth, height: pageHeight });

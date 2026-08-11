@@ -29,6 +29,7 @@ export class PanelUiController {
             if (!panel || !header || !content) return;
 
             const initiallyCollapsed = panel.classList.contains('panel-collapsed');
+            this.host.panelManager?.setCollapsed(panel.id, initiallyCollapsed);
             this.syncCollapseIcon(icon, initiallyCollapsed);
 
             const bottomAnchored = panel.classList.contains('elements-navigator') ||
@@ -43,7 +44,7 @@ export class PanelUiController {
                 const collapsed = panel.classList.contains('panel-collapsed');
 
                 if (collapsed) {
-                    panel.classList.remove('panel-collapsed');
+                    this.setPanelCollapsed(panel, false);
                     this.syncCollapseIcon(icon, false);
                     if (textPanel) this.restoreTextStylesState();
                 } else {
@@ -52,7 +53,7 @@ export class PanelUiController {
                         panel.style.top = `${panel.getBoundingClientRect().top}px`;
                         panel.style.bottom = 'auto';
                     }
-                    panel.classList.add('panel-collapsed');
+                    this.setPanelCollapsed(panel, true);
                     this.syncCollapseIcon(icon, true);
                 }
                 this.updatePanelParams();
@@ -65,6 +66,12 @@ export class PanelUiController {
                 toggle(event);
             });
         });
+    }
+
+    setPanelCollapsed(panel, collapsed) {
+        if (!this.host.panelManager?.setCollapsed(panel.id, collapsed)) {
+            panel.classList.toggle('panel-collapsed', collapsed);
+        }
     }
 
     syncCollapseIcon(icon, collapsed) {

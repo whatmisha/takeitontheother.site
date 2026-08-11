@@ -1,5 +1,5 @@
-import { BrowserFileTransfer } from './BrowserFileTransfer.js';
-import { PDFExporter } from './PDFExporter.js';
+import { BrowserFileTransfer } from './BrowserFileTransfer.js?v=1.12.65';
+import { PDFExporter } from './PDFExporter.js?v=1.12.66';
 import { PresetFileCodec } from './PresetFileCodec.js';
 
 /** Coordinates SVG, PDF and JSON file export/import. */

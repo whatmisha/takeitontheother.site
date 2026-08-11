@@ -1,298 +1,102 @@
-/**
- * Canvas pointer interactions for text and graphics objects.
- * The state carries an explicit kind so text-level document handlers cannot
- * accidentally finish a graphics drag.
- */
+import { ObjectDragEventBinder } from './ObjectDragEventBinder.js';
+import { ObjectDragState } from './ObjectDragState.js';
+import { TextResizeController } from './TextResizeController.js';
+
+/** Coordinates object drag commands while binding and state have single owners. */
 export class ObjectDragController {
-    constructor(host) {
+    constructor(host, { state = null, events = null, textResize = null } = {}) {
         this.host = host;
+        this.state = state || new ObjectDragState(host);
+        this.events = events || new ObjectDragEventBinder(host, this);
+        this.textResize = textResize || new TextResizeController(host);
     }
 
-    init() {
-        document.addEventListener('mousemove', event => {
-            if (!this.isDragging('text')) return;
-            event.preventDefault();
-            this.moveText(event);
-        });
-
-        document.addEventListener('mouseup', event => {
-            if (!this.isDragging('text')) return;
-            event.preventDefault();
-            this.endText();
-        });
-    }
-
-    isDragging(kind) {
-        const state = this.host.textDragState;
-        return state?.isDragging === true && state.kind === kind;
-    }
-
-    attachText(group, block) {
-        group.addEventListener('mousedown', event => {
-            if (event.button !== 0) return;
-            event.stopPropagation();
-            event.preventDefault();
-
-            const startedAt = Date.now();
-            const startX = event.clientX;
-            const startY = event.clientY;
-            let moved = false;
-
-            const onMove = moveEvent => {
-                const dx = Math.abs(moveEvent.clientX - startX);
-                const dy = Math.abs(moveEvent.clientY - startY);
-                if (!moved && (dx > 3 || dy > 3)) {
-                    moved = true;
-                    this.startText(block.id, startX, startY);
-                }
-            };
-
-            const onUp = () => {
-                document.removeEventListener('mousemove', onMove);
-                document.removeEventListener('mouseup', onUp);
-                if (!moved && Date.now() - startedAt < 300) {
-                    this.host.objectEditorPanelController.openTextPanel(block.id);
-                }
-            };
-
-            document.addEventListener('mousemove', onMove);
-            document.addEventListener('mouseup', onUp);
-        });
-    }
+    init() { this.events.init(); }
+    isDragging(kind) { return this.state.is(kind); }
+    attachText(group, block) { this.events.attachText(group, block); }
+    attachGraphics(group, block) { this.events.attachGraphics(group, block); }
+    attachTextResize(handle, block) { this.textResize.attach(handle, block); }
 
     startText(blockId, clientX, clientY) {
         const block = this.host.objectDocument.getTextBlock(blockId);
         if (!block) return false;
-
         this.host.historyManager.beginAction('drag text block', this.host.getStateSnapshot());
-        this.host.textDragState = {
-            kind: 'text',
-            isDragging: true,
-            blockId,
+        this.state.start('text', blockId, this.getPointerOffset(block, clientX, clientY), {
             startBlockX: block.x,
             startBlockRow: block.row,
-            startBlockBaselineOffset: block.baselineOffset,
-            pointerOffset: this.host.objectPlacementController.getPointerOffset(block, clientX, clientY),
-            duplicated: false,
-            moved: false
-        };
+            startBlockBaselineOffset: block.baselineOffset
+        });
         this.setTextBounds(blockId, 0.5, 0.05);
         return true;
     }
 
     moveText(event) {
         if (!this.isDragging('text')) return false;
-        const state = this.host.textDragState;
-
+        const state = this.state.current;
         if ((event.altKey || event.metaKey) && !state.duplicated) {
-            const original = this.host.objectDocument.getTextBlock(state.blockId);
-            if (original) {
-                const duplicate = this.host.objectNavigatorController.duplicate(
-                    'text',
-                    original.id,
-                    true
-                );
-                if (duplicate) {
-                    state.blockId = duplicate.id;
-                    state.duplicated = true;
-                }
-            }
+            const duplicate = this.duplicate('text', state.blockId);
+            if (duplicate) this.state.useDuplicate(duplicate.id);
         }
-
-        const block = this.host.objectDocument.getTextBlock(state.blockId);
-        if (!block) return false;
-        const positioned = this.host.objectPlacementController.positionAtPointer(
-            block,
-            event.clientX,
-            event.clientY,
-            'text',
-            state.pointerOffset
-        );
-        if (!positioned) return false;
-
-        state.moved = true;
-        this.host.updateGridThrottled();
-        return true;
+        return this.positionCurrent('text', event.clientX, event.clientY);
     }
 
     endText() {
         if (!this.isDragging('text')) return false;
-        const state = this.host.textDragState;
-        this.setTextBounds(state.blockId, 0, 0);
-        if (state.moved || state.duplicated) this.host.markAsChanged();
-        this.host.historyManager.commitAction(this.host.getStateSnapshot());
-        this.resetState();
-        this.host.updateGrid();
-        return true;
-    }
-
-    attachTextResize(handle, block) {
-        let resizing = false;
-        let startWidth = 0;
-
-        handle.addEventListener('mousedown', event => {
-            if (event.button !== 0) return;
-            event.stopPropagation();
-            event.preventDefault();
-
-            this.host.historyManager.beginAction('resize text block', this.host.getStateSnapshot());
-            resizing = true;
-            startWidth = block.width || 1;
-            const startPointer = this.host.getSurfacePointer(event.clientX, event.clientY);
-            handle.setAttribute('fill-opacity', '0.3');
-
-            const onMove = moveEvent => {
-                if (!resizing) return;
-                moveEvent.stopPropagation();
-                moveEvent.preventDefault();
-
-                const currentPointer = this.host.getSurfacePointer(moveEvent.clientX, moveEvent.clientY);
-                const surface = block.surface || 'front';
-                if (!startPointer || !currentPointer || currentPointer.surface !== surface) return;
-
-                const context = this.host.getSurfaceGridContext(surface);
-                const columnWidth = (
-                    context.frontWidth -
-                    context.gridModule * context.margins * 2 -
-                    context.gridModule * (context.columnCount - 1)
-                ) / context.columnCount;
-                const direction = block.alignment === 'right' ? -1 : 1;
-                const delta = direction * (
-                    currentPointer.local.x - startPointer.local.x
-                ) / (columnWidth + context.gridModule);
-                const maxWidth = block.alignment === 'right'
-                    ? block.x
-                    : context.columnCount - block.x + 1;
-                const width = Math.round(
-                    Math.max(0.25, Math.min(maxWidth, startWidth + delta)) * 4
-                ) / 4;
-
-                if (Math.abs(width - (block.width || 1)) >= 0.25) {
-                    block.width = width;
-                    this.host.updateGridThrottled();
-                }
-            };
-
-            const onUp = () => {
-                if (!resizing) return;
-                resizing = false;
-                handle.setAttribute('fill-opacity', '0');
-                document.removeEventListener('mousemove', onMove);
-                document.removeEventListener('mouseup', onUp);
-                this.host.markAsChanged();
-                this.host.historyManager.commitAction(this.host.getStateSnapshot());
-            };
-
-            document.addEventListener('mousemove', onMove);
-            document.addEventListener('mouseup', onUp);
-        });
-
-        handle.addEventListener('mouseenter', event => {
-            event.stopPropagation();
-            if (!resizing) handle.setAttribute('fill-opacity', '0.5');
-        });
-        handle.addEventListener('mouseleave', event => {
-            event.stopPropagation();
-            if (!resizing) handle.setAttribute('fill-opacity', '0.2');
-        });
-    }
-
-    attachGraphics(group, block) {
-        group.addEventListener('mousedown', event => {
-            if (event.button !== 0) return;
-            event.stopPropagation();
-            event.preventDefault();
-
-            const startedAt = Date.now();
-            const startX = event.clientX;
-            const startY = event.clientY;
-            this.startGraphics(block, event.clientX, event.clientY);
-            this.setGraphicsBounds(group, 0.5, 0.05);
-
-            const onMove = moveEvent => this.moveGraphics(moveEvent, block);
-            const onUp = upEvent => {
-                document.removeEventListener('mousemove', onMove);
-                document.removeEventListener('mouseup', onUp);
-                this.endGraphics();
-
-                const distance = Math.hypot(
-                    upEvent.clientX - startX,
-                    upEvent.clientY - startY
-                );
-                if (Date.now() - startedAt < 300 && distance < 10) {
-                    this.host.objectEditorPanelController.openGraphicsPanel(block.id);
-                }
-                this.setGraphicsBounds(group, 0, 0);
-            };
-
-            document.addEventListener('mousemove', onMove);
-            document.addEventListener('mouseup', onUp);
-        });
-
-        group.addEventListener('mouseenter', () => {
-            if (!this.host.textDragState.isDragging) {
-                this.setGraphicsBounds(group, 0.5, 0.05);
-            }
-        });
-        group.addEventListener('mouseleave', () => {
-            if (!this.host.textDragState.isDragging) {
-                this.setGraphicsBounds(group, 0, 0);
-            }
-        });
+        this.setTextBounds(this.state.current.blockId, 0, 0);
+        return this.finish();
     }
 
     startGraphics(block, clientX, clientY) {
         this.host.historyManager.beginAction('drag graphics block', this.host.getStateSnapshot());
-        this.host.textDragState = {
-            kind: 'graphics',
-            isDragging: true,
-            blockId: block.id,
-            pointerOffset: this.host.objectPlacementController.getPointerOffset(block, clientX, clientY),
-            duplicated: false,
-            moved: false
-        };
+        this.state.start('graphics', block.id, this.getPointerOffset(block, clientX, clientY));
+        return true;
     }
 
     moveGraphics(event, originalBlock) {
         if (!this.isDragging('graphics')) return false;
-        const state = this.host.textDragState;
-
-        if (
-            (event.altKey || event.metaKey) &&
-            !state.duplicated &&
-            state.blockId === originalBlock.id
-        ) {
+        const state = this.state.current;
+        if ((event.altKey || event.metaKey) && !state.duplicated && state.blockId === originalBlock.id) {
             const type = originalBlock.isBuiltIn ? originalBlock.id : 'graphics';
-            const duplicate = this.host.objectNavigatorController.duplicate(
-                type,
-                originalBlock.id,
-                true
-            );
-            if (duplicate) {
-                state.blockId = duplicate.id;
-                state.duplicated = true;
-            }
+            const duplicate = this.duplicate(type, originalBlock.id);
+            if (duplicate) this.state.useDuplicate(duplicate.id);
         }
-
-        const block = this.host.objectDocument.getGraphicsBlock(state.blockId);
-        if (!block) return false;
-        const positioned = this.host.objectPlacementController.positionAtPointer(
-            block,
-            event.clientX,
-            event.clientY,
-            'graphics',
-            state.pointerOffset
-        );
-        if (!positioned) return false;
-
-        state.moved = true;
-        this.host.updateGridThrottled();
-        return true;
+        return this.positionCurrent('graphics', event.clientX, event.clientY);
     }
 
     endGraphics() {
         if (!this.isDragging('graphics')) return false;
-        const state = this.host.textDragState;
+        return this.finish();
+    }
+
+    positionCurrent(kind, clientX, clientY) {
+        const state = this.state.current;
+        const block = kind === 'text'
+            ? this.host.objectDocument.getTextBlock(state.blockId)
+            : this.host.objectDocument.getGraphicsBlock(state.blockId);
+        if (!block) return false;
+        const positioned = this.host.objectPlacementController.positionAtPointer(
+            block,
+            clientX,
+            clientY,
+            kind,
+            state.pointerOffset
+        );
+        if (!positioned) return false;
+        this.state.markMoved();
+        this.host.updateGridThrottled();
+        return true;
+    }
+
+    duplicate(type, blockId) {
+        return this.host.objectNavigatorController.duplicate(type, blockId, true);
+    }
+
+    getPointerOffset(block, clientX, clientY) {
+        return this.host.objectPlacementController.getPointerOffset(block, clientX, clientY);
+    }
+
+    finish() {
+        const state = this.state.current;
         if (state.moved || state.duplicated) this.host.markAsChanged();
         this.host.historyManager.commitAction(this.host.getStateSnapshot());
         this.resetState();
@@ -300,18 +104,10 @@ export class ObjectDragController {
         return true;
     }
 
-    resetState() {
-        this.host.textDragState = {
-            kind: null,
-            isDragging: false,
-            blockId: null,
-            duplicated: false,
-            moved: false
-        };
-    }
+    resetState() { this.state.reset(); }
 
     setTextBounds(blockId, stroke, fill) {
-        const bounds = document.getElementById(`bounds-${blockId}`);
+        const bounds = this.events.document.getElementById(`bounds-${blockId}`);
         if (!bounds) return;
         bounds.setAttribute('stroke-opacity', String(stroke));
         bounds.setAttribute('fill-opacity', String(fill));

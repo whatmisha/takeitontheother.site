@@ -5,7 +5,7 @@ export class BrowserFileTransfer {
         urlApi = globalThis.URL,
         BlobClass = globalThis.Blob,
         FileReaderClass = globalThis.FileReader,
-        schedule = globalThis.setTimeout
+        schedule = (callback, delay) => globalThis.setTimeout(callback, delay)
     } = {}) {
         this.document = documentRef;
         this.urlApi = urlApi;
