@@ -32,10 +32,10 @@ import { PanelUiController } from './src/ui/PanelUiController.js?v=1.12.39';
 
 // Итерация 6: Elements
 import { GraphicsRenderer } from './src/elements/GraphicsRenderer.js?v=1.12.25';
-import { TextBlockRenderer } from './src/elements/TextBlockRenderer.js?v=1.12.27';
+import { TextBlockRenderer } from './src/elements/TextBlockRenderer.js?v=1.12.57';
 import { TextLayout } from './src/elements/TextLayout.js?v=1.12.27';
 import { TextStyleResolver } from './src/elements/TextStyleResolver.js?v=1.12.28';
-import { ObjectEditorPanelController } from './src/elements/ObjectEditorPanelController.js?v=1.12.43';
+import { ObjectEditorPanelController } from './src/elements/ObjectEditorPanelController.js?v=1.12.53';
 import { ObjectEditorInputController } from './src/elements/ObjectEditorInputController.js?v=1.12.45';
 import { TextEditorPositionController } from './src/elements/TextEditorPositionController.js?v=1.12.45';
 import { LunnenDisplayEditorController } from './src/elements/LunnenDisplayEditorController.js?v=1.12.45';
@@ -46,7 +46,7 @@ import { ObjectDragController } from './src/elements/ObjectDragController.js?v=1
 import { ObjectDocumentController } from './src/elements/ObjectDocumentController.js?v=1.12.39';
 import { ObjectPlacementController } from './src/elements/ObjectPlacementController.js?v=1.12.35';
 import { GraphicsAssetController } from './src/elements/GraphicsAssetController.js?v=1.12.35';
-import { BuiltInGraphicsController } from './src/elements/BuiltInGraphicsController.js?v=1.12.40';
+import { BuiltInGraphicsController } from './src/elements/BuiltInGraphicsController.js?v=1.12.54';
 
 // Итерация 7: SVG Export
 import { SVGExporter } from './src/svg/SVGExporter.js?v=1.12.51';
@@ -58,7 +58,7 @@ import { PresetManager } from './src/preset/PresetManager.js?v=1.12.49';
 import { PresetApplicationController } from './src/preset/PresetApplicationController.js?v=1.12.42';
 
 // Итерация 9: History Management
-import { HistoryManager } from './src/history/HistoryManager.js';
+import { HistoryManager } from './src/history/HistoryManager.js?v=1.12.56';
 
 // Surface model
 import { SurfaceManager, SURFACE_IDS, SIDE_SURFACE_IDS } from './src/surfaces/SurfaceManager.js?v=1.12.10';

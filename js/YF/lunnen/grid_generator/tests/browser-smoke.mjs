@@ -1,4 +1,4 @@
-import { PresetFormatAdapter } from '../src/preset/PresetFormatAdapter.js?v=1.12.42';
+import { PresetFormatAdapter } from '../src/preset/PresetFormatAdapter.js?v=1.12.55';
 
 const resultElement = document.getElementById('result');
 const appFrame = document.getElementById('appFrame');

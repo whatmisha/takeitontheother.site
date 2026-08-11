@@ -65,3 +65,26 @@ test('failed built-in asset keeps document fallback and still finalizes', async 
     assert.deepEqual(readyResults, results);
     assert.equal(icons.svgContent, '<g id="fallback"/>');
 });
+
+test('preset may omit an optional built-in object without reporting an error', async () => {
+    const objectDocument = new ObjectDocumentController();
+    objectDocument.replaceGraphicsBlocks([
+        objectDocument.getGraphicsBlock('claim')
+    ]);
+    const errors = [];
+    const controller = new BuiltInGraphicsController({
+        assetController: {
+            async load(path) {
+                return { width: 100, height: 20, content: `<g data-path="${path}"/>` };
+            }
+        },
+        objectDocument,
+        logger: { log() {}, error: (...args) => errors.push(args) }
+    });
+
+    const results = await controller.initialize();
+
+    assert.deepEqual(results[0], { id: 'icons', loaded: false, skipped: true });
+    assert.deepEqual(results[1], { id: 'claim', loaded: true });
+    assert.deepEqual(errors, []);
+});

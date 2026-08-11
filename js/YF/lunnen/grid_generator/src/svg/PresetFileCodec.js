@@ -1,4 +1,4 @@
-import { PresetFormatAdapter } from '../preset/PresetFormatAdapter.js';
+import { PresetFormatAdapter } from '../preset/PresetFormatAdapter.js?v=1.12.55';
 
 /** Owns the human-editable JSON preset representation and descriptive name. */
 export class PresetFileCodec {

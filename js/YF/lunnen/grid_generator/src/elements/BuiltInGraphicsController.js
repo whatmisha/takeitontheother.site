@@ -37,8 +37,9 @@ export class BuiltInGraphicsController {
 
             const block = this.objectDocument.getGraphicsBlock(definition.id);
             if (!block) {
-                this.logger.error(`Built-in graphics block "${definition.id}" is missing`);
-                return { id: definition.id, loaded: false };
+                // Presets may intentionally omit an optional built-in object.
+                // The JSON document remains authoritative, so this is a valid skip.
+                return { id: definition.id, loaded: false, skipped: true };
             }
 
             block.svgContent = asset.content;

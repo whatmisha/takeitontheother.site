@@ -1,4 +1,4 @@
-import { HistoryManager } from '../history/HistoryManager.js';
+import { HistoryManager } from '../history/HistoryManager.js?v=1.12.56';
 
 const clone = value => value == null ? value : JSON.parse(JSON.stringify(value));
 const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
