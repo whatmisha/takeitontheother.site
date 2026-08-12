@@ -14,7 +14,7 @@ async function loadApplicationFonts() {
 async function startApplication() {
     let application = null;
     try {
-        loadApplicationShell();
+        await loadApplicationShell();
         try {
             await loadApplicationFonts();
         } catch (error) {

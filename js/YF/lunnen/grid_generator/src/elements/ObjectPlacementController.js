@@ -11,6 +11,82 @@ export class ObjectPlacementController {
         this.host.objectDocument.graphicsBlocks.forEach(block => this.constrain(block, 'graphics'));
     }
 
+    getColumnMetrics(context) {
+        const gutter = context.gridModule;
+        const contentWidth = Math.max(
+            gutter,
+            context.frontWidth - 2 * context.margins * gutter
+        );
+        const columnWidth = Math.max(
+            gutter * 0.1,
+            (contentWidth - (context.columnCount - 1) * gutter) / context.columnCount
+        );
+        return { columnWidth, gutter };
+    }
+
+    columnsToMm(columns, context) {
+        const { columnWidth, gutter } = this.getColumnMetrics(context);
+        return columnWidth * columns + gutter * (columns - 1);
+    }
+
+    mmToColumns(widthMm, context) {
+        const { columnWidth, gutter } = this.getColumnMetrics(context);
+        return (widthMm + gutter) / (columnWidth + gutter);
+    }
+
+    getWidthInColumns(block, type, context) {
+        if (type === 'text') return Number(block.width) || 1;
+        if (block.sizeMode === 'width') return Number(block.widthInColumns) || 1;
+
+        const aspectRatio = Number(block.originalWidth) / Number(block.originalHeight);
+        if (!Number.isFinite(aspectRatio) || aspectRatio <= 0) {
+            return Number(block.widthInColumns) || 1;
+        }
+        const widthMm = context.gridModule * (Number(block.heightInModules) || 3) * aspectRatio;
+        return this.mmToColumns(widthMm, context);
+    }
+
+    /** Preserve the object's share of the source grid when crossing surfaces. */
+    transferRelativeWidth(block, targetSurface, type) {
+        const sourceSurface = block.surface || 'front';
+        if (sourceSurface === targetSurface) return false;
+
+        const sourceContext = this.host.surfaceCoordinates.getGridContext(sourceSurface);
+        const targetContext = this.host.surfaceCoordinates.getGridContext(targetSurface);
+        const sourceWidth = this.getWidthInColumns(block, type, sourceContext);
+        const widthRatio = Math.max(0, Math.min(1, sourceWidth / sourceContext.columnCount));
+        const targetWidth = Math.max(
+            0.25,
+            Math.min(targetContext.columnCount, widthRatio * targetContext.columnCount)
+        );
+        const roundedWidth = Number.parseFloat(targetWidth.toFixed(4));
+
+        if (type === 'text') {
+            block.width = roundedWidth;
+        } else {
+            block.widthInColumns = roundedWidth;
+            const aspectRatio = Number(block.originalWidth) / Number(block.originalHeight);
+            if (Number.isFinite(aspectRatio) && aspectRatio > 0) {
+                const widthMm = this.columnsToMm(targetWidth, targetContext);
+                block.heightInModules = Number.parseFloat(
+                    Math.max(0.25, widthMm / aspectRatio / targetContext.gridModule).toFixed(4)
+                );
+            }
+        }
+        block.surface = targetSurface;
+        return true;
+    }
+
+    moveToSurface(block, targetSurface, type) {
+        this.transferRelativeWidth(block, targetSurface, type);
+        block.surface = targetSurface;
+        block.x = 1;
+        block.row = 0;
+        block.baselineOffset = 0;
+        this.constrain(block, type);
+        this.syncOpenEditor(block, type);
+    }
+
     constrain(block, type) {
         if (!block || !block.lockPosition) return;
         const surface = block.surface || 'front';
@@ -83,6 +159,7 @@ export class ObjectPlacementController {
         const localX = pointer.local.x - offset.x;
         const localY = pointer.local.y - offset.y;
 
+        this.transferRelativeWidth(block, surface, type);
         block.surface = surface;
         block.x = Math.round((localX - margin) / (columnWidth + module)) + 1;
         const baseline = Math.max(0, Math.round((localY - margin) / module));
@@ -135,6 +212,7 @@ export class ObjectPlacementController {
                 dom.paragraphBaselineInput.value =
                     this.host.surfaceCoordinates.rowBaselineToY(block.row, block.baselineOffset, surface) + 1;
             }
+            if (dom.paragraphWidthInput) dom.paragraphWidthInput.value = block.width.toFixed(2);
         }
         if (type === 'graphics' && this.host.currentEditingGraphicsId === block.id) {
             if (dom.graphicsSurfaceSelect) dom.graphicsSurfaceSelect.value = surface;
@@ -143,6 +221,12 @@ export class ObjectPlacementController {
             if (dom.graphicsBaselineInput) {
                 dom.graphicsBaselineInput.value =
                     this.host.surfaceCoordinates.rowBaselineToY(block.row, block.baselineOffset, surface) + 1;
+            }
+            if (dom.graphicsWidthInput) {
+                dom.graphicsWidthInput.value = (block.widthInColumns || 1).toFixed(2);
+            }
+            if (dom.graphicsHeightInput) {
+                dom.graphicsHeightInput.value = (block.heightInModules || 1).toFixed(2);
             }
         }
     }

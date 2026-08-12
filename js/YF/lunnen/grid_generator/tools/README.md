@@ -6,18 +6,24 @@ Run commands from the project directory with `npm --prefix tools`:
 npm --prefix tools install
 npm --prefix tools run dev
 npm --prefix tools test
+npm --prefix tools run public:check
 npm --prefix tools run schema
 npm --prefix tools run presets:check
 npm --prefix tools run build
+npm --prefix tools run release
 ```
 
-The Vite development server uses `http://127.0.0.1:8000`. Production output is
-written to `build/`; fonts, graphics and source-of-truth preset JSON files are
-copied into that output. PDF and outlined-SVG dependencies are pinned locally in
-`package-lock.json` and loaded lazily as separate chunks. Ajv is a build-only
-dependency that generates `src/preset/generated/validatePreset12.js`; `test`
-and `build` verify that it still matches the checked-in schema.
+The Vite development server uses `http://127.0.0.1:8000` and rewrites `/` to
+the source document. Production output is written to `build/`. `release` then
+synchronizes its non-map hashed assets into the tracked `runtime/` folder and
+updates the root `index.html`. PDF and outlined-SVG dependencies are pinned in
+`package-lock.json`, synchronized into `vendor/` with `npm run vendor`, and
+loaded lazily as separate hashed assets. Ajv is a build-only dependency that
+generates `src/preset/generated/validatePreset12.js`; `test` and `build` verify
+that it still matches the checked-in schema.
 
-Vite также импортирует HTML-фрагменты как raw-строки и объединяет восемь
-CSS-модулей из корневого `style.css`. Поэтому и dev-сервер, и production build
-проверяют ту же модульную оболочку интерфейса.
+`public:check` не допускает bare-imports и bundler-only imports в исходном
+module graph, проверяет manifest, schema, точные vendor-копии и fingerprint
+хэшированного runtime. Поэтому Netlify обслуживает папку напрямую, но браузер
+получает атомарный набор версионированных файлов без зависимости от локального
+`tools/node_modules`.

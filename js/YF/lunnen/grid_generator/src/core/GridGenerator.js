@@ -375,10 +375,8 @@ export class GridGenerator {
 
     moveBlockToSurface(block, surface) {
         if (!block || !SURFACE_IDS.includes(surface)) return;
-        block.surface = surface;
-        block.x = 1;
-        block.row = 0;
-        block.baselineOffset = 0;
+        const type = this.objectDocument.textBlocks.includes(block) ? 'text' : 'graphics';
+        this.objectPlacementController.moveToSurface(block, surface, type);
         this.constrainAllObjectsToGrid();
         if (this.currentEditingBlock?.id === block.id) {
             if (this.dom.paragraphXInput) this.dom.paragraphXInput.value = 1;

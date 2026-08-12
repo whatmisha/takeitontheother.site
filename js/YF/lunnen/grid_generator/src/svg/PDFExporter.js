@@ -1,19 +1,15 @@
+import { loadPdfRuntime } from '../runtime/BrowserRuntimeLoader.js';
+
 /** Owns lazy PDF dependencies and SVG-to-PDF conversion. */
 export class PDFExporter {
     constructor({
         textToPath,
         cleanSvg,
         windowRef = globalThis.window,
-        dependencyLoader = async () => {
-            const [pdfModule, converterModule] = await Promise.all([
-                import('@vendor/jspdf'),
-                import('@vendor/svg2pdf')
-            ]);
-            return {
-                jsPDF: pdfModule.jsPDF || pdfModule.default?.jsPDF,
-                svg2pdf: converterModule.svg2pdf || converterModule.default
-            };
-        }
+        dependencyLoader = () => loadPdfRuntime({
+            globalRef: windowRef || globalThis,
+            documentRef: windowRef?.document || globalThis.document
+        })
     }) {
         this.textToPath = textToPath;
         this.cleanSvg = cleanSvg;

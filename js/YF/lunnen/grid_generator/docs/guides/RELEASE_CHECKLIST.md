@@ -4,17 +4,26 @@ Updated: 2026-08-12.
 
 ## Automated — completed
 
-- [x] `npm --prefix tools test` — 141/141 tests.
+- [x] `npm --prefix tools test` — 146/146 tests.
+- [x] `npm --prefix tools run public:check` — browser-resolvable static module
+  graph, current schema/manifest, exact vendor copies and current hashed runtime.
 - [x] `npm --prefix tools run presets:check` — 19/19 presets and manifest.
 - [x] `npm --prefix tools audit --audit-level=low` — 0 vulnerabilities.
-- [x] `npm --prefix tools run build` — 371 transformed modules.
+- [x] `npm --prefix tools run build` — 105 transformed modules.
 - [x] `tests/browser-smoke.html` — `PASS — 70 checks` in the local Chromium
   browser, with no uncaught application errors.
 
-The browser suite covers JSON round-trip, New/Front/reverse presets, Caption,
+The browser suite runs through the hashed public entry served by the same
+ordinary static-server path used by Netlify. It covers JSON round-trip,
+New/Front/reverse presets, Caption,
 Sides, own grids, all canvas rotations, screen-axis pan, Fit/zoom, rotated
 cross-surface dragging, object editors, locks/units, modular shell assembly,
 performance metrics, SVG template caching and accessible error presentation.
+Outlined SVG and PDF were also exercised with all three lazy local runtime
+libraries loaded successfully; the Vite production build passed the same
+startup and PDF-runtime checks.
+- [x] Airis 14 Back transfers text width `3/12 → 4.5/18` and graphics width
+  `2.8/12 → 4.2/18` when moved from Front to Left.
 
 ## macOS Quick Look — completed for the reported regression
 

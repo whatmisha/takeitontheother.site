@@ -3,12 +3,11 @@
  * Использует opentype.js для загрузки шрифтов и создания путей
  */
 
+import { loadOpentypeRuntime } from '../runtime/BrowserRuntimeLoader.js';
+
 export class TextToPath {
     constructor({
-        dependencyLoader = async () => {
-            const module = await import('@vendor/opentype');
-            return module.default || module;
-        }
+        dependencyLoader = () => loadOpentypeRuntime()
     } = {}) {
         this.fonts = new Map(); // Кэш загруженных шрифтов
         this.dependencyLoader = dependencyLoader;

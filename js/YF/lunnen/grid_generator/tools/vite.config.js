@@ -1,14 +1,14 @@
-import { cp } from 'node:fs/promises';
+import { cp, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { defineConfig } from 'vite';
 
+import { readBuildEntry, renderApplicationDocument } from './public-runtime-utils.js';
+
 const toolsDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(toolsDirectory, '..');
 const outputDirectory = path.join(projectRoot, 'build');
-const dependencyPath = (...parts) => path.join(toolsDirectory, 'node_modules', ...parts);
-
 function copyRuntimeAssets() {
     return {
         name: 'copy-runtime-assets',
@@ -24,19 +24,41 @@ function copyRuntimeAssets() {
     };
 }
 
+function serveDevelopmentDocument() {
+    return {
+        name: 'serve-development-document',
+        configureServer(server) {
+            server.middlewares.use((request, _response, next) => {
+                const [pathname, query = ''] = (request.url || '/').split('?');
+                if (pathname === '/' || pathname === '/index.html') {
+                    request.url = `/src/ui/ApplicationDocument.html${query ? `?${query}` : ''}`;
+                }
+                next();
+            });
+        }
+    };
+}
+
+function writeBuildDocument() {
+    return {
+        name: 'write-build-document',
+        async closeBundle() {
+            const entry = await readBuildEntry();
+            const html = await renderApplicationDocument({
+                scriptHref: `./${entry.script}`,
+                styleHref: `./${entry.style}`
+            });
+            await writeFile(path.join(outputDirectory, 'index.html'), html, 'utf8');
+        }
+    };
+}
+
 export default defineConfig({
     root: projectRoot,
     cacheDir: path.join(toolsDirectory, '.vite'),
     base: './',
     publicDir: false,
-    resolve: {
-        alias: {
-            '@vendor/jspdf': dependencyPath('jspdf', 'dist', 'jspdf.es.min.js'),
-            '@vendor/opentype': dependencyPath('opentype.js', 'dist', 'opentype.module.js'),
-            '@vendor/svg2pdf': dependencyPath('svg2pdf.js', 'dist', 'svg2pdf.es.min.js')
-        }
-    },
-    plugins: [copyRuntimeAssets()],
+    plugins: [serveDevelopmentDocument(), copyRuntimeAssets(), writeBuildDocument()],
     server: {
         host: '127.0.0.1',
         port: 8000,
@@ -50,7 +72,11 @@ export default defineConfig({
     build: {
         outDir: outputDirectory,
         emptyOutDir: true,
+        manifest: true,
         sourcemap: true,
-        target: ['chrome120', 'safari17']
+        target: ['chrome120', 'safari17'],
+        rollupOptions: {
+            input: path.join(projectRoot, 'src', 'runtime', 'PublicEntry.js')
+        }
     }
 });

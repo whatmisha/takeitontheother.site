@@ -15,11 +15,13 @@ npm --prefix tools run dev
 ## Основные команды
 
 ```bash
-npm --prefix tools test                 # 141 unit/regression checks + schema freshness
+npm --prefix tools test                 # unit/regression + public-runtime checks
+npm --prefix tools run public:check     # проверить статическую публичную версию
 npm --prefix tools run schema           # пересобрать runtime-валидатор из JSON Schema
 npm --prefix tools run presets:check    # проверить manifest пресетов
 npm --prefix tools run presets          # пересобрать manifest
 npm --prefix tools run build            # production-сборка в build/
+npm --prefix tools run release          # обновить закоммиченный public runtime
 npm --prefix tools run preview          # проверить production-сборку
 ```
 
@@ -53,15 +55,22 @@ JSON-файлы в `presets/` — источник истины. `presets/manife
 - `src/svg` — SVG/PDF/JSON, санитайзер и файловый экспорт.
 - `src/history` — snapshot history и транзакции.
 - `src/ui` — панели, слайдеры и zoom/pan.
-- `src/ui/fragments` — синхронно собираемые части интерфейса.
+- `src/ui/fragments` — части интерфейса, загружаемые с того же origin до startup.
 - `styles` — тематические CSS-модули; корневой `style.css` задаёт их порядок.
 - `schemas` — единственный контракт формата пресета.
-- `tools` — Vite, локальные зависимости, генераторы manifest и валидатора.
+- `vendor` — три компактные закреплённые исходные библиотеки экспорта.
+- `runtime` — готовые хэшированные ассеты, которые загружает публичный `index.html`.
+- `tools` — удаляемая локальная среда разработки: Vite, `node_modules` и генераторы.
 
-Production-сборка использует хэшированные ассеты. jsPDF, svg2pdf.js и
-opentype.js закреплены в `tools/package-lock.json` и грузятся лениво локальными
-чанками. Ajv используется только инструментом сборки; браузер получает
-автономный сгенерированный ESM-валидатор без runtime-зависимости от Ajv.
+Публичный `index.html` загружает только закоммиченный хэшированный `runtime/`.
+Это не позволяет браузеру смешать модули от разных релизов. Исходный module
+graph тоже остаётся browser-resolvable и используется Vite-сервером разработки.
+jsPDF, svg2pdf.js и opentype.js закреплены в `tools/package-lock.json`,
+синхронизируются в `vendor/` и попадают в runtime отдельными ленивыми ассетами.
+`npm run public:check` сверяет fingerprint runtime со всеми исходниками. Папка
+`tools/node_modules` не публикуется и может быть удалена с диска; она
+восстанавливается через `npm --prefix tools install`. Ajv используется только
+генератором; браузер получает автономный ESM-валидатор.
 
 ## Совместимость
 

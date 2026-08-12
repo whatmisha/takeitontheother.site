@@ -12,10 +12,15 @@ const context = {
     rowCount: 12,
     rowHeight: 7
 };
+const leftContext = {
+    ...context,
+    frontWidth: 100,
+    columnCount: 18
+};
 
 function createHost() {
     const coordinates = {
-        getGridContext: () => context,
+        getGridContext: surface => surface === 'left' ? leftContext : context,
         getBlockY: block => block.row * 8 + block.baselineOffset,
         yToRowBaseline: y => ({ row: Math.floor(y / 8), baselineOffset: y % 8 }),
         rowBaselineToY: (row, offset) => row * 8 + offset,
@@ -84,8 +89,65 @@ test('pointer placement transfers an object between surfaces before constraining
 
     assert.equal(placement.positionAtPointer(block, 0, 0, 'text'), true);
     assert.equal(block.surface, 'left');
+    assert.equal(block.width, 4.5);
     assert.equal(block.x >= 1 && block.x <= 10, true);
     assert.equal(block.row >= 0, true);
+});
+
+test('surface transfer preserves text width as a share of the selected surface grid', () => {
+    const host = createHost();
+    const placement = new ObjectPlacementController(host);
+    const block = {
+        id: 'text-relative',
+        lockPosition: true,
+        surface: 'front',
+        x: 6,
+        row: 4,
+        baselineOffset: 2,
+        width: 4,
+        alignment: 'left'
+    };
+
+    placement.moveToSurface(block, 'left', 'text');
+
+    assert.equal(block.width, 6);
+    assert.equal(block.surface, 'left');
+    assert.deepEqual([block.x, block.row, block.baselineOffset], [1, 0, 0]);
+});
+
+test('surface transfer preserves graphics width ratio in both sizing modes', () => {
+    const host = createHost();
+    const placement = new ObjectPlacementController(host);
+    const widthSized = {
+        surface: 'front',
+        sizeMode: 'width',
+        widthInColumns: 4,
+        heightInModules: 3,
+        originalWidth: 200,
+        originalHeight: 100
+    };
+
+    placement.transferRelativeWidth(widthSized, 'left', 'graphics');
+    assert.equal(widthSized.widthInColumns, 6);
+    assert.equal(widthSized.surface, 'left');
+
+    const heightSized = {
+        surface: 'front',
+        sizeMode: 'height',
+        widthInColumns: 1,
+        heightInModules: 3,
+        originalWidth: 200,
+        originalHeight: 100
+    };
+    const sourceWidth = placement.getWidthInColumns(heightSized, 'graphics', context);
+    placement.transferRelativeWidth(heightSized, 'left', 'graphics');
+    const targetWidth = placement.getWidthInColumns(heightSized, 'graphics', leftContext);
+
+    assert.ok(Math.abs(sourceWidth / context.columnCount - targetWidth / leftContext.columnCount) < 1e-5);
+    assert.equal(
+        heightSized.widthInColumns,
+        Number.parseFloat((sourceWidth / context.columnCount * leftContext.columnCount).toFixed(4))
+    );
 });
 
 test('graphics width is recalculated from aspect ratio in surface columns', () => {
