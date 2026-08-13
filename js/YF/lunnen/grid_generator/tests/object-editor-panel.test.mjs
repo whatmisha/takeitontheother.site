@@ -214,3 +214,25 @@ test('graphics editor lifecycle resets transient UI and editing state', () => {
         globalThis.window = previousWindow;
     }
 });
+
+test('Objects clicks do not immediately close built-in graphics editors', () => {
+    const paragraphPanel = createPanel();
+    paragraphPanel.classList.remove('active');
+    const graphicsPanel = createPanel();
+    const host = { dom: { paragraphPanel, graphicsPanel } };
+    const controller = new ObjectEditorPanelController(host, {
+        document: {},
+        hide() {},
+        resetGraphics() {}
+    });
+    let closes = 0;
+    controller.closeGraphicsPanel = () => { closes += 1; };
+
+    controller.handleOutsideClick({
+        target: {
+            closest: selector => selector.includes('.element-item') ? {} : null
+        }
+    });
+
+    assert.equal(closes, 0);
+});

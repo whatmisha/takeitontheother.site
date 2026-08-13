@@ -52,7 +52,6 @@ export class ApplicationEventController {
     bindSideVisibility() {
         this.listeners.listen(this.host.dom.showSidePanels, 'change', event => {
             this.runAction('toggle side panels', () => {
-                this.host.markAsChanged();
                 this.host.surfaceManager.setAllSideVisibility(event.target.checked);
                 this.host.updateEyeIcon(event.target);
                 this.host.syncSurfaceControls();
@@ -64,7 +63,6 @@ export class ApplicationEventController {
     bindSettingToggle(input, setting, label, updateEyeIcon) {
         this.listeners.listen(input, 'change', event => {
             this.runAction(label, () => {
-                this.host.markAsChanged();
                 this.host.settingsModule.set(setting, event.target.checked);
                 if (updateEyeIcon) this.host.updateEyeIcon(event.target);
                 this.host.updateGrid();
@@ -211,6 +209,7 @@ export class ApplicationEventController {
         this.host.historyManager.beginAction(label, this.host.getStateSnapshot());
         mutation();
         this.host.historyManager.commitAction(this.host.getStateSnapshot());
+        this.host.markAsChanged();
     }
 
     dispose() {

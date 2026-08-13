@@ -19,6 +19,7 @@ export function createPresetApplicationPort(application) {
         get objectEditorPanelController() { return application.objectEditorPanelController; },
         objectPlacementController: application.objectPlacementController,
         resetChangesFlag: bind(application, 'resetChangesFlag'),
+        markAsChanged: bind(application, 'markAsChanged'),
         syncApplicationUI: bind(application, 'syncApplicationUI'),
         updateGrid: bind(application, 'updateGrid'),
         mmToColumns: bind(application, 'mmToColumns')
@@ -48,7 +49,8 @@ export function createExportPort(application) {
         dom: application.dom,
         svgExporter: application.svgExporter,
         objectDocument: application.objectDocument,
-        get errorPresenter() { return application.errorPresenter; }
+        get errorPresenter() { return application.errorPresenter; },
+        onSettingsExported: () => application.handleSettingsExported()
     });
 }
 

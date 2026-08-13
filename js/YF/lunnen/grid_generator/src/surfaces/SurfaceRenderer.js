@@ -16,6 +16,7 @@ export class SurfaceRenderer {
         getGridOpacity,
         getTextBlocks = () => [],
         getGraphicsBlocks = () => [],
+        getLayerEntries = null,
         drawTextBlock,
         drawGraphicsBlock,
         drawGraphicsBlockForExport
@@ -29,6 +30,10 @@ export class SurfaceRenderer {
         this.getGridOpacity = getGridOpacity;
         this.getTextBlocks = getTextBlocks;
         this.getGraphicsBlocks = getGraphicsBlocks;
+        this.getLayerEntries = getLayerEntries || (() => [
+            ...this.getTextBlocks().map(block => ({ type: 'text', block })),
+            ...this.getGraphicsBlocks().map(block => ({ type: 'graphics', block }))
+        ]);
         this.drawTextBlock = drawTextBlock;
         this.drawGraphicsBlock = drawGraphicsBlock;
         this.drawGraphicsBlockForExport = drawGraphicsBlockForExport;
@@ -54,32 +59,34 @@ export class SurfaceRenderer {
         if (!this.settings.get('showObjects') && !forExport) return;
 
         const context = this.getGridContext(surface);
-        this.getTextBlocks().forEach(block => {
+        this.getLayerEntries().forEach(({ type, block }) => {
             if ((block.surface || 'front') !== surface || block.visible === false || block.deleting) return;
-            this.drawTextBlock(
-                container,
-                block,
-                0,
-                0,
-                geometry.localWidth,
-                geometry.localHeight,
-                scale,
-                context
-            );
-        });
-        this.getGraphicsBlocks().forEach(block => {
-            if ((block.surface || 'front') !== surface || block.visible === false || block.deleting || !block.svgContent) return;
-            const draw = forExport ? this.drawGraphicsBlockForExport : this.drawGraphicsBlock;
-            draw(
-                container,
-                block,
-                0,
-                0,
-                geometry.localWidth,
-                geometry.localHeight,
-                scale,
-                context
-            );
+            if (type === 'text') {
+                this.drawTextBlock(
+                    container,
+                    block,
+                    0,
+                    0,
+                    geometry.localWidth,
+                    geometry.localHeight,
+                    scale,
+                    context
+                );
+                return;
+            }
+            if (block.svgContent) {
+                const draw = forExport ? this.drawGraphicsBlockForExport : this.drawGraphicsBlock;
+                draw(
+                    container,
+                    block,
+                    0,
+                    0,
+                    geometry.localWidth,
+                    geometry.localHeight,
+                    scale,
+                    context
+                );
+            }
         });
     }
 

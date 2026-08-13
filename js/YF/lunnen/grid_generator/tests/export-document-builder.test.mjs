@@ -98,6 +98,24 @@ test('export text-style reference reuses the shared typography resolver', () => 
     ]);
 });
 
+test('export paints text and graphics in their shared layer order', async () => {
+    const host = createHost();
+    const graphic = { id: 'graphic', surface: 'front', svgContent: '<path/>' };
+    const text = { id: 'text', surface: 'front' };
+    host.objectDocument = {
+        textBlocks: [text],
+        graphicsBlocks: [graphic],
+        getLayerEntries: () => [
+            { type: 'graphics', block: graphic },
+            { type: 'text', block: text }
+        ]
+    };
+
+    await new ExportDocumentBuilder(host).build(false);
+
+    assert.deepEqual(host.calls.slice(-2), ['graphics', 'text']);
+});
+
 test('export document builder caches parsed immutable SVG assets', async () => {
     let fetches = 0;
     const svg = {

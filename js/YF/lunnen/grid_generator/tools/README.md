@@ -27,3 +27,7 @@ module graph, проверяет manifest, schema, точные vendor-копи�
 хэшированного runtime. Поэтому Netlify обслуживает папку напрямую, но браузер
 получает атомарный набор версионированных файлов без зависимости от локального
 `tools/node_modules`.
+
+Репозиторный GitHub Actions workflow запускает `npm ci`, полный `test` и
+production `build` на Node 22 для каждого изменения Grid Generator в push/PR.
+Он только проверяет состояние и не делает bot commits.

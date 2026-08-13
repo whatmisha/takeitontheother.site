@@ -81,7 +81,8 @@ test('organized preset JSON round-trips every editable document setting', () => 
                 surface: 'left',
                 showBounds: true,
                 visible: false,
-                lockPosition: false
+                lockPosition: false,
+                layerIndex: 1
             },
             {
                 id: 'display',
@@ -98,6 +99,7 @@ test('organized preset JSON round-trips every editable document setting', () => 
                 showBounds: false,
                 visible: true,
                 lockPosition: true,
+                layerIndex: 4,
                 fontWeight: 275,
                 fontFeatures: { salt: true, ss01: false, tnum: true }
             }
@@ -121,7 +123,8 @@ test('organized preset JSON round-trips every editable document setting', () => 
                 visible: false,
                 originalWidth: 120,
                 originalHeight: 30,
-                lockPosition: false
+                lockPosition: false,
+                layerIndex: 3
             },
             {
                 id: 'icons',
@@ -140,7 +143,8 @@ test('organized preset JSON round-trips every editable document setting', () => 
                 visible: true,
                 originalWidth: 205,
                 originalHeight: 29,
-                lockPosition: false
+                lockPosition: false,
+                layerIndex: 0
             },
             {
                 id: 'claim',
@@ -159,7 +163,8 @@ test('organized preset JSON round-trips every editable document setting', () => 
                 visible: false,
                 originalWidth: 187,
                 originalHeight: 29,
-                lockPosition: true
+                lockPosition: true,
+                layerIndex: 2
             },
             {
                 id: 'claim2026',
@@ -178,7 +183,8 @@ test('organized preset JSON round-trips every editable document setting', () => 
                 visible: true,
                 originalWidth: 202.0335404,
                 originalHeight: 32.7559817,
-                lockPosition: true
+                lockPosition: true,
+                layerIndex: 5
             }
         ]
     };
@@ -221,6 +227,7 @@ test('organized preset JSON round-trips every editable document setting', () => 
     assert.deepEqual(normalized.settings.surfaceSettings, surfaceSettings);
     assert.equal(normalized.textBlocks[0].x, 0);
     assert.equal(normalized.textBlocks[0].lockPosition, false);
+    assert.equal(normalized.textBlocks[0].layerIndex, 1);
     assert.equal(normalized.textBlocks[1].fontWeight, 275);
     assert.deepEqual(normalized.textBlocks[1].fontFeatures, {
         salt: true,
@@ -235,6 +242,7 @@ test('organized preset JSON round-trips every editable document setting', () => 
     assert.equal(customGraphic.widthInModules, 8);
     assert.equal(customGraphic.lockPosition, false);
     assert.equal(customGraphic.showBounds, true);
+    assert.equal(customGraphic.layerIndex, 3);
 
     const icons = normalized.graphicsBlocks.find(block => block.id === 'icons');
     assert.equal(icons.sizeMode, 'width');
@@ -251,6 +259,7 @@ test('organized preset JSON round-trips every editable document setting', () => 
     assert.equal(claim2026.heightInModules, 3);
     assert.equal(claim2026.originalHeight, 32.7559817);
     assert.equal(claim2026.svgContent, '<g id="claim-2026"/>');
+    assert.equal(claim2026.layerIndex, 5);
 });
 
 test('legacy and incomplete preset documents are rejected explicitly', async () => {

@@ -43,6 +43,7 @@ function createHost() {
         panelUiController: { updatePanelParams() {} },
         getStyleFontWeight: () => 500,
         getBlockNumber: () => 1,
+        markAsChanged: () => history.push('changed'),
         history
     };
 }
@@ -69,7 +70,7 @@ test('duplicate records one history transaction and creates an independent objec
     assert.equal(duplicate.x, 2);
     assert.equal(duplicate.visible, true);
     assert.equal(renders, 1);
-    assert.deepEqual(host.history, ['begin:duplicate text', 'commit']);
+    assert.deepEqual(host.history, ['begin:duplicate text', 'commit', 'changed']);
 });
 
 test('clipboard survives a preset document replacement and pastes one undoable copy', () => {
@@ -103,7 +104,7 @@ test('clipboard survives a preset document replacement and pastes one undoable c
     assert.equal(pasted.visible, true);
     assert.notEqual(pasted.id, source.id);
     assert.deepEqual(selected, { type: 'text', id: pasted.id });
-    assert.deepEqual(host.history, ['begin:paste text', 'commit']);
+    assert.deepEqual(host.history, ['begin:paste text', 'commit', 'changed']);
 });
 
 test('copying a built-in graphic pastes it as an independent custom object', () => {
@@ -138,7 +139,7 @@ test('adding text is owned by the navigator transaction', () => {
         assert.equal(block.content, 'New object');
         assert.equal(renders, 1);
         assert.deepEqual(selected, { type: 'text', id: block.id });
-        assert.deepEqual(host.history, ['begin:add text block', 'commit']);
+        assert.deepEqual(host.history, ['begin:add text block', 'commit', 'changed']);
     } finally {
         globalThis.setTimeout = previousSetTimeout;
     }
@@ -155,7 +156,20 @@ test('visibility action updates the model in one history transaction', () => {
 
     assert.equal(host.objectDocument.textBlocks[0].visible, false);
     assert.equal(itemVisibility, false);
-    assert.deepEqual(host.history, ['begin:toggle visibility text', 'commit']);
+    assert.deepEqual(host.history, ['begin:toggle visibility text', 'commit', 'changed']);
+});
+
+test('layer buttons reorder text and graphics in one undoable transaction', () => {
+    const host = createHost();
+    const controller = new ObjectNavigatorController(host);
+    controller.render = () => {};
+
+    assert.equal(controller.moveLayer('text', 'text-1', 'forward'), true);
+    assert.deepEqual(
+        host.objectDocument.getLayerEntries().map(entry => entry.block.id),
+        ['icons', 'text-1']
+    );
+    assert.deepEqual(host.history, ['begin:bring object forward', 'commit', 'changed']);
 });
 
 test('delete ignores a missing graphics object instead of splicing the wrong item', () => {

@@ -3,6 +3,8 @@ const EYE_HIDDEN_PATHS = `${EYE_VISIBLE_PATHS}<line x1="2" y1="2" x2="14" y2="14
 const EYE_VISIBLE = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">${EYE_VISIBLE_PATHS}</svg>`;
 const EYE_HIDDEN = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">${EYE_HIDDEN_PATHS}</svg>`;
 const DUPLICATE_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="5" y="5" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
+const FORWARD_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 10L8 6L12 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const BACKWARD_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 /** DOM-only view for the Objects panel and canvas bounds feedback. */
 export class ObjectNavigatorView {
@@ -11,6 +13,7 @@ export class ObjectNavigatorView {
         this.actions = actions;
         this.document = documentRef;
         this.highlightTimers = new Set();
+        this.draggedItem = null;
     }
 
     render(items) {
@@ -21,10 +24,19 @@ export class ObjectNavigatorView {
         return true;
     }
 
-    createItem({ name, type, blockId, visible, deleting = false }) {
+    createItem({
+        name,
+        type,
+        blockId,
+        visible,
+        deleting = false,
+        canBringForward = true,
+        canSendBackward = true
+    }) {
         const wrapper = this.document.createElement('div');
         wrapper.className = 'element-item-wrapper';
         if (deleting) wrapper.classList.add('deleting');
+        else this.bindLayerDrag(wrapper, type, blockId);
 
         const button = this.document.createElement('button');
         button.type = 'button';
@@ -44,7 +56,14 @@ export class ObjectNavigatorView {
                 this.actions.restorePendingDelete(type, blockId);
             });
         } else {
-            button.appendChild(this.createActions({ name, type, blockId, visible }));
+            button.appendChild(this.createActions({
+                name,
+                type,
+                blockId,
+                visible,
+                canBringForward,
+                canSendBackward
+            }));
             button.addEventListener('click', event => {
                 if (!event.target.closest('.element-action-btn')) this.actions.select(type, blockId);
             });
@@ -57,7 +76,7 @@ export class ObjectNavigatorView {
         return wrapper;
     }
 
-    createActions({ name, type, blockId, visible }) {
+    createActions({ name, type, blockId, visible, canBringForward, canSendBackward }) {
         const actions = this.document.createElement('div');
         actions.className = 'element-actions';
         const visibility = this.createActionButton(visible ? 'Hide' : 'Show', visible ? EYE_VISIBLE : EYE_HIDDEN);
@@ -67,8 +86,12 @@ export class ObjectNavigatorView {
         });
 
         const duplicate = this.createActionButton('Duplicate', DUPLICATE_ICON);
+        const forward = this.createActionButton('Bring Forward', FORWARD_ICON);
+        const backward = this.createActionButton('Send Backward', BACKWARD_ICON);
+        forward.disabled = !canBringForward;
+        backward.disabled = !canSendBackward;
         const remove = this.createActionButton('Delete', '×');
-        [duplicate, remove].forEach(button => {
+        [forward, backward, duplicate, remove].forEach(button => {
             button.dataset.elementType = type;
             if (blockId) button.dataset.elementId = blockId;
         });
@@ -76,12 +99,63 @@ export class ObjectNavigatorView {
             event.stopPropagation();
             this.actions.duplicate(type, blockId);
         });
+        forward.addEventListener('click', event => {
+            event.stopPropagation();
+            this.actions.bringForward(type, blockId);
+        });
+        backward.addEventListener('click', event => {
+            event.stopPropagation();
+            this.actions.sendBackward(type, blockId);
+        });
         remove.addEventListener('click', event => {
             event.stopPropagation();
             this.actions.startDelete(remove, type, blockId, name);
         });
-        actions.append(visibility, duplicate, remove);
+        actions.append(visibility, forward, backward, duplicate, remove);
         return actions;
+    }
+
+    bindLayerDrag(wrapper, type, blockId) {
+        wrapper.draggable = true;
+        wrapper.addEventListener('dragstart', event => {
+            this.draggedItem = { type, blockId };
+            wrapper.classList.add('dragging');
+            if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', `${type}:${blockId}`);
+            }
+        });
+        wrapper.addEventListener('dragover', event => {
+            if (!this.draggedItem || this.draggedItem.blockId === blockId) return;
+            event.preventDefault();
+            this.clearDropIndicators();
+            const midpoint = wrapper.getBoundingClientRect().top + wrapper.offsetHeight / 2;
+            wrapper.classList.add(event.clientY < midpoint ? 'drop-before' : 'drop-after');
+        });
+        wrapper.addEventListener('drop', event => {
+            if (!this.draggedItem || this.draggedItem.blockId === blockId) return;
+            event.preventDefault();
+            const midpoint = wrapper.getBoundingClientRect().top + wrapper.offsetHeight / 2;
+            const placement = event.clientY < midpoint ? 'before' : 'after';
+            const source = this.draggedItem;
+            this.clearLayerDrag();
+            this.actions.reorder(source.type, source.blockId, type, blockId, placement);
+        });
+        wrapper.addEventListener('dragend', () => this.clearLayerDrag());
+    }
+
+    clearDropIndicators() {
+        this.host.dom.elementsList?.querySelectorAll('.drop-before, .drop-after').forEach(item => {
+            item.classList.remove('drop-before', 'drop-after');
+        });
+    }
+
+    clearLayerDrag() {
+        this.host.dom.elementsList?.querySelectorAll('.dragging').forEach(item => {
+            item.classList.remove('dragging');
+        });
+        this.clearDropIndicators();
+        this.draggedItem = null;
     }
 
     createActionButton(title, content) {
@@ -171,6 +245,7 @@ export class ObjectNavigatorView {
     }
 
     dispose() {
+        this.clearLayerDrag();
         this.highlightTimers.forEach(timer => clearTimeout(timer));
         this.highlightTimers.clear();
         return true;

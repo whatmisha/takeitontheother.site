@@ -88,4 +88,66 @@ test('a copied block can be inserted after its source document was replaced', ()
     assert.equal(pasted.visible, true);
     assert.equal(document.textBlocks.length, 2);
     assert.equal(source.metadata.preset, 'A');
+    assert.equal(document.getLayerEntries({ frontToBack: true })[0].block.id, pasted.id);
+});
+
+test('text and graphics share one deterministic layer stack', () => {
+    const document = new ObjectDocumentController({ includeBuiltIns: false });
+    document.replaceDocument({
+        textBlocks: [
+            { id: 'text-back', content: 'Back', layerIndex: 0 },
+            { id: 'text-front', content: 'Front', layerIndex: 2 }
+        ],
+        graphicsBlocks: [{ id: 'graphic-middle', name: 'Middle', layerIndex: 1 }]
+    });
+
+    assert.deepEqual(
+        document.getLayerEntries().map(entry => entry.block.id),
+        ['text-back', 'graphic-middle', 'text-front']
+    );
+    assert.deepEqual(
+        document.getLayerEntries({ frontToBack: true }).map(entry => entry.block.id),
+        ['text-front', 'graphic-middle', 'text-back']
+    );
+});
+
+test('layer commands move and drag objects across text and graphics types', () => {
+    const document = new ObjectDocumentController({ includeBuiltIns: false });
+    document.replaceDocument({
+        textBlocks: [{ id: 'text', layerIndex: 0 }],
+        graphicsBlocks: [
+            { id: 'logo', layerIndex: 1 },
+            { id: 'qr', layerIndex: 2 }
+        ]
+    });
+
+    assert.equal(document.moveLayer('text', 'text', 'forward'), true);
+    assert.deepEqual(
+        document.getLayerEntries().map(entry => entry.block.id),
+        ['logo', 'text', 'qr']
+    );
+    assert.equal(document.reorderLayer(
+        { type: 'graphics', id: 'logo' },
+        { type: 'graphics', id: 'qr' },
+        'before'
+    ), true);
+    assert.deepEqual(
+        document.getLayerEntries({ frontToBack: true }).map(entry => entry.block.id),
+        ['logo', 'qr', 'text']
+    );
+});
+
+test('duplicated objects are inserted directly above their source layer', () => {
+    const document = new ObjectDocumentController({ includeBuiltIns: false, now: () => 50 });
+    document.replaceDocument({
+        textBlocks: [{ id: 'text', layerIndex: 0 }],
+        graphicsBlocks: [{ id: 'logo', layerIndex: 1 }]
+    });
+
+    const copy = document.duplicate('text', 'text');
+
+    assert.deepEqual(
+        document.getLayerEntries().map(entry => entry.block.id),
+        ['text', copy.id, 'logo']
+    );
 });

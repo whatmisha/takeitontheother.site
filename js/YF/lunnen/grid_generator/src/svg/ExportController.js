@@ -86,6 +86,7 @@ export class ExportController {
             currentPresetName: host.currentPresetName || 'Custom'
         };
         host.svgExporter.exportSettings(data, this.filename('json'));
+        host.onSettingsExported?.(data);
         return data;
     }
 }

@@ -1,4 +1,5 @@
 import { PresetFormatAdapter } from '../src/preset/PresetFormatAdapter.js';
+import { DraftStore } from '../src/persistence/DraftStore.js';
 
 const resultElement = document.getElementById('result');
 const appFrame = document.getElementById('appFrame');
@@ -20,6 +21,9 @@ async function waitFor(predicate, message, timeout = 8000) {
 }
 
 async function loadApplication() {
+    const draftStore = new DraftStore();
+    await draftStore.clear();
+    draftStore.dispose();
     const loaded = new Promise((resolve, reject) => {
         appFrame.addEventListener('load', resolve, { once: true });
         appFrame.addEventListener('error', () => reject(new Error('Application iframe failed to load')), { once: true });
@@ -82,12 +86,14 @@ async function run() {
                 id: 'display',
                 styleRef: 'lunnenDisplay',
                 lockPosition: false,
+                layerIndex: 1,
                 fontWeight: 275,
                 fontFeatures: { salt: true }
             }],
             graphicsBlocks: [{
                 id: 'icons',
                 isBuiltIn: true,
+                layerIndex: 0,
                 sizeMode: 'width',
                 widthInColumns: 4.5,
                 alignment: 'right',
@@ -112,8 +118,10 @@ async function run() {
     );
     assert(
         presetRoundTrip.graphicsBlocks[0].sizeMode === 'width' &&
-            presetRoundTrip.graphicsBlocks[0].lockPosition === false,
-        'Built-in graphics sizing and constraints survive JSON round-trip'
+            presetRoundTrip.graphicsBlocks[0].lockPosition === false &&
+            presetRoundTrip.graphicsBlocks[0].layerIndex === 0 &&
+            presetRoundTrip.textBlocks[0].layerIndex === 1,
+        'Built-in graphics sizing, constraints and layer order survive JSON round-trip'
     );
 
     const appDocument = await loadApplication();
@@ -207,8 +215,74 @@ async function run() {
     assert(appDocument.querySelectorAll('#gridSvg [id^="text-group-"]').length > 0, 'text objects render on the canvas');
     assert(appDocument.querySelectorAll('#gridSvg [id^="graphics-group-"]').length > 0, 'graphics objects render on the canvas');
     assert(appDocument.querySelectorAll('#gridSvg [data-surface]').length === 4, 'all four side surface layers render');
+    assert(
+        Array.from(appDocument.querySelectorAll('#elementsList .element-item')).map(
+            item => item.dataset.elementId
+        ).join('|') === application.objectDocument.getLayerEntries({ frontToBack: true }).map(
+            entry => entry.block.id
+        ).join('|'),
+        'Objects lists the shared text/graphics stack from front to back'
+    );
 
-    const textItem = appDocument.querySelector('#elementsList [data-element-type="text"]');
+    const forwardButton = appDocument.querySelector(
+        '#elementsList .element-item [title="Bring Forward"]:not(:disabled)'
+    );
+    const forwardItem = forwardButton?.closest('.element-item');
+    const forwardBlock = forwardItem && application.objectDocument.getBlock(
+        forwardItem.dataset.elementType,
+        forwardItem.dataset.elementId
+    );
+    const forwardLayerBefore = forwardBlock?.layerIndex;
+    forwardButton?.click();
+    await waitFor(
+        () => forwardBlock?.layerIndex === forwardLayerBefore + 1,
+        'object layer button'
+    );
+    assert(
+        forwardBlock?.layerIndex === forwardLayerBefore + 1,
+        'Bring Forward reorders the shared text/graphics stack'
+    );
+
+    const dragItems = Array.from(
+        appDocument.querySelectorAll('#elementsList .element-item-wrapper[draggable="true"]')
+    );
+    const draggedLayerItem = dragItems.at(-1);
+    const layerDropTarget = dragItems[0];
+    const draggedLayerId = draggedLayerItem.querySelector('.element-item').dataset.elementId;
+    const layerTransfer = new appWindow.DataTransfer();
+    draggedLayerItem.dispatchEvent(new appWindow.DragEvent('dragstart', {
+        dataTransfer: layerTransfer,
+        bubbles: true,
+        cancelable: true
+    }));
+    const dropRect = layerDropTarget.getBoundingClientRect();
+    layerDropTarget.dispatchEvent(new appWindow.DragEvent('dragover', {
+        dataTransfer: layerTransfer,
+        clientY: dropRect.top + 1,
+        bubbles: true,
+        cancelable: true
+    }));
+    layerDropTarget.dispatchEvent(new appWindow.DragEvent('drop', {
+        dataTransfer: layerTransfer,
+        clientY: dropRect.top + 1,
+        bubbles: true,
+        cancelable: true
+    }));
+    await waitFor(
+        () => appDocument.querySelector('#elementsList .element-item')?.dataset.elementId === draggedLayerId,
+        'object layer drag reorder'
+    );
+    assert(
+        application.objectDocument.getLayerEntries({ frontToBack: true })[0].block.id === draggedLayerId,
+        'Dragging an Objects row reorders the shared layer stack'
+    );
+
+    const editableTextBlock = application.objectDocument.textBlocks.find(block => (
+        (block.surface || 'front') === 'front' && block.styleRef !== 'lunnenDisplay'
+    ));
+    const textItem = appDocument.querySelector(
+        `#elementsList [data-element-id="${editableTextBlock.id}"]`
+    );
     const editedTextId = textItem.dataset.elementId;
     textItem.click();
     await waitFor(() => appDocument.getElementById('paragraphPanel').classList.contains('active'), 'text editor opening');
@@ -785,6 +859,39 @@ async function run() {
             exactContentWidth < 475 &&
             exactSideLines.length === 1,
         'Left-side export renders a 12-column paragraph at the full 475 mm width'
+    );
+
+    application.markAsChanged();
+    await application.draftRecoveryController.saveNow();
+    const savedDraft = await application.draftRecoveryController.store.load();
+    assert(
+        savedDraft?.version === 1 &&
+            savedDraft.snapshot?.document?.textBlocks?.[0]?.id === 'exact-side-width',
+        'edited document autosaves to the isolated IndexedDB draft'
+    );
+    application.draftRecoveryController.present(savedDraft);
+    assert(
+        appDocument.querySelector('.app-draft-recovery [type="button"].app-draft-restore') &&
+            appDocument.querySelector('.app-draft-recovery [type="button"].app-draft-discard'),
+        'draft recovery offers explicit Restore and Discard actions'
+    );
+    const draftRect = appDocument.querySelector('.app-draft-recovery').getBoundingClientRect();
+    const exportControlsRect = appDocument.querySelector('.bottom-buttons').getBoundingClientRect();
+    const draftExportGap = exportControlsRect.top - draftRect.bottom;
+    assert(
+        Math.abs(draftRect.left + draftRect.width / 2 - appWindow.innerWidth / 2) < 1 &&
+            draftExportGap >= 4 &&
+            draftExportGap <= 32,
+        'Unsaved draft is centered directly above the export controls'
+    );
+    appDocument.querySelector('.app-draft-discard').click();
+    await waitFor(
+        () => !appDocument.querySelector('.app-draft-recovery'),
+        'draft discard'
+    );
+    assert(
+        await application.draftRecoveryController.store.load() === null,
+        'Discard removes the recovery draft without changing preset JSON'
     );
     assert(applicationErrors.length === 0, 'application emits no uncaught browser errors');
 

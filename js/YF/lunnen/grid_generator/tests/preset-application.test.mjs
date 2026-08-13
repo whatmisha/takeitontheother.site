@@ -46,6 +46,7 @@ const createHost = () => {
             closeGraphicsPanel: () => { host.closeCount += 1; }
         },
         resetChangesFlag: () => { host.resetCount = (host.resetCount || 0) + 1; },
+        markAsChanged: () => { host.changedCount = (host.changedCount || 0) + 1; },
         mmToColumns: millimeters => millimeters / 2,
         recalculateGraphicsWidthFromHeight: block => { block.widthInColumns = 3; },
         svgExporter: { importSettings: async value => value },
@@ -112,6 +113,32 @@ test('snapshot round-trip restores independent document data', () => {
     assert.notEqual(host.objectDocument.textBlocks, snapshot.document.textBlocks);
     assert.equal(host.historyManager.isRestoring, false);
     assert.equal(host.closeCount, 2);
+});
+
+test('draft recovery replaces the document without mutating bundled preset data', () => {
+    const host = createHost();
+    const controller = new PresetApplicationController(host);
+    controller.applyPreset(preset, 'Initial');
+    const draft = {
+        version: 1,
+        presetName: 'Airis recovered',
+        presetKey: 'Airis.json',
+        snapshot: {
+            settings: { ...preset.settings, frontWidth: 777 },
+            document: {
+                textBlocks: [{ id: 'draft-text', content: 'Recovered', deleting: true }],
+                graphicsBlocks: []
+            }
+        }
+    };
+
+    assert.equal(controller.restoreDraft(draft), true);
+    assert.equal(host.currentPresetName, 'Airis recovered');
+    assert.equal(host.settingsModule.get('frontWidth'), 777);
+    assert.equal(host.objectDocument.textBlocks[0].content, 'Recovered');
+    assert.equal(host.objectDocument.textBlocks[0].deleting, undefined);
+    assert.equal(host.changedCount, 1);
+    assert.equal(host.historyManager.history.length, 1);
 });
 
 test('switching presets restores the latest per-preset history state', () => {

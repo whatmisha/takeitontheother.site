@@ -120,6 +120,28 @@ export class PresetApplicationController {
         }
     }
 
+    restoreDraft(draft) {
+        if (!draft?.snapshot) throw new Error('Draft document is missing');
+        this.storeCurrentHistory();
+        const presetName = draft.presetName || 'Custom';
+        const historyKey = draft.presetKey || `recovered:${presetName}`;
+        this.host.historyManager = new HistoryManager({ maxSize: 50 });
+        this.currentHistoryKey = historyKey;
+        if (draft.presetKey) {
+            this.host.presetManager?.applySelection?.(draft.presetKey, presetName);
+        } else {
+            this.host.presetManager?.updateDropdownText?.(presetName);
+        }
+        this.applyDocumentState(draft.snapshot, {
+            presetName,
+            defaultMissingUnits: false,
+            closeEditors: true
+        });
+        this.host.historyManager.saveSnapshot(this.createSnapshot(), 'recovered draft');
+        this.host.markAsChanged();
+        return true;
+    }
+
     applyDocumentState(source, options = {}) {
         const state = clone(source) || {};
         const settings = state.settings || {};
@@ -155,11 +177,14 @@ export class PresetApplicationController {
     }
 
     normalizeTextBlocks(blocks = []) {
-        return clone(blocks).map(block => ({
-            ...block,
-            lockPosition: block.lockPosition ?? true,
-            textAlign: block.textAlign ?? 'left'
-        }));
+        return clone(blocks).map(block => {
+            delete block.deleting;
+            return {
+                ...block,
+                lockPosition: block.lockPosition ?? true,
+                textAlign: block.textAlign ?? 'left'
+            };
+        });
     }
 
     getDocumentState(state) {
@@ -185,6 +210,7 @@ export class PresetApplicationController {
         const gridModule = this.host.settingsModule.get('gridModule');
 
         normalized.forEach(block => {
+            delete block.deleting;
             if (block.svgContent) {
                 block.svgContent = this.sanitizer.sanitizeFragment(block.svgContent);
             }

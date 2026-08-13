@@ -31,6 +31,7 @@ function serializeText(block, index) {
         showBounds: block.showBounds ?? false,
         visible: block.visible ?? true,
         lockPosition: block.lockPosition ?? true,
+        layer: block.layerIndex,
         fontWeight: block.fontWeight,
         fontFeatures: clone(block.fontFeatures)
     });
@@ -52,6 +53,7 @@ function serializeGraphic(block, index) {
         showBounds: block.showBounds ?? false,
         visible: block.visible ?? true,
         lockPosition: block.lockPosition ?? true,
+        layer: block.layerIndex,
         svg: block.svgContent ?? ''
     });
 }
@@ -71,6 +73,7 @@ function serializeBuiltIn(block, id) {
         showBounds: block.showBounds ?? false,
         visible: block.visible ?? true,
         lockPosition: block.lockPosition ?? true,
+        layer: block.layerIndex,
         svg: block.svgContent ?? ''
     });
 }

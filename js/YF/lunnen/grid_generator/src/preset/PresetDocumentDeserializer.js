@@ -25,6 +25,7 @@ function deserializeText(text, index) {
         showBounds: text.showBounds ?? false,
         visible: text.visible ?? true,
         lockPosition: text.lockPosition,
+        layerIndex: text.layer,
         fontWeight: text.fontWeight,
         fontFeatures: clone(text.fontFeatures)
     });
@@ -48,6 +49,7 @@ function deserializeGraphic(graphic, index) {
         showBounds: graphic.showBounds ?? false,
         visible: graphic.visible ?? true,
         lockPosition: graphic.lockPosition,
+        layerIndex: graphic.layer,
         originalWidth: graphic.originalWidth ?? 100,
         originalHeight: graphic.originalHeight ?? 100
     });
@@ -73,6 +75,7 @@ function deserializeBuiltIn(graphic, id) {
         showBounds: graphic.showBounds ?? false,
         visible: graphic.visible ?? true,
         lockPosition: graphic.lockPosition,
+        layerIndex: graphic.layer,
         originalWidth: graphic.originalWidth ?? defaults.originalWidth,
         originalHeight: graphic.originalHeight ?? defaults.originalHeight
     });

@@ -6,12 +6,14 @@ export class ApplicationStartupController {
         loadPresets,
         loadBuiltInGraphics,
         finalize,
+        recover = () => false,
         fit,
         nextFrame = waitForAnimationFrame
     }) {
         this.loadPresets = loadPresets;
         this.loadBuiltInGraphics = loadBuiltInGraphics;
         this.finalize = finalize;
+        this.recover = recover;
         this.fit = fit;
         this.nextFrame = nextFrame;
         this.initialization = null;
@@ -26,6 +28,7 @@ export class ApplicationStartupController {
         await this.loadPresets();
         await this.loadBuiltInGraphics();
         await this.finalize();
+        await this.recover();
         await this.nextFrame();
         this.fit();
         return true;

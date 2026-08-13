@@ -144,6 +144,7 @@ export class GraphicsEditorInputController {
         input.value = config.decimals > 0
             ? constrained.toFixed(config.decimals)
             : Math.round(constrained);
+        this.host.markAsChanged?.();
         this.host.updateGrid();
     }
 

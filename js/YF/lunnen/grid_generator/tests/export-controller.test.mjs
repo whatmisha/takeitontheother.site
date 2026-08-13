@@ -81,6 +81,7 @@ test('SVG export forwards outline mode and generated document once', async () =>
 
 test('JSON export reads object data from the document source of truth', () => {
     let exported;
+    let saved = 0;
     const textBlocks = [{ id: 'text-1' }];
     const graphicsBlocks = [{ id: 'icons' }, { id: 'claim' }];
     const host = {
@@ -92,7 +93,8 @@ test('JSON export reads object data from the document source of truth', () => {
         },
         svgExporter: {
             exportSettings: (data, filename) => { exported = { data, filename }; }
-        }
+        },
+        onSettingsExported: () => { saved += 1; }
     };
     const controller = new ExportController(host, { now: () => date });
 
@@ -105,4 +107,5 @@ test('JSON export reads object data from the document source of truth', () => {
     assert.equal('iconsBlock' in data, false);
     assert.equal('claimBlock' in data, false);
     assert.match(exported.filename, /\.json$/);
+    assert.equal(saved, 1);
 });

@@ -89,6 +89,7 @@ export class ObjectDocumentController {
     replaceDocument({ textBlocks = [], graphicsBlocks = [] } = {}) {
         this.replaceTextBlocks(textBlocks);
         this.replaceGraphicsBlocks(graphicsBlocks);
+        this.normalizeLayerOrder();
         return this.createSnapshot();
     }
 
@@ -115,6 +116,75 @@ export class ObjectDocumentController {
         if (type === 'text') return this.getTextBlock(id);
         if (GRAPHICS_TYPES.has(type)) return this.getGraphicsBlock(id);
         return null;
+    }
+
+    getLayerEntries({ frontToBack = false } = {}) {
+        this.normalizeLayerOrder();
+        const entries = [
+            ...this.textBlocks.map(block => ({ type: 'text', block })),
+            ...this.graphicsBlocks.map(block => ({ type: 'graphics', block }))
+        ].sort((left, right) => left.block.layerIndex - right.block.layerIndex);
+        return frontToBack ? entries.reverse() : entries;
+    }
+
+    normalizeLayerOrder() {
+        const entries = [
+            ...this.textBlocks.map((block, sourceIndex) => ({
+                block,
+                fallback: sourceIndex
+            })),
+            ...this.graphicsBlocks.map((block, sourceIndex) => ({
+                block,
+                fallback: this.textBlocks.length + sourceIndex
+            }))
+        ];
+        entries.sort((left, right) => {
+            const leftLayer = Number(left.block.layerIndex);
+            const rightLayer = Number(right.block.layerIndex);
+            const leftValid = Number.isFinite(leftLayer) && leftLayer >= 0;
+            const rightValid = Number.isFinite(rightLayer) && rightLayer >= 0;
+            if (leftValid && rightValid && leftLayer !== rightLayer) return leftLayer - rightLayer;
+            if (leftValid !== rightValid) return leftValid ? -1 : 1;
+            return left.fallback - right.fallback;
+        });
+        entries.forEach(({ block }, layerIndex) => { block.layerIndex = layerIndex; });
+        return entries;
+    }
+
+    moveLayer(type, blockId, direction) {
+        const entries = this.getLayerEntries();
+        const normalizedType = type === 'text' ? 'text' : 'graphics';
+        const index = entries.findIndex(entry => (
+            entry.type === normalizedType && entry.block.id === blockId
+        ));
+        const offset = direction === 'forward' ? 1 : (direction === 'backward' ? -1 : 0);
+        const targetIndex = index + offset;
+        if (index < 0 || !offset || targetIndex < 0 || targetIndex >= entries.length) return false;
+        [entries[index], entries[targetIndex]] = [entries[targetIndex], entries[index]];
+        entries.forEach((entry, layerIndex) => { entry.block.layerIndex = layerIndex; });
+        return true;
+    }
+
+    reorderLayer(source, target, placement = 'before') {
+        const entries = this.getLayerEntries({ frontToBack: true });
+        const normalizeType = type => type === 'text' ? 'text' : 'graphics';
+        const sourceIndex = entries.findIndex(entry => (
+            entry.type === normalizeType(source?.type) && entry.block.id === source?.id
+        ));
+        const targetIndex = entries.findIndex(entry => (
+            entry.type === normalizeType(target?.type) && entry.block.id === target?.id
+        ));
+        if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return false;
+        const [moved] = entries.splice(sourceIndex, 1);
+        const adjustedTarget = entries.findIndex(entry => (
+            entry.type === normalizeType(target?.type) && entry.block.id === target?.id
+        ));
+        const insertAt = placement === 'after' ? adjustedTarget + 1 : adjustedTarget;
+        entries.splice(insertAt, 0, moved);
+        entries.forEach((entry, index) => {
+            entry.block.layerIndex = entries.length - 1 - index;
+        });
+        return true;
     }
 
     getBlockNumber(blockId) {
@@ -145,6 +215,7 @@ export class ObjectDocumentController {
     }
 
     addTextBlock(overrides = {}) {
+        const layerIndex = this.getLayerEntries().length;
         const block = {
             id: this.nextId('text'),
             content: 'Lunnen — бренд компьютерной техники, придуманный в Яндексе. Это спутник, с которым просто. Просто решать задачи. Создавать новое. И изучать неизведанное.',
@@ -160,6 +231,7 @@ export class ObjectDocumentController {
             visible: true,
             alignmentMode: 'baseline',
             lockPosition: true,
+            layerIndex,
             ...clone(overrides)
         };
         this.textBlocks.push(block);
@@ -167,6 +239,7 @@ export class ObjectDocumentController {
     }
 
     addGraphicsBlock({ svgContent, name, originalWidth, originalHeight, ...overrides } = {}) {
+        const layerIndex = this.getLayerEntries().length;
         const block = {
             id: this.nextId('graphics'),
             name: name || 'Graphic',
@@ -185,6 +258,7 @@ export class ObjectDocumentController {
             originalWidth: originalWidth || 100,
             originalHeight: originalHeight || 100,
             lockPosition: true,
+            layerIndex,
             ...clone(overrides)
         };
         this.graphicsBlocks.push(block);
@@ -202,16 +276,23 @@ export class ObjectDocumentController {
         const isText = type === 'text';
         if (!source || (!isText && !GRAPHICS_TYPES.has(type))) return null;
 
+        this.normalizeLayerOrder();
+        const liveSource = this.getBlock(type, source.id);
+        const layerIndex = liveSource === source
+            ? Number(source.layerIndex) + 0.5
+            : this.getLayerEntries().length;
         const duplicate = {
             ...clone(source),
             id: this.nextId(isText ? 'text' : 'graphics'),
             x: Number(source.x || 0) + 1,
             visible: true,
             deleting: false,
+            layerIndex,
             ...(isText ? {} : { isBuiltIn: false })
         };
         transform(duplicate);
         (isText ? this.textBlocks : this.graphicsBlocks).push(duplicate);
+        this.normalizeLayerOrder();
         return duplicate;
     }
 
@@ -223,6 +304,7 @@ export class ObjectDocumentController {
         const index = blocks.findIndex(block => block.id === blockId);
         if (index < 0) return false;
         blocks.splice(index, 1);
+        this.normalizeLayerOrder();
         return true;
     }
 

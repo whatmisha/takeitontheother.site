@@ -1,33 +1,39 @@
-name: Update Presets Manifest
+name: Grid Generator CI
 
 on:
   push:
     paths:
-      - 'js/YF/lunnen/grid_generator/presets/*.json'
-      - '!js/YF/lunnen/grid_generator/presets/manifest.json'
+      - 'js/YF/lunnen/grid_generator/**'
+      - '.github/workflows/update-presets.yml'
+  pull_request:
+    paths:
+      - 'js/YF/lunnen/grid_generator/**'
+      - '.github/workflows/update-presets.yml'
+
+concurrency:
+  group: grid-generator-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  update-manifest:
+  verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-          
-      - name: Generate manifest
-        run: |
-          cd js/YF/lunnen/grid_generator
-          python3 generate-presets-manifest.py
-          
-      - name: Commit and push if changed
-        run: |
-          cd js/YF/lunnen/grid_generator
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add presets/manifest.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update presets manifest" && git push)
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: js/YF/lunnen/grid_generator/tools/package-lock.json
+
+      - name: Install tooling
+        run: npm ci --prefix js/YF/lunnen/grid_generator/tools
+
+      - name: Verify source, presets, public runtime and tests
+        run: npm --prefix js/YF/lunnen/grid_generator/tools test
+
+      - name: Build production runtime
+        run: npm --prefix js/YF/lunnen/grid_generator/tools run build

@@ -182,6 +182,22 @@ textarea::placeholder {
     min-height: 28px;
 }
 
+.element-item-wrapper[draggable="true"] {
+    cursor: grab;
+}
+
+.element-item-wrapper.dragging {
+    opacity: 0.35;
+}
+
+.element-item-wrapper.drop-before {
+    box-shadow: inset 0 2px 0 var(--color-text);
+}
+
+.element-item-wrapper.drop-after {
+    box-shadow: inset 0 -2px 0 var(--color-text);
+}
+
 .element-item {
     flex: 1;
     display: flex;
@@ -262,6 +278,11 @@ textarea::placeholder {
 .element-action-btn:hover {
     background: rgba(255, 255, 255, 0.1);
     color: var(--color-text);
+}
+
+.element-action-btn:disabled {
+    cursor: default;
+    opacity: 0.2;
 }
 
 .element-item-wrapper.deleting {

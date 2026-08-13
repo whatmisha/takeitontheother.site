@@ -1,16 +1,16 @@
 # Release checklist
 
-Updated: 2026-08-12.
+Updated: 2026-08-13.
 
 ## Automated — completed
 
-- [x] `npm --prefix tools test` — 155/155 tests.
+- [x] `npm --prefix tools test` — 165/165 tests.
 - [x] `npm --prefix tools run public:check` — browser-resolvable static module
   graph, current schema/manifest, exact vendor copies and current hashed runtime.
 - [x] `npm --prefix tools run presets:check` — 19/19 presets and manifest.
 - [x] `npm --prefix tools audit --audit-level=low` — 0 vulnerabilities.
-- [x] `npm --prefix tools run build` — 105 transformed modules.
-- [x] `tests/browser-smoke.html` — `PASS — 76 checks` in the local Chromium
+- [x] `npm --prefix tools run build` — 107 transformed modules.
+- [x] `tests/browser-smoke.html` — `PASS — 83 checks` in the local Chromium
   browser, with no uncaught application errors.
 
 The browser suite runs through the hashed public entry served by the same
@@ -18,7 +18,8 @@ ordinary static-server path used by Netlify. It covers JSON round-trip,
 New/Front/reverse presets, Caption,
 Sides, own grids, all canvas rotations, screen-axis pan, Fit/zoom, rotated
 cross-surface dragging, object editors, locks/units, modular shell assembly,
-performance metrics, SVG template caching and accessible error presentation.
+performance metrics, SVG template caching, unified layer reorder, IndexedDB
+draft recovery and accessible error presentation.
 Outlined SVG and PDF were also exercised with all three lazy local runtime
 libraries loaded successfully; the Vite production build passed the same
 startup and PDF-runtime checks.

@@ -17,6 +17,9 @@ export class ObjectNavigatorController {
             showBounds: (...args) => this.showBounds(...args),
             hideBounds: (...args) => this.hideBounds(...args),
             toggleVisibility: (...args) => this.toggleVisibility(...args),
+            bringForward: (...args) => this.moveLayer(...args, 'forward'),
+            sendBackward: (...args) => this.moveLayer(...args, 'backward'),
+            reorder: (...args) => this.reorderLayer(...args),
             duplicate: (...args) => this.duplicate(...args),
             startDelete: (...args) => this.startDelete(...args)
         });
@@ -41,6 +44,7 @@ export class ObjectNavigatorController {
         this.render();
         this.host.updateGrid();
         this.host.historyManager.commitAction(this.host.getStateSnapshot());
+        this.host.markAsChanged?.();
         this.scheduleSelection(() => this.select('text', block.id));
         return block;
     }
@@ -51,19 +55,22 @@ export class ObjectNavigatorController {
         this.render();
         this.host.updateGrid();
         this.host.historyManager.commitAction(this.host.getStateSnapshot());
+        this.host.markAsChanged?.();
         return block;
     }
 
     render() {
-        const textItems = this.host.objectDocument.textBlocks.map(block => ({
-            name: this.getTextName(block), type: 'text', blockId: block.id,
-            visible: block.visible !== false, deleting: block.deleting === true
+        const entries = this.host.objectDocument.getLayerEntries({ frontToBack: true });
+        const items = entries.map(({ type, block }, index) => ({
+            name: type === 'text' ? this.getTextName(block) : (block.name || 'Graphic'),
+            type: type === 'text' ? 'text' : this.getGraphicsType(block),
+            blockId: block.id,
+            visible: block.visible !== false,
+            deleting: block.deleting === true,
+            canBringForward: index > 0,
+            canSendBackward: index < entries.length - 1
         }));
-        const graphicsItems = this.host.objectDocument.graphicsBlocks.map(block => ({
-            name: block.name || 'Graphic', type: this.getGraphicsType(block), blockId: block.id,
-            visible: block.visible !== false, deleting: block.deleting === true
-        }));
-        if (this.view.render([...textItems, ...graphicsItems])) this.host.panelUiController.updatePanelParams();
+        if (this.view.render(items)) this.host.panelUiController.updatePanelParams();
     }
 
     getTextName(block) {
@@ -92,6 +99,41 @@ export class ObjectNavigatorController {
         this.syncOpenGraphicsPanel(blockId, block.visible);
         this.host.updateGrid();
         this.host.historyManager.commitAction(this.host.getStateSnapshot());
+        this.host.markAsChanged?.();
+    }
+
+    moveLayer(type, blockId, direction) {
+        this.host.historyManager.beginAction(
+            direction === 'forward' ? 'bring object forward' : 'send object backward',
+            this.host.getStateSnapshot()
+        );
+        if (!this.host.objectDocument.moveLayer(type, blockId, direction)) {
+            this.host.historyManager.cancelAction?.();
+            return false;
+        }
+        this.render();
+        this.host.updateGrid();
+        this.host.historyManager.commitAction(this.host.getStateSnapshot());
+        this.host.markAsChanged?.();
+        return true;
+    }
+
+    reorderLayer(sourceType, sourceId, targetType, targetId, placement) {
+        this.host.historyManager.beginAction('reorder objects', this.host.getStateSnapshot());
+        const changed = this.host.objectDocument.reorderLayer(
+            { type: sourceType, id: sourceId },
+            { type: targetType, id: targetId },
+            placement
+        );
+        if (!changed) {
+            this.host.historyManager.cancelAction?.();
+            return false;
+        }
+        this.render();
+        this.host.updateGrid();
+        this.host.historyManager.commitAction(this.host.getStateSnapshot());
+        this.host.markAsChanged?.();
+        return true;
     }
 
     duplicate(type, blockId, skipSelection = false) {
@@ -107,6 +149,7 @@ export class ObjectNavigatorController {
         this.render();
         this.host.updateGrid();
         this.host.historyManager.commitAction(this.host.getStateSnapshot());
+        this.host.markAsChanged?.();
         if (!skipSelection && !this.host.textDragState.isDragging) {
             this.scheduleSelection(() => this.select(isText ? 'text' : 'graphics', duplicate.id));
         }
@@ -160,6 +203,7 @@ export class ObjectNavigatorController {
         this.render();
         this.host.updateGrid();
         this.host.historyManager.commitAction(this.host.getStateSnapshot());
+        this.host.markAsChanged?.();
         if (!this.host.textDragState.isDragging) {
             this.scheduleSelection(() => this.select(type, pasted.id));
         }
@@ -180,6 +224,7 @@ export class ObjectNavigatorController {
         }
         this.host.updateGrid();
         this.host.historyManager.commitAction(this.host.getStateSnapshot());
+        this.host.markAsChanged?.();
         this.host.deletionTimers[timerKey] = setTimeout(() => {
             if (this.getBlock(type, blockId)?.deleting === true) this.delete(type, blockId);
             delete this.host.deletionTimers[timerKey];
@@ -195,12 +240,14 @@ export class ObjectNavigatorController {
         const block = this.getBlock(type, blockId);
         if (block) delete block.deleting;
         this.host.updateGrid();
+        this.host.markAsChanged?.();
     }
 
     delete(type, blockId) {
         if (!this.host.objectDocument.remove(type, blockId)) return false;
         this.render();
         this.host.updateGrid();
+        this.host.markAsChanged?.();
         return true;
     }
 

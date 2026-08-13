@@ -111,29 +111,33 @@ export class CanvasRendererController {
         const host = this.host;
         if (!host.settingsModule.get('showObjects')) return;
 
-        host.objectDocument.textBlocks.forEach(block => {
+        const entries = host.objectDocument.getLayerEntries?.() || [
+            ...(host.objectDocument.textBlocks || []).map(block => ({ type: 'text', block })),
+            ...(host.objectDocument.graphicsBlocks || []).map(block => ({ type: 'graphics', block }))
+        ];
+        entries.forEach(({ type, block }) => {
             if (!this.isVisibleFrontBlock(block)) return;
-            host.textRenderer.draw(
-                svg,
-                block,
-                frontX,
-                frontY,
-                layout.frontWidth,
-                layout.frontHeight,
-                layout.scale
-            );
-        });
-        host.objectDocument.graphicsBlocks.forEach(block => {
-            if (!this.isVisibleFrontBlock(block)) return;
-            host.graphicsRenderer?.draw(
-                svg,
-                block,
-                frontX,
-                frontY,
-                layout.frontWidth,
-                layout.frontHeight,
-                layout.scale
-            );
+            if (type === 'text') {
+                host.textRenderer.draw(
+                    svg,
+                    block,
+                    frontX,
+                    frontY,
+                    layout.frontWidth,
+                    layout.frontHeight,
+                    layout.scale
+                );
+            } else {
+                host.graphicsRenderer?.draw(
+                    svg,
+                    block,
+                    frontX,
+                    frontY,
+                    layout.frontWidth,
+                    layout.frontHeight,
+                    layout.scale
+                );
+            }
         });
     }
 

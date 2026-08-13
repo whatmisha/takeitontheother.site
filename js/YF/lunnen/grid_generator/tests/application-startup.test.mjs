@@ -17,6 +17,7 @@ test('startup waits for presets, graphics, final render and fit in order', async
             events.push('graphics:end');
         },
         finalize: () => { events.push('render'); },
+        recover: async () => { events.push('recover'); },
         nextFrame: async () => { events.push('frame'); },
         fit: () => { events.push('fit'); }
     });
@@ -32,6 +33,7 @@ test('startup waits for presets, graphics, final render and fit in order', async
         'graphics:start',
         'graphics:end',
         'render',
+        'recover',
         'frame',
         'fit'
     ]);

@@ -16,14 +16,14 @@ export class ObjectEditorPanelController {
             if (
                 paragraphPanel?.classList.contains('active')
                 && !paragraphPanel.contains(target)
-                && !target.closest('[data-block-id], [data-element-type="text"], .element-button')
+                && !target.closest('[data-block-id], .element-item, .element-button')
             ) {
                 this.closeTextPanel();
             }
             if (
                 graphicsPanel?.classList.contains('active')
                 && !graphicsPanel.contains(target)
-                && !target.closest('[data-block-id], [data-element-type="graphics"], #addGraphicsBtn, .element-button')
+                && !target.closest('[data-block-id], .element-item, #addGraphicsBtn, .element-button')
             ) {
                 this.closeGraphicsPanel();
             }

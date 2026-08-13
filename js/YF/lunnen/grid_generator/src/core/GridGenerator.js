@@ -60,6 +60,8 @@ import { PresetManager } from '../preset/PresetManager.js';
 import { PresetApplicationController } from '../preset/PresetApplicationController.js';
 
 import { HistoryManager } from '../history/HistoryManager.js';
+import { DraftStore } from '../persistence/DraftStore.js';
+import { DraftRecoveryController } from '../persistence/DraftRecoveryController.js';
 
 // Surface model
 import { SurfaceManager, SURFACE_IDS, SIDE_SURFACE_IDS } from '../surfaces/SurfaceManager.js';
@@ -107,6 +109,7 @@ export class GridGenerator {
             getGridOpacity: opacity => this.canvasRenderer.getGridOpacity(opacity),
             getTextBlocks: () => this.objectDocument.textBlocks,
             getGraphicsBlocks: () => this.objectDocument.graphicsBlocks,
+            getLayerEntries: () => this.objectDocument.getLayerEntries(),
             drawTextBlock: (...args) => this.textRenderer.draw(...args),
             drawGraphicsBlock: (...args) => this.graphicsRenderer?.draw(...args),
             drawGraphicsBlockForExport: (...args) => this.graphicsRenderer?.drawForExport(...args)
@@ -253,19 +256,31 @@ export class GridGenerator {
             onPresetLoad: (data, name) => this.handlePresetLoad(data, name),
             onPresetSelect: (file, name) => {
                 this.hasUnsavedChanges = false;
+                if (!this.isInitializing) void this.draftRecoveryController?.clearDraft();
             },
             onError: error => this.errorPresenter.show(error, { title: 'Preset loading failed' })
+        }));
+        this.draftRecoveryController = this.lifecycle.own(new DraftRecoveryController({
+            store: new DraftStore(),
+            createDraft: () => ({
+                presetKey: this.presetManager?.currentPreset || null,
+                presetName: this.currentPresetName || 'Custom',
+                snapshot: this.getStateSnapshot()
+            }),
+            restoreDraft: draft => this.presetApplicationController.restoreDraft(draft)
         }));
         this.startupController = new ApplicationStartupController({
             loadPresets: () => this.presetManager.init(),
             loadBuiltInGraphics: () => this.builtInGraphicsController.initialize(),
             finalize: () => this.finalizeInitialization(),
+            recover: () => this.draftRecoveryController.checkForRecovery(),
             fit: () => this.zoomPanManager?.fitToScreen()
         });
 
         // Предупреждение при закрытии вкладки с несохраненными изменениями
         this.globalListeners.listen(globalThis.window, 'beforeunload', e => {
             if (this.hasUnsavedChanges) {
+                void this.draftRecoveryController?.saveNow();
                 // Стандартный диалог браузера
                 e.preventDefault();
                 e.returnValue = ''; // Для Chrome
@@ -332,12 +347,19 @@ export class GridGenerator {
         if (this.presetManager) {
             this.presetManager.markAsChanged();
         }
+        this.draftRecoveryController?.scheduleSave();
     }
 
     // Сбросить флаг изменений (при загрузке пресета, импорте и т.д.)
     resetChangesFlag() {
         this.hasUnsavedChanges = false;
         this.presetManager?.markAsSaved();
+    }
+
+    handleSettingsExported() {
+        this.resetChangesFlag();
+        void this.draftRecoveryController?.clearDraft();
+        return true;
     }
 
     initEventListeners() {
@@ -520,12 +542,16 @@ export class GridGenerator {
     undo() {
         if (!this.presetApplicationController.undo()) {
             console.log('[UNDO] Nothing to undo');
+        } else {
+            this.markAsChanged();
         }
     }
 
     redo() {
         if (!this.presetApplicationController.redo()) {
             console.log('[REDO] Nothing to redo');
+        } else {
+            this.markAsChanged();
         }
     }
 

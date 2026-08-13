@@ -133,33 +133,35 @@ export class ExportDocumentBuilder {
 
     drawFrontObjects(svg, x, y, width, height, scale) {
         const host = this.host;
-        host.objectDocument.textBlocks.forEach(block => {
+        const entries = host.objectDocument.getLayerEntries?.() || [
+            ...(host.objectDocument.textBlocks || []).map(block => ({ type: 'text', block })),
+            ...(host.objectDocument.graphicsBlocks || []).map(block => ({ type: 'graphics', block }))
+        ];
+        entries.forEach(({ type, block }) => {
             if ((block.surface || 'front') !== 'front' || block.visible === false) return;
-            host.textRenderer.draw(
-                this.createGroup(svg, `text-${block.id}`),
-                block,
-                x,
-                y,
-                width,
-                height,
-                scale
-            );
-        });
-        host.objectDocument.graphicsBlocks.forEach(block => {
-            if (
-                (block.surface || 'front') !== 'front' ||
-                block.visible === false ||
-                !block.svgContent
-            ) return;
-            host.graphicsRenderer?.drawForExport(
-                this.createGroup(svg, block.isBuiltIn ? block.id : `graphics-${block.id}`),
-                block,
-                x,
-                y,
-                width,
-                height,
-                scale
-            );
+            if (type === 'text') {
+                host.textRenderer.draw(
+                    this.createGroup(svg, `text-${block.id}`),
+                    block,
+                    x,
+                    y,
+                    width,
+                    height,
+                    scale
+                );
+                return;
+            }
+            if (block.svgContent) {
+                host.graphicsRenderer?.drawForExport(
+                    this.createGroup(svg, block.isBuiltIn ? block.id : `graphics-${block.id}`),
+                    block,
+                    x,
+                    y,
+                    width,
+                    height,
+                    scale
+                );
+            }
         });
     }
 

@@ -25,7 +25,7 @@ npm --prefix tools run release          # обновить закоммичен�
 npm --prefix tools run preview          # проверить production-сборку
 ```
 
-Браузерный набор находится в `tests/browser-smoke.html` и выполняет 76 проверок
+Браузерный набор находится в `tests/browser-smoke.html` и выполняет 83 проверки
 редактора. Подробности о сборке и зависимостях: `tools/README.md`.
 
 ## Возможности
@@ -33,6 +33,9 @@ npm --prefix tools run preview          # проверить production-сбор
 - Front-сетка с модулем, полями, колонками, строками и baseline.
 - Четыре боковые грани с независимой видимостью, ориентацией и собственной сеткой.
 - Текстовые и SVG-объекты с перетаскиванием между гранями.
+- Единый порядок слоёв текста и SVG с перетаскиванием в Objects и командами
+  Bring Forward / Send Backward.
+- Автовосстановление несохранённого черновика через Restore/Discard.
 - Поворот, zoom, Fit и экранно-ориентированное панорамирование канваса.
 - JSON-пресеты версии 1.2, SVG с точными размерами и PDF.
 - Локальное превращение текста в кривые без CDN.
@@ -54,6 +57,7 @@ JSON-файлы в `presets/` — источник истины. `presets/manife
 - `src/preset` — схема 1.2, импорт, применение и хранение пресетов.
 - `src/svg` — SVG/PDF/JSON, санитайзер и файловый экспорт.
 - `src/history` — snapshot history и транзакции.
+- `src/persistence` — изолированный IndexedDB-черновик и startup recovery.
 - `src/ui` — панели, слайдеры и zoom/pan.
 - `src/ui/fragments` — части интерфейса, загружаемые с того же origin до startup.
 - `styles` — тематические CSS-модули; корневой `style.css` задаёт их порядок.
@@ -71,6 +75,10 @@ jsPDF, svg2pdf.js и opentype.js закреплены в `tools/package-lock.jso
 `tools/node_modules` не публикуется и может быть удалена с диска; она
 восстанавливается через `npm --prefix tools install`. Ajv используется только
 генератором; браузер получает автономный ESM-валидатор.
+
+GitHub Actions на push и pull request выполняет чистую установку tooling,
+полный `npm --prefix tools test` и production build. Workflow ничего не
+коммитит и не изменяет в репозитории.
 
 ## Совместимость
 
