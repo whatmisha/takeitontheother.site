@@ -64,11 +64,11 @@ export class TextStyleResolver {
         return this.fontMetrics[family] || this.fontMetrics['TT Commons Classic'];
     }
 
-    calculateFontSize(styleRef = 'text', sizeInModules = null) {
+    calculateFontSize(styleRef = 'text', sizeInModules = null, gridModule = null) {
         const config = this.getConfig(styleRef);
         const metrics = this.getFontMetrics(styleRef);
         const size = sizeInModules ?? this.settings.get(config.size);
-        const targetSize = this.settings.get('gridModule') * size;
+        const targetSize = (gridModule ?? this.settings.get('gridModule')) * size;
         const metric = this.settings.get(config.useXHeight)
             ? metrics.xHeight
             : metrics.capHeight;
@@ -90,12 +90,12 @@ export class TextStyleResolver {
         return module > 0 ? targetSize / module : 0;
     }
 
-    getStyleSettings(styleRef = 'text') {
+    getStyleSettings(styleRef = 'text', gridModule = null) {
         const normalizedStyle = STYLE_CONFIG[styleRef] ? styleRef : 'text';
         const config = this.getConfig(normalizedStyle);
         const isDisplay = normalizedStyle === 'lunnenDisplay';
         return {
-            fontSize: this.calculateFontSize(normalizedStyle),
+            fontSize: this.calculateFontSize(normalizedStyle, null, gridModule),
             lineHeight: this.settings.get(config.lineHeight),
             tracking: this.settings.get(config.tracking),
             useXHeight: isDisplay ? false : Boolean(this.settings.get(config.useXHeight)),

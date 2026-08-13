@@ -15,7 +15,8 @@ const DESIGN_KIT_ASSETS = Object.freeze([
     Object.freeze({ file: 'icons.svg', name: 'Icons' }),
     Object.freeze({ file: 'l_sign.svg', name: 'L Sign' }),
     Object.freeze({ file: 'qr_lunnen.pro.svg', name: 'QR' }),
-    Object.freeze({ file: 'yf_claim.svg', name: 'YF Claim' })
+    Object.freeze({ file: 'yf_claim.svg', name: 'YF Claim' }),
+    Object.freeze({ file: 'yf_claim_2026.svg', name: 'YF Claim 2026' })
 ]);
 
 /** Builds Illustrator-friendly SVG documents independently from editor rendering. */

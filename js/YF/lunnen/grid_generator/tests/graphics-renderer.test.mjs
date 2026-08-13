@@ -42,6 +42,31 @@ test('graphics dimensions preserve aspect ratio in height and width modes', () =
     assertClose(MathUtils.ptToMm(widthMode.height), 18.75);
 });
 
+test('graphics width uses the explicit side context without mutating front settings', () => {
+    const dimensions = renderer.calculateDimensions({
+        sizeMode: 'width',
+        widthInColumns: 12,
+        originalWidth: 200,
+        originalHeight: 100
+    }, {
+        gridModule: 5,
+        margins: 2.5,
+        columnCount: 12,
+        rowHeight: 7,
+        frontWidth: 500,
+        frontHeight: 50
+    });
+
+    assertClose(MathUtils.ptToMm(dimensions.width), 475);
+    assertClose(MathUtils.ptToMm(dimensions.height), 237.5);
+    assert.deepEqual(values, {
+        gridModule: 5,
+        margins: 2,
+        columnCount: 4,
+        frontWidth: 100
+    });
+});
+
 test('graphics layout respects scale, baseline and right alignment', () => {
     const left = renderer.calculateLayout({
         x: 2,

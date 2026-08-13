@@ -154,7 +154,11 @@ async function run() {
         'application errors use a non-blocking accessible notification'
     );
     application.errorPresenter.clear();
-    const builtInAssetUrls = ['graphics/icons.svg', 'graphics/yf_claim.svg'].map(
+    const builtInAssetUrls = [
+        'graphics/icons.svg',
+        'graphics/yf_claim.svg',
+        'graphics/yf_claim_2026.svg'
+    ].map(
         path => new URL(path, appWindow.location.href).href
     );
 
@@ -164,7 +168,7 @@ async function run() {
     );
     assert(
         builtInAssetUrls.every(url => appWindow.performance.getEntriesByName(url).length > 0),
-        'both built-in SVG assets load during bootstrap'
+        'all built-in SVG assets load during bootstrap'
     );
     const initialPresetEntry = appWindow.performance.getEntriesByType('resource').find(entry => (
         decodeURIComponent(new URL(entry.name).pathname).endsWith('/presets/New.json')
@@ -177,6 +181,17 @@ async function run() {
             entry => entry.startTime >= initialPresetEntry.responseEnd
         ),
         'built-in SVG assets load after the default preset finishes'
+    );
+    const claim2026 = application.objectDocument.getGraphicsBlock('claim2026');
+    assert(
+        claim2026?.x === 4 &&
+            claim2026.row === 11 &&
+            claim2026.baselineOffset === 4 &&
+            claim2026.heightInModules === 3 &&
+            claim2026.originalWidth === 202.0335404 &&
+            claim2026.originalHeight === 32.7559817 &&
+            claim2026.svgContent.length > 0,
+        'New loads Claim 2026 in column 4 at artboard height 3'
     );
 
     await waitFor(
@@ -582,6 +597,26 @@ async function run() {
     const rememberedWidth = Number(widthInput.value);
     assert(rememberedWidth === widthBefore + 1, 'Dimensions use the shared numeric keyboard behavior');
 
+    const shortcutSourceItem = appDocument.querySelector(
+        `#elementsList [data-element-id="${duplicatedTextId}"]`
+    );
+    shortcutSourceItem.click();
+    await waitFor(
+        () => appDocument.getElementById('paragraphPanel').classList.contains('active'),
+        'copy shortcut source selection'
+    );
+    const shortcutSource = application.objectDocument.getTextBlock(duplicatedTextId);
+    appDocument.dispatchEvent(new appWindow.KeyboardEvent('keydown', {
+        key: 'c',
+        metaKey: true,
+        bubbles: true,
+        cancelable: true
+    }));
+    assert(
+        application.objectNavigatorController.clipboardEntry?.block.id === duplicatedTextId,
+        'Cmd/Ctrl+C copies the selected object'
+    );
+
     const presetToggle = appDocument.getElementById('presetDropdownToggle');
     presetToggle.click();
     const otherPreset = Array.from(
@@ -594,6 +629,60 @@ async function run() {
     );
     await waitFor(() => Number(widthInput.value) !== rememberedWidth, 'second preset dimensions');
     assert(Number(widthInput.value) !== rememberedWidth, 'Preset switch replaces the document state');
+
+    const targetPresetTextIds = new Set(
+        application.objectDocument.textBlocks.map(block => block.id)
+    );
+    const targetPresetTextCount = application.objectDocument.textBlocks.length;
+    appDocument.dispatchEvent(new appWindow.KeyboardEvent('keydown', {
+        key: 'v',
+        metaKey: true,
+        bubbles: true,
+        cancelable: true
+    }));
+    await waitFor(
+        () => application.objectDocument.textBlocks.length === targetPresetTextCount + 1,
+        'cross-preset paste shortcut'
+    );
+    const crossPresetPaste = application.objectDocument.textBlocks.find(
+        block => !targetPresetTextIds.has(block.id)
+    );
+    assert(
+        crossPresetPaste?.id !== shortcutSource.id &&
+            crossPresetPaste?.content === shortcutSource.content &&
+            crossPresetPaste?.styleRef === shortcutSource.styleRef &&
+            crossPresetPaste?.visible === true,
+        'Cmd/Ctrl+V pastes an independent object into another preset'
+    );
+    appDocument.dispatchEvent(new appWindow.KeyboardEvent('keydown', {
+        key: 'z',
+        metaKey: true,
+        bubbles: true,
+        cancelable: true
+    }));
+    await waitFor(
+        () => application.objectDocument.textBlocks.length === targetPresetTextCount,
+        'cross-preset paste undo'
+    );
+    assert(
+        !application.objectDocument.getTextBlock(crossPresetPaste.id),
+        'Undo removes the pasted object from the target preset'
+    );
+    appDocument.dispatchEvent(new appWindow.KeyboardEvent('keydown', {
+        key: 'z',
+        metaKey: true,
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true
+    }));
+    await waitFor(
+        () => application.objectDocument.textBlocks.length === targetPresetTextCount + 1,
+        'cross-preset paste redo'
+    );
+    assert(
+        application.objectDocument.getTextBlock(crossPresetPaste.id)?.content === shortcutSource.content,
+        'Redo restores the pasted object in the target preset'
+    );
 
     presetToggle.click();
     appDocument.querySelector(
@@ -628,6 +717,74 @@ async function run() {
             Number(appDocument.getElementById('captionTrackingValue').value) === 0 &&
             !appDocument.getElementById('useXHeightCaption').checked,
         'Updated E-ink preset applies its approved Caption weight and metrics'
+    );
+
+    const exactSideSettings = {
+        frontWidth: 500,
+        frontHeight: 500,
+        thickness: 50,
+        gridModule: 5,
+        margins: 2.5,
+        columnCount: 12,
+        rowCount: 12,
+        rowHeight: 7,
+        showSidePanels: true,
+        showObjects: true,
+        showColumns: true,
+        showRows: true,
+        showBaseline: true
+    };
+    Object.entries(exactSideSettings).forEach(([key, value]) => {
+        application.settingsModule.set(key, value, true);
+    });
+    application.surfaceManager.initialize('+ New');
+    const exactSideContext = application.getSurfaceGridContext('left');
+    const exactStyle = application.textStyleResolver.getStyleSettings('text');
+    let exactContent = 'Ширина';
+    while (
+        application.textLayout.measureTextWidth(
+            exactContent,
+            exactStyle.fontSize,
+            1,
+            exactStyle.tracking
+        ) < 390
+    ) {
+        exactContent += ' колонок';
+    }
+    const exactContentWidth = application.textLayout.measureTextWidth(
+        exactContent,
+        exactStyle.fontSize,
+        1,
+        exactStyle.tracking
+    );
+    const exactSideBlock = {
+        id: 'exact-side-width',
+        content: exactContent,
+        styleRef: 'text',
+        x: 1,
+        row: 0,
+        baselineOffset: 0,
+        width: 12,
+        alignment: 'left',
+        textAlign: 'left',
+        surface: 'left',
+        visible: true,
+        alignmentMode: 'baseline',
+        lockPosition: true
+    };
+    application.objectDocument.replaceTextBlocks([exactSideBlock]);
+    application.objectDocument.replaceGraphicsBlocks([]);
+    const exactSideSvg = await application.exportDocumentBuilder.build(false);
+    const exactSideLines = exactSideSvg.querySelectorAll(
+        '#surface-export-left #text-group-exact-side-width text'
+    );
+    assert(
+        exactSideContext.columnCount === 12 &&
+            application.textLayout.calculateBlockWidth(exactSideBlock, exactSideContext) === 475 &&
+            exactContentWidth > 355 &&
+            exactContentWidth < 475 &&
+            exactSideLines.length === 1,
+        'Left-side export renders a 12-column paragraph at the full 475 mm width'
     );
     assert(applicationErrors.length === 0, 'application emits no uncaught browser errors');
 

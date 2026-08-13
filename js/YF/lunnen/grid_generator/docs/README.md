@@ -25,7 +25,7 @@ npm --prefix tools run release          # обновить закоммичен�
 npm --prefix tools run preview          # проверить production-сборку
 ```
 
-Браузерный набор находится в `tests/browser-smoke.html` и выполняет 70 проверок
+Браузерный набор находится в `tests/browser-smoke.html` и выполняет 76 проверок
 редактора. Подробности о сборке и зависимостях: `tools/README.md`.
 
 ## Возможности

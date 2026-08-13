@@ -15,11 +15,14 @@ export class TextBlockRenderModel {
         this.layout = layout;
     }
 
-    create(block, frontX, frontY, scale) {
+    create(block, frontX, frontY, scale, explicitGridContext = null) {
         const color = this.getContrastColor();
-        const module = this.settings.get('gridModule');
-        const margins = this.settings.get('margins');
-        const position = this.layout.calculateBlockPosition(block, scale);
+        const gridContext = this.layout.getGridContext
+            ? this.layout.getGridContext(block, explicitGridContext)
+            : explicitGridContext;
+        const module = gridContext?.gridModule ?? this.settings.get('gridModule');
+        const margins = gridContext?.margins ?? this.settings.get('margins');
+        const position = this.layout.calculateBlockPosition(block, scale, gridContext);
         const topMargin = module * margins * scale;
         const inputLines = String(block.content || '').split('\n');
         const base = { color, position, topMargin };
@@ -34,8 +37,8 @@ export class TextBlockRenderModel {
 
         const alignment = block.alignment || 'left';
         const styleRef = block.styleRef || 'text';
-        const style = this.getStyleSettings(styleRef);
-        const width = this.layout.calculateBlockWidth(block) * scale;
+        const style = this.getStyleSettings(styleRef, module);
+        const width = this.layout.calculateBlockWidth(block, gridContext) * scale;
         const lines = inputLines.flatMap(line => (
             this.layout.wrapText(line, width, style.fontSize, scale, style.tracking)
         ));
@@ -43,7 +46,12 @@ export class TextBlockRenderModel {
             ? frontX + position.x - width
             : frontX + position.x;
         const alignmentMode = block.alignmentMode || 'baseline';
-        const { capHeight, xHeight } = this.calculateGlyphMetrics(styleRef, style.useXHeight, scale);
+        const { capHeight, xHeight } = this.calculateGlyphMetrics(
+            styleRef,
+            style.useXHeight,
+            scale,
+            module
+        );
         const firstLineY = this.calculateFirstLineY({
             frontY,
             positionY: position.y,
@@ -51,12 +59,13 @@ export class TextBlockRenderModel {
             alignmentMode,
             capHeight,
             xHeight,
-            scale
+            scale,
+            module
         });
         const lineHeight = module * style.lineHeight * scale;
         const placement = this.getHorizontalPlacement(block.textAlign || 'left', left, width);
         const baselines = this.calculateBaselines(lines.length, {
-            firstLineY, lineHeight, frontY, scale, alignmentMode
+            firstLineY, lineHeight, frontY, scale, alignmentMode, gridContext
         });
         return {
             ...base,
@@ -75,8 +84,13 @@ export class TextBlockRenderModel {
         return this.settings.get(STYLE_SIZE_SETTINGS[styleRef] || STYLE_SIZE_SETTINGS.text);
     }
 
-    calculateGlyphMetrics(styleRef, useXHeight, scale) {
-        const target = this.settings.get('gridModule') * this.getStyleSizeInModules(styleRef) * scale;
+    calculateGlyphMetrics(
+        styleRef,
+        useXHeight,
+        scale,
+        module = this.settings.get('gridModule')
+    ) {
+        const target = module * this.getStyleSizeInModules(styleRef) * scale;
         const metrics = this.getFontMetrics(styleRef);
         if (useXHeight) {
             return { xHeight: target, capHeight: target * (metrics.capHeight / metrics.xHeight) };
@@ -84,11 +98,20 @@ export class TextBlockRenderModel {
         return { capHeight: target, xHeight: target * (metrics.xHeight / metrics.capHeight) };
     }
 
-    calculateFirstLineY({ frontY, positionY, topMargin, alignmentMode, capHeight, xHeight, scale }) {
+    calculateFirstLineY({
+        frontY,
+        positionY,
+        topMargin,
+        alignmentMode,
+        capHeight,
+        xHeight,
+        scale,
+        module = this.settings.get('gridModule')
+    }) {
         const origin = frontY + positionY + topMargin;
         if (alignmentMode === 'x-height') return origin + xHeight;
         if (alignmentMode === 'cap-height') return origin + capHeight;
-        return origin + this.settings.get('gridModule') * scale;
+        return origin + module * scale;
     }
 
     getHorizontalPlacement(textAlign, left, width) {
@@ -97,15 +120,36 @@ export class TextBlockRenderModel {
         return { anchor: 'start', x: left };
     }
 
-    calculateBaselines(lineCount, { firstLineY, lineHeight, frontY, scale, alignmentMode }) {
+    calculateBaselines(lineCount, {
+        firstLineY,
+        lineHeight,
+        frontY,
+        scale,
+        alignmentMode,
+        gridContext = null
+    }) {
         const baselines = [];
         for (let index = 0; index < lineCount; index += 1) {
             if (index === 0) {
-                baselines.push(this.layout.snapToBaseline(firstLineY, frontY, scale, true, alignmentMode));
+                baselines.push(this.layout.snapToBaseline(
+                    firstLineY,
+                    frontY,
+                    scale,
+                    true,
+                    alignmentMode,
+                    gridContext
+                ));
             } else if (alignmentMode === 'x-height' || alignmentMode === 'cap-height') {
                 baselines.push(baselines[index - 1] + lineHeight);
             } else {
-                baselines.push(this.layout.snapToBaseline(baselines[index - 1] + lineHeight, frontY, scale, false));
+                baselines.push(this.layout.snapToBaseline(
+                    baselines[index - 1] + lineHeight,
+                    frontY,
+                    scale,
+                    false,
+                    'baseline',
+                    gridContext
+                ));
             }
         }
         return baselines;

@@ -1,6 +1,7 @@
 import { GRAPHICS_TYPES } from './ObjectDocumentController.js';
 import { ObjectNavigatorView } from './ObjectNavigatorView.js';
 import { ListenerScope } from '../core/ListenerScope.js';
+import { cloneJson as clone } from '../utils/cloneJson.js';
 
 /** Owns Objects-panel commands while ObjectNavigatorView owns DOM rendering. */
 export class ObjectNavigatorController {
@@ -9,6 +10,7 @@ export class ObjectNavigatorController {
         this.listeners = new ListenerScope();
         this.selectionTimers = new Set();
         this.initialized = false;
+        this.clipboardEntry = null;
         this.view = view || new ObjectNavigatorView(host, {
             restorePendingDelete: (...args) => this.restorePendingDelete(...args),
             select: (...args) => this.select(...args),
@@ -109,6 +111,59 @@ export class ObjectNavigatorController {
             this.scheduleSelection(() => this.select(isText ? 'text' : 'graphics', duplicate.id));
         }
         return duplicate;
+    }
+
+    getSelectedObject() {
+        const selectedItem = this.host.dom.elementsList?.querySelector('.element-item.active');
+        const selectedType = selectedItem?.dataset.elementType;
+        const selectedId = selectedItem?.dataset.elementId;
+        const selectedBlock = selectedId ? this.getBlock(selectedType, selectedId) : null;
+        if (selectedBlock) {
+            return {
+                type: selectedType === 'text' ? 'text' : 'graphics',
+                block: selectedBlock
+            };
+        }
+
+        const textBlock = this.host.currentEditingBlock;
+        if (textBlock && this.host.objectDocument.getTextBlock(textBlock.id)) {
+            return { type: 'text', block: textBlock };
+        }
+        const graphicsBlock = this.host.objectDocument.getGraphicsBlock(
+            this.host.currentEditingGraphicsId
+        );
+        return graphicsBlock ? { type: 'graphics', block: graphicsBlock } : null;
+    }
+
+    copySelected() {
+        const selected = this.getSelectedObject();
+        if (!selected || selected.block.deleting === true) return false;
+        this.clipboardEntry = {
+            type: selected.type,
+            block: clone(selected.block)
+        };
+        delete this.clipboardEntry.block.deleting;
+        return true;
+    }
+
+    pasteCopied() {
+        if (!this.clipboardEntry) return null;
+        const { type, block: source } = clone(this.clipboardEntry);
+        this.host.historyManager.beginAction(`paste ${type}`, this.host.getStateSnapshot());
+        const pasted = this.host.objectDocument.insertCopy(type, source, block => {
+            this.host.objectPlacementController.constrain(block, type);
+        });
+        if (!pasted) {
+            this.host.historyManager.cancelAction?.();
+            return null;
+        }
+        this.render();
+        this.host.updateGrid();
+        this.host.historyManager.commitAction(this.host.getStateSnapshot());
+        if (!this.host.textDragState.isDragging) {
+            this.scheduleSelection(() => this.select(type, pasted.id));
+        }
+        return pasted;
     }
 
     startDelete(_button, type, blockId) {

@@ -15,8 +15,8 @@ test('built-in graphics load and finalize once', async () => {
             async load(path) {
                 requested.push(path);
                 return {
-                    width: path.includes('icons') ? 200 : 180,
-                    height: 28,
+                    width: path.includes('icons') ? 200 : (path.includes('2026') ? 202 : 180),
+                    height: path.includes('2026') ? 33 : 28,
                     content: `<g data-path="${path}"/>`
                 };
             }
@@ -28,13 +28,19 @@ test('built-in graphics load and finalize once', async () => {
 
     const results = await controller.initialize();
 
-    assert.deepEqual(requested, ['graphics/icons.svg', 'graphics/yf_claim.svg']);
+    assert.deepEqual(requested, [
+        'graphics/icons.svg',
+        'graphics/yf_claim.svg',
+        'graphics/yf_claim_2026.svg'
+    ]);
     assert.deepEqual(results, [
         { id: 'icons', loaded: true },
-        { id: 'claim', loaded: true }
+        { id: 'claim', loaded: true },
+        { id: 'claim2026', loaded: true }
     ]);
     assert.equal(objectDocument.getGraphicsBlock('icons').originalWidth, 200);
     assert.equal(objectDocument.getGraphicsBlock('claim').originalWidth, 180);
+    assert.equal(objectDocument.getGraphicsBlock('claim2026').originalHeight, 33);
     assert.match(objectDocument.getGraphicsBlock('icons').svgContent, /icons\.svg/);
     assert.equal(readyCalls, 1);
 });
@@ -60,7 +66,8 @@ test('failed built-in asset keeps document fallback and still finalizes', async 
 
     assert.deepEqual(results, [
         { id: 'icons', loaded: false },
-        { id: 'claim', loaded: false }
+        { id: 'claim', loaded: false },
+        { id: 'claim2026', loaded: false }
     ]);
     assert.deepEqual(readyResults, results);
     assert.equal(icons.svgContent, '<g id="fallback"/>');
@@ -86,5 +93,6 @@ test('preset may omit an optional built-in object without reporting an error', a
 
     assert.deepEqual(results[0], { id: 'icons', loaded: false, skipped: true });
     assert.deepEqual(results[1], { id: 'claim', loaded: true });
+    assert.deepEqual(results[2], { id: 'claim2026', loaded: false, skipped: true });
     assert.deepEqual(errors, []);
 });

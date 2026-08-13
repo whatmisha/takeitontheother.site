@@ -31,8 +31,8 @@ export class TextBlockRenderer {
         });
     }
 
-    draw(container, block, frontX, frontY, _frontWidth, _frontHeight, scale) {
-        const model = this.renderModel.create(block, frontX, frontY, scale);
+    draw(container, block, frontX, frontY, _frontWidth, _frontHeight, scale, gridContext = null) {
+        const model = this.renderModel.create(block, frontX, frontY, scale, gridContext);
         return this.view.draw(container, block, model, scale);
     }
 

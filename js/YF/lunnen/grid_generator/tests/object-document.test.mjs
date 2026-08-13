@@ -7,7 +7,7 @@ test('document starts with independent built-in graphics objects', () => {
     const first = new ObjectDocumentController();
     const second = new ObjectDocumentController();
 
-    assert.deepEqual(first.graphicsBlocks.map(block => block.id), ['icons', 'claim']);
+    assert.deepEqual(first.graphicsBlocks.map(block => block.id), ['icons', 'claim', 'claim2026']);
     first.graphicsBlocks[0].visible = true;
     assert.equal(second.graphicsBlocks[0].visible, false);
 });
@@ -65,4 +65,27 @@ test('duplicate deep-clones data, declassifies built-ins and avoids id collision
     assert.equal(second.id, 'graphics-10-1');
     assert.equal(first.isBuiltIn, false);
     assert.equal(document.getGraphicsBlock('icons').metadata.source, 'built-in');
+});
+
+test('a copied block can be inserted after its source document was replaced', () => {
+    const document = new ObjectDocumentController({ includeBuiltIns: false, now: () => 20 });
+    const source = {
+        id: 'source',
+        content: 'Copied between presets',
+        styleRef: 'caption',
+        x: 3,
+        visible: false,
+        metadata: { preset: 'A' }
+    };
+    document.replaceTextBlocks([source]);
+    document.replaceTextBlocks([{ id: 'target', content: 'Preset B' }]);
+
+    const pasted = document.insertCopy('text', source);
+    pasted.metadata.preset = 'pasted';
+
+    assert.equal(pasted.id, 'text-20');
+    assert.equal(pasted.x, 4);
+    assert.equal(pasted.visible, true);
+    assert.equal(document.textBlocks.length, 2);
+    assert.equal(source.metadata.preset, 'A');
 });

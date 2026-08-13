@@ -44,8 +44,8 @@ cross-surface dragging remain release invariants.
 
 ## Verification baseline
 
-- 49 Node test files / 146 passing tests.
-- Browser smoke: `PASS — 70 checks`, including modular shell assembly,
+- 50 Node test files / 155 passing tests.
+- Browser smoke: `PASS — 76 checks`, including modular shell assembly,
   metrics, asset cache and non-blocking error UI.
 - 19/19 presets valid and manifest current.
 - Static public module graph: 99 browser-resolvable modules; pinned vendor

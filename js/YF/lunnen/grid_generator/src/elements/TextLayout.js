@@ -16,14 +16,18 @@ export class TextLayout {
         this.measurementContext = null;
     }
 
-    calculateBlockWidth(block) {
-        const context = this.getSurfaceGridContext(block.surface || 'front');
+    getGridContext(block, context = null) {
+        return context || this.getSurfaceGridContext(block?.surface || 'front');
+    }
+
+    calculateBlockWidth(block, gridContext = null) {
+        const context = this.getGridContext(block, gridContext);
         const columnWidth = this.calculateColumnWidth(context);
         return columnWidth * block.width + context.gridModule * (block.width - 1);
     }
 
-    calculateBlockPosition(block, scale = 1) {
-        const context = this.getSurfaceGridContext(block.surface || 'front');
+    calculateBlockPosition(block, scale = 1, gridContext = null) {
+        const context = this.getGridContext(block, gridContext);
         const module = context.gridModule;
         const columnWidth = this.calculateColumnWidth(context);
         const columnLeft = module * context.margins * scale
@@ -31,7 +35,10 @@ export class TextLayout {
         const x = (block.alignment || 'left') === 'right'
             ? columnLeft + columnWidth * scale
             : columnLeft;
-        const y = this.getBlockY(block) * module * scale;
+        const blockY = gridContext
+            ? (Number(block.row) || 0) * (context.rowHeight + 1) + (Number(block.baselineOffset) || 0)
+            : this.getBlockY(block);
+        const y = blockY * module * scale;
         return { x, y };
     }
 
@@ -43,13 +50,21 @@ export class TextLayout {
         ) / context.columnCount;
     }
 
-    snapToBaseline(y, frontY, scale, isFirstLine = false, alignmentMode = 'baseline') {
+    snapToBaseline(
+        y,
+        frontY,
+        scale,
+        isFirstLine = false,
+        alignmentMode = 'baseline',
+        gridContext = null
+    ) {
         if (isFirstLine && (alignmentMode === 'x-height' || alignmentMode === 'cap-height')) {
             return y;
         }
 
-        const module = this.settings.get('gridModule');
-        const topMargin = module * this.settings.get('margins') * scale;
+        const module = gridContext?.gridModule ?? this.settings.get('gridModule');
+        const margins = gridContext?.margins ?? this.settings.get('margins');
+        const topMargin = module * margins * scale;
         const relativeY = y - (frontY + topMargin);
         const step = isFirstLine ? module * scale : module * scale / 4;
         const snappedY = Math.round(relativeY / step) * step;

@@ -25,6 +25,10 @@ function createHost() {
         },
         undo: () => calls.push('undo'),
         redo: () => calls.push('redo'),
+        objectNavigatorController: {
+            copySelected: () => { calls.push('copy'); return true; },
+            pasteCopied: () => { calls.push('paste'); return {}; }
+        },
         calls
     };
 }
@@ -45,6 +49,31 @@ test('export and history keyboard commands are routed through one controller', (
     assert.equal(exportEvent.defaultPrevented, true);
     assert.equal(undoEvent.defaultPrevented, true);
     assert.equal(redoEvent.defaultPrevented, true);
+});
+
+test('copy and paste shortcuts target objects but preserve native editor behavior', () => {
+    const host = createHost();
+    const documentRef = { activeElement: { tagName: 'BODY' } };
+    const controller = new ApplicationEventController(host, documentRef);
+    const copyEvent = keyboardEvent('c', { metaKey: true });
+    const pasteEvent = keyboardEvent('V', { ctrlKey: true });
+
+    controller.handleKeyboard(copyEvent);
+    controller.handleKeyboard(pasteEvent);
+
+    assert.deepEqual(host.calls, ['copy', 'paste']);
+    assert.equal(copyEvent.defaultPrevented, true);
+    assert.equal(pasteEvent.defaultPrevented, true);
+
+    documentRef.activeElement = { tagName: 'TEXTAREA' };
+    const nativeCopy = keyboardEvent('c', { metaKey: true });
+    const nativePaste = keyboardEvent('v', { metaKey: true });
+    controller.handleKeyboard(nativeCopy);
+    controller.handleKeyboard(nativePaste);
+
+    assert.deepEqual(host.calls, ['copy', 'paste']);
+    assert.equal(nativeCopy.defaultPrevented, undefined);
+    assert.equal(nativePaste.defaultPrevented, undefined);
 });
 
 test('delete ignores editor keystrokes and removes the selected canvas object otherwise', () => {

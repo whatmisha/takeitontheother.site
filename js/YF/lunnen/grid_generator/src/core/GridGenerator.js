@@ -600,7 +600,9 @@ export class GridGenerator {
                 this.canvasRenderer.createSvgElement(type, attrs, container)
             ),
             getContrastColor: () => this.canvasRenderer.getContrastColor(),
-            getStyleSettings: styleRef => this.textStyleResolver.getStyleSettings(styleRef),
+            getStyleSettings: (styleRef, gridModule) => (
+                this.textStyleResolver.getStyleSettings(styleRef, gridModule)
+            ),
             getFontMetrics: styleRef => this.textStyleResolver.getFontMetrics(styleRef),
             layout: this.textLayout,
             attachInteractions: (element, block) => (

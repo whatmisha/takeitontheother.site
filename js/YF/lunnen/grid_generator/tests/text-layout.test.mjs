@@ -34,6 +34,32 @@ test('text width and position use the selected surface grid', () => {
     }, 2), { x: 95, y: 70 });
 });
 
+test('explicit side context prevents a second geometry calculation from shrinking 12 columns to 9', () => {
+    const sideContext = {
+        gridModule: 5,
+        margins: 2.5,
+        columnCount: 12,
+        rowCount: 1,
+        rowHeight: 7,
+        frontWidth: 500,
+        frontHeight: 50
+    };
+    const block = {
+        surface: 'left',
+        width: 12,
+        x: 1,
+        row: 0,
+        baselineOffset: 0,
+        alignment: 'left'
+    };
+
+    assert.equal(layout.calculateBlockWidth(block, sideContext), 475);
+    assert.deepEqual(
+        layout.calculateBlockPosition(block, 1, sideContext),
+        { x: 12.5, y: 0 }
+    );
+});
+
 test('baseline snapping keeps special first-line alignment unsnapped', () => {
     assert.equal(layout.snapToBaseline(73, 20, 2, true, 'baseline'), 70);
     assert.equal(layout.snapToBaseline(73, 20, 2, false, 'baseline'), 72.5);

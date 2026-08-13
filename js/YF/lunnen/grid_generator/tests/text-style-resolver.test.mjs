@@ -33,6 +33,7 @@ const closeTo = (actual, expected) => {
 test('font sizing uses the configured cap-height or x-height', () => {
     closeTo(resolver.calculateFontSize('headline'), 7.5 * 1000 / 630);
     closeTo(resolver.calculateFontSize('text'), 2.5 * 1000 / 447);
+    closeTo(resolver.calculateFontSize('text', null, 8), 4 * 1000 / 447);
 });
 
 test('font size conversion round-trips through modules', () => {
@@ -61,4 +62,11 @@ test('style settings normalize fallback and Lunnen Display behavior', () => {
         fontWeight: 400,
         fontFamily: 'Lunnen Display'
     });
+});
+
+test('style settings use an explicit side-grid module without changing global typography', () => {
+    const sideStyle = resolver.getStyleSettings('text', 8);
+
+    closeTo(sideStyle.fontSize, 4 * 1000 / 447);
+    closeTo(resolver.getStyleSettings('text').fontSize, 2.5 * 1000 / 447);
 });

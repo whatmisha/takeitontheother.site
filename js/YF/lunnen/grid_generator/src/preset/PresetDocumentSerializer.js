@@ -5,7 +5,8 @@ const compact = object => Object.fromEntries(
 
 const BUILT_IN_DEFAULTS = Object.freeze({
     icons: Object.freeze({ x: 1 }),
-    claim: Object.freeze({ x: 7 })
+    claim: Object.freeze({ x: 7 }),
+    claim2026: Object.freeze({ x: 4 })
 });
 
 function serializePosition(block, defaultColumn = 1) {
@@ -82,6 +83,7 @@ export class PresetDocumentSerializer {
         const graphicsBlocks = data.graphicsBlocks || [];
         const icons = graphicsBlocks.find(block => block.id === 'icons');
         const claim = graphicsBlocks.find(block => block.id === 'claim');
+        const claim2026 = graphicsBlocks.find(block => block.id === 'claim2026');
         return {
             presetName: presetName ?? data.presetName ?? data.currentPresetName ?? 'Custom',
             version: data.version ?? '1.2',
@@ -133,10 +135,11 @@ export class PresetDocumentSerializer {
             },
             graphics: {
                 blocks: graphicsBlocks
-                    .filter(block => !block.isBuiltIn && !['icons', 'claim'].includes(block.id))
+                    .filter(block => !block.isBuiltIn && !['icons', 'claim', 'claim2026'].includes(block.id))
                     .map(serializeGraphic),
                 icons: serializeBuiltIn(icons, 'icons'),
-                claim: serializeBuiltIn(claim, 'claim')
+                claim: serializeBuiltIn(claim, 'claim'),
+                claim2026: serializeBuiltIn(claim2026, 'claim2026')
             }
         };
     }

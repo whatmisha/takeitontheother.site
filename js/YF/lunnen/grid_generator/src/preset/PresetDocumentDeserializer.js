@@ -5,7 +5,8 @@ const compact = object => Object.fromEntries(
 
 const BUILT_IN_DEFAULTS = Object.freeze({
     icons: Object.freeze({ name: 'Icons', x: 1, originalWidth: 204.0944882, originalHeight: 28.3464567 }),
-    claim: Object.freeze({ name: 'Claim', x: 7, originalWidth: 186.2242584, originalHeight: 28.3464565 })
+    claim: Object.freeze({ name: 'Claim', x: 7, originalWidth: 186.2242584, originalHeight: 28.3464565 }),
+    claim2026: Object.freeze({ name: 'Claim 2026', x: 4, originalWidth: 202.0335404, originalHeight: 32.7559817 })
 });
 
 function deserializeText(text, index) {
@@ -118,7 +119,7 @@ export class PresetDocumentDeserializer {
             surfaceSettings: data.surfaces == null ? undefined : clone(data.surfaces)
         });
         const graphicsBlocks = (data.graphics?.blocks || []).map(deserializeGraphic);
-        for (const id of ['icons', 'claim']) {
+        for (const id of ['icons', 'claim', 'claim2026']) {
             const builtIn = deserializeBuiltIn(data.graphics?.[id], id);
             if (builtIn) graphicsBlocks.push(builtIn);
         }

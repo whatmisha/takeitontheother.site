@@ -21,16 +21,28 @@ export class GraphicsRenderer {
         this.attachInteractions = attachInteractions;
     }
 
-    calculateDimensions(block) {
-        const module = this.settings.get('gridModule');
+    getGridContext(frontWidth, scale = 1, explicitGridContext = null) {
+        if (explicitGridContext) return explicitGridContext;
+        return {
+            gridModule: this.settings.get('gridModule'),
+            margins: this.settings.get('margins'),
+            columnCount: this.settings.get('columnCount'),
+            rowHeight: this.settings.get('rowHeight'),
+            frontWidth: frontWidth == null ? this.settings.get('frontWidth') : frontWidth / scale
+        };
+    }
+
+    calculateDimensions(block, explicitGridContext = null) {
+        const context = this.getGridContext(null, 1, explicitGridContext);
+        const module = context.gridModule;
         const aspectRatio = block.originalWidth / block.originalHeight;
         let widthInMm;
         let heightInMm;
 
         if (block.sizeMode === 'width') {
-            const frontWidth = this.settings.get('frontWidth');
-            const margins = this.settings.get('margins');
-            const columnCount = this.settings.get('columnCount');
+            const frontWidth = context.frontWidth;
+            const margins = context.margins;
+            const columnCount = context.columnCount;
             const contentWidth = frontWidth - 2 * margins * module;
             const columnWidth = (contentWidth - (columnCount - 1) * module) / columnCount;
             widthInMm = block.widthInColumns * columnWidth
@@ -47,15 +59,16 @@ export class GraphicsRenderer {
         };
     }
 
-    calculateLayout(block, frontX, frontY, frontWidth, scale) {
-        const module = this.settings.get('gridModule');
-        const margins = this.settings.get('margins');
-        const columnCount = this.settings.get('columnCount');
-        const dimensions = this.calculateDimensions(block);
+    calculateLayout(block, frontX, frontY, frontWidth, scale, explicitGridContext = null) {
+        const context = this.getGridContext(frontWidth, scale, explicitGridContext);
+        const module = context.gridModule;
+        const margins = context.margins;
+        const columnCount = context.columnCount;
+        const dimensions = this.calculateDimensions(block, context);
         const widthInMm = MathUtils.ptToMm(dimensions.width);
         const heightInMm = MathUtils.ptToMm(dimensions.height);
         const columnWidth = (
-            frontWidth / scale
+            context.frontWidth
             - module * margins * 2
             - module * (columnCount - 1)
         ) / columnCount;
@@ -74,21 +87,24 @@ export class GraphicsRenderer {
             x = areaRightEdge - widthInMm * scale;
         }
 
+        const blockY = explicitGridContext
+            ? (Number(block.row) || 0) * (context.rowHeight + 1) + (Number(block.baselineOffset) || 0)
+            : this.getBlockY(block);
         return {
             x,
             y: frontY
-                + this.getBlockY(block) * module * scale
+                + blockY * module * scale
                 + module * margins * scale,
             width: widthInMm * scale,
             height: heightInMm * scale
         };
     }
 
-    draw(container, block, frontX, frontY, frontWidth, frontHeight, scale) {
+    draw(container, block, frontX, frontY, frontWidth, frontHeight, scale, gridContext = null) {
         if (!block.svgContent) return null;
 
         const color = this.getContrastColor();
-        const layout = this.calculateLayout(block, frontX, frontY, frontWidth, scale);
+        const layout = this.calculateLayout(block, frontX, frontY, frontWidth, scale, gridContext);
         const group = this.createSvgElement('g', {
             id: `graphics-group-${block.id}`,
             style: 'cursor: move;',
@@ -115,11 +131,11 @@ export class GraphicsRenderer {
         return group;
     }
 
-    drawForExport(container, block, frontX, frontY, frontWidth, frontHeight, scale) {
+    drawForExport(container, block, frontX, frontY, frontWidth, frontHeight, scale, gridContext = null) {
         if (!block.svgContent) return null;
 
         const color = this.getContrastColor();
-        const layout = this.calculateLayout(block, frontX, frontY, frontWidth, scale);
+        const layout = this.calculateLayout(block, frontX, frontY, frontWidth, scale, gridContext);
         const svg = this.createGraphicSvg(container, block, layout, color, false);
         svg.innerHTML = this.sanitizeSvgContent(block.svgContent);
         this.applyContrastColor(svg, color);

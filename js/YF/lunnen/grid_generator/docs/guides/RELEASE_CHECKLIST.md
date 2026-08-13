@@ -4,13 +4,13 @@ Updated: 2026-08-12.
 
 ## Automated — completed
 
-- [x] `npm --prefix tools test` — 146/146 tests.
+- [x] `npm --prefix tools test` — 155/155 tests.
 - [x] `npm --prefix tools run public:check` — browser-resolvable static module
   graph, current schema/manifest, exact vendor copies and current hashed runtime.
 - [x] `npm --prefix tools run presets:check` — 19/19 presets and manifest.
 - [x] `npm --prefix tools audit --audit-level=low` — 0 vulnerabilities.
 - [x] `npm --prefix tools run build` — 105 transformed modules.
-- [x] `tests/browser-smoke.html` — `PASS — 70 checks` in the local Chromium
+- [x] `tests/browser-smoke.html` — `PASS — 76 checks` in the local Chromium
   browser, with no uncaught application errors.
 
 The browser suite runs through the hashed public entry served by the same

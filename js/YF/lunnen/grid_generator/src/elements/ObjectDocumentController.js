@@ -42,6 +42,25 @@ const BUILT_IN_GRAPHICS = Object.freeze([
         originalWidth: 186.2242584,
         originalHeight: 28.3464565,
         lockPosition: true
+    }),
+    Object.freeze({
+        id: 'claim2026',
+        name: 'Claim 2026',
+        isBuiltIn: true,
+        svgContent: '',
+        sizeMode: 'height',
+        heightInModules: 3,
+        widthInColumns: 4,
+        alignment: 'left',
+        surface: 'front',
+        x: 4,
+        row: 0,
+        baselineOffset: 0,
+        showBounds: false,
+        visible: false,
+        originalWidth: 202.0335404,
+        originalHeight: 32.7559817,
+        lockPosition: true
     })
 ]);
 
@@ -176,11 +195,17 @@ export class ObjectDocumentController {
         const original = this.getBlock(type, blockId);
         if (!original) return null;
 
+        return this.insertCopy(type, original, transform);
+    }
+
+    insertCopy(type, source, transform = block => block) {
         const isText = type === 'text';
+        if (!source || (!isText && !GRAPHICS_TYPES.has(type))) return null;
+
         const duplicate = {
-            ...clone(original),
+            ...clone(source),
             id: this.nextId(isText ? 'text' : 'graphics'),
-            x: Number(original.x || 0) + 1,
+            x: Number(source.x || 0) + 1,
             visible: true,
             deleting: false,
             ...(isText ? {} : { isBuiltIn: false })

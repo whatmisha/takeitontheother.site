@@ -84,6 +84,20 @@ test('E-ink preset keeps the approved 2026-08-10 parameters', async () => {
     assert.equal(data.graphics.claim.surface, 'front');
 });
 
+test('New preset places Claim 2026 by its full SVG artboard', async () => {
+    const data = JSON.parse(
+        await readFile(new URL('../presets/New.json', import.meta.url), 'utf8')
+    );
+    const claim = data.graphics.claim2026;
+
+    assert.deepEqual(claim.position, { column: 4, row: 11, baseline: 4 });
+    assert.equal(claim.height, 3);
+    assert.equal(claim.sizeMode, 'height');
+    assert.equal(claim.originalWidth, 202.0335404);
+    assert.equal(claim.originalHeight, 32.7559817);
+    assert.equal(claim.visible, true);
+});
+
 test('surface coordinate mapper keeps grid and pointer math surface-local', () => {
     const settings = new Settings({
         frontWidth: 500,

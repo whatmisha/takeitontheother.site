@@ -156,6 +156,12 @@
             { "$ref": "#/$defs/builtInGraphic" },
             { "type": "null" }
           ]
+        },
+        "claim2026": {
+          "anyOf": [
+            { "$ref": "#/$defs/builtInGraphic" },
+            { "type": "null" }
+          ]
         }
       }
     }

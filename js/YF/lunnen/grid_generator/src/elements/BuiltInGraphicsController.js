@@ -1,6 +1,7 @@
 export const BUILT_IN_GRAPHICS_ASSETS = Object.freeze([
     Object.freeze({ id: 'icons', path: 'graphics/icons.svg', label: 'Icons' }),
-    Object.freeze({ id: 'claim', path: 'graphics/yf_claim.svg', label: 'Claim' })
+    Object.freeze({ id: 'claim', path: 'graphics/yf_claim.svg', label: 'Claim' }),
+    Object.freeze({ id: 'claim2026', path: 'graphics/yf_claim_2026.svg', label: 'Claim 2026' })
 ]);
 
 /** Loads the application-owned SVG assets into their document objects. */

@@ -122,6 +122,15 @@ export class ApplicationEventController {
         const key = String(event.key || '').toLowerCase();
         const command = event.ctrlKey || event.metaKey;
 
+        if (command && !event.altKey && (key === 'c' || key === 'v')) {
+            if (this.isEditingControl(this.document.activeElement)) return;
+            const result = key === 'c'
+                ? this.host.objectNavigatorController.copySelected()
+                : this.host.objectNavigatorController.pasteCopied();
+            if (result) event.preventDefault();
+            return;
+        }
+
         if (command && key === 'e') {
             event.preventDefault();
             this.host.exportController.exportSvg();
@@ -146,12 +155,7 @@ export class ApplicationEventController {
 
     deleteSelected(event) {
         const active = this.document.activeElement;
-        const isEditing = active && (
-            active.tagName === 'INPUT' ||
-            active.tagName === 'TEXTAREA' ||
-            active.isContentEditable
-        );
-        if (isEditing) return;
+        if (this.isEditingControl(active)) return;
 
         if (this.host.currentEditingBlock) {
             const block = this.host.objectDocument.textBlocks.find(
@@ -176,6 +180,14 @@ export class ApplicationEventController {
         event.preventDefault();
         this.host.objectEditorPanelController.closeGraphicsPanel();
         this.startNavigatorDelete('graphics', block.id, block.name || 'Graphic');
+    }
+
+    isEditingControl(element) {
+        return Boolean(element && (
+            element.tagName === 'INPUT' ||
+            element.tagName === 'TEXTAREA' ||
+            element.isContentEditable
+        ));
     }
 
     startNavigatorDelete(type, blockId, name) {

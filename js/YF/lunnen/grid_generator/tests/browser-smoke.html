@@ -18,6 +18,8 @@
     <h1>Pizza Boxer browser smoke</h1>
     <pre id="result" role="status">Running…</pre>
     <iframe id="appFrame" title="Application under test"></iframe>
-    <script type="module" src="browser-smoke.mjs"></script>
+    <script type="module">
+        import(`./browser-smoke.mjs?ts=${Date.now()}`);
+    </script>
 </body>
 </html>

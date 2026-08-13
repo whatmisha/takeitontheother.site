@@ -72,6 +72,56 @@ test('duplicate records one history transaction and creates an independent objec
     assert.deepEqual(host.history, ['begin:duplicate text', 'commit']);
 });
 
+test('clipboard survives a preset document replacement and pastes one undoable copy', () => {
+    const host = createHost();
+    const controller = new ObjectNavigatorController(host);
+    const source = host.objectDocument.getTextBlock('text-1');
+    host.currentEditingBlock = source;
+    controller.render = () => {};
+    controller.scheduleSelection = callback => callback();
+    let selected = null;
+    controller.select = (type, id) => { selected = { type, id }; };
+
+    assert.equal(controller.copySelected(), true);
+    host.objectDocument.replaceTextBlocks([{
+        id: 'preset-b',
+        content: 'Other preset',
+        styleRef: 'headline',
+        surface: 'front',
+        x: 1,
+        width: 2,
+        visible: true
+    }]);
+    host.currentEditingBlock = null;
+
+    const pasted = controller.pasteCopied();
+
+    assert.equal(host.objectDocument.textBlocks.length, 2);
+    assert.equal(pasted.content, 'Text');
+    assert.equal(pasted.styleRef, 'text');
+    assert.equal(pasted.x, 2);
+    assert.equal(pasted.visible, true);
+    assert.notEqual(pasted.id, source.id);
+    assert.deepEqual(selected, { type: 'text', id: pasted.id });
+    assert.deepEqual(host.history, ['begin:paste text', 'commit']);
+});
+
+test('copying a built-in graphic pastes it as an independent custom object', () => {
+    const host = createHost();
+    const controller = new ObjectNavigatorController(host);
+    const source = host.objectDocument.getGraphicsBlock('icons');
+    host.currentEditingGraphicsId = source.id;
+    controller.render = () => {};
+    controller.scheduleSelection = () => {};
+
+    assert.equal(controller.copySelected(), true);
+    const pasted = controller.pasteCopied();
+
+    assert.equal(pasted.name, 'Icons');
+    assert.equal(pasted.isBuiltIn, false);
+    assert.notEqual(pasted.id, 'icons');
+});
+
 test('adding text is owned by the navigator transaction', () => {
     const host = createHost();
     const controller = new ObjectNavigatorController(host);

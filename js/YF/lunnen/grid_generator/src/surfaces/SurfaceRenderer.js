@@ -2,16 +2,6 @@ import { SurfaceGridPainter } from './SurfaceGridPainter.js';
 import { SurfaceLayerFactory } from './SurfaceLayerFactory.js';
 
 const DEFAULT_SIDE_SURFACES = Object.freeze(['left', 'right', 'top', 'bottom']);
-const GRID_CONTEXT_KEYS = Object.freeze([
-    'gridModule',
-    'margins',
-    'columnCount',
-    'rowCount',
-    'rowHeight',
-    'frontWidth',
-    'frontHeight'
-]);
-
 /**
  * Renders side-surface grids and objects without owning editor state.
  */
@@ -52,19 +42,6 @@ export class SurfaceRenderer {
         });
     }
 
-    withGridContext(surface, callback) {
-        const context = this.getGridContext(surface);
-        const previous = Object.fromEntries(
-            GRID_CONTEXT_KEYS.map(key => [key, this.settings.get(key)])
-        );
-        try {
-            GRID_CONTEXT_KEYS.forEach(key => this.settings.set(key, context[key], true));
-            return callback(context);
-        } finally {
-            GRID_CONTEXT_KEYS.forEach(key => this.settings.set(key, previous[key], true));
-        }
-    }
-
     createLayer(container, surface, layout, suffix = 'display') {
         return this.layerFactory.create(container, surface, layout, suffix);
     }
@@ -76,32 +53,33 @@ export class SurfaceRenderer {
     drawObjects(container, surface, geometry, scale, forExport = false) {
         if (!this.settings.get('showObjects') && !forExport) return;
 
-        this.withGridContext(surface, () => {
-            this.getTextBlocks().forEach(block => {
-                if ((block.surface || 'front') !== surface || block.visible === false || block.deleting) return;
-                this.drawTextBlock(
-                    container,
-                    block,
-                    0,
-                    0,
-                    geometry.localWidth,
-                    geometry.localHeight,
-                    scale
-                );
-            });
-            this.getGraphicsBlocks().forEach(block => {
-                if ((block.surface || 'front') !== surface || block.visible === false || block.deleting || !block.svgContent) return;
-                const draw = forExport ? this.drawGraphicsBlockForExport : this.drawGraphicsBlock;
-                draw(
-                    container,
-                    block,
-                    0,
-                    0,
-                    geometry.localWidth,
-                    geometry.localHeight,
-                    scale
-                );
-            });
+        const context = this.getGridContext(surface);
+        this.getTextBlocks().forEach(block => {
+            if ((block.surface || 'front') !== surface || block.visible === false || block.deleting) return;
+            this.drawTextBlock(
+                container,
+                block,
+                0,
+                0,
+                geometry.localWidth,
+                geometry.localHeight,
+                scale,
+                context
+            );
+        });
+        this.getGraphicsBlocks().forEach(block => {
+            if ((block.surface || 'front') !== surface || block.visible === false || block.deleting || !block.svgContent) return;
+            const draw = forExport ? this.drawGraphicsBlockForExport : this.drawGraphicsBlock;
+            draw(
+                container,
+                block,
+                0,
+                0,
+                geometry.localWidth,
+                geometry.localHeight,
+                scale,
+                context
+            );
         });
     }
 

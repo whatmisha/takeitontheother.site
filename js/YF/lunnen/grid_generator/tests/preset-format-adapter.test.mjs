@@ -160,6 +160,25 @@ test('organized preset JSON round-trips every editable document setting', () => 
                 originalWidth: 187,
                 originalHeight: 29,
                 lockPosition: true
+            },
+            {
+                id: 'claim2026',
+                name: 'Claim 2026',
+                isBuiltIn: true,
+                svgContent: '<g id="claim-2026"/>',
+                sizeMode: 'height',
+                heightInModules: 3,
+                widthInColumns: null,
+                alignment: 'left',
+                surface: 'front',
+                x: 4,
+                row: 11,
+                baselineOffset: 4,
+                showBounds: false,
+                visible: true,
+                originalWidth: 202.0335404,
+                originalHeight: 32.7559817,
+                lockPosition: true
             }
         ]
     };
@@ -224,6 +243,14 @@ test('organized preset JSON round-trips every editable document setting', () => 
     assert.equal(icons.lockPosition, false);
     assert.equal(icons.originalWidth, 205);
     assert.equal(icons.showBounds, true);
+
+    const claim2026 = normalized.graphicsBlocks.find(block => block.id === 'claim2026');
+    assert.equal(claim2026.x, 4);
+    assert.equal(claim2026.row, 11);
+    assert.equal(claim2026.baselineOffset, 4);
+    assert.equal(claim2026.heightInModules, 3);
+    assert.equal(claim2026.originalHeight, 32.7559817);
+    assert.equal(claim2026.svgContent, '<g id="claim-2026"/>');
 });
 
 test('legacy and incomplete preset documents are rejected explicitly', async () => {
