@@ -243,6 +243,22 @@ assert.deepEqual(
     { 1: 108, 2: 2 }
 );
 
+const sampleSvg = readFileSync('app/assets/new-layout-sample.svg', 'utf8');
+const pathOnlySample = sampleSvg.replace(/<line\b[^>]*>/gi, (tag) => {
+    const attrs = parseSvgAttributes(tag);
+    return `<path d="M${attrs.x1},${attrs.y1}L${attrs.x2},${attrs.y2}"/>`;
+});
+const pathOnlyAnalysis = analyzeSvgBlueprint(pathOnlySample);
+assert.equal(pathOnlyAnalysis.groups.blueprint, true);
+assert.equal(pathOnlyAnalysis.elements.sourceLines, 0);
+assert.equal(pathOnlyAnalysis.geometry.source, 'normalized-svg');
+assert.ok(pathOnlyAnalysis.geometry.stats.segments > 2877);
+assert.equal(pathOnlyAnalysis.recognized.keys.length, 78);
+assert.equal(pathOnlyAnalysis.recognized.stackCells.length, 1);
+assert.equal(pathOnlyAnalysis.layoutDraft.stats.layoutProfile, 'ANSI_COMPACT_78');
+assert.equal(pathOnlyAnalysis.layoutDraft.stats.semanticKeys, 78);
+assert.equal(pathOnlyAnalysis.diagnostics.warnings.length, 0);
+
 const semanticCompact = analyzeSvgBlueprint(ansiCompactSvg());
 assert.equal(semanticCompact.recognized.keys.length, 77);
 assert.equal(semanticCompact.layoutDraft.stats.keys, 77);

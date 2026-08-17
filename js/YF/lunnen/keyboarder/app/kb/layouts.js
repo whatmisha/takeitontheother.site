@@ -1,4 +1,4 @@
-import { LCAKB21, LCAKB22 } from './layout-presets.js';
+import { LCAKB21, LCAKB22, WORK_2_S_UPDATE } from './layout-presets.js';
 import {
     AIRIS_14,
     GROUND_14,
@@ -236,6 +236,7 @@ const ANSI_60 = layout('ANSI_60', '60%', [COMPACT_MAIN], [
 
 export const LAYOUTS = {
     [LCAKB21.meta.name]: LCAKB21,
+    [WORK_2_S_UPDATE.meta.name]: WORK_2_S_UPDATE,
     [LCAKB22.meta.name]: LCAKB22,
     [PERFORM_L.meta.name]: PERFORM_L,
     [PERFORM_S.meta.name]: PERFORM_S,
@@ -252,8 +253,9 @@ export const LAYOUTS = {
 
 export const LAYOUT_OPTIONS = [
     { id: LCAKB21.meta.name, label: 'LCAKB21 · Compact 78' },
+    { id: WORK_2_S_UPDATE.meta.name, label: 'Work 2.0 S Update · Compact 78' },
     { id: LCAKB22.meta.name, label: 'LCAKB22 · Nav 89' },
     { id: LCAKB23.meta.name, label: 'LCAKB23 · ANSI 96%' }
 ];
 
-export { AIRIS_14, GROUND_14, GROUND_15, LCAKB21, LCAKB22, PERFORM_L, PERFORM_S, WORK_1_L_PAD };
+export { AIRIS_14, GROUND_14, GROUND_15, LCAKB21, LCAKB22, PERFORM_L, PERFORM_S, WORK_1_L_PAD, WORK_2_S_UPDATE };

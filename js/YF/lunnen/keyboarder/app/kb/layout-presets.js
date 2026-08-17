@@ -71,6 +71,80 @@ export const LCAKB21 = {
     ]
 };
 
+export const WORK_2_S_UPDATE = {
+    meta: {
+        name: 'WORK_2_S_UPDATE',
+        label: 'Work 2.0 S Update',
+        formFactor: 'compact 78',
+        source: 'svg-blueprint-paths',
+        layoutProfile: 'ANSI_COMPACT_78'
+    },
+    grid: {
+        colPitch: 53.86,
+        rowPitch: 53.86,
+        keyWidth1U: 46.4882,
+        keyHeight: 46.4882,
+        cornerRadius: 3.4016,
+        guideInset: 6.6515,
+        origin: { x: 1.4659, y: 1.47 }
+    },
+    blocks: [
+        { id: 'main', x: 1.4659, width: 771.8882 }
+    ],
+    rows: [
+        {
+            main: [
+                { w: 71.71, id: 'esc' },
+                { u: 1, repeat: 13, ids: ['f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11', 'f12', 'f13'] }
+            ]
+        },
+        {
+            main: [
+                { u: 1, repeat: 13, ids: ['grave', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'minus', 'equal'] },
+                { w: 71.7264, id: 'backspace' }
+            ]
+        },
+        {
+            main: [
+                { w: 71.7282, id: 'tab' },
+                { u: 1, repeat: 13, ids: ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'left-bracket', 'right-bracket', 'backslash'] }
+            ]
+        },
+        {
+            main: [
+                { w: 85.0382, id: 'caps' },
+                { u: 1, repeat: 11, ids: ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'semicolon', 'quote'] },
+                { w: 87.0282, id: 'enter' }
+            ]
+        },
+        {
+            main: [
+                { w: 104.8782, id: 'lshift' },
+                { u: 1, repeat: 10, ids: ['z', 'x', 'c', 'v', 'b', 'n', 'm', 'comma', 'period', 'slash'] },
+                { w: 121.0482, id: 'rshift' }
+            ]
+        },
+        {
+            main: [
+                { w: 78.7983, id: 'lctrl' },
+                { u: 1, repeat: 3, ids: ['lmeta', 'lalt', 'fn-left'] },
+                { w: 254.8282, id: 'space' },
+                { u: 1, repeat: 3, ids: ['ralt', 'fn-right', 'left'] },
+                {
+                    u: 1,
+                    id: 'arrow-stack',
+                    stack: [
+                        { yOffset: 0, h: 22.48, id: 'up', editId: '5:main:8:stack0' },
+                        { yOffset: 23.8099, h: 22.6801, id: 'down', editId: '5:main:8:stack1' }
+                    ],
+                    editId: '5:main:8'
+                },
+                { u: 1, id: 'right' }
+            ]
+        }
+    ]
+};
+
 export const LCAKB22 = {
     meta: {
         name: 'LCAKB22',

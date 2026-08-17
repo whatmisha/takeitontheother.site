@@ -1,3 +1,5 @@
+import { normalizeSvgGeometry } from './svg-geometry.js';
+
 const NUM_RE = /[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?/g;
 const AXIS_TOLERANCE = 1e-6;
 const PATH_CORNER_TOLERANCE = 0.55;
@@ -289,7 +291,11 @@ export function analyzeSvgBlueprint(svgText = '') {
     const guides = groups.guides;
     const source = blueprint || stripped.svg;
     const sourceCounts = timed('tagCountsMs', () => countElementTags(source, ['line', 'path', 'rect', 'polygon']));
-    const lines = timed('parseLinesMs', () => parseSvgLines(source));
+    const explicitLines = timed('parseLinesMs', () => parseSvgLines(source));
+    const normalizedGeometry = explicitLines.length
+        ? null
+        : timed('normalizeGeometryMs', () => normalizeSvgGeometry(source));
+    const lines = explicitLines.length ? explicitLines : normalizedGeometry.segments;
     const buckets = timed('classifyLinesMs', () => classifySvgLines(lines));
     const pathCornerArcs = timed('pathArcsMs', () => parseSvgPathCornerArcs(source));
     const capShapes = timed('capsMs', () => parseSvgCapShapes(caps));
@@ -334,9 +340,19 @@ export function analyzeSvgBlueprint(svgText = '') {
         },
         elements: {
             lines: lines.length,
+            sourceLines: sourceCounts.line || 0,
             paths: sourceCounts.path || 0,
             rects: sourceCounts.rect || 0,
             polygons: sourceCounts.polygon || 0
+        },
+        geometry: normalizedGeometry ? {
+            source: 'normalized-svg',
+            unsupported: normalizedGeometry.unsupported,
+            stats: normalizedGeometry.stats
+        } : {
+            source: 'svg-lines',
+            unsupported: [],
+            stats: { segments: lines.length }
         },
         lineBuckets: buckets,
         horizontalSpanGroups: spanGroups.length,
@@ -404,21 +420,30 @@ export function detectKeyRectCandidates(analysis = {}, options = {}) {
         }
     }
 
-    const regularKeys = removeNestedCandidates(raw).map((k) => ({
-        x: k.x,
-        y: k.y,
-        w: k.w,
-        h: k.h,
-        rowSpan: k.rowSpan,
-        top: k.top,
-        bottom: k.bottom
-    }));
+    const regularKeys = snapDetectedKeysToCaps(removeNestedCandidates(raw).map((k) => {
+        const normalized = normalizeDetectedKeyRect(k, { keyHeight, rowPitch });
+        return {
+            x: normalized.x,
+            y: normalized.y,
+            w: normalized.w,
+            h: normalized.h,
+            rowSpan: k.rowSpan,
+            top: k.top,
+            bottom: k.bottom
+        };
+    }), analysis.caps || []);
 
-    const stackCells = detectStackedKeyCellsFromPathArcs(analysis.pathCornerArcs || [], {
+    const segmentStackCells = detectStackedKeyCellsFromLineSegments(horizontal, vertical, {
         calibration,
         cornerOffset,
         existingKeys: regularKeys
-    }).map((cell, stackId) => ({
+    });
+    const arcStackCells = detectStackedKeyCellsFromPathArcs(analysis.pathCornerArcs || [], {
+        calibration,
+        cornerOffset,
+        existingKeys: regularKeys
+    });
+    const stackCells = uniqueStackCells([...arcStackCells, ...segmentStackCells]).map((cell, stackId) => ({
         ...cell,
         stackId,
         stack: cell.stack.map((key, stackIndex) => ({
@@ -452,6 +477,52 @@ export function detectKeyRectCandidates(analysis = {}, options = {}) {
         estimatedGrid,
         keys
     };
+}
+
+function normalizeDetectedKeyRect(key = {}, options = {}) {
+    const keyHeight = finiteNumber(options.keyHeight);
+    const rowPitch = finiteNumber(options.rowPitch);
+    const expectedHeight = key.rowSpan === 2 && Number.isFinite(rowPitch)
+        ? keyHeight + rowPitch
+        : keyHeight;
+    if (!Number.isFinite(expectedHeight)) return key;
+    const inset = expectedHeight - key.h;
+    if (inset < 0.2 || inset > Math.max(1.5, expectedHeight * 0.04)) return key;
+    return {
+        ...key,
+        x: round(key.x - inset / 2, 4),
+        y: round(key.y - inset / 2, 4),
+        w: round(key.w + inset, 4),
+        h: round(expectedHeight, 4)
+    };
+}
+
+function snapDetectedKeysToCaps(keys = [], caps = []) {
+    const out = keys.map((key) => ({ ...key }));
+    const used = new Set();
+    for (const cap of caps) {
+        const capCx = cap.x + cap.w / 2;
+        const capCy = cap.y + cap.h / 2;
+        let best = null;
+        for (let i = 0; i < out.length; i++) {
+            if (used.has(i)) continue;
+            const key = out[i];
+            if (Math.abs(key.w - cap.w) > 2 || Math.abs(key.h - cap.h) > 2) continue;
+            const distance = Math.hypot(key.x + key.w / 2 - capCx, key.y + key.h / 2 - capCy);
+            if (distance > 1.5 || (best && distance >= best.distance)) continue;
+            best = { i, distance };
+        }
+        if (!best) continue;
+        out[best.i] = {
+            ...out[best.i],
+            x: round(cap.x, 4),
+            y: round(cap.y, 4),
+            w: round(cap.w, 4),
+            h: round(cap.h, 4)
+        };
+        used.add(best.i);
+    }
+    return out;
 }
 
 function chooseRecognizedKeySource(detected = {}, caps = [], calibration = {}, options = {}) {
@@ -665,6 +736,111 @@ function detectStackedKeyCellsFromPathArcs(arcs = [], options = {}) {
     return cells.sort((a, b) => a.y - b.y || a.x - b.x);
 }
 
+function detectStackedKeyCellsFromLineSegments(horizontal = [], vertical = [], options = {}) {
+    const calibration = options.calibration || {};
+    const keyWidth1U = finiteNumber(options.keyWidth1U, calibration.keyWidth1U);
+    const keyHeight = finiteNumber(options.keyHeight, calibration.keyHeight);
+    const cornerOffset = finiteNumber(options.cornerOffset, calibration.cornerRadius);
+    if (![keyWidth1U, keyHeight, cornerOffset].every(Number.isFinite)) return [];
+
+    const minSpan = keyWidth1U * 0.64;
+    const maxSpan = keyWidth1U * 1.04;
+    const minPartHeight = keyHeight * 0.38;
+    const maxPartHeight = keyHeight * 0.62;
+    const centerTolerance = Math.max(0.6, keyWidth1U * 0.018);
+    const spans = horizontal
+        .filter((segment) => segment.length >= minSpan && segment.length <= maxSpan)
+        .sort((a, b) => a.y - b.y || a.xmin - b.xmin || a.xmax - b.xmax);
+    const parts = [];
+
+    for (let i = 0; i < spans.length - 1; i++) {
+        const top = spans[i];
+        const topCenter = (top.xmin + top.xmax) / 2;
+        for (let j = i + 1; j < spans.length; j++) {
+            const bottom = spans[j];
+            const h = bottom.y - top.y;
+            if (h < minPartHeight || h > maxPartHeight) continue;
+            const bottomCenter = (bottom.xmin + bottom.xmax) / 2;
+            if (Math.abs(topCenter - bottomCenter) > centerTolerance) continue;
+            const center = (topCenter + bottomCenter) / 2;
+            const x = center - keyWidth1U / 2;
+            if (!hasVerticalEdge(vertical, x, top.y, bottom.y, cornerOffset)) continue;
+            if (!hasVerticalEdge(vertical, x + keyWidth1U, top.y, bottom.y, cornerOffset)) continue;
+            parts.push({
+                x: round(x, 4),
+                y: round(top.y, 4),
+                w: round(keyWidth1U, 4),
+                h: round(h, 4),
+                edgeScore: round((top.length + bottom.length) / (keyWidth1U * 2), 4)
+            });
+        }
+    }
+
+    const unique = uniqueRects(
+        [...parts].sort((a, b) => Math.abs(a.h - keyHeight / 2) - Math.abs(b.h - keyHeight / 2)),
+        0.75
+    ).sort((a, b) => a.y - b.y || a.x - b.x);
+    const rowYs = uniqueSorted((options.existingKeys || []).map((key) => key.y), 0.75);
+    const candidates = [];
+    for (let i = 0; i < unique.length; i++) {
+        const top = unique[i];
+        for (let j = i + 1; j < unique.length; j++) {
+            const bottom = unique[j];
+            if (!closeEnough(top.x, bottom.x, 0.8) || !closeEnough(top.w, bottom.w, 0.8)) continue;
+            if (bottom.y <= top.y) continue;
+            const footprintH = bottom.y + bottom.h - top.y;
+            const footprintError = Math.abs(footprintH - keyHeight);
+            if (footprintError > Math.max(1.5, keyHeight * 0.04)) continue;
+            const middleGap = bottom.y - (top.y + top.h);
+            if (middleGap < -0.75 || middleGap > keyHeight * 0.15) continue;
+            const rowError = rowYs.length ? Math.min(...rowYs.map((rowY) => Math.abs(rowY - top.y))) : 0;
+            const halfHeight = (keyHeight - Math.max(0, middleGap)) / 2;
+            const balanceError = Math.abs(top.h - halfHeight) + Math.abs(bottom.h - halfHeight);
+            const score = footprintError * 2
+                + balanceError * 0.35
+                + rowError * 0.75
+                + Math.max(0, middleGap) * 0.2
+                - (top.edgeScore + bottom.edgeScore) * 0.05;
+            candidates.push({
+                score,
+                cell: {
+                    x: round((top.x + bottom.x) / 2, 4),
+                    y: round(top.y, 4),
+                    w: round((top.w + bottom.w) / 2, 4),
+                    h: round(footprintH, 4),
+                    stack: [
+                        { x: top.x, y: top.y, w: top.w, h: top.h },
+                        { x: bottom.x, y: bottom.y, w: bottom.w, h: bottom.h }
+                    ]
+                }
+            });
+        }
+    }
+
+    const cells = [];
+    for (const { cell } of candidates.sort((a, b) => a.score - b.score)) {
+        if (overlapsExistingKey(cell, options.existingKeys || [])) continue;
+        if (cells.some((existing) => closeEnough(existing.x, cell.x, 1)
+            && closeEnough(existing.y, cell.y, 2)
+            && closeEnough(existing.w, cell.w, 1)
+            && closeEnough(existing.h, cell.h, 2))) continue;
+        cells.push(cell);
+    }
+    return cells.sort((a, b) => a.y - b.y || a.x - b.x);
+}
+
+function uniqueStackCells(cells = []) {
+    const out = [];
+    for (const cell of cells) {
+        if (out.some((existing) => closeEnough(existing.x, cell.x, 0.8)
+            && closeEnough(existing.y, cell.y, 2)
+            && closeEnough(existing.w, cell.w, 0.8)
+            && closeEnough(existing.h, cell.h, 2))) continue;
+        out.push(cell);
+    }
+    return out;
+}
+
 function overlapsExistingKey(cell, keys = []) {
     return keys.some((key) => rectsIntersect(cell, key, 0.5));
 }
@@ -707,10 +883,13 @@ function estimateGridFromKeys(cells = [], calibration = {}, options = {}) {
         .map((cluster) => cluster.value)
         .sort((a, b) => a - b);
     const rowDiffs = diffs(rowClusters).filter((value) => !Number.isFinite(keyHeight) || value > keyHeight * 0.75);
-    const gap = estimateGapFromRows(cells, keyWidth1U);
-    const colPitch = Number.isFinite(gap) && Number.isFinite(keyWidth1U)
-        ? keyWidth1U + gap
-        : NaN;
+    const measuredPitch = estimatePitchFromRows(cells, keyWidth1U);
+    const measuredGap = estimateGapFromRows(cells, keyWidth1U);
+    const colPitch = finiteNumber(
+        measuredPitch,
+        Number.isFinite(measuredGap) && Number.isFinite(keyWidth1U) ? keyWidth1U + measuredGap : NaN
+    );
+    const gap = Number.isFinite(colPitch) && Number.isFinite(keyWidth1U) ? colPitch - keyWidth1U : measuredGap;
     const rowPitch = finiteNumber(calibration.rowPitch, median(rowDiffs), Number.isFinite(keyHeight) && Number.isFinite(gap) ? keyHeight + gap : NaN);
     return {
         keyWidth1U: Number.isFinite(keyWidth1U) ? round(keyWidth1U, 4) : null,
@@ -719,6 +898,26 @@ function estimateGridFromKeys(cells = [], calibration = {}, options = {}) {
         colPitch: Number.isFinite(colPitch) ? round(colPitch, 4) : null,
         rowPitch: Number.isFinite(rowPitch) ? round(rowPitch, 4) : null
     };
+}
+
+function estimatePitchFromRows(keys = [], keyWidth1U = NaN) {
+    if (!Number.isFinite(keyWidth1U)) return NaN;
+    const rows = clusters(keys.map((key) => key.y), 1).map((cluster) => ({
+        y: cluster.value,
+        keys: keys.filter((key) => Math.abs(key.y - cluster.value) <= 1).sort((a, b) => a.x - b.x)
+    }));
+    const pitches = [];
+    for (const row of rows) {
+        for (let i = 1; i < row.keys.length; i++) {
+            const prev = row.keys[i - 1];
+            const key = row.keys[i];
+            if (Math.abs(prev.w - keyWidth1U) > 1.5 || Math.abs(key.w - keyWidth1U) > 1.5) continue;
+            const pitch = key.x - prev.x;
+            if (pitch < keyWidth1U * 0.9 || pitch > keyWidth1U * 1.5) continue;
+            pitches.push(pitch);
+        }
+    }
+    return clusteredMode(pitches, 0.35, { tie: 'smallest' });
 }
 
 function estimateGapFromRows(cells = [], keyWidth1U = NaN) {
@@ -1276,14 +1475,31 @@ function countDraftItems(rows, predicate) {
     return count;
 }
 
-function groupedHorizontalSegments(horizontal) {
-    const groups = new Map();
+function groupedHorizontalSegments(horizontal, tolerance = 0.15) {
+    const groups = [];
+    const buckets = new Map();
     for (const seg of horizontal) {
-        const key = `${round(seg.xmin, 1)}:${round(seg.xmax, 1)}`;
-        if (!groups.has(key)) groups.set(key, []);
-        groups.get(key).push(seg);
+        const bucket = Math.floor(seg.xmin / tolerance);
+        let groupIndex = -1;
+        for (let offset = -1; offset <= 1 && groupIndex < 0; offset++) {
+            for (const index of buckets.get(bucket + offset) || []) {
+                const group = groups[index];
+                if (Math.abs(group.xmin - seg.xmin) <= tolerance
+                    && Math.abs(group.xmax - seg.xmax) <= tolerance) {
+                    groupIndex = index;
+                    break;
+                }
+            }
+        }
+        if (groupIndex < 0) {
+            groupIndex = groups.length;
+            groups.push({ xmin: seg.xmin, xmax: seg.xmax, items: [] });
+            if (!buckets.has(bucket)) buckets.set(bucket, []);
+            buckets.get(bucket).push(groupIndex);
+        }
+        groups[groupIndex].items.push(seg);
     }
-    return groups.values();
+    return groups.map((group) => group.items);
 }
 
 function nearestAllowedHeight(value, allowed, tolerance) {
