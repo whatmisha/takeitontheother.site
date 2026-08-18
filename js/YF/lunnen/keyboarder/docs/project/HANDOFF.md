@@ -882,10 +882,10 @@ Stage 9 optimization is started:
   `Apply / Reset` draft workflow were removed. Canvas selection is now summarized by a compact key
   header and previous/next navigation; the canvas remains the visual preview. Empty keys expose six visual starter
   recipes; populated keys edit their elements directly through compact, wrapping text-style pills,
-  an icon gallery, and a unified 3x3 position pad. Style and Position share one two-column row. A
-  text element starts with a single input-and-trash row instead of repeating `Text N` and `Text`
-  labels. Rare reference slots, manual offsets, icon size, and text compensation live in a fixed
-  per-element `Fine tuning` popover opened by `•••`. The element toolbar uses `+ Text`, `+ Icon`,
+  an icon gallery, and a unified 3x3 position pad. Each element is a strict two-column card: the
+  left column contains the input/gallery, unlabeled styles, then trash and `...`; the right column
+  contains only the pad. Rare reference slots, manual offsets, icon size, and text compensation
+  live in a fixed per-element `Fine tuning` popover opened by `...`. The element toolbar uses `+ Text`, `+ Icon`,
   and `SVG ↑`. Edits commit immediately
   through the existing debounced history, so `Cmd/Ctrl+Z` works without an Apply step. Multi-key
   edits match elements by original slot and kind: position and style propagate, while text/icon

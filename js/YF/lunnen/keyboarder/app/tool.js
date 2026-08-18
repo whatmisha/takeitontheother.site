@@ -5373,6 +5373,7 @@ function elementEditorHtml(el, i, settings = {}) {
         + '<line class="preset-del-st0" x1="2.4330709" y1="2.7699421" x2="9.5669291" y2="2.7699421"></line>'
         + '</svg></button>';
     const common = ` data-index="${i}" data-source-slot="${html(el.slot)}" data-offset="${offset}"`;
+    const position = positionPickerHtml(el);
     if (el.kind === 'ico') {
         const library = iconLibraryForSettings(settings);
         const iconOptions = iconOptionsForSettings(settings);
@@ -5384,16 +5385,22 @@ function elementEditorHtml(el, i, settings = {}) {
                 + '</button>';
         }).join('');
         return '<div class="legend-edit-row" data-kind="ico" data-group="' + html(iconLayerId(el)) + '"' + common + '>'
-            + `<div class="legend-element-header"><strong>Icon ${i + 1}</strong>${remove}</div>`
+            + '<div class="legend-element-main">'
+            + `<div class="legend-element-header"><strong>Icon ${i + 1}</strong></div>`
             + `<input class="legend-icon-input" type="hidden" value="${html(el.icon)}">`
             + `<div class="legend-icon-grid">${icons}</div>`
-            + positionPickerHtml(el)
+            + `<div class="legend-element-footer">${remove}${position.fine}</div>`
+            + '</div>'
+            + position.pad
             + '</div>';
     }
     return '<div class="legend-edit-row" data-kind="txt"' + common + ' data-size="' + html(el.size) + '" data-tracking="' + html(el.tracking || 0) + '">'
-        + `<div class="legend-text-entry"><input class="legend-text-input" aria-label="Text ${i + 1}" value="${html(el.text)}">${remove}</div>`
+        + '<div class="legend-element-main">'
+        + `<div class="legend-text-entry"><input class="legend-text-input" aria-label="Text ${i + 1}" value="${html(el.text)}"></div>`
         + textStylePickerHtml(el, settings)
-        + positionPickerHtml(el)
+        + `<div class="legend-element-footer">${remove}${position.fine}</div>`
+        + '</div>'
+        + position.pad
         + '</div>';
 }
 
@@ -5406,7 +5413,7 @@ function textStylePickerHtml(el, settings = {}) {
         const summary = `${label} · ${round(finiteOr(style.size, 9), 2)} pt · ${round(finiteOr(style.weight, 400), 0)}`;
         return `<button type="button" class="legend-style-option${id === selected ? ' is-active' : ''}" data-style-value="${html(id)}" title="${html(summary)}">${html(label)}</button>`;
     }).join('');
-    return '<div class="legend-style-field"><span>Style</span>'
+    return '<div class="legend-style-field">'
         + `<input class="legend-style-input" type="hidden" value="${html(selected)}">`
         + `<div class="legend-style-grid">${buttons}</div></div>`;
 }
@@ -5430,20 +5437,20 @@ function positionPickerHtml(el) {
             + `<label><span>Height</span><input class="legend-height-input" type="number" step="0.001" value="${html(el.h)}"></label>`
         : `<label><span>Compensation</span><input class="legend-comp-input" type="number" step="0.001" value="${html(Number.isFinite(el.compOverride?.px) ? el.compOverride.px : '')}" placeholder="Auto"></label>`;
     const hasFineTuning = isSpecial || Object.keys(offset).length || Number.isFinite(el.compOverride?.px);
-    return '<div class="legend-slot-field">'
-        + `<div class="legend-field-heading"><span>Position</span><small class="legend-position-code" title="${html(slotLabel(current))}">${html(current)}</small></div>`
+    const pad = `<div class="legend-slot-field" title="${html(slotLabel(current))}">`
         + `<input class="legend-slot-input" type="hidden" value="${html(current)}">`
         + `<div class="legend-slot-grid">${grid}</div>`
-        + `<details class="legend-fine-tuning${hasFineTuning ? ' has-custom' : ''}">`
-        + '<summary aria-label="Fine tuning" title="Fine tuning"><span aria-hidden="true">•••</span></summary>'
+        + '</div>';
+    const fine = `<details class="legend-fine-tuning${hasFineTuning ? ' has-custom' : ''}">`
+        + '<summary aria-label="Fine tuning" title="Fine tuning"><span aria-hidden="true">...</span></summary>'
         + '<div class="legend-fine-tuning-fields">'
         + `<label class="legend-fine-position"><span>Exact position</span><select class="legend-slot-special-select" aria-label="Exact position">${specialOptions}</select></label>`
         + `<label><span>Offset X</span><input class="legend-offset-x-input" type="number" step="0.001" value="${html(Number.isFinite(xValue) ? xValue : '')}" placeholder="0"></label>`
         + `<label><span>Offset Y</span><input class="legend-offset-y-input" type="number" step="0.001" value="${html(Number.isFinite(yValue) ? yValue : '')}" placeholder="0"></label>`
         + extra
         + '</div>'
-        + '</details>'
-        + '</div>';
+        + '</details>';
+    return { pad, fine };
 }
 
 function slotSymbol(slot = '') {
@@ -5504,6 +5511,7 @@ function positionLegendFineTuningPopover(details) {
 
 function updateLegendFineTuningIndicator(field) {
     if (!field) return;
+    const row = field.closest('.legend-edit-row');
     const slot = String(field.querySelector('.legend-slot-input')?.value || '');
     const hasSpecialSlot = !SLOT_GRID_OPTIONS.flat().includes(slot);
     const hasOverride = [
@@ -5511,7 +5519,7 @@ function updateLegendFineTuningIndicator(field) {
         '.legend-offset-y-input',
         '.legend-comp-input'
     ].some((selector) => String(field.querySelector(selector)?.value || '').trim() !== '');
-    field.querySelector('.legend-fine-tuning')?.classList.toggle('has-custom', hasSpecialSlot || hasOverride);
+    row?.querySelector('.legend-fine-tuning')?.classList.toggle('has-custom', hasSpecialSlot || hasOverride);
 }
 
 function handleSlotPickerClick(app, event) {
@@ -5527,11 +5535,7 @@ function handleSlotPickerClick(app, event) {
     field?.querySelectorAll('[data-slot-value]').forEach((el) => {
         el.classList.toggle('is-active', el.dataset.slotValue === value);
     });
-    const code = field?.querySelector('.legend-position-code');
-    if (code) {
-        code.textContent = value;
-        code.title = slotLabel(value);
-    }
+    if (field) field.title = slotLabel(value);
     updateLegendFineTuningIndicator(field);
     commitLegendEditorChange(app, { intent: 'position', row });
     event.preventDefault();
@@ -5543,16 +5547,12 @@ function handleSlotSpecialChange(app, event) {
     if (!select) return false;
     const value = String(select.value || '').trim();
     if (!value) return true;
-    const field = select.closest('.legend-slot-field');
     const row = select.closest('.legend-edit-row');
+    const field = row?.querySelector('.legend-slot-field');
     const input = field?.querySelector('.legend-slot-input');
     if (input) input.value = value;
     field?.querySelectorAll('[data-slot-value]').forEach((el) => el.classList.remove('is-active'));
-    const code = field?.querySelector('.legend-position-code');
-    if (code) {
-        code.textContent = value;
-        code.title = slotLabel(value);
-    }
+    if (field) field.title = slotLabel(value);
     updateLegendFineTuningIndicator(field);
     commitLegendEditorChange(app, { intent: 'position', row });
     event.preventDefault();
