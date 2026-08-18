@@ -186,8 +186,43 @@ try {
     await page.waitForSelector(MAIN_WEIGHT_INPUT);
     await page.waitForFunction(() =>
         !!window.KeyboarderExport?.cleanSvgSnapshot
-        && document.querySelectorAll('#glyphs path').length >= 170
+        && document.querySelectorAll('#glyphs text').length >= 170
         && /YS Text Variable/.test(document.querySelector('#fontProbeStatus')?.textContent || ''));
+
+    const editable = await page.evaluate(() => {
+        const clean = window.KeyboarderExport.cleanSvgSnapshot();
+        const first = document.querySelector('#glyphs text');
+        return {
+            outlineChecked: !!document.querySelector('#convertToOutlinesCheckbox')?.checked,
+            glyphPaths: clean.layerCounts.glyphPaths || 0,
+            glyphTexts: clean.layerCounts.glyphTexts || 0,
+            hasEmbeddedFont: /id=["']font-faces["']|data:font\//i.test(clean.svg || ''),
+            family: first?.getAttribute('font-family') || '',
+            postScriptName: first?.getAttribute('data-font-postscript-name') || '',
+            weight: first?.getAttribute('font-weight') || '',
+            stretch: first?.getAttribute('font-stretch') || '',
+            variation: first?.getAttribute('style') || '',
+            anchors: [...document.querySelectorAll('#glyphs text')].reduce((counts, element) => {
+                const anchor = element.getAttribute('text-anchor') || 'start';
+                counts[anchor] = (counts[anchor] || 0) + 1;
+                return counts;
+            }, {})
+        };
+    });
+    assert.equal(editable.outlineChecked, false, 'editable SVG text should be the default mode');
+    assert.equal(editable.glyphPaths, 0, 'editable SVG should not contain outlined legend paths');
+    assert.equal(editable.glyphTexts, 176, 'editable SVG should contain one text element per legend');
+    assert.equal(editable.hasEmbeddedFont, false, 'editable SVG should reference installed fonts instead of embedding them');
+    assert.equal(editable.family, 'YS Text', 'editable SVG should preserve the installed font family name');
+    assert.ok(editable.postScriptName, 'editable SVG should include the PostScript font name');
+    assert.equal(editable.weight, '400', 'editable SVG should preserve the selected weight');
+    assert.equal(editable.stretch, '100%', 'editable SVG should preserve the selected width');
+    assert.match(editable.variation, /"wght" 400/, 'editable SVG should preserve the selected variable-font instance');
+    assert.ok(editable.anchors.end > 0, 'right-aligned legends should export with text-anchor=end');
+    assert.ok(editable.anchors.middle > 0, 'centered legends should export with text-anchor=middle');
+
+    await page.locator('#convertToOutlinesCheckbox').check();
+    await page.waitForFunction(() => document.querySelectorAll('#glyphs path').length >= 170);
 
     const regular = await snapshot(page);
     await setMainWeight(page, 100);
@@ -221,6 +256,7 @@ try {
 
     console.log(JSON.stringify({
         url: server.url,
+        editable: { glyphTexts: editable.glyphTexts, family: editable.family, weight: editable.weight },
         regular: { glyphPaths: regular.liveGlyphPaths, cleanBytes: regular.cleanBytes },
         light: { glyphPaths: light.liveGlyphPaths, maxGlyphHeight: Number(light.maxGlyphHeight.toFixed(3)) },
         black: { glyphPaths: black.liveGlyphPaths, maxGlyphHeight: Number(black.maxGlyphHeight.toFixed(3)) },

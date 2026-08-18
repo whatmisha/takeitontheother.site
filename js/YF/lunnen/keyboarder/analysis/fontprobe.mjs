@@ -39,6 +39,9 @@ const variable = loadTypeface('../Fonts/YS Text Variable/YSText-Upright-weight-V
 const variableProbe = probeTypeface(variable);
 const variableParams = autoCompensationParams(variable, variableProbe);
 const variableInvariants = runCompensationInvariants(variable, variableParams);
+assert.equal(variableProbe.names.family, 'YS Text');
+assert.equal(variableProbe.names.subfamily, 'Regular');
+assert.equal(variableProbe.names.postScriptName, 'YSText-Regular');
 variable.setVariations({ wght: 100, wdth: 100 });
 const variableLightH = {
     advance: variable.advance('H'),

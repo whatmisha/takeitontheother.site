@@ -39,9 +39,17 @@ function localizedName(name) {
 
 function fontNames(font) {
     const names = font?.names || {};
+    const preferredFamily = localizedName(names.preferredFamily);
+    const preferredSubfamily = localizedName(names.preferredSubfamily);
+    const legacyFamily = localizedName(names.fontFamily);
+    const legacySubfamily = localizedName(names.fontSubfamily);
     return {
-        family: localizedName(names.fontFamily) || localizedName(names.preferredFamily),
-        subfamily: localizedName(names.fontSubfamily) || localizedName(names.preferredSubfamily),
+        family: preferredFamily || legacyFamily,
+        subfamily: preferredSubfamily || legacySubfamily,
+        preferredFamily,
+        preferredSubfamily,
+        legacyFamily,
+        legacySubfamily,
         fullName: localizedName(names.fullName),
         postScriptName: localizedName(names.postScriptName)
     };

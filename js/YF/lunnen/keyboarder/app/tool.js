@@ -148,6 +148,7 @@ const SLOT_GRID_OPTIONS = [
 const SLOT_SPECIAL_OPTIONS = ['FC', 'UC', 'FL', 'FR', 'tC', 'bC', 'tL', 'bL', 'Ml', 'Mr', 'Tr', 'Tl', 'Fr'];
 const LANGUAGE_LAYERS = new Set(['dual', 'latin', 'cyrillic']);
 const LEGEND_TEXT_MODES = new Set(['outlines', 'text']);
+const SVG_EXPORT_TEXT_MODE_STORAGE_KEY = 'keyboarder.svgExportTextMode';
 const ICON_LAYER_IDS = ['icons', 'f-icons'];
 const CYRILLIC_RE = /[\u0400-\u04FF]/;
 const SINGLE_LATIN_RE = /^[A-Za-z]$/;
@@ -173,7 +174,7 @@ let SUPPRESS_NEXT_SURFACE_CLICK = false;
 const CONTENT_DRAG_START_PX = 6;
 
 function loadFontProbeHelpers() {
-    if (!FONT_PROBE_HELPERS) FONT_PROBE_HELPERS = import('./kb/fontprobe.js');
+    if (!FONT_PROBE_HELPERS) FONT_PROBE_HELPERS = import('./kb/fontprobe.js?v=20260818-svg-outline-toggle-v1');
     return FONT_PROBE_HELPERS;
 }
 
@@ -212,8 +213,33 @@ function normalizeLanguageLayer(value) {
 }
 
 function normalizeLegendTextMode(value) {
-    const key = String(value || 'outlines').trim();
-    return LEGEND_TEXT_MODES.has(key) ? key : 'outlines';
+    const key = String(value || 'text').trim();
+    return LEGEND_TEXT_MODES.has(key) ? key : 'text';
+}
+
+function initialSvgExportTextMode() {
+    if (typeof localStorage === 'undefined') return 'text';
+    try {
+        return normalizeLegendTextMode(localStorage.getItem(SVG_EXPORT_TEXT_MODE_STORAGE_KEY) || 'text');
+    } catch (_) {
+        return 'text';
+    }
+}
+
+function svgExportTextMode() {
+    return normalizeLegendTextMode(SVG_EXPORT_TEXT_MODE);
+}
+
+function setSvgExportTextMode(app, value) {
+    const next = normalizeLegendTextMode(value);
+    if (next === SVG_EXPORT_TEXT_MODE) return;
+    SVG_EXPORT_TEXT_MODE = next;
+    try {
+        localStorage.setItem(SVG_EXPORT_TEXT_MODE_STORAGE_KEY, next);
+    } catch (_) {
+        // Export still works when storage is unavailable.
+    }
+    app?.renderNow?.();
 }
 
 function sourceLayoutFor(s = {}) {
@@ -317,6 +343,7 @@ let LAST_SVG_IMPORT_REPORT = null;
 let TEXT_STYLE_OPEN = new Set(['main']);
 let LEGEND_DRAFT = null;
 let LEGEND_POPOVER_DRAG = null;
+let SVG_EXPORT_TEXT_MODE = initialSvgExportTextMode();
 
 function cleanRuntimeFontId(value) {
     return String(value || '').trim().replace(/[^\w:.-]+/g, '-').slice(0, 96);
@@ -365,12 +392,12 @@ function activeCompensationTable() {
     return activeCompensationBase().table || {};
 }
 
-function activeLegendFontFamily() {
-    return activeFontEntry()?.cssFamily || REFERENCE_FONT_FAMILY;
+function exportFontFamily(entry = activeFontEntry()) {
+    return String(entry?.probe?.names?.family || entry?.name || REFERENCE_FONT_FAMILY).trim() || REFERENCE_FONT_FAMILY;
 }
 
 function legendFontFamilyForElement(el = {}) {
-    return fontEntryForElement(el)?.cssFamily || activeLegendFontFamily();
+    return exportFontFamily(fontEntryForElement(el));
 }
 
 function fontVariationSettings(entry) {
@@ -532,6 +559,38 @@ function fontWeightFromSettings(s = {}) {
 
 function weightAxisFor(entry) {
     return entry?.probe?.variations?.axes?.find((axis) => axis.tag === 'wght') || null;
+}
+
+function widthAxisFor(entry) {
+    return entry?.probe?.variations?.axes?.find((axis) => axis.tag === 'wdth') || null;
+}
+
+function fontWeightForElement(entry, el = {}, s = {}) {
+    const axis = weightAxisFor(entry);
+    if (axis) {
+        return clamp(finiteOr(el.fontWeight, fontWeightFromSettings(s)), Math.max(1, axis.min), Math.min(1000, axis.max));
+    }
+    return clamp(finiteOr(entry?.probe?.metrics?.weightClass?.value, 400), 1, 1000);
+}
+
+function fontStretchForElement(entry, el = {}) {
+    const axis = widthAxisFor(entry);
+    if (axis) {
+        const coordinates = fontCoordinatesForElement(entry, el);
+        return `${compactNumber(clamp(finiteOr(coordinates[axis.tag], axis.default), 50, 200), 3)}%`;
+    }
+    const widthClass = Math.round(finiteOr(entry?.probe?.metrics?.widthClass?.value, 5));
+    const widths = { 1: 50, 2: 62.5, 3: 75, 4: 87.5, 5: 100, 6: 112.5, 7: 125, 8: 150, 9: 200 };
+    return `${widths[widthClass] || 100}%`;
+}
+
+function fontStyleForElement(entry, el = {}) {
+    const coordinates = fontCoordinatesForElement(entry, el);
+    if (Number(coordinates.ital) >= 0.5) return 'italic';
+    if (Number.isFinite(coordinates.slnt) && coordinates.slnt !== 0) return 'oblique';
+    const subfamily = String(entry?.probe?.names?.subfamily || '').toLowerCase();
+    const italicAngle = finiteOr(entry?.probe?.metrics?.italicAngle?.value, 0);
+    return /italic/.test(subfamily) ? 'italic' : (/oblique/.test(subfamily) || italicAngle !== 0 ? 'oblique' : 'normal');
 }
 
 function syncFontWeightSetting(s = {}) {
@@ -907,7 +966,7 @@ const app = defineTool({
         trackingOffset: TYPE_DEFAULTS.trackingOffset,
         textStyles: defaultTextStyles(),
         compensationMode: 'table',
-        legendTextMode: 'outlines',
+        legendTextMode: 'text',
         compensationTableEdits: {},
 
         showCaps: true,
@@ -1005,8 +1064,6 @@ const app = defineTool({
         const referenceVisualText = referenceVisualFor(data.sourceLayout);
 
         svg.appendChild(create('rect', { x: 0, y: 0, width, height, fill: s.bgColor }));
-        appendSessionFontDefs(create, svg, s);
-
         if (advanced && s.showBlocks) {
             const g = create('g', { id: 'blocks' });
             for (const b of data.sourceLayout.blocks) {
@@ -1082,7 +1139,7 @@ const app = defineTool({
         if (dragOverlay) svg.appendChild(dragOverlay);
 
         if (s.showGlyphs && TYPEFACE) {
-            const textMode = normalizeLegendTextMode(s.legendTextMode);
+            const textMode = svgExportTextMode();
             const g = create('g', { id: 'glyphs', fill: s.inkColor });
             for (const el of legends) {
                 if (el.kind !== 'txt') continue;
@@ -1186,6 +1243,7 @@ const app = defineTool({
         updateLegendEditor(s, keys);
         syncCompensationMode(s);
         syncLegendTextMode(s);
+        syncSvgExportModeStatus(legends);
         syncFontImportStatus();
         syncCompensationTableEditor(s);
         syncLayoutSelect(s);
@@ -1198,7 +1256,7 @@ const app = defineTool({
                 layout: data.sourceLayout?.meta?.name || '',
                 keys: keys.length,
                 legends: legends.length,
-                textMode: normalizeLegendTextMode(s.legendTextMode),
+                textMode: svgExportTextMode(),
                 fontReady: !!TYPEFACE
             });
         }
@@ -1217,7 +1275,7 @@ const app = defineTool({
                 legends: legends.length,
                 text: textCount,
                 icons: iconCount,
-                textMode: normalizeLegendTextMode(s.legendTextMode),
+                textMode: svgExportTextMode(),
                 showGlyphs: !!s.showGlyphs,
                 showIcons: !!s.showIcons
             });
@@ -1292,7 +1350,7 @@ const app = defineTool({
                 ...TYPE_DEFAULTS,
                 textStyles,
                 compensationMode: 'table',
-                legendTextMode: 'outlines',
+                legendTextMode: 'text',
                 compensationTableEdits: {}
             };
             Object.assign(values, legacyTypeSettingsFromTextStyles(textStyles));
@@ -1410,10 +1468,8 @@ const app = defineTool({
                 readyApp.settingsStore.set('compensationMode', btn.dataset.mode);
             });
         });
-        document.querySelectorAll('#legendTextModeGroup [data-mode]').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                readyApp.settingsStore.set('legendTextMode', normalizeLegendTextMode(btn.dataset.mode));
-            });
+        document.getElementById('convertToOutlinesCheckbox')?.addEventListener('change', (e) => {
+            setSvgExportTextMode(readyApp, e.target.checked ? 'outlines' : 'text');
         });
         document.getElementById('compTableCharSelect')?.addEventListener('change', (e) => {
             COMP_TABLE_SELECTED_CH = e.target.value || COMP_TABLE_SELECTED_CH;
@@ -2879,8 +2935,29 @@ function syncCompensationMode(s) {
     syncSegmentedButtons('compModeGroup', s.compensationMode || 'table');
 }
 
-function syncLegendTextMode(s) {
-    syncSegmentedButtons('legendTextModeGroup', normalizeLegendTextMode(s.legendTextMode));
+function syncLegendTextMode() {
+    const input = document.getElementById('convertToOutlinesCheckbox');
+    if (input && input.checked !== (svgExportTextMode() === 'outlines')) {
+        input.checked = svgExportTextMode() === 'outlines';
+    }
+}
+
+function fontFamiliesForLegends(legends = []) {
+    return [...new Set(legends
+        .filter((el) => el.kind === 'txt')
+        .map((el) => legendFontFamilyForElement(el))
+        .filter(Boolean))];
+}
+
+function syncSvgExportModeStatus(legends = []) {
+    const control = document.querySelector('.svg-outline-toggle');
+    if (!control) return;
+    const families = fontFamiliesForLegends(legends);
+    const label = svgExportTextMode() === 'text'
+        ? `Editable SVG text · Illustrator must have installed: ${families.join(', ') || 'the selected font'}`
+        : 'SVG outlines · no installed fonts required';
+    setAttrIfChanged(control, 'data-tooltip', label);
+    setAttrIfChanged(control, 'aria-label', label);
 }
 
 function syncSegmentedButtons(groupId, mode) {
@@ -3180,21 +3257,8 @@ function fontFormatFor(name) {
     return 'truetype';
 }
 
-function fontMimeType(file) {
-    if (/woff2$/i.test(file?.name || '')) return 'font/woff2';
-    if (/woff$/i.test(file?.name || '')) return 'font/woff';
-    if (/otf$/i.test(file?.name || '')) return 'font/otf';
-    return file?.type || 'font/ttf';
-}
-
-function fontDataUrl(buf, file) {
-    const bytes = new Uint8Array(buf);
-    let binary = '';
-    const chunk = 0x8000;
-    for (let i = 0; i < bytes.length; i += chunk) {
-        binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
-    }
-    return `data:${fontMimeType(file)};base64,${btoa(binary)}`;
+function cssQuoted(value) {
+    return String(value || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/[\r\n]+/g, ' ');
 }
 
 async function registerReferenceFont(tf) {
@@ -3239,7 +3303,9 @@ function installSessionFontFace(entry, file) {
     const objectUrl = URL.createObjectURL(file);
     const style = document.createElement('style');
     style.id = `keyboarder-font-face-${entry.id.replace(/[^\w-]+/g, '-')}`;
-    style.textContent = `@font-face{font-family:"${entry.cssFamily}";src:url("${objectUrl}") format("${fontFormatFor(file.name)}");font-weight:1 1000;font-stretch:50% 200%;font-style:normal;font-display:block;}`;
+    const previewFamily = cssQuoted(entry.cssFamily);
+    style.textContent = `@font-face{font-family:"${previewFamily}";src:url("${objectUrl}") format("${fontFormatFor(file.name)}");font-weight:1 1000;font-stretch:50% 200%;font-style:normal;font-display:block;}`
+        + `\n#mainSvg #glyphs text[data-font-id="${entry.id}"]{font-family:"${previewFamily}" !important;}`;
     document.head.appendChild(style);
     if (document.fonts?.load) void document.fonts.load(`12px "${entry.cssFamily}"`);
     entry.objectUrl = objectUrl;
@@ -3250,7 +3316,7 @@ function fontImportId(file, probe) {
     return `session:${slugId(probe?.id || file?.name)}:${file?.size || 0}:${file?.lastModified || 0}`;
 }
 
-async function buildSessionFontEntry(file, tf, dataUrl) {
+async function buildSessionFontEntry(file, tf) {
     const { autoCompensationParams, probeTypeface, runCompensationInvariants } = await loadFontProbeHelpers();
     const probe = probeTypeface(tf);
     const params = autoCompensationParams(tf, probe);
@@ -3268,7 +3334,6 @@ async function buildSessionFontEntry(file, tf, dataUrl) {
         invariants: runCompensationInvariants(tf, params),
         coordinates: defaultVariationCoordinates(probe),
         cssFamily: `${CUSTOM_FONT_FAMILY_PREFIX} ${++FONT_IMPORT_SEQ}`,
-        dataUrl,
         signature: `font:session:${id}`
     };
     entry.tf?.setVariations?.(entry.coordinates);
@@ -3300,7 +3365,7 @@ async function importFontFile(app, file) {
     try {
         const buf = await file.arrayBuffer();
         const tf = parseFont(buf);
-        const entry = await buildSessionFontEntry(file, tf, fontDataUrl(buf, file));
+        const entry = await buildSessionFontEntry(file, tf);
         releaseFontEntry(FONT_REGISTRY.get(entry.id));
         installSessionFontFace(entry, file);
         FONT_REGISTRY.set(entry.id, entry);
@@ -4562,35 +4627,33 @@ function svgImportReportKey(index, analysis) {
     };
 }
 
-function appendSessionFontDefs(create, svg, s) {
-    if (normalizeLegendTextMode(s.legendTextMode) !== 'text') return;
-    const fonts = [...FONT_REGISTRY.values()].filter((entry) => entry.kind === 'session' && entry.dataUrl);
-    if (!fonts.length) return;
-    const defs = create('defs', { id: 'font-faces' });
-    const style = create('style', { type: 'text/css' });
-    style.textContent = fonts.map((entry) =>
-        `@font-face{font-family:"${entry.cssFamily}";src:url("${entry.dataUrl}") format("${fontFormatFor(entry.fileName)}");font-weight:1 1000;font-stretch:50% 200%;font-style:normal;}`).join('\n');
-    defs.appendChild(style);
-    svg.appendChild(defs);
-}
-
 function renderLegendText(create, el, fill, s = {}) {
     const entry = fontEntryForElement(el);
     const variation = fontVariationSettingsForElement(entry, el);
-    const weight = weightAxisFor(entry)
-        ? clamp(finiteOr(el.fontWeight, fontWeightFromSettings(s)), 100, 900)
-        : 400;
+    const family = legendFontFamilyForElement(el);
+    const horizontalAnchor = String(el.slot || '').slice(-1);
+    const textAnchor = horizontalAnchor === 'R' ? 'end' : (horizontalAnchor === 'C' ? 'middle' : 'start');
+    const advance = finiteOr(el.advw, 0);
+    const anchorX = textAnchor === 'end'
+        ? el.bx + advance
+        : (textAnchor === 'middle' ? el.bx + advance / 2 : el.bx);
     const text = create('text', {
-        x: el.bx,
+        x: anchorX,
         y: el.by,
         fill,
-        'font-family': legendFontFamilyForElement(el),
+        'text-anchor': textAnchor,
+        'font-family': family,
         'font-size': el.size,
-        'font-weight': weight,
+        'font-weight': compactNumber(fontWeightForElement(entry, el, s), 3),
+        'font-stretch': fontStretchForElement(entry, el),
+        'font-style': fontStyleForElement(entry, el),
         'letter-spacing': `${el.tracking || 0}em`,
         'font-kerning': 'normal',
         'text-rendering': 'geometricPrecision',
         'data-font-id': entry?.id || '',
+        'data-font-family': family,
+        'data-font-subfamily': entry?.probe?.names?.subfamily || '',
+        'data-font-postscript-name': entry?.probe?.names?.postScriptName || '',
         'xml:space': 'preserve'
     });
     if (variation) text.setAttribute('style', `font-variation-settings:${variation}`);
@@ -5978,6 +6041,7 @@ function exportSummary(app, method, filename, options = {}) {
     const legends = data.legends || [];
     const text = legends.filter((el) => el.kind === 'txt').length;
     const icons = legends.filter((el) => el.kind === 'ico').length;
+    const fontFamilies = fontFamiliesForLegends(legends);
     const widthPx = Number(data.bounds?.w) || 0;
     const heightPx = Number(data.bounds?.h) || 0;
     const clean = options.cleanSnapshot || cleanSvgSnapshot(app);
@@ -5994,7 +6058,8 @@ function exportSummary(app, method, filename, options = {}) {
         legends: legends.length,
         text,
         icons,
-        textMode: normalizeLegendTextMode(app.settings.legendTextMode),
+        textMode: svgExportTextMode(),
+        fontFamilies,
         artboardPx: {
             width: round(widthPx, 3),
             height: round(heightPx, 3)
@@ -6063,7 +6128,9 @@ function exportToastText(report) {
     const format = String(report.format || 'export').toUpperCase();
     const mm = `${round(report.artboardMm?.width || 0, 1)} × ${round(report.artboardMm?.height || 0, 1)} mm`;
     const textMode = report.format === 'pdf' ? 'outlines' : report.textMode;
-    return `${format} exported · ${report.layout} · ${mm} · ${textMode} · ${report.keys} keys`;
+    const textLabel = textMode === 'text' ? 'editable text' : 'outlines';
+    const fonts = textMode === 'text' && report.fontFamilies?.length ? ` · ${report.fontFamilies.join(', ')}` : '';
+    return `${format} exported · ${report.layout} · ${mm} · ${textLabel}${fonts} · ${report.keys} keys`;
 }
 
 function keyAtClientPoint(svg, keys, clientX, clientY) {

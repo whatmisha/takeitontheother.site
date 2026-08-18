@@ -40,7 +40,8 @@ export class SVGExporter {
         }
 
         const serializer = new XMLSerializer();
-        const svgString = serializer.serializeToString(clonedSvg);
+        const serialized = serializer.serializeToString(clonedSvg);
+        const svgString = svgDocumentString(serialized);
         this._downloadBlob(svgString, filename, 'image/svg+xml;charset=utf-8');
     }
 
@@ -247,4 +248,10 @@ export class SVGExporter {
         document.body.removeChild(link);
         setTimeout(() => URL.revokeObjectURL(url), 100);
     }
+}
+
+export function svgDocumentString(serialized = '') {
+    const asciiSafe = String(serialized).replace(/[^\x00-\x7F]/gu, (character) =>
+        `&#x${character.codePointAt(0).toString(16).toUpperCase()};`);
+    return `<?xml version="1.0" encoding="UTF-8"?>\n${asciiSafe}`;
 }
