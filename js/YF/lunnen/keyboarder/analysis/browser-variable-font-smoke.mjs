@@ -132,11 +132,8 @@ async function snapshot(page) {
 
 async function uploadCustomIcon(page) {
     await page.evaluate(() => window.KeyboarderUI?.setAdvanced?.(true));
-    await page.waitForFunction(() => document.querySelectorAll('#legendKeySelect option').length > 20);
-    await page.locator('#legendKeySelect').evaluate((select) => {
-        select.value = '20';
-        select.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    await page.waitForFunction(() => document.querySelectorAll('#caps rect').length > 20);
+    await page.locator('#caps rect').nth(20).click();
     await page.waitForFunction(() => {
         const button = document.querySelector('#uploadLegendIconBtn');
         return button && !button.disabled;
@@ -154,19 +151,16 @@ async function uploadCustomIcon(page) {
         buffer: Buffer.from('<svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg"><path d="M0 0L8 0L4 8Z"/></svg>')
     });
     await page.waitForFunction(() =>
-        [...document.querySelectorAll('.legend-icon-input')].some((select) => select.value === 'custom:spark'));
-    await page.locator('#applyLegendEditBtn').evaluate((button) => button.click());
+        [...document.querySelectorAll('.legend-icon-input')].some((input) => input.value === 'custom:spark'));
     await page.waitForTimeout(300);
     return page.evaluate(() => {
         const clean = window.KeyboarderExport.cleanSvgSnapshot();
         return {
             beforeIconPaths: window.__keyboarderSmokeBeforeIconPaths || 0,
-            optionVisible: [...document.querySelectorAll('.legend-icon-input option')]
-                .some((option) => option.value === 'custom:spark'),
+            optionVisible: !!document.querySelector('[data-icon-value="custom:spark"]'),
             customRows: [...document.querySelectorAll('.legend-icon-input')]
-                .filter((select) => select.value === 'custom:spark').length,
+                .filter((input) => input.value === 'custom:spark').length,
             editorRows: document.querySelectorAll('#legendElementEditor .legend-edit-row').length,
-            applyDisabled: !!document.querySelector('#applyLegendEditBtn')?.disabled,
             cleanIconPaths: (clean.layerCounts.icons || 0) + (clean.layerCounts.fIcons || 0),
             cleanSvgHasCustomPath: /M0 0L8 0L4 8Z/.test(clean.svg || '')
         };

@@ -6,7 +6,7 @@
     <title>Keyboarder</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="vendor/framework/css/othersite-styles.css">
-    <link rel="stylesheet" href="app/theme.css?v=20260818-svg-outline-toggle-v1">
+    <link rel="stylesheet" href="app/theme.css?v=20260818-legend-editor-v6">
 </head>
 <body class="ui-simple">
 <div class="container">
@@ -243,9 +243,15 @@
             </div>
             <div class="panel-content">
                 <section class="control-section">
-                    <div class="control-group">
-                        <label for="legendKeySelect"><span>Key</span></label>
-                        <select id="legendKeySelect" class="select-control" aria-label="Selected key"></select>
+                    <div class="legend-selection-bar">
+                        <div class="legend-selection-copy">
+                            <strong id="legendSelectionTitle">No key selected</strong>
+                            <span id="legendSelectionMeta">Select a key on the canvas</span>
+                        </div>
+                        <div class="legend-selection-nav" aria-label="Key navigation">
+                            <button type="button" class="btn-inline" id="legendPrevKeyBtn" aria-label="Previous key">&#8249;</button>
+                            <button type="button" class="btn-inline" id="legendNextKeyBtn" aria-label="Next key">&#8250;</button>
+                        </div>
                     </div>
                     <div class="legend-geometry-editor" id="legendGeometryEditor" data-advanced-only>
                         <div class="legend-geometry-row">
@@ -271,28 +277,20 @@
                         </div>
                     </div>
                     <div class="legend-editor" id="legendEditor">
-                        <div class="control-group">
-                            <label for="legendTemplateSelect"><span>Template</span></label>
-                            <select id="legendTemplateSelect" class="select-control" aria-label="Legend template"></select>
-                        </div>
-                        <div class="legend-key-style">
-                            <label for="legendKeyColorInput">
-                                <span>Key color</span>
-                                <input id="legendKeyColorInput" class="legend-key-color-input" maxlength="7" spellcheck="false" autocomplete="off" placeholder="Global">
-                            </label>
-                            <button type="button" class="btn-inline" id="resetKeyColorBtn">Reset color</button>
+                        <div class="legend-starter" id="legendStarter" hidden>
+                            <div class="legend-section-heading">
+                                <span>Start with</span>
+                                <small>Choose a visual layout</small>
+                            </div>
+                            <div class="legend-starter-grid" id="legendStarterGrid"></div>
                         </div>
                         <div class="legend-element-actions">
-                            <button type="button" class="btn-inline" id="addLegendTextBtn">Add text</button>
-                            <button type="button" class="btn-inline" id="addLegendIconBtn">Add icon</button>
-                            <button type="button" class="btn-inline" id="uploadLegendIconBtn">Upload SVG</button>
+                            <button type="button" class="btn-inline" id="addLegendTextBtn">+ Text</button>
+                            <button type="button" class="btn-inline" id="addLegendIconBtn">+ Icon</button>
+                            <button type="button" class="btn-inline" id="uploadLegendIconBtn">SVG ↑</button>
                             <input id="legendIconFileInput" type="file" accept=".svg,image/svg+xml" hidden>
                         </div>
                         <div id="legendElementEditor" class="legend-element-editor"></div>
-                        <div class="legend-editor-actions">
-                            <button type="button" class="btn-inline" id="applyLegendEditBtn">Apply</button>
-                            <button type="button" class="btn-inline" id="resetLegendEditBtn">Reset</button>
-                        </div>
                     </div>
                     <div id="legendInspector" class="legend-inspector"></div>
                 </section>
@@ -313,6 +311,13 @@
                 <section class="control-section">
                     <div class="control-group">
                         <div class="color-swatches-compact" id="colorPickersGroup">
+                            <div class="legend-key-style">
+                                <label for="legendKeyColorInput">
+                                    <span>Selected key</span>
+                                    <input id="legendKeyColorInput" class="legend-key-color-input" maxlength="7" spellcheck="false" autocomplete="off" placeholder="Select a key">
+                                </label>
+                                <button type="button" class="btn-inline" id="resetKeyColorBtn">Use global</button>
+                            </div>
                             <div class="color-swatch-row">
                                 <div class="color-swatch-compact" id="capColorItem" data-color-type="cap">
                                     <button type="button" class="color-dot color-dot--expandable" id="capColorPreview" aria-label="Key color"></button>
@@ -386,6 +391,6 @@
     </dialog>
 </div>
 
-<script type="module" src="app/tool.js?v=20260818-pdf-variable-font-v3"></script>
+<script type="module" src="app/tool.js?v=20260818-legend-editor-v6"></script>
 </body>
 </html>

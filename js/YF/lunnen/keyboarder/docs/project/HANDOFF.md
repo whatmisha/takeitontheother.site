@@ -878,6 +878,22 @@ Stage 9 optimization is started:
   while preserving canonical `reference/keyboards/Work_2_L.*` files.
 - Reference cleanup 2026-08-02: the old LCAKB23 reference folder was removed after confirming byte-identical
   copies at `reference/keyboards/Work_2_L.svg`, `Work_2_L.layout.json`, and `Work_2_L.legends.json`.
+- Legend editor UX pass 2026-08-18: the redundant `Key` and 33-item `Template` selects plus
+  `Apply / Reset` draft workflow were removed. Canvas selection is now summarized by a compact key
+  header and previous/next navigation; the canvas remains the visual preview. Empty keys expose six visual starter
+  recipes; populated keys edit their elements directly through compact, wrapping text-style pills,
+  an icon gallery, and a unified 3x3 position pad. Style and Position share one two-column row. A
+  text element starts with a single input-and-trash row instead of repeating `Text N` and `Text`
+  labels. Rare reference slots, manual offsets, icon size, and text compensation live in a fixed
+  per-element `Fine tuning` popover opened by `•••`. The element toolbar uses `+ Text`, `+ Icon`,
+  and `SVG ↑`. Edits commit immediately
+  through the existing debounced history, so `Cmd/Ctrl+Z` works without an Apply step. Multi-key
+  edits match elements by original slot and kind: position and style propagate, while text/icon
+  identity stays local to the active key. Per-key color moved to Colors and applies as a style to
+  the current selection. Browser QA covered blank recipes, live editing, undo, stable popover
+  placement, and slot-based batch edits with a clean warn/error console; Node model/layout/preset/
+  numeric harnesses pass. `analysis/browser-variable-font-smoke.mjs` now uses canvas selection and
+  the visual icon picker instead of removed editor controls.
 - Next Stage 9 work can move on to any remaining secondary polish or start the next planned stage.
 
 ## Notes For The Next Assistant

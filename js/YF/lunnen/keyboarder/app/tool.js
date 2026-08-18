@@ -147,6 +147,55 @@ const SLOT_GRID_OPTIONS = [
     ['BL', 'BC', 'BR']
 ];
 const SLOT_SPECIAL_OPTIONS = ['FC', 'UC', 'FL', 'FR', 'tC', 'bC', 'tL', 'bL', 'Ml', 'Mr', 'Tr', 'Tl', 'Fr'];
+const LEGEND_STARTER_RECIPES = [
+    {
+        id: 'single-text', label: 'Text', tpl: 'word-bottom',
+        elements: [{ slot: 'BC', kind: 'txt', text: '', styleId: 'label', size: TYPE_DEFAULTS.wordSize }],
+        preview: [{ slot: 'BC', kind: 'txt', text: 'text' }]
+    },
+    {
+        id: 'letter-pair', label: 'Letters', tpl: 'alpha-dual',
+        elements: [
+            { slot: 'TL', kind: 'txt', text: '', styleId: 'main', size: TYPE_DEFAULTS.glyphSize },
+            { slot: 'BR', kind: 'txt', text: '', styleId: 'main', size: TYPE_DEFAULTS.glyphSize }
+        ],
+        preview: [{ slot: 'TL', kind: 'txt', text: 'A' }, { slot: 'BR', kind: 'txt', text: 'Я' }]
+    },
+    {
+        id: 'two-lines', label: 'Two lines', tpl: 'word-2line',
+        elements: [
+            { slot: 'UC', kind: 'txt', text: '', styleId: 'main', size: TYPE_DEFAULTS.glyphSize },
+            { slot: 'BC', kind: 'txt', text: '', styleId: 'label', size: TYPE_DEFAULTS.wordSize }
+        ],
+        preview: [{ slot: 'UC', kind: 'txt', text: 'A' }, { slot: 'BC', kind: 'txt', text: 'label' }]
+    },
+    {
+        id: 'corners', label: 'Corners', tpl: 'legend-corners',
+        elements: [
+            { slot: 'TL', kind: 'txt', text: '', styleId: 'symbols01', size: TYPE_DEFAULTS.secondarySize },
+            { slot: 'BL', kind: 'txt', text: '', styleId: 'symbols01', size: TYPE_DEFAULTS.secondarySize },
+            { slot: 'BR', kind: 'txt', text: '', styleId: 'main', size: TYPE_DEFAULTS.glyphSize }
+        ],
+        preview: [
+            { slot: 'TL', kind: 'txt', text: '@' },
+            { slot: 'BL', kind: 'txt', text: '2' },
+            { slot: 'BR', kind: 'txt', text: 'Б' }
+        ]
+    },
+    {
+        id: 'single-icon', label: 'Icon', tpl: 'icon-center',
+        elements: [{ slot: 'MC', kind: 'ico', icon: 'emoji', group: 'icons', w: 9.2285, h: 9.2285 }],
+        preview: [{ slot: 'MC', kind: 'ico', icon: 'emoji' }]
+    },
+    {
+        id: 'icon-label', label: 'Icon + label', tpl: 'fkey-icon+label',
+        elements: [
+            { slot: 'FC', kind: 'ico', icon: 'volume-mute', group: 'f-icons', w: 10.108, h: 8.053 },
+            { slot: 'BC', kind: 'txt', text: '', styleId: 'function', size: TYPE_DEFAULTS.wordSize }
+        ],
+        preview: [{ slot: 'FC', kind: 'ico', icon: 'volume-mute' }, { slot: 'BC', kind: 'txt', text: 'F1' }]
+    }
+];
 const LANGUAGE_LAYERS = new Set(['dual', 'latin', 'cyrillic']);
 const LEGEND_TEXT_MODES = new Set(['outlines', 'text']);
 const SVG_EXPORT_TEXT_MODE_STORAGE_KEY = 'keyboarder.svgExportTextMode';
@@ -793,8 +842,7 @@ function contentSigFrom(s, geometrySig) {
         trackingOffset: s.trackingOffset,
         textStyles: textStylesForSettings(s),
         languageLayer: normalizeLanguageLayer(s.languageLayer),
-        contentEdits: s.contentEdits || {},
-        legendDraft: legendDraftSignature()
+        contentEdits: s.contentEdits || {}
     });
 }
 
@@ -841,7 +889,6 @@ function contentForGeometry(s, geometryData, sourceLayout, sig) {
         applyLanguageLayer(data.keys, s);
         captureBaseContent(data.keys);
         applyContentEdits(data.keys, s.contentEdits || {});
-        applyLegendDraft(data.keys);
         applyTypeSettings(data.keys, s);
         contentCached = { sig, data };
     }
@@ -1360,23 +1407,23 @@ const app = defineTool({
             syncSliderValues(readyApp, values);
         });
 
-        document.getElementById('legendKeySelect')?.addEventListener('change', (e) => {
-            selectKey(readyApp, Number(e.target.value) || 0);
+        document.getElementById('legendPrevKeyBtn')?.addEventListener('click', () => {
+            selectAdjacentKey(readyApp, -1);
         });
-        document.getElementById('legendTemplateSelect')?.addEventListener('change', () => {
-            refreshLegendTemplateDraft(readyApp);
+        document.getElementById('legendNextKeyBtn')?.addEventListener('click', () => {
+            selectAdjacentKey(readyApp, 1);
         });
-        document.getElementById('applyLegendEditBtn')?.addEventListener('click', () => {
-            applyLegendEditor(readyApp);
-        });
-        document.getElementById('resetLegendEditBtn')?.addEventListener('click', () => {
-            resetSelectedLegendEdits(readyApp);
+        document.getElementById('legendStarterGrid')?.addEventListener('click', (e) => {
+            const button = e.target.closest('[data-legend-recipe]');
+            if (!button) return;
+            applyLegendStarter(readyApp, button.dataset.legendRecipe);
+            e.preventDefault();
         });
         document.getElementById('addLegendTextBtn')?.addEventListener('click', () => {
-            addLegendElementDraft(readyApp, 'txt');
+            addLegendElement(readyApp, 'txt');
         });
         document.getElementById('addLegendIconBtn')?.addEventListener('click', () => {
-            addLegendElementDraft(readyApp, 'ico');
+            addLegendElement(readyApp, 'ico');
         });
         document.getElementById('uploadLegendIconBtn')?.addEventListener('click', () => {
             document.getElementById('legendIconFileInput')?.click();
@@ -1389,30 +1436,61 @@ const app = defineTool({
         document.getElementById('resetKeyColorBtn')?.addEventListener('click', () => {
             const input = document.getElementById('legendKeyColorInput');
             if (input) input.value = '';
-            updateLegendDraftPreview(readyApp);
+            commitLegendKeyColor(readyApp);
         });
         document.getElementById('legendKeyColorInput')?.addEventListener('input', () => {
-            updateLegendDraftPreview(readyApp);
+            commitLegendKeyColor(readyApp);
         });
         document.getElementById('legendEditor')?.addEventListener('input', (e) => {
-            if (e.target.closest('.legend-slot-popover')) return;
-            updateLegendDraftPreview(readyApp);
+            const row = e.target.closest('.legend-edit-row');
+            if (!row) return;
+            if (e.target.matches('.legend-offset-x-input, .legend-offset-y-input')) {
+                commitLegendEditorChange(readyApp, { intent: 'position', row });
+            } else if (e.target.matches('.legend-style-input, .legend-comp-input, .legend-width-input, .legend-height-input')) {
+                commitLegendEditorChange(readyApp, { intent: 'style', row });
+            } else if (e.target.matches('.legend-text-input')) {
+                commitLegendEditorChange(readyApp, { intent: 'content', row });
+            }
+            if (e.target.matches('.legend-offset-x-input, .legend-offset-y-input, .legend-comp-input')) {
+                updateLegendFineTuningIndicator(row.querySelector('.legend-slot-field'));
+            }
         });
         document.getElementById('legendEditor')?.addEventListener('change', (e) => {
             if (handleSlotSpecialChange(readyApp, e)) return;
-            updateLegendDraftPreview(readyApp);
         });
         document.getElementById('legendElementEditor')?.addEventListener('click', (e) => {
+            const fineSummary = e.target.closest('.legend-fine-tuning > summary');
+            if (fineSummary) {
+                toggleLegendFineTuning(fineSummary.parentElement);
+                e.preventDefault();
+                return;
+            }
             if (handleSlotPickerClick(readyApp, e)) return;
+            const style = e.target.closest('[data-style-value]');
+            if (style) {
+                chooseLegendTextStyle(readyApp, style);
+                e.preventDefault();
+                return;
+            }
+            const icon = e.target.closest('[data-icon-value]');
+            if (icon) {
+                chooseLegendIcon(readyApp, icon);
+                e.preventDefault();
+                return;
+            }
             const button = e.target.closest('.legend-remove-element-btn');
             if (!button) return;
-            removeLegendElementDraft(readyApp, button);
+            removeLegendElement(readyApp, button);
             e.preventDefault();
         });
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.legend-slot-field')) return;
-            document.querySelectorAll('.legend-slot-field.is-open').forEach((item) => item.classList.remove('is-open'));
+        document.addEventListener('pointerdown', (e) => {
+            document.querySelectorAll('.legend-fine-tuning[open]').forEach((details) => {
+                if (!details.contains(e.target)) details.removeAttribute('open');
+            });
         });
+        document.querySelector('#legendPanel .panel-content')?.addEventListener('scroll', () => {
+            closeLegendFineTuningPopovers();
+        }, { passive: true });
         document.getElementById('applyKeyWidthBtn')?.addEventListener('click', () => {
             applyKeyWidthEdit(readyApp);
         });
@@ -1449,12 +1527,6 @@ const app = defineTool({
         document.getElementById('legendKeyWidthInput')?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 applyKeyWidthEdit(readyApp);
-                e.preventDefault();
-            }
-        });
-        document.getElementById('legendEditor')?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
-                applyLegendEditor(readyApp);
                 e.preventDefault();
             }
         });
@@ -5038,7 +5110,7 @@ async function importLegendIconFile(app, file) {
         const savedIcon = customIcons[parsed.id];
         if (!savedIcon) throw new Error('Could not sanitize this SVG path.');
         const hasActiveKey = !!activeKey(layoutFor(app.settings).keys);
-        const nextDraft = hasActiveKey
+        const nextElements = hasActiveKey
             ? [...readElementEditorElements(), cleanElement({
                 slot: 'FC',
                 kind: 'ico',
@@ -5049,7 +5121,9 @@ async function importLegendIconFile(app, file) {
             })]
             : null;
         app.settingsStore.set('customIcons', customIcons);
-        if (nextDraft) requestAnimationFrame(() => renderLegendDraft(app, nextDraft));
+        if (nextElements) {
+            requestAnimationFrame(() => commitActiveLegendElements(app, nextElements, { forceRender: true }));
+        }
         app._showToast?.(`${savedIcon.name} uploaded`);
     } catch (e) {
         await app.dialog?.alert({
@@ -5151,10 +5225,7 @@ function customIconDisplayName(fileName) {
 }
 
 function updateLegendEditor(s, keys) {
-    syncTemplateSelect(keys);
     const editor = document.getElementById('legendElementEditor');
-    const apply = document.getElementById('applyLegendEditBtn');
-    const reset = document.getElementById('resetLegendEditBtn');
     const addText = document.getElementById('addLegendTextBtn');
     const addIcon = document.getElementById('addLegendIconBtn');
     const uploadIcon = document.getElementById('uploadLegendIconBtn');
@@ -5163,37 +5234,115 @@ function updateLegendEditor(s, keys) {
     if (!editor) return;
     const active = activeKey(keys);
     const selected = selectedKeys(keys);
-    setDisabledIfChanged(apply, !selected.length);
-    setDisabledIfChanged(reset, !selected.some((k) => !!s.contentEdits?.[k.editId]));
+    updateLegendSelectionContext(s, keys, active, selected);
     setDisabledIfChanged(addText, !active);
     setDisabledIfChanged(addIcon, !active);
     setDisabledIfChanged(uploadIcon, !active);
     setDisabledIfChanged(keyColorInput, !active);
-    setDisabledIfChanged(resetKeyColor, !active || !cleanHexColor(active.keyColor));
-    setAttrIfChanged(keyColorInput, 'placeholder', s.capColor || 'Global');
+    setDisabledIfChanged(resetKeyColor, !selected.some((k) => cleanHexColor(k.keyColor)));
+    setAttrIfChanged(keyColorInput, 'placeholder', active ? (s.capColor || 'Global') : 'Select a key');
     if (!active) {
         setInputValueForSig(keyColorInput, '', 'none');
         delete editor.dataset.activeEditId;
+        updateLegendStarter(null, s);
         renderElementEditor([], { disabled: true, sig: 'none' });
         return;
     }
-    if (!isAdvancedUiMode()
-        && !document.getElementById('legendPanel')?.classList.contains('panel-collapsed')
-        && editor.dataset.activeEditId === active.editId
-        && LEGEND_DRAFT?.editId === active.editId) {
-        return;
-    }
-    if (!isAdvancedUiMode()
-        && !document.getElementById('legendPanel')?.classList.contains('panel-collapsed')
-        && editor.dataset.activeEditId === active.editId
-        && legendDraftDiffersFromActive(active)) {
-        return;
-    }
-    editor.dataset.activeEditId = active.editId;
     setInputValueForSig(keyColorInput, cleanHexColor(active.keyColor), `${active.editId}:${cleanHexColor(active.keyColor)}`);
     const elements = sourceElements(active);
+    updateLegendStarter(elements.length ? null : active, s);
     const sig = `${active.editId}|${active.tpl}|${JSON.stringify(elements)}|${fontRegistrySignature()}|${customIconLibrarySignature(s)}`;
+    const controlSig = `${JSON.stringify(textStylesForSettings(s))}|${fontRegistrySignature()}|${customIconLibrarySignature(s)}`;
+    if (editor.dataset.forceRender !== 'true'
+        && editor.dataset.activeEditId === active.editId
+        && editor.dataset.controlSig === controlSig
+        && JSON.stringify(readElementEditorElements()) === JSON.stringify(elements)) {
+        editor.dataset.sig = sig;
+        return;
+    }
+    delete editor.dataset.forceRender;
+    editor.dataset.activeEditId = active.editId;
+    editor.dataset.controlSig = controlSig;
     renderElementEditor(elements, { disabled: false, sig, templateId: variantForKey(active), settings: s });
+}
+
+function updateLegendSelectionContext(s, keys, active, selected) {
+    const title = document.getElementById('legendSelectionTitle');
+    const meta = document.getElementById('legendSelectionMeta');
+    const prev = document.getElementById('legendPrevKeyBtn');
+    const next = document.getElementById('legendNextKeyBtn');
+    if (!active) {
+        if (title) title.textContent = 'No key selected';
+        if (meta) meta.textContent = 'Select a key on the canvas';
+        setDisabledIfChanged(prev, true);
+        setDisabledIfChanged(next, true);
+        return;
+    }
+    const elements = sourceElements(active);
+    const firstText = elements.find((el) => el.kind === 'txt' && String(el.text || '').trim());
+    const firstIcon = elements.find((el) => el.kind === 'ico');
+    const iconLibrary = iconLibraryForSettings(s);
+    const display = firstText?.text || (firstIcon ? iconOptionLabel(firstIcon.icon, iconLibrary) : 'Empty key');
+    if (title) title.textContent = display;
+    if (meta) {
+        const location = `R${active.row + 1} · ${active.block || 'main'}`;
+        meta.textContent = selected.length > 1 ? `${selected.length} keys selected · ${location}` : location;
+    }
+    const index = normalizedSelection(keys).active;
+    setDisabledIfChanged(prev, index == null || index <= 0);
+    setDisabledIfChanged(next, index == null || index >= keys.length - 1);
+}
+
+function updateLegendStarter(active, settings = {}) {
+    const starter = document.getElementById('legendStarter');
+    const grid = document.getElementById('legendStarterGrid');
+    if (!starter || !grid) return;
+    starter.hidden = !active;
+    if (!active) return;
+    const sig = customIconLibrarySignature(settings);
+    if (grid.dataset.sig === sig) return;
+    grid.dataset.sig = sig;
+    grid.innerHTML = LEGEND_STARTER_RECIPES.map((recipe) => (
+        `<button type="button" class="legend-starter-card" data-legend-recipe="${html(recipe.id)}">`
+        + `<span class="legend-starter-preview">${legendPreviewElementsHtml(recipe.preview, settings)}</span>`
+        + `<span>${html(recipe.label)}</span>`
+        + '</button>'
+    )).join('');
+}
+
+function legendPreviewElementsHtml(elements = [], settings = {}) {
+    const library = iconLibraryForSettings(settings);
+    return cleanElements(elements).map((el) => {
+        const pos = legendPreviewPosition(el.slot);
+        const style = `left:${pos.x}%;top:${pos.y}%;transform:translate(${pos.tx}%,${pos.ty}%);`;
+        if (el.kind === 'ico') {
+            return `<span class="legend-preview-element legend-preview-icon" style="${style}">${iconSvgHtml(el.icon, library)}</span>`;
+        }
+        return `<span class="legend-preview-element legend-preview-text" style="${style}">${html(el.text)}</span>`;
+    }).join('');
+}
+
+function legendPreviewPosition(slot = 'MC') {
+    const [vertical = 'M', horizontal = 'C'] = String(slot || 'MC');
+    const x = /[Ll]/.test(horizontal) ? 10 : /[Rr]/.test(horizontal) ? 90 : 50;
+    const y = /[Tt]/.test(vertical) ? 10
+        : /[Bb]/.test(vertical) ? 90
+        : vertical === 'U' ? 68
+        : vertical === 'F' ? 34
+        : 50;
+    const tx = /[Ll]/.test(horizontal) ? 0 : /[Rr]/.test(horizontal) ? -100 : -50;
+    const ty = /[Tt]/.test(vertical) ? 0 : /[Bb]/.test(vertical) ? -100 : -50;
+    return { x, y, tx, ty };
+}
+
+function iconSvgHtml(name, library = ICONS) {
+    const icon = library[name];
+    if (!icon?.d) return '<span aria-hidden="true">◆</span>';
+    const ox = finiteOr(icon.ox, 0);
+    const oy = finiteOr(icon.oy, 0);
+    const w = Math.max(0.001, finiteOr(icon.w, 1));
+    const h = Math.max(0.001, finiteOr(icon.h, 1));
+    return `<svg viewBox="${ox} ${oy} ${w} ${h}" aria-hidden="true" focusable="false"><path d="${html(icon.d)}"></path></svg>`;
 }
 
 function renderElementEditor(elements, { disabled = false, sig = null, templateId = '', settings = null } = {}) {
@@ -5208,7 +5357,7 @@ function renderElementEditor(elements, { disabled = false, sig = null, templateI
         return;
     }
     if (!elements.length) {
-        editor.innerHTML = '<p class="inspector-empty">No legend elements.</p>';
+        editor.innerHTML = '';
         return;
     }
     editor.innerHTML = elements.map((el, i) => elementEditorHtml(el, i, settings || {})).join('');
@@ -5216,53 +5365,84 @@ function renderElementEditor(elements, { disabled = false, sig = null, templateI
 
 function elementEditorHtml(el, i, settings = {}) {
     const offset = html(JSON.stringify(cleanOffset(el.offset) || {}));
-    const remove = '<button type="button" class="btn-inline legend-remove-element-btn">Remove</button>';
+    const remove = '<button type="button" class="btn-inline legend-remove-element-btn" aria-label="Remove element" title="Remove">'
+        + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="12" height="12" fill="none" aria-hidden="true">'
+        + '<defs><style>.preset-del-st0{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.2px}</style></defs>'
+        + '<polyline class="preset-del-st0" points="5.001144 2.7699421 5.001144 1.7891858 6.998856 1.7891858 6.998856 2.7699421"></polyline>'
+        + '<polyline class="preset-del-st0" points="8.6261951 2.7699421 8.3008282 10 3.6993139 10 3.37286 2.7699421"></polyline>'
+        + '<line class="preset-del-st0" x1="2.4330709" y1="2.7699421" x2="9.5669291" y2="2.7699421"></line>'
+        + '</svg></button>';
+    const common = ` data-index="${i}" data-source-slot="${html(el.slot)}" data-offset="${offset}"`;
     if (el.kind === 'ico') {
         const library = iconLibraryForSettings(settings);
         const iconOptions = iconOptionsForSettings(settings);
         if (el.icon && !iconOptions.includes(el.icon)) iconOptions.push(el.icon);
-        const options = iconOptions.map((name) =>
-            `<option value="${html(name)}"${name === el.icon ? ' selected' : ''}>${html(iconOptionLabel(name, library))}</option>`).join('');
-        return '<div class="legend-edit-row" data-kind="ico" data-group="' + html(iconLayerId(el)) + '" data-offset="' + offset + '">'
-            + slotPickerHtml(el.slot)
-            + `<label><span>Icon</span><select class="legend-icon-input">${options}</select></label>`
-            + `<label><span>W</span><input class="legend-width-input" type="number" step="0.001" value="${html(el.w)}"></label>`
-            + `<label><span>H</span><input class="legend-height-input" type="number" step="0.001" value="${html(el.h)}"></label>`
-            + remove
+        const icons = iconOptions.map((name) => {
+            const label = iconOptionLabel(name, library);
+            return `<button type="button" class="legend-icon-option${name === el.icon ? ' is-active' : ''}" data-icon-value="${html(name)}" title="${html(label)}" aria-label="${html(label)}">`
+                + iconSvgHtml(name, library)
+                + '</button>';
+        }).join('');
+        return '<div class="legend-edit-row" data-kind="ico" data-group="' + html(iconLayerId(el)) + '"' + common + '>'
+            + `<div class="legend-element-header"><strong>Icon ${i + 1}</strong>${remove}</div>`
+            + `<input class="legend-icon-input" type="hidden" value="${html(el.icon)}">`
+            + `<div class="legend-icon-grid">${icons}</div>`
+            + positionPickerHtml(el)
             + '</div>';
     }
-    const compValue = Number.isFinite(el.compOverride?.px) ? String(el.compOverride.px) : '';
-    return '<div class="legend-edit-row" data-kind="txt" data-offset="' + offset + '" data-size="' + html(el.size) + '" data-tracking="' + html(el.tracking || 0) + '">'
-        + slotPickerHtml(el.slot)
-        + `<label><span>Text</span><input class="legend-text-input" value="${html(el.text)}"></label>`
-        + `<label><span>Style</span><select class="legend-style-input">${textStyleOptionsHtml(el.styleId || inferTextStyleId(el), settings)}</select></label>`
-        + `<label><span>Comp</span><input class="legend-comp-input" type="number" step="0.001" value="${html(compValue)}"></label>`
-        + remove
+    return '<div class="legend-edit-row" data-kind="txt"' + common + ' data-size="' + html(el.size) + '" data-tracking="' + html(el.tracking || 0) + '">'
+        + `<div class="legend-text-entry"><input class="legend-text-input" aria-label="Text ${i + 1}" value="${html(el.text)}">${remove}</div>`
+        + textStylePickerHtml(el, settings)
+        + positionPickerHtml(el)
         + '</div>';
 }
 
-function slotPickerHtml(slot = 'BC') {
-    const current = String(slot || 'BC').trim() || 'BC';
+function textStylePickerHtml(el, settings = {}) {
+    const selected = validTextStyleId(el.styleId || inferTextStyleId(el)) || 'label';
+    const styles = textStylesForSettings(settings || {});
+    const buttons = TEXT_STYLE_IDS.map((id) => {
+        const style = styles[id] || defaultTextStyle(id);
+        const label = style.name || TEXT_STYLE_NAMES[id];
+        const summary = `${label} · ${round(finiteOr(style.size, 9), 2)} pt · ${round(finiteOr(style.weight, 400), 0)}`;
+        return `<button type="button" class="legend-style-option${id === selected ? ' is-active' : ''}" data-style-value="${html(id)}" title="${html(summary)}">${html(label)}</button>`;
+    }).join('');
+    return '<div class="legend-style-field"><span>Style</span>'
+        + `<input class="legend-style-input" type="hidden" value="${html(selected)}">`
+        + `<div class="legend-style-grid">${buttons}</div></div>`;
+}
+
+function positionPickerHtml(el) {
+    const current = String(el.slot || 'BC').trim() || 'BC';
     const gridSlots = SLOT_GRID_OPTIONS.flat();
     const isSpecial = !gridSlots.includes(current);
     const grid = gridSlots.map((value) =>
-        `<button type="button" class="legend-slot-option${value === current ? ' is-active' : ''}" data-slot-value="${html(value)}">${html(slotSymbol(value))}</button>`).join('');
+        `<button type="button" class="legend-slot-option${value === current ? ' is-active' : ''}" data-slot-value="${html(value)}" aria-label="${html(slotLabel(value))}" title="${html(slotLabel(value))}">${html(slotSymbol(value))}</button>`).join('');
     const specialValues = [...new Set([...SLOT_SPECIAL_OPTIONS, ...(isSpecial ? [current] : [])])];
     const specialOptions = ['<option value="">Choose special…</option>']
         .concat(specialValues.map((value) =>
             `<option value="${html(value)}"${value === current ? ' selected' : ''}>${html(`${value} · ${slotLabel(value)}`)}</option>`))
         .join('');
+    const offset = cleanOffset(el.offset) || {};
+    const xValue = el.kind === 'ico' ? offset.x : offset.bx;
+    const yValue = el.kind === 'ico' ? offset.y : offset.by;
+    const extra = el.kind === 'ico'
+        ? `<label><span>Width</span><input class="legend-width-input" type="number" step="0.001" value="${html(el.w)}"></label>`
+            + `<label><span>Height</span><input class="legend-height-input" type="number" step="0.001" value="${html(el.h)}"></label>`
+        : `<label><span>Compensation</span><input class="legend-comp-input" type="number" step="0.001" value="${html(Number.isFinite(el.compOverride?.px) ? el.compOverride.px : '')}" placeholder="Auto"></label>`;
+    const hasFineTuning = isSpecial || Object.keys(offset).length || Number.isFinite(el.compOverride?.px);
     return '<div class="legend-slot-field">'
-        + '<span>Slot</span>'
+        + `<div class="legend-field-heading"><span>Position</span><small class="legend-position-code" title="${html(slotLabel(current))}">${html(current)}</small></div>`
         + `<input class="legend-slot-input" type="hidden" value="${html(current)}">`
-        + `<button type="button" class="legend-slot-button"><span>${html(slotLabel(current))}</span><span>${html(current)}</span></button>`
-        + '<div class="legend-slot-popover">'
         + `<div class="legend-slot-grid">${grid}</div>`
-        + `<details class="legend-slot-special-details"${isSpecial ? ' open' : ''}>`
-        + `<summary>Special <span>${html(isSpecial ? current : '')}</span></summary>`
-        + `<select class="legend-slot-special-select" aria-label="Special slot">${specialOptions}</select>`
-        + '</details>'
+        + `<details class="legend-fine-tuning${hasFineTuning ? ' has-custom' : ''}">`
+        + '<summary aria-label="Fine tuning" title="Fine tuning"><span aria-hidden="true">•••</span></summary>'
+        + '<div class="legend-fine-tuning-fields">'
+        + `<label class="legend-fine-position"><span>Exact position</span><select class="legend-slot-special-select" aria-label="Exact position">${specialOptions}</select></label>`
+        + `<label><span>Offset X</span><input class="legend-offset-x-input" type="number" step="0.001" value="${html(Number.isFinite(xValue) ? xValue : '')}" placeholder="0"></label>`
+        + `<label><span>Offset Y</span><input class="legend-offset-y-input" type="number" step="0.001" value="${html(Number.isFinite(yValue) ? yValue : '')}" placeholder="0"></label>`
+        + extra
         + '</div>'
+        + '</details>'
         + '</div>';
 }
 
@@ -5290,45 +5470,70 @@ function slotLabel(slot = '') {
     return map[slot] || slot || 'Slot';
 }
 
-function textStyleOptionsHtml(selectedId = '', settings = {}) {
-    const selected = validTextStyleId(selectedId) || 'label';
-    const styles = textStylesForSettings(settings || {});
-    return TEXT_STYLE_IDS.map((id) =>
-        `<option value="${html(id)}"${id === selected ? ' selected' : ''}>${html(styles[id]?.name || TEXT_STYLE_NAMES[id])}</option>`).join('');
+function toggleLegendFineTuning(details) {
+    if (!details) return;
+    const shouldOpen = !details.open;
+    closeLegendFineTuningPopovers(details);
+    details.open = shouldOpen;
+    if (shouldOpen) requestAnimationFrame(() => positionLegendFineTuningPopover(details));
+}
+
+function closeLegendFineTuningPopovers(except = null) {
+    document.querySelectorAll('.legend-fine-tuning[open]').forEach((details) => {
+        if (details !== except) details.removeAttribute('open');
+    });
+}
+
+function positionLegendFineTuningPopover(details) {
+    if (!details?.open) return;
+    const summary = details.querySelector('summary');
+    const popover = details.querySelector('.legend-fine-tuning-fields');
+    if (!summary || !popover) return;
+    const anchor = summary.getBoundingClientRect();
+    const width = Math.min(286, Math.max(220, window.innerWidth - 16));
+    popover.style.width = `${width}px`;
+    const height = popover.getBoundingClientRect().height;
+    const left = clamp(anchor.right - width, 8, Math.max(8, window.innerWidth - width - 8));
+    const below = anchor.bottom + 5;
+    const top = below + height <= window.innerHeight - 8
+        ? below
+        : Math.max(8, anchor.top - height - 5);
+    popover.style.left = `${round(left, 1)}px`;
+    popover.style.top = `${round(top, 1)}px`;
+}
+
+function updateLegendFineTuningIndicator(field) {
+    if (!field) return;
+    const slot = String(field.querySelector('.legend-slot-input')?.value || '');
+    const hasSpecialSlot = !SLOT_GRID_OPTIONS.flat().includes(slot);
+    const hasOverride = [
+        '.legend-offset-x-input',
+        '.legend-offset-y-input',
+        '.legend-comp-input'
+    ].some((selector) => String(field.querySelector(selector)?.value || '').trim() !== '');
+    field.querySelector('.legend-fine-tuning')?.classList.toggle('has-custom', hasSpecialSlot || hasOverride);
 }
 
 function handleSlotPickerClick(app, event) {
-    const button = event.target.closest('.legend-slot-button');
-    if (button) {
-        const field = button.closest('.legend-slot-field');
-        document.querySelectorAll('.legend-slot-field.is-open').forEach((item) => {
-            if (item !== field) item.classList.remove('is-open');
-        });
-        field?.classList.toggle('is-open');
-        event.preventDefault();
-        return true;
-    }
     const option = event.target.closest('[data-slot-value]');
     if (!option) return false;
     const field = option.closest('.legend-slot-field');
+    const row = option.closest('.legend-edit-row');
     const value = option.dataset.slotValue || 'BC';
     const input = field?.querySelector('.legend-slot-input');
-    const label = field?.querySelector('.legend-slot-button span:first-child');
-    const code = field?.querySelector('.legend-slot-button span:last-child');
     if (input) input.value = value;
-    if (label) label.textContent = slotLabel(value);
-    if (code) code.textContent = value;
     const specialSelect = field?.querySelector('.legend-slot-special-select');
-    const specialSummary = field?.querySelector('.legend-slot-special-details summary span');
-    const specialDetails = field?.querySelector('.legend-slot-special-details');
     if (specialSelect) specialSelect.value = '';
-    if (specialSummary) specialSummary.textContent = '';
-    if (specialDetails) specialDetails.open = false;
     field?.querySelectorAll('[data-slot-value]').forEach((el) => {
         el.classList.toggle('is-active', el.dataset.slotValue === value);
     });
-    field?.classList.remove('is-open');
-    updateLegendDraftPreview(app);
+    const code = field?.querySelector('.legend-position-code');
+    if (code) {
+        code.textContent = value;
+        code.title = slotLabel(value);
+    }
+    updateLegendFineTuningIndicator(field);
+    commitLegendEditorChange(app, { intent: 'position', row });
     event.preventDefault();
     return true;
 }
@@ -5339,17 +5544,17 @@ function handleSlotSpecialChange(app, event) {
     const value = String(select.value || '').trim();
     if (!value) return true;
     const field = select.closest('.legend-slot-field');
+    const row = select.closest('.legend-edit-row');
     const input = field?.querySelector('.legend-slot-input');
-    const label = field?.querySelector('.legend-slot-button span:first-child');
-    const code = field?.querySelector('.legend-slot-button span:last-child');
-    const specialSummary = field?.querySelector('.legend-slot-special-details summary span');
     if (input) input.value = value;
-    if (label) label.textContent = slotLabel(value);
-    if (code) code.textContent = value;
-    if (specialSummary) specialSummary.textContent = value;
     field?.querySelectorAll('[data-slot-value]').forEach((el) => el.classList.remove('is-active'));
-    field?.classList.remove('is-open');
-    updateLegendDraftPreview(app);
+    const code = field?.querySelector('.legend-position-code');
+    if (code) {
+        code.textContent = value;
+        code.title = slotLabel(value);
+    }
+    updateLegendFineTuningIndicator(field);
+    commitLegendEditorChange(app, { intent: 'position', row });
     event.preventDefault();
     return true;
 }
@@ -5375,78 +5580,92 @@ function defaultLegendElement(kind, settings = {}) {
     });
 }
 
-function renderLegendDraft(app, elements) {
+function forceLegendEditorRender() {
+    const editor = document.getElementById('legendElementEditor');
+    if (editor) editor.dataset.forceRender = 'true';
+}
+
+function setContentEditsIfChanged(app, next) {
+    const clean = sanitizeContentEdits(next || {});
+    const current = sanitizeContentEdits(app.settings.contentEdits || {});
+    if (JSON.stringify(clean) === JSON.stringify(current)) return false;
+    app.settingsStore.set('contentEdits', clean);
+    return true;
+}
+
+function commitActiveLegendElements(app, elements, { tpl = null, forceRender = false } = {}) {
     const keys = layoutFor(app.settings).keys;
     const active = activeKey(keys);
-    if (!active) return;
-    const editor = document.getElementById('legendElementEditor');
-    const templateId = editor?.dataset.templateId || variantForKey(active);
-    renderElementEditor(elements, {
-        disabled: false,
-        sig: `draft:manual:${active.editId}:${JSON.stringify(elements)}`,
-        templateId,
-        settings: app.settings
-    });
-    updateLegendDraftPreview(app);
+    if (!active) return false;
+    const next = sanitizeContentEdits(app.settings.contentEdits || {});
+    writeContentEdit(
+        next,
+        active,
+        tpl || active.tpl || 'blank',
+        cleanElements(elements),
+        cleanHexColor(active.keyColor)
+    );
+    if (forceRender) forceLegendEditorRender();
+    return setContentEditsIfChanged(app, next);
 }
 
-function addLegendElementDraft(app, kind) {
-    const keys = layoutFor(app.settings).keys;
-    if (!activeKey(keys)) return;
+function applyLegendStarter(app, recipeId) {
+    const recipe = LEGEND_STARTER_RECIPES.find((item) => item.id === recipeId);
+    const active = activeKey(layoutFor(app.settings).keys);
+    if (!recipe || !active || sourceElements(active).length) return;
+    commitActiveLegendElements(app, recipe.elements, { tpl: recipe.tpl, forceRender: true });
+}
+
+function addLegendElement(app, kind) {
+    if (!activeKey(layoutFor(app.settings).keys)) return;
     const elements = readElementEditorElements();
     elements.push(defaultLegendElement(kind, app.settings));
-    renderLegendDraft(app, elements);
+    commitActiveLegendElements(app, elements, { forceRender: true });
 }
 
-function removeLegendElementDraft(app, button) {
+function removeLegendElement(app, button) {
     const row = button.closest('.legend-edit-row');
     if (!row) return;
     row.remove();
-    renderLegendDraft(app, readElementEditorElements());
+    commitActiveLegendElements(app, readElementEditorElements(), { forceRender: true });
 }
 
-function refreshLegendTemplateDraft(app) {
-    const keys = layoutFor(app.settings).keys;
-    const active = activeKey(keys);
-    if (!active) return;
-    const select = document.getElementById('legendTemplateSelect');
-    const variant = TEMPLATE_BY_ID.get(select?.value || '');
-    const elements = variant ? retargetElements(sourceElements(active), variant.elements) : sourceElements(active);
-    renderElementEditor(elements, {
-        disabled: false,
-        sig: `draft:${active.editId}:${select?.value || ''}:${JSON.stringify(elements)}`,
-        templateId: select?.value || variantForKey(active),
-        settings: app.settings
+function chooseLegendTextStyle(app, button) {
+    const row = button.closest('.legend-edit-row');
+    const input = row?.querySelector('.legend-style-input');
+    const value = validTextStyleId(button.dataset.styleValue);
+    if (!row || !input || !value) return;
+    input.value = value;
+    row.querySelectorAll('[data-style-value]').forEach((item) => {
+        item.classList.toggle('is-active', item === button);
     });
-    updateLegendDraftPreview(app);
+    commitLegendEditorChange(app, { intent: 'style', row });
 }
 
-function updateLegendDraftPreview(app) {
-    const keys = layoutFor(app.settings).keys;
-    const active = activeKey(keys);
-    if (!active) return;
-    const select = document.getElementById('legendTemplateSelect');
-    const variant = TEMPLATE_BY_ID.get(select?.value || '');
-    const editorTemplateId = document.getElementById('legendElementEditor')?.dataset.templateId || variantForKey(active);
-    const tpl = variant && editorTemplateId === variant.id ? variant.tpl : (active.tpl || 'blank');
-    LEGEND_DRAFT = {
-        editId: active.editId,
-        tpl,
-        elements: readElementEditorElements(),
-        keyColor: readLegendKeyColor()
-    };
-    invalidateLayoutCaches();
-    app.renderNow();
+function chooseLegendIcon(app, button) {
+    const row = button.closest('.legend-edit-row');
+    const input = row?.querySelector('.legend-icon-input');
+    const value = String(button.dataset.iconValue || '').trim();
+    if (!row || !input || !value) return;
+    input.value = value;
+    row.querySelectorAll('[data-icon-value]').forEach((item) => {
+        item.classList.toggle('is-active', item === button);
+    });
+    commitLegendEditorChange(app, { intent: 'content', row });
 }
 
 function readElementEditorElements() {
     const rows = [...document.querySelectorAll('#legendElementEditor .legend-edit-row')];
     return rows.map((row) => {
-        let offset = {};
-        try { offset = JSON.parse(row.dataset.offset || '{}'); } catch (_) { offset = {}; }
+        const kind = row.dataset.kind === 'ico' ? 'ico' : 'txt';
+        const xRaw = row.querySelector('.legend-offset-x-input')?.value;
+        const yRaw = row.querySelector('.legend-offset-y-input')?.value;
+        const offset = cleanOffset(kind === 'ico'
+            ? { x: xRaw, y: yRaw }
+            : { bx: xRaw, by: yRaw }) || {};
         const base = {
             slot: row.querySelector('.legend-slot-input')?.value || 'BC',
-            kind: row.dataset.kind === 'ico' ? 'ico' : 'txt',
+            kind,
             offset
         };
         if (base.kind === 'ico') {
@@ -5476,45 +5695,77 @@ function readElementEditorElements() {
     });
 }
 
-function applyLegendEditor(app) {
+function commitLegendEditorChange(app, { intent = 'content', row = null } = {}) {
     const keys = layoutFor(app.settings).keys;
     const selected = selectedKeys(keys);
     const active = activeKey(keys);
-    if (!selected.length) return;
-    const select = document.getElementById('legendTemplateSelect');
-    const variant = TEMPLATE_BY_ID.get(select?.value || '');
-    const editedElements = active ? readElementEditorElements() : null;
-    const activeKeyColor = active ? readLegendKeyColor() : '';
-    const editorTemplateId = document.getElementById('legendElementEditor')?.dataset.templateId || '';
+    if (!active || !selected.length) return false;
+    const editedElements = readElementEditorElements();
+    const editedIndex = Number(row?.dataset.index);
+    const editedElement = Number.isInteger(editedIndex) ? editedElements[editedIndex] : null;
+    const sourceSlot = String(row?.dataset.sourceSlot || editedElement?.slot || '');
     const next = sanitizeContentEdits(app.settings.contentEdits || {});
+    writeContentEdit(next, active, active.tpl || 'blank', editedElements, cleanHexColor(active.keyColor));
 
-    for (const k of selected) {
-        let tpl = k.tpl || 'blank';
-        let elements = sourceElements(k);
-        if (variant) {
-            tpl = variant.tpl;
-            elements = retargetElements(elements, variant.elements);
+    if ((intent === 'style' || intent === 'position') && editedElement && sourceSlot) {
+        for (const key of selected) {
+            if (key.editId === active.editId) continue;
+            let changed = false;
+            const elements = sourceElements(key).map((element) => {
+                if (element.kind !== editedElement.kind || element.slot !== sourceSlot) return element;
+                changed = true;
+                return patchLegendElement(element, editedElement, intent);
+            });
+            if (changed) {
+                writeContentEdit(next, key, key.tpl || 'blank', elements, cleanHexColor(key.keyColor));
+            }
         }
-        if (active && k.editId === active.editId && editedElements && (!variant || editorTemplateId === variant.id)) {
-            elements = editedElements;
-            if (variant) tpl = variant.tpl;
-        }
-        const keyColor = active && k.editId === active.editId ? activeKeyColor : cleanHexColor(k.keyColor);
-        writeContentEdit(next, k, tpl, elements, keyColor);
     }
-
-    clearLegendDraftState();
-    app.settingsStore.set('contentEdits', next);
+    if (intent === 'position' && row && editedElement) row.dataset.sourceSlot = editedElement.slot;
+    return setContentEditsIfChanged(app, next);
 }
 
-function resetSelectedLegendEdits(app) {
+function patchLegendElement(target, edited, intent) {
+    const next = { ...target };
+    if (intent === 'position') {
+        next.slot = edited.slot;
+        delete next.offset;
+        if (edited.offset) next.offset = clonePlain(edited.offset);
+        return cleanElement(next);
+    }
+    if (target.kind === 'ico') {
+        next.w = edited.w;
+        next.h = edited.h;
+        return cleanElement(next);
+    }
+    for (const key of ['styleId', 'fontId', 'tracking', 'compOverride']) delete next[key];
+    for (const key of ['styleId', 'fontId', 'tracking', 'compOverride']) {
+        if (edited[key] != null && edited[key] !== '') next[key] = clonePlain(edited[key]);
+    }
+    next.size = edited.size;
+    return cleanElement(next);
+}
+
+function commitLegendKeyColor(app) {
+    const raw = String(document.getElementById('legendKeyColorInput')?.value || '').trim();
+    const color = cleanHexColor(raw);
+    if (raw && !color) return false;
     const keys = layoutFor(app.settings).keys;
     const selected = selectedKeys(keys);
-    if (!selected.length) return;
+    if (!selected.length) return false;
     const next = sanitizeContentEdits(app.settings.contentEdits || {});
-    for (const k of selected) delete next[k.editId];
-    clearLegendDraftState();
-    app.settingsStore.set('contentEdits', next);
+    for (const key of selected) {
+        writeContentEdit(next, key, key.tpl || 'blank', sourceElements(key), color);
+    }
+    return setContentEditsIfChanged(app, next);
+}
+
+function selectAdjacentKey(app, delta) {
+    const keys = layoutFor(app.settings).keys;
+    if (!keys.length) return;
+    const current = normalizedSelection(keys).active;
+    const index = clamp((current == null ? 0 : current) + delta, 0, keys.length - 1);
+    selectKey(app, index);
 }
 
 function installFunctionDrag(app) {
@@ -5785,13 +6036,7 @@ function legendSelectionWouldChange(index, { toggle = false } = {}) {
 }
 
 function legendEditorDirty(app) {
-    if (isAdvancedUiMode()) return false;
-    const panel = document.getElementById('legendPanel');
-    if (!panel || panel.classList.contains('panel-collapsed')) return false;
-    const keys = layoutFor(app.settings).keys;
-    const active = activeKey(keys);
-    if (!active) return false;
-    return legendDraftDiffersFromActive(active);
+    return false;
 }
 
 function legendDraftDiffersFromActive(active) {
@@ -5811,14 +6056,7 @@ function legendDraftDiffersFromActive(active) {
 }
 
 async function confirmDiscardLegendDraft(app) {
-    if (!legendEditorDirty(app)) return true;
-    return await app.dialog?.confirm({
-        title: 'Discard unapplied edits?',
-        text: 'This key has changes that have not been applied.',
-        confirmText: 'Discard',
-        cancelText: 'Keep editing',
-        danger: true
-    }) === true;
+    return true;
 }
 
 async function closeLegendPopoverIfAllowed(app) {
@@ -5867,12 +6105,13 @@ function installLegendPopoverDrag(app) {
         if (!LEGEND_POPOVER_DRAG.moved && Math.hypot(dx, dy) < CONTENT_DRAG_START_PX) return;
         LEGEND_POPOVER_DRAG.moved = true;
         const margin = 14;
+        const bottomMargin = 74;
         const width = panel.offsetWidth || 390;
         const height = panel.offsetHeight || 420;
         const vw = window.innerWidth || 1280;
         const vh = window.innerHeight || 800;
         const left = clamp(LEGEND_POPOVER_DRAG.left + dx, margin, Math.max(margin, vw - width - margin));
-        const top = clamp(LEGEND_POPOVER_DRAG.top + dy, margin, Math.max(margin, vh - height - margin));
+        const top = clamp(LEGEND_POPOVER_DRAG.top + dy, margin, Math.max(margin, vh - height - bottomMargin));
         panel.style.left = `${Math.round(left)}px`;
         panel.style.top = `${Math.round(top)}px`;
         SUPPRESS_NEXT_SURFACE_CLICK = true;
@@ -5903,13 +6142,15 @@ function installLegendPopoverDrag(app) {
 function openLegendPopoverAt(clientX, clientY) {
     const panel = document.getElementById('legendPanel');
     if (!panel) return;
+    const wasCollapsed = panel.classList.contains('panel-collapsed');
     panel.classList.remove('panel-collapsed');
     panel.querySelector('.collapse-icon')?.classList.remove('collapsed');
-    requestAnimationFrame(() => positionLegendPopover(panel, clientX, clientY));
+    if (wasCollapsed) requestAnimationFrame(() => positionLegendPopover(panel, clientX, clientY));
 }
 
 function positionLegendPopover(panel, clientX, clientY) {
     const margin = 14;
+    const bottomMargin = 74;
     const gap = 12;
     const width = panel.offsetWidth || 390;
     const height = panel.offsetHeight || 420;
@@ -5918,9 +6159,9 @@ function positionLegendPopover(panel, clientX, clientY) {
     let left = clientX + gap;
     let top = clientY + gap;
     if (left + width + margin > vw) left = clientX - width - gap;
-    if (top + height + margin > vh) top = vh - height - margin;
+    if (top + height + bottomMargin > vh) top = vh - height - bottomMargin;
     left = clamp(left, margin, Math.max(margin, vw - width - margin));
-    top = clamp(top, margin, Math.max(margin, vh - height - margin));
+    top = clamp(top, margin, Math.max(margin, vh - height - bottomMargin));
     panel.style.left = `${Math.round(left)}px`;
     panel.style.top = `${Math.round(top)}px`;
 }
