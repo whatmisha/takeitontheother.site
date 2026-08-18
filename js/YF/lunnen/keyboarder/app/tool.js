@@ -13,7 +13,8 @@ import { buildLayout, gapOf, widthInU } from './kb/grid.js';
 import { attachGuides } from './kb/guides.js';
 import { LAYOUT_OPTIONS, LAYOUTS, LCAKB23 } from './kb/layouts.js';
 import { toMm, toPx } from './kb/units.js';
-import { loadTypeface, parseFont } from './kb/typography.js';
+import { loadTypeface, parseFont } from './kb/typography.js?v=20260818-pdf-editable-text-v1';
+import { SVGExporter } from '../vendor/framework/src/export/SVGExporter.js?v=20260818-pdf-editable-text-v1';
 import { Compensator, YS_TEXT_REGULAR } from './kb/compensate.js';
 import { attachContent, buildLegends, textPath } from './kb/legends.js';
 import {
@@ -1283,6 +1284,7 @@ const app = defineTool({
     },
 
     onInit(readyApp) {
+        readyApp.exporter = new SVGExporter(readyApp.config.export?.exporter || {});
         initUiMode(readyApp);
         migrateShippedPresetNames(readyApp);
         installKeyboarderPerf(readyApp);
@@ -5930,12 +5932,12 @@ function expandLegendPanel() {
     panel.querySelector('.collapse-icon')?.classList.remove('collapsed');
 }
 
-function pdfOutlineSvgForExport(app) {
+function pdfEditableSvgForExport(app) {
     if (!app?.target?.element || app.target.type !== 'svg') return null;
     const previousMode = SVG_EXPORT_TEXT_MODE;
     try {
-        if (previousMode !== 'outlines') {
-            SVG_EXPORT_TEXT_MODE = 'outlines';
+        if (previousMode !== 'text') {
+            SVG_EXPORT_TEXT_MODE = 'text';
             app.renderNow();
         }
         return app.target.element.cloneNode(true);
@@ -5947,24 +5949,56 @@ function pdfOutlineSvgForExport(app) {
     }
 }
 
+function pdfFontsForSvg(svg) {
+    const fonts = new Map();
+    for (const text of svg?.querySelectorAll?.('#glyphs text') || []) {
+        const id = cleanRuntimeFontId(text.getAttribute('data-font-id')) || REFERENCE_FONT_ID;
+        const entry = fontEntry(id);
+        const family = String(text.getAttribute('font-family') || exportFontFamily(entry)).trim();
+        const style = String(text.getAttribute('font-style') || 'normal').trim() || 'normal';
+        const weight = Math.round(finiteOr(text.getAttribute('font-weight'), 400));
+        const data = entry?.tf?.buffer;
+        if (!entry || !data) {
+            throw new Error(`Editable PDF font data is unavailable for ${family || id}.`);
+        }
+        if (!/\.ttf$/i.test(entry.fileName || '')) {
+            throw new Error(`Editable PDF currently requires a TTF font file: ${entry.fileName || family}.`);
+        }
+        const key = `${entry.id}:${family}:${style}:${weight}`;
+        if (fonts.has(key)) continue;
+        const postScriptName = entry.probe?.names?.postScriptName || entry.fileName || family;
+        fonts.set(key, {
+            family,
+            style,
+            weight,
+            fileName: `${slugId(postScriptName)}-${weight}.ttf`,
+            data
+        });
+    }
+    return [...fonts.values()];
+}
+
 function installPdfExport(app) {
     if (app.__keyboarderPdfExport) return;
     app.exportPDF = async (filename) => {
         if (!app.exporter || app.target?.type !== 'svg') return;
         const name = filename || `keyboarder-${layoutSlug(sourceLayoutFor(app.settings).meta.name)}.pdf`;
         try {
-            const svg = pdfOutlineSvgForExport(app);
+            const svg = pdfEditableSvgForExport(app);
             if (!svg) return;
-            const remainingLegendText = svg.querySelectorAll('#glyphs text').length;
-            if (remainingLegendText) {
-                throw new Error(`PDF outline preparation left ${remainingLegendText} editable legend elements.`);
+            const remainingLegendPaths = svg.querySelectorAll('#glyphs path').length;
+            if (remainingLegendPaths) {
+                throw new Error(`Editable PDF preparation left ${remainingLegendPaths} outlined legend elements.`);
             }
+            const fonts = pdfFontsForSvg(svg);
             const size = typeof app.config?.size === 'function' ? app.config.size(app.settings) : {};
             const width = Number(svg.getAttribute('width')) || Number(size.width) || 500;
             const height = Number(svg.getAttribute('height')) || Number(size.height) || 500;
             const format = { width: toMm(width), height: toMm(height) };
             await app.exporter.exportToPDF(svg, name, {
                 removeInteractive: true,
+                convertTextToOutlines: false,
+                fonts,
                 unit: 'mm',
                 format
             });
@@ -6045,7 +6079,7 @@ function installExportDebugAPI(app) {
     const api = {
         cleanSvgSnapshot: () => cleanSvgSnapshot(app),
         cleanSvgString: () => cleanSvgSnapshot(app).svg,
-        pdfOutlineSvgSnapshot: () => cleanSvgSnapshot(app, pdfOutlineSvgForExport(app))
+        pdfEditableSvgSnapshot: () => cleanSvgSnapshot(app, pdfEditableSvgForExport(app))
     };
     window.KeyboarderExport = api;
     app.KeyboarderExport = api;
@@ -6150,7 +6184,7 @@ function byteLength(text) {
 function exportToastText(report) {
     const format = String(report.format || 'export').toUpperCase();
     const mm = `${round(report.artboardMm?.width || 0, 1)} × ${round(report.artboardMm?.height || 0, 1)} mm`;
-    const textMode = report.format === 'pdf' ? 'outlines' : report.textMode;
+    const textMode = report.format === 'pdf' ? 'text' : report.textMode;
     const textLabel = textMode === 'text' ? 'editable text' : 'outlines';
     const fonts = textMode === 'text' && report.fontFamilies?.length ? ` · ${report.fontFamilies.join(', ')}` : '';
     return `${format} exported · ${report.layout} · ${mm} · ${textLabel}${fonts} · ${report.keys} keys`;

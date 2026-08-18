@@ -64,6 +64,8 @@ export class SVGExporter {
      * @param {string} filename
      * @param {Object} options
      * @param {boolean} [options.removeInteractive]
+     * @param {boolean} [options.convertTextToOutlines]
+     * @param {Array<{fileName:string,family:string,style?:string,weight?:number,data:ArrayBuffer|Uint8Array|string}>} [options.fonts]
      * @param {string} [options.unit] — 'mm', 'pt', 'in', 'px'
      * @param {Object} [options.format] — { width, height }
      */
@@ -77,7 +79,7 @@ export class SVGExporter {
             this.removeInteractiveElements(clonedSvg);
         }
 
-        if (this.textToPath) {
+        if (options.convertTextToOutlines !== false && this.textToPath) {
             try {
                 await this.textToPath.convertAllTextToPaths(clonedSvg);
             } catch (error) {
@@ -96,8 +98,11 @@ export class SVGExporter {
         const pdf = new jsPDF({
             orientation: pageWidth > pageHeight ? 'landscape' : 'portrait',
             unit,
-            format: options.format ? [pageWidth, pageHeight] : undefined
+            format: options.format ? [pageWidth, pageHeight] : undefined,
+            putOnlyUsedFonts: true
         });
+
+        this._registerPDFFonts(pdf, options.fonts || []);
 
         if (!options.format) {
             pdf.internal.pageSize.setWidth(pageWidth);
@@ -115,6 +120,17 @@ export class SVGExporter {
         });
 
         pdf.save(filename);
+    }
+
+    _registerPDFFonts(pdf, fonts = []) {
+        for (const font of fonts) {
+            if (!font?.data || !font.family) continue;
+            const fileName = font.fileName || `${font.family}.ttf`;
+            const style = font.style || 'normal';
+            const weight = Number(font.weight) || 400;
+            pdf.addFileToVFS(fileName, pdfFontDataBase64(font.data));
+            pdf.addFont(fileName, font.family, style, weight);
+        }
     }
 
     /**
@@ -254,4 +270,22 @@ export function svgDocumentString(serialized = '') {
     const asciiSafe = String(serialized).replace(/[^\x00-\x7F]/gu, (character) =>
         `&#x${character.codePointAt(0).toString(16).toUpperCase()};`);
     return `<?xml version="1.0" encoding="UTF-8"?>\n${asciiSafe}`;
+}
+
+function pdfFontDataBase64(data) {
+    if (typeof data === 'string') return data;
+    const bytes = data instanceof Uint8Array
+        ? data
+        : data instanceof ArrayBuffer
+            ? new Uint8Array(data)
+            : ArrayBuffer.isView(data)
+                ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+                : null;
+    if (!bytes) throw new Error('Unsupported PDF font data.');
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+    }
+    return btoa(binary);
 }

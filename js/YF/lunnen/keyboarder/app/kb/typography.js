@@ -120,6 +120,7 @@ function pathDataFromCommands(commands, x, y, scale) {
 export class Typeface {
     constructor(font, buffer = null) {
         this.font = font;
+        this.buffer = buffer;
         this.variationModel = createVariationModel(font, buffer);
         this.variationCoordinates = {};
         this.variationNormalized = this.variationModel?.normalize({}) || {};
