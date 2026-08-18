@@ -14,7 +14,7 @@ import { attachGuides } from './kb/guides.js';
 import { LAYOUT_OPTIONS, LAYOUTS, LCAKB23 } from './kb/layouts.js';
 import { toMm, toPx } from './kb/units.js';
 import { loadTypeface, parseFont } from './kb/typography.js?v=20260818-pdf-editable-text-v1';
-import { SVGExporter } from '../vendor/framework/src/export/SVGExporter.js?v=20260818-pdf-editable-text-v1';
+import { SVGExporter } from '../vendor/framework/src/export/SVGExporter.js?v=20260818-pdf-variable-font-v2';
 import { Compensator, YS_TEXT_REGULAR } from './kb/compensate.js';
 import { attachContent, buildLegends, textPath } from './kb/legends.js';
 import {
@@ -5954,25 +5954,29 @@ function pdfFontsForSvg(svg) {
     for (const text of svg?.querySelectorAll?.('#glyphs text') || []) {
         const id = cleanRuntimeFontId(text.getAttribute('data-font-id')) || REFERENCE_FONT_ID;
         const entry = fontEntry(id);
-        const family = String(text.getAttribute('font-family') || exportFontFamily(entry)).trim();
+        const svgFamily = String(text.getAttribute('font-family') || exportFontFamily(entry)).trim();
         const style = String(text.getAttribute('font-style') || 'normal').trim() || 'normal';
         const weight = Math.round(finiteOr(text.getAttribute('font-weight'), 400));
         const data = entry?.tf?.buffer;
         if (!entry || !data) {
-            throw new Error(`Editable PDF font data is unavailable for ${family || id}.`);
+            throw new Error(`Editable PDF font data is unavailable for ${svgFamily || id}.`);
         }
         if (!/\.ttf$/i.test(entry.fileName || '')) {
-            throw new Error(`Editable PDF currently requires a TTF font file: ${entry.fileName || family}.`);
+            throw new Error(`Editable PDF currently requires a TTF font file: ${entry.fileName || svgFamily}.`);
         }
-        const key = `${entry.id}:${family}:${style}:${weight}`;
+        const postScriptName = String(entry.probe?.names?.postScriptName || '').trim();
+        const preserveVariations = (entry.probe?.variations?.axes || []).length > 0;
+        const family = preserveVariations && postScriptName ? postScriptName : svgFamily;
+        if (preserveVariations) text.setAttribute('font-family', family);
+        const key = `${entry.id}:${family}:${style}:${weight}:${preserveVariations ? 'vf' : 'static'}`;
         if (fonts.has(key)) continue;
-        const postScriptName = entry.probe?.names?.postScriptName || entry.fileName || family;
         fonts.set(key, {
             family,
             style,
             weight,
-            fileName: `${slugId(postScriptName)}-${weight}.ttf`,
-            data
+            fileName: `${slugId(postScriptName || entry.fileName || family)}-${weight}.ttf`,
+            data,
+            preserveVariations
         });
     }
     return [...fonts.values()];

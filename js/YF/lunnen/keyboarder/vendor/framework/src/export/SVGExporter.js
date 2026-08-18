@@ -65,7 +65,7 @@ export class SVGExporter {
      * @param {Object} options
      * @param {boolean} [options.removeInteractive]
      * @param {boolean} [options.convertTextToOutlines]
-     * @param {Array<{fileName:string,family:string,style?:string,weight?:number,data:ArrayBuffer|Uint8Array|string}>} [options.fonts]
+     * @param {Array<{fileName:string,family:string,style?:string,weight?:number,data:ArrayBuffer|Uint8Array|string,preserveVariations?:boolean}>} [options.fonts]
      * @param {string} [options.unit] — 'mm', 'pt', 'in', 'px'
      * @param {Object} [options.format] — { width, height }
      */
@@ -130,6 +130,20 @@ export class SVGExporter {
             const weight = Number(font.weight) || 400;
             pdf.addFileToVFS(fileName, pdfFontDataBase64(font.data));
             pdf.addFont(fileName, font.family, style, weight);
+
+            if (font.preserveVariations) {
+                // jsPDF normally rebuilds a small TrueType subset and drops fvar/gvar/STAT.
+                // Selecting the just-registered face gives us its parsed font object; returning
+                // rawData from the subset encoder keeps the complete variable font program in
+                // FontFile2 while preserving jsPDF's CID/GID mapping and editable text objects.
+                pdf.setFont(font.family, style, weight);
+                const metadata = pdf.getFont()?.metadata;
+                if (!metadata?.subset || !metadata?.rawData) {
+                    throw new Error(`Could not preserve variable font data for ${font.family}.`);
+                }
+                const fullFontData = Array.from(metadata.rawData);
+                metadata.subset.encode = () => fullFontData;
+            }
         }
     }
 

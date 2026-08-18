@@ -99,7 +99,8 @@ async function setMainWeight(page, value) {
     await input.fill(String(value));
     await input.press('Enter');
     await page.waitForFunction((next) =>
-        document.querySelector('[data-style-id="main"][data-style-prop="weight"][data-style-script=""]')?.value === String(next), value);
+        document.querySelector('[data-style-id="main"][data-style-prop="weight"][data-style-script=""]')?.value === String(next)
+        && new RegExp(`wght ${next}\\b`).test(document.querySelector('#fontProbeStatus')?.textContent || ''), value);
 }
 
 async function snapshot(page) {
@@ -249,8 +250,12 @@ try {
     assert.equal(pdfBytes.subarray(0, 5).toString('latin1'), '%PDF-', 'PDF export should have a valid header');
     assert.match(pdfSource, /[\r\n]BT[\r\n]/, 'PDF export should contain editable text objects');
     assert.match(pdfSource, /\/FontFile2\b/, 'PDF export should embed its TrueType font');
+    assert.match(pdfSource, /\/BaseFont\s*\/YSText-Regular\b/, 'PDF export should use the variable font PostScript name');
+    assert.match(pdfSource, /\bfvar\b/, 'PDF export should preserve the variable font fvar table');
+    assert.match(pdfSource, /\bgvar\b/, 'PDF export should preserve the variable font gvar table');
+    assert.match(pdfSource, /STAT/, 'PDF export should preserve the variable font STAT table');
     assert.doesNotMatch(pdfSource, /\/BaseFont\s*\/Times-Roman\b/, 'PDF export should not fall back to Times');
-    assert.ok(pdfBytes.length > 100000, 'editable PDF should contain embedded font data');
+    assert.ok(pdfBytes.length > 700000, 'editable PDF should contain the complete variable font data');
 
     const afterPdfExport = await page.evaluate(() => ({
         outlineChecked: !!document.querySelector('#convertToOutlinesCheckbox')?.checked,
@@ -261,7 +266,7 @@ try {
     assert.equal(afterPdfExport.glyphPaths, 0, 'PDF export should preserve live editable SVG paths');
     assert.equal(afterPdfExport.glyphTexts, 176, 'PDF export should preserve live editable SVG text');
 
-    await page.locator('#convertToOutlinesCheckbox').check();
+    await page.locator('#convertToOutlinesCheckbox').evaluate((element) => element.click());
     await page.waitForFunction(() => document.querySelectorAll('#glyphs path').length >= 170);
 
     const pdfFromOutlineMode = await page.evaluate(() => {
