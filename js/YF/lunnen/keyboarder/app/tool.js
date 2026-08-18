@@ -5930,17 +5930,39 @@ function expandLegendPanel() {
     panel.querySelector('.collapse-icon')?.classList.remove('collapsed');
 }
 
+function pdfOutlineSvgForExport(app) {
+    if (!app?.target?.element || app.target.type !== 'svg') return null;
+    const previousMode = SVG_EXPORT_TEXT_MODE;
+    try {
+        if (previousMode !== 'outlines') {
+            SVG_EXPORT_TEXT_MODE = 'outlines';
+            app.renderNow();
+        }
+        return app.target.element.cloneNode(true);
+    } finally {
+        if (SVG_EXPORT_TEXT_MODE !== previousMode) {
+            SVG_EXPORT_TEXT_MODE = previousMode;
+            app.renderNow();
+        }
+    }
+}
+
 function installPdfExport(app) {
     if (app.__keyboarderPdfExport) return;
     app.exportPDF = async (filename) => {
         if (!app.exporter || app.target?.type !== 'svg') return;
-        const svg = app.target.element;
-        const size = typeof app.config?.size === 'function' ? app.config.size(app.settings) : {};
-        const width = Number(svg?.getAttribute('width')) || Number(size.width) || 500;
-        const height = Number(svg?.getAttribute('height')) || Number(size.height) || 500;
-        const format = { width: toMm(width), height: toMm(height) };
         const name = filename || `keyboarder-${layoutSlug(sourceLayoutFor(app.settings).meta.name)}.pdf`;
         try {
+            const svg = pdfOutlineSvgForExport(app);
+            if (!svg) return;
+            const remainingLegendText = svg.querySelectorAll('#glyphs text').length;
+            if (remainingLegendText) {
+                throw new Error(`PDF outline preparation left ${remainingLegendText} editable legend elements.`);
+            }
+            const size = typeof app.config?.size === 'function' ? app.config.size(app.settings) : {};
+            const width = Number(svg.getAttribute('width')) || Number(size.width) || 500;
+            const height = Number(svg.getAttribute('height')) || Number(size.height) || 500;
+            const format = { width: toMm(width), height: toMm(height) };
             await app.exporter.exportToPDF(svg, name, {
                 removeInteractive: true,
                 unit: 'mm',
@@ -6022,7 +6044,8 @@ function installExportDebugAPI(app) {
     if (typeof window === 'undefined') return;
     const api = {
         cleanSvgSnapshot: () => cleanSvgSnapshot(app),
-        cleanSvgString: () => cleanSvgSnapshot(app).svg
+        cleanSvgString: () => cleanSvgSnapshot(app).svg,
+        pdfOutlineSvgSnapshot: () => cleanSvgSnapshot(app, pdfOutlineSvgForExport(app))
     };
     window.KeyboarderExport = api;
     app.KeyboarderExport = api;
@@ -6074,8 +6097,8 @@ function exportSummary(app, method, filename, options = {}) {
     };
 }
 
-function cleanSvgSnapshot(app) {
-    if (!app?.exporter || app.target?.type !== 'svg' || !app.target.element) {
+function cleanSvgSnapshot(app, sourceSvg = app?.target?.element) {
+    if (!app?.exporter || app.target?.type !== 'svg' || !sourceSvg) {
         return {
             svg: '',
             bytes: 0,
@@ -6084,7 +6107,7 @@ function cleanSvgSnapshot(app) {
         };
     }
     try {
-        const cleanSvg = app.exporter.getCleanSVG(app.target.element);
+        const cleanSvg = app.exporter.getCleanSVG(sourceSvg);
         const svg = new XMLSerializer().serializeToString(cleanSvg);
         return {
             svg,

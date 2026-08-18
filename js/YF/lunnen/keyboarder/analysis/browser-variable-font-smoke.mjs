@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
-import { createReadStream, existsSync } from 'node:fs';
+import { createReadStream, existsSync, readFileSync } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
@@ -220,6 +220,42 @@ try {
     assert.match(editable.variation, /"wght" 400/, 'editable SVG should preserve the selected variable-font instance');
     assert.ok(editable.anchors.end > 0, 'right-aligned legends should export with text-anchor=end');
     assert.ok(editable.anchors.middle > 0, 'centered legends should export with text-anchor=middle');
+
+    const pdfOutline = await page.evaluate(() => {
+        const clean = window.KeyboarderExport.pdfOutlineSvgSnapshot();
+        return {
+            glyphPaths: clean.layerCounts.glyphPaths || 0,
+            glyphTexts: clean.layerCounts.glyphTexts || 0,
+            liveOutlineChecked: !!document.querySelector('#convertToOutlinesCheckbox')?.checked,
+            liveGlyphPaths: document.querySelectorAll('#glyphs path').length,
+            liveGlyphTexts: document.querySelectorAll('#glyphs text').length
+        };
+    });
+    assert.equal(pdfOutline.glyphPaths, 176, 'PDF source should always contain outlined legend paths');
+    assert.equal(pdfOutline.glyphTexts, 0, 'PDF source should never contain editable legend text');
+    assert.equal(pdfOutline.liveOutlineChecked, false, 'PDF preparation should restore the SVG outline toggle');
+    assert.equal(pdfOutline.liveGlyphPaths, 0, 'PDF preparation should restore live editable SVG paths');
+    assert.equal(pdfOutline.liveGlyphTexts, 176, 'PDF preparation should restore live editable SVG text');
+
+    const pdfDownloadPromise = page.waitForEvent('download');
+    await page.locator('#exportPdfBtn').click();
+    const pdfDownload = await pdfDownloadPromise;
+    const pdfPath = await pdfDownload.path();
+    assert.ok(pdfPath, 'PDF download should have a temporary file');
+    const pdfBytes = readFileSync(pdfPath);
+    const pdfSource = pdfBytes.toString('latin1');
+    assert.equal(pdfBytes.subarray(0, 5).toString('latin1'), '%PDF-', 'PDF export should have a valid header');
+    assert.doesNotMatch(pdfSource, /[\r\n]BT[\r\n]/, 'PDF export should not contain editable text objects');
+    assert.ok(pdfBytes.length > 500000, 'outlined PDF should contain the legend vector geometry');
+
+    const afterPdfExport = await page.evaluate(() => ({
+        outlineChecked: !!document.querySelector('#convertToOutlinesCheckbox')?.checked,
+        glyphPaths: document.querySelectorAll('#glyphs path').length,
+        glyphTexts: document.querySelectorAll('#glyphs text').length
+    }));
+    assert.equal(afterPdfExport.outlineChecked, false, 'PDF export should not change the SVG outline toggle');
+    assert.equal(afterPdfExport.glyphPaths, 0, 'PDF export should preserve live editable SVG paths');
+    assert.equal(afterPdfExport.glyphTexts, 176, 'PDF export should preserve live editable SVG text');
 
     await page.locator('#convertToOutlinesCheckbox').check();
     await page.waitForFunction(() => document.querySelectorAll('#glyphs path').length >= 170);
