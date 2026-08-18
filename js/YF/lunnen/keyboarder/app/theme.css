@@ -879,6 +879,192 @@
     min-width: min(480px, 72vw);
 }
 
+.modal.modal--import-review {
+    max-width: min(900px, calc(100vw - 32px));
+}
+
+.modal--import-review .modal-content {
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    overflow: visible;
+    transform: none;
+}
+
+.modal--import-review .modal-text {
+    max-height: min(70vh, 720px);
+}
+
+.modal--import-review .modal-buttons {
+    flex-wrap: wrap;
+}
+
+.svg-import-review {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+}
+
+.svg-import-review-intro {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.svg-import-review-intro p {
+    margin: 0;
+}
+
+.svg-import-review-intro strong {
+    color: var(--color-text);
+    font-family: var(--font-mono);
+}
+
+.svg-import-pass-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: var(--spacing-sm);
+}
+
+.svg-import-pass {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--spacing-sm);
+    min-height: 58px;
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    background: rgb(255 255 255 / 0.025);
+    cursor: pointer;
+    transition: border-color var(--transition-normal), background var(--transition-normal);
+}
+
+.svg-import-pass:hover:not(.is-disabled) {
+    border-color: var(--color-text-dim);
+    background: rgb(255 255 255 / 0.05);
+}
+
+.svg-import-pass.is-selected {
+    border-color: var(--color-text-secondary);
+    background: rgb(255 255 255 / 0.08);
+}
+
+.svg-import-pass.is-disabled {
+    cursor: not-allowed;
+    opacity: 0.42;
+}
+
+.svg-import-pass input {
+    margin: 0;
+    accent-color: var(--color-text);
+}
+
+.svg-import-pass-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.svg-import-pass-copy strong {
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.svg-import-pass-copy small {
+    overflow: hidden;
+    color: var(--color-text-dim);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.svg-import-confidence {
+    padding: 2px 6px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    line-height: 1.3;
+    text-transform: uppercase;
+}
+
+.svg-import-confidence.is-high,
+.svg-import-review-status.is-high {
+    color: #79b98a;
+}
+
+.svg-import-confidence.is-medium,
+.svg-import-review-status.is-medium {
+    color: #f0b148;
+}
+
+.svg-import-confidence.is-low,
+.svg-import-review-status.is-low {
+    color: #e0716d;
+}
+
+.svg-import-review-live {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.svg-import-review-metrics {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    background: var(--color-border);
+}
+
+.svg-import-review-metrics > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--spacing-md);
+    background: var(--color-bg-panel);
+}
+
+.svg-import-review-metrics span {
+    color: var(--color-text-dim);
+    font-size: 9px;
+}
+
+.svg-import-review-metrics strong {
+    overflow-wrap: anywhere;
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 400;
+}
+
+.svg-import-review-status {
+    margin: var(--spacing-sm) 0 0;
+    font-family: var(--font-mono);
+    font-size: 10px;
+}
+
+.svg-import-review .svg-import-preview svg {
+    max-height: 300px;
+}
+
+@media (max-width: 720px) {
+    .svg-import-review-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
 .new-layout-intro,
 .new-layout-problem {
     display: flex;

@@ -290,44 +290,97 @@ export function analyzeSvgBlueprint(svgText = '') {
     const caps = groups.caps;
     const guides = groups.guides;
     const source = blueprint || stripped.svg;
-    const sourceCounts = timed('tagCountsMs', () => countElementTags(source, ['line', 'path', 'rect', 'polygon']));
+    const sourceCounts = timed('tagCountsMs', () => countElementTags(source, [
+        'line', 'path', 'rect', 'polygon', 'polyline', 'circle', 'ellipse'
+    ]));
     const explicitLines = timed('parseLinesMs', () => parseSvgLines(source));
-    const normalizedGeometry = explicitLines.length
-        ? null
-        : timed('normalizeGeometryMs', () => normalizeSvgGeometry(source));
-    const lines = explicitLines.length ? explicitLines : normalizedGeometry.segments;
-    const buckets = timed('classifyLinesMs', () => classifySvgLines(lines));
     const pathCornerArcs = timed('pathArcsMs', () => parseSvgPathCornerArcs(source));
     const capShapes = timed('capsMs', () => parseSvgCapShapes(caps));
-    const spanGroups = timed('spanGroupsMs', () => horizontalSpanGroups(buckets.horizontal));
     const calibration = timed('calibrationMs', () => calibrateFromCaps(capShapes));
+    const explicitBuckets = explicitLines.length
+        ? timed('classifyLinesMs', () => classifySvgLines(explicitLines))
+        : emptyLineBuckets();
+    const explicitDetected = explicitLines.length
+        ? timed('detectLinesMs', () => detectKeyRectCandidates({
+            lineBuckets: explicitBuckets,
+            pathCornerArcs,
+            calibration,
+            caps: capShapes
+        }))
+        : null;
+    const needsNormalizedGeometry = shouldRunNormalizedRecognitionPass({
+        sourceCounts,
+        explicitLines,
+        explicitDetected,
+        caps: capShapes,
+        hasBlueprint: !!blueprint
+    });
+    const normalizedGeometry = needsNormalizedGeometry
+        ? timed('normalizeGeometryMs', () => normalizeSvgGeometry(source))
+        : null;
+    const normalizedLines = normalizedGeometry?.segments || [];
+    const normalizedBuckets = normalizedLines.length
+        ? timed('classifyNormalizedMs', () => classifySvgLines(normalizedLines))
+        : emptyLineBuckets();
+    const normalizedDetected = normalizedLines.length
+        ? timed('detectNormalizedMs', () => detectKeyRectCandidates({
+            lineBuckets: normalizedBuckets,
+            pathCornerArcs,
+            calibration,
+            caps: capShapes
+        }))
+        : null;
+    timings.detectMs = round((timings.detectLinesMs || 0) + (timings.detectNormalizedMs || 0), 4);
+
+    const recognitionPasses = [];
+    if (explicitDetected) recognitionPasses.push(blueprintRecognitionPass(
+        'explicit-lines', 'Explicit SVG lines', explicitLines, explicitBuckets, explicitDetected
+    ));
+    if (normalizedDetected) recognitionPasses.push(blueprintRecognitionPass(
+        'normalized-svg', 'Normalized SVG geometry', normalizedLines, normalizedBuckets, normalizedDetected,
+        normalizedGeometry
+    ));
+    if (capShapes.length) recognitionPasses.push(capsRecognitionPass(capShapes, calibration));
+
+    const recognitionResult = timed('sourceMs', () => selectRecognitionPass(recognitionPasses, {
+        caps: capShapes,
+        calibration,
+        hasBlueprint: !!blueprint
+    }));
+    const recognized = recognitionResult.recognized;
+    const recognition = recognitionResult.summary;
+    const selectedPass = recognitionPasses.find((pass) => pass.id === recognition.selectedPass);
+    const geometryPass = selectedPass?.source === 'blueprint'
+        ? selectedPass
+        : recognitionPasses.find((pass) => pass.id === 'explicit-lines')
+            || recognitionPasses.find((pass) => pass.id === 'normalized-svg');
+    const lines = geometryPass?.lines || [];
+    const buckets = geometryPass?.buckets || emptyLineBuckets();
+    const spanGroups = timed('spanGroupsMs', () => horizontalSpanGroups(buckets.horizontal));
     const elements = {
         lines: lines.length,
+        sourceLines: sourceCounts.line || 0,
         paths: sourceCounts.path || 0,
         pathCornerArcs: pathCornerArcs.length,
         rects: sourceCounts.rect || 0,
-        polygons: sourceCounts.polygon || 0
+        polygons: sourceCounts.polygon || 0,
+        polylines: sourceCounts.polyline || 0,
+        circles: sourceCounts.circle || 0,
+        ellipses: sourceCounts.ellipse || 0
     };
-    const detected = timed('detectMs', () => detectKeyRectCandidates({
-        lineBuckets: buckets,
-        pathCornerArcs,
-        calibration,
-        caps: capShapes
-    }));
-    const recognized = timed('sourceMs', () => chooseRecognizedKeySource(detected, capShapes, calibration, {
-        hasBlueprint: !!blueprint
-    }));
     const diagnostics = timed('diagnosticsMs', () => diagnoseRecognizedKeys({
         groups: { blueprint: !!blueprint, caps: !!caps, guides: !!guides },
         elements,
         calibration,
         caps: capShapes,
-        recognized
+        recognized,
+        recognition
     }));
     const layoutDraft = timed('draftMs', () => layoutDraftFromRecognized({ calibration, recognized, diagnostics }));
+    applyRecognitionMetadataToDraft(layoutDraft, recognition);
     timings.totalMs = round(nowMs() - totalStarted, 4);
 
-    return {
+    const result = {
         viewBox,
         privateData: {
             removedBlocks: stripped.removedBlocks,
@@ -343,16 +396,22 @@ export function analyzeSvgBlueprint(svgText = '') {
             sourceLines: sourceCounts.line || 0,
             paths: sourceCounts.path || 0,
             rects: sourceCounts.rect || 0,
-            polygons: sourceCounts.polygon || 0
+            polygons: sourceCounts.polygon || 0,
+            polylines: sourceCounts.polyline || 0,
+            circles: sourceCounts.circle || 0,
+            ellipses: sourceCounts.ellipse || 0
         },
-        geometry: normalizedGeometry ? {
-            source: 'normalized-svg',
-            unsupported: normalizedGeometry.unsupported,
-            stats: normalizedGeometry.stats
-        } : {
-            source: 'svg-lines',
-            unsupported: [],
-            stats: { segments: lines.length }
+        geometry: {
+            source: geometryPass?.id === 'normalized-svg' ? 'normalized-svg' : 'svg-lines',
+            selectedRecognitionPass: recognition.selectedPass,
+            unsupported: normalizedGeometry?.unsupported || [],
+            stats: geometryPass?.normalization?.stats || { segments: lines.length },
+            passes: recognition.passes.map((pass) => ({
+                id: pass.id,
+                source: pass.source,
+                segments: pass.segments,
+                selected: pass.selected
+            }))
         },
         lineBuckets: buckets,
         horizontalSpanGroups: spanGroups.length,
@@ -360,10 +419,87 @@ export function analyzeSvgBlueprint(svgText = '') {
         caps: capShapes,
         calibration,
         recognized,
+        recognition,
         diagnostics,
         layoutDraft,
         timings
     };
+    Object.defineProperty(result, '_recognitionPasses', {
+        value: recognitionPasses,
+        enumerable: false,
+        configurable: false,
+        writable: false
+    });
+    return result;
+}
+
+export function selectSvgRecognitionPass(analysis, passId) {
+    const passes = analysis?._recognitionPasses || [];
+    const wanted = String(passId || '');
+    const pass = passes.find((candidate) => candidate.id === wanted
+        && recognitionPassIsUsable(candidate, analysis?.calibration));
+    if (!analysis || !pass) return analysis;
+    const started = nowMs();
+    const selection = selectRecognitionPass(passes, {
+        caps: analysis.caps || [],
+        calibration: analysis.calibration,
+        hasBlueprint: !!analysis.groups?.blueprint,
+        forcePassId: wanted
+    });
+    analysis.recognized = selection.recognized;
+    analysis.recognition = selection.summary;
+
+    const geometryPass = pass.source === 'blueprint'
+        ? pass
+        : passes.find((candidate) => candidate.id === 'explicit-lines')
+            || passes.find((candidate) => candidate.id === 'normalized-svg');
+    const buckets = geometryPass?.buckets || emptyLineBuckets();
+    const spanGroups = horizontalSpanGroups(buckets.horizontal);
+    analysis.lineBuckets = buckets;
+    analysis.horizontalSpanGroups = spanGroups.length;
+    analysis.topHorizontalSpanGroups = spanGroups.slice(0, 8);
+    if (analysis.elements) analysis.elements.lines = geometryPass?.lines?.length || 0;
+    analysis.geometry = {
+        ...(analysis.geometry || {}),
+        source: geometryPass?.id === 'normalized-svg' ? 'normalized-svg' : 'svg-lines',
+        selectedRecognitionPass: selection.summary.selectedPass,
+        stats: geometryPass?.normalization?.stats || { segments: geometryPass?.lines?.length || 0 },
+        passes: selection.summary.passes.map((candidate) => ({
+            id: candidate.id,
+            source: candidate.source,
+            segments: candidate.segments,
+            selected: candidate.selected
+        }))
+    };
+    analysis.diagnostics = diagnoseRecognizedKeys({
+        groups: analysis.groups,
+        elements: analysis.elements,
+        calibration: analysis.calibration,
+        caps: analysis.caps,
+        recognized: analysis.recognized,
+        recognition: analysis.recognition
+    });
+    analysis.layoutDraft = layoutDraftFromRecognized({
+        calibration: analysis.calibration,
+        recognized: analysis.recognized,
+        diagnostics: analysis.diagnostics
+    });
+    applyRecognitionMetadataToDraft(analysis.layoutDraft, analysis.recognition);
+    if (analysis.timings) analysis.timings.reviewSelectionMs = round(nowMs() - started, 4);
+    return analysis;
+}
+
+function applyRecognitionMetadataToDraft(draft, recognition = {}) {
+    if (draft?.layout?.meta) {
+        draft.layout.meta.recognitionPass = recognition.selectedPass || 'none';
+        draft.layout.meta.recognitionConfidence = recognition.confidence?.score || 0;
+        draft.layout.meta.recognitionSelection = recognition.selection || 'automatic';
+    }
+    if (draft?.stats) {
+        draft.stats.recognitionPass = recognition.selectedPass || 'none';
+        draft.stats.recognitionConfidence = recognition.confidence?.score || 0;
+        draft.stats.recognitionSelection = recognition.selection || 'automatic';
+    }
 }
 
 export function detectKeyRectCandidates(analysis = {}, options = {}) {
@@ -525,21 +661,277 @@ function snapDetectedKeysToCaps(keys = [], caps = []) {
     return out;
 }
 
-function chooseRecognizedKeySource(detected = {}, caps = [], calibration = {}, options = {}) {
-    if (!shouldUseCapsAsKeySource(detected, caps, options)) {
-        return { source: 'blueprint', ...detected };
-    }
-    return recognizedKeysFromCaps(caps, calibration);
+function emptyLineBuckets() {
+    return { horizontal: [], vertical: [], diagonal: [] };
 }
 
-function shouldUseCapsAsKeySource(detected = {}, caps = [], options = {}) {
-    if (!caps.length) return false;
-    const detectedCount = detected.keys?.length || 0;
+function shouldRunNormalizedRecognitionPass(options = {}) {
+    const explicitLines = options.explicitLines || [];
+    if (!explicitLines.length) return true;
+    const sourceCounts = options.sourceCounts || {};
+    const nonLineGeometry = ['path', 'rect', 'polygon', 'polyline', 'circle', 'ellipse']
+        .reduce((sum, key) => sum + (sourceCounts[key] || 0), 0);
+    if (!nonLineGeometry) return false;
+    const detectedCount = options.explicitDetected?.keys?.length || 0;
     if (!detectedCount) return true;
-    const sparseCaps = caps.length <= Math.max(4, detectedCount * 0.1);
-    if (sparseCaps) return false;
-    if (!options.hasBlueprint) return true;
-    return caps.length !== detectedCount;
+    const caps = options.caps || [];
+    const representativeCaps = caps.length > Math.max(4, detectedCount * 0.1);
+    return !(options.hasBlueprint && representativeCaps && caps.length === detectedCount);
+}
+
+function blueprintRecognitionPass(id, label, lines, buckets, detected, normalization = null) {
+    return {
+        id,
+        label,
+        source: 'blueprint',
+        lines,
+        buckets,
+        segments: lines.length,
+        normalization,
+        recognized: { ...detected, source: 'blueprint' }
+    };
+}
+
+function capsRecognitionPass(caps, calibration) {
+    return {
+        id: 'caps',
+        label: 'Caps contours',
+        source: 'caps',
+        lines: [],
+        buckets: emptyLineBuckets(),
+        segments: caps.length,
+        normalization: null,
+        recognized: recognizedKeysFromCaps(caps, calibration)
+    };
+}
+
+function selectRecognitionPass(passes = [], context = {}) {
+    const usable = passes.filter((pass) => recognitionPassIsUsable(pass, context.calibration));
+    if (!usable.length) {
+        const confidence = { score: 0, level: 'low' };
+        return {
+            recognized: {
+                source: 'blueprint',
+                passId: 'none',
+                cornerOffset: null,
+                raw: [],
+                stackCells: [],
+                estimatedGrid: {},
+                keys: [],
+                confidence,
+                provenance: { strategy: 'adaptive-multipass', selectedPass: 'none', candidatePasses: [] }
+            },
+            summary: {
+                strategy: 'adaptive-multipass',
+                selection: context.forcePassId ? 'user' : 'automatic',
+                selectedPass: 'none',
+                selectedLabel: 'No usable geometry',
+                confidence,
+                passes: passes.map((pass) => recognitionPassSummary(pass, 0, false, context.calibration)),
+                disagreement: { keyCountDelta: 0, geometryAgreement: 0 }
+            }
+        };
+    }
+
+    const maxKeys = Math.max(...usable.map((pass) => pass.recognized.keys.length));
+    const usableIds = new Set(usable.map((pass) => pass.id));
+    const maxBlueprintKeys = Math.max(0, ...usable
+        .filter((pass) => pass.source === 'blueprint')
+        .map((pass) => pass.recognized.keys.length));
+    const caps = context.caps || [];
+    const representativeCaps = caps.length > Math.max(4, maxBlueprintKeys * 0.1);
+    const evaluated = passes.map((pass) => {
+        const keyCount = pass.recognized?.keys?.length || 0;
+        const quality = recognitionGeometryQuality(pass.recognized, context.calibration);
+        const coverage = maxKeys ? keyCount / maxKeys : 0;
+        const capAgreement = representativeCaps
+            ? Math.max(0, 1 - Math.abs(keyCount - caps.length) / Math.max(keyCount, caps.length, 1))
+            : null;
+        const weights = capAgreement == null
+            ? { quality: 0.65, coverage: 0.35, caps: 0 }
+            : { quality: 0.55, coverage: 0.25, caps: 0.2 };
+        let score = quality * weights.quality + coverage * weights.coverage + (capAgreement || 0) * weights.caps;
+        if (pass.id === 'explicit-lines') score += 0.012;
+        if (pass.id === 'normalized-svg') score += 0.006;
+        if (pass.source === 'caps' && representativeCaps) score += 0.008;
+        if (!context.hasBlueprint) score += pass.source === 'caps' ? 0.04 : -0.04;
+        return { pass, score: clamp01(score), quality, coverage, capAgreement };
+    });
+    const forcedEvaluation = context.forcePassId
+        ? evaluated.find((candidate) => candidate.pass.id === context.forcePassId && usableIds.has(candidate.pass.id))
+        : null;
+    const selectedEvaluation = forcedEvaluation || evaluated.filter((candidate) => usableIds.has(candidate.pass.id)).sort((a, b) =>
+        b.score - a.score
+        || recognitionPassPriority(b.pass, context) - recognitionPassPriority(a.pass, context)
+        || (b.pass.recognized?.keys?.length || 0) - (a.pass.recognized?.keys?.length || 0)
+    )[0];
+    const selectedPass = selectedEvaluation.pass;
+    const confidence = recognitionConfidence(selectedEvaluation.score);
+    const summaries = evaluated.map(({ pass, score, quality, coverage, capAgreement }) => ({
+        ...recognitionPassSummary(pass, score, pass.id === selectedPass.id, context.calibration),
+        quality: round(quality, 4),
+        coverage: round(coverage, 4),
+        capAgreement: capAgreement == null ? null : round(capAgreement, 4)
+    }));
+    const substantialPasses = usable.filter((pass) => pass.recognized.keys.length >= maxKeys * 0.5);
+    const alternativePasses = substantialPasses.filter((pass) => pass.id !== selectedPass.id);
+    const agreements = alternativePasses.map((pass) => recognitionGeometryAgreement(
+        selectedPass.recognized.keys,
+        pass.recognized.keys
+    ));
+    const counts = substantialPasses.map((pass) => pass.recognized.keys.length);
+    const disagreement = {
+        keyCountDelta: Math.max(...counts) - Math.min(...counts),
+        geometryAgreement: agreements.length ? round(Math.max(...agreements), 4) : 1
+    };
+    const selectionMode = forcedEvaluation ? 'user' : 'automatic';
+    const recognized = annotateRecognitionProvenance(selectedPass, usable, caps, confidence, selectionMode);
+    return {
+        recognized,
+        summary: {
+            strategy: 'adaptive-multipass',
+            selection: selectionMode,
+            selectedPass: selectedPass.id,
+            selectedLabel: selectedPass.label,
+            confidence,
+            passes: summaries,
+            disagreement
+        }
+    };
+}
+
+function recognitionPassPriority(pass, context = {}) {
+    if (!context.hasBlueprint && pass.source === 'caps') return 4;
+    if (pass.id === 'explicit-lines') return 3;
+    if (pass.id === 'normalized-svg') return 2;
+    return 1;
+}
+
+function recognitionPassSummary(pass, score, selected, calibration = {}) {
+    return {
+        id: pass.id,
+        label: pass.label,
+        source: pass.source,
+        segments: pass.segments || 0,
+        keys: pass.recognized?.keys?.length || 0,
+        stacks: pass.recognized?.stackCells?.length || 0,
+        usable: recognitionPassIsUsable(pass, calibration),
+        confidence: recognitionConfidence(score),
+        selected: !!selected
+    };
+}
+
+function recognitionPassIsUsable(pass, calibration = {}) {
+    const recognized = pass?.recognized || {};
+    const cells = draftCellsFromRecognized(recognized.keys || [], recognized);
+    const estimated = recognized.estimatedGrid || {};
+    const keyWidth1U = finiteNumber(calibration?.keyWidth1U, estimated.keyWidth1U);
+    const colPitch = finiteNumber(calibration?.colPitch, estimated.colPitch);
+    const gap = finiteNumber(calibration?.gap, estimated.gap, colPitch - keyWidth1U);
+    const keyHeight = finiteNumber(calibration?.keyHeight, estimated.keyHeight);
+    return !!cells.length
+        && [keyWidth1U, colPitch, gap, keyHeight].every(Number.isFinite)
+        && clusters(cells.map((key) => key.y), 1).length > 0;
+}
+
+function recognitionGeometryQuality(recognized = {}, calibration = {}) {
+    const keys = recognized.keys || [];
+    if (!keys.length) return 0;
+    const valid = keys.filter((key) => [key.x, key.y, key.w, key.h].every(Number.isFinite));
+    if (!valid.length) return 0;
+    let overlaps = 0;
+    for (let i = 0; i < valid.length; i++) {
+        for (let j = i + 1; j < valid.length; j++) {
+            if (rectsIntersect(valid[i], valid[j], 0.5)) overlaps += 1;
+        }
+    }
+    const validity = valid.length / keys.length;
+    const nonOverlap = Math.max(0, 1 - overlaps / Math.max(valid.length, 1));
+    const keyHeight = finiteNumber(calibration?.keyHeight, recognized.estimatedGrid?.keyHeight);
+    const rowPitch = finiteNumber(calibration?.rowPitch, recognized.estimatedGrid?.rowPitch);
+    const heightFit = Number.isFinite(keyHeight)
+        ? valid.filter((key) => {
+            if (key.stackCount) return true;
+            const expected = key.rowSpan === 2 && Number.isFinite(rowPitch) ? keyHeight + rowPitch : keyHeight;
+            return Math.abs(key.h - expected) <= Math.max(1.2, keyHeight * 0.035);
+        }).length / valid.length
+        : 1;
+    return clamp01(validity * 0.45 + nonOverlap * 0.35 + heightFit * 0.2);
+}
+
+function recognitionConfidence(score) {
+    const value = round(Math.min(0.99, clamp01(score)), 4);
+    return {
+        score: value,
+        level: value >= 0.9 ? 'high' : value >= 0.72 ? 'medium' : 'low'
+    };
+}
+
+function annotateRecognitionProvenance(selectedPass, passes, caps, confidence, selection = 'automatic') {
+    const selected = selectedPass.recognized || {};
+    const keys = (selected.keys || []).map((key, i) => {
+        const capIndex = matchingRectIndex(key, caps);
+        const supportingPasses = passes
+            .filter((pass) => pass.id !== selectedPass.id && matchingRectIndex(key, pass.recognized?.keys || []) >= 0)
+            .map((pass) => pass.id);
+        const score = clamp01(confidence.score
+            + (capIndex >= 0 ? 0.015 : 0)
+            + Math.min(0.02, supportingPasses.length * 0.01)
+            - (key.stackCount ? 0.015 : 0));
+        return {
+            ...key,
+            i,
+            confidence: recognitionConfidence(score),
+            provenance: {
+                strategy: 'adaptive-multipass',
+                selection,
+                pass: selectedPass.id,
+                source: selectedPass.source,
+                matchedCap: capIndex >= 0 ? capIndex : null,
+                supportingPasses
+            }
+        };
+    });
+    return {
+        ...selected,
+        passId: selectedPass.id,
+        keys,
+        confidence,
+        provenance: {
+            strategy: 'adaptive-multipass',
+            selection,
+            selectedPass: selectedPass.id,
+            source: selectedPass.source,
+            candidatePasses: passes.map((pass) => pass.id)
+        }
+    };
+}
+
+function recognitionGeometryAgreement(left = [], right = []) {
+    if (!left.length || !right.length) return 0;
+    const matched = left.filter((key) => matchingRectIndex(key, right) >= 0).length;
+    return matched / Math.max(left.length, right.length);
+}
+
+function matchingRectIndex(rect, candidates = []) {
+    let best = -1;
+    let bestError = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < candidates.length; i++) {
+        const candidate = candidates[i];
+        if (![candidate?.x, candidate?.y, candidate?.w, candidate?.h].every(Number.isFinite)) continue;
+        const centerError = Math.hypot(
+            rect.x + rect.w / 2 - candidate.x - candidate.w / 2,
+            rect.y + rect.h / 2 - candidate.y - candidate.h / 2
+        );
+        const sizeError = Math.max(Math.abs(rect.w - candidate.w), Math.abs(rect.h - candidate.h));
+        if (centerError > 1.25 || sizeError > 1.25) continue;
+        const error = centerError + sizeError;
+        if (error < bestError) {
+            best = i;
+            bestError = error;
+        }
+    }
+    return best;
 }
 
 function recognizedKeysFromCaps(caps = [], calibration = {}) {
@@ -987,6 +1379,26 @@ export function diagnoseRecognizedKeys(analysis = {}, options = {}) {
     if (raw.length && keys.length && raw.length > keys.length * 3) {
         add(notices, { code: 'many-raw-candidates', message: `${raw.length} raw candidates collapsed to ${keys.length} keys.` });
     }
+    const recognition = analysis.recognition || {};
+    const confidence = recognition.confidence?.score;
+    if (Number.isFinite(confidence) && recognition.confidence.level === 'low') {
+        add(warnings, {
+            code: 'low-recognition-confidence',
+            message: `Recognition confidence is ${Math.round(confidence * 100)}%. Review the detected geometry.`
+        }, { suspiciousKey: false });
+    } else if (Number.isFinite(confidence) && recognition.confidence.level === 'medium') {
+        add(notices, {
+            code: 'medium-recognition-confidence',
+            message: `Recognition confidence is ${Math.round(confidence * 100)}%.`
+        }, { suspiciousKey: false });
+    }
+    const usablePasses = (recognition.passes || []).filter((pass) => pass.keys > 0);
+    if (usablePasses.length > 1 && recognition.disagreement?.keyCountDelta > 0) {
+        add(notices, {
+            code: 'recognition-pass-disagreement',
+            message: `Recognition passes differ by up to ${recognition.disagreement.keyCountDelta} keys; ${recognition.selectedLabel || recognition.selectedPass} was selected.`
+        }, { suspiciousKey: false });
+    }
 
     for (const key of keys) {
         if (![key.x, key.y, key.w, key.h].every(Number.isFinite)) {
@@ -1180,6 +1592,11 @@ export function blueprintSummaryLines(analysis) {
         const source = analysis.recognized.source === 'caps' ? 'caps' : 'blueprint';
         const d = analysis.recognized.cornerOffset == null ? '' : `, d ${analysis.recognized.cornerOffset}`;
         lines.push(`Detected: ${analysis.recognized.keys.length} keys from ${analysis.recognized.raw.length} ${source}${d}${stacks ? `, ${stacks} stack` : ''}`);
+    }
+    if (analysis.recognition?.selectedPass) {
+        const confidence = analysis.recognition.confidence || {};
+        const percent = Number.isFinite(confidence.score) ? `${Math.round(confidence.score * 100)}%` : 'n/a';
+        lines.push(`Recognition: ${analysis.recognition.selectedLabel || analysis.recognition.selectedPass}; confidence ${percent} ${confidence.level || ''}`.trim());
     }
     if (analysis.diagnostics) {
         const warnings = analysis.diagnostics.warnings?.length || 0;
@@ -1752,6 +2169,10 @@ function numbers(value) {
 function round(value, decimals = 4) {
     const p = 10 ** decimals;
     return Math.round((value + Number.EPSILON) * p) / p;
+}
+
+function clamp01(value) {
+    return Math.max(0, Math.min(1, Number(value) || 0));
 }
 
 function median(values) {

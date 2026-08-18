@@ -43,7 +43,7 @@ import {
     sanitizeCompensationTableEdits as sanitizeCompensationTableEditsData,
     sanitizeLayoutEdits as sanitizeLayoutEditsData
 } from './kb/model-io.js';
-import { analyzeSvgBlueprint, blueprintSummaryLines } from './kb/svg-blueprint.js';
+import { analyzeSvgBlueprint, blueprintSummaryLines, selectSvgRecognitionPass } from './kb/svg-blueprint.js';
 
 const SIZE_EPS = 0.0001;
 const MIN_KEY_WIDTH_MM = 4;
@@ -3655,7 +3655,7 @@ async function showNewLayoutIntro(app) {
 
 function newLayoutIntroHtml() {
     return `<div class="new-layout-intro">
-        <p>Upload an SVG factory drawing or a Keyboarder JSON model. A valid SVG is created immediately.</p>
+        <p>Upload an SVG factory drawing or a Keyboarder JSON model. SVG recognition is reviewed before the layout is created.</p>
         ${newLayoutRequirementsHtml()}
         <p><a class="new-layout-sample-link" href="app/assets/new-layout-sample.svg" download>Download sample SVG</a></p>
     </div>`;
@@ -3740,7 +3740,8 @@ function svgImportSourceFromText(fileName, svgText, options = {}) {
 async function createNewLayoutFromSvgText(app, fileName, svgText, options = {}) {
     return createNewLayoutFromSvgSource(app, svgImportSourceFromText(fileName, svgText, options), {
         guardUnsaved: options.guardUnsaved === true,
-        showDialogs: options.showDialogs === true
+        showDialogs: options.showDialogs === true,
+        review: options.review !== false
     });
 }
 
@@ -3748,12 +3749,14 @@ async function createNewLayoutFromSvgSource(app, source, options = {}) {
     const file = source || svgImportSourceFromText('drawing.svg', '');
     const guardEnabled = options.guardUnsaved !== false;
     const showDialogs = options.showDialogs !== false;
+    const reviewEnabled = showDialogs && options.review !== false;
     const prof = perfEnabled();
     const started = prof ? perfNow() : 0;
     let analysis = null;
     let readMs = 0;
     let analyzeMs = 0;
     let contentStatsMs = 0;
+    let reviewMs = 0;
     let pipelineMs = 0;
     let guardMs = 0;
     let commitMs = 0;
@@ -3765,7 +3768,6 @@ async function createNewLayoutFromSvgSource(app, source, options = {}) {
         const analyzeStarted = prof ? perfNow() : 0;
         analysis = analyzeSvgBlueprint(svgText);
         analyzeMs = prof ? perfSince(analyzeStarted) : 0;
-        const draft = analysis.layoutDraft;
         const blockers = svgImportBlockers(analysis);
         if (blockers.length) {
             pipelineMs = prof ? perfSince(started) : 0;
@@ -3776,7 +3778,8 @@ async function createNewLayoutFromSvgSource(app, source, options = {}) {
                 totalMs: prof ? perfSince(started) : 0,
                 readMs,
                 analyzeMs,
-                contentStatsMs
+                contentStatsMs,
+                reviewMs
             };
             const report = rememberSvgImportReport(app, file, analysis, details, {
                 intro: 'Layout was not created because the SVG is missing required drawing data.'
@@ -3788,7 +3791,33 @@ async function createNewLayoutFromSvgSource(app, source, options = {}) {
         const contentStarted = prof ? perfNow() : 0;
         addSvgImportContentStats(analysis);
         contentStatsMs = prof ? perfSince(contentStarted) : 0;
+        if (reviewEnabled) {
+            const reviewStarted = prof ? perfNow() : 0;
+            const review = await showSvgImportReviewDialog(app, file, analysis);
+            reviewMs = prof ? perfSince(reviewStarted) : 0;
+            if (review?.action !== 'create') {
+                pipelineMs = prof ? perfSince(started) : 0;
+                const details = {
+                    status: review?.action === 'choose' ? 'choose-another' : 'cancelled',
+                    ms: pipelineMs,
+                    totalMs: prof ? perfSince(started) : 0,
+                    readMs,
+                    analyzeMs,
+                    contentStatsMs,
+                    reviewMs
+                };
+                const report = rememberSvgImportReport(app, file, analysis, details, {
+                    intro: review?.action === 'choose'
+                        ? 'Choose another SVG. The current layout was not changed.'
+                        : 'SVG import was cancelled. The current layout was not changed.'
+                });
+                recordSvgImportPerf(file, analysis, details);
+                if (review?.action === 'choose') openNewLayoutFilePicker();
+                return svgImportResult(false, details.status, report);
+            }
+        }
         pipelineMs = prof ? perfSince(started) : 0;
+        const draft = analysis.layoutDraft;
         const warnings = analysis.diagnostics?.warnings || [];
         const guardStarted = prof ? perfNow() : 0;
         const canReplaceLayout = guardEnabled ? await guardUnsavedBeforeNewLayout(app) : true;
@@ -3801,6 +3830,7 @@ async function createNewLayoutFromSvgSource(app, source, options = {}) {
                 readMs,
                 analyzeMs,
                 contentStatsMs,
+                reviewMs,
                 guardMs
             };
             rememberSvgImportReport(app, file, analysis, details, {
@@ -3825,6 +3855,7 @@ async function createNewLayoutFromSvgSource(app, source, options = {}) {
             readMs,
             analyzeMs,
             contentStatsMs,
+            reviewMs,
             guardMs,
             commitMs,
             warnings: warnings.length
@@ -3844,6 +3875,7 @@ async function createNewLayoutFromSvgSource(app, source, options = {}) {
             readMs,
             analyzeMs,
             contentStatsMs,
+            reviewMs,
             guardMs,
             commitMs
         };
@@ -3869,6 +3901,134 @@ function svgImportBlockers(analysis) {
         blockers.push('Keyboarder could not build a layout from the detected contours.');
     }
     return blockers;
+}
+
+async function showSvgImportReviewDialog(app, file, analysis) {
+    if (!app?.dialog) return { action: 'create' };
+    const modal = app.dialog.modal || document.getElementById('dialog');
+    modal?.classList.add('modal--import-review');
+    try {
+        while (true) {
+            const resultPromise = app.dialog.show({
+                title: 'Review SVG import',
+                text: svgImportReviewHtml(file?.name || 'drawing.svg', analysis),
+                html: true,
+                buttons: [
+                    { id: 'create', text: 'Create layout', type: 'primary' },
+                    { id: 'report', text: 'Report JSON', type: 'secondary' },
+                    { id: 'choose', text: 'Choose another file', type: 'ghost' },
+                    { id: 'cancel', text: 'Cancel', type: 'ghost' }
+                ]
+            });
+            const dialogText = app.dialog.textEl || document.getElementById('dialogText');
+            if (dialogText) dialogText.scrollTop = 0;
+            const root = document.querySelector('.svg-import-review');
+            const onChange = (event) => {
+                const input = event.target?.closest?.('input[data-svg-recognition-pass]');
+                if (!input || input.disabled || !input.value) return;
+                selectSvgRecognitionPass(analysis, input.value);
+                addSvgImportContentStats(analysis);
+                syncSvgImportReview(root, analysis);
+            };
+            root?.addEventListener('change', onChange);
+            const result = await resultPromise;
+            root?.removeEventListener('change', onChange);
+            if (result?.action !== 'report') return result || { action: 'cancel' };
+            rememberSvgImportReport(app, file, analysis, {
+                status: 'review',
+                warnings: analysis.diagnostics?.warnings?.length || 0
+            }, {
+                intro: 'SVG recognition is waiting for confirmation. The current layout has not changed.'
+            });
+            exportLastSvgImportReport();
+        }
+    } finally {
+        modal?.classList.remove('modal--import-review');
+    }
+}
+
+function svgImportReviewHtml(fileName, analysis) {
+    return `<div class="svg-import-review" data-selected-pass="${html(analysis?.recognition?.selectedPass || '')}">
+        <div class="svg-import-review-intro">
+            <p><strong>${html(fileName)}</strong></p>
+            <p>Check the detected keyboard before replacing the current layout. Choose a recognition source if the alternatives differ.</p>
+        </div>
+        <section>
+            <h3 class="verify-h">Recognition source</h3>
+            <div class="svg-import-pass-list" role="radiogroup" aria-label="Recognition source">
+                ${svgImportReviewPassesHtml(analysis)}
+            </div>
+        </section>
+        <div class="svg-import-review-live" aria-live="polite">
+            ${svgImportReviewSelectionHtml(analysis)}
+        </div>
+    </div>`;
+}
+
+function svgImportReviewPassesHtml(analysis) {
+    const selectedPass = analysis?.recognition?.selectedPass || '';
+    return (analysis?.recognition?.passes || []).map((pass) => {
+        const selected = pass.id === selectedPass;
+        const usable = pass.usable !== false && pass.keys > 0;
+        const confidence = pass.confidence || {};
+        const level = ['high', 'medium', 'low'].includes(confidence.level) ? confidence.level : 'low';
+        const meta = [
+            `${pass.keys || 0} keys`,
+            `${Math.round((confidence.score || 0) * 100)}% confidence`,
+            `${pass.segments || 0} ${pass.source === 'caps' ? 'shapes' : 'segments'}`
+        ].join(' · ');
+        return `<label class="svg-import-pass is-${level}${selected ? ' is-selected' : ''}${usable ? '' : ' is-disabled'}" data-pass-id="${html(pass.id)}">
+            <input type="radio" name="svgRecognitionPass" value="${html(pass.id)}" data-svg-recognition-pass
+                ${selected ? 'checked' : ''} ${usable ? '' : 'disabled'}>
+            <span class="svg-import-pass-copy">
+                <strong>${html(pass.label)}</strong>
+                <small>${html(meta)}</small>
+            </span>
+            <span class="svg-import-confidence is-${level}">${html(level)}</span>
+        </label>`;
+    }).join('');
+}
+
+function svgImportReviewSelectionHtml(analysis) {
+    const recognition = analysis?.recognition || {};
+    const draft = analysis?.layoutDraft;
+    const stats = draft?.stats || {};
+    const grid = draft?.layout?.grid || {};
+    const confidence = recognition.confidence || {};
+    const level = ['high', 'medium', 'low'].includes(confidence.level) ? confidence.level : 'low';
+    const warnings = analysis?.diagnostics?.warnings || [];
+    const notices = analysis?.diagnostics?.notices || [];
+    const standardKey = Number.isFinite(grid.keyWidth1U) && Number.isFinite(grid.keyHeight)
+        ? `${toMm(grid.keyWidth1U).toFixed(2)} × ${toMm(grid.keyHeight).toFixed(2)} mm`
+        : '—';
+    return `<section class="svg-import-review-summary">
+        <h3 class="verify-h">Selected result</h3>
+        <div class="svg-import-review-metrics">
+            <div><span>Keys</span><strong>${html(stats.keys ?? 0)}</strong></div>
+            <div><span>Standard key</span><strong>${html(standardKey)}</strong></div>
+            <div><span>Profile</span><strong>${html(stats.layoutProfile || 'Custom')}</strong></div>
+            <div><span>Confidence</span><strong>${html(`${Math.round((confidence.score || 0) * 100)}% ${level}`)}</strong></div>
+            <div><span>Warnings</span><strong>${html(warnings.length)}</strong></div>
+        </div>
+        <p class="svg-import-review-status is-${level}">${html(recognition.selectedLabel || recognition.selectedPass || 'No result')} · ${html(recognition.selection === 'user' ? 'selected manually' : 'selected automatically')}</p>
+    </section>
+    ${svgImportPreviewHtml(analysis)}
+    ${svgImportIssueListHtml('Warnings', warnings, analysis, { limit: 5 })}
+    ${svgImportIssueListHtml('Notes', notices, analysis, { limit: 4 })}`;
+}
+
+function syncSvgImportReview(root, analysis) {
+    if (!root) return;
+    const selectedPass = analysis?.recognition?.selectedPass || '';
+    root.dataset.selectedPass = selectedPass;
+    for (const card of root.querySelectorAll('.svg-import-pass')) {
+        const selected = card.dataset.passId === selectedPass;
+        card.classList.toggle('is-selected', selected);
+        const input = card.querySelector('input[data-svg-recognition-pass]');
+        if (input) input.checked = selected;
+    }
+    const live = root.querySelector('.svg-import-review-live');
+    if (live) live.innerHTML = svgImportReviewSelectionHtml(analysis);
 }
 
 async function showNewLayoutProblemDialog(app, file, analysis, details = {}, blockers = []) {
@@ -3931,6 +4091,8 @@ function recordSvgImportPerf(file, analysis, details = {}) {
         rows: draft.rows || 0,
         stacks: draft.stacks || 0,
         profile: draft.layoutProfile || '',
+        recognitionPass: analysis?.recognition?.selectedPass || '',
+        recognitionConfidence: analysis?.recognition?.confidence?.score || 0,
         warnings: diagnostics.warnings?.length || 0,
         notices: diagnostics.notices?.length || 0,
         stripMs: timings.stripMs || 0,
@@ -3938,8 +4100,11 @@ function recordSvgImportPerf(file, analysis, details = {}) {
         parseLinesMs: timings.parseLinesMs || 0,
         normalizeGeometryMs: timings.normalizeGeometryMs || 0,
         classifyLinesMs: timings.classifyLinesMs || 0,
+        classifyNormalizedMs: timings.classifyNormalizedMs || 0,
         pathArcsMs: timings.pathArcsMs || 0,
         capsMs: timings.capsMs || 0,
+        detectLinesMs: timings.detectLinesMs || 0,
+        detectNormalizedMs: timings.detectNormalizedMs || 0,
         detectMs: timings.detectMs || 0,
         diagnosticsMs: timings.diagnosticsMs || 0,
         draftMs: timings.draftMs || 0,
@@ -3968,6 +4133,7 @@ function svgImportToastText(layoutName, stats = {}) {
     if (Number.isFinite(content.alphaDualKeys)) parts.push(`${content.alphaDualKeys} alpha-dual`);
     if (Number.isFinite(content.fIconKeys) && content.fIconKeys) parts.push(`${content.fIconKeys} f-icons`);
     if (Number.isFinite(content.placeholderKeys)) parts.push(`${content.placeholderKeys} placeholders`);
+    if (Number.isFinite(stats.recognitionConfidence)) parts.push(`${Math.round(stats.recognitionConfidence * 100)}% confidence`);
     if (Number.isFinite(stats.warnings) && stats.warnings) parts.push(`${stats.warnings} warnings`);
     return parts.join(' · ');
 }
@@ -4087,11 +4253,32 @@ function svgImportReportHtml(fileName, analysis, options = {}) {
     return `<div class="svg-import-report">
         ${options.intro ? `<p>${html(options.intro)}</p>` : ''}
         <dl>${rows.map(([label, value]) => `<div><dt>${html(label)}</dt><dd>${html(value)}</dd></div>`).join('')}</dl>
+        ${svgRecognitionPassesHtml(analysis)}
         ${svgImportTimingsHtml(analysis)}
         ${svgImportPreviewHtml(analysis)}
         ${svgImportIssueListHtml('Warnings', warnings, analysis)}
         ${svgImportIssueListHtml('Notes', notices, analysis, { limit: 8 })}
     </div>`;
+}
+
+function svgRecognitionPassesHtml(analysis) {
+    const recognition = analysis?.recognition;
+    if (!recognition?.passes?.length) return '';
+    const selected = recognition.passes.find((pass) => pass.selected);
+    const selectedText = selected
+        ? `${selected.label} · ${Math.round((selected.confidence?.score || 0) * 100)}% ${selected.confidence?.level || ''}`
+        : 'No usable pass';
+    const rows = recognition.passes.map((pass) => {
+        const confidence = pass.confidence || {};
+        const label = `${pass.label}${pass.selected ? ' · selected' : ''}`;
+        const value = `${pass.keys} keys · ${Math.round((confidence.score || 0) * 100)}% ${confidence.level || ''}`;
+        return `<div><dt>${html(label)}</dt><dd>${html(value)}</dd></div>`;
+    }).join('');
+    return `<section class="svg-import-recognition">
+        <h3 class="verify-h">Recognition</h3>
+        <p>${html(selectedText)}</p>
+        <dl>${rows}</dl>
+    </section>`;
 }
 
 function svgImportTimingsHtml(analysis) {
@@ -4104,10 +4291,14 @@ function svgImportTimingsHtml(analysis) {
         ['Count tags', t.tagCountsMs],
         ['Parse lines', t.parseLinesMs],
         ['Normalize SVG geometry', t.normalizeGeometryMs],
-        ['Classify lines', t.classifyLinesMs],
+        ['Classify explicit lines', t.classifyLinesMs],
+        ['Classify normalized geometry', t.classifyNormalizedMs],
         ['Parse path arcs', t.pathArcsMs],
         ['Parse caps', t.capsMs],
-        ['Detect keys', t.detectMs],
+        ['Detect explicit pass', t.detectLinesMs],
+        ['Detect normalized pass', t.detectNormalizedMs],
+        ['Detect keys total', t.detectMs],
+        ['Apply review selection', t.reviewSelectionMs],
         ['Diagnostics', t.diagnosticsMs],
         ['Draft layout', t.draftMs]
     ].filter(([, value]) => Number.isFinite(value));
@@ -4298,13 +4489,20 @@ function svgImportReportData(fileName, analysis, details = {}) {
         summary: blueprintSummaryLines(analysis),
         groups: clonePlain(analysis?.groups || {}),
         elements: clonePlain(analysis?.elements || {}),
+        geometry: clonePlain(analysis?.geometry || null),
         calibration: clonePlain(analysis?.calibration || null),
+        recognition: clonePlain(analysis?.recognition || null),
         recognized: {
+            source: analysis?.recognized?.source || '',
+            pass: analysis?.recognized?.passId || '',
+            confidence: clonePlain(analysis?.recognized?.confidence || null),
+            provenance: clonePlain(analysis?.recognized?.provenance || null),
             keys: analysis?.recognized?.keys?.length || 0,
             raw: analysis?.recognized?.raw?.length || 0,
             cornerOffset: analysis?.recognized?.cornerOffset ?? null,
             estimatedGrid: clonePlain(analysis?.recognized?.estimatedGrid || null),
-            stacks: analysis?.recognized?.stackCells?.length || 0
+            stacks: analysis?.recognized?.stackCells?.length || 0,
+            keyConfidence: svgImportKeyConfidenceStats(analysis?.recognized?.keys || [])
         },
         diagnostics: {
             ok: !!diagnostics.ok,
@@ -4320,6 +4518,7 @@ function svgImportReportData(fileName, analysis, details = {}) {
             readMs: details.readMs || 0,
             analyzeMs: details.analyzeMs || 0,
             contentStatsMs: details.contentStatsMs || 0,
+            reviewMs: details.reviewMs || 0,
             guardMs: details.guardMs || 0,
             commitMs: details.commitMs || 0
         },
@@ -4336,6 +4535,17 @@ function svgImportReportIssue(issue = {}, analysis) {
     };
 }
 
+function svgImportKeyConfidenceStats(keys = []) {
+    const scores = keys.map((key) => key.confidence?.score).filter(Number.isFinite);
+    if (!scores.length) return null;
+    return {
+        min: round(Math.min(...scores), 4),
+        average: round(scores.reduce((sum, value) => sum + value, 0) / scores.length, 4),
+        max: round(Math.max(...scores), 4),
+        low: scores.filter((score) => score < 0.72).length
+    };
+}
+
 function svgImportReportKey(index, analysis) {
     const key = (analysis?.recognized?.keys || []).find((candidate) => candidate.i === index);
     if (!key) return null;
@@ -4346,7 +4556,9 @@ function svgImportReportKey(index, analysis) {
         h: round(key.h, 4),
         rowSpan: key.rowSpan || 1,
         stackIndex: key.stackIndex ?? null,
-        stackCount: key.stackCount ?? null
+        stackCount: key.stackCount ?? null,
+        confidence: clonePlain(key.confidence || null),
+        provenance: clonePlain(key.provenance || null)
     };
 }
 
@@ -6212,6 +6424,7 @@ function updateReadout(s, keys, grid, legends, bounds = null) {
     const box = bounds || { w: 0, h: 0 };
     const fit = bounds?.fit || rectBounds(keys) || { w: 0, h: 0 };
     setTextIfChanged('statKeys', String(keys.length));
+    setTextIfChanged('statKeySize', `${toMm(grid.keyWidth1U).toFixed(2)} × ${toMm(grid.keyHeight).toFixed(2)} mm`);
     setTextIfChanged('statBoard', `${toMm(box.w).toFixed(1)} × ${toMm(box.h).toFixed(1)} mm`);
     setTextIfChanged('statKeyBounds', `${toMm(fit.w).toFixed(1)} × ${toMm(fit.h).toFixed(1)} mm`);
     setTextIfChanged('statGap', `${toMm(gapOf(grid)).toFixed(2)} mm`);

@@ -9,6 +9,7 @@ import {
     diagnoseRecognizedKeys,
     extractSvgGroup,
     parseSvgAttributes,
+    selectSvgRecognitionPass,
     stripIllustratorPrivateData
 } from '../app/kb/svg-blueprint.js';
 
@@ -203,6 +204,10 @@ assert.equal(real.calibration.rowPitch, 53.5121);
 assert.equal(real.recognized.cornerOffset, 3.3779);
 assert.equal(real.recognized.raw.length, 220);
 assert.equal(real.recognized.keys.length, 110);
+assert.equal(real.recognition.selectedPass, 'explicit-lines');
+assert.equal(real.recognition.confidence.level, 'high');
+assert.deepEqual(real.recognition.passes.map((pass) => pass.id), ['explicit-lines', 'caps']);
+assert.ok(real.recognized.keys.every((key) => key.provenance.supportingPasses.includes('caps')));
 assert.equal(real.diagnostics.ok, true);
 assert.equal(real.diagnostics.suspiciousKeys, 0);
 assert.equal(real.diagnostics.warnings.length, 0);
@@ -253,11 +258,43 @@ assert.equal(pathOnlyAnalysis.groups.blueprint, true);
 assert.equal(pathOnlyAnalysis.elements.sourceLines, 0);
 assert.equal(pathOnlyAnalysis.geometry.source, 'normalized-svg');
 assert.ok(pathOnlyAnalysis.geometry.stats.segments > 2877);
+assert.equal(pathOnlyAnalysis.recognition.selectedPass, 'normalized-svg');
+assert.equal(pathOnlyAnalysis.recognition.confidence.level, 'high');
+assert.equal(pathOnlyAnalysis.recognized.keys[0].provenance.pass, 'normalized-svg');
+assert.ok(pathOnlyAnalysis.recognized.keys.every((key) => Number.isFinite(key.confidence.score)));
 assert.equal(pathOnlyAnalysis.recognized.keys.length, 78);
 assert.equal(pathOnlyAnalysis.recognized.stackCells.length, 1);
 assert.equal(pathOnlyAnalysis.layoutDraft.stats.layoutProfile, 'ANSI_COMPACT_78');
 assert.equal(pathOnlyAnalysis.layoutDraft.stats.semanticKeys, 78);
 assert.equal(pathOnlyAnalysis.diagnostics.warnings.length, 0);
+
+const mixedGeometrySvg = `<?xml version="1.0"?>
+<svg viewBox="0 0 160 50" xmlns="http://www.w3.org/2000/svg">
+  <g id="caps">
+    <rect x="0" y="0" width="46" height="46" rx="3" ry="3"/>
+    <rect x="53" y="0" width="46" height="46" rx="3" ry="3"/>
+  </g>
+  <g id="blueprint">
+    ${roundedRectLines(0, 0, 46, 46, 3)}
+    ${roundedRectLines(53, 0, 46, 46, 3)}
+    <path d="M109 0H149M109 46H149M106 3V43M152 3V43"/>
+  </g>
+</svg>`;
+const mixedGeometryAnalysis = analyzeSvgBlueprint(mixedGeometrySvg);
+assert.equal(mixedGeometryAnalysis.recognition.passes.length, 3);
+assert.deepEqual(mixedGeometryAnalysis.recognition.passes.map((pass) => pass.keys), [2, 3, 2]);
+assert.equal(mixedGeometryAnalysis.recognition.selectedPass, 'normalized-svg');
+assert.equal(mixedGeometryAnalysis.recognized.keys.length, 3);
+assert.equal(mixedGeometryAnalysis.recognized.provenance.strategy, 'adaptive-multipass');
+assert.equal(mixedGeometryAnalysis.diagnostics.warnings.length, 0);
+selectSvgRecognitionPass(mixedGeometryAnalysis, 'explicit-lines');
+assert.equal(mixedGeometryAnalysis.recognition.selection, 'user');
+assert.equal(mixedGeometryAnalysis.recognition.selectedPass, 'explicit-lines');
+assert.equal(mixedGeometryAnalysis.recognized.keys.length, 2);
+assert.equal(mixedGeometryAnalysis.layoutDraft.stats.keys, 2);
+assert.equal(mixedGeometryAnalysis.layoutDraft.stats.recognitionSelection, 'user');
+selectSvgRecognitionPass(mixedGeometryAnalysis, 'normalized-svg');
+assert.equal(mixedGeometryAnalysis.recognized.keys.length, 3);
 
 const semanticCompact = analyzeSvgBlueprint(ansiCompactSvg());
 assert.equal(semanticCompact.recognized.keys.length, 77);
