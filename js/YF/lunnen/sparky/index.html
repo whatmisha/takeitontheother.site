@@ -115,6 +115,34 @@
                 </div>
             </aside>
 
+            <aside class="controls-panel controls-panel-effects" id="eyesPanel">
+                <div class="panel-header" id="eyesPanelHeader">
+                    <span>Eyes</span>
+                    <span class="collapse-icon" aria-hidden="true">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <p class="sparky-panel-note">The main eyes stay fixed; the lids shape the expression.</p>
+
+                        <div class="control-group">
+                            <label for="cuteSlider"><span>Cute</span>
+                                <input type="text" class="value-display" id="cuteValue" value="0"></label>
+                            <input type="range" id="cuteSlider" min="0" max="100" step="1" value="0">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="angrySlider"><span>Angry</span>
+                                <input type="text" class="value-display" id="angryValue" value="0"></label>
+                            <input type="range" id="angrySlider" min="0" max="100" step="1" value="0">
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
             <aside class="controls-panel controls-panel-text" id="colorsPanel">
                 <div class="panel-header" id="colorsPanelHeader">
                     <span>Colors</span>

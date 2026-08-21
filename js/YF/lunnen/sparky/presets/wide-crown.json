@@ -21,7 +21,6 @@
   "eyeColor": "#111111",
   "backgroundColor": "#391f51",
   "showGuides": false,
-  "eyeDiameter": 32,
-  "eyeGap": 32,
-  "eyeCenterY": 270
+  "cute": 0,
+  "angry": 0
 }

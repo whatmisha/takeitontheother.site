@@ -3,10 +3,12 @@ import {
     DEFAULT_GEOMETRY,
     buildCharacterGeometry
 } from './src/geometry/characterGeometry.js';
+import { buildEyeGeometry } from './src/geometry/eyeGeometry.js';
 import { clamp, distance, point, scale, subtract, add } from './src/geometry/vector.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const GUIDE_CLIP_ID = 'sparky-artboard-clip';
+const HEAD_CLIP_ID = 'sparky-head-clip';
 
 const settings = {
     width: DEFAULT_GEOMETRY.artboardWidth,
@@ -31,9 +33,8 @@ const settings = {
     eyeColor: '#000000',
     backgroundColor: '#000000',
     showGuides: true,
-    eyeDiameter: 32,
-    eyeGap: 32,
-    eyeCenterY: 270
+    cute: 0,
+    angry: 0
 };
 
 const STATE_KEYS = Object.freeze(Object.keys(settings));
@@ -58,17 +59,70 @@ function append(parent, ...children) {
     return parent;
 }
 
-function createClipPath(width, height) {
+function createDefinitions(width, height, headPath) {
     const defs = makeSvgElement('defs');
-    const clipPath = makeSvgElement('clipPath', { id: GUIDE_CLIP_ID });
-    clipPath.appendChild(makeSvgElement('rect', { x: 0, y: 0, width, height }));
-    defs.appendChild(clipPath);
+    const guideClip = makeSvgElement('clipPath', { id: GUIDE_CLIP_ID });
+    guideClip.appendChild(makeSvgElement('rect', { x: 0, y: 0, width, height }));
+    const headClip = makeSvgElement('clipPath', { id: HEAD_CLIP_ID });
+    headClip.appendChild(makeSvgElement('path', { d: headPath }));
+    append(defs, guideClip, headClip);
     return defs;
 }
 
-function drawCharacter(ctx, geometry) {
+function drawEyes(ctx, eyeGeometry, definitions) {
+    const { create, width, height, settings: state } = ctx;
+    const eyes = create('g', {
+        fill: state.eyeColor,
+        'clip-path': `url(#${HEAD_CLIP_ID})`,
+        'data-layer': 'eyes'
+    });
+
+    ['left', 'right'].forEach((side) => {
+        const eye = eyeGeometry[side];
+        const maskId = `sparky-${side}-eye-mask`;
+        const mask = create('mask', {
+            id: maskId,
+            x: 0,
+            y: 0,
+            width,
+            height,
+            maskUnits: 'userSpaceOnUse',
+            maskContentUnits: 'userSpaceOnUse'
+        });
+        append(mask,
+            create('path', { d: eye.eye1.path, fill: '#ffffff' }),
+            create('path', {
+                id: `${side}_eye_top`,
+                d: eye.top.path,
+                fill: '#000000',
+                'data-object': `${side}_eye_top`
+            }),
+            create('path', {
+                id: `${side}_eye_bottom`,
+                d: eye.bottom.path,
+                fill: '#000000',
+                'data-object': `${side}_eye_bottom`
+            })
+        );
+        definitions.appendChild(mask);
+
+        const eyeGroup = create('g', { id: `${side}_eye`, 'data-eye': side });
+        eyeGroup.appendChild(create('path', {
+            id: `${side}_eye1`,
+            d: eye.eye1.path,
+            mask: `url(#${maskId})`,
+            'data-object': `${side}_eye1`
+        }));
+        eyes.appendChild(eyeGroup);
+    });
+
+    return eyes;
+}
+
+function drawCharacter(ctx, geometry, eyeGeometry) {
     const { svg, create, width, height, settings: state } = ctx;
-    svg.appendChild(createClipPath(width, height));
+    const definitions = createDefinitions(width, height, geometry.rounded.path);
+    svg.appendChild(definitions);
     svg.appendChild(create('rect', {
         x: 0,
         y: 0,
@@ -85,14 +139,7 @@ function drawCharacter(ctx, geometry) {
         'data-layer': 'head'
     }));
 
-    const eyeRadius = state.eyeDiameter / 2;
-    const eyeOffset = state.eyeGap / 2 + eyeRadius;
-    const eyes = create('g', { fill: state.eyeColor, 'data-layer': 'eyes' });
-    append(eyes,
-        create('circle', { cx: width / 2 - eyeOffset, cy: state.eyeCenterY, r: eyeRadius }),
-        create('circle', { cx: width / 2 + eyeOffset, cy: state.eyeCenterY, r: eyeRadius })
-    );
-    svg.appendChild(eyes);
+    svg.appendChild(drawEyes(ctx, eyeGeometry, definitions));
 
     if (state.showGuides) drawGuides(ctx, geometry);
 }
@@ -299,13 +346,16 @@ const app = defineTool({
             { id: 'rayWidthSlider', valueId: 'rayWidthValue', setting: 'rayWidth', min: 20, max: 160, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'cornerRadiusSlider', valueId: 'cornerRadiusValue', setting: 'cornerRadius', min: 0, max: 30, decimals: 1, baseStep: 0.5, shiftStep: 5 },
             { id: 'focusXSlider', valueId: 'focusXValue', setting: 'focusX', min: 120, max: 360, decimals: 1, baseStep: 0.5, shiftStep: 5 },
-            { id: 'focusYSlider', valueId: 'focusYValue', setting: 'focusY', min: 180, max: 390, decimals: 1, baseStep: 0.5, shiftStep: 5 }
+            { id: 'focusYSlider', valueId: 'focusYValue', setting: 'focusY', min: 180, max: 390, decimals: 1, baseStep: 0.5, shiftStep: 5 },
+            { id: 'cuteSlider', valueId: 'cuteValue', setting: 'cute', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'angrySlider', valueId: 'angryValue', setting: 'angry', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 }
         ],
         toggles: true
     },
     panels: [
         { id: 'shapePanel', headerId: 'shapePanelHeader', persistent: true },
         { id: 'focusPanel', headerId: 'focusPanelHeader', persistent: true },
+        { id: 'eyesPanel', headerId: 'eyesPanelHeader', persistent: true },
         { id: 'colorsPanel', headerId: 'colorsPanelHeader', persistent: true }
     ],
     colorPickers: {
@@ -330,7 +380,7 @@ const app = defineTool({
         stripKeys: ['width', 'height'],
         quantizableFloatKeys: [
             'focusX', 'focusY', 'rayLength', 'rayWidth', 'cornerRadius',
-            'boundaryCenterX', 'boundaryCenterY', 'boundaryRadius'
+            'boundaryCenterX', 'boundaryCenterY', 'boundaryRadius', 'cute', 'angry'
         ],
         decimals: 2
     },
@@ -347,9 +397,11 @@ const app = defineTool({
     render(ctx) {
         try {
             const geometry = buildCharacterGeometry(ctx.settings);
+            const eyeGeometry = buildEyeGeometry(ctx.settings, geometry);
             ctx.app.characterGeometry = geometry;
+            ctx.app.eyeGeometry = eyeGeometry;
             ctx.app.geometryError = null;
-            drawCharacter(ctx, geometry);
+            drawCharacter(ctx, geometry, eyeGeometry);
         } catch (error) {
             ctx.app.geometryError = error;
             renderFailure(ctx, error);
@@ -365,7 +417,7 @@ const app = defineTool({
         document.getElementById('introHelpBtn')?.addEventListener('click', () => {
             tool.dialog?.alert({
                 title: 'Lunnen Sparky',
-                text: 'A mathematically precise five-ray character. Change ray geometry, drag the green focus, save or share presets, and export a clean SVG or PNG. Guides are always excluded from export.'
+                text: 'A mathematically precise five-ray character. Change ray geometry, drag the green focus, shape the expression with Cute and Angry, save or share presets, and export a clean SVG or PNG. Guides are always excluded from export.'
             });
         });
     }
