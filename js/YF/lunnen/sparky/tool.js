@@ -25,6 +25,7 @@ const HEAD_CLIP_ID = 'sparky-head-clip';
 const MOBILE_SHOWCASE_QUERY = '(max-width: 768px), (hover: none) and (pointer: coarse)';
 const DESKTOP_FIT_PADDING = 58;
 const MOBILE_FIT_PADDING = 24;
+const MOBILE_GRAPHIC_OFFSET_PX = 24;
 let mobileShowcaseFocus = null;
 
 const settings = {
@@ -92,6 +93,10 @@ function fitShowcaseToViewport(app, mobile = isMobileShowcase()) {
     const padding = mobile ? MOBILE_FIT_PADDING : DESKTOP_FIT_PADDING;
     zoomPan.fitPadding = { top: padding, right: padding, bottom: padding, left: padding };
     app.target.fitToScreen();
+    if (mobile) {
+        zoomPan.panY += MOBILE_GRAPHIC_OFFSET_PX / zoomPan.zoom;
+        zoomPan.updateTransform();
+    }
 }
 
 function bindMobileShowcase(app) {
