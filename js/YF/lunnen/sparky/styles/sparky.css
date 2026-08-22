@@ -76,3 +76,41 @@
         display: none;
     }
 }
+
+/* Mobile showcase: the shipped Basic character is the complete interface. */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+    html,
+    body,
+    .container,
+    .main-content,
+    .canvas-container {
+        width: 100%;
+        height: 100dvh;
+        min-height: 100dvh;
+        overflow: hidden;
+    }
+
+    .top-links,
+    .controls-panel,
+    .bottom-buttons,
+    dialog {
+        display: none !important;
+    }
+
+    .container,
+    .main-content,
+    .canvas-container {
+        position: fixed;
+        inset: 0;
+        padding: 0;
+    }
+
+    .canvas-container {
+        pointer-events: none;
+    }
+
+    #mainSvg {
+        width: 100% !important;
+        height: 100% !important;
+    }
+}

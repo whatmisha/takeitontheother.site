@@ -22,6 +22,9 @@ import { clamp, distance, point, scale, subtract, add } from './src/geometry/vec
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const GUIDE_CLIP_ID = 'sparky-artboard-clip';
 const HEAD_CLIP_ID = 'sparky-head-clip';
+const MOBILE_SHOWCASE_QUERY = '(max-width: 768px), (hover: none) and (pointer: coarse)';
+const DESKTOP_FIT_PADDING = 58;
+const MOBILE_FIT_PADDING = 24;
 
 const settings = {
     width: DEFAULT_GEOMETRY.artboardWidth,
@@ -69,6 +72,51 @@ function normalizeIncomingState(source = {}) {
         normalized.roundness = clamp(source.cornerRadius * 6, 0, 100);
     }
     return extractState(normalized);
+}
+
+function isMobileShowcase() {
+    return window.matchMedia?.(MOBILE_SHOWCASE_QUERY).matches
+        ?? window.innerWidth <= 768;
+}
+
+function activeRenderSettings(current) {
+    return isMobileShowcase() ? settings : current;
+}
+
+function fitShowcaseToViewport(app, mobile = isMobileShowcase()) {
+    const zoomPan = app.target?.zoomPan;
+    if (!zoomPan) return;
+    const padding = mobile ? MOBILE_FIT_PADDING : DESKTOP_FIT_PADDING;
+    zoomPan.fitPadding = { top: padding, right: padding, bottom: padding, left: padding };
+    app.target.fitToScreen();
+}
+
+function bindMobileShowcase(app) {
+    const media = window.matchMedia?.(MOBILE_SHOWCASE_QUERY);
+    let fitFrame = null;
+    const scheduleFit = (mobile) => {
+        if (fitFrame != null) cancelAnimationFrame(fitFrame);
+        fitFrame = requestAnimationFrame(() => {
+            fitFrame = null;
+            fitShowcaseToViewport(app, mobile);
+        });
+    };
+    const syncMode = () => {
+        const mobile = media?.matches ?? window.innerWidth <= 768;
+        document.documentElement.classList.toggle('sparky-mobile-showcase', mobile);
+        if (mobile) stopBlink(app);
+        app.renderNow();
+        snapDisplayedEyes(app);
+        scheduleFit(mobile);
+    };
+    const refitMobile = () => {
+        if (isMobileShowcase()) scheduleFit(true);
+    };
+
+    media?.addEventListener?.('change', syncMode);
+    window.addEventListener('resize', refitMobile);
+    window.visualViewport?.addEventListener('resize', refitMobile);
+    syncMode();
 }
 
 function exportSettingsJSON(tool, filename) {
@@ -192,6 +240,7 @@ function bindBlink(app) {
         '.dialog-overlay'
     ].join(',');
     document.addEventListener('click', (event) => {
+        if (isMobileShowcase()) return;
         if (!(event.target instanceof Element)) return;
         if (event.target.closest(excluded)) return;
         startBlink(app);
@@ -591,13 +640,17 @@ const app = defineTool({
     },
     render(ctx) {
         try {
-            const geometry = buildCharacterGeometry(ctx.settings);
-            const eyeGeometry = buildEyeGeometry(ctx.settings, geometry);
+            const renderSettings = activeRenderSettings(ctx.settings);
+            const renderContext = renderSettings === ctx.settings
+                ? ctx
+                : { ...ctx, settings: renderSettings };
+            const geometry = buildCharacterGeometry(renderSettings);
+            const eyeGeometry = buildEyeGeometry(renderSettings, geometry);
             retargetDisplayedEyes(ctx.app, eyeGeometry.pairCenter);
             ctx.app.characterGeometry = geometry;
             ctx.app.eyeGeometry = eyeGeometry;
             ctx.app.geometryError = null;
-            drawCharacter(ctx, geometry, eyeGeometry);
+            drawCharacter(renderContext, geometry, eyeGeometry);
             applyEyeMotionTransform(ctx.app);
             applyBlink(ctx.app);
         } catch (error) {
@@ -625,6 +678,7 @@ const app = defineTool({
         bindFocusDragging(tool);
         bindManualFocusControls(tool);
         bindBlink(tool);
+        bindMobileShowcase(tool);
         document.getElementById('resetFocusBtn')?.addEventListener('click', () => {
             disableFollowCursor(tool);
             setFocus(tool, DEFAULT_GEOMETRY.focusX, DEFAULT_GEOMETRY.focusY);
