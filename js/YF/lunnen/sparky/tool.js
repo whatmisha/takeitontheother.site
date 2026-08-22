@@ -26,7 +26,8 @@ const MOBILE_SHOWCASE_QUERY = '(max-width: 768px), (hover: none) and (pointer: c
 const DESKTOP_FIT_PADDING = 58;
 const MOBILE_FIT_PADDING = 24;
 const MOBILE_GRAPHIC_OFFSET_PX = 24;
-const MOBILE_FOCUS_RESPONSE_MS = 45;
+const MOBILE_FOCUS_TAP_RESPONSE_MS = 135;
+const MOBILE_FOCUS_SWIPE_RESPONSE_MS = 45;
 let mobileShowcaseFocus = null;
 
 const settings = {
@@ -159,7 +160,7 @@ function append(parent, ...children) {
 
 const eyeMotion = createEyeMotionState();
 let eyeMotionFrame = null;
-const mobileFocusMotion = createEyeMotionState(MOBILE_FOCUS_RESPONSE_MS);
+const mobileFocusMotion = createEyeMotionState(MOBILE_FOCUS_TAP_RESPONSE_MS);
 let mobileFocusFrame = null;
 const blink = createBlinkState();
 let blinkFrame = null;
@@ -192,8 +193,9 @@ function scheduleMobileFocusMotion(app) {
     });
 }
 
-function retargetMobileFocus(app, target) {
+function retargetMobileFocus(app, target, responseMs = MOBILE_FOCUS_SWIPE_RESPONSE_MS) {
     if (!mobileFocusMotion.displayedCenter) resetMobileFocusMotion(target);
+    mobileFocusMotion.timeConstant = responseMs;
     const result = retargetEyeMotion(mobileFocusMotion, target, performance.now());
     mobileShowcaseFocus = { ...mobileFocusMotion.displayedCenter };
     if (result.settled) {
@@ -543,13 +545,13 @@ function bindFocusDragging(app) {
     let followFrame = null;
     let pendingFollowPoint = null;
 
-    const update = (raw) => {
+    const update = (raw, responseMs = MOBILE_FOCUS_SWIPE_RESPONSE_MS) => {
         const mobile = isMobileShowcase();
         const focus = constrainFocus(raw, activeRenderSettings(app.settings));
         const x = Number(focus.x.toFixed(1));
         const y = Number(focus.y.toFixed(1));
         if (mobile) {
-            retargetMobileFocus(app, { x, y });
+            retargetMobileFocus(app, { x, y }, responseMs);
             return;
         }
         app.settingsStore.setMultiple({ focusX: x, focusY: y });
@@ -557,9 +559,9 @@ function bindFocusDragging(app) {
         app.sliders?.setValue('focusYSlider', y, false);
     };
 
-    const updateFromEvent = (event) => {
+    const updateFromEvent = (event, responseMs) => {
         const raw = pointFromPointer(svg, event);
-        if (raw) update(raw);
+        if (raw) update(raw, responseMs);
     };
 
     const scheduleFollow = (event) => {
@@ -577,7 +579,7 @@ function bindFocusDragging(app) {
         if (isMobileShowcase()) {
             pointerId = event.pointerId;
             svg.setPointerCapture(pointerId);
-            updateFromEvent(event);
+            updateFromEvent(event, MOBILE_FOCUS_TAP_RESPONSE_MS);
             return;
         }
         const handle = event.target.closest?.('[data-focus-handle="true"]');
@@ -593,7 +595,7 @@ function bindFocusDragging(app) {
     svg.addEventListener('pointermove', (event) => {
         if (event.pointerId === pointerId) {
             event.preventDefault();
-            updateFromEvent(event);
+            updateFromEvent(event, MOBILE_FOCUS_SWIPE_RESPONSE_MS);
             return;
         }
         if (isMobileShowcase() || app.settings.followCursor) scheduleFollow(event);
