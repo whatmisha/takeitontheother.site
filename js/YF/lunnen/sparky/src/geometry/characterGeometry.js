@@ -1,5 +1,5 @@
 import { createCircleBoundary, createEllipseBoundary } from './boundaries.js';
-import { createRoundedPolygon } from './roundedPolygon.js';
+import { createRelativeRoundedPolygon } from './roundedPolygon.js';
 import {
     add,
     directionFromDegrees,
@@ -26,7 +26,7 @@ export const DEFAULT_GEOMETRY = Object.freeze({
     angleStep: 36,
     rayLength: 240,
     rayWidth: 80,
-    cornerRadius: 10
+    roundness: 60
 });
 
 export function createBoundary(settings) {
@@ -64,6 +64,7 @@ export function createRayProfiles(settings) {
                 + (override.angleOffset || 0),
             length: override.length ?? settings.rayLength,
             width: override.width ?? settings.rayWidth,
+            roundnessWeight: override.roundnessWeight ?? 1,
             tipRadius: override.tipRadius ?? settings.cornerRadius,
             valleyRadius: override.valleyRadius ?? settings.cornerRadius
         };
@@ -97,6 +98,9 @@ function requireIntersection(firstStart, firstEnd, secondStart, secondEnd, label
 
 export function buildCharacterGeometry(settings = {}) {
     const values = { ...DEFAULT_GEOMETRY, ...settings };
+    if (settings.roundness == null && Number.isFinite(settings.cornerRadius)) {
+        values.roundness = Math.max(0, Math.min(100, settings.cornerRadius * 6));
+    }
     const focus = point(values.focusX, values.focusY);
     const boundary = createBoundary(values);
     const profiles = createRayProfiles(values);
@@ -127,16 +131,20 @@ export function buildCharacterGeometry(settings = {}) {
 
     const vertices = [last.tip, baseClosure, first.tip];
     const vertexMeta = [
-        { kind: 'tip', rayIndex: last.index, radius: last.tipRadius },
-        { kind: 'base', radius: values.cornerRadius },
-        { kind: 'tip', rayIndex: first.index, radius: first.tipRadius }
+        { kind: 'tip', rayIndex: last.index, roundnessWeight: last.roundnessWeight },
+        { kind: 'base' },
+        { kind: 'tip', rayIndex: first.index, roundnessWeight: first.roundnessWeight }
     ];
 
     for (let index = 0; index < valleys.length; index += 1) {
         vertices.push(valleys[index], rays[index + 1].tip);
         vertexMeta.push(
-            { kind: 'valley', afterRayIndex: index, radius: rays[index].valleyRadius },
-            { kind: 'tip', rayIndex: rays[index + 1].index, radius: rays[index + 1].tipRadius }
+            { kind: 'valley', afterRayIndex: index },
+            {
+                kind: 'tip',
+                rayIndex: rays[index + 1].index,
+                roundnessWeight: rays[index + 1].roundnessWeight
+            }
         );
     }
 
@@ -144,6 +152,6 @@ export function buildCharacterGeometry(settings = {}) {
     vertices.pop();
     vertexMeta.pop();
 
-    const rounded = createRoundedPolygon(vertices, (_, index) => vertexMeta[index].radius);
+    const rounded = createRelativeRoundedPolygon(vertices, vertexMeta, values.roundness);
     return { values, focus, boundary, rays, valleys, baseClosure, vertices, vertexMeta, rounded };
 }

@@ -31,7 +31,7 @@ test('default tips lie on the mathematical guide circle', () => {
     });
 });
 
-test('default outline is horizontally symmetric and rounded with ten-pixel fillets', () => {
+test('default outline is horizontally symmetric with relative fillets', () => {
     const geometry = buildCharacterGeometry();
     closeTo(geometry.baseClosure.x, DEFAULT_GEOMETRY.boundaryCenterX);
     closeTo(geometry.rays[0].tip.x + geometry.rays[4].tip.x, DEFAULT_GEOMETRY.boundaryCenterX * 2);
@@ -39,7 +39,12 @@ test('default outline is horizontally symmetric and rounded with ten-pixel fille
     assert.match(geometry.rounded.path, /^M /);
     assert.match(geometry.rounded.path, / A /);
     assert.match(geometry.rounded.path, / Z$/);
-    geometry.rounded.corners.forEach((corner) => closeTo(corner.radius, 10));
+    closeTo(geometry.rounded.normalizedAmount, 0.6);
+    geometry.rounded.corners.forEach((corner, index) => {
+        closeTo(corner.radius, geometry.rounded.maximumRadii[index] * 0.6);
+    });
+    closeTo(geometry.rounded.corners[0].radius, geometry.rounded.corners[2].radius);
+    closeTo(geometry.rounded.corners[4].radius, geometry.rounded.corners[8].radius);
 });
 
 test('per-ray overrides support non-linear future distributions', () => {
@@ -56,11 +61,48 @@ test('per-ray overrides support non-linear future distributions', () => {
         angleDeg: -165,
         length: 260,
         width: 64,
+        roundnessWeight: 1,
         tipRadius: 4,
         valleyRadius: 6
     });
     assert.equal(profiles[4].angleDeg, -13);
     assert.equal(profiles[4].length, 210);
+});
+
+test('maximum relative rounding leaves a safe gap before neighbouring arcs touch', () => {
+    const geometry = buildCharacterGeometry({ roundness: 100 });
+    geometry.rounded.corners.forEach((corner, index) => {
+        closeTo(corner.radius, geometry.rounded.requestedRadii[index]);
+        const next = geometry.rounded.corners[(index + 1) % geometry.rounded.corners.length];
+        const remainingEdge = corner.nextLength - corner.idealDistance - next.idealDistance;
+        assert.ok(remainingEdge > 0, `corner arcs overlap on edge ${index}`);
+    });
+});
+
+test('each joining radius equals the smaller neighbouring tip radius', () => {
+    const geometry = buildCharacterGeometry({ focusX: 120, roundness: 100 });
+    const tips = new Map();
+    geometry.vertexMeta.forEach((meta, index) => {
+        if (meta.kind === 'tip') tips.set(meta.rayIndex, geometry.rounded.corners[index].radius);
+    });
+    geometry.vertexMeta.forEach((meta, index) => {
+        const radius = geometry.rounded.corners[index].radius;
+        if (meta.kind === 'valley') {
+            closeTo(radius, Math.min(tips.get(meta.afterRayIndex), tips.get(meta.afterRayIndex + 1)));
+        } else if (meta.kind === 'base') {
+            closeTo(radius, Math.min(tips.get(0), tips.get(geometry.rays.length - 1)));
+        }
+    });
+    assert.ok(tips.get(4) > tips.get(0), 'the nearer right ray should have the larger tip fillet');
+});
+
+test('legacy pixel cornerRadius migrates to the relative scale', () => {
+    const migrated = buildCharacterGeometry({ cornerRadius: 10 });
+    const current = buildCharacterGeometry({ roundness: 60 });
+    closeTo(migrated.values.roundness, 60);
+    migrated.rounded.corners.forEach((corner, index) => {
+        closeTo(corner.radius, current.rounded.corners[index].radius);
+    });
 });
 
 test('ellipse boundary already satisfies the same ray-intersection contract', () => {

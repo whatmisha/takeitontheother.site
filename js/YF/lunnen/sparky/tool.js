@@ -27,12 +27,16 @@ const settings = {
     angleStep: DEFAULT_GEOMETRY.angleStep,
     rayLength: DEFAULT_GEOMETRY.rayLength,
     rayWidth: DEFAULT_GEOMETRY.rayWidth,
-    cornerRadius: DEFAULT_GEOMETRY.cornerRadius,
+    roundness: DEFAULT_GEOMETRY.roundness,
     rayOverrides: [{}, {}, {}, {}, {}],
     headColor: '#ffffff',
     eyeColor: '#000000',
     backgroundColor: '#000000',
     showGuides: true,
+    showPoint: true,
+    eyePerspective: 0,
+    eyeSize: 0,
+    eyeDistance: 0,
     cute: 0,
     angry: 0
 };
@@ -41,6 +45,14 @@ const STATE_KEYS = Object.freeze(Object.keys(settings));
 
 function extractState(source) {
     return Object.fromEntries(STATE_KEYS.map((key) => [key, source[key]]));
+}
+
+function normalizeIncomingState(source = {}) {
+    const normalized = { ...settings, ...source };
+    if (source.roundness == null && Number.isFinite(source.cornerRadius)) {
+        normalized.roundness = clamp(source.cornerRadius * 6, 0, 100);
+    }
+    return extractState(normalized);
 }
 
 function setAttributes(element, attributes) {
@@ -141,7 +153,7 @@ function drawCharacter(ctx, geometry, eyeGeometry) {
 
     svg.appendChild(drawEyes(ctx, eyeGeometry, definitions));
 
-    if (state.showGuides) drawGuides(ctx, geometry);
+    if (state.showGuides || state.showPoint) drawGuides(ctx, geometry);
 }
 
 function drawGuides(ctx, geometry) {
@@ -159,91 +171,95 @@ function drawGuides(ctx, geometry) {
         'aria-hidden': 'true'
     });
 
-    append(guides,
-        create('line', {
-            x1: state.boundaryCenterX,
-            y1: 0,
-            x2: state.boundaryCenterX,
-            y2: height,
-            stroke: '#315bff',
-            opacity: 0.55,
-            ...commonStroke
-        }),
-        create('line', {
-            x1: 0,
-            y1: state.boundaryCenterY,
-            x2: width,
-            y2: state.boundaryCenterY,
-            stroke: '#315bff',
-            opacity: 0.55,
-            ...commonStroke
-        })
-    );
+    if (state.showGuides) {
+        append(guides,
+            create('line', {
+                x1: state.boundaryCenterX,
+                y1: 0,
+                x2: state.boundaryCenterX,
+                y2: height,
+                stroke: '#315bff',
+                opacity: 0.55,
+                ...commonStroke
+            }),
+            create('line', {
+                x1: 0,
+                y1: state.boundaryCenterY,
+                x2: width,
+                y2: state.boundaryCenterY,
+                stroke: '#315bff',
+                opacity: 0.55,
+                ...commonStroke
+            })
+        );
 
-    if (geometry.boundary.type === 'circle') {
-        guides.appendChild(create('circle', {
-            cx: geometry.boundary.center.x,
-            cy: geometry.boundary.center.y,
-            r: geometry.boundary.radius,
-            stroke: '#315bff',
-            opacity: 0.8,
-            ...commonStroke
-        }));
-    } else if (geometry.boundary.type === 'ellipse') {
-        guides.appendChild(create('ellipse', {
-            cx: geometry.boundary.center.x,
-            cy: geometry.boundary.center.y,
-            rx: geometry.boundary.radiusX,
-            ry: geometry.boundary.radiusY,
-            transform: `rotate(${geometry.boundary.rotationDeg} ${geometry.boundary.center.x} ${geometry.boundary.center.y})`,
-            stroke: '#315bff',
-            opacity: 0.8,
-            ...commonStroke
-        }));
+        if (geometry.boundary.type === 'circle') {
+            guides.appendChild(create('circle', {
+                cx: geometry.boundary.center.x,
+                cy: geometry.boundary.center.y,
+                r: geometry.boundary.radius,
+                stroke: '#315bff',
+                opacity: 0.8,
+                ...commonStroke
+            }));
+        } else if (geometry.boundary.type === 'ellipse') {
+            guides.appendChild(create('ellipse', {
+                cx: geometry.boundary.center.x,
+                cy: geometry.boundary.center.y,
+                rx: geometry.boundary.radiusX,
+                ry: geometry.boundary.radiusY,
+                transform: `rotate(${geometry.boundary.rotationDeg} ${geometry.boundary.center.x} ${geometry.boundary.center.y})`,
+                stroke: '#315bff',
+                opacity: 0.8,
+                ...commonStroke
+            }));
+        }
+
+        geometry.rays.forEach((ray) => {
+            guides.appendChild(create('path', {
+                d: `M ${ray.baseMinus.x} ${ray.baseMinus.y} L ${ray.tip.x} ${ray.tip.y} L ${ray.basePlus.x} ${ray.basePlus.y}`,
+                stroke: '#ff4c48',
+                opacity: 0.72,
+                ...commonStroke
+            }));
+            guides.appendChild(create('line', {
+                x1: ray.baseCenter.x,
+                y1: ray.baseCenter.y,
+                x2: ray.tip.x,
+                y2: ray.tip.y,
+                stroke: '#38e972',
+                opacity: 0.68,
+                ...commonStroke
+            }));
+        });
     }
 
-    geometry.rays.forEach((ray) => {
-        guides.appendChild(create('path', {
-            d: `M ${ray.baseMinus.x} ${ray.baseMinus.y} L ${ray.tip.x} ${ray.tip.y} L ${ray.basePlus.x} ${ray.basePlus.y}`,
-            stroke: '#ff4c48',
-            opacity: 0.72,
-            ...commonStroke
-        }));
-        guides.appendChild(create('line', {
-            x1: ray.baseCenter.x,
-            y1: ray.baseCenter.y,
-            x2: ray.tip.x,
-            y2: ray.tip.y,
-            stroke: '#38e972',
-            opacity: 0.68,
-            ...commonStroke
-        }));
-    });
-
-    append(guides,
-        create('circle', {
-            cx: geometry.focus.x,
-            cy: geometry.focus.y,
-            r: 4.5,
-            fill: '#38e972',
-            stroke: '#000000',
-            'stroke-width': 1.5,
-            'vector-effect': 'non-scaling-stroke',
-            'pointer-events': 'none'
-        }),
-        create('circle', {
-            cx: geometry.focus.x,
-            cy: geometry.focus.y,
-            r: 14,
-            fill: 'transparent',
-            stroke: '#38e972',
-            'stroke-width': 0.75,
-            opacity: 0.85,
-            'vector-effect': 'non-scaling-stroke',
-            class: 'sparky-focus-hit-area',
-            'data-focus-handle': 'true'
-        })
-    );
+    if (state.showPoint) {
+        append(guides,
+            create('circle', {
+                cx: geometry.focus.x,
+                cy: geometry.focus.y,
+                r: 4.5,
+                fill: '#38e972',
+                stroke: '#000000',
+                'stroke-width': 1.5,
+                'vector-effect': 'non-scaling-stroke',
+                'pointer-events': 'none'
+            }),
+            create('circle', {
+                cx: geometry.focus.x,
+                cy: geometry.focus.y,
+                r: 14,
+                fill: 'transparent',
+                stroke: '#38e972',
+                'stroke-width': 0.75,
+                opacity: 0.85,
+                'vector-effect': 'non-scaling-stroke',
+                class: 'sparky-focus-hit-area',
+                'data-focus-handle': 'true'
+            })
+        );
+    }
 
     svg.appendChild(guides);
 }
@@ -344,9 +360,12 @@ const app = defineTool({
         sliders: [
             { id: 'rayLengthSlider', valueId: 'rayLengthValue', setting: 'rayLength', min: 220, max: 360, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'rayWidthSlider', valueId: 'rayWidthValue', setting: 'rayWidth', min: 20, max: 160, decimals: 0, baseStep: 1, shiftStep: 10 },
-            { id: 'cornerRadiusSlider', valueId: 'cornerRadiusValue', setting: 'cornerRadius', min: 0, max: 30, decimals: 1, baseStep: 0.5, shiftStep: 5 },
+            { id: 'roundnessSlider', valueId: 'roundnessValue', setting: 'roundness', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'focusXSlider', valueId: 'focusXValue', setting: 'focusX', min: 120, max: 360, decimals: 1, baseStep: 0.5, shiftStep: 5 },
             { id: 'focusYSlider', valueId: 'focusYValue', setting: 'focusY', min: 180, max: 390, decimals: 1, baseStep: 0.5, shiftStep: 5 },
+            { id: 'eyePerspectiveSlider', valueId: 'eyePerspectiveValue', setting: 'eyePerspective', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'eyeSizeSlider', valueId: 'eyeSizeValue', setting: 'eyeSize', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'eyeDistanceSlider', valueId: 'eyeDistanceValue', setting: 'eyeDistance', min: -90, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'cuteSlider', valueId: 'cuteValue', setting: 'cute', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'angrySlider', valueId: 'angryValue', setting: 'angry', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 }
         ],
@@ -379,16 +398,17 @@ const app = defineTool({
     share: {
         stripKeys: ['width', 'height'],
         quantizableFloatKeys: [
-            'focusX', 'focusY', 'rayLength', 'rayWidth', 'cornerRadius',
-            'boundaryCenterX', 'boundaryCenterY', 'boundaryRadius', 'cute', 'angry'
+            'focusX', 'focusY', 'rayLength', 'rayWidth', 'roundness',
+            'boundaryCenterX', 'boundaryCenterY', 'boundaryRadius',
+            'eyePerspective', 'eyeSize', 'eyeDistance', 'cute', 'angry'
         ],
         decimals: 2
     },
     history: { maxSize: 80, debounceMs: 180 },
     snapshot: (tool) => extractState(tool.settingsStore.toObject()),
-    restore: (tool, snapshot) => tool.settingsStore.setMultiple(extractState({ ...settings, ...snapshot }), true),
+    restore: (tool, snapshot) => tool.settingsStore.setMultiple(normalizeIncomingState(snapshot), true),
     collectPreset: (tool) => extractState(tool.settingsStore.toObject()),
-    applyPreset: (tool, preset) => tool.settingsStore.setMultiple(extractState({ ...settings, ...preset }), true),
+    applyPreset: (tool, preset) => tool.settingsStore.setMultiple(normalizeIncomingState(preset), true),
     export: { filename: 'lunnen-sparky.svg' },
     zoom: { fitPadding: { top: 58, right: 58, bottom: 58, left: 58 } },
     shortcuts: {

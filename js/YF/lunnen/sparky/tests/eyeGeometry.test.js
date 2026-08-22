@@ -46,6 +46,27 @@ test('combined maximum emotions preserve a gap between the two lid cutters', () 
     });
 });
 
+test('Eye Size 100 exactly reproduces the supplied neutral SVG reference', () => {
+    const rig = createEyeRigModel({ eyeSize: 100, cute: 0, angry: 0 });
+    closeTo(rig.left.eye1.center.x, -36);
+    closeTo(rig.right.eye1.center.x, 36);
+    closeTo(rig.left.eye1.radius, 24);
+    closeTo(rig.left.top.radius, 72);
+    assertPoint(rig.left.top.offset, { x: 0, y: -96 });
+    assertPoint(rig.left.bottom.offset, { x: 0, y: 96 });
+});
+
+test('Eye Distance controls the clear gap and bottoms out at ten percent', () => {
+    const minimum = createEyeRigModel({ eyeDistance: -90 });
+    const neutral = createEyeRigModel({ eyeDistance: 0 });
+    const maximum = createEyeRigModel({ eyeDistance: 100 });
+    closeTo(minimum.eyeGap, 3.2);
+    closeTo(neutral.eyeGap, 32);
+    closeTo(maximum.eyeGap, 64);
+    assert.ok(minimum.left.eye1.center.x + minimum.left.eye1.radius
+        < minimum.right.eye1.center.x - minimum.right.eye1.radius);
+});
+
 test('default geometry reproduces the canonical eye pair without correction', () => {
     const head = buildCharacterGeometry();
     const eyes = buildEyeGeometry(head.values, head);
@@ -86,6 +107,16 @@ test('horizontal focus gives the near eye more area than the far eye', () => {
     assert.ok(mirroredRight < mirroredLeft, 'right eye must be farther when focus moves right');
 });
 
+test('Eye Perspective increases only the near/far size contrast from its current baseline', () => {
+    const head = buildCharacterGeometry({ focusX: 120 });
+    const baseline = buildEyeGeometry({ ...head.values, eyePerspective: 0 }, head);
+    const maximum = buildEyeGeometry({ ...head.values, eyePerspective: 100 }, head);
+    const diameter = (shape) => distance(shape.points[0], shape.points[24]);
+    const baselineRatio = diameter(baseline.right.eye1) / diameter(baseline.left.eye1);
+    const maximumRatio = diameter(maximum.right.eye1) / diameter(maximum.left.eye1);
+    assert.ok(maximumRatio > baselineRatio);
+});
+
 test('vertical focus moves the pair and makes up smaller while down makes it larger', () => {
     const upHead = buildCharacterGeometry({ focusY: 230 });
     const defaultHead = buildCharacterGeometry();
@@ -112,19 +143,24 @@ test('the same vertical perspective makes the lower lid nearer when looking upwa
     });
 });
 
-test('the full supported focus, Width and emotion grid remains inside the head guard', () => {
+test('the full supported focus, Width and eye-control grid remains inside the head guard', () => {
     const focusXs = [120, 240, 360];
     const focusYs = [180, 292, 390];
     const widths = [20, 80, 160];
-    const emotions = [[0, 0], [100, 0], [0, 100], [100, 100]];
+    const eyeControls = [
+        { eyeSize: 0, eyeDistance: 0, eyePerspective: 0 },
+        { eyeSize: 100, eyeDistance: 0, eyePerspective: 0 },
+        { eyeSize: 0, eyeDistance: -90, eyePerspective: 100 },
+        { eyeSize: 100, eyeDistance: 100, eyePerspective: 100 }
+    ];
 
     focusXs.forEach((focusX) => focusYs.forEach((focusY) => widths.forEach((rayWidth) => {
-        emotions.forEach(([cute, angry]) => {
+        eyeControls.forEach((eyeControl) => {
             const head = buildCharacterGeometry({ focusX, focusY, rayWidth });
-            const eyes = buildEyeGeometry({ ...head.values, cute, angry }, head);
+            const eyes = buildEyeGeometry({ ...head.values, ...eyeControl, cute: 100, angry: 100 }, head);
             assert.ok(Number.isFinite(eyes.fitScale) && eyes.fitScale > 0);
             assert.ok(eyes.minClearance + 0.025 >= eyes.guard,
-                `unsafe at focus ${focusX},${focusY}; width ${rayWidth}; emotion ${cute},${angry}`);
+                `unsafe at focus ${focusX},${focusY}; width ${rayWidth}; controls ${JSON.stringify(eyeControl)}`);
             [eyes.left, eyes.right].forEach((eye) => {
                 [eye.eye1, eye.top, eye.bottom].forEach((shape) => {
                     assert.match(shape.path, /^M .* C .* Z$/);

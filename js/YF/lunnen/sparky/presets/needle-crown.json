@@ -15,12 +15,16 @@
   "angleStep": 36,
   "rayLength": 276,
   "rayWidth": 42,
-  "cornerRadius": 4,
+  "roundness": 24,
   "rayOverrides": [{}, {}, {}, {}, {}],
   "headColor": "#d7ff3f",
   "eyeColor": "#000000",
   "backgroundColor": "#141414",
   "showGuides": false,
+  "showPoint": true,
+  "eyePerspective": 0,
+  "eyeSize": 0,
+  "eyeDistance": 0,
   "cute": 0,
   "angry": 0
 }

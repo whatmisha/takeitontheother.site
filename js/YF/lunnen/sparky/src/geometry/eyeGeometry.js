@@ -19,6 +19,9 @@ export const EYE_DEFAULTS = Object.freeze({
     mainRadius: 16,
     lidRadius: 48,
     eyeCenterOffsetX: 32,
+    maximumMainRadius: 24,
+    maximumLidRadius: 72,
+    maximumEyeCenterOffsetX: 36,
     referenceRayWidth: 80,
     guard: 6
 });
@@ -83,23 +86,39 @@ export function interpolateLidOffset(side, lid, cuteValue = 0, angryValue = 0) {
  * Local eye model. eye1 always stays at (0, 0) inside its own eye group;
  * emotions only change the two lid offsets measured from that origin.
  */
-export function createEyeRigModel({ cute = 0, angry = 0 } = {}) {
+export function createEyeRigModel({ cute = 0, angry = 0, eyeSize = 0, eyeDistance = 0 } = {}) {
+    const sizeAmount = clamp(Number(eyeSize) / 100 || 0, 0, 1);
+    const distanceAmount = clamp(Number(eyeDistance) || 0, -90, 100);
+    const sizeScale = mix(1, 1.5, sizeAmount);
+    const mainRadius = mix(EYE_DEFAULTS.mainRadius, EYE_DEFAULTS.maximumMainRadius, sizeAmount);
+    const lidRadius = mix(EYE_DEFAULTS.lidRadius, EYE_DEFAULTS.maximumLidRadius, sizeAmount);
+    const referenceCenterOffset = mix(
+        EYE_DEFAULTS.eyeCenterOffsetX,
+        EYE_DEFAULTS.maximumEyeCenterOffsetX,
+        sizeAmount
+    );
+    const referenceGap = (referenceCenterOffset - mainRadius) * 2;
+    const eyeGap = referenceGap * (1 + distanceAmount / 100);
+    const centerOffset = mainRadius + eyeGap / 2;
     const makeEye = (side, x) => {
         const eyeCenter = point(x, 0);
-        const topOffset = interpolateLidOffset(side, 'top', cute, angry);
-        const bottomOffset = interpolateLidOffset(side, 'bottom', cute, angry);
+        const topOffset = scale(interpolateLidOffset(side, 'top', cute, angry), sizeScale);
+        const bottomOffset = scale(interpolateLidOffset(side, 'bottom', cute, angry), sizeScale);
         return {
             side,
-            eye1: { center: eyeCenter, radius: EYE_DEFAULTS.mainRadius },
-            top: { center: add(eyeCenter, topOffset), offset: topOffset, radius: EYE_DEFAULTS.lidRadius },
-            bottom: { center: add(eyeCenter, bottomOffset), offset: bottomOffset, radius: EYE_DEFAULTS.lidRadius }
+            eye1: { center: eyeCenter, radius: mainRadius },
+            top: { center: add(eyeCenter, topOffset), offset: topOffset, radius: lidRadius },
+            bottom: { center: add(eyeCenter, bottomOffset), offset: bottomOffset, radius: lidRadius }
         };
     };
 
     return {
         pairCenter: point(0, 0),
-        left: makeEye('left', -EYE_DEFAULTS.eyeCenterOffsetX),
-        right: makeEye('right', EYE_DEFAULTS.eyeCenterOffsetX)
+        sizeScale,
+        eyeGap,
+        centerOffset,
+        left: makeEye('left', -centerOffset),
+        right: makeEye('right', centerOffset)
     };
 }
 
@@ -140,11 +159,12 @@ function createRigTransform(values, pairCenter, fitScale = 1) {
     const verticalScale = clamp(1 + (values.focusY - EYE_DEFAULTS.focusY) / 420, 0.7, 1.35);
     const baseScale = widthScale * verticalScale * fitScale;
     const horizontalSqueeze = 1 - Math.abs(horizontal) * 0.22;
+    const perspectiveMultiplier = 1 + clamp(Number(values.eyePerspective) || 0, 0, 100) / 100;
 
     return (localPoint) => {
         const denominator = Math.max(0.52,
             1
-            + 0.18 * horizontal * localPoint.x / 64
+            + 0.18 * perspectiveMultiplier * horizontal * localPoint.x / 64
             + 0.10 * vertical * localPoint.y / 64
         );
         return point(
@@ -272,7 +292,13 @@ function evaluateContainment(model, values, headContour, pairCenter, fitScale) {
     const transform = createRigTransform(values, pairCenter, fitScale);
     const eyeContour = mainEyeContour(model, transform);
     const orientation = polygonSignedArea(headContour);
-    const guard = Math.max(2, EYE_DEFAULTS.guard * values.rayWidth / EYE_DEFAULTS.referenceRayWidth * fitScale);
+    const guard = Math.max(
+        2,
+        EYE_DEFAULTS.guard
+            * values.rayWidth / EYE_DEFAULTS.referenceRayWidth
+            * model.sizeScale
+            * fitScale
+    );
     let worst = null;
 
     eyeContour.forEach((sample) => {
@@ -379,6 +405,9 @@ function buildRenderedCircle(circle, transform) {
 export function buildEyeGeometry(settings, characterGeometry) {
     const values = {
         ...characterGeometry.values,
+        eyePerspective: 0,
+        eyeSize: 0,
+        eyeDistance: 0,
         cute: 0,
         angry: 0,
         ...settings
