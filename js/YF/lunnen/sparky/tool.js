@@ -26,6 +26,7 @@ const MOBILE_SHOWCASE_QUERY = '(max-width: 768px), (hover: none) and (pointer: c
 const DESKTOP_FIT_PADDING = 58;
 const MOBILE_FIT_PADDING = 24;
 const MOBILE_GRAPHIC_OFFSET_PX = 24;
+const MOBILE_FOCUS_RESPONSE_MS = 45;
 let mobileShowcaseFocus = null;
 
 const settings = {
@@ -114,8 +115,10 @@ function bindMobileShowcase(app) {
         const mobile = media?.matches ?? window.innerWidth <= 768;
         document.documentElement.classList.toggle('sparky-mobile-showcase', mobile);
         if (mobile && !wasMobile) {
-            mobileShowcaseFocus = { x: settings.focusX, y: settings.focusY };
+            resetMobileFocusMotion({ x: settings.focusX, y: settings.focusY });
             stopBlink(app);
+        } else if (!mobile && wasMobile) {
+            cancelMobileFocusMotion();
         }
         wasMobile = mobile;
         app.renderNow();
@@ -156,8 +159,52 @@ function append(parent, ...children) {
 
 const eyeMotion = createEyeMotionState();
 let eyeMotionFrame = null;
+const mobileFocusMotion = createEyeMotionState(MOBILE_FOCUS_RESPONSE_MS);
+let mobileFocusFrame = null;
 const blink = createBlinkState();
 let blinkFrame = null;
+
+function cancelMobileFocusMotion() {
+    if (mobileFocusFrame != null) cancelAnimationFrame(mobileFocusFrame);
+    mobileFocusFrame = null;
+    mobileFocusMotion.lastTime = null;
+}
+
+function resetMobileFocusMotion(focus) {
+    cancelMobileFocusMotion();
+    mobileShowcaseFocus = { ...focus };
+    mobileFocusMotion.displayedCenter = { ...focus };
+    mobileFocusMotion.targetCenter = { ...focus };
+}
+
+function scheduleMobileFocusMotion(app) {
+    if (mobileFocusFrame != null) return;
+    mobileFocusFrame = requestAnimationFrame((timestamp) => {
+        mobileFocusFrame = null;
+        if (!isMobileShowcase()) return;
+        const result = advanceEyeMotion(mobileFocusMotion, timestamp);
+        mobileShowcaseFocus = { ...mobileFocusMotion.displayedCenter };
+        app.renderNow();
+        // The whole face already follows the animated Focus; avoid applying a
+        // second delayed movement to the eyes on top of it.
+        snapDisplayedEyes(app);
+        if (!result.settled) scheduleMobileFocusMotion(app);
+    });
+}
+
+function retargetMobileFocus(app, target) {
+    if (!mobileFocusMotion.displayedCenter) resetMobileFocusMotion(target);
+    const result = retargetEyeMotion(mobileFocusMotion, target, performance.now());
+    mobileShowcaseFocus = { ...mobileFocusMotion.displayedCenter };
+    if (result.settled) {
+        mobileShowcaseFocus = { ...target };
+        mobileFocusMotion.displayedCenter = { ...target };
+        app.renderNow();
+        snapDisplayedEyes(app);
+        return;
+    }
+    scheduleMobileFocusMotion(app);
+}
 
 function applyEyeMotionTransform(app) {
     const svg = app.target?.element;
@@ -502,8 +549,7 @@ function bindFocusDragging(app) {
         const x = Number(focus.x.toFixed(1));
         const y = Number(focus.y.toFixed(1));
         if (mobile) {
-            mobileShowcaseFocus = { x, y };
-            app.renderNow();
+            retargetMobileFocus(app, { x, y });
             return;
         }
         app.settingsStore.setMultiple({ focusX: x, focusY: y });
