@@ -49,6 +49,41 @@ test('default tips lie on the mathematical guide circle', () => {
     });
 });
 
+test('both ends of every side and bisector guide meet the boundary circle', () => {
+    const geometry = buildCharacterGeometry();
+    geometry.rays.forEach((ray) => {
+        [ray.tip, ray.guidePlusEnd, ray.guideMinusEnd, ray.guideAxisEnd].forEach((endpoint) => {
+            closeTo(distance(endpoint, geometry.boundary.center), geometry.boundary.radius, 1e-5);
+        });
+        assert.ok(distance(ray.tip, ray.guideAxisEnd) > ray.length);
+    });
+});
+
+test('extended guides also terminate on a rotated ellipse', () => {
+    const geometry = buildCharacterGeometry({
+        boundaryType: 'ellipse',
+        boundaryRadiusX: 190,
+        boundaryRadiusY: 135,
+        boundaryRotation: 23
+    });
+    const radians = -geometry.boundary.rotationDeg * Math.PI / 180;
+    const liesOnEllipse = (endpoint) => {
+        const dx = endpoint.x - geometry.boundary.center.x;
+        const dy = endpoint.y - geometry.boundary.center.y;
+        const localX = dx * Math.cos(radians) - dy * Math.sin(radians);
+        const localY = dx * Math.sin(radians) + dy * Math.cos(radians);
+        closeTo(
+            localX ** 2 / geometry.boundary.radiusX ** 2
+                + localY ** 2 / geometry.boundary.radiusY ** 2,
+            1,
+            1e-5
+        );
+    };
+    geometry.rays.forEach((ray) => {
+        [ray.tip, ray.guidePlusEnd, ray.guideMinusEnd, ray.guideAxisEnd].forEach(liesOnEllipse);
+    });
+});
+
 test('default outline is horizontally symmetric with relative fillets', () => {
     const geometry = buildCharacterGeometry();
     closeTo(geometry.baseClosure.x, DEFAULT_GEOMETRY.boundaryCenterX);

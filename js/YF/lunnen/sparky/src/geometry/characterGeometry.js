@@ -4,9 +4,11 @@ import {
     add,
     directionFromDegrees,
     intersectLines,
+    normalize,
     perpendicular,
     point,
-    scale
+    scale,
+    subtract
 } from './vector.js';
 
 export const DEFAULT_GEOMETRY = Object.freeze({
@@ -85,14 +87,23 @@ export function buildRayTriangle(focus, boundary, profile) {
     const baseCenter = add(tip, scale(direction, -profile.length));
     const normal = perpendicular(direction);
     const halfWidth = profile.width / 2;
+    const basePlus = add(baseCenter, scale(normal, halfWidth));
+    const baseMinus = add(baseCenter, scale(normal, -halfWidth));
+    const oppositeBoundaryPoint = (through) => boundary.intersectRay(
+        tip,
+        normalize(subtract(through, tip))
+    ) || through;
     return {
         ...profile,
         direction,
         normal,
         tip,
         baseCenter,
-        basePlus: add(baseCenter, scale(normal, halfWidth)),
-        baseMinus: add(baseCenter, scale(normal, -halfWidth))
+        basePlus,
+        baseMinus,
+        guidePlusEnd: oppositeBoundaryPoint(basePlus),
+        guideMinusEnd: oppositeBoundaryPoint(baseMinus),
+        guideAxisEnd: oppositeBoundaryPoint(baseCenter)
     };
 }
 

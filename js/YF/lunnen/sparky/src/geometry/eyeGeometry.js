@@ -86,9 +86,19 @@ export function interpolateLidOffset(side, lid, cuteValue = 0, angryValue = 0) {
  * Local eye model. eye1 always stays at (0, 0) inside its own eye group;
  * emotions only change the two lid offsets measured from that origin.
  */
-export function createEyeRigModel({ cute = 0, angry = 0, eyeSize = 0, eyeDistance = 0 } = {}) {
+export function createEyeRigModel({
+    cute = 0,
+    angry = 0,
+    eyeSize = 0,
+    eyeDistance = 0,
+    lidClosure = 0
+} = {}) {
     const sizeAmount = clamp(Number(eyeSize) / 100 || 0, 0, 1);
     const distanceAmount = clamp(Number(eyeDistance) || 0, -90, 100);
+    const closureAmount = clamp(Number(lidClosure) || 0, 0, 1);
+    // At full blink the opposing lid circles overlap enough to cover every
+    // point of eye1. Normal Cute/Angry geometry keeps its designed gap.
+    const closureScale = mix(1, 0.88, closureAmount);
     const sizeScale = mix(1, 1.5, sizeAmount);
     const mainRadius = mix(EYE_DEFAULTS.mainRadius, EYE_DEFAULTS.maximumMainRadius, sizeAmount);
     const lidRadius = mix(EYE_DEFAULTS.lidRadius, EYE_DEFAULTS.maximumLidRadius, sizeAmount);
@@ -102,8 +112,14 @@ export function createEyeRigModel({ cute = 0, angry = 0, eyeSize = 0, eyeDistanc
     const centerOffset = mainRadius + eyeGap / 2;
     const makeEye = (side, x) => {
         const eyeCenter = point(x, 0);
-        const topOffset = scale(interpolateLidOffset(side, 'top', cute, angry), sizeScale);
-        const bottomOffset = scale(interpolateLidOffset(side, 'bottom', cute, angry), sizeScale);
+        const topOffset = scale(
+            interpolateLidOffset(side, 'top', cute, angry),
+            sizeScale * closureScale
+        );
+        const bottomOffset = scale(
+            interpolateLidOffset(side, 'bottom', cute, angry),
+            sizeScale * closureScale
+        );
         return {
             side,
             eye1: { center: eyeCenter, radius: mainRadius },

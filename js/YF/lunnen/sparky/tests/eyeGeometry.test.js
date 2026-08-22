@@ -61,6 +61,25 @@ test('combined maximum emotions preserve a gap between the two lid cutters', () 
     });
 });
 
+test('blink closure fully covers eye1 while leaving the normal emotion gap untouched', () => {
+    const emotional = createEyeRigModel({ cute: 100, angry: 100 });
+    const blinking = createEyeRigModel({ cute: 100, angry: 100, lidClosure: 1 });
+    const isInside = (sample, circle) => distance(sample, circle.center) <= circle.radius + 1e-6;
+    const isFullyCovered = (eye) => Array.from({ length: 720 }, (_, index) => {
+        const angle = Math.PI * 2 * index / 720;
+        return {
+            x: eye.eye1.center.x + Math.cos(angle) * eye.eye1.radius,
+            y: eye.eye1.center.y + Math.sin(angle) * eye.eye1.radius
+        };
+    }).every((sample) => isInside(sample, eye.top) || isInside(sample, eye.bottom));
+
+    ['left', 'right'].forEach((side) => {
+        assert.equal(isFullyCovered(emotional[side]), false, 'the emotion state must retain its eye gap');
+        assert.equal(isFullyCovered(blinking[side]), true, 'the full blink must leave no visible eye');
+        assert.deepEqual(blinking[side].eye1, emotional[side].eye1);
+    });
+});
+
 test('Eye Size 100 exactly reproduces the supplied neutral SVG reference', () => {
     const rig = createEyeRigModel({ eyeSize: 100, cute: 0, angry: 0 });
     closeTo(rig.left.eye1.center.x, -36);

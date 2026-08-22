@@ -2,8 +2,8 @@ import { defineTool } from './framework/src/core/defineTool.js';
 import {
     DEFAULT_GEOMETRY,
     buildCharacterGeometry
-} from './src/geometry/characterGeometry.js';
-import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260822-6';
+} from './src/geometry/characterGeometry.js?v=20260822-10';
+import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260822-10';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import {
     advanceEyeMotion,
@@ -71,6 +71,12 @@ function normalizeIncomingState(source = {}) {
     return extractState(normalized);
 }
 
+function exportSettingsJSON(tool, filename) {
+    const name = filename || `${createSparkyExportBaseName()}.json`;
+    const snapshot = extractState(tool.settingsStore.toObject());
+    return tool.exporter?.exportJSON(snapshot, name);
+}
+
 function setAttributes(element, attributes) {
     Object.entries(attributes).forEach(([name, value]) => {
         if (value != null) element.setAttribute(name, String(value));
@@ -136,7 +142,8 @@ function applyBlink(app) {
         ? eyeGeometry
         : buildEyeLidGeometry({
             cute: app.settings.cute + (100 - app.settings.cute) * amount,
-            angry: app.settings.angry + (100 - app.settings.angry) * amount
+            angry: app.settings.angry + (100 - app.settings.angry) * amount,
+            lidClosure: amount
         }, eyeGeometry);
     ['left', 'right'].forEach((side) => {
         ['top', 'bottom'].forEach((lid) => {
@@ -341,14 +348,14 @@ function drawGuides(ctx, geometry) {
 
         geometry.rays.forEach((ray) => {
             guides.appendChild(create('path', {
-                d: `M ${ray.baseMinus.x} ${ray.baseMinus.y} L ${ray.tip.x} ${ray.tip.y} L ${ray.basePlus.x} ${ray.basePlus.y}`,
+                d: `M ${ray.guideMinusEnd.x} ${ray.guideMinusEnd.y} L ${ray.tip.x} ${ray.tip.y} L ${ray.guidePlusEnd.x} ${ray.guidePlusEnd.y}`,
                 stroke: '#ff4c48',
                 opacity: 0.72,
                 ...commonStroke
             }));
             guides.appendChild(create('line', {
-                x1: ray.baseCenter.x,
-                y1: ray.baseCenter.y,
+                x1: ray.guideAxisEnd.x,
+                y1: ray.guideAxisEnd.y,
                 x2: ray.tip.x,
                 y2: ray.tip.y,
                 stroke: '#38e972',
@@ -574,6 +581,13 @@ const app = defineTool({
     zoom: { fitPadding: { top: 58, right: 58, bottom: 58, left: 58 } },
     shortcuts: {
         g: (tool) => tool.settingsStore.set('showGuides', !tool.settings.showGuides)
+    },
+    onInit(tool) {
+        tool.shortcuts?.register(
+            'mod+j',
+            () => exportSettingsJSON(tool),
+            { allowInInput: true }
+        );
     },
     render(ctx) {
         try {
