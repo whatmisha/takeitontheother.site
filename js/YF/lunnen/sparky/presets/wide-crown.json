@@ -24,6 +24,7 @@
   "backgroundColor": "#391f51",
   "showGuides": false,
   "showPoint": true,
+  "followCursor": false,
   "eyePerspective": 50,
   "eyeSize": 0,
   "eyeDistance": -20,

@@ -344,7 +344,7 @@ export function createRelativeRoundedPolygon(points, vertexMeta, amount = 0, opt
             weights[index] = Math.min(
                 tipWeightsByRay.get(rayIndices[0]) ?? 0,
                 tipWeightsByRay.get(rayIndices[rayIndices.length - 1]) ?? 0
-            );
+            ) * Math.max(0, Number(meta.roundnessWeight) || 1);
         }
     });
 

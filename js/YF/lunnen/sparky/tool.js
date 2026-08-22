@@ -3,11 +3,20 @@ import {
     DEFAULT_GEOMETRY,
     buildCharacterGeometry
 } from './src/geometry/characterGeometry.js';
-import { buildEyeGeometry } from './src/geometry/eyeGeometry.js';
+import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260822-6';
+import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import {
-    createSparkyExportBaseName,
-    createSparkySettingsDocument
-} from './src/export/exportNaming.js';
+    advanceEyeMotion,
+    createEyeMotionState,
+    retargetEyeMotion,
+    snapEyeMotion
+} from './src/animation/eyeMotion.js';
+import {
+    advanceBlink,
+    createBlinkState,
+    resetBlink,
+    triggerBlink
+} from './src/animation/blink.js?v=20260822-6';
 import { clamp, distance, point, scale, subtract, add } from './src/geometry/vector.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -38,12 +47,13 @@ const settings = {
     headColor: '#ffffff',
     eyeColor: '#000000',
     backgroundColor: '#000000',
-    showGuides: true,
-    showPoint: true,
+    showGuides: false,
+    showPoint: false,
+    followCursor: true,
     eyePerspective: 50,
     eyeSize: 0,
     eyeDistance: -20,
-    cute: 0,
+    cute: 50,
     angry: 0
 };
 
@@ -77,6 +87,110 @@ function append(parent, ...children) {
     return parent;
 }
 
+const eyeMotion = createEyeMotionState();
+let eyeMotionFrame = null;
+const blink = createBlinkState();
+let blinkFrame = null;
+
+function applyEyeMotionTransform(app) {
+    const svg = app.target?.element;
+    if (!svg || !eyeMotion.displayedCenter || !eyeMotion.targetCenter) return;
+    const dx = eyeMotion.displayedCenter.x - eyeMotion.targetCenter.x;
+    const dy = eyeMotion.displayedCenter.y - eyeMotion.targetCenter.y;
+    const settled = Math.hypot(dx, dy) <= 0.02;
+    svg.querySelectorAll('[data-eye-motion="true"]').forEach((element) => {
+        if (settled) element.removeAttribute('transform');
+        else element.setAttribute('transform', `translate(${dx} ${dy})`);
+    });
+    app.displayedEyeCenter = { ...eyeMotion.displayedCenter };
+}
+
+function scheduleEyeMotion(app) {
+    if (eyeMotionFrame != null) return;
+    eyeMotionFrame = requestAnimationFrame((timestamp) => {
+        eyeMotionFrame = null;
+        const result = advanceEyeMotion(eyeMotion, timestamp);
+        applyEyeMotionTransform(app);
+        if (!result.settled) scheduleEyeMotion(app);
+    });
+}
+
+function retargetDisplayedEyes(app, target) {
+    const result = retargetEyeMotion(eyeMotion, target, performance.now());
+    if (!result.settled) scheduleEyeMotion(app);
+}
+
+function snapDisplayedEyes(app) {
+    if (eyeMotionFrame != null) cancelAnimationFrame(eyeMotionFrame);
+    eyeMotionFrame = null;
+    snapEyeMotion(eyeMotion);
+    applyEyeMotionTransform(app);
+}
+
+function applyBlink(app) {
+    const svg = app.target?.element;
+    const eyeGeometry = app.eyeGeometry;
+    if (!svg || !eyeGeometry) return;
+    const amount = blink.amount;
+    const lids = amount <= 0
+        ? eyeGeometry
+        : buildEyeLidGeometry({
+            cute: app.settings.cute + (100 - app.settings.cute) * amount,
+            angry: app.settings.angry + (100 - app.settings.angry) * amount
+        }, eyeGeometry);
+    ['left', 'right'].forEach((side) => {
+        ['top', 'bottom'].forEach((lid) => {
+            svg.querySelector(`#${side}_eye_${lid}`)?.setAttribute('d', lids[side][lid].path);
+        });
+    });
+    app.blinkAmount = amount;
+}
+
+function scheduleBlink(app) {
+    if (blinkFrame != null) return;
+    blinkFrame = requestAnimationFrame(() => {
+        blinkFrame = null;
+        const result = advanceBlink(blink, performance.now());
+        applyBlink(app);
+        if (result.active) scheduleBlink(app);
+    });
+}
+
+function startBlink(app) {
+    if (blinkFrame != null) cancelAnimationFrame(blinkFrame);
+    blinkFrame = null;
+    triggerBlink(blink, performance.now());
+    scheduleBlink(app);
+}
+
+function stopBlink(app) {
+    if (blinkFrame != null) cancelAnimationFrame(blinkFrame);
+    blinkFrame = null;
+    resetBlink(blink);
+    applyBlink(app);
+}
+
+function bindBlink(app) {
+    const excluded = [
+        '.controls-panel',
+        'button',
+        'input',
+        'textarea',
+        'select',
+        'label',
+        'a',
+        '[role="button"]',
+        '[role="option"]',
+        '[role="listbox"]',
+        '.dialog-overlay'
+    ].join(',');
+    document.addEventListener('click', (event) => {
+        if (!(event.target instanceof Element)) return;
+        if (event.target.closest(excluded)) return;
+        startBlink(app);
+    }, { capture: true });
+}
+
 function createDefinitions(width, height, headPath) {
     const defs = makeSvgElement('defs');
     const guideClip = makeSvgElement('clipPath', { id: GUIDE_CLIP_ID });
@@ -107,7 +221,8 @@ function drawEyes(ctx, eyeGeometry, definitions) {
             maskUnits: 'userSpaceOnUse',
             maskContentUnits: 'userSpaceOnUse'
         });
-        append(mask,
+        const maskContent = create('g', { 'data-eye-motion': 'true' });
+        append(maskContent,
             create('path', { d: eye.eye1.path, fill: '#ffffff' }),
             create('path', {
                 id: `${side}_eye_top`,
@@ -122,9 +237,14 @@ function drawEyes(ctx, eyeGeometry, definitions) {
                 'data-object': `${side}_eye_bottom`
             })
         );
+        mask.appendChild(maskContent);
         definitions.appendChild(mask);
 
-        const eyeGroup = create('g', { id: `${side}_eye`, 'data-eye': side });
+        const eyeGroup = create('g', {
+            id: `${side}_eye`,
+            'data-eye': side,
+            'data-eye-motion': 'true'
+        });
         eyeGroup.appendChild(create('path', {
             id: `${side}_eye1`,
             d: eye.eye1.path,
@@ -243,7 +363,7 @@ function drawGuides(ctx, geometry) {
             create('path', {
                 d: `M ${geometry.focus.x - 6} ${geometry.focus.y} H ${geometry.focus.x + 6} M ${geometry.focus.x} ${geometry.focus.y - 6} V ${geometry.focus.y + 6}`,
                 fill: 'none',
-                stroke: '#000000',
+                stroke: '#0000FF',
                 'stroke-width': 2,
                 'stroke-linecap': 'square',
                 'vector-effect': 'non-scaling-stroke',
@@ -304,16 +424,32 @@ function bindFocusDragging(app) {
     const svg = document.getElementById('mainSvg');
     if (!svg) return;
     let pointerId = null;
+    let followFrame = null;
+    let pendingFollowPoint = null;
 
-    const update = (event) => {
-        const raw = pointFromPointer(svg, event);
-        if (!raw) return;
+    const update = (raw) => {
         const focus = constrainFocus(raw, app.settings);
         const x = Number(focus.x.toFixed(1));
         const y = Number(focus.y.toFixed(1));
         app.settingsStore.setMultiple({ focusX: x, focusY: y });
         app.sliders?.setValue('focusXSlider', x, false);
         app.sliders?.setValue('focusYSlider', y, false);
+    };
+
+    const updateFromEvent = (event) => {
+        const raw = pointFromPointer(svg, event);
+        if (raw) update(raw);
+    };
+
+    const scheduleFollow = (event) => {
+        pendingFollowPoint = pointFromPointer(svg, event);
+        if (!pendingFollowPoint || followFrame != null) return;
+        followFrame = requestAnimationFrame(() => {
+            followFrame = null;
+            if (!app.settings.followCursor || !pendingFollowPoint) return;
+            update(pendingFollowPoint);
+            pendingFollowPoint = null;
+        });
     };
 
     svg.addEventListener('pointerdown', (event) => {
@@ -324,13 +460,16 @@ function bindFocusDragging(app) {
         pointerId = event.pointerId;
         svg.setPointerCapture(pointerId);
         app.history?.beginTransaction('focus-drag');
-        update(event);
+        updateFromEvent(event);
     });
 
     svg.addEventListener('pointermove', (event) => {
-        if (event.pointerId !== pointerId) return;
-        event.preventDefault();
-        update(event);
+        if (event.pointerId === pointerId) {
+            event.preventDefault();
+            updateFromEvent(event);
+            return;
+        }
+        if (app.settings.followCursor) scheduleFollow(event);
     });
 
     const finish = (event) => {
@@ -341,6 +480,19 @@ function bindFocusDragging(app) {
     };
     svg.addEventListener('pointerup', finish);
     svg.addEventListener('pointercancel', finish);
+}
+
+function disableFollowCursor(app) {
+    if (app.settings.followCursor) app.settingsStore.set('followCursor', false);
+}
+
+function bindManualFocusControls(app) {
+    ['focusXSlider', 'focusYSlider'].forEach((id) => {
+        document.getElementById(id)?.addEventListener('input', () => disableFollowCursor(app));
+    });
+    ['focusXValue', 'focusYValue'].forEach((id) => {
+        document.getElementById(id)?.addEventListener('blur', () => disableFollowCursor(app));
+    });
 }
 
 function setFocus(app, x, y) {
@@ -427,10 +579,13 @@ const app = defineTool({
         try {
             const geometry = buildCharacterGeometry(ctx.settings);
             const eyeGeometry = buildEyeGeometry(ctx.settings, geometry);
+            retargetDisplayedEyes(ctx.app, eyeGeometry.pairCenter);
             ctx.app.characterGeometry = geometry;
             ctx.app.eyeGeometry = eyeGeometry;
             ctx.app.geometryError = null;
             drawCharacter(ctx, geometry, eyeGeometry);
+            applyEyeMotionTransform(ctx.app);
+            applyBlink(ctx.app);
         } catch (error) {
             ctx.app.geometryError = error;
             renderFailure(ctx, error);
@@ -440,27 +595,24 @@ const app = defineTool({
         const frameworkExportSVG = tool.exportSVG.bind(tool);
         const frameworkExportPNG = tool.exportPNG.bind(tool);
         tool.exportSVG = async (filename) => {
-            if (filename) return frameworkExportSVG(filename);
-            const exportedAt = new Date();
-            const baseName = createSparkyExportBaseName(exportedAt);
-            await frameworkExportSVG(`${baseName}.svg`);
-            const settingsDocument = createSparkySettingsDocument(
-                extractState(tool.settingsStore.toObject()),
-                baseName,
-                exportedAt
-            );
-            // Keep the two browser downloads in separate tasks. Some browsers
-            // discard the first of two synthetic link clicks in the same task.
-            window.setTimeout(() => {
-                tool.exporter?.exportJSON(settingsDocument, `${baseName}.json`);
-            }, 250);
+            stopBlink(tool);
+            tool.renderNow();
+            snapDisplayedEyes(tool);
+            const name = filename || `${createSparkyExportBaseName()}.svg`;
+            return frameworkExportSVG(name);
         };
         tool.exportPNG = (filename, scaleFactor) => {
-            if (filename) return frameworkExportPNG(filename, scaleFactor);
-            return frameworkExportPNG(`${createSparkyExportBaseName()}.png`, scaleFactor);
+            stopBlink(tool);
+            tool.renderNow();
+            snapDisplayedEyes(tool);
+            const name = filename || `${createSparkyExportBaseName()}.png`;
+            return frameworkExportPNG(name, scaleFactor);
         };
         bindFocusDragging(tool);
+        bindManualFocusControls(tool);
+        bindBlink(tool);
         document.getElementById('resetFocusBtn')?.addEventListener('click', () => {
+            disableFollowCursor(tool);
             setFocus(tool, DEFAULT_GEOMETRY.focusX, DEFAULT_GEOMETRY.focusY);
         });
         document.getElementById('exportSvgBtn')?.addEventListener('click', () => tool.exportSVG());
@@ -468,7 +620,7 @@ const app = defineTool({
         document.getElementById('introHelpBtn')?.addEventListener('click', () => {
             tool.dialog?.alert({
                 title: 'Lunnen Sparky',
-                text: 'A mathematically precise parametric character. Change ray geometry, drag the focus, shape the expression, save or share presets, and export SVG, JSON, or PNG. Enabled guides and focus are included in exports.'
+                text: 'A mathematically precise parametric character. Change ray geometry, drag or follow the focus, shape the expression, save or share presets, and export SVG or PNG. Enabled guides and focus are included in exports.'
             });
         });
     }

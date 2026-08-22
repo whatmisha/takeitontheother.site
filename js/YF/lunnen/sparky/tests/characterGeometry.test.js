@@ -112,7 +112,7 @@ test('Corner smoothing follows the Figma scale and backs off when an edge has no
     assert.ok(ios.rounded.contour.every(({ x, y }) => Number.isFinite(x) && Number.isFinite(y)));
 });
 
-test('each joining radius equals the smaller neighbouring tip radius', () => {
+test('valleys use the smaller tip radius and the lower face corner uses twice that radius', () => {
     const geometry = buildCharacterGeometry({ focusX: 120, roundness: 100 });
     const tips = new Map();
     geometry.vertexMeta.forEach((meta, index) => {
@@ -123,7 +123,7 @@ test('each joining radius equals the smaller neighbouring tip radius', () => {
         if (meta.kind === 'valley') {
             closeTo(radius, Math.min(tips.get(meta.afterRayIndex), tips.get(meta.afterRayIndex + 1)));
         } else if (meta.kind === 'base') {
-            closeTo(radius, Math.min(tips.get(0), tips.get(geometry.rays.length - 1)));
+            closeTo(radius, Math.min(tips.get(0), tips.get(geometry.rays.length - 1)) * 2);
         }
     });
     assert.ok(tips.get(4) > tips.get(0), 'the nearer right ray should have the larger tip fillet');

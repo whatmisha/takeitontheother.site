@@ -606,7 +606,7 @@ function solveOpticalPairCenter(model, values, characterGeometry, headContour, l
     // Horizontal influence is stronger because the sector itself already
     // carries most of the vertical movement as Focus changes.
     const widthRatio = values.rayWidth / EYE_DEFAULTS.referenceRayWidth;
-    const verticalFaceGravity = 0.2503910736768348
+    const verticalFaceGravity = 0.24605697262036413
         + Math.max(0, widthRatio - 1) * 0.08
         + vertical * Math.min(1, widthRatio) * 0.05;
     const opticalCenter = point(
@@ -700,6 +700,17 @@ function solveOpticalPairCenter(model, values, characterGeometry, headContour, l
 function buildRenderedCircle(circle, transform) {
     const points = sampleCircle(circle, transform, 48);
     return { ...circle, points, path: createClosedCurvePath(points) };
+}
+
+/** Rebuilds only the lid cutters while retaining the exact eye placement. */
+export function buildEyeLidGeometry(settings, eyeGeometry) {
+    const values = { ...eyeGeometry.values, ...settings };
+    const model = createEyeRigModel(values);
+    const transform = createRigTransform(values, eyeGeometry.pairCenter, eyeGeometry.fitScale);
+    return Object.fromEntries(['left', 'right'].map((side) => [side, {
+        top: buildRenderedCircle(model[side].top, transform),
+        bottom: buildRenderedCircle(model[side].bottom, transform)
+    }]));
 }
 
 export function buildEyeGeometry(settings, characterGeometry) {

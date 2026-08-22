@@ -6,6 +6,7 @@ import {
     EYE_DEFAULTS,
     buildFaceFieldContour,
     buildEyeGeometry,
+    buildEyeLidGeometry,
     createEyeRigModel,
     interpolateLidOffset
 } from '../src/geometry/eyeGeometry.js';
@@ -38,6 +39,19 @@ test('Cute and Angry never move or resize either primary eye1', () => {
         assert.deepEqual(combined[side].eye1, neutral[side].eye1);
         closeTo(combined[side].eye1.radius, 16);
     });
+});
+
+test('animated lids reproduce the exact full geometry without replacing eye placement', () => {
+    const head = buildCharacterGeometry();
+    const base = buildEyeGeometry({ ...head.values, cute: 50, angry: 0 }, head);
+    const animated = buildEyeLidGeometry({ cute: 100, angry: 100 }, base);
+    const full = buildEyeGeometry({ ...head.values, cute: 100, angry: 100 }, head);
+    ['left', 'right'].forEach((side) => {
+        assert.equal(animated[side].top.path, full[side].top.path);
+        assert.equal(animated[side].bottom.path, full[side].bottom.path);
+    });
+    assertPoint(base.pairCenter, full.pairCenter);
+    closeTo(base.fitScale, full.fitScale);
 });
 
 test('combined maximum emotions preserve a gap between the two lid cutters', () => {

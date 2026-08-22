@@ -85,12 +85,16 @@
 
                         <div class="control-group pill-toggle-row">
                             <label class="pill-toggle" for="showGuides">
-                                <input type="checkbox" id="showGuides" class="sr-only" data-setting="showGuides" checked>
+                                <input type="checkbox" id="showGuides" class="sr-only" data-setting="showGuides">
                                 <span>Guides</span>
                             </label>
                             <label class="pill-toggle" for="showPoint">
-                                <input type="checkbox" id="showPoint" class="sr-only" data-setting="showPoint" checked>
+                                <input type="checkbox" id="showPoint" class="sr-only" data-setting="showPoint">
                                 <span>Focus</span>
+                            </label>
+                            <label class="pill-toggle" for="followCursor">
+                                <input type="checkbox" id="followCursor" class="sr-only" data-setting="followCursor" checked>
+                                <span>Follow cursor</span>
                             </label>
                         </div>
                     </section>
@@ -156,8 +160,8 @@
 
                         <div class="control-group">
                             <label for="cuteSlider"><span>Cute</span>
-                                <input type="text" class="value-display" id="cuteValue" value="0"></label>
-                            <input type="range" id="cuteSlider" min="0" max="100" step="1" value="0">
+                                <input type="text" class="value-display" id="cuteValue" value="50"></label>
+                            <input type="range" id="cuteSlider" min="0" max="100" step="1" value="50">
                         </div>
 
                         <div class="control-group">
@@ -231,6 +235,6 @@
         </dialog>
     </div>
 
-    <script type="module" src="./tool.js"></script>
+    <script type="module" src="./tool.js?v=20260822-9"></script>
 </body>
 </html>

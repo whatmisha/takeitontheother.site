@@ -22,11 +22,12 @@
   "headColor": "#ffffff",
   "eyeColor": "#000000",
   "backgroundColor": "#000000",
-  "showGuides": true,
-  "showPoint": true,
+  "showGuides": false,
+  "showPoint": false,
+  "followCursor": true,
   "eyePerspective": 50,
   "eyeSize": 0,
   "eyeDistance": -20,
-  "cute": 0,
+  "cute": 50,
   "angry": 0
 }
