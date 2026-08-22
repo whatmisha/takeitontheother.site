@@ -4,6 +4,10 @@ import {
     buildCharacterGeometry
 } from './src/geometry/characterGeometry.js';
 import { buildEyeGeometry } from './src/geometry/eyeGeometry.js';
+import {
+    createSparkyExportBaseName,
+    createSparkySettingsDocument
+} from './src/export/exportNaming.js';
 import { clamp, distance, point, scale, subtract, add } from './src/geometry/vector.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -25,18 +29,20 @@ const settings = {
     rayCount: DEFAULT_GEOMETRY.rayCount,
     centerAngle: DEFAULT_GEOMETRY.centerAngle,
     angleStep: DEFAULT_GEOMETRY.angleStep,
+    angleSpan: DEFAULT_GEOMETRY.angleSpan,
     rayLength: DEFAULT_GEOMETRY.rayLength,
     rayWidth: DEFAULT_GEOMETRY.rayWidth,
     roundness: DEFAULT_GEOMETRY.roundness,
+    cornerSmoothing: 0,
     rayOverrides: [{}, {}, {}, {}, {}],
     headColor: '#ffffff',
     eyeColor: '#000000',
     backgroundColor: '#000000',
     showGuides: true,
     showPoint: true,
-    eyePerspective: 0,
+    eyePerspective: 50,
     eyeSize: 0,
-    eyeDistance: 0,
+    eyeDistance: -20,
     cute: 0,
     angry: 0
 };
@@ -166,8 +172,6 @@ function drawGuides(ctx, geometry) {
     };
     const guides = create('g', {
         'clip-path': `url(#${GUIDE_CLIP_ID})`,
-        'data-interactive': 'true',
-        'data-export-exclude': 'true',
         'aria-hidden': 'true'
     });
 
@@ -236,27 +240,25 @@ function drawGuides(ctx, geometry) {
 
     if (state.showPoint) {
         append(guides,
-            create('circle', {
-                cx: geometry.focus.x,
-                cy: geometry.focus.y,
-                r: 4.5,
-                fill: '#38e972',
+            create('path', {
+                d: `M ${geometry.focus.x - 6} ${geometry.focus.y} H ${geometry.focus.x + 6} M ${geometry.focus.x} ${geometry.focus.y - 6} V ${geometry.focus.y + 6}`,
+                fill: 'none',
                 stroke: '#000000',
-                'stroke-width': 1.5,
+                'stroke-width': 2,
+                'stroke-linecap': 'square',
                 'vector-effect': 'non-scaling-stroke',
                 'pointer-events': 'none'
             }),
-            create('circle', {
-                cx: geometry.focus.x,
-                cy: geometry.focus.y,
-                r: 14,
+            create('rect', {
+                x: geometry.focus.x - 12,
+                y: geometry.focus.y - 12,
+                width: 24,
+                height: 24,
                 fill: 'transparent',
-                stroke: '#38e972',
-                'stroke-width': 0.75,
-                opacity: 0.85,
-                'vector-effect': 'non-scaling-stroke',
                 class: 'sparky-focus-hit-area',
-                'data-focus-handle': 'true'
+                'data-focus-handle': 'true',
+                'data-interactive': 'true',
+                'data-export-exclude': 'true'
             })
         );
     }
@@ -358,9 +360,11 @@ const app = defineTool({
     settings,
     controls: {
         sliders: [
+            { id: 'rayCountSlider', valueId: 'rayCountValue', setting: 'rayCount', min: 3, max: 13, decimals: 0, baseStep: 1, shiftStep: 2 },
             { id: 'rayLengthSlider', valueId: 'rayLengthValue', setting: 'rayLength', min: 220, max: 360, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'rayWidthSlider', valueId: 'rayWidthValue', setting: 'rayWidth', min: 20, max: 160, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'roundnessSlider', valueId: 'roundnessValue', setting: 'roundness', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'cornerSmoothingSlider', valueId: 'cornerSmoothingValue', setting: 'cornerSmoothing', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'focusXSlider', valueId: 'focusXValue', setting: 'focusX', min: 120, max: 360, decimals: 1, baseStep: 0.5, shiftStep: 5 },
             { id: 'focusYSlider', valueId: 'focusYValue', setting: 'focusY', min: 180, max: 390, decimals: 1, baseStep: 0.5, shiftStep: 5 },
             { id: 'eyePerspectiveSlider', valueId: 'eyePerspectiveValue', setting: 'eyePerspective', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
@@ -388,7 +392,12 @@ const app = defineTool({
     presets: {
         storageKey: 'lunnenSparkyGeneratorV1',
         basePath: 'presets',
-        defaultName: '+ Precise Five',
+        defaultName: 'Basic',
+        forceSeed: true,
+        migrate: (store) => {
+            const legacy = store.load('+ Precise Five');
+            if (legacy?.seeded === true) store.delete('+ Precise Five');
+        },
         pinnedPrefix: '+',
         colorDots: (blob) => [
             { kind: 'solid', value: blob.headColor || '#ffffff' },
@@ -398,8 +407,8 @@ const app = defineTool({
     share: {
         stripKeys: ['width', 'height'],
         quantizableFloatKeys: [
-            'focusX', 'focusY', 'rayLength', 'rayWidth', 'roundness',
-            'boundaryCenterX', 'boundaryCenterY', 'boundaryRadius',
+            'focusX', 'focusY', 'rayLength', 'rayWidth', 'roundness', 'cornerSmoothing',
+            'rayCount', 'angleSpan', 'boundaryCenterX', 'boundaryCenterY', 'boundaryRadius',
             'eyePerspective', 'eyeSize', 'eyeDistance', 'cute', 'angry'
         ],
         decimals: 2
@@ -409,7 +418,7 @@ const app = defineTool({
     restore: (tool, snapshot) => tool.settingsStore.setMultiple(normalizeIncomingState(snapshot), true),
     collectPreset: (tool) => extractState(tool.settingsStore.toObject()),
     applyPreset: (tool, preset) => tool.settingsStore.setMultiple(normalizeIncomingState(preset), true),
-    export: { filename: 'lunnen-sparky.svg' },
+    export: { filename: 'sparky.svg' },
     zoom: { fitPadding: { top: 58, right: 58, bottom: 58, left: 58 } },
     shortcuts: {
         g: (tool) => tool.settingsStore.set('showGuides', !tool.settings.showGuides)
@@ -428,6 +437,28 @@ const app = defineTool({
         }
     },
     onReady(tool) {
+        const frameworkExportSVG = tool.exportSVG.bind(tool);
+        const frameworkExportPNG = tool.exportPNG.bind(tool);
+        tool.exportSVG = async (filename) => {
+            if (filename) return frameworkExportSVG(filename);
+            const exportedAt = new Date();
+            const baseName = createSparkyExportBaseName(exportedAt);
+            await frameworkExportSVG(`${baseName}.svg`);
+            const settingsDocument = createSparkySettingsDocument(
+                extractState(tool.settingsStore.toObject()),
+                baseName,
+                exportedAt
+            );
+            // Keep the two browser downloads in separate tasks. Some browsers
+            // discard the first of two synthetic link clicks in the same task.
+            window.setTimeout(() => {
+                tool.exporter?.exportJSON(settingsDocument, `${baseName}.json`);
+            }, 250);
+        };
+        tool.exportPNG = (filename, scaleFactor) => {
+            if (filename) return frameworkExportPNG(filename, scaleFactor);
+            return frameworkExportPNG(`${createSparkyExportBaseName()}.png`, scaleFactor);
+        };
         bindFocusDragging(tool);
         document.getElementById('resetFocusBtn')?.addEventListener('click', () => {
             setFocus(tool, DEFAULT_GEOMETRY.focusX, DEFAULT_GEOMETRY.focusY);
@@ -437,7 +468,7 @@ const app = defineTool({
         document.getElementById('introHelpBtn')?.addEventListener('click', () => {
             tool.dialog?.alert({
                 title: 'Lunnen Sparky',
-                text: 'A mathematically precise five-ray character. Change ray geometry, drag the green focus, shape the expression with Cute and Angry, save or share presets, and export a clean SVG or PNG. Guides are always excluded from export.'
+                text: 'A mathematically precise parametric character. Change ray geometry, drag the focus, shape the expression, save or share presets, and export SVG, JSON, or PNG. Enabled guides and focus are included in exports.'
             });
         });
     }

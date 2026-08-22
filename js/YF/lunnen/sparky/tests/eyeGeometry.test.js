@@ -4,6 +4,7 @@ import test from 'node:test';
 import { buildCharacterGeometry } from '../src/geometry/characterGeometry.js';
 import {
     EYE_DEFAULTS,
+    buildFaceFieldContour,
     buildEyeGeometry,
     createEyeRigModel,
     interpolateLidOffset
@@ -67,12 +68,12 @@ test('Eye Distance controls the clear gap and bottoms out at ten percent', () =>
         < minimum.right.eye1.center.x - minimum.right.eye1.radius);
 });
 
-test('default geometry reproduces the canonical eye pair without correction', () => {
+test('default geometry applies the new minus-twenty eye distance without correction', () => {
     const head = buildCharacterGeometry();
     const eyes = buildEyeGeometry(head.values, head);
     assertPoint(eyes.pairCenter, { x: 240, y: 270 });
-    assertPoint(eyes.left.eye1.points[0], { x: 224, y: 270 }, 1e-4);
-    assertPoint(eyes.right.eye1.points[0], { x: 288, y: 270 }, 1e-4);
+    assertPoint(eyes.left.eye1.points[0], { x: 227.2, y: 270 }, 1e-4);
+    assertPoint(eyes.right.eye1.points[0], { x: 284.8, y: 270 }, 1e-4);
     closeTo(eyes.fitScale, 1);
     assert.ok(eyes.minClearance >= eyes.guard);
 });
@@ -143,7 +144,67 @@ test('the same vertical perspective makes the lower lid nearer when looking upwa
     });
 });
 
-test('the full supported focus, Width and eye-control grid remains inside the head guard', () => {
+test('face placement uses circular Roundness but ignores Corner smoothing', () => {
+    const circular = buildCharacterGeometry({ roundness: 80, cornerSmoothing: 0 });
+    const smoothed = buildCharacterGeometry({ roundness: 80, cornerSmoothing: 100 });
+    const sharp = buildCharacterGeometry({ roundness: 0, cornerSmoothing: 0 });
+    const circularField = buildFaceFieldContour(circular);
+    const smoothedField = buildFaceFieldContour(smoothed);
+    const sharpField = buildFaceFieldContour(sharp);
+    assert.equal(circularField.length, smoothedField.length);
+    circularField.forEach((value, index) => assertPoint(value, smoothedField[index], 1e-6));
+    assert.notDeepEqual(circularField, sharpField);
+});
+
+test('review examples define one continuous optical-placement law', () => {
+    const examples = [
+        { focusX: 120, focusY: 180, rayCount: 11, rayWidth: 80, roundness: 0, eyePerspective: 50, eyeSize: 0, expected: [137.143, 169.853] },
+        { focusX: 120, focusY: 242.1, rayCount: 11, rayWidth: 20, roundness: 0, eyePerspective: 100, eyeSize: 0, expected: [117.363, 234.069] },
+        { focusX: 360, focusY: 180, rayCount: 5, rayWidth: 80, roundness: 60, eyePerspective: 50, eyeSize: 0, expected: [344.236, 172.582] },
+        { focusX: 148.1, focusY: 180, rayCount: 5, rayWidth: 80, roundness: 60, eyePerspective: 50, eyeSize: 0, expected: [157.31, 171.52] },
+        { focusX: 120, focusY: 390, rayCount: 5, rayWidth: 80, roundness: 60, eyePerspective: 50, eyeSize: 0, expected: [120, 368] },
+        { focusX: 120, focusY: 390, rayCount: 5, rayWidth: 37, roundness: 0, eyePerspective: 50, eyeSize: 0, expected: [120, 368] },
+        { focusX: 120, focusY: 367.8, rayCount: 5, rayWidth: 20, roundness: 0, eyePerspective: 50, eyeSize: 0, expected: [115.6, 351.3] },
+        { focusX: 122.2, focusY: 369.9, rayCount: 5, rayWidth: 20, roundness: 0, eyePerspective: 50, eyeSize: 0, expected: [124.868, 362.592] },
+        { focusX: 120.8, focusY: 180.6, rayCount: 5, rayWidth: 20, roundness: 0, eyePerspective: 50, eyeSize: 0, expected: [125.55, 179.302] },
+        { focusX: 120, focusY: 180, rayCount: 5, rayWidth: 20, roundness: 0, eyePerspective: 50, eyeSize: 0, expected: [128.19, 174.4] },
+        { focusX: 360, focusY: 180, rayCount: 5, rayWidth: 98, roundness: 100, eyePerspective: 100, eyeSize: 100, expected: [351.6, 171.71] },
+        { focusX: 360, focusY: 180, rayCount: 5, rayWidth: 98, roundness: 100, eyePerspective: 64, eyeSize: 100, expected: [351.41, 165.22] },
+        { focusX: 360, focusY: 180, rayCount: 5, rayWidth: 98, roundness: 100, eyePerspective: 66, eyeSize: 100, expected: [353.474, 174.796] },
+        { focusX: 360, focusY: 180, rayCount: 5, rayWidth: 160, roundness: 93, eyePerspective: 66, eyeSize: 100, expected: [336.7, 184.51] },
+        { focusX: 360, focusY: 180, rayCount: 5, rayWidth: 160, roundness: 90, eyePerspective: 66, eyeSize: 100, expected: [343.541, 189.332] }
+    ];
+    let totalError = 0;
+    examples.forEach(({ expected, ...settings }) => {
+        const head = buildCharacterGeometry(settings);
+        const eyes = buildEyeGeometry({ ...head.values, ...settings }, head);
+        const error = distance(eyes.pairCenter, { x: expected[0], y: expected[1] });
+        totalError += error;
+        assert.ok(error < 14, `review placement drifted by ${error.toFixed(2)}px for ${JSON.stringify(settings)}`);
+    });
+    assert.ok(totalError / examples.length < 8);
+});
+
+test('nearby Focus, Perspective and Roundness settings cannot jump between local basins', () => {
+    const placement = (settings) => {
+        const head = buildCharacterGeometry(settings);
+        return buildEyeGeometry({ ...head.values, ...settings }, head).pairCenter;
+    };
+    assert.ok(distance(
+        placement({ focusX: 120, focusY: 180, rayWidth: 20 }),
+        placement({ focusX: 120.8, focusY: 180.6, rayWidth: 20 })
+    ) < 8);
+    assert.ok(distance(
+        placement({ focusX: 360, focusY: 180, rayWidth: 98, roundness: 100, eyePerspective: 64, eyeSize: 100 }),
+        placement({ focusX: 360, focusY: 180, rayWidth: 98, roundness: 100, eyePerspective: 66, eyeSize: 100 })
+    ) < 8);
+    assert.ok(distance(
+        placement({ focusX: 360, focusY: 180, rayWidth: 160, roundness: 90, eyePerspective: 66, eyeSize: 100 }),
+        placement({ focusX: 360, focusY: 180, rayWidth: 160, roundness: 93, eyePerspective: 66, eyeSize: 100 })
+    ) < 8);
+});
+
+test('the full supported focus, Width and eye-control grid remains inside the head gap', () => {
     const focusXs = [120, 240, 360];
     const focusYs = [180, 292, 390];
     const widths = [20, 80, 160];

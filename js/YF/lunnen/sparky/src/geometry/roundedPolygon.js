@@ -4,6 +4,7 @@ import {
     clamp,
     cross,
     dot,
+    intersectLines,
     length,
     normalize,
     scale,
@@ -17,6 +18,144 @@ function cleanNumber(value, precision = 4) {
 
 function formatPoint(value) {
     return `${cleanNumber(value.x)} ${cleanNumber(value.y)}`;
+}
+
+function directedArcDelta(startAngle, endAngle, sweep) {
+    const fullTurn = Math.PI * 2;
+    if (sweep) {
+        let delta = (endAngle - startAngle + fullTurn) % fullTurn;
+        if (delta > Math.PI) delta -= fullTurn;
+        return delta;
+    }
+    let delta = -((startAngle - endAngle + fullTurn) % fullTurn);
+    if (delta < -Math.PI) delta += fullTurn;
+    return delta;
+}
+
+function circleCenterForCorner(corner, tangentDistance) {
+    const bisector = add(corner.towardPrevious, corner.towardNext);
+    const bisectorLength = length(bisector);
+    const halfAngleCosine = Math.cos(Math.atan(Math.abs(corner.tangent)));
+    if (bisectorLength < EPSILON || Math.abs(halfAngleCosine) < EPSILON) return corner.vertex;
+    return add(
+        corner.vertex,
+        scale(bisector, tangentDistance / (halfAngleCosine * bisectorLength))
+    );
+}
+
+function circlePoint(center, radius, angle) {
+    return {
+        x: center.x + Math.cos(angle) * radius,
+        y: center.y + Math.sin(angle) * radius
+    };
+}
+
+function arcTangent(angle, delta) {
+    const direction = delta >= 0 ? 1 : -1;
+    return { x: -Math.sin(angle) * direction, y: Math.cos(angle) * direction };
+}
+
+function cubicPoint(start, control1, control2, end, amount) {
+    const inverse = 1 - amount;
+    const inverseSquared = inverse * inverse;
+    const amountSquared = amount * amount;
+    return {
+        x: inverseSquared * inverse * start.x
+            + 3 * inverseSquared * amount * control1.x
+            + 3 * inverse * amountSquared * control2.x
+            + amountSquared * amount * end.x,
+        y: inverseSquared * inverse * start.y
+            + 3 * inverseSquared * amount * control1.y
+            + 3 * inverse * amountSquared * control2.y
+            + amountSquared * amount * end.y
+    };
+}
+
+function transitionFromLineToArc(linePoint, lineDirection, arcPoint, arcDirection) {
+    const intersection = intersectLines(
+        linePoint,
+        add(linePoint, lineDirection),
+        arcPoint,
+        add(arcPoint, arcDirection)
+    );
+    const tangentControl = intersection?.point ?? arcPoint;
+    // Figma's published construction gives two thirds of the transition interval
+    // to the zero-curvature ramp and the remaining third to the arc approach.
+    const lineControl = add(linePoint, scale(subtract(tangentControl, linePoint), 2 / 3));
+    return { lineControl, tangentControl };
+}
+
+function applyCornerSmoothing(corners, distances, requestedValue) {
+    const requested = clamp(Number(requestedValue) || 0, 0, 100) / 100;
+    let effective = requested;
+
+    corners.forEach((corner, index) => {
+        const nextIndex = (index + 1) % corners.length;
+        const baseConsumption = distances[index] + distances[nextIndex];
+        if (baseConsumption <= EPSILON) return;
+        const maximumForEdge = corner.nextLength * 0.998 / baseConsumption - 1;
+        effective = Math.min(effective, Math.max(0, maximumForEdge));
+    });
+
+    const smoothed = corners.map((corner, index) => {
+        const tangentDistance = distances[index];
+        const circularStart = corner.start;
+        const circularEnd = corner.end;
+        if (corner.radius <= EPSILON || effective <= EPSILON) {
+            return {
+                ...corner,
+                circularStart,
+                circularEnd,
+                smoothing: 0,
+                transition: null
+            };
+        }
+
+        const edgeConsumption = tangentDistance * (1 + effective);
+        const start = add(corner.vertex, scale(corner.towardPrevious, edgeConsumption));
+        const end = add(corner.vertex, scale(corner.towardNext, edgeConsumption));
+        const center = circleCenterForCorner(corner, tangentDistance);
+        const startAngle = Math.atan2(circularStart.y - center.y, circularStart.x - center.x);
+        const endAngle = Math.atan2(circularEnd.y - center.y, circularEnd.x - center.x);
+        const delta = directedArcDelta(startAngle, endAngle, corner.sweep);
+        const arcStartAngle = startAngle + delta * effective / 2;
+        const arcEndAngle = endAngle - delta * effective / 2;
+        const arcStart = circlePoint(center, corner.radius, arcStartAngle);
+        const arcEnd = circlePoint(center, corner.radius, arcEndAngle);
+        const incoming = transitionFromLineToArc(
+            start,
+            scale(corner.towardPrevious, -1),
+            arcStart,
+            arcTangent(arcStartAngle, delta)
+        );
+        const outgoingReverse = transitionFromLineToArc(
+            end,
+            scale(corner.towardNext, -1),
+            arcEnd,
+            scale(arcTangent(arcEndAngle, delta), -1)
+        );
+
+        return {
+            ...corner,
+            start,
+            end,
+            circularStart,
+            circularEnd,
+            center,
+            smoothing: effective,
+            transition: {
+                incoming,
+                outgoingReverse,
+                arcStart,
+                arcEnd,
+                arcStartAngle,
+                arcEndAngle,
+                arcDelta: delta * (1 - effective)
+            }
+        };
+    });
+
+    return { corners: smoothed, requestedSmoothing: requested, effectiveSmoothing: effective };
 }
 
 /**
@@ -51,7 +190,7 @@ function measurePolygonCorners(points, radiusAt) {
     });
 }
 
-export function createRoundedPolygon(points, radii = 0) {
+export function createRoundedPolygon(points, radii = 0, options = {}) {
     if (!Array.isArray(points) || points.length < 3) {
         throw new Error('A rounded polygon needs at least three points.');
     }
@@ -84,7 +223,7 @@ export function createRoundedPolygon(points, radii = 0) {
         }
     }
 
-    const corners = raw.map((corner, index) => {
+    const circularCorners = raw.map((corner, index) => {
         const tangentDistance = distances[index];
         const radius = tangentDistance * Math.abs(corner.tangent);
         const start = add(corner.vertex, scale(corner.towardPrevious, tangentDistance));
@@ -100,19 +239,72 @@ export function createRoundedPolygon(points, radii = 0) {
         };
     });
 
+    const smoothing = applyCornerSmoothing(circularCorners, distances, options.cornerSmoothing);
+    const corners = smoothing.corners;
     const commands = [`M ${formatPoint(corners[0].start)}`];
+    const contour = [corners[0].start];
     corners.forEach((corner, index) => {
-        if (corner.radius > EPSILON) {
+        if (corner.radius > EPSILON && corner.transition) {
+            const { incoming, outgoingReverse, arcStart, arcEnd, arcDelta } = corner.transition;
+            commands.push(`C ${formatPoint(incoming.lineControl)} ${formatPoint(incoming.tangentControl)} ${formatPoint(arcStart)}`);
+            for (let sample = 1; sample <= 8; sample += 1) {
+                contour.push(cubicPoint(
+                    corner.start,
+                    incoming.lineControl,
+                    incoming.tangentControl,
+                    arcStart,
+                    sample / 8
+                ));
+            }
+            if (Math.abs(arcDelta) > EPSILON) {
+                commands.push(`A ${cleanNumber(corner.radius)} ${cleanNumber(corner.radius)} 0 0 ${corner.sweep} ${formatPoint(arcEnd)}`);
+                for (let sample = 1; sample <= 12; sample += 1) {
+                    contour.push(circlePoint(
+                        corner.center,
+                        corner.radius,
+                        corner.transition.arcStartAngle + arcDelta * sample / 12
+                    ));
+                }
+            }
+            commands.push(`C ${formatPoint(outgoingReverse.tangentControl)} ${formatPoint(outgoingReverse.lineControl)} ${formatPoint(corner.end)}`);
+            for (let sample = 1; sample <= 8; sample += 1) {
+                contour.push(cubicPoint(
+                    arcEnd,
+                    outgoingReverse.tangentControl,
+                    outgoingReverse.lineControl,
+                    corner.end,
+                    sample / 8
+                ));
+            }
+        } else if (corner.radius > EPSILON) {
             commands.push(`A ${cleanNumber(corner.radius)} ${cleanNumber(corner.radius)} 0 0 ${corner.sweep} ${formatPoint(corner.end)}`);
+            const center = circleCenterForCorner(corner, distances[index]);
+            const startAngle = Math.atan2(corner.start.y - center.y, corner.start.x - center.x);
+            const endAngle = Math.atan2(corner.end.y - center.y, corner.end.x - center.x);
+            const delta = directedArcDelta(startAngle, endAngle, corner.sweep);
+            for (let sample = 1; sample <= 12; sample += 1) {
+                contour.push(circlePoint(center, corner.radius, startAngle + delta * sample / 12));
+            }
         } else {
             commands.push(`L ${formatPoint(corner.vertex)}`);
+            contour.push(corner.vertex);
         }
         const next = corners[(index + 1) % corners.length];
         commands.push(`L ${formatPoint(next.start)}`);
+        contour.push(next.start);
     });
     commands.push('Z');
+    if (contour.length > 1 && length(subtract(contour[0], contour[contour.length - 1])) < EPSILON) {
+        contour.pop();
+    }
 
-    return { path: commands.join(' '), corners };
+    return {
+        path: commands.join(' '),
+        corners,
+        contour,
+        requestedSmoothing: smoothing.requestedSmoothing,
+        effectiveSmoothing: smoothing.effectiveSmoothing
+    };
 }
 
 /**
@@ -173,7 +365,9 @@ export function createRelativeRoundedPolygon(points, vertexMeta, amount = 0, opt
     const normalizedAmount = clamp(Number(amount) || 0, 0, 100) / 100;
     const maximumRadii = weights.map((weight) => weight * maximumScale);
     const requestedRadii = maximumRadii.map((radius) => radius * normalizedAmount);
-    const rounded = createRoundedPolygon(points, requestedRadii);
+    const rounded = createRoundedPolygon(points, requestedRadii, {
+        cornerSmoothing: options.cornerSmoothing
+    });
 
     return {
         ...rounded,

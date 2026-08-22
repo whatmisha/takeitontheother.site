@@ -20,6 +20,24 @@ test('default profile preserves five rays with an exact 36 degree step', () => {
     assert.ok(profiles.every((ray) => ray.length === 240 && ray.width === 80));
 });
 
+test('ray count keeps the same 144 degree fan from three through thirteen rays', () => {
+    const three = createRayProfiles({ ...DEFAULT_GEOMETRY, rayCount: 3 });
+    const thirteen = createRayProfiles({ ...DEFAULT_GEOMETRY, rayCount: 13 });
+    assert.deepEqual(three.map((ray) => ray.angleDeg), [-162, -90, -18]);
+    closeTo(thirteen[0].angleDeg, -162);
+    closeTo(thirteen[1].angleDeg - thirteen[0].angleDeg, 12);
+    closeTo(thirteen[12].angleDeg, -18);
+});
+
+test('every supported ray count produces one tip and one joining vertex per ray', () => {
+    for (let rayCount = 3; rayCount <= 13; rayCount += 1) {
+        const geometry = buildCharacterGeometry({ rayCount });
+        assert.equal(geometry.rays.length, rayCount);
+        assert.equal(geometry.vertices.length, rayCount * 2);
+        assert.ok(geometry.vertices.every(({ x, y }) => Number.isFinite(x) && Number.isFinite(y)));
+    }
+});
+
 test('default tips lie on the mathematical guide circle', () => {
     const geometry = buildCharacterGeometry();
     assert.equal(geometry.rays.length, 5);
@@ -77,6 +95,21 @@ test('maximum relative rounding leaves a safe gap before neighbouring arcs touch
         const remainingEdge = corner.nextLength - corner.idealDistance - next.idealDistance;
         assert.ok(remainingEdge > 0, `corner arcs overlap on edge ${index}`);
     });
+});
+
+test('Corner smoothing follows the Figma scale and backs off when an edge has no room', () => {
+    const circular = buildCharacterGeometry({ cornerSmoothing: 0 });
+    const ios = buildCharacterGeometry({ cornerSmoothing: 60 });
+    const maximum = buildCharacterGeometry({ cornerSmoothing: 100 });
+    closeTo(circular.rounded.effectiveSmoothing, 0);
+    closeTo(ios.rounded.requestedSmoothing, 0.6);
+    closeTo(ios.rounded.effectiveSmoothing, 0.6);
+    closeTo(maximum.rounded.requestedSmoothing, 1);
+    assert.ok(maximum.rounded.effectiveSmoothing > 0.6);
+    assert.ok(maximum.rounded.effectiveSmoothing < 1);
+    assert.doesNotMatch(circular.rounded.path, / C /);
+    assert.match(ios.rounded.path, / C /);
+    assert.ok(ios.rounded.contour.every(({ x, y }) => Number.isFinite(x) && Number.isFinite(y)));
 });
 
 test('each joining radius equals the smaller neighbouring tip radius', () => {

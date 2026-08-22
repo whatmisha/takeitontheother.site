@@ -1,6 +1,6 @@
 {
   "presets": [
-    { "name": "+ Precise Five", "file": "precise-five.json" },
+    { "name": "Basic", "file": "precise-five.json" },
     { "name": "Needle Crown", "file": "needle-crown.json" },
     { "name": "Wide Crown", "file": "wide-crown.json" }
   ]

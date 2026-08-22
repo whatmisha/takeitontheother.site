@@ -210,6 +210,9 @@ function directedArcDelta(startAngle, endAngle, sweep) {
 
 /** Flattens the exact head fillets for deterministic containment tests. */
 export function flattenRoundedContour(rounded, samplesPerArc = 12) {
+    if (Array.isArray(rounded.contour) && rounded.contour.length >= 3) {
+        return rounded.contour;
+    }
     const contour = [];
     rounded.corners.forEach((corner) => {
         contour.push(corner.start);
@@ -397,6 +400,303 @@ function solveEyePlacement(model, values, headContour) {
     return { desiredCenter, pairCenter, fitScale: low, ...best };
 }
 
+function sampleCircularCorner(corner, sampleCount = 4) {
+    if (!corner || corner.radius <= EPSILON) return [corner?.vertex].filter(Boolean);
+    // Corner smoothing deliberately does not participate in face placement.
+    // circularStart/circularEnd are the underlying Roundness-only tangent points.
+    const start = corner.circularStart || corner.start;
+    const end = corner.circularEnd || corner.end;
+    const tangentDistance = distance(corner.vertex, start);
+    const bisector = add(corner.towardPrevious, corner.towardNext);
+    const bisectorLength = length(bisector);
+    const halfAngleCosine = Math.cos(Math.atan(Math.abs(corner.tangent)));
+    if (bisectorLength < EPSILON || Math.abs(halfAngleCosine) < EPSILON) return [corner.vertex];
+    const center = add(
+        corner.vertex,
+        scale(bisector, tangentDistance / (halfAngleCosine * bisectorLength))
+    );
+    const startAngle = Math.atan2(start.y - center.y, start.x - center.x);
+    const endAngle = Math.atan2(end.y - center.y, end.x - center.x);
+    const delta = directedArcDelta(startAngle, endAngle, corner.sweep);
+    return Array.from({ length: sampleCount + 1 }, (_, index) => {
+        const angle = startAngle + delta * index / sampleCount;
+        return point(
+            center.x + Math.cos(angle) * corner.radius,
+            center.y + Math.sin(angle) * corner.radius
+        );
+    });
+}
+
+/**
+ * The soft facial field is the central sector enclosed by the base closure and
+ * the chain of neighbouring-ray intersections. Only circular Roundness arcs
+ * alter it; Corner smoothing is intentionally ignored.
+ */
+export function buildFaceFieldContour(characterGeometry, samplesPerCorner = 4) {
+    const selected = characterGeometry.vertexMeta
+        .map((meta, index) => ({ meta, corner: characterGeometry.rounded.corners[index] }))
+        .filter(({ meta }) => meta.kind === 'base' || meta.kind === 'valley');
+    return selected.flatMap(({ corner }) => sampleCircularCorner(corner, samplesPerCorner));
+}
+
+function contourBounds(contour) {
+    return contour.reduce((bounds, value) => ({
+        minX: Math.min(bounds.minX, value.x),
+        maxX: Math.max(bounds.maxX, value.x),
+        minY: Math.min(bounds.minY, value.y),
+        maxY: Math.max(bounds.maxY, value.y)
+    }), { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
+}
+
+function downsampleContour(contour, maximumPoints = 96) {
+    if (contour.length <= maximumPoints) return contour;
+    return Array.from({ length: maximumPoints }, (_, index) => (
+        contour[Math.floor(index * contour.length / maximumPoints)]
+    ));
+}
+
+function translatedPoint(value, center) {
+    return point(value.x + center.x, value.y + center.y);
+}
+
+function preparePlacementContour(contour) {
+    return contour.map((start, index) => {
+        const end = contour[(index + 1) % contour.length];
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        return { start, end, dx, dy, lengthSquared: dx * dx + dy * dy };
+    });
+}
+
+function preparedSignedClearance(value, edges) {
+    let inside = false;
+    let minimumSquared = Infinity;
+    edges.forEach((edge) => {
+        const { start, end, dx, dy, lengthSquared } = edge;
+        const projection = lengthSquared > EPSILON
+            ? clamp(((value.x - start.x) * dx + (value.y - start.y) * dy) / lengthSquared, 0, 1)
+            : 0;
+        const offsetX = value.x - (start.x + projection * dx);
+        const offsetY = value.y - (start.y + projection * dy);
+        minimumSquared = Math.min(minimumSquared, offsetX * offsetX + offsetY * offsetY);
+        if ((start.y > value.y) !== (end.y > value.y)
+            && value.x < dx * (value.y - start.y) / dy + start.x) {
+            inside = !inside;
+        }
+    });
+    const clearance = Math.sqrt(minimumSquared);
+    return inside ? clearance : -clearance;
+}
+
+function placementClearances(localEyeContour, center, preparedContour) {
+    return localEyeContour.map((sample) => preparedSignedClearance(
+        translatedPoint(sample, center),
+        preparedContour
+    ));
+}
+
+function scoreOpticalPlacement(localEyeContour, center, faceContour, headContour) {
+    const headClearances = placementClearances(
+        localEyeContour,
+        center,
+        headContour
+    );
+    const minimumHeadClearance = Math.min(...headClearances);
+    const minimumGap = 1;
+    if (minimumHeadClearance < minimumGap) {
+        return {
+            score: -1e6 + minimumHeadClearance * 1e3,
+            minimumHeadClearance,
+            feasible: false
+        };
+    }
+
+    const fieldClearances = placementClearances(
+        localEyeContour,
+        center,
+        faceContour
+    );
+    const minimumFieldClearance = Math.min(...fieldClearances);
+    const averageFieldClearance = fieldClearances.reduce((sum, value) => sum + value, 0)
+        / fieldClearances.length;
+    return {
+        // The worst point locates the complete footprint; the small mean term
+        // removes ambiguous plateaus without turning the field into a hard mask.
+        score: minimumFieldClearance + averageFieldClearance * 0.08,
+        minimumHeadClearance,
+        minimumFieldClearance,
+        feasible: true
+    };
+}
+
+function searchGlobalPlacement(bounds, evaluate, seeds = []) {
+    const width = Math.max(EPSILON, bounds.maxX - bounds.minX);
+    const height = Math.max(EPSILON, bounds.maxY - bounds.minY);
+    const coarseSteps = 8;
+    const candidates = [...seeds];
+    for (let row = 0; row <= coarseSteps; row += 1) {
+        for (let column = 0; column <= coarseSteps; column += 1) {
+            candidates.push(point(
+                bounds.minX + width * column / coarseSteps,
+                bounds.minY + height * row / coarseSteps
+            ));
+        }
+    }
+
+    const ranked = candidates
+        .map((center) => ({ center, result: evaluate(center) }))
+        .sort((first, second) => second.result.score - first.result.score)
+        .slice(0, 3);
+    let winner = ranked[0];
+    ranked.forEach((seed) => {
+        let current = seed;
+        let stepX = width / coarseSteps;
+        let stepY = height / coarseSteps;
+        for (let iteration = 0; iteration < 5; iteration += 1) {
+            let localWinner = current;
+            for (let y = -1; y <= 1; y += 1) {
+                for (let x = -1; x <= 1; x += 1) {
+                    const center = point(
+                        clamp(current.center.x + x * stepX, bounds.minX, bounds.maxX),
+                        clamp(current.center.y + y * stepY, bounds.minY, bounds.maxY)
+                    );
+                    const candidate = { center, result: evaluate(center) };
+                    if (candidate.result.score > localWinner.result.score) localWinner = candidate;
+                }
+            }
+            current = localWinner;
+            stepX /= 2;
+            stepY /= 2;
+        }
+        if (!winner || current.result.score > winner.result.score) winner = current;
+    });
+    return winner;
+}
+
+function smoothstep(value) {
+    const amount = clamp(value, 0, 1);
+    return amount * amount * (3 - 2 * amount);
+}
+
+function solveOpticalPairCenter(model, values, characterGeometry, headContour, legacyPlacement) {
+    const faceContour = buildFaceFieldContour(characterGeometry);
+    const sampledHead = downsampleContour(headContour, 32);
+    const preparedFace = preparePlacementContour(faceContour);
+    const preparedHead = preparePlacementContour(sampledHead);
+    const localTransform = createRigTransform(values, point(0, 0), legacyPlacement.fitScale);
+    const localEyeContour = mainEyeContour(model, localTransform, 8);
+    const faceBounds = contourBounds(faceContour);
+    const headBounds = contourBounds(sampledHead);
+    const opticalEvaluation = (center) => scoreOpticalPlacement(
+        localEyeContour,
+        center,
+        preparedFace,
+        preparedHead
+    );
+    const optical = searchGlobalPlacement(faceBounds, opticalEvaluation, [
+        legacyPlacement.pairCenter,
+        point(values.focusX, values.focusY + EYE_DEFAULTS.centerOffsetY)
+    ]);
+    const horizontal = clamp((values.focusX - EYE_DEFAULTS.focusX) / 120, -1, 1);
+    const verticalRange = values.focusY < EYE_DEFAULTS.focusY ? 112 : 98;
+    const vertical = clamp((values.focusY - EYE_DEFAULTS.focusY) / verticalRange, -1, 1);
+    const focusAmount = smoothstep(Math.min(1, Math.hypot(horizontal, vertical) / Math.SQRT2));
+    // One corpus-wide optical law: the sector apex provides facial gravity,
+    // while normalized Focus displacement adds a continuous directional bias.
+    // Horizontal influence is stronger because the sector itself already
+    // carries most of the vertical movement as Focus changes.
+    const widthRatio = values.rayWidth / EYE_DEFAULTS.referenceRayWidth;
+    const verticalFaceGravity = 0.2503910736768348
+        + Math.max(0, widthRatio - 1) * 0.08
+        + vertical * Math.min(1, widthRatio) * 0.05;
+    const opticalCenter = point(
+        optical.center.x + (characterGeometry.baseClosure.x - optical.center.x) * 0.35,
+        optical.center.y
+            + (characterGeometry.baseClosure.y - optical.center.y) * verticalFaceGravity
+    );
+    const horizontalFocusInfluence = (0.72 + Math.max(0, vertical) * 0.43) * focusAmount;
+    const target = point(
+        opticalCenter.x + (values.focusX - optical.center.x) * horizontalFocusInfluence,
+        opticalCenter.y + (values.focusY - optical.center.y) * 0.05 * focusAmount
+    );
+    const fullLocalEyeContour = mainEyeContour(model, localTransform, 48);
+    const preparedFullHead = preparePlacementContour(headContour);
+    const exactMinimumClearance = (center) => Math.min(...placementClearances(
+        fullLocalEyeContour,
+        center,
+        preparedFullHead
+    ));
+    const enforceExactHeadGap = (center) => {
+        const minimumGap = 1;
+        let minimumClearance = exactMinimumClearance(center);
+        if (minimumClearance >= minimumGap) return { center, minimumClearance };
+
+        const safeCenter = legacyPlacement.pairCenter;
+        let previousAmount = 0;
+        for (let index = 1; index <= 32; index += 1) {
+            const amount = index / 32;
+            const candidate = point(
+                mix(center.x, safeCenter.x, amount),
+                mix(center.y, safeCenter.y, amount)
+            );
+            const candidateClearance = exactMinimumClearance(candidate);
+            if (candidateClearance < minimumGap) {
+                previousAmount = amount;
+                continue;
+            }
+            let low = previousAmount;
+            let high = amount;
+            let winner = { center: candidate, minimumClearance: candidateClearance };
+            for (let iteration = 0; iteration < 18; iteration += 1) {
+                const middle = (low + high) / 2;
+                const middleCenter = point(
+                    mix(center.x, safeCenter.x, middle),
+                    mix(center.y, safeCenter.y, middle)
+                );
+                const middleClearance = exactMinimumClearance(middleCenter);
+                if (middleClearance >= minimumGap) {
+                    high = middle;
+                    winner = { center: middleCenter, minimumClearance: middleClearance };
+                } else {
+                    low = middle;
+                }
+            }
+            return winner;
+        }
+        return { center: safeCenter, minimumClearance: exactMinimumClearance(safeCenter) };
+    };
+    const targetResult = opticalEvaluation(target);
+    if (targetResult.feasible) {
+        const exact = enforceExactHeadGap(target);
+        return {
+            faceContour,
+            opticalCenter,
+            pairCenter: exact.center,
+            minimumHeadClearance: exact.minimumClearance
+        };
+    }
+
+    // Project globally to the closest legal translation of the unchanged rig.
+    // The legacy position is always included, so retaining the original size is
+    // possible even when the soft face field has no fully feasible placement.
+    const projection = searchGlobalPlacement(headBounds, (center) => {
+        const placement = opticalEvaluation(center);
+        if (!placement.feasible) return placement;
+        const offset = subtract(center, target);
+        return {
+            ...placement,
+            score: -(offset.x * offset.x + offset.y * offset.y)
+        };
+    }, [target, opticalCenter, legacyPlacement.pairCenter]);
+    const exact = enforceExactHeadGap(projection.center);
+    return {
+        faceContour,
+        opticalCenter,
+        pairCenter: exact.center,
+        minimumHeadClearance: exact.minimumClearance
+    };
+}
+
 function buildRenderedCircle(circle, transform) {
     const points = sampleCircle(circle, transform, 48);
     return { ...circle, points, path: createClosedCurvePath(points) };
@@ -405,16 +705,28 @@ function buildRenderedCircle(circle, transform) {
 export function buildEyeGeometry(settings, characterGeometry) {
     const values = {
         ...characterGeometry.values,
-        eyePerspective: 0,
+        eyePerspective: 50,
         eyeSize: 0,
-        eyeDistance: 0,
+        eyeDistance: -20,
         cute: 0,
         angry: 0,
         ...settings
     };
     const model = createEyeRigModel(values);
     const headContour = flattenRoundedContour(characterGeometry.rounded);
-    const placement = solveEyePlacement(model, values, headContour);
+    const legacyPlacement = solveEyePlacement(model, values, headContour);
+    const opticalPlacement = solveOpticalPairCenter(
+        model,
+        values,
+        characterGeometry,
+        headContour,
+        legacyPlacement
+    );
+    const placement = {
+        ...legacyPlacement,
+        pairCenter: opticalPlacement.pairCenter,
+        minClearance: opticalPlacement.minimumHeadClearance
+    };
     const transform = createRigTransform(values, placement.pairCenter, placement.fitScale);
     const renderEye = (eye) => ({
         side: eye.side,
@@ -431,9 +743,11 @@ export function buildEyeGeometry(settings, characterGeometry) {
         desiredCenter: placement.desiredCenter,
         pairCenter: placement.pairCenter,
         shift: subtract(placement.pairCenter, placement.desiredCenter),
+        opticalCenter: opticalPlacement.opticalCenter,
         fitScale: placement.fitScale,
-        guard: placement.guard,
+        guard: 1,
         minClearance: placement.minClearance,
-        headContour
+        headContour,
+        faceContour: opticalPlacement.faceContour
     };
 }

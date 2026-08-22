@@ -463,9 +463,13 @@ export class ApplicationShell {
     async _bootstrapPresets() {
         if (!this.presets) return;
         const c = this.config.presets;
+        if (typeof c.migrate === 'function') {
+            await c.migrate(this.presetStore);
+        }
         if (c.seed !== false) {
             await this.presetStore.loadSeed({
                 basePath: c.basePath || 'presets',
+                force: c.forceSeed === true,
                 transform: c.transform
             });
         }

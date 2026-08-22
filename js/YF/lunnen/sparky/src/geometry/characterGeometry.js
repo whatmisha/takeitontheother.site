@@ -24,9 +24,11 @@ export const DEFAULT_GEOMETRY = Object.freeze({
     rayCount: 5,
     centerAngle: -90,
     angleStep: 36,
+    angleSpan: 144,
     rayLength: 240,
     rayWidth: 80,
-    roundness: 60
+    roundness: 60,
+    cornerSmoothing: 0
 });
 
 export function createBoundary(settings) {
@@ -51,8 +53,12 @@ export function createBoundary(settings) {
  * ray so later distributions do not require a new geometry representation.
  */
 export function createRayProfiles(settings) {
-    const count = Math.max(2, Math.round(settings.rayCount));
+    const count = Math.max(3, Math.min(13, Math.round(settings.rayCount)));
     const middle = (count - 1) / 2;
+    const angleSpan = Number.isFinite(settings.angleSpan)
+        ? settings.angleSpan
+        : settings.angleStep * 4;
+    const resolvedAngleStep = angleSpan / (count - 1);
     const overrides = Array.isArray(settings.rayOverrides) ? settings.rayOverrides : [];
 
     return Array.from({ length: count }, (_, index) => {
@@ -60,7 +66,7 @@ export function createRayProfiles(settings) {
         return {
             index,
             angleDeg: settings.centerAngle
-                + (index - middle) * settings.angleStep
+                + (index - middle) * resolvedAngleStep
                 + (override.angleOffset || 0),
             length: override.length ?? settings.rayLength,
             width: override.width ?? settings.rayWidth,
@@ -152,6 +158,8 @@ export function buildCharacterGeometry(settings = {}) {
     vertices.pop();
     vertexMeta.pop();
 
-    const rounded = createRelativeRoundedPolygon(vertices, vertexMeta, values.roundness);
+    const rounded = createRelativeRoundedPolygon(vertices, vertexMeta, values.roundness, {
+        cornerSmoothing: values.cornerSmoothing
+    });
     return { values, focus, boundary, rays, valleys, baseClosure, vertices, vertexMeta, rounded };
 }
