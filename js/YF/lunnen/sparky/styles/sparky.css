@@ -26,6 +26,10 @@
     user-select: none;
 }
 
+.mobile-desktop-hint {
+    display: none;
+}
+
 .sparky-panel-action {
     width: 100%;
     height: 32px;
@@ -105,12 +109,23 @@
         padding: 0;
     }
 
-    .canvas-container {
-        pointer-events: none;
-    }
-
     #mainSvg {
         width: 100% !important;
         height: 100% !important;
+    }
+
+    .mobile-desktop-hint {
+        position: fixed;
+        left: 50%;
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        z-index: 2;
+        display: block;
+        width: calc(100% - 32px);
+        transform: translateX(-50%);
+        color: #777;
+        font-size: 11px;
+        line-height: 1.25;
+        text-align: center;
+        pointer-events: none;
     }
 }

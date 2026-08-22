@@ -25,6 +25,7 @@ const HEAD_CLIP_ID = 'sparky-head-clip';
 const MOBILE_SHOWCASE_QUERY = '(max-width: 768px), (hover: none) and (pointer: coarse)';
 const DESKTOP_FIT_PADDING = 58;
 const MOBILE_FIT_PADDING = 24;
+let mobileShowcaseFocus = null;
 
 const settings = {
     width: DEFAULT_GEOMETRY.artboardWidth,
@@ -80,7 +81,9 @@ function isMobileShowcase() {
 }
 
 function activeRenderSettings(current) {
-    return isMobileShowcase() ? settings : current;
+    if (!isMobileShowcase()) return current;
+    const focus = mobileShowcaseFocus || { x: settings.focusX, y: settings.focusY };
+    return { ...settings, focusX: focus.x, focusY: focus.y };
 }
 
 function fitShowcaseToViewport(app, mobile = isMobileShowcase()) {
@@ -94,6 +97,7 @@ function fitShowcaseToViewport(app, mobile = isMobileShowcase()) {
 function bindMobileShowcase(app) {
     const media = window.matchMedia?.(MOBILE_SHOWCASE_QUERY);
     let fitFrame = null;
+    let wasMobile = false;
     const scheduleFit = (mobile) => {
         if (fitFrame != null) cancelAnimationFrame(fitFrame);
         fitFrame = requestAnimationFrame(() => {
@@ -104,7 +108,11 @@ function bindMobileShowcase(app) {
     const syncMode = () => {
         const mobile = media?.matches ?? window.innerWidth <= 768;
         document.documentElement.classList.toggle('sparky-mobile-showcase', mobile);
-        if (mobile) stopBlink(app);
+        if (mobile && !wasMobile) {
+            mobileShowcaseFocus = { x: settings.focusX, y: settings.focusY };
+            stopBlink(app);
+        }
+        wasMobile = mobile;
         app.renderNow();
         snapDisplayedEyes(app);
         scheduleFit(mobile);
@@ -186,11 +194,12 @@ function applyBlink(app) {
     const eyeGeometry = app.eyeGeometry;
     if (!svg || !eyeGeometry) return;
     const amount = blink.amount;
+    const expression = activeRenderSettings(app.settings);
     const lids = amount <= 0
         ? eyeGeometry
         : buildEyeLidGeometry({
-            cute: app.settings.cute + (100 - app.settings.cute) * amount,
-            angry: app.settings.angry + (100 - app.settings.angry) * amount,
+            cute: expression.cute + (100 - expression.cute) * amount,
+            angry: expression.angry + (100 - expression.angry) * amount,
             lidClosure: amount
         }, eyeGeometry);
     ['left', 'right'].forEach((side) => {
@@ -240,7 +249,6 @@ function bindBlink(app) {
         '.dialog-overlay'
     ].join(',');
     document.addEventListener('click', (event) => {
-        if (isMobileShowcase()) return;
         if (!(event.target instanceof Element)) return;
         if (event.target.closest(excluded)) return;
         startBlink(app);
@@ -484,9 +492,15 @@ function bindFocusDragging(app) {
     let pendingFollowPoint = null;
 
     const update = (raw) => {
-        const focus = constrainFocus(raw, app.settings);
+        const mobile = isMobileShowcase();
+        const focus = constrainFocus(raw, activeRenderSettings(app.settings));
         const x = Number(focus.x.toFixed(1));
         const y = Number(focus.y.toFixed(1));
+        if (mobile) {
+            mobileShowcaseFocus = { x, y };
+            app.renderNow();
+            return;
+        }
         app.settingsStore.setMultiple({ focusX: x, focusY: y });
         app.sliders?.setValue('focusXSlider', x, false);
         app.sliders?.setValue('focusYSlider', y, false);
@@ -502,13 +516,19 @@ function bindFocusDragging(app) {
         if (!pendingFollowPoint || followFrame != null) return;
         followFrame = requestAnimationFrame(() => {
             followFrame = null;
-            if (!app.settings.followCursor || !pendingFollowPoint) return;
+            if ((!isMobileShowcase() && !app.settings.followCursor) || !pendingFollowPoint) return;
             update(pendingFollowPoint);
             pendingFollowPoint = null;
         });
     };
 
     svg.addEventListener('pointerdown', (event) => {
+        if (isMobileShowcase()) {
+            pointerId = event.pointerId;
+            svg.setPointerCapture(pointerId);
+            updateFromEvent(event);
+            return;
+        }
         const handle = event.target.closest?.('[data-focus-handle="true"]');
         if (!handle) return;
         event.preventDefault();
@@ -525,14 +545,14 @@ function bindFocusDragging(app) {
             updateFromEvent(event);
             return;
         }
-        if (app.settings.followCursor) scheduleFollow(event);
+        if (isMobileShowcase() || app.settings.followCursor) scheduleFollow(event);
     });
 
     const finish = (event) => {
         if (event.pointerId !== pointerId) return;
         if (svg.hasPointerCapture(pointerId)) svg.releasePointerCapture(pointerId);
         pointerId = null;
-        app.history?.endTransaction();
+        if (!isMobileShowcase()) app.history?.endTransaction();
     };
     svg.addEventListener('pointerup', finish);
     svg.addEventListener('pointercancel', finish);
