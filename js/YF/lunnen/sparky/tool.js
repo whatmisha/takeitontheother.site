@@ -1,9 +1,10 @@
 import { defineTool } from './framework/src/core/defineTool.js';
+import { PresetStore } from './framework/src/preset/PresetStore.js';
 import {
     DEFAULT_GEOMETRY,
     buildCharacterGeometry
-} from './src/geometry/characterGeometry.js?v=20260822-10';
-import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260822-10';
+} from './src/geometry/characterGeometry.js?v=20260823-2';
+import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260823-1';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import {
     advanceEyeMotion,
@@ -17,7 +18,16 @@ import {
     resetBlink,
     triggerBlink
 } from './src/animation/blink.js?v=20260822-6';
-import { clamp, distance, point, scale, subtract, add } from './src/geometry/vector.js';
+import { clamp } from './src/geometry/vector.js';
+import {
+    constrainFocusPoint,
+    focusPointFromPolar,
+    focusPointToPolar
+} from './src/geometry/focusBounds.js?v=20260823-6';
+import {
+    COORDINATE_SPACE_VERSION,
+    migrateCoordinateSpace
+} from './src/geometry/coordinateSpace.js?v=20260823-2';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const GUIDE_CLIP_ID = 'sparky-artboard-clip';
@@ -28,9 +38,12 @@ const MOBILE_FIT_PADDING = 24;
 const MOBILE_GRAPHIC_OFFSET_PX = 24;
 const MOBILE_FOCUS_TAP_RESPONSE_MS = 135;
 const MOBILE_FOCUS_SWIPE_RESPONSE_MS = 45;
+const ARTBOARD_CROP_X = 0;
+const ARTBOARD_CROP_Y = DEFAULT_GEOMETRY.boundaryCenterY - DEFAULT_GEOMETRY.boundaryRadius;
 let mobileShowcaseFocus = null;
 
 const settings = {
+    coordinateSpaceVersion: COORDINATE_SPACE_VERSION,
     width: DEFAULT_GEOMETRY.artboardWidth,
     height: DEFAULT_GEOMETRY.artboardHeight,
     boundaryType: DEFAULT_GEOMETRY.boundaryType,
@@ -42,6 +55,8 @@ const settings = {
     boundaryRotation: DEFAULT_GEOMETRY.boundaryRotation,
     focusX: DEFAULT_GEOMETRY.focusX,
     focusY: DEFAULT_GEOMETRY.focusY,
+    focusAngle: 0,
+    focusDistance: 0,
     rayCount: DEFAULT_GEOMETRY.rayCount,
     centerAngle: DEFAULT_GEOMETRY.centerAngle,
     angleStep: DEFAULT_GEOMETRY.angleStep,
@@ -65,17 +80,47 @@ const settings = {
 };
 
 const STATE_KEYS = Object.freeze(Object.keys(settings));
+const PERSISTED_STATE_KEYS = Object.freeze(
+    STATE_KEYS.filter((key) => key !== 'focusX' && key !== 'focusY')
+);
 
 function extractState(source) {
+    return Object.fromEntries(PERSISTED_STATE_KEYS.map((key) => [key, source[key]]));
+}
+
+function extractInternalState(source) {
     return Object.fromEntries(STATE_KEYS.map((key) => [key, source[key]]));
 }
 
 function normalizeIncomingState(source = {}) {
-    const normalized = { ...settings, ...source };
+    const migrated = migrateCoordinateSpace(source);
+    const normalized = { ...settings, ...migrated };
     if (source.roundness == null && Number.isFinite(source.cornerRadius)) {
         normalized.roundness = clamp(source.cornerRadius * 6, 0, 100);
     }
-    return extractState(normalized);
+    const hasPolarFocus = migrated.focusAngle != null
+        && migrated.focusDistance != null
+        && Number.isFinite(Number(migrated.focusAngle))
+        && Number.isFinite(Number(migrated.focusDistance));
+    if (hasPolarFocus) {
+        const polar = normalizedPolar({
+            angle: migrated.focusAngle,
+            distance: migrated.focusDistance
+        });
+        const focus = normalizedFocus(focusPointFromPolar(polar, normalized), normalized);
+        normalized.focusAngle = polar.angle;
+        normalized.focusDistance = polar.distance;
+        normalized.focusX = focus.x;
+        normalized.focusY = focus.y;
+    } else {
+        const focus = normalizedFocus({ x: normalized.focusX, y: normalized.focusY }, normalized);
+        const polar = normalizedPolar(focusPointToPolar(focus, normalized, normalized.focusAngle));
+        normalized.focusAngle = polar.angle;
+        normalized.focusDistance = polar.distance;
+        normalized.focusX = focus.x;
+        normalized.focusY = focus.y;
+    }
+    return extractInternalState(normalized);
 }
 
 function isMobileShowcase() {
@@ -312,7 +357,12 @@ function bindBlink(app) {
 function createDefinitions(width, height, headPath) {
     const defs = makeSvgElement('defs');
     const guideClip = makeSvgElement('clipPath', { id: GUIDE_CLIP_ID });
-    guideClip.appendChild(makeSvgElement('rect', { x: 0, y: 0, width, height }));
+    guideClip.appendChild(makeSvgElement('rect', {
+        x: ARTBOARD_CROP_X,
+        y: ARTBOARD_CROP_Y,
+        width,
+        height
+    }));
     const headClip = makeSvgElement('clipPath', { id: HEAD_CLIP_ID });
     headClip.appendChild(makeSvgElement('path', { d: headPath }));
     append(defs, guideClip, headClip);
@@ -332,8 +382,8 @@ function drawEyes(ctx, eyeGeometry, definitions) {
         const maskId = `sparky-${side}-eye-mask`;
         const mask = create('mask', {
             id: maskId,
-            x: 0,
-            y: 0,
+            x: ARTBOARD_CROP_X,
+            y: ARTBOARD_CROP_Y,
             width,
             height,
             maskUnits: 'userSpaceOnUse',
@@ -380,8 +430,8 @@ function drawCharacter(ctx, geometry, eyeGeometry) {
     const definitions = createDefinitions(width, height, geometry.rounded.path);
     svg.appendChild(definitions);
     svg.appendChild(create('rect', {
-        x: 0,
-        y: 0,
+        x: ARTBOARD_CROP_X,
+        y: ARTBOARD_CROP_Y,
         width,
         height,
         fill: state.backgroundColor,
@@ -417,17 +467,17 @@ function drawGuides(ctx, geometry) {
         append(guides,
             create('line', {
                 x1: state.boundaryCenterX,
-                y1: 0,
+                y1: ARTBOARD_CROP_Y,
                 x2: state.boundaryCenterX,
-                y2: height,
+                y2: ARTBOARD_CROP_Y + height,
                 stroke: '#315bff',
                 opacity: 0.55,
                 ...commonStroke
             }),
             create('line', {
-                x1: 0,
+                x1: ARTBOARD_CROP_X,
                 y1: state.boundaryCenterY,
-                x2: width,
+                x2: ARTBOARD_CROP_X + width,
                 y2: state.boundaryCenterY,
                 stroke: '#315bff',
                 opacity: 0.55,
@@ -506,7 +556,13 @@ function drawGuides(ctx, geometry) {
 
 function renderFailure(ctx, error) {
     const { svg, create, width, height, settings: state } = ctx;
-    svg.appendChild(create('rect', { x: 0, y: 0, width, height, fill: state.backgroundColor }));
+    svg.appendChild(create('rect', {
+        x: ARTBOARD_CROP_X,
+        y: ARTBOARD_CROP_Y,
+        width,
+        height,
+        fill: state.backgroundColor
+    }));
     const message = create('text', {
         x: width / 2,
         y: height / 2,
@@ -521,15 +577,57 @@ function renderFailure(ctx, error) {
 }
 
 function constrainFocus(raw, state) {
-    let constrained = point(clamp(raw.x, 120, 360), clamp(raw.y, 180, 390));
-    if (state.boundaryType !== 'circle') return constrained;
+    return constrainFocusPoint(raw, state);
+}
 
-    const center = point(state.boundaryCenterX, state.boundaryCenterY);
-    const delta = subtract(constrained, center);
-    const magnitude = distance(constrained, center);
-    const maximum = state.boundaryRadius - 2;
-    if (magnitude > maximum) constrained = add(center, scale(delta, maximum / magnitude));
-    return constrained;
+let focusControlsSyncing = false;
+
+function normalizedFocus(raw, state) {
+    const constrained = constrainFocus(raw, state);
+    const rounded = {
+        x: Number(constrained.x.toFixed(3)),
+        y: Number(constrained.y.toFixed(3))
+    };
+    const final = constrainFocus(rounded, state);
+    return {
+        x: Number(final.x.toFixed(6)),
+        y: Number(final.y.toFixed(6))
+    };
+}
+
+function normalizedPolar(raw = {}) {
+    return {
+        angle: clamp(Number(raw.angle) || 0, 0, 360),
+        distance: clamp(Number(raw.distance) || 0, 0, 100)
+    };
+}
+
+function syncFocusControls(app) {
+    if (!app.sliders) return;
+    const polar = normalizedPolar({
+        angle: app.settings.focusAngle,
+        distance: app.settings.focusDistance
+    });
+    const focus = normalizedFocus(focusPointFromPolar(polar, app.settings), app.settings);
+    const wasSyncing = focusControlsSyncing;
+    focusControlsSyncing = true;
+    try {
+        app.settingsStore.setMultiple({
+            focusAngle: polar.angle,
+            focusDistance: polar.distance,
+            focusX: focus.x,
+            focusY: focus.y
+        }, true);
+        app.sliders.setValue('focusAngleSlider', polar.angle, false);
+        app.sliders.setValue('focusDistanceSlider', polar.distance, false);
+    } finally {
+        focusControlsSyncing = wasSyncing;
+    }
+}
+
+function applyState(app, source) {
+    const normalized = normalizeIncomingState(source);
+    app.settingsStore.setMultiple(normalized, true);
 }
 
 function pointFromPointer(svg, event) {
@@ -547,16 +645,14 @@ function bindFocusDragging(app) {
 
     const update = (raw, responseMs = MOBILE_FOCUS_SWIPE_RESPONSE_MS) => {
         const mobile = isMobileShowcase();
-        const focus = constrainFocus(raw, activeRenderSettings(app.settings));
-        const x = Number(focus.x.toFixed(1));
-        const y = Number(focus.y.toFixed(1));
+        const renderSettings = activeRenderSettings(app.settings);
+        const focus = normalizedFocus(raw, renderSettings);
+        const { x, y } = focus;
         if (mobile) {
             retargetMobileFocus(app, { x, y }, responseMs);
             return;
         }
-        app.settingsStore.setMultiple({ focusX: x, focusY: y });
-        app.sliders?.setValue('focusXSlider', x, false);
-        app.sliders?.setValue('focusYSlider', y, false);
+        setFocus(app, x, y);
     };
 
     const updateFromEvent = (event, responseMs) => {
@@ -616,18 +712,74 @@ function disableFollowCursor(app) {
 }
 
 function bindManualFocusControls(app) {
-    ['focusXSlider', 'focusYSlider'].forEach((id) => {
+    ['focusAngleSlider', 'focusDistanceSlider'].forEach((id) => {
         document.getElementById(id)?.addEventListener('input', () => disableFollowCursor(app));
     });
-    ['focusXValue', 'focusYValue'].forEach((id) => {
+    ['focusAngleValue', 'focusDistanceValue'].forEach((id) => {
         document.getElementById(id)?.addEventListener('blur', () => disableFollowCursor(app));
     });
+
+    const reconcile = () => {
+        if (focusControlsSyncing) return;
+        const polar = normalizedPolar({
+            angle: app.settings.focusAngle,
+            distance: app.settings.focusDistance
+        });
+        const focus = normalizedFocus(focusPointFromPolar(polar, app.settings), app.settings);
+        const wasSyncing = focusControlsSyncing;
+        focusControlsSyncing = true;
+        try {
+            app.settingsStore.setMultiple({
+                focusAngle: polar.angle,
+                focusDistance: polar.distance,
+                focusX: focus.x,
+                focusY: focus.y
+            }, true);
+        } finally {
+            focusControlsSyncing = wasSyncing;
+        }
+    };
+
+    app.settingsStore.subscribe('focusAngle', reconcile);
+    app.settingsStore.subscribe('focusDistance', reconcile);
 }
 
 function setFocus(app, x, y) {
-    app.settingsStore.setMultiple({ focusX: x, focusY: y });
-    app.sliders?.setValue('focusXSlider', x, false);
-    app.sliders?.setValue('focusYSlider', y, false);
+    const focus = normalizedFocus({ x, y }, app.settings);
+    const polar = normalizedPolar(focusPointToPolar(focus, app.settings, app.settings.focusAngle));
+    const wasSyncing = focusControlsSyncing;
+    focusControlsSyncing = true;
+    try {
+        app.settingsStore.setMultiple({
+            focusAngle: polar.angle,
+            focusDistance: polar.distance,
+            focusX: focus.x,
+            focusY: focus.y
+        });
+        app.sliders?.setValue('focusAngleSlider', polar.angle, false);
+        app.sliders?.setValue('focusDistanceSlider', polar.distance, false);
+    } finally {
+        focusControlsSyncing = wasSyncing;
+    }
+}
+
+function setPolarFocus(app, angle, distance) {
+    const polar = normalizedPolar({ angle, distance });
+    const focus = normalizedFocus(focusPointFromPolar(polar, app.settings), app.settings);
+    const wasSyncing = focusControlsSyncing;
+    focusControlsSyncing = true;
+    try {
+        app.settingsStore.setMultiple({
+            focusAngle: polar.angle,
+            focusDistance: polar.distance,
+            focusX: focus.x,
+            focusY: focus.y
+        });
+        app.sliders?.setValue('focusAngleSlider', polar.angle, false);
+        app.sliders?.setValue('focusDistanceSlider', polar.distance, false);
+    } finally {
+        focusControlsSyncing = wasSyncing;
+    }
 }
 
 const app = defineTool({
@@ -646,8 +798,8 @@ const app = defineTool({
             { id: 'rayWidthSlider', valueId: 'rayWidthValue', setting: 'rayWidth', min: 20, max: 160, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'roundnessSlider', valueId: 'roundnessValue', setting: 'roundness', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'cornerSmoothingSlider', valueId: 'cornerSmoothingValue', setting: 'cornerSmoothing', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
-            { id: 'focusXSlider', valueId: 'focusXValue', setting: 'focusX', min: 120, max: 360, decimals: 1, baseStep: 0.5, shiftStep: 5 },
-            { id: 'focusYSlider', valueId: 'focusYValue', setting: 'focusY', min: 180, max: 390, decimals: 1, baseStep: 0.5, shiftStep: 5 },
+            { id: 'focusAngleSlider', valueId: 'focusAngleValue', setting: 'focusAngle', min: 0, max: 360, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'focusDistanceSlider', valueId: 'focusDistanceValue', setting: 'focusDistance', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyePerspectiveSlider', valueId: 'eyePerspectiveValue', setting: 'eyePerspective', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyeSizeSlider', valueId: 'eyeSizeValue', setting: 'eyeSize', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyeDistanceSlider', valueId: 'eyeDistanceValue', setting: 'eyeDistance', min: -90, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
@@ -671,13 +823,31 @@ const app = defineTool({
         ]
     },
     presets: {
-        storageKey: 'lunnenSparkyGeneratorV1',
+        storageKey: 'lunnenSparkyGeneratorV2',
         basePath: 'presets',
         defaultName: 'Basic',
         forceSeed: true,
         migrate: (store) => {
-            const legacy = store.load('+ Precise Five');
-            if (legacy?.seeded === true) store.delete('+ Precise Five');
+            if (store.getNames().length) return;
+            const legacyStore = new PresetStore({ storageKey: 'lunnenSparkyGeneratorV1' });
+            const builtInNames = new Set(['Basic', 'Needle Crown', 'Wide Crown']);
+            Object.entries(legacyStore.loadAll()).forEach(([name, preset]) => {
+                if (!preset || preset.seeded === true) return;
+                const {
+                    seeded: _seeded,
+                    createdAt: _createdAt,
+                    updatedAt: _updatedAt,
+                    ...blob
+                } = preset;
+                const migrated = migrateCoordinateSpace(blob);
+                if (builtInNames.has(name)) {
+                    delete migrated.focusX;
+                    delete migrated.focusY;
+                    migrated.focusAngle = 0;
+                    migrated.focusDistance = 0;
+                }
+                store.create(name, migrated);
+            });
         },
         pinnedPrefix: '+',
         colorDots: (blob) => [
@@ -686,9 +856,9 @@ const app = defineTool({
         ]
     },
     share: {
-        stripKeys: ['width', 'height'],
+        stripKeys: ['width', 'height', 'focusX', 'focusY'],
         quantizableFloatKeys: [
-            'focusX', 'focusY', 'rayLength', 'rayWidth', 'roundness', 'cornerSmoothing',
+            'focusAngle', 'focusDistance', 'rayLength', 'rayWidth', 'roundness', 'cornerSmoothing',
             'rayCount', 'angleSpan', 'boundaryCenterX', 'boundaryCenterY', 'boundaryRadius',
             'eyePerspective', 'eyeSize', 'eyeDistance', 'cute', 'angry'
         ],
@@ -696,9 +866,10 @@ const app = defineTool({
     },
     history: { maxSize: 80, debounceMs: 180 },
     snapshot: (tool) => extractState(tool.settingsStore.toObject()),
-    restore: (tool, snapshot) => tool.settingsStore.setMultiple(normalizeIncomingState(snapshot), true),
+    restore: (tool, snapshot) => applyState(tool, snapshot),
     collectPreset: (tool) => extractState(tool.settingsStore.toObject()),
-    applyPreset: (tool, preset) => tool.settingsStore.setMultiple(normalizeIncomingState(preset), true),
+    applyPreset: (tool, preset) => applyState(tool, preset),
+    syncControls: (tool) => syncFocusControls(tool),
     export: { filename: 'sparky.svg' },
     zoom: { fitPadding: { top: 58, right: 58, bottom: 58, left: 58 } },
     shortcuts: {
@@ -750,11 +921,12 @@ const app = defineTool({
         };
         bindFocusDragging(tool);
         bindManualFocusControls(tool);
+        syncFocusControls(tool);
         bindBlink(tool);
         bindMobileShowcase(tool);
         document.getElementById('resetFocusBtn')?.addEventListener('click', () => {
             disableFollowCursor(tool);
-            setFocus(tool, DEFAULT_GEOMETRY.focusX, DEFAULT_GEOMETRY.focusY);
+            setPolarFocus(tool, 0, 0);
         });
         document.getElementById('exportSvgBtn')?.addEventListener('click', () => tool.exportSVG());
         document.getElementById('exportPngBtn')?.addEventListener('click', () => tool.exportPNG());

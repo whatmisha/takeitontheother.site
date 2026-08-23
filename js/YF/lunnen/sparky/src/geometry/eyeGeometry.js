@@ -9,12 +9,13 @@ import {
     scale,
     subtract
 } from './vector.js';
+import { rebaseLegacyY } from './coordinateSpace.js';
 
 export const EYE_DEFAULTS = Object.freeze({
     pairCenterX: 240,
-    pairCenterY: 270,
+    pairCenterY: rebaseLegacyY(270),
     focusX: 240,
-    focusY: 292,
+    focusY: rebaseLegacyY(292),
     centerOffsetY: -22,
     mainRadius: 16,
     lidRadius: 48,

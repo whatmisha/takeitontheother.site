@@ -11,6 +11,7 @@ import {
     interpolateLidOffset
 } from '../src/geometry/eyeGeometry.js';
 import { distance } from '../src/geometry/vector.js';
+import { rebaseLegacyY } from '../src/geometry/coordinateSpace.js';
 
 const closeTo = (actual, expected, tolerance = 1e-6) => {
     assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} is not within ${tolerance} of ${expected}`);
@@ -101,12 +102,13 @@ test('Eye Distance controls the clear gap and bottoms out at ten percent', () =>
         < minimum.right.eye1.center.x - minimum.right.eye1.radius);
 });
 
-test('default geometry applies the new minus-twenty eye distance without correction', () => {
+test('default centered Focus preserves full eye scale and containment', () => {
     const head = buildCharacterGeometry();
     const eyes = buildEyeGeometry(head.values, head);
-    assertPoint(eyes.pairCenter, { x: 240, y: 270 });
-    assertPoint(eyes.left.eye1.points[0], { x: 227.2, y: 270 }, 1e-4);
-    assertPoint(eyes.right.eye1.points[0], { x: 284.8, y: 270 }, 1e-4);
+    assertPoint(head.focus, { x: 240, y: 240 });
+    assertPoint(eyes.desiredCenter, { x: 240, y: 218 });
+    closeTo(eyes.pairCenter.x, 240);
+    assert.ok(eyes.pairCenter.y < head.focus.y);
     closeTo(eyes.fitScale, 1);
     assert.ok(eyes.minClearance >= eyes.guard);
 });
@@ -152,9 +154,9 @@ test('Eye Perspective increases only the near/far size contrast from its current
 });
 
 test('vertical focus moves the pair and makes up smaller while down makes it larger', () => {
-    const upHead = buildCharacterGeometry({ focusY: 230 });
+    const upHead = buildCharacterGeometry({ focusY: rebaseLegacyY(230) });
     const defaultHead = buildCharacterGeometry();
-    const downHead = buildCharacterGeometry({ focusY: 350 });
+    const downHead = buildCharacterGeometry({ focusY: rebaseLegacyY(350) });
     const up = buildEyeGeometry(upHead.values, upHead);
     const neutral = buildEyeGeometry(defaultHead.values, defaultHead);
     const down = buildEyeGeometry(downHead.values, downHead);
@@ -166,8 +168,8 @@ test('vertical focus moves the pair and makes up smaller while down makes it lar
 });
 
 test('the same vertical perspective makes the lower lid nearer when looking upward', () => {
-    const upHead = buildCharacterGeometry({ focusY: 230 });
-    const downHead = buildCharacterGeometry({ focusY: 350 });
+    const upHead = buildCharacterGeometry({ focusY: rebaseLegacyY(230) });
+    const downHead = buildCharacterGeometry({ focusY: rebaseLegacyY(350) });
     const up = buildEyeGeometry({ ...upHead.values, cute: 100, angry: 100 }, upHead);
     const down = buildEyeGeometry({ ...downHead.values, cute: 100, angry: 100 }, downHead);
     const horizontalDiameter = (shape) => distance(shape.points[0], shape.points[24]);
@@ -208,10 +210,12 @@ test('review examples define one continuous optical-placement law', () => {
         { focusX: 360, focusY: 180, rayCount: 5, rayWidth: 160, roundness: 90, eyePerspective: 66, eyeSize: 100, expected: [343.541, 189.332] }
     ];
     let totalError = 0;
-    examples.forEach(({ expected, ...settings }) => {
+    examples.forEach(({ expected, ...legacySettings }) => {
+        const settings = { ...legacySettings, focusY: rebaseLegacyY(legacySettings.focusY) };
+        const rebasedExpected = { x: expected[0], y: rebaseLegacyY(expected[1]) };
         const head = buildCharacterGeometry(settings);
         const eyes = buildEyeGeometry({ ...head.values, ...settings }, head);
-        const error = distance(eyes.pairCenter, { x: expected[0], y: expected[1] });
+        const error = distance(eyes.pairCenter, rebasedExpected);
         totalError += error;
         assert.ok(error < 14, `review placement drifted by ${error.toFixed(2)}px for ${JSON.stringify(settings)}`);
     });
@@ -224,22 +228,22 @@ test('nearby Focus, Perspective and Roundness settings cannot jump between local
         return buildEyeGeometry({ ...head.values, ...settings }, head).pairCenter;
     };
     assert.ok(distance(
-        placement({ focusX: 120, focusY: 180, rayWidth: 20 }),
-        placement({ focusX: 120.8, focusY: 180.6, rayWidth: 20 })
+        placement({ focusX: 120, focusY: rebaseLegacyY(180), rayWidth: 20 }),
+        placement({ focusX: 120.8, focusY: rebaseLegacyY(180.6), rayWidth: 20 })
     ) < 8);
     assert.ok(distance(
-        placement({ focusX: 360, focusY: 180, rayWidth: 98, roundness: 100, eyePerspective: 64, eyeSize: 100 }),
-        placement({ focusX: 360, focusY: 180, rayWidth: 98, roundness: 100, eyePerspective: 66, eyeSize: 100 })
+        placement({ focusX: 360, focusY: rebaseLegacyY(180), rayWidth: 98, roundness: 100, eyePerspective: 64, eyeSize: 100 }),
+        placement({ focusX: 360, focusY: rebaseLegacyY(180), rayWidth: 98, roundness: 100, eyePerspective: 66, eyeSize: 100 })
     ) < 8);
     assert.ok(distance(
-        placement({ focusX: 360, focusY: 180, rayWidth: 160, roundness: 90, eyePerspective: 66, eyeSize: 100 }),
-        placement({ focusX: 360, focusY: 180, rayWidth: 160, roundness: 93, eyePerspective: 66, eyeSize: 100 })
+        placement({ focusX: 360, focusY: rebaseLegacyY(180), rayWidth: 160, roundness: 90, eyePerspective: 66, eyeSize: 100 }),
+        placement({ focusX: 360, focusY: rebaseLegacyY(180), rayWidth: 160, roundness: 93, eyePerspective: 66, eyeSize: 100 })
     ) < 8);
 });
 
 test('the full supported focus, Width and eye-control grid remains inside the head gap', () => {
     const focusXs = [120, 240, 360];
-    const focusYs = [180, 292, 390];
+    const focusYs = [rebaseLegacyY(180), 240, rebaseLegacyY(390)];
     const widths = [20, 80, 160];
     const eyeControls = [
         { eyeSize: 0, eyeDistance: 0, eyePerspective: 0 },

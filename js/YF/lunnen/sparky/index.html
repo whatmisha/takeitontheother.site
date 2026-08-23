@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#000000">
     <title>Lunnen Sparky — Parametric Character</title>
     <link rel="stylesheet" href="./framework/css/othersite-styles.css">
-    <link rel="stylesheet" href="./styles/sparky.css?v=20260822-1">
+    <link rel="stylesheet" href="./styles/sparky.css?v=20260823-2">
 </head>
 <body>
     <div class="container">
@@ -92,10 +92,6 @@
                                 <input type="checkbox" id="showPoint" class="sr-only" data-setting="showPoint">
                                 <span>Focus</span>
                             </label>
-                            <label class="pill-toggle" for="followCursor">
-                                <input type="checkbox" id="followCursor" class="sr-only" data-setting="followCursor" checked>
-                                <span>Follow cursor</span>
-                            </label>
                         </div>
                     </section>
                 </div>
@@ -113,18 +109,25 @@
                 <div class="panel-content">
                     <section class="control-section">
                         <div class="control-group">
-                            <label for="focusXSlider"><span>X <span class="unit">px</span></span>
-                                <input type="text" class="value-display" id="focusXValue" value="240"></label>
-                            <input type="range" id="focusXSlider" min="120" max="360" step="0.5" value="240">
+                            <label for="focusAngleSlider"><span>Angle <span class="unit">°</span></span>
+                                <input type="text" class="value-display" id="focusAngleValue" value="0"></label>
+                            <input type="range" id="focusAngleSlider" min="0" max="360" step="1" value="0">
                         </div>
 
                         <div class="control-group">
-                            <label for="focusYSlider"><span>Y <span class="unit">px</span></span>
-                                <input type="text" class="value-display" id="focusYValue" value="292"></label>
-                            <input type="range" id="focusYSlider" min="180" max="390" step="0.5" value="292">
+                            <label for="focusDistanceSlider"><span>Distance <span class="unit">%</span></span>
+                                <input type="text" class="value-display" id="focusDistanceValue" value="0"></label>
+                            <input type="range" id="focusDistanceSlider" min="0" max="100" step="1" value="0">
                         </div>
 
                         <button type="button" class="sparky-panel-action" id="resetFocusBtn">Center focus</button>
+
+                        <div class="control-group pill-toggle-row sparky-focus-mode-toggles">
+                            <label class="pill-toggle" for="followCursor">
+                                <input type="checkbox" id="followCursor" class="sr-only" data-setting="followCursor" checked>
+                                <span>Follow cursor</span>
+                            </label>
+                        </div>
                     </section>
                 </div>
             </aside>
@@ -237,6 +240,6 @@
         </dialog>
     </div>
 
-    <script type="module" src="./tool.js?v=20260822-17"></script>
+    <script type="module" src="./tool.js?v=20260823-16"></script>
 </body>
 </html>

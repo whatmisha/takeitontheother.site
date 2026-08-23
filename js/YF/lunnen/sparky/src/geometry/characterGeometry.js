@@ -1,4 +1,5 @@
 import { createCircleBoundary, createEllipseBoundary } from './boundaries.js';
+import { rebaseLegacyY } from './coordinateSpace.js';
 import { createRelativeRoundedPolygon } from './roundedPolygon.js';
 import {
     add,
@@ -16,13 +17,13 @@ export const DEFAULT_GEOMETRY = Object.freeze({
     artboardHeight: 480,
     boundaryType: 'circle',
     boundaryCenterX: 240,
-    boundaryCenterY: 334,
+    boundaryCenterY: rebaseLegacyY(334),
     boundaryRadius: 240,
     boundaryRadiusX: 240,
     boundaryRadiusY: 240,
     boundaryRotation: 0,
     focusX: 240,
-    focusY: 292,
+    focusY: 240,
     rayCount: 5,
     centerAngle: -90,
     angleStep: 36,

@@ -40,6 +40,8 @@ test('every supported ray count produces one tip and one joining vertex per ray'
 
 test('default tips lie on the mathematical guide circle', () => {
     const geometry = buildCharacterGeometry();
+    assert.deepEqual(geometry.boundary.center, { x: 240, y: 240 });
+    assert.deepEqual(geometry.focus, { x: 240, y: 240 });
     assert.equal(geometry.rays.length, 5);
     assert.equal(geometry.vertices.length, 10);
     geometry.rays.forEach((ray) => {
@@ -47,6 +49,7 @@ test('default tips lie on the mathematical guide circle', () => {
         closeTo(distance(ray.basePlus, ray.baseMinus), 80);
         closeTo(distance(ray.tip, ray.baseCenter), 240);
     });
+    closeTo(Math.min(...geometry.rays.map((ray) => ray.tip.y)), 0);
 });
 
 test('both ends of every side and bisector guide meet the boundary circle', () => {
@@ -187,6 +190,10 @@ test('every shipped preset produces a finite closed contour', () => {
     const manifest = JSON.parse(readFileSync(new URL('../presets/manifest.json', import.meta.url), 'utf8'));
     manifest.presets.forEach(({ file }) => {
         const preset = JSON.parse(readFileSync(new URL(`../presets/${file}`, import.meta.url), 'utf8'));
+        assert.ok(Number.isFinite(preset.focusAngle));
+        assert.ok(Number.isFinite(preset.focusDistance));
+        assert.equal('focusX' in preset, false);
+        assert.equal('focusY' in preset, false);
         const geometry = buildCharacterGeometry(preset);
         assert.equal(geometry.vertices.length, preset.rayCount * 2);
         assert.ok(geometry.vertices.every(({ x, y }) => Number.isFinite(x) && Number.isFinite(y)));

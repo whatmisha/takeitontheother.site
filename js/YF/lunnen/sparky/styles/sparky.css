@@ -51,6 +51,10 @@
     outline: none;
 }
 
+.sparky-focus-mode-toggles {
+    margin-top: 12px;
+}
+
 .sparky-focus-hit-area {
     cursor: grab;
     pointer-events: all;
