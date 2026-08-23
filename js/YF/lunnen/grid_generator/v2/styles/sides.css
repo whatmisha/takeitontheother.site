@@ -1,0 +1,354 @@
+.surface-panel-content {
+    gap: 0;
+}
+
+.surface-panel-section {
+    min-width: 0;
+    padding: var(--spacing-lg) 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.surface-panel-section:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.plane-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.plane-row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    border-radius: var(--radius-button);
+    background: var(--color-bg-input);
+}
+
+.plane-row.is-active {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.plane-row.is-root .plane-row-remove {
+    visibility: hidden;
+}
+
+.plane-row-select {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 7px var(--spacing-md);
+    overflow: hidden;
+    border: 0;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font: inherit;
+    font-size: 0.75rem;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.plane-row.is-active .plane-row-select {
+    color: var(--color-text);
+}
+
+.plane-row-select .plane-row-kind {
+    color: var(--color-text-dim);
+    font-size: 0.68rem;
+}
+
+.plane-row-visible,
+.plane-row-remove {
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-button);
+    background: transparent;
+    color: var(--color-text-dim);
+    font: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.plane-row-visible:hover,
+.plane-row-remove:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-text);
+}
+
+.plane-row-visible[aria-pressed="true"] {
+    color: var(--color-text);
+}
+
+.plane-row-remove:last-child {
+    margin-right: 4px;
+}
+
+.plane-add-row {
+    display: flex;
+    gap: 4px;
+    margin-top: var(--spacing-md);
+    min-width: 0;
+}
+
+.plane-add-row select,
+.plane-add-row input {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 26px;
+    padding: 0 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-button);
+    background: var(--color-bg-input);
+    color: var(--color-text);
+    font: inherit;
+    font-size: 0.72rem;
+}
+
+.plane-add-btn {
+    flex: 0 0 auto;
+    height: 26px;
+    padding: 0 var(--spacing-md);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-button);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-text);
+    font: inherit;
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+
+.plane-add-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.plane-geometry,
+.plane-variables {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.plane-field-row {
+    display: flex;
+    gap: var(--spacing-sm);
+    min-width: 0;
+}
+
+.plane-field {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.7rem;
+}
+
+.plane-field input,
+.plane-field select {
+    width: 100%;
+    min-width: 0;
+    height: 26px;
+    padding: 0 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-button);
+    background: var(--color-bg-input);
+    color: var(--color-text);
+    font: inherit;
+    font-size: 0.72rem;
+}
+
+.plane-field input:disabled,
+.plane-field select:disabled {
+    color: var(--color-text-dim);
+    cursor: not-allowed;
+}
+
+.plane-stack-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+.plane-stack-buttons button {
+    flex: 1 1 0;
+    height: 26px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-button);
+    background: var(--color-bg-input);
+    color: var(--color-text-secondary);
+    font: inherit;
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+
+.plane-stack-buttons button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-text);
+}
+
+.plane-variables-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    color: var(--color-text);
+    font-size: 0.82rem;
+}
+
+.plane-variables-heading small {
+    color: var(--color-text-dim);
+    font-size: 0.7rem;
+}
+
+.plane-variable-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.plane-variable-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.plane-variable-row > span {
+    flex: 0 0 66px;
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: 0.72rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.plane-variable-row input {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 26px;
+    padding: 0 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-button);
+    background: var(--color-bg-input);
+    color: var(--color-text);
+    font: inherit;
+    font-size: 0.72rem;
+}
+
+.plane-variable-row .plane-row-remove {
+    flex: 0 0 24px;
+}
+
+.surface-quick-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--spacing-sm);
+}
+
+.surface-quick-controls .toggle-chip-group {
+    flex: 0 0 auto;
+}
+
+.surface-visible-chip span {
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
+}
+
+.surface-own-grid-chip {
+    flex: 0 0 auto;
+}
+
+.surface-own-grid-chip span {
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
+}
+
+.surface-orientation-control {
+    display: inline-flex;
+    flex: 0 0 66px;
+    align-items: center;
+    gap: 2px;
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-button);
+    background: var(--color-bg-input);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: border-color var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.surface-orientation-control:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-text);
+}
+
+.surface-orientation-control:focus-within {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
+.surface-orientation-control svg {
+    flex: 0 0 14px;
+}
+
+.surface-orientation-control select {
+    width: 43px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    appearance: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.75rem;
+    text-align: right;
+    cursor: pointer;
+}
+
+.surface-own-grid-controls {
+    min-width: 0;
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.surface-own-grid-controls[hidden] {
+    display: none;
+}
+
+.surface-own-grid-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: var(--spacing-lg);
+    color: var(--color-text);
+    font-size: 0.82rem;
+}
+
+.surface-own-grid-heading small {
+    color: var(--color-text-dim);
+    font-size: 0.7rem;
+}
+
+.surface-grid-controls {
+    min-width: 0;
+}
+
+.surface-grid-controls .control-group {
+    margin-bottom: var(--spacing-xl);
+}
+
+.surface-grid-controls .control-group:last-child {
+    margin-bottom: 0;
+}

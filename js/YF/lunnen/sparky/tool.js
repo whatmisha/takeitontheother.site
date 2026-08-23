@@ -1098,12 +1098,6 @@ const app = defineTool({
         });
         document.getElementById('exportSvgBtn')?.addEventListener('click', () => tool.exportSVG());
         document.getElementById('exportPngBtn')?.addEventListener('click', () => tool.exportPNG());
-        document.getElementById('introHelpBtn')?.addEventListener('click', () => {
-            tool.dialog?.alert({
-                title: 'Lunnen Sparky',
-                text: 'A mathematically precise parametric character. Change ray geometry, drag or follow the focus, shape the expression, save or share presets, and export SVG or PNG. Enabled guides and focus are included in exports.'
-            });
-        });
     }
 });
 
