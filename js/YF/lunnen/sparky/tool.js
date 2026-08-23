@@ -146,6 +146,14 @@ function activeRenderSettings(current) {
     return { ...current, focusX: focus.x, focusY: focus.y };
 }
 
+function syncPageBackground(color) {
+    const value = color || '#000000';
+    const root = document.documentElement;
+    if (root.style.getPropertyValue('--sparky-page-background') !== value) {
+        root.style.setProperty('--sparky-page-background', value);
+    }
+}
+
 function fitShowcaseToViewport(app, mobile = isMobileShowcase()) {
     const zoomPan = app.target?.zoomPan;
     if (!zoomPan) return;
@@ -1036,6 +1044,7 @@ const app = defineTool({
     render(ctx) {
         try {
             const renderSettings = activeRenderSettings(ctx.settings);
+            syncPageBackground(renderSettings.backgroundColor);
             const renderContext = renderSettings === ctx.settings
                 ? ctx
                 : { ...ctx, settings: renderSettings };

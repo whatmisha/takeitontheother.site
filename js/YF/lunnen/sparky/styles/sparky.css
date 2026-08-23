@@ -20,6 +20,14 @@
     gap: var(--spacing-md);
 }
 
+html,
+body,
+.container,
+.main-content,
+.canvas-container {
+    background-color: var(--sparky-page-background, #000000);
+}
+
 #mainSvg {
     display: block;
     touch-action: none;
