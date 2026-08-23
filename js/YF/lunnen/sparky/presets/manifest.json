@@ -1,6 +1,8 @@
 {
   "presets": [
     { "name": "Basic", "file": "basic.json" },
-    { "name": "Shtrikh", "file": "shtrikh.json" }
+    { "name": "Shtrikh", "file": "shtrikh.json" },
+    { "name": "Shukhov", "file": "shukhov.json" },
+    { "name": "Spiky", "file": "spiky.json" }
   ]
 }

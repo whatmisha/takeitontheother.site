@@ -150,7 +150,27 @@ test('Corner smoothing follows the Figma scale and backs off when an edge has no
     assert.ok(ios.rounded.contour.every(({ x, y }) => Number.isFinite(x) && Number.isFinite(y)));
 });
 
-test('valleys use the smaller tip radius and the lower face corner uses twice that radius', () => {
+test('maximum Corner smoothing preserves a soft pointed cap from the Illustrator reference', () => {
+    const geometry = buildCharacterGeometry({
+        focusX: 240,
+        focusY: 240,
+        roundness: 60,
+        cornerSmoothing: 100
+    });
+    const centerTipIndex = geometry.vertexMeta.findIndex(
+        (meta) => meta.kind === 'tip' && meta.rayIndex === 2
+    );
+    const transition = geometry.rounded.corners[centerTipIndex].transition;
+
+    assert.ok(transition?.cap);
+    closeTo(transition.cap.control1.x, 238.3482, 0.15);
+    closeTo(transition.cap.control1.y, 59.2619, 0.15);
+    closeTo(transition.cap.control2.x, 480 - transition.cap.control1.x, 1e-6);
+    closeTo(transition.cap.control2.y, transition.cap.control1.y, 1e-6);
+    assert.doesNotMatch(geometry.rounded.path, / A /);
+});
+
+test('valleys use the smaller tip radius and the lower face corner uses the sum of extreme radii', () => {
     const geometry = buildCharacterGeometry({ focusX: 120, roundness: 100 });
     const tips = new Map();
     geometry.vertexMeta.forEach((meta, index) => {
@@ -161,7 +181,7 @@ test('valleys use the smaller tip radius and the lower face corner uses twice th
         if (meta.kind === 'valley') {
             closeTo(radius, Math.min(tips.get(meta.afterRayIndex), tips.get(meta.afterRayIndex + 1)));
         } else if (meta.kind === 'base') {
-            closeTo(radius, Math.min(tips.get(0), tips.get(geometry.rays.length - 1)) * 2);
+            closeTo(radius, tips.get(0) + tips.get(geometry.rays.length - 1));
         }
     });
     assert.ok(tips.get(4) > tips.get(0), 'the nearer right ray should have the larger tip fillet');

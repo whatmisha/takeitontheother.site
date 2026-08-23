@@ -1,6 +1,6 @@
 import { createCircleBoundary, createEllipseBoundary } from './boundaries.js';
 import { rebaseLegacyY } from './coordinateSpace.js';
-import { createRelativeRoundedPolygon } from './roundedPolygon.js';
+import { createRelativeRoundedPolygon } from './roundedPolygon.js?v=20260823-4';
 import {
     add,
     directionFromDegrees,
@@ -150,7 +150,7 @@ export function buildCharacterGeometry(settings = {}) {
     const vertices = [last.tip, baseClosure, first.tip];
     const vertexMeta = [
         { kind: 'tip', rayIndex: last.index, roundnessWeight: last.roundnessWeight },
-        { kind: 'base', roundnessWeight: 2 },
+        { kind: 'base', roundnessWeight: 1 },
         { kind: 'tip', rayIndex: first.index, roundnessWeight: first.roundnessWeight }
     ];
 

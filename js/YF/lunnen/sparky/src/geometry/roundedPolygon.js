@@ -85,6 +85,41 @@ function transitionFromLineToArc(linePoint, lineDirection, arcPoint, arcDirectio
     return { lineControl, tangentControl };
 }
 
+function cubicCapBetweenTangents(start, startDirection, end, endDirection) {
+    const intersection = intersectLines(
+        start,
+        add(start, startDirection),
+        end,
+        add(end, scale(endDirection, -1))
+    );
+    if (!intersection?.point) {
+        return {
+            control1: add(start, scale(subtract(end, start), 1 / 3)),
+            control2: add(start, scale(subtract(end, start), 2 / 3))
+        };
+    }
+
+    const firstHandle = subtract(intersection.point, start);
+    const secondHandle = subtract(intersection.point, end);
+    const firstLength = length(firstHandle);
+    const secondLength = length(secondHandle);
+    const tangentDot = clamp(dot(normalize(startDirection), normalize(endDirection)), -1, 1);
+    const turn = Math.acos(tangentDot);
+    const halfTurnTangent = Math.tan(turn / 2);
+    const circularHandleRatio = Math.abs(halfTurnTangent) > EPSILON
+        ? (4 / 3) * Math.tan(turn / 4) / halfTurnTangent
+        : 2 / 3;
+
+    return {
+        control1: firstLength > EPSILON
+            ? add(start, scale(normalize(firstHandle), firstLength * circularHandleRatio))
+            : start,
+        control2: secondLength > EPSILON
+            ? add(end, scale(normalize(secondHandle), secondLength * circularHandleRatio))
+            : end
+    };
+}
+
 function applyCornerSmoothing(corners, distances, requestedValue) {
     const requested = clamp(Number(requestedValue) || 0, 0, 100) / 100;
     let effective = requested;
@@ -122,17 +157,32 @@ function applyCornerSmoothing(corners, distances, requestedValue) {
         const arcEndAngle = endAngle - delta * effective / 2;
         const arcStart = circlePoint(center, corner.radius, arcStartAngle);
         const arcEnd = circlePoint(center, corner.radius, arcEndAngle);
+        // Up to 5/8 the cap follows the circular fillet. Beyond that point the
+        // tangent directions stay put while the smoothing footprint continues
+        // to grow along the adjoining edges. This avoids flattening a tip at
+        // 100% and distributes the extra softness into its shoulders instead.
+        const tangentSmoothing = Math.min(effective, 5 / 8);
+        const capStartAngle = startAngle + delta * tangentSmoothing / 2;
+        const capEndAngle = endAngle - delta * tangentSmoothing / 2;
+        const capStartDirection = arcTangent(capStartAngle, delta);
+        const capEndDirection = arcTangent(capEndAngle, delta);
         const incoming = transitionFromLineToArc(
             start,
             scale(corner.towardPrevious, -1),
             arcStart,
-            arcTangent(arcStartAngle, delta)
+            capStartDirection
         );
         const outgoingReverse = transitionFromLineToArc(
             end,
             scale(corner.towardNext, -1),
             arcEnd,
-            scale(arcTangent(arcEndAngle, delta), -1)
+            scale(capEndDirection, -1)
+        );
+        const cap = cubicCapBetweenTangents(
+            arcStart,
+            capStartDirection,
+            arcEnd,
+            capEndDirection
         );
 
         return {
@@ -150,7 +200,8 @@ function applyCornerSmoothing(corners, distances, requestedValue) {
                 arcEnd,
                 arcStartAngle,
                 arcEndAngle,
-                arcDelta: delta * (1 - effective)
+                arcDelta: delta * (1 - effective),
+                cap
             }
         };
     });
@@ -245,7 +296,7 @@ export function createRoundedPolygon(points, radii = 0, options = {}) {
     const contour = [corners[0].start];
     corners.forEach((corner, index) => {
         if (corner.radius > EPSILON && corner.transition) {
-            const { incoming, outgoingReverse, arcStart, arcEnd, arcDelta } = corner.transition;
+            const { incoming, outgoingReverse, arcStart, arcEnd, cap } = corner.transition;
             commands.push(`C ${formatPoint(incoming.lineControl)} ${formatPoint(incoming.tangentControl)} ${formatPoint(arcStart)}`);
             for (let sample = 1; sample <= 8; sample += 1) {
                 contour.push(cubicPoint(
@@ -256,15 +307,15 @@ export function createRoundedPolygon(points, radii = 0, options = {}) {
                     sample / 8
                 ));
             }
-            if (Math.abs(arcDelta) > EPSILON) {
-                commands.push(`A ${cleanNumber(corner.radius)} ${cleanNumber(corner.radius)} 0 0 ${corner.sweep} ${formatPoint(arcEnd)}`);
-                for (let sample = 1; sample <= 12; sample += 1) {
-                    contour.push(circlePoint(
-                        corner.center,
-                        corner.radius,
-                        corner.transition.arcStartAngle + arcDelta * sample / 12
-                    ));
-                }
+            commands.push(`C ${formatPoint(cap.control1)} ${formatPoint(cap.control2)} ${formatPoint(arcEnd)}`);
+            for (let sample = 1; sample <= 12; sample += 1) {
+                contour.push(cubicPoint(
+                    arcStart,
+                    cap.control1,
+                    cap.control2,
+                    arcEnd,
+                    sample / 12
+                ));
             }
             commands.push(`C ${formatPoint(outgoingReverse.tangentControl)} ${formatPoint(outgoingReverse.lineControl)} ${formatPoint(corner.end)}`);
             for (let sample = 1; sample <= 8; sample += 1) {
@@ -341,10 +392,10 @@ export function createRelativeRoundedPolygon(points, vertexMeta, amount = 0, opt
                 tipWeightsByRay.get(meta.afterRayIndex + 1) ?? 0
             );
         } else if (meta.kind === 'base') {
-            weights[index] = Math.min(
-                tipWeightsByRay.get(rayIndices[0]) ?? 0,
-                tipWeightsByRay.get(rayIndices[rayIndices.length - 1]) ?? 0
-            ) * Math.max(0, Number(meta.roundnessWeight) || 1);
+            const firstExtremeWeight = tipWeightsByRay.get(rayIndices[0]) ?? 0;
+            const lastExtremeWeight = tipWeightsByRay.get(rayIndices[rayIndices.length - 1]) ?? 0;
+            weights[index] = (firstExtremeWeight + lastExtremeWeight)
+                * Math.max(0, Number(meta.roundnessWeight) || 1);
         }
     });
 

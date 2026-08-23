@@ -3,7 +3,7 @@ import { PresetStore } from './framework/src/preset/PresetStore.js';
 import {
     DEFAULT_GEOMETRY,
     buildCharacterGeometry
-} from './src/geometry/characterGeometry.js?v=20260823-2';
+} from './src/geometry/characterGeometry.js?v=20260823-5';
 import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260823-2';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import {
@@ -70,7 +70,9 @@ const settings = {
     headColor: '#ffffff',
     eyeColor: '#000000',
     backgroundColor: '#000000',
-    showGuides: false,
+    showSphere: false,
+    showRayGuides: false,
+    showBisectors: false,
     showPoint: false,
     followCursor: true,
     eyePerspective: 50,
@@ -96,6 +98,11 @@ function extractInternalState(source) {
 function normalizeIncomingState(source = {}) {
     const migrated = migrateCoordinateSpace(source);
     const normalized = { ...settings, ...migrated };
+    if (migrated.showGuides != null) {
+        if (migrated.showSphere == null) normalized.showSphere = Boolean(migrated.showGuides);
+        if (migrated.showRayGuides == null) normalized.showRayGuides = Boolean(migrated.showGuides);
+        if (migrated.showBisectors == null) normalized.showBisectors = Boolean(migrated.showGuides);
+    }
     if (source.roundness == null && Number.isFinite(source.cornerRadius)) {
         normalized.roundness = clamp(source.cornerRadius * 6, 0, 100);
     }
@@ -486,7 +493,9 @@ function drawCharacter(ctx, geometry, eyeGeometry) {
 
     svg.appendChild(drawEyes(ctx, eyeGeometry, definitions));
 
-    if (state.showGuides || state.showPoint) drawGuides(ctx, geometry);
+    if (state.showSphere || state.showRayGuides || state.showBisectors || state.showPoint) {
+        drawGuides(ctx, geometry);
+    }
 }
 
 function drawGuides(ctx, geometry) {
@@ -502,7 +511,7 @@ function drawGuides(ctx, geometry) {
         'aria-hidden': 'true'
     });
 
-    if (state.showGuides) {
+    if (state.showSphere) {
         append(guides,
             create('line', {
                 x1: state.boundaryCenterX,
@@ -546,6 +555,29 @@ function drawGuides(ctx, geometry) {
             }));
         }
 
+        const center = geometry.boundary.center;
+        const focusOffsetX = geometry.focus.x - center.x;
+        const focusOffsetY = geometry.focus.y - center.y;
+        const focusOffsetLength = Math.hypot(focusOffsetX, focusOffsetY);
+        const fallbackAngle = ((Number(state.focusAngle) || 0) - 90) * Math.PI / 180;
+        const radiusDirection = focusOffsetLength > 1e-9
+            ? { x: focusOffsetX / focusOffsetLength, y: focusOffsetY / focusOffsetLength }
+            : { x: Math.cos(fallbackAngle), y: Math.sin(fallbackAngle) };
+        const radiusEnd = geometry.boundary.intersectRay(center, radiusDirection);
+        if (radiusEnd) {
+            guides.appendChild(create('line', {
+                x1: center.x,
+                y1: center.y,
+                x2: radiusEnd.x,
+                y2: radiusEnd.y,
+                stroke: '#315bff',
+                opacity: 0.8,
+                ...commonStroke
+            }));
+        }
+    }
+
+    if (state.showRayGuides) {
         geometry.rays.forEach((ray) => {
             guides.appendChild(create('path', {
                 d: `M ${ray.guideMinusEnd.x} ${ray.guideMinusEnd.y} L ${ray.tip.x} ${ray.tip.y} L ${ray.guidePlusEnd.x} ${ray.guidePlusEnd.y}`,
@@ -553,6 +585,11 @@ function drawGuides(ctx, geometry) {
                 opacity: 0.72,
                 ...commonStroke
             }));
+        });
+    }
+
+    if (state.showBisectors) {
+        geometry.rays.forEach((ray) => {
             guides.appendChild(create('line', {
                 x1: ray.guideAxisEnd.x,
                 y1: ray.guideAxisEnd.y,
@@ -568,10 +605,10 @@ function drawGuides(ctx, geometry) {
     if (state.showPoint) {
         append(guides,
             create('path', {
-                d: `M ${geometry.focus.x - 6} ${geometry.focus.y} H ${geometry.focus.x + 6} M ${geometry.focus.x} ${geometry.focus.y - 6} V ${geometry.focus.y + 6}`,
+                d: `M ${geometry.focus.x - 9} ${geometry.focus.y} H ${geometry.focus.x + 9} M ${geometry.focus.x} ${geometry.focus.y - 9} V ${geometry.focus.y + 9}`,
                 fill: 'none',
                 stroke: '#0000FF',
-                'stroke-width': 2,
+                'stroke-width': 0.75,
                 'stroke-linecap': 'square',
                 'vector-effect': 'non-scaling-stroke',
                 'pointer-events': 'none'
@@ -982,7 +1019,16 @@ const app = defineTool({
         fitPadding: { top: 58, right: 58, bottom: 58, left: 58 }
     },
     shortcuts: {
-        g: (tool) => tool.settingsStore.set('showGuides', !tool.settings.showGuides)
+        g: (tool) => {
+            const enabled = !(tool.settings.showSphere
+                && tool.settings.showRayGuides
+                && tool.settings.showBisectors);
+            tool.settingsStore.setMultiple({
+                showSphere: enabled,
+                showRayGuides: enabled,
+                showBisectors: enabled
+            });
+        }
     },
     onInit(tool) {
         tool.shortcuts?.register(
