@@ -54,10 +54,10 @@ const settings = {
     boundaryRadiusX: DEFAULT_GEOMETRY.boundaryRadiusX,
     boundaryRadiusY: DEFAULT_GEOMETRY.boundaryRadiusY,
     boundaryRotation: DEFAULT_GEOMETRY.boundaryRotation,
-    focusX: DEFAULT_GEOMETRY.focusX,
-    focusY: DEFAULT_GEOMETRY.focusY,
-    focusAngle: 0,
-    focusDistance: 0,
+    focusX: 106.589,
+    focusY: 273.101,
+    focusAngle: 256.0655603225829,
+    focusDistance: 70.40609593300307,
     rayCount: DEFAULT_GEOMETRY.rayCount,
     centerAngle: DEFAULT_GEOMETRY.centerAngle,
     angleStep: DEFAULT_GEOMETRY.angleStep,
@@ -65,7 +65,7 @@ const settings = {
     rayLength: DEFAULT_GEOMETRY.rayLength,
     rayWidth: DEFAULT_GEOMETRY.rayWidth,
     roundness: DEFAULT_GEOMETRY.roundness,
-    cornerSmoothing: 0,
+    cornerSmoothing: 100,
     rayOverrides: [{}, {}, {}, {}, {}],
     headColor: '#ffffff',
     eyeColor: '#000000',
@@ -76,7 +76,7 @@ const settings = {
     showPoint: false,
     followCursor: true,
     eyePerspective: 50,
-    eyeSize: 0,
+    eyeSize: 30,
     eyeDistance: -20,
     cute: 50,
     angry: 0
@@ -964,6 +964,10 @@ const app = defineTool({
         migrate: (store) => {
             const storedPresets = store.loadAll();
             let removedObsoleteSeed = false;
+            if (storedPresets.Basic?.seeded === true) {
+                delete storedPresets.Basic;
+                removedObsoleteSeed = true;
+            }
             ['Needle Crown', 'Wide Crown'].forEach((name) => {
                 if (storedPresets[name]?.seeded !== true) return;
                 delete storedPresets[name];
