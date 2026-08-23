@@ -308,9 +308,9 @@ function mainEyeContour(model, transform, segmentCount = 48) {
     ];
 }
 
-function evaluateContainment(model, values, headContour, pairCenter, fitScale) {
+function evaluateContainment(model, values, headContour, pairCenter, fitScale, segmentCount = 48) {
     const transform = createRigTransform(values, pairCenter, fitScale);
-    const eyeContour = mainEyeContour(model, transform);
+    const eyeContour = mainEyeContour(model, transform, segmentCount);
     const orientation = polygonSignedArea(headContour);
     const guard = Math.max(
         2,
@@ -333,6 +333,76 @@ function evaluateContainment(model, values, headContour, pairCenter, fitScale) {
         guard,
         worst,
         transform
+    };
+}
+
+/**
+ * Interactive placement uses temporal coherence: the previous frame is already
+ * close to the next solution, so a short local projection is enough while the
+ * pointer is moving. The exact global solver still runs when motion settles and
+ * before export.
+ */
+function solveFastEyePlacement(model, values, headContour, previousEyeGeometry) {
+    const desiredCenter = point(
+        values.focusX,
+        values.focusY + EYE_DEFAULTS.centerOffsetY
+    );
+    const previousValues = previousEyeGeometry?.values;
+    const previousCenter = previousEyeGeometry?.pairCenter;
+    const focusDelta = previousValues && previousCenter
+        ? point(values.focusX - previousValues.focusX, values.focusY - previousValues.focusY)
+        : point(0, 0);
+    const carriedCenter = previousCenter
+        ? add(previousCenter, focusDelta)
+        : desiredCenter;
+    let pairCenter = point(
+        mix(carriedCenter.x, desiredCenter.x, 0.2),
+        mix(carriedCenter.y, desiredCenter.y, 0.2)
+    );
+    let fitScale = previousEyeGeometry?.fitScale ?? 1;
+    let result = null;
+
+    for (let iteration = 0; iteration < 12; iteration += 1) {
+        result = evaluateContainment(model, values, headContour, pairCenter, fitScale, 12);
+        if (result.fits) break;
+        const correction = Math.min(18, Math.max(0.25, result.worst.deficit + 0.1));
+        pairCenter = add(pairCenter, scale(result.worst.inward, correction));
+    }
+
+    // Finish with a small, bounded full-resolution projection. Unlike the exact
+    // solver this can never open a global search branch or run unbounded work.
+    for (let iteration = 0; iteration < 8; iteration += 1) {
+        result = evaluateContainment(model, values, headContour, pairCenter, fitScale);
+        if (result.fits) break;
+        const correction = Math.min(12, Math.max(0.15, result.worst.deficit + 0.05));
+        pairCenter = add(pairCenter, scale(result.worst.inward, correction));
+    }
+
+    // The moving preview may temporarily reduce scale instead of entering the
+    // exact solver's expensive global fallback. Exact size is restored as soon
+    // as the gesture settles.
+    if (!result?.fits) {
+        let low = 0.45;
+        let high = fitScale;
+        let best = evaluateContainment(model, values, headContour, pairCenter, low);
+        for (let iteration = 0; iteration < 10; iteration += 1) {
+            const middle = (low + high) / 2;
+            const candidate = evaluateContainment(model, values, headContour, pairCenter, middle);
+            if (candidate.fits) {
+                low = middle;
+                best = candidate;
+            } else {
+                high = middle;
+            }
+        }
+        fitScale = low;
+        result = best;
+    }
+    return {
+        desiredCenter,
+        pairCenter,
+        fitScale,
+        ...result
     };
 }
 
@@ -730,7 +800,7 @@ export function buildEyeLidGeometry(settings, eyeGeometry) {
     }]));
 }
 
-export function buildEyeGeometry(settings, characterGeometry) {
+export function buildEyeGeometry(settings, characterGeometry, options = {}) {
     const values = {
         ...characterGeometry.values,
         eyePerspective: 50,
@@ -742,14 +812,24 @@ export function buildEyeGeometry(settings, characterGeometry) {
     };
     const model = createEyeRigModel(values);
     const headContour = flattenRoundedContour(characterGeometry.rounded);
-    const legacyPlacement = solveEyePlacement(model, values, headContour);
-    const opticalPlacement = solveOpticalPairCenter(
-        model,
-        values,
-        characterGeometry,
-        headContour,
-        legacyPlacement
-    );
+    const fastPlacement = options.placementMode === 'fast';
+    const legacyPlacement = fastPlacement
+        ? solveFastEyePlacement(model, values, headContour, options.previousEyeGeometry)
+        : solveEyePlacement(model, values, headContour);
+    const opticalPlacement = fastPlacement
+        ? {
+            faceContour: buildFaceFieldContour(characterGeometry),
+            opticalCenter: legacyPlacement.pairCenter,
+            pairCenter: legacyPlacement.pairCenter,
+            minimumHeadClearance: legacyPlacement.minClearance
+        }
+        : solveOpticalPairCenter(
+            model,
+            values,
+            characterGeometry,
+            headContour,
+            legacyPlacement
+        );
     const placement = {
         ...legacyPlacement,
         pairCenter: opticalPlacement.pairCenter,

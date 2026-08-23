@@ -1,8 +1,0 @@
-{
-  "presets": [
-    { "name": "Default", "file": "default.json" },
-    { "name": "Dense Dots", "file": "dense-dots.json" },
-    { "name": "Big Squares", "file": "big-squares.json" },
-    { "name": "Scatter", "file": "scatter.json" }
-  ]
-}

@@ -39,7 +39,7 @@ export class SvgTarget extends RenderTarget {
 
     beginFrame() {
         const svg = this.svg;
-        while (svg.firstChild) svg.removeChild(svg.firstChild);
+        svg.replaceChildren();
         const w = this.logicalWidth;
         const h = this.logicalHeight;
         svg.setAttribute('width', w);

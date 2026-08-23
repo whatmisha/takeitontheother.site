@@ -14,7 +14,7 @@
 import { Settings } from './Settings.js';
 import { DOMCache } from './DOMCache.js';
 import { ShortcutRouter } from './ShortcutRouter.js';
-import { SvgTarget } from '../render/SvgTarget.js';
+import { SvgTarget } from '../render/SvgTarget.js?v=20260823-1';
 import { CanvasTarget } from '../render/CanvasTarget.js';
 import { SliderController } from '../ui/SliderController.js';
 import { RangeSliderController } from '../ui/RangeSliderController.js';

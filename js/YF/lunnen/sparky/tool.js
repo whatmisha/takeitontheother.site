@@ -1,10 +1,10 @@
-import { defineTool } from './framework/src/core/defineTool.js';
+import { defineTool } from './framework/src/core/defineTool.js?v=20260823-1';
 import { PresetStore } from './framework/src/preset/PresetStore.js';
 import {
     DEFAULT_GEOMETRY,
     buildCharacterGeometry
 } from './src/geometry/characterGeometry.js?v=20260823-2';
-import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260823-1';
+import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260823-2';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import {
     advanceEyeMotion,
@@ -207,6 +207,7 @@ const eyeMotion = createEyeMotionState();
 let eyeMotionFrame = null;
 const mobileFocusMotion = createEyeMotionState(MOBILE_FOCUS_TAP_RESPONSE_MS);
 let mobileFocusFrame = null;
+let mobileFocusInMotion = false;
 const blink = createBlinkState();
 let blinkFrame = null;
 
@@ -214,6 +215,7 @@ function cancelMobileFocusMotion() {
     if (mobileFocusFrame != null) cancelAnimationFrame(mobileFocusFrame);
     mobileFocusFrame = null;
     mobileFocusMotion.lastTime = null;
+    mobileFocusInMotion = false;
 }
 
 function resetMobileFocusMotion(focus) {
@@ -223,6 +225,15 @@ function resetMobileFocusMotion(focus) {
     mobileFocusMotion.targetCenter = { ...focus };
 }
 
+function settleMobileFocusMotion() {
+    const target = mobileFocusMotion.targetCenter;
+    cancelMobileFocusMotion();
+    if (!target) return;
+    mobileShowcaseFocus = { ...target };
+    mobileFocusMotion.displayedCenter = { ...target };
+    mobileFocusMotion.targetCenter = { ...target };
+}
+
 function scheduleMobileFocusMotion(app) {
     if (mobileFocusFrame != null) return;
     mobileFocusFrame = requestAnimationFrame((timestamp) => {
@@ -230,10 +241,11 @@ function scheduleMobileFocusMotion(app) {
         if (!isMobileShowcase()) return;
         const result = advanceEyeMotion(mobileFocusMotion, timestamp);
         mobileShowcaseFocus = { ...mobileFocusMotion.displayedCenter };
+        mobileFocusInMotion = !result.settled;
         app.renderNow();
-        // The whole face already follows the animated Focus; avoid applying a
-        // second delayed movement to the eyes on top of it.
-        snapDisplayedEyes(app);
+        // While moving, the whole face already follows Focus. Once it settles,
+        // keep the eye transform alive for the short fast-to-exact correction.
+        if (!result.settled) snapDisplayedEyes(app);
         if (!result.settled) scheduleMobileFocusMotion(app);
     });
 }
@@ -244,12 +256,13 @@ function retargetMobileFocus(app, target, responseMs = MOBILE_FOCUS_SWIPE_RESPON
     const result = retargetEyeMotion(mobileFocusMotion, target, performance.now());
     mobileShowcaseFocus = { ...mobileFocusMotion.displayedCenter };
     if (result.settled) {
+        mobileFocusInMotion = false;
         mobileShowcaseFocus = { ...target };
         mobileFocusMotion.displayedCenter = { ...target };
         app.renderNow();
-        snapDisplayedEyes(app);
         return;
     }
+    mobileFocusInMotion = true;
     scheduleMobileFocusMotion(app);
 }
 
@@ -259,7 +272,12 @@ function applyEyeMotionTransform(app) {
     const dx = eyeMotion.displayedCenter.x - eyeMotion.targetCenter.x;
     const dy = eyeMotion.displayedCenter.y - eyeMotion.targetCenter.y;
     const settled = Math.hypot(dx, dy) <= 0.02;
-    svg.querySelectorAll('[data-eye-motion="true"]').forEach((element) => {
+    const cachedElements = (app.eyeMotionElements || []).filter((element) => element.isConnected);
+    const elements = cachedElements.length
+        ? cachedElements
+        : [...svg.querySelectorAll('[data-eye-motion="true"]')];
+    app.eyeMotionElements = elements;
+    elements.forEach((element) => {
         if (settled) element.removeAttribute('transform');
         else element.setAttribute('transform', `translate(${dx} ${dy})`);
     });
@@ -303,7 +321,11 @@ function applyBlink(app) {
         }, eyeGeometry);
     ['left', 'right'].forEach((side) => {
         ['top', 'bottom'].forEach((lid) => {
-            svg.querySelector(`#${side}_eye_${lid}`)?.setAttribute('d', lids[side][lid].path);
+            const cached = app.eyeLidElements?.[side]?.[lid];
+            const element = cached?.isConnected
+                ? cached
+                : svg.querySelector(`#${side}_eye_${lid}`);
+            element?.setAttribute('d', lids[side][lid].path);
         });
     });
     app.blinkAmount = amount;
@@ -376,6 +398,8 @@ function drawEyes(ctx, eyeGeometry, definitions) {
         'clip-path': `url(#${HEAD_CLIP_ID})`,
         'data-layer': 'eyes'
     });
+    const motionElements = [];
+    const lidElements = {};
 
     ['left', 'right'].forEach((side) => {
         const eye = eyeGeometry[side];
@@ -390,20 +414,22 @@ function drawEyes(ctx, eyeGeometry, definitions) {
             maskContentUnits: 'userSpaceOnUse'
         });
         const maskContent = create('g', { 'data-eye-motion': 'true' });
-        append(maskContent,
-            create('path', { d: eye.eye1.path, fill: '#ffffff' }),
-            create('path', {
+        const topLid = create('path', {
                 id: `${side}_eye_top`,
                 d: eye.top.path,
                 fill: '#000000',
                 'data-object': `${side}_eye_top`
-            }),
-            create('path', {
+            });
+        const bottomLid = create('path', {
                 id: `${side}_eye_bottom`,
                 d: eye.bottom.path,
                 fill: '#000000',
                 'data-object': `${side}_eye_bottom`
-            })
+            });
+        append(maskContent,
+            create('path', { d: eye.eye1.path, fill: '#ffffff' }),
+            topLid,
+            bottomLid
         );
         mask.appendChild(maskContent);
         definitions.appendChild(mask);
@@ -420,7 +446,12 @@ function drawEyes(ctx, eyeGeometry, definitions) {
             'data-object': `${side}_eye1`
         }));
         eyes.appendChild(eyeGroup);
+        motionElements.push(maskContent, eyeGroup);
+        lidElements[side] = { top: topLid, bottom: bottomLid };
     });
+
+    ctx.app.eyeMotionElements = motionElements;
+    ctx.app.eyeLidElements = lidElements;
 
     return eyes;
 }
@@ -889,7 +920,10 @@ const app = defineTool({
                 ? ctx
                 : { ...ctx, settings: renderSettings };
             const geometry = buildCharacterGeometry(renderSettings);
-            const eyeGeometry = buildEyeGeometry(renderSettings, geometry);
+            const eyeGeometry = buildEyeGeometry(renderSettings, geometry, {
+                placementMode: isMobileShowcase() && mobileFocusInMotion ? 'fast' : 'exact',
+                previousEyeGeometry: ctx.app.eyeGeometry
+            });
             retargetDisplayedEyes(ctx.app, eyeGeometry.pairCenter);
             ctx.app.characterGeometry = geometry;
             ctx.app.eyeGeometry = eyeGeometry;
@@ -907,6 +941,7 @@ const app = defineTool({
         const frameworkExportPNG = tool.exportPNG.bind(tool);
         tool.exportSVG = async (filename) => {
             stopBlink(tool);
+            settleMobileFocusMotion();
             tool.renderNow();
             snapDisplayedEyes(tool);
             const name = filename || `${createSparkyExportBaseName()}.svg`;
@@ -914,6 +949,7 @@ const app = defineTool({
         };
         tool.exportPNG = (filename, scaleFactor) => {
             stopBlink(tool);
+            settleMobileFocusMotion();
             tool.renderNow();
             snapDisplayedEyes(tool);
             const name = filename || `${createSparkyExportBaseName()}.png`;

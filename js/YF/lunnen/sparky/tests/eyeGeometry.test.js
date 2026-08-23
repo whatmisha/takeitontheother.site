@@ -241,6 +241,30 @@ test('nearby Focus, Perspective and Roundness settings cannot jump between local
     ) < 8);
 });
 
+test('the mobile fast path stays contained and exact placement resumes after motion', () => {
+    let head = buildCharacterGeometry();
+    let eyes = buildEyeGeometry(head.values, head);
+    const radius = 195.233;
+
+    for (let index = 0; index < 48; index += 1) {
+        const angle = index / 48 * Math.PI * 2;
+        head = buildCharacterGeometry({
+            focusX: 240 + Math.cos(angle) * radius,
+            focusY: 240 + Math.sin(angle) * radius
+        });
+        eyes = buildEyeGeometry(head.values, head, {
+            placementMode: 'fast',
+            previousEyeGeometry: eyes
+        });
+        assert.ok(Number.isFinite(eyes.pairCenter.x) && Number.isFinite(eyes.pairCenter.y));
+        assert.ok(eyes.fitScale >= 0.45);
+        assert.ok(eyes.minClearance + 0.025 >= eyes.guard);
+    }
+
+    const exact = buildEyeGeometry(head.values, head);
+    assert.ok(exact.minClearance + 0.025 >= exact.guard);
+});
+
 test('the full supported focus, Width and eye-control grid remains inside the head gap', () => {
     const focusXs = [120, 240, 360];
     const focusYs = [rebaseLegacyY(180), 240, rebaseLegacyY(390)];
