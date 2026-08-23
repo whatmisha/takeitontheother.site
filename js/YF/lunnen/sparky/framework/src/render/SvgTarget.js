@@ -1,5 +1,5 @@
 import { RenderTarget } from './RenderTarget.js';
-import { ZoomPanManager } from '../ui/ZoomPanManager.js';
+import { ZoomPanManager } from '../ui/ZoomPanManager.js?v=20260823-2';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -56,7 +56,8 @@ export class SvgTarget extends RenderTarget {
     initZoom(options = {}) {
         if (this.zoomPan) return;
         this.zoomPan = new ZoomPanManager(this.container, this.svg, {
-            fitPadding: options.fitPadding || this.fitPadding
+            fitPadding: options.fitPadding || this.fitPadding,
+            interactive: options.interactive
         });
         this.container.addEventListener('zoomchange', () => {
             this._emitZoomChange(this.zoomPan.getZoomPercent());

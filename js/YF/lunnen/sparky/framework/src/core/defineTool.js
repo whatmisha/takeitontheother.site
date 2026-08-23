@@ -1,4 +1,4 @@
-import { ApplicationShell } from './ApplicationShell.js?v=20260823-1';
+import { ApplicationShell } from './ApplicationShell.js?v=20260823-2';
 
 /**
  * defineTool — declare a tool with a single config object.

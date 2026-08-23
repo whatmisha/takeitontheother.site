@@ -1,17 +1,32 @@
-import { defineTool } from './framework/src/core/defineTool.js?v=20260823-1';
+import { defineTool } from './framework/src/core/defineTool.js?v=20260823-2';
 import { PresetStore } from './framework/src/preset/PresetStore.js';
 import {
     DEFAULT_GEOMETRY,
     buildCharacterGeometry
 } from './src/geometry/characterGeometry.js?v=20260823-2';
-import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260823-2';
+import {
+    buildEyeGeometry,
+    buildEyeLidGeometry,
+    presentEyeGeometry
+} from './src/geometry/eyeGeometry.js?v=20260823-4';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import {
     advanceEyeMotion,
     createEyeMotionState,
-    retargetEyeMotion,
-    snapEyeMotion
+    retargetEyeMotion
 } from './src/animation/eyeMotion.js';
+import {
+    advanceAdaptiveFocusMotion,
+    createAdaptiveFocusMotion,
+    resetAdaptiveFocusMotion,
+    retargetAdaptiveFocusMotion,
+    settleAdaptiveFocusMotion
+} from './src/animation/focusMotion.js?v=20260823-1';
+import {
+    createEyeCorrection,
+    eyeCorrectionDistance,
+    sampleEyeCorrection
+} from './src/animation/eyeCorrection.js?v=20260823-1';
 import {
     advanceBlink,
     createBlinkState,
@@ -38,9 +53,11 @@ const MOBILE_FIT_PADDING = 24;
 const MOBILE_GRAPHIC_OFFSET_PX = 24;
 const MOBILE_FOCUS_TAP_RESPONSE_MS = 135;
 const MOBILE_FOCUS_SWIPE_RESPONSE_MS = 45;
+const EYE_SETTLE_CORRECTION_MS = 140;
 const ARTBOARD_CROP_X = 0;
 const ARTBOARD_CROP_Y = DEFAULT_GEOMETRY.boundaryCenterY - DEFAULT_GEOMETRY.boundaryRadius;
 let mobileShowcaseFocus = null;
+let desktopFollowFocus = null;
 
 const settings = {
     coordinateSpaceVersion: COORDINATE_SPACE_VERSION,
@@ -129,9 +146,13 @@ function isMobileShowcase() {
 }
 
 function activeRenderSettings(current) {
-    if (!isMobileShowcase()) return current;
-    const focus = mobileShowcaseFocus || { x: settings.focusX, y: settings.focusY };
-    return { ...settings, focusX: focus.x, focusY: focus.y };
+    if (isMobileShowcase()) {
+        const focus = mobileShowcaseFocus || { x: settings.focusX, y: settings.focusY };
+        return { ...settings, focusX: focus.x, focusY: focus.y };
+    }
+    const focus = desktopFocusMotion.displayed;
+    if (!focus) return current;
+    return { ...current, focusX: focus.x, focusY: focus.y };
 }
 
 function fitShowcaseToViewport(app, mobile = isMobileShowcase()) {
@@ -165,10 +186,13 @@ function bindMobileShowcase(app) {
             stopBlink(app);
         } else if (!mobile && wasMobile) {
             cancelMobileFocusMotion();
+            resetDesktopFocusMotion(app, {
+                x: app.settings.focusX,
+                y: app.settings.focusY
+            });
         }
         wasMobile = mobile;
         app.renderNow();
-        snapDisplayedEyes(app);
         scheduleFit(mobile);
     };
     const refitMobile = () => {
@@ -203,13 +227,100 @@ function append(parent, ...children) {
     return parent;
 }
 
-const eyeMotion = createEyeMotionState();
-let eyeMotionFrame = null;
+const desktopFocusMotion = createAdaptiveFocusMotion();
+let desktopFocusFrame = null;
+let desktopFocusInMotion = false;
+let desktopFocusJustSettled = false;
+let lastMovingEyeGeometry = null;
+let eyeSettleCorrection = null;
+let eyeSettleFrame = null;
 const mobileFocusMotion = createEyeMotionState(MOBILE_FOCUS_TAP_RESPONSE_MS);
 let mobileFocusFrame = null;
 let mobileFocusInMotion = false;
 const blink = createBlinkState();
 let blinkFrame = null;
+
+function cancelEyeSettleCorrection() {
+    if (eyeSettleFrame != null) cancelAnimationFrame(eyeSettleFrame);
+    eyeSettleFrame = null;
+    eyeSettleCorrection = null;
+    desktopFocusJustSettled = false;
+}
+
+function scheduleEyeSettleCorrection(app) {
+    if (eyeSettleFrame != null || !eyeSettleCorrection) return;
+    eyeSettleFrame = requestAnimationFrame((timestamp) => {
+        eyeSettleFrame = null;
+        if (!eyeSettleCorrection) return;
+        const result = sampleEyeCorrection(eyeSettleCorrection, timestamp);
+        app.renderNow();
+        if (result.done) {
+            eyeSettleCorrection = null;
+            lastMovingEyeGeometry = null;
+            return;
+        }
+        scheduleEyeSettleCorrection(app);
+    });
+}
+
+function beginEyeSettleCorrection(app, fromGeometry, targetGeometry) {
+    if (!fromGeometry || eyeCorrectionDistance(fromGeometry, targetGeometry) <= 0.05) {
+        lastMovingEyeGeometry = null;
+        return targetGeometry;
+    }
+    eyeSettleCorrection = createEyeCorrection(
+        fromGeometry,
+        targetGeometry,
+        performance.now(),
+        EYE_SETTLE_CORRECTION_MS
+    );
+    scheduleEyeSettleCorrection(app);
+    return presentEyeGeometry(targetGeometry, eyeSettleCorrection.placement);
+}
+
+function cancelDesktopFocusMotion() {
+    if (desktopFocusFrame != null) cancelAnimationFrame(desktopFocusFrame);
+    desktopFocusFrame = null;
+    desktopFocusMotion.lastFrameTime = null;
+    desktopFocusInMotion = false;
+}
+
+function resetDesktopFocusMotion(app, focus) {
+    cancelEyeSettleCorrection();
+    cancelDesktopFocusMotion();
+    resetAdaptiveFocusMotion(desktopFocusMotion, focus);
+    desktopFollowFocus = app?.settings.followCursor ? { ...focus } : null;
+}
+
+function settleDesktopFocusMotion() {
+    cancelEyeSettleCorrection();
+    cancelDesktopFocusMotion();
+    settleAdaptiveFocusMotion(desktopFocusMotion);
+}
+
+function scheduleDesktopFocusMotion(app) {
+    if (desktopFocusFrame != null) return;
+    desktopFocusFrame = requestAnimationFrame((timestamp) => {
+        desktopFocusFrame = null;
+        if (isMobileShowcase()) return;
+        const wasMoving = desktopFocusInMotion;
+        const result = advanceAdaptiveFocusMotion(desktopFocusMotion, timestamp);
+        desktopFocusInMotion = !result.settled;
+        desktopFocusJustSettled = wasMoving && result.settled;
+        app.renderNow();
+        if (!result.settled) scheduleDesktopFocusMotion(app);
+    });
+}
+
+function retargetDesktopFocus(app, target, { transient = false } = {}) {
+    cancelEyeSettleCorrection();
+    if (!desktopFocusMotion.displayed) resetDesktopFocusMotion(app, target);
+    desktopFollowFocus = transient ? { ...target } : null;
+    const result = retargetAdaptiveFocusMotion(desktopFocusMotion, target, performance.now());
+    desktopFocusInMotion = !result.settled;
+    app.renderNow();
+    if (!result.settled) scheduleDesktopFocusMotion(app);
+}
 
 function cancelMobileFocusMotion() {
     if (mobileFocusFrame != null) cancelAnimationFrame(mobileFocusFrame);
@@ -243,9 +354,6 @@ function scheduleMobileFocusMotion(app) {
         mobileShowcaseFocus = { ...mobileFocusMotion.displayedCenter };
         mobileFocusInMotion = !result.settled;
         app.renderNow();
-        // While moving, the whole face already follows Focus. Once it settles,
-        // keep the eye transform alive for the short fast-to-exact correction.
-        if (!result.settled) snapDisplayedEyes(app);
         if (!result.settled) scheduleMobileFocusMotion(app);
     });
 }
@@ -264,46 +372,6 @@ function retargetMobileFocus(app, target, responseMs = MOBILE_FOCUS_SWIPE_RESPON
     }
     mobileFocusInMotion = true;
     scheduleMobileFocusMotion(app);
-}
-
-function applyEyeMotionTransform(app) {
-    const svg = app.target?.element;
-    if (!svg || !eyeMotion.displayedCenter || !eyeMotion.targetCenter) return;
-    const dx = eyeMotion.displayedCenter.x - eyeMotion.targetCenter.x;
-    const dy = eyeMotion.displayedCenter.y - eyeMotion.targetCenter.y;
-    const settled = Math.hypot(dx, dy) <= 0.02;
-    const cachedElements = (app.eyeMotionElements || []).filter((element) => element.isConnected);
-    const elements = cachedElements.length
-        ? cachedElements
-        : [...svg.querySelectorAll('[data-eye-motion="true"]')];
-    app.eyeMotionElements = elements;
-    elements.forEach((element) => {
-        if (settled) element.removeAttribute('transform');
-        else element.setAttribute('transform', `translate(${dx} ${dy})`);
-    });
-    app.displayedEyeCenter = { ...eyeMotion.displayedCenter };
-}
-
-function scheduleEyeMotion(app) {
-    if (eyeMotionFrame != null) return;
-    eyeMotionFrame = requestAnimationFrame((timestamp) => {
-        eyeMotionFrame = null;
-        const result = advanceEyeMotion(eyeMotion, timestamp);
-        applyEyeMotionTransform(app);
-        if (!result.settled) scheduleEyeMotion(app);
-    });
-}
-
-function retargetDisplayedEyes(app, target) {
-    const result = retargetEyeMotion(eyeMotion, target, performance.now());
-    if (!result.settled) scheduleEyeMotion(app);
-}
-
-function snapDisplayedEyes(app) {
-    if (eyeMotionFrame != null) cancelAnimationFrame(eyeMotionFrame);
-    eyeMotionFrame = null;
-    snapEyeMotion(eyeMotion);
-    applyEyeMotionTransform(app);
 }
 
 function applyBlink(app) {
@@ -398,7 +466,6 @@ function drawEyes(ctx, eyeGeometry, definitions) {
         'clip-path': `url(#${HEAD_CLIP_ID})`,
         'data-layer': 'eyes'
     });
-    const motionElements = [];
     const lidElements = {};
 
     ['left', 'right'].forEach((side) => {
@@ -413,7 +480,7 @@ function drawEyes(ctx, eyeGeometry, definitions) {
             maskUnits: 'userSpaceOnUse',
             maskContentUnits: 'userSpaceOnUse'
         });
-        const maskContent = create('g', { 'data-eye-motion': 'true' });
+        const maskContent = create('g');
         const topLid = create('path', {
                 id: `${side}_eye_top`,
                 d: eye.top.path,
@@ -436,8 +503,7 @@ function drawEyes(ctx, eyeGeometry, definitions) {
 
         const eyeGroup = create('g', {
             id: `${side}_eye`,
-            'data-eye': side,
-            'data-eye-motion': 'true'
+            'data-eye': side
         });
         eyeGroup.appendChild(create('path', {
             id: `${side}_eye1`,
@@ -446,11 +512,9 @@ function drawEyes(ctx, eyeGeometry, definitions) {
             'data-object': `${side}_eye1`
         }));
         eyes.appendChild(eyeGroup);
-        motionElements.push(maskContent, eyeGroup);
         lidElements[side] = { top: topLid, bottom: bottomLid };
     });
 
-    ctx.app.eyeMotionElements = motionElements;
     ctx.app.eyeLidElements = lidElements;
 
     return eyes;
@@ -635,22 +699,26 @@ function normalizedPolar(raw = {}) {
 
 function syncFocusControls(app) {
     if (!app.sliders) return;
-    const polar = normalizedPolar({
+    const storedPolar = normalizedPolar({
         angle: app.settings.focusAngle,
         distance: app.settings.focusDistance
     });
-    const focus = normalizedFocus(focusPointFromPolar(polar, app.settings), app.settings);
+    const focus = normalizedFocus(focusPointFromPolar(storedPolar, app.settings), app.settings);
+    const controlPolar = !isMobileShowcase() && app.settings.followCursor && desktopFollowFocus
+        ? normalizedPolar(focusPointToPolar(desktopFollowFocus, app.settings, storedPolar.angle))
+        : storedPolar;
     const wasSyncing = focusControlsSyncing;
     focusControlsSyncing = true;
     try {
         app.settingsStore.setMultiple({
-            focusAngle: polar.angle,
-            focusDistance: polar.distance,
+            focusAngle: storedPolar.angle,
+            focusDistance: storedPolar.distance,
             focusX: focus.x,
             focusY: focus.y
         }, true);
-        app.sliders.setValue('focusAngleSlider', polar.angle, false);
-        app.sliders.setValue('focusDistanceSlider', polar.distance, false);
+        setFocusControls(app, controlPolar, {
+            displayOnly: !isMobileShowcase() && app.settings.followCursor && !!desktopFollowFocus
+        });
     } finally {
         focusControlsSyncing = wasSyncing;
     }
@@ -659,6 +727,8 @@ function syncFocusControls(app) {
 function applyState(app, source) {
     const normalized = normalizeIncomingState(source);
     app.settingsStore.setMultiple(normalized, true);
+    resetDesktopFocusMotion(app, { x: normalized.focusX, y: normalized.focusY });
+    if (isMobileShowcase()) resetMobileFocusMotion({ x: settings.focusX, y: settings.focusY });
 }
 
 function pointFromPointer(svg, event) {
@@ -683,7 +753,8 @@ function bindFocusDragging(app) {
             retargetMobileFocus(app, { x, y }, responseMs);
             return;
         }
-        setFocus(app, x, y);
+        if (app.settings.followCursor) setTransientFollowFocus(app, x, y);
+        else setFocus(app, x, y);
     };
 
     const updateFromEvent = (event, responseMs) => {
@@ -713,6 +784,7 @@ function bindFocusDragging(app) {
         if (!handle) return;
         event.preventDefault();
         event.stopPropagation();
+        disableFollowCursor(app);
         pointerId = event.pointerId;
         svg.setPointerCapture(pointerId);
         app.history?.beginTransaction('focus-drag');
@@ -738,16 +810,50 @@ function bindFocusDragging(app) {
     svg.addEventListener('pointercancel', finish);
 }
 
-function disableFollowCursor(app) {
-    if (app.settings.followCursor) app.settingsStore.set('followCursor', false);
+function setFocusControls(app, polar, { displayOnly = false } = {}) {
+    const method = displayOnly ? 'setDisplayValue' : 'setValue';
+    app.sliders?.[method]?.('focusAngleSlider', polar.angle, false);
+    app.sliders?.[method]?.('focusDistanceSlider', polar.distance, false);
+}
+
+function commitTransientFollowFocus(app, { syncControls = true } = {}) {
+    if (!desktopFollowFocus || isMobileShowcase()) return;
+    const focus = normalizedFocus(desktopFollowFocus, app.settings);
+    const polar = normalizedPolar(focusPointToPolar(focus, app.settings, app.settings.focusAngle));
+    const wasSyncing = focusControlsSyncing;
+    focusControlsSyncing = true;
+    try {
+        app.settingsStore.setMultiple({
+            focusAngle: polar.angle,
+            focusDistance: polar.distance,
+            focusX: focus.x,
+            focusY: focus.y
+        }, true);
+        if (syncControls) setFocusControls(app, polar);
+    } finally {
+        focusControlsSyncing = wasSyncing;
+    }
+    desktopFollowFocus = null;
+}
+
+function disableFollowCursor(app, { syncControls = true } = {}) {
+    if (!app.settings.followCursor) return;
+    commitTransientFollowFocus(app, { syncControls });
+    app.settingsStore.set('followCursor', false);
 }
 
 function bindManualFocusControls(app) {
-    ['focusAngleSlider', 'focusDistanceSlider'].forEach((id) => {
-        document.getElementById(id)?.addEventListener('input', () => disableFollowCursor(app));
-    });
-    ['focusAngleValue', 'focusDistanceValue'].forEach((id) => {
-        document.getElementById(id)?.addEventListener('blur', () => disableFollowCursor(app));
+    [
+        'focusAngleSlider',
+        'focusDistanceSlider',
+        'focusAngleValue',
+        'focusDistanceValue'
+    ].forEach((id) => {
+        document.getElementById(id)?.addEventListener(
+            'input',
+            () => disableFollowCursor(app, { syncControls: false }),
+            { capture: true }
+        );
     });
 
     const reconcile = () => {
@@ -769,10 +875,27 @@ function bindManualFocusControls(app) {
         } finally {
             focusControlsSyncing = wasSyncing;
         }
+        if (!isMobileShowcase()) retargetDesktopFocus(app, focus);
     };
 
     app.settingsStore.subscribe('focusAngle', reconcile);
     app.settingsStore.subscribe('focusDistance', reconcile);
+    app.settingsStore.subscribe('followCursor', (enabled) => {
+        if (isMobileShowcase()) return;
+        if (!enabled) {
+            commitTransientFollowFocus(app);
+            return;
+        }
+        resetDesktopFocusMotion(app, { x: app.settings.focusX, y: app.settings.focusY });
+        syncFocusControls(app);
+    });
+}
+
+function setTransientFollowFocus(app, x, y) {
+    const focus = normalizedFocus({ x, y }, app.settings);
+    const polar = normalizedPolar(focusPointToPolar(focus, app.settings, app.settings.focusAngle));
+    setFocusControls(app, polar, { displayOnly: true });
+    retargetDesktopFocus(app, focus, { transient: true });
 }
 
 function setFocus(app, x, y) {
@@ -787,11 +910,11 @@ function setFocus(app, x, y) {
             focusX: focus.x,
             focusY: focus.y
         });
-        app.sliders?.setValue('focusAngleSlider', polar.angle, false);
-        app.sliders?.setValue('focusDistanceSlider', polar.distance, false);
+        setFocusControls(app, polar);
     } finally {
         focusControlsSyncing = wasSyncing;
     }
+    if (!isMobileShowcase()) retargetDesktopFocus(app, focus);
 }
 
 function setPolarFocus(app, angle, distance) {
@@ -806,11 +929,11 @@ function setPolarFocus(app, angle, distance) {
             focusX: focus.x,
             focusY: focus.y
         });
-        app.sliders?.setValue('focusAngleSlider', polar.angle, false);
-        app.sliders?.setValue('focusDistanceSlider', polar.distance, false);
+        setFocusControls(app, polar);
     } finally {
         focusControlsSyncing = wasSyncing;
     }
+    if (!isMobileShowcase()) retargetDesktopFocus(app, focus);
 }
 
 const app = defineTool({
@@ -818,8 +941,7 @@ const app = defineTool({
     autoStart: true,
     dom: {
         canvas: 'canvasContainer',
-        surface: 'mainSvg',
-        zoomIndicator: 'zoomIndicator'
+        surface: 'mainSvg'
     },
     settings,
     controls: {
@@ -859,9 +981,18 @@ const app = defineTool({
         defaultName: 'Basic',
         forceSeed: true,
         migrate: (store) => {
+            const storedPresets = store.loadAll();
+            let removedObsoleteSeed = false;
+            ['Needle Crown', 'Wide Crown'].forEach((name) => {
+                if (storedPresets[name]?.seeded !== true) return;
+                delete storedPresets[name];
+                removedObsoleteSeed = true;
+            });
+            if (removedObsoleteSeed) store.saveAll(storedPresets);
+
             if (store.getNames().length) return;
             const legacyStore = new PresetStore({ storageKey: 'lunnenSparkyGeneratorV1' });
-            const builtInNames = new Set(['Basic', 'Needle Crown', 'Wide Crown']);
+            const builtInNames = new Set(['Basic']);
             Object.entries(legacyStore.loadAll()).forEach(([name, preset]) => {
                 if (!preset || preset.seeded === true) return;
                 const {
@@ -902,7 +1033,10 @@ const app = defineTool({
     applyPreset: (tool, preset) => applyState(tool, preset),
     syncControls: (tool) => syncFocusControls(tool),
     export: { filename: 'sparky.svg' },
-    zoom: { fitPadding: { top: 58, right: 58, bottom: 58, left: 58 } },
+    zoom: {
+        interactive: false,
+        fitPadding: { top: 58, right: 58, bottom: 58, left: 58 }
+    },
     shortcuts: {
         g: (tool) => tool.settingsStore.set('showGuides', !tool.settings.showGuides)
     },
@@ -920,16 +1054,34 @@ const app = defineTool({
                 ? ctx
                 : { ...ctx, settings: renderSettings };
             const geometry = buildCharacterGeometry(renderSettings);
-            const eyeGeometry = buildEyeGeometry(renderSettings, geometry, {
-                placementMode: isMobileShowcase() && mobileFocusInMotion ? 'fast' : 'exact',
-                previousEyeGeometry: ctx.app.eyeGeometry
-            });
-            retargetDisplayedEyes(ctx.app, eyeGeometry.pairCenter);
+            const mobileMoving = isMobileShowcase() && mobileFocusInMotion;
+            const desktopMoving = !isMobileShowcase() && desktopFocusInMotion;
+            let eyeGeometry;
+            if (!isMobileShowcase() && eyeSettleCorrection) {
+                eyeGeometry = presentEyeGeometry(
+                    eyeSettleCorrection.targetGeometry,
+                    eyeSettleCorrection.placement
+                );
+            } else {
+                eyeGeometry = buildEyeGeometry(renderSettings, geometry, {
+                    placementMode: mobileMoving || desktopMoving ? 'fast' : 'exact',
+                    previousEyeGeometry: ctx.app.eyeGeometry,
+                    allowFastScaleReduction: mobileMoving
+                });
+                if (desktopMoving) lastMovingEyeGeometry = eyeGeometry;
+                else if (!isMobileShowcase() && desktopFocusJustSettled) {
+                    eyeGeometry = beginEyeSettleCorrection(
+                        ctx.app,
+                        lastMovingEyeGeometry,
+                        eyeGeometry
+                    );
+                }
+            }
+            desktopFocusJustSettled = false;
             ctx.app.characterGeometry = geometry;
             ctx.app.eyeGeometry = eyeGeometry;
             ctx.app.geometryError = null;
             drawCharacter(renderContext, geometry, eyeGeometry);
-            applyEyeMotionTransform(ctx.app);
             applyBlink(ctx.app);
         } catch (error) {
             ctx.app.geometryError = error;
@@ -942,19 +1094,21 @@ const app = defineTool({
         tool.exportSVG = async (filename) => {
             stopBlink(tool);
             settleMobileFocusMotion();
+            settleDesktopFocusMotion();
             tool.renderNow();
-            snapDisplayedEyes(tool);
             const name = filename || `${createSparkyExportBaseName()}.svg`;
             return frameworkExportSVG(name);
         };
         tool.exportPNG = (filename, scaleFactor) => {
             stopBlink(tool);
             settleMobileFocusMotion();
+            settleDesktopFocusMotion();
             tool.renderNow();
-            snapDisplayedEyes(tool);
             const name = filename || `${createSparkyExportBaseName()}.png`;
             return frameworkExportPNG(name, scaleFactor);
         };
+        resetDesktopFocusMotion(tool, { x: tool.settings.focusX, y: tool.settings.focusY });
+        tool.settingsStore.subscribe('*', () => cancelEyeSettleCorrection());
         bindFocusDragging(tool);
         bindManualFocusControls(tool);
         syncFocusControls(tool);

@@ -20,6 +20,7 @@ export class ZoomPanManager {
     constructor(containerElement, svgElement, options = {}) {
         this.container = containerElement;
         this.svg = svgElement;
+        this.interactive = options.interactive !== false;
 
         const fp = options.fitPadding || {};
         this.fitPadding = {
@@ -53,7 +54,7 @@ export class ZoomPanManager {
         this.initializeSVG();
         
         // Инициализируем обработчики
-        this.initEventListeners();
+        if (this.interactive) this.initEventListeners();
     }
     
     /**
@@ -421,6 +422,7 @@ export class ZoomPanManager {
      * Очистка обработчиков
      */
     destroy() {
+        if (!this.interactive) return;
         this.container.removeEventListener('wheel', this._onWheel);
         document.removeEventListener('keydown', this._onKeyDown);
         document.removeEventListener('keyup', this._onKeyUp);

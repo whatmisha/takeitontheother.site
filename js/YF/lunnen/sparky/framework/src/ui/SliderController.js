@@ -356,6 +356,19 @@ export class SliderController {
     }
 
     /**
+     * Update only the visible range/text controls without mutating Settings.
+     * Useful for transient previews that must not affect history or preset state.
+     */
+    setDisplayValue(sliderId, value) {
+        const sliderData = this.sliders.get(sliderId);
+        if (!sliderData) return;
+        const { element, valueInput, config } = sliderData;
+        const displayed = this.clamp(value, config.min, config.max);
+        element.value = displayed;
+        this.updateValueDisplay(valueInput, displayed, config);
+    }
+
+    /**
      * Get current slider value
      */
     getValue(sliderId) {
@@ -418,4 +431,3 @@ export class SliderController {
         sliderData.valueInput.disabled = !enabled;
     }
 }
-
