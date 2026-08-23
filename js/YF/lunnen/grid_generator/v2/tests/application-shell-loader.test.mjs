@@ -16,6 +16,8 @@ function createDocument() {
         documentElement: { dataset: {} },
         querySelector(selector) {
             const name = selector.match(/data-ui-fragment="([^"]+)"/)?.[1];
+            if (!name) return null;
+            if (name === 'typography' && !slots.get('workspace').replacement) return null;
             return slots.get(name) || null;
         },
         createElement(tagName) {
@@ -36,7 +38,11 @@ test('application shell fetches each static fragment once before reporting ready
     const fetchImpl = async url => {
         requests.push(url);
         const name = new URL(url).pathname.split('/').at(-1).replace('.html', '');
-        return { ok: true, status: 200, text: async () => `<section>${name}</section>` };
+        return { ok: true, status: 200, text: async () => (
+            name === 'workspace'
+                ? '<div data-ui-fragment="typography"></div>'
+                : `<section>${name}</section>`
+        ) };
     };
     const options = { fetchImpl, fragmentsBaseUrl: new URL('https://example.test/fragments/') };
 
@@ -47,7 +53,10 @@ test('application shell fetches each static fragment once before reporting ready
     assert.equal(documentRef.documentElement.dataset.applicationShell, 'ready');
     assert.equal(requests.length, fragmentNames.length);
     fragmentNames.forEach(name => {
-        assert.equal(documentRef.slots.get(name).replacement.html, `<section>${name}</section>`);
+        const expected = name === 'workspace'
+            ? '<div data-ui-fragment="typography"></div>'
+            : `<section>${name}</section>`;
+        assert.equal(documentRef.slots.get(name).replacement.html, expected);
     });
     assert.equal(await loadApplicationShell(documentRef, options), false);
     assert.equal(requests.length, fragmentNames.length);

@@ -336,76 +336,6 @@ function evaluateContainment(model, values, headContour, pairCenter, fitScale, s
     };
 }
 
-/**
- * Interactive placement uses temporal coherence: the previous frame is already
- * close to the next solution, so a short local projection is enough while the
- * pointer is moving. The exact global solver still runs when motion settles and
- * before export.
- */
-function solveFastEyePlacement(model, values, headContour, previousEyeGeometry) {
-    const desiredCenter = point(
-        values.focusX,
-        values.focusY + EYE_DEFAULTS.centerOffsetY
-    );
-    const previousValues = previousEyeGeometry?.values;
-    const previousCenter = previousEyeGeometry?.pairCenter;
-    const focusDelta = previousValues && previousCenter
-        ? point(values.focusX - previousValues.focusX, values.focusY - previousValues.focusY)
-        : point(0, 0);
-    const carriedCenter = previousCenter
-        ? add(previousCenter, focusDelta)
-        : desiredCenter;
-    let pairCenter = point(
-        mix(carriedCenter.x, desiredCenter.x, 0.2),
-        mix(carriedCenter.y, desiredCenter.y, 0.2)
-    );
-    let fitScale = previousEyeGeometry?.fitScale ?? 1;
-    let result = null;
-
-    for (let iteration = 0; iteration < 12; iteration += 1) {
-        result = evaluateContainment(model, values, headContour, pairCenter, fitScale, 12);
-        if (result.fits) break;
-        const correction = Math.min(18, Math.max(0.25, result.worst.deficit + 0.1));
-        pairCenter = add(pairCenter, scale(result.worst.inward, correction));
-    }
-
-    // Finish with a small, bounded full-resolution projection. Unlike the exact
-    // solver this can never open a global search branch or run unbounded work.
-    for (let iteration = 0; iteration < 8; iteration += 1) {
-        result = evaluateContainment(model, values, headContour, pairCenter, fitScale);
-        if (result.fits) break;
-        const correction = Math.min(12, Math.max(0.15, result.worst.deficit + 0.05));
-        pairCenter = add(pairCenter, scale(result.worst.inward, correction));
-    }
-
-    // The moving preview may temporarily reduce scale instead of entering the
-    // exact solver's expensive global fallback. Exact size is restored as soon
-    // as the gesture settles.
-    if (!result?.fits) {
-        let low = 0.45;
-        let high = fitScale;
-        let best = evaluateContainment(model, values, headContour, pairCenter, low);
-        for (let iteration = 0; iteration < 10; iteration += 1) {
-            const middle = (low + high) / 2;
-            const candidate = evaluateContainment(model, values, headContour, pairCenter, middle);
-            if (candidate.fits) {
-                low = middle;
-                best = candidate;
-            } else {
-                high = middle;
-            }
-        }
-        fitScale = low;
-        result = best;
-    }
-    return {
-        desiredCenter,
-        pairCenter,
-        fitScale,
-        ...result
-    };
-}
-
 function solveEyePlacement(model, values, headContour) {
     const desiredCenter = point(
         values.focusX,
@@ -616,11 +546,87 @@ function scoreOpticalPlacement(localEyeContour, center, faceContour, headContour
     };
 }
 
+function refinePlacement(bounds, evaluate, seed, {
+    iterations,
+    stepX,
+    stepY
+}) {
+    let current = { center: seed, result: evaluate(seed) };
+    let refinementLevel = 0;
+    let sweep = 0;
+    while (refinementLevel < iterations && sweep < iterations * 5) {
+        sweep += 1;
+        let localWinner = current;
+        for (let y = -1; y <= 1; y += 1) {
+            for (let x = -1; x <= 1; x += 1) {
+                const center = point(
+                    clamp(current.center.x + x * stepX, bounds.minX, bounds.maxX),
+                    clamp(current.center.y + y * stepY, bounds.minY, bounds.maxY)
+                );
+                const candidate = { center, result: evaluate(center) };
+                if (candidate.result.score > localWinner.result.score) localWinner = candidate;
+            }
+        }
+        if (distance(localWinner.center, current.center) > EPSILON) {
+            // Follow the current ridge at a stable resolution. Shrinking the
+            // grid immediately after every move makes a single coarse choice
+            // irreversible and is the main source of branch loss.
+            current = localWinner;
+        } else {
+            stepX /= 2;
+            stepY /= 2;
+            refinementLevel += 1;
+        }
+    }
+    return current;
+}
+
+function refinePlacementBeam(bounds, evaluate, seed, {
+    iterations,
+    stepX,
+    stepY,
+    beamWidth = 3
+}) {
+    let frontier = [{ center: seed, result: evaluate(seed) }];
+    for (let iteration = 0; iteration < iterations; iteration += 1) {
+        const candidates = [];
+        frontier.forEach((current) => {
+            for (let y = -1; y <= 1; y += 1) {
+                for (let x = -1; x <= 1; x += 1) {
+                    const center = point(
+                        clamp(current.center.x + x * stepX, bounds.minX, bounds.maxX),
+                        clamp(current.center.y + y * stepY, bounds.minY, bounds.maxY)
+                    );
+                    candidates.push({ center, result: evaluate(center) });
+                }
+            }
+        });
+        candidates.sort((first, second) => second.result.score - first.result.score);
+        const minimumSpacing = Math.hypot(stepX, stepY) * 0.45;
+        frontier = [];
+        candidates.forEach((candidate) => {
+            if (frontier.length >= beamWidth) return;
+            if (frontier.some((current) => distance(current.center, candidate.center) < minimumSpacing)) return;
+            frontier.push(candidate);
+        });
+        // Boundary clamping can collapse a grid. Fill any remaining beam slots
+        // with distinct candidates so refinement never loses all alternatives.
+        candidates.forEach((candidate) => {
+            if (frontier.length >= beamWidth) return;
+            if (frontier.some((current) => distance(current.center, candidate.center) <= EPSILON)) return;
+            frontier.push(candidate);
+        });
+        stepX /= 2;
+        stepY /= 2;
+    }
+    return frontier[0];
+}
+
 function searchGlobalPlacement(bounds, evaluate, seeds = []) {
     const width = Math.max(EPSILON, bounds.maxX - bounds.minX);
     const height = Math.max(EPSILON, bounds.maxY - bounds.minY);
-    const coarseSteps = 8;
-    const candidates = [...seeds];
+    const coarseSteps = 12;
+    const candidates = seeds.filter(Boolean);
     for (let row = 0; row <= coarseSteps; row += 1) {
         for (let column = 0; column <= coarseSteps; column += 1) {
             candidates.push(point(
@@ -633,30 +639,80 @@ function searchGlobalPlacement(bounds, evaluate, seeds = []) {
     const ranked = candidates
         .map((center) => ({ center, result: evaluate(center) }))
         .sort((first, second) => second.result.score - first.result.score)
-        .slice(0, 3);
+        .slice(0, 5);
     let winner = ranked[0];
     ranked.forEach((seed) => {
-        let current = seed;
-        let stepX = width / coarseSteps;
-        let stepY = height / coarseSteps;
-        for (let iteration = 0; iteration < 5; iteration += 1) {
-            let localWinner = current;
-            for (let y = -1; y <= 1; y += 1) {
-                for (let x = -1; x <= 1; x += 1) {
-                    const center = point(
-                        clamp(current.center.x + x * stepX, bounds.minX, bounds.maxX),
-                        clamp(current.center.y + y * stepY, bounds.minY, bounds.maxY)
-                    );
-                    const candidate = { center, result: evaluate(center) };
-                    if (candidate.result.score > localWinner.result.score) localWinner = candidate;
-                }
-            }
-            current = localWinner;
-            stepX /= 2;
-            stepY /= 2;
-        }
+        const current = refinePlacement(bounds, evaluate, seed.center, {
+            iterations: 9,
+            stepX: width / coarseSteps,
+            stepY: height / coarseSteps
+        });
         if (!winner || current.result.score > winner.result.score) winner = current;
     });
+    const precise = refinePlacementBeam(bounds, evaluate, winner.center, {
+        iterations: 9,
+        stepX: width / 192,
+        stepY: height / 192,
+        beamWidth: 4
+    });
+    if (precise.result.score > winner.result.score) winner = precise;
+    return winner;
+}
+
+function searchLocalPlacement(bounds, evaluate, seeds, focusDelta) {
+    const width = Math.max(EPSILON, bounds.maxX - bounds.minX);
+    const height = Math.max(EPSILON, bounds.maxY - bounds.minY);
+    // A tiny branch guard keeps three-by-three anchor seeds alive when the
+    // transported optimum crosses a concave facial ridge. This is deliberately
+    // sparse; the full 13×13 search remains reserved for global placement.
+    const branchSeeds = [];
+    for (let row = 1; row <= 3; row += 1) {
+        for (let column = 1; column <= 3; column += 1) {
+            branchSeeds.push(point(
+                bounds.minX + width * column / 4,
+                bounds.minY + height * row / 4
+            ));
+        }
+    }
+    const ranked = [...seeds, ...branchSeeds]
+        .filter(Boolean)
+        .map((center) => ({ center, result: evaluate(center) }))
+        .sort((first, second) => second.result.score - first.result.score);
+    const transported = seeds[0]
+        ? { center: seeds[0], result: evaluate(seeds[0]), transported: true }
+        : null;
+    const selected = [transported].filter(Boolean);
+    ranked.forEach((candidate) => {
+        if (selected.length >= 4) return;
+        if (selected.some((seed) => distance(seed.center, candidate.center) <= EPSILON)) return;
+        selected.push(candidate);
+    });
+    if (!selected.length) return null;
+    // Every carried seed has already been translated by focusDelta. The first
+    // grid therefore searches the residual optical drift, not the full pointer
+    // displacement; a large first step can jump across a narrow feasible ridge.
+    const stepX = Math.min(width / 12, Math.max(width / 32, Math.abs(focusDelta.x) * 0.4));
+    const stepY = Math.min(height / 12, Math.max(height / 32, Math.abs(focusDelta.y) * 0.4));
+    let winner = selected[0];
+    selected.forEach((seed) => {
+        const current = refinePlacementBeam(bounds, evaluate, seed.center, {
+            iterations: 6,
+            stepX,
+            stepY,
+            beamWidth: seed.transported ? 3 : 2
+        });
+        if (current.result.score > winner.result.score) winner = current;
+    });
+    // Restart once at sub-pixel scale. Min-clearance objectives can contain a
+    // thin ridge that is invisible to the larger grid and should not become a
+    // separate interactive branch.
+    const precise = refinePlacementBeam(bounds, evaluate, winner.center, {
+        iterations: 9,
+        stepX: width / 192,
+        stepY: height / 192,
+        beamWidth: 4
+    });
+    if (precise.result.score > winner.result.score) winner = precise;
     return winner;
 }
 
@@ -665,7 +721,14 @@ function smoothstep(value) {
     return amount * amount * (3 - 2 * amount);
 }
 
-function solveOpticalPairCenter(model, values, characterGeometry, headContour, legacyPlacement) {
+function solveOpticalPairCenter(
+    model,
+    values,
+    characterGeometry,
+    headContour,
+    legacyPlacement,
+    { local = false, previousEyeGeometry = null } = {}
+) {
     const faceContour = buildFaceFieldContour(characterGeometry);
     const sampledHead = downsampleContour(headContour, 32);
     const preparedFace = preparePlacementContour(faceContour);
@@ -673,17 +736,29 @@ function solveOpticalPairCenter(model, values, characterGeometry, headContour, l
     const localTransform = createRigTransform(values, point(0, 0), legacyPlacement.fitScale);
     const localEyeContour = mainEyeContour(model, localTransform, 8);
     const faceBounds = contourBounds(faceContour);
-    const headBounds = contourBounds(sampledHead);
     const opticalEvaluation = (center) => scoreOpticalPlacement(
         localEyeContour,
         center,
         preparedFace,
         preparedHead
     );
-    const optical = searchGlobalPlacement(faceBounds, opticalEvaluation, [
+    const previousValues = previousEyeGeometry?.values;
+    const focusDelta = previousValues
+        ? point(values.focusX - previousValues.focusX, values.focusY - previousValues.focusY)
+        : point(0, 0);
+    const carry = (center) => center ? add(center, focusDelta) : null;
+    const desiredCenter = point(values.focusX, values.focusY + EYE_DEFAULTS.centerOffsetY);
+    const opticalSeeds = [
+        carry(previousEyeGeometry?.opticalSeed),
+        carry(previousEyeGeometry?.opticalCenter),
+        carry(previousEyeGeometry?.legacyCenter),
+        carry(previousEyeGeometry?.pairCenter),
         legacyPlacement.pairCenter,
-        point(values.focusX, values.focusY + EYE_DEFAULTS.centerOffsetY)
-    ]);
+        desiredCenter
+    ];
+    const optical = local
+        ? searchLocalPlacement(faceBounds, opticalEvaluation, opticalSeeds, focusDelta)
+        : searchGlobalPlacement(faceBounds, opticalEvaluation, opticalSeeds);
     const horizontal = clamp((values.focusX - EYE_DEFAULTS.focusX) / 120, -1, 1);
     const verticalRange = values.focusY < EYE_DEFAULTS.focusY ? 112 : 98;
     const vertical = clamp((values.focusY - EYE_DEFAULTS.focusY) / verticalRange, -1, 1);
@@ -752,32 +827,14 @@ function solveOpticalPairCenter(model, values, characterGeometry, headContour, l
         }
         return { center: safeCenter, minimumClearance: exactMinimumClearance(safeCenter) };
     };
-    const targetResult = opticalEvaluation(target);
-    if (targetResult.feasible) {
-        const exact = enforceExactHeadGap(target);
-        return {
-            faceContour,
-            opticalCenter,
-            pairCenter: exact.center,
-            minimumHeadClearance: exact.minimumClearance
-        };
-    }
-
-    // Project globally to the closest legal translation of the unchanged rig.
-    // The legacy position is always included, so retaining the original size is
-    // possible even when the soft face field has no fully feasible placement.
-    const projection = searchGlobalPlacement(headBounds, (center) => {
-        const placement = opticalEvaluation(center);
-        if (!placement.feasible) return placement;
-        const offset = subtract(center, target);
-        return {
-            ...placement,
-            score: -(offset.x * offset.x + offset.y * offset.y)
-        };
-    }, [target, opticalCenter, legacyPlacement.pairCenter]);
-    const exact = enforceExactHeadGap(projection.center);
+    // The optical optimum is already selected above. If Focus bias takes that
+    // target through the hard head boundary, project it deterministically along
+    // the safe legacy branch. Running a second global aesthetic search here
+    // would introduce another, unrelated placement law at the boundary.
+    const exact = enforceExactHeadGap(target);
     return {
         faceContour,
+        opticalSeed: optical.center,
         opticalCenter,
         pairCenter: exact.center,
         minimumHeadClearance: exact.minimumClearance
@@ -812,24 +869,30 @@ export function buildEyeGeometry(settings, characterGeometry, options = {}) {
     };
     const model = createEyeRigModel(values);
     const headContour = flattenRoundedContour(characterGeometry.rounded);
-    const fastPlacement = options.placementMode === 'fast';
-    const legacyPlacement = fastPlacement
-        ? solveFastEyePlacement(model, values, headContour, options.previousEyeGeometry)
-        : solveEyePlacement(model, values, headContour);
-    const opticalPlacement = fastPlacement
-        ? {
-            faceContour: buildFaceFieldContour(characterGeometry),
-            opticalCenter: legacyPlacement.pairCenter,
-            pairCenter: legacyPlacement.pairCenter,
-            minimumHeadClearance: legacyPlacement.minClearance
-        }
-        : solveOpticalPairCenter(
-            model,
-            values,
-            characterGeometry,
-            headContour,
-            legacyPlacement
-        );
+    const requestedLocal = options.placementMode === 'local';
+    const previousEyeGeometry = options.previousEyeGeometry;
+    const previousValues = previousEyeGeometry?.values;
+    const topologyMatches = previousValues
+        && previousValues.boundaryType === values.boundaryType
+        && Math.round(previousValues.rayCount) === Math.round(values.rayCount);
+    const focusDelta = previousValues
+        ? Math.hypot(values.focusX - previousValues.focusX, values.focusY - previousValues.focusY)
+        : Infinity;
+    const canRefineLocally = requestedLocal && topologyMatches && focusDelta <= 64;
+    // Containment and fitScale deliberately use the same exact law in both
+    // modes. Only the optical search strategy changes.
+    const legacyPlacement = solveEyePlacement(model, values, headContour);
+    const scaleMatches = previousEyeGeometry
+        && Math.abs(previousEyeGeometry.fitScale - legacyPlacement.fitScale) <= 0.08;
+    const localPlacement = canRefineLocally && scaleMatches;
+    const opticalPlacement = solveOpticalPairCenter(
+        model,
+        values,
+        characterGeometry,
+        headContour,
+        legacyPlacement,
+        { local: localPlacement, previousEyeGeometry }
+    );
     const placement = {
         ...legacyPlacement,
         pairCenter: opticalPlacement.pairCenter,
@@ -846,12 +909,15 @@ export function buildEyeGeometry(settings, characterGeometry, options = {}) {
     return {
         values,
         model,
+        placementMode: localPlacement ? 'local' : 'global',
         left: renderEye(model.left),
         right: renderEye(model.right),
         desiredCenter: placement.desiredCenter,
+        legacyCenter: legacyPlacement.pairCenter,
         pairCenter: placement.pairCenter,
         shift: subtract(placement.pairCenter, placement.desiredCenter),
         opticalCenter: opticalPlacement.opticalCenter,
+        opticalSeed: opticalPlacement.opticalSeed,
         fitScale: placement.fitScale,
         guard: 1,
         minClearance: placement.minClearance,

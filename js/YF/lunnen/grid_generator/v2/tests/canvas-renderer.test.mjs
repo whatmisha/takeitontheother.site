@@ -68,7 +68,7 @@ test('canvas renderer composes grid, side layers, objects and restores zoom', ()
             drawRows: () => calls.push('rows'),
             drawBaseline: () => calls.push('baseline')
         },
-        surfaceRenderer: { drawSideLayers: () => calls.push('sides') },
+        surfaceRenderer: { drawPlaneLayers: () => calls.push('planes') },
         textRenderer: { draw: () => calls.push('text') },
         graphicsRenderer: { draw: () => calls.push('graphics') },
         objectNavigatorController: {
@@ -87,8 +87,8 @@ test('canvas renderer composes grid, side layers, objects and restores zoom', ()
     assert.equal(svg.attributes.width, 900);
     assert.equal(host.currentSurfaceLayout, layout);
     assert.deepEqual(calls, [
-        'constrain', 'zoom:init', 'box', 'columns', 'rows', 'baseline', 'sides',
-        'text', 'graphics', 'hover', 'typography', 'navigator', 'zoom:restore'
+        'constrain', 'zoom:init', 'box', 'planes',
+        'hover', 'typography', 'navigator', 'zoom:restore'
     ]);
     assert.deepEqual(
         { zoom: zoom.zoom, panX: zoom.panX, panY: zoom.panY },

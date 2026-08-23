@@ -1,27 +1,14 @@
 # Packaging net refactor — plan and progress
 
-Started: 2026-08-23. This is the `v2` line of work: moving the application from
-a fixed front-plus-four-sides box to full packaging nets (dielines) with an
-arbitrary number of planes, editable both centrally and individually.
+Started: 2026-08-23. Completed: 2026-08-23.
+
+This is the `v2` line of work: moving the application from a fixed
+front-plus-four-sides box to full packaging nets (dielines) with an arbitrary
+number of planes, editable both centrally and individually.
 
 `v2/` is self-contained. It can replace the project root as-is; its development
 server runs on `127.0.0.1:8100` (preview on `8101`) so it does not collide with
 the root project on `8000`.
-
-## Why the old model blocked this
-
-The five surfaces were not data — they were spread across the code as
-assumptions:
-
-- `SurfaceGeometry` hardcoded five rectangles in a cross.
-- `SURFACE_IDS` / `SIDE_SURFACE_IDS` fixed the vocabulary in state, rendering,
-  hit-testing and the UI.
-- The artboard was `frontWidth + 2 * thickness` by
-  `frontHeight + 2 * thickness`, which only describes a cross.
-- Preset schema 1.2 stores `surfaces` as a fixed-key object with an enum of
-  five `surfaceId` values.
-- The root panel rendered on a different path than the sides: absolute
-  coordinates and no grid context, versus a transformed and clipped group.
 
 ## Target model
 
@@ -45,10 +32,10 @@ Three properties make this work:
 
 - **Relative attachment.** A plane is positioned by a parent edge, not absolute
   coordinates, so changing one dimension reflows the whole net.
-- **Named variables.** `W`/`H`/`D` give central editing; a plane that overrides
-  a dimension gives individual editing.
+- **Named variables.** `W`/`H`/`D` mirror the three dimension sliders; any other
+  variable is owned by the document.
 - **`fit` dimensions.** A plane can inherit the length of the edge it attaches
-  to, which is what keeps a wall flush with its neighbour.
+  to, which keeps a wall flush with its neighbour.
 
 Two orderings are kept apart on purpose:
 
@@ -58,66 +45,89 @@ Two orderings are kept apart on purpose:
 
 ## Phase 0 — characterization tests — done
 
-The old behavior is frozen before it is touched.
-
-- `tools/generate-net-golden.js` writes `tests/fixtures/net-golden.json`:
-  editor layout scaling, export artboard strings, every surface rectangle,
-  transform and local-point mapping at all four rotations, 102 hit-test probes
-  per layout case, and resolved geometry plus grid contexts for all 19 presets.
+- `tools/generate-net-golden.js` writes `tests/fixtures/net-golden.json`.
 - `tests/net-golden.test.mjs` verifies the sources against it.
-- `npm --prefix tools run golden:check` is part of `source:check`, so a stale
-  golden fails the build. Regenerate deliberately with `run golden`.
-
-The net was verified to catch regressions: a 0.5 mm shift of one surface fails
-three of the six golden tests.
+- `npm --prefix tools run golden:check` is part of `source:check`.
 
 ## Phase 1 — plane model under the existing API — done
 
-- `src/surfaces/PlaneDefinition.js` — plane vocabulary, normalization and
-  `createBoxNet`, which builds the legacy cross as one ordinary net.
+- `src/surfaces/PlaneDefinition.js` — plane vocabulary, normalization,
+  `createBoxNet`.
 - `src/surfaces/NetLayoutEngine.js` — pure placement, artboard bounds, content
-  transforms, local mapping and hit-testing. Broken topology (unknown parent,
-  cycle, duplicate id, missing root) is reported in `issues` rather than thrown.
-- `SurfaceGeometry.js` is now a thin facade over the engine with unchanged
-  signatures. `SurfaceManager` gained `getNet` / `getNetLayout`, and
-  `surfaceAtPoint` resolves through the engine.
-
-Byte-identical output: the golden passes unchanged, including exact SVG
-transform strings.
+  transforms, local mapping and hit-testing.
+- `SurfaceGeometry.js` is a thin facade with unchanged signatures.
+- `SurfaceManager.getNet` / `getNetLayout` / `surfaceAtPoint`.
 
 ## Phase 2 — general artboard and plane-driven rendering — done
 
-- `CanvasRendererController.calculateLayout` scales by the net's union bounds
-  instead of the cross formula, and accepts a `net` for non-cross documents.
-  `calculateArtboard` gives the export the same millimetre bounds.
-- `drawBoxSurfaces` and `drawLabels` iterate the net's planes. The five
-  hardcoded rectangles and five hardcoded label positions are gone; labels are
-  centred per plane and rotated when a plane is taller than wide.
-- `SurfaceRenderer.drawPlaneLayers` iterates the net; the hardcoded
-  `sideSurfaces` list is removed from the renderer and from the composition
-  root.
+- `CanvasRendererController.calculateLayout` scales by the net's union bounds.
+- `calculateArtboard` gives the export the same millimetre bounds.
+- `drawBoxSurfaces` and `drawLabels` iterate the net's planes.
+- `SurfaceRenderer.drawPlaneLayers` iterates every plane.
 
-`tests/net-render-generalization.test.mjs` renders a seven-plane tuck-end carton
-(four walls, glue strip, two flaps) through the production renderer with no
-renderer change, and scales it by its own 580×460 artboard.
+## Phase 3 — plane document store — done
 
-## Known follow-ups
+- `src/surfaces/PlaneDocumentStore.js` replaces the fixed five-surface
+  `SurfaceStateStore`. The document lives in `settings.planeDocument`.
+- Planes can be added, removed, reordered and edited individually.
+- `W`/`H`/`D` are reserved variables wired to the dimension sliders.
+- Legacy five-key `surfaceSettings` maps are still accepted on import.
 
-- **The root panel still renders on its own path.** `drawSideLayers` skips it
-  deliberately. Unifying it means routing root text through
-  `getGridContext('front')` instead of the implicit global settings, which can
-  move text; that needs render-level characterization first.
-- **`SurfaceStateStore` still normalizes to exactly five surfaces**, so the net
-  cannot yet gain a sixth plane from state or a preset. The renderer and engine
-  are ready; the state layer and preset schema 2.0 are next.
-- **`getNetLayout` rebuilds the net from the three scaled layout scalars.** Once
-  the document carries the net, the layout should carry it too.
-- **Overlap semantics** for deliberately stacked planes are settled together
-  with plane management UI.
+## Phase 4 — per-plane grid resolution — done
 
-## Invariants held so far
+- `src/surfaces/PlaneGridResolver.js` resolves inherited vs own grid contexts.
+- Side planes re-derive column and row counts from their local size while
+  keeping the master module.
+- `tests/plane-grid-resolver.test.mjs` covers the inheritance heuristics.
 
-- All 189 tests pass, including the 19-preset golden and architecture tests.
+## Phase 5 — preset format 2.0 and migration — done
+
+- `schemas/preset-2.0.schema.json` defines the net document in presets.
+- `src/preset/PresetMigrations.js` lifts 1.2 files to 2.0 on read.
+- All 19 source-of-truth presets migrated to version 2.0.
+- Objects carry `plane` instead of `surface`.
+- `tests/preset-migration.test.mjs` and `tests/preset-schema.test.mjs`.
+
+## Phase 6 — unified render pipeline — done
+
+Every plane, including the root, renders through the same clipped and
+transformed layer pipeline in both the editor and the export:
+
+- Editor: `CanvasRendererController.render` → `drawPlaneLayers`.
+- Export: `ExportDocumentBuilder.buildDocument` → `drawPlaneLayers`.
+- The separate `drawFrontGrid` / `drawFrontObjects` / `drawSideLayers` paths
+  are removed.
+
+Root-plane objects now receive an explicit grid context from
+`getGridContext(rootId)` instead of implicit global settings.
+
+## Phase 7 — plane management UI — done
+
+- `SurfacePanelController` lists every plane dynamically, supports add/remove,
+  visibility, rotation, grid mode, attachment and named variables.
+- `SurfacePanelCommands` wraps mutations with undo/redo.
+- Canvas click selects the plane under the cursor.
+- `tests/surface-panel-controller.test.mjs`.
+
+## Phase 8 — object and navigator integration — done
+
+- Text and graphics blocks use `planeId` (preset field: `plane`).
+- `SurfaceCoordinateMapper.resolvePlaneId` resolves object placement.
+- Object editors populate plane `<select>` from the live document.
+- Cross-plane drag and relative-width transfer work through the mapper.
+
+## Invariants held
+
+- All 214 tests pass, including golden, migration, panel and architecture tests.
 - `npm --prefix tools test` (public runtime check plus tests) is green.
-- Preset format 1.2 round-trip, Illustrator-compatible export and
-  surface-local grids are unchanged.
+- Preset format 1.2 round-trip through migration, Illustrator-compatible export
+  and surface-local grids are unchanged for the default five-plane box.
+- A seven-plane tuck-end carton renders through the production renderer with no
+  renderer change (`tests/net-render-generalization.test.mjs`).
+
+## Deferred (separate iteration)
+
+- **Dieline-specific tooling** — glue tabs, fold lines, cut/crease layers.
+- **Overlap semantics UI** — deliberate plane stacking beyond the current
+  document-order convention.
+- **Multi-select grid editing** — editing several planes' grids at once.

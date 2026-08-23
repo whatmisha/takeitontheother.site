@@ -1,4 +1,5 @@
 import { ListenerScope } from '../core/ListenerScope.js';
+import { PanelStackScrollController } from './PanelStackScrollController.js';
 
 const TEXT_STYLE_SECTIONS = [
     ['headline', 'headlineHeader', 'headlineContent'],
@@ -19,6 +20,7 @@ export class PanelUiController {
         this.document = documentRef;
         this.window = windowRef;
         this.listeners = new ListenerScope();
+        this.stackScrollController = new PanelStackScrollController(documentRef, windowRef);
         this.boundGroups = new Set();
         this.textStylesState = Object.fromEntries(
             TEXT_STYLE_SECTIONS.map(([style]) => [style, false])
@@ -38,12 +40,7 @@ export class PanelUiController {
             this.host.panelManager?.setCollapsed?.(panel.id, initiallyCollapsed);
             this.syncCollapseIcon(icon, initiallyCollapsed);
 
-            const bottomAnchored = panel.classList.contains('elements-navigator') ||
-                panel.classList.contains('controls-panel-text');
             const textPanel = panel.classList.contains('controls-panel-text');
-            if (bottomAnchored && !panel.dataset.originalTop) {
-                panel.dataset.originalTop = panel.getBoundingClientRect().top;
-            }
 
             const toggle = event => {
                 event.stopPropagation();
@@ -55,14 +52,11 @@ export class PanelUiController {
                     if (textPanel) this.restoreTextStylesState();
                 } else {
                     if (textPanel) this.saveTextStylesState();
-                    if (bottomAnchored) {
-                        panel.style.top = `${panel.getBoundingClientRect().top}px`;
-                        panel.style.bottom = 'auto';
-                    }
                     this.setPanelCollapsed(panel, true);
                     this.syncCollapseIcon(icon, true);
                 }
                 this.updatePanelParams();
+                this.stackScrollController.scheduleUpdate();
             };
 
             this.listeners.listen(icon, 'click', toggle);
@@ -72,6 +66,13 @@ export class PanelUiController {
                 toggle(event);
             });
         });
+        return true;
+    }
+
+    bindPanelStackScroll() {
+        if (this.boundGroups.has('stack-scroll')) return false;
+        this.boundGroups.add('stack-scroll');
+        this.stackScrollController.bind();
         return true;
     }
 
@@ -123,9 +124,14 @@ export class PanelUiController {
             `Txt ${this.host.objectDocument.textBlocks.length}  •  Obj ${this.host.objectDocument.graphicsBlocks.length}`
         );
         this.setText(
+            'planesParams',
+            `Pln ${this.host.surfaceManager?.getPlaneIds?.().length ?? 0}`
+        );
+        this.setText(
             'textStylesParams',
             `${this.getTextStylesCount()} styles`
         );
+        this.stackScrollController.scheduleUpdate();
     }
 
     setText(elementId, text) {
@@ -226,6 +232,7 @@ export class PanelUiController {
 
     dispose() {
         this.boundGroups.clear();
+        this.stackScrollController.dispose();
         return this.listeners.dispose();
     }
 }

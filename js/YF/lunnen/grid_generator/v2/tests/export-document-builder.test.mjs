@@ -50,16 +50,11 @@ function createHost() {
                 return node;
             },
             drawBoxSurfaces: () => calls.push('box'),
-            getContrastColor: () => '#fff',
-            rootPlane: () => ({
-                rect: { x: values.thickness, y: values.thickness },
-                localWidth: values.frontWidth,
-                localHeight: values.frontHeight
-            })
+            getContrastColor: () => '#fff'
         },
         surfaceManager: { getRootId: () => 'front' },
         resolveBlockPlane: block => block.planeId || 'front',
-        surfaceRenderer: { drawSideLayers: () => calls.push('sides') },
+        surfaceRenderer: { drawPlaneLayers: () => calls.push('planes') },
         gridRenderer: {},
         objectDocument: { textBlocks: [], graphicsBlocks: [] },
         textRenderer: { draw: () => calls.push('text') },
@@ -82,8 +77,8 @@ test('export document builder creates exact millimeter artboard without referenc
     assert.equal(svg.attributes.width, '600mm');
     assert.equal(svg.attributes.height, '500mm');
     assert.equal(svg.attributes.viewBox, '0 0 600 500');
-    assert.deepEqual(svg.children.map(child => child.attributes.id), ['box', 'grid']);
-    assert.deepEqual(host.calls, ['box', 'sides']);
+    assert.deepEqual(svg.children.map(child => child.attributes.id), ['box']);
+    assert.deepEqual(host.calls, ['box', 'planes']);
     assert.deepEqual(builder.getPerformanceMetrics(), {
         count: 1,
         totalMs: 7,
@@ -105,7 +100,7 @@ test('export text-style reference reuses the shared typography resolver', () => 
     ]);
 });
 
-test('export paints text and graphics in their shared layer order', async () => {
+test('export paints text and graphics through the unified plane layer pipeline', async () => {
     const host = createHost();
     const graphic = { id: 'graphic', planeId: 'front', svgContent: '<path/>' };
     const text = { id: 'text', planeId: 'front' };
@@ -120,7 +115,7 @@ test('export paints text and graphics in their shared layer order', async () => 
 
     await new ExportDocumentBuilder(host).build(false);
 
-    assert.deepEqual(host.calls.slice(-2), ['graphics', 'text']);
+    assert.deepEqual(host.calls, ['box', 'planes']);
 });
 
 test('export document builder caches parsed immutable SVG assets', async () => {

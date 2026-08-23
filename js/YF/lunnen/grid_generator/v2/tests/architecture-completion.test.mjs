@@ -52,7 +52,7 @@ function createApplication() {
         currentEditingGraphicsId: null
     };
     for (const method of [
-        'resetChangesFlag', 'syncApplicationUI', 'updateGrid', 'mmToColumns',
+        'resetChangesFlag', 'syncApplicationUI', 'updateGrid', 'fitLayoutView', 'mmToColumns',
         'recalculateGraphicsWidthFromHeight', 'importSettings', 'undo', 'redo',
         'getStateSnapshot', 'markAsChanged', 'updateEyeIcon', 'syncSurfaceControls',
         'constrainAllObjectsToGrid', 'updateGridDebounced', 'columnsToMm', 'getBlockY',
@@ -171,7 +171,10 @@ test('root shell stays minimal while HTML and CSS modules retain unique element 
         fs.readFileSync(path.join(fragmentsDir, `${name}.html`), 'utf8')
     ));
 
-    fragmentNames.forEach(name => assert.match(index, new RegExp(`data-ui-fragment="${name}"`)));
+    ['workspace', 'actions', 'objects', 'object-editors', 'help'].forEach(name => (
+        assert.match(index, new RegExp(`data-ui-fragment="${name}"`))
+    ));
+    assert.match(fragments[0], /data-ui-fragment="typography"/);
     assert.ok(index.split('\n').length < 50);
     assert.equal((style.match(/^@import /gm) || []).length, 8);
 

@@ -22,6 +22,7 @@ export function createPresetApplicationPort(application) {
         markAsChanged: bind(application, 'markAsChanged'),
         syncApplicationUI: bind(application, 'syncApplicationUI'),
         updateGrid: bind(application, 'updateGrid'),
+        fitLayoutView: bind(application, 'fitLayoutView'),
         mmToColumns: bind(application, 'mmToColumns')
     });
 }

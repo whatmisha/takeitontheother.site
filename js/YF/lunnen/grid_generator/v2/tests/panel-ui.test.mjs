@@ -8,6 +8,7 @@ function createFixture() {
         ['gridParams', { textContent: '' }],
         ['dimensionsParams', { textContent: '' }],
         ['objectsParams', { textContent: '' }],
+        ['planesParams', { textContent: '' }],
         ['textStylesParams', { textContent: '' }],
         ['headlineStyleDropdown', { value: '' }],
         ['textStyleDropdown', { value: '' }],
@@ -37,6 +38,9 @@ function createFixture() {
                 {}
             ],
             graphicsBlocks: [{}, {}, {}]
+        },
+        surfaceManager: {
+            getPlaneIds: () => ['front', 'left', 'right', 'back', 'top']
         }
     };
     const documentRef = {
@@ -56,6 +60,7 @@ test('collapsed panel summaries are derived from current application state', () 
     assert.equal(elements.get('gridParams').textContent, 'Mod 5.13  •  Col 12  •  Row 10');
     assert.equal(elements.get('dimensionsParams').textContent, '500\u2009×\u2009400\u2009×\u200950 mm');
     assert.equal(elements.get('objectsParams').textContent, 'Txt 4  •  Obj 3');
+    assert.equal(elements.get('planesParams').textContent, 'Pln 5');
     assert.equal(elements.get('textStylesParams').textContent, '2 styles');
 });
 

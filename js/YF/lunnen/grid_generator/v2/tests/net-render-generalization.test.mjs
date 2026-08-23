@@ -163,17 +163,17 @@ test('an invisible plane is skipped without reflowing the artboard', () => {
     );
 });
 
-test('drawSideLayers keeps the root plane on its own render path', () => {
+test('drawPlaneLayers renders every visible plane including the root', () => {
     const renderer = createRenderer(CARTON, { drawn: [] });
     const container = new FakeNode('svg');
 
-    renderer.drawSideLayers(container, { x: 0, y: 0, scale: 1 }, 1);
+    renderer.drawPlaneLayers(container, { x: 0, y: 0, scale: 1 }, 1);
 
     assert.deepEqual(
         container.children
             .filter(child => child.type === 'g')
             .map(layer => layer.attributes['data-surface']),
-        ['rightWall', 'face', 'leftWall', 'glue', 'topFlap']
+        ['back', 'rightWall', 'face', 'leftWall', 'glue', 'topFlap']
     );
 });
 

@@ -4,7 +4,7 @@ import {
     DEFAULT_GEOMETRY,
     buildCharacterGeometry
 } from './src/geometry/characterGeometry.js?v=20260823-5';
-import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260823-2';
+import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-4';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import {
     advanceEyeMotion,
@@ -20,10 +20,14 @@ import {
 } from './src/animation/blink.js?v=20260822-6';
 import { clamp } from './src/geometry/vector.js';
 import {
-    constrainFocusPoint,
     focusPointFromPolar,
     focusPointToPolar
 } from './src/geometry/focusBounds.js?v=20260823-6';
+import {
+    normalizedFocus,
+    normalizedPolar,
+    resolveEffectivePersistenceState
+} from './src/state/focusState.js';
 import {
     COORDINATE_SPACE_VERSION,
     migrateCoordinateSpace
@@ -42,6 +46,7 @@ const ARTBOARD_CROP_X = 0;
 const ARTBOARD_CROP_Y = DEFAULT_GEOMETRY.boundaryCenterY - DEFAULT_GEOMETRY.boundaryRadius;
 let mobileShowcaseFocus = null;
 let desktopFollowFocus = null;
+let eyePlacementMode = 'global';
 
 const settings = {
     coordinateSpaceVersion: COORDINATE_SPACE_VERSION,
@@ -138,12 +143,48 @@ function isMobileShowcase() {
 
 function activeRenderSettings(current) {
     if (isMobileShowcase()) {
+        // Product contract: mobile is a deliberately reduced Basic-only
+        // showcase. Stored/shared presets remain available for desktop, but do
+        // not replace the mobile character profile.
         const focus = mobileShowcaseFocus || { x: settings.focusX, y: settings.focusY };
         return { ...settings, focusX: focus.x, focusY: focus.y };
     }
     const focus = current.followCursor ? desktopFollowFocus : null;
     if (!focus) return current;
     return { ...current, focusX: focus.x, focusY: focus.y };
+}
+
+function effectivePersistenceState(app) {
+    const current = app.settingsStore.toObject();
+    return resolveEffectivePersistenceState(current, desktopFollowFocus, {
+        mobileShowcase: isMobileShowcase()
+    });
+}
+
+function extractEffectiveState(app) {
+    return extractState(effectivePersistenceState(app));
+}
+
+function setEyePlacementMode(app, mode) {
+    eyePlacementMode = mode;
+    if (app) app.eyePlacementMode = mode;
+    if (typeof document !== 'undefined') {
+        document.documentElement.dataset.eyePlacementMode = mode;
+    }
+}
+
+function beginInteractivePlacement(app) {
+    setEyePlacementMode(app, 'interactive');
+}
+
+function finishInteractivePlacement(app) {
+    // Settling is diagnostic only. The last local solution remains the visible
+    // geometry, so pointer stop cannot switch to another placement law.
+    setEyePlacementMode(app, 'settled');
+}
+
+function forceGlobalPlacement(app) {
+    setEyePlacementMode(app, 'global');
 }
 
 function syncPageBackground(color) {
@@ -179,6 +220,7 @@ function bindMobileShowcase(app) {
     };
     const syncMode = () => {
         const mobile = media?.matches ?? window.innerWidth <= 768;
+        forceGlobalPlacement(app);
         document.documentElement.classList.toggle('sparky-mobile-showcase', mobile);
         if (mobile && !wasMobile) {
             resetMobileFocusMotion({ x: settings.focusX, y: settings.focusY });
@@ -206,7 +248,7 @@ function bindMobileShowcase(app) {
 
 function exportSettingsJSON(tool, filename) {
     const name = filename || `${createSparkyExportBaseName()}.json`;
-    const snapshot = extractState(tool.settingsStore.toObject());
+    const snapshot = extractEffectiveState(tool);
     return tool.exporter?.exportJSON(snapshot, name);
 }
 
@@ -262,6 +304,8 @@ function scheduleMobileFocusMotion(app) {
         if (!isMobileShowcase()) return;
         const result = advanceEyeMotion(mobileFocusMotion, timestamp);
         mobileShowcaseFocus = { ...mobileFocusMotion.displayedCenter };
+        if (result.settled) finishInteractivePlacement(app);
+        else beginInteractivePlacement(app);
         app.renderNow();
         if (!result.settled) scheduleMobileFocusMotion(app);
     });
@@ -275,6 +319,7 @@ function retargetMobileFocus(app, target, responseMs = MOBILE_FOCUS_SWIPE_RESPON
     if (result.settled) {
         mobileShowcaseFocus = { ...target };
         mobileFocusMotion.displayedCenter = { ...target };
+        finishInteractivePlacement(app);
         app.renderNow();
         return;
     }
@@ -652,31 +697,7 @@ function renderFailure(ctx, error) {
     console.warn('Sparky geometry:', error.message);
 }
 
-function constrainFocus(raw, state) {
-    return constrainFocusPoint(raw, state);
-}
-
 let focusControlsSyncing = false;
-
-function normalizedFocus(raw, state) {
-    const constrained = constrainFocus(raw, state);
-    const rounded = {
-        x: Number(constrained.x.toFixed(3)),
-        y: Number(constrained.y.toFixed(3))
-    };
-    const final = constrainFocus(rounded, state);
-    return {
-        x: Number(final.x.toFixed(6)),
-        y: Number(final.y.toFixed(6))
-    };
-}
-
-function normalizedPolar(raw = {}) {
-    return {
-        angle: clamp(Number(raw.angle) || 0, 0, 360),
-        distance: clamp(Number(raw.distance) || 0, 0, 100)
-    };
-}
 
 function syncFocusControls(app) {
     if (!app.sliders) return;
@@ -706,6 +727,7 @@ function syncFocusControls(app) {
 }
 
 function applyState(app, source) {
+    forceGlobalPlacement(app);
     const normalized = normalizeIncomingState(source);
     app.settingsStore.setMultiple(normalized, true);
     desktopFollowFocus = normalized.followCursor
@@ -736,7 +758,10 @@ function bindFocusDragging(app) {
             return;
         }
         if (app.settings.followCursor) setTransientFollowFocus(app, x, y);
-        else setFocus(app, x, y);
+        else {
+            beginInteractivePlacement(app);
+            setFocus(app, x, y);
+        }
     };
 
     const updateFromEvent = (event, responseMs) => {
@@ -786,7 +811,10 @@ function bindFocusDragging(app) {
         if (event.pointerId !== pointerId) return;
         if (svg.hasPointerCapture(pointerId)) svg.releasePointerCapture(pointerId);
         pointerId = null;
-        if (!isMobileShowcase()) app.history?.endTransaction();
+        if (!isMobileShowcase()) {
+            app.history?.endTransaction();
+            finishInteractivePlacement(app);
+        }
     };
     svg.addEventListener('pointerup', finish);
     svg.addEventListener('pointercancel', finish);
@@ -873,11 +901,28 @@ function bindManualFocusControls(app) {
     });
 }
 
+function bindInteractivePlacement(app) {
+    const isRangeInput = (target) => target instanceof HTMLInputElement && target.type === 'range';
+    document.addEventListener('input', (event) => {
+        if (isRangeInput(event.target)) beginInteractivePlacement(app);
+    }, { capture: true });
+    document.addEventListener('change', (event) => {
+        if (isRangeInput(event.target)) finishInteractivePlacement(app);
+    }, { capture: true });
+}
+
 function setTransientFollowFocus(app, x, y) {
     const focus = normalizedFocus({ x, y }, app.settings);
     const polar = normalizedPolar(focusPointToPolar(focus, app.settings, app.settings.focusAngle));
     setFocusControls(app, polar, { displayOnly: true });
+    const unchanged = desktopFollowFocus
+        && desktopFollowFocus.x === focus.x
+        && desktopFollowFocus.y === focus.y;
     desktopFollowFocus = { ...focus };
+    if (unchanged) return;
+    app.presets?.markDirty();
+    app.history?.notifyChange('focus-follow');
+    beginInteractivePlacement(app);
     app.renderNow();
 }
 
@@ -1012,9 +1057,9 @@ const app = defineTool({
         decimals: 2
     },
     history: { maxSize: 80, debounceMs: 180 },
-    snapshot: (tool) => extractState(tool.settingsStore.toObject()),
+    snapshot: (tool) => extractEffectiveState(tool),
     restore: (tool, snapshot) => applyState(tool, snapshot),
-    collectPreset: (tool) => extractState(tool.settingsStore.toObject()),
+    collectPreset: (tool) => extractEffectiveState(tool),
     applyPreset: (tool, preset) => applyState(tool, preset),
     syncControls: (tool) => syncFocusControls(tool),
     export: { filename: 'sparky.svg' },
@@ -1050,9 +1095,11 @@ const app = defineTool({
                 : { ...ctx, settings: renderSettings };
             const geometry = buildCharacterGeometry(renderSettings);
             const eyeGeometry = buildEyeGeometry(renderSettings, geometry, {
-                placementMode: 'exact',
+                placementMode: eyePlacementMode === 'global' ? 'global' : 'local',
                 previousEyeGeometry: ctx.app.eyeGeometry
             });
+            ctx.app.eyePlacementSearchMode = eyeGeometry.placementMode;
+            document.documentElement.dataset.eyePlacementSearchMode = eyeGeometry.placementMode;
             retargetDisplayedEyes(ctx.app, eyeGeometry.pairCenter);
             ctx.app.characterGeometry = geometry;
             ctx.app.eyeGeometry = eyeGeometry;
@@ -1071,6 +1118,7 @@ const app = defineTool({
         tool.exportSVG = async (filename) => {
             stopBlink(tool);
             settleMobileFocusMotion();
+            forceGlobalPlacement(tool);
             tool.renderNow();
             snapDisplayedEyes(tool);
             const name = filename || `${createSparkyExportBaseName()}.svg`;
@@ -1079,6 +1127,7 @@ const app = defineTool({
         tool.exportPNG = (filename, scaleFactor) => {
             stopBlink(tool);
             settleMobileFocusMotion();
+            forceGlobalPlacement(tool);
             tool.renderNow();
             snapDisplayedEyes(tool);
             const name = filename || `${createSparkyExportBaseName()}.png`;
@@ -1089,6 +1138,7 @@ const app = defineTool({
             : null;
         bindFocusDragging(tool);
         bindManualFocusControls(tool);
+        bindInteractivePlacement(tool);
         syncFocusControls(tool);
         bindBlink(tool);
         bindMobileShowcase(tool);

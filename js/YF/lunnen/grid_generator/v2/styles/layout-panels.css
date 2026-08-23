@@ -50,32 +50,112 @@
     right: var(--spacing-3xl);
     width: 300px;
     max-height: calc(100vh - 2 * var(--spacing-3xl) - var(--button-height) - var(--spacing-lg) - var(--spacing-sm));
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
     z-index: 999;
 }
 
-.controls-panel-stack > .controls-panel {
+.panel-stack-scroll-body {
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.panel-stack-offscreen {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    flex: 0 0 auto;
+}
+
+.panel-stack-offscreen:empty {
+    display: none;
+}
+
+.panel-stack-offscreen-chip {
+    display: block;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: var(--color-bg-panel);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.panel-stack-offscreen-chip:hover .panel-stack-offscreen-chip-header {
+    color: var(--color-text);
+}
+
+.panel-stack-offscreen-chip-header {
+    cursor: pointer;
+    justify-content: flex-start;
+}
+
+.panel-stack-offscreen-chip .panel-params {
+    opacity: 0.4;
+}
+
+.controls-panel-stack > .controls-panel,
+.panel-stack-scroll-body > .controls-panel {
     position: relative;
     inset: auto;
     width: 100%;
     min-height: var(--button-height);
     max-height: none;
-    flex: 1 1 auto;
+    flex: 0 0 auto;
+    overflow: visible;
     z-index: auto;
 }
 
-.controls-panel-stack > .controls-panel.panel-collapsed {
+.controls-panel-stack-left {
+    left: var(--spacing-3xl);
+    right: auto;
+}
+
+.controls-panel-stack > .controls-panel.panel-collapsed,
+.panel-stack-scroll-body > .controls-panel.panel-collapsed {
     flex: 0 0 auto;
 }
 
-.controls-panel-stack > #gridPanel {
+.controls-panel-stack > #gridPanel,
+.panel-stack-scroll-body > #gridPanel {
     flex: 0 0 auto;
 }
 
-.controls-panel-stack #surfacePanelHeader {
+.controls-panel-stack .panel-header {
     cursor: default;
+}
+
+.controls-panel-stack .panel-header:active {
+    cursor: default;
+}
+
+.controls-panel-stack > .elements-navigator,
+.controls-panel-stack > .controls-panel-text,
+.panel-stack-scroll-body > .elements-navigator,
+.panel-stack-scroll-body > .controls-panel-text {
+    flex: 0 0 auto;
+    top: auto;
+    bottom: auto;
+    right: auto;
+    left: auto;
+}
+
+.controls-panel-stack .panel-content,
+.panel-stack-scroll-body .panel-content {
+    overflow: visible;
+    flex: none;
 }
 
 .panel-content {

@@ -61,6 +61,7 @@ export class ApplicationUiSynchronizer {
         }
         host.typographyUnitController.syncButtons(settings);
         host.panelUiController.syncFontWeights(settings);
+        host.panelUiController.updatePanelParams();
         host.colorPanelController.sync(settings.boxColor);
         host.gridSettingsController.generateRowPresets();
         host.surfacePanelController?.sync();

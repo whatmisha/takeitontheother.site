@@ -241,10 +241,29 @@ test('nearby Focus, Perspective and Roundness settings cannot jump between local
     ) < 8);
 });
 
-test('the mobile fast path stays contained and exact placement resumes after motion', () => {
+test('interactive placement keeps exact containment and visual parity with global validation', () => {
     let head = buildCharacterGeometry();
     let eyes = buildEyeGeometry(head.values, head);
     const radius = 195.233;
+    let maximumCenterDelta = 0;
+    let maximumScaleDelta = 0;
+    let maximumContourDelta = 0;
+    let localFrameCount = 0;
+
+    const contourDelta = (interactive, global) => {
+        let maximum = 0;
+        ['left', 'right'].forEach((side) => {
+            ['eye1', 'top', 'bottom'].forEach((shape) => {
+                interactive[side][shape].points.forEach((value, pointIndex) => {
+                    maximum = Math.max(
+                        maximum,
+                        distance(value, global[side][shape].points[pointIndex])
+                    );
+                });
+            });
+        });
+        return maximum;
+    };
 
     for (let index = 0; index < 48; index += 1) {
         const angle = index / 48 * Math.PI * 2;
@@ -253,16 +272,27 @@ test('the mobile fast path stays contained and exact placement resumes after mot
             focusY: 240 + Math.sin(angle) * radius
         });
         eyes = buildEyeGeometry(head.values, head, {
-            placementMode: 'fast',
+            placementMode: 'local',
             previousEyeGeometry: eyes
         });
+        const global = buildEyeGeometry(head.values, head, {
+            placementMode: 'global',
+            previousEyeGeometry: eyes
+        });
+        if (eyes.placementMode === 'local') localFrameCount += 1;
+        else assert.equal(eyes.placementMode, 'global');
         assert.ok(Number.isFinite(eyes.pairCenter.x) && Number.isFinite(eyes.pairCenter.y));
-        assert.ok(eyes.fitScale >= 0.45);
+        assert.ok(Number.isFinite(eyes.fitScale) && eyes.fitScale > 0);
         assert.ok(eyes.minClearance + 0.025 >= eyes.guard);
+        maximumCenterDelta = Math.max(maximumCenterDelta, distance(eyes.pairCenter, global.pairCenter));
+        maximumScaleDelta = Math.max(maximumScaleDelta, Math.abs(eyes.fitScale - global.fitScale));
+        maximumContourDelta = Math.max(maximumContourDelta, contourDelta(eyes, global));
     }
 
-    const exact = buildEyeGeometry(head.values, head);
-    assert.ok(exact.minClearance + 0.025 >= exact.guard);
+    assert.ok(maximumCenterDelta < 0.25, `center parity drifted by ${maximumCenterDelta}px`);
+    assert.ok(maximumScaleDelta < 0.002, `fitScale parity drifted by ${maximumScaleDelta}`);
+    assert.ok(maximumContourDelta < 0.25, `eye contour parity drifted by ${maximumContourDelta}px`);
+    assert.ok(localFrameCount > 0, 'the continuous trajectory must exercise local refinement');
 });
 
 test('the full supported focus, Width and eye-control grid remains inside the head gap', () => {

@@ -1,5 +1,4 @@
 import {
-    calculateCenteredPan,
     calculateFitView,
     calculateZoomView,
     clientToSvgPoint,
@@ -17,10 +16,12 @@ export class ZoomPanManager {
         this.svg = svgElement;
         this.zoom = 1;
         this.baseZoom = 1;
-        this.minZoom = 1;
+        this.minZoom = 0.1;
         this.maxZoom = 10;
         this.panX = 0;
         this.panY = 0;
+        this.basePanX = 0;
+        this.basePanY = 0;
         this.rotation = 0;
         this.originalWidth = 0;
         this.originalHeight = 0;
@@ -168,30 +169,28 @@ export class ZoomPanManager {
     }
 
     resetZoom() {
-        this.zoom = 1;
-        this.baseZoom = 1;
-        Object.assign(
-            this,
-            calculateCenteredPan(
-                this.svg.getBBox(),
-                this.originalWidth,
-                this.originalHeight,
-                this.zoom
-            )
-        );
+        this.zoom = this.baseZoom;
+        this.panX = this.basePanX;
+        this.panY = this.basePanY;
         this.updateTransform();
         this.notifyZoomChange();
     }
 
     fitToScreen() {
-        Object.assign(this, calculateFitView({
+        const fit = calculateFitView({
             bbox: this.svg.getBBox(),
             containerRect: this.container.getBoundingClientRect(),
             originalWidth: this.originalWidth,
             originalHeight: this.originalHeight,
             minZoom: this.minZoom,
             maxZoom: this.maxZoom
-        }));
+        });
+        this.zoom = fit.zoom;
+        this.panX = fit.panX;
+        this.panY = fit.panY;
+        this.baseZoom = fit.zoom;
+        this.basePanX = fit.panX;
+        this.basePanY = fit.panY;
         this.updateTransform();
         this.notifyZoomChange();
     }

@@ -200,10 +200,22 @@ test('failed preset application rolls back the active document and history', () 
     assert.equal(host.historyManager, stableHistory);
 });
 
-test('import keeps normalized JSON independent from the source of truth', async () => {
+test('import stores the preset file and keeps it independent from later edits', async () => {
     const host = createHost();
-    const normalized = { ...preset, presetName: 'Imported' };
-    host.svgExporter.importSettings = async () => normalized;
+    const raw = {
+        presetName: 'Imported',
+        version: '2.0',
+        dimensions: { width: 500, height: 500, thickness: 50, unit: 'mm' },
+        net: { rootId: 'front', variables: {}, planes: [{ id: 'front', name: 'Front', kind: 'panel', size: { width: 'W', height: 'H' }, attach: null, contentRotation: 0, grid: { mode: 'inherit', own: { module: 5, margins: 2.5, columns: 12, rows: 12, rowHeight: 7, marginsUnit: 'mod', lockedModule: false, lockedMargins: false } }, visible: true }] },
+        texts: [],
+        grid: { module: 5, margins: 2.5, marginsUnit: 'mod', columns: 12, rows: 12, rowHeight: 7, locks: { module: false, margins: false, moduleValue: null, marginsValue: null }, visibility: { columns: true, rows: true, baseline: true } },
+        colors: { background: '#82A9D9' },
+        typography: { units: { size: 'mod', lineHeight: 'mod' }, headline: { size: 1, lineHeight: 2 }, text: { size: 1, lineHeight: 2 }, caption: { size: 0.5, lineHeight: 1 }, lunnenDisplay: { size: 3, lineHeight: 4 } },
+        display: { dimensions: true, labels: true, sidePanels: true, objects: true },
+        graphics: { blocks: [], icons: null, claim: null, claim2026: null }
+    };
+    host.svgExporter.fileTransfer = { readText: async () => JSON.stringify(raw) };
+    host.svgExporter.normalizeImportedData = data => ({ ...preset, presetName: data.presetName });
     let imported;
     host.presetManager.addImportedPreset = async (data, displayName) => {
         imported = { data, displayName };
@@ -211,18 +223,24 @@ test('import keeps normalized JSON independent from the source of truth', async 
     const controller = new PresetApplicationController(host);
 
     await controller.importFile({});
-    imported.data.textBlocks[0].text = 'Local copy';
 
     assert.equal(imported.displayName, 'Custom — Imported');
-    assert.equal(normalized.textBlocks[0].text, 'Hello');
+    assert.equal(imported.data.presetName, 'Imported');
+    assert.equal(imported.data.dimensions.width, 500);
+    imported.data.presetName = 'Mutated';
+
+    assert.equal(raw.presetName, 'Imported');
 });
 
 test('re-importing a custom preset does not stack synthetic name prefixes', async () => {
     const host = createHost();
-    host.svgExporter.importSettings = async () => ({
-        ...preset,
-        presetName: 'Custom — Custom — E-ink, 148.5×203×43.5mm — 26.08.10, 11:07'
-    });
+    host.svgExporter.fileTransfer = {
+        readText: async () => JSON.stringify({
+            presetName: 'Custom — Custom — E-ink, 148.5×203×43.5mm — 26.08.10, 11:07',
+            version: '2.0'
+        })
+    };
+    host.svgExporter.normalizeImportedData = () => preset;
     let importedName;
     host.presetManager.addImportedPreset = async (_data, displayName) => {
         importedName = displayName;
@@ -232,6 +250,45 @@ test('re-importing a custom preset does not stack synthetic name prefixes', asyn
     await controller.importFile({});
 
     assert.equal(importedName, 'Custom — E-ink, 148.5×203×43.5mm — 26.08.10, 11:07');
+});
+
+test('loading a stored preset file round-trips through validation', async () => {
+    const host = createHost();
+    host.svgExporter.importSettings = async blob => {
+        const raw = JSON.parse(await blob.text());
+        assert.equal(raw.version, '2.0');
+        assert.equal(raw.dimensions.width, 500);
+        return { ...preset, presetName: raw.presetName };
+    };
+    const controller = new PresetApplicationController(host);
+
+    await controller.load({
+        presetName: 'Round trip file',
+        version: '2.0',
+        dimensions: { width: 500, height: 500, thickness: 50, unit: 'mm' },
+        net: { rootId: 'front', variables: {}, planes: [] },
+        texts: [],
+        grid: { module: 5, margins: 2.5, marginsUnit: 'mod', columns: 12, rows: 12, rowHeight: 7, locks: { module: false, margins: false, moduleValue: null, marginsValue: null }, visibility: { columns: true, rows: true, baseline: true } },
+        colors: { background: '#82A9D9' },
+        typography: { units: { size: 'mod', lineHeight: 'mod' }, headline: { size: 1, lineHeight: 2 }, text: { size: 1, lineHeight: 2 }, caption: { size: 0.5, lineHeight: 1 }, lunnenDisplay: { size: 3, lineHeight: 4 } },
+        display: { dimensions: true, labels: true, sidePanels: true, objects: true },
+        graphics: { blocks: [], icons: null, claim: null, claim2026: null }
+    }, 'Round trip file');
+
+    assert.equal(host.currentPresetName, 'Round trip file');
+});
+
+test('loading an in-memory imported document skips preset validation', async () => {
+    const host = createHost();
+    host.svgExporter.importSettings = async () => {
+        throw new Error('should not re-validate an imported document snapshot');
+    };
+    const controller = new PresetApplicationController(host);
+
+    await controller.load({ ...preset, presetName: 'Imported snapshot' }, 'Imported snapshot');
+
+    assert.equal(host.currentPresetName, 'Imported snapshot');
+    assert.equal(host.settingsModule.get('frontWidth'), 500);
 });
 
 test('PresetManager awaits application and rolls selection back on failure', async () => {

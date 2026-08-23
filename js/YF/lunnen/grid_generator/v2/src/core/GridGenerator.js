@@ -78,6 +78,10 @@ export class GridGenerator {
         this.sliderConfig = createSliderConfig(this);
         this.settingsModule = new Settings();
         this.textStyleResolver = new TextStyleResolver(this.settingsModule);
+
+        // Surface model must exist before objectDocument asks for the root plane id.
+        this.surfaceManager = new SurfaceManager(this.settingsModule);
+        this.surfaceManager.initialize('+ New');
         this.objectDocument = new ObjectDocumentController({
             getRootPlaneId: () => this.surfaceManager.getRootId()
         });
@@ -85,8 +89,6 @@ export class GridGenerator {
         // ============================================
         // Surface model
         // ============================================
-        this.surfaceManager = new SurfaceManager(this.settingsModule);
-        this.surfaceManager.initialize('+ New');
         this.surfacePanelController = null;
         this.currentSurfaceLayout = null;
         this.canvasRenderer = new CanvasRendererController(this);
@@ -366,6 +368,7 @@ export class GridGenerator {
     initEventListeners() {
         this.applicationEventController.bind();
         this.panelUiController.bindPanelCollapse();
+        this.panelUiController.bindPanelStackScroll();
     }
 
     // ============================================
@@ -440,6 +443,12 @@ export class GridGenerator {
 
     syncApplicationUI() {
         this.applicationUi.sync();
+    }
+
+    fitLayoutView() {
+        requestAnimationFrame(() => {
+            this.zoomPanManager?.fitToScreen();
+        });
     }
 
     constrainAllObjectsToGrid() {
@@ -615,12 +624,13 @@ export class GridGenerator {
     initPanels() {
         // Регистрируем все панели через PanelManager
         const panels = [
-            { id: 'controlsPanel', headerId: 'panelHeader', draggable: true },
-            { id: 'rightSettingsStack', headerId: 'gridPanelHeader', draggable: true },
-            { id: 'textPanel', headerId: 'textPanelHeader', draggable: true },
+            { id: 'controlsPanel', headerId: 'panelHeader', draggable: false },
+            { id: 'gridPanel', headerId: 'gridPanelHeader', draggable: false },
+            { id: 'surfacePanel', headerId: 'surfacePanelHeader', draggable: false },
+            { id: 'elementsNavigator', headerId: 'elementsNavigatorHeader', draggable: false },
+            { id: 'textPanel', headerId: 'textPanelHeader', draggable: false },
             { id: 'paragraphPanel', headerId: 'paragraphPanelHeader', draggable: true },
-            { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true },
-            { id: 'elementsNavigator', headerId: 'elementsNavigatorHeader', draggable: true }
+            { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true }
         ];
 
         panels.forEach(panel => {

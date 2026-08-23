@@ -16,7 +16,16 @@ export class PresetApplicationController {
         this.currentHistoryKey = null;
     }
 
+    /**
+     * Returns true when `data` is already the in-memory document shape produced
+     * by deserialization, rather than a preset file awaiting validation.
+     */
+    isImportedDocument(data) {
+        return Boolean(data?.settings) && !data?.dimensions && !data?.net;
+    }
+
     async normalize(data) {
+        if (this.isImportedDocument(data)) return clone(data);
         return this.host.svgExporter.importSettings(
             new Blob([JSON.stringify(data)], { type: 'application/json' })
         );
@@ -32,15 +41,17 @@ export class PresetApplicationController {
     }
 
     async importFile(file) {
-        const data = await this.host.svgExporter.importSettings(file);
-        const presetName = data.currentPresetName ||
-            data.presetName ||
-            data.settings?.presetName ||
-            'Custom';
+        const rawText = await this.host.svgExporter.fileTransfer.readText(file);
+        const raw = JSON.parse(rawText);
+        // Fail fast on invalid files, but store the preset JSON itself so a later
+        // selection can validate and deserialize it the same way bundled presets do.
+        this.host.svgExporter.normalizeImportedData(raw);
+
+        const presetName = raw.presetName || 'Custom';
         const normalizedName = presetName.replace(/^(?:Custom\s+—\s*)+/i, '') || 'Custom';
         const displayName = `Custom — ${normalizedName}`;
-        await this.host.presetManager.addImportedPreset(clone(data), displayName);
-        return { data, displayName };
+        await this.host.presetManager.addImportedPreset(clone(raw), displayName);
+        return { data: raw, displayName };
     }
 
     applyPreset(normalizedData, presetName) {
@@ -174,6 +185,8 @@ export class PresetApplicationController {
             this.host.objectEditorPanelController.closeTextPanel();
             this.host.objectEditorPanelController.closeGraphicsPanel();
         }
+
+        this.host.fitLayoutView?.();
     }
 
     normalizeTextBlocks(blocks = []) {

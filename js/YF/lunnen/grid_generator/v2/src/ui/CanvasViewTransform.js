@@ -108,12 +108,10 @@ export function calculateFitView({
     const availableHeight = Math.max(100, containerRect.height - paddingVertical * 2);
     const scale = Math.min(availableWidth / bbox.width, availableHeight / bbox.height);
     const zoom = Math.max(minZoom, Math.min(maxZoom, scale));
-    const baseZoom = zoom <= 1 ? 1 : zoom;
-    const normalizedZoom = zoom <= 1 ? 1 : zoom;
 
     return {
-        zoom: normalizedZoom,
-        baseZoom,
-        ...calculateCenteredPan(bbox, originalWidth, originalHeight, normalizedZoom)
+        zoom,
+        baseZoom: zoom,
+        ...calculateCenteredPan(bbox, originalWidth, originalHeight, zoom)
     };
 }

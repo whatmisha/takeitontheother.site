@@ -100,55 +100,6 @@ export class CanvasRendererController {
         return layout;
     }
 
-    /** The net's root plane, resolved for the current layout. */
-    rootPlane(layout) {
-        const net = this.host.surfaceManager.getNetLayout(layout);
-        return net.planes[net.rootId];
-    }
-
-    drawFrontGrid(svg, frontX, frontY, layout, root = this.rootPlane(layout)) {
-        const { settingsModule: settings, gridRenderer } = this.host;
-        const { localWidth: width, localHeight: height } = root;
-        if (settings.get('showColumns')) {
-            gridRenderer.drawColumns(svg, frontX, frontY, width, height, layout.scale);
-        }
-        if (settings.get('showRows')) {
-            gridRenderer.drawRows(svg, frontX, frontY, width, height, layout.scale);
-        }
-        if (settings.get('showBaseline')) {
-            gridRenderer.drawBaseline(svg, frontX, frontY, width, height, layout.scale);
-        }
-    }
-
-    drawFrontObjects(svg, frontX, frontY, layout, root = this.rootPlane(layout)) {
-        const host = this.host;
-        if (!host.settingsModule.get('showObjects')) return;
-
-        const entries = host.objectDocument.getLayerEntries?.() || [
-            ...(host.objectDocument.textBlocks || []).map(block => ({ type: 'text', block })),
-            ...(host.objectDocument.graphicsBlocks || []).map(block => ({ type: 'graphics', block }))
-        ];
-        entries.forEach(({ type, block }) => {
-            if (!this.isVisibleRootBlock(block)) return;
-            const renderer = type === 'text' ? host.textRenderer : host.graphicsRenderer;
-            renderer?.draw(
-                svg,
-                block,
-                frontX,
-                frontY,
-                root.localWidth,
-                root.localHeight,
-                layout.scale
-            );
-        });
-    }
-
-    isVisibleRootBlock(block) {
-        return this.host.resolveBlockPlane(block) === this.host.surfaceManager.getRootId() &&
-            block.visible !== false &&
-            !block.deleting;
-    }
-
     restoreZoom(state) {
         const manager = this.host.zoomPanManager;
         if (!manager || !state) return;

@@ -276,7 +276,7 @@ async function run() {
     );
 
     const editableTextBlock = application.objectDocument.textBlocks.find(block => (
-        (block.surface || 'front') === 'front' && block.styleRef !== 'lunnenDisplay'
+        (block.planeId || 'front') === 'front' && block.styleRef !== 'lunnenDisplay'
     ));
     const textItem = appDocument.querySelector(
         `#elementsList [data-element-id="${editableTextBlock.id}"]`

@@ -86,12 +86,7 @@ export class ExportDocumentBuilder {
         );
 
         const layout = { x: 0, y: 0, frontWidth, frontHeight, thickness, scale };
-        const root = host.canvasRenderer.rootPlane(layout);
-        const grid = this.createGroup(svg, 'grid');
-        this.drawFrontGrid(
-            grid, root.rect.x, root.rect.y, root.localWidth, root.localHeight, scale
-        );
-        host.surfaceRenderer.drawSideLayers(svg, layout, scale, { forExport: true });
+        host.surfaceRenderer.drawPlaneLayers(svg, layout, scale, { forExport: true });
 
         if (host.settingsModule.get('showLabels')) {
             host.canvasRenderer.drawLabels(
@@ -104,69 +99,12 @@ export class ExportDocumentBuilder {
                 scale
             );
         }
-        this.drawFrontObjects(
-            svg, root.rect.x, root.rect.y, root.localWidth, root.localHeight, scale
-        );
 
         if (includeReferenceElements) {
             this.addTextStylesSummary(svg, totalWidth, scale);
             await this.addDesignKitReference(svg, totalWidth, scale);
         }
         return svg;
-    }
-
-    drawFrontGrid(grid, x, y, width, height, scale) {
-        const host = this.host;
-        if (host.settingsModule.get('showColumns')) {
-            host.gridRenderer.drawColumns(
-                this.createGroup(grid, 'columns'), x, y, width, height, scale
-            );
-        }
-        if (host.settingsModule.get('showRows')) {
-            host.gridRenderer.drawRows(
-                this.createGroup(grid, 'rows'), x, y, width, height, scale
-            );
-        }
-        if (host.settingsModule.get('showBaseline')) {
-            host.gridRenderer.drawBaseline(
-                this.createGroup(grid, 'baseline'), x, y, width, height, scale
-            );
-        }
-    }
-
-    drawFrontObjects(svg, x, y, width, height, scale) {
-        const host = this.host;
-        const entries = host.objectDocument.getLayerEntries?.() || [
-            ...(host.objectDocument.textBlocks || []).map(block => ({ type: 'text', block })),
-            ...(host.objectDocument.graphicsBlocks || []).map(block => ({ type: 'graphics', block }))
-        ];
-        const rootId = host.surfaceManager.getRootId();
-        entries.forEach(({ type, block }) => {
-            if (host.resolveBlockPlane(block) !== rootId || block.visible === false) return;
-            if (type === 'text') {
-                host.textRenderer.draw(
-                    this.createGroup(svg, `text-${block.id}`),
-                    block,
-                    x,
-                    y,
-                    width,
-                    height,
-                    scale
-                );
-                return;
-            }
-            if (block.svgContent) {
-                host.graphicsRenderer?.drawForExport(
-                    this.createGroup(svg, block.isBuiltIn ? block.id : `graphics-${block.id}`),
-                    block,
-                    x,
-                    y,
-                    width,
-                    height,
-                    scale
-                );
-            }
-        });
     }
 
     getTextStylesInfo() {

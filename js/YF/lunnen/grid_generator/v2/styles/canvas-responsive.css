@@ -88,6 +88,10 @@
     .controls-panel-stack {
         width: 280px;
     }
+
+    .controls-panel-stack-left {
+        left: var(--spacing-lg);
+    }
 }
 
 @media (max-width: 768px) {
@@ -103,9 +107,10 @@
         width: 260px;
         max-height: calc(100vh - 3 * var(--spacing-lg) - var(--button-height) - var(--spacing-sm));
     }
-    
-    .controls-panel-text {
-        bottom: var(--spacing-3xl); /* Same spacing as desktop */
+
+    .controls-panel-stack-left {
+        left: var(--spacing-lg);
+        right: auto;
     }
     
     .panel-content {
