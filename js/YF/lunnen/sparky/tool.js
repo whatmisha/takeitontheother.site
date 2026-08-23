@@ -222,7 +222,6 @@ const eyeMotion = createEyeMotionState();
 let eyeMotionFrame = null;
 const mobileFocusMotion = createEyeMotionState(MOBILE_FOCUS_TAP_RESPONSE_MS);
 let mobileFocusFrame = null;
-let mobileFocusInMotion = false;
 const blink = createBlinkState();
 let blinkFrame = null;
 
@@ -230,7 +229,6 @@ function cancelMobileFocusMotion() {
     if (mobileFocusFrame != null) cancelAnimationFrame(mobileFocusFrame);
     mobileFocusFrame = null;
     mobileFocusMotion.lastTime = null;
-    mobileFocusInMotion = false;
 }
 
 function resetMobileFocusMotion(focus) {
@@ -256,11 +254,7 @@ function scheduleMobileFocusMotion(app) {
         if (!isMobileShowcase()) return;
         const result = advanceEyeMotion(mobileFocusMotion, timestamp);
         mobileShowcaseFocus = { ...mobileFocusMotion.displayedCenter };
-        mobileFocusInMotion = !result.settled;
         app.renderNow();
-        // While moving, the whole face already follows Focus. Once it settles,
-        // keep the eye transform alive for the short fast-to-exact correction.
-        if (!result.settled) snapDisplayedEyes(app);
         if (!result.settled) scheduleMobileFocusMotion(app);
     });
 }
@@ -271,13 +265,11 @@ function retargetMobileFocus(app, target, responseMs = MOBILE_FOCUS_SWIPE_RESPON
     const result = retargetEyeMotion(mobileFocusMotion, target, performance.now());
     mobileShowcaseFocus = { ...mobileFocusMotion.displayedCenter };
     if (result.settled) {
-        mobileFocusInMotion = false;
         mobileShowcaseFocus = { ...target };
         mobileFocusMotion.displayedCenter = { ...target };
         app.renderNow();
         return;
     }
-    mobileFocusInMotion = true;
     scheduleMobileFocusMotion(app);
 }
 
@@ -1049,7 +1041,7 @@ const app = defineTool({
                 : { ...ctx, settings: renderSettings };
             const geometry = buildCharacterGeometry(renderSettings);
             const eyeGeometry = buildEyeGeometry(renderSettings, geometry, {
-                placementMode: isMobileShowcase() && mobileFocusInMotion ? 'fast' : 'exact',
+                placementMode: 'exact',
                 previousEyeGeometry: ctx.app.eyeGeometry
             });
             retargetDisplayedEyes(ctx.app, eyeGeometry.pairCenter);

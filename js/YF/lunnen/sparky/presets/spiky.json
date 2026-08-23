@@ -29,7 +29,7 @@
   "headColor": "#0400ff",
   "eyeColor": "#000000",
   "backgroundColor": "#000000",
-  "showSphere": false,
+  "showSphere": true,
   "showRayGuides": false,
   "showBisectors": false,
   "showPoint": false,
