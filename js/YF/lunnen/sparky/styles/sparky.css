@@ -127,7 +127,7 @@
         width: calc(100% - 32px);
         transform: translateX(-50%);
         color: #777;
-        font-size: 11px;
+        font-size: 16px;
         line-height: 1.25;
         text-align: center;
         pointer-events: none;
