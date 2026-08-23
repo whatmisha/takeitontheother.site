@@ -342,13 +342,7 @@ function evaluateContainment(model, values, headContour, pairCenter, fitScale, s
  * pointer is moving. The exact global solver still runs when motion settles and
  * before export.
  */
-function solveFastEyePlacement(
-    model,
-    values,
-    headContour,
-    previousEyeGeometry,
-    { allowScaleReduction = true } = {}
-) {
+function solveFastEyePlacement(model, values, headContour, previousEyeGeometry) {
     const desiredCenter = point(
         values.focusX,
         values.focusY + EYE_DEFAULTS.centerOffsetY
@@ -365,7 +359,7 @@ function solveFastEyePlacement(
         mix(carriedCenter.x, desiredCenter.x, 0.2),
         mix(carriedCenter.y, desiredCenter.y, 0.2)
     );
-    let fitScale = allowScaleReduction ? (previousEyeGeometry?.fitScale ?? 1) : 1;
+    let fitScale = previousEyeGeometry?.fitScale ?? 1;
     let result = null;
 
     for (let iteration = 0; iteration < 12; iteration += 1) {
@@ -387,7 +381,7 @@ function solveFastEyePlacement(
     // The moving preview may temporarily reduce scale instead of entering the
     // exact solver's expensive global fallback. Exact size is restored as soon
     // as the gesture settles.
-    if (!result?.fits && allowScaleReduction) {
+    if (!result?.fits) {
         let low = 0.45;
         let high = fitScale;
         let best = evaluateContainment(model, values, headContour, pairCenter, low);
@@ -404,7 +398,6 @@ function solveFastEyePlacement(
         fitScale = low;
         result = best;
     }
-    if (!result?.fits) return solveEyePlacement(model, values, headContour);
     return {
         desiredCenter,
         pairCenter,
@@ -807,38 +800,6 @@ export function buildEyeLidGeometry(settings, eyeGeometry) {
     }]));
 }
 
-/** Rebuilds the complete eye rig at an interpolated presentation placement. */
-export function presentEyeGeometry(eyeGeometry, placement) {
-    const pairCenter = point(
-        placement?.pairCenter?.x ?? eyeGeometry.pairCenter.x,
-        placement?.pairCenter?.y ?? eyeGeometry.pairCenter.y
-    );
-    const fitScale = placement?.fitScale ?? eyeGeometry.fitScale;
-    const transform = createRigTransform(eyeGeometry.values, pairCenter, fitScale);
-    const renderEye = (eye) => ({
-        side: eye.side,
-        eye1: buildRenderedCircle(eye.eye1, transform),
-        top: buildRenderedCircle(eye.top, transform),
-        bottom: buildRenderedCircle(eye.bottom, transform)
-    });
-    const containment = evaluateContainment(
-        eyeGeometry.model,
-        eyeGeometry.values,
-        eyeGeometry.headContour,
-        pairCenter,
-        fitScale
-    );
-    return {
-        ...eyeGeometry,
-        left: renderEye(eyeGeometry.model.left),
-        right: renderEye(eyeGeometry.model.right),
-        pairCenter,
-        fitScale,
-        guard: containment.guard,
-        minClearance: containment.minClearance
-    };
-}
-
 export function buildEyeGeometry(settings, characterGeometry, options = {}) {
     const values = {
         ...characterGeometry.values,
@@ -853,9 +814,7 @@ export function buildEyeGeometry(settings, characterGeometry, options = {}) {
     const headContour = flattenRoundedContour(characterGeometry.rounded);
     const fastPlacement = options.placementMode === 'fast';
     const legacyPlacement = fastPlacement
-        ? solveFastEyePlacement(model, values, headContour, options.previousEyeGeometry, {
-            allowScaleReduction: options.allowFastScaleReduction !== false
-        })
+        ? solveFastEyePlacement(model, values, headContour, options.previousEyeGeometry)
         : solveEyePlacement(model, values, headContour);
     const opticalPlacement = fastPlacement
         ? {

@@ -265,28 +265,6 @@ test('the mobile fast path stays contained and exact placement resumes after mot
     assert.ok(exact.minClearance + 0.025 >= exact.guard);
 });
 
-test('the desktop moving path never introduces an emergency eye-size reduction', () => {
-    let previous = null;
-    const radius = 195.233;
-
-    for (let index = 0; index < 24; index += 1) {
-        const angle = index / 24 * Math.PI * 2;
-        const head = buildCharacterGeometry({
-            focusX: 240 + Math.cos(angle) * radius,
-            focusY: 240 + Math.sin(angle) * radius
-        });
-        const exact = buildEyeGeometry(head.values, head);
-        const moving = buildEyeGeometry(head.values, head, {
-            placementMode: 'fast',
-            previousEyeGeometry: previous,
-            allowFastScaleReduction: false
-        });
-        assert.ok(moving.fitScale + 1e-6 >= exact.fitScale);
-        assert.ok(moving.minClearance + 0.025 >= moving.guard);
-        previous = moving;
-    }
-});
-
 test('the full supported focus, Width and eye-control grid remains inside the head gap', () => {
     const focusXs = [120, 240, 360];
     const focusYs = [rebaseLegacyY(180), 240, rebaseLegacyY(390)];

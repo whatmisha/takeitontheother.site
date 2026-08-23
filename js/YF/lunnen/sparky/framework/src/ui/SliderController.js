@@ -355,10 +355,7 @@ export class SliderController {
         this.isUpdating = false;
     }
 
-    /**
-     * Update only the visible range/text controls without mutating Settings.
-     * Useful for transient previews that must not affect history or preset state.
-     */
+    /** Update the visible controls without mutating Settings or preset state. */
     setDisplayValue(sliderId, value) {
         const sliderData = this.sliders.get(sliderId);
         if (!sliderData) return;
