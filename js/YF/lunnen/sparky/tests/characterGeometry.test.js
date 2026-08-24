@@ -220,3 +220,9 @@ test('every shipped preset produces a finite closed contour', () => {
         assert.match(geometry.rounded.path, /^M .* Z$/);
     });
 });
+
+test('the shipped Basic preset starts with centered Focus', () => {
+    const basic = JSON.parse(readFileSync(new URL('../presets/basic.json', import.meta.url), 'utf8'));
+    assert.equal(basic.focusAngle, 0);
+    assert.equal(basic.focusDistance, 0);
+});

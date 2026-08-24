@@ -34,6 +34,13 @@ body,
     user-select: none;
 }
 
+/* The framework intentionally renders before async preset bootstrap and zoom
+   setup. Keep that provisional frame out of sight and reveal only the final,
+   synchronously fitted viewBox from onReady. */
+.sparky-initializing #mainSvg {
+    visibility: hidden;
+}
+
 .mobile-desktop-hint {
     display: none;
 }

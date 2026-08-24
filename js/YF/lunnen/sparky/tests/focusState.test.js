@@ -46,6 +46,15 @@ test('mobile Basic-only showcase starts with Focus at the boundary center', () =
     assert.deepEqual(centeredFocus(state), { x: 240, y: 240 });
 });
 
+test('runtime defaults start with centered polar Focus', async () => {
+    const toolSource = await readFile(new URL('../tool.js', import.meta.url), 'utf8');
+    const settingsBody = toolSource.match(/const settings = \{([\s\S]*?)\n\};/)?.[1] || '';
+    assert.match(settingsBody, /focusX:\s*DEFAULT_GEOMETRY\.boundaryCenterX/);
+    assert.match(settingsBody, /focusY:\s*DEFAULT_GEOMETRY\.boundaryCenterY/);
+    assert.match(settingsBody, /focusAngle:\s*0/);
+    assert.match(settingsBody, /focusDistance:\s*0/);
+});
+
 test('Follow cursor preview does not dirty presets or create history entries', async () => {
     const toolSource = await readFile(new URL('../tool.js', import.meta.url), 'utf8');
     const transientHandler = toolSource.match(

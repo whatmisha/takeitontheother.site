@@ -19,4 +19,7 @@ test('mobile showcase prevents text selection and SVG dragging', async () => {
     assert.match(toolSource, /addEventListener\('dragstart', preventMobileSelection/);
     assert.match(toolSource, /mobileShowcaseFocus \|\| centeredFocus\(settings\)/);
     assert.match(toolSource, /resetMobileFocusMotion\(centeredFocus\(settings\)\)/);
+    assert.match(styles, /\.sparky-initializing #mainSvg\s*\{[^}]*visibility:\s*hidden/);
+    assert.match(toolSource, /syncMode\(\{ fitImmediately: true \}\)/);
+    assert.match(toolSource, /classList\.remove\('sparky-initializing'\)/);
 });

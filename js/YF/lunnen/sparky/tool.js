@@ -60,10 +60,10 @@ const settings = {
     boundaryRadiusX: DEFAULT_GEOMETRY.boundaryRadiusX,
     boundaryRadiusY: DEFAULT_GEOMETRY.boundaryRadiusY,
     boundaryRotation: DEFAULT_GEOMETRY.boundaryRotation,
-    focusX: 106.589,
-    focusY: 273.101,
-    focusAngle: 256.0655603225829,
-    focusDistance: 70.40609593300307,
+    focusX: DEFAULT_GEOMETRY.boundaryCenterX,
+    focusY: DEFAULT_GEOMETRY.boundaryCenterY,
+    focusAngle: 0,
+    focusDistance: 0,
     rayCount: DEFAULT_GEOMETRY.rayCount,
     centerAngle: DEFAULT_GEOMETRY.centerAngle,
     angleStep: DEFAULT_GEOMETRY.angleStep,
@@ -219,7 +219,7 @@ function bindMobileShowcase(app) {
             fitShowcaseToViewport(app, mobile);
         });
     };
-    const syncMode = () => {
+    const syncMode = ({ fitImmediately = false } = {}) => {
         const mobile = media?.matches ?? window.innerWidth <= 768;
         forceGlobalPlacement(app);
         document.documentElement.classList.toggle('sparky-mobile-showcase', mobile);
@@ -235,7 +235,8 @@ function bindMobileShowcase(app) {
         wasMobile = mobile;
         app.renderNow();
         snapDisplayedEyes(app);
-        scheduleFit(mobile);
+        if (fitImmediately) fitShowcaseToViewport(app, mobile);
+        else scheduleFit(mobile);
     };
     const refitMobile = () => {
         if (isMobileShowcase()) scheduleFit(true);
@@ -249,7 +250,7 @@ function bindMobileShowcase(app) {
     window.visualViewport?.addEventListener('resize', refitMobile);
     document.addEventListener('selectstart', preventMobileSelection, { capture: true });
     document.addEventListener('dragstart', preventMobileSelection, { capture: true });
-    syncMode();
+    syncMode({ fitImmediately: true });
 }
 
 function exportSettingsJSON(tool, filename) {
@@ -1149,6 +1150,7 @@ const app = defineTool({
         syncFocusControls(tool);
         bindBlink(tool);
         bindMobileShowcase(tool);
+        document.documentElement.classList.remove('sparky-initializing');
         document.getElementById('resetFocusBtn')?.addEventListener('click', () => {
             disableFollowCursor(tool);
             setPolarFocus(tool, 0, 0);
