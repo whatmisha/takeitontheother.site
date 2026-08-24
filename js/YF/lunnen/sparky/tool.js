@@ -6,6 +6,7 @@ import {
 } from './src/geometry/characterGeometry.js?v=20260823-5';
 import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-7';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
+import { AnimationExporter } from './src/export/animationExporter.js?v=20260824-2';
 import {
     advanceEyeMotion,
     createEyeMotionState,
@@ -18,6 +19,8 @@ import {
     resetBlink,
     triggerBlink
 } from './src/animation/blink.js?v=20260822-6';
+import { generateFocusPathForSettings, normalizeMotionSeed } from './src/animation/focusPath.js';
+import { createFocusTimeline, sampleFocusTimeline } from './src/animation/focusTimeline.js';
 import { clamp } from './src/geometry/vector.js';
 import {
     focusPointFromPolar,
@@ -43,6 +46,7 @@ const MOBILE_FIT_PADDING = 24;
 const MOBILE_GRAPHIC_OFFSET_PX = 24;
 const MOBILE_FOCUS_TAP_RESPONSE_MS = 135;
 const MOBILE_FOCUS_SWIPE_RESPONSE_MS = 45;
+const FOCUS_PREVIEW_INTERVAL_MS = 1000 / 30;
 const ARTBOARD_CROP_X = 0;
 const ARTBOARD_CROP_Y = DEFAULT_GEOMETRY.boundaryCenterY - DEFAULT_GEOMETRY.boundaryRadius;
 let mobileShowcaseFocus = null;
@@ -81,6 +85,19 @@ const settings = {
     showBisectors: false,
     showPoint: false,
     followCursor: true,
+    focusMode: 'manual',
+    motionDuration: 5,
+    motionPointCount: 6,
+    motionComplexity: 'soft',
+    motionEasing: 'ease-in-out',
+    motionPause: 12,
+    motionSkipProbability: 0,
+    motionSeed: 24062026,
+    showMotionPath: true,
+    motionFps: 30,
+    motionResolution: 480,
+    motionTransparentBackground: false,
+    motionKnockoutEyes: false,
     eyePerspective: 100,
     eyeSize: 50,
     eyeDistance: 0,
@@ -112,6 +129,25 @@ function normalizeIncomingState(source = {}) {
     if (source.roundness == null && Number.isFinite(source.cornerRadius)) {
         normalized.roundness = clamp(source.cornerRadius * 6, 0, 100);
     }
+    normalized.focusMode = normalized.focusMode === 'animate' ? 'animate' : 'manual';
+    normalized.motionDuration = clamp(Number(normalized.motionDuration) || 5, 1, 10);
+    normalized.motionPointCount = Math.round(clamp(Number(normalized.motionPointCount) || 6, 3, 16));
+    normalized.motionComplexity = ['soft', 'medium', 'hard'].includes(normalized.motionComplexity)
+        ? normalized.motionComplexity
+        : 'soft';
+    normalized.motionEasing = ['linear', 'smooth', 'ease-in', 'ease-out', 'ease-in-out']
+        .includes(normalized.motionEasing)
+        ? normalized.motionEasing
+        : 'ease-in-out';
+    normalized.motionPause = clamp(Number(normalized.motionPause) || 0, 0, 60);
+    normalized.motionSkipProbability = clamp(Number(normalized.motionSkipProbability) || 0, 0, 100);
+    normalized.motionSeed = normalizeMotionSeed(normalized.motionSeed);
+    normalized.motionFps = Number(normalized.motionFps) === 60 ? 60 : 30;
+    normalized.motionResolution = Number(normalized.motionResolution) === 960 ? 960 : 480;
+    normalized.showMotionPath = Boolean(normalized.showMotionPath);
+    normalized.motionTransparentBackground = Boolean(normalized.motionTransparentBackground);
+    normalized.motionKnockoutEyes = normalized.motionTransparentBackground
+        && Boolean(normalized.motionKnockoutEyes);
     const hasPolarFocus = migrated.focusAngle != null
         && migrated.focusDistance != null
         && Number.isFinite(Number(migrated.focusAngle))
@@ -149,6 +185,13 @@ function activeRenderSettings(current) {
         // not replace the mobile character profile.
         const focus = mobileShowcaseFocus || centeredFocus(settings);
         return { ...settings, focusX: focus.x, focusY: focus.y };
+    }
+    if (current.focusMode === 'animate' && focusAnimation.currentFocus) {
+        return {
+            ...current,
+            focusX: focusAnimation.currentFocus.x,
+            focusY: focusAnimation.currentFocus.y
+        };
     }
     const focus = current.followCursor ? desktopFollowFocus : null;
     if (!focus) return current;
@@ -259,6 +302,17 @@ function exportSettingsJSON(tool, filename) {
     return tool.exporter?.exportJSON(snapshot, name);
 }
 
+function exportFocusAnimation(tool, format) {
+    const exporter = tool.animationExporter;
+    if (!exporter) return Promise.reject(new Error('Animation exporter is not ready.'));
+    return exporter.export({
+        format,
+        settings: extractInternalState(tool.settings),
+        startFocus: currentStoredFocus(tool.settings),
+        baseName: createSparkyExportBaseName()
+    });
+}
+
 function setAttributes(element, attributes) {
     Object.entries(attributes).forEach(([name, value]) => {
         if (value != null) element.setAttribute(name, String(value));
@@ -281,6 +335,274 @@ const mobileFocusMotion = createEyeMotionState(MOBILE_FOCUS_TAP_RESPONSE_MS);
 let mobileFocusFrame = null;
 const blink = createBlinkState();
 let blinkFrame = null;
+const focusAnimation = {
+    path: null,
+    timeline: null,
+    currentFocus: null,
+    frame: null,
+    startedAt: null,
+    lastPreviewAt: null,
+    elapsedMs: 0,
+    paused: false
+};
+let focusAnimationReady = false;
+
+function cancelFocusAnimationFrame() {
+    if (focusAnimation.frame != null) cancelAnimationFrame(focusAnimation.frame);
+    focusAnimation.frame = null;
+}
+
+function currentStoredFocus(state) {
+    const polar = normalizedPolar({
+        angle: state.focusAngle,
+        distance: state.focusDistance
+    });
+    return normalizedFocus(focusPointFromPolar(polar, state), state);
+}
+
+function updateFocusAnimationButtons() {
+    const playPause = document.getElementById('motionPlayPauseBtn');
+    if (playPause) playPause.textContent = focusAnimation.paused ? 'Play' : 'Pause';
+}
+
+function scheduleFocusAnimation(app) {
+    if (focusAnimation.frame != null
+        || focusAnimation.paused
+        || app.settings.focusMode !== 'animate'
+        || isMobileShowcase()) return;
+    focusAnimation.frame = requestAnimationFrame((timestamp) => {
+        focusAnimation.frame = null;
+        if (focusAnimation.paused
+            || app.settings.focusMode !== 'animate'
+            || isMobileShowcase()
+            || !focusAnimation.timeline) return;
+        if (focusAnimation.lastPreviewAt != null
+            && timestamp - focusAnimation.lastPreviewAt < FOCUS_PREVIEW_INTERVAL_MS) {
+            scheduleFocusAnimation(app);
+            return;
+        }
+        focusAnimation.lastPreviewAt = timestamp;
+        if (focusAnimation.startedAt == null) {
+            focusAnimation.startedAt = timestamp - focusAnimation.elapsedMs;
+        }
+        focusAnimation.elapsedMs = (
+            timestamp - focusAnimation.startedAt
+        ) % focusAnimation.timeline.durationMs;
+        focusAnimation.currentFocus = sampleFocusTimeline(
+            focusAnimation.timeline,
+            focusAnimation.elapsedMs
+        ).point;
+        app.renderNow();
+        scheduleFocusAnimation(app);
+    });
+}
+
+function rebuildFocusAnimation(app, { restart = true, schedule = true } = {}) {
+    cancelFocusAnimationFrame();
+    const start = currentStoredFocus(app.settings);
+    focusAnimation.path = generateFocusPathForSettings(app.settings, start);
+    focusAnimation.timeline = createFocusTimeline(focusAnimation.path, {
+        duration: app.settings.motionDuration,
+        pause: app.settings.motionPause,
+        skipProbability: app.settings.motionSkipProbability,
+        easing: app.settings.motionEasing,
+        seed: app.settings.motionSeed
+    });
+    if (restart) {
+        focusAnimation.elapsedMs = 0;
+        focusAnimation.startedAt = null;
+        focusAnimation.lastPreviewAt = null;
+        focusAnimation.currentFocus = { ...start };
+    } else if (focusAnimation.timeline) {
+        focusAnimation.elapsedMs %= focusAnimation.timeline.durationMs;
+        focusAnimation.currentFocus = sampleFocusTimeline(
+            focusAnimation.timeline,
+            focusAnimation.elapsedMs
+        ).point;
+        focusAnimation.startedAt = performance.now() - focusAnimation.elapsedMs;
+    }
+    if (app.settings.focusMode === 'animate') {
+        focusAnimation.paused = false;
+        stopBlink(app);
+        // Preview uses the exact local containment solver and reuses the prior
+        // frame as its seed. Export recomputes every frame with the global
+        // solver in a worker, keeping the UI responsive without lowering the
+        // quality of the saved result.
+        beginInteractivePlacement(app);
+    }
+    updateFocusAnimationButtons();
+    app.renderNow();
+    if (schedule) scheduleFocusAnimation(app);
+}
+
+function pauseFocusAnimation(app) {
+    if (focusAnimation.paused || app.settings.focusMode !== 'animate') return;
+    if (focusAnimation.startedAt != null && focusAnimation.timeline) {
+        focusAnimation.elapsedMs = (
+            performance.now() - focusAnimation.startedAt
+        ) % focusAnimation.timeline.durationMs;
+        focusAnimation.currentFocus = sampleFocusTimeline(
+            focusAnimation.timeline,
+            focusAnimation.elapsedMs
+        ).point;
+    }
+    focusAnimation.paused = true;
+    cancelFocusAnimationFrame();
+    updateFocusAnimationButtons();
+    app.renderNow();
+}
+
+function playFocusAnimation(app) {
+    if (!focusAnimation.paused || app.settings.focusMode !== 'animate') return;
+    focusAnimation.paused = false;
+    focusAnimation.startedAt = performance.now() - focusAnimation.elapsedMs;
+    focusAnimation.lastPreviewAt = null;
+    updateFocusAnimationButtons();
+    scheduleFocusAnimation(app);
+}
+
+function restartFocusAnimation(app) {
+    if (!focusAnimation.timeline) rebuildFocusAnimation(app);
+    focusAnimation.elapsedMs = 0;
+    focusAnimation.startedAt = null;
+    focusAnimation.lastPreviewAt = null;
+    focusAnimation.currentFocus = { ...focusAnimation.path.anchors[0] };
+    focusAnimation.paused = false;
+    updateFocusAnimationButtons();
+    app.renderNow();
+    scheduleFocusAnimation(app);
+}
+
+function stopFocusAnimation(app) {
+    cancelFocusAnimationFrame();
+    focusAnimation.path = null;
+    focusAnimation.timeline = null;
+    focusAnimation.currentFocus = null;
+    focusAnimation.startedAt = null;
+    focusAnimation.lastPreviewAt = null;
+    focusAnimation.elapsedMs = 0;
+    focusAnimation.paused = false;
+    updateFocusAnimationButtons();
+    app?.renderNow();
+}
+
+function updateAnimationExportControls(app) {
+    const transparent = Boolean(app.settings.motionTransparentBackground);
+    const knockout = document.getElementById('motionKnockoutEyes');
+    const knockoutLabel = document.getElementById('motionKnockoutEyesLabel');
+    if (knockout) knockout.disabled = !transparent;
+    knockoutLabel?.classList.toggle('is-disabled', !transparent);
+}
+
+function syncRadioGroup(name, value) {
+    document.querySelectorAll(`input[name="${name}"]`).forEach((input) => {
+        input.checked = String(input.value) === String(value);
+    });
+}
+
+function syncFocusModeUI(app) {
+    const animate = app.settings.focusMode === 'animate';
+    syncRadioGroup('focusMode', animate ? 'animate' : 'manual');
+    document.getElementById('focusManualControls')?.toggleAttribute('hidden', animate);
+    document.getElementById('focusAnimationControls')?.toggleAttribute('hidden', !animate);
+    const pngButton = document.getElementById('exportPngBtn');
+    const primaryButton = document.getElementById('exportSvgBtn');
+    if (pngButton) pngButton.textContent = animate ? 'Export PNG sequence' : 'Export PNG';
+    if (primaryButton) primaryButton.textContent = animate ? 'Export MP4' : 'Export ⌘E';
+    updateAnimationExportControls(app);
+}
+
+function syncFocusAnimationControls(app) {
+    syncFocusModeUI(app);
+    syncRadioGroup('motionComplexity', app.settings.motionComplexity);
+    syncRadioGroup('motionFps', app.settings.motionFps);
+    syncRadioGroup('motionResolution', app.settings.motionResolution);
+    const easing = document.getElementById('motionEasingSelect');
+    if (easing) easing.value = app.settings.motionEasing;
+    updateFocusAnimationButtons();
+}
+
+function applyFocusMode(app) {
+    syncFocusModeUI(app);
+    if (!focusAnimationReady) return;
+    if (app.settings.focusMode === 'animate' && !isMobileShowcase()) {
+        stopBlink(app);
+        rebuildFocusAnimation(app);
+        return;
+    }
+    forceGlobalPlacement(app);
+    stopFocusAnimation(app);
+}
+
+function bindRadioSetting(app, name, setting, convert = (value) => value) {
+    document.querySelectorAll(`input[name="${name}"]`).forEach((input) => {
+        input.addEventListener('change', () => {
+            if (!input.checked) return;
+            app.settingsStore.set(setting, convert(input.value));
+        });
+    });
+}
+
+function bindFocusAnimation(app) {
+    focusAnimationReady = true;
+    bindRadioSetting(app, 'motionComplexity', 'motionComplexity');
+    bindRadioSetting(app, 'motionFps', 'motionFps', Number);
+    bindRadioSetting(app, 'motionResolution', 'motionResolution', Number);
+    document.querySelectorAll('input[name="focusMode"]').forEach((input) => {
+        input.addEventListener('change', () => {
+            if (!input.checked) return;
+            if (input.value === 'animate') disableFollowCursor(app);
+            app.settingsStore.set('focusMode', input.value);
+        });
+    });
+
+    document.getElementById('motionEasingSelect')?.addEventListener('change', (event) => {
+        app.settingsStore.set('motionEasing', event.target.value);
+    });
+    document.getElementById('motionPlayPauseBtn')?.addEventListener('click', () => {
+        if (focusAnimation.paused) playFocusAnimation(app);
+        else pauseFocusAnimation(app);
+    });
+    document.getElementById('motionRestartBtn')?.addEventListener('click', () => {
+        restartFocusAnimation(app);
+    });
+    document.getElementById('motionRegenerateBtn')?.addEventListener('click', () => {
+        const values = new Uint32Array(1);
+        crypto.getRandomValues(values);
+        app.settingsStore.set('motionSeed', normalizeMotionSeed(values[0]));
+    });
+
+    [
+        'motionDuration',
+        'motionPointCount',
+        'motionComplexity',
+        'motionEasing',
+        'motionPause',
+        'motionSkipProbability',
+        'motionSeed'
+    ].forEach((setting) => {
+        app.settingsStore.subscribe(setting, () => {
+            if (app.settings.focusMode === 'animate') rebuildFocusAnimation(app);
+        });
+    });
+    app.settingsStore.subscribe('focusMode', () => applyFocusMode(app));
+    app.settingsStore.subscribe('motionTransparentBackground', () => {
+        if (!app.settings.motionTransparentBackground && app.settings.motionKnockoutEyes) {
+            app.settingsStore.set('motionKnockoutEyes', false);
+        }
+        updateAnimationExportControls(app);
+    });
+    window.matchMedia?.(MOBILE_SHOWCASE_QUERY)?.addEventListener?.('change', (event) => {
+        if (event.matches) {
+            cancelFocusAnimationFrame();
+            return;
+        }
+        if (app.settings.focusMode === 'animate') rebuildFocusAnimation(app);
+    });
+
+    syncFocusAnimationControls(app);
+    applyFocusMode(app);
+}
 
 function cancelMobileFocusMotion() {
     if (mobileFocusFrame != null) cancelAnimationFrame(mobileFocusFrame);
@@ -361,8 +683,14 @@ function scheduleEyeMotion(app) {
     });
 }
 
-function retargetDisplayedEyes(app, target) {
+function retargetDisplayedEyes(app, target, { immediate = false } = {}) {
     const result = retargetEyeMotion(eyeMotion, target, performance.now());
+    if (immediate) {
+        if (eyeMotionFrame != null) cancelAnimationFrame(eyeMotionFrame);
+        eyeMotionFrame = null;
+        snapEyeMotion(eyeMotion);
+        return;
+    }
     if (!result.settled) scheduleEyeMotion(app);
 }
 
@@ -377,8 +705,8 @@ function applyBlink(app) {
     const svg = app.target?.element;
     const eyeGeometry = app.eyeGeometry;
     if (!svg || !eyeGeometry) return;
-    const amount = blink.amount;
     const expression = activeRenderSettings(app.settings);
+    const amount = expression.focusMode === 'animate' ? 0 : blink.amount;
     const lids = amount <= 0
         ? eyeGeometry
         : buildEyeLidGeometry({
@@ -409,6 +737,7 @@ function scheduleBlink(app) {
 }
 
 function startBlink(app) {
+    if (app.settings.focusMode === 'animate') return;
     if (blinkFrame != null) cancelAnimationFrame(blinkFrame);
     blinkFrame = null;
     triggerBlink(blink, performance.now());
@@ -545,7 +874,11 @@ function drawCharacter(ctx, geometry, eyeGeometry) {
 
     svg.appendChild(drawEyes(ctx, eyeGeometry, definitions));
 
-    if (state.showSphere || state.showRayGuides || state.showBisectors || state.showPoint) {
+    if (state.showSphere
+        || state.showRayGuides
+        || state.showBisectors
+        || state.showPoint
+        || (state.focusMode === 'animate' && state.showMotionPath)) {
         drawGuides(ctx, geometry);
     }
 }
@@ -562,6 +895,48 @@ function drawGuides(ctx, geometry) {
         'clip-path': `url(#${GUIDE_CLIP_ID})`,
         'aria-hidden': 'true'
     });
+
+    if (state.focusMode === 'animate' && state.showMotionPath && focusAnimation.path) {
+        const motionGuides = create('g', {
+            'data-layer': 'motion-path-preview',
+            'data-export-exclude': 'true'
+        });
+        motionGuides.appendChild(create('path', {
+            d: focusAnimation.path.path,
+            stroke: '#00ff2a',
+            opacity: 0.72,
+            ...commonStroke,
+            'stroke-width': 0.9,
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round'
+        }));
+        focusAnimation.path.anchors.forEach((anchor, index) => {
+            const activeStop = focusAnimation.timeline?.activeStops?.[index] !== false;
+            motionGuides.appendChild(create('circle', {
+                cx: anchor.x,
+                cy: anchor.y,
+                r: index === 0 ? 3.4 : 2.5,
+                fill: activeStop ? '#00ff2a' : state.backgroundColor,
+                stroke: '#00ff2a',
+                'stroke-width': 0.75,
+                opacity: activeStop ? 0.9 : 0.5,
+                'vector-effect': 'non-scaling-stroke'
+            }));
+        });
+        const current = focusAnimation.currentFocus;
+        if (current) {
+            motionGuides.appendChild(create('circle', {
+                cx: current.x,
+                cy: current.y,
+                r: 4.5,
+                fill: state.backgroundColor,
+                stroke: '#00ff2a',
+                'stroke-width': 1.5,
+                'vector-effect': 'non-scaling-stroke'
+            }));
+        }
+        guides.appendChild(motionGuides);
+    }
 
     if (state.showSphere) {
         append(guides,
@@ -740,6 +1115,10 @@ function applyState(app, source) {
     desktopFollowFocus = normalized.followCursor
         ? { x: normalized.focusX, y: normalized.focusY }
         : null;
+    if (focusAnimationReady) {
+        syncFocusAnimationControls(app);
+        applyFocusMode(app);
+    }
 }
 
 function pointFromPointer(svg, event) {
@@ -757,6 +1136,7 @@ function bindFocusDragging(app) {
 
     const update = (raw, responseMs = MOBILE_FOCUS_SWIPE_RESPONSE_MS) => {
         const mobile = isMobileShowcase();
+        if (!mobile && app.settings.focusMode === 'animate') return;
         const renderSettings = activeRenderSettings(app.settings);
         const focus = normalizedFocus(raw, renderSettings);
         const { x, y } = focus;
@@ -781,6 +1161,7 @@ function bindFocusDragging(app) {
         if (!pendingFollowPoint || followFrame != null) return;
         followFrame = requestAnimationFrame(() => {
             followFrame = null;
+            if (app.settings.focusMode === 'animate') return;
             if ((!isMobileShowcase() && !app.settings.followCursor) || !pendingFollowPoint) return;
             update(pendingFollowPoint);
             pendingFollowPoint = null;
@@ -794,6 +1175,7 @@ function bindFocusDragging(app) {
             updateFromEvent(event, MOBILE_FOCUS_TAP_RESPONSE_MS);
             return;
         }
+        if (app.settings.focusMode === 'animate') return;
         const handle = event.target.closest?.('[data-focus-handle="true"]');
         if (!handle) return;
         event.preventDefault();
@@ -811,7 +1193,8 @@ function bindFocusDragging(app) {
             updateFromEvent(event, MOBILE_FOCUS_SWIPE_RESPONSE_MS);
             return;
         }
-        if (isMobileShowcase() || app.settings.followCursor) scheduleFollow(event);
+        if (isMobileShowcase()
+            || (app.settings.focusMode !== 'animate' && app.settings.followCursor)) scheduleFollow(event);
     });
 
     const finish = (event) => {
@@ -987,6 +1370,10 @@ const app = defineTool({
             { id: 'cornerSmoothingSlider', valueId: 'cornerSmoothingValue', setting: 'cornerSmoothing', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'focusAngleSlider', valueId: 'focusAngleValue', setting: 'focusAngle', min: 0, max: 360, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'focusDistanceSlider', valueId: 'focusDistanceValue', setting: 'focusDistance', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'motionDurationSlider', valueId: 'motionDurationValue', setting: 'motionDuration', min: 1, max: 10, decimals: 0, baseStep: 1, shiftStep: 1 },
+            { id: 'motionPointCountSlider', valueId: 'motionPointCountValue', setting: 'motionPointCount', min: 3, max: 16, decimals: 0, baseStep: 1, shiftStep: 2 },
+            { id: 'motionPauseSlider', valueId: 'motionPauseValue', setting: 'motionPause', min: 0, max: 60, decimals: 0, baseStep: 1, shiftStep: 5 },
+            { id: 'motionSkipProbabilitySlider', valueId: 'motionSkipProbabilityValue', setting: 'motionSkipProbability', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyePerspectiveSlider', valueId: 'eyePerspectiveValue', setting: 'eyePerspective', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyeSizeSlider', valueId: 'eyeSizeValue', setting: 'eyeSize', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyeDistanceSlider', valueId: 'eyeDistanceValue', setting: 'eyeDistance', min: -100, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
@@ -1060,7 +1447,9 @@ const app = defineTool({
         quantizableFloatKeys: [
             'focusAngle', 'focusDistance', 'rayLength', 'rayWidth', 'roundness', 'cornerSmoothing',
             'rayCount', 'angleSpan', 'boundaryCenterX', 'boundaryCenterY', 'boundaryRadius',
-            'eyePerspective', 'eyeSize', 'eyeDistance', 'cute', 'angry'
+            'eyePerspective', 'eyeSize', 'eyeDistance', 'cute', 'angry',
+            'motionDuration', 'motionPointCount', 'motionPause', 'motionSkipProbability',
+            'motionSeed', 'motionFps', 'motionResolution'
         ],
         decimals: 2
     },
@@ -1069,7 +1458,10 @@ const app = defineTool({
     restore: (tool, snapshot) => applyState(tool, snapshot),
     collectPreset: (tool) => extractEffectiveState(tool),
     applyPreset: (tool, preset) => applyState(tool, preset),
-    syncControls: (tool) => syncFocusControls(tool),
+    syncControls: (tool) => {
+        syncFocusControls(tool);
+        syncFocusAnimationControls(tool);
+    },
     export: { filename: 'sparky.svg' },
     zoom: {
         interactive: false,
@@ -1108,7 +1500,9 @@ const app = defineTool({
             });
             ctx.app.eyePlacementSearchMode = eyeGeometry.placementMode;
             document.documentElement.dataset.eyePlacementSearchMode = eyeGeometry.placementMode;
-            retargetDisplayedEyes(ctx.app, eyeGeometry.pairCenter);
+            retargetDisplayedEyes(ctx.app, eyeGeometry.pairCenter, {
+                immediate: renderSettings.focusMode === 'animate'
+            });
             ctx.app.characterGeometry = geometry;
             ctx.app.eyeGeometry = eyeGeometry;
             ctx.app.geometryError = null;
@@ -1123,7 +1517,27 @@ const app = defineTool({
     onReady(tool) {
         const frameworkExportSVG = tool.exportSVG.bind(tool);
         const frameworkExportPNG = tool.exportPNG.bind(tool);
+        tool.animationExporter = new AnimationExporter({
+            status: document.getElementById('animationExportStatus'),
+            progress: document.getElementById('animationExportProgress'),
+            message: document.getElementById('animationExportMessage'),
+            cancelButton: document.getElementById('animationExportCancelBtn'),
+            exportButtons: [
+                document.getElementById('exportPngBtn'),
+                document.getElementById('exportSvgBtn')
+            ],
+            onError(error) {
+                if (tool.dialog) {
+                    tool.dialog.alert({ title: 'Export failed', text: error.message });
+                } else {
+                    window.alert(`Export failed: ${error.message}`);
+                }
+            }
+        });
         tool.exportSVG = async (filename) => {
+            if (tool.settings.focusMode === 'animate' && !filename) {
+                return exportFocusAnimation(tool, 'mp4');
+            }
             stopBlink(tool);
             settleMobileFocusMotion();
             forceGlobalPlacement(tool);
@@ -1133,6 +1547,9 @@ const app = defineTool({
             return frameworkExportSVG(name);
         };
         tool.exportPNG = (filename, scaleFactor) => {
+            if (tool.settings.focusMode === 'animate' && !filename) {
+                return exportFocusAnimation(tool, 'png-sequence');
+            }
             stopBlink(tool);
             settleMobileFocusMotion();
             forceGlobalPlacement(tool);
@@ -1146,6 +1563,7 @@ const app = defineTool({
             : null;
         bindFocusDragging(tool);
         bindManualFocusControls(tool);
+        bindFocusAnimation(tool);
         bindInteractivePlacement(tool);
         syncFocusControls(tool);
         bindBlink(tool);
@@ -1155,8 +1573,12 @@ const app = defineTool({
             disableFollowCursor(tool);
             setPolarFocus(tool, 0, 0);
         });
-        document.getElementById('exportSvgBtn')?.addEventListener('click', () => tool.exportSVG());
-        document.getElementById('exportPngBtn')?.addEventListener('click', () => tool.exportPNG());
+        document.getElementById('exportSvgBtn')?.addEventListener('click', () => {
+            tool.exportSVG().catch(() => {});
+        });
+        document.getElementById('exportPngBtn')?.addEventListener('click', () => {
+            Promise.resolve(tool.exportPNG()).catch(() => {});
+        });
     }
 });
 

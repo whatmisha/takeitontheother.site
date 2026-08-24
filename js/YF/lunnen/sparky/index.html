@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#000000">
     <title>Lunnen Sparky — Parametric Character</title>
     <link rel="stylesheet" href="./framework/css/othersite-styles.css">
-    <link rel="stylesheet" href="./styles/sparky.css?v=20260824-7">
+    <link rel="stylesheet" href="./styles/sparky.css?v=20260824-8">
 </head>
 <body>
     <div class="container">
@@ -115,25 +115,136 @@
                 </div>
                 <div class="panel-content">
                     <section class="control-section">
-                        <div class="control-group">
-                            <label for="focusAngleSlider"><span>Angle <span class="unit">°</span></span>
-                                <input type="text" class="value-display" id="focusAngleValue" value="0"></label>
-                            <input type="range" id="focusAngleSlider" min="0" max="360" step="1" value="0">
+                        <fieldset class="segmented-control segmented-control-compact sparky-focus-tabs" aria-label="Focus mode">
+                            <input type="radio" id="focusModeManual" name="focusMode" value="manual" checked>
+                            <label for="focusModeManual">Manual</label>
+                            <input type="radio" id="focusModeAnimate" name="focusMode" value="animate">
+                            <label for="focusModeAnimate">Animate</label>
+                        </fieldset>
+
+                        <div id="focusManualControls" data-focus-mode-panel="manual">
+                            <div class="control-group">
+                                <label for="focusAngleSlider"><span>Angle <span class="unit">°</span></span>
+                                    <input type="text" class="value-display" id="focusAngleValue" value="0"></label>
+                                <input type="range" id="focusAngleSlider" min="0" max="360" step="1" value="0">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="focusDistanceSlider"><span>Distance <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="focusDistanceValue" value="0"></label>
+                                <input type="range" id="focusDistanceSlider" min="0" max="100" step="1" value="0">
+                            </div>
+
+                            <button type="button" class="sparky-panel-action" id="resetFocusBtn">Center focus</button>
+
+                            <div class="control-group pill-toggle-row sparky-focus-mode-toggles">
+                                <label class="pill-toggle" for="followCursor">
+                                    <input type="checkbox" id="followCursor" class="sr-only" data-setting="followCursor" checked>
+                                    <span>Follow cursor</span>
+                                </label>
+                            </div>
                         </div>
 
-                        <div class="control-group">
-                            <label for="focusDistanceSlider"><span>Distance <span class="unit">%</span></span>
-                                <input type="text" class="value-display" id="focusDistanceValue" value="0"></label>
-                            <input type="range" id="focusDistanceSlider" min="0" max="100" step="1" value="0">
-                        </div>
+                        <div id="focusAnimationControls" data-focus-mode-panel="animate" hidden>
+                            <div class="control-group">
+                                <label for="motionDurationSlider"><span>Duration <span class="unit">sec</span></span>
+                                    <input type="text" class="value-display" id="motionDurationValue" value="5"></label>
+                                <input type="range" id="motionDurationSlider" min="1" max="10" step="1" value="5">
+                            </div>
 
-                        <button type="button" class="sparky-panel-action" id="resetFocusBtn">Center focus</button>
+                            <div class="control-group">
+                                <label for="motionPointCountSlider"><span>Points</span>
+                                    <input type="text" class="value-display" id="motionPointCountValue" value="6"></label>
+                                <input type="range" id="motionPointCountSlider" min="3" max="16" step="1" value="6">
+                            </div>
 
-                        <div class="control-group pill-toggle-row sparky-focus-mode-toggles">
-                            <label class="pill-toggle" for="followCursor">
-                                <input type="checkbox" id="followCursor" class="sr-only" data-setting="followCursor" checked>
-                                <span>Follow cursor</span>
-                            </label>
+                            <div class="control-group sparky-compact-group">
+                                <span class="sparky-control-label">Complexity</span>
+                                <fieldset class="segmented-control segmented-control-compact sparky-inline-segments" aria-label="Motion path complexity">
+                                    <input type="radio" id="motionComplexitySoft" name="motionComplexity" value="soft" checked>
+                                    <label for="motionComplexitySoft">Soft</label>
+                                    <input type="radio" id="motionComplexityMedium" name="motionComplexity" value="medium">
+                                    <label for="motionComplexityMedium">Medium</label>
+                                    <input type="radio" id="motionComplexityHard" name="motionComplexity" value="hard">
+                                    <label for="motionComplexityHard">Hard</label>
+                                </fieldset>
+                            </div>
+
+                            <div class="control-group sparky-compact-group">
+                                <label class="sparky-select-label" for="motionEasingSelect">Easing</label>
+                                <select id="motionEasingSelect" class="sparky-select">
+                                    <option value="linear">Linear</option>
+                                    <option value="smooth">Smooth</option>
+                                    <option value="ease-in">Ease in</option>
+                                    <option value="ease-out">Ease out</option>
+                                    <option value="ease-in-out" selected>Ease in–out</option>
+                                </select>
+                            </div>
+
+                            <div class="control-group">
+                                <label for="motionPauseSlider"><span>Pause <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="motionPauseValue" value="12"></label>
+                                <input type="range" id="motionPauseSlider" min="0" max="60" step="1" value="12">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="motionSkipProbabilitySlider"><span>Skip stops <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="motionSkipProbabilityValue" value="0"></label>
+                                <input type="range" id="motionSkipProbabilitySlider" min="0" max="100" step="1" value="0">
+                            </div>
+
+                            <div class="sparky-animation-actions">
+                                <button type="button" class="sparky-panel-action" id="motionPlayPauseBtn">Pause</button>
+                                <button type="button" class="sparky-panel-action" id="motionRestartBtn">Restart</button>
+                                <button type="button" class="sparky-panel-action" id="motionRegenerateBtn">Regenerate</button>
+                            </div>
+
+                            <div class="control-group pill-toggle-row sparky-motion-toggles">
+                                <label class="pill-toggle" for="showMotionPath">
+                                    <input type="checkbox" id="showMotionPath" class="sr-only" data-setting="showMotionPath" checked>
+                                    <span>Show path</span>
+                                </label>
+                            </div>
+
+                            <div class="sparky-export-subsection">
+                                <span class="sparky-control-label">Export</span>
+
+                                <div class="sparky-export-option-grid">
+                                    <fieldset class="segmented-control segmented-control-compact sparky-inline-segments" aria-label="Animation frame rate">
+                                        <input type="radio" id="motionFps30" name="motionFps" value="30" checked>
+                                        <label for="motionFps30">30 fps</label>
+                                        <input type="radio" id="motionFps60" name="motionFps" value="60">
+                                        <label for="motionFps60">60 fps</label>
+                                    </fieldset>
+
+                                    <fieldset class="segmented-control segmented-control-compact sparky-inline-segments" aria-label="Animation resolution">
+                                        <input type="radio" id="motionResolution480" name="motionResolution" value="480" checked>
+                                        <label for="motionResolution480">480</label>
+                                        <input type="radio" id="motionResolution960" name="motionResolution" value="960">
+                                        <label for="motionResolution960">960</label>
+                                    </fieldset>
+                                </div>
+
+                                <span class="sparky-control-label sparky-export-options-label">PNG transparency</span>
+                                <div class="control-group pill-toggle-row sparky-motion-toggles">
+                                    <label class="pill-toggle" for="motionTransparentBackground">
+                                        <input type="checkbox" id="motionTransparentBackground" class="sr-only" data-setting="motionTransparentBackground">
+                                        <span>Transparent background</span>
+                                    </label>
+                                    <label class="pill-toggle" for="motionKnockoutEyes" id="motionKnockoutEyesLabel">
+                                        <input type="checkbox" id="motionKnockoutEyes" class="sr-only" data-setting="motionKnockoutEyes">
+                                        <span>Transparent eyes</span>
+                                    </label>
+                                </div>
+
+                                <div class="sparky-export-status" id="animationExportStatus" hidden aria-live="polite">
+                                    <progress id="animationExportProgress" max="1" value="0"></progress>
+                                    <div class="sparky-export-status-row">
+                                        <span id="animationExportMessage">Preparing animation</span>
+                                        <button type="button" id="animationExportCancelBtn">Cancel</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </section>
                 </div>
@@ -246,6 +357,6 @@
         </dialog>
     </div>
 
-    <script type="module" src="./tool.js?v=20260824-46"></script>
+    <script type="module" src="./tool.js?v=20260824-50"></script>
 </body>
 </html>
