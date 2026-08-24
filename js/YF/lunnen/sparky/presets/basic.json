@@ -27,10 +27,10 @@
   "showRayGuides": false,
   "showBisectors": false,
   "showPoint": false,
-  "followCursor": true,
-  "eyePerspective": 50,
-  "eyeSize": 30,
-  "eyeDistance": -20,
+  "followCursor": false,
+  "eyePerspective": 100,
+  "eyeSize": 50,
+  "eyeDistance": 0,
   "cute": 50,
   "angry": 0
 }

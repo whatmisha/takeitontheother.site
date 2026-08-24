@@ -98,7 +98,7 @@ export function createEyeRigModel({
     lidClosure = 0
 } = {}) {
     const sizeAmount = clamp(Number(eyeSize) / 100 || 0, 0, 1);
-    const distanceAmount = clamp(Number(eyeDistance) || 0, -90, 100);
+    const distanceAmount = clamp(Number(eyeDistance) || 0, -100, 100);
     const closureAmount = clamp(Number(lidClosure) || 0, 0, 1);
     // At full blink the opposing lid circles overlap enough to cover every
     // point of eye1. Normal Cute/Angry geometry keeps its designed gap.

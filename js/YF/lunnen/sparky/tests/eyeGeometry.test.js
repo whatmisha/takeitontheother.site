@@ -91,15 +91,17 @@ test('Eye Size 100 exactly reproduces the supplied neutral SVG reference', () =>
     assertPoint(rig.left.bottom.offset, { x: 0, y: 96 });
 });
 
-test('Eye Distance controls the clear gap and bottoms out at ten percent', () => {
-    const minimum = createEyeRigModel({ eyeDistance: -90 });
+test('Eye Distance controls the clear gap and reaches zero at -100', () => {
+    const minimum = createEyeRigModel({ eyeDistance: -100 });
     const neutral = createEyeRigModel({ eyeDistance: 0 });
     const maximum = createEyeRigModel({ eyeDistance: 100 });
-    closeTo(minimum.eyeGap, 3.2);
+    closeTo(minimum.eyeGap, 0);
     closeTo(neutral.eyeGap, 32);
     closeTo(maximum.eyeGap, 64);
-    assert.ok(minimum.left.eye1.center.x + minimum.left.eye1.radius
-        < minimum.right.eye1.center.x - minimum.right.eye1.radius);
+    closeTo(
+        minimum.left.eye1.center.x + minimum.left.eye1.radius,
+        minimum.right.eye1.center.x - minimum.right.eye1.radius
+    );
 });
 
 test('default centered Focus preserves full eye scale and containment', () => {
@@ -302,7 +304,7 @@ test('the full supported focus, Width and eye-control grid remains inside the he
     const eyeControls = [
         { eyeSize: 0, eyeDistance: 0, eyePerspective: 0 },
         { eyeSize: 100, eyeDistance: 0, eyePerspective: 0 },
-        { eyeSize: 0, eyeDistance: -90, eyePerspective: 100 },
+        { eyeSize: 0, eyeDistance: -100, eyePerspective: 100 },
         { eyeSize: 100, eyeDistance: 100, eyePerspective: 100 }
     ];
 

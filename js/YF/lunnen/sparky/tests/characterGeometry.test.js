@@ -223,6 +223,23 @@ test('every shipped preset produces a finite closed contour', () => {
 
 test('the shipped Basic preset starts with centered Focus', () => {
     const basic = JSON.parse(readFileSync(new URL('../presets/basic.json', import.meta.url), 'utf8'));
-    assert.equal(basic.focusAngle, 0);
-    assert.equal(basic.focusDistance, 0);
+    assert.deepEqual({
+        focusAngle: basic.focusAngle,
+        focusDistance: basic.focusDistance,
+        followCursor: basic.followCursor,
+        eyePerspective: basic.eyePerspective,
+        eyeSize: basic.eyeSize,
+        eyeDistance: basic.eyeDistance,
+        cute: basic.cute,
+        angry: basic.angry
+    }, {
+        focusAngle: 0,
+        focusDistance: 0,
+        followCursor: false,
+        eyePerspective: 100,
+        eyeSize: 50,
+        eyeDistance: 0,
+        cute: 50,
+        angry: 0
+    });
 });
