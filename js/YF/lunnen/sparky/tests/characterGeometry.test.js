@@ -235,7 +235,7 @@ test('the shipped Basic preset starts with centered Focus', () => {
     }, {
         focusAngle: 0,
         focusDistance: 0,
-        followCursor: false,
+        followCursor: true,
         eyePerspective: 100,
         eyeSize: 50,
         eyeDistance: 0,

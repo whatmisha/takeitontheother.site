@@ -4,7 +4,7 @@ import {
     DEFAULT_GEOMETRY,
     buildCharacterGeometry
 } from './src/geometry/characterGeometry.js?v=20260823-5';
-import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-6';
+import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-7';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import {
     advanceEyeMotion,
@@ -80,7 +80,7 @@ const settings = {
     showRayGuides: false,
     showBisectors: false,
     showPoint: false,
-    followCursor: false,
+    followCursor: true,
     eyePerspective: 100,
     eyeSize: 50,
     eyeDistance: 0,

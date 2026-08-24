@@ -31,6 +31,7 @@ const REFERENCE_HORIZONTAL_OFFSET = 21.6692;
 const CONTAINMENT_RELAX_ITERATIONS = 16;
 const FIT_SCALE_BINARY_ITERATIONS = 14;
 const FIT_SCALE_CONTINUATION_STEP = 0.08;
+const FINAL_HEAD_GAP = 2;
 
 /**
  * Canonical eyelid centers measured from the corresponding eye1 center.
@@ -1012,7 +1013,7 @@ function solveOpticalPairCenter(
         opticalCenter.y + (values.focusY - optical.center.y) * 0.05 * focusAmount
     );
     const enforceExactHeadGap = (center) => {
-        const minimumGap = 1;
+        const minimumGap = FINAL_HEAD_GAP;
         let candidate = center;
         for (let iteration = 0; iteration < 24; iteration += 1) {
             const result = minimumContainmentResult(
@@ -1169,7 +1170,7 @@ export function buildEyeGeometry(settings, characterGeometry, options = {}) {
         opticalCenter: opticalPlacement.opticalCenter,
         opticalSeed: opticalPlacement.opticalSeed,
         fitScale: placement.fitScale,
-        guard: 1,
+        guard: FINAL_HEAD_GAP,
         minClearance: placement.minClearance,
         solverMetrics,
         headContour,

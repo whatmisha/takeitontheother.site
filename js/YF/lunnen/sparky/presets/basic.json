@@ -27,7 +27,7 @@
   "showRayGuides": false,
   "showBisectors": false,
   "showPoint": false,
-  "followCursor": false,
+  "followCursor": true,
   "eyePerspective": 100,
   "eyeSize": 50,
   "eyeDistance": 0,

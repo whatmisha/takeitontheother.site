@@ -112,6 +112,7 @@ test('default centered Focus preserves full eye scale and containment', () => {
     closeTo(eyes.pairCenter.x, 240);
     assert.ok(eyes.pairCenter.y < head.focus.y);
     closeTo(eyes.fitScale, 1);
+    assert.equal(eyes.guard, 2);
     assert.ok(eyes.minClearance >= eyes.guard);
 });
 
