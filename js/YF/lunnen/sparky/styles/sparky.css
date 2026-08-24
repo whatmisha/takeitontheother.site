@@ -97,6 +97,14 @@ body,
 @media (max-width: 768px), (hover: none) and (pointer: coarse) {
     html,
     body,
+    body * {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
+
+    html,
+    body,
     .container,
     .main-content,
     .canvas-container {
@@ -124,6 +132,7 @@ body,
     #mainSvg {
         width: 100% !important;
         height: 100% !important;
+        -webkit-user-drag: none;
     }
 
     .mobile-desktop-hint {

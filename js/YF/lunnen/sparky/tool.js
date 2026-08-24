@@ -239,10 +239,15 @@ function bindMobileShowcase(app) {
     const refitMobile = () => {
         if (isMobileShowcase()) scheduleFit(true);
     };
+    const preventMobileSelection = (event) => {
+        if (isMobileShowcase()) event.preventDefault();
+    };
 
     media?.addEventListener?.('change', syncMode);
     window.addEventListener('resize', refitMobile);
     window.visualViewport?.addEventListener('resize', refitMobile);
+    document.addEventListener('selectstart', preventMobileSelection, { capture: true });
+    document.addEventListener('dragstart', preventMobileSelection, { capture: true });
     syncMode();
 }
 
