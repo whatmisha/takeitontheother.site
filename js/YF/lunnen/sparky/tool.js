@@ -920,8 +920,9 @@ function setTransientFollowFocus(app, x, y) {
         && desktopFollowFocus.y === focus.y;
     desktopFollowFocus = { ...focus };
     if (unchanged) return;
-    app.presets?.markDirty();
-    app.history?.notifyChange('focus-follow');
+    // Follow cursor is transient preview state. It must not dirty the selected
+    // preset or add history entries until Focus is changed persistently with
+    // Follow cursor disabled.
     beginInteractivePlacement(app);
     app.renderNow();
 }

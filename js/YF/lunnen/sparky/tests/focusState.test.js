@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import {
@@ -38,4 +39,15 @@ test('mobile Basic-only showcase does not overwrite the stored desktop preset st
 
     assert.deepEqual(resolved, state);
     assert.notStrictEqual(resolved, state);
+});
+
+test('Follow cursor preview does not dirty presets or create history entries', async () => {
+    const toolSource = await readFile(new URL('../tool.js', import.meta.url), 'utf8');
+    const transientHandler = toolSource.match(
+        /function setTransientFollowFocus\([^)]*\)\s*\{([\s\S]*?)\n\}/
+    )?.[1] || '';
+
+    assert.ok(transientHandler, 'setTransientFollowFocus must remain testable');
+    assert.doesNotMatch(transientHandler, /markDirty|notifyChange/);
+    assert.match(transientHandler, /renderNow/);
 });
