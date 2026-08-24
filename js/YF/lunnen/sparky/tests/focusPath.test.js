@@ -61,3 +61,13 @@ test('point count and complexity independently affect the generated path', () =>
     assert.equal(twelveSoft.anchors.length, 12);
     assert.notEqual(sixSoft.path, sixHard.path);
 });
+
+test('numeric complexity interpolates continuously between legacy profiles', () => {
+    const soft = generateFocusPath({ ...options, complexity: 0 });
+    const quarter = generateFocusPath({ ...options, complexity: 25 });
+    const medium = generateFocusPath({ ...options, complexity: 50 });
+    assert.equal(soft.path, generateFocusPath({ ...options, complexity: 'soft' }).path);
+    assert.equal(medium.path, generateFocusPath({ ...options, complexity: 'medium' }).path);
+    assert.notEqual(quarter.path, soft.path);
+    assert.notEqual(quarter.path, medium.path);
+});

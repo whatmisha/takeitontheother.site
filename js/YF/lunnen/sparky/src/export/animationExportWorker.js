@@ -1,8 +1,17 @@
-import { generateFocusPathForSettings } from '../animation/focusPath.js';
-import { createFocusTimeline, sampleFocusTimeline } from '../animation/focusTimeline.js';
-import { drawAnimationFrame } from '../render/animationFrameRenderer.js';
+import { generateFocusPathForSettings } from '../animation/focusPath.js?v=20260825-2';
+import { createFocusTimeline, sampleFocusTimeline } from '../animation/focusTimeline.js?v=20260825-2';
+import {
+    createEyeAnimationTimeline,
+    sampleEyeAnimationTimeline
+} from '../animation/eyeTimeline.js?v=20260825-2';
+import { drawAnimationFrame } from '../render/animationFrameRenderer.js?v=20260825-2';
 import { createStoredZip } from './zipStore.js';
 import { muxAvcToMp4 } from './mp4Muxer.js';
+import {
+    ANIMATION_EXPORT_FPS,
+    ANIMATION_EXPORT_SIZE,
+    shouldKnockoutPngEyes
+} from './animationExportDefaults.js?v=20260825-1';
 
 let cancelledJob = null;
 
@@ -23,19 +32,29 @@ function createMotion(settings, startFocus) {
         easing: settings.motionEasing,
         seed: settings.motionSeed
     });
-    return { path, timeline };
+    const eyeTimeline = createEyeAnimationTimeline(timeline, {
+        blinkCount: settings.motionBlinkCount,
+        blinkAtStops: true,
+        emotionVariation: settings.motionEmotionVariation,
+        easing: settings.motionEasing
+    });
+    return { path, timeline, eyeTimeline };
 }
 
-function frameFocus(timeline, frameIndex, fps) {
-    return sampleFocusTimeline(timeline, frameIndex * 1000 / fps).point;
+function frameState(timeline, eyeTimeline, settings, frameIndex, fps) {
+    const timeMs = frameIndex * 1000 / fps;
+    return {
+        focus: sampleFocusTimeline(timeline, timeMs).point,
+        eyes: sampleEyeAnimationTimeline(eyeTimeline, timeMs, settings)
+    };
 }
 
 async function exportPngSequence(job) {
     const { jobId, settings, startFocus, baseName } = job;
-    const fps = settings.motionFps;
-    const size = settings.motionResolution;
+    const fps = ANIMATION_EXPORT_FPS;
+    const size = ANIMATION_EXPORT_SIZE;
     const frameCount = Math.round(settings.motionDuration * fps);
-    const { timeline } = createMotion(settings, startFocus);
+    const { timeline, eyeTimeline } = createMotion(settings, startFocus);
     const canvas = new OffscreenCanvas(size, size);
     const context = canvas.getContext('2d', { alpha: true });
     const files = [];
@@ -43,9 +62,11 @@ async function exportPngSequence(job) {
 
     for (let index = 0; index < frameCount; index += 1) {
         assertActive(jobId);
-        drawAnimationFrame(context, size, size, settings, frameFocus(timeline, index, fps), {
-            transparentBackground: settings.motionTransparentBackground,
-            knockoutEyes: settings.motionKnockoutEyes
+        const state = frameState(timeline, eyeTimeline, settings, index, fps);
+        drawAnimationFrame(context, size, size, settings, state.focus, {
+            transparentBackground: true,
+            knockoutEyes: shouldKnockoutPngEyes(settings),
+            eyeState: state.eyes
         });
         const blob = await canvas.convertToBlob({ type: 'image/png' });
         files.push({
@@ -96,10 +117,10 @@ async function supportedAvcConfig(width, height, fps) {
 
 async function exportMp4(job) {
     const { jobId, settings, startFocus, baseName } = job;
-    const fps = settings.motionFps;
-    const size = settings.motionResolution;
+    const fps = ANIMATION_EXPORT_FPS;
+    const size = ANIMATION_EXPORT_SIZE;
     const frameCount = Math.round(settings.motionDuration * fps);
-    const { timeline } = createMotion(settings, startFocus);
+    const { timeline, eyeTimeline } = createMotion(settings, startFocus);
     const canvas = new OffscreenCanvas(size, size);
     const context = canvas.getContext('2d', { alpha: false });
     const chunks = [];
@@ -125,7 +146,10 @@ async function exportMp4(job) {
         for (let index = 0; index < frameCount; index += 1) {
             assertActive(jobId);
             if (encoderError) throw encoderError;
-            drawAnimationFrame(context, size, size, settings, frameFocus(timeline, index, fps));
+            const state = frameState(timeline, eyeTimeline, settings, index, fps);
+            drawAnimationFrame(context, size, size, settings, state.focus, {
+                eyeState: state.eyes
+            });
             const frame = new VideoFrame(canvas, {
                 timestamp: Math.round(index * microsecondsPerFrame),
                 duration: Math.round(microsecondsPerFrame)

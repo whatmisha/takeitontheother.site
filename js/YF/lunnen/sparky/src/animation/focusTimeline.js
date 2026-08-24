@@ -1,5 +1,5 @@
 import { clamp } from '../geometry/vector.js';
-import { createMotionRandom, sampleFocusPathSegment } from './focusPath.js';
+import { createMotionRandom, sampleFocusPath, sampleFocusPathSegment } from './focusPath.js?v=20260825-2';
 
 export const FOCUS_MOTION_EASINGS = Object.freeze({
     linear: (value) => value,
@@ -73,6 +73,8 @@ export function createFocusTimeline(path, {
         activeStops,
         holdDurationMs,
         movementBudgetMs,
+        movementStartMs: entries.find((entry) => entry.type === 'move')?.startMs || 0,
+        globalEasing: skipRatio >= 1,
         entries
     };
 }
@@ -91,6 +93,29 @@ export function sampleFocusTimeline(timeline, rawTimeMs) {
             type: 'hold',
             anchorIndex: entry?.anchorIndex ?? 0,
             progress: 0
+        };
+    }
+
+
+    if (timeline.globalEasing) {
+        const linearProgress = timeline.movementBudgetMs <= 1e-9
+            ? 1
+            : clamp(
+                (timeMs - timeline.movementStartMs) / timeline.movementBudgetMs,
+                0,
+                1
+            );
+        const easedProgress = FOCUS_MOTION_EASINGS[timeline.easing](linearProgress);
+        const sample = sampleFocusPath(timeline.path, easedProgress);
+        return {
+            point: sample.point,
+            timeMs,
+            type: 'move',
+            segmentIndex: sample.segmentIndex,
+            segmentProgress: sample.segmentProgress,
+            progress: linearProgress,
+            easedProgress,
+            globalEasing: true
         };
     }
 

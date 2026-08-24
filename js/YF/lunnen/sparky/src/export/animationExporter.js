@@ -1,3 +1,5 @@
+import { ANIMATION_EXPORT_FPS } from './animationExportDefaults.js';
+
 function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -50,13 +52,17 @@ export class AnimationExporter {
         if (this.worker) return Promise.reject(new Error('An animation export is already running.'));
         const jobId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const worker = new Worker(
-            new URL('./animationExportWorker.js?v=20260824-1', import.meta.url),
+            new URL('./animationExportWorker.js?v=20260825-3', import.meta.url),
             { type: 'module' }
         );
         this.worker = worker;
         this.jobId = jobId;
         this.setBusy(true);
-        this.updateProgress(0, Math.round(settings.motionDuration * settings.motionFps), 'Preparing animation');
+        this.updateProgress(
+            0,
+            Math.round(settings.motionDuration * ANIMATION_EXPORT_FPS),
+            'Preparing animation'
+        );
 
         return new Promise((resolve, reject) => {
             this.rejectCurrent = reject;

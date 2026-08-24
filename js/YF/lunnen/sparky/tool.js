@@ -6,7 +6,7 @@ import {
 } from './src/geometry/characterGeometry.js?v=20260823-5';
 import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-7';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
-import { AnimationExporter } from './src/export/animationExporter.js?v=20260824-2';
+import { AnimationExporter } from './src/export/animationExporter.js?v=20260825-4';
 import {
     advanceEyeMotion,
     createEyeMotionState,
@@ -19,8 +19,16 @@ import {
     resetBlink,
     triggerBlink
 } from './src/animation/blink.js?v=20260822-6';
-import { generateFocusPathForSettings, normalizeMotionSeed } from './src/animation/focusPath.js';
-import { createFocusTimeline, sampleFocusTimeline } from './src/animation/focusTimeline.js';
+import {
+    generateFocusPathForSettings,
+    normalizeMotionComplexity,
+    normalizeMotionSeed
+} from './src/animation/focusPath.js?v=20260825-2';
+import { createFocusTimeline, sampleFocusTimeline } from './src/animation/focusTimeline.js?v=20260825-2';
+import {
+    createEyeAnimationTimeline,
+    sampleEyeAnimationTimeline
+} from './src/animation/eyeTimeline.js?v=20260825-2';
 import { clamp } from './src/geometry/vector.js';
 import {
     focusPointFromPolar,
@@ -88,16 +96,14 @@ const settings = {
     focusMode: 'manual',
     motionDuration: 5,
     motionPointCount: 6,
-    motionComplexity: 'soft',
+    motionComplexity: 0,
     motionEasing: 'ease-in-out',
     motionPause: 12,
     motionSkipProbability: 0,
+    motionBlinkCount: 2,
+    motionEmotionVariation: 0,
     motionSeed: 24062026,
     showMotionPath: true,
-    motionFps: 30,
-    motionResolution: 480,
-    motionTransparentBackground: false,
-    motionKnockoutEyes: false,
     eyePerspective: 100,
     eyeSize: 50,
     eyeDistance: 0,
@@ -132,22 +138,27 @@ function normalizeIncomingState(source = {}) {
     normalized.focusMode = normalized.focusMode === 'animate' ? 'animate' : 'manual';
     normalized.motionDuration = clamp(Number(normalized.motionDuration) || 5, 1, 10);
     normalized.motionPointCount = Math.round(clamp(Number(normalized.motionPointCount) || 6, 3, 16));
-    normalized.motionComplexity = ['soft', 'medium', 'hard'].includes(normalized.motionComplexity)
-        ? normalized.motionComplexity
-        : 'soft';
+    normalized.motionComplexity = normalizeMotionComplexity(normalized.motionComplexity);
     normalized.motionEasing = ['linear', 'smooth', 'ease-in', 'ease-out', 'ease-in-out']
         .includes(normalized.motionEasing)
         ? normalized.motionEasing
         : 'ease-in-out';
     normalized.motionPause = clamp(Number(normalized.motionPause) || 0, 0, 60);
     normalized.motionSkipProbability = clamp(Number(normalized.motionSkipProbability) || 0, 0, 100);
+    normalized.motionBlinkCount = Math.round(clamp(
+        Number.isFinite(Number(normalized.motionBlinkCount))
+            ? Number(normalized.motionBlinkCount)
+            : 2,
+        0,
+        12
+    ));
+    normalized.motionEmotionVariation = clamp(
+        Number(normalized.motionEmotionVariation) || 0,
+        0,
+        100
+    );
     normalized.motionSeed = normalizeMotionSeed(normalized.motionSeed);
-    normalized.motionFps = Number(normalized.motionFps) === 60 ? 60 : 30;
-    normalized.motionResolution = Number(normalized.motionResolution) === 960 ? 960 : 480;
     normalized.showMotionPath = Boolean(normalized.showMotionPath);
-    normalized.motionTransparentBackground = Boolean(normalized.motionTransparentBackground);
-    normalized.motionKnockoutEyes = normalized.motionTransparentBackground
-        && Boolean(normalized.motionKnockoutEyes);
     const hasPolarFocus = migrated.focusAngle != null
         && migrated.focusDistance != null
         && Number.isFinite(Number(migrated.focusAngle))
@@ -338,6 +349,7 @@ let blinkFrame = null;
 const focusAnimation = {
     path: null,
     timeline: null,
+    eyeTimeline: null,
     currentFocus: null,
     frame: null,
     startedAt: null,
@@ -408,6 +420,12 @@ function rebuildFocusAnimation(app, { restart = true, schedule = true } = {}) {
         easing: app.settings.motionEasing,
         seed: app.settings.motionSeed
     });
+    focusAnimation.eyeTimeline = createEyeAnimationTimeline(focusAnimation.timeline, {
+        blinkCount: app.settings.motionBlinkCount,
+        blinkAtStops: true,
+        emotionVariation: app.settings.motionEmotionVariation,
+        easing: app.settings.motionEasing
+    });
     if (restart) {
         focusAnimation.elapsedMs = 0;
         focusAnimation.startedAt = null;
@@ -433,6 +451,17 @@ function rebuildFocusAnimation(app, { restart = true, schedule = true } = {}) {
     updateFocusAnimationButtons();
     app.renderNow();
     if (schedule) scheduleFocusAnimation(app);
+}
+
+function rebuildEyeAnimation(app) {
+    if (!focusAnimation.timeline) return;
+    focusAnimation.eyeTimeline = createEyeAnimationTimeline(focusAnimation.timeline, {
+        blinkCount: app.settings.motionBlinkCount,
+        blinkAtStops: true,
+        emotionVariation: app.settings.motionEmotionVariation,
+        easing: app.settings.motionEasing
+    });
+    app.renderNow();
 }
 
 function pauseFocusAnimation(app) {
@@ -477,6 +506,7 @@ function stopFocusAnimation(app) {
     cancelFocusAnimationFrame();
     focusAnimation.path = null;
     focusAnimation.timeline = null;
+    focusAnimation.eyeTimeline = null;
     focusAnimation.currentFocus = null;
     focusAnimation.startedAt = null;
     focusAnimation.lastPreviewAt = null;
@@ -484,14 +514,6 @@ function stopFocusAnimation(app) {
     focusAnimation.paused = false;
     updateFocusAnimationButtons();
     app?.renderNow();
-}
-
-function updateAnimationExportControls(app) {
-    const transparent = Boolean(app.settings.motionTransparentBackground);
-    const knockout = document.getElementById('motionKnockoutEyes');
-    const knockoutLabel = document.getElementById('motionKnockoutEyesLabel');
-    if (knockout) knockout.disabled = !transparent;
-    knockoutLabel?.classList.toggle('is-disabled', !transparent);
 }
 
 function syncRadioGroup(name, value) {
@@ -505,18 +527,15 @@ function syncFocusModeUI(app) {
     syncRadioGroup('focusMode', animate ? 'animate' : 'manual');
     document.getElementById('focusManualControls')?.toggleAttribute('hidden', animate);
     document.getElementById('focusAnimationControls')?.toggleAttribute('hidden', !animate);
+    document.getElementById('showMotionPathToggle')?.toggleAttribute('hidden', !animate);
     const pngButton = document.getElementById('exportPngBtn');
     const primaryButton = document.getElementById('exportSvgBtn');
     if (pngButton) pngButton.textContent = animate ? 'Export PNG sequence' : 'Export PNG';
     if (primaryButton) primaryButton.textContent = animate ? 'Export MP4' : 'Export ⌘E';
-    updateAnimationExportControls(app);
 }
 
 function syncFocusAnimationControls(app) {
     syncFocusModeUI(app);
-    syncRadioGroup('motionComplexity', app.settings.motionComplexity);
-    syncRadioGroup('motionFps', app.settings.motionFps);
-    syncRadioGroup('motionResolution', app.settings.motionResolution);
     const easing = document.getElementById('motionEasingSelect');
     if (easing) easing.value = app.settings.motionEasing;
     updateFocusAnimationButtons();
@@ -534,20 +553,8 @@ function applyFocusMode(app) {
     stopFocusAnimation(app);
 }
 
-function bindRadioSetting(app, name, setting, convert = (value) => value) {
-    document.querySelectorAll(`input[name="${name}"]`).forEach((input) => {
-        input.addEventListener('change', () => {
-            if (!input.checked) return;
-            app.settingsStore.set(setting, convert(input.value));
-        });
-    });
-}
-
 function bindFocusAnimation(app) {
     focusAnimationReady = true;
-    bindRadioSetting(app, 'motionComplexity', 'motionComplexity');
-    bindRadioSetting(app, 'motionFps', 'motionFps', Number);
-    bindRadioSetting(app, 'motionResolution', 'motionResolution', Number);
     document.querySelectorAll('input[name="focusMode"]').forEach((input) => {
         input.addEventListener('change', () => {
             if (!input.checked) return;
@@ -585,13 +592,15 @@ function bindFocusAnimation(app) {
             if (app.settings.focusMode === 'animate') rebuildFocusAnimation(app);
         });
     });
-    app.settingsStore.subscribe('focusMode', () => applyFocusMode(app));
-    app.settingsStore.subscribe('motionTransparentBackground', () => {
-        if (!app.settings.motionTransparentBackground && app.settings.motionKnockoutEyes) {
-            app.settingsStore.set('motionKnockoutEyes', false);
-        }
-        updateAnimationExportControls(app);
+    [
+        'motionBlinkCount',
+        'motionEmotionVariation'
+    ].forEach((setting) => {
+        app.settingsStore.subscribe(setting, () => {
+            if (app.settings.focusMode === 'animate') rebuildEyeAnimation(app);
+        });
     });
+    app.settingsStore.subscribe('focusMode', () => applyFocusMode(app));
     window.matchMedia?.(MOBILE_SHOWCASE_QUERY)?.addEventListener?.('change', (event) => {
         if (event.matches) {
             cancelFocusAnimationFrame();
@@ -706,12 +715,23 @@ function applyBlink(app) {
     const eyeGeometry = app.eyeGeometry;
     if (!svg || !eyeGeometry) return;
     const expression = activeRenderSettings(app.settings);
-    const amount = expression.focusMode === 'animate' ? 0 : blink.amount;
-    const lids = amount <= 0
+    const eyeState = expression.focusMode === 'animate' && focusAnimation.eyeTimeline
+        ? sampleEyeAnimationTimeline(
+            focusAnimation.eyeTimeline,
+            focusAnimation.elapsedMs,
+            expression
+        )
+        : null;
+    const amount = eyeState ? eyeState.blinkAmount : blink.amount;
+    const animatedCute = eyeState?.cute ?? expression.cute;
+    const animatedAngry = eyeState?.angry ?? expression.angry;
+    const expressionChanged = animatedCute !== expression.cute
+        || animatedAngry !== expression.angry;
+    const lids = amount <= 0 && !expressionChanged
         ? eyeGeometry
         : buildEyeLidGeometry({
-            cute: expression.cute + (100 - expression.cute) * amount,
-            angry: expression.angry + (100 - expression.angry) * amount,
+            cute: animatedCute + (100 - animatedCute) * amount,
+            angry: animatedAngry + (100 - animatedAngry) * amount,
             lidClosure: amount
         }, eyeGeometry);
     ['left', 'right'].forEach((side) => {
@@ -724,6 +744,7 @@ function applyBlink(app) {
         });
     });
     app.blinkAmount = amount;
+    app.animatedExpression = { cute: animatedCute, angry: animatedAngry };
 }
 
 function scheduleBlink(app) {
@@ -1372,8 +1393,11 @@ const app = defineTool({
             { id: 'focusDistanceSlider', valueId: 'focusDistanceValue', setting: 'focusDistance', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'motionDurationSlider', valueId: 'motionDurationValue', setting: 'motionDuration', min: 1, max: 10, decimals: 0, baseStep: 1, shiftStep: 1 },
             { id: 'motionPointCountSlider', valueId: 'motionPointCountValue', setting: 'motionPointCount', min: 3, max: 16, decimals: 0, baseStep: 1, shiftStep: 2 },
+            { id: 'motionComplexitySlider', valueId: 'motionComplexityValue', setting: 'motionComplexity', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'motionPauseSlider', valueId: 'motionPauseValue', setting: 'motionPause', min: 0, max: 60, decimals: 0, baseStep: 1, shiftStep: 5 },
             { id: 'motionSkipProbabilitySlider', valueId: 'motionSkipProbabilityValue', setting: 'motionSkipProbability', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'motionBlinkCountSlider', valueId: 'motionBlinkCountValue', setting: 'motionBlinkCount', min: 0, max: 12, decimals: 0, baseStep: 1, shiftStep: 2 },
+            { id: 'motionEmotionVariationSlider', valueId: 'motionEmotionVariationValue', setting: 'motionEmotionVariation', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyePerspectiveSlider', valueId: 'eyePerspectiveValue', setting: 'eyePerspective', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyeSizeSlider', valueId: 'eyeSizeValue', setting: 'eyeSize', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyeDistanceSlider', valueId: 'eyeDistanceValue', setting: 'eyeDistance', min: -100, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
@@ -1448,8 +1472,9 @@ const app = defineTool({
             'focusAngle', 'focusDistance', 'rayLength', 'rayWidth', 'roundness', 'cornerSmoothing',
             'rayCount', 'angleSpan', 'boundaryCenterX', 'boundaryCenterY', 'boundaryRadius',
             'eyePerspective', 'eyeSize', 'eyeDistance', 'cute', 'angry',
-            'motionDuration', 'motionPointCount', 'motionPause', 'motionSkipProbability',
-            'motionSeed', 'motionFps', 'motionResolution'
+            'motionDuration', 'motionPointCount', 'motionComplexity', 'motionPause', 'motionSkipProbability',
+            'motionBlinkCount', 'motionEmotionVariation',
+            'motionSeed'
         ],
         decimals: 2
     },

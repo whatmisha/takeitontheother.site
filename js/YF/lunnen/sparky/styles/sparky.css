@@ -70,6 +70,15 @@ body,
     margin-top: 24px;
 }
 
+.sparky-pill-button {
+    appearance: none;
+    font: inherit;
+}
+
+#showMotionPathToggle[hidden] {
+    display: none;
+}
+
 .sparky-focus-tabs {
     margin: 0 0 20px;
 }
@@ -136,10 +145,20 @@ body,
     margin-top: 16px;
 }
 
-.sparky-export-subsection {
-    margin-top: 20px;
+.sparky-eye-animation-subsection {
+    display: grid;
+    gap: 2px;
+    margin-top: 18px;
     padding-top: 18px;
     border-top: 1px solid var(--color-border);
+}
+
+.sparky-eye-animation-subsection > .control-group {
+    margin-top: 14px;
+}
+
+.sparky-eye-animation-subsection > .sparky-motion-toggles {
+    margin-top: 10px;
 }
 
 .sparky-export-status {
@@ -181,25 +200,6 @@ body,
 .bottom-buttons button:disabled {
     cursor: wait;
     opacity: 0.45;
-}
-
-.sparky-export-option-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-}
-
-.sparky-export-options-label {
-    margin-top: 16px;
-}
-
-.sparky-export-options-label + .sparky-motion-toggles {
-    margin-top: 8px;
-}
-
-.pill-toggle.is-disabled {
-    pointer-events: none;
-    opacity: 0.35;
 }
 
 .sparky-focus-hit-area {

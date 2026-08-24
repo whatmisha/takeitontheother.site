@@ -1,17 +1,18 @@
 # Lunnen Sparky: план реализации Focus Motion
 
-Статус: реализован и проверен 24 августа 2026 года.
+Статус: реализован, дополнен и упрощён 25 августа 2026 года.
 
 ## Итог реализации
 
 - Focus разделён на сохраняемые режимы Manual и Animate; мобильный showcase не изменён.
 - Preview работает как transient state, ограничен 30 fps и использует быстрый локальный solver глаз. Фаза не попадает в presets, history и share state.
 - Финальный покадровый renderer использует исходное геометрическое ядро и глобальный solver глаз в Dedicated Worker.
-- PNG sequence собирается в ZIP, поддерживает 480/960, 30/60 fps, прозрачный фон и knockout видимой формы глаз.
+- PNG sequence собирается в ZIP при 480×480 и 60 fps, всегда имеет прозрачный фон; видимая форма глаз становится knockout только при совпадении Eye и Background color.
 - MP4/H.264 использует WebCodecs quality mode, фиксированные timestamps и собственный MP4 muxer с поддержкой reordered AVC samples через CTTS.
 - Во время экспорта видны progress и Cancel; экспортные кнопки защищены от повторного запуска.
-- Реальные browser-прогоны подтвердили MP4, прозрачную PNG sequence, 960×960 / 60 fps, Cancel и продолжающее двигаться preview во время фонового рендера.
-- Полный regression suite: 76 тестов, 76 passed.
+- Реальные browser-прогоны подтвердили фиксированный MP4 60 fps, прозрачную PNG sequence с цветными глазами, Cancel и продолжающее двигаться preview во время фонового рендера.
+- Preview и MP4 export используют одну eye-timeline: моргания и эмоции совпадают по времени и бесшовно повторяются.
+- Полный regression suite: 85 тестов, 85 passed.
 
 ## Продуктовые решения
 
@@ -19,23 +20,25 @@
 - При входе в Animate первая точка пути совпадает с текущим ручным положением фокуса.
 - Вся траектория вписывается в существующую безопасную область Focus без покадрового clamp.
 - Путь — замкнутый smooth cubic Bézier spline в характере `reference/motion_paths.svg`.
-- `Points` и `Complexity` независимы: Points задаёт опорные точки, Complexity — кривизну, смену направления и пересечения.
+- `Points` и `Complexity` независимы: Points задаёт опорные точки, а непрерывный Complexity 0–100 интерполирует кривизну, смену направления и пересечения между прежними Soft/Medium/Hard-профилями.
 - Общая длительность петли — 1–10 секунд и включает остановки.
 - `Pause` — отдельный параметр; easing действует на движение между точками.
 - Seeded skip пропускает только остановку, но не меняет геометрию пути.
 - Один глобальный easing используется для всех сегментов первой версии.
 - Петля детерминирована и вычисляется на полуинтервале `[0, duration)` без дублирования первого кадра в конце.
 - В Animate и export отключаются случайное моргание и realtime-инерция глаз.
-- Video export: MP4/H.264, 480×480 или 960×960, 30 fps по умолчанию и опция 60 fps, без прозрачности.
-- PNG sequence: ZIP, 480×480 или 960×960, 30/60 fps, с непрозрачным или прозрачным фоном и опциональным knockout глаз.
+- При `Skip stops = 100%` easing применяется один раз ко всей замкнутой кривой; промежуточные anchors проходятся без замедления, обязательная остановка остаётся только на шве.
+- Eye animation добавляет детерминированное количество морганий за цикл только во время остановок и степень отклонения от исходной пары Cute/Angry по выбранному easing.
+- Video export: MP4/H.264, фиксированные 480×480 и 60 fps, без прозрачности.
+- PNG sequence: ZIP, фиксированные 480×480 и 60 fps, всегда с прозрачным фоном и автоматическим knockout глаз по совпадению цветов.
 - Мобильный showcase остаётся без изменений.
 - Animated SVG припаркован и не входит в эту реализацию.
 
 ## Этап 1. State и UI
 
-Добавить сохраняемые настройки `focusMode`, `motionDuration`, `motionPointCount`, `motionComplexity`, `motionEasing`, `motionPause`, `motionSkipProbability`, `motionSeed`, `showMotionPath`, `motionFps`, `motionResolution`, `motionTransparentBackground` и `motionKnockoutEyes`.
+Сохраняемые настройки анимации: `focusMode`, `motionDuration`, `motionPointCount`, `motionComplexity`, `motionEasing`, `motionPause`, `motionSkipProbability`, `motionBlinkCount`, `motionEmotionVariation`, `motionSeed` и `showMotionPath`. Технические параметры экспорта удалены из пользовательского state.
 
-В панели Focus использовать две вкладки. Manual сохраняет Angle, Distance, Center focus и Follow cursor. Animate показывает параметры пути, Play/Pause, Restart, Regenerate и диагностический overlay.
+В панели Focus используются две вкладки. Manual сохраняет Angle, Distance, Center focus и Follow cursor. Animate показывает параметры пути, Play/Pause, Restart, Regenerate и eye animation. Тогл Path находится вместе с другими guides в General и виден только в Animate.
 
 ## Этап 2. Генератор пути
 
@@ -76,6 +79,12 @@ Preset/share сохраняют конфигурацию и seed, но не те
 
 Knockout-глаза вычитаются из головы по фактически видимой форме глаза после lids. Для прозрачного background фон не рисуется.
 
+## Дополнение: Eye animation timeline
+
+`src/animation/eyeTimeline.js` создаёт точное количество морганий на полный цикл и всегда размещает их внутри активных hold-интервалов или около математической точки остановки, если Pause равен нулю.
+
+`Emotion variation` не заменяет исходные Cute/Angry: оба сигнала начинаются с исходного сочетания, отклоняются от него в пределах выбранного процента по выбранному Focus easing и возвращаются к нему на шве. Blink временно закрывает уже анимированное выражение тем же законом lids, который используется ручным морганием.
+
 ## Этап 6. PNG sequence
 
 Покадрово отрисовать `duration × fps` кадров, кодировать каждый через `convertToBlob({type: "image/png"})`, именовать `sparky_0001.png` и собирать в ZIP. Worker сообщает progress и поддерживает Cancel.
@@ -91,5 +100,5 @@ Knockout-глаза вычитаются из головы по фактичес
 - тесты ZIP и MP4 container structures;
 - browser QA Manual/Animate, controls, presets, share, Play/Pause/Restart;
 - визуальное сравнение Soft/Medium/Hard с референсом;
-- проверка 30/60 fps, 480/960, прозрачного PNG и knockout глаз;
+- проверка фиксированных 60 fps / 480 px, прозрачного PNG и автоматического knockout глаз;
 - regression всех существующих тестов и mobile showcase.

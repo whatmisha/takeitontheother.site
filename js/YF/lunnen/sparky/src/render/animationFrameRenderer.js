@@ -1,5 +1,5 @@
 import { buildCharacterGeometry } from '../geometry/characterGeometry.js';
-import { buildEyeGeometry } from '../geometry/eyeGeometry.js';
+import { buildEyeGeometry, buildEyeLidGeometry } from '../geometry/eyeGeometry.js';
 
 export const ANIMATION_ARTBOARD_SIZE = 480;
 
@@ -29,24 +29,39 @@ function fillPath(context, path, color) {
     context.fill(createPath(path));
 }
 
-function drawEyes(context, scene, knockoutEyes) {
+function drawEyes(context, scene, knockoutEyes, eyeState) {
     const { settings, character, eyes } = scene;
+    const blinkAmount = Math.max(0, Math.min(1, Number(eyeState?.blinkAmount) || 0));
+    const animatedCute = Number.isFinite(Number(eyeState?.cute))
+        ? Number(eyeState.cute)
+        : settings.cute;
+    const animatedAngry = Number.isFinite(Number(eyeState?.angry))
+        ? Number(eyeState.angry)
+        : settings.angry;
+    const lids = eyeState
+        ? buildEyeLidGeometry({
+            cute: animatedCute + (100 - animatedCute) * blinkAmount,
+            angry: animatedAngry + (100 - animatedAngry) * blinkAmount,
+            lidClosure: blinkAmount
+        }, eyes)
+        : null;
     context.save();
     context.clip(createPath(character.rounded.path));
 
     ['left', 'right'].forEach((side) => {
         const eye = eyes[side];
+        const renderedLids = lids?.[side] || eye;
         if (knockoutEyes) {
             context.globalCompositeOperation = 'destination-out';
             fillPath(context, eye.eye1.path, '#000000');
             context.globalCompositeOperation = 'source-over';
-            fillPath(context, eye.top.path, settings.headColor);
-            fillPath(context, eye.bottom.path, settings.headColor);
+            fillPath(context, renderedLids.top.path, settings.headColor);
+            fillPath(context, renderedLids.bottom.path, settings.headColor);
             return;
         }
         fillPath(context, eye.eye1.path, settings.eyeColor);
-        fillPath(context, eye.top.path, settings.headColor);
-        fillPath(context, eye.bottom.path, settings.headColor);
+        fillPath(context, renderedLids.top.path, settings.headColor);
+        fillPath(context, renderedLids.bottom.path, settings.headColor);
     });
 
     context.restore();
@@ -54,7 +69,8 @@ function drawEyes(context, scene, knockoutEyes) {
 
 export function drawAnimationFrame(context, width, height, settings, focus, {
     transparentBackground = false,
-    knockoutEyes = false
+    knockoutEyes = false,
+    eyeState = null
 } = {}) {
     const scene = buildAnimationFrameScene(settings, focus);
     const scaleX = width / ANIMATION_ARTBOARD_SIZE;
@@ -69,7 +85,12 @@ export function drawAnimationFrame(context, width, height, settings, focus, {
         context.fillRect(0, 0, ANIMATION_ARTBOARD_SIZE, ANIMATION_ARTBOARD_SIZE);
     }
     fillPath(context, scene.character.rounded.path, scene.settings.headColor);
-    drawEyes(context, scene, Boolean(transparentBackground && knockoutEyes));
+    drawEyes(
+        context,
+        scene,
+        Boolean(transparentBackground && knockoutEyes),
+        eyeState
+    );
     context.restore();
     return scene;
 }

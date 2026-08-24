@@ -10,21 +10,24 @@ export const FOCUS_PATH_COMPLEXITY = Object.freeze({
         radiusMin: 0.42,
         radiusMax: 0.84,
         strideRatio: 0,
-        handleFactor: 0.34
+        handleFactor: 0.34,
+        radialExponent: 0.82
     }),
     medium: Object.freeze({
         angularJitter: 0.38,
         radiusMin: 0.28,
         radiusMax: 0.91,
         strideRatio: 0.32,
-        handleFactor: 0.29
+        handleFactor: 0.29,
+        radialExponent: 1
     }),
     hard: Object.freeze({
         angularJitter: 0.68,
         radiusMin: 0.18,
         radiusMax: 0.96,
         strideRatio: 0.48,
-        handleFactor: 0.23
+        handleFactor: 0.23,
+        radialExponent: 1
     })
 });
 
@@ -42,6 +45,38 @@ const addScaled = (origin, direction, amount) => ({
 const vectorLength = (value) => Math.hypot(value.x, value.y);
 const dot = (a, b) => a.x * b.x + a.y * b.y;
 const cross = (a, b) => a.x * b.y - a.y * b.x;
+
+const LEGACY_COMPLEXITY = Object.freeze({ soft: 0, medium: 50, hard: 100 });
+
+export function normalizeMotionComplexity(value) {
+    if (typeof value === 'string' && value in LEGACY_COMPLEXITY) {
+        return LEGACY_COMPLEXITY[value];
+    }
+    return clamp(finiteOr(value, 0), 0, 100);
+}
+
+function interpolateProfile(first, second, amount) {
+    return Object.fromEntries(Object.keys(first).map((key) => [
+        key,
+        first[key] + (second[key] - first[key]) * amount
+    ]));
+}
+
+function complexityProfile(value) {
+    const normalized = normalizeMotionComplexity(value);
+    if (normalized <= 50) {
+        return interpolateProfile(
+            FOCUS_PATH_COMPLEXITY.soft,
+            FOCUS_PATH_COMPLEXITY.medium,
+            normalized / 50
+        );
+    }
+    return interpolateProfile(
+        FOCUS_PATH_COMPLEXITY.medium,
+        FOCUS_PATH_COMPLEXITY.hard,
+        (normalized - 50) / 50
+    );
+}
 
 function unit(value, fallback = { x: 1, y: 0 }) {
     const magnitude = vectorLength(value);
@@ -133,7 +168,7 @@ function createAnchors({ start, center, radius, pointCount, profile, random }) {
     for (let index = 0; index < generatedCount; index += 1) {
         const jitter = (random() - 0.5) * angularStep * profile.angularJitter;
         const angle = baseAngle + index * angularStep + jitter;
-        const radialMix = Math.pow(random(), profile === FOCUS_PATH_COMPLEXITY.soft ? 0.82 : 1);
+        const radialMix = Math.pow(random(), profile.radialExponent);
         const radialRatio = profile.radiusMin
             + (profile.radiusMax - profile.radiusMin) * radialMix;
         pool.push({
@@ -237,6 +272,39 @@ export function sampleFocusPathSegment(segment, distanceProgress) {
     return cubicBezierPoint(segment, left.t + (right.t - left.t) * mix);
 }
 
+export function sampleFocusPath(path, distanceProgress) {
+    const progress = clamp(Number(distanceProgress) || 0, 0, 1);
+    if (progress <= 0 || path.totalLength <= 1e-9) {
+        return { point: copyPoint(path.anchors[0]), segmentIndex: 0, segmentProgress: 0 };
+    }
+    if (progress >= 1) {
+        const finalIndex = path.segments.length - 1;
+        return {
+            point: copyPoint(path.anchors[0]),
+            segmentIndex: finalIndex,
+            segmentProgress: 1
+        };
+    }
+    const target = path.totalLength * progress;
+    let traversed = 0;
+    for (let index = 0; index < path.segments.length; index += 1) {
+        const segment = path.segments[index];
+        const end = traversed + segment.length;
+        if (target <= end || index === path.segments.length - 1) {
+            const localProgress = segment.length <= 1e-9
+                ? 0
+                : (target - traversed) / segment.length;
+            return {
+                point: sampleFocusPathSegment(segment, localProgress),
+                segmentIndex: index,
+                segmentProgress: clamp(localProgress, 0, 1)
+            };
+        }
+        traversed = end;
+    }
+    return { point: copyPoint(path.anchors[0]), segmentIndex: 0, segmentProgress: 0 };
+}
+
 function formatPath(segments) {
     if (!segments.length) return '';
     const commands = [`M ${clean(segments[0].start.x)} ${clean(segments[0].start.y)}`];
@@ -256,7 +324,7 @@ export function generateFocusPath({
     center,
     radius,
     pointCount = 6,
-    complexity = 'soft',
+    complexity = 0,
     seed = 1
 } = {}) {
     const safeCenter = {
@@ -264,7 +332,8 @@ export function generateFocusPath({
         y: finiteOr(center?.y, 240)
     };
     const safeRadius = Math.max(1, finiteOr(radius, 195));
-    const profile = FOCUS_PATH_COMPLEXITY[complexity] || FOCUS_PATH_COMPLEXITY.soft;
+    const normalizedComplexity = normalizeMotionComplexity(complexity);
+    const profile = complexityProfile(normalizedComplexity);
     const random = createMotionRandom(seed);
     const anchors = createAnchors({
         start: start || safeCenter,
@@ -279,7 +348,7 @@ export function generateFocusPath({
     const totalLength = segments.reduce((sum, segment) => sum + segment.length, 0);
     return {
         seed: normalizeMotionSeed(seed),
-        complexity: FOCUS_PATH_COMPLEXITY[complexity] ? complexity : 'soft',
+        complexity: normalizedComplexity,
         center: safeCenter,
         radius: safeRadius,
         anchors,

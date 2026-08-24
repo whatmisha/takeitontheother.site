@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { generateFocusPath } from '../src/animation/focusPath.js';
+import { generateFocusPath, sampleFocusPath } from '../src/animation/focusPath.js';
 import { createFocusTimeline, sampleFocusTimeline } from '../src/animation/focusTimeline.js';
 
 const path = generateFocusPath({
@@ -63,4 +63,27 @@ test('easing affects segment progress but keeps endpoints fixed', () => {
     assert.notDeepEqual(linearPoint, easedPoint);
     assert.deepEqual(sampleFocusTimeline(linear, 0).point, path.anchors[0]);
     assert.deepEqual(sampleFocusTimeline(eased, 0).point, path.anchors[0]);
+});
+
+test('100% skipped stops applies easing once across the complete closed path', () => {
+    const timeline = createFocusTimeline(path, {
+        duration: 5,
+        pause: 12,
+        skipProbability: 100,
+        easing: 'ease-in-out',
+        seed: 17
+    });
+    assert.equal(timeline.globalEasing, true);
+    assert.equal(timeline.activeStops[0], true);
+    assert.equal(timeline.activeStops.slice(1).every((active) => !active), true);
+    assert.equal(timeline.entries.filter((entry) => entry.type === 'hold').length, 1);
+
+    const progress = 0.25;
+    const sample = sampleFocusTimeline(
+        timeline,
+        timeline.movementStartMs + timeline.movementBudgetMs * progress
+    );
+    const expected = sampleFocusPath(path, 4 * progress ** 3);
+    assert.equal(sample.globalEasing, true);
+    assert.deepEqual(sample.point, expected.point);
 });
