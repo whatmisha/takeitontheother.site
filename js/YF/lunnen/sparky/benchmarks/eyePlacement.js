@@ -12,6 +12,18 @@ const PARITY_LIMITS = Object.freeze({
     fitScale: 0.002,
     contourPx: 0.25
 });
+const CONTINUITY_LIMITS = Object.freeze({
+    fitScaleStep: 0.081,
+    cyclicCenterPx: 0.25,
+    cyclicFitScale: 0.002,
+    cyclicContourPx: 0.25
+});
+const PERFORMANCE_LIMITS = Object.freeze({
+    localMeanMs: 8,
+    localP95Ms: 12,
+    framesOver16_7Ms: 3,
+    minimumSpeedup: 1.1
+});
 const baseSettings = {
     rayWidth: 80,
     eyeSize: 30,
@@ -44,6 +56,31 @@ function timingSummary(mode, durations) {
         maxMs: Number(sorted[sorted.length - 1].toFixed(2)),
         framesOver16_7Ms: sorted.filter((duration) => duration > 16.7).length
     };
+}
+
+function solverSummary(mode, entries) {
+    const numericKeys = [
+        'legacyMs',
+        'opticalMs',
+        'containmentEvaluations',
+        'opticalEvaluations',
+        'opticalCacheHits',
+        'sampleChecks',
+        'edgeChecks',
+        'crossingChecks',
+        'bvhNodeChecks',
+        'earlyExits'
+    ];
+    const averages = Object.fromEntries(numericKeys.map((key) => [
+        key,
+        Number((entries.reduce((sum, entry) => sum + entry[key], 0) / entries.length).toFixed(2))
+    ]));
+    const fallbackReasons = entries.reduce((counts, entry) => {
+        const reason = entry.fallbackReason || 'none';
+        counts[reason] = (counts[reason] || 0) + 1;
+        return counts;
+    }, {});
+    return { mode, averages, fallbackReasons };
 }
 
 function maximumContourDelta(interactive, global) {
@@ -90,8 +127,11 @@ function runParityBenchmark() {
     let previousInteractive = buildEyeGeometry(initialHead.values, initialHead, {
         placementMode: 'global'
     });
+    const initialInteractive = previousInteractive;
     const localDurations = [];
     const globalDurations = [];
+    const localSolverMetrics = [];
+    const globalSolverMetrics = [];
     const parity = {
         maxCenterPx: 0,
         maxFitScale: 0,
@@ -99,24 +139,44 @@ function runParityBenchmark() {
         worstFrame: 0,
         allContained: true
     };
+    const continuity = {
+        maxFitScaleStep: 0,
+        maxPairCenterStep: 0,
+        globalFallbacks: 0,
+        cyclicCenterPx: 0,
+        cyclicFitScale: 0,
+        cyclicContourPx: 0
+    };
 
     for (let index = 1; index <= FRAME_COUNT; index += 1) {
         const settings = settingsAt(index);
         const head = buildCharacterGeometry(settings);
+        const previousFrame = previousInteractive;
 
         let startedAt = performance.now();
         const interactive = buildEyeGeometry(head.values, head, {
             placementMode: 'local',
-            previousEyeGeometry: previousInteractive
+            previousEyeGeometry: previousFrame
         });
         localDurations.push(performance.now() - startedAt);
+        localSolverMetrics.push(interactive.solverMetrics);
+        continuity.maxFitScaleStep = Math.max(
+            continuity.maxFitScaleStep,
+            Math.abs(interactive.fitScale - previousFrame.fitScale)
+        );
+        continuity.maxPairCenterStep = Math.max(
+            continuity.maxPairCenterStep,
+            distance(interactive.pairCenter, previousFrame.pairCenter)
+        );
+        if (interactive.placementMode !== 'local') continuity.globalFallbacks += 1;
 
         startedAt = performance.now();
         const global = buildEyeGeometry(head.values, head, {
             placementMode: 'global',
-            previousEyeGeometry: interactive
+            previousEyeGeometry: previousFrame
         });
         globalDurations.push(performance.now() - startedAt);
+        globalSolverMetrics.push(global.solverMetrics);
 
         const centerDelta = distance(interactive.pairCenter, global.pairCenter);
         const scaleDelta = Math.abs(interactive.fitScale - global.fitScale);
@@ -132,13 +192,26 @@ function runParityBenchmark() {
             && global.minClearance + 0.025 >= global.guard;
         previousInteractive = interactive;
     }
+    continuity.cyclicCenterPx = distance(
+        initialInteractive.pairCenter,
+        previousInteractive.pairCenter
+    );
+    continuity.cyclicFitScale = Math.abs(
+        initialInteractive.fitScale - previousInteractive.fitScale
+    );
+    continuity.cyclicContourPx = maximumContourDelta(initialInteractive, previousInteractive);
 
     return {
         parity,
+        continuity,
         lastInteractive: previousInteractive,
         results: [
             timingSummary('global', globalDurations),
             timingSummary('local', localDurations)
+        ],
+        phases: [
+            solverSummary('global', globalSolverMetrics),
+            solverSummary('local', localSolverMetrics)
         ]
     };
 }
@@ -148,10 +221,20 @@ runParityBenchmark();
 const benchmark = runParityBenchmark();
 const settle = await verifySettleContract(benchmark.lastInteractive);
 const speedup = benchmark.results[0].meanMs / Math.max(0.01, benchmark.results[1].meanMs);
+const localTiming = benchmark.results[1];
 const passed = benchmark.parity.maxCenterPx < PARITY_LIMITS.centerPx
     && benchmark.parity.maxFitScale < PARITY_LIMITS.fitScale
     && benchmark.parity.maxContourPx < PARITY_LIMITS.contourPx
     && benchmark.parity.allContained
+    && benchmark.continuity.maxFitScaleStep <= CONTINUITY_LIMITS.fitScaleStep
+    && benchmark.continuity.cyclicCenterPx < CONTINUITY_LIMITS.cyclicCenterPx
+    && benchmark.continuity.cyclicFitScale < CONTINUITY_LIMITS.cyclicFitScale
+    && benchmark.continuity.cyclicContourPx < CONTINUITY_LIMITS.cyclicContourPx
+    && benchmark.continuity.globalFallbacks === 0
+    && localTiming.meanMs < PERFORMANCE_LIMITS.localMeanMs
+    && localTiming.p95Ms < PERFORMANCE_LIMITS.localP95Ms
+    && localTiming.framesOver16_7Ms <= PERFORMANCE_LIMITS.framesOver16_7Ms
+    && speedup >= PERFORMANCE_LIMITS.minimumSpeedup
     && settle.pathsUnchanged
     && !settle.settleSchedulesVisualRecalculation;
 
@@ -159,15 +242,24 @@ console.log(JSON.stringify({
     passed,
     frames: FRAME_COUNT,
     speedup: Number(speedup.toFixed(2)),
-    limits: PARITY_LIMITS,
+    limits: {
+        parity: PARITY_LIMITS,
+        continuity: CONTINUITY_LIMITS,
+        performance: PERFORMANCE_LIMITS
+    },
     parity: {
         ...benchmark.parity,
         maxCenterPx: Number(benchmark.parity.maxCenterPx.toFixed(4)),
         maxFitScale: Number(benchmark.parity.maxFitScale.toFixed(6)),
         maxContourPx: Number(benchmark.parity.maxContourPx.toFixed(4))
     },
+    continuity: Object.fromEntries(Object.entries(benchmark.continuity).map(([key, value]) => [
+        key,
+        typeof value === 'number' ? Number(value.toFixed(6)) : value
+    ])),
     settle,
-    results: benchmark.results
+    results: benchmark.results,
+    phases: benchmark.phases
 }, null, 2));
 
 if (!passed) process.exitCode = 1;

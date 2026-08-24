@@ -28,6 +28,9 @@ export const EYE_DEFAULTS = Object.freeze({
 });
 
 const REFERENCE_HORIZONTAL_OFFSET = 21.6692;
+const CONTAINMENT_RELAX_ITERATIONS = 16;
+const FIT_SCALE_BINARY_ITERATIONS = 14;
+const FIT_SCALE_CONTINUATION_STEP = 0.08;
 
 /**
  * Canonical eyelid centers measured from the corresponding eye1 center.
@@ -252,55 +255,6 @@ export function flattenRoundedContour(rounded, samplesPerArc = 12) {
     return contour;
 }
 
-function pointInPolygon(value, polygon) {
-    let inside = false;
-    for (let index = 0, previous = polygon.length - 1; index < polygon.length; previous = index++) {
-        const a = polygon[index];
-        const b = polygon[previous];
-        const crosses = (a.y > value.y) !== (b.y > value.y)
-            && value.x < (b.x - a.x) * (value.y - a.y) / (b.y - a.y) + a.x;
-        if (crosses) inside = !inside;
-    }
-    return inside;
-}
-
-function closestPointOnSegment(value, start, end) {
-    const edge = subtract(end, start);
-    const edgeLengthSquared = edge.x * edge.x + edge.y * edge.y;
-    if (edgeLengthSquared < EPSILON) return start;
-    const projection = clamp(
-        ((value.x - start.x) * edge.x + (value.y - start.y) * edge.y) / edgeLengthSquared,
-        0,
-        1
-    );
-    return add(start, scale(edge, projection));
-}
-
-function clearanceFromContour(value, contour, orientation) {
-    let nearestDistance = Infinity;
-    let inward = point(0, 0);
-
-    for (let index = 0; index < contour.length; index += 1) {
-        const start = contour[index];
-        const end = contour[(index + 1) % contour.length];
-        const closest = closestPointOnSegment(value, start, end);
-        const currentDistance = distance(value, closest);
-        if (currentDistance >= nearestDistance) continue;
-        nearestDistance = currentDistance;
-        const edge = subtract(end, start);
-        const edgeLength = length(edge);
-        if (edgeLength < EPSILON) continue;
-        inward = orientation >= 0
-            ? point(-edge.y / edgeLength, edge.x / edgeLength)
-            : point(edge.y / edgeLength, -edge.x / edgeLength);
-    }
-
-    return {
-        signedDistance: pointInPolygon(value, contour) ? nearestDistance : -nearestDistance,
-        inward
-    };
-}
-
 function mainEyeContour(model, transform, segmentCount = 48) {
     return [
         ...sampleCircle(model.left.eye1, transform, segmentCount),
@@ -308,10 +262,161 @@ function mainEyeContour(model, transform, segmentCount = 48) {
     ];
 }
 
-function evaluateContainment(model, values, headContour, pairCenter, fitScale, segmentCount = 48) {
-    const transform = createRigTransform(values, pairCenter, fitScale);
-    const eyeContour = mainEyeContour(model, transform, segmentCount);
-    const orientation = polygonSignedArea(headContour);
+function prepareContainmentContour(contour) {
+    const orientation = polygonSignedArea(contour);
+    const edges = contour.map((start, index) => {
+        const end = contour[(index + 1) % contour.length];
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const lengthSquared = dx * dx + dy * dy;
+        const edgeLength = Math.sqrt(lengthSquared);
+        const inward = edgeLength < EPSILON
+            ? point(0, 0)
+            : orientation >= 0
+                ? point(-dy / edgeLength, dx / edgeLength)
+                : point(dy / edgeLength, -dx / edgeLength);
+        return {
+            start,
+            end,
+            dx,
+            dy,
+            lengthSquared,
+            inward,
+            minX: Math.min(start.x, end.x),
+            maxX: Math.max(start.x, end.x),
+            minY: Math.min(start.y, end.y),
+            maxY: Math.max(start.y, end.y)
+        };
+    });
+    const buildNearestTree = (values) => {
+        const bounds = values.reduce((result, edge) => ({
+            minX: Math.min(result.minX, edge.minX),
+            maxX: Math.max(result.maxX, edge.maxX),
+            minY: Math.min(result.minY, edge.minY),
+            maxY: Math.max(result.maxY, edge.maxY)
+        }), { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
+        if (values.length <= 8) return { ...bounds, edges: values };
+        const horizontal = bounds.maxX - bounds.minX >= bounds.maxY - bounds.minY;
+        const sorted = [...values].sort((first, second) => (
+            horizontal
+                ? first.minX + first.maxX - second.minX - second.maxX
+                : first.minY + first.maxY - second.minY - second.maxY
+        ));
+        const middle = Math.floor(sorted.length / 2);
+        return {
+            ...bounds,
+            first: buildNearestTree(sorted.slice(0, middle)),
+            second: buildNearestTree(sorted.slice(middle))
+        };
+    };
+    const minY = Math.min(...edges.map((edge) => edge.minY));
+    const maxY = Math.max(...edges.map((edge) => edge.maxY));
+    const bucketCount = Math.min(64, Math.max(8, Math.ceil(Math.sqrt(edges.length) * 2)));
+    const bucketHeight = Math.max(EPSILON, (maxY - minY) / bucketCount);
+    const crossingBuckets = Array.from({ length: bucketCount }, () => []);
+    edges.forEach((edge) => {
+        const first = clamp(Math.floor((edge.minY - minY) / bucketHeight), 0, bucketCount - 1);
+        const last = clamp(Math.floor((edge.maxY - minY) / bucketHeight), 0, bucketCount - 1);
+        for (let index = first; index <= last; index += 1) crossingBuckets[index].push(edge);
+    });
+    return {
+        contour,
+        edges,
+        orientation,
+        minY,
+        maxY,
+        bucketHeight,
+        crossingBuckets,
+        nearestTree: buildNearestTree(edges)
+    };
+}
+
+function squaredDistanceToBounds(x, y, bounds) {
+    const offsetX = x < bounds.minX
+        ? bounds.minX - x
+        : x > bounds.maxX ? x - bounds.maxX : 0;
+    const offsetY = y < bounds.minY
+        ? bounds.minY - y
+        : y > bounds.maxY ? y - bounds.maxY : 0;
+    return offsetX * offsetX + offsetY * offsetY;
+}
+
+function findNearestPreparedEdge(x, y, node, nearest, metrics) {
+    if (metrics) metrics.bvhNodeChecks += 1;
+    if (squaredDistanceToBounds(x, y, node) >= nearest.distanceSquared) return;
+    if (node.edges) {
+        for (let index = 0; index < node.edges.length; index += 1) {
+            if (metrics) metrics.edgeChecks += 1;
+            const edge = node.edges[index];
+            if (squaredDistanceToBounds(x, y, edge) >= nearest.distanceSquared) continue;
+            const projection = edge.lengthSquared > EPSILON
+                ? clamp(((x - edge.start.x) * edge.dx + (y - edge.start.y) * edge.dy)
+                    / edge.lengthSquared, 0, 1)
+                : 0;
+            const offsetX = x - (edge.start.x + projection * edge.dx);
+            const offsetY = y - (edge.start.y + projection * edge.dy);
+            const distanceSquared = offsetX * offsetX + offsetY * offsetY;
+            if (distanceSquared >= nearest.distanceSquared) continue;
+            nearest.distanceSquared = distanceSquared;
+            nearest.inward = edge.inward;
+        }
+        return;
+    }
+    const firstDistance = squaredDistanceToBounds(x, y, node.first);
+    const secondDistance = squaredDistanceToBounds(x, y, node.second);
+    if (firstDistance <= secondDistance) {
+        findNearestPreparedEdge(x, y, node.first, nearest, metrics);
+        findNearestPreparedEdge(x, y, node.second, nearest, metrics);
+    } else {
+        findNearestPreparedEdge(x, y, node.second, nearest, metrics);
+        findNearestPreparedEdge(x, y, node.first, nearest, metrics);
+    }
+}
+
+function clearanceFromPreparedContour(x, y, prepared, metrics = null) {
+    let inside = false;
+    if (y >= prepared.minY && y <= prepared.maxY) {
+        const bucketIndex = clamp(
+            Math.floor((y - prepared.minY) / prepared.bucketHeight),
+            0,
+            prepared.crossingBuckets.length - 1
+        );
+        const candidates = prepared.crossingBuckets[bucketIndex];
+        for (let index = 0; index < candidates.length; index += 1) {
+            if (metrics) {
+                metrics.edgeChecks += 1;
+                metrics.crossingChecks += 1;
+            }
+            const edge = candidates[index];
+            if ((edge.start.y > y) !== (edge.end.y > y)
+                && x < edge.dx * (y - edge.start.y) / edge.dy + edge.start.x) {
+                inside = !inside;
+            }
+        }
+    }
+    const nearest = { distanceSquared: Infinity, inward: point(0, 0) };
+    findNearestPreparedEdge(x, y, prepared.nearestTree, nearest, metrics);
+    const clearance = Math.sqrt(nearest.distanceSquared);
+    return {
+        signedDistance: inside ? clearance : -clearance,
+        inward: nearest.inward
+    };
+}
+
+function createContainmentContext(model, values, headContour, metrics = null) {
+    const unitTransform = createRigTransform(values, point(0, 0), 1);
+    return {
+        values,
+        model,
+        eyeOffsets: mainEyeContour(model, unitTransform, 48),
+        preparedHead: prepareContainmentContour(headContour),
+        metrics
+    };
+}
+
+function evaluateContainment(context, pairCenter, fitScale, { stopOnFailure = false } = {}) {
+    const { values, model, eyeOffsets, preparedHead, metrics } = context;
+    if (metrics) metrics.containmentEvaluations += 1;
     const guard = Math.max(
         2,
         EYE_DEFAULTS.guard
@@ -321,22 +426,62 @@ function evaluateContainment(model, values, headContour, pairCenter, fitScale, s
     );
     let worst = null;
 
-    eyeContour.forEach((sample) => {
-        const clearance = clearanceFromContour(sample, headContour, orientation);
+    for (let index = 0; index < eyeOffsets.length; index += 1) {
+        if (metrics) metrics.sampleChecks += 1;
+        const offset = eyeOffsets[index];
+        const sampleX = pairCenter.x + offset.x * fitScale;
+        const sampleY = pairCenter.y + offset.y * fitScale;
+        const clearance = clearanceFromPreparedContour(sampleX, sampleY, preparedHead, metrics);
         const deficit = guard - clearance.signedDistance;
-        if (!worst || deficit > worst.deficit) worst = { ...clearance, deficit, sample };
-    });
+        if (!worst || deficit > worst.deficit) {
+            worst = { ...clearance, deficit, sample: point(sampleX, sampleY) };
+        }
+        if (stopOnFailure && deficit > 0.02) {
+            if (metrics) metrics.earlyExits += 1;
+            break;
+        }
+    }
 
     return {
         fits: !worst || worst.deficit <= 0.02,
         minClearance: worst ? guard - worst.deficit : Infinity,
         guard,
         worst,
-        transform
+        transform: createRigTransform(values, pairCenter, fitScale)
     };
 }
 
-function solveEyePlacement(model, values, headContour) {
+function minimumContainmentResult(context, pairCenter, fitScale) {
+    const { eyeOffsets, preparedHead, metrics } = context;
+    let minimum = Infinity;
+    let inward = point(0, 0);
+    for (let index = 0; index < eyeOffsets.length; index += 1) {
+        if (metrics) metrics.sampleChecks += 1;
+        const offset = eyeOffsets[index];
+        const clearance = clearanceFromPreparedContour(
+            pairCenter.x + offset.x * fitScale,
+            pairCenter.y + offset.y * fitScale,
+            preparedHead,
+            metrics
+        );
+        if (clearance.signedDistance >= minimum) continue;
+        minimum = clearance.signedDistance;
+        inward = clearance.inward;
+    }
+    return { minimum, inward };
+}
+
+function minimumContainmentClearance(context, pairCenter, fitScale) {
+    return minimumContainmentResult(context, pairCenter, fitScale).minimum;
+}
+
+function solveEyePlacement(
+    model,
+    values,
+    headContour,
+    containmentContext,
+    { previousEyeGeometry = null } = {}
+) {
     const desiredCenter = point(
         values.focusX,
         values.focusY + EYE_DEFAULTS.centerOffsetY
@@ -346,12 +491,25 @@ function solveEyePlacement(model, values, headContour) {
         headContour.reduce((sum, sample) => add(sum, sample), point(0, 0)),
         1 / headContour.length
     );
+    const previousValues = previousEyeGeometry?.values;
+    const focusDelta = previousValues
+        ? point(values.focusX - previousValues.focusX, values.focusY - previousValues.focusY)
+        : point(0, 0);
+    const focusDistance = Math.hypot(focusDelta.x, focusDelta.y);
+    const carry = (center) => center ? add(center, focusDelta) : null;
+    const transportedLegacyCenter = carry(previousEyeGeometry?.legacyCenter);
+    const continuationCenters = [
+        transportedLegacyCenter,
+        carry(previousEyeGeometry?.opticalCenter),
+        carry(previousEyeGeometry?.pairCenter)
+    ].filter(Boolean);
+    const previousFitScale = clamp(Number(previousEyeGeometry?.fitScale) || 0.05, 0.05, 1);
 
     const relax = (start, fitScale) => {
         let center = start;
         let result = null;
-        for (let iteration = 0; iteration < 72; iteration += 1) {
-            result = evaluateContainment(model, values, headContour, center, fitScale);
+        for (let iteration = 0; iteration < CONTAINMENT_RELAX_ITERATIONS; iteration += 1) {
+            result = evaluateContainment(containmentContext, center, fitScale);
             if (result.fits) break;
             const correction = Math.min(24, Math.max(0.1, result.worst.deficit + 0.05));
             center = add(center, scale(result.worst.inward, correction));
@@ -359,22 +517,32 @@ function solveEyePlacement(model, values, headContour) {
         return { center, result };
     };
 
-    // Phase one: retain full requested size. The desired optical position is
-    // tried first; focus and contour centre are deterministic safe fallbacks
-    // for very narrow heads where alternating concave edges can trap a local
-    // projection.
-    const desiredCandidate = relax(desiredCenter, 1);
-    if (desiredCandidate.result?.fits) {
+    // Phase one: retain full requested size. A continued frame carries every
+    // meaningful center through focusDelta; the optical/final centers often
+    // preserve the correct feasible branch when the legacy projection reaches
+    // a concave ray valley.
+    const continuedFullScale = previousFitScale >= 1 - EPSILON
+        ? continuationCenters
+            .map((center) => relax(center, 1))
+            .filter((candidate) => candidate.result?.fits)
+            .sort((first, second) => (
+                distance(first.center, desiredCenter) - distance(second.center, desiredCenter)
+            ))[0]
+        : null;
+    if (continuedFullScale) {
         return {
             desiredCenter,
-            pairCenter: desiredCandidate.center,
+            pairCenter: continuedFullScale.center,
             fitScale: 1,
-            ...desiredCandidate.result
+            ...continuedFullScale.result
         };
     }
 
+    // A full-scale fallback is only needed if every carried seed lost
+    // containment. It also lets a previously scaled branch rejoin the stable
+    // full-size branch gradually instead of ballooning in one pointer frame.
     const fullScaleCandidates = [
-        desiredCandidate,
+        relax(desiredCenter, 1),
         relax(focusCenter, 1),
         relax(contourCenter, 1)
     ];
@@ -384,29 +552,63 @@ function solveEyePlacement(model, values, headContour) {
 
     if (fittingCandidates.length) {
         const winner = fittingCandidates[0];
-        return { desiredCenter, pairCenter: winner.center, fitScale: 1, ...winner.result };
+        const fitScale = transportedLegacyCenter
+            ? Math.min(
+                1,
+                previousFitScale + (focusDistance > EPSILON ? FIT_SCALE_CONTINUATION_STEP : 0)
+            )
+            : 1;
+        const continued = fitScale >= 1 - EPSILON
+            ? winner
+            : relax(winner.center, fitScale);
+        if (continued.result?.fits) {
+            return {
+                desiredCenter,
+                pairCenter: continued.center,
+                fitScale,
+                ...continued.result
+            };
+        }
     }
 
-    const bestFullScale = fullScaleCandidates.sort(
-        (first, second) => first.result.worst.deficit - second.result.worst.deficit
-    )[0];
-    let pairCenter = bestFullScale.center;
+    // If full scale is impossible, keep one deterministic containment branch.
+    // Picking whichever failed relaxation currently has the smallest deficit
+    // causes discontinuous center/scale switches between adjacent Focus frames.
+    let pairCenter = transportedLegacyCenter || contourCenter;
 
     // Phase two: preserve that shifted center and find the largest uniform
     // scale that satisfies the same relative guard field.
     let low = 0.05;
     let high = 1;
-    let best = evaluateContainment(model, values, headContour, pairCenter, low);
+    let best = evaluateContainment(containmentContext, pairCenter, low);
     if (!best.fits) {
-        const smallScaleCandidates = [pairCenter, focusCenter, contourCenter]
-            .map((start) => relax(start, low))
-            .sort((first, second) => first.result.worst.deficit - second.result.worst.deficit);
-        pairCenter = smallScaleCandidates[0].center;
-        best = smallScaleCandidates[0].result;
+        const recovered = relax(pairCenter, low);
+        pairCenter = recovered.center;
+        best = recovered.result;
     }
-    for (let iteration = 0; iteration < 28; iteration += 1) {
+    const previousScale = clamp(previousFitScale, low, high);
+    if (previousScale > low && previousScale < high) {
+        const previousResult = evaluateContainment(
+            containmentContext,
+            pairCenter,
+            previousScale,
+            { stopOnFailure: true }
+        );
+        if (previousResult.fits) {
+            low = previousScale;
+            best = previousResult;
+        } else {
+            high = previousScale;
+        }
+    }
+    for (let iteration = 0; iteration < FIT_SCALE_BINARY_ITERATIONS; iteration += 1) {
         const middle = (low + high) / 2;
-        const result = evaluateContainment(model, values, headContour, pairCenter, middle);
+        const result = evaluateContainment(
+            containmentContext,
+            pairCenter,
+            middle,
+            { stopOnFailure: true }
+        );
         if (result.fits) {
             low = middle;
             best = result;
@@ -472,10 +674,6 @@ function downsampleContour(contour, maximumPoints = 96) {
     ));
 }
 
-function translatedPoint(value, center) {
-    return point(value.x + center.x, value.y + center.y);
-}
-
 function preparePlacementContour(contour) {
     return contour.map((start, index) => {
         const end = contour[(index + 1) % contour.length];
@@ -485,40 +683,50 @@ function preparePlacementContour(contour) {
     });
 }
 
-function preparedSignedClearance(value, edges) {
+function preparedSignedClearance(x, y, edges) {
     let inside = false;
     let minimumSquared = Infinity;
-    edges.forEach((edge) => {
+    for (let index = 0; index < edges.length; index += 1) {
+        const edge = edges[index];
         const { start, end, dx, dy, lengthSquared } = edge;
         const projection = lengthSquared > EPSILON
-            ? clamp(((value.x - start.x) * dx + (value.y - start.y) * dy) / lengthSquared, 0, 1)
+            ? clamp(((x - start.x) * dx + (y - start.y) * dy) / lengthSquared, 0, 1)
             : 0;
-        const offsetX = value.x - (start.x + projection * dx);
-        const offsetY = value.y - (start.y + projection * dy);
+        const offsetX = x - (start.x + projection * dx);
+        const offsetY = y - (start.y + projection * dy);
         minimumSquared = Math.min(minimumSquared, offsetX * offsetX + offsetY * offsetY);
-        if ((start.y > value.y) !== (end.y > value.y)
-            && value.x < dx * (value.y - start.y) / dy + start.x) {
+        if ((start.y > y) !== (end.y > y)
+            && x < dx * (y - start.y) / dy + start.x) {
             inside = !inside;
         }
-    });
+    }
     const clearance = Math.sqrt(minimumSquared);
     return inside ? clearance : -clearance;
 }
 
-function placementClearances(localEyeContour, center, preparedContour) {
-    return localEyeContour.map((sample) => preparedSignedClearance(
-        translatedPoint(sample, center),
-        preparedContour
-    ));
+function placementClearanceStats(localEyeContour, center, preparedContour) {
+    let minimum = Infinity;
+    let sum = 0;
+    for (let index = 0; index < localEyeContour.length; index += 1) {
+        const sample = localEyeContour[index];
+        const clearance = preparedSignedClearance(
+            sample.x + center.x,
+            sample.y + center.y,
+            preparedContour
+        );
+        minimum = Math.min(minimum, clearance);
+        sum += clearance;
+    }
+    return { minimum, average: sum / localEyeContour.length };
 }
 
 function scoreOpticalPlacement(localEyeContour, center, faceContour, headContour) {
-    const headClearances = placementClearances(
+    const headClearances = placementClearanceStats(
         localEyeContour,
         center,
         headContour
     );
-    const minimumHeadClearance = Math.min(...headClearances);
+    const minimumHeadClearance = headClearances.minimum;
     const minimumGap = 1;
     if (minimumHeadClearance < minimumGap) {
         return {
@@ -528,14 +736,13 @@ function scoreOpticalPlacement(localEyeContour, center, faceContour, headContour
         };
     }
 
-    const fieldClearances = placementClearances(
+    const fieldClearances = placementClearanceStats(
         localEyeContour,
         center,
         faceContour
     );
-    const minimumFieldClearance = Math.min(...fieldClearances);
-    const averageFieldClearance = fieldClearances.reduce((sum, value) => sum + value, 0)
-        / fieldClearances.length;
+    const minimumFieldClearance = fieldClearances.minimum;
+    const averageFieldClearance = fieldClearances.average;
     return {
         // The worst point locates the complete footprint; the small mean term
         // removes ambiguous plateaus without turning the field into a hard mask.
@@ -727,6 +934,7 @@ function solveOpticalPairCenter(
     characterGeometry,
     headContour,
     legacyPlacement,
+    containmentContext,
     { local = false, previousEyeGeometry = null } = {}
 ) {
     const faceContour = buildFaceFieldContour(characterGeometry);
@@ -736,12 +944,24 @@ function solveOpticalPairCenter(
     const localTransform = createRigTransform(values, point(0, 0), legacyPlacement.fitScale);
     const localEyeContour = mainEyeContour(model, localTransform, 8);
     const faceBounds = contourBounds(faceContour);
-    const opticalEvaluation = (center) => scoreOpticalPlacement(
-        localEyeContour,
-        center,
-        preparedFace,
-        preparedHead
-    );
+    const opticalEvaluationCache = new Map();
+    const opticalEvaluation = (center) => {
+        const key = `${center.x},${center.y}`;
+        const cached = opticalEvaluationCache.get(key);
+        if (cached) {
+            if (containmentContext.metrics) containmentContext.metrics.opticalCacheHits += 1;
+            return cached;
+        }
+        if (containmentContext.metrics) containmentContext.metrics.opticalEvaluations += 1;
+        const result = scoreOpticalPlacement(
+            localEyeContour,
+            center,
+            preparedFace,
+            preparedHead
+        );
+        opticalEvaluationCache.set(key, result);
+        return result;
+    };
     const previousValues = previousEyeGeometry?.values;
     const focusDelta = previousValues
         ? point(values.focusX - previousValues.focusX, values.focusY - previousValues.focusY)
@@ -756,9 +976,19 @@ function solveOpticalPairCenter(
         legacyPlacement.pairCenter,
         desiredCenter
     ];
+    const localOptical = searchLocalPlacement(
+        faceBounds,
+        opticalEvaluation,
+        opticalSeeds,
+        focusDelta
+    );
     const optical = local
-        ? searchLocalPlacement(faceBounds, opticalEvaluation, opticalSeeds, focusDelta)
-        : searchGlobalPlacement(faceBounds, opticalEvaluation, opticalSeeds);
+        ? localOptical
+        : searchGlobalPlacement(
+            faceBounds,
+            opticalEvaluation,
+            [localOptical?.center, ...opticalSeeds]
+        );
     const horizontal = clamp((values.focusX - EYE_DEFAULTS.focusX) / 120, -1, 1);
     const verticalRange = values.focusY < EYE_DEFAULTS.focusY ? 112 : 98;
     const vertical = clamp((values.focusY - EYE_DEFAULTS.focusY) / verticalRange, -1, 1);
@@ -781,55 +1011,36 @@ function solveOpticalPairCenter(
         opticalCenter.x + (values.focusX - optical.center.x) * horizontalFocusInfluence,
         opticalCenter.y + (values.focusY - optical.center.y) * 0.05 * focusAmount
     );
-    const fullLocalEyeContour = mainEyeContour(model, localTransform, 48);
-    const preparedFullHead = preparePlacementContour(headContour);
-    const exactMinimumClearance = (center) => Math.min(...placementClearances(
-        fullLocalEyeContour,
-        center,
-        preparedFullHead
-    ));
     const enforceExactHeadGap = (center) => {
         const minimumGap = 1;
-        let minimumClearance = exactMinimumClearance(center);
-        if (minimumClearance >= minimumGap) return { center, minimumClearance };
-
-        const safeCenter = legacyPlacement.pairCenter;
-        let previousAmount = 0;
-        for (let index = 1; index <= 32; index += 1) {
-            const amount = index / 32;
-            const candidate = point(
-                mix(center.x, safeCenter.x, amount),
-                mix(center.y, safeCenter.y, amount)
+        let candidate = center;
+        for (let iteration = 0; iteration < 24; iteration += 1) {
+            const result = minimumContainmentResult(
+                containmentContext,
+                candidate,
+                legacyPlacement.fitScale
             );
-            const candidateClearance = exactMinimumClearance(candidate);
-            if (candidateClearance < minimumGap) {
-                previousAmount = amount;
-                continue;
+            if (result.minimum >= minimumGap) {
+                return { center: candidate, minimumClearance: result.minimum };
             }
-            let low = previousAmount;
-            let high = amount;
-            let winner = { center: candidate, minimumClearance: candidateClearance };
-            for (let iteration = 0; iteration < 18; iteration += 1) {
-                const middle = (low + high) / 2;
-                const middleCenter = point(
-                    mix(center.x, safeCenter.x, middle),
-                    mix(center.y, safeCenter.y, middle)
-                );
-                const middleClearance = exactMinimumClearance(middleCenter);
-                if (middleClearance >= minimumGap) {
-                    high = middle;
-                    winner = { center: middleCenter, minimumClearance: middleClearance };
-                } else {
-                    low = middle;
-                }
-            }
-            return winner;
+            candidate = add(
+                candidate,
+                scale(result.inward, Math.min(16, minimumGap - result.minimum + 0.025))
+            );
         }
-        return { center: safeCenter, minimumClearance: exactMinimumClearance(safeCenter) };
+        const safeCenter = legacyPlacement.pairCenter;
+        return {
+            center: safeCenter,
+            minimumClearance: minimumContainmentClearance(
+                containmentContext,
+                safeCenter,
+                legacyPlacement.fitScale
+            )
+        };
     };
     // The optical optimum is already selected above. If Focus bias takes that
-    // target through the hard head boundary, project it deterministically along
-    // the safe legacy branch. Running a second global aesthetic search here
+    // target through the hard head boundary, project it deterministically from
+    // the target itself. Running a second global aesthetic search here
     // would introduce another, unrelated placement law at the boundary.
     const exact = enforceExactHeadGap(target);
     return {
@@ -869,6 +1080,20 @@ export function buildEyeGeometry(settings, characterGeometry, options = {}) {
     };
     const model = createEyeRigModel(values);
     const headContour = flattenRoundedContour(characterGeometry.rounded);
+    const solverMetrics = {
+        containmentEvaluations: 0,
+        opticalEvaluations: 0,
+        opticalCacheHits: 0,
+        sampleChecks: 0,
+        edgeChecks: 0,
+        crossingChecks: 0,
+        bvhNodeChecks: 0,
+        earlyExits: 0,
+        legacyMs: 0,
+        opticalMs: 0,
+        fallbackReason: null
+    };
+    const containmentContext = createContainmentContext(model, values, headContour, solverMetrics);
     const requestedLocal = options.placementMode === 'local';
     const previousEyeGeometry = options.previousEyeGeometry;
     const previousValues = previousEyeGeometry?.values;
@@ -881,18 +1106,43 @@ export function buildEyeGeometry(settings, characterGeometry, options = {}) {
     const canRefineLocally = requestedLocal && topologyMatches && focusDelta <= 64;
     // Containment and fitScale deliberately use the same exact law in both
     // modes. Only the optical search strategy changes.
-    const legacyPlacement = solveEyePlacement(model, values, headContour);
-    const scaleMatches = previousEyeGeometry
-        && Math.abs(previousEyeGeometry.fitScale - legacyPlacement.fitScale) <= 0.08;
-    const localPlacement = canRefineLocally && scaleMatches;
+    let startedAt = performance.now();
+    const legacyPlacement = solveEyePlacement(
+        model,
+        values,
+        headContour,
+        containmentContext,
+        {
+            previousEyeGeometry: topologyMatches && focusDelta <= 64
+                ? previousEyeGeometry
+                : null
+        }
+    );
+    solverMetrics.legacyMs = performance.now() - startedAt;
+    // fitScale is solved exactly for the current frame above. A scale delta is
+    // therefore not a topology change and must not force an unrelated global
+    // optical search; the current scale participates in every local score.
+    const localPlacement = canRefineLocally;
+    solverMetrics.fallbackReason = localPlacement
+        ? null
+        : !requestedLocal
+            ? 'requested-global'
+            : !topologyMatches
+                ? 'topology'
+                : focusDelta > 64
+                    ? 'focus-delta'
+                    : 'missing-seed';
+    startedAt = performance.now();
     const opticalPlacement = solveOpticalPairCenter(
         model,
         values,
         characterGeometry,
         headContour,
         legacyPlacement,
+        containmentContext,
         { local: localPlacement, previousEyeGeometry }
     );
+    solverMetrics.opticalMs = performance.now() - startedAt;
     const placement = {
         ...legacyPlacement,
         pairCenter: opticalPlacement.pairCenter,
@@ -921,6 +1171,7 @@ export function buildEyeGeometry(settings, characterGeometry, options = {}) {
         fitScale: placement.fitScale,
         guard: 1,
         minClearance: placement.minClearance,
+        solverMetrics,
         headContour,
         faceContour: opticalPlacement.faceContour
     };

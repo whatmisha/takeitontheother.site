@@ -4,7 +4,7 @@ import {
     DEFAULT_GEOMETRY,
     buildCharacterGeometry
 } from './src/geometry/characterGeometry.js?v=20260823-5';
-import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-4';
+import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-5';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import {
     advanceEyeMotion,
@@ -24,10 +24,11 @@ import {
     focusPointToPolar
 } from './src/geometry/focusBounds.js?v=20260823-6';
 import {
+    centeredFocus,
     normalizedFocus,
     normalizedPolar,
     resolveEffectivePersistenceState
-} from './src/state/focusState.js';
+} from './src/state/focusState.js?v=20260824-1';
 import {
     COORDINATE_SPACE_VERSION,
     migrateCoordinateSpace
@@ -146,7 +147,7 @@ function activeRenderSettings(current) {
         // Product contract: mobile is a deliberately reduced Basic-only
         // showcase. Stored/shared presets remain available for desktop, but do
         // not replace the mobile character profile.
-        const focus = mobileShowcaseFocus || { x: settings.focusX, y: settings.focusY };
+        const focus = mobileShowcaseFocus || centeredFocus(settings);
         return { ...settings, focusX: focus.x, focusY: focus.y };
     }
     const focus = current.followCursor ? desktopFollowFocus : null;
@@ -223,7 +224,7 @@ function bindMobileShowcase(app) {
         forceGlobalPlacement(app);
         document.documentElement.classList.toggle('sparky-mobile-showcase', mobile);
         if (mobile && !wasMobile) {
-            resetMobileFocusMotion({ x: settings.focusX, y: settings.focusY });
+            resetMobileFocusMotion(centeredFocus(settings));
             stopBlink(app);
         } else if (!mobile && wasMobile) {
             cancelMobileFocusMotion();

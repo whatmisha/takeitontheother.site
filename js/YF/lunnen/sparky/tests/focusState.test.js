@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import {
+    centeredFocus,
     normalizedFocus,
     resolveEffectivePersistenceState
 } from '../src/state/focusState.js';
@@ -39,6 +40,10 @@ test('mobile Basic-only showcase does not overwrite the stored desktop preset st
 
     assert.deepEqual(resolved, state);
     assert.notStrictEqual(resolved, state);
+});
+
+test('mobile Basic-only showcase starts with Focus at the boundary center', () => {
+    assert.deepEqual(centeredFocus(state), { x: 240, y: 240 });
 });
 
 test('Follow cursor preview does not dirty presets or create history entries', async () => {

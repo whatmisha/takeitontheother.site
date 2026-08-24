@@ -14,6 +14,13 @@ export function normalizedFocus(raw, state) {
     };
 }
 
+export function centeredFocus(state) {
+    return normalizedFocus({
+        x: state.boundaryCenterX,
+        y: state.boundaryCenterY
+    }, state);
+}
+
 export function normalizedPolar(raw = {}) {
     return {
         angle: clamp(Number(raw.angle) || 0, 0, 360),

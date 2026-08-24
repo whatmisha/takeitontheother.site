@@ -17,4 +17,6 @@ test('mobile showcase prevents text selection and SVG dragging', async () => {
     assert.match(mobileStyles, /-webkit-user-drag:\s*none/);
     assert.match(toolSource, /addEventListener\('selectstart', preventMobileSelection/);
     assert.match(toolSource, /addEventListener\('dragstart', preventMobileSelection/);
+    assert.match(toolSource, /mobileShowcaseFocus \|\| centeredFocus\(settings\)/);
+    assert.match(toolSource, /resetMobileFocusMotion\(centeredFocus\(settings\)\)/);
 });
