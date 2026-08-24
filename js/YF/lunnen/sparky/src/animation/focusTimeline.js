@@ -1,5 +1,5 @@
 import { clamp } from '../geometry/vector.js';
-import { createMotionRandom, sampleFocusPath, sampleFocusPathSegment } from './focusPath.js?v=20260825-2';
+import { createMotionRandom, sampleFocusPath, sampleFocusPathSegment } from './focusPath.js?v=20260825-4';
 
 export const FOCUS_MOTION_EASINGS = Object.freeze({
     linear: (value) => value,
@@ -15,6 +15,14 @@ export const FOCUS_MOTION_EASINGS = Object.freeze({
 
 const finiteOr = (value, fallback) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const copyPoint = (value) => ({ x: value.x, y: value.y });
+
+export function resolveFocusStops(stops = 40) {
+    const amount = clamp(finiteOr(stops, 40), 0, 100);
+    return {
+        pause: amount * 0.6,
+        skipProbability: 100 - amount
+    };
+}
 
 export function createFocusTimeline(path, {
     duration = 5,

@@ -28,6 +28,14 @@ export function normalizedPolar(raw = {}) {
     };
 }
 
+export function resolveManualFocusMode(state = {}) {
+    const followCursor = Boolean(state.followCursor);
+    return {
+        followCursor,
+        showPoint: !followCursor
+    };
+}
+
 export function resolveEffectivePersistenceState(
     current,
     transientFocus,

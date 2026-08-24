@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generateFocusPath, sampleFocusPath } from '../src/animation/focusPath.js';
-import { createFocusTimeline, sampleFocusTimeline } from '../src/animation/focusTimeline.js';
+import {
+    createFocusTimeline,
+    resolveFocusStops,
+    sampleFocusTimeline
+} from '../src/animation/focusTimeline.js';
 
 const path = generateFocusPath({
     start: { x: 240, y: 240 },
@@ -86,4 +90,10 @@ test('100% skipped stops applies easing once across the complete closed path', (
     const expected = sampleFocusPath(path, 4 * progress ** 3);
     assert.equal(sample.globalEasing, true);
     assert.deepEqual(sample.point, expected.point);
+});
+
+test('Stops control maps continuously from uninterrupted motion to full stops', () => {
+    assert.deepEqual(resolveFocusStops(0), { pause: 0, skipProbability: 100 });
+    assert.deepEqual(resolveFocusStops(40), { pause: 24, skipProbability: 60 });
+    assert.deepEqual(resolveFocusStops(100), { pause: 60, skipProbability: 0 });
 });

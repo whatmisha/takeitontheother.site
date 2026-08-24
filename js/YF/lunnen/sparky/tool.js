@@ -6,7 +6,7 @@ import {
 } from './src/geometry/characterGeometry.js?v=20260823-5';
 import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-7';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
-import { AnimationExporter } from './src/export/animationExporter.js?v=20260825-4';
+import { AnimationExporter } from './src/export/animationExporter.js?v=20260825-8';
 import {
     advanceEyeMotion,
     createEyeMotionState,
@@ -23,12 +23,16 @@ import {
     generateFocusPathForSettings,
     normalizeMotionComplexity,
     normalizeMotionSeed
-} from './src/animation/focusPath.js?v=20260825-2';
-import { createFocusTimeline, sampleFocusTimeline } from './src/animation/focusTimeline.js?v=20260825-2';
+} from './src/animation/focusPath.js?v=20260825-4';
+import {
+    createFocusTimeline,
+    resolveFocusStops,
+    sampleFocusTimeline
+} from './src/animation/focusTimeline.js?v=20260825-4';
 import {
     createEyeAnimationTimeline,
     sampleEyeAnimationTimeline
-} from './src/animation/eyeTimeline.js?v=20260825-2';
+} from './src/animation/eyeTimeline.js?v=20260825-7';
 import { clamp } from './src/geometry/vector.js';
 import {
     focusPointFromPolar,
@@ -38,8 +42,9 @@ import {
     centeredFocus,
     normalizedFocus,
     normalizedPolar,
-    resolveEffectivePersistenceState
-} from './src/state/focusState.js?v=20260824-1';
+    resolveEffectivePersistenceState,
+    resolveManualFocusMode
+} from './src/state/focusState.js?v=20260825-2';
 import {
     COORDINATE_SPACE_VERSION,
     migrateCoordinateSpace
@@ -97,9 +102,7 @@ const settings = {
     motionDuration: 5,
     motionPointCount: 6,
     motionComplexity: 0,
-    motionEasing: 'ease-in-out',
-    motionPause: 12,
-    motionSkipProbability: 0,
+    motionStops: 40,
     motionBlinkCount: 2,
     motionEmotionVariation: 0,
     motionSeed: 24062026,
@@ -137,14 +140,9 @@ function normalizeIncomingState(source = {}) {
     }
     normalized.focusMode = normalized.focusMode === 'animate' ? 'animate' : 'manual';
     normalized.motionDuration = clamp(Number(normalized.motionDuration) || 5, 1, 10);
-    normalized.motionPointCount = Math.round(clamp(Number(normalized.motionPointCount) || 6, 3, 16));
+    normalized.motionPointCount = Math.round(clamp(Number(normalized.motionPointCount) || 6, 2, 16));
     normalized.motionComplexity = normalizeMotionComplexity(normalized.motionComplexity);
-    normalized.motionEasing = ['linear', 'smooth', 'ease-in', 'ease-out', 'ease-in-out']
-        .includes(normalized.motionEasing)
-        ? normalized.motionEasing
-        : 'ease-in-out';
-    normalized.motionPause = clamp(Number(normalized.motionPause) || 0, 0, 60);
-    normalized.motionSkipProbability = clamp(Number(normalized.motionSkipProbability) || 0, 0, 100);
+    normalized.motionStops = clamp(Number(normalized.motionStops) || 0, 0, 100);
     normalized.motionBlinkCount = Math.round(clamp(
         Number.isFinite(Number(normalized.motionBlinkCount))
             ? Number(normalized.motionBlinkCount)
@@ -159,6 +157,7 @@ function normalizeIncomingState(source = {}) {
     );
     normalized.motionSeed = normalizeMotionSeed(normalized.motionSeed);
     normalized.showMotionPath = Boolean(normalized.showMotionPath);
+    Object.assign(normalized, resolveManualFocusMode(normalized));
     const hasPolarFocus = migrated.focusAngle != null
         && migrated.focusDistance != null
         && Number.isFinite(Number(migrated.focusAngle))
@@ -413,18 +412,18 @@ function rebuildFocusAnimation(app, { restart = true, schedule = true } = {}) {
     cancelFocusAnimationFrame();
     const start = currentStoredFocus(app.settings);
     focusAnimation.path = generateFocusPathForSettings(app.settings, start);
+    const stops = resolveFocusStops(app.settings.motionStops);
     focusAnimation.timeline = createFocusTimeline(focusAnimation.path, {
         duration: app.settings.motionDuration,
-        pause: app.settings.motionPause,
-        skipProbability: app.settings.motionSkipProbability,
-        easing: app.settings.motionEasing,
+        ...stops,
+        easing: 'ease-in-out',
         seed: app.settings.motionSeed
     });
     focusAnimation.eyeTimeline = createEyeAnimationTimeline(focusAnimation.timeline, {
         blinkCount: app.settings.motionBlinkCount,
         blinkAtStops: true,
         emotionVariation: app.settings.motionEmotionVariation,
-        easing: app.settings.motionEasing
+        easing: 'ease-in-out'
     });
     if (restart) {
         focusAnimation.elapsedMs = 0;
@@ -459,7 +458,7 @@ function rebuildEyeAnimation(app) {
         blinkCount: app.settings.motionBlinkCount,
         blinkAtStops: true,
         emotionVariation: app.settings.motionEmotionVariation,
-        easing: app.settings.motionEasing
+        easing: 'ease-in-out'
     });
     app.renderNow();
 }
@@ -536,8 +535,6 @@ function syncFocusModeUI(app) {
 
 function syncFocusAnimationControls(app) {
     syncFocusModeUI(app);
-    const easing = document.getElementById('motionEasingSelect');
-    if (easing) easing.value = app.settings.motionEasing;
     updateFocusAnimationButtons();
 }
 
@@ -563,9 +560,6 @@ function bindFocusAnimation(app) {
         });
     });
 
-    document.getElementById('motionEasingSelect')?.addEventListener('change', (event) => {
-        app.settingsStore.set('motionEasing', event.target.value);
-    });
     document.getElementById('motionPlayPauseBtn')?.addEventListener('click', () => {
         if (focusAnimation.paused) playFocusAnimation(app);
         else pauseFocusAnimation(app);
@@ -583,9 +577,7 @@ function bindFocusAnimation(app) {
         'motionDuration',
         'motionPointCount',
         'motionComplexity',
-        'motionEasing',
-        'motionPause',
-        'motionSkipProbability',
+        'motionStops',
         'motionSeed'
     ].forEach((setting) => {
         app.settingsStore.subscribe(setting, () => {
@@ -898,7 +890,7 @@ function drawCharacter(ctx, geometry, eyeGeometry) {
     if (state.showSphere
         || state.showRayGuides
         || state.showBisectors
-        || state.showPoint
+        || (state.showPoint && !state.followCursor && state.focusMode !== 'animate')
         || (state.focusMode === 'animate' && state.showMotionPath)) {
         drawGuides(ctx, geometry);
     }
@@ -1050,7 +1042,7 @@ function drawGuides(ctx, geometry) {
         });
     }
 
-    if (state.showPoint) {
+    if (state.showPoint && !state.followCursor && state.focusMode !== 'animate') {
         append(guides,
             create('path', {
                 d: `M ${geometry.focus.x - 9} ${geometry.focus.y} H ${geometry.focus.x + 9} M ${geometry.focus.x} ${geometry.focus.y - 9} V ${geometry.focus.y + 9}`,
@@ -1059,7 +1051,9 @@ function drawGuides(ctx, geometry) {
                 'stroke-width': 0.75,
                 'stroke-linecap': 'square',
                 'vector-effect': 'non-scaling-stroke',
-                'pointer-events': 'none'
+                'pointer-events': 'none',
+                'data-interactive': 'true',
+                'data-export-exclude': 'true'
             }),
             create('rect', {
                 x: geometry.focus.x - 12,
@@ -1102,7 +1096,16 @@ function renderFailure(ctx, error) {
 
 let focusControlsSyncing = false;
 
+function syncManualFocusModeControls(app) {
+    const followCursor = Boolean(app.settings.followCursor);
+    const manual = document.getElementById('showPoint');
+    const follow = document.getElementById('followCursor');
+    if (manual) manual.checked = !followCursor;
+    if (follow) follow.checked = followCursor;
+}
+
 function syncFocusControls(app) {
+    syncManualFocusModeControls(app);
     if (!app.sliders) return;
     const storedPolar = normalizedPolar({
         angle: app.settings.focusAngle,
@@ -1258,12 +1261,31 @@ function commitTransientFollowFocus(app, { syncControls = true } = {}) {
 }
 
 function disableFollowCursor(app, { syncControls = true } = {}) {
-    if (!app.settings.followCursor) return;
-    commitTransientFollowFocus(app, { syncControls });
-    app.settingsStore.set('followCursor', false);
+    if (app.settings.followCursor) {
+        commitTransientFollowFocus(app, { syncControls });
+    }
+    app.settingsStore.setMultiple({
+        followCursor: false,
+        showPoint: true
+    });
+    syncManualFocusModeControls(app);
+    app.renderNow();
 }
 
 function bindManualFocusControls(app) {
+    document.getElementById('showPoint')?.addEventListener('change', (event) => {
+        if (event.target.checked) disableFollowCursor(app);
+    });
+    document.getElementById('followCursor')?.addEventListener('change', (event) => {
+        if (!event.target.checked) return;
+        app.settingsStore.setMultiple({
+            showPoint: false,
+            followCursor: true
+        });
+        syncManualFocusModeControls(app);
+        app.renderNow();
+    });
+
     [
         'focusAngleSlider',
         'focusDistanceSlider',
@@ -1300,7 +1322,9 @@ function bindManualFocusControls(app) {
 
     app.settingsStore.subscribe('focusAngle', reconcile);
     app.settingsStore.subscribe('focusDistance', reconcile);
+    app.settingsStore.subscribe('showPoint', () => syncManualFocusModeControls(app));
     app.settingsStore.subscribe('followCursor', (enabled) => {
+        syncManualFocusModeControls(app);
         if (isMobileShowcase()) return;
         if (!enabled) {
             commitTransientFollowFocus(app);
@@ -1392,10 +1416,9 @@ const app = defineTool({
             { id: 'focusAngleSlider', valueId: 'focusAngleValue', setting: 'focusAngle', min: 0, max: 360, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'focusDistanceSlider', valueId: 'focusDistanceValue', setting: 'focusDistance', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'motionDurationSlider', valueId: 'motionDurationValue', setting: 'motionDuration', min: 1, max: 10, decimals: 0, baseStep: 1, shiftStep: 1 },
-            { id: 'motionPointCountSlider', valueId: 'motionPointCountValue', setting: 'motionPointCount', min: 3, max: 16, decimals: 0, baseStep: 1, shiftStep: 2 },
+            { id: 'motionPointCountSlider', valueId: 'motionPointCountValue', setting: 'motionPointCount', min: 2, max: 16, decimals: 0, baseStep: 1, shiftStep: 2 },
             { id: 'motionComplexitySlider', valueId: 'motionComplexityValue', setting: 'motionComplexity', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
-            { id: 'motionPauseSlider', valueId: 'motionPauseValue', setting: 'motionPause', min: 0, max: 60, decimals: 0, baseStep: 1, shiftStep: 5 },
-            { id: 'motionSkipProbabilitySlider', valueId: 'motionSkipProbabilityValue', setting: 'motionSkipProbability', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'motionStopsSlider', valueId: 'motionStopsValue', setting: 'motionStops', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'motionBlinkCountSlider', valueId: 'motionBlinkCountValue', setting: 'motionBlinkCount', min: 0, max: 12, decimals: 0, baseStep: 1, shiftStep: 2 },
             { id: 'motionEmotionVariationSlider', valueId: 'motionEmotionVariationValue', setting: 'motionEmotionVariation', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyePerspectiveSlider', valueId: 'eyePerspectiveValue', setting: 'eyePerspective', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
@@ -1472,7 +1495,7 @@ const app = defineTool({
             'focusAngle', 'focusDistance', 'rayLength', 'rayWidth', 'roundness', 'cornerSmoothing',
             'rayCount', 'angleSpan', 'boundaryCenterX', 'boundaryCenterY', 'boundaryRadius',
             'eyePerspective', 'eyeSize', 'eyeDistance', 'cute', 'angry',
-            'motionDuration', 'motionPointCount', 'motionComplexity', 'motionPause', 'motionSkipProbability',
+            'motionDuration', 'motionPointCount', 'motionComplexity', 'motionStops',
             'motionBlinkCount', 'motionEmotionVariation',
             'motionSeed'
         ],

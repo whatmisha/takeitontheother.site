@@ -1,9 +1,13 @@
-import { generateFocusPathForSettings } from '../animation/focusPath.js?v=20260825-2';
-import { createFocusTimeline, sampleFocusTimeline } from '../animation/focusTimeline.js?v=20260825-2';
+import { generateFocusPathForSettings } from '../animation/focusPath.js?v=20260825-4';
+import {
+    createFocusTimeline,
+    resolveFocusStops,
+    sampleFocusTimeline
+} from '../animation/focusTimeline.js?v=20260825-4';
 import {
     createEyeAnimationTimeline,
     sampleEyeAnimationTimeline
-} from '../animation/eyeTimeline.js?v=20260825-2';
+} from '../animation/eyeTimeline.js?v=20260825-7';
 import { drawAnimationFrame } from '../render/animationFrameRenderer.js?v=20260825-2';
 import { createStoredZip } from './zipStore.js';
 import { muxAvcToMp4 } from './mp4Muxer.js';
@@ -11,7 +15,7 @@ import {
     ANIMATION_EXPORT_FPS,
     ANIMATION_EXPORT_SIZE,
     shouldKnockoutPngEyes
-} from './animationExportDefaults.js?v=20260825-1';
+} from './animationExportDefaults.js?v=20260825-2';
 
 let cancelledJob = null;
 
@@ -25,18 +29,18 @@ const assertActive = (jobId) => {
 
 function createMotion(settings, startFocus) {
     const path = generateFocusPathForSettings(settings, startFocus);
+    const stops = resolveFocusStops(settings.motionStops);
     const timeline = createFocusTimeline(path, {
         duration: settings.motionDuration,
-        pause: settings.motionPause,
-        skipProbability: settings.motionSkipProbability,
-        easing: settings.motionEasing,
+        ...stops,
+        easing: 'ease-in-out',
         seed: settings.motionSeed
     });
     const eyeTimeline = createEyeAnimationTimeline(timeline, {
         blinkCount: settings.motionBlinkCount,
         blinkAtStops: true,
         emotionVariation: settings.motionEmotionVariation,
-        easing: settings.motionEasing
+        easing: 'ease-in-out'
     });
     return { path, timeline, eyeTimeline };
 }

@@ -7,27 +7,27 @@ const LENGTH_SAMPLES = 64;
 export const FOCUS_PATH_COMPLEXITY = Object.freeze({
     soft: Object.freeze({
         angularJitter: 0.16,
-        radiusMin: 0.42,
-        radiusMax: 0.84,
+        radiusMin: 0.32,
+        radiusMax: 0.995,
         strideRatio: 0,
         handleFactor: 0.34,
-        radialExponent: 0.82
+        radialExponent: 0.58
     }),
     medium: Object.freeze({
         angularJitter: 0.38,
-        radiusMin: 0.28,
-        radiusMax: 0.91,
+        radiusMin: 0.18,
+        radiusMax: 0.995,
         strideRatio: 0.32,
         handleFactor: 0.29,
-        radialExponent: 1
+        radialExponent: 0.68
     }),
     hard: Object.freeze({
         angularJitter: 0.68,
-        radiusMin: 0.18,
-        radiusMax: 0.96,
+        radiusMin: 0.08,
+        radiusMax: 0.995,
         strideRatio: 0.48,
         handleFactor: 0.23,
-        radialExponent: 1
+        radialExponent: 0.78
     })
 });
 
@@ -158,19 +158,26 @@ function boundaryAwareTangent(anchor, tangent, center, radius) {
 }
 
 function createAnchors({ start, center, radius, pointCount, profile, random }) {
-    const count = clamp(Math.round(finiteOr(pointCount, 6)), 3, 16);
+    const count = clamp(Math.round(finiteOr(pointCount, 6)), 2, 16);
     const first = constrainToCircle(start, center, radius * 0.995);
     const generatedCount = count - 1;
     const baseAngle = random() * TAU;
     const angularStep = TAU / generatedCount;
     const pool = [];
+    const primaryEdgeIndex = Math.floor(random() * generatedCount);
+    const edgeIndices = new Set([primaryEdgeIndex]);
+    if (generatedCount >= 4) {
+        edgeIndices.add((primaryEdgeIndex + Math.floor(generatedCount / 2)) % generatedCount);
+    }
 
     for (let index = 0; index < generatedCount; index += 1) {
         const jitter = (random() - 0.5) * angularStep * profile.angularJitter;
         const angle = baseAngle + index * angularStep + jitter;
-        const radialMix = Math.pow(random(), profile.radialExponent);
-        const radialRatio = profile.radiusMin
-            + (profile.radiusMax - profile.radiusMin) * radialMix;
+        const radialRandom = random();
+        const radialMix = Math.pow(radialRandom, profile.radialExponent);
+        const radialRatio = edgeIndices.has(index)
+            ? 0.94 + radialRandom * 0.055
+            : profile.radiusMin + (profile.radiusMax - profile.radiusMin) * radialMix;
         pool.push({
             x: center.x + Math.cos(angle) * radius * radialRatio,
             y: center.y + Math.sin(angle) * radius * radialRatio
@@ -190,6 +197,13 @@ function createAnchors({ start, center, radius, pointCount, profile, random }) {
 }
 
 function createTangents(anchors, center, radius) {
+    if (anchors.length === 2) {
+        const chord = unit(subtract(anchors[1], anchors[0]));
+        const tangent = { x: -chord.y, y: chord.x };
+        return anchors.map((anchor) => (
+            boundaryAwareTangent(anchor, tangent, center, radius)
+        ));
+    }
     return anchors.map((anchor, index) => {
         const previous = anchors[(index - 1 + anchors.length) % anchors.length];
         const next = anchors[(index + 1) % anchors.length];

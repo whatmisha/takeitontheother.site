@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { generateFocusPath } from '../src/animation/focusPath.js';
-import { createFocusTimeline } from '../src/animation/focusTimeline.js';
+import { createFocusTimeline, sampleFocusTimeline } from '../src/animation/focusTimeline.js';
+import { BLINK_TIMING } from '../src/animation/blink.js';
 import {
     createEyeAnimationTimeline,
+    MAX_BLINKS_PER_STOP,
     sampleEyeAnimationTimeline
 } from '../src/animation/eyeTimeline.js';
 
@@ -31,6 +33,15 @@ test('blink count creates the exact number of deterministic blink events', () =>
     assert.deepEqual(first.blinkEvents, second.blinkEvents);
 });
 
+test('animated blinks use the same relaxed timing as manual blinks', () => {
+    const eyeTimeline = createEyeAnimationTimeline(focusTimeline, { blinkCount: 1 });
+    const timing = eyeTimeline.blinkEvents[0].timing;
+    assert.deepEqual(timing, {
+        ...BLINK_TIMING,
+        duration: BLINK_TIMING.close + BLINK_TIMING.hold + BLINK_TIMING.open
+    });
+});
+
 test('stop-only blinks are assigned exclusively to active stop anchors', () => {
     const eyeTimeline = createEyeAnimationTimeline(focusTimeline, {
         blinkCount: 5,
@@ -42,6 +53,62 @@ test('stop-only blinks are assigned exclusively to active stop anchors', () => {
     assert.equal(eyeTimeline.blinkEvents.length, 5);
     eyeTimeline.blinkEvents.forEach((event) => {
         assert.ok(activeAnchors.has(event.anchorIndex));
+    });
+});
+
+test('no stop receives more than two blinks even when twelve are requested', () => {
+    const singleStopTimeline = createFocusTimeline(path, {
+        duration: 1,
+        pause: 20,
+        skipProbability: 100,
+        easing: 'ease-in-out',
+        seed: 42
+    });
+    const eyeTimeline = createEyeAnimationTimeline(singleStopTimeline, {
+        blinkCount: 12,
+        blinkAtStops: true
+    });
+    const counts = eyeTimeline.blinkEvents.reduce((result, event) => {
+        result.set(event.anchorIndex, (result.get(event.anchorIndex) || 0) + 1);
+        return result;
+    }, new Map());
+
+    assert.equal(eyeTimeline.blinkEvents.length, MAX_BLINKS_PER_STOP);
+    assert.equal(eyeTimeline.requestedBlinkCount, 12);
+    assert.equal(eyeTimeline.blinkCount, MAX_BLINKS_PER_STOP);
+    assert.equal(Math.max(...counts.values()), MAX_BLINKS_PER_STOP);
+    const manualDuration = BLINK_TIMING.close + BLINK_TIMING.hold + BLINK_TIMING.open;
+    assert.ok(eyeTimeline.blinkEvents.every((event) => (
+        event.timing.duration === manualDuration
+    )));
+    assert.equal(
+        eyeTimeline.blinkEvents[1].centerMs - eyeTimeline.blinkEvents[0].centerMs,
+        manualDuration
+    );
+    assert.equal(
+        sampleFocusTimeline(singleStopTimeline, eyeTimeline.blinkEvents[0].centerMs).type,
+        'hold'
+    );
+    assert.equal(
+        sampleFocusTimeline(singleStopTimeline, eyeTimeline.blinkEvents[1].centerMs).type,
+        'move'
+    );
+});
+
+test('one blink at a stop always keeps the manual click timing', () => {
+    const shortStopTimeline = createFocusTimeline(path, {
+        duration: 1,
+        pause: 5,
+        skipProbability: 100,
+        seed: 42
+    });
+    const eyeTimeline = createEyeAnimationTimeline(shortStopTimeline, {
+        blinkCount: 1,
+        blinkAtStops: true
+    });
+    assert.deepEqual(eyeTimeline.blinkEvents[0].timing, {
+        ...BLINK_TIMING,
+        duration: BLINK_TIMING.close + BLINK_TIMING.hold + BLINK_TIMING.open
     });
 });
 

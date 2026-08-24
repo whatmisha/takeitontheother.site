@@ -62,6 +62,29 @@ test('point count and complexity independently affect the generated path', () =>
     assert.notEqual(sixSoft.path, sixHard.path);
 });
 
+test('two points produce a finite closed loop instead of a line reversal', () => {
+    const path = generateFocusPath({ ...options, pointCount: 2, complexity: 50 });
+    const chord = {
+        x: path.anchors[1].x - path.anchors[0].x,
+        y: path.anchors[1].y - path.anchors[0].y
+    };
+    const chordLength = Math.hypot(chord.x, chord.y);
+
+    assert.equal(path.anchors.length, 2);
+    assert.equal(path.segments.length, 2);
+    assert.ok(Number.isFinite(path.totalLength));
+    assert.ok(path.totalLength > chordLength * 2);
+    path.tangents.forEach((tangent) => {
+        assert.ok(Math.abs(tangent.x * chord.x + tangent.y * chord.y) < 1e-5);
+    });
+    path.anchors.forEach((_, index) => {
+        const continuity = tangentContinuityAtAnchor(path, index);
+        assert.ok(Math.abs(continuity.cross) < 1e-6);
+        assert.ok(continuity.dot > 0.999);
+    });
+    assert.equal(pathIsInsideRegion(path, 1e-5), true);
+});
+
 test('numeric complexity interpolates continuously between legacy profiles', () => {
     const soft = generateFocusPath({ ...options, complexity: 0 });
     const quarter = generateFocusPath({ ...options, complexity: 25 });
@@ -70,4 +93,17 @@ test('numeric complexity interpolates continuously between legacy profiles', () 
     assert.equal(medium.path, generateFocusPath({ ...options, complexity: 'medium' }).path);
     assert.notEqual(quarter.path, soft.path);
     assert.notEqual(quarter.path, medium.path);
+});
+
+test('every complexity generates a path that reaches the outer focus region', () => {
+    [0, 50, 100].forEach((complexity) => {
+        const path = generateFocusPath({ ...options, complexity });
+        const outermostAnchor = Math.max(...path.anchors.map((anchor) => (
+            Math.hypot(anchor.x - options.center.x, anchor.y - options.center.y)
+        )));
+        assert.ok(
+            outermostAnchor >= options.radius * 0.94,
+            `complexity ${complexity} only reached ${outermostAnchor / options.radius}`
+        );
+    });
 });

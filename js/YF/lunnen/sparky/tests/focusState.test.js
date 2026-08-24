@@ -5,6 +5,7 @@ import test from 'node:test';
 import {
     centeredFocus,
     normalizedFocus,
+    resolveManualFocusMode,
     resolveEffectivePersistenceState
 } from '../src/state/focusState.js';
 
@@ -44,6 +45,17 @@ test('mobile Basic-only showcase does not overwrite the stored desktop preset st
 
 test('mobile Basic-only showcase starts with Focus at the boundary center', () => {
     assert.deepEqual(centeredFocus(state), { x: 240, y: 240 });
+});
+
+test('Manual focus and Follow cursor always resolve to opposite modes', () => {
+    assert.deepEqual(
+        resolveManualFocusMode({ followCursor: true, showPoint: true }),
+        { followCursor: true, showPoint: false }
+    );
+    assert.deepEqual(
+        resolveManualFocusMode({ followCursor: false, showPoint: false }),
+        { followCursor: false, showPoint: true }
+    );
 });
 
 test('runtime defaults start with centered polar Focus', async () => {

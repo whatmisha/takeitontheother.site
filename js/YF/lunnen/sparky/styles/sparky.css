@@ -66,10 +66,6 @@ body,
     outline: none;
 }
 
-.sparky-focus-mode-toggles {
-    margin-top: 24px;
-}
-
 .sparky-pill-button {
     appearance: none;
     font: inherit;
@@ -92,17 +88,6 @@ body,
     display: none;
 }
 
-.sparky-compact-group {
-    gap: 8px;
-}
-
-.sparky-control-label,
-.sparky-select-label {
-    display: block;
-    color: var(--color-text);
-    font-size: 0.82rem;
-}
-
 .sparky-inline-segments {
     width: 100%;
     margin-top: 8px;
@@ -115,23 +100,11 @@ body,
     font-size: 0.78rem;
 }
 
-.sparky-select {
-    width: 100%;
-    height: 32px;
-    padding: 0 10px;
-    border: 0;
-    border-radius: var(--radius-input);
-    color: var(--color-text);
-    background: var(--color-bg-input);
-    font: inherit;
-    font-size: 0.82rem;
-}
-
 .sparky-animation-actions {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) 32px 32px;
     gap: 6px;
-    margin-top: 16px;
+    margin-top: 24px;
 }
 
 .sparky-animation-actions .sparky-panel-action {
@@ -140,25 +113,11 @@ body,
     font-size: 0.74rem;
 }
 
-.sparky-motion-toggles {
-    flex-wrap: wrap;
-    margin-top: 16px;
-}
-
-.sparky-eye-animation-subsection {
+.sparky-animation-actions .sparky-icon-action {
     display: grid;
-    gap: 2px;
-    margin-top: 18px;
-    padding-top: 18px;
-    border-top: 1px solid var(--color-border);
-}
-
-.sparky-eye-animation-subsection > .control-group {
-    margin-top: 14px;
-}
-
-.sparky-eye-animation-subsection > .sparky-motion-toggles {
-    margin-top: 10px;
+    width: 32px;
+    padding: 0;
+    place-items: center;
 }
 
 .sparky-export-status {

@@ -1,8 +1,9 @@
 import { BLINK_TIMING } from './blink.js';
-import { FOCUS_MOTION_EASINGS } from './focusTimeline.js?v=20260825-2';
+import { FOCUS_MOTION_EASINGS } from './focusTimeline.js?v=20260825-4';
 import { clamp } from '../geometry/vector.js';
 
 const BASE_BLINK_DURATION = BLINK_TIMING.close + BLINK_TIMING.hold + BLINK_TIMING.open;
+export const MAX_BLINKS_PER_STOP = 2;
 const finiteOr = (value, fallback) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
 const clamp01 = (value) => clamp(value, 0, 1);
@@ -24,14 +25,12 @@ function blinkShape(localTime, timing) {
     );
 }
 
-function scaledBlinkTiming(maxDuration = BASE_BLINK_DURATION) {
-    const duration = Math.max(48, Math.min(BASE_BLINK_DURATION, maxDuration));
-    const scale = duration / BASE_BLINK_DURATION;
+function fixedBlinkTiming() {
     return {
-        close: BLINK_TIMING.close * scale,
-        hold: BLINK_TIMING.hold * scale,
-        open: BLINK_TIMING.open * scale,
-        duration
+        close: BLINK_TIMING.close,
+        hold: BLINK_TIMING.hold,
+        open: BLINK_TIMING.open,
+        duration: BASE_BLINK_DURATION
     };
 }
 
@@ -44,13 +43,11 @@ function stopDescriptors(focusTimeline) {
         if (hold) {
             return [{
                 anchorIndex,
-                centerMs: (hold.startMs + hold.endMs) / 2,
-                startMs: hold.startMs,
-                durationMs: hold.durationMs
+                centerMs: (hold.startMs + hold.endMs) / 2
             }];
         }
         if (anchorIndex === 0) {
-            return [{ anchorIndex, centerMs: 0, startMs: 0, durationMs: 0 }];
+            return [{ anchorIndex, centerMs: 0 }];
         }
         const arrival = focusTimeline.entries.find((entry) => (
             entry.type === 'move'
@@ -58,20 +55,19 @@ function stopDescriptors(focusTimeline) {
         ));
         return [{
             anchorIndex,
-            centerMs: arrival?.endMs || 0,
-            startMs: arrival?.endMs || 0,
-            durationMs: 0
+            centerMs: arrival?.endMs || 0
         }];
     });
 }
 
 function distributeAssignments(count, stops) {
     const assignments = new Map(stops.map((stop) => [stop, []]));
-    for (let index = 0; index < count; index += 1) {
-        const stopIndex = count <= stops.length
-            ? count === 1
+    const assignedCount = Math.min(count, stops.length * MAX_BLINKS_PER_STOP);
+    for (let index = 0; index < assignedCount; index += 1) {
+        const stopIndex = assignedCount <= stops.length
+            ? assignedCount === 1
                 ? 0
-                : Math.round(index * (stops.length - 1) / (count - 1))
+                : Math.round(index * (stops.length - 1) / (assignedCount - 1))
             : index % stops.length;
         assignments.get(stops[stopIndex]).push(index);
     }
@@ -86,16 +82,9 @@ function createStopBlinkEvents(focusTimeline, count) {
 
     assignments.forEach((indices, stop) => {
         if (!indices.length) return;
-        const explicitWindow = stop.durationMs;
-        const fallbackWindow = Math.min(900, focusTimeline.durationMs * 0.18);
-        const windowDuration = explicitWindow > 0 ? explicitWindow : fallbackWindow;
-        const spacing = windowDuration / indices.length;
-        const windowStart = explicitWindow > 0
-            ? stop.startMs
-            : stop.centerMs - windowDuration / 2;
+        const timing = fixedBlinkTiming();
         indices.forEach((_, localIndex) => {
-            const centerMs = windowStart + spacing * (localIndex + 0.5);
-            const timing = scaledBlinkTiming(spacing * 0.82);
+            const centerMs = stop.centerMs + localIndex * BASE_BLINK_DURATION;
             events.push({
                 anchorIndex: stop.anchorIndex,
                 centerMs: wrapTime(centerMs, focusTimeline.durationMs),
@@ -111,7 +100,7 @@ function createFreeBlinkEvents(focusTimeline, count) {
     const spacing = focusTimeline.durationMs / count;
     return Array.from({ length: count }, (_, index) => {
         const centerMs = spacing * (index + 0.5);
-        const timing = scaledBlinkTiming(spacing * 0.72);
+        const timing = fixedBlinkTiming();
         return {
             anchorIndex: null,
             centerMs,
@@ -129,18 +118,20 @@ export function createEyeAnimationTimeline(focusTimeline, {
 } = {}) {
     const count = Math.round(clamp(finiteOr(blinkCount, 2), 0, 12));
     const onlyAtStops = Boolean(blinkAtStops);
+    const blinkEvents = count <= 0
+        ? []
+        : onlyAtStops
+            ? createStopBlinkEvents(focusTimeline, count)
+            : createFreeBlinkEvents(focusTimeline, count);
     return {
         durationMs: focusTimeline.durationMs,
         focusTimeline,
-        blinkCount: count,
+        requestedBlinkCount: count,
+        blinkCount: blinkEvents.length,
         blinkAtStops: onlyAtStops,
         emotionVariation: clamp(finiteOr(emotionVariation, 0), 0, 100),
         easing: FOCUS_MOTION_EASINGS[easing] ? easing : 'ease-in-out',
-        blinkEvents: count <= 0
-            ? []
-            : onlyAtStops
-                ? createStopBlinkEvents(focusTimeline, count)
-                : createFreeBlinkEvents(focusTimeline, count)
+        blinkEvents
     };
 }
 
