@@ -12,6 +12,7 @@ import {
 } from '../src/geometry/eyeGeometry.js';
 import { distance } from '../src/geometry/vector.js';
 import { rebaseLegacyY } from '../src/geometry/coordinateSpace.js';
+import { focusPointFromPolar } from '../src/geometry/focusBounds.js';
 
 const closeTo = (actual, expected, tolerance = 1e-6) => {
     assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} is not within ${tolerance} of ${expected}`);
@@ -20,6 +21,50 @@ const closeTo = (actual, expected, tolerance = 1e-6) => {
 function assertPoint(actual, expected, tolerance = 1e-6) {
     closeTo(actual.x, expected.x, tolerance);
     closeTo(actual.y, expected.y, tolerance);
+}
+
+const BASIC_EYE_SETTINGS = Object.freeze({
+    boundaryType: 'circle',
+    boundaryCenterX: 240,
+    boundaryCenterY: 240,
+    boundaryRadius: 240,
+    rayCount: 5,
+    centerAngle: -90,
+    angleSpan: 144,
+    rayLength: 240,
+    rayWidth: 80,
+    roundness: 60,
+    cornerSmoothing: 100,
+    eyePerspective: 100,
+    eyeSize: 50,
+    eyeDistance: 0,
+    cute: 50,
+    angry: 0
+});
+
+function basicEyeGeometry(angle, focusDistance, options = {}) {
+    const focus = focusPointFromPolar(
+        { angle, distance: focusDistance },
+        BASIC_EYE_SETTINGS
+    );
+    const settings = { ...BASIC_EYE_SETTINGS, focusX: focus.x, focusY: focus.y };
+    const head = buildCharacterGeometry(settings);
+    return buildEyeGeometry(settings, head, options);
+}
+
+function maximumEyeContourDelta(first, second) {
+    let maximum = 0;
+    ['left', 'right'].forEach((side) => {
+        ['eye1', 'top', 'bottom'].forEach((shape) => {
+            first[side][shape].points.forEach((value, index) => {
+                maximum = Math.max(
+                    maximum,
+                    distance(value, second[side][shape].points[index])
+                );
+            });
+        });
+    });
+    return maximum;
 }
 
 test('the four SVG emotion references are exact in eye1-local coordinates', () => {
@@ -296,6 +341,137 @@ test('interactive placement keeps exact containment and visual parity with globa
     assert.ok(maximumScaleDelta < 0.002, `fitScale parity drifted by ${maximumScaleDelta}`);
     assert.ok(maximumContourDelta < 0.25, `eye contour parity drifted by ${maximumContourDelta}px`);
     assert.ok(localFrameCount > 0, 'the continuous trajectory must exercise local refinement');
+});
+
+test('Basic crown placement is monotonic, wrap-symmetric and independent of pointer history', () => {
+    const descendingAngles = [
+        ...Array.from({ length: 46 }, (_, index) => 45 - index),
+        ...Array.from({ length: 45 }, (_, index) => 359 - index)
+    ];
+    const ascendingAngles = [
+        ...Array.from({ length: 46 }, (_, index) => 315 + index),
+        ...Array.from({ length: 45 }, (_, index) => index + 1)
+    ];
+    const runTrajectory = (angles) => {
+        let previous = null;
+        const frames = new Map();
+        angles.forEach((angle, index) => {
+            const geometry = basicEyeGeometry(angle, 100, {
+                placementMode: index === 0 ? 'global' : 'local',
+                previousEyeGeometry: previous
+            });
+            frames.set(angle === 360 ? 0 : angle, geometry);
+            previous = geometry;
+        });
+        return frames;
+    };
+    const descending = runTrajectory(descendingAngles);
+    const ascending = runTrajectory(ascendingAngles);
+
+    for (let angle = 45; angle > 0; angle -= 1) {
+        assert.ok(
+            descending.get(angle - 1).fitScale <= descending.get(angle).fitScale + 0.002,
+            `right crown scale grew between ${angle} and ${angle - 1} degrees`
+        );
+    }
+    for (let angle = 315; angle < 360; angle += 1) {
+        assert.ok(
+            ascending.get(angle + 1 === 360 ? 0 : angle + 1).fitScale
+                <= ascending.get(angle).fitScale + 0.002,
+            `left crown scale grew between ${angle} and ${angle + 1} degrees`
+        );
+    }
+
+    descending.forEach((interactive, angle) => {
+        const reverse = ascending.get(angle);
+        assert.ok(reverse, `reverse trajectory did not visit ${angle} degrees`);
+        assert.ok(distance(interactive.pairCenter, reverse.pairCenter) < 0.35);
+        assert.ok(Math.abs(interactive.fitScale - reverse.fitScale) < 0.002);
+        assert.ok(maximumEyeContourDelta(interactive, reverse) < 0.35);
+        assert.ok(interactive.minClearance + 0.025 >= interactive.guard);
+        assert.ok(reverse.minClearance + 0.025 >= reverse.guard);
+    });
+
+    const zero = basicEyeGeometry(0, 100, { placementMode: 'global' });
+    const fullTurn = basicEyeGeometry(360, 100, { placementMode: 'global' });
+    const rightFlank = basicEyeGeometry(45, 100, { placementMode: 'global' });
+    const leftFlank = basicEyeGeometry(315, 100, { placementMode: 'global' });
+    assert.ok(zero.fitScale >= 0.29, 'crown eyes must remain clearly visible');
+    closeTo(zero.fitScale, fullTurn.fitScale, 1e-9);
+    closeTo(rightFlank.fitScale, leftFlank.fitScale, 1e-9);
+    assert.ok(maximumEyeContourDelta(zero, fullTurn) < 1e-6);
+});
+
+test('Basic Distance remains continuous and history-independent through the crown', () => {
+    const distances = Array.from({ length: 101 }, (_, index) => index);
+    const runTrajectory = (angle, sequence) => {
+        let previous = null;
+        let maximumCenterStep = 0;
+        const frames = new Map();
+        sequence.forEach((focusDistance, index) => {
+            const geometry = basicEyeGeometry(angle, focusDistance, {
+                placementMode: index === 0 ? 'global' : 'local',
+                previousEyeGeometry: previous
+            });
+            if (previous) {
+                maximumCenterStep = Math.max(
+                    maximumCenterStep,
+                    distance(geometry.pairCenter, previous.pairCenter)
+                );
+            }
+            frames.set(focusDistance, geometry);
+            previous = geometry;
+        });
+        return { frames, maximumCenterStep };
+    };
+
+    [0, 15, 30].forEach((angle) => {
+        const increasing = runTrajectory(angle, distances);
+        const decreasing = runTrajectory(angle, [...distances].reverse());
+        assert.ok(
+            increasing.maximumCenterStep < 2.25,
+            `${angle} degrees jumped by ${increasing.maximumCenterStep}px while increasing Distance`
+        );
+        assert.ok(
+            decreasing.maximumCenterStep < 2.25,
+            `${angle} degrees jumped by ${decreasing.maximumCenterStep}px while decreasing Distance`
+        );
+
+        distances.forEach((focusDistance) => {
+            const forward = increasing.frames.get(focusDistance);
+            const reverse = decreasing.frames.get(focusDistance);
+            assert.ok(distance(forward.pairCenter, reverse.pairCenter) < 0.25);
+            assert.ok(Math.abs(forward.fitScale - reverse.fitScale) < 0.002);
+            assert.ok(maximumEyeContourDelta(forward, reverse) < 0.25);
+            assert.ok(forward.minClearance + 0.025 >= forward.guard);
+            assert.ok(reverse.minClearance + 0.025 >= reverse.guard);
+        });
+
+        [13, 14, 19, 20, 36, 37, 100].forEach((focusDistance) => {
+            const interactive = increasing.frames.get(focusDistance);
+            const global = basicEyeGeometry(angle, focusDistance, { placementMode: 'global' });
+            assert.ok(distance(interactive.pairCenter, global.pairCenter) < 0.25);
+            assert.ok(Math.abs(interactive.fitScale - global.fitScale) < 0.002);
+            assert.ok(maximumEyeContourDelta(interactive, global) < 0.25);
+        });
+    });
+});
+
+test('a rapid Basic Distance jump uses the same crown solution as a cold render', () => {
+    const centered = basicEyeGeometry(0, 0, { placementMode: 'global' });
+    const jumped = basicEyeGeometry(0, 100, {
+        placementMode: 'local',
+        previousEyeGeometry: centered
+    });
+    const cold = basicEyeGeometry(0, 100, { placementMode: 'global' });
+
+    assert.equal(jumped.placementMode, 'global');
+    assert.equal(jumped.solverMetrics.fallbackReason, 'focus-delta');
+    assert.ok(jumped.fitScale >= 0.29, 'rapid Distance changes must not collapse the eyes');
+    closeTo(jumped.fitScale, cold.fitScale, 1e-9);
+    assert.ok(distance(jumped.pairCenter, cold.pairCenter) < 0.25);
+    assert.ok(maximumEyeContourDelta(jumped, cold) < 0.25);
+    assert.ok(jumped.minClearance + 0.025 >= jumped.guard);
 });
 
 test('the full supported focus, Width and eye-control grid remains inside the head gap', () => {

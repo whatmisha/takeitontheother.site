@@ -10,6 +10,7 @@ import {
     subtract
 } from './vector.js';
 import { rebaseLegacyY } from './coordinateSpace.js';
+import { createExtendedFocusRegion } from './focusBounds.js';
 
 export const EYE_DEFAULTS = Object.freeze({
     pairCenterX: 240,
@@ -29,9 +30,13 @@ export const EYE_DEFAULTS = Object.freeze({
 
 const REFERENCE_HORIZONTAL_OFFSET = 21.6692;
 const CONTAINMENT_RELAX_ITERATIONS = 16;
-const FIT_SCALE_BINARY_ITERATIONS = 14;
-const FIT_SCALE_CONTINUATION_STEP = 0.08;
+const FIT_SCALE_BINARY_ITERATIONS = 11;
 const FINAL_HEAD_GAP = 2;
+const TOP_FOCUS_SCALE_FLOOR = 0.3;
+const CROWN_SCALE_SAFETY = 0.27;
+const FOCUS_SHIFT_INSET = 0.25;
+const LOCAL_OPTICAL_SCORE_TOLERANCE = 0.05;
+const CROWN_OPTICAL_STABILIZATION = 0.82;
 
 /**
  * Canonical eyelid centers measured from the corresponding eye1 center.
@@ -476,12 +481,46 @@ function minimumContainmentClearance(context, pairCenter, fitScale) {
     return minimumContainmentResult(context, pairCenter, fitScale).minimum;
 }
 
+function topFocusCrownDepth(values) {
+    const region = createExtendedFocusRegion(values);
+    if (region.radius <= EPSILON) return 0;
+    const upward = clamp((region.center.y - values.focusY) / region.radius, 0, 1);
+    const sideways = clamp(Math.abs(values.focusX - region.center.x) / region.radius, 0, 1);
+    return clamp(upward - sideways, 0, 1);
+}
+
+function topFocusScaleLimit(values) {
+    // The upper 90-degree Focus cone is the head's narrow crown. A continuous
+    // directional ceiling makes the requested shrinkage explicit: full size at
+    // 315/45 degrees, the same minimum at 0/360, and no angle-wrap branch.
+    const crownDepth = topFocusCrownDepth(values);
+    // This continuous inset replaces the old one-shot scale probe. It has no
+    // effect at either flank or at the crown apex, and supplies extra room only
+    // where the concave head boundary otherwise triggers a binary fallback.
+    const safetyInset = CROWN_SCALE_SAFETY
+        * crownDepth
+        * (1 - crownDepth) ** 3;
+    return mix(1, TOP_FOCUS_SCALE_FLOOR, smoothstep(crownDepth)) - safetyInset;
+}
+
+function crownOpticalStabilization(values) {
+    const region = createExtendedFocusRegion(values);
+    if (region.radius <= EPSILON) return 0;
+    const upward = (region.center.y - values.focusY) / region.radius;
+    if (upward <= EPSILON) return 0;
+    const sideways = Math.abs(values.focusX - region.center.x) / region.radius;
+    // Blend the optical field into its deterministic Focus anchor before the
+    // narrow crown begins. The short transition avoids a new branch exactly at
+    // 315/45 degrees while leaving the rest of the face objective untouched.
+    const transition = smoothstep(clamp((upward - sideways + 0.08) / 0.16, 0, 1));
+    return CROWN_OPTICAL_STABILIZATION * transition;
+}
+
 function solveEyePlacement(
     model,
     values,
     headContour,
-    containmentContext,
-    { previousEyeGeometry = null } = {}
+    containmentContext
 ) {
     const desiredCenter = point(
         values.focusX,
@@ -492,21 +531,20 @@ function solveEyePlacement(
         headContour.reduce((sum, sample) => add(sum, sample), point(0, 0)),
         1 / headContour.length
     );
-    const previousValues = previousEyeGeometry?.values;
-    const focusDelta = previousValues
-        ? point(values.focusX - previousValues.focusX, values.focusY - previousValues.focusY)
-        : point(0, 0);
-    const focusDistance = Math.hypot(focusDelta.x, focusDelta.y);
-    const carry = (center) => center ? add(center, focusDelta) : null;
-    const transportedLegacyCenter = carry(previousEyeGeometry?.legacyCenter);
-    const continuationCenters = [
-        transportedLegacyCenter,
-        carry(previousEyeGeometry?.opticalCenter),
-        carry(previousEyeGeometry?.pairCenter)
-    ].filter(Boolean);
-    const previousFitScale = clamp(Number(previousEyeGeometry?.fitScale) || 0.05, 0.05, 1);
-
-    const relax = (start, fitScale) => {
+    const requestedScaleLimit = topFocusScaleLimit(values);
+    // Keep the allowed center travel just inside its nominal eye-spacing field;
+    // the inset prevents tolerance-only contact from becoming a separate branch.
+    const focusShiftBudget = Math.max(model.centerOffset, model.left.eye1.radius)
+        - FOCUS_SHIFT_INSET;
+    const symmetryAxisX = contourCenter.x;
+    const preserveHorizontalSymmetry = Math.abs(desiredCenter.x - symmetryAxisX) <= EPSILON;
+    const constrainToFocusField = (center) => {
+        const offset = subtract(center, desiredCenter);
+        const offsetLength = length(offset);
+        if (offsetLength <= focusShiftBudget || offsetLength <= EPSILON) return center;
+        return add(desiredCenter, scale(offset, focusShiftBudget / offsetLength));
+    };
+    const relax = (start, fitScale, constrain = false) => {
         let center = start;
         let result = null;
         for (let iteration = 0; iteration < CONTAINMENT_RELAX_ITERATIONS; iteration += 1) {
@@ -514,110 +552,109 @@ function solveEyePlacement(
             if (result.fits) break;
             const correction = Math.min(24, Math.max(0.1, result.worst.deficit + 0.05));
             center = add(center, scale(result.worst.inward, correction));
+            if (constrain) center = constrainToFocusField(center);
+            if (preserveHorizontalSymmetry) center = point(symmetryAxisX, center.y);
         }
         return { center, result };
     };
 
-    // Phase one: retain full requested size. A continued frame carries every
-    // meaningful center through focusDelta; the optical/final centers often
-    // preserve the correct feasible branch when the legacy projection reaches
-    // a concave ray valley.
-    const continuedFullScale = previousFitScale >= 1 - EPSILON
-        ? continuationCenters
-            .map((center) => relax(center, 1))
-            .filter((candidate) => candidate.result?.fits)
-            .sort((first, second) => (
-                distance(first.center, desiredCenter) - distance(second.center, desiredCenter)
-            ))[0]
+    // Full-size placement keeps the established containment law. It is based
+    // only on the current geometry, so identical settings cannot select a
+    // different branch because of pointer history.
+    const directFullScale = requestedScaleLimit >= 1 - EPSILON
+        ? relax(desiredCenter, 1)
         : null;
-    if (continuedFullScale) {
+    if (directFullScale?.result?.fits) {
         return {
             desiredCenter,
-            pairCenter: continuedFullScale.center,
+            pairCenter: directFullScale.center,
             fitScale: 1,
-            ...continuedFullScale.result
+            ...directFullScale.result
         };
     }
-
-    // A full-scale fallback is only needed if every carried seed lost
-    // containment. It also lets a previously scaled branch rejoin the stable
-    // full-size branch gradually instead of ballooning in one pointer frame.
-    const fullScaleCandidates = [
-        relax(desiredCenter, 1),
-        relax(focusCenter, 1),
-        relax(contourCenter, 1)
-    ];
+    const fullScaleCandidates = requestedScaleLimit >= 1 - EPSILON
+        ? [relax(focusCenter, 1), relax(contourCenter, 1)]
+        : [];
     const fittingCandidates = fullScaleCandidates
         .filter((candidate) => candidate.result?.fits)
         .sort((first, second) => distance(first.center, desiredCenter) - distance(second.center, desiredCenter));
 
     if (fittingCandidates.length) {
         const winner = fittingCandidates[0];
-        const fitScale = transportedLegacyCenter
-            ? Math.min(
-                1,
-                previousFitScale + (focusDistance > EPSILON ? FIT_SCALE_CONTINUATION_STEP : 0)
-            )
-            : 1;
-        const continued = fitScale >= 1 - EPSILON
-            ? winner
-            : relax(winner.center, fitScale);
-        if (continued.result?.fits) {
-            return {
-                desiredCenter,
-                pairCenter: continued.center,
-                fitScale,
-                ...continued.result
-            };
-        }
+        return {
+            desiredCenter,
+            pairCenter: winner.center,
+            fitScale: 1,
+            ...winner.result
+        };
     }
 
-    // If full scale is impossible, keep one deterministic containment branch.
-    // Picking whichever failed relaxation currently has the smallest deficit
-    // causes discontinuous center/scale switches between adjacent Focus frames.
-    let pairCenter = transportedLegacyCenter || contourCenter;
+    // When full scale is impossible, solve center and scale together. Each
+    // binary-search probe re-projects deterministic current-frame seeds into a
+    // Focus-centred field. This retains the intended direction by preferring
+    // shrinkage over an arbitrary trip to another concave branch of the head.
+    // Previous-frame centers deliberately do not participate in this law.
+    const inwardDirection = subtract(contourCenter, desiredCenter);
+    const inwardLength = length(inwardDirection);
+    const inwardUnit = inwardLength > EPSILON
+        ? scale(inwardDirection, 1 / inwardLength)
+        : point(0, 1);
+    const scaledSeeds = [
+        desiredCenter,
+        focusCenter,
+        add(desiredCenter, scale(inwardUnit, focusShiftBudget * 0.5))
+    ];
+    const solveAtScale = (fitScale) => {
+        const direct = relax(scaledSeeds[0], fitScale, true);
+        // Distance zero is the primary objective, so no other seed can improve
+        // a fitting requested center. This skips most successful scale probes
+        // without changing placement geometry.
+        if (direct.result?.fits) return direct;
+        return scaledSeeds
+            .slice(1)
+            .map((seed) => relax(seed, fitScale, true))
+            .filter((candidate) => candidate.result?.fits)
+            .sort((first, second) => {
+            const desiredDelta = distance(first.center, desiredCenter)
+                - distance(second.center, desiredCenter);
+            if (Math.abs(desiredDelta) > EPSILON) return desiredDelta;
+            const symmetryDelta = Math.abs(first.center.x - symmetryAxisX)
+                - Math.abs(second.center.x - symmetryAxisX);
+            if (Math.abs(symmetryDelta) > EPSILON) return symmetryDelta;
+            if (Math.abs(first.center.y - second.center.y) > EPSILON) {
+                return first.center.y - second.center.y;
+            }
+            return first.center.x - second.center.x;
+            })[0] || null;
+    };
 
-    // Phase two: preserve that shifted center and find the largest uniform
-    // scale that satisfies the same relative guard field.
     let low = 0.05;
-    let high = 1;
-    let best = evaluateContainment(containmentContext, pairCenter, low);
-    if (!best.fits) {
-        const recovered = relax(pairCenter, low);
-        pairCenter = recovered.center;
-        best = recovered.result;
+    let high = requestedScaleLimit;
+    const scaleLimitPlacement = solveAtScale(high);
+    if (scaleLimitPlacement) {
+        return {
+            desiredCenter,
+            pairCenter: scaleLimitPlacement.center,
+            fitScale: high,
+            ...scaleLimitPlacement.result
+        };
     }
-    const previousScale = clamp(previousFitScale, low, high);
-    if (previousScale > low && previousScale < high) {
-        const previousResult = evaluateContainment(
-            containmentContext,
-            pairCenter,
-            previousScale,
-            { stopOnFailure: true }
-        );
-        if (previousResult.fits) {
-            low = previousScale;
-            best = previousResult;
-        } else {
-            high = previousScale;
-        }
-    }
+    let best = solveAtScale(low);
+    // Extremely narrow custom heads may require more than the normal Focus
+    // shift budget even at the minimum scale. Keep the old safe recovery only
+    // for that terminal case; it does not affect the normal objective branch.
+    if (!best) best = relax(contourCenter, low);
     for (let iteration = 0; iteration < FIT_SCALE_BINARY_ITERATIONS; iteration += 1) {
         const middle = (low + high) / 2;
-        const result = evaluateContainment(
-            containmentContext,
-            pairCenter,
-            middle,
-            { stopOnFailure: true }
-        );
-        if (result.fits) {
+        const candidate = solveAtScale(middle);
+        if (candidate) {
             low = middle;
-            best = result;
+            best = candidate;
         } else {
             high = middle;
         }
     }
-    return { desiredCenter, pairCenter, fitScale: low, ...best };
+    return { desiredCenter, pairCenter: best.center, fitScale: low, ...best.result };
 }
 
 function sampleCircularCorner(corner, sampleCount = 4) {
@@ -867,18 +904,23 @@ function searchGlobalPlacement(bounds, evaluate, seeds = []) {
     return winner;
 }
 
-function searchLocalPlacement(bounds, evaluate, seeds, focusDelta) {
+function searchLocalPlacement(
+    bounds,
+    evaluate,
+    seeds,
+    { canonicalSeeds = [] } = {}
+) {
     const width = Math.max(EPSILON, bounds.maxX - bounds.minX);
     const height = Math.max(EPSILON, bounds.maxY - bounds.minY);
-    // A tiny branch guard keeps three-by-three anchor seeds alive when the
-    // transported optimum crosses a concave facial ridge. This is deliberately
-    // sparse; the full 13×13 search remains reserved for global placement.
+    // A sparse branch guard keeps deterministic anchor seeds alive when the
+    // transported optimum crosses a concave facial ridge. The 7×7 seed field
+    // remains far smaller than the full 13×13 global placement search.
     const branchSeeds = [];
-    for (let row = 1; row <= 3; row += 1) {
-        for (let column = 1; column <= 3; column += 1) {
+    for (let row = 1; row <= 7; row += 1) {
+        for (let column = 1; column <= 7; column += 1) {
             branchSeeds.push(point(
-                bounds.minX + width * column / 4,
-                bounds.minY + height * row / 4
+                bounds.minX + width * column / 8,
+                bounds.minY + height * row / 8
             ));
         }
     }
@@ -890,27 +932,56 @@ function searchLocalPlacement(bounds, evaluate, seeds, focusDelta) {
         ? { center: seeds[0], result: evaluate(seeds[0]), transported: true }
         : null;
     const selected = [transported].filter(Boolean);
+    const directCanonicalCandidates = canonicalSeeds
+        .filter(Boolean)
+        .map((center) => ({ center, result: evaluate(center), canonical: true }));
+    const branchCanonicalCandidates = branchSeeds
+        .map((center) => ({ center, result: evaluate(center), canonical: true }))
+        .sort((first, second) => second.result.score - first.result.score)
+        .slice(0, 3);
+    const canonicalCandidates = [
+        ...directCanonicalCandidates,
+        ...branchCanonicalCandidates
+    ];
+    canonicalCandidates.forEach(({ center, result }) => {
+        if (selected.some((seed) => distance(seed.center, center) <= EPSILON)) return;
+        selected.push({ center, result, canonical: true });
+    });
     ranked.forEach((candidate) => {
-        if (selected.length >= 4) return;
+        if (selected.length >= 8) return;
         if (selected.some((seed) => distance(seed.center, candidate.center) <= EPSILON)) return;
         selected.push(candidate);
     });
     if (!selected.length) return null;
-    // Every carried seed has already been translated by focusDelta. The first
-    // grid therefore searches the residual optical drift, not the full pointer
-    // displacement; a large first step can jump across a narrow feasible ridge.
-    const stepX = Math.min(width / 12, Math.max(width / 32, Math.abs(focusDelta.x) * 0.4));
-    const stepY = Math.min(height / 12, Math.max(height / 32, Math.abs(focusDelta.y) * 0.4));
+    // The grid law depends only on the current topology. Deriving its step from
+    // the incoming focusDelta makes the same Focus point refine differently
+    // when approached clockwise and counter-clockwise.
+    const stepX = width / 32;
+    const stepY = height / 32;
     let winner = selected[0];
+    let canonicalWinner = null;
     selected.forEach((seed) => {
         const current = refinePlacementBeam(bounds, evaluate, seed.center, {
-            iterations: 6,
-            stepX,
-            stepY,
-            beamWidth: seed.transported ? 3 : 2
+            iterations: seed.canonical ? 9 : 6,
+            stepX: seed.canonical ? width / 12 : stepX,
+            stepY: seed.canonical ? height / 12 : stepY,
+            beamWidth: seed.canonical ? 4 : seed.transported ? 3 : 2
         });
         if (current.result.score > winner.result.score) winner = current;
+        if (seed.canonical
+            && (!canonicalWinner || current.result.score > canonicalWinner.result.score)) {
+            canonicalWinner = current;
+        }
     });
+    const canonicalScoreDelta = canonicalWinner
+        ? winner.result.score - canonicalWinner.result.score
+        : Infinity;
+    // Near-equal optical ridges are visually interchangeable but can otherwise
+    // make previous-frame seeds select different DOM geometry. Prefer the
+    // current-frame canonical basin unless continuation is materially better.
+    if (canonicalWinner && canonicalScoreDelta <= LOCAL_OPTICAL_SCORE_TOLERANCE) {
+        winner = canonicalWinner;
+    }
     // Restart once at sub-pixel scale. Min-clearance objectives can contain a
     // thin ridge that is invisible to the larger grid and should not become a
     // separate interactive branch.
@@ -945,6 +1016,19 @@ function solveOpticalPairCenter(
     const localTransform = createRigTransform(values, point(0, 0), legacyPlacement.fitScale);
     const localEyeContour = mainEyeContour(model, localTransform, 8);
     const faceBounds = contourBounds(faceContour);
+    const scaledContainmentAmount = smoothstep(clamp(
+        (1 - legacyPlacement.fitScale) / 0.08,
+        0,
+        1
+    ));
+    const perspectiveAmount = smoothstep(clamp(
+        (Number(values.eyePerspective) - 66) / 34,
+        0,
+        1
+    ));
+    const opticalStabilization = crownOpticalStabilization(values)
+        * scaledContainmentAmount
+        * perspectiveAmount;
     const opticalEvaluationCache = new Map();
     const opticalEvaluation = (center) => {
         const key = `${center.x},${center.y}`;
@@ -968,9 +1052,12 @@ function solveOpticalPairCenter(
         ? point(values.focusX - previousValues.focusX, values.focusY - previousValues.focusY)
         : point(0, 0);
     const carry = (center) => center ? add(center, focusDelta) : null;
+    const extrapolate = (center) => center ? add(center, scale(focusDelta, 2)) : null;
     const desiredCenter = point(values.focusX, values.focusY + EYE_DEFAULTS.centerOffsetY);
     const opticalSeeds = [
         carry(previousEyeGeometry?.opticalSeed),
+        previousEyeGeometry?.opticalSeed,
+        extrapolate(previousEyeGeometry?.opticalSeed),
         carry(previousEyeGeometry?.opticalCenter),
         carry(previousEyeGeometry?.legacyCenter),
         carry(previousEyeGeometry?.pairCenter),
@@ -981,7 +1068,7 @@ function solveOpticalPairCenter(
         faceBounds,
         opticalEvaluation,
         opticalSeeds,
-        focusDelta
+        { canonicalSeeds: [legacyPlacement.pairCenter, desiredCenter] }
     );
     const optical = local
         ? localOptical
@@ -990,6 +1077,15 @@ function solveOpticalPairCenter(
             opticalEvaluation,
             [localOptical?.center, ...opticalSeeds]
         );
+    // Keep the optical objective unchanged. Its neighbouring maxima may swap
+    // rank as the eyes scale, so applying a changing penalty inside the score
+    // creates a discrete basin switch. Blend the solved seed afterwards toward
+    // the continuously moving requested center, never toward the branchy hard-
+    // containment projection. Both inputs and the weight remain continuous.
+    const opticalSeed = point(
+        mix(optical.center.x, desiredCenter.x, opticalStabilization),
+        mix(optical.center.y, desiredCenter.y, opticalStabilization)
+    );
     const horizontal = clamp((values.focusX - EYE_DEFAULTS.focusX) / 120, -1, 1);
     const verticalRange = values.focusY < EYE_DEFAULTS.focusY ? 112 : 98;
     const vertical = clamp((values.focusY - EYE_DEFAULTS.focusY) / verticalRange, -1, 1);
@@ -1003,14 +1099,14 @@ function solveOpticalPairCenter(
         + Math.max(0, widthRatio - 1) * 0.08
         + vertical * Math.min(1, widthRatio) * 0.05;
     const opticalCenter = point(
-        optical.center.x + (characterGeometry.baseClosure.x - optical.center.x) * 0.35,
-        optical.center.y
-            + (characterGeometry.baseClosure.y - optical.center.y) * verticalFaceGravity
+        opticalSeed.x + (characterGeometry.baseClosure.x - opticalSeed.x) * 0.35,
+        opticalSeed.y
+            + (characterGeometry.baseClosure.y - opticalSeed.y) * verticalFaceGravity
     );
     const horizontalFocusInfluence = (0.72 + Math.max(0, vertical) * 0.43) * focusAmount;
     const target = point(
-        opticalCenter.x + (values.focusX - optical.center.x) * horizontalFocusInfluence,
-        opticalCenter.y + (values.focusY - optical.center.y) * 0.05 * focusAmount
+        opticalCenter.x + (values.focusX - opticalSeed.x) * horizontalFocusInfluence,
+        opticalCenter.y + (values.focusY - opticalSeed.y) * 0.05 * focusAmount
     );
     const enforceExactHeadGap = (center) => {
         const minimumGap = FINAL_HEAD_GAP;
@@ -1046,7 +1142,7 @@ function solveOpticalPairCenter(
     const exact = enforceExactHeadGap(target);
     return {
         faceContour,
-        opticalSeed: optical.center,
+        opticalSeed,
         opticalCenter,
         pairCenter: exact.center,
         minimumHeadClearance: exact.minimumClearance
@@ -1112,12 +1208,7 @@ export function buildEyeGeometry(settings, characterGeometry, options = {}) {
         model,
         values,
         headContour,
-        containmentContext,
-        {
-            previousEyeGeometry: topologyMatches && focusDelta <= 64
-                ? previousEyeGeometry
-                : null
-        }
+        containmentContext
     );
     solverMetrics.legacyMs = performance.now() - startedAt;
     // fitScale is solved exactly for the current frame above. A scale delta is

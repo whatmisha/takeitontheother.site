@@ -26,8 +26,11 @@ const PERFORMANCE_LIMITS = Object.freeze({
 });
 const baseSettings = {
     rayWidth: 80,
-    eyeSize: 30,
-    eyePerspective: 50,
+    eyeSize: 50,
+    eyeDistance: 0,
+    eyePerspective: 100,
+    cute: 50,
+    angry: 0,
     roundness: 60,
     cornerSmoothing: 100
 };
