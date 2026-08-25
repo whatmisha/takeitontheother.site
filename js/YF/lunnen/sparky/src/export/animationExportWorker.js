@@ -8,8 +8,13 @@ import {
     sampleFocusTimeline
 } from '../animation/focusTimeline.js?v=20260825-8';
 import {
-    createEyeAnimationTimeline
+    createEyeAnimationTimeline,
+    sampleEyeAnimationTimeline
 } from '../animation/eyeTimeline.js?v=20260825-11';
+import {
+    resolveMotionBlur,
+    wrapMotionBlurTime
+} from '../animation/motionBlur.js?v=20260825-1';
 import {
     advanceEyeMotionToTarget,
     createEyeMotionState
@@ -123,6 +128,72 @@ function drawMotionFrame(context, size, settings, samples, motion, frameIndex, f
     });
 }
 
+function createMotionBlurBuffers(size, value) {
+    const blur = resolveMotionBlur(value);
+    if (blur.sampleCount === 1) return { blur };
+    const sampleCanvas = new OffscreenCanvas(size, size);
+    const accumulationCanvas = new OffscreenCanvas(size, size);
+    return {
+        blur,
+        sampleCanvas,
+        sampleContext: sampleCanvas.getContext('2d', { alpha: true }),
+        accumulationCanvas,
+        accumulationContext: accumulationCanvas.getContext('2d', { alpha: true })
+    };
+}
+
+function drawMotionBlurFrame(
+    context,
+    size,
+    settings,
+    motion,
+    frameIndex,
+    fps,
+    timeline,
+    eyeTimeline,
+    buffers,
+    options = {},
+    metrics = null
+) {
+    const centerTime = frameIndex * 1000 / fps;
+    const centerFocus = sampleFocusTimeline(timeline, centerTime).point;
+    const centerScene = buildAnimationFrameScene(settings, centerFocus, { metrics });
+    const eyeOffset = advanceEyeMotionToTarget(
+        motion,
+        centerScene.eyes.pairCenter,
+        1000 / fps
+    );
+    const { blur, sampleContext, sampleCanvas, accumulationContext, accumulationCanvas } = buffers;
+    accumulationContext.save();
+    accumulationContext.setTransform(1, 0, 0, 1, 0, 0);
+    accumulationContext.clearRect(0, 0, size, size);
+    accumulationContext.globalCompositeOperation = 'lighter';
+    accumulationContext.globalAlpha = 1 / blur.sampleCount;
+    blur.offsets.forEach((offsetFrames) => {
+        const time = wrapMotionBlurTime(
+            centerTime + offsetFrames * 1000 / fps,
+            timeline.durationMs
+        );
+        const focus = sampleFocusTimeline(timeline, time).point;
+        const eyes = sampleEyeAnimationTimeline(eyeTimeline, time, settings);
+        const scene = buildAnimationFrameScene(settings, focus, { metrics });
+        drawAnimationFrame(sampleContext, size, size, settings, focus, {
+            ...options,
+            eyeState: eyes,
+            eyeOffset,
+            scene,
+            metrics
+        });
+        accumulationContext.drawImage(sampleCanvas, 0, 0);
+    });
+    accumulationContext.restore();
+    context.save();
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, size, size);
+    context.drawImage(accumulationCanvas, 0, 0);
+    context.restore();
+}
+
 async function exportPngSequence(job) {
     const { jobId, settings, startFocus, motionPath, baseName } = job;
     const fps = ANIMATION_EXPORT_FPS;
@@ -147,15 +218,27 @@ async function exportPngSequence(job) {
     measure(benchmarkMetrics, 'eyeWarmupMs', startedAt);
     const canvas = new OffscreenCanvas(size, size);
     const context = canvas.getContext('2d', { alpha: true });
+    const motionBlurBuffers = createMotionBlurBuffers(size, settings.motionBlur);
     const archive = new StoredZipBlobBuilder();
     const digits = Math.max(4, String(frameCount).length);
 
     for (let index = 0; index < frameCount; index += 1) {
         assertActive(jobId);
-        drawMotionFrame(context, size, settings, samples, eyeMotion, index, fps, {
+        const drawOptions = {
             transparentBackground: true,
             knockoutEyes: shouldKnockoutPngEyes(settings)
-        }, benchmarkMetrics);
+        };
+        if (motionBlurBuffers.blur.sampleCount > 1) {
+            drawMotionBlurFrame(
+                context, size, settings, eyeMotion, index, fps,
+                timeline, eyeTimeline, motionBlurBuffers, drawOptions, benchmarkMetrics
+            );
+        } else {
+            drawMotionFrame(
+                context, size, settings, samples, eyeMotion, index, fps,
+                drawOptions, benchmarkMetrics
+            );
+        }
         startedAt = now();
         const blob = await canvas.convertToBlob({ type: 'image/png' });
         measure(benchmarkMetrics, 'pngEncodeMs', startedAt);
@@ -266,6 +349,7 @@ async function exportMp4(job) {
     measure(benchmarkMetrics, 'eyeWarmupMs', startedAt);
     const canvas = new OffscreenCanvas(size, size);
     const context = canvas.getContext('2d', { alpha: false });
+    const motionBlurBuffers = createMotionBlurBuffers(size, settings.motionBlur);
     const chunks = [];
     let decoderConfig = null;
     let encoderError = null;
@@ -289,17 +373,17 @@ async function exportMp4(job) {
         for (let index = 0; index < frameCount; index += 1) {
             assertActive(jobId);
             if (encoderError) throw encoderError;
-            drawMotionFrame(
-                context,
-                size,
-                settings,
-                samples,
-                eyeMotion,
-                index,
-                fps,
-                {},
-                benchmarkMetrics
-            );
+            if (motionBlurBuffers.blur.sampleCount > 1) {
+                drawMotionBlurFrame(
+                    context, size, settings, eyeMotion, index, fps,
+                    timeline, eyeTimeline, motionBlurBuffers, {}, benchmarkMetrics
+                );
+            } else {
+                drawMotionFrame(
+                    context, size, settings, samples, eyeMotion, index, fps,
+                    {}, benchmarkMetrics
+                );
+            }
             const frame = new VideoFrame(canvas, {
                 timestamp: Math.round(index * microsecondsPerFrame),
                 duration: Math.round(microsecondsPerFrame)

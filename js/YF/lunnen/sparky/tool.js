@@ -7,7 +7,7 @@ import {
 import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-7';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import { createStaticSparkySvg } from './src/export/staticSvgExporter.js?v=20260825-2';
-import { AnimationExporter } from './src/export/animationExporter.js?v=20260825-12';
+import { AnimationExporter } from './src/export/animationExporter.js?v=20260825-13';
 import {
     advanceEyeMotion,
     createEyeMotionState,
@@ -44,6 +44,11 @@ import {
     createEyeAnimationTimeline,
     sampleEyeAnimationTimeline
 } from './src/animation/eyeTimeline.js?v=20260825-11';
+import {
+    normalizeMotionBlur,
+    resolvePreviewMotionBlurGhosts,
+    wrapMotionBlurTime
+} from './src/animation/motionBlur.js?v=20260825-3';
 import { clamp } from './src/geometry/vector.js';
 import {
     focusPointFromPolar,
@@ -76,6 +81,8 @@ const ARTBOARD_CROP_Y = DEFAULT_GEOMETRY.boundaryCenterY - DEFAULT_GEOMETRY.boun
 let mobileShowcaseFocus = null;
 let desktopFollowFocus = null;
 let eyePlacementMode = 'global';
+let previewBlurReducedUntil = 0;
+let previewBlurRestoreTimer = null;
 
 const settings = {
     coordinateSpaceVersion: COORDINATE_SPACE_VERSION,
@@ -117,6 +124,7 @@ const settings = {
     motionStops: 40,
     motionBlinkCount: 2,
     motionEmotionVariation: 0,
+    motionBlur: 0,
     motionSeed: 24062026,
     showMotionPath: true,
     eyePerspective: 100,
@@ -168,6 +176,7 @@ function normalizeIncomingState(source = {}) {
         0,
         100
     );
+    normalized.motionBlur = normalizeMotionBlur(normalized.motionBlur);
     normalized.motionSeed = normalizeMotionSeed(normalized.motionSeed);
     normalized.showMotionPath = Boolean(normalized.showMotionPath);
     Object.assign(normalized, resolveManualFocusMode(normalized));
@@ -923,6 +932,30 @@ function bindBlink(app) {
     }, { capture: true });
 }
 
+function previewMotionBlurGhosts(state) {
+    if (state.focusMode !== 'animate' || !focusAnimation.timeline) return [];
+    const descriptors = resolvePreviewMotionBlurGhosts(state.motionBlur, {
+        reduced: performance.now() < previewBlurReducedUntil
+    });
+    const currentTime = focusAnimation.elapsedMs;
+    const current = sampleFocusTimeline(focusAnimation.timeline, currentTime).point;
+    return descriptors.flatMap(({ offsetFrames, opacity }) => {
+        const time = wrapMotionBlurTime(
+            currentTime + offsetFrames * 1000 / 60,
+            focusAnimation.timeline.durationMs
+        );
+        const focus = sampleFocusTimeline(focusAnimation.timeline, time).point;
+        if (Math.hypot(focus.x - current.x, focus.y - current.y) < 0.15) return [];
+        const geometry = buildCharacterGeometry({
+            ...state,
+            focusX: focus.x,
+            focusY: focus.y,
+            focusMode: 'manual'
+        });
+        return [{ path: geometry.rounded.path, opacity }];
+    });
+}
+
 function createDefinitions(width, height, headPath) {
     const defs = makeSvgElement('defs');
     const guideClip = makeSvgElement('clipPath', { id: GUIDE_CLIP_ID });
@@ -1005,6 +1038,7 @@ function drawEyes(ctx, eyeGeometry, definitions) {
 
 function drawCharacter(ctx, geometry, eyeGeometry) {
     const { svg, create, width, height, settings: state } = ctx;
+    const blurGhosts = previewMotionBlurGhosts(state);
     const definitions = createDefinitions(width, height, geometry.rounded.path);
     svg.appendChild(definitions);
     svg.appendChild(create('rect', {
@@ -1016,14 +1050,26 @@ function drawCharacter(ctx, geometry, eyeGeometry) {
         'data-layer': 'background'
     }));
 
-    svg.appendChild(create('path', {
+    const characterLayer = create('g', {
+        'data-layer': 'character'
+    });
+    blurGhosts.forEach((ghost) => {
+        characterLayer.appendChild(create('path', {
+            d: ghost.path,
+            fill: state.headColor,
+            opacity: ghost.opacity,
+            'data-motion-blur-ghost': 'true'
+        }));
+    });
+    characterLayer.appendChild(create('path', {
         d: geometry.rounded.path,
         fill: state.headColor,
         'fill-rule': 'nonzero',
         'data-layer': 'head'
     }));
 
-    svg.appendChild(drawEyes(ctx, eyeGeometry, definitions));
+    characterLayer.appendChild(drawEyes(ctx, eyeGeometry, definitions));
+    svg.appendChild(characterLayer);
 
     if (state.showSphere
         || state.showRayGuides
@@ -1610,7 +1656,15 @@ function bindManualFocusControls(app) {
 function bindInteractivePlacement(app) {
     const isRangeInput = (target) => target instanceof HTMLInputElement && target.type === 'range';
     document.addEventListener('input', (event) => {
-        if (isRangeInput(event.target)) beginInteractivePlacement(app);
+        if (isRangeInput(event.target)) {
+            beginInteractivePlacement(app);
+            previewBlurReducedUntil = performance.now() + 200;
+            if (previewBlurRestoreTimer != null) clearTimeout(previewBlurRestoreTimer);
+            previewBlurRestoreTimer = setTimeout(() => {
+                previewBlurRestoreTimer = null;
+                app.renderNow();
+            }, 210);
+        }
     }, { capture: true });
     document.addEventListener('change', (event) => {
         if (isRangeInput(event.target)) finishInteractivePlacement(app);
@@ -1693,6 +1747,7 @@ const app = defineTool({
             { id: 'motionStopsSlider', valueId: 'motionStopsValue', setting: 'motionStops', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'motionBlinkCountSlider', valueId: 'motionBlinkCountValue', setting: 'motionBlinkCount', min: 0, max: 12, decimals: 0, baseStep: 1, shiftStep: 2 },
             { id: 'motionEmotionVariationSlider', valueId: 'motionEmotionVariationValue', setting: 'motionEmotionVariation', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'motionBlurSlider', valueId: 'motionBlurValue', setting: 'motionBlur', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyePerspectiveSlider', valueId: 'eyePerspectiveValue', setting: 'eyePerspective', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyeSizeSlider', valueId: 'eyeSizeValue', setting: 'eyeSize', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyeDistanceSlider', valueId: 'eyeDistanceValue', setting: 'eyeDistance', min: -100, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
@@ -1768,7 +1823,7 @@ const app = defineTool({
             'rayCount', 'angleSpan', 'boundaryCenterX', 'boundaryCenterY', 'boundaryRadius',
             'eyePerspective', 'eyeSize', 'eyeDistance', 'cute', 'angry',
             'motionDuration', 'motionPointCount', 'motionComplexity', 'motionSmoothness', 'motionStops',
-            'motionBlinkCount', 'motionEmotionVariation',
+            'motionBlinkCount', 'motionEmotionVariation', 'motionBlur',
             'motionSeed'
         ],
         decimals: 2
