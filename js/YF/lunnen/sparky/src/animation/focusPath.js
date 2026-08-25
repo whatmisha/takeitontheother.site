@@ -333,6 +333,68 @@ function formatPath(segments) {
     return commands.join(' ');
 }
 
+function finitePoint(value, label) {
+    const x = Number(value?.x);
+    const y = Number(value?.y);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        throw new Error(`Invalid ${label} point.`);
+    }
+    return { x, y };
+}
+
+export function rebuildFocusPath(source, rawSegments = source?.segments) {
+    if (!Array.isArray(rawSegments) || rawSegments.length < 2 || rawSegments.length > 16) {
+        throw new Error('A focus path requires between 2 and 16 segments.');
+    }
+    const center = finitePoint(source?.center, 'focus path center');
+    const radius = Number(source?.radius);
+    if (!Number.isFinite(radius) || radius <= 0) {
+        throw new Error('Invalid focus path radius.');
+    }
+    const segments = rawSegments.map((segment, index) => measureSegment({
+        index,
+        start: finitePoint(segment?.start, `segment ${index} start`),
+        control1: finitePoint(segment?.control1, `segment ${index} control1`),
+        control2: finitePoint(segment?.control2, `segment ${index} control2`),
+        end: finitePoint(segment?.end, `segment ${index} end`),
+        endIndex: (index + 1) % rawSegments.length
+    }));
+    const anchors = segments.map((segment) => copyPoint(segment.start));
+    const tangents = segments.map((segment, index) => unit(
+        subtract(segment.control1, segment.start),
+        subtract(segments[(index - 1 + segments.length) % segments.length].end,
+            segments[(index - 1 + segments.length) % segments.length].control2)
+    ));
+    const totalLength = segments.reduce((sum, segment) => sum + segment.length, 0);
+    return {
+        seed: normalizeMotionSeed(source?.seed),
+        complexity: normalizeMotionComplexity(source?.complexity),
+        center,
+        radius,
+        anchors,
+        tangents,
+        segments,
+        totalLength,
+        path: formatPath(segments)
+    };
+}
+
+export function serializeFocusPath(path) {
+    return {
+        version: 1,
+        seed: normalizeMotionSeed(path?.seed),
+        complexity: normalizeMotionComplexity(path?.complexity),
+        center: finitePoint(path?.center, 'focus path center'),
+        radius: Number(path?.radius),
+        segments: path?.segments?.map((segment) => ({
+            start: finitePoint(segment.start, 'segment start'),
+            control1: finitePoint(segment.control1, 'segment control1'),
+            control2: finitePoint(segment.control2, 'segment control2'),
+            end: finitePoint(segment.end, 'segment end')
+        })) || []
+    };
+}
+
 export function generateFocusPath({
     start,
     center,
@@ -359,18 +421,13 @@ export function generateFocusPath({
     });
     const tangents = createTangents(anchors, safeCenter, safeRadius);
     const segments = createSegments(anchors, tangents, safeCenter, safeRadius, profile);
-    const totalLength = segments.reduce((sum, segment) => sum + segment.length, 0);
-    return {
+    return rebuildFocusPath({
         seed: normalizeMotionSeed(seed),
         complexity: normalizedComplexity,
         center: safeCenter,
         radius: safeRadius,
-        anchors,
-        tangents,
-        segments,
-        totalLength,
-        path: formatPath(segments)
-    };
+        segments
+    });
 }
 
 export function generateFocusPathForSettings(settings, start) {

@@ -12,7 +12,8 @@
 - Во время экспорта видны progress и Cancel; экспортные кнопки защищены от повторного запуска.
 - Реальные browser-прогоны подтвердили фиксированный MP4 60 fps, прозрачную PNG sequence с цветными глазами, Cancel и продолжающее двигаться preview во время фонового рендера.
 - Preview и оба animation export используют одну eye-timeline и одинаковое инерционное смещение eye-rig: моргания, эмоции и движение глаз совпадают по времени и бесшовно повторяются.
-- Полный regression suite: 94 теста, 94 passed.
+- Browser-QA редактора подтвердил drag anchors/handles, сохранение ручного spline при Duration и Manual/Animate, обе ветки подтверждения Regenerate и успешное завершение MP4 worker с ручным путём.
+- Полный regression suite: 102 теста, 102 passed.
 
 ## Продуктовые решения
 
@@ -33,12 +34,14 @@
 - PNG sequence: ZIP, фиксированные 1080×1080 и 60 fps, всегда с прозрачным фоном и автоматическим knockout глаз по совпадению цветов.
 - Мобильный showcase остаётся без изменений.
 - Animated SVG припаркован и не входит в эту реализацию.
+- В Animate есть отдельный `Edit path`: он ставит preview на паузу и открывает на холсте опорные точки и связанные Bézier-ручки. Обе ручки каждой точки всегда лежат на одной прямой и смотрят в противоположные стороны, поэтому редактор сохраняет гладкую кривую без острых углов. Изменённый spline напрямую используется preview, MP4 и PNG sequence.
+- Ручной путь хранится как transient-конфигурация текущей сессии, переживает переключение Manual/Animate и изменения Duration/Stops, но не попадает в presets/share. Points, Complexity и Seed создают новую геометрию. `Regenerate` после фактического ручного перемещения требует подтверждения, поскольку удаляет ручные изменения.
 
 ## Этап 1. State и UI
 
 Сохраняемые настройки анимации: `focusMode`, `motionDuration`, `motionPointCount`, `motionComplexity`, `motionStops`, `motionBlinkCount`, `motionEmotionVariation`, `motionSeed` и `showMotionPath`. Технические параметры экспорта удалены из пользовательского state.
 
-В панели Focus используются две вкладки. Manual содержит Angle, Distance и одну pill-группу Manual focus / Follow cursor / Center focus. Первые два режима взаимоисключающие; focus marker существует только в Manual focus и всегда исключается из SVG/PNG export. Animate показывает четыре основных параметра пути, eye animation и нижнюю строку управления: основной Play/Pause и компактные иконки Restart/Regenerate. Тогл `Motion path` находится вместе с другими guides в General и виден только в Animate.
+В панели Focus используются две вкладки. Manual содержит Angle, Distance и одну pill-группу Manual / Follow cursor / Center focus. Первые два режима взаимоисключающие; focus marker существует только в Manual и всегда исключается из SVG/PNG export. Animate показывает четыре основных параметра пути, eye animation, кнопку Edit path и нижнюю строку управления: основной Play/Pause и компактные иконки Restart/Regenerate. Тогл `Motion path` находится вместе с другими guides в General и виден только в Animate.
 
 ## Этап 2. Генератор пути
 
@@ -72,6 +75,12 @@
 Хранить текущую animated focus point как transient state. Не записывать каждый кадр в settings/history/presets. `activeRenderSettings()` подставляет transient point только на desktop в Animate. При переключении в Animate сначала фиксируется текущий Follow cursor focus, затем Follow cursor отключается.
 
 Preset/share сохраняют конфигурацию и seed, но не текущую фазу. После восстановления петля начинается с `t = 0`.
+
+### Дополнение: векторный редактор пути
+
+`src/animation/focusPathEditor.js` редактирует ту же модель cubic Bézier без аппроксимации SVG-строки. Drag anchor переносит точку вместе с обеими ручками; drag любой ручки поворачивает парную в строго противоположном направлении, сохраняя её собственную длину. При входе в редактор и после каждого drag обе ручки получают минимальную длину 14 units. Anchor ограничивается техническим inset 14,5 units от границы Focus — это гарантирует место для обеих противоположных ручек любой ориентации, не позволяет им схлопнуться и сохраняет controls внутри области. После каждого изменения заново рассчитываются segment lookup, длины, timeline и бесшовное замыкание. Edit mode всегда показывает путь независимо от General → Motion path и исключается из всех экспортных guides.
+
+Отредактированный путь передаётся Dedicated Worker как сериализованные start/control1/control2/end каждого сегмента и там заново валидируется и гидратируется. Флаг ручного изменения выставляется только после движения control; поэтому простое открытие редактора не вызывает лишнего подтверждения Regenerate.
 
 ## Этап 5. Frame renderer
 

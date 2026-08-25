@@ -1,13 +1,16 @@
-import { generateFocusPathForSettings } from '../animation/focusPath.js?v=20260825-5';
+import {
+    generateFocusPathForSettings,
+    rebuildFocusPath
+} from '../animation/focusPath.js?v=20260825-6';
 import {
     createFocusTimeline,
     resolveFocusStops,
     sampleFocusTimeline
-} from '../animation/focusTimeline.js?v=20260825-5';
+} from '../animation/focusTimeline.js?v=20260825-6';
 import {
     createEyeAnimationTimeline,
     sampleEyeAnimationTimeline
-} from '../animation/eyeTimeline.js?v=20260825-8';
+} from '../animation/eyeTimeline.js?v=20260825-9';
 import {
     advanceEyeMotionToTarget,
     createEyeMotionState
@@ -35,8 +38,10 @@ const assertActive = (jobId) => {
     if (cancelledJob === jobId) throw new DOMException('Export cancelled.', 'AbortError');
 };
 
-function createMotion(settings, startFocus) {
-    const path = generateFocusPathForSettings(settings, startFocus);
+function createMotion(settings, startFocus, motionPath = null) {
+    const path = motionPath
+        ? rebuildFocusPath(motionPath)
+        : generateFocusPathForSettings(settings, startFocus);
     const stops = resolveFocusStops(settings.motionStops);
     const timeline = createFocusTimeline(path, {
         duration: settings.motionDuration,
@@ -90,11 +95,11 @@ function drawMotionFrame(context, size, settings, timeline, eyeTimeline, motion,
 }
 
 async function exportPngSequence(job) {
-    const { jobId, settings, startFocus, baseName } = job;
+    const { jobId, settings, startFocus, motionPath, baseName } = job;
     const fps = ANIMATION_EXPORT_FPS;
     const size = ANIMATION_EXPORT_SIZE;
     const frameCount = Math.round(settings.motionDuration * fps);
-    const { timeline, eyeTimeline } = createMotion(settings, startFocus);
+    const { timeline, eyeTimeline } = createMotion(settings, startFocus, motionPath);
     const eyeMotion = createLoopingEyeMotion(settings, timeline, frameCount, fps);
     const canvas = new OffscreenCanvas(size, size);
     const context = canvas.getContext('2d', { alpha: true });
@@ -155,11 +160,11 @@ async function supportedAvcConfig(width, height, fps) {
 }
 
 async function exportMp4(job) {
-    const { jobId, settings, startFocus, baseName } = job;
+    const { jobId, settings, startFocus, motionPath, baseName } = job;
     const fps = ANIMATION_EXPORT_FPS;
     const size = ANIMATION_EXPORT_SIZE;
     const frameCount = Math.round(settings.motionDuration * fps);
-    const { timeline, eyeTimeline } = createMotion(settings, startFocus);
+    const { timeline, eyeTimeline } = createMotion(settings, startFocus, motionPath);
     const eyeMotion = createLoopingEyeMotion(settings, timeline, frameCount, fps);
     const canvas = new OffscreenCanvas(size, size);
     const context = canvas.getContext('2d', { alpha: false });

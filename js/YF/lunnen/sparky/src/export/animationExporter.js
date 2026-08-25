@@ -48,11 +48,11 @@ export class AnimationExporter {
         reject?.(new DOMException('Export cancelled.', 'AbortError'));
     }
 
-    export({ format, settings, startFocus, baseName }) {
+    export({ format, settings, startFocus, motionPath = null, baseName }) {
         if (this.worker) return Promise.reject(new Error('An animation export is already running.'));
         const jobId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const worker = new Worker(
-            new URL('./animationExportWorker.js?v=20260825-9', import.meta.url),
+            new URL('./animationExportWorker.js?v=20260825-10', import.meta.url),
             { type: 'module' }
         );
         this.worker = worker;
@@ -106,6 +106,7 @@ export class AnimationExporter {
                 format,
                 settings,
                 startFocus,
+                motionPath,
                 baseName
             });
         });

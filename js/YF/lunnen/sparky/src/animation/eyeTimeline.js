@@ -1,5 +1,5 @@
 import { BLINK_TIMING } from './blink.js';
-import { FOCUS_MOTION_EASINGS } from './focusTimeline.js?v=20260825-5';
+import { FOCUS_MOTION_EASINGS } from './focusTimeline.js?v=20260825-6';
 import { clamp } from '../geometry/vector.js';
 
 const BASE_BLINK_DURATION = BLINK_TIMING.close + BLINK_TIMING.hold + BLINK_TIMING.open;

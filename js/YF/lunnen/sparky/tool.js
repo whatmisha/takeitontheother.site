@@ -6,7 +6,7 @@ import {
 } from './src/geometry/characterGeometry.js?v=20260823-5';
 import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-7';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
-import { AnimationExporter } from './src/export/animationExporter.js?v=20260825-9';
+import { AnimationExporter } from './src/export/animationExporter.js?v=20260825-10';
 import {
     advanceEyeMotion,
     createEyeMotionState,
@@ -22,17 +22,26 @@ import {
 import {
     generateFocusPathForSettings,
     normalizeMotionComplexity,
-    normalizeMotionSeed
-} from './src/animation/focusPath.js?v=20260825-5';
+    normalizeMotionSeed,
+    serializeFocusPath
+} from './src/animation/focusPath.js?v=20260825-6';
+import {
+    ensureFocusPathHandles,
+    moveFocusPathAnchor,
+    moveFocusPathHandle
+} from './src/animation/focusPathEditor.js?v=20260825-4';
+import {
+    confirmPathRegeneration
+} from './src/animation/pathRegenerateConfirmation.js?v=20260825-1';
 import {
     createFocusTimeline,
     resolveFocusStops,
     sampleFocusTimeline
-} from './src/animation/focusTimeline.js?v=20260825-5';
+} from './src/animation/focusTimeline.js?v=20260825-6';
 import {
     createEyeAnimationTimeline,
     sampleEyeAnimationTimeline
-} from './src/animation/eyeTimeline.js?v=20260825-8';
+} from './src/animation/eyeTimeline.js?v=20260825-9';
 import { clamp } from './src/geometry/vector.js';
 import {
     focusPointFromPolar,
@@ -319,6 +328,9 @@ function exportFocusAnimation(tool, format) {
         format,
         settings: extractInternalState(tool.settings),
         startFocus: currentStoredFocus(tool.settings),
+        motionPath: focusAnimation.editedPath && focusAnimation.path
+            ? serializeFocusPath(focusAnimation.path)
+            : null,
         baseName: createSparkyExportBaseName()
     });
 }
@@ -354,7 +366,11 @@ const focusAnimation = {
     startedAt: null,
     lastPreviewAt: null,
     elapsedMs: 0,
-    paused: false
+    paused: false,
+    editing: false,
+    manuallyEdited: false,
+    editedPath: null,
+    selectedEditorControl: null
 };
 let focusAnimationReady = false;
 
@@ -374,6 +390,13 @@ function currentStoredFocus(state) {
 function updateFocusAnimationButtons() {
     const playPause = document.getElementById('motionPlayPauseBtn');
     if (playPause) playPause.textContent = focusAnimation.paused ? 'Play' : 'Pause';
+    const editPath = document.getElementById('motionEditPathBtn');
+    if (editPath) {
+        editPath.textContent = focusAnimation.editing ? 'Done editing' : 'Edit path';
+        editPath.setAttribute('aria-pressed', String(focusAnimation.editing));
+    }
+    document.getElementById('motionEditorHint')
+        ?.toggleAttribute('hidden', !focusAnimation.editing);
 }
 
 function scheduleFocusAnimation(app) {
@@ -408,10 +431,23 @@ function scheduleFocusAnimation(app) {
     });
 }
 
-function rebuildFocusAnimation(app, { restart = true, schedule = true } = {}) {
+function rebuildFocusAnimation(app, {
+    restart = true,
+    schedule = true,
+    regenerate = false,
+    preservePlayback = false
+} = {}) {
     cancelFocusAnimationFrame();
     const start = currentStoredFocus(app.settings);
-    focusAnimation.path = generateFocusPathForSettings(app.settings, start);
+    const wasPaused = focusAnimation.paused;
+    if (regenerate) {
+        focusAnimation.editedPath = null;
+        focusAnimation.manuallyEdited = false;
+        focusAnimation.editing = false;
+        focusAnimation.selectedEditorControl = null;
+    }
+    focusAnimation.path = focusAnimation.editedPath
+        || generateFocusPathForSettings(app.settings, start);
     const stops = resolveFocusStops(app.settings.motionStops);
     focusAnimation.timeline = createFocusTimeline(focusAnimation.path, {
         duration: app.settings.motionDuration,
@@ -429,7 +465,7 @@ function rebuildFocusAnimation(app, { restart = true, schedule = true } = {}) {
         focusAnimation.elapsedMs = 0;
         focusAnimation.startedAt = null;
         focusAnimation.lastPreviewAt = null;
-        focusAnimation.currentFocus = { ...start };
+        focusAnimation.currentFocus = { ...focusAnimation.path.anchors[0] };
     } else if (focusAnimation.timeline) {
         focusAnimation.elapsedMs %= focusAnimation.timeline.durationMs;
         focusAnimation.currentFocus = sampleFocusTimeline(
@@ -439,7 +475,7 @@ function rebuildFocusAnimation(app, { restart = true, schedule = true } = {}) {
         focusAnimation.startedAt = performance.now() - focusAnimation.elapsedMs;
     }
     if (app.settings.focusMode === 'animate') {
-        focusAnimation.paused = false;
+        focusAnimation.paused = preservePlayback ? wasPaused : false;
         stopBlink(app);
         // Preview uses the exact local containment solver and reuses the prior
         // frame as its seed. Export recomputes every frame with the global
@@ -480,8 +516,31 @@ function pauseFocusAnimation(app) {
     app.renderNow();
 }
 
+function setFocusPathEditing(app, editing) {
+    const next = Boolean(editing) && app.settings.focusMode === 'animate';
+    if (next) {
+        pauseFocusAnimation(app);
+        if (focusAnimation.path) {
+            focusAnimation.path = ensureFocusPathHandles(focusAnimation.path);
+            focusAnimation.editedPath = focusAnimation.path;
+            rebuildFocusAnimation(app, {
+                restart: false,
+                schedule: false,
+                regenerate: false,
+                preservePlayback: true
+            });
+        }
+    }
+    focusAnimation.editing = next;
+    focusAnimation.selectedEditorControl = null;
+    updateFocusAnimationButtons();
+    app.renderNow();
+}
+
 function playFocusAnimation(app) {
     if (!focusAnimation.paused || app.settings.focusMode !== 'animate') return;
+    focusAnimation.editing = false;
+    focusAnimation.selectedEditorControl = null;
     focusAnimation.paused = false;
     focusAnimation.startedAt = performance.now() - focusAnimation.elapsedMs;
     focusAnimation.lastPreviewAt = null;
@@ -491,6 +550,8 @@ function playFocusAnimation(app) {
 
 function restartFocusAnimation(app) {
     if (!focusAnimation.timeline) rebuildFocusAnimation(app);
+    focusAnimation.editing = false;
+    focusAnimation.selectedEditorControl = null;
     focusAnimation.elapsedMs = 0;
     focusAnimation.startedAt = null;
     focusAnimation.lastPreviewAt = null;
@@ -511,6 +572,8 @@ function stopFocusAnimation(app) {
     focusAnimation.lastPreviewAt = null;
     focusAnimation.elapsedMs = 0;
     focusAnimation.paused = false;
+    focusAnimation.editing = false;
+    focusAnimation.selectedEditorControl = null;
     updateFocusAnimationButtons();
     app?.renderNow();
 }
@@ -567,21 +630,48 @@ function bindFocusAnimation(app) {
     document.getElementById('motionRestartBtn')?.addEventListener('click', () => {
         restartFocusAnimation(app);
     });
-    document.getElementById('motionRegenerateBtn')?.addEventListener('click', () => {
+    document.getElementById('motionEditPathBtn')?.addEventListener('click', () => {
+        setFocusPathEditing(app, !focusAnimation.editing);
+    });
+    document.getElementById('motionRegenerateBtn')?.addEventListener('click', async () => {
+        const confirmed = await confirmPathRegeneration({
+            manuallyEdited: focusAnimation.manuallyEdited,
+            dialog: app.dialog,
+            fallbackConfirm: (message) => window.confirm(message)
+        });
+        if (!confirmed) return;
         const values = new Uint32Array(1);
         crypto.getRandomValues(values);
+        focusAnimation.editedPath = null;
+        focusAnimation.manuallyEdited = false;
+        focusAnimation.editing = false;
+        focusAnimation.selectedEditorControl = null;
         app.settingsStore.set('motionSeed', normalizeMotionSeed(values[0]));
     });
 
     [
-        'motionDuration',
         'motionPointCount',
         'motionComplexity',
-        'motionStops',
         'motionSeed'
     ].forEach((setting) => {
         app.settingsStore.subscribe(setting, () => {
-            if (app.settings.focusMode === 'animate') rebuildFocusAnimation(app);
+            if (app.settings.focusMode === 'animate') {
+                rebuildFocusAnimation(app, { regenerate: true });
+            }
+        });
+    });
+    [
+        'motionDuration',
+        'motionStops'
+    ].forEach((setting) => {
+        app.settingsStore.subscribe(setting, () => {
+            if (app.settings.focusMode === 'animate') {
+                rebuildFocusAnimation(app, {
+                    restart: false,
+                    regenerate: false,
+                    preservePlayback: true
+                });
+            }
         });
     });
     [
@@ -891,7 +981,8 @@ function drawCharacter(ctx, geometry, eyeGeometry) {
         || state.showRayGuides
         || state.showBisectors
         || (state.showPoint && !state.followCursor && state.focusMode !== 'animate')
-        || (state.focusMode === 'animate' && state.showMotionPath)) {
+        || (state.focusMode === 'animate'
+            && (state.showMotionPath || focusAnimation.editing))) {
         drawGuides(ctx, geometry);
     }
 }
@@ -909,35 +1000,107 @@ function drawGuides(ctx, geometry) {
         'aria-hidden': 'true'
     });
 
-    if (state.focusMode === 'animate' && state.showMotionPath && focusAnimation.path) {
+    if (state.focusMode === 'animate'
+        && (state.showMotionPath || focusAnimation.editing)
+        && focusAnimation.path) {
+        const editing = focusAnimation.editing;
         const motionGuides = create('g', {
             'data-layer': 'motion-path-preview',
             'data-export-exclude': 'true'
         });
+        if (editing) {
+            const handlesPath = focusAnimation.path.segments.map((segment) => (
+                `M ${segment.start.x} ${segment.start.y}`
+                + ` L ${segment.control1.x} ${segment.control1.y}`
+                + ` M ${segment.end.x} ${segment.end.y}`
+                + ` L ${segment.control2.x} ${segment.control2.y}`
+            )).join(' ');
+            motionGuides.appendChild(create('path', {
+                d: handlesPath,
+                stroke: '#00ff2a',
+                opacity: 0.32,
+                ...commonStroke,
+                'stroke-width': 0.7,
+                'stroke-dasharray': '2 2'
+            }));
+        }
         motionGuides.appendChild(create('path', {
             d: focusAnimation.path.path,
             stroke: '#00ff2a',
-            opacity: 0.72,
+            opacity: editing ? 0.92 : 0.72,
             ...commonStroke,
-            'stroke-width': 0.9,
+            'stroke-width': editing ? 1.2 : 0.9,
             'stroke-linecap': 'round',
             'stroke-linejoin': 'round'
         }));
+        if (editing) {
+            focusAnimation.path.anchors.forEach((anchor, index) => {
+                const previous = focusAnimation.path.segments[
+                    (index - 1 + focusAnimation.path.segments.length)
+                    % focusAnimation.path.segments.length
+                ];
+                const outgoing = focusAnimation.path.segments[index];
+                [
+                    { side: 'incoming', point: previous.control2 },
+                    { side: 'outgoing', point: outgoing.control1 }
+                ].forEach(({ side, point }) => {
+                    const key = `handle:${index}:${side}`;
+                    motionGuides.appendChild(create('circle', {
+                        cx: point.x,
+                        cy: point.y,
+                        r: 3.1,
+                        fill: state.backgroundColor,
+                        stroke: '#00ff2a',
+                        'stroke-width': 0.9,
+                        'vector-effect': 'non-scaling-stroke',
+                        'pointer-events': 'none'
+                    }));
+                    motionGuides.appendChild(create('circle', {
+                        cx: point.x,
+                        cy: point.y,
+                        r: 8,
+                        fill: 'transparent',
+                        class: 'sparky-motion-editor-control',
+                        'data-motion-editor-kind': 'handle',
+                        'data-motion-editor-index': index,
+                        'data-motion-editor-side': side,
+                        'data-selected': focusAnimation.selectedEditorControl === key
+                            ? 'true'
+                            : 'false'
+                    }));
+                });
+            });
+        }
         focusAnimation.path.anchors.forEach((anchor, index) => {
             const activeStop = focusAnimation.timeline?.activeStops?.[index] !== false;
             motionGuides.appendChild(create('circle', {
                 cx: anchor.x,
                 cy: anchor.y,
-                r: index === 0 ? 3.4 : 2.5,
+                r: editing ? 4.2 : index === 0 ? 3.4 : 2.5,
                 fill: activeStop ? '#00ff2a' : state.backgroundColor,
                 stroke: '#00ff2a',
-                'stroke-width': 0.75,
+                'stroke-width': editing ? 1 : 0.75,
                 opacity: activeStop ? 0.9 : 0.5,
-                'vector-effect': 'non-scaling-stroke'
+                'vector-effect': 'non-scaling-stroke',
+                'pointer-events': 'none'
             }));
+            if (editing) {
+                motionGuides.appendChild(create('circle', {
+                    cx: anchor.x,
+                    cy: anchor.y,
+                    r: 10,
+                    fill: 'transparent',
+                    class: 'sparky-motion-editor-control sparky-motion-editor-anchor',
+                    'data-motion-editor-kind': 'anchor',
+                    'data-motion-editor-index': index,
+                    'data-selected': focusAnimation.selectedEditorControl === `anchor:${index}`
+                        ? 'true'
+                        : 'false'
+                }));
+            }
         });
         const current = focusAnimation.currentFocus;
-        if (current) {
+        if (current && !editing) {
             motionGuides.appendChild(create('circle', {
                 cx: current.x,
                 cy: current.y,
@@ -1134,6 +1297,10 @@ function syncFocusControls(app) {
 
 function applyState(app, source) {
     forceGlobalPlacement(app);
+    focusAnimation.editedPath = null;
+    focusAnimation.manuallyEdited = false;
+    focusAnimation.editing = false;
+    focusAnimation.selectedEditorControl = null;
     const normalized = normalizeIncomingState(source);
     app.settingsStore.setMultiple(normalized, true);
     desktopFollowFocus = normalized.followCursor
@@ -1229,6 +1396,66 @@ function bindFocusDragging(app) {
             app.history?.endTransaction();
             finishInteractivePlacement(app);
         }
+    };
+    svg.addEventListener('pointerup', finish);
+    svg.addEventListener('pointercancel', finish);
+}
+
+function bindMotionPathEditing(app) {
+    const svg = document.getElementById('mainSvg');
+    if (!svg) return;
+    let drag = null;
+
+    const updateFromEvent = (event) => {
+        if (!drag || event.pointerId !== drag.pointerId || !focusAnimation.path) return;
+        const point = pointFromPointer(svg, event);
+        if (!point) return;
+        focusAnimation.path = drag.kind === 'anchor'
+            ? moveFocusPathAnchor(focusAnimation.path, drag.index, point)
+            : moveFocusPathHandle(focusAnimation.path, drag.index, drag.side, point);
+        focusAnimation.editedPath = focusAnimation.path;
+        focusAnimation.manuallyEdited = true;
+        rebuildFocusAnimation(app, {
+            restart: false,
+            schedule: false,
+            regenerate: false,
+            preservePlayback: true
+        });
+    };
+
+    svg.addEventListener('pointerdown', (event) => {
+        if (!focusAnimation.editing
+            || app.settings.focusMode !== 'animate'
+            || isMobileShowcase()) return;
+        const control = event.target.closest?.('[data-motion-editor-kind]');
+        if (!control) return;
+        const index = Number(control.dataset.motionEditorIndex);
+        const kind = control.dataset.motionEditorKind;
+        if (!Number.isInteger(index) || (kind !== 'anchor' && kind !== 'handle')) return;
+        event.preventDefault();
+        event.stopPropagation();
+        drag = {
+            pointerId: event.pointerId,
+            kind,
+            index,
+            side: control.dataset.motionEditorSide || 'outgoing'
+        };
+        focusAnimation.selectedEditorControl = kind === 'anchor'
+            ? `anchor:${index}`
+            : `handle:${index}:${drag.side}`;
+        svg.setPointerCapture(event.pointerId);
+        app.renderNow();
+    });
+    svg.addEventListener('pointermove', (event) => {
+        if (!drag || event.pointerId !== drag.pointerId) return;
+        event.preventDefault();
+        updateFromEvent(event);
+    });
+    const finish = (event) => {
+        if (!drag || event.pointerId !== drag.pointerId) return;
+        if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
+        drag = null;
+        app.renderNow();
     };
     svg.addEventListener('pointerup', finish);
     svg.addEventListener('pointercancel', finish);
@@ -1610,6 +1837,7 @@ const app = defineTool({
             ? { x: tool.settings.focusX, y: tool.settings.focusY }
             : null;
         bindFocusDragging(tool);
+        bindMotionPathEditing(tool);
         bindManualFocusControls(tool);
         bindFocusAnimation(tool);
         bindInteractivePlacement(tool);

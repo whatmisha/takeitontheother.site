@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#000000">
     <title>Lunnen Sparky — Parametric Character</title>
     <link rel="stylesheet" href="./framework/css/othersite-styles.css">
-    <link rel="stylesheet" href="./styles/sparky.css?v=20260825-13">
+    <link rel="stylesheet" href="./styles/sparky.css?v=20260825-14">
 </head>
 <body>
     <div class="container">
@@ -135,10 +135,10 @@
                                 <input type="range" id="focusDistanceSlider" min="0" max="100" step="1" value="0">
                             </div>
 
-                            <div class="control-group pill-toggle-row" role="group" aria-label="Manual focus behavior">
+                            <div class="control-group pill-toggle-row" role="group" aria-label="Focus behavior">
                                 <label class="pill-toggle" for="showPoint">
                                     <input type="radio" id="showPoint" class="sr-only" name="manualFocusBehavior" value="manual">
-                                    <span>Manual focus</span>
+                                    <span>Manual</span>
                                 </label>
                                 <label class="pill-toggle" for="followCursor">
                                     <input type="radio" id="followCursor" class="sr-only" name="manualFocusBehavior" value="follow" checked>
@@ -186,6 +186,12 @@
                                     <input type="text" class="value-display" id="motionEmotionVariationValue" value="0"></label>
                                 <input type="range" id="motionEmotionVariationSlider" min="0" max="100" step="1" value="0">
                             </div>
+
+                            <button type="button" class="sparky-panel-action sparky-motion-edit-action"
+                                    id="motionEditPathBtn" aria-pressed="false">Edit path</button>
+                            <p class="sparky-motion-editor-hint" id="motionEditorHint" hidden>
+                                Drag points and Bézier handles on the canvas.
+                            </p>
 
                             <div class="sparky-animation-actions">
                                 <button type="button" class="sparky-panel-action sparky-animation-primary-action" id="motionPlayPauseBtn">Pause</button>
@@ -324,6 +330,6 @@
         </dialog>
     </div>
 
-    <script type="module" src="./tool.js?v=20260825-58"></script>
+    <script type="module" src="./tool.js?v=20260825-62"></script>
 </body>
 </html>
