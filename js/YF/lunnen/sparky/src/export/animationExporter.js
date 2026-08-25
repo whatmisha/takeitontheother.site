@@ -11,6 +11,12 @@ function downloadBlob(blob, filename) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+export function animationResultBlob(result) {
+    return result.blob instanceof Blob
+        ? result.blob
+        : new Blob([result.data], { type: result.mimeType });
+}
+
 export class AnimationExporter {
     constructor({ status, progress, message, cancelButton, exportButtons = [], onError } = {}) {
         this.elements = { status, progress, message, cancelButton, exportButtons };
@@ -52,7 +58,7 @@ export class AnimationExporter {
         if (this.worker) return Promise.reject(new Error('An animation export is already running.'));
         const jobId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const worker = new Worker(
-            new URL('./animationExportWorker.js?v=20260825-10', import.meta.url),
+            new URL('./animationExportWorker.js?v=20260825-12', import.meta.url),
             { type: 'module' }
         );
         this.worker = worker;
@@ -83,7 +89,7 @@ export class AnimationExporter {
                     return;
                 }
                 if (result.type === 'complete') {
-                    const blob = new Blob([result.data], { type: result.mimeType });
+                    const blob = animationResultBlob(result);
                     downloadBlob(blob, result.filename);
                     finish();
                     resolve(result.filename);

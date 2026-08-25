@@ -77,7 +77,10 @@ export class ShortcutRouter {
             if (b.shift !== e.shiftKey) continue;
             if (b.alt !== e.altKey) continue;
             // Normalise '=' / '+' and 'esc'
-            const wanted = b.key === 'plus' ? '+' : b.key === 'esc' ? 'escape' : b.key;
+            const wanted = b.key === 'plus' ? '+'
+                : b.key === 'esc' ? 'escape'
+                    : b.key === 'space' ? ' '
+                        : b.key;
             const matches = key === wanted ||
                 (wanted === '+' && (key === '+' || key === '='));
             if (!matches) continue;

@@ -6,7 +6,8 @@ import {
 } from './src/geometry/characterGeometry.js?v=20260823-5';
 import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-7';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
-import { AnimationExporter } from './src/export/animationExporter.js?v=20260825-10';
+import { createStaticSparkySvg } from './src/export/staticSvgExporter.js?v=20260825-2';
+import { AnimationExporter } from './src/export/animationExporter.js?v=20260825-12';
 import {
     advanceEyeMotion,
     createEyeMotionState,
@@ -546,6 +547,25 @@ function playFocusAnimation(app) {
     focusAnimation.lastPreviewAt = null;
     updateFocusAnimationButtons();
     scheduleFocusAnimation(app);
+}
+
+function toggleFocusFreeze(app) {
+    if (app.settings.focusMode === 'animate') {
+        if (focusAnimation.paused) playFocusAnimation(app);
+        else pauseFocusAnimation(app);
+        return;
+    }
+    if (app.settings.focusMode !== 'manual') return;
+    if (app.settings.followCursor) {
+        disableFollowCursor(app);
+        return;
+    }
+    app.settingsStore.setMultiple({
+        showPoint: false,
+        followCursor: true
+    });
+    syncManualFocusModeControls(app);
+    app.renderNow();
 }
 
 function restartFocusAnimation(app) {
@@ -1760,6 +1780,10 @@ const app = defineTool({
             () => exportSettingsJSON(tool),
             { allowInInput: true }
         );
+        tool.shortcuts?.register('space', (event) => {
+            if (event.repeat) return;
+            toggleFocusFreeze(tool);
+        });
     },
     render(ctx) {
         try {
@@ -1790,7 +1814,6 @@ const app = defineTool({
         }
     },
     onReady(tool) {
-        const frameworkExportSVG = tool.exportSVG.bind(tool);
         const frameworkExportPNG = tool.exportPNG.bind(tool);
         tool.animationExporter = new AnimationExporter({
             status: document.getElementById('animationExportStatus'),
@@ -1819,7 +1842,15 @@ const app = defineTool({
             tool.renderNow();
             snapDisplayedEyes(tool);
             const name = filename || `${createSparkyExportBaseName()}.svg`;
-            return frameworkExportSVG(name);
+            const svgString = createStaticSparkySvg({
+                settings: tool.settings,
+                characterGeometry: tool.characterGeometry,
+                eyeGeometry: tool.eyeGeometry,
+                width: tool.settings.width,
+                height: tool.settings.height
+            });
+            tool._downloadText(svgString, name, 'image/svg+xml;charset=utf-8');
+            return svgString;
         };
         tool.exportPNG = (filename, scaleFactor) => {
             if (tool.settings.focusMode === 'animate' && !filename) {
@@ -1850,7 +1881,7 @@ const app = defineTool({
             setPolarFocus(tool, 0, 0);
         });
         document.getElementById('exportSvgBtn')?.addEventListener('click', () => {
-            tool.exportSVG().catch(() => {});
+            tool.exportSVG().catch((error) => console.error('SVG export failed:', error));
         });
         document.getElementById('exportPngBtn')?.addEventListener('click', () => {
             Promise.resolve(tool.exportPNG()).catch(() => {});

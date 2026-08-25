@@ -13,7 +13,7 @@
 - Реальные browser-прогоны подтвердили фиксированный MP4 60 fps, прозрачную PNG sequence с цветными глазами, Cancel и продолжающее двигаться preview во время фонового рендера.
 - Preview и оба animation export используют одну eye-timeline и одинаковое инерционное смещение eye-rig: моргания, эмоции и движение глаз совпадают по времени и бесшовно повторяются.
 - Browser-QA редактора подтвердил drag anchors/handles, сохранение ручного spline при Duration и Manual/Animate, обе ветки подтверждения Regenerate и успешное завершение MP4 worker с ручным путём.
-- Полный regression suite: 102 теста, 102 passed.
+- Полный regression suite: 112 тестов, 112 passed.
 
 ## Продуктовые решения
 

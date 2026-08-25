@@ -1,7 +1,21 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { AnimationExporter } from '../src/export/animationExporter.js';
+import {
+    AnimationExporter,
+    animationResultBlob
+} from '../src/export/animationExporter.js';
+
+test('animation exporter reuses a worker-built Blob without copying it', () => {
+    const workerBlob = new Blob([new Uint8Array([1, 2, 3])], { type: 'application/zip' });
+    assert.equal(animationResultBlob({ blob: workerBlob }), workerBlob);
+    const fallback = animationResultBlob({
+        data: new Uint8Array([4, 5]).buffer,
+        mimeType: 'video/mp4'
+    });
+    assert.equal(fallback.type, 'video/mp4');
+    assert.equal(fallback.size, 2);
+});
 
 test('animation exporter transfers a manually edited path to its worker', async () => {
     const OriginalWorker = globalThis.Worker;

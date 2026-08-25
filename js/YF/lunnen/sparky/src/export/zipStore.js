@@ -83,3 +83,82 @@ export function createStoredZip(files) {
     end.setUint32(16, localOffset, true);
     return concat([...localParts, centralDirectory, asBytes(end)]);
 }
+
+export class StoredZipBlobBuilder {
+    constructor() {
+        this.localParts = [];
+        this.centralParts = [];
+        this.localOffset = 0;
+        this.centralSize = 0;
+        this.fileCount = 0;
+        this.dataBytes = 0;
+        this.metadataBytes = 22;
+    }
+
+    add(nameValue, dataValue) {
+        const name = encoder.encode(String(nameValue));
+        const data = dataValue instanceof Uint8Array
+            ? dataValue
+            : new Uint8Array(dataValue);
+        const checksum = crc32(data);
+        const local = header(30);
+        local.setUint32(0, 0x04034b50, true);
+        local.setUint16(4, 20, true);
+        local.setUint16(6, 0x0800, true);
+        local.setUint16(8, 0, true);
+        local.setUint32(14, checksum, true);
+        local.setUint32(18, data.byteLength, true);
+        local.setUint32(22, data.byteLength, true);
+        local.setUint16(26, name.byteLength, true);
+        this.localParts.push(asBytes(local), name, data);
+
+        const central = header(46);
+        central.setUint32(0, 0x02014b50, true);
+        central.setUint16(4, 20, true);
+        central.setUint16(6, 20, true);
+        central.setUint16(8, 0x0800, true);
+        central.setUint16(10, 0, true);
+        central.setUint32(16, checksum, true);
+        central.setUint32(20, data.byteLength, true);
+        central.setUint32(24, data.byteLength, true);
+        central.setUint16(28, name.byteLength, true);
+        central.setUint32(42, this.localOffset, true);
+        this.centralParts.push(asBytes(central), name);
+
+        const localSize = 30 + name.byteLength + data.byteLength;
+        const centralSize = 46 + name.byteLength;
+        this.localOffset += localSize;
+        this.centralSize += centralSize;
+        this.fileCount += 1;
+        this.dataBytes += data.byteLength;
+        this.metadataBytes += 30 + 46 + name.byteLength * 2;
+        return this;
+    }
+
+    get byteLength() {
+        return this.localOffset + this.centralSize + 22;
+    }
+
+    get retainedBytes() {
+        return this.dataBytes + this.metadataBytes;
+    }
+
+    toBlob() {
+        const end = header(22);
+        end.setUint32(0, 0x06054b50, true);
+        end.setUint16(8, this.fileCount, true);
+        end.setUint16(10, this.fileCount, true);
+        end.setUint32(12, this.centralSize, true);
+        end.setUint32(16, this.localOffset, true);
+        return new Blob(
+            [...this.localParts, ...this.centralParts, asBytes(end)],
+            { type: 'application/zip' }
+        );
+    }
+}
+
+export function createStoredZipBlob(files) {
+    const builder = new StoredZipBlobBuilder();
+    files.forEach((file) => builder.add(file.name, file.data));
+    return builder.toBlob();
+}

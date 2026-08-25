@@ -4,8 +4,14 @@ import { buildEyeGeometry, buildEyeLidGeometry } from '../geometry/eyeGeometry.j
 export const ANIMATION_ARTBOARD_SIZE = 480;
 
 const createPath = (path) => new Path2D(path);
+const now = () => globalThis.performance?.now?.() ?? Date.now();
 
-export function buildAnimationFrameScene(settings, focus) {
+function addDuration(metrics, key, startedAt) {
+    if (!metrics) return;
+    metrics[key] = (metrics[key] || 0) + now() - startedAt;
+}
+
+export function buildAnimationFrameScene(settings, focus, { metrics = null } = {}) {
     const frameSettings = {
         ...settings,
         focusX: focus.x,
@@ -17,10 +23,14 @@ export function buildAnimationFrameScene(settings, focus) {
         showPoint: false,
         showMotionPath: false
     };
+    let startedAt = now();
     const character = buildCharacterGeometry(frameSettings);
+    addDuration(metrics, 'characterMs', startedAt);
+    startedAt = now();
     const eyes = buildEyeGeometry(frameSettings, character, {
         placementMode: 'global'
     });
+    addDuration(metrics, 'eyesMs', startedAt);
     return { settings: frameSettings, character, eyes };
 }
 
@@ -29,7 +39,7 @@ function fillPath(context, path, color) {
     context.fill(createPath(path));
 }
 
-function drawEyes(context, scene, knockoutEyes, eyeState, eyeOffset) {
+function drawEyes(context, scene, knockoutEyes, eyeState, eyeOffset, metrics) {
     const { settings, character, eyes } = scene;
     const blinkAmount = Math.max(0, Math.min(1, Number(eyeState?.blinkAmount) || 0));
     const animatedCute = Number.isFinite(Number(eyeState?.cute))
@@ -38,6 +48,7 @@ function drawEyes(context, scene, knockoutEyes, eyeState, eyeOffset) {
     const animatedAngry = Number.isFinite(Number(eyeState?.angry))
         ? Number(eyeState.angry)
         : settings.angry;
+    const lidsStartedAt = now();
     const lids = eyeState
         ? buildEyeLidGeometry({
             cute: animatedCute + (100 - animatedCute) * blinkAmount,
@@ -45,6 +56,7 @@ function drawEyes(context, scene, knockoutEyes, eyeState, eyeOffset) {
             lidClosure: blinkAmount
         }, eyes)
         : null;
+    addDuration(metrics, 'lidsMs', lidsStartedAt);
     context.save();
     context.clip(createPath(character.rounded.path));
     context.translate(
@@ -76,11 +88,13 @@ export function drawAnimationFrame(context, width, height, settings, focus, {
     knockoutEyes = false,
     eyeState = null,
     eyeOffset = null,
-    scene: preparedScene = null
+    scene: preparedScene = null,
+    metrics = null
 } = {}) {
-    const scene = preparedScene || buildAnimationFrameScene(settings, focus);
+    const scene = preparedScene || buildAnimationFrameScene(settings, focus, { metrics });
     const scaleX = width / ANIMATION_ARTBOARD_SIZE;
     const scaleY = height / ANIMATION_ARTBOARD_SIZE;
+    const drawStartedAt = now();
 
     context.save();
     context.setTransform(1, 0, 0, 1, 0, 0);
@@ -96,8 +110,10 @@ export function drawAnimationFrame(context, width, height, settings, focus, {
         scene,
         Boolean(transparentBackground && knockoutEyes),
         eyeState,
-        eyeOffset
+        eyeOffset,
+        metrics
     );
     context.restore();
+    addDuration(metrics, 'canvasDrawMs', drawStartedAt);
     return scene;
 }

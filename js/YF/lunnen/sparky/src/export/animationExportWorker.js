@@ -8,8 +8,7 @@ import {
     sampleFocusTimeline
 } from '../animation/focusTimeline.js?v=20260825-6';
 import {
-    createEyeAnimationTimeline,
-    sampleEyeAnimationTimeline
+    createEyeAnimationTimeline
 } from '../animation/eyeTimeline.js?v=20260825-9';
 import {
     advanceEyeMotionToTarget,
@@ -18,8 +17,12 @@ import {
 import {
     buildAnimationFrameScene,
     drawAnimationFrame
-} from '../render/animationFrameRenderer.js?v=20260825-3';
-import { createStoredZip } from './zipStore.js';
+} from '../render/animationFrameRenderer.js?v=20260825-4';
+import {
+    createAnimationFrameSamples,
+    sampleAnimationFrame
+} from './animationFrameSamples.js?v=20260825-2';
+import { StoredZipBlobBuilder } from './zipStore.js?v=20260825-1';
 import { muxAvcToMp4 } from './mp4Muxer.js';
 import {
     ANIMATION_EXPORT_FPS,
@@ -29,6 +32,39 @@ import {
 
 let cancelledJob = null;
 const EYE_MOTION_WARMUP_FRAMES = 24;
+const now = () => globalThis.performance?.now?.() ?? Date.now();
+
+function createBenchmarkMetrics(job, frameCount) {
+    if (!job.benchmark) return null;
+    return {
+        format: job.format,
+        frameCount,
+        characterMs: 0,
+        eyesMs: 0,
+        lidsMs: 0,
+        canvasDrawMs: 0,
+        timelineMs: 0,
+        samplePrecomputeMs: 0,
+        eyeWarmupMs: 0,
+        pngEncodeMs: 0,
+        zipPackageMs: 0,
+        videoSubmitMs: 0,
+        backpressureWaitMs: 0,
+        encoderFlushMs: 0,
+        mp4MuxMs: 0,
+        intermediateFlushes: 0,
+        backpressureWaits: 0,
+        maxEncodeQueueSize: 0,
+        bufferedPngBytes: 0,
+        peakKnownBytes: 0,
+        outputBytes: 0,
+        totalMs: 0
+    };
+}
+
+function measure(metrics, key, startedAt) {
+    if (metrics) metrics[key] += now() - startedAt;
+}
 
 const postProgress = (jobId, completed, total, message) => {
     self.postMessage({ type: 'progress', jobId, completed, total, message });
@@ -58,14 +94,6 @@ function createMotion(settings, startFocus, motionPath = null) {
     return { path, timeline, eyeTimeline };
 }
 
-function frameState(timeline, eyeTimeline, settings, frameIndex, fps) {
-    const timeMs = frameIndex * 1000 / fps;
-    return {
-        focus: sampleFocusTimeline(timeline, timeMs).point,
-        eyes: sampleEyeAnimationTimeline(eyeTimeline, timeMs, settings)
-    };
-}
-
 function createLoopingEyeMotion(settings, timeline, frameCount, fps) {
     const motion = createEyeMotionState();
     const frameDuration = 1000 / fps;
@@ -78,9 +106,9 @@ function createLoopingEyeMotion(settings, timeline, frameCount, fps) {
     return motion;
 }
 
-function drawMotionFrame(context, size, settings, timeline, eyeTimeline, motion, frameIndex, fps, options = {}) {
-    const state = frameState(timeline, eyeTimeline, settings, frameIndex, fps);
-    const scene = buildAnimationFrameScene(settings, state.focus);
+function drawMotionFrame(context, size, settings, samples, motion, frameIndex, fps, options = {}, metrics = null) {
+    const state = sampleAnimationFrame(samples, frameIndex);
+    const scene = buildAnimationFrameScene(settings, state.focus, { metrics });
     const eyeOffset = advanceEyeMotionToTarget(
         motion,
         scene.eyes.pairCenter,
@@ -90,7 +118,8 @@ function drawMotionFrame(context, size, settings, timeline, eyeTimeline, motion,
         ...options,
         eyeState: state.eyes,
         eyeOffset,
-        scene
+        scene,
+        metrics
     });
 }
 
@@ -99,24 +128,49 @@ async function exportPngSequence(job) {
     const fps = ANIMATION_EXPORT_FPS;
     const size = ANIMATION_EXPORT_SIZE;
     const frameCount = Math.round(settings.motionDuration * fps);
+    const benchmarkMetrics = createBenchmarkMetrics(job, frameCount);
+    const totalStartedAt = now();
+    let startedAt = now();
     const { timeline, eyeTimeline } = createMotion(settings, startFocus, motionPath);
+    measure(benchmarkMetrics, 'timelineMs', startedAt);
+    startedAt = now();
+    const samples = createAnimationFrameSamples(
+        timeline,
+        eyeTimeline,
+        settings,
+        frameCount,
+        fps
+    );
+    measure(benchmarkMetrics, 'samplePrecomputeMs', startedAt);
+    startedAt = now();
     const eyeMotion = createLoopingEyeMotion(settings, timeline, frameCount, fps);
+    measure(benchmarkMetrics, 'eyeWarmupMs', startedAt);
     const canvas = new OffscreenCanvas(size, size);
     const context = canvas.getContext('2d', { alpha: true });
-    const files = [];
+    const archive = new StoredZipBlobBuilder();
     const digits = Math.max(4, String(frameCount).length);
 
     for (let index = 0; index < frameCount; index += 1) {
         assertActive(jobId);
-        drawMotionFrame(context, size, settings, timeline, eyeTimeline, eyeMotion, index, fps, {
+        drawMotionFrame(context, size, settings, samples, eyeMotion, index, fps, {
             transparentBackground: true,
             knockoutEyes: shouldKnockoutPngEyes(settings)
-        });
+        }, benchmarkMetrics);
+        startedAt = now();
         const blob = await canvas.convertToBlob({ type: 'image/png' });
-        files.push({
-            name: `${baseName}_${String(index + 1).padStart(digits, '0')}.png`,
-            data: new Uint8Array(await blob.arrayBuffer())
-        });
+        measure(benchmarkMetrics, 'pngEncodeMs', startedAt);
+        const data = new Uint8Array(await blob.arrayBuffer());
+        archive.add(
+            `${baseName}_${String(index + 1).padStart(digits, '0')}.png`,
+            data
+        );
+        if (benchmarkMetrics) {
+            benchmarkMetrics.bufferedPngBytes = archive.dataBytes;
+            benchmarkMetrics.peakKnownBytes = Math.max(
+                benchmarkMetrics.peakKnownBytes,
+                archive.retainedBytes
+            );
+        }
         if (index === 0 || (index + 1) % Math.max(1, Math.round(fps / 4)) === 0) {
             postProgress(jobId, index + 1, frameCount, `Rendering PNG ${index + 1} of ${frameCount}`);
         }
@@ -124,11 +178,22 @@ async function exportPngSequence(job) {
 
     assertActive(jobId);
     postProgress(jobId, frameCount, frameCount, 'Packaging PNG sequence');
-    const archive = createStoredZip(files);
+    startedAt = now();
+    const archiveBlob = archive.toBlob();
+    measure(benchmarkMetrics, 'zipPackageMs', startedAt);
+    if (benchmarkMetrics) {
+        benchmarkMetrics.outputBytes = archiveBlob.size;
+        benchmarkMetrics.peakKnownBytes = Math.max(
+            benchmarkMetrics.peakKnownBytes,
+            archive.retainedBytes
+        );
+        benchmarkMetrics.totalMs = now() - totalStartedAt;
+    }
     return {
-        data: archive,
+        data: archiveBlob,
         mimeType: 'application/zip',
-        filename: `${baseName}-png-sequence.zip`
+        filename: `${baseName}-png-sequence.zip`,
+        benchmarkMetrics
     };
 }
 
@@ -159,13 +224,46 @@ async function supportedAvcConfig(width, height, fps) {
     throw new Error('H.264 encoding is unavailable for the selected resolution and frame rate.');
 }
 
+async function waitForEncoderCapacity(encoder, maximumQueueSize) {
+    while (encoder.encodeQueueSize > maximumQueueSize) {
+        await new Promise((resolve) => {
+            let settled = false;
+            const finish = () => {
+                if (settled) return;
+                settled = true;
+                encoder.removeEventListener('dequeue', finish);
+                resolve();
+            };
+            encoder.addEventListener('dequeue', finish, { once: true });
+            // Avoid missing a dequeue that happened between the outer check
+            // and listener registration.
+            if (encoder.encodeQueueSize <= maximumQueueSize) finish();
+        });
+    }
+}
+
 async function exportMp4(job) {
     const { jobId, settings, startFocus, motionPath, baseName } = job;
     const fps = ANIMATION_EXPORT_FPS;
     const size = ANIMATION_EXPORT_SIZE;
     const frameCount = Math.round(settings.motionDuration * fps);
+    const benchmarkMetrics = createBenchmarkMetrics(job, frameCount);
+    const totalStartedAt = now();
+    let startedAt = now();
     const { timeline, eyeTimeline } = createMotion(settings, startFocus, motionPath);
+    measure(benchmarkMetrics, 'timelineMs', startedAt);
+    startedAt = now();
+    const samples = createAnimationFrameSamples(
+        timeline,
+        eyeTimeline,
+        settings,
+        frameCount,
+        fps
+    );
+    measure(benchmarkMetrics, 'samplePrecomputeMs', startedAt);
+    startedAt = now();
     const eyeMotion = createLoopingEyeMotion(settings, timeline, frameCount, fps);
+    measure(benchmarkMetrics, 'eyeWarmupMs', startedAt);
     const canvas = new OffscreenCanvas(size, size);
     const context = canvas.getContext('2d', { alpha: false });
     const chunks = [];
@@ -195,24 +293,40 @@ async function exportMp4(job) {
                 context,
                 size,
                 settings,
-                timeline,
-                eyeTimeline,
+                samples,
                 eyeMotion,
                 index,
-                fps
+                fps,
+                {},
+                benchmarkMetrics
             );
             const frame = new VideoFrame(canvas, {
                 timestamp: Math.round(index * microsecondsPerFrame),
                 duration: Math.round(microsecondsPerFrame)
             });
+            startedAt = now();
             encoder.encode(frame, { keyFrame: index === 0 || index % fps === 0 });
+            measure(benchmarkMetrics, 'videoSubmitMs', startedAt);
             frame.close();
-            if (encoder.encodeQueueSize > 8) await encoder.flush();
+            if (benchmarkMetrics) {
+                benchmarkMetrics.maxEncodeQueueSize = Math.max(
+                    benchmarkMetrics.maxEncodeQueueSize,
+                    encoder.encodeQueueSize
+                );
+            }
+            if (encoder.encodeQueueSize > 8) {
+                if (benchmarkMetrics) benchmarkMetrics.backpressureWaits += 1;
+                startedAt = now();
+                await waitForEncoderCapacity(encoder, 8);
+                measure(benchmarkMetrics, 'backpressureWaitMs', startedAt);
+            }
             if (index === 0 || (index + 1) % Math.max(1, Math.round(fps / 4)) === 0) {
                 postProgress(jobId, index + 1, frameCount, `Encoding frame ${index + 1} of ${frameCount}`);
             }
         }
+        startedAt = now();
         await encoder.flush();
+        measure(benchmarkMetrics, 'encoderFlushMs', startedAt);
         if (encoderError) throw encoderError;
     } finally {
         if (encoder.state !== 'closed') encoder.close();
@@ -220,6 +334,7 @@ async function exportMp4(job) {
 
     assertActive(jobId);
     postProgress(jobId, frameCount, frameCount, 'Packaging MP4');
+    startedAt = now();
     const video = muxAvcToMp4({
         chunks,
         decoderConfig,
@@ -227,10 +342,20 @@ async function exportMp4(job) {
         height: size,
         fps
     });
+    measure(benchmarkMetrics, 'mp4MuxMs', startedAt);
+    if (benchmarkMetrics) {
+        benchmarkMetrics.outputBytes = video.byteLength;
+        benchmarkMetrics.peakKnownBytes = chunks.reduce(
+            (sum, chunk) => sum + chunk.data.byteLength,
+            0
+        ) + video.byteLength;
+        benchmarkMetrics.totalMs = now() - totalStartedAt;
+    }
     return {
         data: video,
         mimeType: 'video/mp4',
-        filename: `${baseName}.mp4`
+        filename: `${baseName}.mp4`,
+        benchmarkMetrics
     };
 }
 
@@ -249,8 +374,23 @@ self.addEventListener('message', async (event) => {
         const result = job.format === 'png-sequence'
             ? await exportPngSequence(job)
             : await exportMp4(job);
-        const buffer = result.data.buffer;
-        self.postMessage({ type: 'complete', jobId: job.jobId, ...result, data: buffer }, [buffer]);
+        if (result.data instanceof Blob) {
+            self.postMessage({
+                type: 'complete',
+                jobId: job.jobId,
+                ...result,
+                data: null,
+                blob: result.data
+            });
+        } else {
+            const buffer = result.data.buffer;
+            self.postMessage({
+                type: 'complete',
+                jobId: job.jobId,
+                ...result,
+                data: buffer
+            }, [buffer]);
+        }
     } catch (error) {
         self.postMessage({
             type: error?.name === 'AbortError' ? 'cancelled' : 'error',

@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createStoredZip, crc32 } from '../src/export/zipStore.js';
+import {
+    createStoredZip,
+    createStoredZipBlob,
+    crc32,
+    StoredZipBlobBuilder
+} from '../src/export/zipStore.js';
 import { muxAvcToMp4 } from '../src/export/mp4Muxer.js';
 
 const signatureAt = (bytes, offset) => new DataView(
@@ -25,6 +30,22 @@ test('stored ZIP contains every named PNG and a valid directory footer', () => {
 
 test('CRC32 matches the standard check value', () => {
     assert.equal(crc32(new TextEncoder().encode('123456789')), 0xcbf43926);
+});
+
+test('incremental Blob ZIP is byte-identical without a second archive buffer', async () => {
+    const files = [
+        { name: 'sparky_0001.png', data: new Uint8Array([1, 2, 3]) },
+        { name: 'sparky_0002.png', data: new Uint8Array([4, 5, 6, 7]) }
+    ];
+    const expected = createStoredZip(files);
+    const blob = createStoredZipBlob(files);
+    const builder = new StoredZipBlobBuilder();
+    files.forEach((file) => builder.add(file.name, file.data));
+
+    assert.deepEqual(new Uint8Array(await blob.arrayBuffer()), expected);
+    assert.equal(builder.byteLength, expected.byteLength);
+    assert.equal(builder.dataBytes, 7);
+    assert.ok(builder.retainedBytes < expected.byteLength + builder.dataBytes);
 });
 
 test('MP4 muxer writes AVC configuration, timing, samples and media data', () => {
