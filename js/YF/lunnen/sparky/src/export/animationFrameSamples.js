@@ -1,5 +1,5 @@
-import { sampleEyeAnimationTimeline } from '../animation/eyeTimeline.js?v=20260825-9';
-import { sampleFocusTimeline } from '../animation/focusTimeline.js?v=20260825-6';
+import { sampleEyeAnimationTimeline } from '../animation/eyeTimeline.js?v=20260825-11';
+import { sampleFocusTimeline } from '../animation/focusTimeline.js?v=20260825-8';
 
 export function createAnimationFrameSamples(
     timeline,

@@ -23,14 +23,15 @@ import {
 import {
     generateFocusPathForSettings,
     normalizeMotionComplexity,
+    normalizeMotionSmoothness,
     normalizeMotionSeed,
     serializeFocusPath
-} from './src/animation/focusPath.js?v=20260825-6';
+} from './src/animation/focusPath.js?v=20260825-8';
 import {
-    ensureFocusPathHandles,
+    focusPathEditorHandlePoints,
     moveFocusPathAnchor,
     moveFocusPathHandle
-} from './src/animation/focusPathEditor.js?v=20260825-4';
+} from './src/animation/focusPathEditor.js?v=20260825-6';
 import {
     confirmPathRegeneration
 } from './src/animation/pathRegenerateConfirmation.js?v=20260825-1';
@@ -38,11 +39,11 @@ import {
     createFocusTimeline,
     resolveFocusStops,
     sampleFocusTimeline
-} from './src/animation/focusTimeline.js?v=20260825-6';
+} from './src/animation/focusTimeline.js?v=20260825-8';
 import {
     createEyeAnimationTimeline,
     sampleEyeAnimationTimeline
-} from './src/animation/eyeTimeline.js?v=20260825-9';
+} from './src/animation/eyeTimeline.js?v=20260825-11';
 import { clamp } from './src/geometry/vector.js';
 import {
     focusPointFromPolar,
@@ -112,6 +113,7 @@ const settings = {
     motionDuration: 5,
     motionPointCount: 6,
     motionComplexity: 0,
+    motionSmoothness: 50,
     motionStops: 40,
     motionBlinkCount: 2,
     motionEmotionVariation: 0,
@@ -152,6 +154,7 @@ function normalizeIncomingState(source = {}) {
     normalized.motionDuration = clamp(Number(normalized.motionDuration) || 5, 1, 10);
     normalized.motionPointCount = Math.round(clamp(Number(normalized.motionPointCount) || 6, 2, 16));
     normalized.motionComplexity = normalizeMotionComplexity(normalized.motionComplexity);
+    normalized.motionSmoothness = normalizeMotionSmoothness(normalized.motionSmoothness);
     normalized.motionStops = clamp(Number(normalized.motionStops) || 0, 0, 100);
     normalized.motionBlinkCount = Math.round(clamp(
         Number.isFinite(Number(normalized.motionBlinkCount))
@@ -374,6 +377,8 @@ const focusAnimation = {
     selectedEditorControl: null
 };
 let focusAnimationReady = false;
+let motionSmoothnessConfirmation = null;
+let revertingMotionSmoothness = false;
 
 function cancelFocusAnimationFrame() {
     if (focusAnimation.frame != null) cancelAnimationFrame(focusAnimation.frame);
@@ -521,16 +526,6 @@ function setFocusPathEditing(app, editing) {
     const next = Boolean(editing) && app.settings.focusMode === 'animate';
     if (next) {
         pauseFocusAnimation(app);
-        if (focusAnimation.path) {
-            focusAnimation.path = ensureFocusPathHandles(focusAnimation.path);
-            focusAnimation.editedPath = focusAnimation.path;
-            rebuildFocusAnimation(app, {
-                restart: false,
-                schedule: false,
-                regenerate: false,
-                preservePlayback: true
-            });
-        }
     }
     focusAnimation.editing = next;
     focusAnimation.selectedEditorControl = null;
@@ -678,6 +673,39 @@ function bindFocusAnimation(app) {
             if (app.settings.focusMode === 'animate') {
                 rebuildFocusAnimation(app, { regenerate: true });
             }
+        });
+    });
+    app.settingsStore.subscribe('motionSmoothness', (value, previousValue) => {
+        if (revertingMotionSmoothness || app.settings.focusMode !== 'animate') return;
+        if (!focusAnimation.manuallyEdited) {
+            rebuildFocusAnimation(app, { regenerate: true });
+            return;
+        }
+        if (motionSmoothnessConfirmation) return;
+        const originalValue = previousValue;
+        motionSmoothnessConfirmation = (async () => {
+            const confirmed = await confirmPathRegeneration({
+                manuallyEdited: true,
+                dialog: app.dialog,
+                fallbackConfirm: (message) => window.confirm(message)
+            });
+            if (confirmed) {
+                if (app.settings.focusMode === 'animate') {
+                    rebuildFocusAnimation(app, { regenerate: true });
+                } else {
+                    focusAnimation.editedPath = null;
+                    focusAnimation.manuallyEdited = false;
+                    focusAnimation.editing = false;
+                    focusAnimation.selectedEditorControl = null;
+                }
+            } else {
+                revertingMotionSmoothness = true;
+                app.settingsStore.set('motionSmoothness', originalValue);
+                revertingMotionSmoothness = false;
+                app.sliders?.setDisplayValue('motionSmoothnessSlider', originalValue);
+            }
+        })().finally(() => {
+            motionSmoothnessConfirmation = null;
         });
     });
     [
@@ -1055,14 +1083,10 @@ function drawGuides(ctx, geometry) {
         }));
         if (editing) {
             focusAnimation.path.anchors.forEach((anchor, index) => {
-                const previous = focusAnimation.path.segments[
-                    (index - 1 + focusAnimation.path.segments.length)
-                    % focusAnimation.path.segments.length
-                ];
-                const outgoing = focusAnimation.path.segments[index];
+                const handles = focusPathEditorHandlePoints(focusAnimation.path, index);
                 [
-                    { side: 'incoming', point: previous.control2 },
-                    { side: 'outgoing', point: outgoing.control1 }
+                    { side: 'incoming', point: handles.incoming },
+                    { side: 'outgoing', point: handles.outgoing }
                 ].forEach(({ side, point }) => {
                     const key = `handle:${index}:${side}`;
                     motionGuides.appendChild(create('circle', {
@@ -1665,6 +1689,7 @@ const app = defineTool({
             { id: 'motionDurationSlider', valueId: 'motionDurationValue', setting: 'motionDuration', min: 1, max: 10, decimals: 0, baseStep: 1, shiftStep: 1 },
             { id: 'motionPointCountSlider', valueId: 'motionPointCountValue', setting: 'motionPointCount', min: 2, max: 16, decimals: 0, baseStep: 1, shiftStep: 2 },
             { id: 'motionComplexitySlider', valueId: 'motionComplexityValue', setting: 'motionComplexity', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'motionSmoothnessSlider', valueId: 'motionSmoothnessValue', setting: 'motionSmoothness', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'motionStopsSlider', valueId: 'motionStopsValue', setting: 'motionStops', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'motionBlinkCountSlider', valueId: 'motionBlinkCountValue', setting: 'motionBlinkCount', min: 0, max: 12, decimals: 0, baseStep: 1, shiftStep: 2 },
             { id: 'motionEmotionVariationSlider', valueId: 'motionEmotionVariationValue', setting: 'motionEmotionVariation', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
@@ -1742,7 +1767,7 @@ const app = defineTool({
             'focusAngle', 'focusDistance', 'rayLength', 'rayWidth', 'roundness', 'cornerSmoothing',
             'rayCount', 'angleSpan', 'boundaryCenterX', 'boundaryCenterY', 'boundaryRadius',
             'eyePerspective', 'eyeSize', 'eyeDistance', 'cute', 'angry',
-            'motionDuration', 'motionPointCount', 'motionComplexity', 'motionStops',
+            'motionDuration', 'motionPointCount', 'motionComplexity', 'motionSmoothness', 'motionStops',
             'motionBlinkCount', 'motionEmotionVariation',
             'motionSeed'
         ],

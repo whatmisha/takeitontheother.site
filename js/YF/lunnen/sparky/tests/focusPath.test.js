@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
     generateFocusPath,
+    normalizeMotionSmoothness,
     pathIsInsideRegion,
+    sampleFocusPath,
     tangentContinuityAtAnchor
 } from '../src/animation/focusPath.js';
 
@@ -30,7 +32,7 @@ test('focus path preserves the requested start point', () => {
     assert.deepEqual(path.anchors[0], start);
 });
 
-test('focus path and its control points remain inside the focus region', () => {
+test('focus path remains inside the focus region', () => {
     ['soft', 'medium', 'hard'].forEach((complexity) => {
         for (let seed = 1; seed <= 30; seed += 1) {
             const path = generateFocusPath({
@@ -42,6 +44,31 @@ test('focus path and its control points remain inside the focus region', () => {
             assert.equal(pathIsInsideRegion(path, 1e-5), true, `${complexity} seed ${seed}`);
         }
     });
+});
+
+test('a start point on the boundary keeps two non-collapsed seam handles', () => {
+    const start = {
+        x: options.center.x + options.radius,
+        y: options.center.y
+    };
+    const path = generateFocusPath({
+        ...options,
+        start,
+        pointCount: 16,
+        complexity: 100,
+        smoothness: 50,
+        seed: 9
+    });
+    const incoming = path.segments.at(-1).control2;
+    const outgoing = path.segments[0].control1;
+
+    assert.deepEqual(path.anchors[0], start);
+    assert.ok(distanceBetween(incoming, start) >= 14);
+    assert.ok(distanceBetween(outgoing, start) >= 14);
+    assert.equal(pathIsInsideRegion(path, 1e-5), true);
+    const continuity = tangentContinuityAtAnchor(path, 0);
+    assert.ok(Math.abs(continuity.cross) < 1e-6);
+    assert.ok(continuity.dot > 0.999);
 });
 
 test('focus path has a continuous tangent at every anchor including the seam', () => {
@@ -108,3 +135,95 @@ test('every complexity generates a path that visually touches the outer focus re
         );
     });
 });
+
+test('motion smoothness is normalized to an independent 0–100 range', () => {
+    assert.equal(normalizeMotionSmoothness(-20), 0);
+    assert.equal(normalizeMotionSmoothness(35), 35);
+    assert.equal(normalizeMotionSmoothness(140), 100);
+    assert.equal(normalizeMotionSmoothness('75'), 75);
+});
+
+test('zero smoothness preserves the legacy generated geometry', () => {
+    const legacy = generateFocusPath(options);
+    const explicitZero = generateFocusPath({ ...options, smoothness: 0 });
+    assert.equal(explicitZero.path, legacy.path);
+    assert.deepEqual(explicitZero.anchors, legacy.anchors);
+});
+
+test('smoothness enlarges a tight loop without changing its seed, start, or point count', () => {
+    const fixture = {
+        ...options,
+        pointCount: 6,
+        complexity: 100,
+        seed: 66
+    };
+    const tight = generateFocusPath({ ...fixture, smoothness: 0 });
+    const smooth = generateFocusPath({ ...fixture, smoothness: 100 });
+    const minimumChord = (path) => Math.min(...path.anchors.map((anchor, index) => (
+        distanceBetween(anchor, path.anchors[(index + 1) % path.anchors.length])
+    )));
+
+    assert.deepEqual(smooth.anchors[0], tight.anchors[0]);
+    assert.equal(smooth.anchors.length, tight.anchors.length);
+    assert.equal(smooth.seed, tight.seed);
+    assert.ok(minimumChord(smooth) > minimumChord(tight) * 4);
+    assert.notEqual(smooth.path, tight.path);
+});
+
+test('maximum smoothness reduces the sharpest sampled direction change', () => {
+    const fixture = {
+        ...options,
+        pointCount: 6,
+        complexity: 100,
+        seed: 66
+    };
+    const sharpestTurn = (path) => {
+        const samples = Array.from({ length: 241 }, (_, index) => (
+            sampleFocusPath(path, index / 240).point
+        ));
+        let maximum = 0;
+        for (let index = 1; index < samples.length - 1; index += 1) {
+            const incoming = {
+                x: samples[index].x - samples[index - 1].x,
+                y: samples[index].y - samples[index - 1].y
+            };
+            const outgoing = {
+                x: samples[index + 1].x - samples[index].x,
+                y: samples[index + 1].y - samples[index].y
+            };
+            const denominator = Math.hypot(incoming.x, incoming.y)
+                * Math.hypot(outgoing.x, outgoing.y);
+            if (denominator <= 1e-9) continue;
+            const cosine = (incoming.x * outgoing.x + incoming.y * outgoing.y) / denominator;
+            maximum = Math.max(maximum, Math.acos(Math.max(-1, Math.min(1, cosine))));
+        }
+        return maximum;
+    };
+    const tight = generateFocusPath({ ...fixture, smoothness: 0 });
+    const smooth = generateFocusPath({ ...fixture, smoothness: 100 });
+    assert.ok(sharpestTurn(smooth) < sharpestTurn(tight) * 0.2);
+});
+
+test('smoothed paths remain contained and tangent-continuous across complexities', () => {
+    [0, 50, 100].forEach((complexity) => {
+        for (let seed = 1; seed <= 20; seed += 1) {
+            const path = generateFocusPath({
+                ...options,
+                start: seed % 2 ? { x: 240, y: 240 } : { x: 420, y: 240 },
+                complexity,
+                smoothness: 100,
+                seed
+            });
+            assert.equal(pathIsInsideRegion(path, 1e-5), true, `${complexity} seed ${seed}`);
+            path.anchors.forEach((_, index) => {
+                const continuity = tangentContinuityAtAnchor(path, index);
+                assert.ok(Math.abs(continuity.cross) < 1e-6);
+                assert.ok(continuity.dot > 0.999);
+            });
+        }
+    });
+});
+
+function distanceBetween(first, second) {
+    return Math.hypot(first.x - second.x, first.y - second.y);
+}

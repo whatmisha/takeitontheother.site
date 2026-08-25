@@ -1,7 +1,10 @@
-import { rebuildFocusPath } from './focusPath.js?v=20260825-6';
+import {
+    fitCubicSegmentToCircle,
+    rebuildFocusPath
+} from './focusPath.js?v=20260825-8';
 
 export const FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH = 14;
-export const FOCUS_PATH_EDITOR_ANCHOR_INSET = 14.5;
+export const FOCUS_PATH_EDITOR_ANCHOR_INSET = 0;
 const EPSILON = 1e-9;
 
 const copyPoint = (point) => ({ x: point.x, y: point.y });
@@ -35,14 +38,6 @@ function constrainPoint(point, center, radius) {
     };
 }
 
-function maximumLengthAlong(anchor, direction, center, radius) {
-    const offset = subtract(anchor, center);
-    const b = 2 * dot(offset, direction);
-    const c = dot(offset, offset) - radius * radius;
-    const discriminant = Math.max(0, b * b - 4 * c);
-    return Math.max(0, (-b + Math.sqrt(discriminant)) / 2);
-}
-
 function pairedDirection(outgoing, incoming, previous, next) {
     const candidates = [
         outgoing,
@@ -55,19 +50,29 @@ function pairedDirection(outgoing, incoming, previous, next) {
     return { x: 1, y: 0 };
 }
 
-function visibleHandlePoint(anchor, direction, preferredLength, center, radius) {
+function boundarySafeDirection(anchor, direction, center, radius) {
+    const radialVector = subtract(anchor, center);
+    const radialDistance = length(radialVector);
+    if (radialDistance <= radius * 0.9 || radialDistance <= EPSILON) return unit(direction);
+    const radial = unit(radialVector);
+    let tangent = { x: -radial.y, y: radial.x };
+    if (dot(tangent, direction) < 0) tangent = reverse(tangent);
+    const blend = Math.min(1, Math.max(0, (radialDistance / radius - 0.9) / 0.1));
+    return unit({
+        x: direction.x * (1 - blend) + tangent.x * blend,
+        y: direction.y * (1 - blend) + tangent.y * blend
+    }, tangent);
+}
+
+function visibleHandlePoint(anchor, direction, preferredLength) {
     const normalizedDirection = unit(direction);
-    const requestedLength = Math.max(
+    const length = Math.max(
         FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH,
         preferredLength
     );
-    const permittedLength = Math.min(
-        requestedLength,
-        maximumLengthAlong(anchor, normalizedDirection, center, radius) * 0.9995
-    );
     return {
-        x: anchor.x + normalizedDirection.x * permittedLength,
-        y: anchor.y + normalizedDirection.y * permittedLength
+        x: anchor.x + normalizedDirection.x * length,
+        y: anchor.y + normalizedDirection.y * length
     };
 }
 
@@ -87,41 +92,84 @@ function restoreAnchorHandles(segments, anchors, index, previousAnchor, center, 
     const { incomingSegment, outgoingSegment } = anchorHandles(segments, index);
     const incomingVector = subtract(incomingSegment.control2, previousAnchor);
     const outgoingVector = subtract(outgoingSegment.control1, previousAnchor);
-    const direction = pairedDirection(outgoingVector, incomingVector, previous, next);
+    const direction = boundarySafeDirection(
+        anchor,
+        pairedDirection(outgoingVector, incomingVector, previous, next),
+        center,
+        radius
+    );
 
     incomingSegment.end = copyPoint(anchor);
     outgoingSegment.start = copyPoint(anchor);
     incomingSegment.control2 = visibleHandlePoint(
         anchor,
         reverse(direction),
-        length(incomingVector),
-        center,
-        radius
+        length(incomingVector)
     );
     outgoingSegment.control1 = visibleHandlePoint(
         anchor,
         direction,
-        length(outgoingVector),
-        center,
-        radius
+        length(outgoingVector)
     );
 }
 
 function editableAnchors(path) {
-    const anchors = path.anchors.map((anchor) => (
-        constrainPoint(
-            anchor,
-            path.center,
-            Math.max(0, path.radius - FOCUS_PATH_EDITOR_ANCHOR_INSET)
-        )
-    ));
-    return anchors;
+    return path.anchors.map(copyPoint);
+}
+
+function handleLengths(segments, anchors, index) {
+    const count = anchors.length;
+    const anchor = anchors[index];
+    return {
+        incoming: length(subtract(
+            segments[(index - 1 + count) % count].control2,
+            anchor
+        )),
+        outgoing: length(subtract(segments[index].control1, anchor))
+    };
+}
+
+function fitSegment(segments, index, center, radius, options) {
+    const normalizedIndex = ((index % segments.length) + segments.length) % segments.length;
+    segments[normalizedIndex] = fitCubicSegmentToCircle(
+        segments[normalizedIndex],
+        center,
+        radius,
+        options
+    );
+}
+
+export function focusPathEditorHandlePoints(path, anchorIndex) {
+    const count = path.anchors.length;
+    const index = ((Math.round(anchorIndex) % count) + count) % count;
+    const anchor = path.anchors[index];
+    const previous = path.anchors[(index - 1 + count) % count];
+    const next = path.anchors[(index + 1) % count];
+    const incomingVector = subtract(
+        path.segments[(index - 1 + count) % count].control2,
+        anchor
+    );
+    const outgoingVector = subtract(path.segments[index].control1, anchor);
+    const direction = boundarySafeDirection(
+        anchor,
+        pairedDirection(outgoingVector, incomingVector, previous, next),
+        path.center,
+        path.radius
+    );
+    return {
+        incoming: visibleHandlePoint(anchor, reverse(direction), length(incomingVector)),
+        outgoing: visibleHandlePoint(anchor, direction, length(outgoingVector))
+    };
 }
 
 export function ensureFocusPathHandles(path) {
     const segments = copySegments(path);
     const anchors = editableAnchors(path);
+    let changed = false;
     anchors.forEach((_, index) => {
+        const lengths = handleLengths(segments, anchors, index);
+        if (lengths.incoming >= FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH - 1e-6
+            && lengths.outgoing >= FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH - 1e-6) return;
         restoreAnchorHandles(
             segments,
             anchors,
@@ -130,12 +178,21 @@ export function ensureFocusPathHandles(path) {
             path.center,
             path.radius
         );
+        fitSegment(segments, index - 1, path.center, path.radius, {
+            scaleControl1: false,
+            scaleControl2: true
+        });
+        fitSegment(segments, index, path.center, path.radius, {
+            scaleControl1: true,
+            scaleControl2: false
+        });
+        changed = true;
     });
-    return rebuildFocusPath(path, segments);
+    return changed ? rebuildFocusPath(path, segments) : path;
 }
 
 export function moveFocusPathAnchor(path, anchorIndex, rawPoint) {
-    const prepared = ensureFocusPathHandles(path);
+    const prepared = path;
     const count = prepared.segments.length;
     const index = ((Math.round(anchorIndex) % count) + count) % count;
     const segments = copySegments(prepared);
@@ -144,7 +201,7 @@ export function moveFocusPathAnchor(path, anchorIndex, rawPoint) {
     anchors[index] = constrainPoint(
         rawPoint,
         prepared.center,
-        Math.max(0, prepared.radius - FOCUS_PATH_EDITOR_ANCHOR_INSET)
+        prepared.radius
     );
     restoreAnchorHandles(
         segments,
@@ -154,11 +211,19 @@ export function moveFocusPathAnchor(path, anchorIndex, rawPoint) {
         prepared.center,
         prepared.radius
     );
+    fitSegment(segments, index - 1, prepared.center, prepared.radius, {
+        scaleControl1: false,
+        scaleControl2: true
+    });
+    fitSegment(segments, index, prepared.center, prepared.radius, {
+        scaleControl1: true,
+        scaleControl2: false
+    });
     return rebuildFocusPath(prepared, segments);
 }
 
 export function moveFocusPathHandle(path, anchorIndex, side, rawPoint) {
-    const prepared = ensureFocusPathHandles(path);
+    const prepared = path;
     const count = prepared.segments.length;
     const index = ((Math.round(anchorIndex) % count) + count) % count;
     const segments = copySegments(prepared);
@@ -172,9 +237,15 @@ export function moveFocusPathHandle(path, anchorIndex, side, rawPoint) {
         ? subtract(rawPoint, anchor)
         : subtract(currentPoint, anchor);
     const selectedDirection = unit(editedVector);
-    const outgoingDirection = editingOutgoing
+    const rawOutgoingDirection = editingOutgoing
         ? selectedDirection
         : reverse(selectedDirection);
+    const outgoingDirection = boundarySafeDirection(
+        anchor,
+        rawOutgoingDirection,
+        prepared.center,
+        prepared.radius
+    );
     const incomingDirection = reverse(outgoingDirection);
     const outgoingLength = editingOutgoing
         ? length(editedVector)
@@ -186,16 +257,20 @@ export function moveFocusPathHandle(path, anchorIndex, side, rawPoint) {
     outgoingSegment.control1 = visibleHandlePoint(
         anchor,
         outgoingDirection,
-        outgoingLength,
-        prepared.center,
-        prepared.radius
+        outgoingLength
     );
     incomingSegment.control2 = visibleHandlePoint(
         anchor,
         incomingDirection,
-        incomingLength,
-        prepared.center,
-        prepared.radius
+        incomingLength
     );
+    fitSegment(segments, index, prepared.center, prepared.radius, {
+        scaleControl1: true,
+        scaleControl2: false
+    });
+    fitSegment(segments, index - 1, prepared.center, prepared.radius, {
+        scaleControl1: false,
+        scaleControl2: true
+    });
     return rebuildFocusPath(prepared, segments);
 }

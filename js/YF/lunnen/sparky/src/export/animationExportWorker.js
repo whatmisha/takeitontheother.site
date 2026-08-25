@@ -1,15 +1,15 @@
 import {
     generateFocusPathForSettings,
     rebuildFocusPath
-} from '../animation/focusPath.js?v=20260825-6';
+} from '../animation/focusPath.js?v=20260825-8';
 import {
     createFocusTimeline,
     resolveFocusStops,
     sampleFocusTimeline
-} from '../animation/focusTimeline.js?v=20260825-6';
+} from '../animation/focusTimeline.js?v=20260825-8';
 import {
     createEyeAnimationTimeline
-} from '../animation/eyeTimeline.js?v=20260825-9';
+} from '../animation/eyeTimeline.js?v=20260825-11';
 import {
     advanceEyeMotionToTarget,
     createEyeMotionState
@@ -21,7 +21,7 @@ import {
 import {
     createAnimationFrameSamples,
     sampleAnimationFrame
-} from './animationFrameSamples.js?v=20260825-2';
+} from './animationFrameSamples.js?v=20260825-4';
 import { StoredZipBlobBuilder } from './zipStore.js?v=20260825-1';
 import { muxAvcToMp4 } from './mp4Muxer.js';
 import {

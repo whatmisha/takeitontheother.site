@@ -12,6 +12,7 @@ import {
     ensureFocusPathHandles,
     FOCUS_PATH_EDITOR_ANCHOR_INSET,
     FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH,
+    focusPathEditorHandlePoints,
     moveFocusPathAnchor,
     moveFocusPathHandle
 } from '../src/animation/focusPathEditor.js';
@@ -47,6 +48,35 @@ test('serialized edited paths rebuild with the exact same cubic geometry', () =>
     assert.equal(rebuilt.totalLength, path.totalLength);
     assert.deepEqual(rebuilt.anchors, path.anchors);
     assert.equal(pathIsInsideRegion(rebuilt), true);
+});
+
+test('opening editor controls does not change a generated boundary path', () => {
+    const boundaryPath = generateFocusPath({
+        start: { x: 435.233, y: 240 },
+        center: { x: 240, y: 240 },
+        radius: 195.233,
+        pointCount: 6,
+        complexity: 50,
+        smoothness: 50,
+        seed: 9
+    });
+    const originalPath = boundaryPath.path;
+    const originalAnchors = structuredClone(boundaryPath.anchors);
+    const handles = focusPathEditorHandlePoints(boundaryPath, 0);
+    const prepared = ensureFocusPathHandles(boundaryPath);
+
+    assert.ok(Math.hypot(
+        handles.incoming.x - boundaryPath.anchors[0].x,
+        handles.incoming.y - boundaryPath.anchors[0].y
+    ) >= FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH - 1e-6);
+    assert.ok(Math.hypot(
+        handles.outgoing.x - boundaryPath.anchors[0].x,
+        handles.outgoing.y - boundaryPath.anchors[0].y
+    ) >= FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH - 1e-6);
+    assert.equal(boundaryPath.path, originalPath);
+    assert.deepEqual(boundaryPath.anchors, originalAnchors);
+    assert.equal(prepared.path, originalPath);
+    assert.deepEqual(prepared.anchors, originalAnchors);
 });
 
 test('moving an anchor carries both handles and remains inside the focus circle', () => {

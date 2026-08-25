@@ -3,6 +3,9 @@ import { createExtendedFocusRegion } from '../geometry/focusBounds.js';
 
 const TAU = Math.PI * 2;
 const LENGTH_SAMPLES = 64;
+const CONTAINMENT_SAMPLES = 192;
+const CONTAINMENT_ITERATIONS = 18;
+const BOUNDARY_HANDLE_MIN_LENGTH = 14;
 
 export const FOCUS_PATH_COMPLEXITY = Object.freeze({
     soft: Object.freeze({
@@ -45,6 +48,7 @@ const addScaled = (origin, direction, amount) => ({
 const vectorLength = (value) => Math.hypot(value.x, value.y);
 const dot = (a, b) => a.x * b.x + a.y * b.y;
 const cross = (a, b) => a.x * b.y - a.y * b.x;
+const mix = (first, second, amount) => first + (second - first) * amount;
 
 const LEGACY_COMPLEXITY = Object.freeze({ soft: 0, medium: 50, hard: 100 });
 
@@ -53,6 +57,15 @@ export function normalizeMotionComplexity(value) {
         return LEGACY_COMPLEXITY[value];
     }
     return clamp(finiteOr(value, 0), 0, 100);
+}
+
+export function normalizeMotionSmoothness(value) {
+    return clamp(finiteOr(value, 0), 0, 100);
+}
+
+function smoothnessAmount(value) {
+    const normalized = normalizeMotionSmoothness(value) / 100;
+    return normalized * normalized * (3 - 2 * normalized);
 }
 
 function interpolateProfile(first, second, amount) {
@@ -132,25 +145,24 @@ function constrainToCircle(raw, center, radius) {
     };
 }
 
-function maximumHandleLength(anchor, direction, center, radius) {
-    const offset = subtract(anchor, center);
-    const b = 2 * dot(offset, direction);
-    const c = dot(offset, offset) - radius * radius;
-    const discriminant = Math.max(0, b * b - 4 * c);
-    return Math.max(0, (-b + Math.sqrt(discriminant)) / 2);
-}
-
-function boundaryAwareTangent(anchor, tangent, center, radius) {
+function boundaryAwareTangent(anchor, tangent, center, radius, smoothness = 0) {
     const radialVector = subtract(anchor, center);
     const radialDistance = vectorLength(radialVector);
-    if (radialDistance <= radius * 0.78 || radialDistance <= 1e-9) return tangent;
+    const amount = smoothnessAmount(smoothness);
+    const blendStart = mix(0.78, 0.72, amount);
+    const blendEnd = mix(0.985, 0.95, amount);
+    if (radialDistance <= radius * blendStart || radialDistance <= 1e-9) return tangent;
 
     const radial = unit(radialVector);
     let boundaryTangent = { x: -radial.y, y: radial.x };
     if (dot(boundaryTangent, tangent) < 0) {
         boundaryTangent = { x: -boundaryTangent.x, y: -boundaryTangent.y };
     }
-    const blend = clamp((radialDistance / radius - 0.78) / 0.22, 0, 1);
+    const blend = clamp(
+        (radialDistance / radius - blendStart) / Math.max(1e-9, blendEnd - blendStart),
+        0,
+        1
+    );
     return unit({
         x: tangent.x * (1 - blend) + boundaryTangent.x * blend,
         y: tangent.y * (1 - blend) + boundaryTangent.y * blend
@@ -196,43 +208,263 @@ function createAnchors({ start, center, radius, pointCount, profile, random }) {
     return [first, ...ordered];
 }
 
-function createTangents(anchors, center, radius) {
+function constrainedAnchor(point, center, radius, minimumRadius = 0) {
+    const constrained = constrainToCircle(point, center, radius);
+    const offset = subtract(constrained, center);
+    const magnitude = vectorLength(offset);
+    if (magnitude >= minimumRadius || minimumRadius <= 0) return constrained;
+    const fallback = unit(subtract(point, center), { x: 1, y: 0 });
+    const direction = unit(offset, fallback);
+    return addScaled(center, direction, minimumRadius);
+}
+
+function addPairSeparation(displacements, anchors, firstIndex, secondIndex, minimumDistance, strength) {
+    const first = anchors[firstIndex];
+    const second = anchors[secondIndex];
+    const offset = subtract(second, first);
+    const currentDistance = vectorLength(offset);
+    if (currentDistance >= minimumDistance) return;
+    const fallbackAngle = (firstIndex * 0.754877666 + secondIndex * 0.569840296) * TAU;
+    const direction = unit(offset, {
+        x: Math.cos(fallbackAngle),
+        y: Math.sin(fallbackAngle)
+    });
+    const push = (minimumDistance - currentDistance) * strength;
+    const firstMovable = firstIndex !== 0;
+    const secondMovable = secondIndex !== 0;
+    const movableCount = Number(firstMovable) + Number(secondMovable);
+    if (!movableCount) return;
+    const share = push / movableCount;
+    if (firstMovable) {
+        displacements[firstIndex].x -= direction.x * share;
+        displacements[firstIndex].y -= direction.y * share;
+    }
+    if (secondMovable) {
+        displacements[secondIndex].x += direction.x * share;
+        displacements[secondIndex].y += direction.y * share;
+    }
+}
+
+function addTurnOpening(displacements, anchors, index, minimumAngle, strength) {
+    const count = anchors.length;
+    const previousIndex = (index - 1 + count) % count;
+    const nextIndex = (index + 1) % count;
+    const anchor = anchors[index];
+    const toPrevious = subtract(anchors[previousIndex], anchor);
+    const toNext = subtract(anchors[nextIndex], anchor);
+    const previousLength = vectorLength(toPrevious);
+    const nextLength = vectorLength(toNext);
+    if (previousLength <= 1e-9 || nextLength <= 1e-9) return;
+    const previousDirection = unit(toPrevious);
+    const nextDirection = unit(toNext);
+    const angle = Math.acos(clamp(dot(previousDirection, nextDirection), -1, 1));
+    if (angle >= minimumAngle) return;
+
+    const bisector = unit({
+        x: previousDirection.x + nextDirection.x,
+        y: previousDirection.y + nextDirection.y
+    }, { x: -previousDirection.y, y: previousDirection.x });
+    const perpendicular = { x: -bisector.y, y: bisector.x };
+    let previousSign = Math.sign(dot(previousDirection, perpendicular));
+    if (!previousSign) previousSign = cross(previousDirection, nextDirection) >= 0 ? -1 : 1;
+    const deficit = (minimumAngle - angle) / Math.max(minimumAngle, 1e-9);
+    const push = Math.min(previousLength, nextLength) * deficit * strength;
+    if (previousIndex !== 0) {
+        displacements[previousIndex].x += perpendicular.x * previousSign * push;
+        displacements[previousIndex].y += perpendicular.y * previousSign * push;
+    }
+    if (nextIndex !== 0) {
+        displacements[nextIndex].x -= perpendicular.x * previousSign * push;
+        displacements[nextIndex].y -= perpendicular.y * previousSign * push;
+    }
+}
+
+function regularizeAnchors(source, center, radius, smoothness) {
+    const amount = smoothnessAmount(smoothness);
+    if (amount <= 0) return source.map(copyPoint);
+
+    const anchors = source.map((anchor, index) => {
+        if (index === 0) return copyPoint(anchor);
+        const offset = subtract(anchor, center);
+        const originalRadius = vectorLength(offset);
+        if (originalRadius < radius * 0.985) return copyPoint(anchor);
+        const targetRadius = mix(originalRadius, radius * 0.955, amount);
+        return addScaled(center, unit(offset), targetRadius);
+    });
+    if (source.length <= 2) return anchors;
+    const count = anchors.length;
+    const edgeRadii = source.map((anchor, index) => {
+        if (index === 0) return vectorLength(subtract(anchor, center));
+        const originalRadius = vectorLength(subtract(anchor, center));
+        return originalRadius >= radius * 0.985
+            ? mix(originalRadius, radius * 0.955, amount)
+            : 0;
+    });
+    const adjacentRatio = clamp(1.22 / Math.sqrt(count), 0.27, 0.56);
+    const minimumAdjacentDistance = radius * adjacentRatio * amount;
+    const minimumFreeDistance = minimumAdjacentDistance * 0.58;
+    const minimumTurnAngle = mix(4, 44, amount) * Math.PI / 180;
+    const iterations = Math.max(2, Math.ceil(3 + amount * 8));
+    const maximumStep = radius * mix(0.025, 0.075, amount);
+    const maximumGeneratedRadius = mix(radius, radius * 0.955, amount);
+
+    for (let iteration = 0; iteration < iterations; iteration += 1) {
+        const displacements = anchors.map(() => ({ x: 0, y: 0 }));
+        for (let index = 0; index < count; index += 1) {
+            addPairSeparation(
+                displacements,
+                anchors,
+                index,
+                (index + 1) % count,
+                minimumAdjacentDistance,
+                mix(0.34, 0.52, amount)
+            );
+        }
+        for (let first = 0; first < count; first += 1) {
+            for (let second = first + 1; second < count; second += 1) {
+                const adjacent = second === first + 1 || (first === 0 && second === count - 1);
+                if (!adjacent) {
+                    addPairSeparation(
+                        displacements,
+                        anchors,
+                        first,
+                        second,
+                        minimumFreeDistance,
+                        mix(0.12, 0.24, amount)
+                    );
+                }
+            }
+        }
+        anchors.forEach((_, index) => {
+            addTurnOpening(
+                displacements,
+                anchors,
+                index,
+                minimumTurnAngle,
+                mix(0.035, 0.1, amount)
+            );
+        });
+
+        for (let index = 1; index < count; index += 1) {
+            const displacement = displacements[index];
+            const magnitude = vectorLength(displacement);
+            const scale = magnitude > maximumStep ? maximumStep / magnitude : 1;
+            const edgeRadius = edgeRadii[index];
+            anchors[index] = constrainedAnchor({
+                x: anchors[index].x + displacement.x * scale,
+                y: anchors[index].y + displacement.y * scale
+            }, center, edgeRadius || maximumGeneratedRadius, edgeRadius);
+        }
+        anchors[0] = copyPoint(source[0]);
+    }
+    return anchors;
+}
+
+function createTangents(anchors, center, radius, smoothness = 0) {
     if (anchors.length === 2) {
         const chord = unit(subtract(anchors[1], anchors[0]));
         const tangent = { x: -chord.y, y: chord.x };
         return anchors.map((anchor) => (
-            boundaryAwareTangent(anchor, tangent, center, radius)
+            boundaryAwareTangent(anchor, tangent, center, radius, smoothness)
         ));
     }
     return anchors.map((anchor, index) => {
         const previous = anchors[(index - 1 + anchors.length) % anchors.length];
         const next = anchors[(index + 1) % anchors.length];
         const fallback = unit(subtract(next, anchor));
-        const tangent = unit(subtract(next, previous), fallback);
-        return boundaryAwareTangent(anchor, tangent, center, radius);
+        const weighted = unit(subtract(next, previous), fallback);
+        const incoming = unit(subtract(anchor, previous), weighted);
+        const outgoing = unit(subtract(next, anchor), weighted);
+        const bisector = unit({
+            x: incoming.x + outgoing.x,
+            y: incoming.y + outgoing.y
+        }, weighted);
+        const amount = smoothnessAmount(smoothness);
+        const tangent = unit({
+            x: mix(weighted.x, bisector.x, amount),
+            y: mix(weighted.y, bisector.y, amount)
+        }, weighted);
+        return boundaryAwareTangent(anchor, tangent, center, radius, smoothness);
     });
 }
 
-function createSegments(anchors, tangents, center, radius, profile) {
+function createSegments(anchors, tangents, center, radius, profile, smoothness = 0) {
+    const amount = smoothnessAmount(smoothness);
     return anchors.map((start, index) => {
         const endIndex = (index + 1) % anchors.length;
         const end = anchors[endIndex];
         const chord = distance(start, end);
-        const startDesired = chord * profile.handleFactor;
-        const endDesired = chord * profile.handleFactor;
-        const startMaximum = maximumHandleLength(start, tangents[index], center, radius);
+        const previous = anchors[(index - 1 + anchors.length) % anchors.length];
+        const next = anchors[(endIndex + 1) % anchors.length];
+        const previousChord = distance(previous, start);
+        const nextChord = distance(end, next);
+        const supportLimit = 1 + amount * 1.25;
+        const startSupport = clamp(
+            Math.sqrt(chord * previousChord),
+            chord,
+            chord * supportLimit
+        );
+        const endSupport = clamp(
+            Math.sqrt(chord * nextChord),
+            chord,
+            chord * supportLimit
+        );
+        const handleFactor = mix(profile.handleFactor, 0.42, amount);
+        const handleCap = chord * mix(1.5, 0.48, amount);
+        const startDesired = Math.min(
+            mix(chord, startSupport, amount) * handleFactor,
+            handleCap
+        );
+        const endDesired = Math.min(
+            mix(chord, endSupport, amount) * handleFactor,
+            handleCap
+        );
         const reverseEndTangent = { x: -tangents[endIndex].x, y: -tangents[endIndex].y };
-        const endMaximum = maximumHandleLength(end, reverseEndTangent, center, radius);
-        const control1 = addScaled(start, tangents[index], Math.min(startDesired, startMaximum * 0.985));
-        const control2 = addScaled(end, reverseEndTangent, Math.min(endDesired, endMaximum * 0.985));
-        return measureSegment({
+        const control1 = addScaled(start, tangents[index], startDesired);
+        const control2 = addScaled(end, reverseEndTangent, endDesired);
+        const startOnBoundary = distance(start, center) >= radius - 1e-6;
+        const endOnBoundary = distance(end, center) >= radius - 1e-6;
+        const containmentOptions = startOnBoundary !== endOnBoundary
+            ? {
+                scaleControl1: !startOnBoundary,
+                scaleControl2: !endOnBoundary
+            }
+            : undefined;
+        const rawSegment = {
             index,
             start: copyPoint(start),
             control1,
             control2,
             end: copyPoint(end),
             endIndex
-        });
+        };
+        let fitted = fitCubicSegmentToCircle(
+            rawSegment,
+            center,
+            radius,
+            containmentOptions
+        );
+        if (startOnBoundary
+            && distance(fitted.control1, start) < BOUNDARY_HANDLE_MIN_LENGTH) {
+            fitted = fitCubicSegmentToCircle({
+                ...rawSegment,
+                control1: addScaled(start, tangents[index], BOUNDARY_HANDLE_MIN_LENGTH)
+            }, center, radius, {
+                scaleControl1: false,
+                scaleControl2: true
+            });
+        }
+        if (endOnBoundary
+            && distance(fitted.control2, end) < BOUNDARY_HANDLE_MIN_LENGTH) {
+            fitted = fitCubicSegmentToCircle({
+                ...rawSegment,
+                control2: addScaled(end, reverseEndTangent, BOUNDARY_HANDLE_MIN_LENGTH)
+            }, center, radius, {
+                scaleControl1: true,
+                scaleControl2: false
+            });
+        }
+        return measureSegment(fitted);
     });
 }
 
@@ -251,6 +483,58 @@ export function cubicBezierPoint(segment, amount) {
             + 3 * inverse * t2 * segment.control2.y
             + t2 * t * segment.end.y
     };
+}
+
+function segmentIsInsideCircle(segment, center, radius, tolerance = 1e-7) {
+    for (let sample = 0; sample <= CONTAINMENT_SAMPLES; sample += 1) {
+        const point = cubicBezierPoint(segment, sample / CONTAINMENT_SAMPLES);
+        if (distance(point, center) > radius + tolerance) return false;
+    }
+    return true;
+}
+
+function scaleSegmentHandles(segment, amount, scaleControl1, scaleControl2) {
+    return {
+        ...segment,
+        start: copyPoint(segment.start),
+        control1: scaleControl1
+            ? addScaled(segment.start, subtract(segment.control1, segment.start), amount)
+            : copyPoint(segment.control1),
+        control2: scaleControl2
+            ? addScaled(segment.end, subtract(segment.control2, segment.end), amount)
+            : copyPoint(segment.control2),
+        end: copyPoint(segment.end)
+    };
+}
+
+export function fitCubicSegmentToCircle(segment, center, radius, {
+    scaleControl1 = true,
+    scaleControl2 = true
+} = {}) {
+    const candidate = scaleSegmentHandles(segment, 1, false, false);
+    if (segmentIsInsideCircle(candidate, center, radius)) return candidate;
+
+    let collapsed = scaleSegmentHandles(candidate, 0, scaleControl1, scaleControl2);
+    if (!segmentIsInsideCircle(collapsed, center, radius)) {
+        if (!scaleControl1 || !scaleControl2) {
+            return fitCubicSegmentToCircle(candidate, center, radius);
+        }
+        collapsed = {
+            ...candidate,
+            control1: copyPoint(candidate.start),
+            control2: copyPoint(candidate.end)
+        };
+    }
+
+    let lower = 0;
+    let upper = 1;
+    for (let iteration = 0; iteration < CONTAINMENT_ITERATIONS; iteration += 1) {
+        const middle = (lower + upper) / 2;
+        const scaled = scaleSegmentHandles(candidate, middle, scaleControl1, scaleControl2);
+        if (segmentIsInsideCircle(scaled, center, radius)) lower = middle;
+        else upper = middle;
+    }
+    return scaleSegmentHandles(candidate, lower * 0.9995, scaleControl1, scaleControl2);
 }
 
 function measureSegment(segment) {
@@ -369,6 +653,7 @@ export function rebuildFocusPath(source, rawSegments = source?.segments) {
     return {
         seed: normalizeMotionSeed(source?.seed),
         complexity: normalizeMotionComplexity(source?.complexity),
+        smoothness: normalizeMotionSmoothness(source?.smoothness),
         center,
         radius,
         anchors,
@@ -384,6 +669,7 @@ export function serializeFocusPath(path) {
         version: 1,
         seed: normalizeMotionSeed(path?.seed),
         complexity: normalizeMotionComplexity(path?.complexity),
+        smoothness: normalizeMotionSmoothness(path?.smoothness),
         center: finitePoint(path?.center, 'focus path center'),
         radius: Number(path?.radius),
         segments: path?.segments?.map((segment) => ({
@@ -401,6 +687,7 @@ export function generateFocusPath({
     radius,
     pointCount = 6,
     complexity = 0,
+    smoothness = 0,
     seed = 1
 } = {}) {
     const safeCenter = {
@@ -409,6 +696,7 @@ export function generateFocusPath({
     };
     const safeRadius = Math.max(1, finiteOr(radius, 195));
     const normalizedComplexity = normalizeMotionComplexity(complexity);
+    const normalizedSmoothness = normalizeMotionSmoothness(smoothness);
     const profile = complexityProfile(normalizedComplexity);
     const random = createMotionRandom(seed);
     const anchors = createAnchors({
@@ -419,11 +707,30 @@ export function generateFocusPath({
         profile,
         random
     });
-    const tangents = createTangents(anchors, safeCenter, safeRadius);
-    const segments = createSegments(anchors, tangents, safeCenter, safeRadius, profile);
+    const regularizedAnchors = regularizeAnchors(
+        anchors,
+        safeCenter,
+        safeRadius,
+        normalizedSmoothness
+    );
+    const tangents = createTangents(
+        regularizedAnchors,
+        safeCenter,
+        safeRadius,
+        normalizedSmoothness
+    );
+    const segments = createSegments(
+        regularizedAnchors,
+        tangents,
+        safeCenter,
+        safeRadius,
+        profile,
+        normalizedSmoothness
+    );
     return rebuildFocusPath({
         seed: normalizeMotionSeed(seed),
         complexity: normalizedComplexity,
+        smoothness: normalizedSmoothness,
         center: safeCenter,
         radius: safeRadius,
         segments
@@ -438,17 +745,14 @@ export function generateFocusPathForSettings(settings, start) {
         radius: region.radius,
         pointCount: settings.motionPointCount,
         complexity: settings.motionComplexity,
+        smoothness: settings.motionSmoothness,
         seed: settings.motionSeed
     });
 }
 
 export function pathIsInsideRegion(path, tolerance = 1e-6) {
     return path.segments.every((segment) => {
-        const controls = [segment.start, segment.control1, segment.control2, segment.end];
-        if (controls.some((value) => distance(value, path.center) > path.radius + tolerance)) return false;
-        return segment.lookup.every((sample) => (
-            distance(cubicBezierPoint(segment, sample.t), path.center) <= path.radius + tolerance
-        ));
+        return segmentIsInsideCircle(segment, path.center, path.radius, tolerance);
     });
 }
 
