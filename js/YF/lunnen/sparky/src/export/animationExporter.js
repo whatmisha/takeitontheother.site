@@ -52,7 +52,7 @@ export class AnimationExporter {
         if (this.worker) return Promise.reject(new Error('An animation export is already running.'));
         const jobId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const worker = new Worker(
-            new URL('./animationExportWorker.js?v=20260825-8', import.meta.url),
+            new URL('./animationExportWorker.js?v=20260825-9', import.meta.url),
             { type: 'module' }
         );
         this.worker = worker;

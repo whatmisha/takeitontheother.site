@@ -6,13 +6,13 @@ import {
 } from './src/geometry/characterGeometry.js?v=20260823-5';
 import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-7';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
-import { AnimationExporter } from './src/export/animationExporter.js?v=20260825-8';
+import { AnimationExporter } from './src/export/animationExporter.js?v=20260825-9';
 import {
     advanceEyeMotion,
     createEyeMotionState,
     retargetEyeMotion,
     snapEyeMotion
-} from './src/animation/eyeMotion.js';
+} from './src/animation/eyeMotion.js?v=20260825-1';
 import {
     advanceBlink,
     createBlinkState,
@@ -23,16 +23,16 @@ import {
     generateFocusPathForSettings,
     normalizeMotionComplexity,
     normalizeMotionSeed
-} from './src/animation/focusPath.js?v=20260825-4';
+} from './src/animation/focusPath.js?v=20260825-5';
 import {
     createFocusTimeline,
     resolveFocusStops,
     sampleFocusTimeline
-} from './src/animation/focusTimeline.js?v=20260825-4';
+} from './src/animation/focusTimeline.js?v=20260825-5';
 import {
     createEyeAnimationTimeline,
     sampleEyeAnimationTimeline
-} from './src/animation/eyeTimeline.js?v=20260825-7';
+} from './src/animation/eyeTimeline.js?v=20260825-8';
 import { clamp } from './src/geometry/vector.js';
 import {
     focusPointFromPolar,
@@ -1549,7 +1549,7 @@ const app = defineTool({
             ctx.app.eyePlacementSearchMode = eyeGeometry.placementMode;
             document.documentElement.dataset.eyePlacementSearchMode = eyeGeometry.placementMode;
             retargetDisplayedEyes(ctx.app, eyeGeometry.pairCenter, {
-                immediate: renderSettings.focusMode === 'animate'
+                immediate: false
             });
             ctx.app.characterGeometry = geometry;
             ctx.app.eyeGeometry = eyeGeometry;

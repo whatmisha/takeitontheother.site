@@ -1,14 +1,21 @@
-import { generateFocusPathForSettings } from '../animation/focusPath.js?v=20260825-4';
+import { generateFocusPathForSettings } from '../animation/focusPath.js?v=20260825-5';
 import {
     createFocusTimeline,
     resolveFocusStops,
     sampleFocusTimeline
-} from '../animation/focusTimeline.js?v=20260825-4';
+} from '../animation/focusTimeline.js?v=20260825-5';
 import {
     createEyeAnimationTimeline,
     sampleEyeAnimationTimeline
-} from '../animation/eyeTimeline.js?v=20260825-7';
-import { drawAnimationFrame } from '../render/animationFrameRenderer.js?v=20260825-2';
+} from '../animation/eyeTimeline.js?v=20260825-8';
+import {
+    advanceEyeMotionToTarget,
+    createEyeMotionState
+} from '../animation/eyeMotion.js?v=20260825-1';
+import {
+    buildAnimationFrameScene,
+    drawAnimationFrame
+} from '../render/animationFrameRenderer.js?v=20260825-3';
 import { createStoredZip } from './zipStore.js';
 import { muxAvcToMp4 } from './mp4Muxer.js';
 import {
@@ -18,6 +25,7 @@ import {
 } from './animationExportDefaults.js?v=20260825-2';
 
 let cancelledJob = null;
+const EYE_MOTION_WARMUP_FRAMES = 24;
 
 const postProgress = (jobId, completed, total, message) => {
     self.postMessage({ type: 'progress', jobId, completed, total, message });
@@ -53,12 +61,41 @@ function frameState(timeline, eyeTimeline, settings, frameIndex, fps) {
     };
 }
 
+function createLoopingEyeMotion(settings, timeline, frameCount, fps) {
+    const motion = createEyeMotionState();
+    const frameDuration = 1000 / fps;
+    const warmupCount = Math.min(frameCount, EYE_MOTION_WARMUP_FRAMES);
+    for (let index = frameCount - warmupCount; index < frameCount; index += 1) {
+        const focus = sampleFocusTimeline(timeline, index * frameDuration).point;
+        const scene = buildAnimationFrameScene(settings, focus);
+        advanceEyeMotionToTarget(motion, scene.eyes.pairCenter, frameDuration);
+    }
+    return motion;
+}
+
+function drawMotionFrame(context, size, settings, timeline, eyeTimeline, motion, frameIndex, fps, options = {}) {
+    const state = frameState(timeline, eyeTimeline, settings, frameIndex, fps);
+    const scene = buildAnimationFrameScene(settings, state.focus);
+    const eyeOffset = advanceEyeMotionToTarget(
+        motion,
+        scene.eyes.pairCenter,
+        1000 / fps
+    );
+    drawAnimationFrame(context, size, size, settings, state.focus, {
+        ...options,
+        eyeState: state.eyes,
+        eyeOffset,
+        scene
+    });
+}
+
 async function exportPngSequence(job) {
     const { jobId, settings, startFocus, baseName } = job;
     const fps = ANIMATION_EXPORT_FPS;
     const size = ANIMATION_EXPORT_SIZE;
     const frameCount = Math.round(settings.motionDuration * fps);
     const { timeline, eyeTimeline } = createMotion(settings, startFocus);
+    const eyeMotion = createLoopingEyeMotion(settings, timeline, frameCount, fps);
     const canvas = new OffscreenCanvas(size, size);
     const context = canvas.getContext('2d', { alpha: true });
     const files = [];
@@ -66,11 +103,9 @@ async function exportPngSequence(job) {
 
     for (let index = 0; index < frameCount; index += 1) {
         assertActive(jobId);
-        const state = frameState(timeline, eyeTimeline, settings, index, fps);
-        drawAnimationFrame(context, size, size, settings, state.focus, {
+        drawMotionFrame(context, size, settings, timeline, eyeTimeline, eyeMotion, index, fps, {
             transparentBackground: true,
-            knockoutEyes: shouldKnockoutPngEyes(settings),
-            eyeState: state.eyes
+            knockoutEyes: shouldKnockoutPngEyes(settings)
         });
         const blob = await canvas.convertToBlob({ type: 'image/png' });
         files.push({
@@ -125,6 +160,7 @@ async function exportMp4(job) {
     const size = ANIMATION_EXPORT_SIZE;
     const frameCount = Math.round(settings.motionDuration * fps);
     const { timeline, eyeTimeline } = createMotion(settings, startFocus);
+    const eyeMotion = createLoopingEyeMotion(settings, timeline, frameCount, fps);
     const canvas = new OffscreenCanvas(size, size);
     const context = canvas.getContext('2d', { alpha: false });
     const chunks = [];
@@ -150,10 +186,16 @@ async function exportMp4(job) {
         for (let index = 0; index < frameCount; index += 1) {
             assertActive(jobId);
             if (encoderError) throw encoderError;
-            const state = frameState(timeline, eyeTimeline, settings, index, fps);
-            drawAnimationFrame(context, size, size, settings, state.focus, {
-                eyeState: state.eyes
-            });
+            drawMotionFrame(
+                context,
+                size,
+                settings,
+                timeline,
+                eyeTimeline,
+                eyeMotion,
+                index,
+                fps
+            );
             const frame = new VideoFrame(canvas, {
                 timestamp: Math.round(index * microsecondsPerFrame),
                 duration: Math.round(microsecondsPerFrame)

@@ -8,7 +8,7 @@ export const FOCUS_PATH_COMPLEXITY = Object.freeze({
     soft: Object.freeze({
         angularJitter: 0.16,
         radiusMin: 0.32,
-        radiusMax: 0.995,
+        radiusMax: 0.9995,
         strideRatio: 0,
         handleFactor: 0.34,
         radialExponent: 0.58
@@ -16,7 +16,7 @@ export const FOCUS_PATH_COMPLEXITY = Object.freeze({
     medium: Object.freeze({
         angularJitter: 0.38,
         radiusMin: 0.18,
-        radiusMax: 0.995,
+        radiusMax: 0.9995,
         strideRatio: 0.32,
         handleFactor: 0.29,
         radialExponent: 0.68
@@ -24,7 +24,7 @@ export const FOCUS_PATH_COMPLEXITY = Object.freeze({
     hard: Object.freeze({
         angularJitter: 0.68,
         radiusMin: 0.08,
-        radiusMax: 0.995,
+        radiusMax: 0.9995,
         strideRatio: 0.48,
         handleFactor: 0.23,
         radialExponent: 0.78
@@ -159,15 +159,15 @@ function boundaryAwareTangent(anchor, tangent, center, radius) {
 
 function createAnchors({ start, center, radius, pointCount, profile, random }) {
     const count = clamp(Math.round(finiteOr(pointCount, 6)), 2, 16);
-    const first = constrainToCircle(start, center, radius * 0.995);
+    const first = constrainToCircle(start, center, radius);
     const generatedCount = count - 1;
     const baseAngle = random() * TAU;
     const angularStep = TAU / generatedCount;
     const pool = [];
     const primaryEdgeIndex = Math.floor(random() * generatedCount);
     const edgeIndices = new Set([primaryEdgeIndex]);
-    if (generatedCount >= 4) {
-        edgeIndices.add((primaryEdgeIndex + Math.floor(generatedCount / 2)) % generatedCount);
+    if (generatedCount >= 2) {
+        edgeIndices.add((primaryEdgeIndex + Math.round(generatedCount / 2)) % generatedCount);
     }
 
     for (let index = 0; index < generatedCount; index += 1) {
@@ -176,7 +176,7 @@ function createAnchors({ start, center, radius, pointCount, profile, random }) {
         const radialRandom = random();
         const radialMix = Math.pow(radialRandom, profile.radialExponent);
         const radialRatio = edgeIndices.has(index)
-            ? 0.94 + radialRandom * 0.055
+            ? 0.985 + radialRandom * 0.0145
             : profile.radiusMin + (profile.radiusMax - profile.radiusMin) * radialMix;
         pool.push({
             x: center.x + Math.cos(angle) * radius * radialRatio,

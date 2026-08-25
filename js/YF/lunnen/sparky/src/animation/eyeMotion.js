@@ -1,14 +1,40 @@
 const SETTLE_DISTANCE = 0.15;
 const MAX_FRAME_DURATION = 32;
+export const EYE_MOTION_TIME_CONSTANT = 16;
 
 const copyPoint = (value) => ({ x: value.x, y: value.y });
 
-export function createEyeMotionState(timeConstant = 16) {
+export function createEyeMotionState(timeConstant = EYE_MOTION_TIME_CONSTANT) {
     return {
         displayedCenter: null,
         targetCenter: null,
         lastTime: null,
         timeConstant
+    };
+}
+
+export function advanceEyeMotionToTarget(state, target, elapsedMs) {
+    const nextTarget = copyPoint(target);
+    if (!state.displayedCenter) {
+        state.displayedCenter = copyPoint(nextTarget);
+        state.targetCenter = nextTarget;
+        state.lastTime = null;
+        return { x: 0, y: 0, settled: true };
+    }
+
+    state.targetCenter = nextTarget;
+    const elapsed = Math.max(0, Math.min(MAX_FRAME_DURATION, Number(elapsedMs) || 0));
+    const alpha = 1 - Math.exp(-elapsed / state.timeConstant);
+    state.displayedCenter.x += (nextTarget.x - state.displayedCenter.x) * alpha;
+    state.displayedCenter.y += (nextTarget.y - state.displayedCenter.y) * alpha;
+    const x = state.displayedCenter.x - nextTarget.x;
+    const y = state.displayedCenter.y - nextTarget.y;
+    const settled = Math.hypot(x, y) <= SETTLE_DISTANCE;
+    if (settled) state.displayedCenter = copyPoint(nextTarget);
+    return {
+        x: state.displayedCenter.x - nextTarget.x,
+        y: state.displayedCenter.y - nextTarget.y,
+        settled
     };
 }
 

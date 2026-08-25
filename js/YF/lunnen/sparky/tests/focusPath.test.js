@@ -95,15 +95,16 @@ test('numeric complexity interpolates continuously between legacy profiles', () 
     assert.notEqual(quarter.path, medium.path);
 });
 
-test('every complexity generates a path that reaches the outer focus region', () => {
+test('every complexity generates a path that visually touches the outer focus region', () => {
     [0, 50, 100].forEach((complexity) => {
         const path = generateFocusPath({ ...options, complexity });
-        const outermostAnchor = Math.max(...path.anchors.map((anchor) => (
+        const outerAnchors = path.anchors.filter((anchor) => (
             Math.hypot(anchor.x - options.center.x, anchor.y - options.center.y)
-        )));
+                >= options.radius * 0.985
+        ));
         assert.ok(
-            outermostAnchor >= options.radius * 0.94,
-            `complexity ${complexity} only reached ${outermostAnchor / options.radius}`
+            outerAnchors.length >= 2,
+            `complexity ${complexity} only generated ${outerAnchors.length} outer anchor(s)`
         );
     });
 });

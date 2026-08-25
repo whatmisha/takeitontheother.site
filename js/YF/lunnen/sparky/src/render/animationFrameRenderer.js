@@ -29,7 +29,7 @@ function fillPath(context, path, color) {
     context.fill(createPath(path));
 }
 
-function drawEyes(context, scene, knockoutEyes, eyeState) {
+function drawEyes(context, scene, knockoutEyes, eyeState, eyeOffset) {
     const { settings, character, eyes } = scene;
     const blinkAmount = Math.max(0, Math.min(1, Number(eyeState?.blinkAmount) || 0));
     const animatedCute = Number.isFinite(Number(eyeState?.cute))
@@ -47,6 +47,10 @@ function drawEyes(context, scene, knockoutEyes, eyeState) {
         : null;
     context.save();
     context.clip(createPath(character.rounded.path));
+    context.translate(
+        Number(eyeOffset?.x) || 0,
+        Number(eyeOffset?.y) || 0
+    );
 
     ['left', 'right'].forEach((side) => {
         const eye = eyes[side];
@@ -70,9 +74,11 @@ function drawEyes(context, scene, knockoutEyes, eyeState) {
 export function drawAnimationFrame(context, width, height, settings, focus, {
     transparentBackground = false,
     knockoutEyes = false,
-    eyeState = null
+    eyeState = null,
+    eyeOffset = null,
+    scene: preparedScene = null
 } = {}) {
-    const scene = buildAnimationFrameScene(settings, focus);
+    const scene = preparedScene || buildAnimationFrameScene(settings, focus);
     const scaleX = width / ANIMATION_ARTBOARD_SIZE;
     const scaleY = height / ANIMATION_ARTBOARD_SIZE;
 
@@ -89,7 +95,8 @@ export function drawAnimationFrame(context, width, height, settings, focus, {
         context,
         scene,
         Boolean(transparentBackground && knockoutEyes),
-        eyeState
+        eyeState,
+        eyeOffset
     );
     context.restore();
     return scene;

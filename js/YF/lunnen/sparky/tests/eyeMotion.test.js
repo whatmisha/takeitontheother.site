@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
     advanceEyeMotion,
+    advanceEyeMotionToTarget,
     createEyeMotionState,
     retargetEyeMotion,
     snapEyeMotion
@@ -37,4 +38,30 @@ test('snapping makes export geometry exact', () => {
     retargetEyeMotion(motion, { x: 360, y: 180 }, 16);
     assert.deepEqual(snapEyeMotion(motion), { x: 0, y: 0, settled: true });
     assert.deepEqual(motion.displayedCenter, motion.targetCenter);
+});
+
+test('fixed-step eye motion converges to the same state across a loop seam', () => {
+    const frameCount = 60;
+    const frameDuration = 1000 / 60;
+    const targets = Array.from({ length: frameCount }, (_, index) => {
+        const angle = index / frameCount * Math.PI * 2;
+        return { x: 240 + Math.cos(angle) * 40, y: 260 + Math.sin(angle) * 24 };
+    });
+    const motion = createEyeMotionState();
+
+    targets.slice(-24).forEach((target) => {
+        advanceEyeMotionToTarget(motion, target, frameDuration);
+    });
+    advanceEyeMotionToTarget(motion, targets[0], frameDuration);
+    const first = { ...motion.displayedCenter };
+    targets.slice(1).forEach((target) => {
+        advanceEyeMotionToTarget(motion, target, frameDuration);
+    });
+    advanceEyeMotionToTarget(motion, targets[0], frameDuration);
+
+    assert.ok(Math.hypot(
+        motion.displayedCenter.x - first.x,
+        motion.displayedCenter.y - first.y
+    ) < 1e-6);
+    assert.notDeepEqual(first, targets[0]);
 });
