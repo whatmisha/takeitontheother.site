@@ -6,16 +6,28 @@ export const REGENERATE_PATH_CONFIRMATION = Object.freeze({
     danger: true
 });
 
+export const REGENERATE_IMPORTED_PATH_CONFIRMATION = Object.freeze({
+    title: 'Replace imported path?',
+    text: 'The imported SVG path and its closure edits will be lost.',
+    confirmText: 'Regenerate',
+    cancelText: 'Keep path',
+    danger: true
+});
+
 export async function confirmPathRegeneration({
     manuallyEdited,
+    imported = false,
     dialog = null,
     fallbackConfirm = null
 } = {}) {
     if (!manuallyEdited) return true;
+    const content = imported
+        ? REGENERATE_IMPORTED_PATH_CONFIRMATION
+        : REGENERATE_PATH_CONFIRMATION;
     if (dialog?.confirm) {
-        return Boolean(await dialog.confirm(REGENERATE_PATH_CONFIRMATION));
+        return Boolean(await dialog.confirm(content));
     }
     return Boolean(fallbackConfirm?.(
-        `${REGENERATE_PATH_CONFIRMATION.title}\n\n${REGENERATE_PATH_CONFIRMATION.text}`
+        `${content.title}\n\n${content.text}`
     ));
 }

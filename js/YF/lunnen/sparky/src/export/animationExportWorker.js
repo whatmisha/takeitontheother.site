@@ -1,7 +1,7 @@
 import {
     generateFocusPathForSettings,
     rebuildFocusPath
-} from '../animation/focusPath.js?v=20260825-8';
+} from '../animation/focusPath.js?v=20260826-1';
 import {
     createFocusTimeline,
     resolveFocusStops,

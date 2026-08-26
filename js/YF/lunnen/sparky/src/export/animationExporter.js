@@ -18,28 +18,68 @@ export function animationResultBlob(result) {
 }
 
 export class AnimationExporter {
-    constructor({ status, progress, message, cancelButton, exportButtons = [], onError } = {}) {
-        this.elements = { status, progress, message, cancelButton, exportButtons };
+    constructor({
+        container,
+        status,
+        progress,
+        message,
+        cancelButton,
+        exportButtons = [],
+        onError
+    } = {}) {
+        this.elements = {
+            container,
+            status,
+            progress,
+            message,
+            cancelButton,
+            exportButtons
+        };
         this.onError = onError;
         this.worker = null;
         this.jobId = null;
         this.rejectCurrent = null;
+        this.restoreTimer = null;
         cancelButton?.addEventListener('click', () => this.cancel());
     }
 
-    setBusy(busy) {
+    clearRestoreTimer() {
+        if (this.restoreTimer == null) return;
+        clearTimeout(this.restoreTimer);
+        this.restoreTimer = null;
+    }
+
+    setBusy(busy, state = 'working') {
         this.elements.exportButtons.forEach((button) => {
             if (button) button.disabled = busy;
         });
-        if (this.elements.status) this.elements.status.hidden = !busy;
+        this.elements.container?.classList.toggle('is-exporting', busy);
+        if (this.elements.status) {
+            this.elements.status.hidden = !busy;
+            this.elements.status.dataset.state = busy ? state : 'idle';
+        }
+        if (this.elements.cancelButton) this.elements.cancelButton.hidden = state === 'complete';
     }
 
     updateProgress(completed, total, message) {
+        const safeTotal = Math.max(1, Number(total) || 1);
+        const ratio = Math.max(0, Math.min(1, (Number(completed) || 0) / safeTotal));
         if (this.elements.progress) {
-            this.elements.progress.max = Math.max(1, total);
+            this.elements.progress.max = safeTotal;
             this.elements.progress.value = completed;
         }
+        this.elements.status?.style.setProperty('--sparky-export-progress', `${ratio * 100}%`);
         if (this.elements.message) this.elements.message.textContent = message;
+    }
+
+    showComplete(total) {
+        this.updateProgress(total, total, 'Done');
+        this.setBusy(true, 'complete');
+        this.clearRestoreTimer();
+        this.restoreTimer = setTimeout(() => {
+            this.restoreTimer = null;
+            this.setBusy(false);
+        }, 800);
     }
 
     cancel() {
@@ -49,6 +89,7 @@ export class AnimationExporter {
         this.worker = null;
         this.jobId = null;
         this.rejectCurrent = null;
+        this.clearRestoreTimer();
         this.setBusy(false);
         this.updateProgress(0, 1, 'Export cancelled');
         reject?.(new DOMException('Export cancelled.', 'AbortError'));
@@ -63,22 +104,21 @@ export class AnimationExporter {
         );
         this.worker = worker;
         this.jobId = jobId;
+        this.clearRestoreTimer();
         this.setBusy(true);
-        this.updateProgress(
-            0,
-            Math.round(settings.motionDuration * ANIMATION_EXPORT_FPS),
-            'Preparing animation'
-        );
+        const frameCount = Math.round(settings.motionDuration * ANIMATION_EXPORT_FPS);
+        this.updateProgress(0, frameCount, 'Preparing');
 
         return new Promise((resolve, reject) => {
             this.rejectCurrent = reject;
-            const finish = () => {
+            const finish = ({ complete = false } = {}) => {
                 worker.terminate();
                 if (this.worker === worker) {
                     this.worker = null;
                     this.jobId = null;
                     this.rejectCurrent = null;
-                    this.setBusy(false);
+                    if (complete) this.showComplete(frameCount);
+                    else this.setBusy(false);
                 }
             };
             worker.addEventListener('message', (event) => {
@@ -91,7 +131,7 @@ export class AnimationExporter {
                 if (result.type === 'complete') {
                     const blob = animationResultBlob(result);
                     downloadBlob(blob, result.filename);
-                    finish();
+                    finish({ complete: true });
                     resolve(result.filename);
                     return;
                 }

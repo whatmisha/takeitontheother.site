@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
     confirmPathRegeneration,
+    REGENERATE_IMPORTED_PATH_CONFIRMATION,
     REGENERATE_PATH_CONFIRMATION
 } from '../src/animation/pathRegenerateConfirmation.js';
 
@@ -29,4 +30,20 @@ test('manually edited paths use the destructive regeneration confirmation', asyn
     });
     assert.equal(confirmed, false);
     assert.deepEqual(received, REGENERATE_PATH_CONFIRMATION);
+});
+
+test('imported paths explain that regeneration replaces the SVG', async () => {
+    let received = null;
+    const confirmed = await confirmPathRegeneration({
+        manuallyEdited: true,
+        imported: true,
+        dialog: {
+            confirm: async (options) => {
+                received = options;
+                return true;
+            }
+        }
+    });
+    assert.equal(confirmed, true);
+    assert.deepEqual(received, REGENERATE_IMPORTED_PATH_CONFIRMATION);
 });

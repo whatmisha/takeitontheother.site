@@ -59,11 +59,18 @@ body,
     transition: background var(--transition-normal), color var(--transition-normal);
 }
 
-.sparky-panel-action:hover,
-.sparky-panel-action:focus-visible {
+.sparky-panel-action:hover:not(:disabled),
+.sparky-panel-action:focus-visible:not(:disabled) {
     color: var(--color-bg);
     background: var(--color-text);
     outline: none;
+}
+
+.sparky-panel-action:disabled {
+    color: var(--color-inactive-text);
+    background: var(--color-inactive-bg);
+    box-shadow: none;
+    cursor: default;
 }
 
 .sparky-pill-button {
@@ -77,6 +84,11 @@ body,
 
 .sparky-focus-tabs {
     margin: 0 0 20px;
+}
+
+.sparky-focus-tabs label {
+    font-size: 0.9rem;
+    font-weight: 500;
 }
 
 [data-focus-mode-panel][hidden] {
@@ -105,6 +117,92 @@ body,
 .sparky-motion-edit-action[aria-pressed="true"] {
     color: var(--color-bg);
     background: var(--color-text);
+}
+
+.sparky-motion-edit-action:not([aria-pressed="true"]) {
+    color: var(--color-text-secondary);
+    background: transparent;
+    box-shadow: inset 0 0 0 1px #000000;
+}
+
+.sparky-motion-edit-action {
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+.sparky-motion-edit-action:not([aria-pressed="true"]):hover:not(:disabled),
+.sparky-motion-edit-action:not([aria-pressed="true"]):focus-visible:not(:disabled) {
+    color: var(--color-bg);
+    background: var(--color-text);
+    box-shadow: none;
+}
+
+.sparky-motion-path-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 32px;
+    gap: 6px;
+    margin-top: var(--spacing-sm);
+}
+
+.sparky-motion-path-actions .sparky-panel-action {
+    margin-top: 0;
+}
+
+.sparky-motion-import-action {
+    display: grid;
+    width: 32px;
+    padding: 0;
+    color: #ffffff;
+    background: transparent;
+    box-shadow: inset 0 0 0 1px #000000;
+    place-items: center;
+}
+
+.sparky-motion-import-action:hover:not(:disabled),
+.sparky-motion-import-action:focus-visible:not(:disabled) {
+    color: var(--color-bg);
+    background: var(--color-text);
+    box-shadow: none;
+}
+
+.sparky-motion-import-status {
+    margin: 7px 0 0;
+    color: var(--color-text-secondary);
+    font-size: 0.72rem;
+    line-height: 1.3;
+}
+
+.sparky-motion-import-status[hidden] {
+    display: none;
+}
+
+.sparky-motion-generator-control.is-import-disabled {
+    opacity: 0.42;
+}
+
+@keyframes sparky-sphere-feedback-temporary {
+    0% { opacity: 0; }
+    14% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes sparky-sphere-feedback-visible {
+    0%, 100% {
+        opacity: var(--sparky-sphere-guide-opacity);
+        stroke: #315bff;
+    }
+    18% {
+        opacity: 1;
+        stroke: #8da8ff;
+    }
+}
+
+.sparky-sphere-feedback--temporary [data-sphere-guide] {
+    animation: sparky-sphere-feedback-temporary 720ms ease-out forwards;
+}
+
+.sparky-sphere-feedback--visible [data-sphere-guide] {
+    animation: sparky-sphere-feedback-visible 720ms ease-out forwards;
 }
 
 .sparky-motion-editor-hint {
@@ -143,6 +241,11 @@ body,
     font-size: 0.74rem;
 }
 
+.sparky-animation-actions .sparky-animation-primary-action {
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
 .sparky-animation-actions .sparky-icon-action {
     display: grid;
     width: 32px;
@@ -150,10 +253,43 @@ body,
     place-items: center;
 }
 
+.sparky-export-actions {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.sparky-export-actions.is-exporting > .btn-fixed {
+    visibility: hidden;
+}
+
 .sparky-export-status {
-    display: grid;
-    gap: 7px;
-    margin-top: 12px;
+    --sparky-export-progress: 0%;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--button-height);
+    overflow: hidden;
+    border-radius: var(--radius-button);
+    background: var(--color-bg-panel);
+    color: var(--color-text);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+    font-size: 1rem;
+    font-weight: 400;
+    isolation: isolate;
+}
+
+.sparky-export-status::before {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: -1;
+    width: var(--sparky-export-progress);
+    background: #3a3a3a;
+    content: '';
+    transition: width 120ms linear;
 }
 
 .sparky-export-status[hidden] {
@@ -161,29 +297,37 @@ body,
 }
 
 .sparky-export-status progress {
-    width: 100%;
-    height: 6px;
-    accent-color: currentColor;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
 }
 
-.sparky-export-status-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    color: var(--text-secondary, #777);
-    font-size: 11px;
-}
-
-.sparky-export-status-row button {
+.sparky-export-status button {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    width: 22px;
+    height: 22px;
+    transform: translateY(-50%);
     appearance: none;
     border: 0;
     padding: 0;
     background: transparent;
-    color: inherit;
+    color: var(--color-text-secondary);
     font: inherit;
-    text-decoration: underline;
+    font-size: 1.15rem;
+    line-height: 1;
     cursor: pointer;
+}
+
+.sparky-export-status button:hover {
+    color: var(--color-text);
+}
+
+.sparky-export-status[data-state="complete"]::before {
+    background: #505050;
 }
 
 .bottom-buttons button:disabled {

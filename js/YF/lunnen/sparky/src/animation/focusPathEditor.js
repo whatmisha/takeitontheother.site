@@ -1,7 +1,7 @@
 import {
     fitCubicSegmentToCircle,
     rebuildFocusPath
-} from './focusPath.js?v=20260825-8';
+} from './focusPath.js?v=20260826-1';
 
 export const FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH = 14;
 export const FOCUS_PATH_EDITOR_ANCHOR_INSET = 0;
@@ -24,9 +24,13 @@ function copySegments(path) {
         start: copyPoint(segment.start),
         control1: copyPoint(segment.control1),
         control2: copyPoint(segment.control2),
-        end: copyPoint(segment.end)
+        end: copyPoint(segment.end),
+        kind: segment.kind,
+        role: segment.role
     }));
 }
+
+const add = (a, b) => ({ x: a.x + b.x, y: a.y + b.y });
 
 function constrainPoint(point, center, radius) {
     const offset = subtract(point, center);
@@ -273,4 +277,125 @@ export function moveFocusPathHandle(path, anchorIndex, side, rawPoint) {
         scaleControl2: true
     });
     return rebuildFocusPath(prepared, segments);
+}
+
+export function importedClosureEditorControls(path) {
+    if (!path?.importMeta?.wasOpen) return { anchors: [], handles: [] };
+    const count = path.segments.length;
+    const anchors = [];
+    const handles = [];
+    path.segments.forEach((segment, segmentIndex) => {
+        if (segment.role !== 'closure') return;
+        const endAnchorIndex = (segmentIndex + 1) % count;
+        handles.push({
+            segmentIndex,
+            control: 'control1',
+            anchorIndex: segmentIndex,
+            anchor: copyPoint(segment.start),
+            point: visibleHandlePoint(
+                segment.start,
+                subtract(segment.control1, segment.start),
+                length(subtract(segment.control1, segment.start))
+            )
+        });
+        handles.push({
+            segmentIndex,
+            control: 'control2',
+            anchorIndex: endAnchorIndex,
+            anchor: copyPoint(segment.end),
+            point: visibleHandlePoint(
+                segment.end,
+                subtract(segment.control2, segment.end),
+                length(subtract(segment.control2, segment.end))
+            )
+        });
+        if (path.segments[(segmentIndex - 1 + count) % count].role === 'closure') {
+            anchors.push({ anchorIndex: segmentIndex, point: copyPoint(segment.start) });
+        }
+    });
+    return { anchors, handles };
+}
+
+export function moveImportedClosureAnchor(path, anchorIndex, rawPoint) {
+    if (!path?.importMeta?.wasOpen) return path;
+    const count = path.segments.length;
+    const index = ((Math.round(anchorIndex) % count) + count) % count;
+    const previousIndex = (index - 1 + count) % count;
+    if (path.segments[previousIndex].role !== 'closure'
+        || path.segments[index].role !== 'closure') return path;
+    const segments = copySegments(path);
+    const current = path.anchors[index];
+    const next = constrainPoint(rawPoint, path.center, path.radius);
+    const delta = subtract(next, current);
+    segments[previousIndex].end = copyPoint(next);
+    segments[previousIndex].control2 = add(segments[previousIndex].control2, delta);
+    segments[index].start = copyPoint(next);
+    segments[index].control1 = add(segments[index].control1, delta);
+    fitSegment(segments, previousIndex, path.center, path.radius, {
+        scaleControl1: true,
+        scaleControl2: true
+    });
+    fitSegment(segments, index, path.center, path.radius, {
+        scaleControl1: true,
+        scaleControl2: true
+    });
+    return rebuildFocusPath(path, segments);
+}
+
+export function moveImportedClosureHandle(path, segmentIndex, control, rawPoint) {
+    if (!path?.importMeta?.wasOpen) return path;
+    const count = path.segments.length;
+    const index = ((Math.round(segmentIndex) % count) + count) % count;
+    if (path.segments[index].role !== 'closure') return path;
+    const segments = copySegments(path);
+    const editingStart = control !== 'control2';
+    const anchorIndex = editingStart ? index : (index + 1) % count;
+    const anchor = path.anchors[anchorIndex];
+    const adjacentIndex = editingStart
+        ? (index - 1 + count) % count
+        : (index + 1) % count;
+    const adjacent = segments[adjacentIndex];
+    const selected = segments[index];
+    const selectedProperty = editingStart ? 'control1' : 'control2';
+    const adjacentProperty = editingStart ? 'control2' : 'control1';
+    const rawVector = subtract(rawPoint, anchor);
+    let selectedDirection = unit(
+        rawVector,
+        subtract(selected[selectedProperty], anchor)
+    );
+
+    if (adjacent.role !== 'closure') {
+        selectedDirection = editingStart
+            ? unit(subtract(anchor, adjacent.control2), selectedDirection)
+            : unit(subtract(anchor, adjacent.control1), selectedDirection);
+    }
+    const selectedLength = Math.max(
+        FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH,
+        adjacent.role === 'closure'
+            ? length(rawVector)
+            : Math.max(0, dot(rawVector, selectedDirection))
+    );
+    selected[selectedProperty] = visibleHandlePoint(
+        anchor,
+        selectedDirection,
+        selectedLength
+    );
+
+    if (adjacent.role === 'closure') {
+        const adjacentLength = length(subtract(adjacent[adjacentProperty], anchor));
+        adjacent[adjacentProperty] = visibleHandlePoint(
+            anchor,
+            reverse(selectedDirection),
+            adjacentLength
+        );
+        fitSegment(segments, adjacentIndex, path.center, path.radius, {
+            scaleControl1: true,
+            scaleControl2: true
+        });
+    }
+    fitSegment(segments, index, path.center, path.radius, {
+        scaleControl1: true,
+        scaleControl2: true
+    });
+    return rebuildFocusPath(path, segments);
 }

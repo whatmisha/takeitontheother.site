@@ -7,7 +7,7 @@ import {
 import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-7';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import { createStaticSparkySvg } from './src/export/staticSvgExporter.js?v=20260825-2';
-import { AnimationExporter } from './src/export/animationExporter.js?v=20260826-3';
+import { AnimationExporter } from './src/export/animationExporter.js?v=20260826-4';
 import {
     advanceEyeMotion,
     createEyeMotionState,
@@ -26,12 +26,20 @@ import {
     normalizeMotionSmoothness,
     normalizeMotionSeed,
     serializeFocusPath
-} from './src/animation/focusPath.js?v=20260825-8';
+} from './src/animation/focusPath.js?v=20260826-1';
 import {
     focusPathEditorHandlePoints,
+    importedClosureEditorControls,
+    moveImportedClosureAnchor,
+    moveImportedClosureHandle,
     moveFocusPathAnchor,
     moveFocusPathHandle
-} from './src/animation/focusPathEditor.js?v=20260825-6';
+} from './src/animation/focusPathEditor.js?v=20260826-1';
+import { importSvgMotionPath } from './src/animation/svgPathImporter.js?v=20260826-2';
+import {
+    CENTER_FOCUS_TRANSITION_DURATION_MS,
+    sampleLinearFocusTransition
+} from './src/animation/focusTransition.js?v=20260826-1';
 import {
     confirmPathRegeneration
 } from './src/animation/pathRegenerateConfirmation.js?v=20260825-1';
@@ -52,6 +60,7 @@ import {
 } from './src/animation/motionBlur.js?v=20260826-3';
 import { clamp } from './src/geometry/vector.js';
 import {
+    createExtendedFocusRegion,
     focusPointFromPolar,
     focusPointToPolar
 } from './src/geometry/focusBounds.js?v=20260823-6';
@@ -81,6 +90,8 @@ const ARTBOARD_CROP_X = 0;
 const ARTBOARD_CROP_Y = DEFAULT_GEOMETRY.boundaryCenterY - DEFAULT_GEOMETRY.boundaryRadius;
 let mobileShowcaseFocus = null;
 let desktopFollowFocus = null;
+let manualFocusTransition = null;
+let manualFocusTransitionFrame = null;
 let eyePlacementMode = 'global';
 let previewBlurReducedUntil = 0;
 let previewBlurRestoreTimer = null;
@@ -234,6 +245,13 @@ function activeRenderSettings(current) {
             ...current,
             focusX: focusAnimation.currentFocus.x,
             focusY: focusAnimation.currentFocus.y
+        };
+    }
+    if (current.focusMode === 'manual' && manualFocusTransition?.current) {
+        return {
+            ...current,
+            focusX: manualFocusTransition.current.x,
+            focusY: manualFocusTransition.current.y
         };
     }
     const focus = current.followCursor ? desktopFollowFocus : null;
@@ -400,6 +418,20 @@ const focusAnimation = {
 let focusAnimationReady = false;
 let motionSmoothnessConfirmation = null;
 let revertingMotionSmoothness = false;
+let sphereFeedbackActive = false;
+let sphereFeedbackTimer = null;
+const SPHERE_FEEDBACK_DURATION_MS = 720;
+
+function triggerSphereFeedback(app) {
+    sphereFeedbackActive = true;
+    if (sphereFeedbackTimer != null) clearTimeout(sphereFeedbackTimer);
+    app.renderNow();
+    sphereFeedbackTimer = setTimeout(() => {
+        sphereFeedbackTimer = null;
+        sphereFeedbackActive = false;
+        app.renderNow();
+    }, SPHERE_FEEDBACK_DURATION_MS);
+}
 
 function bindShortcutHelp() {
     const root = document.getElementById('shortcutHelp');
@@ -441,7 +473,52 @@ function currentStoredFocus(state) {
     return normalizedFocus(focusPointFromPolar(polar, state), state);
 }
 
-function updateFocusAnimationButtons() {
+function activeImportedMotionPath() {
+    const candidate = focusAnimation.editedPath || focusAnimation.path;
+    return candidate?.importMeta?.imported ? candidate : null;
+}
+
+function syncImportedMotionPathUI(app) {
+    const importedPath = activeImportedMotionPath();
+    const imported = Boolean(importedPath);
+    [
+        'motionPointCountSlider',
+        'motionComplexitySlider',
+        'motionSmoothnessSlider'
+    ].forEach((id) => app?.sliders?.setEnabled?.(id, !imported));
+    document.querySelectorAll('.sparky-motion-generator-control').forEach((group) => {
+        group.classList.toggle('is-import-disabled', imported);
+    });
+    const status = document.getElementById('motionImportStatus');
+    if (status) {
+        status.toggleAttribute('hidden', !imported);
+        if (imported) {
+            const count = importedPath.importMeta.pointCount || importedPath.anchors.length;
+            status.textContent = `Imported · ${count} points`;
+        }
+    }
+    const editButton = document.getElementById('motionEditPathBtn');
+    if (editButton) {
+        const locked = imported && !importedPath.importMeta.wasOpen;
+        editButton.disabled = locked;
+        editButton.title = locked
+            ? 'This imported path is already closed.'
+            : 'Edit path';
+        if (locked && focusAnimation.editing) {
+            focusAnimation.editing = false;
+            focusAnimation.selectedEditorControl = null;
+        }
+    }
+    const hint = document.getElementById('motionEditorHint');
+    if (hint) {
+        hint.textContent = imported
+            ? 'Drag only the generated closure and its Bézier handles.'
+            : 'Drag points and Bézier handles on the canvas.';
+    }
+}
+
+function updateFocusAnimationButtons(app) {
+    syncImportedMotionPathUI(app);
     const playPause = document.getElementById('motionPlayPauseBtn');
     if (playPause) playPause.textContent = focusAnimation.paused ? 'Play' : 'Pause';
     const editPath = document.getElementById('motionEditPathBtn');
@@ -540,7 +617,7 @@ function rebuildFocusAnimation(app, {
         // quality of the saved result.
         beginInteractivePlacement(app);
     }
-    updateFocusAnimationButtons();
+    updateFocusAnimationButtons(app);
     app.renderNow();
     if (schedule) scheduleFocusAnimation(app);
 }
@@ -570,18 +647,21 @@ function pauseFocusAnimation(app) {
     focusAnimation.paused = true;
     focusAnimation.pausedByUser = true;
     cancelFocusAnimationFrame();
-    updateFocusAnimationButtons();
+    updateFocusAnimationButtons(app);
     app.renderNow();
 }
 
 function setFocusPathEditing(app, editing) {
-    const next = Boolean(editing) && app.settings.focusMode === 'animate';
+    const importedPath = activeImportedMotionPath();
+    const next = Boolean(editing)
+        && app.settings.focusMode === 'animate'
+        && (!importedPath || importedPath.importMeta.wasOpen);
     if (next) {
         pauseFocusAnimation(app);
     }
     focusAnimation.editing = next;
     focusAnimation.selectedEditorControl = null;
-    updateFocusAnimationButtons();
+    updateFocusAnimationButtons(app);
     app.renderNow();
 }
 
@@ -593,7 +673,7 @@ function playFocusAnimation(app) {
     focusAnimation.pausedByUser = false;
     focusAnimation.startedAt = performance.now() - focusAnimation.elapsedMs;
     focusAnimation.lastPreviewAt = null;
-    updateFocusAnimationButtons();
+    updateFocusAnimationButtons(app);
     scheduleFocusAnimation(app);
 }
 
@@ -604,6 +684,7 @@ function toggleFocusFreeze(app) {
         return;
     }
     if (app.settings.focusMode !== 'manual') return;
+    settleManualFocusTransition(app);
     if (app.settings.followCursor) {
         disableFollowCursor(app);
         return;
@@ -626,7 +707,7 @@ function restartFocusAnimation(app) {
     focusAnimation.currentFocus = { ...focusAnimation.path.anchors[0] };
     focusAnimation.paused = false;
     focusAnimation.pausedByUser = false;
-    updateFocusAnimationButtons();
+    updateFocusAnimationButtons(app);
     app.renderNow();
     scheduleFocusAnimation(app);
 }
@@ -643,7 +724,7 @@ function stopFocusAnimation(app) {
     focusAnimation.paused = focusAnimation.pausedByUser;
     focusAnimation.editing = false;
     focusAnimation.selectedEditorControl = null;
-    updateFocusAnimationButtons();
+    updateFocusAnimationButtons(app);
     app?.renderNow();
 }
 
@@ -667,9 +748,14 @@ function syncFocusModeUI(app) {
 
 function syncFocusAnimationControls(app) {
     syncFocusModeUI(app);
-    app.sliders?.updateLimits?.('motionStopCountSlider', 1, app.settings.motionPointCount);
+    const pathPointCount = (focusAnimation.editedPath || focusAnimation.path)?.anchors?.length;
+    app.sliders?.updateLimits?.(
+        'motionStopCountSlider',
+        1,
+        pathPointCount || app.settings.motionPointCount
+    );
     app.sliders?.setDisplayValue?.('motionStopCountSlider', app.settings.motionStopCount);
-    updateFocusAnimationButtons();
+    updateFocusAnimationButtons(app);
 }
 
 function applyFocusMode(app) {
@@ -684,13 +770,74 @@ function applyFocusMode(app) {
     stopFocusAnimation(app);
 }
 
+async function confirmMotionPathReplacement(app) {
+    if (!focusAnimation.manuallyEdited && !activeImportedMotionPath()) return true;
+    const options = {
+        title: 'Replace current path?',
+        text: activeImportedMotionPath()
+            ? 'The imported SVG path and its closure edits will be lost.'
+            : 'Your manual path edits will be lost.',
+        confirmText: 'Replace',
+        cancelText: 'Keep path',
+        danger: true
+    };
+    if (app.dialog?.confirm) return Boolean(await app.dialog.confirm(options));
+    return window.confirm(`${options.title}\n\n${options.text}`);
+}
+
+function showMotionImportError(app, error) {
+    const text = error instanceof Error ? error.message : String(error);
+    if (app.dialog?.alert) {
+        app.dialog.alert({ title: 'Could not import SVG', text });
+    } else {
+        window.alert(`Could not import SVG: ${text}`);
+    }
+}
+
+function bindMotionPathImport(app) {
+    const button = document.getElementById('motionImportPathBtn');
+    const input = document.getElementById('motionImportPathInput');
+    if (!button || !input) return;
+    button.addEventListener('click', () => input.click());
+    input.addEventListener('change', async () => {
+        const file = input.files?.[0];
+        input.value = '';
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+            showMotionImportError(app, new Error('The SVG file must be smaller than 2 MB.'));
+            return;
+        }
+        if (!await confirmMotionPathReplacement(app)) return;
+        try {
+            const region = createExtendedFocusRegion(app.settings);
+            const imported = importSvgMotionPath(await file.text(), {
+                center: region.center,
+                radius: region.radius,
+                startFocus: focusAnimation.currentFocus || currentStoredFocus(app.settings),
+                fileName: file.name
+            });
+            focusAnimation.editedPath = imported;
+            focusAnimation.manuallyEdited = true;
+            focusAnimation.editing = false;
+            focusAnimation.selectedEditorControl = null;
+            rebuildFocusAnimation(app, { restart: true, regenerate: false });
+            syncFocusAnimationControls(app);
+        } catch (error) {
+            showMotionImportError(app, error);
+        }
+    });
+}
+
 function bindFocusAnimation(app) {
     focusAnimationReady = true;
     app.sliders?.updateLimits?.('motionStopCountSlider', 1, app.settings.motionPointCount);
     document.querySelectorAll('input[name="focusMode"]').forEach((input) => {
         input.addEventListener('change', () => {
             if (!input.checked) return;
-            if (input.value === 'animate') disableFollowCursor(app);
+            if (input.value === 'animate') {
+                settleManualFocusTransition(app, { atTarget: true });
+                disableFollowCursor(app);
+            }
             app.settingsStore.set('focusMode', input.value);
         });
     });
@@ -708,6 +855,7 @@ function bindFocusAnimation(app) {
     document.getElementById('motionRegenerateBtn')?.addEventListener('click', async () => {
         const confirmed = await confirmPathRegeneration({
             manuallyEdited: focusAnimation.manuallyEdited,
+            imported: Boolean(activeImportedMotionPath()),
             dialog: app.dialog,
             fallbackConfirm: (message) => window.confirm(message)
         });
@@ -721,8 +869,11 @@ function bindFocusAnimation(app) {
         app.settingsStore.set('motionSeed', normalizeMotionSeed(values[0]));
     });
 
+    bindMotionPathImport(app);
+
     let syncingMotionStopCount = false;
     app.settingsStore.subscribe('motionPointCount', (pointCount) => {
+        if (activeImportedMotionPath()) return;
         app.sliders?.updateLimits?.('motionStopCountSlider', 1, pointCount);
         if (app.settings.motionStopCount > pointCount) {
             syncingMotionStopCount = true;
@@ -738,12 +889,14 @@ function bindFocusAnimation(app) {
         'motionSeed'
     ].forEach((setting) => {
         app.settingsStore.subscribe(setting, () => {
+            if (activeImportedMotionPath()) return;
             if (app.settings.focusMode === 'animate') {
                 rebuildFocusAnimation(app, { regenerate: true });
             }
         });
     });
     app.settingsStore.subscribe('motionSmoothness', (value, previousValue) => {
+        if (activeImportedMotionPath()) return;
         if (revertingMotionSmoothness || app.settings.focusMode !== 'animate') return;
         if (!focusAnimation.manuallyEdited) {
             rebuildFocusAnimation(app, { regenerate: true });
@@ -1132,6 +1285,7 @@ function drawCharacter(ctx, geometry, eyeGeometry) {
     svg.appendChild(characterLayer);
 
     if (state.showSphere
+        || sphereFeedbackActive
         || state.showRayGuides
         || state.showBisectors
         || (state.showPoint && !state.followCursor && state.focusMode !== 'animate')
@@ -1158,12 +1312,18 @@ function drawGuides(ctx, geometry) {
         && (state.showMotionPath || focusAnimation.editing)
         && focusAnimation.path) {
         const editing = focusAnimation.editing;
+        const importedClosureControls = editing && focusAnimation.path.importMeta?.wasOpen
+            ? importedClosureEditorControls(focusAnimation.path)
+            : null;
         const motionGuides = create('g', {
             'data-layer': 'motion-path-preview',
             'data-export-exclude': 'true'
         });
         if (editing) {
-            const handlesPath = focusAnimation.path.segments.map((segment) => (
+            const handleSegments = importedClosureControls
+                ? focusAnimation.path.segments.filter((segment) => segment.role === 'closure')
+                : focusAnimation.path.segments;
+            const handlesPath = handleSegments.map((segment) => (
                 `M ${segment.start.x} ${segment.start.y}`
                 + ` L ${segment.control1.x} ${segment.control1.y}`
                 + ` M ${segment.end.x} ${segment.end.y}`
@@ -1188,16 +1348,12 @@ function drawGuides(ctx, geometry) {
             'stroke-linejoin': 'round'
         }));
         if (editing) {
-            focusAnimation.path.anchors.forEach((anchor, index) => {
-                const handles = focusPathEditorHandlePoints(focusAnimation.path, index);
-                [
-                    { side: 'incoming', point: handles.incoming },
-                    { side: 'outgoing', point: handles.outgoing }
-                ].forEach(({ side, point }) => {
-                    const key = `handle:${index}:${side}`;
+            if (importedClosureControls) {
+                importedClosureControls.handles.forEach((handle) => {
+                    const key = `closure-handle:${handle.segmentIndex}:${handle.control}`;
                     motionGuides.appendChild(create('circle', {
-                        cx: point.x,
-                        cy: point.y,
+                        cx: handle.point.x,
+                        cy: handle.point.y,
                         r: 3.1,
                         fill: state.backgroundColor,
                         stroke: '#00ff2a',
@@ -1206,44 +1362,86 @@ function drawGuides(ctx, geometry) {
                         'pointer-events': 'none'
                     }));
                     motionGuides.appendChild(create('circle', {
-                        cx: point.x,
-                        cy: point.y,
+                        cx: handle.point.x,
+                        cy: handle.point.y,
                         r: 8,
                         fill: 'transparent',
                         class: 'sparky-motion-editor-control',
-                        'data-motion-editor-kind': 'handle',
-                        'data-motion-editor-index': index,
-                        'data-motion-editor-side': side,
+                        'data-motion-editor-kind': 'closure-handle',
+                        'data-motion-editor-segment': handle.segmentIndex,
+                        'data-motion-editor-control': handle.control,
                         'data-selected': focusAnimation.selectedEditorControl === key
                             ? 'true'
                             : 'false'
                     }));
                 });
-            });
+            } else {
+                focusAnimation.path.anchors.forEach((anchor, index) => {
+                    const handles = focusPathEditorHandlePoints(focusAnimation.path, index);
+                    [
+                        { side: 'incoming', point: handles.incoming },
+                        { side: 'outgoing', point: handles.outgoing }
+                    ].forEach(({ side, point }) => {
+                        const key = `handle:${index}:${side}`;
+                        motionGuides.appendChild(create('circle', {
+                            cx: point.x,
+                            cy: point.y,
+                            r: 3.1,
+                            fill: state.backgroundColor,
+                            stroke: '#00ff2a',
+                            'stroke-width': 0.9,
+                            'vector-effect': 'non-scaling-stroke',
+                            'pointer-events': 'none'
+                        }));
+                        motionGuides.appendChild(create('circle', {
+                            cx: point.x,
+                            cy: point.y,
+                            r: 8,
+                            fill: 'transparent',
+                            class: 'sparky-motion-editor-control',
+                            'data-motion-editor-kind': 'handle',
+                            'data-motion-editor-index': index,
+                            'data-motion-editor-side': side,
+                            'data-selected': focusAnimation.selectedEditorControl === key
+                                ? 'true'
+                                : 'false'
+                        }));
+                    });
+                });
+            }
         }
+        const importedEditableAnchors = new Set(
+            importedClosureControls?.anchors.map((entry) => entry.anchorIndex) || []
+        );
         focusAnimation.path.anchors.forEach((anchor, index) => {
             const activeStop = focusAnimation.timeline?.activeStops?.[index] !== false;
+            const editableAnchor = editing
+                && (!importedClosureControls || importedEditableAnchors.has(index));
             motionGuides.appendChild(create('circle', {
                 cx: anchor.x,
                 cy: anchor.y,
-                r: editing ? 4.2 : index === 0 ? 3.4 : 2.5,
+                r: editableAnchor ? 4.2 : index === 0 ? 3.4 : 2.5,
                 fill: activeStop ? '#00ff2a' : state.backgroundColor,
                 stroke: '#00ff2a',
-                'stroke-width': editing ? 1 : 0.75,
-                opacity: activeStop ? 0.9 : 0.5,
+                'stroke-width': editableAnchor ? 1 : 0.75,
+                opacity: importedClosureControls && !editableAnchor
+                    ? 0.42
+                    : activeStop ? 0.9 : 0.5,
                 'vector-effect': 'non-scaling-stroke',
                 'pointer-events': 'none'
             }));
-            if (editing) {
+            if (editableAnchor) {
+                const kind = importedClosureControls ? 'closure-anchor' : 'anchor';
+                const key = `${kind}:${index}`;
                 motionGuides.appendChild(create('circle', {
                     cx: anchor.x,
                     cy: anchor.y,
                     r: 10,
                     fill: 'transparent',
                     class: 'sparky-motion-editor-control sparky-motion-editor-anchor',
-                    'data-motion-editor-kind': 'anchor',
+                    'data-motion-editor-kind': kind,
                     'data-motion-editor-index': index,
-                    'data-selected': focusAnimation.selectedEditorControl === `anchor:${index}`
+                    'data-selected': focusAnimation.selectedEditorControl === key
                         ? 'true'
                         : 'false'
                 }));
@@ -1264,8 +1462,16 @@ function drawGuides(ctx, geometry) {
         guides.appendChild(motionGuides);
     }
 
-    if (state.showSphere) {
-        append(guides,
+    if (state.showSphere || sphereFeedbackActive) {
+        const sphereGuides = create('g', {
+            class: sphereFeedbackActive
+                ? `sparky-sphere-feedback ${state.showSphere
+                    ? 'sparky-sphere-feedback--visible'
+                    : 'sparky-sphere-feedback--temporary'}`
+                : '',
+            'data-sphere-guides': 'true'
+        });
+        append(sphereGuides,
             create('line', {
                 x1: state.boundaryCenterX,
                 y1: ARTBOARD_CROP_Y,
@@ -1273,6 +1479,8 @@ function drawGuides(ctx, geometry) {
                 y2: ARTBOARD_CROP_Y + height,
                 stroke: '#315bff',
                 opacity: 0.55,
+                style: '--sparky-sphere-guide-opacity: 0.55',
+                'data-sphere-guide': 'true',
                 ...commonStroke
             }),
             create('line', {
@@ -1282,21 +1490,25 @@ function drawGuides(ctx, geometry) {
                 y2: state.boundaryCenterY,
                 stroke: '#315bff',
                 opacity: 0.55,
+                style: '--sparky-sphere-guide-opacity: 0.55',
+                'data-sphere-guide': 'true',
                 ...commonStroke
             })
         );
 
         if (geometry.boundary.type === 'circle') {
-            guides.appendChild(create('circle', {
+            sphereGuides.appendChild(create('circle', {
                 cx: geometry.boundary.center.x,
                 cy: geometry.boundary.center.y,
                 r: geometry.boundary.radius,
                 stroke: '#315bff',
                 opacity: 0.8,
+                style: '--sparky-sphere-guide-opacity: 0.8',
+                'data-sphere-guide': 'true',
                 ...commonStroke
             }));
         } else if (geometry.boundary.type === 'ellipse') {
-            guides.appendChild(create('ellipse', {
+            sphereGuides.appendChild(create('ellipse', {
                 cx: geometry.boundary.center.x,
                 cy: geometry.boundary.center.y,
                 rx: geometry.boundary.radiusX,
@@ -1304,6 +1516,8 @@ function drawGuides(ctx, geometry) {
                 transform: `rotate(${geometry.boundary.rotationDeg} ${geometry.boundary.center.x} ${geometry.boundary.center.y})`,
                 stroke: '#315bff',
                 opacity: 0.8,
+                style: '--sparky-sphere-guide-opacity: 0.8',
+                'data-sphere-guide': 'true',
                 ...commonStroke
             }));
         }
@@ -1318,16 +1532,19 @@ function drawGuides(ctx, geometry) {
             : { x: Math.cos(fallbackAngle), y: Math.sin(fallbackAngle) };
         const radiusEnd = geometry.boundary.intersectRay(center, radiusDirection);
         if (radiusEnd) {
-            guides.appendChild(create('line', {
+            sphereGuides.appendChild(create('line', {
                 x1: center.x,
                 y1: center.y,
                 x2: radiusEnd.x,
                 y2: radiusEnd.y,
                 stroke: '#315bff',
                 opacity: 0.8,
+                style: '--sparky-sphere-guide-opacity: 0.8',
+                'data-sphere-guide': 'true',
                 ...commonStroke
             }));
         }
+        guides.appendChild(sphereGuides);
     }
 
     if (state.showRayGuides) {
@@ -1446,6 +1663,7 @@ function syncFocusControls(app) {
 }
 
 function applyState(app, source) {
+    cancelManualFocusTransition();
     forceGlobalPlacement(app);
     focusAnimation.editedPath = null;
     focusAnimation.manuallyEdited = false;
@@ -1560,9 +1778,24 @@ function bindMotionPathEditing(app) {
         if (!drag || event.pointerId !== drag.pointerId || !focusAnimation.path) return;
         const point = pointFromPointer(svg, event);
         if (!point) return;
-        focusAnimation.path = drag.kind === 'anchor'
-            ? moveFocusPathAnchor(focusAnimation.path, drag.index, point)
-            : moveFocusPathHandle(focusAnimation.path, drag.index, drag.side, point);
+        if (drag.kind === 'closure-anchor') {
+            focusAnimation.path = moveImportedClosureAnchor(
+                focusAnimation.path,
+                drag.index,
+                point
+            );
+        } else if (drag.kind === 'closure-handle') {
+            focusAnimation.path = moveImportedClosureHandle(
+                focusAnimation.path,
+                drag.segmentIndex,
+                drag.control,
+                point
+            );
+        } else {
+            focusAnimation.path = drag.kind === 'anchor'
+                ? moveFocusPathAnchor(focusAnimation.path, drag.index, point)
+                : moveFocusPathHandle(focusAnimation.path, drag.index, drag.side, point);
+        }
         focusAnimation.editedPath = focusAnimation.path;
         focusAnimation.manuallyEdited = true;
         rebuildFocusAnimation(app, {
@@ -1580,18 +1813,33 @@ function bindMotionPathEditing(app) {
         if (!control) return;
         const index = Number(control.dataset.motionEditorIndex);
         const kind = control.dataset.motionEditorKind;
-        if (!Number.isInteger(index) || (kind !== 'anchor' && kind !== 'handle')) return;
+        const segmentIndex = Number(control.dataset.motionEditorSegment);
+        const supported = kind === 'anchor'
+            || kind === 'handle'
+            || kind === 'closure-anchor'
+            || kind === 'closure-handle';
+        if (!supported) return;
+        if ((kind === 'closure-handle' && !Number.isInteger(segmentIndex))
+            || (kind !== 'closure-handle' && !Number.isInteger(index))) return;
         event.preventDefault();
         event.stopPropagation();
         drag = {
             pointerId: event.pointerId,
             kind,
             index,
-            side: control.dataset.motionEditorSide || 'outgoing'
+            side: control.dataset.motionEditorSide || 'outgoing',
+            segmentIndex,
+            control: control.dataset.motionEditorControl || 'control1'
         };
-        focusAnimation.selectedEditorControl = kind === 'anchor'
-            ? `anchor:${index}`
-            : `handle:${index}:${drag.side}`;
+        if (kind === 'closure-handle') {
+            focusAnimation.selectedEditorControl = `closure-handle:${segmentIndex}:${drag.control}`;
+        } else if (kind === 'closure-anchor') {
+            focusAnimation.selectedEditorControl = `closure-anchor:${index}`;
+        } else {
+            focusAnimation.selectedEditorControl = kind === 'anchor'
+                ? `anchor:${index}`
+                : `handle:${index}:${drag.side}`;
+        }
         svg.setPointerCapture(event.pointerId);
         app.renderNow();
     });
@@ -1650,10 +1898,14 @@ function disableFollowCursor(app, { syncControls = true } = {}) {
 
 function bindManualFocusControls(app) {
     document.getElementById('showPoint')?.addEventListener('change', (event) => {
-        if (event.target.checked) disableFollowCursor(app);
+        if (event.target.checked) {
+            settleManualFocusTransition(app);
+            disableFollowCursor(app);
+        }
     });
     document.getElementById('followCursor')?.addEventListener('change', (event) => {
         if (!event.target.checked) return;
+        settleManualFocusTransition(app);
         app.settingsStore.setMultiple({
             showPoint: false,
             followCursor: true
@@ -1670,7 +1922,10 @@ function bindManualFocusControls(app) {
     ].forEach((id) => {
         document.getElementById(id)?.addEventListener(
             'input',
-            () => disableFollowCursor(app, { syncControls: false }),
+            () => {
+                cancelManualFocusTransition();
+                disableFollowCursor(app, { syncControls: false });
+            },
             { capture: true }
         );
     });
@@ -1716,6 +1971,7 @@ function bindInteractivePlacement(app) {
     const isRangeInput = (target) => target instanceof HTMLInputElement && target.type === 'range';
     document.addEventListener('input', (event) => {
         if (isRangeInput(event.target)) {
+            cancelManualFocusTransition();
             beginInteractivePlacement(app);
             previewBlurReducedUntil = performance.now() + 200;
             if (previewBlurRestoreTimer != null) clearTimeout(previewBlurRestoreTimer);
@@ -1730,7 +1986,83 @@ function bindInteractivePlacement(app) {
     }, { capture: true });
 }
 
+function cancelManualFocusTransition() {
+    if (manualFocusTransitionFrame != null) cancelAnimationFrame(manualFocusTransitionFrame);
+    manualFocusTransitionFrame = null;
+    manualFocusTransition = null;
+}
+
+function settleManualFocusTransition(app, { atTarget = false } = {}) {
+    if (!manualFocusTransition) return;
+    const focus = atTarget
+        ? manualFocusTransition.target
+        : manualFocusTransition.current;
+    cancelManualFocusTransition();
+    if (atTarget) setPolarFocus(app, 0, 0);
+    else setFocus(app, focus.x, focus.y);
+    finishInteractivePlacement(app);
+    app.renderNow();
+}
+
+function animateFocusToCenter(app) {
+    if (isMobileShowcase()) {
+        setPolarFocus(app, 0, 0);
+        app.renderNow();
+        return;
+    }
+    const start = manualFocusTransition?.current
+        ? { ...manualFocusTransition.current }
+        : currentStoredFocus(app.settings);
+    const target = centeredFocus(app.settings);
+    cancelManualFocusTransition();
+    if (Math.hypot(target.x - start.x, target.y - start.y) <= 1e-6) {
+        setPolarFocus(app, 0, 0);
+        app.renderNow();
+        return;
+    }
+    manualFocusTransition = {
+        start,
+        target,
+        current: { ...start },
+        startedAt: null,
+        fallbackAngle: app.settings.focusAngle
+    };
+    beginInteractivePlacement(app);
+    const advance = (timestamp) => {
+        manualFocusTransitionFrame = null;
+        const transition = manualFocusTransition;
+        if (!transition || app.settings.focusMode !== 'manual') return;
+        if (transition.startedAt == null) transition.startedAt = timestamp;
+        const progress = Math.min(
+            1,
+            (timestamp - transition.startedAt) / CENTER_FOCUS_TRANSITION_DURATION_MS
+        );
+        transition.current = sampleLinearFocusTransition(
+            transition.start,
+            transition.target,
+            progress
+        );
+        const polar = normalizedPolar(focusPointToPolar(
+            transition.current,
+            app.settings,
+            transition.fallbackAngle
+        ));
+        setFocusControls(app, polar, { displayOnly: true });
+        app.renderNow();
+        if (progress < 1) {
+            manualFocusTransitionFrame = requestAnimationFrame(advance);
+            return;
+        }
+        manualFocusTransition = null;
+        setPolarFocus(app, 0, 0);
+        finishInteractivePlacement(app);
+        app.renderNow();
+    };
+    manualFocusTransitionFrame = requestAnimationFrame(advance);
+}
+
 function setTransientFollowFocus(app, x, y) {
+    cancelManualFocusTransition();
     const focus = normalizedFocus({ x, y }, app.settings);
     const polar = normalizedPolar(focusPointToPolar(focus, app.settings, app.settings.focusAngle));
     setFocusControls(app, polar, { displayOnly: true });
@@ -1747,6 +2079,7 @@ function setTransientFollowFocus(app, x, y) {
 }
 
 function setFocus(app, x, y) {
+    cancelManualFocusTransition();
     const focus = normalizedFocus({ x, y }, app.settings);
     const polar = normalizedPolar(focusPointToPolar(focus, app.settings, app.settings.focusAngle));
     const wasSyncing = focusControlsSyncing;
@@ -1765,6 +2098,7 @@ function setFocus(app, x, y) {
 }
 
 function setPolarFocus(app, angle, distance) {
+    cancelManualFocusTransition();
     const polar = normalizedPolar({ angle, distance });
     const focus = normalizedFocus(focusPointFromPolar(polar, app.settings), app.settings);
     const wasSyncing = focusControlsSyncing;
@@ -1961,6 +2295,7 @@ const app = defineTool({
     onReady(tool) {
         const frameworkExportPNG = tool.exportPNG.bind(tool);
         tool.animationExporter = new AnimationExporter({
+            container: document.getElementById('animationExportActions'),
             status: document.getElementById('animationExportStatus'),
             progress: document.getElementById('animationExportProgress'),
             message: document.getElementById('animationExportMessage'),
@@ -2023,7 +2358,8 @@ const app = defineTool({
         document.documentElement.classList.remove('sparky-initializing');
         document.getElementById('resetFocusBtn')?.addEventListener('click', () => {
             disableFollowCursor(tool);
-            setPolarFocus(tool, 0, 0);
+            animateFocusToCenter(tool);
+            triggerSphereFeedback(tool);
         });
         document.getElementById('exportSvgBtn')?.addEventListener('click', () => {
             tool.exportSVG().catch((error) => console.error('SVG export failed:', error));

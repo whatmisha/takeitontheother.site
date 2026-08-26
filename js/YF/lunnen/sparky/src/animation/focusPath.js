@@ -627,8 +627,8 @@ function finitePoint(value, label) {
 }
 
 export function rebuildFocusPath(source, rawSegments = source?.segments) {
-    if (!Array.isArray(rawSegments) || rawSegments.length < 2 || rawSegments.length > 16) {
-        throw new Error('A focus path requires between 2 and 16 segments.');
+    if (!Array.isArray(rawSegments) || rawSegments.length < 2 || rawSegments.length > 96) {
+        throw new Error('A focus path requires between 2 and 96 segments.');
     }
     const center = finitePoint(source?.center, 'focus path center');
     const radius = Number(source?.radius);
@@ -641,7 +641,9 @@ export function rebuildFocusPath(source, rawSegments = source?.segments) {
         control1: finitePoint(segment?.control1, `segment ${index} control1`),
         control2: finitePoint(segment?.control2, `segment ${index} control2`),
         end: finitePoint(segment?.end, `segment ${index} end`),
-        endIndex: (index + 1) % rawSegments.length
+        endIndex: (index + 1) % rawSegments.length,
+        kind: segment?.kind === 'line' ? 'line' : 'curve',
+        role: segment?.role === 'closure' ? 'closure' : 'source'
     }));
     const anchors = segments.map((segment) => copyPoint(segment.start));
     const tangents = segments.map((segment, index) => unit(
@@ -660,7 +662,18 @@ export function rebuildFocusPath(source, rawSegments = source?.segments) {
         tangents,
         segments,
         totalLength,
-        path: formatPath(segments)
+        path: formatPath(segments),
+        importMeta: source?.importMeta?.imported
+            ? {
+                imported: true,
+                fileName: String(source.importMeta.fileName || 'Imported SVG'),
+                wasOpen: Boolean(source.importMeta.wasOpen),
+                originalPointCount: Math.max(0, Math.round(Number(source.importMeta.originalPointCount) || 0)),
+                simplifiedPointCount: Math.max(0, Math.round(Number(source.importMeta.simplifiedPointCount) || 0)),
+                pointCount: segments.length,
+                tolerancePx: Math.max(0, Number(source.importMeta.tolerancePx) || 0)
+            }
+            : null
     };
 }
 
@@ -672,11 +685,14 @@ export function serializeFocusPath(path) {
         smoothness: normalizeMotionSmoothness(path?.smoothness),
         center: finitePoint(path?.center, 'focus path center'),
         radius: Number(path?.radius),
+        importMeta: path?.importMeta?.imported ? { ...path.importMeta } : null,
         segments: path?.segments?.map((segment) => ({
             start: finitePoint(segment.start, 'segment start'),
             control1: finitePoint(segment.control1, 'segment control1'),
             control2: finitePoint(segment.control2, 'segment control2'),
-            end: finitePoint(segment.end, 'segment end')
+            end: finitePoint(segment.end, 'segment end'),
+            kind: segment.kind === 'line' ? 'line' : 'curve',
+            role: segment.role === 'closure' ? 'closure' : 'source'
         })) || []
     };
 }

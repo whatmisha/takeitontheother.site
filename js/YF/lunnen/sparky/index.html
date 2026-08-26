@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#000000">
     <title>Lunnen Sparky — Parametric Character</title>
     <link rel="stylesheet" href="./framework/css/othersite-styles.css">
-    <link rel="stylesheet" href="./styles/sparky.css?v=20260826-3">
+    <link rel="stylesheet" href="./styles/sparky.css?v=20260826-7">
 </head>
 <body>
     <div class="container">
@@ -157,19 +157,19 @@
                                 <input type="range" id="motionDurationSlider" min="1" max="10" step="1" value="5">
                             </div>
 
-                            <div class="control-group">
+                            <div class="control-group sparky-motion-generator-control">
                                 <label for="motionPointCountSlider"><span>Points</span>
                                     <input type="text" class="value-display" id="motionPointCountValue" value="6"></label>
                                 <input type="range" id="motionPointCountSlider" min="2" max="16" step="1" value="6">
                             </div>
 
-                            <div class="control-group">
+                            <div class="control-group sparky-motion-generator-control">
                                 <label for="motionComplexitySlider"><span>Complexity</span>
                                     <input type="text" class="value-display" id="motionComplexityValue" value="0"></label>
                                 <input type="range" id="motionComplexitySlider" min="0" max="100" step="1" value="0">
                             </div>
 
-                            <div class="control-group">
+                            <div class="control-group sparky-motion-generator-control">
                                 <label for="motionSmoothnessSlider"><span>Smoothness</span>
                                     <input type="text" class="value-display" id="motionSmoothnessValue" value="50"></label>
                                 <input type="range" id="motionSmoothnessSlider" min="0" max="100" step="1" value="50">
@@ -205,8 +205,20 @@
                                 <input type="range" id="motionBlurSlider" min="0" max="100" step="1" value="0">
                             </div>
 
-                            <button type="button" class="sparky-panel-action sparky-motion-edit-action"
-                                    id="motionEditPathBtn" aria-pressed="false">Edit path</button>
+                            <div class="sparky-motion-path-actions">
+                                <button type="button" class="sparky-panel-action sparky-motion-edit-action"
+                                        id="motionEditPathBtn" aria-pressed="false">Edit path</button>
+                                <button type="button" class="sparky-panel-action sparky-motion-import-action"
+                                        id="motionImportPathBtn" aria-label="Import SVG path"
+                                        title="Import SVG path" data-tooltip="Import SVG path">
+                                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                        <path d="M8 10.8V2.4M4.9 5.5 8 2.4l3.1 3.1M2.5 9.4v3.4h11V9.4"
+                                              stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </button>
+                                <input type="file" id="motionImportPathInput" accept=".svg,image/svg+xml" hidden>
+                            </div>
+                            <p class="sparky-motion-import-status" id="motionImportStatus" hidden></p>
                             <p class="sparky-motion-editor-hint" id="motionEditorHint" hidden>
                                 Drag points and Bézier handles on the canvas.
                             </p>
@@ -229,13 +241,6 @@
                                 </button>
                             </div>
 
-                            <div class="sparky-export-status" id="animationExportStatus" hidden aria-live="polite">
-                                <progress id="animationExportProgress" max="1" value="0"></progress>
-                                <div class="sparky-export-status-row">
-                                    <span id="animationExportMessage">Preparing animation</span>
-                                    <button type="button" id="animationExportCancelBtn">Cancel</button>
-                                </div>
-                            </div>
                         </div>
                     </section>
                 </div>
@@ -350,8 +355,17 @@
                     </ul>
                 </div>
             </div>
-            <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
-            <button class="btn-fixed" id="exportSvgBtn" type="button">Export ⌘E</button>
+            <div class="sparky-export-actions" id="animationExportActions">
+                <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
+                <button class="btn-fixed" id="exportSvgBtn" type="button">Export ⌘E</button>
+                <div class="sparky-export-status" id="animationExportStatus" hidden
+                     data-state="idle" aria-live="polite">
+                    <progress id="animationExportProgress" max="1" value="0"></progress>
+                    <span id="animationExportMessage">Preparing</span>
+                    <button type="button" id="animationExportCancelBtn"
+                            aria-label="Cancel export" title="Cancel export">×</button>
+                </div>
+            </div>
         </nav>
 
         <p class="mobile-desktop-hint">Try swiping and tapping — it’s fun!<br>The desktop version is better.</p>
@@ -366,6 +380,6 @@
         </dialog>
     </div>
 
-    <script type="module" src="./tool.js?v=20260826-8"></script>
+    <script type="module" src="./tool.js?v=20260826-13"></script>
 </body>
 </html>

@@ -55,3 +55,49 @@ test('animation exporter transfers a manually edited path to its worker', async 
         else globalThis.Worker = OriginalWorker;
     }
 });
+
+test('animation exporter morphs both actions into one progress surface', () => {
+    const classes = new Set();
+    const container = {
+        classList: {
+            toggle(name, active) {
+                if (active) classes.add(name);
+                else classes.delete(name);
+            }
+        }
+    };
+    const properties = new Map();
+    const status = {
+        hidden: true,
+        dataset: {},
+        style: { setProperty: (name, value) => properties.set(name, value) }
+    };
+    const progress = { max: 1, value: 0 };
+    const message = { textContent: '' };
+    const cancelButton = { hidden: false, addEventListener() {} };
+    const exportButtons = [{ disabled: false }, { disabled: false }];
+    const exporter = new AnimationExporter({
+        container,
+        status,
+        progress,
+        message,
+        cancelButton,
+        exportButtons
+    });
+
+    exporter.setBusy(true);
+    exporter.updateProgress(25, 100, 'Encoding frame 25 of 100');
+    assert.equal(classes.has('is-exporting'), true);
+    assert.equal(status.hidden, false);
+    assert.equal(status.dataset.state, 'working');
+    assert.equal(properties.get('--sparky-export-progress'), '25%');
+    assert.equal(message.textContent, 'Encoding frame 25 of 100');
+    assert.ok(exportButtons.every((button) => button.disabled));
+
+    exporter.showComplete(100);
+    assert.equal(status.dataset.state, 'complete');
+    assert.equal(message.textContent, 'Done');
+    assert.equal(cancelButton.hidden, true);
+    assert.equal(properties.get('--sparky-export-progress'), '100%');
+    exporter.clearRestoreTimer();
+});
