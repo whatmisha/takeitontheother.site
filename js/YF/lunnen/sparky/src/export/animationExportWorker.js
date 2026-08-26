@@ -15,7 +15,7 @@ import {
     resolveBlinkMotionBlurTime,
     resolveMotionBlur,
     wrapMotionBlurTime
-} from '../animation/motionBlur.js?v=20260826-2';
+} from '../animation/motionBlur.js?v=20260826-3';
 import {
     advanceEyeMotionToTarget,
     createEyeMotionState

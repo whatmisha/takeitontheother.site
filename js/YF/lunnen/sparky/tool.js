@@ -1,4 +1,4 @@
-import { defineTool } from './framework/src/core/defineTool.js?v=20260823-2';
+import { defineTool } from './framework/src/core/defineTool.js?v=20260826-1';
 import { PresetStore } from './framework/src/preset/PresetStore.js';
 import {
     DEFAULT_GEOMETRY,
@@ -7,7 +7,7 @@ import {
 import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-7';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import { createStaticSparkySvg } from './src/export/staticSvgExporter.js?v=20260825-2';
-import { AnimationExporter } from './src/export/animationExporter.js?v=20260826-2';
+import { AnimationExporter } from './src/export/animationExporter.js?v=20260826-3';
 import {
     advanceEyeMotion,
     createEyeMotionState,
@@ -49,7 +49,7 @@ import {
     normalizeMotionBlur,
     resolvePreviewMotionBlurGhosts,
     wrapMotionBlurTime
-} from './src/animation/motionBlur.js?v=20260826-2';
+} from './src/animation/motionBlur.js?v=20260826-3';
 import { clamp } from './src/geometry/vector.js';
 import {
     focusPointFromPolar,
@@ -391,6 +391,7 @@ const focusAnimation = {
     lastPreviewAt: null,
     elapsedMs: 0,
     paused: false,
+    pausedByUser: false,
     editing: false,
     manuallyEdited: false,
     editedPath: null,
@@ -399,6 +400,33 @@ const focusAnimation = {
 let focusAnimationReady = false;
 let motionSmoothnessConfirmation = null;
 let revertingMotionSmoothness = false;
+
+function bindShortcutHelp() {
+    const root = document.getElementById('shortcutHelp');
+    const button = document.getElementById('shortcutHelpBtn');
+    const popup = document.getElementById('shortcutHelpPopup');
+    if (!root || !button || !popup) return;
+
+    const setOpen = (open) => {
+        popup.toggleAttribute('hidden', !open);
+        button.setAttribute('aria-expanded', String(open));
+    };
+
+    button.addEventListener('click', () => {
+        setOpen(button.getAttribute('aria-expanded') !== 'true');
+    });
+    document.addEventListener('pointerdown', (event) => {
+        if (button.getAttribute('aria-expanded') === 'true' && !root.contains(event.target)) {
+            setOpen(false);
+        }
+    });
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && button.getAttribute('aria-expanded') === 'true') {
+            setOpen(false);
+            button.focus();
+        }
+    });
+}
 
 function cancelFocusAnimationFrame() {
     if (focusAnimation.frame != null) cancelAnimationFrame(focusAnimation.frame);
@@ -460,12 +488,11 @@ function scheduleFocusAnimation(app) {
 function rebuildFocusAnimation(app, {
     restart = true,
     schedule = true,
-    regenerate = false,
-    preservePlayback = false
+    regenerate = false
 } = {}) {
     cancelFocusAnimationFrame();
     const start = currentStoredFocus(app.settings);
-    const wasPaused = focusAnimation.paused;
+    const wasPaused = focusAnimation.paused || focusAnimation.pausedByUser;
     if (regenerate) {
         focusAnimation.editedPath = null;
         focusAnimation.manuallyEdited = false;
@@ -505,7 +532,7 @@ function rebuildFocusAnimation(app, {
         focusAnimation.startedAt = performance.now() - focusAnimation.elapsedMs;
     }
     if (app.settings.focusMode === 'animate') {
-        focusAnimation.paused = preservePlayback ? wasPaused : false;
+        focusAnimation.paused = wasPaused;
         stopBlink(app);
         // Preview uses the exact local containment solver and reuses the prior
         // frame as its seed. Export recomputes every frame with the global
@@ -541,6 +568,7 @@ function pauseFocusAnimation(app) {
         ).point;
     }
     focusAnimation.paused = true;
+    focusAnimation.pausedByUser = true;
     cancelFocusAnimationFrame();
     updateFocusAnimationButtons();
     app.renderNow();
@@ -562,6 +590,7 @@ function playFocusAnimation(app) {
     focusAnimation.editing = false;
     focusAnimation.selectedEditorControl = null;
     focusAnimation.paused = false;
+    focusAnimation.pausedByUser = false;
     focusAnimation.startedAt = performance.now() - focusAnimation.elapsedMs;
     focusAnimation.lastPreviewAt = null;
     updateFocusAnimationButtons();
@@ -596,6 +625,7 @@ function restartFocusAnimation(app) {
     focusAnimation.lastPreviewAt = null;
     focusAnimation.currentFocus = { ...focusAnimation.path.anchors[0] };
     focusAnimation.paused = false;
+    focusAnimation.pausedByUser = false;
     updateFocusAnimationButtons();
     app.renderNow();
     scheduleFocusAnimation(app);
@@ -610,7 +640,7 @@ function stopFocusAnimation(app) {
     focusAnimation.startedAt = null;
     focusAnimation.lastPreviewAt = null;
     focusAnimation.elapsedMs = 0;
-    focusAnimation.paused = false;
+    focusAnimation.paused = focusAnimation.pausedByUser;
     focusAnimation.editing = false;
     focusAnimation.selectedEditorControl = null;
     updateFocusAnimationButtons();
@@ -756,8 +786,7 @@ function bindFocusAnimation(app) {
             if (app.settings.focusMode === 'animate') {
                 rebuildFocusAnimation(app, {
                     restart: false,
-                    regenerate: false,
-                    preservePlayback: true
+                    regenerate: false
                 });
             }
         });
@@ -1539,8 +1568,7 @@ function bindMotionPathEditing(app) {
         rebuildFocusAnimation(app, {
             restart: false,
             schedule: false,
-            regenerate: false,
-            preservePlayback: true
+            regenerate: false
         });
     };
 
@@ -1887,6 +1915,7 @@ const app = defineTool({
         }
     },
     onInit(tool) {
+        bindShortcutHelp();
         tool.shortcuts?.register(
             'mod+j',
             () => exportSettingsJSON(tool),
@@ -1896,6 +1925,10 @@ const app = defineTool({
             if (event.repeat) return;
             toggleFocusFreeze(tool);
         });
+        tool.shortcuts?.register('mod+\\', (event) => {
+            if (event.repeat) return;
+            tool.panels?.toggleAllCollapsed();
+        }, { allowInInput: true });
     },
     render(ctx) {
         try {

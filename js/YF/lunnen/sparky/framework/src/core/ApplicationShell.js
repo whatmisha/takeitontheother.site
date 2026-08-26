@@ -18,7 +18,7 @@ import { SvgTarget } from '../render/SvgTarget.js?v=20260823-2';
 import { CanvasTarget } from '../render/CanvasTarget.js';
 import { SliderController } from '../ui/SliderController.js?v=20260823-2';
 import { RangeSliderController } from '../ui/RangeSliderController.js';
-import { PanelManager } from '../ui/PanelManager.js';
+import { PanelManager } from '../ui/PanelManager.js?v=20260826-1';
 import { ColorPicker } from '../ui/ColorPicker.js';
 import { UnifiedColorPicker } from '../ui/UnifiedColorPicker.js';
 import { DicePanel } from '../ui/DicePanel.js';

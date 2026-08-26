@@ -79,11 +79,6 @@ body,
     margin: 0 0 20px;
 }
 
-#focusPanel .panel-content {
-    max-height: calc(100vh - 88px);
-    overflow-y: auto;
-}
-
 [data-focus-mode-panel][hidden] {
     display: none;
 }
@@ -194,6 +189,64 @@ body,
 .bottom-buttons button:disabled {
     cursor: wait;
     opacity: 0.45;
+}
+
+.sparky-shortcut-help {
+    position: absolute;
+    right: calc(100% + var(--spacing-lg));
+    bottom: 0;
+}
+
+.sparky-shortcut-help-button {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.sparky-shortcut-help-popup {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 10px);
+    width: 260px;
+    padding: 16px;
+    border-radius: var(--radius);
+    background: var(--color-bg-panel);
+    color: var(--color-text);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+}
+
+.sparky-shortcut-help-popup[hidden] {
+    display: none;
+}
+
+.sparky-shortcut-help-popup h2 {
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.sparky-shortcut-help-popup ul {
+    display: grid;
+    gap: 9px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sparky-shortcut-help-popup li {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    align-items: baseline;
+    gap: 10px;
+    color: var(--color-text-secondary);
+    font-size: 0.76rem;
+    line-height: 1.25;
+}
+
+.sparky-shortcut-help-popup kbd {
+    color: var(--color-text);
+    font: inherit;
+    font-weight: 500;
+    white-space: nowrap;
 }
 
 .sparky-focus-hit-area {

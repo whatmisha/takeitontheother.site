@@ -26,7 +26,9 @@ test('motion blur strength increases shutter duration and sample quality', () =>
     const light = resolveMotionBlur(20);
     const strong = resolveMotionBlur(100);
     assert.equal(light.sampleCount, 3);
-    assert.equal(strong.sampleCount, 9);
+    assert.equal(resolveMotionBlur(50).sampleCount, 5);
+    assert.equal(resolveMotionBlur(75).sampleCount, 9);
+    assert.equal(strong.sampleCount, 15);
     assert.ok(strong.shutterFrames > light.shutterFrames);
     assert.equal(strong.offsets[0], -1.5);
     assert.equal(strong.offsets.at(-1), 1.5);

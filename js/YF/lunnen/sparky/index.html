@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#000000">
     <title>Lunnen Sparky — Parametric Character</title>
     <link rel="stylesheet" href="./framework/css/othersite-styles.css">
-    <link rel="stylesheet" href="./styles/sparky.css?v=20260825-14">
+    <link rel="stylesheet" href="./styles/sparky.css?v=20260826-3">
 </head>
 <body>
     <div class="container">
@@ -332,6 +332,24 @@
         </main>
 
         <nav class="bottom-buttons" aria-label="Export actions">
+            <div class="sparky-shortcut-help" id="shortcutHelp">
+                <button type="button" class="preset-toolbar-share-btn sparky-shortcut-help-button"
+                        id="shortcutHelpBtn" aria-label="Keyboard shortcuts" aria-haspopup="dialog"
+                        aria-expanded="false" aria-controls="shortcutHelpPopup">?</button>
+                <div class="sparky-shortcut-help-popup" id="shortcutHelpPopup" role="dialog"
+                     aria-label="Keyboard shortcuts" hidden>
+                    <h2>Shortcuts</h2>
+                    <ul>
+                        <li><kbd>Space</kbd><span>Play, pause or freeze focus</span></li>
+                        <li><kbd>G</kbd><span>Toggle all guides</span></li>
+                        <li><kbd>⌘ \</kbd><span>Hide or restore panels</span></li>
+                        <li><kbd>⌘ E</kbd><span>Export SVG or MP4</span></li>
+                        <li><kbd>⌘ Z</kbd><span>Undo</span></li>
+                        <li><kbd>⇧ ⌘ Z</kbd><span>Redo</span></li>
+                        <li><kbd>⌘ J</kbd><span>Export settings JSON</span></li>
+                    </ul>
+                </div>
+            </div>
             <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
             <button class="btn-fixed" id="exportSvgBtn" type="button">Export ⌘E</button>
         </nav>
@@ -348,6 +366,6 @@
         </dialog>
     </div>
 
-    <script type="module" src="./tool.js?v=20260826-3"></script>
+    <script type="module" src="./tool.js?v=20260826-8"></script>
 </body>
 </html>

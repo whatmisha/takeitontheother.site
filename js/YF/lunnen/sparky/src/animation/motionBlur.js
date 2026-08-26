@@ -10,8 +10,8 @@ export function resolveMotionBlur(value) {
     }
     const sampleCount = strength <= 25 ? 3
         : strength <= 50 ? 5
-            : strength <= 75 ? 7
-                : 9;
+            : strength <= 75 ? 9
+                : 15;
     const shutterFrames = 3 * strength / 100;
     const offsets = Array.from({ length: sampleCount }, (_, index) => (
         (index / (sampleCount - 1) - 0.5) * shutterFrames
