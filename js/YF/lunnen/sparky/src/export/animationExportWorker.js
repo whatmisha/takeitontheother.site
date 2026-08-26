@@ -6,15 +6,16 @@ import {
     createFocusTimeline,
     resolveFocusStops,
     sampleFocusTimeline
-} from '../animation/focusTimeline.js?v=20260825-8';
+} from '../animation/focusTimeline.js?v=20260826-1';
 import {
     createEyeAnimationTimeline,
     sampleEyeAnimationTimeline
-} from '../animation/eyeTimeline.js?v=20260825-11';
+} from '../animation/eyeTimeline.js?v=20260826-1';
 import {
+    resolveBlinkMotionBlurTime,
     resolveMotionBlur,
     wrapMotionBlurTime
-} from '../animation/motionBlur.js?v=20260825-1';
+} from '../animation/motionBlur.js?v=20260826-2';
 import {
     advanceEyeMotionToTarget,
     createEyeMotionState
@@ -26,7 +27,7 @@ import {
 import {
     createAnimationFrameSamples,
     sampleAnimationFrame
-} from './animationFrameSamples.js?v=20260825-4';
+} from './animationFrameSamples.js?v=20260826-1';
 import { StoredZipBlobBuilder } from './zipStore.js?v=20260825-1';
 import { muxAvcToMp4 } from './mp4Muxer.js';
 import {
@@ -83,10 +84,11 @@ function createMotion(settings, startFocus, motionPath = null) {
     const path = motionPath
         ? rebuildFocusPath(motionPath)
         : generateFocusPathForSettings(settings, startFocus);
-    const stops = resolveFocusStops(settings.motionStops);
+    const stops = resolveFocusStops(settings.motionStopCount, path.anchors.length);
     const timeline = createFocusTimeline(path, {
         duration: settings.motionDuration,
         ...stops,
+        speedVariation: settings.motionSpeedVariation,
         easing: 'ease-in-out',
         seed: settings.motionSeed
     });
@@ -170,16 +172,23 @@ function drawMotionBlurFrame(
     accumulationContext.globalCompositeOperation = 'lighter';
     accumulationContext.globalAlpha = 1 / blur.sampleCount;
     blur.offsets.forEach((offsetFrames) => {
+        const rawTime = centerTime + offsetFrames * 1000 / fps;
         const time = wrapMotionBlurTime(
-            centerTime + offsetFrames * 1000 / fps,
+            rawTime,
             timeline.durationMs
         );
         const focus = sampleFocusTimeline(timeline, time).point;
         const eyes = sampleEyeAnimationTimeline(eyeTimeline, time, settings);
+        const blinkTime = resolveBlinkMotionBlurTime(
+            centerTime,
+            rawTime,
+            timeline.durationMs
+        );
+        const blink = sampleEyeAnimationTimeline(eyeTimeline, blinkTime, settings);
         const scene = buildAnimationFrameScene(settings, focus, { metrics });
         drawAnimationFrame(sampleContext, size, size, settings, focus, {
             ...options,
-            eyeState: eyes,
+            eyeState: { ...eyes, blinkAmount: blink.blinkAmount },
             eyeOffset,
             scene,
             metrics

@@ -176,9 +176,15 @@
                             </div>
 
                             <div class="control-group">
-                                <label for="motionStopsSlider"><span>Stops</span>
-                                    <input type="text" class="value-display" id="motionStopsValue" value="40"></label>
-                                <input type="range" id="motionStopsSlider" min="0" max="100" step="1" value="40">
+                                <label for="motionStopCountSlider"><span>Stops</span>
+                                    <input type="text" class="value-display" id="motionStopCountValue" value="3"></label>
+                                <input type="range" id="motionStopCountSlider" min="1" max="6" step="1" value="3">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="motionSpeedVariationSlider"><span>Speed variation <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="motionSpeedVariationValue" value="0"></label>
+                                <input type="range" id="motionSpeedVariationSlider" min="0" max="100" step="1" value="0">
                             </div>
 
                             <div class="control-group">
@@ -342,6 +348,6 @@
         </dialog>
     </div>
 
-    <script type="module" src="./tool.js?v=20260825-71"></script>
+    <script type="module" src="./tool.js?v=20260826-3"></script>
 </body>
 </html>

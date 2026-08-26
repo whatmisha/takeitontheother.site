@@ -51,7 +51,7 @@ function stopDescriptors(focusTimeline) {
         }
         const arrival = focusTimeline.entries.find((entry) => (
             entry.type === 'move'
-            && focusTimeline.path.segments[entry.segmentIndex].endIndex === anchorIndex
+            && entry.endAnchorIndex === anchorIndex
         ));
         return [{
             anchorIndex,

@@ -27,7 +27,7 @@ test('animation frame samples precompute a complete deterministic loop', () => {
     const timeline = createFocusTimeline(path, {
         duration: 1,
         pause: 24,
-        skipProbability: 60,
+        stopCount: 3,
         seed: 42
     });
     const eyeTimeline = createEyeAnimationTimeline(timeline, {

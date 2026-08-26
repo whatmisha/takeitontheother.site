@@ -21,7 +21,7 @@ const path = generateFocusPath({
 const focusTimeline = createFocusTimeline(path, {
     duration: 5,
     pause: 20,
-    skipProbability: 0,
+    stopCount: 6,
     easing: 'ease-in-out',
     seed: 42
 });
@@ -60,7 +60,7 @@ test('no stop receives more than two blinks even when twelve are requested', () 
     const singleStopTimeline = createFocusTimeline(path, {
         duration: 1,
         pause: 20,
-        skipProbability: 100,
+        stopCount: 1,
         easing: 'ease-in-out',
         seed: 42
     });
@@ -99,7 +99,7 @@ test('one blink at a stop always keeps the manual click timing', () => {
     const shortStopTimeline = createFocusTimeline(path, {
         duration: 1,
         pause: 5,
-        skipProbability: 100,
+        stopCount: 1,
         seed: 42
     });
     const eyeTimeline = createEyeAnimationTimeline(shortStopTimeline, {

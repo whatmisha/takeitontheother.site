@@ -1,6 +1,7 @@
 import { clamp } from '../geometry/vector.js';
 
 export const normalizeMotionBlur = (value) => clamp(Number(value) || 0, 0, 100);
+export const BLINK_MOTION_BLUR_SCALE = 0.25;
 
 export function resolveMotionBlur(value) {
     const strength = normalizeMotionBlur(value);
@@ -21,6 +22,18 @@ export function resolveMotionBlur(value) {
 export function wrapMotionBlurTime(timeMs, durationMs) {
     if (!(durationMs > 0)) return 0;
     return ((timeMs % durationMs) + durationMs) % durationMs;
+}
+
+export function resolveBlinkMotionBlurTime(
+    centerTimeMs,
+    sampleTimeMs,
+    durationMs,
+    scale = BLINK_MOTION_BLUR_SCALE
+) {
+    const center = Number(centerTimeMs) || 0;
+    const sample = Number(sampleTimeMs) || 0;
+    const amount = clamp(Number(scale) || 0, 0, 1);
+    return wrapMotionBlurTime(center + (sample - center) * amount, durationMs);
 }
 
 export function previewMotionBlurDeviation(value) {
@@ -46,7 +59,7 @@ export function resolvePreviewMotionBlurGhosts(value, { reduced = false } = {}) 
         const amount = (index + 1) / count;
         return {
             offsetFrames: -blur.shutterFrames * amount,
-            opacity: strength * (0.2 - amount * 0.1)
+            opacity: strength * (0.25 - amount * 0.1)
         };
     }).reverse();
 }

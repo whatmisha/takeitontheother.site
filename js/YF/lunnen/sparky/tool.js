@@ -7,7 +7,7 @@ import {
 import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-7';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import { createStaticSparkySvg } from './src/export/staticSvgExporter.js?v=20260825-2';
-import { AnimationExporter } from './src/export/animationExporter.js?v=20260825-13';
+import { AnimationExporter } from './src/export/animationExporter.js?v=20260826-2';
 import {
     advanceEyeMotion,
     createEyeMotionState,
@@ -37,18 +37,19 @@ import {
 } from './src/animation/pathRegenerateConfirmation.js?v=20260825-1';
 import {
     createFocusTimeline,
+    normalizeSpeedVariation,
     resolveFocusStops,
     sampleFocusTimeline
-} from './src/animation/focusTimeline.js?v=20260825-8';
+} from './src/animation/focusTimeline.js?v=20260826-1';
 import {
     createEyeAnimationTimeline,
     sampleEyeAnimationTimeline
-} from './src/animation/eyeTimeline.js?v=20260825-11';
+} from './src/animation/eyeTimeline.js?v=20260826-1';
 import {
     normalizeMotionBlur,
     resolvePreviewMotionBlurGhosts,
     wrapMotionBlurTime
-} from './src/animation/motionBlur.js?v=20260825-3';
+} from './src/animation/motionBlur.js?v=20260826-2';
 import { clamp } from './src/geometry/vector.js';
 import {
     focusPointFromPolar,
@@ -121,7 +122,8 @@ const settings = {
     motionPointCount: 6,
     motionComplexity: 0,
     motionSmoothness: 50,
-    motionStops: 40,
+    motionStopCount: 3,
+    motionSpeedVariation: 0,
     motionBlinkCount: 2,
     motionEmotionVariation: 0,
     motionBlur: 0,
@@ -163,7 +165,16 @@ function normalizeIncomingState(source = {}) {
     normalized.motionPointCount = Math.round(clamp(Number(normalized.motionPointCount) || 6, 2, 16));
     normalized.motionComplexity = normalizeMotionComplexity(normalized.motionComplexity);
     normalized.motionSmoothness = normalizeMotionSmoothness(normalized.motionSmoothness);
-    normalized.motionStops = clamp(Number(normalized.motionStops) || 0, 0, 100);
+    const legacyStopPercentage = Number(source.motionStops);
+    const requestedStopCount = Number(source.motionStopCount);
+    normalized.motionStopCount = Number.isFinite(requestedStopCount)
+        ? Math.round(clamp(requestedStopCount, 1, normalized.motionPointCount))
+        : Number.isFinite(legacyStopPercentage)
+            ? 1 + Math.round(
+                (normalized.motionPointCount - 1) * clamp(legacyStopPercentage, 0, 100) / 100
+            )
+            : Math.round(clamp(normalized.motionStopCount, 1, normalized.motionPointCount));
+    normalized.motionSpeedVariation = normalizeSpeedVariation(normalized.motionSpeedVariation);
     normalized.motionBlinkCount = Math.round(clamp(
         Number.isFinite(Number(normalized.motionBlinkCount))
             ? Number(normalized.motionBlinkCount)
@@ -463,10 +474,14 @@ function rebuildFocusAnimation(app, {
     }
     focusAnimation.path = focusAnimation.editedPath
         || generateFocusPathForSettings(app.settings, start);
-    const stops = resolveFocusStops(app.settings.motionStops);
+    const stops = resolveFocusStops(
+        app.settings.motionStopCount,
+        focusAnimation.path.anchors.length
+    );
     focusAnimation.timeline = createFocusTimeline(focusAnimation.path, {
         duration: app.settings.motionDuration,
         ...stops,
+        speedVariation: app.settings.motionSpeedVariation,
         easing: 'ease-in-out',
         seed: app.settings.motionSeed
     });
@@ -622,6 +637,8 @@ function syncFocusModeUI(app) {
 
 function syncFocusAnimationControls(app) {
     syncFocusModeUI(app);
+    app.sliders?.updateLimits?.('motionStopCountSlider', 1, app.settings.motionPointCount);
+    app.sliders?.setDisplayValue?.('motionStopCountSlider', app.settings.motionStopCount);
     updateFocusAnimationButtons();
 }
 
@@ -639,6 +656,7 @@ function applyFocusMode(app) {
 
 function bindFocusAnimation(app) {
     focusAnimationReady = true;
+    app.sliders?.updateLimits?.('motionStopCountSlider', 1, app.settings.motionPointCount);
     document.querySelectorAll('input[name="focusMode"]').forEach((input) => {
         input.addEventListener('change', () => {
             if (!input.checked) return;
@@ -673,8 +691,19 @@ function bindFocusAnimation(app) {
         app.settingsStore.set('motionSeed', normalizeMotionSeed(values[0]));
     });
 
+    let syncingMotionStopCount = false;
+    app.settingsStore.subscribe('motionPointCount', (pointCount) => {
+        app.sliders?.updateLimits?.('motionStopCountSlider', 1, pointCount);
+        if (app.settings.motionStopCount > pointCount) {
+            syncingMotionStopCount = true;
+            app.settingsStore.set('motionStopCount', pointCount);
+            syncingMotionStopCount = false;
+        }
+        if (app.settings.focusMode === 'animate') {
+            rebuildFocusAnimation(app, { regenerate: true });
+        }
+    });
     [
-        'motionPointCount',
         'motionComplexity',
         'motionSeed'
     ].forEach((setting) => {
@@ -719,9 +748,11 @@ function bindFocusAnimation(app) {
     });
     [
         'motionDuration',
-        'motionStops'
+        'motionStopCount',
+        'motionSpeedVariation'
     ].forEach((setting) => {
         app.settingsStore.subscribe(setting, () => {
+            if (setting === 'motionStopCount' && syncingMotionStopCount) return;
             if (app.settings.focusMode === 'animate') {
                 rebuildFocusAnimation(app, {
                     restart: false,
@@ -1744,7 +1775,8 @@ const app = defineTool({
             { id: 'motionPointCountSlider', valueId: 'motionPointCountValue', setting: 'motionPointCount', min: 2, max: 16, decimals: 0, baseStep: 1, shiftStep: 2 },
             { id: 'motionComplexitySlider', valueId: 'motionComplexityValue', setting: 'motionComplexity', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'motionSmoothnessSlider', valueId: 'motionSmoothnessValue', setting: 'motionSmoothness', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
-            { id: 'motionStopsSlider', valueId: 'motionStopsValue', setting: 'motionStops', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'motionStopCountSlider', valueId: 'motionStopCountValue', setting: 'motionStopCount', min: 1, max: 6, decimals: 0, baseStep: 1, shiftStep: 2 },
+            { id: 'motionSpeedVariationSlider', valueId: 'motionSpeedVariationValue', setting: 'motionSpeedVariation', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'motionBlinkCountSlider', valueId: 'motionBlinkCountValue', setting: 'motionBlinkCount', min: 0, max: 12, decimals: 0, baseStep: 1, shiftStep: 2 },
             { id: 'motionEmotionVariationSlider', valueId: 'motionEmotionVariationValue', setting: 'motionEmotionVariation', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'motionBlurSlider', valueId: 'motionBlurValue', setting: 'motionBlur', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
@@ -1822,7 +1854,7 @@ const app = defineTool({
             'focusAngle', 'focusDistance', 'rayLength', 'rayWidth', 'roundness', 'cornerSmoothing',
             'rayCount', 'angleSpan', 'boundaryCenterX', 'boundaryCenterY', 'boundaryRadius',
             'eyePerspective', 'eyeSize', 'eyeDistance', 'cute', 'angry',
-            'motionDuration', 'motionPointCount', 'motionComplexity', 'motionSmoothness', 'motionStops',
+            'motionDuration', 'motionPointCount', 'motionComplexity', 'motionSmoothness', 'motionStopCount', 'motionSpeedVariation',
             'motionBlinkCount', 'motionEmotionVariation', 'motionBlur',
             'motionSeed'
         ],

@@ -96,14 +96,14 @@ function settingsFor(scenario) {
         motionDuration: scenario.duration,
         motionPointCount: scenario.points,
         motionComplexity: scenario.complexity,
-        motionStops: scenario.stops,
+        motionStopCount: 1 + Math.round((scenario.points - 1) * scenario.stops / 100),
         motionBlinkCount: scenario.blinks
     };
 }
 
 function createMotion(settings) {
     const path = generateFocusPathForSettings(settings, START_FOCUS);
-    const stops = resolveFocusStops(settings.motionStops);
+    const stops = resolveFocusStops(settings.motionStopCount, path.anchors.length);
     const timeline = createFocusTimeline(path, {
         duration: settings.motionDuration,
         ...stops,
