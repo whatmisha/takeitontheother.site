@@ -3,11 +3,11 @@ import { PresetStore } from './framework/src/preset/PresetStore.js';
 import {
     DEFAULT_GEOMETRY,
     buildCharacterGeometry
-} from './src/geometry/characterGeometry.js?v=20260823-5';
+} from './src/geometry/characterGeometry.js?v=20260827-1';
 import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-7';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import { createStaticSparkySvg } from './src/export/staticSvgExporter.js?v=20260825-2';
-import { AnimationExporter } from './src/export/animationExporter.js?v=20260826-4';
+import { AnimationExporter } from './src/export/animationExporter.js?v=20260827-2';
 import {
     advanceEyeMotion,
     createEyeMotionState,
@@ -21,25 +21,25 @@ import {
     triggerBlink
 } from './src/animation/blink.js?v=20260822-6';
 import {
+    cubicBezierPoint,
     generateFocusPathForSettings,
     normalizeMotionComplexity,
     normalizeMotionSmoothness,
     normalizeMotionSeed,
+    rebuildFocusPath,
     serializeFocusPath
-} from './src/animation/focusPath.js?v=20260826-1';
+} from './src/animation/focusPath.js?v=20260827-2';
 import {
     focusPathEditorHandlePoints,
-    importedClosureEditorControls,
-    moveImportedClosureAnchor,
-    moveImportedClosureHandle,
     moveFocusPathAnchor,
-    moveFocusPathHandle
-} from './src/animation/focusPathEditor.js?v=20260826-1';
-import { importSvgMotionPath } from './src/animation/svgPathImporter.js?v=20260826-2';
+    moveFocusPathHandle,
+    toggleFocusPathAnchorHandles
+} from './src/animation/focusPathEditor.js?v=20260827-2';
+import { importSvgMotionPath } from './src/animation/svgPathImporter.js?v=20260827-1';
 import {
     CENTER_FOCUS_TRANSITION_DURATION_MS,
-    sampleLinearFocusTransition
-} from './src/animation/focusTransition.js?v=20260826-1';
+    sampleCenterFocusTransition
+} from './src/animation/focusTransition.js?v=20260826-2';
 import {
     confirmPathRegeneration
 } from './src/animation/pathRegenerateConfirmation.js?v=20260825-1';
@@ -60,10 +60,11 @@ import {
 } from './src/animation/motionBlur.js?v=20260826-3';
 import { clamp } from './src/geometry/vector.js';
 import {
-    createExtendedFocusRegion,
+    constrainFocusPoint,
+    createMotionPathRegion,
     focusPointFromPolar,
     focusPointToPolar
-} from './src/geometry/focusBounds.js?v=20260823-6';
+} from './src/geometry/focusBounds.js?v=20260827-1';
 import {
     centeredFocus,
     normalizedFocus,
@@ -75,6 +76,7 @@ import {
     COORDINATE_SPACE_VERSION,
     migrateCoordinateSpace
 } from './src/geometry/coordinateSpace.js?v=20260823-2';
+import { applyPresetPlaybackPolicy } from './src/state/presetAnimation.js?v=20260827-2';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const GUIDE_CLIP_ID = 'sparky-artboard-clip';
@@ -241,10 +243,11 @@ function activeRenderSettings(current) {
         return { ...settings, focusX: focus.x, focusY: focus.y };
     }
     if (current.focusMode === 'animate' && focusAnimation.currentFocus) {
+        const focus = constrainFocusPoint(focusAnimation.currentFocus, current);
         return {
             ...current,
-            focusX: focusAnimation.currentFocus.x,
-            focusY: focusAnimation.currentFocus.y
+            focusX: focus.x,
+            focusY: focus.y
         };
     }
     if (current.focusMode === 'manual' && manualFocusTransition?.current) {
@@ -267,7 +270,11 @@ function effectivePersistenceState(app) {
 }
 
 function extractEffectiveState(app) {
-    return extractState(effectivePersistenceState(app));
+    const snapshot = extractState(effectivePersistenceState(app));
+    if (focusAnimation.editedPath && focusAnimation.path) {
+        snapshot.motionPath = serializeFocusPath(focusAnimation.path);
+    }
+    return snapshot;
 }
 
 function setEyePlacementMode(app, mode) {
@@ -499,21 +506,12 @@ function syncImportedMotionPathUI(app) {
     }
     const editButton = document.getElementById('motionEditPathBtn');
     if (editButton) {
-        const locked = imported && !importedPath.importMeta.wasOpen;
-        editButton.disabled = locked;
-        editButton.title = locked
-            ? 'This imported path is already closed.'
-            : 'Edit path';
-        if (locked && focusAnimation.editing) {
-            focusAnimation.editing = false;
-            focusAnimation.selectedEditorControl = null;
-        }
+        editButton.disabled = false;
+        editButton.title = 'Edit path';
     }
     const hint = document.getElementById('motionEditorHint');
     if (hint) {
-        hint.textContent = imported
-            ? 'Drag only the generated closure and its Bézier handles.'
-            : 'Drag points and Bézier handles on the canvas.';
+        hint.textContent = 'Drag points and existing handles. Double-click a point to add or remove handles.';
     }
 }
 
@@ -652,10 +650,8 @@ function pauseFocusAnimation(app) {
 }
 
 function setFocusPathEditing(app, editing) {
-    const importedPath = activeImportedMotionPath();
     const next = Boolean(editing)
-        && app.settings.focusMode === 'animate'
-        && (!importedPath || importedPath.importMeta.wasOpen);
+        && app.settings.focusMode === 'animate';
     if (next) {
         pauseFocusAnimation(app);
     }
@@ -737,6 +733,8 @@ function syncRadioGroup(name, value) {
 function syncFocusModeUI(app) {
     const animate = app.settings.focusMode === 'animate';
     syncRadioGroup('focusMode', animate ? 'animate' : 'manual');
+    document.getElementById('focusPanel')
+        ?.classList.toggle('sparky-focus-panel--animate', animate);
     document.getElementById('focusManualControls')?.toggleAttribute('hidden', animate);
     document.getElementById('focusAnimationControls')?.toggleAttribute('hidden', !animate);
     document.getElementById('showMotionPathToggle')?.toggleAttribute('hidden', !animate);
@@ -809,7 +807,7 @@ function bindMotionPathImport(app) {
         }
         if (!await confirmMotionPathReplacement(app)) return;
         try {
-            const region = createExtendedFocusRegion(app.settings);
+            const region = createMotionPathRegion(app.settings);
             const imported = importSvgMotionPath(await file.text(), {
                 center: region.center,
                 radius: region.radius,
@@ -822,6 +820,9 @@ function bindMotionPathImport(app) {
             focusAnimation.selectedEditorControl = null;
             rebuildFocusAnimation(app, { restart: true, regenerate: false });
             syncFocusAnimationControls(app);
+            app.presets?.markDirty();
+            app.history?.beginTransaction('motion-path-import');
+            app.history?.endTransaction();
         } catch (error) {
             showMotionImportError(app, error);
         }
@@ -1151,13 +1152,19 @@ function previewMotionBlurGhosts(state) {
         reduced: performance.now() < previewBlurReducedUntil
     });
     const currentTime = focusAnimation.elapsedMs;
-    const current = sampleFocusTimeline(focusAnimation.timeline, currentTime).point;
+    const current = constrainFocusPoint(
+        sampleFocusTimeline(focusAnimation.timeline, currentTime).point,
+        state
+    );
     return descriptors.flatMap(({ offsetFrames, opacity }) => {
         const time = wrapMotionBlurTime(
             currentTime + offsetFrames * 1000 / 60,
             focusAnimation.timeline.durationMs
         );
-        const focus = sampleFocusTimeline(focusAnimation.timeline, time).point;
+        const focus = constrainFocusPoint(
+            sampleFocusTimeline(focusAnimation.timeline, time).point,
+            state
+        );
         if (Math.hypot(focus.x - current.x, focus.y - current.y) < 0.15) return [];
         const geometry = buildCharacterGeometry({
             ...state,
@@ -1167,6 +1174,26 @@ function previewMotionBlurGhosts(state) {
         });
         return [{ path: geometry.rounded.path, opacity }];
     });
+}
+
+function effectiveMotionPathData(path, state) {
+    const segmentCount = path?.segments?.length || 0;
+    if (!segmentCount) return '';
+    const samplesPerSegment = Math.max(4, Math.min(24, Math.ceil(384 / segmentCount)));
+    const commands = [];
+    path.segments.forEach((segment, segmentIndex) => {
+        for (let sampleIndex = segmentIndex === 0 ? 0 : 1;
+            sampleIndex <= samplesPerSegment;
+            sampleIndex += 1) {
+            const raw = cubicBezierPoint(segment, sampleIndex / samplesPerSegment);
+            const focus = constrainFocusPoint(raw, state);
+            const x = Number(focus.x.toFixed(3));
+            const y = Number(focus.y.toFixed(3));
+            commands.push(`${commands.length ? 'L' : 'M'} ${x} ${y}`);
+        }
+    });
+    commands.push('Z');
+    return commands.join(' ');
 }
 
 function createDefinitions(width, height, headPath) {
@@ -1312,34 +1339,42 @@ function drawGuides(ctx, geometry) {
         && (state.showMotionPath || focusAnimation.editing)
         && focusAnimation.path) {
         const editing = focusAnimation.editing;
-        const importedClosureControls = editing && focusAnimation.path.importMeta?.wasOpen
-            ? importedClosureEditorControls(focusAnimation.path)
-            : null;
+        const editorHandles = editing
+            ? focusAnimation.path.anchors.flatMap((anchor, index) => {
+                const handles = focusPathEditorHandlePoints(focusAnimation.path, index);
+                return [
+                    { side: 'incoming', point: handles.incoming },
+                    { side: 'outgoing', point: handles.outgoing }
+                ].filter((entry) => entry.point).map((entry) => ({
+                    ...entry,
+                    anchor,
+                    index
+                }));
+            })
+            : [];
         const motionGuides = create('g', {
             'data-layer': 'motion-path-preview',
             'data-export-exclude': 'true'
         });
         if (editing) {
-            const handleSegments = importedClosureControls
-                ? focusAnimation.path.segments.filter((segment) => segment.role === 'closure')
-                : focusAnimation.path.segments;
-            const handlesPath = handleSegments.map((segment) => (
-                `M ${segment.start.x} ${segment.start.y}`
-                + ` L ${segment.control1.x} ${segment.control1.y}`
-                + ` M ${segment.end.x} ${segment.end.y}`
-                + ` L ${segment.control2.x} ${segment.control2.y}`
+            const handlesPath = editorHandles.map(({ anchor, point }) => (
+                `M ${anchor.x} ${anchor.y} L ${point.x} ${point.y}`
             )).join(' ');
-            motionGuides.appendChild(create('path', {
-                d: handlesPath,
-                stroke: '#00ff2a',
-                opacity: 0.32,
-                ...commonStroke,
-                'stroke-width': 0.7,
-                'stroke-dasharray': '2 2'
-            }));
+            if (handlesPath) {
+                motionGuides.appendChild(create('path', {
+                    d: handlesPath,
+                    stroke: '#00ff2a',
+                    opacity: 0.32,
+                    ...commonStroke,
+                    'stroke-width': 0.7,
+                    'stroke-dasharray': '2 2'
+                }));
+            }
         }
         motionGuides.appendChild(create('path', {
-            d: focusAnimation.path.path,
+            d: editing
+                ? focusAnimation.path.path
+                : effectiveMotionPathData(focusAnimation.path, state),
             stroke: '#00ff2a',
             opacity: editing ? 0.92 : 0.72,
             ...commonStroke,
@@ -1348,98 +1383,57 @@ function drawGuides(ctx, geometry) {
             'stroke-linejoin': 'round'
         }));
         if (editing) {
-            if (importedClosureControls) {
-                importedClosureControls.handles.forEach((handle) => {
-                    const key = `closure-handle:${handle.segmentIndex}:${handle.control}`;
-                    motionGuides.appendChild(create('circle', {
-                        cx: handle.point.x,
-                        cy: handle.point.y,
-                        r: 3.1,
-                        fill: state.backgroundColor,
-                        stroke: '#00ff2a',
-                        'stroke-width': 0.9,
-                        'vector-effect': 'non-scaling-stroke',
-                        'pointer-events': 'none'
-                    }));
-                    motionGuides.appendChild(create('circle', {
-                        cx: handle.point.x,
-                        cy: handle.point.y,
-                        r: 8,
-                        fill: 'transparent',
-                        class: 'sparky-motion-editor-control',
-                        'data-motion-editor-kind': 'closure-handle',
-                        'data-motion-editor-segment': handle.segmentIndex,
-                        'data-motion-editor-control': handle.control,
-                        'data-selected': focusAnimation.selectedEditorControl === key
-                            ? 'true'
-                            : 'false'
-                    }));
-                });
-            } else {
-                focusAnimation.path.anchors.forEach((anchor, index) => {
-                    const handles = focusPathEditorHandlePoints(focusAnimation.path, index);
-                    [
-                        { side: 'incoming', point: handles.incoming },
-                        { side: 'outgoing', point: handles.outgoing }
-                    ].forEach(({ side, point }) => {
-                        const key = `handle:${index}:${side}`;
-                        motionGuides.appendChild(create('circle', {
-                            cx: point.x,
-                            cy: point.y,
-                            r: 3.1,
-                            fill: state.backgroundColor,
-                            stroke: '#00ff2a',
-                            'stroke-width': 0.9,
-                            'vector-effect': 'non-scaling-stroke',
-                            'pointer-events': 'none'
-                        }));
-                        motionGuides.appendChild(create('circle', {
-                            cx: point.x,
-                            cy: point.y,
-                            r: 8,
-                            fill: 'transparent',
-                            class: 'sparky-motion-editor-control',
-                            'data-motion-editor-kind': 'handle',
-                            'data-motion-editor-index': index,
-                            'data-motion-editor-side': side,
-                            'data-selected': focusAnimation.selectedEditorControl === key
-                                ? 'true'
-                                : 'false'
-                        }));
-                    });
-                });
-            }
+            editorHandles.forEach(({ index, side, point }) => {
+                const key = `handle:${index}:${side}`;
+                motionGuides.appendChild(create('circle', {
+                    cx: point.x,
+                    cy: point.y,
+                    r: 3.1,
+                    fill: state.backgroundColor,
+                    stroke: '#00ff2a',
+                    'stroke-width': 0.9,
+                    'vector-effect': 'non-scaling-stroke',
+                    'pointer-events': 'none'
+                }));
+                motionGuides.appendChild(create('circle', {
+                    cx: point.x,
+                    cy: point.y,
+                    r: 8,
+                    fill: 'transparent',
+                    class: 'sparky-motion-editor-control',
+                    'data-motion-editor-kind': 'handle',
+                    'data-motion-editor-index': index,
+                    'data-motion-editor-side': side,
+                    'data-selected': focusAnimation.selectedEditorControl === key
+                        ? 'true'
+                        : 'false'
+                }));
+            });
         }
-        const importedEditableAnchors = new Set(
-            importedClosureControls?.anchors.map((entry) => entry.anchorIndex) || []
-        );
         focusAnimation.path.anchors.forEach((anchor, index) => {
             const activeStop = focusAnimation.timeline?.activeStops?.[index] !== false;
-            const editableAnchor = editing
-                && (!importedClosureControls || importedEditableAnchors.has(index));
+            const editableAnchor = editing;
+            const guideAnchor = editing ? anchor : constrainFocusPoint(anchor, state);
             motionGuides.appendChild(create('circle', {
-                cx: anchor.x,
-                cy: anchor.y,
+                cx: guideAnchor.x,
+                cy: guideAnchor.y,
                 r: editableAnchor ? 4.2 : index === 0 ? 3.4 : 2.5,
                 fill: activeStop ? '#00ff2a' : state.backgroundColor,
                 stroke: '#00ff2a',
                 'stroke-width': editableAnchor ? 1 : 0.75,
-                opacity: importedClosureControls && !editableAnchor
-                    ? 0.42
-                    : activeStop ? 0.9 : 0.5,
+                opacity: activeStop ? 0.9 : 0.5,
                 'vector-effect': 'non-scaling-stroke',
                 'pointer-events': 'none'
             }));
             if (editableAnchor) {
-                const kind = importedClosureControls ? 'closure-anchor' : 'anchor';
-                const key = `${kind}:${index}`;
+                const key = `anchor:${index}`;
                 motionGuides.appendChild(create('circle', {
                     cx: anchor.x,
                     cy: anchor.y,
                     r: 10,
                     fill: 'transparent',
                     class: 'sparky-motion-editor-control sparky-motion-editor-anchor',
-                    'data-motion-editor-kind': kind,
+                    'data-motion-editor-kind': 'anchor',
                     'data-motion-editor-index': index,
                     'data-selected': focusAnimation.selectedEditorControl === key
                         ? 'true'
@@ -1449,9 +1443,10 @@ function drawGuides(ctx, geometry) {
         });
         const current = focusAnimation.currentFocus;
         if (current && !editing) {
+            const effectiveCurrent = constrainFocusPoint(current, state);
             motionGuides.appendChild(create('circle', {
-                cx: current.x,
-                cy: current.y,
+                cx: effectiveCurrent.x,
+                cy: effectiveCurrent.y,
                 r: 4.5,
                 fill: state.backgroundColor,
                 stroke: '#00ff2a',
@@ -1665,11 +1660,20 @@ function syncFocusControls(app) {
 function applyState(app, source) {
     cancelManualFocusTransition();
     forceGlobalPlacement(app);
-    focusAnimation.editedPath = null;
-    focusAnimation.manuallyEdited = false;
-    focusAnimation.editing = false;
+    const keepEditing = focusAnimation.editing;
+    let restoredMotionPath = null;
+    if (source?.motionPath) {
+        try {
+            restoredMotionPath = rebuildFocusPath(source.motionPath);
+        } catch (error) {
+            console.warn('Could not restore motion path from state.', error);
+        }
+    }
+    focusAnimation.editedPath = restoredMotionPath;
+    focusAnimation.manuallyEdited = Boolean(restoredMotionPath);
     focusAnimation.selectedEditorControl = null;
     const normalized = normalizeIncomingState(source);
+    focusAnimation.editing = Boolean(keepEditing && normalized.focusMode === 'animate');
     app.settingsStore.setMultiple(normalized, true);
     desktopFollowFocus = normalized.followCursor
         ? { x: normalized.focusX, y: normalized.focusY }
@@ -1678,6 +1682,11 @@ function applyState(app, source) {
         syncFocusAnimationControls(app);
         applyFocusMode(app);
     }
+}
+
+function applyPresetState(app, preset) {
+    applyPresetPlaybackPolicy(focusAnimation, preset);
+    applyState(app, preset);
 }
 
 function pointFromPointer(svg, event) {
@@ -1778,26 +1787,13 @@ function bindMotionPathEditing(app) {
         if (!drag || event.pointerId !== drag.pointerId || !focusAnimation.path) return;
         const point = pointFromPointer(svg, event);
         if (!point) return;
-        if (drag.kind === 'closure-anchor') {
-            focusAnimation.path = moveImportedClosureAnchor(
-                focusAnimation.path,
-                drag.index,
-                point
-            );
-        } else if (drag.kind === 'closure-handle') {
-            focusAnimation.path = moveImportedClosureHandle(
-                focusAnimation.path,
-                drag.segmentIndex,
-                drag.control,
-                point
-            );
-        } else {
-            focusAnimation.path = drag.kind === 'anchor'
-                ? moveFocusPathAnchor(focusAnimation.path, drag.index, point)
-                : moveFocusPathHandle(focusAnimation.path, drag.index, drag.side, point);
-        }
+        focusAnimation.path = drag.kind === 'anchor'
+            ? moveFocusPathAnchor(focusAnimation.path, drag.index, point)
+            : moveFocusPathHandle(focusAnimation.path, drag.index, drag.side, point);
         focusAnimation.editedPath = focusAnimation.path;
         focusAnimation.manuallyEdited = true;
+        drag.changed = true;
+        app.presets?.markDirty();
         rebuildFocusAnimation(app, {
             restart: false,
             schedule: false,
@@ -1813,14 +1809,9 @@ function bindMotionPathEditing(app) {
         if (!control) return;
         const index = Number(control.dataset.motionEditorIndex);
         const kind = control.dataset.motionEditorKind;
-        const segmentIndex = Number(control.dataset.motionEditorSegment);
-        const supported = kind === 'anchor'
-            || kind === 'handle'
-            || kind === 'closure-anchor'
-            || kind === 'closure-handle';
+        const supported = kind === 'anchor' || kind === 'handle';
         if (!supported) return;
-        if ((kind === 'closure-handle' && !Number.isInteger(segmentIndex))
-            || (kind !== 'closure-handle' && !Number.isInteger(index))) return;
+        if (!Number.isInteger(index)) return;
         event.preventDefault();
         event.stopPropagation();
         drag = {
@@ -1828,20 +1819,13 @@ function bindMotionPathEditing(app) {
             kind,
             index,
             side: control.dataset.motionEditorSide || 'outgoing',
-            segmentIndex,
-            control: control.dataset.motionEditorControl || 'control1'
+            changed: false
         };
-        if (kind === 'closure-handle') {
-            focusAnimation.selectedEditorControl = `closure-handle:${segmentIndex}:${drag.control}`;
-        } else if (kind === 'closure-anchor') {
-            focusAnimation.selectedEditorControl = `closure-anchor:${index}`;
-        } else {
-            focusAnimation.selectedEditorControl = kind === 'anchor'
-                ? `anchor:${index}`
-                : `handle:${index}:${drag.side}`;
-        }
+        focusAnimation.selectedEditorControl = kind === 'anchor'
+            ? `anchor:${index}`
+            : `handle:${index}:${drag.side}`;
+        app.history?.beginTransaction('motion-path-drag');
         svg.setPointerCapture(event.pointerId);
-        app.renderNow();
     });
     svg.addEventListener('pointermove', (event) => {
         if (!drag || event.pointerId !== drag.pointerId) return;
@@ -1851,11 +1835,36 @@ function bindMotionPathEditing(app) {
     const finish = (event) => {
         if (!drag || event.pointerId !== drag.pointerId) return;
         if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
+        const changed = drag.changed;
+        app.history?.endTransaction();
         drag = null;
-        app.renderNow();
+        if (changed) app.renderNow();
     };
     svg.addEventListener('pointerup', finish);
     svg.addEventListener('pointercancel', finish);
+    svg.addEventListener('dblclick', (event) => {
+        if (!focusAnimation.editing
+            || app.settings.focusMode !== 'animate'
+            || isMobileShowcase()
+            || !focusAnimation.path) return;
+        const control = event.target.closest?.('[data-motion-editor-kind="anchor"]');
+        const index = Number(control?.dataset.motionEditorIndex);
+        if (!control || !Number.isInteger(index)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        app.history?.beginTransaction('motion-path-handles');
+        focusAnimation.path = toggleFocusPathAnchorHandles(focusAnimation.path, index);
+        focusAnimation.editedPath = focusAnimation.path;
+        focusAnimation.manuallyEdited = true;
+        focusAnimation.selectedEditorControl = `anchor:${index}`;
+        app.presets?.markDirty();
+        rebuildFocusAnimation(app, {
+            restart: false,
+            schedule: false,
+            regenerate: false
+        });
+        app.history?.endTransaction();
+    });
 }
 
 function setFocusControls(app, polar, { displayOnly = false } = {}) {
@@ -2037,7 +2046,7 @@ function animateFocusToCenter(app) {
             1,
             (timestamp - transition.startedAt) / CENTER_FOCUS_TRANSITION_DURATION_MS
         );
-        transition.current = sampleLinearFocusTransition(
+        transition.current = sampleCenterFocusTransition(
             transition.start,
             transition.target,
             progress
@@ -2226,7 +2235,7 @@ const app = defineTool({
     snapshot: (tool) => extractEffectiveState(tool),
     restore: (tool, snapshot) => applyState(tool, snapshot),
     collectPreset: (tool) => extractEffectiveState(tool),
-    applyPreset: (tool, preset) => applyState(tool, preset),
+    applyPreset: (tool, preset) => applyPresetState(tool, preset),
     syncControls: (tool) => {
         syncFocusControls(tool);
         syncFocusAnimationControls(tool);

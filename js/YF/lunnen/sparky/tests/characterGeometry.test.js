@@ -62,6 +62,21 @@ test('both ends of every side and bisector guide meet the boundary circle', () =
     });
 });
 
+test('a motion-path focus on the exact guide boundary remains constructible', () => {
+    const geometry = buildCharacterGeometry({
+        ...DEFAULT_GEOMETRY,
+        focusX: DEFAULT_GEOMETRY.boundaryCenterX + DEFAULT_GEOMETRY.boundaryRadius,
+        focusY: DEFAULT_GEOMETRY.boundaryCenterY
+    });
+    assert.ok(Number.isFinite(geometry.focus.x));
+    assert.ok(Number.isFinite(geometry.focus.y));
+    assert.ok(
+        distance(geometry.focus, geometry.boundary.center)
+        < geometry.boundary.radius
+    );
+    assert.ok(geometry.rounded.path.length > 0);
+});
+
 test('extended guides also terminate on a rotated ellipse', () => {
     const geometry = buildCharacterGeometry({
         boundaryType: 'ellipse',

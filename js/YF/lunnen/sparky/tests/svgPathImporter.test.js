@@ -11,8 +11,12 @@ import {
 import { pathIsInsideRegion, serializeFocusPath, rebuildFocusPath } from '../src/animation/focusPath.js';
 import {
     importedClosureEditorControls,
+    focusPathEditorHandlePoints,
+    moveFocusPathAnchor,
+    moveFocusPathHandle,
     moveImportedClosureAnchor,
-    moveImportedClosureHandle
+    moveImportedClosureHandle,
+    toggleFocusPathAnchorHandles
 } from '../src/animation/focusPathEditor.js';
 
 const options = {
@@ -58,7 +62,7 @@ test('polygons convert to a closed straight path', () => {
     assert.ok(parsed.segments.every((segment) => segment.kind === 'line'));
 });
 
-test('a single SVG polyline passes object validation and receives a smooth closure', () => {
+test('a single angular SVG polyline receives one straight closure', () => {
     const originalDOMParser = globalThis.DOMParser;
     const points = '521.7191918 255.1942894 267.2320092 .7071067 .7071068 267.231948 267.2320092 533.7568504 395.5080101 405.4807884 649.9951928 659.967971 916.5200341 393.4431297 649.9951928 126.9182273';
     const root = {
@@ -83,12 +87,38 @@ test('a single SVG polyline passes object validation and receives a smooth closu
     try {
         const path = importSvgMotionPath('<svg><polyline/></svg>', options);
         assert.equal(path.importMeta.wasOpen, true);
-        assert.equal(path.segments.filter((segment) => segment.role === 'closure').length, 2);
+        assert.equal(path.importMeta.closureKind, 'line');
+        const closure = path.segments.filter((segment) => segment.role === 'closure');
+        assert.equal(closure.length, 1);
+        assert.equal(closure[0].kind, 'line');
+        assert.deepEqual(importedClosureEditorControls(path), { anchors: [], handles: [] });
         assert.equal(pathIsInsideRegion(path, 1e-4), true);
     } finally {
         if (originalDOMParser) globalThis.DOMParser = originalDOMParser;
         else delete globalThis.DOMParser;
     }
+});
+
+test('straight pairs at both open ends use a line even when the middle contains a curve', () => {
+    const path = importSvgPathData(
+        'M0 0 L20 0 L40 20 C60 35 60 65 40 80 L20 100 L0 80',
+        options
+    );
+    const closure = path.segments.filter((segment) => segment.role === 'closure');
+    assert.equal(path.importMeta.closureKind, 'line');
+    assert.equal(closure.length, 1);
+    assert.equal(closure[0].kind, 'line');
+});
+
+test('a curved segment among either endpoint pair keeps the smooth closure', () => {
+    const path = importSvgPathData(
+        'M0 0 C12 -8 28 -8 40 0 L80 20 L80 80 L40 100 L0 80',
+        options
+    );
+    const closure = path.segments.filter((segment) => segment.role === 'closure');
+    assert.equal(path.importMeta.closureKind, 'smooth');
+    assert.equal(closure.length, 2);
+    assert.ok(closure.every((segment) => segment.kind === 'curve'));
 });
 
 test('closed imports fit the focus circle and expose no closure editor', () => {
@@ -98,6 +128,65 @@ test('closed imports fit the focus circle and expose no closure editor', () => {
     assert.equal(path.importMeta.fileName, 'motion.svg');
     assert.equal(pathIsInsideRegion(path, 1e-4), true);
     assert.deepEqual(importedClosureEditorControls(path), { anchors: [], handles: [] });
+});
+
+test('import keeps every anchor and control inside the circle with boundary contact', () => {
+    const path = importSvgPathData(
+        'M0 0 C80 -160 180 -160 260 0 C340 160 80 240 0 0 Z',
+        options
+    );
+    const controls = path.segments.flatMap((segment) => [
+        segment.start,
+        segment.control1,
+        segment.control2,
+        segment.end
+    ]);
+    const radii = controls.map((point) => Math.hypot(
+        point.x - path.center.x,
+        point.y - path.center.y
+    ));
+    assert.ok(radii.every((radius) => radius <= path.radius + 1e-6));
+    assert.ok(Math.max(...radii) >= path.radius - 1e-6);
+});
+
+test('all imported anchors are editable and imported handles may leave the circle', () => {
+    const path = importSvgPathData('M0 0 L100 0 C140 20 140 80 100 100 L0 100 Z', options);
+    const movedAnchor = moveFocusPathAnchor(path, 1, { x: 900, y: 240 });
+    assert.ok(Math.hypot(
+        movedAnchor.anchors[1].x - movedAnchor.center.x,
+        movedAnchor.anchors[1].y - movedAnchor.center.y
+    ) <= movedAnchor.radius + 1e-6);
+
+    const curvedAnchor = movedAnchor.anchors.findIndex((_, index) => (
+        focusPathEditorHandlePoints(movedAnchor, index).outgoing
+    ));
+    assert.ok(curvedAnchor >= 0);
+    const movedHandle = moveFocusPathHandle(
+        movedAnchor,
+        curvedAnchor,
+        'outgoing',
+        { x: 800, y: 240 }
+    );
+    assert.ok(Math.hypot(
+        movedHandle.segments[curvedAnchor].control1.x - movedHandle.center.x,
+        movedHandle.segments[curvedAnchor].control1.y - movedHandle.center.y
+    ) > movedHandle.radius);
+});
+
+test('straight imported anchors gain handles only after an explicit toggle', () => {
+    const path = importSvgPathData('M0 0 L100 0 L100 100 L0 100 Z', options);
+    assert.deepEqual(focusPathEditorHandlePoints(path, 0), {
+        incoming: null,
+        outgoing: null
+    });
+    const curved = toggleFocusPathAnchorHandles(path, 0);
+    assert.ok(focusPathEditorHandlePoints(curved, 0).incoming);
+    assert.ok(focusPathEditorHandlePoints(curved, 0).outgoing);
+    const straightAgain = toggleFocusPathAnchorHandles(curved, 0);
+    assert.deepEqual(focusPathEditorHandlePoints(straightAgain, 0), {
+        incoming: null,
+        outgoing: null
+    });
 });
 
 test('the imported loop starts at the source point nearest the current Focus', () => {
@@ -125,6 +214,7 @@ test('open imports gain exactly two editable closure curves', () => {
     const closureSegments = path.segments.filter((segment) => segment.role === 'closure');
     const controls = importedClosureEditorControls(path);
     assert.equal(path.importMeta.wasOpen, true);
+    assert.equal(path.importMeta.closureKind, 'smooth');
     assert.equal(closureSegments.length, 2);
     assert.equal(controls.anchors.length, 1);
     assert.equal(controls.handles.length, 4);

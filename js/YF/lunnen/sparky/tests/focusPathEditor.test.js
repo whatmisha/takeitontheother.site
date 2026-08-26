@@ -9,12 +9,12 @@ import {
     tangentContinuityAtAnchor
 } from '../src/animation/focusPath.js';
 import {
-    ensureFocusPathHandles,
     FOCUS_PATH_EDITOR_ANCHOR_INSET,
     FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH,
     focusPathEditorHandlePoints,
     moveFocusPathAnchor,
-    moveFocusPathHandle
+    moveFocusPathHandle,
+    toggleFocusPathAnchorHandles
 } from '../src/animation/focusPathEditor.js';
 
 const handleLengthsAt = (value, index) => {
@@ -63,7 +63,6 @@ test('opening editor controls does not change a generated boundary path', () => 
     const originalPath = boundaryPath.path;
     const originalAnchors = structuredClone(boundaryPath.anchors);
     const handles = focusPathEditorHandlePoints(boundaryPath, 0);
-    const prepared = ensureFocusPathHandles(boundaryPath);
 
     assert.ok(Math.hypot(
         handles.incoming.x - boundaryPath.anchors[0].x,
@@ -75,18 +74,15 @@ test('opening editor controls does not change a generated boundary path', () => 
     ) >= FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH - 1e-6);
     assert.equal(boundaryPath.path, originalPath);
     assert.deepEqual(boundaryPath.anchors, originalAnchors);
-    assert.equal(prepared.path, originalPath);
-    assert.deepEqual(prepared.anchors, originalAnchors);
 });
 
-test('moving an anchor carries both handles and remains inside the focus circle', () => {
+test('moving an anchor carries both handles while keeping only the anchor constrained', () => {
     const moved = moveFocusPathAnchor(path, 2, { x: 900, y: -200 });
     const anchor = moved.anchors[2];
     assert.ok(
         Math.hypot(anchor.x - moved.center.x, anchor.y - moved.center.y)
         <= moved.radius - FOCUS_PATH_EDITOR_ANCHOR_INSET + 1e-6
     );
-    assert.equal(pathIsInsideRegion(moved), true);
     const handles = handleLengthsAt(moved, 2);
     assert.ok(handles.incoming >= FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH - 1e-6);
     assert.ok(handles.outgoing >= FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH - 1e-6);
@@ -95,22 +91,16 @@ test('moving an anchor carries both handles and remains inside the focus circle'
     assert.ok(continuity.dot > 0.999);
 });
 
-test('entering the editor restores collapsed handles to a draggable minimum', () => {
-    const segments = path.segments.map((segment) => ({
-        start: { ...segment.start },
-        control1: { ...segment.control1 },
-        control2: { ...segment.control2 },
-        end: { ...segment.end }
-    }));
-    segments[0].control1 = { ...segments[0].start };
-    segments.at(-1).control2 = { ...segments[0].start };
-    const collapsed = rebuildFocusPath(path, segments);
-    const restored = ensureFocusPathHandles(collapsed);
+test('double-click handle toggling removes and restores a paired handle set', () => {
+    const collapsed = toggleFocusPathAnchorHandles(path, 0);
+    const hidden = focusPathEditorHandlePoints(collapsed, 0);
+    const restored = toggleFocusPathAnchorHandles(collapsed, 0);
     const handles = handleLengthsAt(restored, 0);
 
+    assert.deepEqual(hidden, { incoming: null, outgoing: null });
     assert.ok(handles.incoming >= FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH - 1e-6);
     assert.ok(handles.outgoing >= FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH - 1e-6);
-    assert.equal(pathIsInsideRegion(restored), true);
+    assert.notDeepEqual(restored.path, collapsed.path);
 });
 
 test('dragging a Bézier handle rotates its partner along the same straight line', () => {
@@ -135,8 +125,22 @@ test('a smooth handle remains draggable after its anchor is pulled toward the bo
     assert.notDeepEqual(edited.segments[0].control1, before);
     assert.ok(handles.incoming >= FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH - 1e-6);
     assert.ok(handles.outgoing >= FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH - 1e-6);
-    assert.equal(pathIsInsideRegion(edited), true);
     const continuity = tangentContinuityAtAnchor(edited, 0);
     assert.ok(Math.abs(continuity.cross) < 1e-6);
     assert.ok(continuity.dot > 0.999);
+});
+
+test('a Bézier handle may be dragged outside the motion circle', () => {
+    const edited = moveFocusPathHandle(path, 0, 'outgoing', { x: 700, y: 240 });
+    const control = edited.segments[0].control1;
+    assert.ok(Math.hypot(
+        control.x - edited.center.x,
+        control.y - edited.center.y
+    ) > edited.radius);
+    edited.anchors.forEach((anchor) => {
+        assert.ok(Math.hypot(
+            anchor.x - edited.center.x,
+            anchor.y - edited.center.y
+        ) <= edited.radius + 1e-6);
+    });
 });

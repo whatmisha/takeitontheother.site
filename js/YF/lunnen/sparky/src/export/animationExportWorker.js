@@ -1,7 +1,7 @@
 import {
     generateFocusPathForSettings,
     rebuildFocusPath
-} from '../animation/focusPath.js?v=20260826-1';
+} from '../animation/focusPath.js?v=20260827-2';
 import {
     createFocusTimeline,
     resolveFocusStops,
@@ -23,7 +23,7 @@ import {
 import {
     buildAnimationFrameScene,
     drawAnimationFrame
-} from '../render/animationFrameRenderer.js?v=20260825-4';
+} from '../render/animationFrameRenderer.js?v=20260827-2';
 import {
     createAnimationFrameSamples,
     sampleAnimationFrame

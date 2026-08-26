@@ -31,6 +31,19 @@ function boundaryCircle(state) {
     return { center, radius: Math.max(0, radius) };
 }
 
+/** Motion paths may use the complete guide circle, including its boundary. */
+export function createMotionPathRegion(state = {}) {
+    const boundary = boundaryCircle(state);
+    return {
+        center: boundary.center,
+        radius: boundary.radius,
+        minX: boundary.center.x - boundary.radius,
+        maxX: boundary.center.x + boundary.radius,
+        minY: boundary.center.y - boundary.radius,
+        maxY: boundary.center.y + boundary.radius
+    };
+}
+
 export function createExtendedFocusRegion(state = {}) {
     const boundary = boundaryCircle(state);
     const radius = Math.max(0, boundary.radius - EXTENDED_FOCUS_INSET);

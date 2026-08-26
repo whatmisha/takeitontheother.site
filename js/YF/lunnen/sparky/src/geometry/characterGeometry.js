@@ -12,6 +12,45 @@ import {
     subtract
 } from './vector.js';
 
+const FOCUS_BOUNDARY_NUMERIC_INSET = 1e-4;
+
+function focusInsideBoundary(rawFocus, boundary) {
+    if (boundary.type === 'circle') {
+        const offset = subtract(rawFocus, boundary.center);
+        const magnitude = Math.hypot(offset.x, offset.y);
+        const maximum = Math.max(0, boundary.radius - FOCUS_BOUNDARY_NUMERIC_INSET);
+        if (magnitude <= maximum || magnitude <= 1e-9) return rawFocus;
+        return add(boundary.center, scale(offset, maximum / magnitude));
+    }
+    if (boundary.type === 'ellipse') {
+        const radians = -boundary.rotationDeg * Math.PI / 180;
+        const cosine = Math.cos(radians);
+        const sine = Math.sin(radians);
+        const offset = subtract(rawFocus, boundary.center);
+        const local = point(
+            offset.x * cosine - offset.y * sine,
+            offset.x * sine + offset.y * cosine
+        );
+        const normalized = Math.hypot(
+            local.x / boundary.radiusX,
+            local.y / boundary.radiusY
+        );
+        if (normalized < 1) return rawFocus;
+        const insetRatio = FOCUS_BOUNDARY_NUMERIC_INSET
+            / Math.max(FOCUS_BOUNDARY_NUMERIC_INSET, Math.min(boundary.radiusX, boundary.radiusY));
+        const factor = Math.max(0, 1 - insetRatio) / normalized;
+        const safeLocal = scale(local, factor);
+        const inverse = -radians;
+        const inverseCosine = Math.cos(inverse);
+        const inverseSine = Math.sin(inverse);
+        return add(boundary.center, point(
+            safeLocal.x * inverseCosine - safeLocal.y * inverseSine,
+            safeLocal.x * inverseSine + safeLocal.y * inverseCosine
+        ));
+    }
+    return rawFocus;
+}
+
 export const DEFAULT_GEOMETRY = Object.freeze({
     artboardWidth: 480,
     artboardHeight: 480,
@@ -119,8 +158,8 @@ export function buildCharacterGeometry(settings = {}) {
     if (settings.roundness == null && Number.isFinite(settings.cornerRadius)) {
         values.roundness = Math.max(0, Math.min(100, settings.cornerRadius * 6));
     }
-    const focus = point(values.focusX, values.focusY);
     const boundary = createBoundary(values);
+    const focus = focusInsideBoundary(point(values.focusX, values.focusY), boundary);
     const profiles = createRayProfiles(values);
     const rays = profiles.map((profile) => buildRayTriangle(focus, boundary, profile));
 

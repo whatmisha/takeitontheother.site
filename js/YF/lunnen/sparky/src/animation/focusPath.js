@@ -1,5 +1,5 @@
 import { clamp, distance } from '../geometry/vector.js';
-import { createExtendedFocusRegion } from '../geometry/focusBounds.js';
+import { createMotionPathRegion } from '../geometry/focusBounds.js?v=20260827-1';
 
 const TAU = Math.PI * 2;
 const LENGTH_SAMPLES = 64;
@@ -11,7 +11,7 @@ export const FOCUS_PATH_COMPLEXITY = Object.freeze({
     soft: Object.freeze({
         angularJitter: 0.16,
         radiusMin: 0.32,
-        radiusMax: 0.9995,
+        radiusMax: 1,
         strideRatio: 0,
         handleFactor: 0.34,
         radialExponent: 0.58
@@ -19,7 +19,7 @@ export const FOCUS_PATH_COMPLEXITY = Object.freeze({
     medium: Object.freeze({
         angularJitter: 0.38,
         radiusMin: 0.18,
-        radiusMax: 0.9995,
+        radiusMax: 1,
         strideRatio: 0.32,
         handleFactor: 0.29,
         radialExponent: 0.68
@@ -27,7 +27,7 @@ export const FOCUS_PATH_COMPLEXITY = Object.freeze({
     hard: Object.freeze({
         angularJitter: 0.68,
         radiusMin: 0.08,
-        radiusMax: 0.9995,
+        radiusMax: 1,
         strideRatio: 0.48,
         handleFactor: 0.23,
         radialExponent: 0.78
@@ -188,7 +188,7 @@ function createAnchors({ start, center, radius, pointCount, profile, random }) {
         const radialRandom = random();
         const radialMix = Math.pow(radialRandom, profile.radialExponent);
         const radialRatio = edgeIndices.has(index)
-            ? 0.985 + radialRandom * 0.0145
+            ? 0.985 + radialRandom * 0.015
             : profile.radiusMin + (profile.radiusMax - profile.radiusMin) * radialMix;
         pool.push({
             x: center.x + Math.cos(angle) * radius * radialRatio,
@@ -288,7 +288,7 @@ function regularizeAnchors(source, center, radius, smoothness) {
         const offset = subtract(anchor, center);
         const originalRadius = vectorLength(offset);
         if (originalRadius < radius * 0.985) return copyPoint(anchor);
-        const targetRadius = mix(originalRadius, radius * 0.955, amount);
+        const targetRadius = mix(originalRadius, radius, amount);
         return addScaled(center, unit(offset), targetRadius);
     });
     if (source.length <= 2) return anchors;
@@ -297,7 +297,7 @@ function regularizeAnchors(source, center, radius, smoothness) {
         if (index === 0) return vectorLength(subtract(anchor, center));
         const originalRadius = vectorLength(subtract(anchor, center));
         return originalRadius >= radius * 0.985
-            ? mix(originalRadius, radius * 0.955, amount)
+            ? mix(originalRadius, radius, amount)
             : 0;
     });
     const adjacentRatio = clamp(1.22 / Math.sqrt(count), 0.27, 0.56);
@@ -306,7 +306,7 @@ function regularizeAnchors(source, center, radius, smoothness) {
     const minimumTurnAngle = mix(4, 44, amount) * Math.PI / 180;
     const iterations = Math.max(2, Math.ceil(3 + amount * 8));
     const maximumStep = radius * mix(0.025, 0.075, amount);
-    const maximumGeneratedRadius = mix(radius, radius * 0.955, amount);
+    const maximumGeneratedRadius = radius;
 
     for (let iteration = 0; iteration < iterations; iteration += 1) {
         const displacements = anchors.map(() => ({ x: 0, y: 0 }));
@@ -668,6 +668,9 @@ export function rebuildFocusPath(source, rawSegments = source?.segments) {
                 imported: true,
                 fileName: String(source.importMeta.fileName || 'Imported SVG'),
                 wasOpen: Boolean(source.importMeta.wasOpen),
+                closureKind: source.importMeta.closureKind === 'line'
+                    ? 'line'
+                    : source.importMeta.wasOpen ? 'smooth' : 'none',
                 originalPointCount: Math.max(0, Math.round(Number(source.importMeta.originalPointCount) || 0)),
                 simplifiedPointCount: Math.max(0, Math.round(Number(source.importMeta.simplifiedPointCount) || 0)),
                 pointCount: segments.length,
@@ -754,7 +757,7 @@ export function generateFocusPath({
 }
 
 export function generateFocusPathForSettings(settings, start) {
-    const region = createExtendedFocusRegion(settings);
+    const region = createMotionPathRegion(settings);
     return generateFocusPath({
         start,
         center: region.center,

@@ -6,6 +6,7 @@ import {
     FOCUS_BOUNDARY_REFERENCE,
     constrainFocusPoint,
     createExtendedFocusRegion,
+    createMotionPathRegion,
     focusPointFromPolar,
     focusPointToPolar,
     getFocusSliderBounds
@@ -42,6 +43,15 @@ test('Focus uses a concentric circle through both reference positions', () => {
     closeTo(region.maxX, 435.2331938989884);
     closeTo(region.minY, 44.76680610101158);
     closeTo(region.maxY, 435.2331938989885);
+});
+
+test('motion paths use the complete guide circle without the Focus inset', () => {
+    const region = createMotionPathRegion(defaultBoundary);
+    closeTo(region.radius, defaultBoundary.boundaryRadius);
+    closeTo(region.minX, 0);
+    closeTo(region.maxX, 480);
+    closeTo(region.minY, 0);
+    closeTo(region.maxY, 480);
 });
 
 test('Focus leaves inside positions intact and projects outside positions to the circle', () => {

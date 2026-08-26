@@ -1,4 +1,4 @@
-import { rebuildFocusPath } from './focusPath.js?v=20260826-1';
+import { rebuildFocusPath } from './focusPath.js?v=20260827-2';
 
 export const IMPORT_SIMPLIFICATION_TOLERANCE_PX = 0.75;
 export const IMPORT_SIMPLIFICATION_TARGET_POINTS = 48;
@@ -628,11 +628,17 @@ function minimumEnclosingCircle(source) {
 
 function normalizeIntoCircle(segments, center, radius) {
     const silhouette = flattenSegments(segments);
-    const sourceCircle = minimumEnclosingCircle(silhouette);
+    const controls = segments.flatMap((segment) => [
+        segment.start,
+        segment.control1,
+        segment.control2,
+        segment.end
+    ]);
+    const sourceCircle = minimumEnclosingCircle([...silhouette, ...controls]);
     if (!sourceCircle || sourceCircle.radius <= EPSILON) {
         throw new Error('The SVG path is too small to use as a motion path.');
     }
-    const factor = radius * 0.9995 / sourceCircle.radius;
+    const factor = radius / sourceCircle.radius;
     const map = (value) => point(
         center.x + (value.x - sourceCircle.center.x) * factor,
         center.y + (value.y - sourceCircle.center.y) * factor
@@ -856,6 +862,17 @@ function createSmoothClosure(source, center, radius) {
     return [firstClosure, secondClosure];
 }
 
+export function shouldUseStraightImportedClosure(source) {
+    if (!Array.isArray(source) || source.length < 2) return false;
+    const candidates = [
+        source[0],
+        source[1],
+        source[source.length - 2],
+        source[source.length - 1]
+    ];
+    return candidates.every((segment) => segment?.kind === 'line');
+}
+
 function closestPointOnSegment(segment, target) {
     const samples = 32;
     let bestIndex = 0;
@@ -921,14 +938,26 @@ function importParsedPath(parsed, {
     const normalized = normalizeIntoCircle(transformed, center, radius);
     const geometricallyClosed = parsed.closed
         || distance(normalized[0].start, normalized.at(-1).end) <= 1e-6;
-    const reservedPoints = geometricallyClosed ? 1 : 3;
+    const straightClosure = !geometricallyClosed
+        && shouldUseStraightImportedClosure(normalized);
+    const reservedPoints = geometricallyClosed ? 1 : straightClosure ? 2 : 3;
     const simplified = simplifyImportedSegments(normalized, {
         target: Math.max(2, IMPORT_SIMPLIFICATION_TARGET_POINTS - reservedPoints),
         maximum: IMPORT_MAX_POINTS - reservedPoints
     });
+    // Curve fitting during simplification can create new controls. Normalize a
+    // second time so imported anchors and every Bézier handle are guaranteed to
+    // start inside the complete motion circle, with boundary contact allowed.
+    const fitted = normalizeIntoCircle(simplified, center, radius);
     const withClosure = geometricallyClosed
-        ? simplified
-        : [...simplified, ...createSmoothClosure(simplified, center, radius)];
+        ? fitted
+        : straightClosure
+            ? [...fitted, lineSegment(
+                fitted.at(-1).end,
+                fitted[0].start,
+                'closure'
+            )]
+            : [...fitted, ...createSmoothClosure(fitted, center, radius)];
     const ordered = rotateToNearestSourcePoint(withClosure, startFocus || center);
     if (ordered.length > IMPORT_MAX_POINTS) {
         throw new Error(`The imported path exceeds the ${IMPORT_MAX_POINTS}-point limit.`);
@@ -943,6 +972,7 @@ function importParsedPath(parsed, {
             imported: true,
             fileName,
             wasOpen: !geometricallyClosed,
+            closureKind: geometricallyClosed ? 'none' : straightClosure ? 'line' : 'smooth',
             originalPointCount: parsed.segments.length,
             simplifiedPointCount: ordered.filter((segment) => segment.role === 'source').length,
             pointCount: ordered.length,

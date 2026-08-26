@@ -1,7 +1,7 @@
 import {
     fitCubicSegmentToCircle,
     rebuildFocusPath
-} from './focusPath.js?v=20260826-1';
+} from './focusPath.js?v=20260827-2';
 
 export const FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH = 14;
 export const FOCUS_PATH_EDITOR_ANCHOR_INSET = 0;
@@ -54,20 +54,6 @@ function pairedDirection(outgoing, incoming, previous, next) {
     return { x: 1, y: 0 };
 }
 
-function boundarySafeDirection(anchor, direction, center, radius) {
-    const radialVector = subtract(anchor, center);
-    const radialDistance = length(radialVector);
-    if (radialDistance <= radius * 0.9 || radialDistance <= EPSILON) return unit(direction);
-    const radial = unit(radialVector);
-    let tangent = { x: -radial.y, y: radial.x };
-    if (dot(tangent, direction) < 0) tangent = reverse(tangent);
-    const blend = Math.min(1, Math.max(0, (radialDistance / radius - 0.9) / 0.1));
-    return unit({
-        x: direction.x * (1 - blend) + tangent.x * blend,
-        y: direction.y * (1 - blend) + tangent.y * blend
-    }, tangent);
-}
-
 function visibleHandlePoint(anchor, direction, preferredLength) {
     const normalizedDirection = unit(direction);
     const length = Math.max(
@@ -88,48 +74,31 @@ function anchorHandles(segments, anchorIndex) {
     };
 }
 
-function restoreAnchorHandles(segments, anchors, index, previousAnchor, center, radius) {
-    const count = anchors.length;
-    const anchor = anchors[index];
-    const previous = anchors[(index - 1 + count) % count];
-    const next = anchors[(index + 1) % count];
-    const { incomingSegment, outgoingSegment } = anchorHandles(segments, index);
-    const incomingVector = subtract(incomingSegment.control2, previousAnchor);
-    const outgoingVector = subtract(outgoingSegment.control1, previousAnchor);
-    const direction = boundarySafeDirection(
-        anchor,
-        pairedDirection(outgoingVector, incomingVector, previous, next),
-        center,
-        radius
-    );
-
-    incomingSegment.end = copyPoint(anchor);
-    outgoingSegment.start = copyPoint(anchor);
-    incomingSegment.control2 = visibleHandlePoint(
-        anchor,
-        reverse(direction),
-        length(incomingVector)
-    );
-    outgoingSegment.control1 = visibleHandlePoint(
-        anchor,
-        direction,
-        length(outgoingVector)
-    );
+function hasSegmentHandle(segment, side) {
+    if (!segment || segment.kind === 'line') return false;
+    const anchor = side === 'incoming' ? segment.end : segment.start;
+    const control = side === 'incoming' ? segment.control2 : segment.control1;
+    return length(subtract(control, anchor)) > EPSILON;
 }
 
-function editableAnchors(path) {
-    return path.anchors.map(copyPoint);
-}
-
-function handleLengths(segments, anchors, index) {
-    const count = anchors.length;
-    const anchor = anchors[index];
+function anchorHandleState(segments, anchorIndex) {
+    const { incomingSegment, outgoingSegment } = anchorHandles(segments, anchorIndex);
     return {
-        incoming: length(subtract(
-            segments[(index - 1 + count) % count].control2,
-            anchor
-        )),
-        outgoing: length(subtract(segments[index].control1, anchor))
+        incoming: hasSegmentHandle(incomingSegment, 'incoming'),
+        outgoing: hasSegmentHandle(outgoingSegment, 'outgoing')
+    };
+}
+
+function refreshLineControls(segment) {
+    if (segment.kind !== 'line') return;
+    const delta = subtract(segment.end, segment.start);
+    segment.control1 = {
+        x: segment.start.x + delta.x / 3,
+        y: segment.start.y + delta.y / 3
+    };
+    segment.control2 = {
+        x: segment.start.x + delta.x * 2 / 3,
+        y: segment.start.y + delta.y * 2 / 3
     };
 }
 
@@ -147,52 +116,18 @@ export function focusPathEditorHandlePoints(path, anchorIndex) {
     const count = path.anchors.length;
     const index = ((Math.round(anchorIndex) % count) + count) % count;
     const anchor = path.anchors[index];
-    const previous = path.anchors[(index - 1 + count) % count];
-    const next = path.anchors[(index + 1) % count];
-    const incomingVector = subtract(
-        path.segments[(index - 1 + count) % count].control2,
-        anchor
-    );
-    const outgoingVector = subtract(path.segments[index].control1, anchor);
-    const direction = boundarySafeDirection(
-        anchor,
-        pairedDirection(outgoingVector, incomingVector, previous, next),
-        path.center,
-        path.radius
-    );
+    const { incomingSegment, outgoingSegment } = anchorHandles(path.segments, index);
+    const state = anchorHandleState(path.segments, index);
+    const incomingVector = subtract(incomingSegment.control2, anchor);
+    const outgoingVector = subtract(outgoingSegment.control1, anchor);
     return {
-        incoming: visibleHandlePoint(anchor, reverse(direction), length(incomingVector)),
-        outgoing: visibleHandlePoint(anchor, direction, length(outgoingVector))
+        incoming: state.incoming
+            ? visibleHandlePoint(anchor, incomingVector, length(incomingVector))
+            : null,
+        outgoing: state.outgoing
+            ? visibleHandlePoint(anchor, outgoingVector, length(outgoingVector))
+            : null
     };
-}
-
-export function ensureFocusPathHandles(path) {
-    const segments = copySegments(path);
-    const anchors = editableAnchors(path);
-    let changed = false;
-    anchors.forEach((_, index) => {
-        const lengths = handleLengths(segments, anchors, index);
-        if (lengths.incoming >= FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH - 1e-6
-            && lengths.outgoing >= FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH - 1e-6) return;
-        restoreAnchorHandles(
-            segments,
-            anchors,
-            index,
-            path.anchors[index],
-            path.center,
-            path.radius
-        );
-        fitSegment(segments, index - 1, path.center, path.radius, {
-            scaleControl1: false,
-            scaleControl2: true
-        });
-        fitSegment(segments, index, path.center, path.radius, {
-            scaleControl1: true,
-            scaleControl2: false
-        });
-        changed = true;
-    });
-    return changed ? rebuildFocusPath(path, segments) : path;
 }
 
 export function moveFocusPathAnchor(path, anchorIndex, rawPoint) {
@@ -200,29 +135,28 @@ export function moveFocusPathAnchor(path, anchorIndex, rawPoint) {
     const count = prepared.segments.length;
     const index = ((Math.round(anchorIndex) % count) + count) % count;
     const segments = copySegments(prepared);
-    const anchors = editableAnchors(prepared);
+    const previousIndex = (index - 1 + count) % count;
     const previousAnchor = prepared.anchors[index];
-    anchors[index] = constrainPoint(
+    const nextAnchor = constrainPoint(
         rawPoint,
         prepared.center,
         prepared.radius
     );
-    restoreAnchorHandles(
-        segments,
-        anchors,
-        index,
-        previousAnchor,
-        prepared.center,
-        prepared.radius
-    );
-    fitSegment(segments, index - 1, prepared.center, prepared.radius, {
-        scaleControl1: false,
-        scaleControl2: true
-    });
-    fitSegment(segments, index, prepared.center, prepared.radius, {
-        scaleControl1: true,
-        scaleControl2: false
-    });
+    const delta = subtract(nextAnchor, previousAnchor);
+    const state = anchorHandleState(segments, index);
+    const incoming = segments[previousIndex];
+    const outgoing = segments[index];
+
+    incoming.end = copyPoint(nextAnchor);
+    outgoing.start = copyPoint(nextAnchor);
+    incoming.control2 = state.incoming
+        ? add(incoming.control2, delta)
+        : copyPoint(nextAnchor);
+    outgoing.control1 = state.outgoing
+        ? add(outgoing.control1, delta)
+        : copyPoint(nextAnchor);
+    refreshLineControls(incoming);
+    refreshLineControls(outgoing);
     return rebuildFocusPath(prepared, segments);
 }
 
@@ -234,6 +168,10 @@ export function moveFocusPathHandle(path, anchorIndex, side, rawPoint) {
     const anchor = prepared.anchors[index];
     const { incomingSegment, outgoingSegment } = anchorHandles(segments, index);
     const editingOutgoing = side !== 'incoming';
+    const state = anchorHandleState(segments, index);
+    if ((editingOutgoing && !state.outgoing) || (!editingOutgoing && !state.incoming)) {
+        return path;
+    }
     const currentPoint = editingOutgoing
         ? outgoingSegment.control1
         : incomingSegment.control2;
@@ -241,15 +179,9 @@ export function moveFocusPathHandle(path, anchorIndex, side, rawPoint) {
         ? subtract(rawPoint, anchor)
         : subtract(currentPoint, anchor);
     const selectedDirection = unit(editedVector);
-    const rawOutgoingDirection = editingOutgoing
+    const outgoingDirection = editingOutgoing
         ? selectedDirection
         : reverse(selectedDirection);
-    const outgoingDirection = boundarySafeDirection(
-        anchor,
-        rawOutgoingDirection,
-        prepared.center,
-        prepared.radius
-    );
     const incomingDirection = reverse(outgoingDirection);
     const outgoingLength = editingOutgoing
         ? length(editedVector)
@@ -258,29 +190,68 @@ export function moveFocusPathHandle(path, anchorIndex, side, rawPoint) {
         ? length(subtract(incomingSegment.control2, anchor))
         : length(editedVector);
 
-    outgoingSegment.control1 = visibleHandlePoint(
-        anchor,
-        outgoingDirection,
-        outgoingLength
-    );
-    incomingSegment.control2 = visibleHandlePoint(
-        anchor,
-        incomingDirection,
-        incomingLength
-    );
-    fitSegment(segments, index, prepared.center, prepared.radius, {
-        scaleControl1: true,
-        scaleControl2: false
-    });
-    fitSegment(segments, index - 1, prepared.center, prepared.radius, {
-        scaleControl1: false,
-        scaleControl2: true
-    });
+    if (state.outgoing) {
+        outgoingSegment.control1 = visibleHandlePoint(
+            anchor,
+            outgoingDirection,
+            outgoingLength
+        );
+        outgoingSegment.kind = 'curve';
+    }
+    if (state.incoming) {
+        incomingSegment.control2 = visibleHandlePoint(
+            anchor,
+            incomingDirection,
+            incomingLength
+        );
+        incomingSegment.kind = 'curve';
+    }
     return rebuildFocusPath(prepared, segments);
 }
 
+export function toggleFocusPathAnchorHandles(path, anchorIndex) {
+    const count = path.segments.length;
+    const index = ((Math.round(anchorIndex) % count) + count) % count;
+    const previousIndex = (index - 1 + count) % count;
+    const segments = copySegments(path);
+    const anchor = path.anchors[index];
+    const previous = path.anchors[previousIndex];
+    const next = path.anchors[(index + 1) % count];
+    const incoming = segments[previousIndex];
+    const outgoing = segments[index];
+    const state = anchorHandleState(segments, index);
+
+    if (state.incoming || state.outgoing) {
+        incoming.control2 = copyPoint(anchor);
+        outgoing.control1 = copyPoint(anchor);
+        return rebuildFocusPath(path, segments);
+    }
+
+    const direction = pairedDirection(
+        subtract(next, anchor),
+        subtract(anchor, previous),
+        previous,
+        next
+    );
+    const incomingLength = Math.max(
+        FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH,
+        length(subtract(anchor, previous)) / 3
+    );
+    const outgoingLength = Math.max(
+        FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH,
+        length(subtract(next, anchor)) / 3
+    );
+    incoming.control2 = visibleHandlePoint(anchor, reverse(direction), incomingLength);
+    outgoing.control1 = visibleHandlePoint(anchor, direction, outgoingLength);
+    incoming.kind = 'curve';
+    outgoing.kind = 'curve';
+    return rebuildFocusPath(path, segments);
+}
+
 export function importedClosureEditorControls(path) {
-    if (!path?.importMeta?.wasOpen) return { anchors: [], handles: [] };
+    if (!path?.importMeta?.wasOpen || path.importMeta.closureKind === 'line') {
+        return { anchors: [], handles: [] };
+    }
     const count = path.segments.length;
     const anchors = [];
     const handles = [];
@@ -317,7 +288,7 @@ export function importedClosureEditorControls(path) {
 }
 
 export function moveImportedClosureAnchor(path, anchorIndex, rawPoint) {
-    if (!path?.importMeta?.wasOpen) return path;
+    if (!path?.importMeta?.wasOpen || path.importMeta.closureKind === 'line') return path;
     const count = path.segments.length;
     const index = ((Math.round(anchorIndex) % count) + count) % count;
     const previousIndex = (index - 1 + count) % count;
@@ -343,7 +314,7 @@ export function moveImportedClosureAnchor(path, anchorIndex, rawPoint) {
 }
 
 export function moveImportedClosureHandle(path, segmentIndex, control, rawPoint) {
-    if (!path?.importMeta?.wasOpen) return path;
+    if (!path?.importMeta?.wasOpen || path.importMeta.closureKind === 'line') return path;
     const count = path.segments.length;
     const index = ((Math.round(segmentIndex) % count) + count) % count;
     if (path.segments[index].role !== 'closure') return path;

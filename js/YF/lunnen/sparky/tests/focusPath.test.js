@@ -2,11 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
     generateFocusPath,
+    generateFocusPathForSettings,
     normalizeMotionSmoothness,
     pathIsInsideRegion,
     sampleFocusPath,
     tangentContinuityAtAnchor
 } from '../src/animation/focusPath.js';
+import { focusPathEditorHandlePoints } from '../src/animation/focusPathEditor.js';
 
 const options = {
     start: { x: 240, y: 240 },
@@ -59,12 +61,11 @@ test('a start point on the boundary keeps two non-collapsed seam handles', () =>
         smoothness: 50,
         seed: 9
     });
-    const incoming = path.segments.at(-1).control2;
-    const outgoing = path.segments[0].control1;
+    const handles = focusPathEditorHandlePoints(path, 0);
 
     assert.deepEqual(path.anchors[0], start);
-    assert.ok(distanceBetween(incoming, start) >= 14);
-    assert.ok(distanceBetween(outgoing, start) >= 14);
+    assert.ok(distanceBetween(handles.incoming, start) >= 14);
+    assert.ok(distanceBetween(handles.outgoing, start) >= 14);
     assert.equal(pathIsInsideRegion(path, 1e-5), true);
     const continuity = tangentContinuityAtAnchor(path, 0);
     assert.ok(Math.abs(continuity.cross) < 1e-6);
@@ -134,6 +135,24 @@ test('every complexity generates a path that visually touches the outer focus re
             `complexity ${complexity} only generated ${outerAnchors.length} outer anchor(s)`
         );
     });
+});
+
+test('settings-based generation reaches the complete boundary circle', () => {
+    const path = generateFocusPathForSettings({
+        boundaryType: 'circle',
+        boundaryCenterX: 240,
+        boundaryCenterY: 240,
+        boundaryRadius: 240,
+        motionPointCount: 6,
+        motionComplexity: 50,
+        motionSmoothness: 100,
+        motionSeed: 123456
+    }, { x: 240, y: 240 });
+    assert.equal(path.radius, 240);
+    assert.ok(path.anchors.some((anchor) => (
+        Math.hypot(anchor.x - path.center.x, anchor.y - path.center.y)
+            >= path.radius - 1e-6
+    )));
 });
 
 test('motion smoothness is normalized to an independent 0–100 range', () => {

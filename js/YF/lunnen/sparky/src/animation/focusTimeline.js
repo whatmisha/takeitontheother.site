@@ -1,5 +1,5 @@
 import { clamp } from '../geometry/vector.js';
-import { createMotionRandom, sampleFocusPathSegment } from './focusPath.js?v=20260826-1';
+import { createMotionRandom, sampleFocusPathSegment } from './focusPath.js?v=20260827-2';
 
 export const FOCUS_MOTION_EASINGS = Object.freeze({
     linear: (value) => value,

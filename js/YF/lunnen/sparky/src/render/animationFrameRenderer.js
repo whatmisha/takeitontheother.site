@@ -1,5 +1,6 @@
-import { buildCharacterGeometry } from '../geometry/characterGeometry.js';
+import { buildCharacterGeometry } from '../geometry/characterGeometry.js?v=20260827-1';
 import { buildEyeGeometry, buildEyeLidGeometry } from '../geometry/eyeGeometry.js';
+import { constrainFocusPoint } from '../geometry/focusBounds.js?v=20260827-1';
 
 export const ANIMATION_ARTBOARD_SIZE = 480;
 
@@ -12,10 +13,11 @@ function addDuration(metrics, key, startedAt) {
 }
 
 export function buildAnimationFrameScene(settings, focus, { metrics = null } = {}) {
+    const effectiveFocus = constrainFocusPoint(focus, settings);
     const frameSettings = {
         ...settings,
-        focusX: focus.x,
-        focusY: focus.y,
+        focusX: effectiveFocus.x,
+        focusY: effectiveFocus.y,
         focusMode: 'manual',
         showSphere: false,
         showRayGuides: false,
