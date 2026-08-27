@@ -1370,6 +1370,17 @@ function drawGuides(ctx, geometry) {
                     'stroke-dasharray': '2 2'
                 }));
             }
+        } else {
+            motionGuides.appendChild(create('path', {
+                d: focusAnimation.path.path,
+                stroke: '#00ff2a',
+                opacity: 0.22,
+                ...commonStroke,
+                'stroke-width': 0.75,
+                'stroke-linecap': 'round',
+                'stroke-linejoin': 'round',
+                'data-motion-path-kind': 'source'
+            }));
         }
         motionGuides.appendChild(create('path', {
             d: editing
@@ -1380,7 +1391,8 @@ function drawGuides(ctx, geometry) {
             ...commonStroke,
             'stroke-width': editing ? 1.2 : 0.9,
             'stroke-linecap': 'round',
-            'stroke-linejoin': 'round'
+            'stroke-linejoin': 'round',
+            'data-motion-path-kind': editing ? 'editable' : 'effective'
         }));
         if (editing) {
             editorHandles.forEach(({ index, side, point }) => {
