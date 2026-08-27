@@ -1794,6 +1794,25 @@ function bindMotionPathEditing(app) {
     const svg = document.getElementById('mainSvg');
     if (!svg) return;
     let drag = null;
+    let lastAnchorPress = null;
+    let suppressNativeDoubleClickUntil = 0;
+    const doublePressIntervalMs = 600;
+    const doublePressDistancePx = 14;
+
+    const applyAnchorHandleToggle = (index) => {
+        app.history?.beginTransaction('motion-path-handles');
+        focusAnimation.path = toggleFocusPathAnchorHandles(focusAnimation.path, index);
+        focusAnimation.editedPath = focusAnimation.path;
+        focusAnimation.manuallyEdited = true;
+        focusAnimation.selectedEditorControl = `anchor:${index}`;
+        app.presets?.markDirty();
+        rebuildFocusAnimation(app, {
+            restart: false,
+            schedule: false,
+            regenerate: false
+        });
+        app.history?.endTransaction();
+    };
 
     const updateFromEvent = (event) => {
         if (!drag || event.pointerId !== drag.pointerId || !focusAnimation.path) return;
@@ -1824,6 +1843,30 @@ function bindMotionPathEditing(app) {
         const supported = kind === 'anchor' || kind === 'handle';
         if (!supported) return;
         if (!Number.isInteger(index)) return;
+        const now = performance.now();
+        const repeatedAnchorPress = kind === 'anchor'
+            && lastAnchorPress?.index === index
+            && now - lastAnchorPress.time <= doublePressIntervalMs
+            && Math.hypot(
+                event.clientX - lastAnchorPress.clientX,
+                event.clientY - lastAnchorPress.clientY
+            ) <= doublePressDistancePx;
+        if (repeatedAnchorPress) {
+            event.preventDefault();
+            event.stopPropagation();
+            lastAnchorPress = null;
+            suppressNativeDoubleClickUntil = now + doublePressIntervalMs;
+            applyAnchorHandleToggle(index);
+            return;
+        }
+        lastAnchorPress = kind === 'anchor'
+            ? {
+                index,
+                time: now,
+                clientX: event.clientX,
+                clientY: event.clientY
+            }
+            : null;
         event.preventDefault();
         event.stopPropagation();
         drag = {
@@ -1848,6 +1891,7 @@ function bindMotionPathEditing(app) {
         if (!drag || event.pointerId !== drag.pointerId) return;
         if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
         const changed = drag.changed;
+        if (changed) lastAnchorPress = null;
         app.history?.endTransaction();
         drag = null;
         if (changed) app.renderNow();
@@ -1864,18 +1908,9 @@ function bindMotionPathEditing(app) {
         if (!control || !Number.isInteger(index)) return;
         event.preventDefault();
         event.stopPropagation();
-        app.history?.beginTransaction('motion-path-handles');
-        focusAnimation.path = toggleFocusPathAnchorHandles(focusAnimation.path, index);
-        focusAnimation.editedPath = focusAnimation.path;
-        focusAnimation.manuallyEdited = true;
-        focusAnimation.selectedEditorControl = `anchor:${index}`;
-        app.presets?.markDirty();
-        rebuildFocusAnimation(app, {
-            restart: false,
-            schedule: false,
-            regenerate: false
-        });
-        app.history?.endTransaction();
+        if (performance.now() < suppressNativeDoubleClickUntil) return;
+        lastAnchorPress = null;
+        applyAnchorHandleToggle(index);
     });
 }
 
