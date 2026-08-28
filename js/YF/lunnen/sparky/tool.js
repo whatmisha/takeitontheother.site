@@ -1448,6 +1448,26 @@ function drawCharacter(ctx, geometry, eyeGeometry) {
     }
 }
 
+function renderedMotionPoint(raw, state) {
+    const authored = createMotionPathRegion(state);
+    const rendered = createExtendedFocusRegion(state);
+    const factor = authored.radius > 1e-9 ? rendered.radius / authored.radius : 1;
+    return {
+        x: rendered.center.x + (raw.x - authored.center.x) * factor,
+        y: rendered.center.y + (raw.y - authored.center.y) * factor
+    };
+}
+
+function authoredMotionPoint(raw, state) {
+    const authored = createMotionPathRegion(state);
+    const rendered = createExtendedFocusRegion(state);
+    const factor = rendered.radius > 1e-9 ? authored.radius / rendered.radius : 1;
+    return {
+        x: authored.center.x + (raw.x - rendered.center.x) * factor,
+        y: authored.center.y + (raw.y - rendered.center.y) * factor
+    };
+}
+
 function drawGuides(ctx, geometry) {
     const { svg, create, width, height } = ctx;
     const state = geometry.values;
@@ -1487,9 +1507,7 @@ function drawGuides(ctx, geometry) {
         const renderedPathScale = authoredRegion.radius > 1e-9
             ? renderedRegion.radius / authoredRegion.radius
             : 1;
-        const renderedPathTransform = editing
-            ? null
-            : `translate(${authoredRegion.center.x} ${authoredRegion.center.y}) scale(${renderedPathScale}) translate(${-authoredRegion.center.x} ${-authoredRegion.center.y})`;
+        const renderedPathTransform = `translate(${authoredRegion.center.x} ${authoredRegion.center.y}) scale(${renderedPathScale}) translate(${-authoredRegion.center.x} ${-authoredRegion.center.y})`;
         if (editing) {
             const handlesPath = editorHandles.map(({ anchor, point }) => (
                 `M ${anchor.x} ${anchor.y} L ${point.x} ${point.y}`
@@ -1497,6 +1515,7 @@ function drawGuides(ctx, geometry) {
             if (handlesPath) {
                 motionGuides.appendChild(create('path', {
                     d: handlesPath,
+                    transform: renderedPathTransform,
                     stroke: '#00ff2a',
                     opacity: 0.32,
                     ...commonStroke,
@@ -1504,17 +1523,6 @@ function drawGuides(ctx, geometry) {
                     'stroke-dasharray': '2 2'
                 }));
             }
-        } else {
-            motionGuides.appendChild(create('path', {
-                d: focusAnimation.path.path,
-                stroke: '#00ff2a',
-                opacity: 0.18,
-                ...commonStroke,
-                'stroke-width': 0.65,
-                'stroke-linecap': 'round',
-                'stroke-linejoin': 'round',
-                'data-motion-path-kind': 'authored'
-            }));
         }
         motionGuides.appendChild(create('path', {
             d: focusAnimation.path.path,
@@ -1530,9 +1538,10 @@ function drawGuides(ctx, geometry) {
         if (editing) {
             editorHandles.forEach(({ index, side, point }) => {
                 const key = `handle:${index}:${side}`;
+                const guidePoint = renderedMotionPoint(point, state);
                 motionGuides.appendChild(create('circle', {
-                    cx: point.x,
-                    cy: point.y,
+                    cx: guidePoint.x,
+                    cy: guidePoint.y,
                     r: 3.1,
                     fill: state.backgroundColor,
                     stroke: '#00ff2a',
@@ -1541,8 +1550,8 @@ function drawGuides(ctx, geometry) {
                     'pointer-events': 'none'
                 }));
                 motionGuides.appendChild(create('circle', {
-                    cx: point.x,
-                    cy: point.y,
+                    cx: guidePoint.x,
+                    cy: guidePoint.y,
                     r: 8,
                     fill: 'transparent',
                     class: 'sparky-motion-editor-control',
@@ -1558,9 +1567,7 @@ function drawGuides(ctx, geometry) {
         focusAnimation.path.anchors.forEach((anchor, index) => {
             const activeStop = focusAnimation.timeline?.activeStops?.[index] !== false;
             const editableAnchor = editing;
-            const guideAnchor = editing
-                ? anchor
-                : mapFocusPointToGeometry(anchor, state);
+            const guideAnchor = renderedMotionPoint(anchor, state);
             motionGuides.appendChild(create('circle', {
                 cx: guideAnchor.x,
                 cy: guideAnchor.y,
@@ -1575,8 +1582,8 @@ function drawGuides(ctx, geometry) {
             if (editableAnchor) {
                 const key = `anchor:${index}`;
                 motionGuides.appendChild(create('circle', {
-                    cx: anchor.x,
-                    cy: anchor.y,
+                    cx: guideAnchor.x,
+                    cy: guideAnchor.y,
                     r: 10,
                     fill: 'transparent',
                     class: 'sparky-motion-editor-control sparky-motion-editor-anchor',
@@ -2074,8 +2081,9 @@ function bindMotionPathEditing(app) {
 
     const updateFromEvent = (event) => {
         if (!drag || event.pointerId !== drag.pointerId || !focusAnimation.path) return;
-        const point = pointFromPointer(svg, event);
-        if (!point) return;
+        const displayedPoint = pointFromPointer(svg, event);
+        if (!displayedPoint) return;
+        const point = authoredMotionPoint(displayedPoint, app.settings);
         focusAnimation.path = drag.kind === 'anchor'
             ? moveFocusPathAnchor(focusAnimation.path, drag.index, point)
             : moveFocusPathHandle(focusAnimation.path, drag.index, drag.side, point);
