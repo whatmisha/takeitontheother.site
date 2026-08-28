@@ -7,6 +7,7 @@ import {
 import { rebuildFocusPath } from '../src/animation/focusPath.js';
 import { createFocusTimeline, sampleFocusTimeline } from '../src/animation/focusTimeline.js';
 import { constrainFocusPoint } from '../src/geometry/focusBounds.js';
+import { buildBolidEyeColorTrailLayers } from '../src/animation/bolidColorTrail.js';
 
 const settings = {
     width: 480,
@@ -95,7 +96,7 @@ test('Bolid deformation changes over time and returns exactly at the loop bounda
     assert.equal(loop.eyes.right.eye1.path, start.eyes.right.eye1.path);
 });
 
-test('Bolid frame scenes carry the same two color layers used by SVG preview', () => {
+test('Bolid frame scenes carry the same six spectral layers used by SVG preview', () => {
     const animatedSettings = {
         ...settings,
         focusMode: 'bolid',
@@ -104,7 +105,8 @@ test('Bolid frame scenes carry the same two color layers used by SVG preview', (
         bolidTargetDistance: 0,
         bolidIntensity: 100,
         bolidColorTrail: 100,
-        bolidHueSpread: 32
+        bolidHueSpread: 32,
+        eyeColor: '#00ff00'
     };
     const focus = { x: 240, y: 240 };
     const colored = buildAnimationFrameScene(animatedSettings, focus, {
@@ -119,12 +121,12 @@ test('Bolid frame scenes carry the same two color layers used by SVG preview', (
         durationMs: 4000
     });
 
-    assert.equal(colored.colorTrailLayers.length, 2);
+    assert.equal(colored.colorTrailLayers.length, 6);
     assert.ok(colored.colorTrailLayers.every((layer) => /^#[0-9a-f]{6}$/.test(layer.color)));
     assert.deepEqual(monochrome.colorTrailLayers, []);
 });
 
-test('Canvas animation export paints both Bolid trail colors behind the head', () => {
+test('Canvas animation export paints every Bolid spectral band behind the head', () => {
     const previousPath2D = globalThis.Path2D;
     globalThis.Path2D = class MockPath2D {
         constructor(path) {
@@ -139,7 +141,8 @@ test('Canvas animation export paints both Bolid trail colors behind the head', (
         bolidTargetDistance: 0,
         bolidIntensity: 100,
         bolidColorTrail: 100,
-        bolidHueSpread: 32
+        bolidHueSpread: 32,
+        eyeColor: '#00ff00'
     };
     const focus = { x: 240, y: 240 };
     const scene = buildAnimationFrameScene(animatedSettings, focus, {
@@ -163,10 +166,18 @@ test('Canvas animation export paints both Bolid trail colors behind the head', (
     try {
         drawAnimationFrame(context, 1080, 1080, animatedSettings, focus, { scene });
         assert.deepEqual(
-            fills.slice(0, 2),
+            fills.slice(0, 6),
             scene.colorTrailLayers.map((layer) => layer.color)
         );
-        assert.equal(fills[2], animatedSettings.headColor);
+        assert.equal(fills[6], animatedSettings.headColor);
+        const eyeTrail = buildBolidEyeColorTrailLayers(
+            scene.settings,
+            scene.colorTrailLayers
+        );
+        assert.deepEqual(
+            eyeTrail.map((_, index) => [fills[7 + index * 6], fills[10 + index * 6]]),
+            eyeTrail.map((layer) => [layer.color, layer.color])
+        );
     } finally {
         if (previousPath2D === undefined) delete globalThis.Path2D;
         else globalThis.Path2D = previousPath2D;

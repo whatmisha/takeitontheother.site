@@ -6,7 +6,10 @@ import {
 } from '../geometry/eyeGeometry.js?v=20260828-1';
 import { constrainFocusPoint } from '../geometry/focusBounds.js?v=20260828-2';
 import { settingsAtBolidTime } from '../animation/bolid.js?v=20260828-2';
-import { buildBolidColorTrailLayers } from '../animation/bolidColorTrail.js?v=20260828-2';
+import {
+    buildBolidColorTrailLayers,
+    buildBolidEyeColorTrailLayers
+} from '../animation/bolidColorTrail.js?v=20260828-4';
 import { createBolidEyeScaffold } from '../animation/bolidEyeScaffold.js?v=20260828-2';
 
 export const ANIMATION_ARTBOARD_SIZE = 480;
@@ -67,7 +70,15 @@ function fillPath(context, path, color) {
     context.fill(createPath(path));
 }
 
-function drawEyes(context, scene, knockoutEyes, eyeState, eyeOffset, metrics) {
+function drawEyes(
+    context,
+    scene,
+    knockoutEyes,
+    eyeState,
+    eyeOffset,
+    colorTrailLayers,
+    metrics
+) {
     const { settings, character, eyes } = scene;
     const blinkAmount = Math.max(0, Math.min(1, Number(eyeState?.blinkAmount) || 0));
     const animatedCute = Number.isFinite(Number(eyeState?.cute))
@@ -97,6 +108,21 @@ function drawEyes(context, scene, knockoutEyes, eyeState, eyeOffset, metrics) {
     } else {
         context.translate(offsetX, offsetY);
     }
+
+    colorTrailLayers.forEach((layer) => {
+        context.save();
+        context.translate(layer.offsetX, layer.offsetY);
+        ['left', 'right'].forEach((side) => {
+            const eye = eyes[side];
+            const renderedLids = lids?.[side] || eye;
+            context.globalAlpha = layer.opacity;
+            fillPath(context, eye.eye1.path, layer.color);
+            context.globalAlpha = 1;
+            fillPath(context, renderedLids.top.path, settings.headColor);
+            fillPath(context, renderedLids.bottom.path, settings.headColor);
+        });
+        context.restore();
+    });
 
     ['left', 'right'].forEach((side) => {
         const eye = eyes[side];
@@ -128,6 +154,11 @@ export function drawAnimationFrame(context, width, height, settings, focus, {
     const scene = preparedScene || buildAnimationFrameScene(settings, focus, { metrics });
     const scaleX = width / ANIMATION_ARTBOARD_SIZE;
     const scaleY = height / ANIMATION_ARTBOARD_SIZE;
+    const eyeColorTrailLayers = buildBolidEyeColorTrailLayers(
+        scene.settings,
+        scene.colorTrailLayers,
+        eyeOffset
+    );
     const drawStartedAt = now();
 
     context.save();
@@ -152,6 +183,7 @@ export function drawAnimationFrame(context, width, height, settings, focus, {
         Boolean(transparentBackground && knockoutEyes),
         eyeState,
         eyeOffset,
+        eyeColorTrailLayers,
         metrics
     );
     context.restore();

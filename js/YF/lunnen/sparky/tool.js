@@ -11,12 +11,13 @@ import {
 } from './src/geometry/eyeGeometry.js?v=20260828-1';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import { createStaticSparkySvg } from './src/export/staticSvgExporter.js?v=20260825-2';
-import { AnimationExporter } from './src/export/animationExporter.js?v=20260828-5';
+import { AnimationExporter } from './src/export/animationExporter.js?v=20260828-7';
 import {
     BOLID_EYE_MOTION_TIME_CONSTANT,
     EYE_MOTION_TIME_CONSTANT,
     advanceEyeMotion,
     createEyeMotionState,
+    currentEyeMotionTransform,
     retargetEyeMotion,
     snapEyeMotion
 } from './src/animation/eyeMotion.js?v=20260828-1';
@@ -75,10 +76,11 @@ import {
 import {
     BOLID_COLOR_TRAIL_DEFAULT,
     BOLID_HUE_SPREAD_DEFAULT,
+    buildBolidEyeColorTrailLayers,
     buildBolidColorTrailLayers,
     normalizeBolidColorTrail,
     normalizeBolidHueSpread
-} from './src/animation/bolidColorTrail.js?v=20260828-2';
+} from './src/animation/bolidColorTrail.js?v=20260828-4';
 import {
     normalizeMotionBlur,
     resolvePreviewMotionBlurGhosts,
@@ -176,7 +178,7 @@ const settings = {
     bolidIntensity: 100,
     bolidColorTrail: BOLID_COLOR_TRAIL_DEFAULT,
     bolidHueSpread: BOLID_HUE_SPREAD_DEFAULT,
-    bolidAngryEyes: true,
+    bolidAngryEyes: false,
     eyePerspective: 100,
     eyeSize: 50,
     eyeDistance: 0,
@@ -245,7 +247,7 @@ function normalizeIncomingState(source = {}) {
     normalized.bolidIntensity = normalizeBolidIntensity(normalized.bolidIntensity);
     normalized.bolidColorTrail = normalizeBolidColorTrail(normalized.bolidColorTrail);
     normalized.bolidHueSpread = normalizeBolidHueSpread(normalized.bolidHueSpread);
-    normalized.bolidAngryEyes = normalized.bolidAngryEyes !== false;
+    normalized.bolidAngryEyes = normalized.bolidAngryEyes === true;
     Object.assign(normalized, resolveManualFocusMode(normalized));
     const hasPolarFocus = migrated.focusAngle != null
         && migrated.focusDistance != null
@@ -880,6 +882,9 @@ function applyFocusMode(app) {
     syncFocusModeUI(app);
     if (!focusAnimationReady) return;
     if (isAnimatedFocusMode(app.settings.focusMode) && !isMobileShowcase()) {
+        // Path and Bolid expand across the panel below. Raise Modes once when
+        // entering either mode, then let PanelManager preserve normal click order.
+        app.panels?.bringToFront?.('focusPanel');
         stopBlink(app);
         rebuildActiveAnimation(app);
         return;
@@ -1241,7 +1246,11 @@ function applyBlink(app) {
             const element = cached?.isConnected
                 ? cached
                 : svg.querySelector(`#${side}_eye_${lid}`);
-            element?.setAttribute('d', lids[side][lid].path);
+            const spectral = (app.eyeSpectralLidElements?.[side]?.[lid] || [])
+                .filter((entry) => entry.isConnected);
+            [element, ...spectral].forEach((entry) => {
+                entry?.setAttribute('d', lids[side][lid].path);
+            });
         });
     });
     app.blinkAmount = amount;
@@ -1358,7 +1367,7 @@ function createDefinitions(width, height, headPath) {
     return defs;
 }
 
-function drawEyes(ctx, eyeGeometry, definitions) {
+function drawEyes(ctx, eyeGeometry, definitions, colorTrail = []) {
     const { create, width, height, settings: state } = ctx;
     const eyes = create('g', {
         fill: state.eyeColor,
@@ -1367,6 +1376,10 @@ function drawEyes(ctx, eyeGeometry, definitions) {
     });
     const motionElements = [];
     const lidElements = {};
+    const spectralLidElements = {
+        left: { top: [], bottom: [] },
+        right: { top: [], bottom: [] }
+    };
 
     ['left', 'right'].forEach((side) => {
         const eye = eyeGeometry[side];
@@ -1406,6 +1419,34 @@ function drawEyes(ctx, eyeGeometry, definitions) {
             'data-eye': side,
             'data-eye-motion': 'true'
         });
+        colorTrail.forEach((layer, index) => {
+            const spectralGroup = create('g', {
+                transform: `translate(${layer.offsetX} ${layer.offsetY})`,
+                'data-bolid-eye-color-trail': layer.side < 0 ? 'minus' : 'plus',
+                'data-bolid-eye-color-band': layer.band
+            });
+            const spectralTop = create('path', {
+                d: eye.top.path,
+                fill: state.headColor
+            });
+            const spectralBottom = create('path', {
+                d: eye.bottom.path,
+                fill: state.headColor
+            });
+            append(spectralGroup,
+                create('path', {
+                    d: eye.eye1.path,
+                    fill: layer.color,
+                    opacity: layer.opacity,
+                    'data-object': `${side}_eye_aberration_${index}`
+                }),
+                spectralTop,
+                spectralBottom
+            );
+            eyeGroup.appendChild(spectralGroup);
+            spectralLidElements[side].top.push(spectralTop);
+            spectralLidElements[side].bottom.push(spectralBottom);
+        });
         eyeGroup.appendChild(create('path', {
             id: `${side}_eye1`,
             d: eye.eye1.path,
@@ -1419,6 +1460,7 @@ function drawEyes(ctx, eyeGeometry, definitions) {
 
     ctx.app.eyeMotionElements = motionElements;
     ctx.app.eyeLidElements = lidElements;
+    ctx.app.eyeSpectralLidElements = spectralLidElements;
 
     return eyes;
 }
@@ -1427,6 +1469,11 @@ function drawCharacter(ctx, geometry, eyeGeometry) {
     const { svg, create, width, height, settings: state } = ctx;
     const blurGhosts = previewMotionBlurGhosts(state, ctx.app.settings);
     const colorTrail = previewBolidColorTrail(state, ctx.app.settings);
+    const eyeColorTrail = buildBolidEyeColorTrailLayers(
+        state,
+        colorTrail,
+        currentEyeMotionTransform(eyeMotion)
+    );
     const definitions = createDefinitions(width, height, geometry.rounded.path);
     svg.appendChild(definitions);
     svg.appendChild(create('rect', {
@@ -1447,7 +1494,8 @@ function drawCharacter(ctx, geometry, eyeGeometry) {
             fill: layer.color,
             opacity: layer.opacity,
             transform: `translate(${layer.offsetX} ${layer.offsetY})`,
-            'data-bolid-color-trail': layer.side < 0 ? 'minus' : 'plus'
+            'data-bolid-color-trail': layer.side < 0 ? 'minus' : 'plus',
+            'data-bolid-color-band': layer.band
         }));
     });
     blurGhosts.forEach((ghost) => {
@@ -1465,7 +1513,7 @@ function drawCharacter(ctx, geometry, eyeGeometry) {
         'data-layer': 'head'
     }));
 
-    characterLayer.appendChild(drawEyes(ctx, eyeGeometry, definitions));
+    characterLayer.appendChild(drawEyes(ctx, eyeGeometry, definitions, eyeColorTrail));
     svg.appendChild(characterLayer);
 
     if (state.showSphere

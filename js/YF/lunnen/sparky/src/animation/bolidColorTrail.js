@@ -9,6 +9,11 @@ export const BOLID_HUE_SPREAD_MAX = 90;
 const ACHROMATIC_RED = '#ff334d';
 const ACHROMATIC_BLUE = '#2868ff';
 const TAU = Math.PI * 2;
+const SPECTRAL_BANDS = Object.freeze([
+    { name: 'outer', distance: 1, opacity: 0.42 },
+    { name: 'middle', distance: 0.72, opacity: 0.76 },
+    { name: 'inner', distance: 0.42, opacity: 0.52 }
+]);
 
 const finiteOr = (value, fallback) => Number.isFinite(Number(value))
     ? Number(value)
@@ -119,6 +124,22 @@ export function colorToOklch(value) {
     };
 }
 
+function spectralProfile(baseColor, sourceColor) {
+    const baseLab = rgbToOklab(parseHex(baseColor));
+    const sourceLab = rgbToOklab(parseHex(sourceColor));
+    const baseChroma = Math.hypot(baseLab.a, baseLab.b);
+    const baseHue = baseChroma <= 1e-9
+        ? 0
+        : Math.atan2(baseLab.b, baseLab.a) * 180 / Math.PI;
+    const outerLightness = clamp(baseLab.L - 0.085, 0.06, 0.94);
+    const outerChroma = clamp(baseChroma * 1.14 + 0.008, 0, 0.34);
+    return {
+        inner: labToHex(mixLab(baseLab, sourceLab, 0.36)),
+        middle: baseColor,
+        outer: labToHex(gamutMappedLch(outerLightness, outerChroma, baseHue))
+    };
+}
+
 /**
  * Achromatic heads use the fixed aberration pair. As source chroma grows, the
  * same pair continuously becomes two neighbours around the source OKLCH hue.
@@ -140,6 +161,64 @@ export function resolveBolidTrailColors(headColor, hueSpread) {
     };
 }
 
+/**
+ * The edge is a small spectral profile rather than one translucent color:
+ * inner bands converge towards the head, middle bands stay pure and outer
+ * bands become darker and more saturated.
+ */
+export function resolveBolidTrailSpectrum(headColor, hueSpread) {
+    const colors = resolveBolidTrailColors(headColor, hueSpread);
+    return {
+        minus: spectralProfile(colors.minus, headColor),
+        plus: spectralProfile(colors.plus, headColor),
+        chromaticMix: colors.chromaticMix,
+        source: colors.source
+    };
+}
+
+/**
+ * Reuse the head spectrum for the much smaller eye contours. Eye inertia adds
+ * a short common lag while the red/blue (or hue-neighbour) sides stay split.
+ */
+export function buildBolidEyeColorTrailLayers(
+    settings,
+    headLayers,
+    eyeOffset = null
+) {
+    if (!Array.isArray(headLayers) || headLayers.length === 0) return [];
+    const eyeLab = rgbToOklab(parseHex(settings.eyeColor));
+    const headLab = rgbToOklab(parseHex(settings.headColor));
+    const contrast = clamp(Math.hypot(
+        eyeLab.L - headLab.L,
+        eyeLab.a - headLab.a,
+        eyeLab.b - headLab.b
+    ) / 0.22, 0, 1);
+    if (contrast <= 1e-5) return [];
+
+    const spectrum = resolveBolidTrailSpectrum(
+        settings.eyeColor,
+        settings.bolidHueSpread
+    );
+    const lagX = finiteOr(eyeOffset?.x, 0);
+    const lagY = finiteOr(eyeOffset?.y, 0);
+    const scaleLag = Math.abs(finiteOr(eyeOffset?.scaleRatio, 1) - 1);
+    const lagStrength = clamp(Math.hypot(lagX, lagY) / 8 + scaleLag * 8, 0, 1);
+
+    return headLayers.map((layer) => {
+        const sideName = layer.side < 0 ? 'minus' : 'plus';
+        const band = SPECTRAL_BANDS.find((entry) => entry.name === layer.band)
+            || SPECTRAL_BANDS[1];
+        return {
+            side: layer.side,
+            band: layer.band,
+            color: spectrum[sideName][layer.band],
+            opacity: layer.opacity * contrast * (0.68 + lagStrength * 0.22),
+            offsetX: layer.offsetX * 0.36 + lagX * 0.2 * band.distance,
+            offsetY: layer.offsetY * 0.36 + lagY * 0.2 * band.distance
+        };
+    });
+}
+
 const clockDirection = (degrees) => {
     const radians = degrees * Math.PI / 180;
     return { x: Math.sin(radians), y: -Math.cos(radians) };
@@ -150,7 +229,7 @@ const wrapTime = (timeMs, durationMs) => {
     return ((timeMs % duration) + duration) % duration;
 };
 
-/** Build the two ordinary filled paths shared by SVG preview and Canvas export. */
+/** Build six ordinary filled paths shared by SVG preview and Canvas export. */
 export function buildBolidColorTrailLayers(settings, focus, {
     timeMs = 0,
     durationMs = finiteOr(settings.motionDuration, 5) * 1000
@@ -165,38 +244,51 @@ export function buildBolidColorTrailLayers(settings, focus, {
     const amount = trailControl * deformationStrength;
     if (amount <= 1e-5) return [];
 
-    const colors = resolveBolidTrailColors(settings.headColor, settings.bolidHueSpread);
+    const spectrum = resolveBolidTrailSpectrum(settings.headColor, settings.bolidHueSpread);
     const flight = clockDirection(finiteOr(settings.bolidTargetAngle, 180));
     const trail = { x: -flight.x, y: -flight.y };
     const lateral = { x: -trail.y, y: trail.x };
     const flutterPhase = finiteOr(current.bolidFlutterPhase, 0) * TAU;
     const jitterPhase = finiteOr(current.bolidJitterPhase, 0) * TAU;
     const sampleOffsetMs = 9 + amount * 27;
-    const lateralBase = 1.4 + amount * 5.2;
-    const trailBase = 0.8 + amount * 3.4;
-    const opacity = clamp(amount * (0.22 + amount * 0.32), 0, 0.54);
+    const lateralBase = 1.5 + amount * 5.4;
+    const trailBase = 0.8 + amount * 3.5;
+    const opacity = clamp(amount * (0.2 + amount * 0.28), 0, 0.48);
 
-    return [-1, 1].map((side) => {
-        const localFlutter = Math.sin(flutterPhase + side * 0.9) * 0.16
-            + Math.sin(jitterPhase - side * 1.35) * 0.08;
-        const sampleTimeMs = wrapTime(currentTime + side * sampleOffsetMs, duration);
-        const sampled = settingsAtBolidTime(settings, sampleTimeMs, duration);
-        const geometry = buildCharacterGeometry({
-            ...sampled,
-            focusX: focus.x,
-            focusY: focus.y,
-            focusMode: 'manual'
-        });
-        const lateralDistance = side * lateralBase * (1 + localFlutter);
-        const trailDistance = trailBase * (1 - localFlutter * 0.45);
-        return {
-            side,
-            color: side < 0 ? colors.minus : colors.plus,
-            opacity: opacity * (side < 0 ? 0.94 : 1),
-            offsetX: trail.x * trailDistance + lateral.x * lateralDistance,
-            offsetY: trail.y * trailDistance + lateral.y * lateralDistance,
-            sampleTimeMs,
-            path: geometry.rounded.path
-        };
-    });
+    return SPECTRAL_BANDS.flatMap((band, bandIndex) => (
+        [-1, 1].map((side) => {
+            const localFlutter = Math.sin(
+                flutterPhase + side * 0.9 + bandIndex * 0.13
+            ) * 0.16 + Math.sin(
+                jitterPhase - side * 1.35 - bandIndex * 0.17
+            ) * 0.08;
+            const bandSampleOffset = sampleOffsetMs * band.distance;
+            const sampleTimeMs = wrapTime(
+                currentTime + side * bandSampleOffset,
+                duration
+            );
+            const sampled = settingsAtBolidTime(settings, sampleTimeMs, duration);
+            const geometry = buildCharacterGeometry({
+                ...sampled,
+                focusX: focus.x,
+                focusY: focus.y,
+                focusMode: 'manual'
+            });
+            const lateralDistance = side * lateralBase * band.distance
+                * (1 + localFlutter);
+            const trailDistance = trailBase * band.distance
+                * (1 - localFlutter * 0.45);
+            const sideName = side < 0 ? 'minus' : 'plus';
+            return {
+                side,
+                band: band.name,
+                color: spectrum[sideName][band.name],
+                opacity: opacity * band.opacity * (side < 0 ? 0.94 : 1),
+                offsetX: trail.x * trailDistance + lateral.x * lateralDistance,
+                offsetY: trail.y * trailDistance + lateral.y * lateralDistance,
+                sampleTimeMs,
+                path: geometry.rounded.path
+            };
+        })
+    ));
 }

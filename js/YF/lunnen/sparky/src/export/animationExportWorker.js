@@ -31,7 +31,7 @@ import {
 import {
     buildAnimationFrameScene,
     drawAnimationFrame
-} from '../render/animationFrameRenderer.js?v=20260828-5';
+} from '../render/animationFrameRenderer.js?v=20260828-7';
 import {
     createAnimationFrameSamples,
     sampleAnimationFrame
