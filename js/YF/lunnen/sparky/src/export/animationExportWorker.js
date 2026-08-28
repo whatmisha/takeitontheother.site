@@ -31,7 +31,7 @@ import {
 import {
     buildAnimationFrameScene,
     drawAnimationFrame
-} from '../render/animationFrameRenderer.js?v=20260828-3';
+} from '../render/animationFrameRenderer.js?v=20260828-5';
 import {
     createAnimationFrameSamples,
     sampleAnimationFrame
@@ -54,6 +54,7 @@ function createBenchmarkMetrics(job, frameCount) {
         format: job.format,
         frameCount,
         characterMs: 0,
+        colorTrailMs: 0,
         eyesMs: 0,
         lidsMs: 0,
         canvasDrawMs: 0,

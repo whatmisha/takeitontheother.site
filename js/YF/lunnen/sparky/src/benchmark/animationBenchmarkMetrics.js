@@ -34,6 +34,7 @@ export function summarizeWorkerMetrics(metrics) {
     const frames = Math.max(1, Number(metrics?.frameCount) || 1);
     const phaseKeys = [
         'characterMs',
+        'colorTrailMs',
         'eyesMs',
         'lidsMs',
         'canvasDrawMs',

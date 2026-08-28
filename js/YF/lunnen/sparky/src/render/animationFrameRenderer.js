@@ -6,6 +6,7 @@ import {
 } from '../geometry/eyeGeometry.js?v=20260828-1';
 import { constrainFocusPoint } from '../geometry/focusBounds.js?v=20260828-2';
 import { settingsAtBolidTime } from '../animation/bolid.js?v=20260828-2';
+import { buildBolidColorTrailLayers } from '../animation/bolidColorTrail.js?v=20260828-2';
 import { createBolidEyeScaffold } from '../animation/bolidEyeScaffold.js?v=20260828-2';
 
 export const ANIMATION_ARTBOARD_SIZE = 480;
@@ -42,6 +43,12 @@ export function buildAnimationFrameScene(settings, focus, {
     const character = buildCharacterGeometry(frameSettings);
     addDuration(metrics, 'characterMs', startedAt);
     startedAt = now();
+    const colorTrailLayers = buildBolidColorTrailLayers(settings, effectiveFocus, {
+        timeMs: Number.isFinite(timeMs) ? timeMs : 0,
+        durationMs
+    });
+    addDuration(metrics, 'colorTrailMs', startedAt);
+    startedAt = now();
     const eyes = settings.focusMode === 'bolid'
         ? stabilizeEyeGeometry(
             frameSettings,
@@ -52,7 +59,7 @@ export function buildAnimationFrameScene(settings, focus, {
             placementMode: 'global'
         });
     addDuration(metrics, 'eyesMs', startedAt);
-    return { settings: frameSettings, character, eyes };
+    return { settings: frameSettings, character, eyes, colorTrailLayers };
 }
 
 function fillPath(context, path, color) {
@@ -131,6 +138,13 @@ export function drawAnimationFrame(context, width, height, settings, focus, {
         context.fillStyle = scene.settings.backgroundColor;
         context.fillRect(0, 0, ANIMATION_ARTBOARD_SIZE, ANIMATION_ARTBOARD_SIZE);
     }
+    (scene.colorTrailLayers || []).forEach((layer) => {
+        context.save();
+        context.globalAlpha = layer.opacity;
+        context.translate(layer.offsetX, layer.offsetY);
+        fillPath(context, layer.path, layer.color);
+        context.restore();
+    });
     fillPath(context, scene.character.rounded.path, scene.settings.headColor);
     drawEyes(
         context,

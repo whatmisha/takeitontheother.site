@@ -210,6 +210,18 @@
                                         <input type="text" class="value-display" id="bolidIntensityValue" value="100"></label>
                                     <input type="range" id="bolidIntensitySlider" min="0" max="100" step="1" value="100">
                                 </div>
+
+                                <div class="control-group">
+                                    <label for="bolidColorTrailSlider"><span>Color trail <span class="unit">%</span></span>
+                                        <input type="text" class="value-display" id="bolidColorTrailValue" value="0"></label>
+                                    <input type="range" id="bolidColorTrailSlider" min="0" max="100" step="1" value="0">
+                                </div>
+
+                                <div class="control-group">
+                                    <label for="bolidHueSpreadSlider"><span>Hue spread <span class="unit">°</span></span>
+                                        <input type="text" class="value-display" id="bolidHueSpreadValue" value="0"></label>
+                                    <input type="range" id="bolidHueSpreadSlider" min="0" max="90" step="1" value="0">
+                                </div>
                             </div>
 
                             <div class="control-group">
@@ -226,8 +238,8 @@
 
                             <div class="control-group">
                                 <label for="motionBlurSlider"><span>Motion blur <span class="unit">%</span></span>
-                                    <input type="text" class="value-display" id="motionBlurValue" value="0"></label>
-                                <input type="range" id="motionBlurSlider" min="0" max="100" step="1" value="0">
+                                    <input type="text" class="value-display" id="motionBlurValue" value="50"></label>
+                                <input type="range" id="motionBlurSlider" min="0" max="100" step="1" value="50">
                             </div>
 
                             <div class="control-group pill-toggle-row" id="bolidAngryToggleRow" hidden>
@@ -415,6 +427,6 @@
         </dialog>
     </div>
 
-    <script type="module" src="./tool.js?v=20260828-9"></script>
+    <script type="module" src="./tool.js?v=20260828-11"></script>
 </body>
 </html>

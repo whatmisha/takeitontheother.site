@@ -11,7 +11,7 @@ import {
 } from './src/geometry/eyeGeometry.js?v=20260828-1';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import { createStaticSparkySvg } from './src/export/staticSvgExporter.js?v=20260825-2';
-import { AnimationExporter } from './src/export/animationExporter.js?v=20260828-3';
+import { AnimationExporter } from './src/export/animationExporter.js?v=20260828-5';
 import {
     BOLID_EYE_MOTION_TIME_CONSTANT,
     EYE_MOTION_TIME_CONSTANT,
@@ -72,6 +72,13 @@ import {
     normalizeBolidTargetDistance,
     settingsAtBolidTime
 } from './src/animation/bolid.js?v=20260828-2';
+import {
+    BOLID_COLOR_TRAIL_DEFAULT,
+    BOLID_HUE_SPREAD_DEFAULT,
+    buildBolidColorTrailLayers,
+    normalizeBolidColorTrail,
+    normalizeBolidHueSpread
+} from './src/animation/bolidColorTrail.js?v=20260828-2';
 import {
     normalizeMotionBlur,
     resolvePreviewMotionBlurGhosts,
@@ -161,12 +168,14 @@ const settings = {
     motionSpeedVariation: 0,
     motionBlinkCount: 2,
     motionEmotionVariation: 0,
-    motionBlur: 0,
+    motionBlur: 50,
     motionSeed: 24062026,
     showMotionPath: true,
     bolidTargetAngle: 180,
     bolidTargetDistance: 40,
     bolidIntensity: 100,
+    bolidColorTrail: BOLID_COLOR_TRAIL_DEFAULT,
+    bolidHueSpread: BOLID_HUE_SPREAD_DEFAULT,
     bolidAngryEyes: true,
     eyePerspective: 100,
     eyeSize: 50,
@@ -234,6 +243,8 @@ function normalizeIncomingState(source = {}) {
     normalized.bolidTargetAngle = normalizeBolidTargetAngle(normalized.bolidTargetAngle);
     normalized.bolidTargetDistance = normalizeBolidTargetDistance(normalized.bolidTargetDistance);
     normalized.bolidIntensity = normalizeBolidIntensity(normalized.bolidIntensity);
+    normalized.bolidColorTrail = normalizeBolidColorTrail(normalized.bolidColorTrail);
+    normalized.bolidHueSpread = normalizeBolidHueSpread(normalized.bolidHueSpread);
     normalized.bolidAngryEyes = normalized.bolidAngryEyes !== false;
     Object.assign(normalized, resolveManualFocusMode(normalized));
     const hasPolarFocus = migrated.focusAngle != null
@@ -1321,6 +1332,17 @@ function previewMotionBlurGhosts(state, sourceState = state) {
     });
 }
 
+function previewBolidColorTrail(state, sourceState = state) {
+    if (state.focusMode !== 'bolid' || !focusAnimation.timeline) return [];
+    return buildBolidColorTrailLayers(sourceState, {
+        x: state.focusX,
+        y: state.focusY
+    }, {
+        timeMs: focusAnimation.elapsedMs,
+        durationMs: focusAnimation.timeline.durationMs
+    });
+}
+
 function createDefinitions(width, height, headPath) {
     const defs = makeSvgElement('defs');
     const guideClip = makeSvgElement('clipPath', { id: GUIDE_CLIP_ID });
@@ -1404,6 +1426,7 @@ function drawEyes(ctx, eyeGeometry, definitions) {
 function drawCharacter(ctx, geometry, eyeGeometry) {
     const { svg, create, width, height, settings: state } = ctx;
     const blurGhosts = previewMotionBlurGhosts(state, ctx.app.settings);
+    const colorTrail = previewBolidColorTrail(state, ctx.app.settings);
     const definitions = createDefinitions(width, height, geometry.rounded.path);
     svg.appendChild(definitions);
     svg.appendChild(create('rect', {
@@ -1417,6 +1440,15 @@ function drawCharacter(ctx, geometry, eyeGeometry) {
 
     const characterLayer = create('g', {
         'data-layer': 'character'
+    });
+    colorTrail.forEach((layer) => {
+        characterLayer.appendChild(create('path', {
+            d: layer.path,
+            fill: layer.color,
+            opacity: layer.opacity,
+            transform: `translate(${layer.offsetX} ${layer.offsetY})`,
+            'data-bolid-color-trail': layer.side < 0 ? 'minus' : 'plus'
+        }));
     });
     blurGhosts.forEach((ghost) => {
         characterLayer.appendChild(create('path', {
@@ -2468,6 +2500,8 @@ const app = defineTool({
             { id: 'bolidTargetAngleSlider', valueId: 'bolidTargetAngleValue', setting: 'bolidTargetAngle', min: 0, max: 360, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'bolidTargetDistanceSlider', valueId: 'bolidTargetDistanceValue', setting: 'bolidTargetDistance', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'bolidIntensitySlider', valueId: 'bolidIntensityValue', setting: 'bolidIntensity', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'bolidColorTrailSlider', valueId: 'bolidColorTrailValue', setting: 'bolidColorTrail', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'bolidHueSpreadSlider', valueId: 'bolidHueSpreadValue', setting: 'bolidHueSpread', min: 0, max: 90, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyePerspectiveSlider', valueId: 'eyePerspectiveValue', setting: 'eyePerspective', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyeSizeSlider', valueId: 'eyeSizeValue', setting: 'eyeSize', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyeDistanceSlider', valueId: 'eyeDistanceValue', setting: 'eyeDistance', min: -100, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
@@ -2546,6 +2580,7 @@ const app = defineTool({
             'motionDuration', 'motionPointCount', 'motionComplexity', 'motionSmoothness', 'motionStopCount', 'motionSpeedVariation',
             'motionBlinkCount', 'motionEmotionVariation', 'motionBlur',
             'bolidTargetAngle', 'bolidTargetDistance', 'bolidIntensity',
+            'bolidColorTrail', 'bolidHueSpread',
             'motionSeed'
         ],
         decimals: 2

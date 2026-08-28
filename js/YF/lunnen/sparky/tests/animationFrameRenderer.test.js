@@ -95,6 +95,84 @@ test('Bolid deformation changes over time and returns exactly at the loop bounda
     assert.equal(loop.eyes.right.eye1.path, start.eyes.right.eye1.path);
 });
 
+test('Bolid frame scenes carry the same two color layers used by SVG preview', () => {
+    const animatedSettings = {
+        ...settings,
+        focusMode: 'bolid',
+        motionDuration: 4,
+        bolidTargetAngle: 180,
+        bolidTargetDistance: 0,
+        bolidIntensity: 100,
+        bolidColorTrail: 100,
+        bolidHueSpread: 32
+    };
+    const focus = { x: 240, y: 240 };
+    const colored = buildAnimationFrameScene(animatedSettings, focus, {
+        timeMs: 250,
+        durationMs: 4000
+    });
+    const monochrome = buildAnimationFrameScene({
+        ...animatedSettings,
+        bolidColorTrail: 0
+    }, focus, {
+        timeMs: 250,
+        durationMs: 4000
+    });
+
+    assert.equal(colored.colorTrailLayers.length, 2);
+    assert.ok(colored.colorTrailLayers.every((layer) => /^#[0-9a-f]{6}$/.test(layer.color)));
+    assert.deepEqual(monochrome.colorTrailLayers, []);
+});
+
+test('Canvas animation export paints both Bolid trail colors behind the head', () => {
+    const previousPath2D = globalThis.Path2D;
+    globalThis.Path2D = class MockPath2D {
+        constructor(path) {
+            this.path = path;
+        }
+    };
+    const animatedSettings = {
+        ...settings,
+        focusMode: 'bolid',
+        motionDuration: 4,
+        bolidTargetAngle: 180,
+        bolidTargetDistance: 0,
+        bolidIntensity: 100,
+        bolidColorTrail: 100,
+        bolidHueSpread: 32
+    };
+    const focus = { x: 240, y: 240 };
+    const scene = buildAnimationFrameScene(animatedSettings, focus, {
+        timeMs: 250,
+        durationMs: 4000
+    });
+    const fills = [];
+    const context = {
+        save() {},
+        restore() {},
+        setTransform() {},
+        clearRect() {},
+        fillRect() {},
+        clip() {},
+        translate() {},
+        fill() {
+            fills.push(this.fillStyle);
+        }
+    };
+
+    try {
+        drawAnimationFrame(context, 1080, 1080, animatedSettings, focus, { scene });
+        assert.deepEqual(
+            fills.slice(0, 2),
+            scene.colorTrailLayers.map((layer) => layer.color)
+        );
+        assert.equal(fills[2], animatedSettings.headColor);
+    } finally {
+        if (previousPath2D === undefined) delete globalThis.Path2D;
+        else globalThis.Path2D = previousPath2D;
+    }
+});
+
 test('extreme Bézier handles cannot push an animation frame outside the renderable Focus region', () => {
     const path = rebuildFocusPath({
         center: { x: 240, y: 240 },
