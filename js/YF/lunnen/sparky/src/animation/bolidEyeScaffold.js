@@ -3,7 +3,7 @@ import { buildEyeGeometry } from '../geometry/eyeGeometry.js?v=20260828-1';
 import {
     bolidEyeScaffoldSettings,
     settingsAtBolidTime
-} from './bolid.js?v=20260828-2';
+} from './bolid.js?v=20260828-3';
 
 const cache = new WeakMap();
 

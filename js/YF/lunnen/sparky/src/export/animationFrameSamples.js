@@ -1,7 +1,7 @@
 import { sampleEyeAnimationTimeline } from '../animation/eyeTimeline.js?v=20260828-2';
 import { sampleFocusTimeline } from '../animation/focusTimeline.js?v=20260826-1';
 import { sampleLoopFocus } from '../animation/loopTimeline.js?v=20260827-1';
-import { settingsAtBolidTime } from '../animation/bolid.js?v=20260828-2';
+import { settingsAtBolidTime } from '../animation/bolid.js?v=20260828-3';
 
 export function createAnimationFrameSamples(
     timeline,

@@ -15,7 +15,7 @@ import {
     rayModulationAmount,
     rayVariationFactor
 } from './rayModulation.js';
-import { bolidRayAdjustment } from '../animation/bolid.js?v=20260828-2';
+import { bolidRayAdjustment } from '../animation/bolid.js?v=20260828-3';
 
 const FOCUS_BOUNDARY_NUMERIC_INSET = 1e-4;
 

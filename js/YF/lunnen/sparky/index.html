@@ -97,7 +97,7 @@
                             </label>
                             <label class="pill-toggle" for="showMotionPath" id="showMotionPathToggle" hidden>
                                 <input type="checkbox" id="showMotionPath" class="sr-only" data-setting="showMotionPath" checked>
-                                <span>Motion path</span>
+                                <span>Path</span>
                             </label>
                         </div>
                     </section>
@@ -125,16 +125,18 @@
                         </fieldset>
 
                         <div id="focusManualControls" data-focus-mode-panel="manual">
-                            <div class="control-group">
-                                <label for="focusAngleSlider"><span>Angle <span class="unit">°</span></span>
-                                    <input type="text" class="value-display" id="focusAngleValue" value="0"></label>
-                                <input type="range" id="focusAngleSlider" min="0" max="360" step="1" value="0">
-                            </div>
+                            <div class="sparky-mode-slider-group">
+                                <div class="control-group">
+                                    <label for="focusAngleSlider"><span>Angle <span class="unit">°</span></span>
+                                        <input type="text" class="value-display" id="focusAngleValue" value="0"></label>
+                                    <input type="range" id="focusAngleSlider" min="0" max="360" step="1" value="0">
+                                </div>
 
-                            <div class="control-group">
-                                <label for="focusDistanceSlider"><span>Distance <span class="unit">%</span></span>
-                                    <input type="text" class="value-display" id="focusDistanceValue" value="0"></label>
-                                <input type="range" id="focusDistanceSlider" min="0" max="100" step="1" value="0">
+                                <div class="control-group">
+                                    <label for="focusDistanceSlider"><span>Distance <span class="unit">%</span></span>
+                                        <input type="text" class="value-display" id="focusDistanceValue" value="0"></label>
+                                    <input type="range" id="focusDistanceSlider" min="0" max="100" step="1" value="0">
+                                </div>
                             </div>
 
                             <div class="control-group pill-toggle-row" role="group" aria-label="Focus behavior">
@@ -153,101 +155,84 @@
                         </div>
 
                         <div id="focusAnimationControls" data-focus-mode-panel="animated" hidden>
-                            <div class="control-group">
-                                <label for="motionDurationSlider"><span>Duration <span class="unit">sec</span></span>
-                                    <input type="text" class="value-display" id="motionDurationValue" value="5"></label>
-                                <input type="range" id="motionDurationSlider" min="1" max="10" step="1" value="5">
-                            </div>
+                            <div class="sparky-mode-slider-group">
+                                <div class="control-group">
+                                    <label for="motionDurationSlider"><span>Duration <span class="unit">sec</span></span>
+                                        <input type="text" class="value-display" id="motionDurationValue" value="5"></label>
+                                    <input type="range" id="motionDurationSlider" min="1" max="10" step="1" value="5">
+                                </div>
 
-                            <div id="focusPathControls">
-                                <div class="control-group sparky-motion-generator-control">
+                                <div class="control-group sparky-motion-generator-control" data-focus-mode-control="path">
                                     <label for="motionPointCountSlider"><span>Points</span>
                                         <input type="text" class="value-display" id="motionPointCountValue" value="6"></label>
                                     <input type="range" id="motionPointCountSlider" min="2" max="16" step="1" value="6">
                                 </div>
 
-                                <div class="control-group sparky-motion-generator-control">
+                                <div class="control-group sparky-motion-generator-control" data-focus-mode-control="path">
                                     <label for="motionComplexitySlider"><span>Complexity</span>
                                         <input type="text" class="value-display" id="motionComplexityValue" value="0"></label>
                                     <input type="range" id="motionComplexitySlider" min="0" max="100" step="1" value="0">
                                 </div>
 
-                                <div class="control-group sparky-motion-generator-control">
+                                <div class="control-group sparky-motion-generator-control" data-focus-mode-control="path">
                                     <label for="motionSmoothnessSlider"><span>Smoothness</span>
                                         <input type="text" class="value-display" id="motionSmoothnessValue" value="50"></label>
                                     <input type="range" id="motionSmoothnessSlider" min="0" max="100" step="1" value="50">
                                 </div>
 
-                                <div class="control-group">
+                                <div class="control-group" data-focus-mode-control="path">
                                     <label for="motionStopCountSlider"><span>Stops</span>
                                         <input type="text" class="value-display" id="motionStopCountValue" value="3"></label>
                                     <input type="range" id="motionStopCountSlider" min="1" max="6" step="1" value="3">
                                 </div>
 
-                                <div class="control-group">
+                                <div class="control-group" data-focus-mode-control="path">
                                     <label for="motionSpeedVariationSlider"><span>Speed variation <span class="unit">%</span></span>
                                         <input type="text" class="value-display" id="motionSpeedVariationValue" value="0"></label>
                                     <input type="range" id="motionSpeedVariationSlider" min="0" max="100" step="1" value="0">
                                 </div>
 
-                            </div>
-
-                            <div id="focusBolidControls" hidden>
-                                <div class="control-group">
+                                <div class="control-group" data-focus-mode-control="bolid" hidden>
                                     <label for="bolidTargetAngleSlider"><span>Target angle <span class="unit">°</span></span>
                                         <input type="text" class="value-display" id="bolidTargetAngleValue" value="180"></label>
                                     <input type="range" id="bolidTargetAngleSlider" min="0" max="360" step="1" value="180">
                                 </div>
 
-                                <div class="control-group">
+                                <div class="control-group" data-focus-mode-control="bolid" hidden>
                                     <label for="bolidTargetDistanceSlider"><span>Target distance <span class="unit">%</span></span>
                                         <input type="text" class="value-display" id="bolidTargetDistanceValue" value="40"></label>
                                     <input type="range" id="bolidTargetDistanceSlider" min="0" max="100" step="1" value="40">
                                 </div>
 
-                                <div class="control-group">
+                                <div class="control-group" data-focus-mode-control="bolid" hidden>
                                     <label for="bolidIntensitySlider"><span>Intensity <span class="unit">%</span></span>
                                         <input type="text" class="value-display" id="bolidIntensityValue" value="100"></label>
                                     <input type="range" id="bolidIntensitySlider" min="0" max="100" step="1" value="100">
                                 </div>
 
-                                <div class="control-group">
+                                <div class="control-group" data-focus-mode-control="bolid" hidden>
                                     <label for="bolidColorTrailSlider"><span>Color trail <span class="unit">%</span></span>
                                         <input type="text" class="value-display" id="bolidColorTrailValue" value="0"></label>
                                     <input type="range" id="bolidColorTrailSlider" min="0" max="100" step="1" value="0">
                                 </div>
 
                                 <div class="control-group">
-                                    <label for="bolidHueSpreadSlider"><span>Hue spread <span class="unit">°</span></span>
-                                        <input type="text" class="value-display" id="bolidHueSpreadValue" value="0"></label>
-                                    <input type="range" id="bolidHueSpreadSlider" min="0" max="90" step="1" value="0">
+                                    <label for="motionEmotionVariationSlider"><span>Emotion variation <span class="unit">%</span></span>
+                                        <input type="text" class="value-display" id="motionEmotionVariationValue" value="0"></label>
+                                    <input type="range" id="motionEmotionVariationSlider" min="0" max="100" step="1" value="0">
                                 </div>
-                            </div>
 
-                            <div class="control-group">
-                                <label for="motionEmotionVariationSlider"><span>Emotion variation <span class="unit">%</span></span>
-                                    <input type="text" class="value-display" id="motionEmotionVariationValue" value="0"></label>
-                                <input type="range" id="motionEmotionVariationSlider" min="0" max="100" step="1" value="0">
-                            </div>
+                                <div class="control-group">
+                                    <label for="motionBlinkCountSlider"><span>Blinks <span class="unit">/ loop</span></span>
+                                        <input type="text" class="value-display" id="motionBlinkCountValue" value="2"></label>
+                                    <input type="range" id="motionBlinkCountSlider" min="0" max="12" step="1" value="2">
+                                </div>
 
-                            <div class="control-group">
-                                <label for="motionBlinkCountSlider"><span>Blinks <span class="unit">/ loop</span></span>
-                                    <input type="text" class="value-display" id="motionBlinkCountValue" value="2"></label>
-                                <input type="range" id="motionBlinkCountSlider" min="0" max="12" step="1" value="2">
-                            </div>
-
-                            <div class="control-group">
-                                <label for="motionBlurSlider"><span>Motion blur <span class="unit">%</span></span>
-                                    <input type="text" class="value-display" id="motionBlurValue" value="50"></label>
-                                <input type="range" id="motionBlurSlider" min="0" max="100" step="1" value="50">
-                            </div>
-
-                            <div class="control-group pill-toggle-row" id="bolidAngryToggleRow" hidden>
-                                <label class="pill-toggle" for="bolidAngryEyes">
-                                    <input type="checkbox" id="bolidAngryEyes" class="sr-only"
-                                           data-setting="bolidAngryEyes">
-                                    <span>Gets angrier</span>
-                                </label>
+                                <div class="control-group">
+                                    <label for="motionBlurSlider"><span>Motion blur <span class="unit">%</span></span>
+                                        <input type="text" class="value-display" id="motionBlurValue" value="50"></label>
+                                    <input type="range" id="motionBlurSlider" min="0" max="100" step="1" value="50">
+                                </div>
                             </div>
 
                             <div id="focusPathActionControls">
@@ -304,12 +289,6 @@
                 </div>
                 <div class="panel-content">
                     <section class="control-section">
-                        <div class="control-group">
-                            <label for="eyePerspectiveSlider"><span>Perspective</span>
-                                <input type="text" class="value-display" id="eyePerspectiveValue" value="100"></label>
-                            <input type="range" id="eyePerspectiveSlider" min="0" max="100" step="1" value="100">
-                        </div>
-
                         <div class="control-group">
                             <label for="eyeSizeSlider"><span>Size</span>
                                 <input type="text" class="value-display" id="eyeSizeValue" value="50"></label>

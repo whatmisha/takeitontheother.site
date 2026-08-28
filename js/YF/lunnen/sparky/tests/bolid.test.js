@@ -3,7 +3,6 @@ import test from 'node:test';
 
 import {
     BOLID_FAR_STRENGTH_RATIO,
-    BOLID_MAX_ANGRY,
     bolidTargetPoint,
     bolidTargetPolarFromPoint,
     resolveBolidStrength,
@@ -20,7 +19,6 @@ const settings = {
     bolidTargetAngle: 90,
     bolidTargetDistance: 40,
     bolidIntensity: 100,
-    bolidAngryEyes: true,
     angry: 10,
     roundness: 60,
     cornerSmoothing: 100
@@ -72,16 +70,13 @@ test('Intensity sets scene strength while Target proximity amplifies it', () => 
     assert.equal(resolveBolidStrength({ bolidTargetDistance: 0, bolidIntensity: 0 }), 0);
 });
 
-test('Target-driven Angry is optional and remains capped below full closure', () => {
-    const maximum = settingsAtBolidTime({ ...settings, bolidTargetDistance: 0 }, 0, 5000);
-    assert.equal(maximum.angry, BOLID_MAX_ANGRY);
-    assert.ok(maximum.angry < 100);
-    const disabled = settingsAtBolidTime({
+test('Bolid preserves configured Angry and ignores the removed legacy toggle', () => {
+    const animated = settingsAtBolidTime({
         ...settings,
         bolidTargetDistance: 0,
-        bolidAngryEyes: false
+        bolidAngryEyes: true
     }, 0, 5000);
-    assert.equal(disabled.angry, settings.angry);
+    assert.equal(animated.angry, settings.angry);
 });
 
 test('flutter frequency is independent from Duration while every loop stays seamless', () => {

@@ -1,10 +1,10 @@
-import { settingsAtBolidTime } from './bolid.js?v=20260828-2';
+import { settingsAtBolidTime } from './bolid.js?v=20260828-3';
 import { buildCharacterGeometry } from '../geometry/characterGeometry.js?v=20260828-2';
 import { clamp } from '../geometry/vector.js';
 
 export const BOLID_COLOR_TRAIL_DEFAULT = 0;
-export const BOLID_HUE_SPREAD_DEFAULT = 0;
 export const BOLID_HUE_SPREAD_MAX = 90;
+export const BOLID_HUE_SPREAD_DEFAULT = BOLID_HUE_SPREAD_MAX;
 
 const ACHROMATIC_RED = '#ff334d';
 const ACHROMATIC_BLUE = '#2868ff';
@@ -197,7 +197,7 @@ export function buildBolidEyeColorTrailLayers(
 
     const spectrum = resolveBolidTrailSpectrum(
         settings.eyeColor,
-        settings.bolidHueSpread
+        BOLID_HUE_SPREAD_MAX
     );
     const lagX = finiteOr(eyeOffset?.x, 0);
     const lagY = finiteOr(eyeOffset?.y, 0);
@@ -244,7 +244,7 @@ export function buildBolidColorTrailLayers(settings, focus, {
     const amount = trailControl * deformationStrength;
     if (amount <= 1e-5) return [];
 
-    const spectrum = resolveBolidTrailSpectrum(settings.headColor, settings.bolidHueSpread);
+    const spectrum = resolveBolidTrailSpectrum(settings.headColor, BOLID_HUE_SPREAD_MAX);
     const flight = clockDirection(finiteOr(settings.bolidTargetAngle, 180));
     const trail = { x: -flight.x, y: -flight.y };
     const lateral = { x: -trail.y, y: trail.x };

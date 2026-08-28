@@ -1,7 +1,6 @@
 import { createMotionPathRegion } from '../geometry/focusBounds.js';
 import { clamp } from '../geometry/vector.js';
 
-export const BOLID_MAX_ANGRY = 88;
 export const BOLID_FAR_STRENGTH_RATIO = 0.25;
 
 const finiteOr = (value, fallback) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -110,12 +109,7 @@ export function settingsAtBolidTime(settings, rawTimeMs, durationMs) {
         rayWidthVariation: strength * 16,
         rayModulationFrequency: 1,
         rayModulationPhase: phases.primary * 360,
-        angry: settings.bolidAngryEyes === false
-            ? baseAngry
-            : Math.min(
-                BOLID_MAX_ANGRY,
-                baseAngry + (BOLID_MAX_ANGRY - baseAngry) * strength
-            )
+        angry: baseAngry
     };
 }
 

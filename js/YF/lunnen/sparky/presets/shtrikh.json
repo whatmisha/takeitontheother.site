@@ -34,7 +34,7 @@
   "showBisectors": false,
   "showPoint": false,
   "followCursor": true,
-  "eyePerspective": 50,
+  "eyePerspective": 100,
   "eyeSize": 100,
   "eyeDistance": -90,
   "cute": 0,

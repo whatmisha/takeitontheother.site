@@ -72,15 +72,13 @@ import {
     normalizeBolidTargetAngle,
     normalizeBolidTargetDistance,
     settingsAtBolidTime
-} from './src/animation/bolid.js?v=20260828-2';
+} from './src/animation/bolid.js?v=20260828-3';
 import {
     BOLID_COLOR_TRAIL_DEFAULT,
-    BOLID_HUE_SPREAD_DEFAULT,
     buildBolidEyeColorTrailLayers,
     buildBolidColorTrailLayers,
-    normalizeBolidColorTrail,
-    normalizeBolidHueSpread
-} from './src/animation/bolidColorTrail.js?v=20260828-4';
+    normalizeBolidColorTrail
+} from './src/animation/bolidColorTrail.js?v=20260828-5';
 import {
     normalizeMotionBlur,
     resolvePreviewMotionBlurGhosts,
@@ -177,8 +175,6 @@ const settings = {
     bolidTargetDistance: 40,
     bolidIntensity: 100,
     bolidColorTrail: BOLID_COLOR_TRAIL_DEFAULT,
-    bolidHueSpread: BOLID_HUE_SPREAD_DEFAULT,
-    bolidAngryEyes: false,
     eyePerspective: 100,
     eyeSize: 50,
     eyeDistance: 0,
@@ -246,8 +242,9 @@ function normalizeIncomingState(source = {}) {
     normalized.bolidTargetDistance = normalizeBolidTargetDistance(normalized.bolidTargetDistance);
     normalized.bolidIntensity = normalizeBolidIntensity(normalized.bolidIntensity);
     normalized.bolidColorTrail = normalizeBolidColorTrail(normalized.bolidColorTrail);
-    normalized.bolidHueSpread = normalizeBolidHueSpread(normalized.bolidHueSpread);
-    normalized.bolidAngryEyes = normalized.bolidAngryEyes === true;
+    delete normalized.bolidHueSpread;
+    delete normalized.bolidAngryEyes;
+    normalized.eyePerspective = 100;
     Object.assign(normalized, resolveManualFocusMode(normalized));
     const hasPolarFocus = migrated.focusAngle != null
         && migrated.focusDistance != null
@@ -850,10 +847,13 @@ function syncFocusModeUI(app) {
         ?.classList.toggle('sparky-focus-panel--bolid', bolid);
     document.getElementById('focusManualControls')?.toggleAttribute('hidden', animated);
     document.getElementById('focusAnimationControls')?.toggleAttribute('hidden', !animated);
-    document.getElementById('focusPathControls')?.toggleAttribute('hidden', !path);
+    document.querySelectorAll('[data-focus-mode-control="path"]').forEach((control) => {
+        control.toggleAttribute('hidden', !path);
+    });
     document.getElementById('focusPathActionControls')?.toggleAttribute('hidden', !path);
-    document.getElementById('focusBolidControls')?.toggleAttribute('hidden', !bolid);
-    document.getElementById('bolidAngryToggleRow')?.toggleAttribute('hidden', !bolid);
+    document.querySelectorAll('[data-focus-mode-control="bolid"]').forEach((control) => {
+        control.toggleAttribute('hidden', !bolid);
+    });
     document.getElementById('motionRegenerateBtn')?.toggleAttribute('hidden', bolid);
     document.getElementById('showMotionPathToggle')?.toggleAttribute('hidden', !path);
     const pngButton = document.getElementById('exportPngBtn');
@@ -2549,8 +2549,6 @@ const app = defineTool({
             { id: 'bolidTargetDistanceSlider', valueId: 'bolidTargetDistanceValue', setting: 'bolidTargetDistance', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'bolidIntensitySlider', valueId: 'bolidIntensityValue', setting: 'bolidIntensity', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'bolidColorTrailSlider', valueId: 'bolidColorTrailValue', setting: 'bolidColorTrail', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
-            { id: 'bolidHueSpreadSlider', valueId: 'bolidHueSpreadValue', setting: 'bolidHueSpread', min: 0, max: 90, decimals: 0, baseStep: 1, shiftStep: 10 },
-            { id: 'eyePerspectiveSlider', valueId: 'eyePerspectiveValue', setting: 'eyePerspective', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyeSizeSlider', valueId: 'eyeSizeValue', setting: 'eyeSize', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyeDistanceSlider', valueId: 'eyeDistanceValue', setting: 'eyeDistance', min: -100, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'cuteSlider', valueId: 'cuteValue', setting: 'cute', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
@@ -2628,7 +2626,7 @@ const app = defineTool({
             'motionDuration', 'motionPointCount', 'motionComplexity', 'motionSmoothness', 'motionStopCount', 'motionSpeedVariation',
             'motionBlinkCount', 'motionEmotionVariation', 'motionBlur',
             'bolidTargetAngle', 'bolidTargetDistance', 'bolidIntensity',
-            'bolidColorTrail', 'bolidHueSpread',
+            'bolidColorTrail',
             'motionSeed'
         ],
         decimals: 2

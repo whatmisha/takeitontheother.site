@@ -16,7 +16,7 @@ import {
     createStationaryLoopTimeline,
     sampleLoopFocus
 } from '../animation/loopTimeline.js?v=20260827-1';
-import { settingsAtBolidTime } from '../animation/bolid.js?v=20260828-2';
+import { settingsAtBolidTime } from '../animation/bolid.js?v=20260828-3';
 import {
     resolveBlinkMotionBlurTime,
     resolveMotionBlur,

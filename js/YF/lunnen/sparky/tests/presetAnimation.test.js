@@ -67,6 +67,11 @@ test('Path and Bolid presets opt into autoplay', () => {
     assert.equal(shouldAutoplayPreset({}), false);
 });
 
+test('all built-in presets use the fixed maximum eye perspective', () => {
+    ['basic.json', 'basic-wild.json', 'shtrikh.json', 'shukhov.json', 'spiky.json']
+        .forEach((file) => assert.equal(readPreset(file).eyePerspective, 100, file));
+});
+
 test('opening an animated preset clears a previous user pause', () => {
     const playback = {
         paused: true,

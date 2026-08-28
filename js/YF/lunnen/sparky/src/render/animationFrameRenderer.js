@@ -5,11 +5,11 @@ import {
     stabilizeEyeGeometry
 } from '../geometry/eyeGeometry.js?v=20260828-1';
 import { constrainFocusPoint } from '../geometry/focusBounds.js?v=20260828-2';
-import { settingsAtBolidTime } from '../animation/bolid.js?v=20260828-2';
+import { settingsAtBolidTime } from '../animation/bolid.js?v=20260828-3';
 import {
     buildBolidColorTrailLayers,
     buildBolidEyeColorTrailLayers
-} from '../animation/bolidColorTrail.js?v=20260828-4';
+} from '../animation/bolidColorTrail.js?v=20260828-5';
 import { createBolidEyeScaffold } from '../animation/bolidEyeScaffold.js?v=20260828-2';
 
 export const ANIMATION_ARTBOARD_SIZE = 480;

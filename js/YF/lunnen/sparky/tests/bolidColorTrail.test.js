@@ -21,7 +21,6 @@ const settings = {
     bolidTargetDistance: 0,
     bolidIntensity: 100,
     bolidColorTrail: 100,
-    bolidHueSpread: 32,
     headColor: '#ffffff',
     eyeColor: '#000000',
     roundness: 60,
@@ -32,11 +31,28 @@ const angularDelta = (from, to) => ((to - from + 540) % 360) - 180;
 
 test('Bolid color controls normalize to their UI contracts', () => {
     assert.equal(normalizeBolidColorTrail(undefined), 0);
-    assert.equal(normalizeBolidHueSpread(undefined), 0);
+    assert.equal(normalizeBolidHueSpread(undefined), 90);
     assert.equal(normalizeBolidColorTrail(-10), 0);
     assert.equal(normalizeBolidColorTrail(130), 100);
     assert.equal(normalizeBolidHueSpread(-10), 0);
     assert.equal(normalizeBolidHueSpread(130), 90);
+});
+
+test('Color trail always renders with the maximum hue spread', () => {
+    const focus = { x: 240, y: 240 };
+    const chromatic = { ...settings, headColor: '#00ff00' };
+    const legacyMinimum = buildBolidColorTrailLayers({
+        ...chromatic,
+        bolidHueSpread: 0
+    }, focus);
+    const maximum = buildBolidColorTrailLayers({
+        ...chromatic,
+        bolidHueSpread: 90
+    }, focus);
+    assert.deepEqual(
+        legacyMinimum.map((layer) => layer.color),
+        maximum.map((layer) => layer.color)
+    );
 });
 
 test('achromatic heads use the fixed red and electric-blue aberration pair', () => {
