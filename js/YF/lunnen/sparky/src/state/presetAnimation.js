@@ -1,5 +1,5 @@
 export function shouldAutoplayPreset(preset = {}) {
-    return preset?.focusMode === 'animate';
+    return preset?.focusMode === 'animate' || preset?.focusMode === 'bolid';
 }
 
 export function applyPresetPlaybackPolicy(playback, preset = {}) {

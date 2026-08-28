@@ -1,7 +1,7 @@
 import {
     generateFocusPathForSettings,
     rebuildFocusPath
-} from '../animation/focusPath.js?v=20260827-2';
+} from '../animation/focusPath.js?v=20260828-1';
 import {
     createFocusTimeline,
     resolveFocusStops,
@@ -9,25 +9,33 @@ import {
 } from '../animation/focusTimeline.js?v=20260826-1';
 import {
     createEyeAnimationTimeline,
+    createLoopEyeAnimationTimeline,
     sampleEyeAnimationTimeline
-} from '../animation/eyeTimeline.js?v=20260826-1';
+} from '../animation/eyeTimeline.js?v=20260828-2';
+import {
+    createStationaryLoopTimeline,
+    sampleLoopFocus
+} from '../animation/loopTimeline.js?v=20260827-1';
+import { settingsAtBolidTime } from '../animation/bolid.js?v=20260828-2';
 import {
     resolveBlinkMotionBlurTime,
     resolveMotionBlur,
     wrapMotionBlurTime
 } from '../animation/motionBlur.js?v=20260826-3';
 import {
+    BOLID_EYE_MOTION_TIME_CONSTANT,
     advanceEyeMotionToTarget,
-    createEyeMotionState
-} from '../animation/eyeMotion.js?v=20260825-1';
+    createEyeMotionState,
+    currentEyeMotionTransform
+} from '../animation/eyeMotion.js?v=20260828-1';
 import {
     buildAnimationFrameScene,
     drawAnimationFrame
-} from '../render/animationFrameRenderer.js?v=20260827-2';
+} from '../render/animationFrameRenderer.js?v=20260828-3';
 import {
     createAnimationFrameSamples,
     sampleAnimationFrame
-} from './animationFrameSamples.js?v=20260826-1';
+} from './animationFrameSamples.js?v=20260827-3';
 import { StoredZipBlobBuilder } from './zipStore.js?v=20260825-1';
 import { muxAvcToMp4 } from './mp4Muxer.js';
 import {
@@ -81,6 +89,15 @@ const assertActive = (jobId) => {
 };
 
 function createMotion(settings, startFocus, motionPath = null) {
+    if (settings.focusMode === 'bolid') {
+        const timeline = createStationaryLoopTimeline(startFocus, settings.motionDuration);
+        const eyeTimeline = createLoopEyeAnimationTimeline(timeline, {
+            blinkCount: settings.motionBlinkCount,
+            pairedBlinks: true,
+            emotionVariation: settings.motionEmotionVariation
+        });
+        return { path: null, timeline, eyeTimeline };
+    }
     const path = motionPath
         ? rebuildFocusPath(motionPath)
         : generateFocusPathForSettings(settings, startFocus);
@@ -101,26 +118,50 @@ function createMotion(settings, startFocus, motionPath = null) {
     return { path, timeline, eyeTimeline };
 }
 
+const sampleMotionFocus = (timeline, timeMs) => (
+    sampleLoopFocus(timeline, timeMs, sampleFocusTimeline).point
+);
+
 function createLoopingEyeMotion(settings, timeline, frameCount, fps) {
-    const motion = createEyeMotionState();
+    const motion = createEyeMotionState(
+        settings.focusMode === 'bolid' ? BOLID_EYE_MOTION_TIME_CONSTANT : undefined
+    );
     const frameDuration = 1000 / fps;
-    const warmupCount = Math.min(frameCount, EYE_MOTION_WARMUP_FRAMES);
+    const warmupCount = Math.min(
+        frameCount,
+        settings.focusMode === 'bolid' ? 40 : EYE_MOTION_WARMUP_FRAMES
+    );
     for (let index = frameCount - warmupCount; index < frameCount; index += 1) {
-        const focus = sampleFocusTimeline(timeline, index * frameDuration).point;
-        const scene = buildAnimationFrameScene(settings, focus);
-        advanceEyeMotionToTarget(motion, scene.eyes.pairCenter, frameDuration);
+        const timeMs = index * frameDuration;
+        const focus = sampleMotionFocus(timeline, timeMs);
+        const scene = buildAnimationFrameScene(settings, focus, {
+            timeMs,
+            durationMs: timeline.durationMs
+        });
+        advanceEyeMotionToTarget(
+            motion,
+            scene.eyes.pairCenter,
+            frameDuration,
+            scene.eyes.fitScale
+        );
     }
     return motion;
 }
 
 function drawMotionFrame(context, size, settings, samples, motion, frameIndex, fps, options = {}, metrics = null) {
     const state = sampleAnimationFrame(samples, frameIndex);
-    const scene = buildAnimationFrameScene(settings, state.focus, { metrics });
-    const eyeOffset = advanceEyeMotionToTarget(
+    const scene = buildAnimationFrameScene(settings, state.focus, {
+        metrics,
+        timeMs: frameIndex * 1000 / fps,
+        durationMs: settings.motionDuration * 1000
+    });
+    advanceEyeMotionToTarget(
         motion,
         scene.eyes.pairCenter,
-        1000 / fps
+        1000 / fps,
+        scene.eyes.fitScale
     );
+    const eyeOffset = currentEyeMotionTransform(motion);
     drawAnimationFrame(context, size, size, settings, state.focus, {
         ...options,
         eyeState: state.eyes,
@@ -158,13 +199,19 @@ function drawMotionBlurFrame(
     metrics = null
 ) {
     const centerTime = frameIndex * 1000 / fps;
-    const centerFocus = sampleFocusTimeline(timeline, centerTime).point;
-    const centerScene = buildAnimationFrameScene(settings, centerFocus, { metrics });
-    const eyeOffset = advanceEyeMotionToTarget(
+    const centerFocus = sampleMotionFocus(timeline, centerTime);
+    const centerScene = buildAnimationFrameScene(settings, centerFocus, {
+        metrics,
+        timeMs: centerTime,
+        durationMs: timeline.durationMs
+    });
+    advanceEyeMotionToTarget(
         motion,
         centerScene.eyes.pairCenter,
-        1000 / fps
+        1000 / fps,
+        centerScene.eyes.fitScale
     );
+    const eyeOffset = currentEyeMotionTransform(motion);
     const { blur, sampleContext, sampleCanvas, accumulationContext, accumulationCanvas } = buffers;
     accumulationContext.save();
     accumulationContext.setTransform(1, 0, 0, 1, 0, 0);
@@ -177,15 +224,25 @@ function drawMotionBlurFrame(
             rawTime,
             timeline.durationMs
         );
-        const focus = sampleFocusTimeline(timeline, time).point;
-        const eyes = sampleEyeAnimationTimeline(eyeTimeline, time, settings);
+        const focus = sampleMotionFocus(timeline, time);
+        const expression = settingsAtBolidTime(settings, time, timeline.durationMs);
+        const eyes = sampleEyeAnimationTimeline(eyeTimeline, time, expression);
         const blinkTime = resolveBlinkMotionBlurTime(
             centerTime,
             rawTime,
             timeline.durationMs
         );
-        const blink = sampleEyeAnimationTimeline(eyeTimeline, blinkTime, settings);
-        const scene = buildAnimationFrameScene(settings, focus, { metrics });
+        const blinkExpression = settingsAtBolidTime(
+            settings,
+            blinkTime,
+            timeline.durationMs
+        );
+        const blink = sampleEyeAnimationTimeline(eyeTimeline, blinkTime, blinkExpression);
+        const scene = buildAnimationFrameScene(settings, focus, {
+            metrics,
+            timeMs: time,
+            durationMs: timeline.durationMs
+        });
         drawAnimationFrame(sampleContext, size, size, settings, focus, {
             ...options,
             eyeState: { ...eyes, blinkAmount: blink.blinkAmount },

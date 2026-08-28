@@ -1,5 +1,5 @@
 import { clamp, distance } from '../geometry/vector.js';
-import { createMotionPathRegion } from '../geometry/focusBounds.js?v=20260827-1';
+import { createMotionPathRegion } from '../geometry/focusBounds.js?v=20260828-2';
 
 const TAU = Math.PI * 2;
 const LENGTH_SAMPLES = 64;
@@ -10,27 +10,27 @@ const BOUNDARY_HANDLE_MIN_LENGTH = 14;
 export const FOCUS_PATH_COMPLEXITY = Object.freeze({
     soft: Object.freeze({
         angularJitter: 0.16,
-        radiusMin: 0.32,
-        radiusMax: 1,
+        radiusMin: 0.24,
+        radiusMax: 0.92,
         strideRatio: 0,
         handleFactor: 0.34,
-        radialExponent: 0.58
+        radialExponent: 1.12
     }),
     medium: Object.freeze({
         angularJitter: 0.38,
-        radiusMin: 0.18,
-        radiusMax: 1,
-        strideRatio: 0.32,
+        radiusMin: 0.12,
+        radiusMax: 0.94,
+        strideRatio: 0,
         handleFactor: 0.29,
-        radialExponent: 0.68
+        radialExponent: 1.06
     }),
     hard: Object.freeze({
         angularJitter: 0.68,
-        radiusMin: 0.08,
-        radiusMax: 1,
-        strideRatio: 0.48,
+        radiusMin: 0.05,
+        radiusMax: 0.96,
+        strideRatio: 0,
         handleFactor: 0.23,
-        radialExponent: 0.78
+        radialExponent: 0.94
     })
 });
 
@@ -149,8 +149,8 @@ function boundaryAwareTangent(anchor, tangent, center, radius, smoothness = 0) {
     const radialVector = subtract(anchor, center);
     const radialDistance = vectorLength(radialVector);
     const amount = smoothnessAmount(smoothness);
-    const blendStart = mix(0.78, 0.72, amount);
-    const blendEnd = mix(0.985, 0.95, amount);
+    const blendStart = mix(0.88, 0.84, amount);
+    const blendEnd = mix(0.995, 0.98, amount);
     if (radialDistance <= radius * blendStart || radialDistance <= 1e-9) return tangent;
 
     const radial = unit(radialVector);
@@ -177,18 +177,14 @@ function createAnchors({ start, center, radius, pointCount, profile, random }) {
     const angularStep = TAU / generatedCount;
     const pool = [];
     const primaryEdgeIndex = Math.floor(random() * generatedCount);
-    const edgeIndices = new Set([primaryEdgeIndex]);
-    if (generatedCount >= 2) {
-        edgeIndices.add((primaryEdgeIndex + Math.round(generatedCount / 2)) % generatedCount);
-    }
 
     for (let index = 0; index < generatedCount; index += 1) {
         const jitter = (random() - 0.5) * angularStep * profile.angularJitter;
         const angle = baseAngle + index * angularStep + jitter;
         const radialRandom = random();
         const radialMix = Math.pow(radialRandom, profile.radialExponent);
-        const radialRatio = edgeIndices.has(index)
-            ? 0.985 + radialRandom * 0.015
+        const radialRatio = index === primaryEdgeIndex
+            ? 0.9 + radialRandom * 0.1
             : profile.radiusMin + (profile.radiusMax - profile.radiusMin) * radialMix;
         pool.push({
             x: center.x + Math.cos(angle) * radius * radialRatio,
@@ -283,21 +279,14 @@ function regularizeAnchors(source, center, radius, smoothness) {
     const amount = smoothnessAmount(smoothness);
     if (amount <= 0) return source.map(copyPoint);
 
-    const anchors = source.map((anchor, index) => {
-        if (index === 0) return copyPoint(anchor);
-        const offset = subtract(anchor, center);
-        const originalRadius = vectorLength(offset);
-        if (originalRadius < radius * 0.985) return copyPoint(anchor);
-        const targetRadius = mix(originalRadius, radius, amount);
-        return addScaled(center, unit(offset), targetRadius);
-    });
+    const anchors = source.map(copyPoint);
     if (source.length <= 2) return anchors;
     const count = anchors.length;
     const edgeRadii = source.map((anchor, index) => {
         if (index === 0) return vectorLength(subtract(anchor, center));
         const originalRadius = vectorLength(subtract(anchor, center));
-        return originalRadius >= radius * 0.985
-            ? mix(originalRadius, radius, amount)
+        return originalRadius >= radius * 0.9
+            ? originalRadius
             : 0;
     });
     const adjacentRatio = clamp(1.22 / Math.sqrt(count), 0.27, 0.56);
@@ -603,6 +592,118 @@ export function sampleFocusPath(path, distanceProgress) {
     return { point: copyPoint(path.anchors[0]), segmentIndex: 0, segmentProgress: 0 };
 }
 
+const GENERATED_PATH_QUALITY_SAMPLES = 256;
+const GENERATED_PATH_ATTEMPTS = 16;
+
+function strictSegmentIntersection(firstStart, firstEnd, secondStart, secondEnd) {
+    const first = subtract(firstEnd, firstStart);
+    const second = subtract(secondEnd, secondStart);
+    const denominator = cross(first, second);
+    if (Math.abs(denominator) <= 1e-9) return null;
+    const offset = subtract(secondStart, firstStart);
+    const firstAmount = cross(offset, second) / denominator;
+    const secondAmount = cross(offset, first) / denominator;
+    const epsilon = 1e-5;
+    if (firstAmount <= epsilon || firstAmount >= 1 - epsilon
+        || secondAmount <= epsilon || secondAmount >= 1 - epsilon) return null;
+    return {
+        x: firstStart.x + first.x * firstAmount,
+        y: firstStart.y + first.y * firstAmount
+    };
+}
+
+function shorterLoopDiameter(samples, firstIndex, secondIndex) {
+    const count = samples.length;
+    const directLength = secondIndex - firstIndex;
+    const useDirect = directLength <= count - directLength;
+    const points = [];
+    if (useDirect) {
+        for (let index = firstIndex + 1; index <= secondIndex; index += 1) {
+            points.push(samples[index % count]);
+        }
+    } else {
+        for (let index = secondIndex + 1; index <= firstIndex + count; index += 1) {
+            points.push(samples[index % count]);
+        }
+    }
+    if (!points.length) return 0;
+    const xs = points.map((point) => point.x);
+    const ys = points.map((point) => point.y);
+    return Math.hypot(
+        Math.max(...xs) - Math.min(...xs),
+        Math.max(...ys) - Math.min(...ys)
+    );
+}
+
+/** Metrics used only to reject unattractive automatically generated paths. */
+export function analyzeGeneratedFocusPath(path, {
+    sampleCount = GENERATED_PATH_QUALITY_SAMPLES,
+    outerBandStart = 0.92
+} = {}) {
+    const count = Math.max(64, Math.round(sampleCount));
+    const samples = Array.from({ length: count }, (_, index) => (
+        sampleFocusPath(path, index / count).point
+    ));
+    const radii = samples.map((sample) => distance(sample, path.center) / path.radius);
+    const intersections = [];
+    let tinyLoopCount = 0;
+    for (let first = 0; first < count; first += 1) {
+        const firstEnd = (first + 1) % count;
+        for (let second = first + 2; second < count; second += 1) {
+            const secondEnd = (second + 1) % count;
+            if (first === 0 && secondEnd === 0) continue;
+            const intersection = strictSegmentIntersection(
+                samples[first],
+                samples[firstEnd],
+                samples[second],
+                samples[secondEnd]
+            );
+            if (!intersection) continue;
+            const directSpan = second - first;
+            const loopFraction = Math.min(directSpan, count - directSpan) / count;
+            const diameterRatio = shorterLoopDiameter(samples, first, second) / path.radius;
+            const tiny = loopFraction < 0.16 || diameterRatio < 0.34;
+            intersections.push({ loopFraction, diameterRatio, tiny });
+            if (tiny) tinyLoopCount += 1;
+        }
+    }
+    return {
+        outerBandRatio: radii.filter((radius) => radius >= outerBandStart).length / count,
+        maximumRadiusRatio: Math.max(...radii),
+        intersectionCount: intersections.length,
+        tinyLoopCount
+    };
+}
+
+function retryMotionSeed(seed, attempt) {
+    if (attempt <= 0) return normalizeMotionSeed(seed);
+    let value = (normalizeMotionSeed(seed) + Math.imul(attempt, 0x9e3779b9)) >>> 0;
+    value ^= value >>> 16;
+    value = Math.imul(value, 0x21f0aaad) >>> 0;
+    value ^= value >>> 15;
+    return value >>> 0;
+}
+
+function generatedPathQuality(path, complexity) {
+    const metrics = analyzeGeneratedFocusPath(path);
+    const complexityAmount = normalizeMotionComplexity(complexity) / 100;
+    const startRadius = distance(path.anchors[0], path.center) / path.radius;
+    const outerLimit = path.anchors.length <= 2
+        ? 1
+        : mix(0.22, 0.34, complexityAmount) + (startRadius >= 0.92 ? 0.08 : 0);
+    const radiusDeficit = Math.max(0, 0.88 - metrics.maximumRadiusRatio);
+    const outerExcess = Math.max(0, metrics.outerBandRatio - outerLimit);
+    return {
+        accepted: metrics.tinyLoopCount === 0
+            && outerExcess <= 1e-9
+            && radiusDeficit <= 1e-9,
+        score: metrics.tinyLoopCount * 100
+            + outerExcess * 20
+            + radiusDeficit * 10,
+        metrics
+    };
+}
+
 function formatPath(segments) {
     if (!segments.length) return '';
     const commands = [`M ${clean(segments[0].start.x)} ${clean(segments[0].start.y)}`];
@@ -700,6 +801,56 @@ export function serializeFocusPath(path) {
     };
 }
 
+function generateFocusPathCandidate({
+    start,
+    center,
+    radius,
+    pointCount,
+    normalizedComplexity,
+    normalizedSmoothness,
+    baseSeed,
+    candidateSeed
+}) {
+    const profile = complexityProfile(normalizedComplexity);
+    const random = createMotionRandom(candidateSeed);
+    const anchors = createAnchors({
+        start: start || center,
+        center,
+        radius,
+        pointCount,
+        profile,
+        random
+    });
+    const regularizedAnchors = regularizeAnchors(
+        anchors,
+        center,
+        radius,
+        normalizedSmoothness
+    );
+    const tangents = createTangents(
+        regularizedAnchors,
+        center,
+        radius,
+        normalizedSmoothness
+    );
+    const segments = createSegments(
+        regularizedAnchors,
+        tangents,
+        center,
+        radius,
+        profile,
+        normalizedSmoothness
+    );
+    return rebuildFocusPath({
+        seed: baseSeed,
+        complexity: normalizedComplexity,
+        smoothness: normalizedSmoothness,
+        center,
+        radius,
+        segments
+    });
+}
+
 export function generateFocusPath({
     start,
     center,
@@ -716,44 +867,27 @@ export function generateFocusPath({
     const safeRadius = Math.max(1, finiteOr(radius, 195));
     const normalizedComplexity = normalizeMotionComplexity(complexity);
     const normalizedSmoothness = normalizeMotionSmoothness(smoothness);
-    const profile = complexityProfile(normalizedComplexity);
-    const random = createMotionRandom(seed);
-    const anchors = createAnchors({
-        start: start || safeCenter,
+    const baseSeed = normalizeMotionSeed(seed);
+    const candidateOptions = {
+        start,
         center: safeCenter,
         radius: safeRadius,
         pointCount,
-        profile,
-        random
-    });
-    const regularizedAnchors = regularizeAnchors(
-        anchors,
-        safeCenter,
-        safeRadius,
-        normalizedSmoothness
-    );
-    const tangents = createTangents(
-        regularizedAnchors,
-        safeCenter,
-        safeRadius,
-        normalizedSmoothness
-    );
-    const segments = createSegments(
-        regularizedAnchors,
-        tangents,
-        safeCenter,
-        safeRadius,
-        profile,
-        normalizedSmoothness
-    );
-    return rebuildFocusPath({
-        seed: normalizeMotionSeed(seed),
-        complexity: normalizedComplexity,
-        smoothness: normalizedSmoothness,
-        center: safeCenter,
-        radius: safeRadius,
-        segments
-    });
+        normalizedComplexity,
+        normalizedSmoothness,
+        baseSeed
+    };
+    let best = null;
+    for (let attempt = 0; attempt < GENERATED_PATH_ATTEMPTS; attempt += 1) {
+        const candidate = generateFocusPathCandidate({
+            ...candidateOptions,
+            candidateSeed: retryMotionSeed(baseSeed, attempt)
+        });
+        const quality = generatedPathQuality(candidate, normalizedComplexity);
+        if (!best || quality.score < best.quality.score) best = { candidate, quality };
+        if (quality.accepted) return candidate;
+    }
+    return best.candidate;
 }
 
 export function generateFocusPathForSettings(settings, start) {

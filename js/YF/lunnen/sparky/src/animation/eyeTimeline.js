@@ -110,6 +110,39 @@ function createFreeBlinkEvents(focusTimeline, count) {
     });
 }
 
+function createPairedFreeBlinkEvents(loopTimeline, count) {
+    if (count <= 0) return [];
+    const pairCount = count >= 2
+        ? Math.min(Math.floor(count / 2), Math.max(1, Math.floor(count / 4)))
+        : 0;
+    const groupCount = count - pairCount;
+    const pairedGroups = new Set(Array.from({ length: pairCount }, (_, index) => (
+        Math.min(
+            groupCount - 1,
+            Math.max(0, Math.round((index + 0.5) * groupCount / pairCount - 0.5))
+        )
+    )));
+    const spacing = loopTimeline.durationMs / groupCount;
+    const timing = fixedBlinkTiming();
+    const events = [];
+    for (let groupIndex = 0; groupIndex < groupCount; groupIndex += 1) {
+        const paired = pairedGroups.has(groupIndex);
+        const groupCenter = spacing * (groupIndex + 0.5);
+        const centers = paired
+            ? [groupCenter - BASE_BLINK_DURATION / 2, groupCenter + BASE_BLINK_DURATION / 2]
+            : [groupCenter];
+        centers.forEach((centerMs) => {
+            events.push({
+                anchorIndex: null,
+                centerMs: wrapTime(centerMs, loopTimeline.durationMs),
+                startMs: centerMs - timing.close - timing.hold / 2,
+                timing
+            });
+        });
+    }
+    return events.sort((first, second) => first.centerMs - second.centerMs);
+}
+
 export function createEyeAnimationTimeline(focusTimeline, {
     blinkCount = 2,
     blinkAtStops = true,
@@ -129,6 +162,30 @@ export function createEyeAnimationTimeline(focusTimeline, {
         requestedBlinkCount: count,
         blinkCount: blinkEvents.length,
         blinkAtStops: onlyAtStops,
+        emotionVariation: clamp(finiteOr(emotionVariation, 0), 0, 100),
+        easing: FOCUS_MOTION_EASINGS[easing] ? easing : 'ease-in-out',
+        blinkEvents
+    };
+}
+
+export function createLoopEyeAnimationTimeline(loopTimeline, {
+    blinkCount = 2,
+    pairedBlinks = true,
+    emotionVariation = 0,
+    easing = 'ease-in-out'
+} = {}) {
+    const count = Math.round(clamp(finiteOr(blinkCount, 2), 0, 12));
+    const blinkEvents = count <= 0
+        ? []
+        : pairedBlinks
+            ? createPairedFreeBlinkEvents(loopTimeline, count)
+            : createFreeBlinkEvents(loopTimeline, count);
+    return {
+        durationMs: loopTimeline.durationMs,
+        focusTimeline: loopTimeline,
+        requestedBlinkCount: count,
+        blinkCount: blinkEvents.length,
+        blinkAtStops: false,
         emotionVariation: clamp(finiteOr(emotionVariation, 0), 0, 100),
         easing: FOCUS_MOTION_EASINGS[easing] ? easing : 'ease-in-out',
         blinkEvents

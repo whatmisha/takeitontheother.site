@@ -140,6 +140,39 @@ test('per-ray overrides support non-linear future distributions', () => {
     assert.equal(profiles[4].length, 210);
 });
 
+test('harmonic variation modulates each ray without changing its stored base values', () => {
+    const profiles = createRayProfiles({
+        ...DEFAULT_GEOMETRY,
+        rayCount: 5,
+        rayLengthVariation: 100,
+        rayWidthVariation: 50,
+        rayModulationFrequency: 1,
+        rayModulationPhase: 90,
+        rayOverrides: [{ length: 300, width: 100 }]
+    });
+
+    closeTo(profiles[0].length, 480);
+    closeTo(profiles[0].width, 130);
+    assert.notEqual(profiles[1].length, profiles[0].length);
+    assert.equal(DEFAULT_GEOMETRY.rayLength, 240);
+    assert.equal(DEFAULT_GEOMETRY.rayWidth, 80);
+});
+
+test('maximum harmonic controls stay constructible across every ray count and frequency', () => {
+    for (let rayCount = 3; rayCount <= 13; rayCount += 1) {
+        for (let frequency = 1; frequency <= 6; frequency += 1) {
+            const geometry = buildCharacterGeometry({
+                rayCount,
+                rayLengthVariation: 100,
+                rayWidthVariation: 100,
+                rayModulationFrequency: frequency,
+                rayModulationPhase: 137
+            });
+            assert.match(geometry.rounded.path, /^M .* Z$/);
+        }
+    }
+});
+
 test('maximum relative rounding leaves a safe gap before neighbouring arcs touch', () => {
     const geometry = buildCharacterGeometry({ roundness: 100 });
     geometry.rounded.corners.forEach((corner, index) => {

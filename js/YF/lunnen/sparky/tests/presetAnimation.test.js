@@ -60,8 +60,9 @@ test('Basic Wild preserves the Basic character and ships the requested animation
     });
 });
 
-test('only presets saved in Animate mode opt into autoplay', () => {
+test('Path and Bolid presets opt into autoplay', () => {
     assert.equal(shouldAutoplayPreset({ focusMode: 'animate' }), true);
+    assert.equal(shouldAutoplayPreset({ focusMode: 'bolid' }), true);
     assert.equal(shouldAutoplayPreset({ focusMode: 'manual', motionDuration: 10 }), false);
     assert.equal(shouldAutoplayPreset({}), false);
 });

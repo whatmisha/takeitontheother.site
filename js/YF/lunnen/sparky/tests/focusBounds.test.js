@@ -4,12 +4,14 @@ import test from 'node:test';
 import {
     EXTENDED_FOCUS_INSET,
     FOCUS_BOUNDARY_REFERENCE,
+    constrainFocusControlPoint,
     constrainFocusPoint,
     createExtendedFocusRegion,
     createMotionPathRegion,
     focusPointFromPolar,
     focusPointToPolar,
-    getFocusSliderBounds
+    getFocusSliderBounds,
+    mapFocusPointToGeometry
 } from '../src/geometry/focusBounds.js';
 import { distance } from '../src/geometry/vector.js';
 import { rebaseLegacyY } from '../src/geometry/coordinateSpace.js';
@@ -54,18 +56,22 @@ test('motion paths use the complete guide circle without the Focus inset', () =>
     closeTo(region.maxY, 480);
 });
 
-test('Focus leaves inside positions intact and projects outside positions to the circle', () => {
+test('authored Focus uses the whole Sphere while rendered Focus stays constructible', () => {
     const state = { ...defaultBoundary };
-    const region = createExtendedFocusRegion(state);
-    const inside = { x: 280, y: 300 };
-    assert.deepEqual(constrainFocusPoint(inside, state), inside);
+    const controlRegion = createMotionPathRegion(state);
+    const geometryRegion = createExtendedFocusRegion(state);
+    const halfway = { x: 360, y: 240 };
+    const mapped = mapFocusPointToGeometry(halfway, state);
+    closeTo(distance(mapped, geometryRegion.center), geometryRegion.radius * 0.5);
 
-    const constrained = constrainFocusPoint({ x: 600, y: 20 }, state);
-    closeTo(distance(constrained, region.center), region.radius);
+    const edge = constrainFocusControlPoint({ x: 600, y: 240 }, state);
+    closeTo(distance(edge, controlRegion.center), controlRegion.radius);
+    const effectiveEdge = constrainFocusPoint(edge, state);
+    closeTo(distance(effectiveEdge, geometryRegion.center), geometryRegion.radius);
 });
 
 test('polar Focus starts at twelve o’clock and increases clockwise', () => {
-    const region = createExtendedFocusRegion(defaultBoundary);
+    const region = createMotionPathRegion(defaultBoundary);
     const top = focusPointFromPolar({ angle: 0, distance: 80 }, defaultBoundary);
     closeTo(top.x, region.center.x);
     closeTo(top.y, region.center.y - region.radius * 0.8);
@@ -79,11 +85,16 @@ test('polar Focus starts at twelve o’clock and increases clockwise', () => {
     closeTo(polar.distance, 80);
 });
 
-test('100 percent reaches the circular Focus boundary in every direction', () => {
-    const region = createExtendedFocusRegion(defaultBoundary);
+test('100 percent reaches the Sphere and maps to the geometric Focus boundary', () => {
+    const controlRegion = createMotionPathRegion(defaultBoundary);
+    const geometryRegion = createExtendedFocusRegion(defaultBoundary);
     [0, 45, 90, 180, 270, 360].forEach((angle) => {
         const focus = focusPointFromPolar({ angle, distance: 100 }, defaultBoundary);
-        closeTo(distance(focus, region.center), region.radius);
+        closeTo(distance(focus, controlRegion.center), controlRegion.radius);
+        closeTo(
+            distance(mapFocusPointToGeometry(focus, defaultBoundary), geometryRegion.center),
+            geometryRegion.radius
+        );
     });
 });
 
@@ -94,9 +105,9 @@ test('the center preserves a chosen angle while its distance stays zero', () => 
     closeTo(polar.distance, 0);
 });
 
-test('legacy Extended flags cannot disable the circular Focus region', () => {
+test('legacy Extended flags cannot disable the complete visible Focus region', () => {
     const region = getFocusSliderBounds({ ...defaultBoundary, extendedFocus: false });
-    const constrained = constrainFocusPoint(
+    const constrained = constrainFocusControlPoint(
         { x: 20, y: 600 },
         { ...defaultBoundary, extendedFocus: false }
     );

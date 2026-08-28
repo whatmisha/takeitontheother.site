@@ -1,7 +1,7 @@
 import {
     fitCubicSegmentToCircle,
     rebuildFocusPath
-} from './focusPath.js?v=20260827-2';
+} from './focusPath.js?v=20260828-1';
 
 export const FOCUS_PATH_EDITOR_MIN_HANDLE_LENGTH = 14;
 export const FOCUS_PATH_EDITOR_ANCHOR_INSET = 0;

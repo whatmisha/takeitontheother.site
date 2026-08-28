@@ -1,13 +1,16 @@
 import { clamp } from '../geometry/vector.js';
-import { constrainFocusPoint, focusPointToPolar } from '../geometry/focusBounds.js';
+import {
+    constrainFocusControlPoint,
+    focusPointToPolar
+} from '../geometry/focusBounds.js?v=20260828-2';
 
 export function normalizedFocus(raw, state) {
-    const constrained = constrainFocusPoint(raw, state);
+    const constrained = constrainFocusControlPoint(raw, state);
     const rounded = {
         x: Number(constrained.x.toFixed(3)),
         y: Number(constrained.y.toFixed(3))
     };
-    const final = constrainFocusPoint(rounded, state);
+    const final = constrainFocusControlPoint(rounded, state);
     return {
         x: Number(final.x.toFixed(6)),
         y: Number(final.y.toFixed(6))

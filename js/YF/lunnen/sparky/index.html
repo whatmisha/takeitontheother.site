@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#000000">
     <title>Lunnen Sparky — Parametric Character</title>
     <link rel="stylesheet" href="./framework/css/othersite-styles.css">
-    <link rel="stylesheet" href="./styles/sparky.css?v=20260827-1">
+    <link rel="stylesheet" href="./styles/sparky.css?v=20260828-3">
 </head>
 <body>
     <div class="container">
@@ -106,7 +106,7 @@
 
             <aside class="controls-panel" id="focusPanel">
                 <div class="panel-header" id="focusPanelHeader">
-                    <span>Focus</span>
+                    <span>Modes</span>
                     <span class="collapse-icon" aria-hidden="true">
                         <svg width="10" height="6" viewBox="0 0 12 8" fill="none">
                             <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -115,11 +115,13 @@
                 </div>
                 <div class="panel-content">
                     <section class="control-section">
-                        <fieldset class="segmented-control segmented-control-compact sparky-focus-tabs" aria-label="Focus mode">
+                        <fieldset class="segmented-control segmented-control-compact sparky-focus-tabs" aria-label="Animation mode">
                             <input type="radio" id="focusModeManual" name="focusMode" value="manual" checked>
                             <label for="focusModeManual">Manual</label>
                             <input type="radio" id="focusModeAnimate" name="focusMode" value="animate">
-                            <label for="focusModeAnimate">Animate</label>
+                            <label for="focusModeAnimate">Path</label>
+                            <input type="radio" id="focusModeBolid" name="focusMode" value="bolid">
+                            <label for="focusModeBolid">Bolid</label>
                         </fieldset>
 
                         <div id="focusManualControls" data-focus-mode-panel="manual">
@@ -150,47 +152,64 @@
                             </div>
                         </div>
 
-                        <div id="focusAnimationControls" data-focus-mode-panel="animate" hidden>
+                        <div id="focusAnimationControls" data-focus-mode-panel="animated" hidden>
                             <div class="control-group">
                                 <label for="motionDurationSlider"><span>Duration <span class="unit">sec</span></span>
                                     <input type="text" class="value-display" id="motionDurationValue" value="5"></label>
                                 <input type="range" id="motionDurationSlider" min="1" max="10" step="1" value="5">
                             </div>
 
-                            <div class="control-group sparky-motion-generator-control">
-                                <label for="motionPointCountSlider"><span>Points</span>
-                                    <input type="text" class="value-display" id="motionPointCountValue" value="6"></label>
-                                <input type="range" id="motionPointCountSlider" min="2" max="16" step="1" value="6">
+                            <div id="focusPathControls">
+                                <div class="control-group sparky-motion-generator-control">
+                                    <label for="motionPointCountSlider"><span>Points</span>
+                                        <input type="text" class="value-display" id="motionPointCountValue" value="6"></label>
+                                    <input type="range" id="motionPointCountSlider" min="2" max="16" step="1" value="6">
+                                </div>
+
+                                <div class="control-group sparky-motion-generator-control">
+                                    <label for="motionComplexitySlider"><span>Complexity</span>
+                                        <input type="text" class="value-display" id="motionComplexityValue" value="0"></label>
+                                    <input type="range" id="motionComplexitySlider" min="0" max="100" step="1" value="0">
+                                </div>
+
+                                <div class="control-group sparky-motion-generator-control">
+                                    <label for="motionSmoothnessSlider"><span>Smoothness</span>
+                                        <input type="text" class="value-display" id="motionSmoothnessValue" value="50"></label>
+                                    <input type="range" id="motionSmoothnessSlider" min="0" max="100" step="1" value="50">
+                                </div>
+
+                                <div class="control-group">
+                                    <label for="motionStopCountSlider"><span>Stops</span>
+                                        <input type="text" class="value-display" id="motionStopCountValue" value="3"></label>
+                                    <input type="range" id="motionStopCountSlider" min="1" max="6" step="1" value="3">
+                                </div>
+
+                                <div class="control-group">
+                                    <label for="motionSpeedVariationSlider"><span>Speed variation <span class="unit">%</span></span>
+                                        <input type="text" class="value-display" id="motionSpeedVariationValue" value="0"></label>
+                                    <input type="range" id="motionSpeedVariationSlider" min="0" max="100" step="1" value="0">
+                                </div>
+
                             </div>
 
-                            <div class="control-group sparky-motion-generator-control">
-                                <label for="motionComplexitySlider"><span>Complexity</span>
-                                    <input type="text" class="value-display" id="motionComplexityValue" value="0"></label>
-                                <input type="range" id="motionComplexitySlider" min="0" max="100" step="1" value="0">
-                            </div>
+                            <div id="focusBolidControls" hidden>
+                                <div class="control-group">
+                                    <label for="bolidTargetAngleSlider"><span>Target angle <span class="unit">°</span></span>
+                                        <input type="text" class="value-display" id="bolidTargetAngleValue" value="180"></label>
+                                    <input type="range" id="bolidTargetAngleSlider" min="0" max="360" step="1" value="180">
+                                </div>
 
-                            <div class="control-group sparky-motion-generator-control">
-                                <label for="motionSmoothnessSlider"><span>Smoothness</span>
-                                    <input type="text" class="value-display" id="motionSmoothnessValue" value="50"></label>
-                                <input type="range" id="motionSmoothnessSlider" min="0" max="100" step="1" value="50">
-                            </div>
+                                <div class="control-group">
+                                    <label for="bolidTargetDistanceSlider"><span>Target distance <span class="unit">%</span></span>
+                                        <input type="text" class="value-display" id="bolidTargetDistanceValue" value="40"></label>
+                                    <input type="range" id="bolidTargetDistanceSlider" min="0" max="100" step="1" value="40">
+                                </div>
 
-                            <div class="control-group">
-                                <label for="motionStopCountSlider"><span>Stops</span>
-                                    <input type="text" class="value-display" id="motionStopCountValue" value="3"></label>
-                                <input type="range" id="motionStopCountSlider" min="1" max="6" step="1" value="3">
-                            </div>
-
-                            <div class="control-group">
-                                <label for="motionSpeedVariationSlider"><span>Speed variation <span class="unit">%</span></span>
-                                    <input type="text" class="value-display" id="motionSpeedVariationValue" value="0"></label>
-                                <input type="range" id="motionSpeedVariationSlider" min="0" max="100" step="1" value="0">
-                            </div>
-
-                            <div class="control-group">
-                                <label for="motionBlinkCountSlider"><span>Blinks <span class="unit">/ loop</span></span>
-                                    <input type="text" class="value-display" id="motionBlinkCountValue" value="2"></label>
-                                <input type="range" id="motionBlinkCountSlider" min="0" max="12" step="1" value="2">
+                                <div class="control-group">
+                                    <label for="bolidIntensitySlider"><span>Intensity <span class="unit">%</span></span>
+                                        <input type="text" class="value-display" id="bolidIntensityValue" value="100"></label>
+                                    <input type="range" id="bolidIntensitySlider" min="0" max="100" step="1" value="100">
+                                </div>
                             </div>
 
                             <div class="control-group">
@@ -200,28 +219,44 @@
                             </div>
 
                             <div class="control-group">
+                                <label for="motionBlinkCountSlider"><span>Blinks <span class="unit">/ loop</span></span>
+                                    <input type="text" class="value-display" id="motionBlinkCountValue" value="2"></label>
+                                <input type="range" id="motionBlinkCountSlider" min="0" max="12" step="1" value="2">
+                            </div>
+
+                            <div class="control-group">
                                 <label for="motionBlurSlider"><span>Motion blur <span class="unit">%</span></span>
                                     <input type="text" class="value-display" id="motionBlurValue" value="0"></label>
                                 <input type="range" id="motionBlurSlider" min="0" max="100" step="1" value="0">
                             </div>
 
-                            <div class="sparky-motion-path-actions">
-                                <button type="button" class="sparky-panel-action sparky-motion-edit-action"
-                                        id="motionEditPathBtn" aria-pressed="false">Edit path</button>
-                                <button type="button" class="sparky-panel-action sparky-motion-import-action"
-                                        id="motionImportPathBtn" aria-label="Import SVG path"
-                                        title="Import SVG path" data-tooltip="Import SVG path">
-                                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                                        <path d="M8 10.8V2.4M4.9 5.5 8 2.4l3.1 3.1M2.5 9.4v3.4h11V9.4"
-                                              stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                </button>
-                                <input type="file" id="motionImportPathInput" accept=".svg,image/svg+xml" hidden>
+                            <div class="control-group pill-toggle-row" id="bolidAngryToggleRow" hidden>
+                                <label class="pill-toggle" for="bolidAngryEyes">
+                                    <input type="checkbox" id="bolidAngryEyes" class="sr-only"
+                                           data-setting="bolidAngryEyes" checked>
+                                    <span>Gets angrier</span>
+                                </label>
                             </div>
-                            <p class="sparky-motion-import-status" id="motionImportStatus" hidden></p>
-                            <p class="sparky-motion-editor-hint" id="motionEditorHint" hidden>
-                                Drag points and Bézier handles on the canvas.
-                            </p>
+
+                            <div id="focusPathActionControls">
+                                <div class="sparky-motion-path-actions">
+                                    <button type="button" class="sparky-panel-action sparky-motion-edit-action"
+                                            id="motionEditPathBtn" aria-pressed="false">Edit path</button>
+                                    <button type="button" class="sparky-panel-action sparky-motion-import-action"
+                                            id="motionImportPathBtn" aria-label="Import SVG path"
+                                            title="Import SVG path" data-tooltip="Import SVG path">
+                                        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                            <path d="M8 10.8V2.4M4.9 5.5 8 2.4l3.1 3.1M2.5 9.4v3.4h11V9.4"
+                                                  stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </button>
+                                    <input type="file" id="motionImportPathInput" accept=".svg,image/svg+xml" hidden>
+                                </div>
+                                <p class="sparky-motion-import-status" id="motionImportStatus" hidden></p>
+                                <p class="sparky-motion-editor-hint" id="motionEditorHint" hidden>
+                                    Drag points and Bézier handles on the canvas.
+                                </p>
+                            </div>
 
                             <div class="sparky-animation-actions">
                                 <button type="button" class="sparky-panel-action sparky-animation-primary-action" id="motionPlayPauseBtn">Pause</button>
@@ -380,6 +415,6 @@
         </dialog>
     </div>
 
-    <script type="module" src="./tool.js?v=20260827-11"></script>
+    <script type="module" src="./tool.js?v=20260828-7"></script>
 </body>
 </html>

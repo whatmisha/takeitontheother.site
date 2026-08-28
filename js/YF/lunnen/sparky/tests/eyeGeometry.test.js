@@ -12,7 +12,10 @@ import {
 } from '../src/geometry/eyeGeometry.js';
 import { distance } from '../src/geometry/vector.js';
 import { rebaseLegacyY } from '../src/geometry/coordinateSpace.js';
-import { focusPointFromPolar } from '../src/geometry/focusBounds.js';
+import {
+    focusPointFromPolar,
+    mapFocusPointToGeometry
+} from '../src/geometry/focusBounds.js';
 
 const closeTo = (actual, expected, tolerance = 1e-6) => {
     assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} is not within ${tolerance} of ${expected}`);
@@ -47,7 +50,12 @@ function basicEyeGeometry(angle, focusDistance, options = {}) {
         { angle, distance: focusDistance },
         BASIC_EYE_SETTINGS
     );
-    const settings = { ...BASIC_EYE_SETTINGS, focusX: focus.x, focusY: focus.y };
+    const effectiveFocus = mapFocusPointToGeometry(focus, BASIC_EYE_SETTINGS);
+    const settings = {
+        ...BASIC_EYE_SETTINGS,
+        focusX: effectiveFocus.x,
+        focusY: effectiveFocus.y
+    };
     const head = buildCharacterGeometry(settings);
     return buildEyeGeometry(settings, head, options);
 }

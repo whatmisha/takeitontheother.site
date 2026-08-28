@@ -58,11 +58,12 @@ export function createExtendedFocusRegion(state = {}) {
 }
 
 export function getFocusSliderBounds(state = {}) {
-    return createExtendedFocusRegion(state);
+    return createMotionPathRegion(state);
 }
 
-export function constrainFocusPoint(raw, state = {}) {
-    const region = createExtendedFocusRegion(state);
+/** Keep the single geometric Focus anywhere inside the complete Sphere. */
+export function constrainFocusControlPoint(raw, state = {}) {
+    const region = createMotionPathRegion(state);
     const candidate = point(
         finiteOr(raw.x, region.center.x),
         finiteOr(raw.y, region.center.y)
@@ -73,9 +74,33 @@ export function constrainFocusPoint(raw, state = {}) {
     return add(region.center, scale(delta, region.radius / magnitude));
 }
 
-/** Convert UI polar coordinates to the Cartesian focus used by the geometry. */
+/**
+ * Map the authored full-Sphere motion field to the constructible geometric
+ * Focus field. The transform is uniform, so the path keeps its shape instead
+ * of sticking to the boundary. Only the mapped point is rendered as Focus.
+ */
+export function mapFocusPointToGeometry(raw, state = {}) {
+    const controlRegion = createMotionPathRegion(state);
+    const geometryRegion = createExtendedFocusRegion(state);
+    const control = constrainFocusControlPoint(raw, state);
+    if (controlRegion.radius <= 1e-9 || geometryRegion.radius <= 1e-9) {
+        return point(geometryRegion.center.x, geometryRegion.center.y);
+    }
+    const delta = subtract(control, controlRegion.center);
+    return add(
+        geometryRegion.center,
+        scale(delta, geometryRegion.radius / controlRegion.radius)
+    );
+}
+
+/** Backwards-compatible name for consumers that need a valid Focus point. */
+export function constrainFocusPoint(raw, state = {}) {
+    return mapFocusPointToGeometry(raw, state);
+}
+
+/** Convert UI polar coordinates to the visible/controller Focus point. */
 export function focusPointFromPolar(raw = {}, state = {}) {
-    const region = createExtendedFocusRegion(state);
+    const region = createMotionPathRegion(state);
     const angle = clamp(finiteOr(raw.angle, 0), 0, 360);
     const distancePercent = clamp(finiteOr(raw.distance, 0), 0, 100);
     const radians = angle * Math.PI / 180;
@@ -88,8 +113,8 @@ export function focusPointFromPolar(raw = {}, state = {}) {
 
 /** Convert a Cartesian focus to clock coordinates: 0° = up, clockwise. */
 export function focusPointToPolar(raw, state = {}, fallbackAngle = 0) {
-    const region = createExtendedFocusRegion(state);
-    const focus = constrainFocusPoint(raw, state);
+    const region = createMotionPathRegion(state);
+    const focus = constrainFocusControlPoint(raw, state);
     const delta = subtract(focus, region.center);
     const magnitude = distance(focus, region.center);
     const measuredAngle = ((Math.atan2(delta.x, -delta.y) * 180 / Math.PI) + 360) % 360;

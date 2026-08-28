@@ -82,11 +82,15 @@ body,
     display: none;
 }
 
+#bolidAngryToggleRow[hidden] {
+    display: none;
+}
+
 .sparky-focus-tabs {
     margin: 0 0 20px;
 }
 
-/* Animate is taller than the space above Eyes. Keep its expanded surface in
+/* Animated modes are taller than the space above Eyes. Keep the expanded surface in
    front even after another panel has received the framework's inline z-index. */
 #focusPanel.sparky-focus-panel--animate:not(.panel-collapsed) {
     z-index: 1002 !important;
@@ -118,6 +122,10 @@ body,
     grid-template-columns: minmax(0, 1fr) 32px 32px;
     gap: 6px;
     margin-top: 24px;
+}
+
+#focusPanel.sparky-focus-panel--bolid .sparky-animation-actions {
+    grid-template-columns: minmax(0, 1fr) 32px;
 }
 
 .sparky-motion-edit-action[aria-pressed="true"] {
@@ -257,6 +265,10 @@ body,
     width: 32px;
     padding: 0;
     place-items: center;
+}
+
+.sparky-animation-actions .sparky-panel-action[hidden] {
+    display: none;
 }
 
 .sparky-export-actions {
@@ -405,6 +417,15 @@ body,
 }
 
 .sparky-focus-hit-area:active {
+    cursor: grabbing;
+}
+
+.sparky-bolid-target-control {
+    cursor: grab;
+    pointer-events: all;
+}
+
+.sparky-bolid-target-control:active {
     cursor: grabbing;
 }
 

@@ -11,6 +11,11 @@ import {
     scale,
     subtract
 } from './vector.js';
+import {
+    rayModulationAmount,
+    rayVariationFactor
+} from './rayModulation.js';
+import { bolidRayAdjustment } from '../animation/bolid.js?v=20260828-2';
 
 const FOCUS_BOUNDARY_NUMERIC_INSET = 1e-4;
 
@@ -69,6 +74,10 @@ export const DEFAULT_GEOMETRY = Object.freeze({
     angleSpan: 144,
     rayLength: 240,
     rayWidth: 80,
+    rayLengthVariation: 0,
+    rayWidthVariation: 0,
+    rayModulationFrequency: 1,
+    rayModulationPhase: 0,
     roundness: 60,
     cornerSmoothing: 0
 });
@@ -105,13 +114,25 @@ export function createRayProfiles(settings) {
 
     return Array.from({ length: count }, (_, index) => {
         const override = overrides[index] || {};
+        const baseAngle = settings.centerAngle
+            + (index - middle) * resolvedAngleStep
+            + (override.angleOffset || 0);
+        const bolid = bolidRayAdjustment(settings, index, count, baseAngle);
+        const modulation = rayModulationAmount(settings, index, count);
+        const baseLength = override.length ?? settings.rayLength;
+        const baseWidth = override.width ?? settings.rayWidth;
         return {
             index,
-            angleDeg: settings.centerAngle
-                + (index - middle) * resolvedAngleStep
-                + (override.angleOffset || 0),
-            length: override.length ?? settings.rayLength,
-            width: override.width ?? settings.rayWidth,
+            angleDeg: baseAngle + bolid.angleOffset,
+            length: baseLength * rayVariationFactor(
+                settings.rayLengthVariation,
+                modulation
+            ) * bolid.lengthFactor,
+            width: baseWidth * rayVariationFactor(
+                settings.rayWidthVariation,
+                modulation
+            ) * bolid.widthFactor,
+            ...(settings.bolidActive ? { tipOffset: bolid.tipOffset } : {}),
             roundnessWeight: override.roundnessWeight ?? 1,
             tipRadius: override.tipRadius ?? settings.cornerRadius,
             valleyRadius: override.valleyRadius ?? settings.cornerRadius
@@ -121,8 +142,9 @@ export function createRayProfiles(settings) {
 
 export function buildRayTriangle(focus, boundary, profile) {
     const direction = directionFromDegrees(profile.angleDeg);
-    const tip = boundary.intersectRay(focus, direction);
-    if (!tip) throw new Error(`Ray ${profile.index} does not intersect the boundary.`);
+    const boundaryTip = boundary.intersectRay(focus, direction);
+    if (!boundaryTip) throw new Error(`Ray ${profile.index} does not intersect the boundary.`);
+    const tip = add(boundaryTip, profile.tipOffset || point(0, 0));
 
     const baseCenter = add(tip, scale(direction, -profile.length));
     const normal = perpendicular(direction);

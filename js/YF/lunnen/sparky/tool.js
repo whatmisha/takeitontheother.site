@@ -3,17 +3,24 @@ import { PresetStore } from './framework/src/preset/PresetStore.js';
 import {
     DEFAULT_GEOMETRY,
     buildCharacterGeometry
-} from './src/geometry/characterGeometry.js?v=20260827-1';
-import { buildEyeGeometry, buildEyeLidGeometry } from './src/geometry/eyeGeometry.js?v=20260824-7';
+} from './src/geometry/characterGeometry.js?v=20260828-2';
+import {
+    buildEyeGeometry,
+    buildEyeLidGeometry,
+    stabilizeEyeGeometry
+} from './src/geometry/eyeGeometry.js?v=20260828-1';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import { createStaticSparkySvg } from './src/export/staticSvgExporter.js?v=20260825-2';
-import { AnimationExporter } from './src/export/animationExporter.js?v=20260827-2';
+import { AnimationExporter } from './src/export/animationExporter.js?v=20260828-3';
 import {
+    BOLID_EYE_MOTION_TIME_CONSTANT,
+    EYE_MOTION_TIME_CONSTANT,
     advanceEyeMotion,
     createEyeMotionState,
     retargetEyeMotion,
     snapEyeMotion
-} from './src/animation/eyeMotion.js?v=20260825-1';
+} from './src/animation/eyeMotion.js?v=20260828-1';
+import { createBolidEyeScaffold } from './src/animation/bolidEyeScaffold.js?v=20260828-2';
 import {
     advanceBlink,
     createBlinkState,
@@ -21,14 +28,13 @@ import {
     triggerBlink
 } from './src/animation/blink.js?v=20260822-6';
 import {
-    cubicBezierPoint,
     generateFocusPathForSettings,
     normalizeMotionComplexity,
     normalizeMotionSmoothness,
     normalizeMotionSeed,
     rebuildFocusPath,
     serializeFocusPath
-} from './src/animation/focusPath.js?v=20260827-2';
+} from './src/animation/focusPath.js?v=20260828-1';
 import {
     focusPathEditorHandlePoints,
     moveFocusPathAnchor,
@@ -51,8 +57,21 @@ import {
 } from './src/animation/focusTimeline.js?v=20260826-1';
 import {
     createEyeAnimationTimeline,
+    createLoopEyeAnimationTimeline,
     sampleEyeAnimationTimeline
-} from './src/animation/eyeTimeline.js?v=20260826-1';
+} from './src/animation/eyeTimeline.js?v=20260828-2';
+import {
+    createStationaryLoopTimeline,
+    sampleLoopFocus
+} from './src/animation/loopTimeline.js?v=20260827-1';
+import {
+    bolidTargetPoint,
+    bolidTargetPolarFromPoint,
+    normalizeBolidIntensity,
+    normalizeBolidTargetAngle,
+    normalizeBolidTargetDistance,
+    settingsAtBolidTime
+} from './src/animation/bolid.js?v=20260828-2';
 import {
     normalizeMotionBlur,
     resolvePreviewMotionBlurGhosts,
@@ -61,17 +80,19 @@ import {
 import { clamp } from './src/geometry/vector.js';
 import {
     constrainFocusPoint,
+    createExtendedFocusRegion,
     createMotionPathRegion,
     focusPointFromPolar,
-    focusPointToPolar
-} from './src/geometry/focusBounds.js?v=20260827-1';
+    focusPointToPolar,
+    mapFocusPointToGeometry
+} from './src/geometry/focusBounds.js?v=20260828-2';
 import {
     centeredFocus,
     normalizedFocus,
     normalizedPolar,
     resolveEffectivePersistenceState,
     resolveManualFocusMode
-} from './src/state/focusState.js?v=20260825-2';
+} from './src/state/focusState.js?v=20260828-2';
 import {
     COORDINATE_SPACE_VERSION,
     migrateCoordinateSpace
@@ -97,6 +118,7 @@ let manualFocusTransitionFrame = null;
 let eyePlacementMode = 'global';
 let previewBlurReducedUntil = 0;
 let previewBlurRestoreTimer = null;
+let manualFocusBehaviorBeforeAnimatedMode = null;
 
 const settings = {
     coordinateSpaceVersion: COORDINATE_SPACE_VERSION,
@@ -142,6 +164,10 @@ const settings = {
     motionBlur: 0,
     motionSeed: 24062026,
     showMotionPath: true,
+    bolidTargetAngle: 180,
+    bolidTargetDistance: 40,
+    bolidIntensity: 100,
+    bolidAngryEyes: true,
     eyePerspective: 100,
     eyeSize: 50,
     eyeDistance: 0,
@@ -173,7 +199,9 @@ function normalizeIncomingState(source = {}) {
     if (source.roundness == null && Number.isFinite(source.cornerRadius)) {
         normalized.roundness = clamp(source.cornerRadius * 6, 0, 100);
     }
-    normalized.focusMode = normalized.focusMode === 'animate' ? 'animate' : 'manual';
+    normalized.focusMode = ['animate', 'bolid'].includes(normalized.focusMode)
+        ? normalized.focusMode
+        : 'manual';
     normalized.motionDuration = clamp(Number(normalized.motionDuration) || 5, 1, 10);
     normalized.motionPointCount = Math.round(clamp(Number(normalized.motionPointCount) || 6, 2, 16));
     normalized.motionComplexity = normalizeMotionComplexity(normalized.motionComplexity);
@@ -203,6 +231,10 @@ function normalizeIncomingState(source = {}) {
     normalized.motionBlur = normalizeMotionBlur(normalized.motionBlur);
     normalized.motionSeed = normalizeMotionSeed(normalized.motionSeed);
     normalized.showMotionPath = Boolean(normalized.showMotionPath);
+    normalized.bolidTargetAngle = normalizeBolidTargetAngle(normalized.bolidTargetAngle);
+    normalized.bolidTargetDistance = normalizeBolidTargetDistance(normalized.bolidTargetDistance);
+    normalized.bolidIntensity = normalizeBolidIntensity(normalized.bolidIntensity);
+    normalized.bolidAngryEyes = normalized.bolidAngryEyes !== false;
     Object.assign(normalized, resolveManualFocusMode(normalized));
     const hasPolarFocus = migrated.focusAngle != null
         && migrated.focusDistance != null
@@ -235,31 +267,42 @@ function isMobileShowcase() {
 }
 
 function activeRenderSettings(current) {
+    const atFocus = (source, rawFocus) => {
+        const authoredFocus = normalizedFocus(rawFocus, source);
+        const focus = mapFocusPointToGeometry(authoredFocus, source);
+        return {
+            ...source,
+            focusX: focus.x,
+            focusY: focus.y
+        };
+    };
     if (isMobileShowcase()) {
         // Product contract: mobile is a deliberately reduced Basic-only
         // showcase. Stored/shared presets remain available for desktop, but do
         // not replace the mobile character profile.
         const focus = mobileShowcaseFocus || centeredFocus(settings);
-        return { ...settings, focusX: focus.x, focusY: focus.y };
+        return atFocus(settings, focus);
     }
-    if (current.focusMode === 'animate' && focusAnimation.currentFocus) {
-        const focus = constrainFocusPoint(focusAnimation.currentFocus, current);
-        return {
-            ...current,
-            focusX: focus.x,
-            focusY: focus.y
-        };
+    if (current.focusMode === 'animate') {
+        const focus = focusAnimation.currentFocus || currentStoredFocus(current);
+        return atFocus(current, focus);
+    }
+    if (current.focusMode === 'bolid') {
+        const animated = settingsAtBolidTime(
+            current,
+            focusAnimation.elapsedMs,
+            focusAnimation.timeline?.durationMs
+        );
+        const focus = focusAnimation.currentFocus || currentStoredFocus(current);
+        return atFocus(animated, focus);
     }
     if (current.focusMode === 'manual' && manualFocusTransition?.current) {
-        return {
-            ...current,
-            focusX: manualFocusTransition.current.x,
-            focusY: manualFocusTransition.current.y
-        };
+        return atFocus(current, manualFocusTransition.current);
     }
-    const focus = current.followCursor ? desktopFollowFocus : null;
-    if (!focus) return current;
-    return { ...current, focusX: focus.x, focusY: focus.y };
+    const focus = current.followCursor && desktopFollowFocus
+        ? desktopFollowFocus
+        : currentStoredFocus(current);
+    return atFocus(current, focus);
 }
 
 function effectivePersistenceState(app) {
@@ -528,15 +571,21 @@ function updateFocusAnimationButtons(app) {
         ?.toggleAttribute('hidden', !focusAnimation.editing);
 }
 
+const isAnimatedFocusMode = (mode) => mode === 'animate' || mode === 'bolid';
+
+function sampleAnimatedFocus(timeline, timeMs) {
+    return sampleLoopFocus(timeline, timeMs, sampleFocusTimeline).point;
+}
+
 function scheduleFocusAnimation(app) {
     if (focusAnimation.frame != null
         || focusAnimation.paused
-        || app.settings.focusMode !== 'animate'
+        || !isAnimatedFocusMode(app.settings.focusMode)
         || isMobileShowcase()) return;
     focusAnimation.frame = requestAnimationFrame((timestamp) => {
         focusAnimation.frame = null;
         if (focusAnimation.paused
-            || app.settings.focusMode !== 'animate'
+            || !isAnimatedFocusMode(app.settings.focusMode)
             || isMobileShowcase()
             || !focusAnimation.timeline) return;
         if (focusAnimation.lastPreviewAt != null
@@ -551,13 +600,54 @@ function scheduleFocusAnimation(app) {
         focusAnimation.elapsedMs = (
             timestamp - focusAnimation.startedAt
         ) % focusAnimation.timeline.durationMs;
-        focusAnimation.currentFocus = sampleFocusTimeline(
+        focusAnimation.currentFocus = sampleAnimatedFocus(
             focusAnimation.timeline,
             focusAnimation.elapsedMs
-        ).point;
+        );
         app.renderNow();
         scheduleFocusAnimation(app);
     });
+}
+
+function rebuildBolidAnimation(app, {
+    restart = true,
+    schedule = true
+} = {}) {
+    cancelFocusAnimationFrame();
+    const wasPaused = focusAnimation.paused || focusAnimation.pausedByUser;
+    const focus = currentStoredFocus(app.settings);
+    focusAnimation.path = null;
+    focusAnimation.timeline = createStationaryLoopTimeline(
+        focus,
+        app.settings.motionDuration
+    );
+    focusAnimation.eyeTimeline = createLoopEyeAnimationTimeline(focusAnimation.timeline, {
+        blinkCount: app.settings.motionBlinkCount,
+        pairedBlinks: true,
+        emotionVariation: app.settings.motionEmotionVariation
+    });
+    focusAnimation.editing = false;
+    focusAnimation.selectedEditorControl = null;
+    if (restart) {
+        focusAnimation.elapsedMs = 0;
+        focusAnimation.startedAt = null;
+        focusAnimation.lastPreviewAt = null;
+    } else {
+        focusAnimation.elapsedMs %= focusAnimation.timeline.durationMs;
+        focusAnimation.startedAt = performance.now() - focusAnimation.elapsedMs;
+    }
+    focusAnimation.currentFocus = { ...focus };
+    focusAnimation.paused = wasPaused;
+    stopBlink(app);
+    beginInteractivePlacement(app);
+    updateFocusAnimationButtons(app);
+    app.renderNow();
+    if (schedule) scheduleFocusAnimation(app);
+}
+
+function rebuildActiveAnimation(app, options = {}) {
+    if (app.settings.focusMode === 'bolid') rebuildBolidAnimation(app, options);
+    else rebuildFocusAnimation(app, options);
 }
 
 function rebuildFocusAnimation(app, {
@@ -622,25 +712,31 @@ function rebuildFocusAnimation(app, {
 
 function rebuildEyeAnimation(app) {
     if (!focusAnimation.timeline) return;
-    focusAnimation.eyeTimeline = createEyeAnimationTimeline(focusAnimation.timeline, {
-        blinkCount: app.settings.motionBlinkCount,
-        blinkAtStops: true,
-        emotionVariation: app.settings.motionEmotionVariation,
-        easing: 'ease-in-out'
-    });
+    focusAnimation.eyeTimeline = app.settings.focusMode === 'bolid'
+        ? createLoopEyeAnimationTimeline(focusAnimation.timeline, {
+            blinkCount: app.settings.motionBlinkCount,
+            pairedBlinks: true,
+            emotionVariation: app.settings.motionEmotionVariation
+        })
+        : createEyeAnimationTimeline(focusAnimation.timeline, {
+            blinkCount: app.settings.motionBlinkCount,
+            blinkAtStops: true,
+            emotionVariation: app.settings.motionEmotionVariation,
+            easing: 'ease-in-out'
+        });
     app.renderNow();
 }
 
 function pauseFocusAnimation(app) {
-    if (focusAnimation.paused || app.settings.focusMode !== 'animate') return;
+    if (focusAnimation.paused || !isAnimatedFocusMode(app.settings.focusMode)) return;
     if (focusAnimation.startedAt != null && focusAnimation.timeline) {
         focusAnimation.elapsedMs = (
             performance.now() - focusAnimation.startedAt
         ) % focusAnimation.timeline.durationMs;
-        focusAnimation.currentFocus = sampleFocusTimeline(
+        focusAnimation.currentFocus = sampleAnimatedFocus(
             focusAnimation.timeline,
             focusAnimation.elapsedMs
-        ).point;
+        );
     }
     focusAnimation.paused = true;
     focusAnimation.pausedByUser = true;
@@ -662,7 +758,7 @@ function setFocusPathEditing(app, editing) {
 }
 
 function playFocusAnimation(app) {
-    if (!focusAnimation.paused || app.settings.focusMode !== 'animate') return;
+    if (!focusAnimation.paused || !isAnimatedFocusMode(app.settings.focusMode)) return;
     focusAnimation.editing = false;
     focusAnimation.selectedEditorControl = null;
     focusAnimation.paused = false;
@@ -674,7 +770,7 @@ function playFocusAnimation(app) {
 }
 
 function toggleFocusFreeze(app) {
-    if (app.settings.focusMode === 'animate') {
+    if (isAnimatedFocusMode(app.settings.focusMode)) {
         if (focusAnimation.paused) playFocusAnimation(app);
         else pauseFocusAnimation(app);
         return;
@@ -694,13 +790,13 @@ function toggleFocusFreeze(app) {
 }
 
 function restartFocusAnimation(app) {
-    if (!focusAnimation.timeline) rebuildFocusAnimation(app);
+    if (!focusAnimation.timeline) rebuildActiveAnimation(app);
     focusAnimation.editing = false;
     focusAnimation.selectedEditorControl = null;
     focusAnimation.elapsedMs = 0;
     focusAnimation.startedAt = null;
     focusAnimation.lastPreviewAt = null;
-    focusAnimation.currentFocus = { ...focusAnimation.path.anchors[0] };
+    focusAnimation.currentFocus = sampleAnimatedFocus(focusAnimation.timeline, 0);
     focusAnimation.paused = false;
     focusAnimation.pausedByUser = false;
     updateFocusAnimationButtons(app);
@@ -731,17 +827,26 @@ function syncRadioGroup(name, value) {
 }
 
 function syncFocusModeUI(app) {
-    const animate = app.settings.focusMode === 'animate';
-    syncRadioGroup('focusMode', animate ? 'animate' : 'manual');
+    const path = app.settings.focusMode === 'animate';
+    const bolid = app.settings.focusMode === 'bolid';
+    const animated = path || bolid;
+    syncRadioGroup('focusMode', app.settings.focusMode);
     document.getElementById('focusPanel')
-        ?.classList.toggle('sparky-focus-panel--animate', animate);
-    document.getElementById('focusManualControls')?.toggleAttribute('hidden', animate);
-    document.getElementById('focusAnimationControls')?.toggleAttribute('hidden', !animate);
-    document.getElementById('showMotionPathToggle')?.toggleAttribute('hidden', !animate);
+        ?.classList.toggle('sparky-focus-panel--animate', animated);
+    document.getElementById('focusPanel')
+        ?.classList.toggle('sparky-focus-panel--bolid', bolid);
+    document.getElementById('focusManualControls')?.toggleAttribute('hidden', animated);
+    document.getElementById('focusAnimationControls')?.toggleAttribute('hidden', !animated);
+    document.getElementById('focusPathControls')?.toggleAttribute('hidden', !path);
+    document.getElementById('focusPathActionControls')?.toggleAttribute('hidden', !path);
+    document.getElementById('focusBolidControls')?.toggleAttribute('hidden', !bolid);
+    document.getElementById('bolidAngryToggleRow')?.toggleAttribute('hidden', !bolid);
+    document.getElementById('motionRegenerateBtn')?.toggleAttribute('hidden', bolid);
+    document.getElementById('showMotionPathToggle')?.toggleAttribute('hidden', !path);
     const pngButton = document.getElementById('exportPngBtn');
     const primaryButton = document.getElementById('exportSvgBtn');
-    if (pngButton) pngButton.textContent = animate ? 'Export PNG sequence' : 'Export PNG';
-    if (primaryButton) primaryButton.textContent = animate ? 'Export MP4' : 'Export ⌘E';
+    if (pngButton) pngButton.textContent = animated ? 'Export PNG sequence' : 'Export PNG';
+    if (primaryButton) primaryButton.textContent = animated ? 'Export MP4' : 'Export ⌘E';
 }
 
 function syncFocusAnimationControls(app) {
@@ -753,19 +858,32 @@ function syncFocusAnimationControls(app) {
         pathPointCount || app.settings.motionPointCount
     );
     app.sliders?.setDisplayValue?.('motionStopCountSlider', app.settings.motionStopCount);
+    setBolidTargetControls(app, {
+        angle: app.settings.bolidTargetAngle,
+        distance: app.settings.bolidTargetDistance
+    });
     updateFocusAnimationButtons(app);
 }
 
 function applyFocusMode(app) {
     syncFocusModeUI(app);
     if (!focusAnimationReady) return;
-    if (app.settings.focusMode === 'animate' && !isMobileShowcase()) {
+    if (isAnimatedFocusMode(app.settings.focusMode) && !isMobileShowcase()) {
         stopBlink(app);
-        rebuildFocusAnimation(app);
+        rebuildActiveAnimation(app);
         return;
     }
     forceGlobalPlacement(app);
     stopFocusAnimation(app);
+    if (app.settings.focusMode === 'manual' && manualFocusBehaviorBeforeAnimatedMode) {
+        const behavior = manualFocusBehaviorBeforeAnimatedMode;
+        manualFocusBehaviorBeforeAnimatedMode = null;
+        app.settingsStore.setMultiple(behavior);
+        desktopFollowFocus = behavior.followCursor
+            ? currentStoredFocus(app.settings)
+            : null;
+        syncManualFocusModeControls(app);
+    }
 }
 
 async function confirmMotionPathReplacement(app) {
@@ -835,7 +953,11 @@ function bindFocusAnimation(app) {
     document.querySelectorAll('input[name="focusMode"]').forEach((input) => {
         input.addEventListener('change', () => {
             if (!input.checked) return;
-            if (input.value === 'animate') {
+            if (isAnimatedFocusMode(input.value) && app.settings.focusMode === 'manual') {
+                manualFocusBehaviorBeforeAnimatedMode = {
+                    followCursor: Boolean(app.settings.followCursor),
+                    showPoint: Boolean(app.settings.showPoint)
+                };
                 settleManualFocusTransition(app, { atTarget: true });
                 disableFollowCursor(app);
             }
@@ -937,20 +1059,19 @@ function bindFocusAnimation(app) {
     ].forEach((setting) => {
         app.settingsStore.subscribe(setting, () => {
             if (setting === 'motionStopCount' && syncingMotionStopCount) return;
-            if (app.settings.focusMode === 'animate') {
-                rebuildFocusAnimation(app, {
+            if (isAnimatedFocusMode(app.settings.focusMode)) {
+                if (setting !== 'motionDuration' && app.settings.focusMode === 'bolid') return;
+                rebuildActiveAnimation(app, {
                     restart: false,
                     regenerate: false
                 });
             }
         });
     });
-    [
-        'motionBlinkCount',
-        'motionEmotionVariation'
-    ].forEach((setting) => {
+    ['motionBlinkCount', 'motionEmotionVariation'].forEach((setting) => {
         app.settingsStore.subscribe(setting, () => {
-            if (app.settings.focusMode === 'animate') rebuildEyeAnimation(app);
+            if (!isAnimatedFocusMode(app.settings.focusMode)) return;
+            rebuildEyeAnimation(app);
         });
     });
     app.settingsStore.subscribe('focusMode', () => applyFocusMode(app));
@@ -959,7 +1080,7 @@ function bindFocusAnimation(app) {
             cancelFocusAnimationFrame();
             return;
         }
-        if (app.settings.focusMode === 'animate') rebuildFocusAnimation(app);
+        if (isAnimatedFocusMode(app.settings.focusMode)) rebuildActiveAnimation(app);
     });
 
     syncFocusAnimationControls(app);
@@ -1022,7 +1143,10 @@ function applyEyeMotionTransform(app) {
     if (!svg || !eyeMotion.displayedCenter || !eyeMotion.targetCenter) return;
     const dx = eyeMotion.displayedCenter.x - eyeMotion.targetCenter.x;
     const dy = eyeMotion.displayedCenter.y - eyeMotion.targetCenter.y;
-    const settled = Math.hypot(dx, dy) <= 0.02;
+    const targetScale = eyeMotion.targetScale || 1;
+    const displayedScale = eyeMotion.displayedScale || targetScale;
+    const scaleRatio = displayedScale / targetScale;
+    const settled = Math.hypot(dx, dy) <= 0.02 && Math.abs(scaleRatio - 1) <= 0.0001;
     const cachedElements = (app.eyeMotionElements || []).filter((element) => element.isConnected);
     const elements = cachedElements.length
         ? cachedElements
@@ -1030,9 +1154,14 @@ function applyEyeMotionTransform(app) {
     app.eyeMotionElements = elements;
     elements.forEach((element) => {
         if (settled) element.removeAttribute('transform');
-        else element.setAttribute('transform', `translate(${dx} ${dy})`);
+        else element.setAttribute('transform', [
+            `translate(${eyeMotion.displayedCenter.x} ${eyeMotion.displayedCenter.y})`,
+            `scale(${scaleRatio})`,
+            `translate(${-eyeMotion.targetCenter.x} ${-eyeMotion.targetCenter.y})`
+        ].join(' '));
     });
     app.displayedEyeCenter = { ...eyeMotion.displayedCenter };
+    app.displayedEyeScale = displayedScale;
 }
 
 function scheduleEyeMotion(app) {
@@ -1045,8 +1174,16 @@ function scheduleEyeMotion(app) {
     });
 }
 
-function retargetDisplayedEyes(app, target, { immediate = false } = {}) {
-    const result = retargetEyeMotion(eyeMotion, target, performance.now());
+function retargetDisplayedEyes(app, eyeGeometry, { immediate = false } = {}) {
+    eyeMotion.timeConstant = app.settings.focusMode === 'bolid'
+        ? BOLID_EYE_MOTION_TIME_CONSTANT
+        : EYE_MOTION_TIME_CONSTANT;
+    const result = retargetEyeMotion(
+        eyeMotion,
+        eyeGeometry.pairCenter,
+        performance.now(),
+        eyeGeometry.fitScale
+    );
     if (immediate) {
         if (eyeMotionFrame != null) cancelAnimationFrame(eyeMotionFrame);
         eyeMotionFrame = null;
@@ -1068,7 +1205,7 @@ function applyBlink(app) {
     const eyeGeometry = app.eyeGeometry;
     if (!svg || !eyeGeometry) return;
     const expression = activeRenderSettings(app.settings);
-    const eyeState = expression.focusMode === 'animate' && focusAnimation.eyeTimeline
+    const eyeState = isAnimatedFocusMode(expression.focusMode) && focusAnimation.eyeTimeline
         ? sampleEyeAnimationTimeline(
             focusAnimation.eyeTimeline,
             focusAnimation.elapsedMs,
@@ -1111,7 +1248,7 @@ function scheduleBlink(app) {
 }
 
 function startBlink(app) {
-    if (app.settings.focusMode === 'animate') return;
+    if (isAnimatedFocusMode(app.settings.focusMode)) return;
     if (blinkFrame != null) cancelAnimationFrame(blinkFrame);
     blinkFrame = null;
     triggerBlink(blink, performance.now());
@@ -1146,14 +1283,14 @@ function bindBlink(app) {
     }, { capture: true });
 }
 
-function previewMotionBlurGhosts(state) {
-    if (state.focusMode !== 'animate' || !focusAnimation.timeline) return [];
+function previewMotionBlurGhosts(state, sourceState = state) {
+    if (!isAnimatedFocusMode(state.focusMode) || !focusAnimation.timeline) return [];
     const descriptors = resolvePreviewMotionBlurGhosts(state.motionBlur, {
         reduced: performance.now() < previewBlurReducedUntil
     });
     const currentTime = focusAnimation.elapsedMs;
     const current = constrainFocusPoint(
-        sampleFocusTimeline(focusAnimation.timeline, currentTime).point,
+        sampleAnimatedFocus(focusAnimation.timeline, currentTime),
         state
     );
     return descriptors.flatMap(({ offsetFrames, opacity }) => {
@@ -1162,38 +1299,26 @@ function previewMotionBlurGhosts(state) {
             focusAnimation.timeline.durationMs
         );
         const focus = constrainFocusPoint(
-            sampleFocusTimeline(focusAnimation.timeline, time).point,
+            sampleAnimatedFocus(focusAnimation.timeline, time),
             state
         );
-        if (Math.hypot(focus.x - current.x, focus.y - current.y) < 0.15) return [];
+        if (state.focusMode === 'animate'
+            && Math.hypot(focus.x - current.x, focus.y - current.y) < 0.15) return [];
+        const timedState = state.focusMode === 'bolid'
+            ? settingsAtBolidTime(
+                sourceState,
+                time,
+                focusAnimation.timeline.durationMs
+            )
+            : sourceState;
         const geometry = buildCharacterGeometry({
-            ...state,
+            ...timedState,
             focusX: focus.x,
             focusY: focus.y,
             focusMode: 'manual'
         });
         return [{ path: geometry.rounded.path, opacity }];
     });
-}
-
-function effectiveMotionPathData(path, state) {
-    const segmentCount = path?.segments?.length || 0;
-    if (!segmentCount) return '';
-    const samplesPerSegment = Math.max(4, Math.min(24, Math.ceil(384 / segmentCount)));
-    const commands = [];
-    path.segments.forEach((segment, segmentIndex) => {
-        for (let sampleIndex = segmentIndex === 0 ? 0 : 1;
-            sampleIndex <= samplesPerSegment;
-            sampleIndex += 1) {
-            const raw = cubicBezierPoint(segment, sampleIndex / samplesPerSegment);
-            const focus = constrainFocusPoint(raw, state);
-            const x = Number(focus.x.toFixed(3));
-            const y = Number(focus.y.toFixed(3));
-            commands.push(`${commands.length ? 'L' : 'M'} ${x} ${y}`);
-        }
-    });
-    commands.push('Z');
-    return commands.join(' ');
 }
 
 function createDefinitions(width, height, headPath) {
@@ -1278,7 +1403,7 @@ function drawEyes(ctx, eyeGeometry, definitions) {
 
 function drawCharacter(ctx, geometry, eyeGeometry) {
     const { svg, create, width, height, settings: state } = ctx;
-    const blurGhosts = previewMotionBlurGhosts(state);
+    const blurGhosts = previewMotionBlurGhosts(state, ctx.app.settings);
     const definitions = createDefinitions(width, height, geometry.rounded.path);
     svg.appendChild(definitions);
     svg.appendChild(create('rect', {
@@ -1315,7 +1440,8 @@ function drawCharacter(ctx, geometry, eyeGeometry) {
         || sphereFeedbackActive
         || state.showRayGuides
         || state.showBisectors
-        || (state.showPoint && !state.followCursor && state.focusMode !== 'animate')
+        || (state.showPoint && !state.followCursor && state.focusMode === 'manual')
+        || state.focusMode === 'bolid'
         || (state.focusMode === 'animate'
             && (state.showMotionPath || focusAnimation.editing))) {
         drawGuides(ctx, geometry);
@@ -1356,6 +1482,14 @@ function drawGuides(ctx, geometry) {
             'data-layer': 'motion-path-preview',
             'data-export-exclude': 'true'
         });
+        const authoredRegion = createMotionPathRegion(state);
+        const renderedRegion = createExtendedFocusRegion(state);
+        const renderedPathScale = authoredRegion.radius > 1e-9
+            ? renderedRegion.radius / authoredRegion.radius
+            : 1;
+        const renderedPathTransform = editing
+            ? null
+            : `translate(${authoredRegion.center.x} ${authoredRegion.center.y}) scale(${renderedPathScale}) translate(${-authoredRegion.center.x} ${-authoredRegion.center.y})`;
         if (editing) {
             const handlesPath = editorHandles.map(({ anchor, point }) => (
                 `M ${anchor.x} ${anchor.y} L ${point.x} ${point.y}`
@@ -1374,25 +1508,24 @@ function drawGuides(ctx, geometry) {
             motionGuides.appendChild(create('path', {
                 d: focusAnimation.path.path,
                 stroke: '#00ff2a',
-                opacity: 0.22,
+                opacity: 0.18,
                 ...commonStroke,
-                'stroke-width': 0.75,
+                'stroke-width': 0.65,
                 'stroke-linecap': 'round',
                 'stroke-linejoin': 'round',
-                'data-motion-path-kind': 'source'
+                'data-motion-path-kind': 'authored'
             }));
         }
         motionGuides.appendChild(create('path', {
-            d: editing
-                ? focusAnimation.path.path
-                : effectiveMotionPathData(focusAnimation.path, state),
+            d: focusAnimation.path.path,
+            transform: renderedPathTransform,
             stroke: '#00ff2a',
             opacity: editing ? 0.92 : 0.72,
             ...commonStroke,
             'stroke-width': editing ? 1.2 : 0.9,
             'stroke-linecap': 'round',
             'stroke-linejoin': 'round',
-            'data-motion-path-kind': editing ? 'editable' : 'effective'
+            'data-motion-path-kind': editing ? 'editable' : 'motion'
         }));
         if (editing) {
             editorHandles.forEach(({ index, side, point }) => {
@@ -1425,7 +1558,9 @@ function drawGuides(ctx, geometry) {
         focusAnimation.path.anchors.forEach((anchor, index) => {
             const activeStop = focusAnimation.timeline?.activeStops?.[index] !== false;
             const editableAnchor = editing;
-            const guideAnchor = editing ? anchor : constrainFocusPoint(anchor, state);
+            const guideAnchor = editing
+                ? anchor
+                : mapFocusPointToGeometry(anchor, state);
             motionGuides.appendChild(create('circle', {
                 cx: guideAnchor.x,
                 cy: guideAnchor.y,
@@ -1453,12 +1588,10 @@ function drawGuides(ctx, geometry) {
                 }));
             }
         });
-        const current = focusAnimation.currentFocus;
-        if (current && !editing) {
-            const effectiveCurrent = constrainFocusPoint(current, state);
+        if (focusAnimation.currentFocus && !editing) {
             motionGuides.appendChild(create('circle', {
-                cx: effectiveCurrent.x,
-                cy: effectiveCurrent.y,
+                cx: geometry.focus.x,
+                cy: geometry.focus.y,
                 r: 4.5,
                 fill: state.backgroundColor,
                 stroke: '#00ff2a',
@@ -1467,6 +1600,47 @@ function drawGuides(ctx, geometry) {
             }));
         }
         guides.appendChild(motionGuides);
+    }
+
+    if (state.focusMode === 'bolid') {
+        const target = bolidTargetPoint(state, geometry.focus);
+        const targetGuides = create('g', {
+            'data-layer': 'bolid-target',
+            'data-export-exclude': 'true'
+        });
+        targetGuides.appendChild(create('line', {
+            x1: geometry.focus.x,
+            y1: geometry.focus.y,
+            x2: target.x,
+            y2: target.y,
+            stroke: '#315bff',
+            opacity: 0.5,
+            'stroke-width': 0.8,
+            'stroke-dasharray': '2.5 2.5',
+            'vector-effect': 'non-scaling-stroke',
+            'pointer-events': 'none'
+        }));
+        targetGuides.appendChild(create('circle', {
+            cx: target.x,
+            cy: target.y,
+            r: 4.5,
+            fill: state.backgroundColor,
+            stroke: '#315bff',
+            'stroke-width': 1.5,
+            'vector-effect': 'non-scaling-stroke',
+            'pointer-events': 'none'
+        }));
+        targetGuides.appendChild(create('circle', {
+            cx: target.x,
+            cy: target.y,
+            r: 13,
+            fill: 'transparent',
+            class: 'sparky-bolid-target-control',
+            'data-bolid-target-handle': 'true',
+            'data-interactive': 'true',
+            'data-export-exclude': 'true'
+        }));
+        guides.appendChild(targetGuides);
     }
 
     if (state.showSphere || sphereFeedbackActive) {
@@ -1579,31 +1753,37 @@ function drawGuides(ctx, geometry) {
         });
     }
 
-    if (state.showPoint && !state.followCursor && state.focusMode !== 'animate') {
-        append(guides,
-            create('path', {
-                d: `M ${geometry.focus.x - 9} ${geometry.focus.y} H ${geometry.focus.x + 9} M ${geometry.focus.x} ${geometry.focus.y - 9} V ${geometry.focus.y + 9}`,
-                fill: 'none',
-                stroke: '#0000FF',
-                'stroke-width': 0.75,
-                'stroke-linecap': 'square',
-                'vector-effect': 'non-scaling-stroke',
-                'pointer-events': 'none',
-                'data-interactive': 'true',
-                'data-export-exclude': 'true'
-            }),
-            create('rect', {
-                x: geometry.focus.x - 12,
-                y: geometry.focus.y - 12,
+    const manualFocusHandle = state.showPoint
+        && !state.followCursor
+        && state.focusMode === 'manual';
+    if (manualFocusHandle || state.focusMode === 'bolid') {
+        const visibleFocus = geometry.focus;
+        guides.appendChild(create('path', {
+            d: `M ${visibleFocus.x - 9} ${visibleFocus.y} H ${visibleFocus.x + 9} M ${visibleFocus.x} ${visibleFocus.y - 9} V ${visibleFocus.y + 9}`,
+            fill: 'none',
+            stroke: '#0000FF',
+            'stroke-width': 0.75,
+            'stroke-linecap': 'square',
+            'vector-effect': 'non-scaling-stroke',
+            'pointer-events': 'none',
+            'data-bolid-focus-point': state.focusMode === 'bolid' ? 'true' : null,
+            'data-interactive': 'true',
+            'data-export-exclude': 'true'
+        }));
+        if (manualFocusHandle || state.focusMode === 'bolid') {
+            guides.appendChild(create('rect', {
+                x: visibleFocus.x - 12,
+                y: visibleFocus.y - 12,
                 width: 24,
                 height: 24,
                 fill: 'transparent',
                 class: 'sparky-focus-hit-area',
                 'data-focus-handle': 'true',
+                'data-bolid-focus-handle': state.focusMode === 'bolid' ? 'true' : null,
                 'data-interactive': 'true',
                 'data-export-exclude': 'true'
-            })
-        );
+            }));
+        }
     }
 
     svg.appendChild(guides);
@@ -1685,6 +1865,7 @@ function applyState(app, source) {
     focusAnimation.manuallyEdited = Boolean(restoredMotionPath);
     focusAnimation.selectedEditorControl = null;
     const normalized = normalizeIncomingState(source);
+    manualFocusBehaviorBeforeAnimatedMode = null;
     focusAnimation.editing = Boolean(keepEditing && normalized.focusMode === 'animate');
     app.settingsStore.setMultiple(normalized, true);
     desktopFollowFocus = normalized.followCursor
@@ -1716,7 +1897,7 @@ function bindFocusDragging(app) {
 
     const update = (raw, responseMs = MOBILE_FOCUS_SWIPE_RESPONSE_MS) => {
         const mobile = isMobileShowcase();
-        if (!mobile && app.settings.focusMode === 'animate') return;
+        if (!mobile && !['manual', 'bolid'].includes(app.settings.focusMode)) return;
         const renderSettings = activeRenderSettings(app.settings);
         const focus = normalizedFocus(raw, renderSettings);
         const { x, y } = focus;
@@ -1724,10 +1905,34 @@ function bindFocusDragging(app) {
             retargetMobileFocus(app, { x, y }, responseMs);
             return;
         }
-        if (app.settings.followCursor) setTransientFollowFocus(app, x, y);
-        else {
+        if (app.settings.focusMode === 'manual' && app.settings.followCursor) {
+            setTransientFollowFocus(app, x, y);
+        } else {
             beginInteractivePlacement(app);
-            setFocus(app, x, y);
+            const fixedBolidTarget = app.settings.focusMode === 'bolid'
+                ? bolidTargetPoint(
+                    app.settings,
+                    focusAnimation.currentFocus || currentStoredFocus(app.settings)
+                )
+                : null;
+            const nextFocus = setFocus(app, x, y);
+            if (app.settings.focusMode === 'bolid') {
+                const nextTarget = bolidTargetPolarFromPoint(
+                    app.settings,
+                    nextFocus,
+                    fixedBolidTarget,
+                    app.settings.bolidTargetAngle
+                );
+                app.settingsStore.setMultiple({
+                    bolidTargetAngle: nextTarget.angle,
+                    bolidTargetDistance: nextTarget.distance
+                });
+                setBolidTargetControls(app, nextTarget);
+                focusAnimation.currentFocus = { ...nextFocus };
+                if (focusAnimation.timeline?.kind === 'stationary') {
+                    focusAnimation.timeline.focus = { ...nextFocus };
+                }
+            }
         }
     };
 
@@ -1741,7 +1946,7 @@ function bindFocusDragging(app) {
         if (!pendingFollowPoint || followFrame != null) return;
         followFrame = requestAnimationFrame(() => {
             followFrame = null;
-            if (app.settings.focusMode === 'animate') return;
+            if (app.settings.focusMode !== 'manual') return;
             if ((!isMobileShowcase() && !app.settings.followCursor) || !pendingFollowPoint) return;
             update(pendingFollowPoint);
             pendingFollowPoint = null;
@@ -1755,12 +1960,12 @@ function bindFocusDragging(app) {
             updateFromEvent(event, MOBILE_FOCUS_TAP_RESPONSE_MS);
             return;
         }
-        if (app.settings.focusMode === 'animate') return;
+        if (!['manual', 'bolid'].includes(app.settings.focusMode)) return;
         const handle = event.target.closest?.('[data-focus-handle="true"]');
         if (!handle) return;
         event.preventDefault();
         event.stopPropagation();
-        disableFollowCursor(app);
+        if (app.settings.focusMode === 'manual') disableFollowCursor(app);
         pointerId = event.pointerId;
         svg.setPointerCapture(pointerId);
         app.history?.beginTransaction('focus-drag');
@@ -1774,7 +1979,7 @@ function bindFocusDragging(app) {
             return;
         }
         if (isMobileShowcase()
-            || (app.settings.focusMode !== 'animate' && app.settings.followCursor)) scheduleFollow(event);
+            || (app.settings.focusMode === 'manual' && app.settings.followCursor)) scheduleFollow(event);
     });
 
     const finish = (event) => {
@@ -1785,6 +1990,59 @@ function bindFocusDragging(app) {
             app.history?.endTransaction();
             finishInteractivePlacement(app);
         }
+    };
+    svg.addEventListener('pointerup', finish);
+    svg.addEventListener('pointercancel', finish);
+}
+
+function setBolidTargetControls(app, target) {
+    app.sliders?.setValue?.('bolidTargetAngleSlider', target.angle, false);
+    app.sliders?.setValue?.('bolidTargetDistanceSlider', target.distance, false);
+}
+
+function bindBolidTargetDragging(app) {
+    const svg = document.getElementById('mainSvg');
+    if (!svg) return;
+    let pointerId = null;
+
+    const update = (event) => {
+        const raw = pointFromPointer(svg, event);
+        if (!raw) return;
+        const focus = focusAnimation.currentFocus || currentStoredFocus(app.settings);
+        const target = bolidTargetPolarFromPoint(
+            app.settings,
+            focus,
+            raw,
+            app.settings.bolidTargetAngle
+        );
+        app.settingsStore.setMultiple({
+            bolidTargetAngle: target.angle,
+            bolidTargetDistance: target.distance
+        });
+        setBolidTargetControls(app, target);
+    };
+
+    svg.addEventListener('pointerdown', (event) => {
+        if (app.settings.focusMode !== 'bolid' || isMobileShowcase()) return;
+        const handle = event.target.closest?.('[data-bolid-target-handle="true"]');
+        if (!handle) return;
+        event.preventDefault();
+        event.stopPropagation();
+        pointerId = event.pointerId;
+        svg.setPointerCapture(pointerId);
+        app.history?.beginTransaction('bolid-target-drag');
+        update(event);
+    });
+    svg.addEventListener('pointermove', (event) => {
+        if (event.pointerId !== pointerId) return;
+        event.preventDefault();
+        update(event);
+    });
+    const finish = (event) => {
+        if (event.pointerId !== pointerId) return;
+        if (svg.hasPointerCapture(pointerId)) svg.releasePointerCapture(pointerId);
+        pointerId = null;
+        app.history?.endTransaction();
     };
     svg.addEventListener('pointerup', finish);
     svg.addEventListener('pointercancel', finish);
@@ -2151,6 +2409,7 @@ function setFocus(app, x, y) {
     } finally {
         focusControlsSyncing = wasSyncing;
     }
+    return focus;
 }
 
 function setPolarFocus(app, angle, distance) {
@@ -2198,6 +2457,9 @@ const app = defineTool({
             { id: 'motionBlinkCountSlider', valueId: 'motionBlinkCountValue', setting: 'motionBlinkCount', min: 0, max: 12, decimals: 0, baseStep: 1, shiftStep: 2 },
             { id: 'motionEmotionVariationSlider', valueId: 'motionEmotionVariationValue', setting: 'motionEmotionVariation', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'motionBlurSlider', valueId: 'motionBlurValue', setting: 'motionBlur', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'bolidTargetAngleSlider', valueId: 'bolidTargetAngleValue', setting: 'bolidTargetAngle', min: 0, max: 360, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'bolidTargetDistanceSlider', valueId: 'bolidTargetDistanceValue', setting: 'bolidTargetDistance', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'bolidIntensitySlider', valueId: 'bolidIntensityValue', setting: 'bolidIntensity', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyePerspectiveSlider', valueId: 'eyePerspectiveValue', setting: 'eyePerspective', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyeSizeSlider', valueId: 'eyeSizeValue', setting: 'eyeSize', min: 0, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
             { id: 'eyeDistanceSlider', valueId: 'eyeDistanceValue', setting: 'eyeDistance', min: -100, max: 100, decimals: 0, baseStep: 1, shiftStep: 10 },
@@ -2269,11 +2531,13 @@ const app = defineTool({
     share: {
         stripKeys: ['width', 'height', 'focusX', 'focusY'],
         quantizableFloatKeys: [
-            'focusAngle', 'focusDistance', 'rayLength', 'rayWidth', 'roundness', 'cornerSmoothing',
+            'focusAngle', 'focusDistance', 'rayLength', 'rayWidth',
+            'roundness', 'cornerSmoothing',
             'rayCount', 'angleSpan', 'boundaryCenterX', 'boundaryCenterY', 'boundaryRadius',
             'eyePerspective', 'eyeSize', 'eyeDistance', 'cute', 'angry',
             'motionDuration', 'motionPointCount', 'motionComplexity', 'motionSmoothness', 'motionStopCount', 'motionSpeedVariation',
             'motionBlinkCount', 'motionEmotionVariation', 'motionBlur',
+            'bolidTargetAngle', 'bolidTargetDistance', 'bolidIntensity',
             'motionSeed'
         ],
         decimals: 2
@@ -2328,13 +2592,19 @@ const app = defineTool({
                 ? ctx
                 : { ...ctx, settings: renderSettings };
             const geometry = buildCharacterGeometry(renderSettings);
-            const eyeGeometry = buildEyeGeometry(renderSettings, geometry, {
-                placementMode: eyePlacementMode === 'global' ? 'global' : 'local',
-                previousEyeGeometry: ctx.app.eyeGeometry
-            });
+            const eyeGeometry = renderSettings.focusMode === 'bolid'
+                ? stabilizeEyeGeometry(
+                    renderSettings,
+                    geometry,
+                    createBolidEyeScaffold(ctx.settings, geometry.focus).eyes
+                )
+                : buildEyeGeometry(renderSettings, geometry, {
+                    placementMode: eyePlacementMode === 'global' ? 'global' : 'local',
+                    previousEyeGeometry: ctx.app.eyeGeometry
+                });
             ctx.app.eyePlacementSearchMode = eyeGeometry.placementMode;
             document.documentElement.dataset.eyePlacementSearchMode = eyeGeometry.placementMode;
-            retargetDisplayedEyes(ctx.app, eyeGeometry.pairCenter, {
+            retargetDisplayedEyes(ctx.app, eyeGeometry, {
                 immediate: false
             });
             ctx.app.characterGeometry = geometry;
@@ -2369,7 +2639,7 @@ const app = defineTool({
             }
         });
         tool.exportSVG = async (filename) => {
-            if (tool.settings.focusMode === 'animate' && !filename) {
+            if (isAnimatedFocusMode(tool.settings.focusMode) && !filename) {
                 return exportFocusAnimation(tool, 'mp4');
             }
             stopBlink(tool);
@@ -2389,7 +2659,7 @@ const app = defineTool({
             return svgString;
         };
         tool.exportPNG = (filename, scaleFactor) => {
-            if (tool.settings.focusMode === 'animate' && !filename) {
+            if (isAnimatedFocusMode(tool.settings.focusMode) && !filename) {
                 return exportFocusAnimation(tool, 'png-sequence');
             }
             stopBlink(tool);
@@ -2404,6 +2674,7 @@ const app = defineTool({
             ? { x: tool.settings.focusX, y: tool.settings.focusY }
             : null;
         bindFocusDragging(tool);
+        bindBolidTargetDragging(tool);
         bindMotionPathEditing(tool);
         bindManualFocusControls(tool);
         bindFocusAnimation(tool);

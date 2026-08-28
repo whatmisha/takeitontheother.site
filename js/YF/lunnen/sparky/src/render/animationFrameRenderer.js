@@ -1,6 +1,12 @@
-import { buildCharacterGeometry } from '../geometry/characterGeometry.js?v=20260827-1';
-import { buildEyeGeometry, buildEyeLidGeometry } from '../geometry/eyeGeometry.js';
-import { constrainFocusPoint } from '../geometry/focusBounds.js?v=20260827-1';
+import { buildCharacterGeometry } from '../geometry/characterGeometry.js?v=20260828-2';
+import {
+    buildEyeGeometry,
+    buildEyeLidGeometry,
+    stabilizeEyeGeometry
+} from '../geometry/eyeGeometry.js?v=20260828-1';
+import { constrainFocusPoint } from '../geometry/focusBounds.js?v=20260828-2';
+import { settingsAtBolidTime } from '../animation/bolid.js?v=20260828-2';
+import { createBolidEyeScaffold } from '../animation/bolidEyeScaffold.js?v=20260828-2';
 
 export const ANIMATION_ARTBOARD_SIZE = 480;
 
@@ -12,10 +18,17 @@ function addDuration(metrics, key, startedAt) {
     metrics[key] = (metrics[key] || 0) + now() - startedAt;
 }
 
-export function buildAnimationFrameScene(settings, focus, { metrics = null } = {}) {
+export function buildAnimationFrameScene(settings, focus, {
+    metrics = null,
+    timeMs = null,
+    durationMs = Number(settings.motionDuration) * 1000
+} = {}) {
     const effectiveFocus = constrainFocusPoint(focus, settings);
+    const timedSettings = Number.isFinite(timeMs)
+        ? settingsAtBolidTime(settings, timeMs, durationMs)
+        : settings;
     const frameSettings = {
-        ...settings,
+        ...timedSettings,
         focusX: effectiveFocus.x,
         focusY: effectiveFocus.y,
         focusMode: 'manual',
@@ -29,9 +42,15 @@ export function buildAnimationFrameScene(settings, focus, { metrics = null } = {
     const character = buildCharacterGeometry(frameSettings);
     addDuration(metrics, 'characterMs', startedAt);
     startedAt = now();
-    const eyes = buildEyeGeometry(frameSettings, character, {
-        placementMode: 'global'
-    });
+    const eyes = settings.focusMode === 'bolid'
+        ? stabilizeEyeGeometry(
+            frameSettings,
+            character,
+            createBolidEyeScaffold(settings, effectiveFocus).eyes
+        )
+        : buildEyeGeometry(frameSettings, character, {
+            placementMode: 'global'
+        });
     addDuration(metrics, 'eyesMs', startedAt);
     return { settings: frameSettings, character, eyes };
 }
@@ -61,10 +80,16 @@ function drawEyes(context, scene, knockoutEyes, eyeState, eyeOffset, metrics) {
     addDuration(metrics, 'lidsMs', lidsStartedAt);
     context.save();
     context.clip(createPath(character.rounded.path));
-    context.translate(
-        Number(eyeOffset?.x) || 0,
-        Number(eyeOffset?.y) || 0
-    );
+    const offsetX = Number(eyeOffset?.x) || 0;
+    const offsetY = Number(eyeOffset?.y) || 0;
+    const scaleRatio = Math.max(0.05, Number(eyeOffset?.scaleRatio) || 1);
+    if (Math.abs(scaleRatio - 1) > 1e-6) {
+        context.translate(eyes.pairCenter.x + offsetX, eyes.pairCenter.y + offsetY);
+        context.scale(scaleRatio, scaleRatio);
+        context.translate(-eyes.pairCenter.x, -eyes.pairCenter.y);
+    } else {
+        context.translate(offsetX, offsetY);
+    }
 
     ['left', 'right'].forEach((side) => {
         const eye = eyes[side];

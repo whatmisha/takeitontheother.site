@@ -1,4 +1,4 @@
-import { rebuildFocusPath } from './focusPath.js?v=20260827-2';
+import { rebuildFocusPath } from './focusPath.js?v=20260828-1';
 
 export const IMPORT_SIMPLIFICATION_TOLERANCE_PX = 0.75;
 export const IMPORT_SIMPLIFICATION_TARGET_POINTS = 48;

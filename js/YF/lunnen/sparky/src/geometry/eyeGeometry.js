@@ -10,7 +10,7 @@ import {
     subtract
 } from './vector.js';
 import { rebaseLegacyY } from './coordinateSpace.js';
-import { createExtendedFocusRegion } from './focusBounds.js';
+import { createExtendedFocusRegion } from './focusBounds.js?v=20260828-2';
 
 export const EYE_DEFAULTS = Object.freeze({
     pairCenterX: 240,
@@ -1154,6 +1154,16 @@ function buildRenderedCircle(circle, transform) {
     return { ...circle, points, path: createClosedCurvePath(points) };
 }
 
+function renderEyeRig(model, values, pairCenter, fitScale) {
+    const transform = createRigTransform(values, pairCenter, fitScale);
+    return Object.fromEntries(['left', 'right'].map((side) => [side, {
+        side,
+        eye1: buildRenderedCircle(model[side].eye1, transform),
+        top: buildRenderedCircle(model[side].top, transform),
+        bottom: buildRenderedCircle(model[side].bottom, transform)
+    }]));
+}
+
 /** Rebuilds only the lid cutters while retaining the exact eye placement. */
 export function buildEyeLidGeometry(settings, eyeGeometry) {
     const values = { ...eyeGeometry.values, ...settings };
@@ -1163,6 +1173,78 @@ export function buildEyeLidGeometry(settings, eyeGeometry) {
         top: buildRenderedCircle(model[side].top, transform),
         bottom: buildRenderedCircle(model[side].bottom, transform)
     }]));
+}
+
+/**
+ * Keeps a Bolid eye scaffold stable while applying only the minimum correction
+ * required by the fully animated head contour. Optical placement is deliberately
+ * not rerun here: high-frequency ray tremor may request a small inward shift or
+ * scale reduction, but it cannot select a different facial basin.
+ */
+export function stabilizeEyeGeometry(
+    settings,
+    characterGeometry,
+    scaffoldEyeGeometry,
+    { minimumGap = FINAL_HEAD_GAP } = {}
+) {
+    if (!scaffoldEyeGeometry) {
+        return buildEyeGeometry(settings, characterGeometry, { placementMode: 'global' });
+    }
+    const values = {
+        ...characterGeometry.values,
+        ...scaffoldEyeGeometry.values,
+        ...settings
+    };
+    const model = createEyeRigModel(values);
+    const headContour = flattenRoundedContour(characterGeometry.rounded);
+    const containmentContext = createContainmentContext(model, values, headContour);
+    const requiredGap = clamp(Number(minimumGap) || FINAL_HEAD_GAP, 1, 12);
+    let pairCenter = { ...scaffoldEyeGeometry.pairCenter };
+    let fitScale = scaffoldEyeGeometry.fitScale;
+    let clearance = minimumContainmentResult(containmentContext, pairCenter, fitScale);
+
+    // Correct only an actual gap violation. The target correction can still
+    // change from frame to frame, but transform inertia turns those small,
+    // deterministic changes into continuous motion in preview and export.
+    for (let iteration = 0; iteration < 12 && clearance.minimum < requiredGap; iteration += 1) {
+        const deficit = requiredGap - clearance.minimum;
+        pairCenter = add(
+            pairCenter,
+            scale(clearance.inward, Math.min(8, deficit + 0.025))
+        );
+        clearance = minimumContainmentResult(containmentContext, pairCenter, fitScale);
+    }
+
+    if (clearance.minimum < requiredGap) {
+        let low = Math.max(0.05, fitScale * 0.35);
+        let high = fitScale;
+        for (let iteration = 0; iteration < FIT_SCALE_BINARY_ITERATIONS; iteration += 1) {
+            const middle = (low + high) / 2;
+            const result = minimumContainmentResult(containmentContext, pairCenter, middle);
+            if (result.minimum >= requiredGap) low = middle;
+            else high = middle;
+        }
+        fitScale = low;
+        clearance = minimumContainmentResult(containmentContext, pairCenter, fitScale);
+    }
+
+    const rendered = renderEyeRig(model, values, pairCenter, fitScale);
+    return {
+        ...scaffoldEyeGeometry,
+        values,
+        model,
+        ...rendered,
+        placementMode: 'bolid-scaffold',
+        pairCenter,
+        fitScale,
+        minClearance: clearance.minimum,
+        headContour,
+        safetyCorrection: {
+            x: pairCenter.x - scaffoldEyeGeometry.pairCenter.x,
+            y: pairCenter.y - scaffoldEyeGeometry.pairCenter.y,
+            scale: fitScale / Math.max(EPSILON, scaffoldEyeGeometry.fitScale)
+        }
+    };
 }
 
 export function buildEyeGeometry(settings, characterGeometry, options = {}) {

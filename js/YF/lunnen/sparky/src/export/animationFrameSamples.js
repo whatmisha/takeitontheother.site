@@ -1,5 +1,7 @@
-import { sampleEyeAnimationTimeline } from '../animation/eyeTimeline.js?v=20260826-1';
+import { sampleEyeAnimationTimeline } from '../animation/eyeTimeline.js?v=20260828-2';
 import { sampleFocusTimeline } from '../animation/focusTimeline.js?v=20260826-1';
+import { sampleLoopFocus } from '../animation/loopTimeline.js?v=20260827-1';
+import { settingsAtBolidTime } from '../animation/bolid.js?v=20260828-2';
 
 export function createAnimationFrameSamples(
     timeline,
@@ -21,8 +23,9 @@ export function createAnimationFrameSamples(
 
     for (let index = 0; index < count; index += 1) {
         const timeMs = index * 1000 / rate;
-        const focus = sampleFocusTimeline(timeline, timeMs).point;
-        const eyes = sampleEyeAnimationTimeline(eyeTimeline, timeMs, settings);
+        const focus = sampleLoopFocus(timeline, timeMs, sampleFocusTimeline).point;
+        const expression = settingsAtBolidTime(settings, timeMs, timeline.durationMs);
+        const eyes = sampleEyeAnimationTimeline(eyeTimeline, timeMs, expression);
         focusX[index] = focus.x;
         focusY[index] = focus.y;
         blink[index] = eyes.blinkAmount;

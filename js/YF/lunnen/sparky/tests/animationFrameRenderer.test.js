@@ -39,8 +39,9 @@ const settings = {
 
 test('animation frame scene uses the sampled focus and excludes transient guides', () => {
     const focus = { x: 200, y: 170 };
+    const effectiveFocus = constrainFocusPoint(focus, settings);
     const scene = buildAnimationFrameScene(settings, focus);
-    assert.deepEqual(scene.character.focus, focus);
+    assert.deepEqual(scene.character.focus, effectiveFocus);
     assert.equal(scene.settings.focusMode, 'manual');
     assert.equal(scene.settings.showMotionPath, false);
     assert.match(scene.character.rounded.path, /^M /);
@@ -48,7 +49,7 @@ test('animation frame scene uses the sampled focus and excludes transient guides
     assert.match(scene.eyes.right.eye1.path, /^M /);
 });
 
-test('animation frames project edge and overshooting path samples like Follow cursor', () => {
+test('animation frames smoothly scale the full Focus disk and clamp only beyond the Sphere', () => {
     const edgeFocus = { x: 480, y: 240 };
     const farFocus = { x: 4000, y: 240 };
     const effectiveFocus = constrainFocusPoint(edgeFocus, settings);
@@ -64,6 +65,34 @@ test('animation frames project edge and overshooting path samples like Follow cu
     assert.equal(farScene.character.rounded.path, edgeScene.character.rounded.path);
     assert.equal(farScene.eyes.left.eye1.path, edgeScene.eyes.left.eye1.path);
     assert.equal(farScene.eyes.right.eye1.path, edgeScene.eyes.right.eye1.path);
+});
+
+test('Bolid deformation changes over time and returns exactly at the loop boundary', () => {
+    const animatedSettings = {
+        ...settings,
+        focusMode: 'bolid',
+        motionDuration: 4,
+        bolidTargetAngle: 180,
+        bolidTargetDistance: 0
+    };
+    const focus = { x: 240, y: 240 };
+    const start = buildAnimationFrameScene(animatedSettings, focus, {
+        timeMs: 0,
+        durationMs: 4000
+    });
+    const moving = buildAnimationFrameScene(animatedSettings, focus, {
+        timeMs: 375,
+        durationMs: 4000
+    });
+    const loop = buildAnimationFrameScene(animatedSettings, focus, {
+        timeMs: 4000,
+        durationMs: 4000
+    });
+
+    assert.notEqual(moving.character.rounded.path, start.character.rounded.path);
+    assert.equal(loop.character.rounded.path, start.character.rounded.path);
+    assert.equal(loop.eyes.left.eye1.path, start.eyes.left.eye1.path);
+    assert.equal(loop.eyes.right.eye1.path, start.eyes.right.eye1.path);
 });
 
 test('extreme Bézier handles cannot push an animation frame outside the renderable Focus region', () => {

@@ -2,9 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+    BOLID_EYE_MOTION_TIME_CONSTANT,
     advanceEyeMotion,
     advanceEyeMotionToTarget,
     createEyeMotionState,
+    currentEyeMotionTransform,
     retargetEyeMotion,
     snapEyeMotion
 } from '../src/animation/eyeMotion.js';
@@ -64,4 +66,16 @@ test('fixed-step eye motion converges to the same state across a loop seam', () 
         motion.displayedCenter.y - first.y
     ) < 1e-6);
     assert.notDeepEqual(first, targets[0]);
+});
+
+test('Bolid inertia smooths center and scale as one transform', () => {
+    const motion = createEyeMotionState(BOLID_EYE_MOTION_TIME_CONSTANT);
+    advanceEyeMotionToTarget(motion, { x: 240, y: 260 }, 1000 / 60, 1);
+    advanceEyeMotionToTarget(motion, { x: 260, y: 280 }, 1000 / 60, 0.88);
+    const transform = currentEyeMotionTransform(motion);
+
+    assert.ok(motion.displayedCenter.x > 240 && motion.displayedCenter.x < 260);
+    assert.ok(motion.displayedScale < 1 && motion.displayedScale > 0.88);
+    assert.ok(transform.scaleRatio > 1);
+    assert.equal(transform.targetScale, 0.88);
 });

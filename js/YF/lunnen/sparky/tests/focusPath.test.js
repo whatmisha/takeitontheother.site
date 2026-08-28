@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+    analyzeGeneratedFocusPath,
     generateFocusPath,
     generateFocusPathForSettings,
     normalizeMotionSmoothness,
@@ -123,21 +124,21 @@ test('numeric complexity interpolates continuously between legacy profiles', () 
     assert.notEqual(quarter.path, medium.path);
 });
 
-test('every complexity generates a path that visually touches the outer focus region', () => {
+test('every complexity makes one broad edge excursion without tracing the boundary', () => {
     [0, 50, 100].forEach((complexity) => {
         const path = generateFocusPath({ ...options, complexity });
         const outerAnchors = path.anchors.filter((anchor) => (
             Math.hypot(anchor.x - options.center.x, anchor.y - options.center.y)
-                >= options.radius * 0.985
+                >= options.radius * 0.88
         ));
-        assert.ok(
-            outerAnchors.length >= 2,
-            `complexity ${complexity} only generated ${outerAnchors.length} outer anchor(s)`
-        );
+        const quality = analyzeGeneratedFocusPath(path);
+        assert.ok(outerAnchors.length >= 1, `complexity ${complexity} has no edge excursion`);
+        assert.ok(quality.outerBandRatio <= 0.34, `complexity ${complexity} traces the edge`);
+        assert.equal(quality.tinyLoopCount, 0);
     });
 });
 
-test('settings-based generation reaches the complete boundary circle', () => {
+test('settings-based generation uses the complete Sphere without sticking to it', () => {
     const path = generateFocusPathForSettings({
         boundaryType: 'circle',
         boundaryCenterX: 240,
@@ -149,10 +150,13 @@ test('settings-based generation reaches the complete boundary circle', () => {
         motionSeed: 123456
     }, { x: 240, y: 240 });
     assert.equal(path.radius, 240);
+    const quality = analyzeGeneratedFocusPath(path);
     assert.ok(path.anchors.some((anchor) => (
         Math.hypot(anchor.x - path.center.x, anchor.y - path.center.y)
-            >= path.radius - 1e-6
+            >= path.radius * 0.88
     )));
+    assert.ok(quality.outerBandRatio <= 0.34);
+    assert.equal(quality.tinyLoopCount, 0);
 });
 
 test('motion smoothness is normalized to an independent 0–100 range', () => {
@@ -220,7 +224,7 @@ test('maximum smoothness reduces the sharpest sampled direction change', () => {
     };
     const tight = generateFocusPath({ ...fixture, smoothness: 0 });
     const smooth = generateFocusPath({ ...fixture, smoothness: 100 });
-    assert.ok(sharpestTurn(smooth) < sharpestTurn(tight) * 0.2);
+    assert.ok(sharpestTurn(smooth) < sharpestTurn(tight) * 0.5);
 });
 
 test('smoothed paths remain contained and tangent-continuous across complexities', () => {

@@ -5,9 +5,11 @@ import { createFocusTimeline, sampleFocusTimeline } from '../src/animation/focus
 import { BLINK_TIMING } from '../src/animation/blink.js';
 import {
     createEyeAnimationTimeline,
+    createLoopEyeAnimationTimeline,
     MAX_BLINKS_PER_STOP,
     sampleEyeAnimationTimeline
 } from '../src/animation/eyeTimeline.js';
+import { createStationaryLoopTimeline } from '../src/animation/loopTimeline.js';
 
 const path = generateFocusPath({
     start: { x: 240, y: 240 },
@@ -155,4 +157,33 @@ test('emotion transitions use the selected motion easing', () => {
     const timeMs = focusTimeline.durationMs / 8;
     assert.equal(sampleEyeAnimationTimeline(linear, timeMs, base).cute, 60);
     assert.equal(sampleEyeAnimationTimeline(eased, timeMs, base).cute, 30);
+});
+
+test('stationary loops distribute every blink and include relaxed double blinks', () => {
+    const loop = createStationaryLoopTimeline({ x: 240, y: 240 }, 5);
+    const eyeTimeline = createLoopEyeAnimationTimeline(loop, { blinkCount: 8 });
+    const duration = BLINK_TIMING.close + BLINK_TIMING.hold + BLINK_TIMING.open;
+    assert.equal(eyeTimeline.blinkEvents.length, 8);
+    assert.ok(eyeTimeline.blinkEvents.every((event) => event.timing.duration === duration));
+    assert.ok(eyeTimeline.blinkEvents.some((event, index, events) => (
+        index > 0 && Math.abs(event.centerMs - events[index - 1].centerMs - duration) < 1e-9
+    )));
+});
+
+test('stationary loops can vary emotion around the source expression', () => {
+    const loop = createStationaryLoopTimeline({ x: 240, y: 240 }, 5);
+    const eyeTimeline = createLoopEyeAnimationTimeline(loop, {
+        blinkCount: 0,
+        emotionVariation: 70
+    });
+    const base = { cute: 50, angry: 20 };
+    const start = sampleEyeAnimationTimeline(eyeTimeline, 0, base);
+    const changed = sampleEyeAnimationTimeline(eyeTimeline, loop.durationMs / 8, base);
+    const seam = sampleEyeAnimationTimeline(eyeTimeline, loop.durationMs, base);
+
+    assert.equal(start.cute, base.cute);
+    assert.equal(start.angry, base.angry);
+    assert.notEqual(changed.cute, base.cute);
+    assert.notEqual(changed.angry, base.angry);
+    assert.deepEqual(seam, start);
 });
