@@ -8,6 +8,7 @@ import {
 } from '../src/animation/focusTimeline.js';
 import { buildCharacterGeometry } from '../src/geometry/characterGeometry.js';
 import { buildEyeGeometry, buildEyeLidGeometry } from '../src/geometry/eyeGeometry.js';
+import { constrainFocusPoint } from '../src/geometry/focusBounds.js';
 import {
     summarizeTimings,
     summarizeWorkerMetrics
@@ -16,6 +17,12 @@ import {
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const PREVIEW_FPS = 30;
 const EXPORT_FPS = 60;
+const PREVIEW_LIMITS = Object.freeze({
+    meanMs: 8,
+    p95Ms: 12,
+    maximumFrameMs: 16.7,
+    droppedFrames: 0
+});
 const START_FOCUS = Object.freeze({ x: 240, y: 240 });
 const BASE_SETTINGS = Object.freeze({
     coordinateSpaceVersion: 2,
@@ -156,6 +163,34 @@ function createPreviewSurface() {
     return svg;
 }
 
+function slowPreviewFrames(timings, limit = 5) {
+    return timings.total
+        .map((totalMs, frameIndex) => ({
+            frameIndex,
+            timeMs: rounded(frameIndex * 1000 / PREVIEW_FPS),
+            totalMs: rounded(totalMs),
+            characterMs: rounded(timings.character[frameIndex]),
+            eyesMs: rounded(timings.eyes[frameIndex]),
+            lidsMs: rounded(timings.lids[frameIndex]),
+            domMs: rounded(timings.dom[frameIndex]),
+            over16_7Ms: totalMs > 16.7,
+            solver: timings.solvers[frameIndex]
+                ? {
+                    legacyMs: rounded(timings.solvers[frameIndex].legacyMs),
+                    opticalMs: rounded(timings.solvers[frameIndex].opticalMs),
+                    opticalEvaluations: timings.solvers[frameIndex].opticalEvaluations,
+                    opticalCacheHits: timings.solvers[frameIndex].opticalCacheHits,
+                    opticalBranchExpansions: timings.solvers[frameIndex].opticalBranchExpansions,
+                    opticalGlobalFallbacks: timings.solvers[frameIndex].opticalGlobalFallbacks,
+                    containmentEvaluations: timings.solvers[frameIndex].containmentEvaluations,
+                    fallbackReason: timings.solvers[frameIndex].fallbackReason || 'none'
+                }
+                : null
+        }))
+        .sort((first, second) => second.totalMs - first.totalMs)
+        .slice(0, limit);
+}
+
 function measurePreviewFrame({
     svg,
     settings,
@@ -167,7 +202,8 @@ function measurePreviewFrame({
 }) {
     const frameStartedAt = now();
     const timeMs = frameIndex * 1000 / PREVIEW_FPS;
-    const focus = sampleFocusTimeline(motion.timeline, timeMs).point;
+    const authoredFocus = sampleFocusTimeline(motion.timeline, timeMs).point;
+    const focus = constrainFocusPoint(authoredFocus, settings);
     const eyeState = sampleEyeAnimationTimeline(motion.eyes, timeMs, settings);
     const frameSettings = { ...settings, focusX: focus.x, focusY: focus.y };
 
@@ -181,6 +217,7 @@ function measurePreviewFrame({
         previousEyeGeometry: previousEyes
     });
     timings.eyes.push(now() - startedAt);
+    timings.solvers.push(eyes.solverMetrics);
 
     startedAt = now();
     const lids = buildEyeLidGeometry({
@@ -209,10 +246,10 @@ async function benchmarkPreview(scenario) {
     const initialCharacter = buildCharacterGeometry(settings);
     let previousEyes = buildEyeGeometry(settings, initialCharacter, { placementMode: 'global' });
     const eyeMotion = createEyeMotionState();
-    const timings = { total: [], character: [], eyes: [], lids: [], dom: [] };
+    const timings = { total: [], character: [], eyes: [], lids: [], dom: [], solvers: [] };
 
     for (let index = -12; index < 0; index += 1) {
-        const warmupTimings = { total: [], character: [], eyes: [], lids: [], dom: [] };
+        const warmupTimings = { total: [], character: [], eyes: [], lids: [], dom: [], solvers: [] };
         previousEyes = measurePreviewFrame({
             svg,
             settings,
@@ -252,7 +289,8 @@ async function benchmarkPreview(scenario) {
             eyes: summarizeTimings(timings.eyes, summaryOptions),
             lids: summarizeTimings(timings.lids, summaryOptions),
             dom: summarizeTimings(timings.dom, summaryOptions)
-        }
+        },
+        slowFrames: slowPreviewFrames(timings)
     };
 }
 
@@ -390,7 +428,13 @@ export async function runAnimationPipelineBenchmark({ profile = 'standard' } = {
         profile,
         startedAt,
         completedAt: new Date().toISOString(),
-        passed: exports.every((entry) => entry.status === 'complete'),
+        passed: exports.every((entry) => entry.status === 'complete')
+            && preview.every((entry) => (
+                entry.total.meanMs < PREVIEW_LIMITS.meanMs
+                && entry.total.p95Ms < PREVIEW_LIMITS.p95Ms
+                && entry.total.maxMs < PREVIEW_LIMITS.maximumFrameMs
+                && entry.total.droppedFrames <= PREVIEW_LIMITS.droppedFrames
+            )),
         environment: {
             userAgent: navigator.userAgent,
             platform: navigator.platform,
@@ -404,6 +448,7 @@ export async function runAnimationPipelineBenchmark({ profile = 'standard' } = {
             previewFps: PREVIEW_FPS,
             exportFps: EXPORT_FPS,
             exportSize: 1080,
+            previewLimits: PREVIEW_LIMITS,
             scenarios
         },
         preview,

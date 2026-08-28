@@ -30,12 +30,18 @@ export const EYE_DEFAULTS = Object.freeze({
 
 const REFERENCE_HORIZONTAL_OFFSET = 21.6692;
 const CONTAINMENT_RELAX_ITERATIONS = 16;
-const FIT_SCALE_BINARY_ITERATIONS = 11;
+const FIT_SCALE_BINARY_ITERATIONS = 14;
+const FIT_SCALE_SEARCH_TOLERANCE = 0.00025;
+const FIT_SCALE_WARM_PROBE_STEP = 0.08;
 const FINAL_HEAD_GAP = 2;
 const TOP_FOCUS_SCALE_FLOOR = 0.3;
-const CROWN_SCALE_SAFETY = 0.27;
+const CROWN_SCALE_SAFETY = 0.29;
 const FOCUS_SHIFT_INSET = 0.25;
 const LOCAL_OPTICAL_SCORE_TOLERANCE = 0.05;
+const LOCAL_BRANCH_FOCUS_DELTA = 18;
+const LOCAL_BRANCH_SCALE_DELTA = 0.055;
+const LOCAL_OPTICAL_SHORTLIST_SIZE = 5;
+const LOCAL_OPTICAL_GLOBAL_SCORE_DELTA = 0.25;
 const CROWN_OPTICAL_STABILIZATION = 0.82;
 
 /**
@@ -520,7 +526,8 @@ function solveEyePlacement(
     model,
     values,
     headContour,
-    containmentContext
+    containmentContext,
+    { previousFitScale = null } = {}
 ) {
     const desiredCenter = point(
         values.focusX,
@@ -639,12 +646,36 @@ function solveEyePlacement(
             ...scaleLimitPlacement.result
         };
     }
-    let best = solveAtScale(low);
+    let best = null;
+    const warmScale = Number(previousFitScale);
+    if (Number.isFinite(warmScale)) {
+        const probeScale = clamp(warmScale, low, high);
+        if (probeScale > low + EPSILON && probeScale < high - EPSILON) {
+            const warmPlacement = solveAtScale(probeScale);
+            if (warmPlacement) {
+                low = probeScale;
+                best = warmPlacement;
+            } else {
+                high = probeScale;
+                const lowerProbeScale = Math.max(low, probeScale - FIT_SCALE_WARM_PROBE_STEP);
+                if (lowerProbeScale > low + EPSILON) {
+                    const lowerWarmPlacement = solveAtScale(lowerProbeScale);
+                    if (lowerWarmPlacement) {
+                        low = lowerProbeScale;
+                        best = lowerWarmPlacement;
+                    }
+                }
+            }
+        }
+    }
+    if (!best) best = solveAtScale(low);
     // Extremely narrow custom heads may require more than the normal Focus
     // shift budget even at the minimum scale. Keep the old safe recovery only
     // for that terminal case; it does not affect the normal objective branch.
     if (!best) best = relax(contourCenter, low);
-    for (let iteration = 0; iteration < FIT_SCALE_BINARY_ITERATIONS; iteration += 1) {
+    for (let iteration = 0;
+        iteration < FIT_SCALE_BINARY_ITERATIONS && high - low > FIT_SCALE_SEARCH_TOLERANCE;
+        iteration += 1) {
         const middle = (low + high) / 2;
         const candidate = solveAtScale(middle);
         if (candidate) {
@@ -721,6 +752,14 @@ function preparePlacementContour(contour) {
     });
 }
 
+function preparePlacementSamples(contour) {
+    return {
+        count: contour.length,
+        x: contour.map((sample) => sample.x),
+        y: contour.map((sample) => sample.y)
+    };
+}
+
 function preparedSignedClearance(x, y, edges) {
     let inside = false;
     let minimumSquared = Infinity;
@@ -742,25 +781,24 @@ function preparedSignedClearance(x, y, edges) {
     return inside ? clearance : -clearance;
 }
 
-function placementClearanceStats(localEyeContour, center, preparedContour) {
+function placementClearanceStats(localEyeSamples, center, preparedContour) {
     let minimum = Infinity;
     let sum = 0;
-    for (let index = 0; index < localEyeContour.length; index += 1) {
-        const sample = localEyeContour[index];
+    for (let index = 0; index < localEyeSamples.count; index += 1) {
         const clearance = preparedSignedClearance(
-            sample.x + center.x,
-            sample.y + center.y,
+            localEyeSamples.x[index] + center.x,
+            localEyeSamples.y[index] + center.y,
             preparedContour
         );
         minimum = Math.min(minimum, clearance);
         sum += clearance;
     }
-    return { minimum, average: sum / localEyeContour.length };
+    return { minimum, average: sum / localEyeSamples.count };
 }
 
-function scoreOpticalPlacement(localEyeContour, center, faceContour, headContour) {
+function scoreOpticalPlacement(localEyeSamples, center, faceContour, headContour) {
     const headClearances = placementClearanceStats(
-        localEyeContour,
+        localEyeSamples,
         center,
         headContour
     );
@@ -775,7 +813,7 @@ function scoreOpticalPlacement(localEyeContour, center, faceContour, headContour
     }
 
     const fieldClearances = placementClearanceStats(
-        localEyeContour,
+        localEyeSamples,
         center,
         faceContour
     );
@@ -791,6 +829,60 @@ function scoreOpticalPlacement(localEyeContour, center, faceContour, headContour
     };
 }
 
+function pushUniqueCenter(centers, rows, center) {
+    let row = rows.get(center.x);
+    if (!row) {
+        row = new Set();
+        rows.set(center.x, row);
+    } else if (row.has(center.y)) {
+        return false;
+    }
+    row.add(center.y);
+    centers.push(center);
+    return true;
+}
+
+function uniqueCenters(centers) {
+    const unique = [];
+    const rows = new Map();
+    centers.filter(Boolean).forEach((center) => pushUniqueCenter(unique, rows, center));
+    return unique;
+}
+
+function bestCandidates(candidates, limit) {
+    const ranked = [];
+    candidates.forEach((candidate) => {
+        let insertAt = ranked.length;
+        for (let index = 0; index < ranked.length; index += 1) {
+            if (candidate.result.score > ranked[index].result.score) {
+                insertAt = index;
+                break;
+            }
+        }
+        if (insertAt >= limit) return;
+        ranked.splice(insertAt, 0, candidate);
+        if (ranked.length > limit) ranked.pop();
+    });
+    return ranked;
+}
+
+function localGridCenters(bounds, anchors, stepX, stepY, { includeCenter = true } = {}) {
+    const centers = [];
+    const rows = new Map();
+    anchors.forEach((anchor) => {
+        for (let y = -1; y <= 1; y += 1) {
+            for (let x = -1; x <= 1; x += 1) {
+                if (!includeCenter && x === 0 && y === 0) continue;
+                pushUniqueCenter(centers, rows, point(
+                    clamp(anchor.x + x * stepX, bounds.minX, bounds.maxX),
+                    clamp(anchor.y + y * stepY, bounds.minY, bounds.maxY)
+                ));
+            }
+        }
+    });
+    return centers;
+}
+
 function refinePlacement(bounds, evaluate, seed, {
     iterations,
     stepX,
@@ -802,16 +894,11 @@ function refinePlacement(bounds, evaluate, seed, {
     while (refinementLevel < iterations && sweep < iterations * 5) {
         sweep += 1;
         let localWinner = current;
-        for (let y = -1; y <= 1; y += 1) {
-            for (let x = -1; x <= 1; x += 1) {
-                const center = point(
-                    clamp(current.center.x + x * stepX, bounds.minX, bounds.maxX),
-                    clamp(current.center.y + y * stepY, bounds.minY, bounds.maxY)
-                );
+        localGridCenters(bounds, [current.center], stepX, stepY, { includeCenter: false })
+            .forEach((center) => {
                 const candidate = { center, result: evaluate(center) };
                 if (candidate.result.score > localWinner.result.score) localWinner = candidate;
-            }
-        }
+            });
         if (distance(localWinner.center, current.center) > EPSILON) {
             // Follow the current ridge at a stable resolution. Shrinking the
             // grid immediately after every move makes a single coarse choice
@@ -834,18 +921,12 @@ function refinePlacementBeam(bounds, evaluate, seed, {
 }) {
     let frontier = [{ center: seed, result: evaluate(seed) }];
     for (let iteration = 0; iteration < iterations; iteration += 1) {
-        const candidates = [];
-        frontier.forEach((current) => {
-            for (let y = -1; y <= 1; y += 1) {
-                for (let x = -1; x <= 1; x += 1) {
-                    const center = point(
-                        clamp(current.center.x + x * stepX, bounds.minX, bounds.maxX),
-                        clamp(current.center.y + y * stepY, bounds.minY, bounds.maxY)
-                    );
-                    candidates.push({ center, result: evaluate(center) });
-                }
-            }
-        });
+        const candidates = localGridCenters(
+            bounds,
+            frontier.map((current) => current.center),
+            stepX,
+            stepY
+        ).map((center) => ({ center, result: evaluate(center) }));
         candidates.sort((first, second) => second.result.score - first.result.score);
         const minimumSpacing = Math.hypot(stepX, stepY) * 0.45;
         frontier = [];
@@ -881,10 +962,11 @@ function searchGlobalPlacement(bounds, evaluate, seeds = []) {
         }
     }
 
-    const ranked = candidates
-        .map((center) => ({ center, result: evaluate(center) }))
-        .sort((first, second) => second.result.score - first.result.score)
-        .slice(0, 5);
+    const ranked = bestCandidates(
+        uniqueCenters(candidates)
+            .map((center) => ({ center, result: evaluate(center) })),
+        5
+    );
     let winner = ranked[0];
     ranked.forEach((seed) => {
         const current = refinePlacement(bounds, evaluate, seed.center, {
@@ -908,26 +990,33 @@ function searchLocalPlacement(
     bounds,
     evaluate,
     seeds,
-    { canonicalSeeds = [] } = {}
+    {
+        canonicalSeeds = [],
+        metrics = null
+    } = {}
 ) {
     const width = Math.max(EPSILON, bounds.maxX - bounds.minX);
     const height = Math.max(EPSILON, bounds.maxY - bounds.minY);
-    // A sparse branch guard keeps deterministic anchor seeds alive when the
-    // transported optimum crosses a concave facial ridge. The 7×7 seed field
-    // remains far smaller than the full 13×13 global placement search.
-    const branchSeeds = [];
-    for (let row = 1; row <= 7; row += 1) {
-        for (let column = 1; column <= 7; column += 1) {
-            branchSeeds.push(point(
-                bounds.minX + width * column / 8,
-                bounds.minY + height * row / 8
-            ));
+    const makeBranchSeeds = (steps) => {
+        const branchSeeds = [];
+        for (let row = 1; row <= steps; row += 1) {
+            for (let column = 1; column <= steps; column += 1) {
+                branchSeeds.push(point(
+                    bounds.minX + width * column / (steps + 1),
+                    bounds.minY + height * row / (steps + 1)
+                ));
+            }
         }
-    }
-    const ranked = [...seeds, ...branchSeeds]
-        .filter(Boolean)
-        .map((center) => ({ center, result: evaluate(center) }))
-        .sort((first, second) => second.result.score - first.result.score);
+        return branchSeeds;
+    };
+    // Normal pointer frames keep only a deterministic 3×3 branch guard. Large
+    // moves and scale transitions expand to 7×7 below without changing score.
+    const branchSeeds = makeBranchSeeds(3);
+    const ranked = bestCandidates(
+        uniqueCenters([...seeds, ...branchSeeds])
+            .map((center) => ({ center, result: evaluate(center) })),
+        8
+    );
     const transported = seeds[0]
         ? { center: seeds[0], result: evaluate(seeds[0]), transported: true }
         : null;
@@ -935,10 +1024,10 @@ function searchLocalPlacement(
     const directCanonicalCandidates = canonicalSeeds
         .filter(Boolean)
         .map((center) => ({ center, result: evaluate(center), canonical: true }));
-    const branchCanonicalCandidates = branchSeeds
-        .map((center) => ({ center, result: evaluate(center), canonical: true }))
-        .sort((first, second) => second.result.score - first.result.score)
-        .slice(0, 3);
+    const branchCanonicalCandidates = bestCandidates(
+        branchSeeds.map((center) => ({ center, result: evaluate(center), canonical: true })),
+        1
+    );
     const canonicalCandidates = [
         ...directCanonicalCandidates,
         ...branchCanonicalCandidates
@@ -948,7 +1037,7 @@ function searchLocalPlacement(
         selected.push({ center, result, canonical: true });
     });
     ranked.forEach((candidate) => {
-        if (selected.length >= 8) return;
+        if (selected.length >= LOCAL_OPTICAL_SHORTLIST_SIZE) return;
         if (selected.some((seed) => distance(seed.center, candidate.center) <= EPSILON)) return;
         selected.push(candidate);
     });
@@ -973,6 +1062,27 @@ function searchLocalPlacement(
             canonicalWinner = current;
         }
     });
+    if (!winner.result.feasible) {
+        if (metrics) metrics.opticalBranchExpansions += 1;
+        const expandedSeeds = makeBranchSeeds(7);
+        const expandedCandidates = bestCandidates(
+            uniqueCenters(expandedSeeds)
+                .map((center) => ({ center, result: evaluate(center), canonical: true })),
+            3
+        );
+        expandedCandidates.forEach((seed) => {
+            const current = refinePlacementBeam(bounds, evaluate, seed.center, {
+                iterations: 9,
+                stepX: width / 12,
+                stepY: height / 12,
+                beamWidth: 4
+            });
+            if (current.result.score > winner.result.score) winner = current;
+            if (!canonicalWinner || current.result.score > canonicalWinner.result.score) {
+                canonicalWinner = current;
+            }
+        });
+    }
     const canonicalScoreDelta = canonicalWinner
         ? winner.result.score - canonicalWinner.result.score
         : Infinity;
@@ -992,7 +1102,8 @@ function searchLocalPlacement(
         beamWidth: 4
     });
     if (precise.result.score > winner.result.score) winner = precise;
-    return winner;
+    if (metrics) metrics.opticalCanonicalScoreDelta = canonicalScoreDelta;
+    return { ...winner, canonicalScoreDelta };
 }
 
 function smoothstep(value) {
@@ -1014,7 +1125,7 @@ function solveOpticalPairCenter(
     const preparedFace = preparePlacementContour(faceContour);
     const preparedHead = preparePlacementContour(sampledHead);
     const localTransform = createRigTransform(values, point(0, 0), legacyPlacement.fitScale);
-    const localEyeContour = mainEyeContour(model, localTransform, 8);
+    const localEyeSamples = preparePlacementSamples(mainEyeContour(model, localTransform, 8));
     const faceBounds = contourBounds(faceContour);
     const scaledContainmentAmount = smoothstep(clamp(
         (1 - legacyPlacement.fitScale) / 0.08,
@@ -1031,20 +1142,20 @@ function solveOpticalPairCenter(
         * perspectiveAmount;
     const opticalEvaluationCache = new Map();
     const opticalEvaluation = (center) => {
-        const key = `${center.x},${center.y}`;
-        const cached = opticalEvaluationCache.get(key);
-        if (cached) {
+        const row = opticalEvaluationCache.get(center.x);
+        if (row?.has(center.y)) {
             if (containmentContext.metrics) containmentContext.metrics.opticalCacheHits += 1;
-            return cached;
+            return row.get(center.y);
         }
         if (containmentContext.metrics) containmentContext.metrics.opticalEvaluations += 1;
         const result = scoreOpticalPlacement(
-            localEyeContour,
+            localEyeSamples,
             center,
             preparedFace,
             preparedHead
         );
-        opticalEvaluationCache.set(key, result);
+        if (row) row.set(center.y, result);
+        else opticalEvaluationCache.set(center.x, new Map([[center.y, result]]));
         return result;
     };
     const previousValues = previousEyeGeometry?.values;
@@ -1064,13 +1175,29 @@ function solveOpticalPairCenter(
         legacyPlacement.pairCenter,
         desiredCenter
     ];
+    const focusDeltaLength = length(focusDelta);
+    const fitScaleDelta = previousEyeGeometry
+        ? Math.abs(legacyPlacement.fitScale - previousEyeGeometry.fitScale)
+        : Infinity;
+    const preemptiveGlobalSearch = local
+        && (Math.round(values.rayCount) <= 3
+            || focusDeltaLength > LOCAL_BRANCH_FOCUS_DELTA
+            || fitScaleDelta > LOCAL_BRANCH_SCALE_DELTA);
     const localOptical = searchLocalPlacement(
         faceBounds,
         opticalEvaluation,
         opticalSeeds,
-        { canonicalSeeds: [legacyPlacement.pairCenter, desiredCenter] }
+        {
+            canonicalSeeds: [legacyPlacement.pairCenter, desiredCenter],
+            metrics: containmentContext.metrics
+        }
     );
-    const optical = local
+    const requiresGlobalSearch = preemptiveGlobalSearch
+        || (local && localOptical.canonicalScoreDelta > LOCAL_OPTICAL_GLOBAL_SCORE_DELTA);
+    if (local && requiresGlobalSearch && containmentContext.metrics) {
+        containmentContext.metrics.opticalGlobalFallbacks += 1;
+    }
+    const optical = local && !requiresGlobalSearch
         ? localOptical
         : searchGlobalPlacement(
             faceBounds,
@@ -1263,6 +1390,9 @@ export function buildEyeGeometry(settings, characterGeometry, options = {}) {
         containmentEvaluations: 0,
         opticalEvaluations: 0,
         opticalCacheHits: 0,
+        opticalBranchExpansions: 0,
+        opticalGlobalFallbacks: 0,
+        opticalCanonicalScoreDelta: 0,
         sampleChecks: 0,
         edgeChecks: 0,
         crossingChecks: 0,
@@ -1290,7 +1420,12 @@ export function buildEyeGeometry(settings, characterGeometry, options = {}) {
         model,
         values,
         headContour,
-        containmentContext
+        containmentContext,
+        {
+            previousFitScale: canRefineLocally
+                ? previousEyeGeometry?.fitScale
+                : null
+        }
     );
     solverMetrics.legacyMs = performance.now() - startedAt;
     // fitScale is solved exactly for the current frame above. A scale delta is

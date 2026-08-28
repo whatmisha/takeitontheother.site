@@ -261,7 +261,8 @@ try {
             scenario: entry.scenario.id,
             meanMs: entry.total.meanMs,
             p95Ms: entry.total.p95Ms,
-            droppedFrames: entry.total.droppedFrames
+            droppedFrames: entry.total.droppedFrames,
+            slowestFrame: entry.slowFrames?.[0] || null
         })),
         exports: report.exports.map((entry) => ({
             scenario: entry.scenario.id,
