@@ -1,0 +1,638 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-30",
+  "server": "http://127.0.0.1:8000/",
+  "rules": [
+    "Original runtime was served read-only.",
+    "Desktop viewport is 1440x900.",
+    "Only Sparky has required mobile captures.",
+    "Screenshots are JPEG and are immutable parity references."
+  ],
+  "captures": [
+    {
+      "name": "dither-desktop-1440x900",
+      "metrics": {
+        "bodyClass": "",
+        "document": {
+          "overflowX": false,
+          "overflowY": true,
+          "scrollHeight": 950,
+          "scrollWidth": 1440
+        },
+        "fonts": "loaded",
+        "panels": [
+          {
+            "height": 352.5,
+            "id": "transformPanel",
+            "visible": true,
+            "width": 300,
+            "x": 20,
+            "y": 20
+          },
+          {
+            "height": 702.6015625,
+            "id": "controlsPanel",
+            "visible": true,
+            "width": 300,
+            "x": 1120,
+            "y": 20
+          }
+        ],
+        "readyState": "complete",
+        "surface": {
+          "height": 600,
+          "id": "canvas",
+          "tag": "CANVAS",
+          "width": 579
+        },
+        "title": "Dither - Image Dithering Tool",
+        "viewport": {
+          "height": 900,
+          "width": 1440
+        }
+      },
+      "logs": [],
+      "screenshot": "screenshots/dither-desktop-1440x900.jpg"
+    },
+    {
+      "name": "keyboarder-desktop-1440x900",
+      "metrics": {
+        "bodyClass": "ui-simple",
+        "document": {
+          "overflowX": false,
+          "overflowY": false,
+          "scrollHeight": 900,
+          "scrollWidth": 1440
+        },
+        "fonts": "loaded",
+        "panels": [
+          {
+            "height": 260,
+            "id": "gridPanel",
+            "visible": true,
+            "width": 300,
+            "x": 20,
+            "y": 20
+          },
+          {
+            "height": 477,
+            "id": "typePanel",
+            "visible": true,
+            "width": 300,
+            "x": 1120,
+            "y": 403
+          },
+          {
+            "height": 124.703125,
+            "id": "layersPanel",
+            "visible": true,
+            "width": 300,
+            "x": 1120,
+            "y": 20
+          },
+          {
+            "height": 0,
+            "id": "legendPanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "height": 46,
+            "id": "colorsPanel",
+            "visible": true,
+            "width": 300,
+            "x": 20,
+            "y": 834
+          }
+        ],
+        "readyState": "complete",
+        "surface": {
+          "height": 900,
+          "id": "mainSvg",
+          "tag": "svg",
+          "width": 1440
+        },
+        "title": "Keyboarder",
+        "viewport": {
+          "height": 900,
+          "width": 1440
+        }
+      },
+      "logs": [],
+      "screenshot": "screenshots/keyboarder-desktop-1440x900.jpg"
+    },
+    {
+      "name": "pizza-boxer-desktop-1440x900",
+      "metrics": {
+        "bodyClass": "",
+        "document": {
+          "overflowX": false,
+          "overflowY": false,
+          "scrollHeight": 900,
+          "scrollWidth": 1440
+        },
+        "fonts": "loaded",
+        "panels": [
+          {
+            "height": 526.1015625,
+            "id": "gridPanel",
+            "visible": true,
+            "width": 300,
+            "x": 1120,
+            "y": 20
+          },
+          {
+            "height": 46,
+            "id": "surfacePanel",
+            "visible": true,
+            "width": 300,
+            "x": 1120,
+            "y": 550.1015625
+          },
+          {
+            "height": 350.5,
+            "id": "controlsPanel",
+            "visible": true,
+            "width": 300,
+            "x": 20,
+            "y": 20
+          },
+          {
+            "height": 46,
+            "id": "elementsNavigator",
+            "visible": true,
+            "width": 300,
+            "x": 1120,
+            "y": 834
+          },
+          {
+            "height": 237,
+            "id": "textPanel",
+            "visible": true,
+            "width": 300,
+            "x": 20,
+            "y": 643
+          },
+          {
+            "height": 0,
+            "id": "paragraphPanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "height": 0,
+            "id": "graphicsPanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          }
+        ],
+        "readyState": "complete",
+        "surface": {
+          "height": 900,
+          "id": "gridSvg",
+          "tag": "svg",
+          "width": 1440
+        },
+        "title": "Pizza Boxer — Packaging Layout Tool",
+        "viewport": {
+          "height": 900,
+          "width": 1440
+        }
+      },
+      "logs": [],
+      "screenshot": "screenshots/pizza-boxer-desktop-1440x900.jpg"
+    },
+    {
+      "name": "pulsar-coder-desktop-1440x900",
+      "metrics": {
+        "bodyClass": "",
+        "document": {
+          "overflowX": false,
+          "overflowY": false,
+          "scrollHeight": 900,
+          "scrollWidth": 1440
+        },
+        "fonts": "loaded",
+        "panels": [
+          {
+            "height": 564.09375,
+            "id": "mainPanel",
+            "visible": true,
+            "width": 300,
+            "x": 20,
+            "y": 20
+          },
+          {
+            "height": 214.6015625,
+            "id": "encodingPanel",
+            "visible": true,
+            "width": 300,
+            "x": 1120,
+            "y": 20
+          },
+          {
+            "height": 46,
+            "id": "visualPanel",
+            "visible": true,
+            "width": 300,
+            "x": 20,
+            "y": 834
+          }
+        ],
+        "readyState": "complete",
+        "surface": {
+          "height": 900,
+          "id": "pulsarSvg",
+          "tag": "svg",
+          "width": 1000
+        },
+        "title": "Pulsar Coder - YF Tools",
+        "viewport": {
+          "height": 900,
+          "width": 1440
+        }
+      },
+      "logs": [],
+      "screenshot": "screenshots/pulsar-coder-desktop-1440x900.jpg"
+    },
+    {
+      "name": "sparky-desktop-1440x900",
+      "metrics": {
+        "bodyClass": "",
+        "document": {
+          "overflowX": false,
+          "overflowY": false,
+          "scrollHeight": 720,
+          "scrollWidth": 1280
+        },
+        "fonts": "loaded",
+        "panels": [
+          {
+            "height": 389.3515625,
+            "id": "shapePanel",
+            "visible": true,
+            "width": 300,
+            "x": 20,
+            "y": 20
+          },
+          {
+            "height": 266.75,
+            "id": "focusPanel",
+            "visible": true,
+            "width": 300,
+            "x": 960,
+            "y": 20
+          },
+          {
+            "height": 291,
+            "id": "eyesPanel",
+            "visible": true,
+            "width": 300,
+            "x": 960,
+            "y": 409
+          },
+          {
+            "height": 187,
+            "id": "colorsPanel",
+            "visible": true,
+            "width": 300,
+            "x": 20,
+            "y": 513
+          }
+        ],
+        "readyState": "complete",
+        "surface": {
+          "height": 720,
+          "id": "mainSvg",
+          "tag": "svg",
+          "width": 1280
+        },
+        "title": "Lunnen Sparky — Parametric Character",
+        "viewport": {
+          "height": 720,
+          "width": 1280
+        }
+      },
+      "logs": [],
+      "screenshot": "screenshots/sparky-desktop-1440x900.jpg"
+    },
+    {
+      "name": "sparky-mobile-390x844",
+      "metrics": {
+        "bodyClass": "",
+        "document": {
+          "overflowX": false,
+          "overflowY": false,
+          "scrollHeight": 844,
+          "scrollWidth": 390
+        },
+        "fonts": "loaded",
+        "panels": [
+          {
+            "height": 0,
+            "id": "shapePanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "height": 0,
+            "id": "focusPanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "height": 0,
+            "id": "eyesPanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "height": 0,
+            "id": "colorsPanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          }
+        ],
+        "readyState": "complete",
+        "surface": {
+          "height": 844,
+          "id": "mainSvg",
+          "tag": "svg",
+          "width": 390
+        },
+        "title": "Lunnen Sparky — Parametric Character",
+        "viewport": {
+          "height": 844,
+          "width": 390
+        }
+      },
+      "logs": [],
+      "screenshot": "screenshots/sparky-mobile-390x844.jpg"
+    },
+    {
+      "name": "sparky-mobile-430x932",
+      "metrics": {
+        "bodyClass": "",
+        "document": {
+          "overflowX": false,
+          "overflowY": false,
+          "scrollHeight": 932,
+          "scrollWidth": 430
+        },
+        "fonts": "loaded",
+        "panels": [
+          {
+            "height": 0,
+            "id": "shapePanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "height": 0,
+            "id": "focusPanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "height": 0,
+            "id": "eyesPanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "height": 0,
+            "id": "colorsPanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          }
+        ],
+        "readyState": "complete",
+        "surface": {
+          "height": 932,
+          "id": "mainSvg",
+          "tag": "svg",
+          "width": 430
+        },
+        "title": "Lunnen Sparky — Parametric Character",
+        "viewport": {
+          "height": 932,
+          "width": 430
+        }
+      },
+      "logs": [],
+      "screenshot": "screenshots/sparky-mobile-430x932.jpg"
+    },
+    {
+      "name": "sticky-fingers-desktop-1440x900",
+      "metrics": {
+        "bodyClass": "",
+        "document": {
+          "overflowX": false,
+          "overflowY": false,
+          "scrollHeight": 900,
+          "scrollWidth": 1440
+        },
+        "fonts": "loaded",
+        "panels": [
+          {
+            "height": 242,
+            "id": "dataImportPanel",
+            "visible": true,
+            "width": 300,
+            "x": 1120,
+            "y": 20
+          },
+          {
+            "height": 0,
+            "id": "barcodePanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "height": 0,
+            "id": "controlsPanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "height": 0,
+            "id": "elementsNavigator",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "height": 0,
+            "id": "textPanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "height": 0,
+            "id": "paragraphPanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          {
+            "height": 0,
+            "id": "graphicsPanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          }
+        ],
+        "readyState": "complete",
+        "surface": {
+          "height": 860,
+          "id": "gridSvg",
+          "tag": "svg",
+          "width": 860
+        },
+        "title": "Sticky Fingers — Packaging Label Generator",
+        "viewport": {
+          "height": 900,
+          "width": 1440
+        }
+      },
+      "logs": [
+        {
+          "level": "warn",
+          "message": "EAN-13 checksum mismatch: provided 7, calculated 6",
+          "timestamp": "2026-08-29T22:13:04.929Z",
+          "url": "http://127.0.0.1:8000/lunnen/label_generator/src/utils/BarcodeGenerator.js"
+        }
+      ],
+      "screenshot": "screenshots/sticky-fingers-desktop-1440x900.jpg"
+    },
+    {
+      "name": "wander-bender-desktop-1440x900",
+      "metrics": {
+        "bodyClass": "",
+        "document": {
+          "overflowX": false,
+          "overflowY": false,
+          "scrollHeight": 900,
+          "scrollWidth": 1440
+        },
+        "fonts": "loaded",
+        "panels": [
+          {
+            "height": 605.703125,
+            "id": "controlsPanel",
+            "visible": true,
+            "width": 300,
+            "x": 1120,
+            "y": 20
+          }
+        ],
+        "readyState": "complete",
+        "surface": {
+          "height": 900,
+          "id": "mainSvg",
+          "tag": "svg",
+          "width": 1440
+        },
+        "title": "Wander Bender - YF Tools",
+        "viewport": {
+          "height": 900,
+          "width": 1440
+        }
+      },
+      "logs": [],
+      "screenshot": "screenshots/wander-bender-desktop-1440x900.jpg"
+    },
+    {
+      "name": "wordplayer-desktop-1440x900",
+      "metrics": {
+        "bodyClass": "",
+        "document": {
+          "overflowX": false,
+          "overflowY": false,
+          "scrollHeight": 900,
+          "scrollWidth": 1440
+        },
+        "fonts": "loaded",
+        "panels": [
+          {
+            "height": 316,
+            "id": "textPanel",
+            "visible": true,
+            "width": 300,
+            "x": 20,
+            "y": 20
+          },
+          {
+            "height": 724.703125,
+            "id": "pixelsPanel",
+            "visible": true,
+            "width": 300,
+            "x": 1120,
+            "y": 20
+          },
+          {
+            "height": 305.5,
+            "id": "ditherPanel",
+            "visible": true,
+            "width": 300,
+            "x": 20,
+            "y": 520.5
+          },
+          {
+            "height": 0,
+            "id": "formsPanel",
+            "visible": false,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          }
+        ],
+        "readyState": "complete",
+        "surface": {
+          "height": 900,
+          "id": "mainCanvas",
+          "tag": "CANVAS",
+          "width": 1440
+        },
+        "title": "Wordplayer",
+        "viewport": {
+          "height": 900,
+          "width": 1440
+        }
+      },
+      "logs": [],
+      "screenshot": "screenshots/wordplayer-desktop-1440x900.jpg"
+    }
+  ]
+}

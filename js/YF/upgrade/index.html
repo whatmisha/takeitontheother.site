@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Experimental isolated workspace for Lunnen design tools">
+  <title>Lunnen Upgrade</title>
+  <style>
+    @font-face {
+      font-family: 'CoFo Sans';
+      src: url('framework/fonts/CoFoSans-Regular.woff2') format('woff2'),
+           url('framework/fonts/CoFoSans-Regular.woff') format('woff');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'CoFo Sans';
+      src: url('framework/fonts/CoFoSans-Medium.woff2') format('woff2'),
+           url('framework/fonts/CoFoSans-Medium.woff') format('woff');
+      font-weight: 500;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      color-scheme: dark;
+      font-family: 'CoFo Sans', Arial, sans-serif;
+      background: #000;
+      color: #fff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      background: #000;
+      color: #fff;
+    }
+
+    h1 {
+      width: 100%;
+      margin: 0 0 30px;
+      padding: 20px;
+      overflow: visible;
+      font-size: clamp(64px, 16vw, 230px);
+      font-weight: 500;
+      letter-spacing: -0.04em;
+      line-height: 0.9;
+      white-space: nowrap;
+    }
+
+    main {
+      padding: 0 20px 40px;
+    }
+
+    h2 {
+      margin: 0 0 15px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid #444;
+      font-size: 24px;
+      font-weight: 500;
+    }
+
+    ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    li {
+      margin-bottom: 10px;
+    }
+
+    a {
+      color: #fff;
+      font-size: 18px;
+      text-decoration: none;
+    }
+
+    a:hover,
+    a:focus-visible {
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <h1>Lunnen</h1>
+  <main>
+    <section aria-labelledby="tools-heading">
+      <h2 id="tools-heading">Upgrade tools</h2>
+      <ul>
+        <li><a href="sparky/">Sparky</a></li>
+        <li><a href="grid_generator/">Pizza Boxer</a></li>
+        <li><a href="label_generator/">Sticky Fingers</a></li>
+        <li><a href="keyboarder/">Keyboarder</a></li>
+        <li><a href="wordplayer/">Wordplayer</a></li>
+        <li><a href="dither/">Dither Wizard</a></li>
+        <li><a href="wander_bender/">Wander Bender</a></li>
+        <li><a href="pulsar_coder/">Pulsar Coder</a></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

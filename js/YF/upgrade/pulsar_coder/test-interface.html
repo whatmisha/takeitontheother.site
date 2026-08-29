@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interface Test - Pulsar Coder</title>
+    <link rel="stylesheet" href="css/yf-styles.css">
+    <link rel="stylesheet" href="pulsar-styles.css">
+    <style>
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 99999;
+            max-width: 400px;
+        }
+        .debug-info h4 {
+            margin: 0 0 10px 0;
+            color: #000;
+        }
+        .debug-info p {
+            margin: 5px 0;
+            color: #000;
+        }
+        .status-ok { color: green; font-weight: bold; }
+        .status-error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="debug-info">
+        <h4>🔍 Interface Diagnostics</h4>
+        <p>CSS Loaded: <span id="cssStatus" class="status-ok">✓ YES</span></p>
+        <p>Body Background: <span id="bgStatus"></span></p>
+        <p>Panel Visible: <span id="panelStatus"></span></p>
+        <p>Controls Count: <span id="controlsCount"></span></p>
+        <p>JS Modules: <span id="jsStatus"></span></p>
+        <p><strong>Refresh: Cmd+Shift+R</strong></p>
+    </div>
+
+    <div class="container">
+        <!-- Top Navigation -->
+        <div class="top-links">
+            <a href="../" class="yf-tools-link">←Upgrade Tools</a>
+            <button class="zoom-indicator" id="zoomIndicator">100%</button>
+        </div>
+
+        <div class="main-content">
+            <!-- Main Canvas Area -->
+            <div class="canvas-container" id="canvasContainer">
+                <svg id="pulsarSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+                    <circle cx="500" cy="500" r="50" fill="#fff" opacity="0.5"/>
+                    <text x="500" y="500" text-anchor="middle" fill="#fff" font-size="16">TEST</text>
+                </svg>
+            </div>
+
+            <!-- Control Panel (right side) -->
+            <aside class="controls-panel" id="controlsPanel">
+                <div class="panel-header" id="controlsPanelHeader">
+                    <span>Test Panel</span>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <div class="panel-content">
+                    <!-- Payload Input -->
+                    <section class="control-section">
+                        <h3>Coordinates Input</h3>
+                        <textarea id="payloadInput" placeholder="Enter coordinates..." rows="4">0° 41'15" / 23° 26'</textarea>
+                        <div class="textarea-footer">
+                            <span class="char-counter" id="charCounter">21 characters</span>
+                        </div>
+                    </section>
+
+                    <!-- Test Slider -->
+                    <section class="control-section">
+                        <h3>Test Slider</h3>
+                        
+                        <div class="control-group">
+                            <label for="testSlider">
+                                <span>Test Parameter</span>
+                                <input type="text" class="value-display" id="testValue" value="50">
+                            </label>
+                            <input type="range" id="testSlider" min="0" max="100" step="1" value="50">
+                        </div>
+                    </section>
+
+                    <!-- Test Buttons -->
+                    <section class="control-section">
+                        <h3>Actions</h3>
+                        <button class="btn-primary" style="width: 100%; margin-bottom: 10px;">Test Button 1</button>
+                        <button class="btn-secondary" style="width: 100%;">Test Button 2</button>
+                    </section>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Bottom Action Buttons -->
+    <nav class="bottom-buttons">
+        <button class="btn-fixed">Test Action</button>
+    </nav>
+
+    <script>
+        // Diagnostic script
+        window.addEventListener('DOMContentLoaded', () => {
+            // Check CSS
+            const body = document.body;
+            const bgColor = window.getComputedStyle(body).backgroundColor;
+            document.getElementById('bgStatus').textContent = bgColor;
+            
+            // Check panel
+            const panel = document.getElementById('controlsPanel');
+            const panelDisplay = window.getComputedStyle(panel).display;
+            document.getElementById('panelStatus').textContent = panelDisplay !== 'none' ? '✓ YES' : '✗ NO';
+            document.getElementById('panelStatus').className = panelDisplay !== 'none' ? 'status-ok' : 'status-error';
+            
+            // Count controls
+            const controls = document.querySelectorAll('.control-group').length;
+            document.getElementById('controlsCount').textContent = controls;
+            
+            // Check modules
+            document.getElementById('jsStatus').textContent = '✓ Loaded';
+            document.getElementById('jsStatus').className = 'status-ok';
+            
+            // Test slider interaction
+            const slider = document.getElementById('testSlider');
+            const value = document.getElementById('testValue');
+            slider.addEventListener('input', (e) => {
+                value.value = e.target.value;
+            });
+            
+            // Panel collapse test
+            const collapseIcon = document.querySelector('.collapse-icon');
+            collapseIcon.addEventListener('click', function() {
+                panel.classList.toggle('panel-collapsed');
+                this.classList.toggle('collapsed');
+            });
+            
+            console.log('✅ Test page loaded successfully');
+            console.log('Panel status:', panelDisplay);
+            console.log('Controls found:', controls);
+        });
+    </script>
+</body>
+</html>

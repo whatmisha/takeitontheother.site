@@ -1,0 +1,8 @@
+@import url('./styles/base.css');
+@import url('./styles/toolbar.css');
+@import url('./styles/sides.css');
+@import url('./styles/layout-panels.css');
+@import url('./styles/controls.css');
+@import url('./styles/editors.css');
+@import url('./styles/actions-modal.css');
+@import url('./styles/canvas-responsive.css');

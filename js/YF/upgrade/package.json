@@ -1,0 +1,28 @@
+{
+  "name": "lunnen-upgrade",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "python3 -m http.server 8000 --bind 127.0.0.1",
+    "manifest:generate": "node scripts/generate-source-manifest.mjs",
+    "manifest:check": "node scripts/generate-source-manifest.mjs --check",
+    "gate:g0": "npm run manifest:check && node scripts/check-gate-g0.mjs",
+    "copy:sources": "node scripts/copy-selected-sources.mjs",
+    "copy:dry-run": "node scripts/copy-selected-sources.mjs --dry-run",
+    "copy:check": "node scripts/copy-selected-sources.mjs --check",
+    "assets:sync": "node scripts/sync-bootstrap-assets.mjs",
+    "assets:check": "node scripts/sync-bootstrap-assets.mjs --check",
+    "framework:bootstrap": "node scripts/bootstrap-framework-v3.mjs",
+    "framework:upstream:check": "node scripts/bootstrap-framework-v3.mjs --check",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "check:storage": "node scripts/check-storage-namespaces.mjs",
+    "check:isolation": "npm run assets:check && npm run framework:upstream:check && npm run check:storage && npm run check:boundaries",
+    "build:pizza": "npm --prefix grid_generator/tools run release",
+    "test:sparky": "npm --prefix sparky test",
+    "test:framework": "npm --prefix framework test",
+    "test:pizza": "npm --prefix grid_generator/tools test",
+    "test:wordplayer": "node wordplayer/tests/dither-worker.test.mjs && node wordplayer/tests/forms-worker.test.mjs",
+    "test:tier1": "npm run test:framework && npm run test:sparky && npm run test:pizza && npm run test:wordplayer",
+    "gate:g1:static": "npm run gate:g0 && npm run check:isolation && npm run test:tier1"
+  }
+}

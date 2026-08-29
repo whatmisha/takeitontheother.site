@@ -1,0 +1,30 @@
+{
+  "name": "lunnen-grid-generator-tools",
+  "version": "1.12.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config vite.config.js",
+    "build": "npm run source:check && vite build --config vite.config.js",
+    "preview": "vite preview --config vite.config.js",
+    "test": "npm run public:check && node --test ../tests/*.test.mjs",
+    "schema": "node generate-preset-validator.js",
+    "schema:check": "node generate-preset-validator.js --check",
+    "presets": "node generate-presets-manifest.js",
+    "presets:check": "node generate-presets-manifest.js --check",
+    "vendor": "node sync-runtime-vendors.js",
+    "vendor:check": "node sync-runtime-vendors.js --check",
+    "source:check": "npm run schema:check && npm run presets:check && npm run vendor:check && node check-static-runtime.js",
+    "release": "npm run build && node sync-public-runtime.js",
+    "public:check": "npm run source:check && node check-public-runtime.js"
+  },
+  "dependencies": {
+    "jspdf": "4.2.1",
+    "opentype.js": "1.3.4",
+    "svg2pdf.js": "2.7.0"
+  },
+  "devDependencies": {
+    "ajv": "8.20.0",
+    "vite": "7.3.6"
+  }
+}

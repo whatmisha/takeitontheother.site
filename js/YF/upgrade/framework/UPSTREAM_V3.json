@@ -1,0 +1,308 @@
+{
+  "schemaVersion": 1,
+  "source": "othersite-ui-framework/v3",
+  "immutableSnapshot": "framework/upstream-v3",
+  "workingTree": "framework",
+  "files": [
+    {
+      "path": "css/othersite-styles.css",
+      "sha256": "1ea9314b39ce5de366a17b90d5536d7cfaf2854a788028e9b26a7a6b3e26e0a0",
+      "bytes": 102441,
+      "workingStatus": "upgrade-modified"
+    },
+    {
+      "path": "css/tokens.css",
+      "sha256": "6e47fac2e182feeea3aa1755bb524617c8ba84ed7b72159f8be3a49a9515348d",
+      "bytes": 2706,
+      "workingStatus": "upgrade-modified"
+    },
+    {
+      "path": "demo/index.html",
+      "sha256": "dbd25589dd73a34a271a61c8f7d9d3c97f8ea5597b40c2b658ea530ee21d0d52",
+      "bytes": 12085,
+      "workingStatus": "upgrade-modified"
+    },
+    {
+      "path": "demo/presets/big-squares.json",
+      "sha256": "e07c27b98dc6b2c57ea40076506f9150bdf5f3a2be86049c34888268e4280e8b",
+      "bytes": 250,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "demo/presets/default.json",
+      "sha256": "935b24cf27ba1c6769f3f61e9f459cf567279829011de908d4ad36449af8aded",
+      "bytes": 252,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "demo/presets/dense-dots.json",
+      "sha256": "aa3ed2b04a3432c9a975f538d9c1ab73c65ae399dae4c7fb820c44b7197327bd",
+      "bytes": 253,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "demo/presets/manifest.json",
+      "sha256": "0845c95c6c6824d52a702fa437fbf61e7c6d7017144e9e03ab3a32f58212bf9a",
+      "bytes": 240,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "demo/presets/scatter.json",
+      "sha256": "c62e32e986edaa18a7ca78f99d20bb4010714a3e0f2197a44ffadeeee93be919",
+      "bytes": 250,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "demo/tool.js",
+      "sha256": "d5cde46a1fac6d025cb32ca71b99fd3e178c5bd953882d3bbcf320346a4110b3",
+      "bytes": 6872,
+      "workingStatus": "upgrade-modified"
+    },
+    {
+      "path": "fonts/LunnenDisplay-VariableVF.ttf",
+      "sha256": "a05fec6330ac20fcd380bc348cbab7a04434f14d3987d46dddd40a5d9832e8be",
+      "bytes": 75968,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "fonts/LunnenDisplay-VariableVF.woff",
+      "sha256": "22f7cdadc7bed8a62b0cd7cf17429e1385c19f48e96cb4adfe9a0e1e2acafb5b",
+      "bytes": 32716,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "fonts/LunnenDisplay-VariableVF.woff2",
+      "sha256": "2133ce7f19be1f8003760d269ed74a70a7f4ce85cf66e883445c046888c73f75",
+      "bytes": 27324,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "fonts/TT Commons Classic Medium.otf",
+      "sha256": "b5e407fe3fc76cdaf89671df6b1b76203c841ce29777f49eb34c37ff369428c8",
+      "bytes": 248352,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "fonts/TT Commons Classic Regular.otf",
+      "sha256": "2c16ca380ad6be02e65ccdd7cfa7d65245fb4610f7c8434057d59a7530cdbe63",
+      "bytes": 248128,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "fonts/TT_Commons_Classic_Medium.woff2",
+      "sha256": "bb238e580875f7c3d6325934bd766925f7fc937b956cac474525d72a24a0671a",
+      "bytes": 59520,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "fonts/TT_Commons_Classic_Regular.woff2",
+      "sha256": "29b4c6687fee39fec4c1fc5bcac48eab71432ce86c537b2b8b622d9d11e61979",
+      "bytes": 59892,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "FRAMEWORK.md",
+      "sha256": "1c86933b12480b1c1b600a26dc1b5a809f3129ea562acd4fae8913a9cb54d2f0",
+      "bytes": 16042,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/config/timings.js",
+      "sha256": "b4e79c3bdf889c0f021c85900815042adf983b71b18e0082b0877b327c7b9032",
+      "bytes": 877,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/core/ApplicationShell.js",
+      "sha256": "c9700ab05456a448fe1433844fba51c026ef223c9666d5939258abd4812beef8",
+      "bytes": 44239,
+      "workingStatus": "upgrade-modified"
+    },
+    {
+      "path": "src/core/defineTool.js",
+      "sha256": "905ba7e6e4db17e1be55d00023b4bc944e45751fca43267b8d766dbad8292d50",
+      "bytes": 1752,
+      "workingStatus": "upgrade-modified"
+    },
+    {
+      "path": "src/core/DOMCache.js",
+      "sha256": "dae35588840ba032912e63909a3ae522174e5305ad7f8ca237c98ceaa4c1b5c9",
+      "bytes": 2115,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/core/Settings.js",
+      "sha256": "4f6617a2b3ce2586a31278c3084e7564d3db94e5a3e78fe01adafbdb436be08a",
+      "bytes": 5634,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/core/ShortcutRouter.js",
+      "sha256": "df4bf488ba4e3c8ae5d129a3342724b9a5bff0ceb764bc1480b4b26ff57dea75",
+      "bytes": 3353,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/effects/GradientStrokeEffect.js",
+      "sha256": "2e7fdbbcaea45cd7711e2e6e362c08ac1a653a85a0eacf7a1ff6f05f4b95e982",
+      "bytes": 4619,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/effects/WobblyEffect.js",
+      "sha256": "1ab70d3234738c63f7f57ce58a36cb4ef84453b6bebe9fd939588a10a54c8e52",
+      "bytes": 12100,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/export/SVGExporter.js",
+      "sha256": "4ddea8de50e03f372272797a981f2205c1a25612796b91ee4d5df1aa6c335af3",
+      "bytes": 8694,
+      "workingStatus": "upgrade-modified"
+    },
+    {
+      "path": "src/export/TextToPath.js",
+      "sha256": "1557056ce0015d02b647d1bc64f73004b7cc9a0417ff17bf944f4eeb595c7a88",
+      "bytes": 8061,
+      "workingStatus": "upgrade-modified"
+    },
+    {
+      "path": "src/geometry/StrokeGeometry.js",
+      "sha256": "2dc22b951c08087b3510b3eae917545dcad9aee466efd2a43adef534dffb2202",
+      "bytes": 3429,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/history/HistoryBridge.js",
+      "sha256": "2905aee081790f3bd289a1015c7199dcebdec9d7ee192f79a4b9295c371cc6d7",
+      "bytes": 3061,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/history/HistoryManager.js",
+      "sha256": "f1bc9c9b3a18eb66f25c5b56c21aab7f24022f920ad8f22400b9127d7af7ccdb",
+      "bytes": 7041,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/index.js",
+      "sha256": "5dc9fb2c07c19bcfc98a7ccf5853aa070397c6b0fb6325b1e521242743826132",
+      "bytes": 2093,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/preset/PresetSession.js",
+      "sha256": "d82e506bc6ed56732b105cfbb5cd3d66003133f46bf840f0469f2d095d113f46",
+      "bytes": 8745,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/preset/PresetStore.js",
+      "sha256": "bfdb3082676dcb1711e9863e64e9780caae2342551e135f3a34ca723c5b6fee0",
+      "bytes": 6252,
+      "workingStatus": "upgrade-modified"
+    },
+    {
+      "path": "src/preset/ShareCodec.js",
+      "sha256": "6c19d34df8191bc45a055b6a79aee82d72c451e4837e81eccee377755198fefc",
+      "bytes": 11497,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/render/CanvasTarget.js",
+      "sha256": "cee736794e0a345ea02ccfd6fb42b55c50c4702dff0034d39fad5b2ddb8a2720",
+      "bytes": 8767,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/render/RenderTarget.js",
+      "sha256": "dec7dd5bf9a5102bd2a6eb7401e6c7488a49baf55012ef1b218018bd179b8fdb",
+      "bytes": 2786,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/render/SvgTarget.js",
+      "sha256": "875b39a352ec9200ff333b98fb269383e965370dce5ef6939cd25d4d899b43e1",
+      "bytes": 3308,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/ui/ColorPicker.js",
+      "sha256": "822aade8209fab2f3a46980c6de4350ced2981715b38aab25265043161ca754c",
+      "bytes": 12595,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/ui/DialogHost.js",
+      "sha256": "028bd246669fd87f07531a8e6ace6e240525de6c3d258ac2ca5d15cb3cc279ea",
+      "bytes": 6132,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/ui/DicePanel.js",
+      "sha256": "b8af6e85a600fc55c4ba08bc8043cd4add435c55b2cb489657b42e8bd454f7ad",
+      "bytes": 5461,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/ui/PanelManager.js",
+      "sha256": "15a2f141094c258b924f7525a10dfe555943eb3d4a7cc25006326e4f1aa89170",
+      "bytes": 9763,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/ui/RangeSliderController.js",
+      "sha256": "7fe54cae5d97023cdeb5c32913a27a4dc357de61a6788fe25de9791ee8f9a9d6",
+      "bytes": 19958,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/ui/SliderController.js",
+      "sha256": "5c023aa561b35c87e22b45a89e96b43570a18b94ef61f269e060482ea4101394",
+      "bytes": 13954,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/ui/TooltipService.js",
+      "sha256": "7aef2d0960deae67b176a8a1988783b74e15df8c868a2393cef1b7e44c2f4f9c",
+      "bytes": 5089,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/ui/UnifiedColorPicker.js",
+      "sha256": "3bca3f1b32f4de0f4839b42ba9ca841529c4733d3213910eac2f918aa841cefc",
+      "bytes": 7295,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/ui/ZoomPanManager.js",
+      "sha256": "360db401952abbb4f8b7beee5d45d3f61e3da240429503cfe27600cfc3c408ae",
+      "bytes": 15966,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/utils/ColorUtils.js",
+      "sha256": "4a59cb891eafbb89911709651e9f9ef7de2a4f9dced8b3147668a1ed3f559ba2",
+      "bytes": 5644,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/utils/DOMUtils.js",
+      "sha256": "4a489ccf57966ddadff59c3309d35525611458b96a3faed66675e38fe4b00d43",
+      "bytes": 4686,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/utils/MathUtils.js",
+      "sha256": "b8d69c1452be5541343483839da087c73bc339cbe279b6fac5cdcea9032b616d",
+      "bytes": 4299,
+      "workingStatus": "upstream-exact"
+    },
+    {
+      "path": "src/utils/NoiseGenerator.js",
+      "sha256": "86d2907c9ffbcd2d5dbdd43c48958e421a707f7eabf392838a5694aa4f367d0f",
+      "bytes": 4584,
+      "workingStatus": "upstream-exact"
+    }
+  ]
+}

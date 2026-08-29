@@ -1,0 +1,381 @@
+    <div class="container">
+        <div class="top-links">
+            <a href="../" class="yf-tools-link" aria-label="Back to Upgrade Tools">
+                ←Upgrade Tools
+            </a>
+            <div class="preset-dropdown" id="presetDropdown">
+                <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="preset-dropdown-text">Loading presets...</span>
+                    <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox">
+                    <!-- Options will be populated by JavaScript -->
+                </ul>
+            </div>
+            <button class="zoom-indicator" id="zoomIndicator" aria-label="Reset zoom to 100%">100%</button>
+            <button class="canvas-rotate-btn" id="canvasRotateLeftBtn" type="button" aria-label="Rotate canvas left" title="Rotate canvas left">
+                <svg width="20" height="20" viewBox="0 0 18.7106995 20.8883214" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <rect x=".8106995" y="8.3675181" width="11.7101038" height="11.7101038" rx="2.0267487" stroke="currentColor" stroke-width="1.6213989"/>
+                    <polyline points="8.3995105 5.2552439 6.2218885 3.077622 8.3995105 .9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M17.8106995,13.577622v-4.2500063c0-3.4517762-2.7982175-6.2499937-6.2499938-6.2499937h-4.2500063" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="main-content">
+            <div class="canvas-container" id="canvasContainer">
+                <svg id="gridSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+
+            <div class="controls-panel-stack" id="rightSettingsStack">
+            <aside class="controls-panel" id="gridPanel" role="complementary" aria-label="Grid settings">
+                <div class="panel-header" id="gridPanelHeader">
+                    <span>Grid <span class="panel-params" id="gridParams">5.05 mm</span></span>
+                    <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="gridModuleSlider">
+                                <span>Module <span class="unit">mm</span></span>
+                                <div class="value-display-wrapper">
+                                    <input type="text" class="value-display" id="gridModuleValue" value="5.0505" data-min="0.5" data-max="20" aria-label="Grid module">
+                                    <button type="button" class="lock-btn" id="lockModuleBtn" aria-label="Lock module" title="Lock module">
+                                        <svg class="lock-icon lock-icon-open" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6M3.5 6H10.5C11.3284 6 12 6.67157 12 7.5V11.5C12 12.3284 11.3284 13 10.5 13H3.5C2.67157 13 2 12.3284 2 11.5V7.5C2 6.67157 2.67157 6 3.5 6Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <svg class="lock-icon lock-icon-locked" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                                            <rect x="2" y="6" width="10" height="7" rx="1.5" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </label>
+                            <input type="range" id="gridModuleSlider" min="0.5" max="20" step="0.0001" value="5.0505" aria-label="Grid module slider">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="marginsSlider">
+                                <span>Margins 
+                                    <span class="unit-buttons">
+                                        <button type="button" class="unit-btn active" data-unit="mod" id="marginsUnitMod">mod</button>
+                                        <button type="button" class="unit-btn" data-unit="mm" id="marginsUnitMm">mm</button>
+                                    </span>
+                                </span>
+                                <div class="value-display-wrapper">
+                                    <input type="text" class="value-display" id="marginsValue" value="2.00" data-min="0" data-max="10" aria-label="Margins in modules">
+                                    <button type="button" class="lock-btn" id="lockMarginsBtn" aria-label="Lock margins" title="Lock margins">
+                                        <svg class="lock-icon lock-icon-open" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6M3.5 6H10.5C11.3284 6 12 6.67157 12 7.5V11.5C12 12.3284 11.3284 13 10.5 13H3.5C2.67157 13 2 12.3284 2 11.5V7.5C2 6.67157 2.67157 6 3.5 6Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <svg class="lock-icon lock-icon-locked" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                                            <rect x="2" y="6" width="10" height="7" rx="1.5" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </label>
+                            <input type="range" id="marginsSlider" min="0" max="10" step="0.01" value="2" aria-label="Margins slider">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="columnCountSlider">
+                                <span>Columns</span>
+                                <input type="text" class="value-display" id="columnCountValue" value="12" data-min="1" data-max="24" aria-label="Column count">
+                            </label>
+                            <input type="range" id="columnCountSlider" min="1" max="24" step="1" value="12" aria-label="Column count slider">
+                        </div>
+                        
+                        <div id="linkedControlsContainer">
+                            <div class="control-group">
+                                <label for="rowCountSlider">
+                                    <span>Rows</span>
+                                    <input type="text" class="value-display" id="rowCountValue" value="12" data-min="1" data-max="50" aria-label="Row count">
+                                </label>
+                                <input type="range" id="rowCountSlider" min="1" max="50" step="1" value="12" aria-label="Row count slider">
+                            </div>
+                            
+                            <div class="control-group">
+                                <label for="rowHeightSlider">
+                                    <span>Row Height <span class="unit">mod</span></span>
+                                    <input type="text" class="value-display" id="rowHeightValue" value="7" data-min="1" data-max="20" aria-label="Row height in modules">
+                                </label>
+                                <input type="range" id="rowHeightSlider" min="1" max="20" step="1" value="7" aria-label="Row height slider">
+                            </div>
+                            
+                            <div class="control-group">
+                                <div id="rowPresetsContainer" class="row-presets"></div>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label>
+                                    <span>Link Mode</span>
+                                </label>
+                                <fieldset>
+                                    <legend class="sr-only">Link mode selection</legend>
+                                    <div class="segmented-control" role="radiogroup" aria-label="Link mode selection">
+                                        <input type="radio" name="linkMode" value="off" id="linkModeOff" aria-label="No linking">
+                                        <label for="linkModeOff">Off</label>
+                                        
+                                        <input type="radio" name="linkMode" value="rows-height" id="linkModeRowsHeight" aria-label="Link rows and row height">
+                                        <label for="linkModeRowsHeight">R⇄RH</label>
+                                        
+                                        <input type="radio" name="linkMode" value="module" id="linkModeModule" checked aria-label="Link rows, row height and module">
+                                        <label for="linkModeModule">RRH⇄Mod</label>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <section class="control-section">
+                        <div class="control-group show-toggle-chip-group">
+                            <div class="toggle-chip-group" role="group" aria-label="Show grid options">
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="showColumns" checked aria-label="Show columns">
+                                    <span>
+                                        <span class="toggle-chip-icon-wrapper">
+                                            <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                                            <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                        </span>
+                                        Columns
+                                    </span>
+                                </label>
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="showRows" checked aria-label="Show rows">
+                                    <span>
+                                        <span class="toggle-chip-icon-wrapper">
+                                            <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                                            <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                        </span>
+                                        Rows
+                                    </span>
+                                </label>
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="showBaseline" checked aria-label="Show baseline grid">
+                                    <span>
+                                        <span class="toggle-chip-icon-wrapper">
+                                            <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                                            <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                        </span>
+                                        Baseline
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+            </aside>
+
+            <aside class="controls-panel controls-panel-surface panel-collapsed" id="surfacePanel" role="complementary" aria-label="Sides settings">
+                <div class="panel-header" id="surfacePanelHeader">
+                    <span>Sides</span>
+                    <span class="collapse-icon collapsed" role="button" tabindex="0" aria-label="Expand panel" aria-expanded="false">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content surface-panel-content">
+                    <section class="surface-panel-section">
+                        <fieldset>
+                            <legend class="sr-only">Side surface selection</legend>
+                            <div class="segmented-control surface-tabs" id="surfaceSettingsTabs" role="radiogroup" aria-label="Side surface selection">
+                                <input type="radio" name="surfaceSettings" value="left" id="surfaceSettingsLeft" data-surface="left" checked>
+                                <label for="surfaceSettingsLeft">Left</label>
+                                <input type="radio" name="surfaceSettings" value="right" id="surfaceSettingsRight" data-surface="right">
+                                <label for="surfaceSettingsRight">Right</label>
+                                <input type="radio" name="surfaceSettings" value="top" id="surfaceSettingsTop" data-surface="top">
+                                <label for="surfaceSettingsTop">Top</label>
+                                <input type="radio" name="surfaceSettings" value="bottom" id="surfaceSettingsBottom" data-surface="bottom">
+                                <label for="surfaceSettingsBottom">Bottom</label>
+                            </div>
+                        </fieldset>
+                    </section>
+
+                    <section class="surface-panel-section surface-quick-controls" aria-label="Surface behavior and orientation">
+                        <div class="toggle-chip-group" role="group" aria-label="Surface visibility">
+                            <label class="toggle-chip surface-visible-chip">
+                                <input type="checkbox" id="surfaceVisibleToggle" checked aria-label="Show selected surface">
+                                <span>
+                                    <span class="toggle-chip-icon-wrapper">
+                                        <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                                        <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                    </span>
+                                    Visible
+                                </span>
+                            </label>
+                        </div>
+                        <label class="toggle-chip surface-own-grid-chip">
+                            <input type="checkbox" id="surfaceOwnGridToggle" aria-label="Use own grid on selected surface">
+                            <span>Own Grid</span>
+                        </label>
+                        <label class="surface-orientation-control" title="Orientation">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M4.25 4.5H1.75V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2 4.25A6 6 0 1 1 2.75 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                            <select id="surfaceRotationSelect" aria-label="Surface orientation">
+                                <option value="0">0°</option>
+                                <option value="90">90°</option>
+                                <option value="180">180°</option>
+                                <option value="270">270°</option>
+                            </select>
+                        </label>
+                    </section>
+
+                    <section id="surfaceOwnGridControls" class="surface-own-grid-controls" aria-labelledby="surfaceGridTitle" hidden>
+                        <div class="surface-own-grid-heading">
+                            <span id="surfaceGridTitle">Independent Grid</span>
+                            <small>Overrides the Front grid</small>
+                        </div>
+                        <div class="surface-grid-controls">
+                            <div class="control-group" id="surfaceGridModuleGroup">
+                                <label for="surfaceGridModuleSlider">
+                                    <span>Module <span class="unit">mm</span></span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" inputmode="decimal" id="surfaceGridModuleInput" value="5.0000" data-min="0.1" data-max="100" aria-label="Surface grid module">
+                                        <button type="button" class="lock-btn" id="surfaceLockModuleBtn" aria-label="Lock surface module" title="Lock surface module">
+                                            <svg class="lock-icon lock-icon-open" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6M3.5 6H10.5C11.3284 6 12 6.67157 12 7.5V11.5C12 12.3284 11.3284 13 10.5 13H3.5C2.67157 13 2 12.3284 2 11.5V7.5C2 6.67157 2.67157 6 3.5 6Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                            <svg class="lock-icon lock-icon-locked" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;"><rect x="2" y="6" width="10" height="7" rx="1.5" fill="currentColor" stroke="currentColor" stroke-width="1.2"/><path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                        </button>
+                                    </div>
+                                </label>
+                                <input type="range" id="surfaceGridModuleSlider" min="0.1" max="100" step="0.1" value="5" aria-label="Surface grid module slider">
+                            </div>
+                            <div class="control-group" id="surfaceGridMarginsGroup">
+                                <label for="surfaceGridMarginsSlider">
+                                    <span>Margins <span class="unit-buttons"><button type="button" class="unit-btn active" id="surfaceMarginsUnitMod">mod</button><button type="button" class="unit-btn" id="surfaceMarginsUnitMm">mm</button></span></span>
+                                    <div class="value-display-wrapper">
+                                        <input type="text" class="value-display" inputmode="decimal" id="surfaceGridMarginsInput" value="2.0000" data-min="0" data-max="10" aria-label="Surface grid margins">
+                                        <button type="button" class="lock-btn" id="surfaceLockMarginsBtn" aria-label="Lock surface margins" title="Lock surface margins">
+                                            <svg class="lock-icon lock-icon-open" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6M3.5 6H10.5C11.3284 6 12 6.67157 12 7.5V11.5C12 12.3284 11.3284 13 10.5 13H3.5C2.67157 13 2 12.3284 2 11.5V7.5C2 6.67157 2.67157 6 3.5 6Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                            <svg class="lock-icon lock-icon-locked" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;"><rect x="2" y="6" width="10" height="7" rx="1.5" fill="currentColor" stroke="currentColor" stroke-width="1.2"/><path d="M4 6V4C4 2.34315 5.34315 1 7 1C8.65685 1 10 2.34315 10 4V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                        </button>
+                                    </div>
+                                </label>
+                                <input type="range" id="surfaceGridMarginsSlider" min="0" max="10" step="0.0001" value="2" aria-label="Surface grid margins slider">
+                            </div>
+                            <div class="control-group">
+                                <label for="surfaceGridColumnsSlider"><span>Columns</span><input type="text" class="value-display" inputmode="numeric" id="surfaceGridColumnsInput" value="4" data-min="1" data-max="128" aria-label="Surface grid columns"></label>
+                                <input type="range" id="surfaceGridColumnsSlider" min="1" max="128" step="1" value="4" aria-label="Surface grid columns slider">
+                            </div>
+                            <div class="control-group">
+                                <label for="surfaceGridRowsSlider"><span>Rows</span><input type="text" class="value-display" inputmode="numeric" id="surfaceGridRowsInput" value="4" data-min="1" data-max="128" aria-label="Surface grid rows"></label>
+                                <input type="range" id="surfaceGridRowsSlider" min="1" max="128" step="1" value="4" aria-label="Surface grid rows slider">
+                            </div>
+                            <div class="control-group">
+                                <label for="surfaceGridRowHeightSlider"><span>Row Height <span class="unit">mod</span></span><input type="text" class="value-display" inputmode="numeric" id="surfaceGridRowHeightInput" value="4" data-min="1" data-max="64" aria-label="Surface grid row height"></label>
+                                <input type="range" id="surfaceGridRowHeightSlider" min="1" max="64" step="1" value="4" aria-label="Surface grid row height slider">
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+            </div>
+
+            <aside class="controls-panel controls-panel-left" id="controlsPanel" role="complementary" aria-label="Dimensions settings">
+                <div class="panel-header" id="panelHeader">
+                    <span>Dimensions <span class="panel-params" id="dimensionsParams"></span></span>
+                    <span class="collapse-icon" role="button" tabindex="0" aria-label="Collapse panel">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="frontWidthSlider">
+                                <span>Width</span>
+                                <input type="text" class="value-display" id="frontWidthValue" value="500" data-min="50" data-max="1000" aria-label="Front width value">
+                            </label>
+                            <input type="range" id="frontWidthSlider" min="50" max="1000" step="0.5" value="500" aria-label="Front width slider" aria-valuemin="50" aria-valuemax="1000" aria-valuenow="500">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="frontHeightSlider">
+                                <span>Height</span>
+                                <input type="text" class="value-display" id="frontHeightValue" value="500" data-min="50" data-max="1000" aria-label="Front height value">
+                            </label>
+                            <input type="range" id="frontHeightSlider" min="50" max="1000" step="0.5" value="500" aria-label="Front height slider" aria-valuemin="50" aria-valuemax="1000" aria-valuenow="500">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="thicknessSlider">
+                                <span>Thickness</span>
+                                <input type="text" class="value-display" id="thicknessValue" value="50" data-min="5" data-max="200" aria-label="Thickness value">
+                            </label>
+                            <input type="range" id="thicknessSlider" min="5" max="200" step="0.5" value="50" aria-label="Thickness slider" aria-valuemin="5" aria-valuemax="200" aria-valuenow="50">
+                        </div>
+                    </section>
+
+                    <section class="control-section" aria-labelledby="color-heading">
+                        <h3 id="color-heading" class="sr-only">Color Settings</h3>
+                        <div class="control-group">
+                            <div class="control-group-header">
+                                <span class="control-label">Background Color</span>
+                                <button type="button" class="color-preset" id="lunnenBlue" aria-label="Apply Lunnen Blue preset color">Lunnen Blue</button>
+                            </div>
+                            <div class="color-input-group">
+                                <button type="button" class="color-preview" id="colorPreview" aria-label="Open color picker"></button>
+                                <input type="text" id="hexColorInput" value="#808080" placeholder="#808080" maxlength="7" aria-label="Hex color code input">
+                            </div>
+                        </div>
+                        
+                        <!-- Custom HSB Color Picker -->
+                        <div class="hsb-picker" id="hsbPicker" style="display: none;">
+                            <div class="hsb-controls">
+                                <div class="hsb-control-group">
+                                    <label for="hueSlider">
+                                        <span>Hue</span>
+                                        <input type="text" class="value-display hsb-value" id="hueValue" value="0" data-min="0" data-max="360" data-suffix="°" aria-label="Hue value">
+                                    </label>
+                                    <input type="range" id="hueSlider" min="0" max="360" step="1" value="0">
+                                </div>
+                                
+                                <div class="hsb-control-group">
+                                    <label for="saturationSlider">
+                                        <span>Saturation</span>
+                                        <input type="text" class="value-display hsb-value" id="saturationValue" value="0" data-min="0" data-max="100" data-suffix="%" aria-label="Saturation value">
+                                    </label>
+                                    <input type="range" id="saturationSlider" min="0" max="100" step="1" value="0">
+                                </div>
+                                
+                                <div class="hsb-control-group">
+                                    <label for="brightnessSlider">
+                                        <span>Brightness</span>
+                                        <input type="text" class="value-display hsb-value" id="brightnessValue" value="0" data-min="0" data-max="100" data-suffix="%" aria-label="Brightness value">
+                                    </label>
+                                    <input type="range" id="brightnessSlider" min="0" max="100" step="1" value="0">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="control-section">
+                        <div class="control-group show-toggle-chip-group">
+                            <div class="toggle-chip-group" role="group" aria-label="Show sides option">
+                                <label class="toggle-chip">
+                                    <input type="checkbox" id="showSidePanels" checked aria-label="Show sides">
+                                    <span>
+                                        <span class="toggle-chip-icon-wrapper">
+                                            <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                                            <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                        </span>
+                                        Sides
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        </div>
+    </div>

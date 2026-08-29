@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Pizza Boxer — Packaging Layout Tool">
+    <meta name="keywords" content="grid generator, packaging, print design, Adobe Illustrator, SVG">
+
+    <title>Pizza Boxer — Packaging Layout Tool</title>
+    <link rel="stylesheet" href="./runtime/assets/PublicEntry-BM8tpVIE.css">
+</head>
+<body>
+    <div data-ui-fragment="workspace"></div>
+    <div data-ui-fragment="actions"></div>
+    <div data-ui-fragment="objects"></div>
+    <div data-ui-fragment="typography"></div>
+    <div data-ui-fragment="object-editors"></div>
+    <div data-ui-fragment="help"></div>
+
+    <script>
+        window.addEventListener('error', event => {
+            document.documentElement.dataset.moduleError = event.message || 'Unknown module error';
+        });
+        window.addEventListener('unhandledrejection', event => {
+            document.documentElement.dataset.moduleError = event.reason?.message || String(event.reason);
+        });
+    </script>
+    <script type="module" src="./runtime/assets/PublicEntry-DM29QgRO.js"></script>
+</body>
+</html>

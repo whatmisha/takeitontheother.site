@@ -1,0 +1,621 @@
+/* Text preset chips (action buttons, not toggles) */
+.text-preset-chips {
+    gap: var(--spacing-xs);
+}
+
+.text-preset-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 11px;
+    line-height: 1;
+    color: var(--color-text-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-button);
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    transition: border-color var(--transition-normal),
+                background-color var(--transition-normal),
+                color var(--transition-normal);
+    user-select: none;
+    white-space: nowrap;
+}
+
+.text-preset-chip:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--color-text);
+}
+
+.text-preset-chip:active {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.text-preset-chip svg {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    opacity: 0.5;
+    transition: opacity var(--transition-normal);
+}
+
+.text-preset-chip:hover svg {
+    opacity: 1;
+}
+
+.control-group label {
+    display: flex;
+    align-items: center;
+    font-weight: 400;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    gap: var(--spacing-md);
+}
+
+.control-group-header {
+    display: flex;
+    align-items: center;
+    font-weight: 400;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    gap: var(--spacing-md);
+}
+
+.control-label {
+    display: inline-block;
+    margin-right: auto;
+}
+
+.control-group label > span:first-child {
+    white-space: nowrap;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.control-group label .value-display-wrapper {
+    margin-left: auto;
+}
+
+.control-group label .unit {
+    opacity: 0.4;
+    white-space: nowrap;
+}
+
+/* Unit buttons */
+.unit-buttons {
+    display: inline-flex;
+    gap: 2px;
+    margin-left: 4px;
+}
+
+.unit-btn {
+    background: #2a2a2a;
+    border: none;
+    padding: 1px 5px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #ccc;
+    opacity: 0.4;
+    border-radius: 2px;
+    transition: all var(--transition-fast);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.unit-btn.active {
+    opacity: 1;
+    background: #3a3a3a;
+}
+
+.unit-btn:hover:not(.active) {
+    opacity: 0.6;
+    background: #333;
+}
+
+.value-display-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    width: auto;
+}
+
+.control-group label .value-display {
+    flex-shrink: 0;
+}
+
+.lock-btn {
+    background: transparent;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    opacity: 0.5;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+}
+
+.lock-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-text);
+}
+
+.lock-btn.locked {
+    opacity: 1;
+    color: var(--color-text);
+}
+
+.lock-btn.locked .lock-icon-open {
+    display: none;
+}
+
+.lock-btn.locked .lock-icon-locked {
+    display: block !important;
+}
+
+.lock-btn:not(.locked) .lock-icon-open {
+    display: block;
+}
+
+.lock-btn:not(.locked) .lock-icon-locked {
+    display: none !important;
+}
+
+.lock-icon {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+}
+
+/* Визуальная индикация заблокированных параметров - убрана, достаточно белой иконки */
+
+/* Range slider styles */
+.control-group input[type="range"] {
+    width: 100%;
+    height: 10px; /* Кликабельная область = размер hover thumb */
+    border-radius: var(--radius);
+    background: transparent; /* Делаем фон прозрачным */
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    margin-top: calc(var(--spacing-md) - 2px); /* Опускаем слайдер: 8px - 2px = 6px */
+    cursor: pointer;
+    position: relative;
+}
+
+/* Unified slider thumb styles */
+.control-group input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: var(--slider-thumb-size);
+    height: var(--slider-thumb-size);
+    border-radius: 50%;
+    background: var(--color-text);
+    cursor: pointer;
+    border: none;
+    transition: all var(--transition-fast);
+    margin-top: calc((1px - var(--slider-thumb-size)) / 2); /* Центрируем 8px thumb относительно 1px track = -3.5px */
+}
+
+.control-group input[type="range"]::-moz-range-thumb {
+    width: var(--slider-thumb-size);
+    height: var(--slider-thumb-size);
+    border-radius: 50%;
+    background: var(--color-text);
+    cursor: pointer;
+    border: none;
+    transition: all var(--transition-fast);
+    margin-top: 0; /* Firefox centers automatically */
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.25); /* 8px × 1.25 = 10px */
+    background: var(--color-text);
+}
+
+.control-group input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.25); /* 8px × 1.25 = 10px */
+    background: var(--color-text);
+}
+
+/* Track styles */
+.control-group input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 1px; /* Оставляем визуально тонкую линию */
+    background: var(--color-border);
+    border: none;
+    border-radius: var(--radius);
+}
+
+.control-group input[type="range"]::-moz-range-track {
+    width: 100%;
+    height: 1px;
+    background: var(--color-border);
+    border: none;
+    border-radius: var(--radius);
+}
+
+/* Focus styles */
+.control-group input[type="range"]:focus {
+    outline: none;
+}
+
+.control-group input[type="range"]:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
+}
+
+.control-group input[type="range"]:focus::-moz-range-thumb {
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
+}
+
+.color-input-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+}
+
+/* Adjust color picker group spacing */
+.control-group .color-input-group {
+    gap: var(--spacing-md);
+}
+
+/* Color preview button */
+.color-preview {
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    background: var(--color-bg-input);
+    cursor: pointer;
+    padding: 0;
+    transition: border-color var(--transition-normal), transform var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.color-preview:hover {
+    border-color: var(--color-text-subtle);
+    transform: scale(1.05);
+}
+
+.color-preview:focus {
+    border-color: var(--color-text-subtle);
+    outline: none;
+}
+
+/* HSB Picker */
+.hsb-picker {
+    margin-top: var(--spacing-lg);
+    animation: slideDown var(--transition-normal) ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden;
+    }
+    to {
+        opacity: 1;
+        max-height: 300px;
+        overflow: visible;
+    }
+}
+
+.hsb-controls {
+    display: flex;
+    flex-direction: column;
+}
+
+.hsb-control-group {
+    margin-bottom: var(--spacing-lg);
+    padding-top: 1px; /* Уменьшаем с 6px до 1px для компенсации увеличенной высоты слайдера */
+}
+
+.hsb-control-group:last-child {
+    margin-bottom: 0;
+}
+
+.hsb-control-group label {
+    display: flex;
+    align-items: center;
+    font-weight: 400;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+}
+
+.hsb-value {
+    display: inline-block;
+    min-width: 40px;
+    text-align: right;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+    cursor: text;
+    font-family: inherit;
+    position: relative;
+}
+
+.hsb-value:focus {
+    color: var(--color-text);
+}
+
+/* Add suffix after value */
+.hsb-value::after {
+    content: attr(data-suffix);
+    position: absolute;
+    right: -0.5em;
+    pointer-events: none;
+}
+
+#hueValue::after {
+    content: '°';
+}
+
+#saturationValue::after,
+#brightnessValue::after {
+    content: '%';
+}
+
+/* HSB sliders - same styles as main sliders but with color gradients */
+.hsb-control-group input[type="range"] {
+    width: 100%;
+    height: 10px; /* Кликабельная область = размер hover thumb */
+    border-radius: var(--radius);
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    margin-top: calc(var(--spacing-md) - 2px); /* Опускаем слайдер: 8px - 2px = 6px */
+    cursor: pointer;
+    position: relative;
+}
+
+/* HSB slider thumbs - matching main slider thumbs */
+.hsb-control-group input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: var(--slider-thumb-size);
+    height: var(--slider-thumb-size);
+    border-radius: 50%;
+    background: var(--color-text);
+    cursor: pointer;
+    border: none;
+    transition: all var(--transition-fast);
+    margin-top: calc((1px - var(--slider-thumb-size)) / 2); /* Центрируем 8px thumb относительно 1px track = -3.5px */
+}
+
+.hsb-control-group input[type="range"]::-moz-range-thumb {
+    width: var(--slider-thumb-size);
+    height: var(--slider-thumb-size);
+    border-radius: 50%;
+    background: var(--color-text);
+    cursor: pointer;
+    border: none;
+    transition: all var(--transition-fast);
+}
+
+.hsb-control-group input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.25); /* 8px × 1.25 = 10px */
+    background: var(--color-text);
+}
+
+.hsb-control-group input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.25); /* 8px × 1.25 = 10px */
+    background: var(--color-text);
+}
+
+/* Track styles for HSB sliders */
+.hsb-control-group input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 1px; /* Оставляем визуально тонкую линию */
+    border: none;
+    border-radius: var(--radius);
+}
+
+.hsb-control-group input[type="range"]::-moz-range-track {
+    width: 100%;
+    height: 1px;
+    border: none;
+    border-radius: var(--radius);
+}
+
+/* Focus styles for HSB sliders */
+.hsb-control-group input[type="range"]:focus {
+    outline: none;
+}
+
+.hsb-control-group input[type="range"]:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
+}
+
+.hsb-control-group input[type="range"]:focus::-moz-range-thumb {
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
+}
+
+/* Color gradients for HSB sliders - preserved! */
+#hueSlider {
+    background: linear-gradient(to right, 
+        #ff0000 0%, 
+        #ffff00 17%, 
+        #00ff00 33%, 
+        #00ffff 50%, 
+        #0000ff 67%, 
+        #ff00ff 83%, 
+        #ff0000 100%
+    ) !important;
+}
+
+#hueSlider::-webkit-slider-runnable-track {
+    background: linear-gradient(to right, 
+        #ff0000 0%, 
+        #ffff00 17%, 
+        #00ff00 33%, 
+        #00ffff 50%, 
+        #0000ff 67%, 
+        #ff00ff 83%, 
+        #ff0000 100%
+    );
+}
+
+#hueSlider::-moz-range-track {
+    background: linear-gradient(to right, 
+        #ff0000 0%, 
+        #ffff00 17%, 
+        #00ff00 33%, 
+        #00ffff 50%, 
+        #0000ff 67%, 
+        #ff00ff 83%, 
+        #ff0000 100%
+    );
+}
+
+/* Saturation slider - will be updated dynamically */
+#saturationSlider {
+    background: linear-gradient(to right, #808080, #ff0000);
+}
+
+/* Brightness slider - will be updated dynamically */
+#brightnessSlider {
+    background: linear-gradient(to right, #000000, #ffffff);
+}
+
+.control-group input[type="text"]#hexColorInput {
+    flex: 1;
+    height: 30px;
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-family: monospace;
+    font-size: 0.9rem;
+    padding: 0 var(--spacing-md);
+    border-radius: var(--radius-input);
+}
+
+/* Value input with dropdown */
+.value-input-with-dropdown {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: auto;
+}
+
+.value-display {
+    display: inline-block;
+    min-width: 40px;
+    text-align: right;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+    padding-right: 4px;
+    cursor: text;
+    font-family: inherit;
+}
+
+.value-display:focus {
+    color: var(--color-text);
+}
+
+.dropdown-toggle {
+    background: transparent;
+    border: none;
+    color: var(--color-text-dim);
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--transition-fast);
+    margin-left: 2px;
+}
+
+.dropdown-toggle:hover {
+    color: var(--color-text);
+}
+
+.dropdown-toggle svg {
+    display: block;
+}
+
+/* Dropdown menu */
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    background: var(--color-bg-panel);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.9);
+    padding: 4px;
+    min-width: 60px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1001;
+    display: none;
+}
+
+.dropdown-menu.active {
+    display: block;
+}
+
+.dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 4px 8px;
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: 0.8rem;
+    font-family: inherit;
+    text-align: right;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background var(--transition-fast);
+}
+
+.dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-text);
+}
+
+.dropdown-item.selected {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--color-text);
+}
+
+.color-preset {
+    font-size: 0.85rem;
+    color: var(--color-text-dim);
+    cursor: pointer;
+    padding: var(--spacing-xs) 6px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-normal);
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+}
+
+.color-preset:hover {
+    color: var(--color-text);
+    background: #2a2a2a;
+}

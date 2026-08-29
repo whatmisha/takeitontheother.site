@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wordplayer</title>
+    <link rel="icon" href="data:,">
+    <link rel="preload" href="./fonts/CoFo%20Sans/CoFoSans-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="./fonts/CoFo%20Sans/CoFoSans-Medium.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="foundation.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container" data-mode="dither">
+        <div class="top-links">
+            <nav class="mode-navigation" aria-label="Tool and mode navigation">
+                <a href="../" class="mode-nav-button mode-nav-back">←Upgrade Tools</a>
+                <div class="mode-nav-options" role="radiogroup" aria-label="Wordplayer mode">
+                    <input type="radio" name="mode" value="dither" id="modeDither" checked>
+                    <label class="mode-nav-button" for="modeDither">Dither</label>
+                    <input type="radio" name="mode" value="forms" id="modeForms">
+                    <label class="mode-nav-button" for="modeForms">Forms</label>
+                </div>
+            </nav>
+            <div class="preset-toolbar-cluster">
+                <div class="preset-dropdown" id="presetDropdown">
+                    <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button"
+                            aria-haspopup="listbox" aria-expanded="false" aria-controls="presetDropdownMenu">
+                        <span class="preset-dropdown-text">Presets</span>
+                        <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox"></ul>
+                </div>
+                <button type="button" id="presetToolbarShareBtn" class="preset-toolbar-share-btn"
+                        aria-label="Copy share link" data-tooltip="Copy share link">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="18" height="18" fill="none" aria-hidden="true">
+                        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M5.741 3.43l.612-.612a2 2 0 0 1 2.829 2.828l-.612.613"/>
+                        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M6.259 8.57l-.613.612a2 2 0 1 1-2.828-2.828l.612-.613"/>
+                        <line x1="7.518" y1="4.482" x2="4.482" y2="7.518" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"/>
+                    </svg>
+                </button>
+            </div>
+            <button class="top-link" id="savePresetBtn" type="button" style="display:none;">Save preset</button>
+            <div class="zoom-indicator" id="zoomIndicator" data-tooltip="Click to fit to screen">100%</div>
+        </div>
+
+        <main class="main-content" id="mainContent">
+            <h1 class="sr-only">Wordplayer</h1>
+            <div class="canvas-container word-canvas" id="canvasContainer">
+                <canvas id="mainCanvas" role="img" aria-label="Generated letter pattern"></canvas>
+            </div>
+
+            <aside class="controls-panel controls-panel-left" id="textPanel">
+                <div class="panel-header" id="textPanelHeader">
+                    <span>General</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label class="pattern-text-label" for="patternTextInput"><span>Pattern text</span></label>
+                            <textarea id="patternTextInput" class="text-input pattern-text-input" spellcheck="false">Чтение может стать золотым часом дня — временем, когда всё погружается в цельную особенную атсмосферу и можно вернуться к себе и пережить что-то новое, погрузившись в книгу. В дизайне мы тоже подсвечиваем этот путь — иммерсивность погружения в книгу от лица читателя. Мы показываем именно этот момент перехода — резкость и холод внешнего мира растворяются в тёплом камерном пространстве чтения</textarea>
+                        </div>
+                        <div class="control-group density-control">
+                            <label for="densitySlider"><span>Density</span>
+                                <input type="text" class="value-display" id="densityValue" value="0"></label>
+                            <input type="range" id="densitySlider" min="-100" max="100" value="0" step="1">
+                        </div>
+                        <div class="canvas-metrics-row">
+                            <div class="canvas-metric-field">
+                                <label for="widthValue">Width <span class="unit">px</span></label>
+                                <input type="text" class="canvas-metric-input" id="widthValue" value="430" inputmode="numeric" autocomplete="off" spellcheck="false">
+                            </div>
+                            <div class="canvas-metric-field">
+                                <label for="heightValue">Height <span class="unit">px</span></label>
+                                <input type="text" class="canvas-metric-input" id="heightValue" value="574" inputmode="numeric" autocomplete="off" spellcheck="false">
+                            </div>
+                            <div class="canvas-metric-field">
+                                <label for="resolutionValue">Resolution</label>
+                                <input type="text" class="canvas-metric-input" id="resolutionValue" value="72" inputmode="numeric" autocomplete="off" spellcheck="false">
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <div class="color-swatches-compact" id="colorPickersGroup">
+                                <div class="color-swatch-row">
+                                    <div class="color-swatch-compact" id="inkColorItem" data-color-type="ink">
+                                        <button type="button" class="color-dot color-dot--expandable" id="inkColorPreview" aria-label="Open Ink color controls"></button>
+                                        <span class="color-label">Ink</span>
+                                        <input type="text" class="color-swatch-hex" id="inkColorHex" value="#ffffff" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Ink color hex">
+                                    </div>
+                                    <div class="color-hsb-slot" id="inkColorHsbSlot">
+                                        <div id="unifiedColorPickerContainer"></div>
+                                    </div>
+                                </div>
+                                <div class="color-swatch-row">
+                                    <div class="color-swatch-compact" id="bgColorItem" data-color-type="bg">
+                                        <button type="button" class="color-dot color-dot--expandable" id="bgColorPreview" aria-label="Open Background color controls"></button>
+                                        <span class="color-label">Background</span>
+                                        <input type="text" class="color-swatch-hex" id="bgColorHex" value="#0d0d0d" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Background color hex">
+                                    </div>
+                                    <div class="color-hsb-slot" id="bgColorHsbSlot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <aside class="controls-panel controls-panel-left" id="pixelsPanel">
+                <div class="panel-header" id="pixelsPanelHeader">
+                    <span>Pixels</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <section class="tone-param-group" role="group" aria-labelledby="lightToneGroupLabel">
+                            <div class="tone-group-heading" id="lightToneGroupLabel">Light pixels</div>
+                            <div class="control-group">
+                                <label for="weightMinSlider"><span>Light weight</span>
+                                    <input type="text" class="value-display" id="weightMinValue" value="100"></label>
+                                <input type="range" id="weightMinSlider" min="100" max="900" value="100" step="10">
+                            </div>
+                            <div class="control-group">
+                                <label for="sizeMinSlider"><span>Min size <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="sizeMinValue" value="36"></label>
+                                <input type="range" id="sizeMinSlider" min="5" max="200" value="36" step="1">
+                            </div>
+                            <div class="control-group">
+                                <label for="rotationMinSlider"><span>Rotation <span class="unit">°</span></span>
+                                    <input type="text" class="value-display" id="rotationMinValue" value="0"></label>
+                                <input type="range" id="rotationMinSlider" min="-180" max="180" value="0" step="1">
+                            </div>
+                            <div class="control-group">
+                                <label for="noiseMinSlider"><span>Noise <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="noiseMinValue" value="100"></label>
+                                <input type="range" id="noiseMinSlider" min="0" max="200" value="100" step="1">
+                            </div>
+                        </section>
+                        <section class="tone-param-group" role="group" aria-labelledby="darkToneGroupLabel">
+                            <div class="tone-group-heading" id="darkToneGroupLabel">Dark pixels</div>
+                            <div class="control-group">
+                                <label for="weightMaxSlider"><span>Heavy weight</span>
+                                    <input type="text" class="value-display" id="weightMaxValue" value="500"></label>
+                                <input type="range" id="weightMaxSlider" min="100" max="900" value="500" step="10">
+                            </div>
+                            <div class="control-group">
+                                <label for="sizeMaxSlider"><span>Max size <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="sizeMaxValue" value="96"></label>
+                                <input type="range" id="sizeMaxSlider" min="5" max="200" value="96" step="1">
+                            </div>
+                            <div class="control-group">
+                                <label for="rotationMaxSlider"><span>Rotation <span class="unit">°</span></span>
+                                    <input type="text" class="value-display" id="rotationMaxValue" value="0"></label>
+                                <input type="range" id="rotationMaxSlider" min="-180" max="180" value="0" step="1">
+                            </div>
+                            <div class="control-group">
+                                <label for="noiseMaxSlider"><span>Noise <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="noiseMaxValue" value="0"></label>
+                                <input type="range" id="noiseMaxSlider" min="0" max="200" value="0" step="1">
+                            </div>
+                        </section>
+                        <div class="control-group pill-toggle-row pixel-toggle-row">
+                            <label class="pill-toggle" for="allCapsToggle" data-tooltip="Render generated text as uppercase">
+                                <input type="checkbox" id="allCapsToggle" class="sr-only" data-setting="allCaps" checked>
+                                <span>Caps</span>
+                            </label>
+                            <label class="pill-toggle" for="sizeEnabledToggle" data-tooltip="Use pixel brightness for letter size">
+                                <input type="checkbox" id="sizeEnabledToggle" class="sr-only" data-setting="sizeEnabled" checked>
+                                <span>Size</span>
+                            </label>
+                            <label class="pill-toggle" for="weightEnabledToggle" data-tooltip="Use pixel brightness for letter weight">
+                                <input type="checkbox" id="weightEnabledToggle" class="sr-only" data-setting="weightEnabled" checked>
+                                <span>Weight</span>
+                            </label>
+                            <label class="pill-toggle" for="rotationEnabledToggle" data-tooltip="Use pixel brightness for letter rotation">
+                                <input type="checkbox" id="rotationEnabledToggle" class="sr-only" data-setting="rotationEnabled" checked>
+                                <span>Rotation</span>
+                            </label>
+                            <label class="pill-toggle" for="noiseEnabledToggle" data-tooltip="Use pixel brightness for position noise">
+                                <input type="checkbox" id="noiseEnabledToggle" class="sr-only" data-setting="noiseEnabled" checked>
+                                <span>Noise</span>
+                            </label>
+                            <label class="pill-toggle dither-only-toggle" for="bayerToggle" data-tooltip="Use Bayer ordered dithering instead of Floyd–Steinberg">
+                                <input type="checkbox" id="bayerToggle" class="sr-only">
+                                <span>Bayer</span>
+                            </label>
+                            <label class="pill-toggle forms-only-toggle" for="formCanvasEdgesToggle" data-tooltip="Use canvas edges as attracting lines">
+                                <input type="checkbox" id="formCanvasEdgesToggle" class="sr-only" data-setting="formCanvasEdges" checked>
+                                <span>Edges</span>
+                            </label>
+                            <label class="pill-toggle forms-only-toggle" for="formInsideOutToggle" data-tooltip="Fill the canvas outside the loaded form">
+                                <input type="checkbox" id="formInsideOutToggle" class="sr-only" data-setting="formInsideOut">
+                                <span>Inside-out</span>
+                            </label>
+                            <label class="pill-toggle" for="hideTinyLettersToggle" data-tooltip="Hide critically small letters">
+                                <input type="checkbox" id="hideTinyLettersToggle" class="sr-only" data-setting="hideTinyLetters" checked>
+                                <span>Hide tiny</span>
+                            </label>
+                            <label class="pill-toggle" for="invertDitherToggle" data-tooltip="Invert tone mapping">
+                                <input type="checkbox" id="invertDitherToggle" class="sr-only" data-setting="invertDither">
+                                <span>Invert</span>
+                            </label>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <aside class="controls-panel mode-panel" id="ditherPanel" data-mode-panel="dither">
+                <div class="panel-header" id="ditherPanelHeader">
+                    <span>Dither</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section image-load-section">
+                        <input type="file" id="imageInput" accept="image/*" hidden>
+                        <button type="button" class="btn-secondary btn-full" id="imageLoadBtn">Load image</button>
+                        <div class="file-status" id="imageStatus">default-image.avif</div>
+                    </section>
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="contrastSlider"><span>Contrast</span>
+                                <input type="text" class="value-display" id="contrastValue" value="2.00"></label>
+                            <input type="range" id="contrastSlider" min="0.2" max="3" value="2" step="0.01">
+                        </div>
+                        <div class="control-group">
+                            <label for="blackPointSlider"><span>Black Point</span>
+                                <input type="text" class="value-display" id="blackPointValue" value="40"></label>
+                            <input type="range" id="blackPointSlider" min="0" max="250" value="40" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="whitePointSlider"><span>White Point</span>
+                                <input type="text" class="value-display" id="whitePointValue" value="200"></label>
+                            <input type="range" id="whitePointSlider" min="5" max="255" value="200" step="1">
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <aside class="controls-panel mode-panel" id="formsPanel" data-mode-panel="forms">
+                <div class="panel-header" id="formsPanelHeader">
+                    <span>Forms</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section image-load-section">
+                        <input type="file" id="formInput" accept=".svg,image/svg+xml" hidden>
+                        <button type="button" class="btn-secondary btn-full" id="formLoadBtn">Load SVG</button>
+                        <div class="file-status" id="formStatus">default-form.svg</div>
+                    </section>
+                    <section class="control-section forms-groups">
+                        <section class="tone-param-group" role="group" aria-labelledby="formBoundaryGroupLabel">
+                            <div class="tone-group-heading" id="formBoundaryGroupLabel">Form boundary</div>
+                            <div class="compact-slider-grid">
+                                <div class="control-group compact-slider-control" data-tooltip="Attraction range">
+                                    <label for="formEdgeSpreadSlider"><span>Range <span class="unit">%</span></span>
+                                        <input type="text" class="value-display" id="formEdgeSpreadValue" value="15"></label>
+                                    <input type="range" id="formEdgeSpreadSlider" min="2" max="100" value="15" step="1">
+                                </div>
+                                <div class="control-group compact-slider-control" data-tooltip="Line gravity">
+                                    <label for="formAttractionSlider"><span>Line grav.</span>
+                                        <input type="text" class="value-display" id="formAttractionValue" value="25"></label>
+                                    <input type="range" id="formAttractionSlider" min="0" max="100" value="25" step="1">
+                                </div>
+                                <div class="control-group compact-slider-control" data-tooltip="Stickiness">
+                                    <label for="formStickinessSlider"><span>Stick</span>
+                                        <input type="text" class="value-display" id="formStickinessValue" value="25"></label>
+                                    <input type="range" id="formStickinessSlider" min="0" max="100" value="25" step="1">
+                                </div>
+                                <div class="control-group compact-slider-control" data-tooltip="Friction">
+                                    <label for="formFrictionSlider"><span>Friction</span>
+                                        <input type="text" class="value-display" id="formFrictionValue" value="50"></label>
+                                    <input type="range" id="formFrictionSlider" min="0" max="100" value="50" step="1">
+                                </div>
+                            </div>
+                        </section>
+                        <section class="tone-param-group" role="group" aria-labelledby="formFlowGroupLabel">
+                            <div class="tone-group-heading" id="formFlowGroupLabel">Letter flow</div>
+                            <div class="compact-slider-grid">
+                                <div class="control-group compact-slider-control" data-tooltip="Letter spacing">
+                                    <label for="formLetterSpacingSlider"><span>Spacing <span class="unit">%</span></span>
+                                        <input type="text" class="value-display" id="formLetterSpacingValue" value="25"></label>
+                                    <input type="range" id="formLetterSpacingSlider" min="0" max="100" value="25" step="1">
+                                </div>
+                                <div class="control-group compact-slider-control" data-tooltip="Settling time">
+                                    <label for="formSettlingTimeSlider"><span>Settle</span>
+                                        <input type="text" class="value-display" id="formSettlingTimeValue" value="75"></label>
+                                    <input type="range" id="formSettlingTimeSlider" min="12" max="180" value="75" step="1">
+                                </div>
+                            </div>
+                        </section>
+                        <section class="tone-param-group" role="group" aria-labelledby="formGravityGroupLabel">
+                            <div class="tone-group-heading" id="formGravityGroupLabel">Gravity</div>
+                            <div class="compact-slider-grid">
+                                <div class="control-group compact-slider-control" data-tooltip="Gravity force">
+                                    <label for="formGravitySlider"><span>Force</span>
+                                        <input type="text" class="value-display" id="formGravityValue" value="50"></label>
+                                    <input type="range" id="formGravitySlider" min="0" max="100" value="50" step="1">
+                                </div>
+                                <div class="control-group compact-slider-control" data-tooltip="Gravity direction">
+                                    <label for="formGravityDirectionSlider"><span>Direction <span class="unit">°</span></span>
+                                        <input type="text" class="value-display" id="formGravityDirectionValue" value="135"></label>
+                                    <input type="range" id="formGravityDirectionSlider" min="-180" max="180" value="135" step="1">
+                                </div>
+                            </div>
+                        </section>
+                    </section>
+                </div>
+            </aside>
+        </main>
+
+        <nav class="bottom-buttons">
+            <button class="btn-fixed btn-intro-help" id="introHelpBtn" type="button" aria-label="About" data-tooltip="About">?</button>
+            <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
+            <button class="btn-fixed" id="exportSvgBtn" type="button">Export SVG</button>
+            <label class="toggle-label" data-tooltip="Transparent background on PNG export">
+                <span class="toggle-switch">
+                    <input type="checkbox" id="transparentPngCheckbox" data-setting="exportTransparent" aria-label="Transparent" checked>
+                    <span class="toggle-slider"></span>
+                </span>
+                <span class="toggle-label-text">Transparent</span>
+            </label>
+        </nav>
+
+        <dialog id="dialog" class="modal">
+            <div class="modal-content">
+                <h2 id="dialogTitle" class="modal-title"></h2>
+                <div id="dialogText" class="modal-text"></div>
+                <input id="dialogInput" class="modal-input" type="text" style="display:none;">
+                <div id="dialogButtons" class="modal-buttons"></div>
+            </div>
+        </dialog>
+    </div>
+
+    <script type="module" src="./tool.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+{
+  "presets": [
+    {
+      "name": "Work 2.0 L",
+      "file": "lcakb23.json"
+    },
+    {
+      "name": "Work 2.0 M",
+      "file": "lcakb22.json"
+    },
+    {
+      "name": "Work 2.0 S",
+      "file": "lcakb21.json"
+    },
+    {
+      "name": "Work 2.0 S Update",
+      "file": "work-2-s-update.json"
+    },
+    {
+      "name": "Perform L",
+      "file": "perform-l.json"
+    },
+    {
+      "name": "Perform S",
+      "file": "perform-s.json"
+    },
+    {
+      "name": "Work 1.0 L Pad",
+      "file": "work-1-l-pad.json"
+    },
+    {
+      "name": "Airis 14",
+      "file": "airis-14.json"
+    },
+    {
+      "name": "Ground 14",
+      "file": "ground-14.json"
+    },
+    {
+      "name": "Ground 15",
+      "file": "ground-15.json"
+    }
+  ]
+}
