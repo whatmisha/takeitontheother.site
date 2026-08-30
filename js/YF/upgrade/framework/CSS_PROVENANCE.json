@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "base": "Othersite UI Framework v3 / Void active root",
+  "upstreamStylesSha256": "1ea9314b39ce5de366a17b90d5536d7cfaf2854a788028e9b26a7a6b3e26e0a0",
+  "workingStylesSha256": "e22f134ecbb4ab544cac005bdceef279007c153c4667f598ebcd30799103a67f",
+  "upstreamTokensSha256": "6e47fac2e182feeea3aa1755bb524617c8ba84ed7b72159f8be3a49a9515348d",
+  "workingTokensSha256": "3b9e83edc4a133264fcd18ae29f8b8300b469505d0c6ed484a5a51196f4276b4",
+  "workingDifference": "Only four CoFo Sans URLs per stylesheet are rewritten from mishaivanov.ru to framework-local ../fonts assets.",
+  "loadOrder": "framework css first, application css second",
+  "mobile": "opt-in; only Sparky requires a mobile application stylesheet"
+}

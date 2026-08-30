@@ -15,11 +15,13 @@
  * @param {Object} [options]
  * @param {{ top?: number, right?: number, bottom?: number, left?: number }} [options.fitPadding]
  *        Отступы внутри контейнера при fitToScreen (по умолчанию небольшой inset — макет «вписывается» в слот канваса)
+ * @param {boolean} [options.interactive=true] — attach wheel/keyboard/pointer listeners
  */
 export class ZoomPanManager {
     constructor(containerElement, svgElement, options = {}) {
         this.container = containerElement;
         this.svg = svgElement;
+        this.interactive = options.interactive !== false;
 
         const fp = options.fitPadding || {};
         this.fitPadding = {
@@ -53,7 +55,7 @@ export class ZoomPanManager {
         this.initializeSVG();
         
         // Инициализируем обработчики
-        this.initEventListeners();
+        if (this.interactive) this.initEventListeners();
     }
     
     /**
@@ -273,6 +275,14 @@ export class ZoomPanManager {
         const [x, y, width, height] = viewBoxAttr.split(' ').map(Number);
         return { x, y, width, height };
     }
+
+    /** Use stable logical artboard bounds when guides extend beyond the page. */
+    getContentBounds() {
+        if (this.svg.dataset?.fitArtboard === 'true') {
+            return { x: 0, y: 0, width: this.originalWidth, height: this.originalHeight };
+        }
+        return this.svg.getBBox();
+    }
     
     /**
      * Применяет текущую трансформацию через viewBox (векторное масштабирование).
@@ -321,7 +331,7 @@ export class ZoomPanManager {
      * Центрирует содержимое SVG в контейнере без изменения зума.
      */
     centerContent() {
-        const bbox = this.svg.getBBox();
+        const bbox = this.getContentBounds();
         const rect = this.container.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) return;
 
@@ -339,7 +349,7 @@ export class ZoomPanManager {
      * Результирующий зум становится baseline и считается за 100%.
      */
     fitToScreen() {
-        const bbox = this.svg.getBBox();
+        const bbox = this.getContentBounds();
         const containerRect = this.container.getBoundingClientRect();
         if (containerRect.width === 0 || containerRect.height === 0) return;
 
@@ -410,6 +420,7 @@ export class ZoomPanManager {
      * Очистка обработчиков
      */
     destroy() {
+        if (!this.interactive) return;
         this.container.removeEventListener('wheel', this._onWheel);
         document.removeEventListener('keydown', this._onKeyDown);
         document.removeEventListener('keyup', this._onKeyUp);
@@ -419,4 +430,3 @@ export class ZoomPanManager {
         this.container.removeEventListener('contextmenu', this._onContextMenu);
     }
 }
-

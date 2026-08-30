@@ -4,6 +4,8 @@
  *
  * @param {Object} [options]
  * @param {Record<string, string>} [options.fontPaths] — переопределение карты 'Family-Weight' → URL
+ * @param {string|false} [options.opentypeModuleUrl] — ESM build; false disables the module attempt
+ * @param {string} [options.opentypeUrl] — classic-script fallback
  */
 export class TextToPath {
     constructor(options = {}) {
@@ -16,6 +18,10 @@ export class TextToPath {
         };
         this.opentypeUrl = options.opentypeUrl
             || new URL('../../vendor/opentype/1.3.4/opentype.min.js', import.meta.url).href;
+        this.opentypeModuleUrl = options.opentypeModuleUrl === false
+            ? null
+            : options.opentypeModuleUrl
+                || new URL('../../vendor/opentype/1.3.4/opentype.module.js', import.meta.url).href;
         this.opentypeLoaded = false;
         this.loadingPromise = null;
     }
@@ -27,26 +33,63 @@ export class TextToPath {
             return this.loadingPromise;
         }
 
-        this.loadingPromise = new Promise((resolve, reject) => {
+        this.loadingPromise = (async () => {
             if (window.opentype) {
                 this.opentypeLoaded = true;
-                resolve(true);
-                return;
+                return true;
             }
 
+            if (this.opentypeModuleUrl) {
+                try {
+                    const module = await import(this.opentypeModuleUrl);
+                    window.opentype = module.default || module;
+                    this.opentypeLoaded = true;
+                    return true;
+                } catch (_) {
+                    // Continue with the classic same-origin bundle for older browsers.
+                }
+            }
+
+            await this._loadClassicScript();
+            if (!window.opentype) throw new Error('opentype.js loaded but did not expose its API');
+            this.opentypeLoaded = true;
+            return true;
+        })();
+
+        try {
+            return await this.loadingPromise;
+        } catch (error) {
+            this.loadingPromise = null;
+            throw error;
+        }
+    }
+
+    _loadClassicScript() {
+        if (window.opentype) return Promise.resolve();
+        return new Promise((resolve, reject) => {
+            const existing = document.querySelector('script[data-framework-lib="opentype"]');
+            if (existing) {
+                if (existing.dataset.frameworkLibState === 'loaded') {
+                    reject(new Error('opentype.js loaded but did not expose its API'));
+                    return;
+                }
+                existing.addEventListener('load', resolve, { once: true });
+                existing.addEventListener('error', () => reject(new Error('Failed to load opentype.js')), { once: true });
+                return;
+            }
             const script = document.createElement('script');
             script.src = this.opentypeUrl;
+            script.dataset.frameworkLib = 'opentype';
             script.onload = () => {
-                this.opentypeLoaded = true;
-                resolve(true);
+                script.dataset.frameworkLibState = 'loaded';
+                resolve();
             };
             script.onerror = () => {
+                script.dataset.frameworkLibState = 'error';
                 reject(new Error('Failed to load opentype.js'));
             };
             document.head.appendChild(script);
         });
-
-        return this.loadingPromise;
     }
 
     async loadFont(fontKey) {

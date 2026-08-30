@@ -8,7 +8,7 @@
 |---|---|---|
 | G0 | Документы, source manifest, test/visual/runtime baselines | Passed |
 | G1 | Восемь автономных копий, paths/storage/network isolation | Passed |
-| G2 | Общий framework и conformance suite | Not started |
+| G2 | Общий framework и conformance suite | Passed |
 | G3 | Wordplayer, Keyboarder, Sparky, Pizza Boxer, Sticky Fingers | Not started |
 | G4 | Pulsar Coder, Dither, Wander Bender | Not started |
 | G5 | Последующая визуальная и API-унификация | Not started |
@@ -27,6 +27,13 @@
 | UPG-013 | Local vendor/fonts | Complete | 11 copied assets + 3 pinned downloads |
 | UPG-014 | Storage isolation | Complete | 6 original sentinel keys неизменны |
 | UPG-015 | Boundary scanner | Complete | `npm run check:isolation` |
+| UPG-020 | v3 snapshot и working framework | Complete | 50 immutable / 15 modified upstream files |
+| UPG-021 | Public contracts | Complete | `framework/CONTRACT.md`, public barrel |
+| UPG-022 | Keyboarder improvements | Complete | export/font/preset conformance |
+| UPG-023 | Sparky improvements | Complete | 34 framework + 195 Sparky tests |
+| UPG-024 | Void principles | Complete | history audit, RNG/share/export/mobile tests |
+| UPG-025 | CSS compatibility | Complete | exact v3/Void base, local font-only diff |
+| UPG-026 | Framework conformance | Complete | SVG/Canvas browser demos, `gate:g2:static` |
 
 ## Подтверждённые исходные результаты
 
@@ -45,7 +52,7 @@
 - Большинство инструментов, кроме Sparky, не имеют согласованного mobile layout.
 - Основной Wander Bender загружает Paper.js с CDN.
 - Sticky Fingers загружает PDF/OpenType зависимости с CDN и использует Google Sheets.
-- Framework v3 содержит remote font и export-library URL.
+- Исходный framework v3 содержит remote font/export URL; рабочий `upgrade/framework` полностью локализован.
 - Pizza Boxer использует IndexedDB `lunnen-grid-generator`.
 - v3-инструменты используют исходные localStorage namespaces без `upgrade:`.
 
@@ -58,4 +65,4 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-UPG-020: перенести Othersite UI Framework v3 в `framework/src` и `framework/css`, затем создать conformance suite. До Gate G2 приложения продолжают работать со своими изолированными framework-копиями.
+UPG-030: подключить Wordplayer к публичному API общего framework как Canvas-canary, сохранив renderer, workers, caches, DOM/CSS и export. После browser/worker parity перейти к Keyboarder.

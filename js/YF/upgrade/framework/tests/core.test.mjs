@@ -75,6 +75,16 @@ test('ShortcutRouter owns one removable listener and ignores editable targets', 
     listeners.get('keydown')(canvasEvent);
     assert.equal(calls, 1);
     assert.equal(canvasEvent.prevented, true);
+
+    router.register('space', () => { calls += 10; });
+    const spaceEvent = {
+        key: ' ', metaKey: false, ctrlKey: false, shiftKey: false, altKey: false,
+        target: { tagName: 'DIV', isContentEditable: false },
+        preventDefault() { this.prevented = true; }
+    };
+    listeners.get('keydown')(spaceEvent);
+    assert.equal(calls, 11);
+    assert.equal(spaceEvent.prevented, true);
     router.destroy();
     assert.equal(listeners.size, 0);
 });

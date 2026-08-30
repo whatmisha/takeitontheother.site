@@ -23,6 +23,7 @@
     "test:pizza": "npm --prefix grid_generator/tools test",
     "test:wordplayer": "node wordplayer/tests/dither-worker.test.mjs && node wordplayer/tests/forms-worker.test.mjs",
     "test:tier1": "npm run test:framework && npm run test:sparky && npm run test:pizza && npm run test:wordplayer",
-    "gate:g1:static": "npm run gate:g0 && npm run check:isolation && npm run test:tier1"
+    "gate:g1:static": "npm run gate:g0 && npm run check:isolation && npm run test:tier1",
+    "gate:g2:static": "npm run gate:g0 && npm run check:isolation && npm run test:tier1"
   }
 }

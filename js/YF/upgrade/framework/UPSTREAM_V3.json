@@ -140,7 +140,7 @@
       "path": "src/core/ShortcutRouter.js",
       "sha256": "df4bf488ba4e3c8ae5d129a3342724b9a5bff0ceb764bc1480b4b26ff57dea75",
       "bytes": 3353,
-      "workingStatus": "upstream-exact"
+      "workingStatus": "upgrade-modified"
     },
     {
       "path": "src/effects/GradientStrokeEffect.js",
@@ -188,7 +188,7 @@
       "path": "src/index.js",
       "sha256": "5dc9fb2c07c19bcfc98a7ccf5853aa070397c6b0fb6325b1e521242743826132",
       "bytes": 2093,
-      "workingStatus": "upstream-exact"
+      "workingStatus": "upgrade-modified"
     },
     {
       "path": "src/preset/PresetSession.js",
@@ -224,7 +224,7 @@
       "path": "src/render/SvgTarget.js",
       "sha256": "875b39a352ec9200ff333b98fb269383e965370dce5ef6939cd25d4d899b43e1",
       "bytes": 3308,
-      "workingStatus": "upstream-exact"
+      "workingStatus": "upgrade-modified"
     },
     {
       "path": "src/ui/ColorPicker.js",
@@ -248,7 +248,7 @@
       "path": "src/ui/PanelManager.js",
       "sha256": "15a2f141094c258b924f7525a10dfe555943eb3d4a7cc25006326e4f1aa89170",
       "bytes": 9763,
-      "workingStatus": "upstream-exact"
+      "workingStatus": "upgrade-modified"
     },
     {
       "path": "src/ui/RangeSliderController.js",
@@ -260,7 +260,7 @@
       "path": "src/ui/SliderController.js",
       "sha256": "5c023aa561b35c87e22b45a89e96b43570a18b94ef61f269e060482ea4101394",
       "bytes": 13954,
-      "workingStatus": "upstream-exact"
+      "workingStatus": "upgrade-modified"
     },
     {
       "path": "src/ui/TooltipService.js",
@@ -278,7 +278,7 @@
       "path": "src/ui/ZoomPanManager.js",
       "sha256": "360db401952abbb4f8b7beee5d45d3f61e3da240429503cfe27600cfc3c408ae",
       "bytes": 15966,
-      "workingStatus": "upstream-exact"
+      "workingStatus": "upgrade-modified"
     },
     {
       "path": "src/utils/ColorUtils.js",

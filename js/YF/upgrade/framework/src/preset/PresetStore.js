@@ -10,10 +10,12 @@ export class PresetStore {
     /**
      * @param {Object} [options]
      * @param {string} [options.storageKey='upgrade:framework:presets:v1']
+     * @param {number} [options.fetchTimeoutMs=5000] — seed request timeout
      */
-    constructor({ storageKey = 'upgrade:framework:presets:v1' } = {}) {
+    constructor({ storageKey = 'upgrade:framework:presets:v1', fetchTimeoutMs = 5000 } = {}) {
         this.storageKey = storageKey;
         this.seedMarkerKey = `${storageKey}__seeded`;
+        this.fetchTimeoutMs = Math.max(1, Number(fetchTimeoutMs) || 5000);
     }
 
     /* --------------------------------- read ---------------------------------- */
@@ -135,9 +137,7 @@ export class PresetStore {
         if (this.isSeeded() && !force) return 0;
         let manifest;
         try {
-            const res = await fetch(`${basePath}/manifest.json`, { cache: 'no-cache' });
-            if (!res.ok) throw new Error(`manifest ${res.status}`);
-            manifest = await res.json();
+            manifest = await this._fetchJSON(`${basePath}/manifest.json`, 'manifest');
         } catch (e) {
             console.warn('PresetStore.loadSeed: no manifest:', e.message);
             this.markSeeded();
@@ -150,9 +150,7 @@ export class PresetStore {
             const name = entry.name || entry.file?.replace(/\.json$/i, '');
             if (!name || all[name]) continue;
             try {
-                const res = await fetch(`${basePath}/${entry.file}`, { cache: 'no-cache' });
-                if (!res.ok) continue;
-                let blob = await res.json();
+                let blob = await this._fetchJSON(`${basePath}/${entry.file}`, entry.file);
                 if (typeof transform === 'function') blob = transform(blob, entry);
                 const now = Date.now();
                 all[name] = { ...blob, seeded: true, createdAt: now, updatedAt: now };
@@ -164,5 +162,26 @@ export class PresetStore {
         this.saveAll(all);
         this.markSeeded();
         return count;
+    }
+
+    async _fetchJSON(url, label = url) {
+        const controller = typeof AbortController === 'function' ? new AbortController() : null;
+        let timer = null;
+        const timeout = new Promise((_, reject) => {
+            timer = setTimeout(() => {
+                controller?.abort();
+                reject(new Error(`${label} timed out after ${this.fetchTimeoutMs} ms`));
+            }, this.fetchTimeoutMs);
+        });
+        try {
+            const response = await Promise.race([
+                fetch(url, { cache: 'no-cache', signal: controller?.signal }),
+                timeout
+            ]);
+            if (!response.ok) throw new Error(`${label} ${response.status}`);
+            return await response.json();
+        } finally {
+            if (timer) clearTimeout(timer);
+        }
     }
 }

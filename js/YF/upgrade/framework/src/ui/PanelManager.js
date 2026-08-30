@@ -5,6 +5,7 @@ export class PanelManager {
     constructor() {
         this.panels = new Map();
         this.highestZIndex = 1000;
+        this.expandedPanelSnapshot = null;
         this.dragState = {
             isDragging: false,
             panel: null,
@@ -343,5 +344,24 @@ export class PanelManager {
         const icon = panelData.element.querySelector('.collapse-icon');
         if (icon) icon.classList.toggle('collapsed', !!collapsed);
     }
-}
 
+    /** Collapse all expanded panels, then restore exactly that set. */
+    toggleAllCollapsed() {
+        if (this.expandedPanelSnapshot !== null) {
+            const panelIds = this.expandedPanelSnapshot;
+            this.expandedPanelSnapshot = null;
+            panelIds.forEach((panelId) => this.setCollapsed(panelId, false));
+            return { collapsed: false, panelIds: [...panelIds] };
+        }
+
+        const panelIds = [...this.panels.entries()]
+            .filter(([, panelData]) => (
+                panelData.isOpen
+                && !panelData.element.classList.contains('panel-collapsed')
+            ))
+            .map(([panelId]) => panelId);
+        this.expandedPanelSnapshot = panelIds;
+        panelIds.forEach((panelId) => this.setCollapsed(panelId, true));
+        return { collapsed: true, panelIds: [...panelIds] };
+    }
+}

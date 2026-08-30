@@ -30,6 +30,8 @@ import { ShareCodec } from '../preset/ShareCodec.js';
 import { HistoryBridge } from '../history/HistoryBridge.js';
 import { HistoryManager } from '../history/HistoryManager.js';
 import { SVGExporter } from '../export/SVGExporter.js';
+import { ExportGuard } from '../export/ExportGuard.js';
+import { MobileBootstrap } from '../mobile/MobileBootstrap.js';
 
 /** Inline SVGs for the per-preset row action buttons (delete / share / rename). */
 const PRESET_ICONS = {
@@ -61,7 +63,9 @@ export class ApplicationShell {
         this.share = null;
         this.history = null;
         this.exporter = null;
+        this.exportGuard = null;
         this.shortcuts = null;
+        this.mobile = null;
 
         this._initialized = false;
         this._isInitializing = true;
@@ -93,6 +97,7 @@ export class ApplicationShell {
         this._initShortcuts();
         this._initChangeTracking();
         this._initPresetChrome();
+        this._initMobile();
 
         if (typeof c.onInit === 'function') c.onInit(this);
 
@@ -256,7 +261,30 @@ export class ApplicationShell {
 
     _initExport() {
         if (this.config.export === false) return;
-        this.exporter = new SVGExporter(this.config.export?.exporter || {});
+        const exportConfig = this.config.export || {};
+        this.exporter = new SVGExporter(exportConfig.exporter || {});
+        if (exportConfig.guard !== false) {
+            this.exportGuard = new ExportGuard({
+                capture: (context) => typeof exportConfig.captureState === 'function'
+                    ? exportConfig.captureState(this, context)
+                    : this.getSnapshot(),
+                restore: (state, context) => typeof exportConfig.restoreState === 'function'
+                    ? exportConfig.restoreState(this, state, context)
+                    : this.applySnapshot(state),
+                prepare: (context) => exportConfig.prepare?.(this, context),
+                equals: exportConfig.stateEquals
+            });
+        }
+    }
+
+    _initMobile() {
+        const mobileConfig = this.config.mobile;
+        if (!mobileConfig) return;
+        this.mobile = new MobileBootstrap({
+            ...mobileConfig,
+            onChange: (active, coordinator) => mobileConfig.onChange?.(this, active, coordinator),
+            onViewport: (dimensions, coordinator) => mobileConfig.onViewport?.(this, dimensions, coordinator)
+        }).init();
     }
 
     _initHistoryAndPresets() {
@@ -264,7 +292,10 @@ export class ApplicationShell {
         const restore = (snap) => this.applySnapshot(snap);
 
         if (this.config.presets) {
-            this.presetStore = new PresetStore({ storageKey: this.config.presets.storageKey || 'upgrade:framework:presets:v1' });
+            this.presetStore = new PresetStore({
+                storageKey: this.config.presets.storageKey || 'upgrade:framework:presets:v1',
+                fetchTimeoutMs: this.config.presets.fetchTimeoutMs
+            });
             this.presets = new PresetSession({
                 store: this.presetStore,
                 snapshot,
@@ -463,9 +494,13 @@ export class ApplicationShell {
     async _bootstrapPresets() {
         if (!this.presets) return;
         const c = this.config.presets;
+        if (typeof c.migrate === 'function') {
+            await c.migrate(this.presetStore);
+        }
         if (c.seed !== false) {
             await this.presetStore.loadSeed({
                 basePath: c.basePath || 'presets',
+                force: c.forceSeed === true,
                 transform: c.transform
             });
         }
@@ -505,44 +540,54 @@ export class ApplicationShell {
 
     async exportSVG(filename) {
         if (!this.exporter) return;
-        const name = filename || this.config.export?.filename || 'export.svg';
-        if (this.target.type === 'svg') {
-            const outlines = document.getElementById('convertToOutlinesCheckbox')?.checked
-                ?? this.config.export?.outlineFonts ?? false;
-            await this.exporter.exportToFile(this.target.element, name, {
-                removeInteractive: true,
-                convertTextToOutlines: outlines
-            });
-        } else {
-            // Canvas tools provide an SVG string via config.renderSVG(ctx) if needed.
-            const svgString = typeof this.config.renderSVG === 'function'
-                ? this.config.renderSVG(this._renderContext())
-                : await this.target.toSVGString();
-            if (!svgString) { console.warn('exportSVG: no SVG available for canvas target.'); return; }
-            this._downloadText(svgString, name, 'image/svg+xml');
-        }
+        return this.runExport('svg', async () => {
+            const name = filename || this.config.export?.filename || 'export.svg';
+            if (this.target.type === 'svg') {
+                const outlines = document.getElementById('convertToOutlinesCheckbox')?.checked
+                    ?? this.config.export?.outlineFonts ?? false;
+                await this.exporter.exportToFile(this.target.element, name, {
+                    removeInteractive: true,
+                    convertTextToOutlines: outlines
+                });
+            } else {
+                // Canvas tools provide an SVG string via config.renderSVG(ctx) if needed.
+                const svgString = typeof this.config.renderSVG === 'function'
+                    ? this.config.renderSVG(this._renderContext())
+                    : await this.target.toSVGString();
+                if (!svgString) { console.warn('exportSVG: no SVG available for canvas target.'); return; }
+                this._downloadText(svgString, name, 'image/svg+xml');
+            }
+        });
     }
 
     async exportPNG(filename, scale = 2) {
-        const name = filename || (this.config.export?.filename || 'export').replace(/\.svg$/, '') + '.png';
-        const { width, height } = this._logicalSize();
-        if (this.target.type === 'canvas') {
-            // Re-render at logical size into an offscreen canvas for crisp output.
-            const off = document.createElement('canvas');
-            off.width = width * scale;
-            off.height = height * scale;
-            const octx = off.getContext('2d');
-            octx.setTransform(scale, 0, 0, scale, 0, 0);
-            if (typeof this.config.renderTo === 'function') {
-                this.config.renderTo({ ...this._renderContext(), ctx2d: octx });
+        return this.runExport('png', async () => {
+            const name = filename || (this.config.export?.filename || 'export').replace(/\.svg$/, '') + '.png';
+            const { width, height } = this._logicalSize();
+            if (this.target.type === 'canvas') {
+                // Re-render at logical size into an offscreen canvas for crisp output.
+                const off = document.createElement('canvas');
+                off.width = width * scale;
+                off.height = height * scale;
+                const octx = off.getContext('2d');
+                octx.setTransform(scale, 0, 0, scale, 0, 0);
+                if (typeof this.config.renderTo === 'function') {
+                    this.config.renderTo({ ...this._renderContext(), ctx2d: octx });
+                } else {
+                    octx.drawImage(this.target.element, 0, 0, width, height);
+                }
+                off.toBlob((blob) => this._downloadBlob(blob, name));
             } else {
-                octx.drawImage(this.target.element, 0, 0, width, height);
+                const svgString = await this.target.toSVGString();
+                await this._rasterizeSVG(svgString, width * scale, height * scale, name);
             }
-            off.toBlob((blob) => this._downloadBlob(blob, name));
-        } else {
-            const svgString = await this.target.toSVGString();
-            await this._rasterizeSVG(svgString, width * scale, height * scale, name);
-        }
+        });
+    }
+
+    async runExport(format, operation) {
+        return this.exportGuard
+            ? this.exportGuard.run(format, operation)
+            : operation();
     }
 
     /* ================================================================== */
@@ -916,11 +961,8 @@ export class ApplicationShell {
     async _sharePreset(name) {
         if (!this.share) return;
         const useCurrent = name === '__unsaved__' || name === '__new__' || name === this.presets.currentName;
-        const blob = useCurrent ? this.getPresetBlob() : this.presetStore.load(name);
-        if (!blob) return;
-        const prefix = this.share.buildShareUrlPrefix();
-        const { encoded } = await this.share.encodeWithBudget(blob, { urlPrefix: prefix });
-        const url = prefix + encoded;
+        const url = await this._buildShareUrl(name, { useCurrent });
+        if (!url) return;
         let copied = false;
         try { await navigator.clipboard.writeText(url); copied = true; } catch (_) { /* ignore */ }
         this._showToast(copied ? 'Link copied' : 'Could not copy link');
@@ -968,9 +1010,17 @@ export class ApplicationShell {
         if (!this.presets) return false;
         if (this.presets.isEphemeral) {
             const wasShared = this.presets.isShared;
+            const suggestedName = typeof this.config.presets?.suggestSaveName === 'function'
+                ? String(this.config.presets.suggestSaveName(this) || '').trim()
+                : '';
             const name = this.dialog
-                ? await this.dialog.prompt({ title: 'Save preset', placeholder: 'Preset name', confirmText: 'Save' })
-                : prompt('Preset name');
+                ? await this.dialog.prompt({
+                    title: 'Save preset',
+                    value: suggestedName,
+                    placeholder: 'Preset name',
+                    confirmText: 'Save'
+                })
+                : prompt('Preset name', suggestedName);
             if (!name) return false;
             let res = wasShared
                 ? this.presets.saveSharedToLibrary(name, { overwrite: false })
@@ -995,12 +1045,34 @@ export class ApplicationShell {
     /** Copy a share link for the current preset to the clipboard. */
     async copyShareLink() {
         if (!this.share) return null;
-        const blob = this.getPresetBlob();
-        const prefix = this.share.buildShareUrlPrefix();
-        const { encoded } = await this.share.encodeWithBudget(blob, { urlPrefix: prefix });
-        const url = prefix + encoded;
+        const name = this.presets?.currentName || null;
+        const url = await this._buildShareUrl(name, { useCurrent: true });
+        if (!url) return null;
         try { await navigator.clipboard.writeText(url); } catch (_) { /* ignore */ }
         return url;
+    }
+
+    async _buildShareUrl(name, { useCurrent = false } = {}) {
+        const persistedName = name && !String(name).startsWith('__') ? name : null;
+        const storedBlob = persistedName ? this.presetStore?.load(persistedName) : null;
+        const currentIsDirty = this.presets?.currentName === persistedName && this.presets.isDirty;
+        if (
+            storedBlob?.seeded === true
+            && !currentIsDirty
+            && this.config.share?.shortSeeded !== false
+        ) {
+            const configuredSlug = typeof this.config.share?.shortSlug === 'function'
+                ? this.config.share.shortSlug(persistedName, storedBlob, this)
+                : persistedName;
+            const shortUrl = this.share.buildShortUrl(configuredSlug);
+            if (shortUrl) return shortUrl;
+        }
+
+        const blob = useCurrent ? this.getPresetBlob() : (storedBlob || this.presetStore?.load(name));
+        if (!blob) return null;
+        const prefix = this.share.buildShareUrlPrefix();
+        const { encoded } = await this.share.encodeWithBudget(blob, { urlPrefix: prefix });
+        return prefix + encoded;
     }
 
     /* ------------------------------- internals -------------------------------- */
@@ -1035,6 +1107,7 @@ export class ApplicationShell {
     destroy() {
         if (this._rafId != null) cancelAnimationFrame(this._rafId);
         this.shortcuts?.destroy();
+        this.mobile?.destroy();
         this.tooltips?.destroy();
         this.target?.destroy();
     }

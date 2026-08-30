@@ -121,4 +121,6 @@ Root workspace оркестрирует приложения, но не заст
 - ADR-007: external runtime is forbidden except user-initiated Google Sheets — accepted.
 - ADR-008: storage starts empty in new namespaces — accepted.
 - ADR-009: applications live directly under `/upgrade/<name>/` — accepted.
-
+- ADR-010: shared CSS is the exact v3/Void base with local font URLs only — accepted.
+- ADR-011: applications consume `framework/src/index.js`; internal imports require a migration note — accepted.
+- ADR-012: Void contributes generic behavior, never runtime files or domain code — accepted.

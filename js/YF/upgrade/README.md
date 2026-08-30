@@ -4,7 +4,7 @@
 
 ## Статус
 
-Gate G1 пройден: восемь приложений скопированы, запускаются из локального индекса и изолированы по файлам, runtime URL, зависимостям и browser storage. Следующая фаза — перенос общего framework v3 без переключения приложений до готовности conformance suite.
+Gate G2 пройден: восемь приложений изолированы, общий framework v3 локализован и расширен, 34 conformance-теста и SVG/Canvas browser demos проходят. Следующая фаза — поочерёдное подключение пяти основных инструментов с сохранением их DOM/CSS и функционала.
 
 Актуальный порядок и критерии работы находятся в [PLAN.md](./PLAN.md), архитектурные границы — в [ARCHITECTURE.md](./ARCHITECTURE.md), прогресс — в [MIGRATION_STATUS.md](./MIGRATION_STATUS.md).
 
@@ -29,6 +29,7 @@ Gate G1 пройден: восемь приложений скопированы
 
 ```sh
 npm run gate:g1:static
+npm run gate:g2:static
 ```
 
 Команда проверяет исходный manifest и baseline, локальные зависимости, storage namespaces, filesystem/network boundaries, 195 тестов Sparky, 165 тестов Pizza Boxer и два worker-набора Wordplayer.
@@ -39,4 +40,4 @@ npm run gate:g1:static
 npm run serve
 ```
 
-Затем открыть `http://127.0.0.1:8000/`. Browser smoke и mobile visual Sparky описаны в [GATE_G1.md](./GATE_G1.md).
+Затем открыть `http://127.0.0.1:8000/`. Browser smoke и mobile visual Sparky описаны в [GATE_G1.md](./GATE_G1.md); общий framework и его SVG/Canvas demos — в [GATE_G2.md](./GATE_G2.md).

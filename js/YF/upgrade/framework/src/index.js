@@ -36,8 +36,12 @@ export { HistoryBridge } from './history/HistoryBridge.js';
 export { PresetStore } from './preset/PresetStore.js';
 export { PresetSession, SHARED_SLOT, NEW_SLOT } from './preset/PresetSession.js';
 export { ShareCodec, SHARE_SOFT_LIMIT_CHARS } from './preset/ShareCodec.js';
-export { SVGExporter } from './export/SVGExporter.js';
+export { SVGExporter, svgDocumentString } from './export/SVGExporter.js';
+export { ExportGuard } from './export/ExportGuard.js';
 export { TextToPath } from './export/TextToPath.js';
+
+// Opt-in responsive coordination
+export { MobileBootstrap } from './mobile/MobileBootstrap.js';
 
 // Effects
 export { WobblyEffect } from './effects/WobblyEffect.js';
@@ -47,6 +51,7 @@ export { GradientStrokeEffect } from './effects/GradientStrokeEffect.js';
 export { ColorUtils } from './utils/ColorUtils.js';
 export { MathUtils } from './utils/MathUtils.js';
 export { NoiseGenerator } from './utils/NoiseGenerator.js';
+export { SeededRandom, seedToUint32 } from './utils/SeededRandom.js';
 export * as StripeGeometry from './geometry/StrokeGeometry.js';
 
 // Config

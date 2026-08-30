@@ -39,7 +39,7 @@ export class SvgTarget extends RenderTarget {
 
     beginFrame() {
         const svg = this.svg;
-        while (svg.firstChild) svg.removeChild(svg.firstChild);
+        svg.replaceChildren();
         const w = this.logicalWidth;
         const h = this.logicalHeight;
         svg.setAttribute('width', w);
@@ -56,7 +56,8 @@ export class SvgTarget extends RenderTarget {
     initZoom(options = {}) {
         if (this.zoomPan) return;
         this.zoomPan = new ZoomPanManager(this.container, this.svg, {
-            fitPadding: options.fitPadding || this.fitPadding
+            fitPadding: options.fitPadding || this.fitPadding,
+            interactive: options.interactive
         });
         this.container.addEventListener('zoomchange', () => {
             this._emitZoomChange(this.zoomPan.getZoomPercent());
@@ -76,6 +77,7 @@ export class SvgTarget extends RenderTarget {
      */
     async toSVGString() {
         const clone = this.svg.cloneNode(true);
+        clone.querySelectorAll('[data-export-exclude="true"]').forEach((element) => element.remove());
         clone.setAttribute('xmlns', SVG_NS);
         clone.setAttribute('width', this.logicalWidth);
         clone.setAttribute('height', this.logicalHeight);

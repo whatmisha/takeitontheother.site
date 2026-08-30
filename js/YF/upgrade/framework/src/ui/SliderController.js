@@ -355,6 +355,16 @@ export class SliderController {
         this.isUpdating = false;
     }
 
+    /** Update visible controls without mutating Settings or preset state. */
+    setDisplayValue(sliderId, value) {
+        const sliderData = this.sliders.get(sliderId);
+        if (!sliderData) return;
+        const { element, valueInput, config } = sliderData;
+        const displayed = this.clamp(value, config.min, config.max);
+        element.value = displayed;
+        this.updateValueDisplay(valueInput, displayed, config);
+    }
+
     /**
      * Get current slider value
      */
@@ -418,4 +428,3 @@ export class SliderController {
         sliderData.valueInput.disabled = !enabled;
     }
 }
-

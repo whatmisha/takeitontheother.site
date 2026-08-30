@@ -16,8 +16,10 @@
 - sliders/ranges, panels, color picker, dice, dialogs, tooltips, zoom/pan;
 - `HistoryManager`, `HistoryBridge`;
 - `PresetStore`, `PresetSession`, `ShareCodec`;
-- `SVGExporter`, `TextToPath`;
+- `SVGExporter`, `svgDocumentString`, `TextToPath`, `ExportGuard`;
+- opt-in `MobileBootstrap`;
 - generic effects, color/math/noise/stripe utilities и timings.
+- `SeededRandom` для воспроизводимых генеративных потоков.
 
 Импорт из внутренних путей считается временным compatibility exception и должен быть записан в migration-карточке приложения.
 
@@ -34,7 +36,13 @@ defineTool({
 });
 ```
 
-Optional capabilities включаются наличием соответствующей секции: `controls`, `panels`, `colorPickers`, `dice`, `presets`, `share`, `export`, `history`, `shortcuts`, `dialog`, `tooltips`, `zoom`. Отключение оформляется `false`, если это поддерживает секция.
+Optional capabilities включаются наличием соответствующей секции: `controls`, `panels`, `colorPickers`, `dice`, `presets`, `share`, `export`, `history`, `shortcuts`, `dialog`, `tooltips`, `zoom`. Отключение оформляется `false`, если это поддерживает секция. `zoom.interactive: false` оставляет fit/centering, но не устанавливает wheel/keyboard/pointer listeners.
+
+`mobile` — строго opt-in. `MobileBootstrap` владеет media-query, root class, viewport CSS variables и снятием listeners; перестройка интерфейса остаётся в `mobile.onChange(app, active)` и app CSS. В текущем наборе capability предназначена только Sparky.
+
+`presets.suggestSaveName(app)` может предложить имя для сохранения временного/полученного по ссылке пресета; окончательное решение остаётся за пользователем. `presets.fetchTimeoutMs` ограничивает ожидание локальной seed-библиотеки и по умолчанию равно 5000 ms.
+
+`presets.migrate(store)` выполняется перед seed и предназначен только для изменения данных уже переданного app-specific store. Он не даёт разрешения читать legacy namespaces. `presets.forceSeed: true` повторно сверяет локальную seed-библиотеку, не перезаписывая пользовательские пресеты с совпадающими именами.
 
 Framework не предполагает конкретную DOM-разметку сверх переданных IDs и documented component classes. Существующие IDs/classes приложения сохраняются до визуального Gate G5.
 
@@ -60,6 +68,10 @@ Hook не должен писать в другое приложение или 
 
 Render должен быть детерминированным при одинаковом состоянии и seed. Случайность передаётся явно через setting/configurable RNG.
 
+`SeededRandom` принимает числовой или строковый seed, имеет сериализуемый state и независимые `fork(label)` streams. Он не заменяет существующий алгоритм приложения во время parity-миграции: adapter должен сохранить прежнюю последовательность, если она влияет на результат.
+
+SVG-узлы с `data-export-exclude="true"` удаляются из файла. `data-fit-artboard="true"` на корневом SVG заставляет zoom/fit использовать логические размеры артборда, даже если guides выступают наружу. `SliderController.setDisplayValue()` меняет только отображение, не state. `PanelManager.toggleAllCollapsed()` восстанавливает именно набор ранее раскрытых панелей.
+
 ## 6. Storage
 
 Каждое приложение обязано передать уникальный versioned key вида `upgrade:<tool>:<purpose>:vN`. IndexedDB использует `upgrade-<tool>-vN`. Автоматическое чтение старых namespaces запрещено.
@@ -70,9 +82,14 @@ Framework fallback — `upgrade:framework:presets:v1`; он предназнач
 
 Runtime assets загружаются только same-origin:
 
-- `SVGExporter` вычисляет local jsPDF/svg2pdf URLs через `import.meta.url` и принимает `pdfLibPaths` override;
-- `TextToPath` вычисляет local OpenType/font URLs через `import.meta.url` и принимает `opentypeUrl`/`fontPaths` override;
+- `SVGExporter` вычисляет local jsPDF/svg2pdf URLs через `import.meta.url`, принимает `pdfLibPaths` override, не дублирует параллельные загрузки и поддерживает outline либо editable-text PDF с явно переданными fonts;
+- `svgDocumentString` добавляет XML declaration и заменяет non-ASCII символы numeric entities для переносимого SVG-файла;
+- `TextToPath` сначала загружает local ESM OpenType, затем использует local classic fallback; доступны `opentypeModuleUrl`/`opentypeUrl`/`fontPaths` overrides;
 - CSS использует `framework/fonts`.
+
+`ExportGuard` оборачивает framework SVG/PNG export: `export.prepare` может лениво заполнить отсутствующие caches, но если preparation или export изменили captured state, guard восстанавливает точный pre-export snapshot. Для внешних caches приложение задаёт `export.captureState`/`restoreState`; обычный settings/history snapshot используется по умолчанию. Export renderer всё равно обязан быть детерминированным и не вызывать новый random roll.
+
+Для неизменённого bundled preset (`seeded: true`) framework копирует короткий `?preset=<slug>` URL. Изменённый, пользовательский, New или Shared preset получает полный `#p=v1…` payload. `share.shortSlug(name, blob, app)` позволяет задать стабильный slug; `share.shortSeeded: false` отключает short URL.
 
 Единственное внешнее runtime-исключение всей среды — user-initiated Google Sheets в Sticky Fingers; framework его не реализует.
 

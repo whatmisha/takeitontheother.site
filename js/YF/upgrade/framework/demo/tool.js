@@ -6,18 +6,7 @@
  * control, color pickers, draggable/collapsible panels, zoom/pan, undo/redo,
  * presets, share links, export and tooltips — is provided by `defineTool`.
  */
-import { defineTool } from '../src/core/defineTool.js';
-
-/* Tiny deterministic PRNG so renders (and undo/redo) are reproducible. */
-function mulberry32(seed) {
-    let a = seed >>> 0;
-    return function () {
-        a |= 0; a = (a + 0x6D2B79F5) | 0;
-        let t = Math.imul(a ^ (a >>> 15), 1 | a);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-}
+import { defineTool, SeededRandom } from '../src/index.js';
 const lerp = (a, b, t) => a + (b - a) * t;
 
 const app = defineTool({
@@ -117,13 +106,13 @@ const app = defineTool({
         const cw = width / s.cols;
         const ch = height / s.rows;
         const base = Math.min(cw, ch);
-        const rng = mulberry32((s.seed >>> 0) || 1);
+        const rng = new SeededRandom((s.seed >>> 0) || 1);
 
         for (let r = 0; r < s.rows; r++) {
             for (let c = 0; c < s.cols; c++) {
                 const cx = c * cw + cw / 2;
                 const cy = r * ch + ch / 2;
-                const scale = s.randomScale ? lerp(s.scaleMin, s.scaleMax, rng()) : s.scale;
+                const scale = s.randomScale ? lerp(s.scaleMin, s.scaleMax, rng.next()) : s.scale;
                 const size = base * scale;
                 if (s.square) {
                     const rect = create('rect', {

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Studio — Othersite UI Framework v3 demo</title>
+    <link id="frameworkStyles" rel="stylesheet" href="../css/othersite-styles.css">
+    <link id="applicationStyles" rel="stylesheet" href="./demo.css">
+</head>
+<body>
+    <div class="container">
+        <div class="top-links">
+            <a href="../../" class="top-link">←Upgrade Tools</a>
+            <div class="zoom-indicator" id="zoomIndicator">100%</div>
+        </div>
+        <main class="main-content">
+            <h1 class="sr-only">Canvas Studio</h1>
+            <div class="canvas-container" id="canvasContainer">
+                <canvas id="mainCanvas" role="img" aria-label="Deterministic canvas preview"></canvas>
+            </div>
+            <aside class="controls-panel canvas-demo-panel" id="canvasPanel">
+                <div class="panel-header" id="canvasPanelHeader">
+                    <span>Canvas</span>
+                    <span class="collapse-icon" aria-hidden="true">⌄</span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="countSlider"><span>Count</span><input class="value-display" id="countValue" value="36"></label>
+                            <input type="range" id="countSlider" min="4" max="100" value="36" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="radiusSlider"><span>Radius</span><input class="value-display" id="radiusValue" value="12"></label>
+                            <input type="range" id="radiusSlider" min="2" max="40" value="12" step="1">
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        </main>
+        <nav class="bottom-buttons">
+            <button class="btn-fixed" id="shuffleBtn" type="button">Shuffle</button>
+            <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
+        </nav>
+    </div>
+    <script type="module" src="./tool.js"></script>
+</body>
+</html>

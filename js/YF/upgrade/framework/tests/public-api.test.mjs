@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readdir, readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
@@ -8,16 +9,24 @@ const testsDir = path.dirname(fileURLToPath(import.meta.url));
 const frameworkRoot = path.dirname(testsDir);
 const srcRoot = path.join(frameworkRoot, 'src');
 
+function sha256(text) {
+    return createHash('sha256').update(text).digest('hex');
+}
+
+function localizeFrameworkFonts(text) {
+    return text.replaceAll('https://mishaivanov.ru/fonts/', '../fonts/');
+}
+
 test('public barrel exports the documented framework surface', async () => {
     const api = await import('../src/index.js');
     const expected = [
         'ApplicationShell', 'CanvasTarget', 'ColorPicker', 'DOMCache', 'DialogHost',
-        'DicePanel', 'GradientStrokeEffect', 'HistoryBridge', 'HistoryManager',
-        'MathUtils', 'NoiseGenerator', 'PanelManager', 'PresetSession', 'PresetStore',
+        'DicePanel', 'ExportGuard', 'GradientStrokeEffect', 'HistoryBridge', 'HistoryManager',
+        'MathUtils', 'MobileBootstrap', 'NoiseGenerator', 'PanelManager', 'PresetSession', 'PresetStore',
         'RangeSliderController', 'RenderTarget', 'SVGExporter', 'SHARED_SLOT',
-        'ShareCodec', 'ShortcutRouter', 'SliderController', 'StripeGeometry',
+        'SeededRandom', 'ShareCodec', 'ShortcutRouter', 'SliderController', 'StripeGeometry',
         'SvgTarget', 'TextToPath', 'TooltipService', 'UnifiedColorPicker',
-        'WobblyEffect', 'ZoomPanManager', 'defineTool'
+        'WobblyEffect', 'ZoomPanManager', 'defineTool', 'seedToUint32', 'svgDocumentString'
     ];
     for (const name of expected) assert.ok(name in api, `Missing public export: ${name}`);
 });
@@ -51,7 +60,7 @@ test('framework source graph stays local and application-agnostic', async () => 
             assert.ok(resolved.startsWith(`${frameworkRoot}${path.sep}`));
         }
     }
-    assert.equal(files.length, 33);
+    assert.equal(files.length, 36);
 });
 
 test('working CSS and exporters use checked-in same-origin assets', async () => {
@@ -64,6 +73,49 @@ test('working CSS and exporters use checked-in same-origin assets', async () => 
     assert.match(svgExporter, /new URL\('\.\.\/\.\.\/vendor\/jspdf\/2\.5\.1/);
     assert.match(svgExporter, /new URL\('\.\.\/\.\.\/vendor\/svg2pdf\/2\.2\.3/);
     assert.match(textToPath, /new URL\('\.\.\/\.\.\/vendor\/opentype\/1\.3\.4/);
+    assert.match(textToPath, /opentype\.module\.js/);
+});
+
+test('working CSS is the exact v3/Void component base with only local font URLs', async () => {
+    const provenance = JSON.parse(await readFile(path.join(frameworkRoot, 'CSS_PROVENANCE.json'), 'utf8'));
+    const pairs = [
+        ['css/othersite-styles.css', provenance.upstreamStylesSha256, provenance.workingStylesSha256],
+        ['css/tokens.css', provenance.upstreamTokensSha256, provenance.workingTokensSha256]
+    ];
+    for (const [relativePath, upstreamHash, workingHash] of pairs) {
+        const upstream = await readFile(path.join(frameworkRoot, 'upstream-v3', relativePath), 'utf8');
+        const working = await readFile(path.join(frameworkRoot, relativePath), 'utf8');
+        assert.equal(sha256(upstream), upstreamHash);
+        assert.equal(sha256(working), workingHash);
+        assert.equal(localizeFrameworkFonts(upstream), working);
+    }
+});
+
+test('SVG and Canvas demos load host CSS after framework CSS', async () => {
+    for (const directory of ['demo', 'demo-canvas']) {
+        const html = await readFile(path.join(frameworkRoot, directory, 'index.html'), 'utf8');
+        const frameworkIndex = html.indexOf('id="frameworkStyles"');
+        const applicationIndex = html.indexOf('id="applicationStyles"');
+        assert.ok(frameworkIndex >= 0, `${directory} missing framework stylesheet`);
+        assert.ok(applicationIndex > frameworkIndex, `${directory} app stylesheet must load second`);
+        assert.match(html, new RegExp(`<script[^>]+src="\\./tool\\.js"`));
+    }
+});
+
+test('preset save supports a tool-provided suggested name', async () => {
+    const source = await readFile(path.join(srcRoot, 'core/ApplicationShell.js'), 'utf8');
+    assert.match(source, /presets\?\.suggestSaveName/);
+    assert.match(source, /value:\s*suggestedName/);
+});
+
+test('SVG render and export honor tool-level interaction and exclusion markers', async () => {
+    const target = await readFile(path.join(srcRoot, 'render/SvgTarget.js'), 'utf8');
+    const zoom = await readFile(path.join(srcRoot, 'ui/ZoomPanManager.js'), 'utf8');
+    const exporter = await readFile(path.join(srcRoot, 'export/SVGExporter.js'), 'utf8');
+    assert.match(target, /interactive:\s*options\.interactive/);
+    assert.match(target, /data-export-exclude/);
+    assert.match(zoom, /dataset\?\.fitArtboard/);
+    assert.match(exporter, /data-export-exclude/);
 });
 
 test('demo uses an isolated storage namespace', async () => {

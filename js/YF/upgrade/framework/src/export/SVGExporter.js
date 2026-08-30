@@ -8,6 +8,7 @@ export class SVGExporter {
     constructor(options = {}) {
         this.textToPath = options.textToPath || null;
         this.pdfLibsLoaded = false;
+        this.pdfLibsPromise = null;
         this.pdfLibPaths = {
             jsPDF: new URL('../../vendor/jspdf/2.5.1/jspdf.umd.min.js', import.meta.url).href,
             svg2pdf: new URL('../../vendor/svg2pdf/2.2.3/svg2pdf.umd.min.js', import.meta.url).href,
@@ -40,7 +41,7 @@ export class SVGExporter {
         }
 
         const serializer = new XMLSerializer();
-        const svgString = serializer.serializeToString(clonedSvg);
+        const svgString = svgDocumentString(serializer.serializeToString(clonedSvg));
         this._downloadBlob(svgString, filename, 'image/svg+xml;charset=utf-8');
     }
 
@@ -48,30 +49,22 @@ export class SVGExporter {
      * Загрузить библиотеки для PDF (jsPDF + svg2pdf)
      */
     async loadPDFLibraries() {
-        if (this.pdfLibsLoaded) return;
+        const hasJsPDF = () => !!window.jspdf?.jsPDF;
+        const hasSvg2pdf = () => !!(window.svg2pdf?.svg2pdf || window.svg2pdf);
+        if (this.pdfLibsLoaded && hasJsPDF() && hasSvg2pdf()) return;
+        if (this.pdfLibsPromise) return this.pdfLibsPromise;
 
-        return new Promise((resolve, reject) => {
-            if (window.jspdf) {
-                this.pdfLibsLoaded = true;
-                resolve();
-                return;
-            }
+        this.pdfLibsPromise = (async () => {
+            await this._loadExportLib(this.pdfLibPaths.jsPDF, hasJsPDF, 'jsPDF');
+            await this._loadExportLib(this.pdfLibPaths.svg2pdf, hasSvg2pdf, 'svg2pdf.js');
+            this.pdfLibsLoaded = true;
+        })();
 
-            const jsPDFScript = document.createElement('script');
-            jsPDFScript.src = this.pdfLibPaths.jsPDF;
-            jsPDFScript.onload = () => {
-                const svg2pdfScript = document.createElement('script');
-                svg2pdfScript.src = this.pdfLibPaths.svg2pdf;
-                svg2pdfScript.onload = () => {
-                    this.pdfLibsLoaded = true;
-                    resolve();
-                };
-                svg2pdfScript.onerror = () => reject(new Error('Failed to load svg2pdf.js'));
-                document.head.appendChild(svg2pdfScript);
-            };
-            jsPDFScript.onerror = () => reject(new Error('Failed to load jsPDF'));
-            document.head.appendChild(jsPDFScript);
-        });
+        try {
+            await this.pdfLibsPromise;
+        } finally {
+            this.pdfLibsPromise = null;
+        }
     }
 
     /**
@@ -80,6 +73,8 @@ export class SVGExporter {
      * @param {string} filename
      * @param {Object} options
      * @param {boolean} [options.removeInteractive]
+     * @param {boolean} [options.convertTextToOutlines=true]
+     * @param {Array<{fileName:string,family:string,style?:string,weight?:number,data:ArrayBuffer|Uint8Array|string,preserveVariations?:boolean}>} [options.fonts]
      * @param {string} [options.unit] — 'mm', 'pt', 'in', 'px'
      * @param {Object} [options.format] — { width, height }
      */
@@ -93,7 +88,7 @@ export class SVGExporter {
             this.removeInteractiveElements(clonedSvg);
         }
 
-        if (this.textToPath) {
+        if (options.convertTextToOutlines !== false && this.textToPath) {
             try {
                 await this.textToPath.convertAllTextToPaths(clonedSvg);
             } catch (error) {
@@ -112,8 +107,11 @@ export class SVGExporter {
         const pdf = new jsPDF({
             orientation: pageWidth > pageHeight ? 'landscape' : 'portrait',
             unit,
-            format: options.format ? [pageWidth, pageHeight] : undefined
+            format: options.format ? [pageWidth, pageHeight] : undefined,
+            putOnlyUsedFonts: true
         });
+
+        this._registerPDFFonts(pdf, options.fonts || []);
 
         if (!options.format) {
             pdf.internal.pageSize.setWidth(pageWidth);
@@ -131,6 +129,31 @@ export class SVGExporter {
         });
 
         pdf.save(filename);
+    }
+
+    /**
+     * Register optional fonts so svg2pdf can keep SVG text editable in the PDF.
+     * Variable fonts may opt into preserving their complete OpenType program.
+     */
+    _registerPDFFonts(pdf, fonts = []) {
+        for (const font of fonts) {
+            if (!font?.data || !font.family) continue;
+            const fileName = font.fileName || `${font.family}.ttf`;
+            const style = font.style || 'normal';
+            const weight = Number(font.weight) || 400;
+            pdf.addFileToVFS(fileName, pdfFontDataBase64(font.data));
+            pdf.addFont(fileName, font.family, style, weight);
+
+            if (font.preserveVariations) {
+                pdf.setFont(font.family, style, weight);
+                const metadata = pdf.getFont()?.metadata;
+                if (!metadata?.subset || !metadata?.rawData) {
+                    throw new Error(`Could not preserve variable font data for ${font.family}.`);
+                }
+                const fullFontData = Array.from(metadata.rawData);
+                metadata.subset.encode = () => fullFontData;
+            }
+        }
     }
 
     /**
@@ -201,6 +224,7 @@ export class SVGExporter {
         const selectors = [
             '.resize-handle', '.hover-overlay',
             '[data-interactive="true"]',
+            '[data-export-exclude="true"]',
             '[class*="handle"]', '[class*="hover"]'
         ];
         selectors.forEach(sel => {
@@ -220,6 +244,49 @@ export class SVGExporter {
         return cloned;
     }
 
+    async _loadExportLib(src, isReady, label) {
+        if (isReady()) return;
+        const url = new URL(src, document.baseURI).href;
+        try {
+            await import(url);
+            if (isReady()) return;
+        } catch (_) {
+            // UMD/classic bundles are expected to fail module import in some browsers.
+        }
+        await this._loadScriptOnce(url, isReady, label);
+    }
+
+    _loadScriptOnce(src, isReady, label) {
+        if (isReady()) return Promise.resolve();
+        return new Promise((resolve, reject) => {
+            const selector = `script[data-export-lib="${label}"]`;
+            const existing = document.querySelector(selector);
+            if (existing) {
+                if (existing.dataset.exportLibState === 'loaded') {
+                    reject(new Error(`${label} loaded but did not expose its API`));
+                    return;
+                }
+                existing.addEventListener('load', resolve, { once: true });
+                existing.addEventListener('error', () => reject(new Error(`Failed to load ${label}`)), { once: true });
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = src;
+            script.dataset.exportLib = label;
+            script.onload = () => {
+                script.dataset.exportLibState = 'loaded';
+                resolve();
+            };
+            script.onerror = () => {
+                script.dataset.exportLibState = 'error';
+                reject(new Error(`Failed to load ${label}`));
+            };
+            document.head.appendChild(script);
+        }).then(() => {
+            if (!isReady()) throw new Error(`${label} loaded but did not expose its API`);
+        });
+    }
+
     /** @private */
     _downloadBlob(content, filename, mimeType) {
         const blob = new Blob([content], { type: mimeType });
@@ -232,4 +299,29 @@ export class SVGExporter {
         document.body.removeChild(link);
         setTimeout(() => URL.revokeObjectURL(url), 100);
     }
+}
+
+/** Return a standalone, XML-declared SVG document with non-ASCII XML entities. */
+export function svgDocumentString(serialized = '') {
+    const asciiSafe = String(serialized).replace(/[^\x00-\x7F]/gu, (character) =>
+        `&#x${character.codePointAt(0).toString(16).toUpperCase()};`);
+    return `<?xml version="1.0" encoding="UTF-8"?>\n${asciiSafe}`;
+}
+
+function pdfFontDataBase64(data) {
+    if (typeof data === 'string') return data;
+    const bytes = data instanceof Uint8Array
+        ? data
+        : data instanceof ArrayBuffer
+            ? new Uint8Array(data)
+            : ArrayBuffer.isView(data)
+                ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+                : null;
+    if (!bytes) throw new Error('Unsupported PDF font data.');
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+    }
+    return btoa(binary);
 }

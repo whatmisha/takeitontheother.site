@@ -1,0 +1,4 @@
+/* Host stylesheet deliberately loads after framework CSS; visual rules remain app-owned. */
+.framework-demo-host {
+    --demo-css-layer: application;
+}
