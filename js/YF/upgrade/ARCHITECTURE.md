@@ -9,11 +9,11 @@
 | Область | Источник истины | Роль альтернатив |
 |---|---|---|
 | UI framework | Othersite UI Framework v3 | Fork-улучшения Keyboarder и Sparky переносятся после тестирования |
-| Sparky | верхний `lunnen/sparky` | Локальный framework — donor универсальных расширений |
+| Sparky | верхний `lunnen/sparky` | Общий framework подключён; animation/mobile/export orchestration частные |
 | Pizza Boxer | верхний `lunnen/grid_generator` | `grid_generator/v2` — donor, не текущий runtime |
 | Sticky Fingers | верхний `lunnen/label_generator` | Старые framework-компоненты заменяются через façade |
-| Keyboarder | верхний `lunnen/keyboarder` | Локальный framework — donor export/preset улучшений |
-| Wordplayer | верхний `lunnen/wordplayer` | Локальный foundation заменяется общим framework |
+| Keyboarder | верхний `lunnen/keyboarder` | Общий framework подключён; geometry/legends/import/export wrappers частные |
+| Wordplayer | верхний `lunnen/wordplayer` | Общий framework подключён; renderer/workers/export остаются частными |
 | Wander Bender | трёхрежимный верхний инструмент | `pattern/` — donor v3-реализации Random mode |
 | Void | активный root проекта без `wip/` | Donor общих принципов; приложение не копируется |
 

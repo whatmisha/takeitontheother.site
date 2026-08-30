@@ -1,4 +1,4 @@
-import { defineTool } from './framework/src/core/defineTool.js?v=20260826-1';
+import { defineTool } from '../framework/src/index.js';
 import {
     DEFAULT_GEOMETRY,
     buildCharacterGeometry
@@ -2619,7 +2619,7 @@ const app = defineTool({
         syncFocusControls(tool);
         syncFocusAnimationControls(tool);
     },
-    export: { filename: 'sparky.svg' },
+    export: { filename: 'sparky.svg', guard: false },
     zoom: {
         interactive: false,
         fitPadding: { top: 58, right: 58, bottom: 58, left: 58 }

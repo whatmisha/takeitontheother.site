@@ -9,7 +9,7 @@
 | G0 | Документы, source manifest, test/visual/runtime baselines | Passed |
 | G1 | Восемь автономных копий, paths/storage/network isolation | Passed |
 | G2 | Общий framework и conformance suite | Passed |
-| G3 | Wordplayer, Keyboarder, Sparky, Pizza Boxer, Sticky Fingers | Not started |
+| G3 | Wordplayer, Keyboarder, Sparky, Pizza Boxer, Sticky Fingers | In progress (Wordplayer + Keyboarder + Sparky complete) |
 | G4 | Pulsar Coder, Dither, Wander Bender | Not started |
 | G5 | Последующая визуальная и API-унификация | Not started |
 
@@ -24,7 +24,7 @@
 | UPG-010 | Чистое копирование | Complete | 915 файлов сверены до relocation-правок |
 | UPG-011 | Relocation paths | Complete | Browser smoke + boundary scan |
 | UPG-012 | Upgrade index | Complete | Восемь относительных ссылок |
-| UPG-013 | Local vendor/fonts | Complete | 11 copied assets + 3 pinned downloads |
+| UPG-013 | Local vendor/fonts | Complete | 5 source-backed + 6 canonical assets + 3 pinned downloads |
 | UPG-014 | Storage isolation | Complete | 6 original sentinel keys неизменны |
 | UPG-015 | Boundary scanner | Complete | `npm run check:isolation` |
 | UPG-020 | v3 snapshot и working framework | Complete | 50 immutable / 15 modified upstream files |
@@ -34,6 +34,9 @@
 | UPG-024 | Void principles | Complete | history audit, RNG/share/export/mobile tests |
 | UPG-025 | CSS compatibility | Complete | exact v3/Void base, local font-only diff |
 | UPG-026 | Framework conformance | Complete | SVG/Canvas browser demos, `gate:g2:static` |
+| UPG-030 | Wordplayer Canvas-canary | Complete | public barrel/CSS, no local foundation, workers + browser parity |
+| UPG-031 | Keyboarder SVG-canary | Complete | public barrel/CSS, no local framework, SVG/PDF + browser parity |
+| UPG-032 | Sparky priority migration | Complete | 196 tests; exact desktop + 390×844 + 430×932 browser parity |
 
 ## Подтверждённые исходные результаты
 
@@ -41,8 +44,9 @@
 |---|---|
 | Pizza Boxer top-level | 165/165 tests pass; source/public runtime checks pass |
 | Pizza Boxer `v2` donor | 221/222; один failure в Node test mock без `requestAnimationFrame` |
-| Sparky | 195/195 tests pass |
-| Wordplayer | Dither worker и Forms worker tests pass |
+| Sparky | 196/196 tests pass (195 исходных + shared-framework boundary) |
+| Wordplayer | Shared-framework boundary, Dither worker и Forms worker tests pass |
+| Keyboarder | Boundary + 5 domain suites; SVG text/outline и editable PDF browser export pass |
 | Остальные | Формального полного test suite нет; требуется manual/browser baseline |
 
 ## Известные исходные особенности
@@ -65,4 +69,4 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-UPG-030: подключить Wordplayer к публичному API общего framework как Canvas-canary, сохранив renderer, workers, caches, DOM/CSS и export. После browser/worker parity перейти к Keyboarder.
+UPG-033: подключить Pizza Boxer через тонкий React/framework adapter, не меняя geometry/domain components, IndexedDB schema и публичный production runtime.

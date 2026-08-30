@@ -7,14 +7,13 @@
  * В интерфейсе размеры сетки — только мм, кегли (когда появятся) — только pt. Внутри геометрия
  * по-прежнему в px (= pt = 1/72″), перевод через toPx / toMm.
  */
-import { defineTool } from '../vendor/framework/src/core/defineTool.js';
+import { defineTool, SVGExporter } from '../../framework/src/index.js';
 import { installKeyboarderPerf, perfEnabled, perfMarkStartup, perfNow, perfRecord, perfSince } from './perf.js';
 import { buildLayout, gapOf, widthInU } from './kb/grid.js';
 import { attachGuides } from './kb/guides.js';
 import { LAYOUT_OPTIONS, LAYOUTS, LCAKB23 } from './kb/layouts.js';
 import { toMm, toPx } from './kb/units.js';
 import { loadTypeface, parseFont } from './kb/typography.js?v=20260818-pdf-editable-text-v1';
-import { SVGExporter } from '../vendor/framework/src/export/SVGExporter.js?v=20260818-pdf-variable-font-v2';
 import { Compensator, YS_TEXT_REGULAR } from './kb/compensate.js';
 import { attachContent, buildLegends, textPath } from './kb/legends.js';
 import {
@@ -210,7 +209,7 @@ const PRESET_NAME_MIGRATIONS = {
     'Work 1 L Pad': 'Work 1.0 L Pad'
 };
 const REFERENCE_FONT_ID = 'reference';
-const REFERENCE_FONT_URL = 'Fonts/YS%20Text%20Variable/YSText-Upright-weight-VF.ttf';
+const REFERENCE_FONT_URL = 'fonts/YS%20Text%20Variable/YSText-Upright-weight-VF.ttf';
 const UI_MODE_STORAGE_KEY = 'upgrade:keyboarder:ui-mode:v1';
 let UI_ADVANCED = false;
 const REFERENCE_FONT_FAMILY = 'YS Text';

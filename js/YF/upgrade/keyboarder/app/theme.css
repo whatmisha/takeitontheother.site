@@ -1,19 +1,17 @@
 /**
  * Keyboarder — оверрайд токенов и собственные компоненты.
  *
- * Подключается ПОСЛЕ vendor/framework/css/othersite-styles.css. Компонентный CSS фреймворка
+ * Подключается ПОСЛЕ ../framework/css/othersite-styles.css. Компонентный CSS фреймворка
  * не форкаем, только переопределяем кастомные свойства и добавляем то, чего в нём нет.
  */
 
 /**
- * CoFo Sans is bundled here for local keyboarder-only dev servers. The framework stylesheet
- * points at mishaivanov.ru, which can fail under @font-face CORS; keeping the UI font next to
- * the tool avoids remote requests and keeps browser QA logs quiet.
+ * Keep Keyboarder's original font-display behavior while using the shared local CoFo files.
  */
 @font-face {
     font-family: 'CoFo Sans';
-    src: url('../Fonts/CoFo%20Sans/CoFoSans-Regular.woff2') format('woff2'),
-         url('../Fonts/CoFo%20Sans/CoFoSans-Regular.woff') format('woff');
+    src: url('../../framework/fonts/CoFoSans-Regular.woff2') format('woff2'),
+         url('../../framework/fonts/CoFoSans-Regular.woff') format('woff');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -21,8 +19,8 @@
 
 @font-face {
     font-family: 'CoFo Sans';
-    src: url('../Fonts/CoFo%20Sans/CoFoSans-Medium.woff2') format('woff2'),
-         url('../Fonts/CoFo%20Sans/CoFoSans-Medium.woff') format('woff');
+    src: url('../../framework/fonts/CoFoSans-Medium.woff2') format('woff2'),
+         url('../../framework/fonts/CoFoSans-Medium.woff') format('woff');
     font-weight: 500;
     font-style: normal;
     font-display: swap;
@@ -30,7 +28,7 @@
 
 @font-face {
     font-family: 'YS Text';
-    src: url('../Fonts/YS%20Text%20Variable/YSText-Upright-weight-VF.ttf') format('truetype');
+    src: url('../fonts/YS%20Text%20Variable/YSText-Upright-weight-VF.ttf') format('truetype');
     font-weight: 100 900;
     font-style: normal;
     font-display: swap;

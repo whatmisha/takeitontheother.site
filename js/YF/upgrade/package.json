@@ -21,8 +21,9 @@
     "test:sparky": "npm --prefix sparky test",
     "test:framework": "npm --prefix framework test",
     "test:pizza": "npm --prefix grid_generator/tools test",
-    "test:wordplayer": "node wordplayer/tests/dither-worker.test.mjs && node wordplayer/tests/forms-worker.test.mjs",
-    "test:tier1": "npm run test:framework && npm run test:sparky && npm run test:pizza && npm run test:wordplayer",
+    "test:wordplayer": "node wordplayer/tests/framework-boundary.test.mjs && node wordplayer/tests/dither-worker.test.mjs && node wordplayer/tests/forms-worker.test.mjs",
+    "test:keyboarder": "node keyboarder/tests/framework-boundary.test.mjs && node keyboarder/analysis/svg-export-encoding.mjs && node keyboarder/analysis/svg-geometry.mjs && node keyboarder/analysis/model-io.mjs && node keyboarder/analysis/presets.mjs && node keyboarder/analysis/layout-content.mjs",
+    "test:tier1": "npm run test:framework && npm run test:sparky && npm run test:pizza && npm run test:wordplayer && npm run test:keyboarder",
     "gate:g1:static": "npm run gate:g0 && npm run check:isolation && npm run test:tier1",
     "gate:g2:static": "npm run gate:g0 && npm run check:isolation && npm run test:tier1"
   }

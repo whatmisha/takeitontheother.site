@@ -1,4 +1,4 @@
-import { defineTool } from './src/foundation/core/defineTool.js';
+import { defineTool } from '../framework/src/index.js';
 import { DEFAULT_SETTINGS, SLIDER_DEFINITIONS } from './src/config/defaults.js';
 import { WordplayerExporter } from './src/export/exporters.js';
 import { AssetController } from './src/io/assets.js';

@@ -80,7 +80,7 @@ globalThis.localStorage = memoryStorage;
 
 const presetStoreUrl = pathToFileURL(path.join(
     upgradeRoot,
-    'wordplayer/src/foundation/preset/PresetStore.js'
+    'framework/src/preset/PresetStore.js'
 )).href;
 const { PresetStore } = await import(`${presetStoreUrl}?storage-isolation-check=1`);
 

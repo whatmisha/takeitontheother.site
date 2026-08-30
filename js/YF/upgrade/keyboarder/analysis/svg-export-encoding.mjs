@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { svgDocumentString } from '../vendor/framework/src/export/SVGExporter.js';
+import { svgDocumentString } from '../../framework/src/index.js';
 
 const source = '<svg xmlns="http://www.w3.org/2000/svg"><text>Ё й →</text></svg>';
 const encoded = svgDocumentString(source);

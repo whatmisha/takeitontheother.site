@@ -32,7 +32,7 @@ npm run gate:g1:static
 npm run gate:g2:static
 ```
 
-Команда проверяет исходный manifest и baseline, локальные зависимости, storage namespaces, filesystem/network boundaries, 195 тестов Sparky, 165 тестов Pizza Boxer и два worker-набора Wordplayer.
+Команда проверяет исходный manifest и baseline, локальные зависимости, storage namespaces, filesystem/network boundaries, framework/domain suites Wordplayer и Keyboarder, 196 тестов Sparky и 165 тестов Pizza Boxer.
 
 Для локального просмотра:
 

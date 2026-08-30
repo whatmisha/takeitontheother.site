@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { PanelManager } from '../framework/src/ui/PanelManager.js';
+import { PanelManager } from '../../framework/src/index.js';
 
 function fakeClassList(initial = []) {
     const values = new Set(initial);

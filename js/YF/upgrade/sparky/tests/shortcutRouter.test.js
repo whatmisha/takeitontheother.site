@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { ShortcutRouter } from '../framework/src/core/ShortcutRouter.js';
+import { ShortcutRouter } from '../../framework/src/index.js';
 
 function keyboardEvent(overrides = {}) {
     return {
