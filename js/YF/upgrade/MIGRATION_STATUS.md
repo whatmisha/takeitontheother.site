@@ -1,6 +1,6 @@
 # Migration Status
 
-Последнее обновление: 2026-08-31.
+Последнее обновление: 2026-09-01.
 
 ## Gates
 
@@ -73,11 +73,43 @@
 | UPG-054k | Pulsar shared ordinary-range canary | Complete | shared thumb/track/hover/focus + one 6 px reset bridge; normal/hover/focus byte-exact; 8 ranges/panels/22 input-select states/40 180-char SVG exact; 8 tests + Gate G4 |
 | UPG-054l | Direct canonical range verification | Complete | Sparky 24+3, Wordplayer 20+3, Keyboarder 0+3; no production diff; shared skin/HSB gradients/docking/live restore and compact Forms protected |
 | UPG-054m | Wander shared ordinary-range rollout | Complete | 19 shared ranges + 6 px reset bridge; private disabled Auto/Max exact; byte-identical Radial/Random/Flow captures/SVG, dynamic max 15; 10 tests |
+| UPG-054n | Pizza Boxer shared ordinary-range rollout | Complete | 26 ordinary ranges use shared skin + 6 px reset bridge; three HSB ranges/history remain private; default/hover/focus/HSB/Paragraph/Graphics exact; 15-asset rebuild; 167 tests |
+| UPG-054o | Shared/private HSB boundary | Complete | nine shared 12 px-thumb ranges + three private Pizza 8 px-thumb ranges; gradients, HEX/output, docking and restore verified; 36 framework + 167 Pizza tests |
+| UPG-054p | Dither private + Sticky zero-range boundary | Complete | Dither keeps 10 ordinary + 3 HSB raster-safe ranges with 10 px thumb/private timing; Sticky keeps 0 ranges + 40 native numbers; 11 + 5 tests |
+| UPG-054q | Range component gate | Complete | `check:ranges` enforces 97 shared ordinary + 9 shared HSB + 16 private = 122 and Sticky 0; full Gate G4, isolation and all app suites pass |
+| UPG-054r | Toggle/segmented compatibility matrix | Complete | 77 checkbox + 37 radio = 114 native controls; seven presentation families, private variants and UPG-054s–y rollout fixed; production unchanged |
+| UPG-054s | Toggle contract gate + direct shared verification | Complete | `check:toggles` gates 114 native controls and family ownership; Sparky desktop/mobile, Keyboarder and Wordplayer checked/restored; production unchanged |
+| UPG-054t | Pulsar shared checkbox/segmented canary | Complete | shared 33×18 checkbox base + segmented font token; scoped `revert-layer`/0.85rem bridge; exact screenshot/state/panels/22 fields/40,180-char SVG; 8 tests |
+| UPG-054u | Wander Bender shared segmented rollout | Complete | one 3-radio segment uses shared presentation through scoped `revert-layer`/0.85rem bridge; byte-identical screenshot and 48-control state; three SVG modes and private Auto/Max exact; 10 tests |
+| UPG-054v | Pizza Boxer shared choice rollout | Complete | 15 chips, 7 checkbox-label, 4 segments and 1 switch use shared presentation; exact default screenshot/113 fields/components/SVG, Paragraph/Graphics state and round-trips; 15-asset rebuild; 167 tests |
+| UPG-054w | Sticky Fingers shared choice rollout | Complete | 9 chips, 10 checkbox-label, 2 segments and 3 switches use shared presentation; exact normal/edit state, component styles, panels and SVG; focus/round-trip accepted; 5 tests + Gate G4 |
+| UPG-054x | Dither raster-safe shared choice rollout | Complete | 2 checkbox-label + 1 segment use shared presentation; scoped 1/1/2 px + gap bridge; 4 export checks stay private; 0 changed Canvas RGB channels in default/Bayer/Pixel4; 11 tests + Gate G4 |
+| UPG-054y | Toggle component gate | Complete | `check:toggles` fixes 114 native controls, final shared/private ownership, 6 private inputs and 8 private state buttons; isolation/all app suites/Gate G4 pass |
+| UPG-055a | Preset toolbar compatibility matrix | Complete | six active dropdowns; 5+10+1+19+3 shipped manifest presets and 4 inline Pulsar presets; four data families, rollback rules and UPG-055b–f fixed; production unchanged |
+| UPG-055b | Preset contract + direct shared verification | Complete | `check:presets` gates 6 dropdowns/38 selectable manifest presets/4 inline presets and data ownership; Sparky/Keyboarder exact restore, Wordplayer 0 changed Canvas RGB channels; production unchanged |
+| UPG-055c | Pulsar shared preset presentation canary | Complete | fixed four-item menu uses shared skin + exact font/padding/overflow bridges; closed/open styles, 22 fields/panels and initial/Accurate/Voyager SVG states exact; ARIA-only semantics added |
+| UPG-055d | Sticky Fingers shared preset presentation | Complete | manifest-only dropdown uses shared skin + exact sizing/scroll bridges; closed/open byte-exact, three presets and normal/edit state/SVG exact; Sheets boundary retained |
+| UPG-055e | Pizza Boxer shared preset presentation | Complete | repository dropdown uses shared skin + exact sizing/scroll bridges; New/E-ink round-trips, 113 form states/panels/SVG and closed/open styles exact; schema/import/history/draft private; 15-asset rebuild; 167 tests |
+| UPG-055f | Preset component gate | Complete | final shared/private ownership and bridge removal conditions recorded; six dropdowns/38 selectable manifest presets/4 inline presets; isolation and all eight app suites pass through Gate G4 |
+| UPG-056a | Action/export compatibility matrix | Complete | 8 bars; 31 btn-fixed + 2 special buttons + 9 labels; format/state/CSS ownership, rollout and rollback fixed; production unchanged |
+| UPG-056b | Action contract + direct shared verification | Complete | check:actions gates 42 controls and 8 private pipelines; all bars explicitly named toolbars; five ARIA-only captures have 0 changed RGB; Sparky cancel no longer logs AbortError; desktop/mobile/direct suites pass |
+| UPG-056c | Wander shared action canary | Complete | one button uses canonical shared bar/button; intentional Arial 14.4/600→CoFo 16/500 and 110.016→124.914 px; raster diff button-only; panel/41 fields/three SVG modes exact; 10 tests |
+| UPG-056d | Pulsar shared action rollout | Complete | three buttons use canonical shared bar/button; intentional 14.4/600→16/500 and 8×15→8×20 px; raster diff action-only; Verify/Copy, 22 fields/panels and exact 40,180-char SVG retained; 8 tests |
+| UPG-056e | Pizza Boxer shared action adapter | Complete | four buttons use shared shell with private muted/PDF/group variants; 640×36 bar retained; JSON/SVG/PDF actions and New/E-ink exact states/SVG pass; 15-asset rebuild; 167 tests |
+| UPG-056f | Sticky Fingers shared action adapter | Complete | six buttons use shared shell with private muted/group/mode/data variants; normal/edit, Outline/Prepress, preset/SVG/PDF and exact 79-state/SVG baselines pass; Sheets boundary retained; 5 tests |
+| UPG-056g | Dither raster-safe action boundary | Complete | shared fixed-button shell with private left anchor/remove/export labels; default/Bayer/Pixel Size 4 Canvas has 0 changed pixels; alpha, ×2/×4/×8, PNG and disabled/no-image pass; 11 tests |
+| UPG-056h | Action component gate | Complete | all 8 bars use shared shell; Dither anchor and app domain variants documented; Sparky progress remains private; all suites, isolation and full Gate G4 pass |
+| UPG-057a | Dialog/tooltip/error/toast compatibility matrix | Complete | 3 native dialogs, 2 active overlays + 2 dormant fragments, 1 popup, 47 tooltip hosts and feedback families inventoried; selector collision and rollout/rollback fixed; production unchanged |
+| UPG-057b | Feedback contract gate | Complete | `check:feedback` fixes dialog/overlay/popup/tooltip/blocking-call counts and shared/private ownership; included in Gate G4 before production rollout |
+| UPG-057c | Scoped modal CSS + native DialogHost hardening | Complete | overlay/native content shells isolated with exact Keyboarder geometry; native cancel/close/replacement/focus/destroy covered; 3 labelled dialogs; 38 framework tests and full Gate G4 pass |
+| UPG-057d | Keyboard-accessible TooltipService | Complete | 47 hosts gain focus/Escape/role/description lifecycle; pointer geometry/styles exact in Sparky, Keyboarder and Wordplayer; dynamic/disabled/cleanup tested; 39 framework tests + Gate G4 pass |
+| UPG-057e | Dither shared OverlayDialogHost canary | Complete | exact 600×483.523 overlay geometry; shared Escape/backdrop/Tab/focus/ARIA/scroll lifecycle; default/Bayer/Pixel Size 4 states and pixels exact; 41 framework tests + Gate G4 pass |
 
 ## Подтверждённые исходные результаты
 
 | Проект | Результат |
 |---|---|
+| Shared framework | 41/41 tests pass; range, toggle, preset, action and feedback contracts are part of Gate G4 |
 | Pizza Boxer top-level | 167/167 tests pass (165 original + JS/CSS boundary); source/public runtime checks pass |
 | Pizza Boxer `v2` donor | 221/222; один failure в Node test mock без `requestAnimationFrame` |
 | Sparky | 196/196 tests pass (195 исходных + shared-framework boundary) |
@@ -85,7 +117,7 @@
 | Keyboarder | Boundary + 5 domain suites; SVG text/outline и editable PDF browser export pass |
 | Sticky Fingers | 5/5 boundary/domain tests; manifest presets, Google Sheets and local-font PDF browser acceptance pass |
 | Pulsar Coder | 8/8 boundary/codec tests; exact 1280×720 SVG/panel/input parity and SVG export pass |
-| Dither | 10/10 boundary/algorithm tests; byte-identical default, Bayer and Pixel Size 4 browser captures |
+| Dither | 11/11 boundary/algorithm tests; byte-identical default, Bayer and Pixel Size 4 browser captures |
 | Wander Bender | 10/10 boundary/mode tests; exact three-mode canvas/panel parity plus Rays, collapse and extraction browser acceptance |
 
 ## Известные исходные особенности
@@ -109,9 +141,7 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-UPG-054n: перевести 26 ordinary ranges Pizza Boxer на shared skin, не затрагивая
-три private HSB ranges. Удалить только ordinary normal/thumb/track/hover/focus
-duplicate, оставить reset-safe margin bridge и HSB gradients/controller.
-Пересобрать 15 public assets; проверить default/Paragraph/Graphics, normal/
-focus, pointer history begin/commit/document mouseup, undo/redo, 113 inputs,
-29 ranges, panels/surface/SVG, 167 tests, isolation и Gate G4.
+UPG-057f: перевести активный Pulsar Verify overlay на проверенный shared
+`OverlayDialogHost`, сохранив rich verification HTML, Copy flash и известное
+CRC-поведение; затем machine-readable и browser-проверками доказать, что
+дремлющие Pizza/Sticky fragments не получили controller или trigger.

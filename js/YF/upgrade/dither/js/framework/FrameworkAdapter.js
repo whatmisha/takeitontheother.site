@@ -1,7 +1,8 @@
 import {
     ColorUtils,
+    OverlayDialogHost,
     PanelManager
-} from '../../../framework/src/index.js';
+} from '../../../framework/src/index.js?v=g5-overlay-1';
 
 /**
  * Shared PanelManager with Dither's legacy unbounded desktop drag preserved.
@@ -34,12 +35,13 @@ export class DitherPanelManager extends PanelManager {
     }
 }
 
-export { ColorUtils };
+export { ColorUtils, OverlayDialogHost };
 
 export const DITHER_FRAMEWORK_ADAPTER = Object.freeze({
     app: 'dither',
     sharedCapabilities: Object.freeze([
         'ColorUtils',
+        'OverlayDialogHost',
         'PanelManager'
     ]),
     privateCapabilities: Object.freeze([

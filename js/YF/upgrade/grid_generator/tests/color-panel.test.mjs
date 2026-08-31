@@ -49,6 +49,9 @@ test('hex synchronization updates HSB controls and the visible color swatch', ()
     assert.equal(Number(dom.hueSlider.value), 224);
     assert.ok(styles.has('saturationSlider-wide-track-style'));
     assert.ok(styles.has('brightnessSlider-wide-track-style'));
+    assert.match(styles.get('saturationSlider-wide-track-style').textContent, /height: 10px !important;/u);
+    assert.match(styles.get('saturationSlider-wide-track-style').textContent, /width: 8px !important;/u);
+    assert.match(styles.get('brightnessSlider-wide-track-style').textContent, /height: 8px !important;/u);
 });
 
 test('invalid hex input restores the current source-of-truth color', () => {
@@ -75,4 +78,8 @@ test('HSB slider updates store a hex color and refresh only dependent gradients'
     assert.deepEqual(calls, ['changed', 'render']);
     assert.ok(styles.has('brightnessSlider-wide-track-style'));
     assert.equal(styles.has('saturationSlider-wide-track-style'), false);
+    assert.match(
+        styles.get('brightnessSlider-wide-track-style').textContent,
+        /linear-gradient\(to right, #000000, #ff0000\) !important;/u
+    );
 });

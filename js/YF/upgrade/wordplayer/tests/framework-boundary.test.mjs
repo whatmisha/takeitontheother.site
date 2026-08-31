@@ -12,7 +12,7 @@ const [toolSource, htmlSource, stylesSource, frameworkStylesSource] = await Prom
 
 assert.match(
     toolSource,
-    /import\s*\{\s*defineTool\s*\}\s*from\s*['"]\.\.\/framework\/src\/index\.js['"];/,
+    /import\s*\{\s*defineTool\s*\}\s*from\s*['"]\.\.\/framework\/src\/index\.js\?v=g5-feedback-1['"];/,
     'Wordplayer must consume the shared framework through its public barrel'
 );
 assert.doesNotMatch(
@@ -118,5 +118,37 @@ assert.match(
     'shared HSB range thumb changed'
 );
 assert.match(toolSource, /colorPickers:\s*\{[\s\S]*?containerId:\s*'unifiedColorPickerContainer'/u);
+
+assert.equal(
+    htmlSource.match(/<input\b[^>]*\btype="checkbox"[^>]*>/gu)?.length,
+    11,
+    'Wordplayer checkbox inventory changed'
+);
+assert.equal(
+    htmlSource.match(/<input\b[^>]*\btype="radio"[^>]*>/gu)?.length,
+    2,
+    'Wordplayer mode radio inventory changed'
+);
+assert.equal(htmlSource.match(/class="pill-toggle(?: [^"]*)?"/gu)?.length, 10, 'Wordplayer pill family changed');
+assert.match(
+    frameworkStylesSource,
+    /\.pill-toggle\s*\{[^}]*touch-action:\s*manipulation;[^}]*\}/su,
+    'shared pill-toggle base changed'
+);
+assert.match(
+    frameworkStylesSource,
+    /\.toggle-switch input:checked \+ \.toggle-slider:before\s*\{[^}]*translateX\(20px\);/su,
+    'shared transparent-export switch state changed'
+);
+assert.doesNotMatch(
+    stylesSource.replace(/\/\*[\s\S]*?\*\//gu, ''),
+    /(?:^|\})\s*\.(?:pill-toggle|toggle-switch)\s*\{/u,
+    'Wordplayer must not fork shared pill or toggle-switch presentation'
+);
+assert.match(
+    stylesSource,
+    /\.mode-nav-options input\[type="radio"\]:checked \+ \.mode-nav-button/u,
+    'Wordplayer private mode-navigation checked state changed'
+);
 
 console.log(`Wordplayer framework boundary passed (${appRoot})`);

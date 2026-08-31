@@ -12,7 +12,7 @@ test('Sparky consumes the shared framework without surrendering private mobile a
 
     assert.match(
         toolSource,
-        /import\s*\{\s*defineTool\s*\}\s*from\s*['"]\.\.\/framework\/src\/index\.js['"];/,
+        /import\s*\{\s*defineTool\s*\}\s*from\s*['"]\.\.\/framework\/src\/index\.js\?v=g5-feedback-1['"];/,
         'Sparky must consume shared infrastructure through the public barrel'
     );
     assert.doesNotMatch(toolSource, /from\s*['"]\.\/framework\//, 'Sparky runtime still imports its retired framework copy');
@@ -23,6 +23,11 @@ test('Sparky consumes the shared framework without surrendering private mobile a
     assert.match(toolSource, /interactive:\s*false/, 'Sparky non-interactive zoom contract changed');
     assert.match(toolSource, /tool\.exportSVG\s*=\s*async/, 'Sparky static/animated SVG override changed');
     assert.match(toolSource, /tool\.exportPNG\s*=/, 'Sparky static/animated PNG override changed');
+    assert.match(
+        toolSource,
+        /tool\.exportSVG\(\)\.catch\(\(error\)\s*=>\s*\{[\s\S]*?error\?\.name\s*!==\s*'AbortError'/u,
+        'intentional animation cancellation must not be reported as an export failure'
+    );
 
     const frameworkCss = htmlSource.indexOf('../framework/css/othersite-styles.css');
     const applicationCss = htmlSource.indexOf('./styles/sparky.css');
@@ -96,6 +101,42 @@ test('Sparky consumes the shared framework without surrendering private mobile a
         frameworkStylesSource,
         /\.hsb-control-group input\[type="range"\]::-webkit-slider-thumb\s*\{[\s\S]*?width: 12px;[\s\S]*?height: 12px;[\s\S]*?\}/u,
         'shared HSB range thumb changed'
+    );
+    assert.equal(
+        htmlSource.match(/<input\b[^>]*\btype="(?:checkbox|radio)"[^>]*>/gu)?.length,
+        9,
+        'Sparky toggle/radio inventory changed'
+    );
+    assert.equal(htmlSource.match(/class="pill-toggle"/gu)?.length, 6, 'Sparky pill input family changed');
+    assert.equal(
+        htmlSource.match(/<input\b[^>]*\bname="focusMode"[^>]*>/gu)?.length,
+        3,
+        'Sparky focus segmented-control inventory changed'
+    );
+    assert.match(
+        frameworkStylesSource,
+        /\.pill-toggle\s*\{[^}]*touch-action:\s*manipulation;[^}]*\}/su,
+        'shared pill-toggle touch contract changed'
+    );
+    assert.match(
+        frameworkStylesSource,
+        /\.pill-toggle:has\(input:focus-visible\)\s*\{[^}]*outline:\s*2px solid var\(--color-text\);/su,
+        'shared pill-toggle keyboard focus changed'
+    );
+    assert.match(
+        frameworkStylesSource,
+        /\.segmented-control input\[type="radio"\]:checked \+ label\s*\{[^}]*background:\s*var\(--color-text\);/su,
+        'shared segmented checked state changed'
+    );
+    assert.doesNotMatch(
+        stylesSource.replace(/\/\*[\s\S]*?\*\//gu, ''),
+        /(?:^|\})\s*\.(?:pill-toggle|segmented-control)\s*\{/u,
+        'Sparky must not fork shared pill or segmented-control presentation'
+    );
+    assert.match(
+        htmlSource,
+        /id="showMotionPathToggle" hidden/u,
+        'Sparky Path-only toggle visibility contract changed'
     );
     assert.match(toolSource, /colorPickers:\s*\{[\s\S]*?containerId:\s*'unifiedColorPickerContainer'/u);
     assert.match(

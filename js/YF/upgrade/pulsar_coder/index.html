@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pulsar Coder - YF Tools</title>
-    <link rel="stylesheet" href="css/framework-base.css?v=g4-pulsar-1">
-    <link rel="stylesheet" href="css/yf-styles.css?v=g5-pulsar-range-1">
-    <link rel="stylesheet" href="pulsar-styles.css?v=g5-pulsar-2">
+    <link rel="stylesheet" href="css/framework-base.css?v=g5-pulsar-actions-1">
+    <link rel="stylesheet" href="css/yf-styles.css?v=g5-pulsar-actions-1">
+    <link rel="stylesheet" href="pulsar-styles.css?v=g5-pulsar-actions-1">
 </head>
 <body>
     <div class="container">
@@ -16,13 +16,14 @@
             
             <!-- Preset Dropdown -->
             <div class="preset-dropdown" id="presetDropdown">
-                <button class="preset-dropdown-toggle" id="presetDropdownToggle" aria-haspopup="listbox" aria-expanded="false">
+                <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button"
+                        aria-haspopup="listbox" aria-expanded="false" aria-controls="presetDropdownMenu">
                     <span class="preset-dropdown-text" id="presetDropdownText">Voyager 14</span>
                     <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
-                <ul class="preset-dropdown-menu" id="presetDropdownMenu">
+                <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox">
                     <li class="preset-dropdown-item selected" data-preset="voyager">Voyager 14 rays</li>
                     <li class="preset-dropdown-item" data-preset="dense">Dense 20 rays</li>
                     <li class="preset-dropdown-item" data-preset="minimal">Minimal 8 rays</li>
@@ -222,7 +223,7 @@
     </div>
 
     <!-- Bottom Action Buttons -->
-    <nav class="bottom-buttons">
+    <nav class="bottom-buttons" role="toolbar" aria-label="Verify and export actions">
         <button class="btn-fixed" id="verifyBtn">Verify</button>
         <button class="btn-fixed" id="copyBtn">Copy SVG</button>
         <button class="btn-fixed btn-export" id="downloadBtn">Download SVG</button>

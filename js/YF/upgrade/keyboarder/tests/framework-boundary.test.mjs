@@ -12,7 +12,7 @@ const [toolSource, htmlSource, themeSource, typographySource, frameworkStylesSou
 
 assert.match(
     toolSource,
-    /import\s*\{\s*defineTool\s*,\s*SVGExporter\s*\}\s*from\s*['"]\.\.\/\.\.\/framework\/src\/index\.js['"];/,
+    /import\s*\{\s*defineTool\s*,\s*SVGExporter\s*\}\s*from\s*['"]\.\.\/\.\.\/framework\/src\/index\.js\?v=g5-feedback-1['"];/,
     'Keyboarder must consume shared infrastructure through the public barrel'
 );
 assert.doesNotMatch(toolSource, /vendor\/framework/, 'Keyboarder runtime still imports its retired framework copy');
@@ -118,6 +118,44 @@ assert.equal(
     'shared ColorPicker HSB range inventory changed'
 );
 assert.match(toolSource, /colorPickers:\s*\{[\s\S]*?containerId:\s*'unifiedColorPickerContainer'/u);
+
+assert.equal(
+    htmlSource.match(/<input\b[^>]*\btype="checkbox"[^>]*>/gu)?.length,
+    12,
+    'Keyboarder checkbox inventory changed'
+);
+assert.doesNotMatch(htmlSource, /<input\b[^>]*\btype="radio"/u, 'Keyboarder must retain its private button segment');
+assert.equal(htmlSource.match(/class="pill-toggle"/gu)?.length, 11, 'Keyboarder pill family changed');
+assert.equal(
+    htmlSource.match(/<button type="button" data-mode="[^"]+" aria-pressed="(?:true|false)">/gu)?.length,
+    3,
+    'Keyboarder compensation segment contract changed'
+);
+assert.match(
+    frameworkStylesSource,
+    /\.pill-toggle\s*\{[^}]*touch-action:\s*manipulation;[^}]*\}/su,
+    'shared pill-toggle base changed'
+);
+assert.match(
+    frameworkStylesSource,
+    /\.toggle-switch\s*\{[^}]*width:\s*40px;[^}]*height:\s*20px;[^}]*\}/su,
+    'shared export toggle-switch geometry changed'
+);
+assert.doesNotMatch(
+    themeWithoutComments,
+    /(?:^|\})\s*\.(?:pill-toggle|toggle-switch)\s*\{/u,
+    'Keyboarder must not fork shared pill or toggle-switch presentation'
+);
+assert.match(
+    themeWithoutComments,
+    /\.segmented-control\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*repeat\(3,/su,
+    'Keyboarder private button segment geometry changed'
+);
+assert.match(
+    toolSource,
+    /setAttrIfChanged\(btn, 'aria-pressed', active \? 'true' : 'false'\)/u,
+    'Keyboarder compensation aria-pressed synchronization changed'
+);
 
 for (const [relativePath, label] of [
     ['../vendor/framework/', 'local framework copy'],

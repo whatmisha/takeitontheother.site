@@ -24,7 +24,7 @@ export class DialogHost {
      * @param {string} [ids.input='dialogInput']
      * @param {string} [ids.buttons='dialogButtons']
      */
-    constructor(ids = {}) {
+    constructor(ids = {}, { ownerDocument = globalThis.document } = {}) {
         const id = {
             dialog: 'dialog',
             title: 'dialogTitle',
@@ -33,26 +33,37 @@ export class DialogHost {
             buttons: 'dialogButtons',
             ...ids
         };
-        this.modal = document.getElementById(id.dialog);
-        this.titleEl = document.getElementById(id.title);
-        this.textEl = document.getElementById(id.text);
-        this.inputEl = document.getElementById(id.input);
-        this.buttonsEl = document.getElementById(id.buttons);
+        this.document = ownerDocument;
+        this.modal = this.document?.getElementById(id.dialog) || null;
+        this.titleEl = this.document?.getElementById(id.title) || null;
+        this.textEl = this.document?.getElementById(id.text) || null;
+        this.inputEl = this.document?.getElementById(id.input) || null;
+        this.buttonsEl = this.document?.getElementById(id.buttons) || null;
         this.resolvePromise = null;
+        this.previousActiveElement = null;
+        this.pendingAction = null;
+        this._listeners = [];
 
         if (!this.modal) {
             console.warn(`DialogHost: <dialog id="${id.dialog}"> not found.`);
             return;
         }
 
-        this.modal.addEventListener('click', (e) => {
+        this._addListener('click', (e) => {
             if (e.target === this.modal) this.close('cancel');
         });
-        this.modal.addEventListener('keydown', (e) => {
+        this._addListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 e.preventDefault();
                 this.close('cancel');
             }
+        });
+        this._addListener('cancel', (e) => {
+            e.preventDefault();
+            this.close('cancel');
+        });
+        this._addListener('close', () => {
+            this._finish(this.pendingAction || this.modal.returnValue || 'cancel');
         });
     }
 
@@ -70,6 +81,7 @@ export class DialogHost {
      */
     show(options = {}) {
         if (!this.modal) return Promise.resolve({ action: 'cancel' });
+        if (this.modal.open || this.resolvePromise) this.close('cancel');
         const {
             title = '',
             text = '',
@@ -99,15 +111,28 @@ export class DialogHost {
         if (this.buttonsEl) {
             this.buttonsEl.innerHTML = '';
             buttons.forEach(btn => {
-                const button = document.createElement('button');
+                const button = this.document.createElement('button');
                 button.className = `modal-btn modal-btn-${btn.type || 'secondary'}`;
+                button.type = 'button';
                 button.textContent = btn.text;
                 button.addEventListener('click', () => this.close(btn.id));
                 this.buttonsEl.appendChild(button);
             });
         }
 
-        this.modal.showModal();
+        const activeElement = this.document.activeElement;
+        this.previousActiveElement = activeElement && activeElement !== this.document.body
+            ? activeElement
+            : null;
+        this.pendingAction = null;
+        try {
+            this.modal.showModal();
+        } catch (error) {
+            this.previousActiveElement = null;
+            throw error;
+        }
+
+        const result = new Promise(resolve => { this.resolvePromise = resolve; });
 
         if (showInput && this.inputEl) {
             this.inputEl.focus();
@@ -116,24 +141,50 @@ export class DialogHost {
             this.buttonsEl.firstChild.focus();
         }
 
-        return new Promise(resolve => { this.resolvePromise = resolve; });
+        return result;
     }
 
-    close(action) {
+    close(action = 'cancel') {
         if (!this.modal) return;
-        this.modal.close();
+        this.pendingAction = action;
+        if (this.modal.open) this.modal.close(action);
         if (this.buttonsEl) {
             this.buttonsEl.style.display = '';
             this.buttonsEl.style.justifyContent = '';
             this.buttonsEl.style.alignItems = '';
             this.buttonsEl.style.gap = '';
         }
-        if (this.resolvePromise) {
-            this.resolvePromise({
+        this._finish(action);
+    }
+
+    destroy() {
+        if (this.modal?.open || this.resolvePromise) this.close('cancel');
+        for (const [type, listener] of this._listeners) {
+            this.modal?.removeEventListener(type, listener);
+        }
+        this._listeners.length = 0;
+        this.previousActiveElement = null;
+    }
+
+    _addListener(type, listener) {
+        this.modal.addEventListener(type, listener);
+        this._listeners.push([type, listener]);
+    }
+
+    _finish(action) {
+        const resolve = this.resolvePromise;
+        const focusTarget = this.previousActiveElement;
+        this.resolvePromise = null;
+        this.previousActiveElement = null;
+        this.pendingAction = null;
+        if (resolve) {
+            resolve({
                 action,
                 inputValue: this.inputEl ? this.inputEl.value.trim() : ''
             });
-            this.resolvePromise = null;
+        }
+        if (focusTarget?.isConnected !== false && typeof focusTarget?.focus === 'function') {
+            focusTarget.focus();
         }
     }
 

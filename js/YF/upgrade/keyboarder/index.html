@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Keyboarder</title>
     <link rel="icon" href="data:,">
-    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g3-keyboarder-2">
+    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g5-dialog-scope-1">
     <link id="applicationStyles" rel="stylesheet" href="app/theme.css?v=g3-keyboarder-2">
 </head>
 <body class="ui-simple">
@@ -359,7 +359,7 @@
         </aside>
     </main>
 
-    <nav class="bottom-buttons">
+    <nav class="bottom-buttons" role="toolbar" aria-label="Export and document actions">
         <button class="btn-fixed btn-intro-help" id="aboutBtn" type="button" aria-label="About" data-tooltip="About">?</button>
         <button class="btn-fixed" id="verifyBtn" type="button" data-tooltip="Compare geometry to the reference" data-advanced-only>Verify</button>
         <button class="btn-fixed" id="exportJsonBtn" type="button" aria-label="Export model JSON" data-tooltip="Export model JSON">JSON</button>
@@ -381,7 +381,7 @@
     <input id="drawingSvgInput" type="file" accept="image/svg+xml,.svg" hidden>
     <input id="fontFileInput" type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden>
 
-    <dialog id="dialog" class="modal">
+    <dialog id="dialog" class="modal" aria-labelledby="dialogTitle">
         <div class="modal-content">
             <h2 id="dialogTitle" class="modal-title"></h2>
             <div id="dialogText" class="modal-text"></div>
@@ -391,6 +391,6 @@
     </dialog>
 </div>
 
-<script type="module" src="app/tool.js?v=g3-keyboarder-2"></script>
+<script type="module" src="app/tool.js?v=g5-feedback-1"></script>
 </body>
 </html>

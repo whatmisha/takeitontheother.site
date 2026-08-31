@@ -22,7 +22,7 @@ test('public barrel exports the documented framework surface', async () => {
     const expected = [
         'ApplicationShell', 'CanvasTarget', 'ColorPicker', 'DOMCache', 'DialogHost',
         'DicePanel', 'ExportGuard', 'GradientStrokeEffect', 'HistoryBridge', 'HistoryManager',
-        'MathUtils', 'MobileBootstrap', 'NoiseGenerator', 'PanelManager', 'PresetSession', 'PresetStore',
+        'MathUtils', 'MobileBootstrap', 'NoiseGenerator', 'OverlayDialogHost', 'PanelManager', 'PresetSession', 'PresetStore',
         'RangeSliderController', 'RenderTarget', 'SVGExporter', 'SHARED_SLOT',
         'SeededRandom', 'ShareCodec', 'ShortcutRouter', 'SliderController', 'StripeGeometry',
         'SvgTarget', 'TextToPath', 'TooltipService', 'UnifiedColorPicker',
@@ -60,7 +60,7 @@ test('framework source graph stays local and application-agnostic', async () => 
             assert.ok(resolved.startsWith(`${frameworkRoot}${path.sep}`));
         }
     }
-    assert.equal(files.length, 36);
+    assert.equal(files.length, 37);
 });
 
 test('working CSS and exporters use checked-in same-origin assets', async () => {
@@ -76,7 +76,7 @@ test('working CSS and exporters use checked-in same-origin assets', async () => 
     assert.match(textToPath, /opentype\.module\.js/);
 });
 
-test('working CSS is the exact v3/Void component base with only local font URLs', async () => {
+test('working CSS preserves v3 provenance and documents intentional G5 extensions', async () => {
     const provenance = JSON.parse(await readFile(path.join(frameworkRoot, 'CSS_PROVENANCE.json'), 'utf8'));
     const pairs = [
         ['css/othersite-styles.css', provenance.upstreamStylesSha256, provenance.workingStylesSha256],
@@ -87,7 +87,13 @@ test('working CSS is the exact v3/Void component base with only local font URLs'
         const working = await readFile(path.join(frameworkRoot, relativePath), 'utf8');
         assert.equal(sha256(upstream), upstreamHash);
         assert.equal(sha256(working), workingHash);
-        assert.equal(localizeFrameworkFonts(upstream), working);
+        if (relativePath === 'css/tokens.css') {
+            assert.equal(localizeFrameworkFonts(upstream), working);
+            continue;
+        }
+        assert.notEqual(localizeFrameworkFonts(upstream), working);
+        assert.match(working, /font-size: var\(--segmented-control-font-size, 0\.9rem\);/u);
+        assert.match(working, /\.checkbox-label\s*\{[^}]*display: flex !important;/su);
     }
 });
 

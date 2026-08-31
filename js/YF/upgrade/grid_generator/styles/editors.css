@@ -356,158 +356,6 @@ textarea::placeholder {
     border-color: var(--color-text-dim);
 }
 
-.checkbox-label {
-    display: flex !important;
-    align-items: center !important;
-    cursor: pointer;
-    padding: var(--spacing-sm) 0;
-    margin-bottom: 0 !important;
-    position: relative;
-}
-
-.control-group:has(.checkbox-label) {
-    margin-bottom: var(--spacing-xs);
-}
-
-.checkbox-label span {
-    font-size: 0.85rem;
-    color: var(--color-text-secondary);
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-}
-
-.checkbox-icon {
-    flex-shrink: 0;
-    opacity: 0.7;
-    transition: opacity var(--transition-normal);
-}
-
-.checkbox-label:hover .checkbox-icon {
-    opacity: 1;
-}
-
-.checkbox-label:hover span {
-    color: var(--color-text);
-}
-
-/* Fieldset reset */
-fieldset {
-    border: none;
-    padding: 0;
-    margin: 0;
-}
-
-legend {
-    padding: 0;
-}
-
-/* Segmented Control */
-.segmented-control {
-    display: flex;
-    background: var(--color-bg-input);
-    border-radius: var(--radius-input);
-    padding: 4px;
-    gap: 4px;
-    margin-top: var(--spacing-md);
-}
-
-.segmented-control input[type="radio"] {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.segmented-control label {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: var(--spacing-lg);
-    margin: 0;
-    font-size: 0.85rem;
-    line-height: 1;
-    color: var(--color-text-secondary);
-    background: transparent;
-    border-radius: calc(var(--radius-input) - 4px);
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    user-select: none;
-    position: relative;
-    font-weight: 400;
-}
-
-.segmented-control label:hover {
-    color: var(--color-text);
-}
-
-.segmented-control input[type="radio"]:checked + label {
-    background: var(--color-text);
-    color: var(--color-bg);
-    font-weight: 500;
-}
-
-.segmented-control input[type="radio"]:focus + label {
-    outline: 2px solid var(--color-text);
-    outline-offset: 2px;
-}
-
-/* Compact Segmented Control - меньшая высота для Alignment Mode */
-.segmented-control-compact label {
-    padding: 6px var(--spacing-lg);
-}
-
-/* Toggle switch styles */
-.control-group input[type="checkbox"] {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.checkbox-label::before {
-    content: '';
-    display: inline-block;
-    width: 33px;
-    height: 18px;
-    background-color: #3a3a3a;
-    border-radius: 9px;
-    margin-right: var(--spacing-lg);
-    transition: background-color 0.3s ease;
-    position: relative;
-    flex-shrink: 0;
-}
-
-.checkbox-label::after {
-    content: '';
-    position: absolute;
-    left: 2px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 14px;
-    height: 14px;
-    background-color: #ffffff;
-    border-radius: 50%;
-    transition: left 0.3s ease;
-}
-
-.control-group input[type="checkbox"]:checked + .checkbox-label::before,
-.checkbox-label:has(input[type="checkbox"]:checked)::before {
-    background-color: #888888;
-}
-
-.control-group input[type="checkbox"]:checked + .checkbox-label::after,
-.checkbox-label:has(input[type="checkbox"]:checked)::after {
-    left: 17px;
-    background-color: #ffffff;
-}
-
-.checkbox-label:hover::before {
-    opacity: 0.9;
-}
-
 /* Linked controls group - visual grouping for related controls */
 #linkedControlsContainer {
     /* Reserve space for padding so elements don't jump */
@@ -529,8 +377,7 @@ legend {
 
 /* Base button styles - DRY principle */
 .btn-primary,
-.btn-secondary,
-.btn-fixed {
+.btn-secondary {
     padding: var(--spacing-md) var(--spacing-2xl);
     border: none;
     border-radius: var(--radius-button);
@@ -566,8 +413,7 @@ legend {
 
 /* Disabled state for all buttons */
 .btn-primary:disabled,
-.btn-secondary:disabled,
-.btn-fixed:disabled {
+.btn-secondary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }

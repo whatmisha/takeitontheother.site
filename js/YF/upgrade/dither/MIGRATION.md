@@ -97,3 +97,77 @@ coercion to 1.3) and Rotation's degree behavior (0°→1°→11°, Escape→0°)
 The boundary suite additionally guards focus-snapshot rollback, raster cache
 invalidation and the unchanged PNG `toBlob` path. `npm run test:dither` passes
 10/10.
+
+## G5 private-range boundary
+
+UPG-054p makes no production change and formally excludes all 13 Dither ranges
+from the shared range skin. The ten ordinary and three HSB controls keep their
+1 px tracks, 10 px thumbs, `-4.5px` WebKit centering, hover `scale(1.3)` and
+private default cursor. The controller retains six 16 ms debounced raster
+updates alongside immediate transform/rotation paths, private value formatting
+and cache invalidation. The accepted default/Bayer/Pixel Size 4 Canvas evidence
+above remains valid because Dither production sources have not changed. The
+expanded boundary suite passes 11/11.
+
+## G5 raster-safe shared choice rollout
+
+UPG-054x removes Dither's full local `checkbox-label` and segmented
+base/state blocks. The shared framework now presents the two effect switches
+and the three pattern radios. Dither keeps only the measured compatibility
+values that differ from the shared default: 0.85rem segment text, 1 px top/left
+label margins, 2 px bottom margin and `gap: normal`.
+
+The first after capture shortened the segment by 2 px and was rejected. The
+scoped bridge restores the exact 44.6015625 px segment, both checkbox positions,
+38 form states, both panels and Canvas/overlay geometry. The four bottom-bar
+export controls remain private native 16×16 checkboxes; ×2/×4/×8 exclusivity
+and alpha/export behavior were not moved into the framework.
+
+Default, Bayer and Pixel Size 4 comparisons report zero changed RGB channels
+across the 246,440-pixel Canvas region. The only non-raster difference observed
+in the Pixel Size 4 full-page harness is a 2 px automatic scroll position in
+the right panel, with every changed pixel confined to x≥976. Invert and Show
+Effect off/on cycles change the raster and return it exactly; the private ×2
+checkbox restores its initial state. Pattern focus remains a 2 px outline with
+2 px offset. Browser errors are zero.
+
+`npm run test:dither` passes 11/11; `check:toggles` and full Gate G4 pass.
+
+## G5 raster-safe action-bar rollout
+
+UPG-056g removes Dither's local fixed-button base and promotes the shared shell
+through the frozen reset. Dither retains only its 20 px left anchor/z-index,
+36 px destructive remove controls, four native 16×16 raster-export labels and
+all private processing/export behavior.
+
+The intentional ordinary-button change is Arial 14.4/600, 8×15 px, 1 px border
+and 35.5 px height to CoFo Sans 16/500, 8×20 px, no border and 36 px. Bar width
+changes 904.695→947.742 px while the left and bottom anchors remain exact.
+Default, Bayer and Pixel Size 4 each produce the same full-page difference
+`21675/max255/[8,400,623,423]`, entirely outside the Canvas region: Canvas pixels,
+38 fields, both panels and Canvas/overlay geometry are unchanged. Transparency,
+exclusive ×2/×4/×8, PNG ×2, disabled/no-image and reload restoration pass with
+zero browser errors. All 11 Dither tests and the action contract pass.
+
+## G5 shared overlay lifecycle canary
+
+UPG-057e moves only the existing Help overlay lifecycle into the shared
+`OverlayDialogHost`. Dither still owns the complete markup, instructions and
+CSS. Its adapter is the sole import boundary, while `openModal()` and
+`closeModal()` remain thin compatibility methods. The duplicate app-local
+Escape, help-button, close-button, backdrop, class and body-overflow handlers
+were removed.
+
+The closed default page, Bayer and Pixel Size 4 states are exact before/after:
+all recorded controls, both panels, Canvas/overlay geometry and full-page RGB
+captures have zero differences. The open content also retains its exact
+600×483.523 px rectangle, 30 px padding, 12 px radius, 600 px max-width,
+576 px max-height, background and transform. The only accepted open-state
+visual delta is the focus indicator moving from the Help trigger to the close
+button; no content or layout pixels moved.
+
+The shared host adds initial focus, a one-control Tab loop, Escape and backdrop
+dismissal, focus return to `helpButton`, `aria-haspopup`/`aria-controls`/
+`aria-expanded`, and exact scroll restoration. Browser checks cover all of
+those states with no module error. Framework tests pass 41/41, Dither 11/11,
+and the full Gate G4 remains green.

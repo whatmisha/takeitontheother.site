@@ -1,4 +1,4 @@
-import { defineTool } from '../framework/src/index.js';
+import { defineTool } from '../framework/src/index.js?v=g5-feedback-1';
 import { DEFAULT_SETTINGS, SLIDER_DEFINITIONS } from './src/config/defaults.js';
 import { WordplayerExporter } from './src/export/exporters.js';
 import { AssetController } from './src/io/assets.js';

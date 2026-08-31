@@ -14,6 +14,72 @@
     line-height: 1rem;
 }
 
+/*
+ * G5 toggle rollout: promote only the shared checkbox/segmented component
+ * through the frozen skin's unlayered resets. Domain state remains private.
+ */
+.segmented-control,
+.segmented-control input[type="radio"],
+.segmented-control label,
+.checkbox-label,
+.checkbox-label span,
+.checkbox-label input[type="checkbox"],
+.checkbox-label::before,
+.checkbox-label::after {
+    all: revert-layer;
+}
+
+.control-group:has(.checkbox-label) {
+    margin-bottom: revert-layer;
+}
+
+.segmented-control {
+    --segmented-control-font-size: 0.85rem;
+}
+
+/*
+ * G5 preset rollout: shared dropdown presentation with only the metrics needed
+ * by Pulsar's fixed, text-only four-item menu. Preset data and selection logic
+ * remain in pulsar-main.js.
+ */
+.preset-dropdown,
+.preset-dropdown-toggle,
+.preset-dropdown-text,
+.preset-dropdown-arrow,
+.preset-dropdown-menu,
+.preset-dropdown-item {
+    all: revert-layer;
+}
+
+.preset-dropdown-toggle {
+    padding: var(--spacing-md) var(--spacing-xl) var(--spacing-md) var(--spacing-3xl);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.preset-dropdown-menu {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.preset-dropdown-item {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.preset-dropdown-item.selected {
+    font-weight: 600;
+}
+
+/* G5 action rollout: consume the canonical shared bar and button shell. */
+.bottom-buttons,
+.btn-fixed {
+    all: revert-layer;
+}
+
 /* Info Display - Status information panel */
 .info-display {
     background: var(--color-bg-input);

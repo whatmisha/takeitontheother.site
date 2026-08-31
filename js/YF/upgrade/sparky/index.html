@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#000000">
     <title>Lunnen Sparky — Parametric Character</title>
-    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g3-sparky-2">
+    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g5-dialog-scope-1">
     <link id="applicationStyles" rel="stylesheet" href="./styles/sparky.css?v=g3-sparky-2">
 </head>
 <body>
@@ -362,7 +362,7 @@
             </aside>
         </main>
 
-        <nav class="bottom-buttons" aria-label="Export actions">
+        <nav class="bottom-buttons" role="toolbar" aria-label="Export actions">
             <div class="sparky-shortcut-help" id="shortcutHelp">
                 <button type="button" class="preset-toolbar-share-btn sparky-shortcut-help-button"
                         id="shortcutHelpBtn" aria-label="Keyboard shortcuts" aria-haspopup="dialog"
@@ -396,7 +396,7 @@
 
         <p class="mobile-desktop-hint">Try swiping and tapping — it’s fun!<br>The desktop version is better.</p>
 
-        <dialog id="dialog" class="modal">
+        <dialog id="dialog" class="modal" aria-labelledby="dialogTitle">
             <div class="modal-content">
                 <h2 id="dialogTitle" class="modal-title"></h2>
                 <div id="dialogText" class="modal-text"></div>
@@ -406,6 +406,6 @@
         </dialog>
     </div>
 
-    <script type="module" src="./tool.js?v=g3-sparky-2"></script>
+    <script type="module" src="./tool.js?v=g5-feedback-1"></script>
 </body>
 </html>

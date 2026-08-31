@@ -356,6 +356,159 @@ Radial/Random/Flow captures и SVG 1 838/12 261/26 292 characters совпада
 побайтно. Auto/Max off/on, width 30 → stroke 25/corner max 15 и clean reload
 идентичны до/после. Десять tests проходят; isolation/Gate G4 остаются зелёными.
 
+Результат UPG-054n — Pizza Boxer переведён на shared ordinary range skin с
+нулевым visual/runtime diff. Удалены только local ordinary
+base/thumb/track/hover/focus declarations; сохранены 6 px reset bridge, весь
+private HSB block с 8 px thumb/gradients и application-owned slider/history
+controllers. Reproducible build синхронизировал 15 public assets.
+
+Cached old и новый runtime на 1280×720 побайтно совпадают в default, hover,
+focus, HSB, Graphics и Paragraph states. Все 29 ranges, 113 form states,
+panels/surface и SVG совпадают; Graphics 300×451 и Paragraph 300×680 сохраняют
+собственные редакторы. Mouse gesture/document mouseup/focus-blur transaction
+границы подтверждены dedicated tests; Pizza suite проходит 167/167.
+
+Результат UPG-054o — HSB boundary закрыт verification-only. Девять ranges в
+Sparky/Wordplayer/Keyboarder остаются shared: 244×10, 12 px thumb, dynamic
+gradients, единый `ColorPicker` и переносимый `UnifiedColorPicker`. Три Pizza
+ranges остаются private: 260×10, 8 px thumb, 10 px dynamic track и собственный
+color/history lifecycle. Browser подтверждает HEX/output update, docking и
+exact clean reload для shared SVG apps, а Pizza control restore возвращает
+exact 94 380-character SVG. Новый framework contract test фиксирует gradients,
+silent sync, callback и существующую integer HSB quantization. Framework 36/36
+и Pizza 167/167 tests проходят.
+
+Результат UPG-054p — исключения range family закрыты без production diff.
+Dither сохраняет private raster-safe contract для всех 13 ranges: 1 px track,
+10 px thumb, private formatting/cache invalidation и разделение immediate
+transform от 16 ms debounced raster controls. Sticky сохраняет ноль active
+ranges и 40 native number fields; его dormant legacy range CSS оставлен до
+отдельного dead-CSS cleanup. Принятые UPG-054h/i browser baselines остаются
+валидны; Dither 11/11 и Sticky 5/5 tests проходят.
+
+Результат UPG-054q — range component gate закрыт. `check:ranges` теперь является
+обязательной частью Gate G4 и машинно фиксирует 97 shared ordinary, девять
+shared HSB, 16 private ranges и zero-range Sticky boundary. Он также запрещает
+возврат private ordinary thumb/track skin в shared-compatible apps. Полный Gate
+G4 проходит вместе с manifest, assets/provenance, storage/path isolation,
+36 framework tests, всеми app suites и Pizza 15-asset public runtime.
+`git diff --check` clean. Следующий компонент начинается с отдельной
+toggle/segmented compatibility matrix без production diff.
+
+Результат UPG-054r — выполнена отдельная инвентаризация toggle/segmented без
+production diff. `TOGGLE_COMPATIBILITY_MATRIX.md` фиксирует 77 checkbox и 37
+radio (114 native controls), семь presentation families и восемь private
+state buttons. Подтверждены уже shared 27 `pill-toggle`; 24 `toggle-chip` и
+шесть `toggle-switch` готовы к поэтапному promotion; для 20 legacy
+`checkbox-label` нужен новый совместимый shared base. Из 37 radio 31 относятся
+к radio/label segment, остальные защищены как pill/toolbar/private variants.
+Определены state/ownership matrix, Dither raster rollback и последовательность
+UPG-054s–UPG-054y. Следующий шаг — machine-readable contract gate и
+verification-only direct family, прежде чем менять shared CSS.
+
+Результат UPG-054s — `scripts/check-toggle-contracts.mjs` добавлен в
+`check:toggles` и обязательный Gate G4. Gate фиксирует 77 checkbox + 37 radio,
+все family totals, уже shared direct apps, текущих legacy owners и private
+Keyboarder/Wordplayer/Dither variants. Boundary tests Sparky, Keyboarder и
+Wordplayer теперь запрещают возвращать local pill/toggle-switch base. Browser
+на 1280×720 подтверждает checked/restore: Sparky возвращает SVG к 26 806
+символам, Keyboarder — к 133 295; Wordplayer возвращается Forms→Dither.
+Sparky на 390×844 и 430×932 имеет canvas ровно по viewport, zero horizontal
+overflow и все девять choice inputs. Console errors отсутствуют; 196 Sparky
+tests и все Keyboarder/Wordplayer suites проходят. Production CSS/runtime не
+изменялись. Следующий шаг — изолированный Pulsar canary.
+
+Результат UPG-054t — shared framework получил exact-compatible 33×18
+`checkbox-label` и `--segmented-control-font-size` с default 0.9rem. Полные
+checkbox/segmented дубли удалены из Pulsar; frozen 13.6 px metric сохраняют
+0.85rem token и узкий `revert-layer` promotion bridge. Первая проверка штатно
+поймала влияние legacy unlayered reset на padding до приёмки; bridge вернул
+exact geometry без копирования declarations. Финальная old/new full-page
+capture побайтно совпадает (`001ddcb25457…`), как и complete state record:
+checkbox 260×26, track 33×18, thumb 14/left 17, segment 260×33.602, panels,
+22 input/select/textarea states и SVG 40 180 chars. Show Rays даёт
+40 180→37 965→40 180, ECC 2x — 77 860→40 180; checked/focus styles точны.
+CSS provenance теперь явно отделяет immutable upstream-v3 от G5 extensions.
+Framework 36/36, Pulsar 8/8, toggle gate и isolation проходят. Следующий шаг —
+единственный segmented control Wander; private Auto/Max не меняются.
+
+Результат UPG-054u — единственный radio/label segment Wander Bender переведён
+на shared presentation. Полный local segmented block удалён; 13.6 px frozen
+metric сохраняют 0.85rem token и scoped `revert-layer` bridge поверх legacy
+reset. Runtime, настройки и private Auto/Max CSS/behavior не менялись.
+Full-page before/after SHA-256 побайтно совпадает (`5877e8c29e237acc…`), как
+и complete computed/state record: segment 260×55.203125, panel 300×605.703125,
+48 controls и disabled dependencies. Radial/Random/Flow возвращают точные SVG
+длины 1 838/12 261/26 292; после round-trip Radial снова 1 838. Console errors
+отсутствуют. Wander 10/10, framework 36/36 и toggle gate проходят. Следующий
+шаг — поэтапный Pizza Boxer rollout с пересборкой 15 public assets.
+
+Результат UPG-054v — Pizza Boxer перевёл 15 `toggle-chip`, семь
+`checkbox-label`, четыре segmented groups и один export `toggle-switch` на
+shared presentation. Полные base/state дубли удалены из трёх source CSS files;
+surface tabs, Graphics flex-layout и все controllers остались private. Frozen
+reset компенсируют один grouped `revert-layer` promotion, 0.85rem token и
+узкие container/input bridges без копирования component declarations.
+
+Первые after captures были отклонены: сначала segment вырос на 2 px, затем
+`.show-toggle-chip-group` добавил 1 px. Более точные selectors вернули исходный
+layout. Финальный default capture побайтно совпадает (`1dfbb49ac2b3aa3…`),
+как и полный record 113 fields, 36 choices, component geometry/styles, пять
+panel shells и SVG 94 374 chars (`4abbde0d…`). Paragraph 300×680 и Graphics
+300×451 state records совпадают; private surface lock states стабильны.
+Show Columns, Link Mode, x-height и Outline Fonts round-trip возвращает все
+113 fields и точный SVG; keyboard focus ring остаётся 2/4 px. Public runtime
+воспроизводим и содержит 15 assets. Pizza 167/167, framework 36/36 и toggle
+gate проходят; полный Gate G4 остаётся зелёным. Следующий rollout — Sticky
+Fingers с сохранением edit/Sheets/PDF.
+
+Результат UPG-054w — Sticky Fingers перевёл девять `toggle-chip`, десять
+`checkbox-label`, две segmented groups и три `toggle-switch` на shared
+presentation. Полные local base/state blocks удалены из `style.css`; edit-mode,
+preset/data rows, Google Sheets, SVG/PDF и все event handlers не менялись.
+Frozen universal reset компенсируют grouped `revert-layer`, 0.85rem token и
+узкие chip/container/segment bridges. Единственные частные chip-метрики —
+центрирование, 12 px horizontal padding и 13.6 px text.
+
+Первый edit capture выявил сокращение Layout panel на 8 px: shared
+`.control-section > .control-group:last-child` обнулял legacy нижний интервал
+последней chip group. Изменение было отклонено; scoped bridge вернул ровно
+8 px без копирования component base. Финальные normal/edit records полностью
+совпадают: 79 form fields, 28 choices, все component computed styles и panels,
+включая Layout 300×878.703125. SVG остаётся 18 640 chars/hash `1592eaac…` в
+normal и 18 607/hash `8850fd2f…` в edit; принятые full-page captures остаются
+`164e7ea8…`/`29946506…`. Show objects, Prepress и edit round-trip возвращают
+исходный SVG/state; switch focus ring остаётся 2 px black + 4 px white.
+Browser errors: 0; известен только прежний EAN-13 checksum warning.
+
+Sticky 5/5, framework 36/36, toggle gate и полный Gate G4 проходят. Следующий
+rollout — Dither с обязательным raster rollback boundary.
+
+Результат UPG-054x — Dither перевёл две `checkbox-label` и один трёхпозиционный
+segment на shared presentation. Полные local base/state blocks удалены;
+четыре native 16×16 export checkbox, все 13 private ranges, Canvas algorithms,
+cache invalidation и PNG export не менялись. Raster-safe bridge сохраняет
+0.85rem и исходные segment margins 1/1/2 px плюс `gap: normal`.
+
+Первый capture был отклонён: segment потерял 2 px высоты. После измеренного
+bridge полный default и Bayer component/state record совпадает, включая
+38 fields, panels, Canvas/overlay geometry и choice computed styles. Для
+Pixel Size 4 browser automation оставляет правую прокручиваемую панель на
+отличающемся на 2 px `scrollTop`; diff полностью ограничен x≥976. Во всей
+области Canvas (246 440 pixels) default/Bayer/Pixel4 имеют 0 изменённых RGB
+channels. Invert и Show Effect меняют raster и после обратного click возвращают
+его точно; private ×2 checkbox также возвращается. Segment focus остаётся
+2 px/offset 2 px, browser errors — 0. Dither 11/11 и Gate G4 проходят.
+
+Результат UPG-054y — `check:toggles` обновлён до финальной классификации. Gate
+фиксирует 77 checkbox + 37 radio = 114 native controls, все семь presentation
+families, шесть private inputs и восемь отдельных state buttons. Отдельно
+защищены Keyboarder compensation buttons, Wordplayer mode navigation, четыре
+Dither export checks, Sparky Edit Path, два Pizza surface lock и Wander
+Auto/Max с его зафиксированным отсутствием `aria-pressed`. Все rollout bridges
+имеют app-owner и точную parity-причину. Полный Gate G4 и isolation проходят;
+choice family закрыта. Следующий этап — UPG-055 preset toolbar.
+
 ### UPG-055. Preset toolbar
 
 1. Канонический shared toolbar остаётся источником Sparky/Keyboarder/Wordplayer.
@@ -367,6 +520,99 @@ Radial/Random/Flow captures и SVG 1 838/12 261/26 292 characters совпада
 5. Проверить duplicate names, dirty state, share, seed/migration hooks и empty
    storage namespace.
 
+Результат UPG-055a — выполнен полный статический аудит без production diff. В
+`PRESET_TOOLBAR_COMPATIBILITY_MATRIX.md` зафиксированы шесть активных верхних
+dropdown, пять manifest-библиотек и четыре разные data family. Sparky,
+Keyboarder и Wordplayer уже используют shared CRUD/share/session contract;
+Pizza сохраняет repository, schema 1.2, импорт, per-preset history и draft
+recovery; Sticky сохраняет manifest-only loader и width animation; Pulsar
+сохраняет четыре inline objects. Dither/Wander не получают искусственные
+presets. У Wordplayer отдельно защищено текущее состояние: один manifest entry
+при трёх JSON files. Определены state matrix, domain invariants, rollback rules
+и порядок UPG-055b–UPG-055f. Следующий шаг — machine-readable gate и
+verification-only приёмка уже канонической family A, с desktop/mobile
+приоритетом Sparky.
+
+Результат UPG-055b — добавлен `scripts/check-preset-contracts.mjs` и включён в
+Gate G4. Контракт фиксирует шесть активных dropdown, 38 выбираемых manifest
+presets в 40 строках/40 JSON files, четыре inline Pulsar presets, три shared
+CRUD и три private data systems; отдельно защищены три upgrade storage keys,
+Wordplayer 1-entry manifest, Pizza schema/import/draft и Sticky Google Sheets.
+Production HTML/CSS/JS приложений не менялись.
+
+Browser verification подтверждает Sparky `Basic → Shtrikh → Basic` с точным
+возвратом 68 form states, panels и 26 806-character SVG, dirty/Save/share и
+clean reload; Keyboarder `Work 2.0 L → Ground 14 → Work 2.0 L` с точным
+возвратом form states, panels и SVG; Wordplayer `New → Default`, dirty/reload и
+0 изменённых RGB channels в центральной Canvas-области. Browser errors — 0.
+Empty-storage/duplicate/per-preset history остаются покрыты 36 framework tests;
+browser sandbox запретил прямой `localStorage`, поэтому page storage не
+мутировал. Sparky 196/196, Keyboarder и Wordplayer suites проходят. Следующий
+шаг — UPG-055c, presentation-only canary Pulsar.
+
+Результат UPG-055c — Pulsar fixed dropdown переведён на shared presentation.
+Полный local component base и его preset scrollbar selectors удалены; scoped
+bridge сохраняет legacy system 14.4/600 toggle, asymmetric 8×12×8×20 padding,
+400 px overflow contract, text clipping и selected 600. Четыре inline preset
+objects, `applyPreset`, settings и SVG renderer не менялись. Добавлены только
+нулевые visual diff semantics: `type="button"`, `aria-controls` и
+`role="listbox"`.
+
+Closed/open computed-style records совпадают полностью. Initial 22 form states,
+panels и 40 180-character SVG hash `97155e5a…` точны; Accurate и последующий
+Voyager совпадают со своими до-migration state/SVG snapshots, включая
+существующее отличие startup label/default от явно применённого Voyager. В
+full-page JPEG остаётся одинаковый closed/open raster jitter только внутри SVG:
+291 RGB channels, max delta 2; dropdown geometry/style не меняются. Outside
+click, focus и selected state приняты, browser errors — 0. Pulsar 8/8,
+`check:presets` и Gate G4 проходят. Следующий rollout — Sticky Fingers.
+
+Результат UPG-055d — Sticky Fingers manifest-only dropdown переведён на shared
+presentation. Полный local base и scrollbar block удалены; framework bridge
+сохраняет system 14.4/600 toggle, asymmetric padding, 400 px overflow,
+text clipping, selected weight и 6 px scrollbar. Loader, manifest sorting,
+width measurement/application, data rows, Google Sheets и exports не менялись.
+Добавлен нулевой visual diff `aria-controls`.
+
+Closed и open captures побайтно совпадают, как и все computed-style records.
+Laptop initial/restore сохраняет 79 form states, panels и SVG hash
+`1592eaac…`; Monitor сохраняет собственные 78 states и SVG `e006d2ff…`;
+Tablet даёт ожидаемо другой SVG `c0f0bd8…` и точно возвращается в Laptop.
+Edit mode сохраняет 79 states, Layout 300×878.703125, Data 300×242, Objects
+300×383, Text 300×237 и SVG `8850fd2f…`. Его единственный raster jitter —
+108 RGB channels/max delta 8 в 8×8 px области SVG, вне toolbar; DOM/style/output
+snapshots точны. Escape закрывает menu, browser errors — 0. Sticky 5/5 и preset
+contract проходят. Следующий rollout — Pizza Boxer.
+
+Результат UPG-055e — Pizza Boxer удалил полный local preset dropdown base и
+получает component skin из shared framework. В приложении остались только
+private divider rules, repository/schema/import/history/draft logic и точные
+font/padding/400 px overflow bridges. Добавлен `aria-controls`; data model и
+обработчики выбора не менялись.
+
+Первый production build был отвергнут до приёмки: генератор публичного HTML
+оставил source-relative путь `../../framework-base.css`, и shared CSS не
+загрузился. `renderApplicationDocument` теперь независимо от cache-buster
+переписывает его в root-relative для инструмента `./framework-base.css`; тест
+фиксирует разные корректные пути source и public документов. Повторная сборка
+создала проверенный 15-asset runtime.
+
+Closed/open computed-style records и geometry совпадают с pre-rollout
+эталонами полностью. `New → E-ink → New` сохраняет 113 form states, panels и
+точные SVG: New 94 374/hash `4abbde0d…`, E-ink 78 234/hash `9d4f24e9…`.
+Escape закрывает listbox и возвращает focus toggle; browser errors — 0.
+Schema 1.2, 19 built-ins, два divider, import rollback, per-preset history и
+draft recovery подтверждены полным набором 167/167 тестов. Следующий шаг —
+UPG-055f preset component gate.
+
+Результат UPG-055f — preset family закрыта. `check:presets` фиксирует шесть
+active dropdown, 38 selectable manifest presets в 40 rows/40 JSON files,
+четыре inline Pulsar presets, три shared CRUD и три private data systems.
+Final bridge inventory и условия удаления записаны в compatibility matrix.
+Isolation, storage/boundary checks, 36 framework tests и все восемь app suites
+проходят в полном Gate G4. Следующий шаг — UPG-056a, audit нижних
+action/export панелей без production diff.
+
 ### UPG-056. Нижняя панель действий и export presentation
 
 Унифицируются placement, button states, focus и progress presentation. Форматы,
@@ -376,11 +622,156 @@ filename, SVG/PDF/PNG geometry, font embedding и workers остаются ча�
 Sticky SVG/PDF, Keyboarder editable/outlined SVG/PDF, Wordplayer PNG/SVG,
 Dither PNG, Wander/Pulsar SVG.
 
+Результат UPG-056a — создан `ACTION_EXPORT_COMPATIBILITY_MATRIX.md` без
+production diff. Зафиксированы восемь bars, 31 `btn-fixed`, две специальные
+кнопки Sparky и девять label-controls: всего 42 direct controls. Определены пять
+presentation families, восемь private export pipelines, accessibility gaps,
+rollback rules и порядок UPG-056b–h. Общая граница остаётся view-only:
+framework не получает generic exporter или чужие filename/domain rules.
+
+Результат UPG-056b — добавлен `check:actions` и включён в Gate G4. Он
+защищает 42 direct controls, IDs/formats, current shared/local CSS ownership,
+Sparky progress/mobile, Wordplayer aria-busy, Pizza/Sticky/Dither private
+states и все восемь export pipelines. Все action bars получили явные
+`role=toolbar` и доступное имя; пять изменённых captures имеют 0 changed RGB
+channels, controls/geometry точны.
+
+Sparky подтверждён в static и Basic Wild states: labels переключаются
+`Export PNG / Export ⌘E` ↔ `Export PNG sequence / Export MP4`. Working
+state скрывает и disables обе кнопки, показывает progress/cancel; cancellation
+возвращает idle/buttons. Intentional AbortError больше не логируется как export
+failure и защищён тестом. На 390×844 и 430×932 action bar остаётся скрытым.
+Sparky 196/196, Keyboarder и Wordplayer suites проходят.
+
+Результат UPG-056c — Wander удалил полный local action bar/button base и
+получает canonical shared presentation через scoped `revert-layer`.
+Намеренный diff одной кнопки: Arial 14.4/600 и 8×15 px → CoFo 16/500 и
+8×20 px; width 110.016→124.914 px, центр и 36 px height сохранены. Raster diff
+ограничен кнопкой. Panel 300×605.703125, 41 fields и Radial/Random/Flow SVG
+точны; возврат к исходному Radial state точен. Wander 10/10 и action gate
+проходят. Следующий rollout — UPG-056d Pulsar.
+
+Результат UPG-056d — Pulsar удалил полный local `bottom-buttons`/`btn-fixed`
+base и получает canonical shared presentation через scoped `revert-layer`.
+Намеренный diff трёх кнопок: CoFo 14.4/600 и 8×15 px → CoFo 16/500 и 8×20 px;
+общая ширина 313.664→366.281 px, центр, bottom anchor и 36 px height сохранены.
+Raster diff ограничен нижней панелью. Verify открывает и закрывает прежний
+modal с зафиксированной legacy CRC-ошибкой; Copy показывает зелёный `✓ Copied!`
+и восстанавливается. Все 22 поля, три panel rect и SVG 40 180/hash `97155e5a…`
+точны; browser/module errors — 0. Pulsar 8/8 и action gate проходят. Следующий
+rollout — UPG-056e Pizza Boxer.
+
+Результат UPG-056e — Pizza Boxer удалил local base action bar, fixed button и
+дублирующий export variant. Shared framework теперь владеет shell; private
+остались muted Setup, bordered PDF и right group extensions. Намеренный diff
+четырёх кнопок: Arial 14.4/600 и 8×15 px → CoFo 16/500 и 8×20 px. Bar остаётся
+320×664, 640×36; muted/PDF paint и правый край Outline сохранены, raster diff
+ограничен action region. Browser JSON, SVG и PDF actions не меняют документ.
+New/E-ink/New возвращают точные 113 fields, panels и SVG 94 374/`4abbde0d…`,
+78 234/`9d4f24e9…`, 94 374/`4abbde0d…`; errors — 0. Public runtime пересобран
+в 15 hashed assets, Pizza 167/167 и action gate проходят. Следующий rollout —
+UPG-056f Sticky Fingers.
+
+Результат UPG-056f — Sticky Fingers удалил local action bar/fixed button base
+и дублирующий export paint. Shared framework владеет shell; private остались
+muted preset/SVG variants, right group, edit/data visibility и batch lifecycle.
+Намеренный diff visible buttons: Arial 14.4/600 и 8×15 px → CoFo 16/500 и
+8×20 px; normal group 283.211→306.078 px, центр/bottom/36 px height сохранены,
+raster diff ограничен action region. Normal 79 fields, Data 300×242 и SVG
+18 640/`1592eaac…`; edit 79 fields, Layout 300×878.703125, Objects 300×383,
+Text 300×237 и SVG 18 607/`8850fd2f…` точны. Preset, current SVG/PDF actions
+не меняют state; Outline/Prepress round-trip точен, errors — 0. Google Sheets
+остаётся user-initiated private boundary; Sticky 5/5 и action gate проходят.
+Следующий rollout — UPG-056g Dither.
+
+Результат UPG-056g — Dither удалил local fixed-button base и получает shared
+shell через raster-safe promotion. Private остаются left 20 px anchor/z-index,
+36 px destructive remove buttons и четыре native 16×16 export option labels.
+Намеренный diff обычных кнопок: Arial 14.4/600, 8×15, 1 px border и 35.5 px
+height → CoFo 16/500, 8×20, no border и 36 px; bar width 904.695→947.742 px,
+его левый/bottom anchor сохранён. Для default, Bayer и Pixel Size 4 получен один
+и тот же full-page diff `21675/max 255/bounds [8,400,623,423]`, полностью ниже
+Canvas region: Canvas имеет 0 изменённых пикселей, 38 fields, panels и
+Canvas/overlay geometry точны. Alpha и ×2/×4/×8 exclusivity, PNG ×2,
+disabled/no-image и reload restore проходят; errors — 0. Dither 11/11 и action
+gate проходят. Следующий шаг — UPG-056h final action gate.
+
+Результат UPG-056h — action family закрыта. `check:actions` фиксирует восемь
+shared shells, 42 direct controls и восемь private export pipelines. Framework
+владеет centered bar/button normal/hover/focus/disabled; app-owned остаются
+Sparky progress/cancel/mobile, Pizza/Sticky group и semantic variants, Pulsar
+Copy flash, Wordplayer busy state и Dither left anchor/remove/native export
+labels. Sparky progress не вынесен в speculative shared primitive: его lifecycle
+жёстко связан с animation worker и cancel. `all:revert-layer` bridges удаляются
+только после UPG-058 legacy universal resets; Dither anchor — только при отдельном
+решении центрировать инструмент. Source manifest, assets/provenance,
+storage/path isolation, 36 framework tests и все восемь app suites проходят в
+полном Gate G4. Следующий этап — UPG-057a dialog/tooltip/error/toast audit.
+
 ### UPG-057. Dialog, tooltip, error и toast presentation
 
 Общий framework владеет shell, focus trap, dismissal и визуальными tokens.
 Приложение владеет текстом, validation и recovery decision. Не объединять
 unsaved guard, Pizza recovery и export errors в одну domain-модель.
+
+Результат UPG-057a — production не изменён; создана
+`DIALOG_FEEDBACK_COMPATIBILITY_MATRIX.md`. Зафиксированы 3 native
+dialogs, 2 active legacy overlays, 2 dormant Pizza/Sticky overlay fragments, 1 Sparky
+shortcut popup, 47 tooltip hosts и раздельные feedback families. Важный
+blocker: shared overlay и native dialog одновременно используют
+нескоупленный `.modal-content`; local overlay CSS нельзя удалять до
+отдельного regression contract. `TooltipService` пока mouse-only, а
+Pulsar overlay lifecycle не имеет полной keyboard/focus семантики; Sticky
+controller сохранился после удаления его UI-trigger и не должен быть оживлён.
+Решение: общий native `DialogHost`, минимальный
+`OverlayDialogHost` для двух реальных consumers и accessible `TooltipService`;
+domain presenters/progress/recovery остаются private. Следующий шаг —
+UPG-057b machine-readable feedback gate.
+
+Результат UPG-057b — `check:feedback` добавлен в Gate G4 и до первого
+production diff фиксирует 3 native dialogs, 2 active overlays + 2 dormant
+fragments, 1 private popup, 47 tooltip hosts, 10 primary blocking browser calls,
+shared shells и private feedback/recovery ownership. Следующий шаг — UPG-057c
+CSS scoping и native `DialogHost` lifecycle hardening.
+
+Результат UPG-057c — конфликт двух широких `.modal-content` устранён без
+визуального изменения: legacy overlay использует
+`.modal-overlay > .modal-content`, native dialog — `.modal > .modal-content`,
+а общие title/scrollbar/responsive rules явно перечисляют обе семьи. Для
+Keyboarder до/после полностью совпали dialog/content rect, background,
+radius, max sizes, overflow, padding 20 px, scale 0.95, transition и 24 px
+title; Wordplayer сохраняет тот же shell, Escape и возврат фокуса на About.
+Три native dialog получили `aria-labelledby="dialogTitle"`. `DialogHost`
+теперь разрешает native cancel/close, повторный show, repeated close, exact-once
+Promise resolution, focus return и destroy; `ApplicationShell.destroy()`
+освобождает его listeners. Dither и Pulsar overlay остаются рабочими со своими
+600 px shells; dormant Sticky UI не оживлён. Framework 38/38, все app suites,
+isolation и полный Gate G4 проходят. Следующий шаг — UPG-057d accessible
+`TooltipService`.
+
+Результат UPG-057d — 47 существующих tooltip hosts в Sparky 4, Keyboarder 21
+и Wordplayer 22 получили общий focus lifecycle, `role="tooltip"`, временный
+`aria-describedby`, Escape dismissal и очистку своих attributes/listeners.
+Existing `aria-describedby` сохраняется; dynamic и disabled copy, viewport flip
+и destroy покрыты unit test. Pointer mode до/после точен во всех трёх apps:
+совпадают text, rect, padding 6×10, 12/400 font, colors, 4 px radius, opacity,
+visibility и z-index. Keyboard focus показывает ту же copy под host, Escape
+скрывает её, оставляет focus и снимает только `cursorTooltip` reference.
+Versioned public-module chain гарантирует загрузку обновлённого service, не
+создавая app-local copies. Framework 39/39, все app suites, isolation и полный
+Gate G4 проходят. Следующий шаг — UPG-057e Dither `OverlayDialogHost` canary.
+
+Результат UPG-057e — создан presentation-neutral `OverlayDialogHost` и через
+существующий adapter подключён к Dither. App-local Escape/help/close/backdrop,
+class и body-overflow lifecycle удалён; markup, copy, CSS и Canvas domain-код
+не менялись. Default, Bayer и Pixel Size 4 имеют нулевую разницу state и RGB.
+Открытый shell сохраняет точный rect 600×483.523 px, padding 30 px, radius
+12 px, max sizes, background и transform. Намеренное отличие — initial focus
+теперь находится на Close, а не за overlay на Help; Tab удерживается внутри,
+Escape/backdrop возвращают focus и восстанавливают scroll. Добавлены ARIA
+trigger state и полный destroy contract. Framework 41/41, Dither 11/11,
+feedback contract, isolation и полный Gate G4 проходят. Следующий шаг —
+UPG-057f Pulsar rollout и доказательство dormant Pizza/Sticky fragments.
 
 ### UPG-058. Удалить подтверждённые legacy CSS-дубли
 

@@ -6,8 +6,8 @@
  */
 
 // Engine
-export { defineTool } from './core/defineTool.js';
-export { ApplicationShell } from './core/ApplicationShell.js';
+export { defineTool } from './core/defineTool.js?v=g5-feedback-1';
+export { ApplicationShell } from './core/ApplicationShell.js?v=g5-feedback-1';
 
 // Core
 export { Settings } from './core/Settings.js';
@@ -26,8 +26,9 @@ export { PanelManager } from './ui/PanelManager.js';
 export { ColorPicker } from './ui/ColorPicker.js';
 export { UnifiedColorPicker } from './ui/UnifiedColorPicker.js';
 export { DicePanel } from './ui/DicePanel.js';
-export { DialogHost } from './ui/DialogHost.js';
-export { TooltipService } from './ui/TooltipService.js';
+export { DialogHost } from './ui/DialogHost.js?v=g5-feedback-1';
+export { OverlayDialogHost } from './ui/OverlayDialogHost.js?v=g5-overlay-1';
+export { TooltipService } from './ui/TooltipService.js?v=g5-feedback-1';
 export { ZoomPanManager } from './ui/ZoomPanManager.js';
 
 // Features

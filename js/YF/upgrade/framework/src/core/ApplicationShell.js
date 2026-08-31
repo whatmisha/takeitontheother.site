@@ -22,8 +22,8 @@ import { PanelManager } from '../ui/PanelManager.js';
 import { ColorPicker } from '../ui/ColorPicker.js';
 import { UnifiedColorPicker } from '../ui/UnifiedColorPicker.js';
 import { DicePanel } from '../ui/DicePanel.js';
-import { TooltipService } from '../ui/TooltipService.js';
-import { DialogHost } from '../ui/DialogHost.js';
+import { TooltipService } from '../ui/TooltipService.js?v=g5-feedback-1';
+import { DialogHost } from '../ui/DialogHost.js?v=g5-feedback-1';
 import { PresetStore } from '../preset/PresetStore.js';
 import { PresetSession } from '../preset/PresetSession.js';
 import { ShareCodec } from '../preset/ShareCodec.js';
@@ -1109,6 +1109,7 @@ export class ApplicationShell {
         this.shortcuts?.destroy();
         this.mobile?.destroy();
         this.tooltips?.destroy();
+        this.dialog?.destroy();
         this.target?.destroy();
     }
 }

@@ -245,6 +245,82 @@ pair: range opacity 1/pointer/white thumb, display 0.3/`not-allowed`.
 corner max/value 15 и disabled states; reload возвращает width 25, source
 Auto/Max state и exact Radial SVG. Десять tests проходят.
 
+### Результат UPG-054n
+
+Pizza Boxer переведён на shared ordinary range presentation с нулевым
+visual/runtime diff. Из `styles/controls.css` удалены только ordinary
+base/thumb/track/hover/focus declarations; сохранён 6 px top-margin bridge над
+unlayered universal reset. Private `.hsb-control-group` block, 8 px HSB thumb,
+dynamic gradients, `SliderController` и `SliderHistoryController` не менялись.
+Reproducible build снова содержит ровно 15 public assets.
+
+На 1280×720 old cached runtime и новый runtime побайтно совпадают в default
+`7e902c4c…`, hover `d3518732…`, focus `13cb4e1e…` и открытом HSB picker
+`d3332fc7…`. Совпадают все 29 range states, 113 form states, panel/surface
+geometry и SVG 94 374/hash `4abbde0d…`. При одинаковой раскладке панелей
+Graphics 300×451 и Paragraph 300×680 также дают byte-identical captures,
+одинаковые editor inputs/ranges/panels и exact 94 384-character SVG.
+
+Live 5→6→5 state одинаков до/после; clean reload возвращает baseline. Pointer
+drag нельзя надёжно синтезировать текущим browser driver, поэтому transaction
+contract подтверждён специализированными tests: один history action на mouse
+gesture, commit на document `mouseup` вне slider и независимые focus/blur
+keyboard transactions. Полная Pizza suite проходит 167/167.
+
+### Результат UPG-054o
+
+HSB boundary закрыт verification-only: production CSS/runtime/HTML не менялись.
+Sparky, Wordplayer и Keyboarder создают по три ranges из одного shared
+`ColorPicker`; все девять имеют 244×10 rect, 12 px thumb, transparent track и
+shared focus/hover. Pizza оставляет три private 260×10 ranges, 8 px thumb и
+app-owned 10 px dynamic track styles. Framework unit test теперь отдельно
+фиксирует integer HSB values, gradients, silent HEX sync и callback lifecycle.
+
+Browser acceptance подтверждает shared picker 260×164 в Sparky и 260×161 в
+Wordplayer/Keyboarder, rainbow Hue и зависимые Saturation/Brightness gradients.
+Saturation 0→100 обновляет HEX `#ffffff`→`#ff0000` в Sparky/Wordplayer и
+`#1e1e1e`→`#1f0000` в Keyboarder; SVG меняется и clean reload возвращает exact
+Sparky 26 806-character и Keyboarder 133 295-character markup. Один picker
+корректно docks head→eyes→head, ink→background→ink и cap→guide→cap.
+
+Pizza при 213/40/85 открывает private picker 260×135.5, меняет saturation
+40→50 и HEX `#82A9D9`→`#6c9dd9`, создавая scoped 10 px track/8 px thumb styles;
+возврат через control к 40 и HEX `#82A9D9` восстанавливает exact 94 380-character
+SVG. Существующая integer HSB quantization (`#336699`→`#326699`) явно
+закреплена как color behavior, не range regression. Framework 36/36 и Pizza
+167/167 tests проходят.
+
+### Результат UPG-054p
+
+Два исключения закрыты без production diff. Dither сохраняет все 13 ranges как
+private raster-safe variant: десять ordinary и три HSB, 1 px track, 10 px thumb
+с `-4.5px` centering и hover `scale(1.3)`. Boundary test фиксирует 16 ms
+debounce для шести raster-processing controls, immediate transform/rotation
+paths, private formatting и cache invalidation. Ранее принятые byte-identical
+default/Bayer/Pixel Size 4 Canvas baselines остаются применимы, поскольку после
+UPG-054h production sources Dither не менялись. Suite проходит 11/11.
+
+Sticky Fingers подтверждён как zero-range boundary: 39 static + один dynamic
+native number input и ноль active ranges/value displays. Dormant legacy range
+CSS намеренно не удаляется в component rollout и теперь отмечен тестом до
+отдельного dead-CSS cleanup. Normal/edit/editor/SVG evidence UPG-054i остаётся
+точным; Google Sheets по-прежнему единственное user-initiated network
+исключение. Suite проходит 5/5.
+
+### Результат UPG-054q
+
+Range component gate закрыт. Новый `npm run check:ranges` включён первым шагом
+в `gate:g4:static` и проверяет одновременно DOM inventory и CSS ownership:
+97 shared ordinary + 9 shared HSB + 16 private = 122; Sticky Fingers = 0
+active. Shared-ordinary приложения не могут незаметно вернуть private
+thumb/track selectors, а Pizza/Dither/Sticky variants имеют явные assertions.
+
+Полный Gate G4 проходит: source manifest, 11 shared assets и три pinned
+downloads, framework provenance, storage isolation, 434-file runtime boundary,
+36 framework tests и все восемь app suites, включая Pizza public 15-asset
+runtime, Sparky 196, Pizza 167 и Dither 11. `git diff --check` clean. Range
+rollout завершён; toggle/segmented controls начинаются только отдельной matrix.
+
 ## 7. Acceptance checklist
 
 Для каждого приложения до и после изменения фиксируются:

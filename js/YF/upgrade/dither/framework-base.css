@@ -1,2 +1,42 @@
 /** Shared framework foundation below the frozen Dither skin. */
-@import url('../framework/css/othersite-styles.css?v=g4-dither-1') layer(framework);
+@import url('../framework/css/othersite-styles.css?v=g5-dialog-scope-1') layer(framework);
+
+/* G5 raster-safe action rollout with Dither's private left anchor. */
+.bottom-buttons {
+    all: revert-layer;
+    left: var(--spacing-3xl);
+    transform: none;
+    z-index: 1000;
+}
+
+.btn-fixed {
+    all: revert-layer;
+}
+
+/* G5 raster-safe choice rollout through the frozen universal reset. */
+.segmented-control,
+.segmented-control input[type="radio"],
+.segmented-control label,
+.checkbox-label,
+.checkbox-label span,
+.checkbox-label input[type="checkbox"],
+.checkbox-label::before,
+.checkbox-label::after {
+    all: revert-layer;
+}
+
+.control-group:has(.checkbox-label) {
+    margin-bottom: revert-layer;
+}
+
+.control-group .segmented-control label {
+    all: revert-layer;
+    margin-top: 1px;
+    margin-left: 1px;
+    margin-bottom: var(--spacing-xs);
+    gap: normal;
+}
+
+.segmented-control {
+    --segmented-control-font-size: 0.85rem;
+}

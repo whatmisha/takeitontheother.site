@@ -130,3 +130,20 @@ The 1280×720 normal capture, all 19 range records, 48 controls and the
 width 30 still produce stroke 25, corner maximum/value 15 and the same disabled
 states; clean reload restores the exact Radial baseline. Ten tests, isolation
 and Gate G4 pass.
+
+## G5 action-bar rollout
+
+UPG-056c removes the complete local btn-fixed and bottom-buttons component
+bases. The one-button export bar now consumes canonical shared presentation
+through a scoped revert-layer promotion; the private SVG serialization,
+area-boundary exclusion and filename remain unchanged.
+
+The accepted visual change is limited to Export SVG: Arial 14.4/600 and
+8×15 px padding become CoFo Sans 16/500 and 8×20 px. Width changes from
+110.016 to 124.914 px while the centered position and 36 px height remain
+canonical. Full-page raster differences are confined to that button.
+
+The controls panel remains 300×605.703125, all 41 fields restore, and exact
+Radial, Random and Flow Field SVG hashes remain 8bcdfde2…, fa1daf28… and
+f6fa2d66…. Browser errors are zero; all ten Wander tests and the action
+contract pass.

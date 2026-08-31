@@ -69,13 +69,13 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
 
     assert.match(
         bridge,
-        /@import url\('\.\.\/\.\.\/framework\/css\/othersite-styles\.css\?v=g4-pulsar-1'\) layer\(framework\);/u
+        /@import url\('\.\.\/\.\.\/framework\/css\/othersite-styles\.css\?v=g5-dialog-scope-1'\) layer\(framework\);/u
     );
     assert.ok(
         html.indexOf('css/framework-base.css') < html.indexOf('css/yf-styles.css'),
         'shared CSS must load before Pulsar compatibility CSS'
     );
-    assert.match(html, /css\/yf-styles\.css\?v=g5-pulsar-range-1/u);
+    assert.match(html, /css\/yf-styles\.css\?v=g5-pulsar-actions-1/u);
     assert.match(
         html,
         /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u
@@ -132,6 +132,77 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
         [...html.matchAll(/<input\b[^>]*\btype="range"[^>]*>/gu)].length,
         8,
         'Pulsar range inventory must remain stable'
+    );
+    assert.equal(
+        [...html.matchAll(/<input\b[^>]*\btype="(?:checkbox|radio)"[^>]*>/gu)].length,
+        4,
+        'Pulsar toggle/radio inventory must remain stable'
+    );
+    assert.match(
+        sharedStyles,
+        /\.checkbox-label\s*\{[^}]*display:\s*flex !important;[^}]*padding:\s*var\(--spacing-sm\) 0;/su,
+        'shared checkbox-label base changed'
+    );
+    assert.match(
+        sharedStyles,
+        /\.checkbox-label::before\s*\{[^}]*width:\s*33px;[^}]*height:\s*18px;/su,
+        'shared checkbox-label track geometry changed'
+    );
+    assert.match(
+        sharedStyles,
+        /\.checkbox-label::after\s*\{[^}]*left:\s*2px;[^}]*width:\s*14px;[^}]*height:\s*14px;/su,
+        'shared checkbox-label thumb geometry changed'
+    );
+    assert.match(
+        sharedStyles,
+        /\.segmented-control label\s*\{[^}]*font-size:\s*var\(--segmented-control-font-size, 0\.9rem\);/su,
+        'shared segmented font token changed'
+    );
+    assert.doesNotMatch(
+        legacySkin.replace(/\/\*[\s\S]*?\*\//gu, ''),
+        /(?:^|\})\s*\.(?:checkbox-label|segmented-control)(?:\s|:|\{)/u,
+        'Pulsar must not retain checkbox-label or segmented-control base CSS'
+    );
+    assert.match(
+        skin,
+        /\.segmented-control\s*\{\s*--segmented-control-font-size:\s*0\.85rem;\s*\}/u,
+        'Pulsar must preserve the frozen 13.6 px segmented label metric'
+    );
+    assert.match(
+        skin,
+        /\.segmented-control,\s*[\s\S]*?\.checkbox-label::after\s*\{\s*all:\s*revert-layer;\s*\}/u,
+        'Pulsar must promote only the shared choice components through unlayered resets'
+    );
+    assert.doesNotMatch(
+        legacySkin.replace(/\/\*[\s\S]*?\*\//gu, ''),
+        /(?:^|\})\s*\.preset-dropdown(?:-toggle|-text|-arrow|-menu|-item)?(?:\s|:|\{)/u,
+        'Pulsar must not retain the preset dropdown component base in its legacy skin'
+    );
+    assert.match(
+        skin,
+        /\.preset-dropdown,\s*[\s\S]*?\.preset-dropdown-item\s*\{\s*all:\s*revert-layer;\s*\}/u,
+        'Pulsar must promote shared preset dropdown presentation through the frozen reset'
+    );
+    assert.match(
+        skin,
+        /\.preset-dropdown-toggle\s*\{[\s\S]*?padding: var\(--spacing-md\) var\(--spacing-xl\) var\(--spacing-md\) var\(--spacing-3xl\);[\s\S]*?font-size: 0\.9rem;[\s\S]*?font-weight: 600;[\s\S]*?\}/u,
+        'Pulsar must preserve the legacy fixed-menu toggle metrics'
+    );
+    assert.match(
+        html,
+        /id="presetDropdownToggle" type="button"[\s\S]*?aria-controls="presetDropdownMenu"/u,
+        'Pulsar preset toggle semantics changed'
+    );
+    assert.match(html, /id="presetDropdownMenu" role="listbox"/u);
+    assert.doesNotMatch(
+        legacySkin.replace(/\/\*[\s\S]*?\*\//gu, ''),
+        /(?:^|\})\s*\.(?:bottom-buttons|btn-fixed)(?:\s|:|\{|,)/u,
+        'Pulsar must consume the shared action-bar and fixed-button base'
+    );
+    assert.match(
+        skin,
+        /\.bottom-buttons,\s*\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
+        'Pulsar must promote the shared action presentation through the frozen reset'
     );
 });
 

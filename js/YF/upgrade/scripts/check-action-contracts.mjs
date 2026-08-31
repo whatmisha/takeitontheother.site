@@ -1,0 +1,287 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+
+const root = new URL('../', import.meta.url);
+const read = relativePath => readFile(new URL(relativePath, root), 'utf8');
+const stripComments = source => source.replace(/\/\*[\s\S]*?\*\//gu, '');
+const count = (source, pattern) => source.match(pattern)?.length || 0;
+const countClass = (source, className) => [...source.matchAll(/\bclass=["']([^"']*)["']/gu)]
+    .filter(match => match[1].split(/\s+/u).includes(className))
+    .length;
+const bottomBar = (source, name) => {
+    const match = source.match(
+        /<nav\b[^>]*\bclass=["'][^"']*\bbottom-buttons\b[^"']*["'][^>]*>[\s\S]*?<\/nav>/u
+    );
+    assert.ok(match, `${name} bottom action bar missing`);
+    return match[0];
+};
+
+const appHtmlPaths = {
+    Sparky: 'sparky/index.html',
+    'Pizza Boxer': 'grid_generator/src/ui/fragments/actions.html',
+    'Sticky Fingers': 'label_generator/index.html',
+    Keyboarder: 'keyboarder/index.html',
+    Wordplayer: 'wordplayer/index.html',
+    'Pulsar Coder': 'pulsar_coder/index.html',
+    Dither: 'dither/index.html',
+    'Wander Bender': 'wander_bender/index.html'
+};
+
+const appHtml = Object.fromEntries(await Promise.all(
+    Object.entries(appHtmlPaths).map(async ([name, path]) => [name, await read(path)])
+));
+const bars = Object.fromEntries(
+    Object.entries(appHtml).map(([name, html]) => [name, bottomBar(html, name)])
+);
+
+const expected = {
+    Sparky: {
+        buttons: 4,
+        fixed: 2,
+        labels: 0,
+        ids: ['shortcutHelpBtn', 'exportPngBtn', 'exportSvgBtn', 'animationExportCancelBtn']
+    },
+    'Pizza Boxer': {
+        buttons: 4,
+        fixed: 4,
+        labels: 1,
+        ids: ['exportSettingsBtn', 'importSettingsBtn', 'exportPDFBtn', 'exportBtn',
+            'convertToOutlinesCheckbox']
+    },
+    'Sticky Fingers': {
+        buttons: 6,
+        fixed: 6,
+        labels: 2,
+        ids: ['exportSettingsBtn', 'importSettingsBtn', 'exportPdfBtn',
+            'generateAllStickersBtn', 'exportCurrentSvgBtn', 'exportAllSvgBtn',
+            'convertToOutlinesCheckbox', 'prepressCheckbox']
+    },
+    Keyboarder: {
+        buttons: 7,
+        fixed: 7,
+        labels: 1,
+        ids: ['aboutBtn', 'verifyBtn', 'exportJsonBtn', 'importJsonBtn', 'exportPdfBtn',
+            'exportPngBtn', 'exportSvgBtn', 'convertToOutlinesCheckbox']
+    },
+    Wordplayer: {
+        buttons: 3,
+        fixed: 3,
+        labels: 1,
+        ids: ['introHelpBtn', 'exportPngBtn', 'exportSvgBtn', 'transparentPngCheckbox']
+    },
+    'Pulsar Coder': {
+        buttons: 3,
+        fixed: 3,
+        labels: 0,
+        ids: ['verifyBtn', 'copyBtn', 'downloadBtn']
+    },
+    Dither: {
+        buttons: 5,
+        fixed: 5,
+        labels: 4,
+        ids: ['uploadBtnFixed', 'removeImageBtn', 'uploadSampleBtn', 'removeSampleBtn',
+            'exportBtn', 'exportWithAlpha', 'export2x', 'export4x', 'export8x']
+    },
+    'Wander Bender': {
+        buttons: 1,
+        fixed: 1,
+        labels: 0,
+        ids: ['exportBtn']
+    }
+};
+
+for (const [name, contract] of Object.entries(expected)) {
+    const bar = bars[name];
+    assert.equal(count(bar, /<button\b/gu), contract.buttons, `${name} button count changed`);
+    assert.equal(countClass(bar, 'btn-fixed'), contract.fixed, `${name} btn-fixed count changed`);
+    assert.equal(count(bar, /<label\b/gu), contract.labels, `${name} action-label count changed`);
+    assert.match(
+        bar,
+        /<nav\b[^>]*\brole=["']toolbar["'][^>]*\baria-label=["'][^"']+["']/u,
+        `${name} action bar must have an explicit toolbar name`
+    );
+    for (const id of contract.ids) {
+        assert.equal(
+            count(bar, new RegExp(`\\bid=["']${id}["']`, 'gu')),
+            1,
+            `${name} action id ${id} changed`
+        );
+    }
+}
+
+const buttonCount = Object.values(bars).reduce((total, bar) => total + count(bar, /<button\b/gu), 0);
+const fixedCount = Object.values(bars).reduce((total, bar) => total + countClass(bar, 'btn-fixed'), 0);
+const labelCount = Object.values(bars).reduce((total, bar) => total + count(bar, /<label\b/gu), 0);
+assert.equal(buttonCount, 33);
+assert.equal(fixedCount, 31);
+assert.equal(labelCount, 9);
+assert.equal(buttonCount + labelCount, 42);
+
+const [
+    sharedCss,
+    sparkyCss,
+    keyboarderCss,
+    wordplayerCss,
+    pulsarCss,
+    pulsarBridge,
+    wanderCss,
+    wanderBridge,
+    stickyCss,
+    stickyBridge,
+    pizzaCss,
+    pizzaEditorCss,
+    pizzaResponsiveCss,
+    ditherCss,
+    ditherBridge,
+    sparkyTool,
+    keyboarderTool,
+    wordplayerControls,
+    pulsarScript,
+    wanderScript,
+    stickyScript,
+    pizzaExportController,
+    ditherScript
+] = await Promise.all([
+    read('framework/css/othersite-styles.css'),
+    read('sparky/styles/sparky.css'),
+    read('keyboarder/app/theme.css'),
+    read('wordplayer/styles.css'),
+    read('pulsar_coder/css/yf-styles.css'),
+    read('pulsar_coder/pulsar-styles.css'),
+    read('wander_bender/css/yf-styles.css'),
+    read('wander_bender/css/wander-bender.css'),
+    read('label_generator/style.css'),
+    read('label_generator/framework-base.css'),
+    read('grid_generator/styles/actions-modal.css'),
+    read('grid_generator/styles/editors.css'),
+    read('grid_generator/styles/canvas-responsive.css'),
+    read('dither/style.css'),
+    read('dither/framework-base.css'),
+    read('sparky/tool.js'),
+    read('keyboarder/app/tool.js'),
+    read('wordplayer/src/ui/controls.js'),
+    read('pulsar_coder/pulsar-main.js'),
+    read('wander_bender/js/wander-bender.js'),
+    read('label_generator/script.js'),
+    read('grid_generator/src/svg/ExportController.js'),
+    read('dither/dither.js')
+]);
+
+const activeSharedCss = stripComments(sharedCss);
+for (const selector of ['bottom-buttons', 'btn-fixed']) {
+    assert.match(
+        activeSharedCss,
+        new RegExp(`\\.${selector}(?:[\\s:{.#]|$)`, 'u'),
+        `shared ${selector} presentation missing`
+    );
+}
+assert.match(activeSharedCss, /\.btn-fixed:disabled\s*\{/u);
+assert.match(activeSharedCss, /\.btn-fixed\.btn-intro-help\s*\{/u);
+assert.match(activeSharedCss, /\.btn-fixed\.btn-fixed--muted,/u);
+
+const localButtonBase = css => /(?:^|\})\s*\.btn-fixed\s*\{/u.test(stripComments(css));
+const localBarBase = css => /(?:^|\})\s*\.bottom-buttons\s*\{/u.test(stripComments(css));
+for (const [name, css] of [
+    ['Sparky', sparkyCss],
+    ['Keyboarder', keyboarderCss],
+    ['Wordplayer', wordplayerCss],
+    ['Pulsar Coder', pulsarCss],
+    ['Wander Bender', wanderCss],
+    ['Pizza Boxer', pizzaCss],
+    ['Sticky Fingers', stickyCss],
+    ['Dither', ditherCss]
+]) {
+    assert.equal(localButtonBase(css), false, `${name} reintroduced a local button base`);
+    assert.equal(localBarBase(css), false, `${name} reintroduced a local action-bar base`);
+}
+assert.match(
+    stripComments(await read('grid_generator/framework-base.css')),
+    /\.bottom-buttons,\s*\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
+    'Pizza Boxer must promote the canonical shared action presentation through legacy resets'
+);
+assert.equal(localButtonBase(pizzaEditorCss), false, 'Pizza Boxer editor CSS reintroduced a local button base');
+assert.equal(localBarBase(pizzaResponsiveCss), false, 'Pizza Boxer responsive CSS reintroduced a local action-bar base');
+assert.equal(localButtonBase(pizzaResponsiveCss), false, 'Pizza Boxer responsive CSS reintroduced a local button base');
+assert.match(stripComments(pizzaCss), /\.btn-export-pdf\s*\{/u);
+assert.match(stripComments(pizzaCss), /\.btn-export-settings,\s*\.btn-import-settings\s*\{/u);
+assert.match(stripComments(pizzaCss), /\.export-group-right\s*\{/u);
+assert.match(
+    stripComments(stickyBridge),
+    /\.bottom-buttons,\s*\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
+    'Sticky Fingers must promote the canonical shared action presentation through legacy resets'
+);
+assert.match(stripComments(stickyCss), /\.btn-export-settings,\s*\.btn-import-settings\s*\{/u);
+assert.match(stripComments(stickyCss), /\.export-group-right\s*\{/u);
+assert.match(stripComments(stickyCss), /body:not\(\.edit-mode-active\) \.edit-mode-only\s*\{/u);
+assert.match(
+    stripComments(ditherBridge),
+    /\.bottom-buttons\s*\{\s*all:\s*revert-layer;\s*left:\s*var\(--spacing-3xl\);\s*transform:\s*none;\s*z-index:\s*1000;\s*\}[\s\S]*?\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
+    'Dither must consume the shared shell while retaining only its left anchor'
+);
+assert.match(stripComments(ditherCss), /\.btn-remove\s*\{/u);
+assert.match(stripComments(ditherCss), /\.export-transparency-label\s*\{/u);
+assert.match(
+    stripComments(pulsarBridge),
+    /\.bottom-buttons,\s*\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
+    'Pulsar must promote the canonical shared action presentation through legacy resets'
+);
+assert.match(
+    stripComments(wanderBridge),
+    /\.bottom-buttons,\s*\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
+    'Wander must promote the canonical shared action presentation through legacy resets'
+);
+
+assert.match(sparkyCss, /\.sparky-export-status\s*\{/u);
+assert.match(sparkyCss, /\.sparky-export-actions\.is-exporting > \.btn-fixed\s*\{/u);
+assert.match(sparkyCss, /@media[^\{]*max-width:\s*768px[\s\S]*?\.bottom-buttons,[\s\S]*?display:\s*none\s*!important;/u);
+assert.match(sparkyTool, /new AnimationExporter\s*\(/u);
+assert.match(sparkyTool, /Export PNG sequence/u);
+assert.match(sparkyTool, /Export MP4/u);
+assert.match(sparkyTool, /animationExportCancelBtn/u);
+
+for (const marker of ['exportSVG()', 'exportPNG()', 'exportPDF()', 'exportModelJSON']) {
+    assert.ok(keyboarderTool.includes(marker), `Keyboarder lost ${marker}`);
+}
+assert.match(keyboarderTool, /convertToOutlinesCheckbox/u);
+assert.match(wordplayerControls, /setAttribute\('aria-busy', 'true'\)/u);
+assert.match(wordplayerControls, /exportPng\(this\.getScene\(\)/u);
+assert.match(wordplayerControls, /exportCurvedSvg\(this\.getScene\(\)\)/u);
+
+for (const marker of ['function downloadSvg()', 'function copySvg()', 'function verify()']) {
+    assert.ok(pulsarScript.includes(marker), `Pulsar lost ${marker}`);
+}
+assert.match(pulsarScript, /btn\.textContent = '✓ Copied!'/u);
+assert.match(wanderScript, /areaBoundary\.remove\(\)/u);
+assert.match(wanderScript, /wander-bender-\$\{settings\.get\('rays'\)\}-rays\.svg/u);
+
+for (const marker of [
+    'exportPDF()',
+    'exportCurrentLabelSVG()',
+    'exportAllLabelsSVG()',
+    'generateAllStickers()',
+    'loadDataFromGoogleSheets()'
+]) {
+    assert.ok(stickyScript.includes(marker), `Sticky lost ${marker}`);
+}
+assert.match(stickyScript, /generateAllStickersBtn\.disabled = true/u);
+assert.match(stickyScript, /exportAllSvgBtn\.disabled = true/u);
+assert.match(stickyScript, /prepressCheckbox/u);
+
+for (const marker of ['async exportSvg()', 'async exportPdf()', 'exportSettings()']) {
+    assert.ok(pizzaExportController.includes(marker), `Pizza lost ${marker}`);
+}
+assert.match(pizzaExportController, /convertToOutlinesCheckbox/u);
+
+assert.match(ditherScript, /exportBtn\.disabled = true/u);
+assert.match(ditherScript, /exportBtn\.disabled = false/u);
+assert.match(ditherScript, /if \(this\.settings\.export8x\)/u);
+assert.match(ditherScript, /else if \(this\.settings\.export4x\)/u);
+assert.match(ditherScript, /else if \(this\.settings\.export2x\)/u);
+assert.match(ditherScript, /if \(this\.settings\.exportWithAlpha\)/u);
+assert.match(stripComments(ditherBridge), /\.bottom-buttons\s*\{[^}]*left:\s*var\(--spacing-3xl\);/su);
+
+console.log(
+    `Action contract passed: 8 toolbars; ${fixedCount} btn-fixed + ${buttonCount - fixedCount} `
+    + `special buttons + ${labelCount} labels = ${buttonCount + labelCount} direct controls; `
+    + '8 shared shells + 1 private Dither anchor extension; 8 private export pipelines protected.'
+);

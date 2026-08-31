@@ -49,13 +49,29 @@
     line-height: 1rem;
 }
 
+/* G5 segmented rollout: promote shared presentation through legacy resets. */
+.segmented-control,
+.segmented-control input[type="radio"],
+.segmented-control label {
+    all: revert-layer;
+}
+
+.segmented-control {
+    --segmented-control-font-size: 0.85rem;
+}
+
 .control-group label > span:first-child {
     color: inherit;
 }
 
-.btn-secondary,
-.btn-fixed {
+.btn-secondary {
     font-family: Arial;
+}
+
+/* G5 action canary: consume the canonical shared bar and button presentation. */
+.bottom-buttons,
+.btn-fixed {
+    all: revert-layer;
 }
 
 .control-group input[type="range"]:disabled {

@@ -887,8 +887,7 @@ body {
 
 /* Base Button Styles - общие стили для всех кнопок */
 .btn-primary,
-.btn-secondary,
-.btn-fixed {
+.btn-secondary {
     padding: var(--spacing-md) var(--spacing-2xl);
     border: none;
     border-radius: var(--radius-button);
@@ -924,26 +923,9 @@ body {
 
 /* Disabled State */
 .btn-primary:disabled,
-.btn-secondary:disabled,
-.btn-fixed:disabled {
+.btn-secondary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-}
-
-/* Fixed Buttons - для bottom bar */
-.btn-fixed {
-    background: var(--color-text);
-    color: var(--color-bg);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
-}
-
-.btn-fixed:hover {
-    background: #2a2a2a;
-    color: var(--color-text);
-}
-
-.btn-fixed:active {
-    transform: none;
 }
 
 /* Apply/Close Buttons в модальных панелях */
@@ -1149,78 +1131,6 @@ body {
 .toggle-chip input:focus-visible + span {
     outline: 2px solid rgba(255, 255, 255, 0.5);
     outline-offset: 2px;
-}
-
-/* ============================================
-   11. SEGMENTED CONTROL
-   ============================================
-   Переключатель с несколькими вариантами (радио-кнопки)
-   ============================================ */
-
-fieldset {
-    border: none;
-    padding: 0;
-    margin: 0;
-}
-
-legend {
-    padding: 0;
-}
-
-.segmented-control {
-    display: flex;
-    background: var(--color-bg-input);
-    border-radius: var(--radius-input);
-    padding: 4px;
-    gap: 4px;
-    margin-top: var(--spacing-md);
-}
-
-.segmented-control input[type="radio"] {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.segmented-control label {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: var(--spacing-lg);
-    margin: 0;
-    font-size: 0.85rem;
-    line-height: 1;
-    color: var(--color-text-secondary);
-    background: transparent;
-    border-radius: calc(var(--radius-input) - 4px);
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    user-select: none;
-    position: relative;
-    font-weight: 400;
-}
-
-.segmented-control label:hover {
-    color: var(--color-text);
-}
-
-.segmented-control input[type="radio"]:checked + label {
-    background: var(--color-text);
-    color: var(--color-bg);
-    font-weight: 500;
-}
-
-.segmented-control input[type="radio"]:focus + label {
-    outline: 2px solid var(--color-text);
-    outline-offset: 2px;
-}
-
-/* Compact Segmented Control - меньшая высота */
-.segmented-control-compact label {
-    padding: 6px var(--spacing-lg);
 }
 
 /* ============================================
@@ -1696,21 +1606,6 @@ textarea::placeholder {
     font-weight: 600;
 }
 
-/* ============================================
-   16. BOTTOM BUTTONS
-   ============================================ */
-
-.bottom-buttons {
-    position: fixed;
-    bottom: var(--spacing-3xl);
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: var(--spacing-lg);
-    align-items: center;
-    z-index: 10000;
-}
-
 /* Toggle Label для "Outline fonts" и подобных */
 .toggle-label {
     display: flex;
@@ -1956,17 +1851,6 @@ textarea::placeholder {
         padding-right: 16px;
         padding-top: var(--spacing-xl);
         padding-bottom: var(--spacing-xl);
-    }
-    
-    .bottom-buttons {
-        bottom: var(--spacing-3xl);
-        flex-direction: column;
-        gap: 5px;
-    }
-    
-    .btn-fixed {
-        padding: var(--spacing-xl) var(--spacing-3xl);
-        font-size: 0.9rem;
     }
     
     .modal-content {

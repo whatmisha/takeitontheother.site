@@ -68,3 +68,21 @@ Canvas stays 1280×720 CSS/2560×1440 backing pixels. Focus and 25→26→25 res
 all inputs and panel geometry; the shared picker docks between Ink/Background.
 The running Forms simulation is intentionally not treated as a byte-stable
 screenshot baseline.
+
+## G5 native dialog lifecycle
+
+UPG-057c preserves Wordplayer's shared native dialog presentation and private
+about/export-error copy while adding `aria-labelledby="dialogTitle"`. Escape
+closes the dialog and returns focus to `introHelpBtn`; the shared host now also
+handles native cancel/external close, replacement and listener cleanup. Dither
+and Forms engines, busy buttons, Canvas and exporters are untouched. Boundary,
+both worker suites and full Gate G4 pass.
+
+## G5 tooltip accessibility
+
+UPG-057d applies the shared keyboard tooltip lifecycle to all 22 static hosts
+across Dither and Forms. The pointer Copy share link tooltip remains exactly
+100.094×25.5 with unchanged position, padding, font and paint. Focus adds a
+temporary `aria-describedby`; Escape removes it and leaves focus in place.
+Mode-hidden controls, Canvas workers, busy state and exporters are unchanged.
+Boundary, both worker suites and Gate G4 pass.

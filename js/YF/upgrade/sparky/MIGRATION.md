@@ -67,3 +67,22 @@ ranges; ordinary controls are 260×10 with 6/12 px margins, HSB controls are
 244×10, and picker docking between Head and Eyes works. Ray Count 5→6→5
 changes and then exactly restores the 26 806-character SVG. With no production
 diff, the accepted desktop and 390×844/430×932 mobile baselines remain intact.
+
+## G5 native dialog lifecycle
+
+UPG-057c keeps Sparky's native dialog presentation and private copy unchanged,
+adds the explicit `aria-labelledby="dialogTitle"` relationship and consumes the
+hardened shared lifecycle. Native cancel/external close, exact-once Promise
+resolution, focus return and listener cleanup are framework-owned. Sparky's
+shortcut popup and animation progress/cancel remain separate private families.
+The 196-test desktop/mobile suite and full Gate G4 pass.
+
+## G5 tooltip accessibility
+
+UPG-057d keeps the exact pointer tooltip presentation for Sparky's four hosts;
+the measured Copy share link tooltip remains 92.242×26 with unchanged position,
+font, padding and paint. Keyboard focus now exposes the same text through
+`role="tooltip"`/`aria-describedby`, and Escape removes the relation without
+moving focus. Shortcut help and animation progress remain private. The
+versioned public import prevents a stale shared service; 196 tests and Gate G4
+pass, including the existing mobile behavior suite.

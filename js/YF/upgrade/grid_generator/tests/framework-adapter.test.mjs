@@ -35,7 +35,22 @@ test('Pizza Boxer consumes shared capabilities through one explicit adapter', as
 });
 
 test('Pizza Boxer layers shared CSS below its production compatibility skin', async () => {
-    const [html, bridge, workspace, typography, editors, template, panelStyles, controlsStyles, frameworkStyles] = await Promise.all([
+    const [
+        html,
+        bridge,
+        workspace,
+        typography,
+        editors,
+        template,
+        panelStyles,
+        controlsStyles,
+        editorStyles,
+        actionStyles,
+        responsiveStyles,
+        sideStyles,
+        toolbarStyles,
+        frameworkStyles
+    ] = await Promise.all([
         readFile(new URL('../index.html', import.meta.url), 'utf8'),
         readFile(new URL('../framework-base.css', import.meta.url), 'utf8'),
         readFile(new URL('../src/ui/fragments/workspace.html', import.meta.url), 'utf8'),
@@ -44,32 +59,134 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
         readFile(new URL('../src/ui/ApplicationDocument.html', import.meta.url), 'utf8'),
         readFile(new URL('../styles/layout-panels.css', import.meta.url), 'utf8'),
         readFile(new URL('../styles/controls.css', import.meta.url), 'utf8'),
+        readFile(new URL('../styles/editors.css', import.meta.url), 'utf8'),
+        readFile(new URL('../styles/actions-modal.css', import.meta.url), 'utf8'),
+        readFile(new URL('../styles/canvas-responsive.css', import.meta.url), 'utf8'),
+        readFile(new URL('../styles/sides.css', import.meta.url), 'utf8'),
+        readFile(new URL('../styles/toolbar.css', import.meta.url), 'utf8'),
         readFile(new URL('../../framework/css/othersite-styles.css', import.meta.url), 'utf8')
     ]);
 
     assert.match(
         bridge,
-        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g5-pizza-2'\) layer\(framework\);/u
+        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g5-dialog-scope-1'\) layer\(framework\);/u
     );
     assert.match(bridge, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
-    assert.match(bridge, /\.btn-fixed\s*\{\s*font-family: Arial;/u);
+    assert.match(
+        bridge,
+        /\.bottom-buttons,\s*\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
+        'Pizza Boxer must promote the canonical shared action presentation'
+    );
+    assert.match(
+        bridge,
+        /\.show-toggle-chip-group,[\s\S]*?\.toggle-slider::before\s*\{\s*all:\s*revert-layer;\s*\}/u,
+        'Pizza Boxer must promote only the shared choice presentation families'
+    );
+    assert.match(
+        bridge,
+        /\.control-group:has\(\.checkbox-label\)\s*\{\s*margin-bottom:\s*revert-layer;\s*\}/u
+    );
+    assert.match(
+        bridge,
+        /\.control-group\.show-toggle-chip-group\s*\{\s*padding-top:\s*revert-layer;\s*margin-bottom:\s*revert-layer;\s*\}/u
+    );
+    assert.match(
+        bridge,
+        /\.control-group \.toggle-chip input\[type="checkbox"\]\s*\{\s*width:\s*0;\s*height:\s*0;\s*\}/u
+    );
+    assert.match(
+        bridge,
+        /\.control-group \.segmented-control label\s*\{\s*all:\s*revert-layer;\s*\}/u
+    );
+    assert.match(
+        bridge,
+        /\.segmented-control\s*\{\s*--segmented-control-font-size:\s*0\.85rem;\s*\}/u
+    );
+    assert.match(
+        bridge,
+        /\.preset-dropdown,\s*[\s\S]*?\.preset-dropdown-item\s*\{\s*all:\s*revert-layer;\s*\}/u,
+        'Pizza Boxer must promote shared preset dropdown presentation'
+    );
+    assert.match(
+        bridge,
+        /\.preset-dropdown-toggle\s*\{[\s\S]*?padding:\s*var\(--spacing-md\) var\(--spacing-xl\) var\(--spacing-md\) var\(--spacing-3xl\);[\s\S]*?font-size:\s*0\.9rem;[\s\S]*?font-weight:\s*600;[\s\S]*?\}/u,
+        'Pizza Boxer must preserve repository-view width metrics'
+    );
     assert.match(
         workspace,
         /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">\s*←Upgrade Tools\s*<\/a>/u
     );
     assert.doesNotMatch(workspace, /class="yf-tools-link"/u);
+    assert.match(workspace, /id="presetDropdownToggle" type="button"[\s\S]*?aria-controls="presetDropdownMenu"/u);
     assert.ok(
         template.indexOf('framework-base.css') < template.indexOf('../../style.css'),
         'source document must retain shared CSS before the application stylesheet'
+    );
+    assert.match(
+        template,
+        /href="\.\.\/\.\.\/framework-base\.css\?v=[^"]+"/u,
+        'development document must resolve the bridge from src/ui'
     );
     assert.ok(
         html.indexOf('framework-base.css') < html.search(/PublicEntry-[^"/]+\.css/u),
         'shared CSS must load below the frozen Pizza Boxer production skin'
     );
     assert.match(
+        html,
+        /href="\.\/framework-base\.css\?v=[^"]+"/u,
+        'public document must resolve the bridge from the project root'
+    );
+    assert.match(
         panelStyles,
         /\.panel-header span:first-child\s*\{[^}]*font-size:\s*0\.9rem;[^}]*line-height:\s*1rem;/su
     );
+    const stripComments = css => css.replace(/\/\*[\s\S]*?\*\//gu, '');
+    assert.doesNotMatch(
+        stripComments(toolbarStyles),
+        /(?:^|\})\s*\.preset-dropdown(?:-toggle|-text|-arrow|-menu|-item)?(?:\s|:|\{)/u,
+        'Pizza Boxer must not retain the preset dropdown component base'
+    );
+    assert.match(
+        stripComments(toolbarStyles),
+        /\.preset-dropdown-item\.preset-dropdown-divider\s*\{/u,
+        'Pizza Boxer manifest divider remains a private view extension'
+    );
+    assert.doesNotMatch(
+        stripComments(panelStyles),
+        /(?:^|\})\s*\.toggle-chip(?:\s|:|\{)/u,
+        'Pizza Boxer toggle-chip base must come from shared CSS'
+    );
+    assert.doesNotMatch(
+        stripComments(editorStyles),
+        /(?:^|\})\s*\.(?:checkbox-label|segmented-control)(?:\s|:|\{)/u,
+        'Pizza Boxer checkbox and segmented bases must come from shared CSS'
+    );
+    assert.doesNotMatch(
+        stripComments(actionStyles),
+        /(?:^|\})\s*\.toggle-switch(?:\s|:|\{)/u,
+        'Pizza Boxer toggle-switch base must come from shared CSS'
+    );
+    assert.doesNotMatch(
+        stripComments(editorStyles),
+        /(?:^|\})\s*\.btn-fixed(?:\s|:|\{|,)/u,
+        'Pizza Boxer must not retain the fixed-button base in editor styles'
+    );
+    assert.doesNotMatch(
+        stripComments(actionStyles),
+        /(?:^|\})\s*\.(?:bottom-buttons|btn-fixed|btn-export)(?:\s|:|\{|,)/u,
+        'Pizza Boxer must retain only semantic action variants locally'
+    );
+    assert.doesNotMatch(
+        stripComments(responsiveStyles),
+        /(?:^|\})\s*\.(?:bottom-buttons|btn-fixed)(?:\s|:|\{|,)/u,
+        'Pizza Boxer must not override the shared action shell responsively'
+    );
+    assert.match(sideStyles, /\.surface-tabs\.segmented-control label\s*\{/u);
+    assert.match(sideStyles, /\.surface-quick-controls \.toggle-chip-group\s*\{/u);
+    assert.match(frameworkStyles, /(?:^|\n)\.toggle-chip\s*\{/u);
+    assert.match(frameworkStyles, /(?:^|\n)\.checkbox-label\s*\{/u);
+    assert.match(frameworkStyles, /(?:^|\n)\.segmented-control\s*\{/u);
+    assert.match(frameworkStyles, /(?:^|\n)\.toggle-switch\s*\{/u);
     assert.match(
         frameworkStyles,
         /(?:^|\n)\.value-display\s*\{[\s\S]*?font-variant-numeric: tabular-nums;[\s\S]*?\}/u

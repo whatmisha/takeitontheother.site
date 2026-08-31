@@ -71,42 +71,6 @@
     cursor: wait;
     opacity: 0.5;
 }
-.bottom-buttons {
-    position: fixed;
-    bottom: var(--spacing-3xl);
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: var(--spacing-lg);
-    align-items: center;
-    z-index: 10000;
-}
-
-.btn-fixed {
-    background: var(--color-text);
-    color: var(--color-bg);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
-}
-
-.btn-fixed:hover {
-    background: #2a2a2a;
-    color: var(--color-text);
-}
-
-.btn-fixed:active {
-    transform: none;
-}
-
-.btn-export {
-    background: var(--color-text);
-    color: var(--color-bg);
-}
-
-.btn-export:hover {
-    background: #2a2a2a;
-    color: var(--color-text);
-}
-
 .btn-export-pdf {
     background: var(--color-bg-panel);
     color: var(--color-text);
@@ -157,55 +121,6 @@
 
 .toggle-label:hover .toggle-label-text {
     color: var(--color-text);
-}
-
-.toggle-switch {
-    position: relative;
-    width: 40px;
-    height: 20px;
-}
-
-.toggle-switch input[type="checkbox"] {
-    opacity: 0;
-    width: 0;
-    height: 0;
-    position: absolute;
-}
-
-.toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: var(--color-border);
-    transition: all var(--transition-normal);
-    border-radius: 20px;
-}
-
-.toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 14px;
-    width: 14px;
-    left: 3px;
-    bottom: 3px;
-    background-color: var(--color-bg);
-    transition: all var(--transition-normal);
-    border-radius: 50%;
-}
-
-.toggle-switch input:checked + .toggle-slider {
-    background-color: var(--color-text);
-}
-
-.toggle-switch input:checked + .toggle-slider:before {
-    transform: translateX(20px);
-}
-
-.toggle-switch input:focus + .toggle-slider {
-    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
 }
 
 /* Help Button */

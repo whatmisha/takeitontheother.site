@@ -1,5 +1,6 @@
 let ColorUtils;
 let DitherPanelManager;
+let OverlayDialogHost;
 
 class DitheringTool {
     // Constants
@@ -114,6 +115,11 @@ class DitheringTool {
             backgroundColor: '#000000'
         };
         
+        this.modalHost = new OverlayDialogHost({
+            overlayId: 'modalOverlay',
+            closeButtonId: 'modalClose',
+            triggerId: 'helpButton'
+        }).init();
         this.initEventListeners();
         this.panelManager = new DitherPanelManager();
         this.panelManager.registerPanel('controlsPanel', {
@@ -647,56 +653,15 @@ class DitheringTool {
                 e.preventDefault();
                 this.dom.sampleInput.click();
             }
-            // Close modal on Escape
-            if (e.key === 'Escape') {
-                const modalOverlay = document.getElementById('modalOverlay');
-                if (modalOverlay && modalOverlay.classList.contains('active')) {
-                    this.closeModal();
-                }
-            }
         });
-        
-        // Help button and modal
-        const helpButton = document.getElementById('helpButton');
-        const modalOverlay = document.getElementById('modalOverlay');
-        const modalClose = document.getElementById('modalClose');
-        
-        if (helpButton) {
-            helpButton.addEventListener('click', () => this.openModal());
-        }
-        
-        if (modalClose) {
-            modalClose.addEventListener('click', () => this.closeModal());
-        }
-        
-        if (modalOverlay) {
-            // Close modal when clicking on overlay (but not on modal content)
-            modalOverlay.addEventListener('click', (e) => {
-                if (e.target === modalOverlay) {
-                    this.closeModal();
-                }
-            });
-        }
     }
     
     openModal() {
-        const modalOverlay = document.getElementById('modalOverlay');
-        if (modalOverlay) {
-            modalOverlay.classList.add('active');
-            modalOverlay.setAttribute('aria-hidden', 'false');
-            // Prevent body scroll when modal is open
-            document.body.style.overflow = 'hidden';
-        }
+        return this.modalHost?.open();
     }
     
     closeModal() {
-        const modalOverlay = document.getElementById('modalOverlay');
-        if (modalOverlay) {
-            modalOverlay.classList.remove('active');
-            modalOverlay.setAttribute('aria-hidden', 'true');
-            // Restore body scroll
-            document.body.style.overflow = '';
-        }
+        return this.modalHost?.close();
     }
     
     // Unified slider update handler map
@@ -2291,8 +2256,8 @@ class DitheringTool {
 
 // Initialize the tool when the page loads
 document.addEventListener('DOMContentLoaded', async () => {
-    ({ ColorUtils, DitherPanelManager } = await import(
-        './js/framework/FrameworkAdapter.js?v=g4-dither-2'
+    ({ ColorUtils, DitherPanelManager, OverlayDialogHost } = await import(
+        './js/framework/FrameworkAdapter.js?v=g5-overlay-1'
     ));
     new DitheringTool();
 });

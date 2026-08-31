@@ -1,4 +1,4 @@
-import { defineTool } from '../framework/src/index.js';
+import { defineTool } from '../framework/src/index.js?v=g5-feedback-1';
 import {
     DEFAULT_GEOMETRY,
     buildCharacterGeometry
@@ -2757,7 +2757,11 @@ const app = defineTool({
             triggerSphereFeedback(tool);
         });
         document.getElementById('exportSvgBtn')?.addEventListener('click', () => {
-            tool.exportSVG().catch((error) => console.error('SVG export failed:', error));
+            tool.exportSVG().catch((error) => {
+                if (error?.name !== 'AbortError') {
+                    console.error('SVG export failed:', error);
+                }
+            });
         });
         document.getElementById('exportPngBtn')?.addEventListener('click', () => {
             Promise.resolve(tool.exportPNG()).catch(() => {});

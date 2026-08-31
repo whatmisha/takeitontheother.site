@@ -115,17 +115,6 @@
         padding-bottom: var(--spacing-xl);
     }
     
-    .bottom-buttons {
-        bottom: var(--spacing-3xl);
-        flex-direction: column;
-        gap: 5px;
-    }
-    
-    .btn-fixed {
-        padding: var(--spacing-xl) var(--spacing-3xl);
-        font-size: 0.9rem;
-    }
-    
     .modal-content {
         padding: var(--spacing-3xl);
     }

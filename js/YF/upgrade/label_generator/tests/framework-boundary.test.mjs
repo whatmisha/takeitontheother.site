@@ -7,19 +7,25 @@ import { ColorUtils } from '../../framework/src/index.js';
 const appRoot = new URL('../', import.meta.url);
 
 test('Sticky Fingers exposes shared behavior through one public-barrel facade', async () => {
-    const [adapter, html, bridge] = await Promise.all([
+    const [adapter, html, bridge, sharedStyles, style] = await Promise.all([
         readFile(new URL('src/framework/FrameworkAdapter.js', appRoot), 'utf8'),
         readFile(new URL('index.html', appRoot), 'utf8'),
-        readFile(new URL('framework-base.css', appRoot), 'utf8')
+        readFile(new URL('framework-base.css', appRoot), 'utf8'),
+        readFile(new URL('../framework/css/othersite-styles.css', appRoot), 'utf8'),
+        readFile(new URL('style.css', appRoot), 'utf8')
     ]);
     assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/framework\/src\/index\.js';/u);
     assert.match(adapter, /sharedCapabilities: Object\.freeze\(\['ColorUtils'\]\)/u);
     assert.match(
         bridge,
-        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g5-sticky-2'\) layer\(framework\);/u
+        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g5-dialog-scope-1'\) layer\(framework\);/u
     );
     assert.match(bridge, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
-    assert.match(bridge, /\.btn-fixed\s*\{\s*font-family: Arial;/u);
+    assert.match(
+        bridge,
+        /\.bottom-buttons,\s*\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
+        'Sticky Fingers must promote the canonical shared action presentation'
+    );
     assert.match(bridge, /\.controls-panel\s*\{\s*max-height: none;/u);
     assert.match(
         html,
@@ -30,6 +36,75 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
         html.indexOf('framework-base.css') < html.indexOf('style.css'),
         'shared CSS must load below the frozen Sticky Fingers skin'
     );
+    assert.match(html, /href="framework-base\.css\?v=g5-sticky-actions-1"/u);
+    assert.match(html, /href="style\.css\?v=g5-sticky-actions-1"/u);
+
+    assert.equal(html.match(/class="toggle-chip"/gu)?.length || 0, 9);
+    assert.equal(html.match(/class="checkbox-label"/gu)?.length || 0, 10);
+    assert.equal(html.match(/class="toggle-switch"/gu)?.length || 0, 3);
+    assert.equal(
+        [...html.matchAll(/<div class="segmented-control(?: segmented-control-compact)?"[\s\S]*?<\/div>/gu)]
+            .reduce((count, match) => count + (match[0].match(/type="radio"/gu)?.length || 0), 0),
+        6
+    );
+
+    const sharedWithoutComments = sharedStyles.replace(/\/\*[\s\S]*?\*\//gu, '');
+    const styleWithoutComments = style.replace(/\/\*[\s\S]*?\*\//gu, '');
+    assert.doesNotMatch(
+        styleWithoutComments,
+        /(?:^|\})\s*\.(?:bottom-buttons|btn-fixed|btn-export)(?:\s|:|\{|,)/u,
+        'Sticky Fingers must retain only semantic action variants locally'
+    );
+    assert.match(styleWithoutComments, /\.btn-export-settings,\s*\.btn-import-settings\s*\{/u);
+    assert.match(styleWithoutComments, /\.export-group-right\s*\{/u);
+    for (const selector of [
+        /(?:^|\})\s*\.toggle-chip(?:\s|:|\{)/u,
+        /(?:^|\})\s*\.(?:checkbox-label|segmented-control)(?:\s|:|\{)/u,
+        /(?:^|\})\s*\.toggle-switch(?:\s|:|\{)/u
+    ]) {
+        assert.match(sharedWithoutComments, selector);
+        assert.doesNotMatch(styleWithoutComments, selector);
+    }
+    assert.match(
+        bridge,
+        /\.show-toggle-chip-group,[\s\S]*?\.toggle-slider::before\s*\{\s*all:\s*revert-layer;\s*\}/u
+    );
+    assert.match(
+        bridge,
+        /\.toggle-chip span\s*\{\s*justify-content:\s*center;\s*padding:\s*var\(--spacing-sm\) var\(--spacing-xl\);\s*font-size:\s*0\.85rem;\s*\}/u
+    );
+    assert.match(
+        bridge,
+        /\.segmented-control\s*\{\s*--segmented-control-font-size:\s*0\.85rem;\s*\}/u
+    );
+    assert.match(
+        bridge,
+        /\.control-group\.show-toggle-chip-group\s*\{\s*padding-top:\s*revert-layer;\s*margin-bottom:\s*var\(--spacing-md\);\s*\}/u
+    );
+    assert.match(
+        bridge,
+        /\.control-group \.toggle-chip input\[type="checkbox"\]\s*\{\s*width:\s*0;\s*height:\s*0;\s*\}/u
+    );
+    assert.match(
+        bridge,
+        /\.control-group \.segmented-control label\s*\{\s*all:\s*revert-layer;\s*\}/u
+    );
+    assert.doesNotMatch(
+        styleWithoutComments,
+        /(?:^|\})\s*\.preset-dropdown(?:-toggle|-text|-arrow|-menu|-item)?(?:\s|:|\{)/u,
+        'Sticky Fingers must not retain the preset dropdown component base'
+    );
+    assert.match(
+        bridge,
+        /\.preset-dropdown,\s*[\s\S]*?\.preset-dropdown-item\s*\{\s*all:\s*revert-layer;\s*\}/u,
+        'Sticky Fingers must promote shared preset dropdown presentation'
+    );
+    assert.match(
+        bridge,
+        /\.preset-dropdown-toggle\s*\{[\s\S]*?padding:\s*var\(--spacing-md\) var\(--spacing-xl\) var\(--spacing-md\) var\(--spacing-3xl\);[\s\S]*?font-size:\s*0\.9rem;[\s\S]*?font-weight:\s*600;[\s\S]*?\}/u,
+        'Sticky Fingers must preserve manifest-loader width metrics'
+    );
+    assert.match(html, /id="presetDropdownToggle" type="button"[\s\S]*?aria-controls="presetDropdownMenu"/u);
 
     for (const [source, expectedImport] of [
         ['script.js', "./src/framework/FrameworkAdapter.js"],
@@ -50,15 +125,13 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
         error => error?.code === 'ENOENT'
     );
 
-    const [style, textToPath] = await Promise.all([
-        readFile(new URL('style.css', appRoot), 'utf8'),
+    const [textToPath] = await Promise.all([
         readFile(new URL('src/utils/TextToPath.js', appRoot), 'utf8')
     ]);
     assert.match(style, /\.\.\/framework\/fonts\/TT_Commons_Classic_Regular\.woff2/u);
     assert.match(style, /\.\.\/framework\/fonts\/TT_Commons_Classic_Medium\.woff2/u);
     assert.match(textToPath, /\.\.\/framework\/fonts\/TT Commons Classic Regular\.otf/u);
     assert.match(textToPath, /\.\.\/framework\/fonts\/TT Commons Classic Medium\.otf/u);
-    assert.match(html, /href="style\.css\?v=g5-sticky-value-1"/u);
     assert.match(
         style,
         /\.panel-header span:first-child\s*\{[^}]*font-size:\s*0\.9rem;[^}]*line-height:\s*1rem;/su
@@ -88,6 +161,7 @@ test('Sticky Fingers keeps native number inputs outside the value-display contra
 
     assert.equal(html.match(/type="number"/gu)?.length || 0, 39);
     assert.equal(html.match(/class="number-input"/gu)?.length || 0, 39);
+    assert.equal(html.match(/<input\b[^>]*\btype="range"[^>]*>/gu)?.length || 0, 0);
     assert.equal(html.match(/class="value-display(?!-)/gu)?.length || 0, 0);
     assert.equal(script.match(/input\.type = 'number';/gu)?.length || 0, 1);
     assert.match(script, /input\.className = 'number-input';/u);
@@ -109,6 +183,11 @@ test('Sticky Fingers keeps native number inputs outside the value-display contra
     assert.match(
         style,
         /\.number-input::-webkit-inner-spin-button,\s*\.number-input::-webkit-outer-spin-button\s*\{\s*opacity: 1;\s*\}/u
+    );
+    assert.match(
+        styleWithoutComments,
+        /\.control-group input\[type="range"\]\s*\{/u,
+        'legacy range presentation remains dormant until dead-CSS cleanup'
     );
     assert.match(controller, /if \(event\.shiftKey && config\.decimals === 2\)/u);
     assert.match(controller, /const roundedToTenth = Math\.round\(currentValue \* 10\) \/ 10;/u);

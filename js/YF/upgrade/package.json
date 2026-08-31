@@ -15,6 +15,11 @@
     "framework:bootstrap": "node scripts/bootstrap-framework-v3.mjs",
     "framework:upstream:check": "node scripts/bootstrap-framework-v3.mjs --check",
     "check:boundaries": "node scripts/check-boundaries.mjs",
+    "check:ranges": "node scripts/check-range-contracts.mjs",
+    "check:toggles": "node scripts/check-toggle-contracts.mjs",
+    "check:presets": "node scripts/check-preset-contracts.mjs",
+    "check:actions": "node scripts/check-action-contracts.mjs",
+    "check:feedback": "node scripts/check-feedback-contracts.mjs",
     "check:storage": "node scripts/check-storage-namespaces.mjs",
     "check:isolation": "npm run assets:check && npm run framework:upstream:check && npm run check:storage && npm run check:boundaries",
     "build:pizza": "npm --prefix grid_generator/tools run release",
@@ -32,6 +37,6 @@
     "gate:g1:static": "npm run gate:g0 && npm run check:isolation && npm run test:tier1",
     "gate:g2:static": "npm run gate:g0 && npm run check:isolation && npm run test:tier1",
     "gate:g3:static": "npm run gate:g0 && npm run check:isolation && npm run test:tier1",
-    "gate:g4:static": "npm run gate:g3:static && npm run test:tier2"
+    "gate:g4:static": "npm run check:ranges && npm run check:toggles && npm run check:presets && npm run check:actions && npm run check:feedback && npm run gate:g3:static && npm run test:tier2"
   }
 }

@@ -86,4 +86,73 @@ change-only formatting lifecycle, and a clean reload restores exact normal/edit
 baselines. Google Sheets remains the sole user-initiated network exception.
 `npm run test:sticky` passes 5/5.
 
+UPG-054p separately fixes Sticky Fingers as the zero-range boundary. The active
+runtime has no `input[type="range"]`; all 40 numeric controls remain native
+number inputs with application-owned behavior. Dormant legacy range selectors
+are deliberately left untouched until the later dead-CSS cleanup, so this
+verification cannot alter normal/edit/editor geometry. The five-test suite now
+asserts both the zero active inventory and that explicit quarantine.
+
+## G5 shared choice rollout
+
+UPG-054w moves nine `toggle-chip`, ten `checkbox-label`, two radio/label
+segments and three `toggle-switch` instances onto the shared presentation
+blocks. `style.css` no longer owns their full base/state declarations.
+`framework-base.css` contains only the cascade promotion and legacy metrics the
+shared base cannot infer: 0.85rem segment text, centered 12 px/13.6 px chips,
+zero-sized chip inputs and the final chip group's 8 px bottom interval.
+
+That interval is a measured parity bridge: the first edit-mode verification
+showed Layout shrinking from 878.703125 to 870.703125 because the newer shared
+last-child rule won inside the framework layer. The candidate was rejected;
+the scoped bridge restored the original 300×878.703125 panel before acceptance.
+
+At 1280×720 the complete normal/edit records are exact: all 79 form fields,
+28 choice controls, component geometry/computed styles and visible panels.
+Normal SVG remains 18 640 characters/hash `1592eaac…`; edit remains 18 607
+characters/hash `8850fd2f…`. The accepted full-page captures remain
+`164e7ea8…` and `29946506…`. Show objects, Prepress and edit-mode round-trips
+restore the exact initial state; the switch retains its 2 px black + 4 px white
+focus ring. There are no browser errors and the existing EAN-13 warning remains.
+Google Sheets and local PDF/OpenType paths were not changed.
+
+`npm run test:sticky` passes 5/5; `check:toggles` and full Gate G4 pass.
+
+## G5 preset presentation rollout
+
+UPG-055d removes Sticky Fingers' complete local preset dropdown and scrollbar
+base. The manifest-only three-item menu now consumes the shared component. A
+scoped bridge preserves the legacy system 14.4/600 toggle, asymmetric padding,
+400 px overflow, text clipping, selected weight and 6 px scrollbar. Manifest
+loading/sorting, JS width measurement/application, data rows, Google Sheets and
+exports remain private. Only `aria-controls` was added to the existing button
+and listbox semantics.
+
+Closed/open captures and every computed-style record match byte-for-byte.
+Laptop initial/restore keeps 79 form states, panels and SVG hash `1592eaac…`;
+Monitor keeps 78 states and SVG `e006d2ff…`; Tablet produces its expected SVG
+`c0f0bd8…` and returns exactly to Laptop. Edit mode keeps 79 states, Layout
+300×878.703125, Data 300×242, Objects 300×383, Text 300×237 and SVG
+`8850fd2f…`. Its only screenshot jitter is an 8×8 px SVG-local region
+(108 RGB channels, maximum delta 8), outside the toolbar; DOM/style/output
+snapshots are exact. Escape closes the menu and browser errors remain zero.
+Five tests and the preset contract pass.
+
+## G5 action-bar rollout
+
+UPG-056f removes Sticky Fingers' complete local action-bar/fixed-button base
+and duplicate export paint. The shared framework owns the canonical shell;
+the application retains muted preset/SVG variants, right-group layout,
+edit/data visibility, batch disabled lifecycle, all formats, prepress, data
+rows and its explicit user-initiated Google Sheets integration.
+
+The intentional change is Arial 14.4/600 with 8×15 px padding to CoFo Sans
+16/500 with 8×20 px padding. The normal group grows 283.211→306.078 px while
+its center, bottom anchor and 36 px height stay exact; raster changes are
+confined to the action region. Normal keeps 79 fields, Data 300×242 and SVG
+18,640/`1592eaac…`; edit keeps 79 fields, Layout 300×878.703125, Objects
+300×383, Text 300×237 and SVG 18,607/`8850fd2f…`. Preset, current SVG and PDF
+actions do not mutate state; Outline and Prepress round-trip exactly. Browser
+errors are zero, the Sheets boundary is unchanged and all five tests pass.
+
 Run `npm run test:sticky` from `upgrade/` for the automated Sticky Fingers checks.

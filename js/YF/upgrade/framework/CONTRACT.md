@@ -78,6 +78,36 @@ SVG-узлы с `data-export-exclude="true"` удаляются из файла.
 при initialization, interaction и `setCollapsed()`. App-owned controllers могут
 оставаться частными, но не должны одновременно привязывать duplicate handler.
 
+`DialogHost` обслуживает нативный `<dialog class="modal">`: безопасный text по
+умолчанию, явно запрошенный rich HTML, confirm/prompt/alert buttons, backdrop,
+Escape/native cancel, external close, exact-once Promise resolution и возврат
+фокуса. Повторный `show()` завершает предыдущий запрос как cancel. `destroy()`
+закрывает pending dialog и снимает listeners; `ApplicationShell.destroy()`
+вызывает его автоматически. Заголовок host markup должен быть связан через
+`aria-labelledby`. Domain copy, validation и решение о recovery остаются в app.
+
+`OverlayDialogHost` обслуживает уже существующую ненативную overlay-разметку,
+не создавая и не стилизуя её. Он владеет только `active`/`aria-hidden`,
+`aria-expanded`/`aria-controls` trigger-семантикой, Escape, backdrop, Tab
+containment, initial/return focus и обратимым body scroll lock. Предыдущее
+inline-значение `body.style.overflow` восстанавливается буквально. Текст,
+rich HTML, CSS, вычисления и решения о том, когда открыть окно, принадлежат
+приложению; `init()` идемпотентен, `destroy()` закрывает окно и снимает все
+созданные listeners.
+
+Legacy overlay и native dialog имеют отдельные CSS roots:
+`.modal-overlay > .modal-content` и `.modal > .modal-content`. Возврат широкого
+`.modal-content { ... }` запрещён, потому что он неявно связывает две разные
+геометрии и lifecycle families.
+
+`TooltipService` создаёт один `#cursorTooltip[role="tooltip"]`. Pointer position
+и presentation остаются cursor-following; keyboard focus показывает ту же
+актуальную `data-tooltip`/`data-tooltip-disabled` copy у host. Service временно
+добавляет свой ID в `aria-describedby`, не стирает существующие tokens, снимает
+только собственный token при focus-out/Escape и полностью очищается в
+`destroy()`. Positioning использует `ownerDocument.defaultView`, поэтому
+внедрённый document остаётся тестируемым и изолированным.
+
 ## 6. Storage
 
 Каждое приложение обязано передать уникальный versioned key вида `upgrade:<tool>:<purpose>:vN`. IndexedDB использует `upgrade-<tool>-vN`. Автоматическое чтение старых namespaces запрещено.
@@ -102,6 +132,17 @@ Runtime assets загружаются только same-origin:
 ## 8. CSS
 
 `framework/css/othersite-styles.css` подключается до app CSS. Tokens можно переопределять только последующим stylesheet. Mobile behavior opt-in и требуется только Sparky. Изменение framework CSS требует desktop checks всех приложений и обеих mobile ширин Sparky.
+
+Shared choice presentation включает `pill-toggle`, `toggle-chip`, 40×20
+`toggle-switch`, radio/label `segmented-control` и 33×18 `checkbox-label`.
+Framework читает native checked/focus/disabled state, но приложение владеет
+settings, persistence, взаимными зависимостями и render/export side effects.
+`--segmented-control-font-size` имеет default `0.9rem`; legacy adapter может
+задать только этот token. Если весь framework намеренно подключён в нижнем
+cascade layer, promotion отдельного совместимого компонента через старые
+unlayered resets оформляется узким app bridge с `revert-layer` и обязательно
+проверяется exact before/after capture; копировать component declarations
+обратно в приложение запрещено.
 
 ## 9. Compatibility and versioning
 

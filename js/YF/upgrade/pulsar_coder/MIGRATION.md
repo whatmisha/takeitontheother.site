@@ -118,3 +118,38 @@ bottom margins; panels, canvas and 22 input/select states are exact. The SVG
 remains 40 180 characters with hash `97155e5a…`. Live range 14→15→14, draft
 999 + Escape, Arrow and Enter restoration preserve the accepted lifecycle.
 Eight Pulsar tests, isolation and full Gate G4 pass.
+
+## G5 preset presentation canary
+
+UPG-055c removes Pulsar's complete local preset dropdown base and its duplicate
+preset scrollbar selectors. The fixed four-item menu now consumes the shared
+component. A scoped bridge preserves only the legacy system 14.4/600 toggle,
+asymmetric 8×12×8×20 padding, 400 px overflow, text clipping and selected 600.
+The four inline preset objects, `applyPreset`, settings and SVG renderer remain
+private. `type="button"`, `aria-controls` and `role="listbox"` were added with
+no visual effect.
+
+Closed/open computed-style records are exact. Initial 22 form states, panel
+rectangles and 40 180-character SVG hash `97155e5a…` match; Accurate and the
+subsequent explicit Voyager selection match their own pre-migration snapshots.
+The existing difference between startup defaults/label and an explicitly
+applied Voyager preset is recorded rather than changed. Full-page captures have
+the same closed/open SVG-only raster jitter (291 RGB channels, maximum delta 2)
+while dropdown geometry is exact. Outside click and focus pass with zero browser
+errors. Eight tests, the preset contract and Gate G4 pass.
+
+## G5 action-bar rollout
+
+UPG-056d removes Pulsar's complete local `.bottom-buttons` and `.btn-fixed`
+component base. The three controls now consume the canonical shared shell via
+a scoped `revert-layer` promotion required by the frozen universal reset.
+Verify, Copy, SVG download, filename and codec behavior remain app-owned.
+
+The intentional presentation change is CoFo 14.4/600 with 8×15 px padding to
+CoFo 16/500 with 8×20 px padding. Group width changes 313.664→366.281 px while
+its center, 36 px height and bottom anchor stay exact; the raster difference is
+confined to the action bar. Copy still flashes green `✓ Copied!` and restores;
+Verify retains the recorded legacy CRC failure and closes normally. All 22
+fields, three panel rectangles and the exact 40,180-character SVG hash
+`97155e5a…` remain unchanged. Browser/module errors are zero; eight Pulsar tests
+and the action contract pass.

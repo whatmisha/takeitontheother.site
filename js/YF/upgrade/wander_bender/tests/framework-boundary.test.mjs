@@ -68,15 +68,15 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
 
     assert.match(
         bridge,
-        /@import url\('\.\.\/\.\.\/framework\/css\/othersite-styles\.css\?v=g4-wander-1'\) layer\(framework\);/u
+        /@import url\('\.\.\/\.\.\/framework\/css\/othersite-styles\.css\?v=g5-dialog-scope-1'\) layer\(framework\);/u
     );
     assert.ok(
         html.indexOf('framework-base.css') < html.indexOf('yf-styles.css') &&
         html.indexOf('yf-styles.css') < html.indexOf('wander-bender.css'),
         'shared CSS must load before the two frozen Wander stylesheets'
     );
-    assert.match(html, /css\/yf-styles\.css\?v=g5-wander-range-1/u);
-    assert.match(html, /css\/wander-bender\.css\?v=g5-wander-value-1/u);
+    assert.match(html, /css\/yf-styles\.css\?v=g5-wander-actions-1/u);
+    assert.match(html, /css\/wander-bender\.css\?v=g5-wander-actions-1/u);
     assert.match(
         html,
         /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u
@@ -131,6 +131,43 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
         19,
         'Wander range inventory must remain stable'
     );
+    assert.equal(
+        [...html.matchAll(/<input\b[^>]*\btype="radio"[^>]*>/gu)].length,
+        3,
+        'Wander mode segment inventory must remain stable'
+    );
+    assert.doesNotMatch(html, /<input\b[^>]*\btype="checkbox"/u, 'Wander must retain its zero-checkbox boundary');
+    assert.match(
+        sharedStyles,
+        /\.segmented-control label\s*\{[^}]*font-size:\s*var\(--segmented-control-font-size, 0\.9rem\);/su,
+        'shared segmented-control base changed'
+    );
+    assert.doesNotMatch(
+        legacySkin.replace(/\/\*[\s\S]*?\*\//gu, ''),
+        /(?:^|\})\s*\.segmented-control(?:\s|:|\{)/u,
+        'Wander must not retain segmented-control base CSS'
+    );
+    assert.match(
+        skin,
+        /\.segmented-control,\s*[\s\S]*?\.segmented-control label\s*\{\s*all:\s*revert-layer;\s*\}/u,
+        'Wander must promote only the shared segmented component through resets'
+    );
+    assert.match(
+        skin,
+        /\.segmented-control\s*\{\s*--segmented-control-font-size:\s*0\.85rem;\s*\}/u,
+        'Wander must preserve the frozen 13.6 px segmented label metric'
+    );
+    assert.doesNotMatch(
+        legacySkin.replace(/\/\*[\s\S]*?\*\//gu, ''),
+        /(?:^|\})\s*\.(?:bottom-buttons|btn-fixed)\s*\{/u,
+        'Wander must not retain the shared action component base'
+    );
+    assert.match(
+        skin,
+        /\.bottom-buttons,\s*\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
+        'Wander must promote the canonical shared action presentation through resets'
+    );
+    assert.match(skin, /\.unit-btn\.active\s*\{[^}]*background:\s*#fff;/su, 'Auto/Max must remain private');
 });
 
 test('Paper.js is local and donor Pattern never enters the active runtime', async () => {

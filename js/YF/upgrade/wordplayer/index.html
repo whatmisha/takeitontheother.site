@@ -7,7 +7,7 @@
     <link rel="icon" href="data:,">
     <link rel="preload" href="../framework/fonts/CoFoSans-Regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="../framework/fonts/CoFoSans-Medium.woff2" as="font" type="font/woff2" crossorigin>
-    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g3-wordplayer-2">
+    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g5-dialog-scope-1">
     <link id="applicationStyles" rel="stylesheet" href="styles.css?v=g3-wordplayer-2">
 </head>
 <body>
@@ -326,7 +326,7 @@
             </aside>
         </main>
 
-        <nav class="bottom-buttons">
+        <nav class="bottom-buttons" role="toolbar" aria-label="Export actions">
             <button class="btn-fixed btn-intro-help" id="introHelpBtn" type="button" aria-label="About" data-tooltip="About">?</button>
             <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
             <button class="btn-fixed" id="exportSvgBtn" type="button">Export SVG</button>
@@ -339,7 +339,7 @@
             </label>
         </nav>
 
-        <dialog id="dialog" class="modal">
+        <dialog id="dialog" class="modal" aria-labelledby="dialogTitle">
             <div class="modal-content">
                 <h2 id="dialogTitle" class="modal-title"></h2>
                 <div id="dialogText" class="modal-text"></div>
@@ -349,6 +349,6 @@
         </dialog>
     </div>
 
-    <script type="module" src="./tool.js?v=g3-wordplayer-2"></script>
+    <script type="module" src="./tool.js?v=g5-feedback-1"></script>
 </body>
 </html>

@@ -7,7 +7,7 @@
  * В интерфейсе размеры сетки — только мм, кегли (когда появятся) — только pt. Внутри геометрия
  * по-прежнему в px (= pt = 1/72″), перевод через toPx / toMm.
  */
-import { defineTool, SVGExporter } from '../../framework/src/index.js';
+import { defineTool, SVGExporter } from '../../framework/src/index.js?v=g5-feedback-1';
 import { installKeyboarderPerf, perfEnabled, perfMarkStartup, perfNow, perfRecord, perfSince } from './perf.js';
 import { buildLayout, gapOf, widthInU } from './kb/grid.js';
 import { attachGuides } from './kb/guides.js';

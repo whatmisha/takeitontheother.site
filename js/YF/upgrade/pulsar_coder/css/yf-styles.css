@@ -887,8 +887,7 @@ body {
 
 /* Base Button Styles - общие стили для всех кнопок */
 .btn-primary,
-.btn-secondary,
-.btn-fixed {
+.btn-secondary {
     padding: var(--spacing-md) var(--spacing-2xl);
     border: none;
     border-radius: var(--radius-button);
@@ -924,26 +923,9 @@ body {
 
 /* Disabled State */
 .btn-primary:disabled,
-.btn-secondary:disabled,
-.btn-fixed:disabled {
+.btn-secondary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-}
-
-/* Fixed Buttons - для bottom bar */
-.btn-fixed {
-    background: var(--color-text);
-    color: var(--color-bg);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
-}
-
-.btn-fixed:hover {
-    background: #2a2a2a;
-    color: var(--color-text);
-}
-
-.btn-fixed:active {
-    transform: none;
 }
 
 /* Apply/Close Buttons в модальных панелях */
@@ -1152,167 +1134,6 @@ body {
 }
 
 /* ============================================
-   11. SEGMENTED CONTROL
-   ============================================
-   Переключатель с несколькими вариантами (радио-кнопки)
-   ============================================ */
-
-fieldset {
-    border: none;
-    padding: 0;
-    margin: 0;
-}
-
-legend {
-    padding: 0;
-}
-
-.segmented-control {
-    display: flex;
-    background: var(--color-bg-input);
-    border-radius: var(--radius-input);
-    padding: 4px;
-    gap: 4px;
-    margin-top: var(--spacing-md);
-}
-
-.segmented-control input[type="radio"] {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.segmented-control label {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: var(--spacing-lg);
-    margin: 0;
-    font-size: 0.85rem;
-    line-height: 1;
-    color: var(--color-text-secondary);
-    background: transparent;
-    border-radius: calc(var(--radius-input) - 4px);
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    user-select: none;
-    position: relative;
-    font-weight: 400;
-}
-
-.segmented-control label:hover {
-    color: var(--color-text);
-}
-
-.segmented-control input[type="radio"]:checked + label {
-    background: var(--color-text);
-    color: var(--color-bg);
-    font-weight: 500;
-}
-
-.segmented-control input[type="radio"]:focus + label {
-    outline: 2px solid var(--color-text);
-    outline-offset: 2px;
-}
-
-/* Compact Segmented Control - меньшая высота */
-.segmented-control-compact label {
-    padding: 6px var(--spacing-lg);
-}
-
-/* ============================================
-   12. CHECKBOXES & TOGGLES
-   ============================================ */
-
-/* Checkbox Label */
-.checkbox-label {
-    display: flex !important;
-    align-items: center !important;
-    cursor: pointer;
-    padding: var(--spacing-sm) 0;
-    margin-bottom: 0 !important;
-    position: relative;
-}
-
-.control-group:has(.checkbox-label) {
-    margin-bottom: var(--spacing-xs);
-}
-
-.checkbox-label span {
-    font-size: 0.85rem;
-    color: var(--color-text-secondary);
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-}
-
-.checkbox-icon {
-    flex-shrink: 0;
-    opacity: 0.7;
-    transition: opacity var(--transition-normal);
-}
-
-.checkbox-label:hover .checkbox-icon {
-    opacity: 1;
-}
-
-.checkbox-label:hover span {
-    color: var(--color-text);
-}
-
-/* Toggle Switch Styles */
-.control-group input[type="checkbox"] {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.checkbox-label::before {
-    content: '';
-    display: inline-block;
-    width: 33px;
-    height: 18px;
-    background-color: #3a3a3a;
-    border-radius: 9px;
-    margin-right: var(--spacing-lg);
-    transition: background-color 0.3s ease;
-    position: relative;
-    flex-shrink: 0;
-}
-
-.checkbox-label::after {
-    content: '';
-    position: absolute;
-    left: 2px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 14px;
-    height: 14px;
-    background-color: #ffffff;
-    border-radius: 50%;
-    transition: left 0.3s ease;
-}
-
-.control-group input[type="checkbox"]:checked + .checkbox-label::before,
-.checkbox-label:has(input[type="checkbox"]:checked)::before {
-    background-color: #888888;
-}
-
-.control-group input[type="checkbox"]:checked + .checkbox-label::after,
-.checkbox-label:has(input[type="checkbox"]:checked)::after {
-    left: 17px;
-    background-color: #ffffff;
-}
-
-.checkbox-label:hover::before {
-    opacity: 0.9;
-}
-
-/* ============================================
    13. DROPDOWNS & SELECTS
    ============================================ */
 
@@ -1419,124 +1240,6 @@ legend {
 .dropdown-item.selected {
     background: rgba(255, 255, 255, 0.12);
     color: var(--color-text);
-}
-
-/* Custom Preset Dropdown (в top-links) */
-.preset-dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-.preset-dropdown-toggle {
-    padding: var(--spacing-md) var(--spacing-xl) var(--spacing-md) var(--spacing-3xl);
-    background: var(--color-bg-panel);
-    color: var(--color-text);
-    border: none;
-    border-radius: var(--radius-button);
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    white-space: nowrap;
-    width: auto;
-    min-width: fit-content;
-    height: var(--button-height);
-    transition: width var(--duration-expand) var(--easing-standard),
-                background-color var(--transition-slow);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
-}
-
-.preset-dropdown-toggle:hover {
-    background-color: #2a2a2a;
-}
-
-.preset-dropdown-toggle:focus {
-    outline: none;
-    background-color: #2a2a2a;
-}
-
-.preset-dropdown-text {
-    flex: 0 0 auto;
-    min-width: 0;
-}
-
-.preset-dropdown-arrow {
-    color: var(--color-text);
-    transition: transform var(--duration-collapse) var(--easing-standard);
-    flex-shrink: 0;
-    width: 12px;
-    height: 8px;
-}
-
-.preset-dropdown-toggle[aria-expanded="true"] .preset-dropdown-arrow {
-    transform: rotate(180deg);
-}
-
-.preset-dropdown-menu {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
-    min-width: 100%;
-    width: max-content;
-    background: var(--color-bg-panel);
-    border-radius: var(--radius-sm);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
-    border: 1px solid var(--color-border);
-    padding: 4px;
-    margin: 0;
-    list-style: none;
-    z-index: 10001;
-    max-height: 400px;
-    overflow-y: auto;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-8px) scale(0.98);
-    transform-origin: top left;
-    transition: opacity var(--duration-fade) var(--easing-standard), 
-                transform var(--duration-expand) var(--easing-standard),
-                visibility 0s var(--duration-fade);
-}
-
-.preset-dropdown-menu.active {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0) scale(1);
-    transition: opacity var(--duration-fade) var(--easing-decelerate), 
-                transform var(--duration-expand) var(--easing-decelerate),
-                visibility 0s 0s;
-}
-
-.preset-dropdown-item {
-    padding: var(--spacing-lg) var(--spacing-xl);
-    color: var(--color-text-secondary);
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all var(--transition-fast);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 2px;
-}
-
-.preset-dropdown-item:last-child {
-    margin-bottom: 0;
-}
-
-.preset-dropdown-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--color-text);
-}
-
-.preset-dropdown-item.selected {
-    background: rgba(255, 255, 255, 0.12);
-    color: var(--color-text);
-    font-weight: 600;
 }
 
 /* ============================================
@@ -1699,17 +1402,6 @@ textarea::placeholder {
 /* ============================================
    16. BOTTOM BUTTONS
    ============================================ */
-
-.bottom-buttons {
-    position: fixed;
-    bottom: var(--spacing-3xl);
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: var(--spacing-lg);
-    align-items: center;
-    z-index: 10000;
-}
 
 /* Toggle Label для "Outline fonts" и подобных */
 .toggle-label {
@@ -1890,24 +1582,20 @@ textarea::placeholder {
 }
 
 /* Dropdown Menu Scrollbar */
-.dropdown-menu::-webkit-scrollbar,
-.preset-dropdown-menu::-webkit-scrollbar {
+.dropdown-menu::-webkit-scrollbar {
     width: 6px;
 }
 
-.dropdown-menu::-webkit-scrollbar-track,
-.preset-dropdown-menu::-webkit-scrollbar-track {
+.dropdown-menu::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.dropdown-menu::-webkit-scrollbar-thumb,
-.preset-dropdown-menu::-webkit-scrollbar-thumb {
+.dropdown-menu::-webkit-scrollbar-thumb {
     background: var(--color-border);
     border-radius: 3px;
 }
 
-.dropdown-menu::-webkit-scrollbar-thumb:hover,
-.preset-dropdown-menu::-webkit-scrollbar-thumb:hover {
+.dropdown-menu::-webkit-scrollbar-thumb:hover {
     background: var(--color-text-dim);
 }
 
@@ -1956,17 +1644,6 @@ textarea::placeholder {
         padding-right: 16px;
         padding-top: var(--spacing-xl);
         padding-bottom: var(--spacing-xl);
-    }
-    
-    .bottom-buttons {
-        bottom: var(--spacing-3xl);
-        flex-direction: column;
-        gap: 5px;
-    }
-    
-    .btn-fixed {
-        padding: var(--spacing-xl) var(--spacing-3xl);
-        font-size: 0.9rem;
     }
     
     .modal-content {

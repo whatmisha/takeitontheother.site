@@ -236,7 +236,7 @@
       "path": "src/ui/DialogHost.js",
       "sha256": "028bd246669fd87f07531a8e6ace6e240525de6c3d258ac2ca5d15cb3cc279ea",
       "bytes": 6132,
-      "workingStatus": "upstream-exact"
+      "workingStatus": "upgrade-modified"
     },
     {
       "path": "src/ui/DicePanel.js",
@@ -266,7 +266,7 @@
       "path": "src/ui/TooltipService.js",
       "sha256": "7aef2d0960deae67b176a8a1988783b74e15df8c868a2393cef1b7e44c2f4f9c",
       "bytes": 5089,
-      "workingStatus": "upstream-exact"
+      "workingStatus": "upgrade-modified"
     },
     {
       "path": "src/ui/UnifiedColorPicker.js",

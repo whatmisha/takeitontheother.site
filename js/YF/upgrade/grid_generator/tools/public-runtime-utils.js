@@ -68,7 +68,10 @@ export async function readBuildEntry() {
 export async function renderApplicationDocument({ scriptHref, styleHref }) {
     const template = await readFile(documentTemplatePath, 'utf8');
     return template
-        .replace('../../framework-base.css?v=g5-pizza-2', './framework-base.css?v=g5-pizza-2')
+        .replace(
+            /href="\.\.\/\.\.\/framework-base\.css(\?[^"]*)?"/u,
+            'href="./framework-base.css$1"'
+        )
         .replace('../../style.css', styleHref)
         .replace('../../script.js', scriptHref);
 }

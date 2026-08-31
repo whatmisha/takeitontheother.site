@@ -1,17 +1,117 @@
 /** Shared framework foundation below Sticky Fingers' frozen application skin. */
-@import url('../framework/css/othersite-styles.css?v=g5-sticky-2') layer(framework);
+@import url('../framework/css/othersite-styles.css?v=g5-dialog-scope-1') layer(framework);
 
 /* Promotion over Sticky Fingers' unlayered universal padding reset. */
 .top-link {
     padding: var(--spacing-md) var(--spacing-3xl);
 }
 
-/* Parity bridge: the legacy action buttons previously inherited Arial. */
+/* G5 action rollout: consume the canonical shared bar and button shell. */
+.bottom-buttons,
 .btn-fixed {
-    font-family: Arial;
+    all: revert-layer;
 }
 
 /* Parity bridge: edit-mode panels historically extend beyond the viewport. */
 .controls-panel {
     max-height: none;
+}
+
+/* G5 choice rollout: promote shared presentation through the frozen reset. */
+.show-toggle-chip-group,
+.toggle-chip-group,
+.toggle-chip,
+.toggle-chip input,
+.toggle-chip span,
+.checkbox-label,
+.checkbox-label span,
+.checkbox-label input[type="checkbox"],
+.checkbox-label::before,
+.checkbox-label::after,
+.segmented-control,
+.segmented-control input[type="radio"],
+.segmented-control label,
+.toggle-switch,
+.toggle-switch input[type="checkbox"],
+.toggle-slider,
+.toggle-slider::before {
+    all: revert-layer;
+}
+
+.control-group:has(.checkbox-label) {
+    margin-bottom: revert-layer;
+}
+
+.control-group.show-toggle-chip-group {
+    padding-top: revert-layer;
+    margin-bottom: var(--spacing-md);
+}
+
+.control-group .toggle-chip input[type="checkbox"] {
+    width: 0;
+    height: 0;
+}
+
+.control-group .segmented-control label {
+    all: revert-layer;
+}
+
+.toggle-chip span {
+    justify-content: center;
+    padding: var(--spacing-sm) var(--spacing-xl);
+    font-size: 0.85rem;
+}
+
+.segmented-control {
+    --segmented-control-font-size: 0.85rem;
+}
+
+/* G5 preset rollout: shared skin with Sticky's manifest-only sizing metrics. */
+.preset-dropdown,
+.preset-dropdown-toggle,
+.preset-dropdown-text,
+.preset-dropdown-arrow,
+.preset-dropdown-menu,
+.preset-dropdown-item {
+    all: revert-layer;
+}
+
+.preset-dropdown-toggle {
+    padding: var(--spacing-md) var(--spacing-xl) var(--spacing-md) var(--spacing-3xl);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.preset-dropdown-menu {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.preset-dropdown-item {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.preset-dropdown-item.selected {
+    font-weight: 600;
+}
+
+.preset-dropdown-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.preset-dropdown-menu::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.preset-dropdown-menu::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+}
+
+.preset-dropdown-menu::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-dim);
 }

@@ -64,3 +64,23 @@ and three 244×10 gradient controls; docking between Cap/Guide/Ink rows works.
 The existing integer HSB conversion can normalize achromatic `#aaaaaa` to
 `#ababab` after a manual edit. This is recorded as color behavior, not changed
 here; clean reload restores the exact 133 295-character SVG and `#aaaaaa`.
+
+## G5 native dialog lifecycle
+
+UPG-057c scopes the shared native shell away from legacy overlays while
+preserving Keyboarder's accepted About geometry exactly: 480×406.5 outer,
+456×386.175 transformed content, 20 px padding, 12 px radius, 0.95 scale and
+24 px title. `aria-labelledby="dialogTitle"` is explicit. Verify, import review,
+prompt/confirm and error content remain Keyboarder-owned; the shared host now
+handles native cancel/close, replacement, focus return and destroy. All six
+Keyboarder suites and full Gate G4 pass.
+
+## G5 tooltip accessibility
+
+UPG-057d gives all 21 static Keyboarder tooltip hosts shared keyboard behavior
+without changing hover presentation. Copy share link stays exactly
+100.094×25.5 with the same position, 6×10 padding, 12/400 font and paint.
+Focused hosts receive a temporary description; Escape hides it without moving
+focus. Dynamic Outline copy is reread from `data-tooltip`, while existing ARIA
+labels and rich dialogs remain application-owned. All six suites and Gate G4
+pass.

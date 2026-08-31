@@ -1866,7 +1866,7 @@ legend {
     text-align: center;
     padding: var(--spacing-lg);
     margin: 0;
-    font-size: 0.9rem;
+    font-size: var(--segmented-control-font-size, 0.9rem);
     line-height: 1;
     color: var(--color-text-secondary);
     background: transparent;
@@ -2490,6 +2490,96 @@ button.color-dot--expandable:focus-visible {
     display: none !important;
 }
 
+/* ============================================
+   12. CHECKBOX LABEL TOGGLES
+   ============================================
+   Compact 33×18 switch used beside control labels. Application code owns
+   state and side effects; this block owns presentation only.
+   ============================================ */
+
+.checkbox-label {
+    display: flex !important;
+    align-items: center !important;
+    cursor: pointer;
+    padding: var(--spacing-sm) 0;
+    margin-bottom: 0 !important;
+    position: relative;
+}
+
+.control-group:has(.checkbox-label) {
+    margin-bottom: var(--spacing-xs);
+}
+
+.checkbox-label span {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.checkbox-icon {
+    flex-shrink: 0;
+    opacity: 0.7;
+    transition: opacity var(--transition-normal);
+}
+
+.checkbox-label:hover .checkbox-icon {
+    opacity: 1;
+}
+
+.checkbox-label:hover span {
+    color: var(--color-text);
+}
+
+.checkbox-label input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.checkbox-label::before {
+    content: '';
+    display: inline-block;
+    width: 33px;
+    height: 18px;
+    background-color: #3a3a3a;
+    border-radius: 9px;
+    margin-right: var(--spacing-lg);
+    transition: background-color 0.3s ease;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.checkbox-label::after {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    transition: left 0.3s ease;
+}
+
+.control-group input[type="checkbox"]:checked + .checkbox-label::before,
+.checkbox-label:has(input[type="checkbox"]:checked)::before {
+    background-color: #888888;
+}
+
+.control-group input[type="checkbox"]:checked + .checkbox-label::after,
+.checkbox-label:has(input[type="checkbox"]:checked)::after {
+    left: 17px;
+    background-color: #ffffff;
+}
+
+.checkbox-label:hover::before {
+    opacity: 0.9;
+}
+
 
 /* ============================================
    13. DROPDOWNS & SELECTS
@@ -3108,7 +3198,7 @@ textarea::-moz-selection {
     pointer-events: auto;
 }
 
-.modal-content {
+.modal-overlay > .modal-content {
     background: var(--color-bg-panel);
     border: none;
     border-radius: var(--radius-sm);
@@ -3149,7 +3239,8 @@ textarea::-moz-selection {
     color: var(--color-text);
 }
 
-.modal-content h2 {
+.modal-overlay > .modal-content h2,
+.modal > .modal-content h2 {
     font-size: 1.5rem;
     margin-bottom: var(--spacing-3xl);
     color: var(--color-text);
@@ -3559,21 +3650,25 @@ textarea::-moz-selection {
 }
 
 /* Modal Content Scrollbar */
-.modal-content::-webkit-scrollbar {
+.modal-overlay > .modal-content::-webkit-scrollbar,
+.modal > .modal-content::-webkit-scrollbar {
     width: 6px;
 }
 
-.modal-content::-webkit-scrollbar-track {
+.modal-overlay > .modal-content::-webkit-scrollbar-track,
+.modal > .modal-content::-webkit-scrollbar-track {
     background: var(--color-bg);
     border-radius: var(--radius);
 }
 
-.modal-content::-webkit-scrollbar-thumb {
+.modal-overlay > .modal-content::-webkit-scrollbar-thumb,
+.modal > .modal-content::-webkit-scrollbar-thumb {
     background: var(--color-text-dim);
     border-radius: var(--radius);
 }
 
-.modal-content::-webkit-scrollbar-thumb:hover {
+.modal-overlay > .modal-content::-webkit-scrollbar-thumb:hover,
+.modal > .modal-content::-webkit-scrollbar-thumb:hover {
     background: var(--color-text-secondary);
 }
 
@@ -3725,11 +3820,13 @@ textarea::-moz-selection {
         height: calc(18px * 1.5);
     }
     
-    .modal-content {
+    .modal-overlay > .modal-content,
+    .modal > .modal-content {
         padding: var(--spacing-3xl);
     }
     
-    .modal-content h2 {
+    .modal-overlay > .modal-content h2,
+    .modal > .modal-content h2 {
         font-size: 1.3rem;
         margin-bottom: var(--spacing-3xl);
     }
@@ -4185,9 +4282,18 @@ html.is-mobile body {
     backdrop-filter: blur(4px);
 }
 
-.modal-content {
+.modal > .modal-content {
+    background: var(--color-bg-panel);
+    border: none;
+    border-radius: var(--radius-sm);
+    max-width: 600px;
     width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
     padding: var(--spacing-3xl);
+    position: relative;
+    transform: scale(0.95);
+    transition: transform var(--duration-expand) var(--easing-decelerate);
 }
 
 .modal-title {
