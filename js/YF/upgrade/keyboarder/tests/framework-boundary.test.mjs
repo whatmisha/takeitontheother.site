@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { access, readFile } from 'node:fs/promises';
 
-const [toolSource, htmlSource, themeSource, typographySource] = await Promise.all([
+const [toolSource, htmlSource, themeSource, typographySource, frameworkStylesSource] = await Promise.all([
     readFile(new URL('../app/tool.js', import.meta.url), 'utf8'),
     readFile(new URL('../index.html', import.meta.url), 'utf8'),
     readFile(new URL('../app/theme.css', import.meta.url), 'utf8'),
-    readFile(new URL('../app/kb/typography.js', import.meta.url), 'utf8')
+    readFile(new URL('../app/kb/typography.js', import.meta.url), 'utf8'),
+    readFile(new URL('../../framework/css/othersite-styles.css', import.meta.url), 'utf8')
 ]);
 
 assert.match(
@@ -26,10 +27,21 @@ const applicationCss = htmlSource.indexOf('app/theme.css');
 assert.ok(frameworkCss >= 0, 'shared framework stylesheet is missing');
 assert.ok(applicationCss > frameworkCss, 'Keyboarder theme must load after framework CSS');
 assert.doesNotMatch(htmlSource, /vendor\/framework/, 'Keyboarder HTML still links its retired framework copy');
+assert.match(
+    htmlSource,
+    /<a class="top-link" href="\.\.\/" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u,
+    'Keyboarder back link must expose the canonical navigation contract'
+);
 assert.match(themeSource, /\.\.\/\.\.\/framework\/fonts\/CoFoSans-Regular\.woff2/, 'shared regular CoFo font is missing');
 assert.match(themeSource, /\.\.\/\.\.\/framework\/fonts\/CoFoSans-Medium\.woff2/, 'shared medium CoFo font is missing');
 assert.match(themeSource, /\.\.\/fonts\/YS%20Text%20Variable\/YSText-Upright-weight-VF\.ttf/, 'application YS Text font changed');
 assert.match(typographySource, /\.\.\/\.\.\/vendor\/lib\/opentype\.module\.js/, 'Keyboarder typography dependency changed');
+assert.match(
+    frameworkStylesSource,
+    /\.panel-header span:first-child\s*\{[^}]*font-weight:\s*500;[^}]*font-size:\s*0\.9rem;/su,
+    'shared 14.4/500 panel-title contract changed'
+);
+assert.doesNotMatch(themeSource, /\.panel-header span:first-child/u, 'Keyboarder must not fork the shared panel-title presentation');
 
 for (const [relativePath, label] of [
     ['../vendor/framework/', 'local framework copy'],

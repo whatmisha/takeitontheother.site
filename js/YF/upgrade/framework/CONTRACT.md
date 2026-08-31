@@ -72,6 +72,12 @@ Render должен быть детерминированным при один�
 
 SVG-узлы с `data-export-exclude="true"` удаляются из файла. `data-fit-artboard="true"` на корневом SVG заставляет zoom/fit использовать логические размеры артборда, даже если guides выступают наружу. `SliderController.setDisplayValue()` меняет только отображение, не state. `PanelManager.toggleAllCollapsed()` восстанавливает именно набор ранее раскрытых панелей.
 
+`PanelManager.initCollapse()` идемпотентно связывает `.collapse-icon` с ближайшей
+`.controls-panel`: click, Enter и Space меняют один и тот же class state;
+`role="button"`, `tabindex="0"`, `aria-expanded` и state label синхронизируются
+при initialization, interaction и `setCollapsed()`. App-owned controllers могут
+оставаться частными, но не должны одновременно привязывать duplicate handler.
+
 ## 6. Storage
 
 Каждое приложение обязано передать уникальный versioned key вида `upgrade:<tool>:<purpose>:vN`. IndexedDB использует `upgrade-<tool>-vN`. Автоматическое чтение старых namespaces запрещено.

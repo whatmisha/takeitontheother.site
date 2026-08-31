@@ -2,10 +2,10 @@
 // Импорты модулей
 // ============================================
 // Итерация 1: Утилиты
-import { ColorUtils } from './src/utils/ColorUtils.js';
+import { ColorUtils } from './src/framework/FrameworkAdapter.js';
 import { MathUtils } from './src/utils/MathUtils.js';
 import { DOMUtils } from './src/utils/DOMUtils.js';
-import { TextToPath } from './src/utils/TextToPath.js';
+import { TextToPath } from './src/utils/TextToPath.js?v=g3-sticky-1';
 import { BarcodeGenerator } from './src/utils/BarcodeGenerator.js';
 import { ICONS, createSVGIcon } from './src/core/Constants.js';
 
@@ -1420,149 +1420,6 @@ class GridGenerator {
             console.warn('Failed to load presets manifest:', error);
             this.updateDropdownText('Error loading presets');
         }
-    }
-    
-    async loadPresetsFromDirectoryListing(applyImmediately = true) {
-        try {
-            // Сначала пробуем обычный directory listing
-            const listingResponse = await fetch(`presets/?ts=${Date.now()}`, {
-                cache: 'no-store'
-            });
-            
-            if (!listingResponse.ok) {
-                console.warn('Presets directory listing request failed, trying GitHub API...');
-                return await this.loadPresetsFromGitHubAPI(applyImmediately);
-            }
-            
-            const contentType = listingResponse.headers.get('content-type') || '';
-            if (!contentType.includes('text') && !contentType.includes('html')) {
-                console.warn('Presets directory listing returned unsupported content type, trying GitHub API...');
-                return await this.loadPresetsFromGitHubAPI(applyImmediately);
-            }
-            
-            const listingHtml = await listingResponse.text();
-            const files = this.extractJsonFilenamesFromListing(listingHtml);
-            
-            if (files.length === 0) {
-                console.warn('No JSON files in directory listing, trying GitHub API...');
-                return await this.loadPresetsFromGitHubAPI(applyImmediately);
-            }
-            
-            const presets = [];
-            for (const file of files) {
-                const presetMeta = await this.fetchPresetMetadataFromFile(file);
-                if (presetMeta) {
-                    presets.push(presetMeta);
-                }
-            }
-            
-            if (presets.length === 0) {
-                console.warn('Could not read any presets, trying GitHub API...');
-                return await this.loadPresetsFromGitHubAPI(applyImmediately);
-            }
-            
-            const sortedPresets = presets.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
-            
-            if (applyImmediately) {
-                this.availablePresets = sortedPresets;
-                this.initializePresets();
-                return true;
-            }
-            
-            return sortedPresets;
-        } catch (error) {
-            console.warn('Failed to scan presets directory, trying GitHub API:', error);
-            return await this.loadPresetsFromGitHubAPI(applyImmediately);
-        }
-    }
-    
-    async loadPresetsFromGitHubAPI(applyImmediately = true) {
-        console.warn('Remote preset discovery is disabled in the isolated upgrade workspace');
-        return applyImmediately ? false : null;
-    }
-    
-    mergePresetLists(primaryList = [], secondaryList = []) {
-        const merged = [];
-        const seenFiles = new Set();
-        
-        const addPreset = (preset) => {
-            if (!preset || !preset.file) return;
-            const normalizedFile = preset.file.toLowerCase();
-            if (seenFiles.has(normalizedFile)) return;
-            seenFiles.add(normalizedFile);
-            merged.push(preset);
-        };
-        
-        primaryList.forEach(addPreset);
-        secondaryList.forEach(addPreset);
-        
-        return merged.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
-    }
-    
-    extractJsonFilenamesFromListing(listingHtml) {
-        const files = new Set();
-        const regex = /href="([^"]+\.json)"/gi;
-        let match;
-        
-        while ((match = regex.exec(listingHtml)) !== null) {
-            const rawPath = match[1];
-            const normalized = this.normalizePresetFilename(rawPath);
-            if (
-                normalized &&
-                !/manifest\.json$/i.test(normalized) &&
-                !/readme\.json$/i.test(normalized)
-            ) {
-                files.add(normalized);
-            }
-        }
-        
-        return Array.from(files);
-    }
-    
-    normalizePresetFilename(filePath) {
-        if (!filePath) return null;
-        const decoded = decodeURIComponent(filePath)
-            .replace(/\\/g, '/')
-            .replace(/^\.?\//, '')
-            .replace(/^presets\//i, '');
-        return decoded.trim();
-    }
-    
-    async fetchPresetMetadataFromFile(fileName) {
-        if (!fileName) return null;
-        
-        // Use encodeURIComponent for proper encoding of special characters like quotes
-        const encodedName = encodeURIComponent(fileName);
-        const url = `presets/${encodedName}?ts=${Date.now()}`;
-        const fallbackName = this.getPresetDisplayNameFromFilename(fileName);
-        
-        try {
-            const response = await fetch(url, { cache: 'no-store' });
-            if (!response.ok) {
-                console.warn(`Failed to fetch preset ${fileName}:`, response.status);
-                return {
-                    name: fallbackName,
-                    file: fileName
-                };
-            }
-            
-            const presetData = await response.json();
-            return {
-                name: presetData.presetName || fallbackName,
-                file: fileName
-            };
-        } catch (error) {
-            console.warn(`Failed to parse preset ${fileName}:`, error);
-            return {
-                name: fallbackName,
-                file: fileName
-            };
-        }
-    }
-    
-    getPresetDisplayNameFromFilename(fileName) {
-        const base = fileName.replace(/^.*\//, '').replace(/\.json$/i, '');
-        return base.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim() || base || 'Preset';
     }
     
     initializePresets() {

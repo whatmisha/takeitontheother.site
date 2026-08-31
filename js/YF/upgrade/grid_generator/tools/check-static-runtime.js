@@ -5,6 +5,13 @@ import { fileURLToPath } from 'node:url';
 const toolsDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectDirectory = path.resolve(toolsDirectory, '..');
 const entryPath = path.join(projectDirectory, 'script.js');
+const sharedFrameworkEntryPath = path.resolve(
+    projectDirectory,
+    '..',
+    'framework',
+    'src',
+    'index.js'
+);
 const visited = new Set();
 const importPattern = /(?:import|export)\s+(?:[^'";]*?\s+from\s+)?['"]([^'"]+)['"]/gu;
 const dynamicImportPattern = /import\(\s*['"]([^'"]+)['"]\s*\)/gu;
@@ -30,6 +37,10 @@ async function visit(modulePath) {
         assertStaticSpecifier(specifier, path.relative(projectDirectory, normalizedPath));
         if (!specifier.startsWith('.')) continue;
         const importedPath = path.resolve(path.dirname(normalizedPath), specifier);
+        if (importedPath === sharedFrameworkEntryPath) continue;
+        if (!importedPath.startsWith(`${projectDirectory}${path.sep}`)) {
+            throw new Error(`Import escapes the Pizza Boxer boundary: ${importedPath}`);
+        }
         await visit(importedPath);
     }
 }

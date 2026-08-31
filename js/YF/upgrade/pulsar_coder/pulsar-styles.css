@@ -3,6 +3,17 @@
  * Extends yf-styles.css with app-specific components
  */
 
+/* G5 navigation: promote the shared top-link above the legacy universal reset. */
+.top-link {
+    padding: var(--spacing-md) var(--spacing-3xl);
+}
+
+/* G5 panel rollout: shared title size with geometry-safe system line-height. */
+.panel-header span:first-child {
+    font-size: 0.9rem;
+    line-height: 1rem;
+}
+
 /* Info Display - Status information panel */
 .info-display {
     background: var(--color-bg-input);
@@ -167,4 +178,3 @@
         display: none; /* Hide on mobile to save space */
     }
 }
-

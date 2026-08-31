@@ -3,10 +3,11 @@ import { access, readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 test('Sparky consumes the shared framework without surrendering private mobile and export behavior', async () => {
-    const [toolSource, htmlSource, stylesSource] = await Promise.all([
+    const [toolSource, htmlSource, stylesSource, frameworkStylesSource] = await Promise.all([
         readFile(new URL('../tool.js', import.meta.url), 'utf8'),
         readFile(new URL('../index.html', import.meta.url), 'utf8'),
-        readFile(new URL('../styles/sparky.css', import.meta.url), 'utf8')
+        readFile(new URL('../styles/sparky.css', import.meta.url), 'utf8'),
+        readFile(new URL('../../framework/css/othersite-styles.css', import.meta.url), 'utf8')
     ]);
 
     assert.match(
@@ -28,9 +29,49 @@ test('Sparky consumes the shared framework without surrendering private mobile a
     assert.ok(frameworkCss >= 0, 'shared framework stylesheet is missing');
     assert.ok(applicationCss > frameworkCss, 'Sparky stylesheet must load after framework CSS');
     assert.doesNotMatch(htmlSource, /(?:href|src)=["']\.\/framework\//, 'Sparky HTML still links its retired framework copy');
+    assert.match(
+        htmlSource,
+        /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u,
+        'Sparky back link must expose the canonical navigation contract'
+    );
     assert.match(stylesSource, /\.\.\/fonts\/TT_Commons_Classic_Regular\.woff2/, 'private regular TT Commons font moved incorrectly');
     assert.match(stylesSource, /\.\.\/fonts\/TT_Commons_Classic_Medium\.woff2/, 'private medium TT Commons font moved incorrectly');
     assert.doesNotMatch(stylesSource, /\.\.\/framework\/fonts\/TT_Commons/, 'Sparky CSS still depends on the retired local framework directory');
+    assert.match(
+        frameworkStylesSource,
+        /\.panel-header span:first-child\s*\{[^}]*font-weight:\s*500;[^}]*font-size:\s*0\.9rem;/su,
+        'shared 14.4/500 panel-title contract changed'
+    );
+    assert.doesNotMatch(
+        stylesSource,
+        /\.panel-header span:first-child/u,
+        'Sparky must not fork the shared panel-title presentation'
+    );
+    assert.match(
+        frameworkStylesSource,
+        /(?:^|\n)\.value-display\s*\{[\s\S]*?font-variant-numeric: tabular-nums;[\s\S]*?\}/u,
+        'shared value-display presentation changed'
+    );
+    assert.match(
+        frameworkStylesSource,
+        /(?:^|\n)\.value-display:focus\s*\{[\s\S]*?color: var\(--color-text\);[\s\S]*?\}/u,
+        'shared value-display focus state changed'
+    );
+    assert.match(
+        frameworkStylesSource,
+        /(?:^|\n)\.value-display:disabled\s*\{[\s\S]*?opacity: 0\.4;[\s\S]*?cursor: default;[\s\S]*?\}/u,
+        'shared value-display disabled state changed'
+    );
+    assert.doesNotMatch(
+        stylesSource,
+        /value-display/u,
+        'Sparky desktop/mobile CSS must not fork shared value-display presentation'
+    );
+    assert.equal(
+        htmlSource.match(/class="value-display"/gu)?.length,
+        24,
+        'Sparky domain slider display inventory changed'
+    );
     await assert.rejects(
         access(new URL('../framework/', import.meta.url)),
         (error) => error?.code === 'ENOENT',

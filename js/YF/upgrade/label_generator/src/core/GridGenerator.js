@@ -4,7 +4,7 @@
  */
 import { Settings } from './Settings.js';
 import { COLORS } from './Constants.js';
-import { ColorUtils } from '../utils/ColorUtils.js';
+import { ColorUtils } from '../framework/FrameworkAdapter.js';
 import { MathUtils } from '../utils/MathUtils.js';
 import { GridCalculator } from '../grid/GridCalculator.js';
 import { GridRenderer } from '../grid/GridRenderer.js';
@@ -735,4 +735,3 @@ export class GridGenerator {
         console.log('Redo not yet implemented');
     }
 }
-

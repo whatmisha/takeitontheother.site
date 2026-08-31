@@ -4,9 +4,9 @@
 
 ## Статус
 
-Gate G2 пройден: восемь приложений изолированы, общий framework v3 локализован и расширен, 34 conformance-теста и SVG/Canvas browser demos проходят. Следующая фаза — поочерёдное подключение пяти основных инструментов с сохранением их DOM/CSS и функционала.
+Gate G4 пройден: все восемь инструментов подключены к shared framework с сохранением согласованного desktop parity. Sparky остаётся protected mobile sentinel; частные codec/SVG/Canvas/algorithm/Paper особенности инструментов не переносились в framework.
 
-Актуальный порядок и критерии работы находятся в [PLAN.md](./PLAN.md), архитектурные границы — в [ARCHITECTURE.md](./ARCHITECTURE.md), прогресс — в [MIGRATION_STATUS.md](./MIGRATION_STATUS.md).
+Актуальный порядок и критерии работы находятся в [PLAN.md](./PLAN.md), архитектурные границы — в [ARCHITECTURE.md](./ARCHITECTURE.md), прогресс — в [MIGRATION_STATUS.md](./MIGRATION_STATUS.md). Детальный rollout унификации после паритета описан в [G5_UNIFICATION_PLAN.md](./G5_UNIFICATION_PLAN.md).
 
 ## Неприкосновенное правило
 
@@ -30,9 +30,11 @@ Gate G2 пройден: восемь приложений изолированы
 ```sh
 npm run gate:g1:static
 npm run gate:g2:static
+npm run gate:g3:static
+npm run gate:g4:static
 ```
 
-Команда проверяет исходный manifest и baseline, локальные зависимости, storage namespaces, filesystem/network boundaries, framework/domain suites Wordplayer и Keyboarder, 196 тестов Sparky и 165 тестов Pizza Boxer.
+Команда G3 проверяет исходный manifest и baseline, локальные зависимости, storage namespaces, filesystem/network boundaries, framework/domain suites Wordplayer и Keyboarder, 196 тестов Sparky, 167 тестов Pizza Boxer и 4 теста Sticky Fingers. G4 дополнительно запускает 8 Pulsar, 9 Dither и 10 Wander Bender boundary/domain checks.
 
 Для локального просмотра:
 
@@ -40,4 +42,4 @@ npm run gate:g2:static
 npm run serve
 ```
 
-Затем открыть `http://127.0.0.1:8000/`. Browser smoke и mobile visual Sparky описаны в [GATE_G1.md](./GATE_G1.md); общий framework и его SVG/Canvas demos — в [GATE_G2.md](./GATE_G2.md).
+Затем открыть `http://127.0.0.1:8000/`. Browser smoke и mobile visual Sparky описаны в [GATE_G1.md](./GATE_G1.md), общий framework — в [GATE_G2.md](./GATE_G2.md), приёмка пяти основных инструментов — в [GATE_G3.md](./GATE_G3.md), завершение миграции всех восьми — в [GATE_G4.md](./GATE_G4.md).

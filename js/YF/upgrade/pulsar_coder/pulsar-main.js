@@ -14,8 +14,10 @@
  * [PREAMBLE (16-32 bits)] [LENGTH (16 bits)] [PAYLOAD (n bits)] [CRC32 (32 bits)]
  */
 
-import { SliderController } from './js/ui/SliderController.js';
-import { PanelManager } from './js/ui/PanelManager.js';
+import {
+    PanelManager,
+    SliderController
+} from './js/framework/FrameworkAdapter.js';
 import { ZoomPanManager } from './js/ui/ZoomPanManager.js';
 
 // ============================================
@@ -882,13 +884,8 @@ document.addEventListener('DOMContentLoaded', () => {
         zoomPanManager.resetZoom();
     });
     
-    // Panel collapse
-    document.querySelectorAll('.collapse-icon').forEach(icon => {
-        icon.addEventListener('click', function() {
-            this.closest('.controls-panel').classList.toggle('panel-collapsed');
-            this.classList.toggle('collapsed');
-        });
-    });
+    // Shared click/keyboard/ARIA collapse contract; Pulsar keeps panel ownership.
+    panelManager.initCollapse();
     
     // Collapsible sections
     document.querySelectorAll('.collapsible-header').forEach(header => {
@@ -1086,3 +1083,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
 });
 
+// Pure codec/geometry exports are intentionally public for deterministic
+// regression tests. Browser startup remains driven by DOMContentLoaded above.
+export {
+    addFraming,
+    applyECC,
+    bitsToBytes,
+    bitsToNum,
+    bytesToBits,
+    bytesToUtf8,
+    crc32,
+    decodeECC,
+    encodePulsar,
+    makeAngles,
+    numToBits,
+    seededRandom,
+    splitBitsToRays,
+    utf8ToBytes,
+    verifyPulsar
+};

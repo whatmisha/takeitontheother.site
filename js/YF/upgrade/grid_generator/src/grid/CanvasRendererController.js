@@ -1,4 +1,4 @@
-import { ColorUtils } from '../utils/ColorUtils.js';
+import { ColorUtils } from '../framework/FrameworkAdapter.js';
 import { DOMUtils } from '../utils/DOMUtils.js';
 
 /** Owns the complete editor-canvas SVG composition. */

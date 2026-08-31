@@ -30,6 +30,82 @@ function fakePanel(collapsed = false, isOpen = true) {
     };
 }
 
+function fakeCollapseDom(collapsed = false) {
+    const attributes = new Map([['aria-hidden', 'true']]);
+    const listeners = new Map();
+    let listenerCount = 0;
+    const panel = {
+        classList: fakeClassList(collapsed ? ['panel-collapsed'] : []),
+        querySelector: () => icon
+    };
+    const icon = {
+        classList: fakeClassList(collapsed ? ['collapsed'] : []),
+        dataset: {},
+        closest: () => panel,
+        addEventListener(type, handler) {
+            listenerCount += 1;
+            listeners.set(type, handler);
+        },
+        setAttribute: (name, value) => attributes.set(name, String(value)),
+        getAttribute: name => attributes.get(name) ?? null,
+        removeAttribute: name => attributes.delete(name)
+    };
+    return { attributes, icon, listeners, panel, get listenerCount() { return listenerCount; } };
+}
+
+test('PanelManager collapse controls synchronize click, keyboard and ARIA idempotently', () => {
+    const previousDocument = globalThis.document;
+    const dom = fakeCollapseDom(true);
+    globalThis.document = { querySelectorAll: () => [dom.icon] };
+    try {
+        const manager = new PanelManager();
+        manager.initCollapse();
+        manager.initCollapse();
+
+        assert.equal(dom.listenerCount, 2, 'click and keydown listeners must bind once');
+        assert.equal(dom.icon.getAttribute('aria-hidden'), null);
+        assert.equal(dom.icon.getAttribute('role'), 'button');
+        assert.equal(dom.icon.getAttribute('tabindex'), '0');
+        assert.equal(dom.icon.getAttribute('aria-expanded'), 'false');
+        assert.equal(dom.icon.getAttribute('aria-label'), 'Expand panel');
+
+        const event = (key) => ({
+            key,
+            repeat: false,
+            prevented: false,
+            stopped: false,
+            preventDefault() { this.prevented = true; },
+            stopPropagation() { this.stopped = true; }
+        });
+        const space = event(' ');
+        dom.listeners.get('keydown')(space);
+        assert.equal(space.prevented, true);
+        assert.equal(space.stopped, true);
+        assert.equal(dom.panel.classList.contains('panel-collapsed'), false);
+        assert.equal(dom.icon.classList.contains('collapsed'), false);
+        assert.equal(dom.icon.getAttribute('aria-expanded'), 'true');
+        assert.equal(dom.icon.getAttribute('aria-label'), 'Collapse panel');
+
+        const enter = event('Enter');
+        dom.listeners.get('keydown')(enter);
+        assert.equal(dom.panel.classList.contains('panel-collapsed'), true);
+        assert.equal(dom.icon.getAttribute('aria-expanded'), 'false');
+
+        const click = event();
+        dom.listeners.get('click')(click);
+        assert.equal(dom.panel.classList.contains('panel-collapsed'), false);
+        assert.equal(dom.icon.getAttribute('aria-expanded'), 'true');
+
+        manager.panels.set('panel', { element: dom.panel, isOpen: true });
+        manager.setCollapsed('panel', true);
+        assert.equal(dom.panel.classList.contains('panel-collapsed'), true);
+        assert.equal(dom.icon.getAttribute('aria-expanded'), 'false');
+        assert.equal(dom.icon.getAttribute('aria-label'), 'Expand panel');
+    } finally {
+        globalThis.document = previousDocument;
+    }
+});
+
 test('PanelManager global toggle restores only panels that were expanded', () => {
     const manager = new PanelManager();
     const general = fakePanel();

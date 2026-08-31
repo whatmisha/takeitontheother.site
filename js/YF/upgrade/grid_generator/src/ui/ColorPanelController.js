@@ -1,4 +1,4 @@
-import { ColorUtils } from '../utils/ColorUtils.js';
+import { ColorUtils } from '../framework/FrameworkAdapter.js';
 import { ListenerScope } from '../core/ListenerScope.js';
 
 const DEFAULT_COLOR = '#dadde6';

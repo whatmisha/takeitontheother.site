@@ -10,7 +10,8 @@ Sparky is the priority migration and the mobile acceptance reference. It imports
 - Static PNG still delegates rasterization to the framework after Sparky settles animation/eye state.
 - The generic export guard is explicitly disabled because Sparky already owns the transient-state preparation policy for static and animated exports.
 - Storage remains `upgrade:sparky:presets:v1`; the force-seed and seed-migration policy is unchanged.
-- DOM structure and `styles/sparky.css` remain unchanged.
+- DOM structure and `styles/sparky.css` remain unchanged; UPG-052g adds the
+  canonical back link's missing accessible name without changing layout.
 
 ## Shared responsibilities
 
@@ -21,5 +22,27 @@ Sparky is the priority migration and the mobile acceptance reference. It imports
 ## Fonts
 
 Sparky intentionally renders its UI with its existing TT Commons files under the historical `CoFo Sans` family name. The two byte-identical files were moved from the retired local framework directory to `sparky/fonts/`; this preserves layout while making ownership explicit.
+
+UPG-052g completes the existing `.top-link` contract with
+`aria-label="Back to Upgrade Tools"`. Desktop browser state is an exact visual
+match, including toolbar/panels/actions, generated character SVG and all 68
+form states. The source diff is attribute-only and neither shared nor Sparky
+CSS selects `aria-label`, so the accepted 390×844 and 430×932 mobile geometry
+and safe-area behavior cannot be affected; the mobile showcase remains covered
+by the full 196-test suite.
+
+UPG-053f verifies without a runtime or CSS change that all four panel titles
+consume the shared 14.4/500 rule. Sparky's private font intentionally keeps each
+header and collapsed shell at 47 px. Shape collapse/restore returns the exact
+panel state, 26 806-character character SVG and all 68 inputs. The boundary test
+now rejects a private `.panel-header span:first-child` override; because this
+step adds no visual selector, the accepted mobile layouts remain unchanged.
+
+UPG-053g makes the existing collapse icons focusable shared controls with
+synchronized expanded state and Enter/Space behavior. It removes runtime
+`aria-hidden` without changing markup source or CSS; no Sparky selector targets
+the added attributes. Keyboard collapse/restore keeps the 47 px shell, exact
+character SVG and 68 inputs. The mobile showcase logic remains private and the
+196-test suite stays green.
 
 Run `npm run test:sparky` from `upgrade/`. Browser acceptance covers desktop plus 390×844 and 430×932 mobile viewports, mode controls, panel/shortcut behavior and static exports.

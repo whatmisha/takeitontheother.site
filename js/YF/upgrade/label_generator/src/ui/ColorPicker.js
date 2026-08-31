@@ -1,7 +1,7 @@
 /**
  * ColorPicker - HSB Color Picker с управлением градиентами
  */
-import { ColorUtils } from '../utils/ColorUtils.js';
+import { ColorUtils } from '../framework/FrameworkAdapter.js';
 
 export class ColorPicker {
     constructor(settings, callbacks = {}) {
@@ -301,4 +301,3 @@ export class ColorPicker {
         this.setColorFromHex(hex);
     }
 }
-

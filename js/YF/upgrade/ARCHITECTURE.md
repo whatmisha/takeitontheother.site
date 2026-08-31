@@ -10,11 +10,13 @@
 |---|---|---|
 | UI framework | Othersite UI Framework v3 | Fork-улучшения Keyboarder и Sparky переносятся после тестирования |
 | Sparky | верхний `lunnen/sparky` | Общий framework подключён; animation/mobile/export orchestration частные |
-| Pizza Boxer | верхний `lunnen/grid_generator` | `grid_generator/v2` — donor, не текущий runtime |
-| Sticky Fingers | верхний `lunnen/label_generator` | Старые framework-компоненты заменяются через façade |
+| Pizza Boxer | верхний `lunnen/grid_generator` | Общие `ColorUtils` и CSS lower layer через adapters; Grid Application/Vite/domain частные; `v2` — donor |
+| Sticky Fingers | верхний `lunnen/label_generator` | Общие `ColorUtils`/TT Commons/CSS lower layer через façade; label/data/barcode/export частные |
 | Keyboarder | верхний `lunnen/keyboarder` | Общий framework подключён; geometry/legends/import/export wrappers частные |
 | Wordplayer | верхний `lunnen/wordplayer` | Общий framework подключён; renderer/workers/export остаются частными |
-| Wander Bender | трёхрежимный верхний инструмент | `pattern/` — donor v3-реализации Random mode |
+| Pulsar Coder | верхний `lunnen/pulsar_coder` | Общие panels/sliders/CSS подключены; codec/SVG/private zoom остаются частными |
+| Dither | верхний `lunnen/dither` | Общие ColorUtils/panel lifecycle/CSS подключены; Canvas/overlay/algorithms/export остаются частными |
+| Wander Bender | верхний `lunnen/wander_bender` | Общие panels/sliders/CSS и local Paper vendor; три режима/Paper geometry/private zoom частные; `pattern/` — donor-only |
 | Void | активный root проекта без `wip/` | Donor общих принципов; приложение не копируется |
 
 ## 3. Dependency direction
@@ -92,7 +94,7 @@ Visual baseline нельзя обновлять в том же изменени�
 
 ## 8. Build contract
 
-Root workspace оркестрирует приложения, но не заставляет их иметь одинаковый build pipeline. Статические ES-module tools могут импортировать framework напрямую. Pizza Boxer сохраняет Vite build и проверку соответствия source/public runtime.
+Root workspace оркестрирует приложения, но не заставляет их иметь одинаковый build pipeline. Статические ES-module tools могут импортировать framework напрямую. Pizza Boxer сохраняет Vite build и проверку соответствия source/public runtime; его hashed entry внешне импортирует `framework/src/index.js`, не включая копию framework в bundle.
 
 Все `node_modules`, caches, generated runtime и test artifacts располагаются внутри `upgrade/`.
 
@@ -124,3 +126,11 @@ Root workspace оркестрирует приложения, но не заст
 - ADR-010: shared CSS is the exact v3/Void base with local font URLs only — accepted.
 - ADR-011: applications consume `framework/src/index.js`; internal imports require a migration note — accepted.
 - ADR-012: Void contributes generic behavior, never runtime files or domain code — accepted.
+- ADR-013: Pizza Boxer keeps its Grid Application and exposes shared behavior through a thin runtime adapter — accepted.
+- ADR-014: Sticky Fingers keeps its legacy GridGenerator and moves shared behavior only through small façades — accepted.
+- ADR-015: Google Sheets is the sole user-initiated external runtime exception — accepted.
+- ADR-016: Pulsar keeps its legacy codec/SVG/zoom; shared CSS is placed in a lower cascade layer until post-parity skin unification — accepted.
+- ADR-017: Dither keeps its Canvas/overlay/algorithm monolith and preserves paint-neutral panel clicks plus unbounded desktop drag through a thin shared `PanelManager` subclass — accepted.
+- ADR-018: Wander keeps all three modes, Paper geometry and legacy zoom private; shared panels/sliders are exposed through one façade, while `pattern/` remains outside the active runtime — accepted.
+- ADR-019: Pizza and Sticky join the shared CSS cascade through per-application lower-layer entrypoints before any intentional visual unification; narrow parity bridges must be explicit and tested — accepted.
+- ADR-020: top navigation is a static HTML/accessibility/shared-CSS contract rather than a JavaScript component; Wordplayer may keep mode navigation as an explicit extension — accepted.

@@ -1,6 +1,8 @@
-// Import framework modules
-import { SliderController } from './ui/SliderController.js';
-import { PanelManager } from './ui/PanelManager.js';
+// Import shared framework capabilities through the application façade.
+import {
+    SliderController,
+    WanderPanelManager
+} from './framework/FrameworkAdapter.js';
 import { ZoomPanManager } from './ui/ZoomPanManager.js';
 import { debounce, DEBOUNCE_DELAYS } from './utils/DebounceUtils.js';
 import { RadialMode } from './modes/RadialMode.js';
@@ -586,12 +588,13 @@ document.getElementById('resetExtractedRadialBtn').addEventListener('click', () 
 });
 
 // Initialize PanelManager
-const panelManager = new PanelManager();
+const panelManager = new WanderPanelManager();
 panelManager.registerPanel('controlsPanel', {
     headerId: 'controlsPanelHeader',
     draggable: true,
     persistent: true
 });
+panelManager.initCollapse();
 
 // Initialize ZoomPanManager
 const zoomPanManager = new ZoomPanManager(
@@ -607,14 +610,6 @@ document.getElementById('canvasContainer').addEventListener('zoomchange', (e) =>
 // Reset zoom on click
 document.getElementById('zoomIndicator').addEventListener('click', () => {
     zoomPanManager.resetZoom();
-});
-
-// Panel collapse
-document.querySelectorAll('.collapse-icon').forEach(icon => {
-    icon.addEventListener('click', function() {
-        this.closest('.controls-panel').classList.toggle('panel-collapsed');
-        this.classList.toggle('collapsed');
-    });
 });
 
 // Copy SVG to clipboard functionality
@@ -711,4 +706,3 @@ if (document.readyState === 'loading') {
     // DOM is already ready
     initializeApp();
 }
-

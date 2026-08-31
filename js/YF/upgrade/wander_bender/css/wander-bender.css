@@ -5,6 +5,7 @@
     opacity: 1;
 }
 
+/* Auto/Max remains an explicit disabled-presentation extension. */
 .value-display:disabled {
     opacity: 0.3;
     cursor: not-allowed;
@@ -28,3 +29,59 @@
     opacity: 0.7;
 }
 
+/* Shared-framework parity bridge. */
+.controls-panel {
+    max-height: none;
+}
+
+.top-links {
+    flex-wrap: nowrap;
+}
+
+/* G5 navigation: promote the shared top-link above the legacy universal reset. */
+.top-link {
+    padding: var(--spacing-md) var(--spacing-3xl);
+}
+
+/* G5 panel canary: promote the title to the shared header typography. */
+.panel-header span:first-child {
+    font-size: 0.9rem;
+    line-height: 1rem;
+}
+
+.control-group label > span:first-child {
+    color: inherit;
+}
+
+.btn-secondary,
+.btn-fixed {
+    font-family: Arial;
+}
+
+.control-group input[type="range"]:disabled {
+    opacity: 1;
+    cursor: pointer;
+}
+
+.control-group:has(input[type="range"]:disabled) label > span:first-child {
+    opacity: 1;
+    color: inherit;
+}
+
+.control-group input[type="range"]:disabled::-webkit-slider-thumb {
+    background: var(--color-text);
+    cursor: pointer;
+}
+
+.control-group input[type="range"]:disabled::-moz-range-thumb {
+    background: var(--color-text);
+    cursor: pointer;
+}
+
+.control-group input[type="range"]:disabled::-webkit-slider-runnable-track {
+    background: var(--color-border);
+}
+
+.control-group input[type="range"]:disabled::-moz-range-track {
+    background: var(--color-border);
+}

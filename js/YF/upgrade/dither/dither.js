@@ -1,3 +1,6 @@
+let ColorUtils;
+let DitherPanelManager;
+
 class DitheringTool {
     // Constants
     static CONSTANTS = {
@@ -112,8 +115,15 @@ class DitheringTool {
         };
         
         this.initEventListeners();
-        this.initPanelDrag('controlsPanel', 'panelHeader');
-        this.initPanelDrag('transformPanel', 'transformPanelHeader');
+        this.panelManager = new DitherPanelManager();
+        this.panelManager.registerPanel('controlsPanel', {
+            headerId: 'panelHeader',
+            persistent: true
+        });
+        this.panelManager.registerPanel('transformPanel', {
+            headerId: 'transformPanelHeader',
+            persistent: true
+        });
         this.initCanvasInteraction();
         this.initValueInputs();
         this.initColorPreview();
@@ -255,82 +265,19 @@ class DitheringTool {
     
     // Color conversion methods
     hexToRgb(hex) {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16)
-        } : null;
+        return ColorUtils.hexToRgb(hex);
     }
     
     rgbToHex(r, g, b) {
-        return '#' + [r, g, b].map(x => {
-            const hex = Math.round(x).toString(16);
-            return hex.length === 1 ? '0' + hex : hex;
-        }).join('');
+        return ColorUtils.rgbToHex(r, g, b);
     }
     
     rgbToHsb(r, g, b) {
-        r /= 255;
-        g /= 255;
-        b /= 255;
-        
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        const delta = max - min;
-        
-        let h = 0;
-        let s = max === 0 ? 0 : delta / max;
-        let v = max;
-        
-        if (delta !== 0) {
-            if (max === r) {
-                h = ((g - b) / delta + (g < b ? 6 : 0)) / 6;
-            } else if (max === g) {
-                h = ((b - r) / delta + 2) / 6;
-            } else {
-                h = ((r - g) / delta + 4) / 6;
-            }
-        }
-        
-        return {
-            h: Math.round(h * 360),
-            s: Math.round(s * 100),
-            b: Math.round(v * 100)
-        };
+        return ColorUtils.rgbToHsb(r, g, b);
     }
     
     hsbToRgb(h, s, b) {
-        h = h / 360;
-        s = s / 100;
-        b = b / 100;
-        
-        let r, g, bl;
-        
-        if (s === 0) {
-            r = g = bl = b;
-        } else {
-            const i = Math.floor(h * 6);
-            const f = h * 6 - i;
-            const p = b * (1 - s);
-            const q = b * (1 - f * s);
-            const t = b * (1 - (1 - f) * s);
-            
-            switch (i % 6) {
-                case 0: r = b; g = t; bl = p; break;
-                case 1: r = q; g = b; bl = p; break;
-                case 2: r = p; g = b; bl = t; break;
-                case 3: r = p; g = q; bl = b; break;
-                case 4: r = t; g = p; bl = b; break;
-                case 5: r = b; g = p; bl = q; break;
-            }
-        }
-        
-        return {
-            r: r * 255,
-            g: g * 255,
-            b: bl * 255
-        };
+        return ColorUtils.hsbToRgb(h, s, b);
     }
     
     updateHSBFromHex(hex) {
@@ -900,124 +847,6 @@ class DitheringTool {
         if (this.dom.positionYSlider) {
             this.dom.positionYSlider.value = this.transform.positionY;
             this.dom.positionYValue.value = this.transform.positionY;
-        }
-    }
-    
-    initPanelDrag(panelId, headerId) {
-        const panel = document.getElementById(panelId);
-        const header = document.getElementById(headerId);
-        
-        if (!panel || !header) return;
-        
-        let isDragging = false;
-        let currentX;
-        let currentY;
-        let initialX;
-        let initialY;
-        let xOffset = 0;
-        let yOffset = 0;
-        
-        // Get initial position from CSS
-        const computedStyle = window.getComputedStyle(panel);
-        const top = parseInt(computedStyle.top);
-        const left = parseInt(computedStyle.left);
-        const right = parseInt(computedStyle.right);
-        
-        // Handle both left and right positioned panels
-        if (!isNaN(left) && left !== 0) {
-            xOffset = left;
-        } else if (!isNaN(right)) {
-            xOffset = window.innerWidth - right - panel.offsetWidth;
-        }
-        yOffset = top;
-        
-        // Prevent dragging from interactive elements
-        panel.addEventListener('mousedown', (e) => {
-            const target = e.target;
-            // Don't interfere with input elements (sliders, text inputs, buttons, checkboxes)
-            if (target.tagName === 'INPUT' || 
-                target.tagName === 'BUTTON' || 
-                target.tagName === 'TEXTAREA' ||
-                target.tagName === 'SELECT') {
-                e.stopPropagation();
-                return;
-            }
-        }, true); // Use capture phase
-        
-        header.addEventListener('mousedown', dragStart);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', dragEnd);
-        
-        // Touch events for mobile
-        header.addEventListener('touchstart', dragStart);
-        document.addEventListener('touchmove', drag);
-        document.addEventListener('touchend', dragEnd);
-        
-        function dragStart(e) {
-            // Only start dragging if clicking directly on header, not on interactive elements
-            if (e.target.tagName === 'INPUT' || 
-                e.target.tagName === 'BUTTON' || 
-                e.target.tagName === 'TEXTAREA' ||
-                e.target.tagName === 'SELECT') {
-                return;
-            }
-            
-            if (e.type === 'touchstart') {
-                initialX = e.touches[0].clientX - xOffset;
-                initialY = e.touches[0].clientY - yOffset;
-            } else {
-                initialX = e.clientX - xOffset;
-                initialY = e.clientY - yOffset;
-            }
-            
-            if (e.target === header || header.contains(e.target)) {
-                isDragging = true;
-                panel.style.transition = 'none';
-                
-                // Bring this panel to front
-                const allPanels = document.querySelectorAll('.controls-panel');
-                allPanels.forEach(p => {
-                    if (p === panel) {
-                        p.style.zIndex = '1000';
-                    } else {
-                        p.style.zIndex = '999';
-                    }
-                });
-            }
-        }
-        
-        function drag(e) {
-            if (isDragging) {
-                e.preventDefault();
-                
-                if (e.type === 'touchmove') {
-                    currentX = e.touches[0].clientX - initialX;
-                    currentY = e.touches[0].clientY - initialY;
-                } else {
-                    currentX = e.clientX - initialX;
-                    currentY = e.clientY - initialY;
-                }
-                
-                xOffset = currentX;
-                yOffset = currentY;
-                
-                setTranslate(currentX, currentY, panel);
-            }
-        }
-        
-        function dragEnd(e) {
-            if (isDragging) {
-                initialX = currentX;
-                initialY = currentY;
-                isDragging = false;
-            }
-        }
-        
-        function setTranslate(xPos, yPos, el) {
-            el.style.left = xPos + 'px';
-            el.style.top = yPos + 'px';
-            el.style.right = 'auto';
-            el.style.bottom = 'auto';
         }
     }
     
@@ -2461,6 +2290,9 @@ class DitheringTool {
 }
 
 // Initialize the tool when the page loads
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    ({ ColorUtils, DitherPanelManager } = await import(
+        './js/framework/FrameworkAdapter.js?v=g4-dither-2'
+    ));
     new DitheringTool();
 });

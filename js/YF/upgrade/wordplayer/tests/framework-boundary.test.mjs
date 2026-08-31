@@ -3,9 +3,11 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 const appRoot = fileURLToPath(new URL('../', import.meta.url));
-const [toolSource, htmlSource] = await Promise.all([
+const [toolSource, htmlSource, stylesSource, frameworkStylesSource] = await Promise.all([
     readFile(new URL('../tool.js', import.meta.url), 'utf8'),
-    readFile(new URL('../index.html', import.meta.url), 'utf8')
+    readFile(new URL('../index.html', import.meta.url), 'utf8'),
+    readFile(new URL('../styles.css', import.meta.url), 'utf8'),
+    readFile(new URL('../../framework/css/othersite-styles.css', import.meta.url), 'utf8')
 ]);
 
 assert.match(
@@ -33,5 +35,21 @@ assert.ok(applicationCss > frameworkCss, 'application stylesheet must load after
 assert.doesNotMatch(htmlSource, /href=["']foundation\.css["']/, 'retired local foundation CSS is still linked');
 assert.match(htmlSource, /\.\.\/framework\/fonts\/CoFoSans-Regular\.woff2/, 'shared regular CoFo font is not preloaded');
 assert.match(htmlSource, /\.\.\/framework\/fonts\/CoFoSans-Medium\.woff2/, 'shared medium CoFo font is not preloaded');
+assert.match(
+    htmlSource,
+    /<a href="\.\.\/" class="mode-nav-button mode-nav-back" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u,
+    'Wordplayer mode-navigation extension must expose the canonical back-link semantics'
+);
+assert.doesNotMatch(
+    htmlSource,
+    /class="[^"]*top-link[^"]*"[^>]*>←Upgrade Tools<\/a>/u,
+    'Wordplayer back link must retain its explicit mode-navigation presentation'
+);
+assert.match(
+    frameworkStylesSource,
+    /\.panel-header span:first-child\s*\{[^}]*font-weight:\s*500;[^}]*font-size:\s*0\.9rem;/su,
+    'shared 14.4/500 panel-title contract changed'
+);
+assert.doesNotMatch(stylesSource, /\.panel-header span:first-child/u, 'Wordplayer must not fork the shared panel-title presentation');
 
 console.log(`Wordplayer framework boundary passed (${appRoot})`);

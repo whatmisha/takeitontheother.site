@@ -317,32 +317,65 @@ export class PanelManager {
     /**
      * Wire collapse toggles for every panel. Clicking a `.collapse-icon` inside a
      * `.controls-panel` toggles the `.panel-collapsed` class (CSS animates the body).
-     * Idempotent and selector-driven so new panels work without registration.
+     * Enter and Space expose the same behavior. State and accessibility attributes
+     * are synchronized on every call, while listeners remain idempotent.
+     * Selector-driven so new panels work without registration.
      * @param {Object} [opts]
      * @param {string} [opts.iconSelector='.collapse-icon']
      * @param {string} [opts.panelSelector='.controls-panel']
      */
     initCollapse({ iconSelector = '.collapse-icon', panelSelector = '.controls-panel' } = {}) {
         document.querySelectorAll(iconSelector).forEach((icon) => {
+            const initialPanel = icon.closest(panelSelector);
+            if (initialPanel) {
+                this._syncCollapseControl(
+                    initialPanel,
+                    icon,
+                    initialPanel.classList.contains('panel-collapsed')
+                );
+            }
             if (icon.dataset.collapseBound === '1') return;
             icon.dataset.collapseBound = '1';
-            icon.addEventListener('click', (e) => {
+
+            const toggle = (e) => {
                 e.stopPropagation();
                 const panel = icon.closest(panelSelector);
                 if (!panel) return;
-                panel.classList.toggle('panel-collapsed');
-                icon.classList.toggle('collapsed');
+                this._syncCollapseControl(
+                    panel,
+                    icon,
+                    !panel.classList.contains('panel-collapsed')
+                );
+            };
+            icon.addEventListener('click', toggle);
+            icon.addEventListener('keydown', (e) => {
+                if ((e.key !== 'Enter' && e.key !== ' ') || e.repeat) return;
+                e.preventDefault();
+                toggle(e);
             });
         });
+    }
+
+    /** Keep DOM class state and the interactive control contract in lockstep. */
+    _syncCollapseControl(panel, icon, collapsed) {
+        const nextCollapsed = !!collapsed;
+        panel.classList.toggle('panel-collapsed', nextCollapsed);
+        if (!icon) return;
+
+        icon.classList.toggle('collapsed', nextCollapsed);
+        icon.removeAttribute?.('aria-hidden');
+        icon.setAttribute?.('role', 'button');
+        icon.setAttribute?.('tabindex', '0');
+        icon.setAttribute?.('aria-expanded', String(!nextCollapsed));
+        icon.setAttribute?.('aria-label', nextCollapsed ? 'Expand panel' : 'Collapse panel');
     }
 
     /** Programmatically collapse/expand a registered panel. */
     setCollapsed(panelId, collapsed) {
         const panelData = this.panels.get(panelId);
         if (!panelData) return;
-        panelData.element.classList.toggle('panel-collapsed', !!collapsed);
         const icon = panelData.element.querySelector('.collapse-icon');
-        if (icon) icon.classList.toggle('collapsed', !!collapsed);
+        this._syncCollapseControl(panelData.element, icon, collapsed);
     }
 
     /** Collapse all expanded panels, then restore exactly that set. */

@@ -1,0 +1,12 @@
+/** Shared framework foundation below Pizza Boxer's frozen production skin. */
+@import url('../framework/css/othersite-styles.css?v=g5-pizza-2') layer(framework);
+
+/* Promotion over Pizza Boxer's unlayered universal padding reset. */
+.top-link {
+    padding: var(--spacing-md) var(--spacing-3xl);
+}
+
+/* Parity bridge: the production action buttons previously inherited Arial. */
+.btn-fixed {
+    font-family: Arial;
+}

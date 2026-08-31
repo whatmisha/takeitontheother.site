@@ -7,8 +7,8 @@ export class TextToPath {
     constructor() {
         this.fonts = new Map(); // Кэш загруженных шрифтов
         this.fontPaths = {
-            'TT Commons Classic-400': 'fonts/TT Commons Classic Regular.otf',
-            'TT Commons Classic-500': 'fonts/TT Commons Classic Medium.otf',
+            'TT Commons Classic-400': '../framework/fonts/TT Commons Classic Regular.otf',
+            'TT Commons Classic-500': '../framework/fonts/TT Commons Classic Medium.otf',
             'Lunnen Display-400': 'fonts/LunnenDisplay-VariableVF.ttf'
         };
         this.opentypeLoaded = false;

@@ -23,8 +23,15 @@
     "test:pizza": "npm --prefix grid_generator/tools test",
     "test:wordplayer": "node wordplayer/tests/framework-boundary.test.mjs && node wordplayer/tests/dither-worker.test.mjs && node wordplayer/tests/forms-worker.test.mjs",
     "test:keyboarder": "node keyboarder/tests/framework-boundary.test.mjs && node keyboarder/analysis/svg-export-encoding.mjs && node keyboarder/analysis/svg-geometry.mjs && node keyboarder/analysis/model-io.mjs && node keyboarder/analysis/presets.mjs && node keyboarder/analysis/layout-content.mjs",
-    "test:tier1": "npm run test:framework && npm run test:sparky && npm run test:pizza && npm run test:wordplayer && npm run test:keyboarder",
+    "test:sticky": "node --test label_generator/tests/*.test.mjs",
+    "test:pulsar": "node --test pulsar_coder/tests/*.test.mjs",
+    "test:dither": "node --test dither/tests/*.test.mjs",
+    "test:wander": "node --test wander_bender/tests/*.test.mjs",
+    "test:tier2": "npm run test:pulsar && npm run test:dither && npm run test:wander",
+    "test:tier1": "npm run test:framework && npm run test:sparky && npm run test:pizza && npm run test:wordplayer && npm run test:keyboarder && npm run test:sticky",
     "gate:g1:static": "npm run gate:g0 && npm run check:isolation && npm run test:tier1",
-    "gate:g2:static": "npm run gate:g0 && npm run check:isolation && npm run test:tier1"
+    "gate:g2:static": "npm run gate:g0 && npm run check:isolation && npm run test:tier1",
+    "gate:g3:static": "npm run gate:g0 && npm run check:isolation && npm run test:tier1",
+    "gate:g4:static": "npm run gate:g3:static && npm run test:tier2"
   }
 }

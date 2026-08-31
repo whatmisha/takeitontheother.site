@@ -291,6 +291,8 @@ Gate G2: framework самодостаточен, SVG/Canvas demos проходя
 - IndexedDB переименовать в `upgrade-pizza-boxer-v1`;
 - проверить presets, grid/sides, rotation, zoom, text, graphics, layers, clipboard, drag, history, recovery, JSON/SVG/PDF и runtime reproducibility.
 
+Результат UPG-033 — выполнено: modular vanilla-JS Grid Application сохранён, общий `ColorUtils` подключён через единственный façade, production entry импортирует public barrel непосредственно из `/upgrade/framework`, 165 исходных и один boundary-test проходят, 15-file runtime воспроизводим, desktop DOM/CSS/SVG geometry совпадает с baseline.
+
 Grid v2 переносится только после паритета отдельными feature-коммитами. Перед этим donor suite должен проходить 222/222, schema migration и golden geometry обязательны.
 
 ### 8.5. Sticky Fingers
@@ -302,7 +304,9 @@ Grid v2 переносится только после паритета отде
 - сохранить Google Sheets как единственную внешнюю функцию;
 - проверить presets, data import, edit mode, grid, barcodes, text styles, objects, colors, SVG/PDF и исходное checksum behavior.
 
-Gate G3: пять основных инструментов используют общий framework, проходят acceptance, не имеют локальных framework-копий, Sparky не регрессировал, `test:tier1`, storage и boundary checks проходят.
+Результат UPG-034 — выполнено: legacy GridGenerator сохранён, общий `ColorUtils` подключён через façade, TT Commons централизован без изменения байтов, manifest стал единственным источником трёх presets, Google Sheets и PDF проверены в браузере, исходное EAN-13 warning сохранено, normal/edit geometry совпадает с baseline.
+
+Gate G3 — пройден: пять основных инструментов используют общий framework, проходят acceptance, не имеют локальных framework-копий, Sparky не регрессировал, `test:tier1`, storage и boundary checks проходят.
 
 ## 9. Фаза 4 — второстепенные инструменты
 
@@ -310,21 +314,29 @@ Gate G3: пять основных инструментов используют
 
 Первый secondary legacy-adapter. Сохранить SVG renderer, presets, encoding, visual parameters, zoom и export. После паритета заменить v1 UI-компоненты.
 
+Результат UPG-040 — выполнено: общие `PanelManager` и `SliderController` подключены через единственный façade, локальные копии удалены, shared CSS загружается нижним cascade layer под замороженным skin, codec/SVG/presets/private zoom сохранены, восемь тестов и browser parity проходят. Существующий дефект `verifyPulsar()` (несовпадающий порядок split/reconstruction) записан отдельно и не исправлялся в миграционном изменении.
+
 ### Dither
 
 Оставить алгоритмический монолит нетронутым. Подключать общий panel/control/history/export shell отдельно от image transforms, overlay и dithering. Mobile overflow не исправлять в этой миграции.
+
+Результат UPG-041 — выполнено: общий `ColorUtils` и `PanelManager` подключены через единственный façade, прежний 118-строчный panel-drag удалён, а два исходных правила Dither (z-index меняется только при drag и координаты не ограничиваются viewport) сохранены в совместимом подклассе. Shared CSS активен нижним cascade layer под замороженным skin. Алгоритмы, Canvas/overlay, transforms и PNG export остались частными. Девять тестов проходят; default, Bayer и Pixel Size 4 имеют побайтово одинаковые source/upgrade screenshots; исходный desktop/mobile overflow намеренно не менялся.
 
 ### Wander Bender
 
 Подключать режимы Radial, Random и Flow Field по одному. Paper.js локализуется, Paper geometry остаётся domain code. Pattern Bender используется как donor deterministic RNG, ranges, physical-size export и preset/share, но не заменяет основной инструмент.
 
-Gate G4: восемь ссылок работают, восемь приложений используют общий framework, desktop сохранён, CDN отсутствуют, tests/boundaries проходят.
+Результат UPG-042 — выполнено: общие `PanelManager` и `SliderController` подключены через единственный façade, локальные дубликаты удалены, Paper.js загружается из shared local vendor. Radial, Random, Flow Field, Paper geometry, extraction, SVG export и отличающийся zoom остались частными. Shared CSS активен нижним cascade layer; исходные длинные панели и disabled-control appearance сохранены parity bridge. Десять тестов проходят; три режима, Rays 3→6, collapse, extraction и reset совпадают с исходником в browser acceptance. `pattern/` остаётся только donor и не входит в runtime.
+
+Gate G4 — пройден: восемь ссылок работают, восемь приложений используют общий framework, desktop сохранён, CDN отсутствуют, `gate:g4:static` и boundaries проходят. Отличия исходных back links от `←Upgrade Tools` являются согласованной relocation-правкой.
 
 ## 10. Фаза 5 — унификация после паритета
 
 Последовательно унифицировать tokens, top navigation, preset toolbar, panel headers, controls, dialogs/tooltips, errors и export UI. Один framework-компонент — один commit и один visual-review набор.
 
 Нельзя автоматически обновлять visual baselines в том же задании, которое изменяет UI. Каждое отличие классифицируется как ожидаемое улучшение, rasterization difference, regression или изменение, требующее решения владельца.
+
+Исполнимая разбивка UPG-050—UPG-059, compatibility matrix, порядок rollout и acceptance template находятся в [G5_UNIFICATION_PLAN.md](./G5_UNIFICATION_PLAN.md). Первый runtime-шаг — нижнеслойное подключение shared CSS к Pizza Boxer, затем отдельной задачей к Sticky Fingers, без изменения внешнего вида.
 
 ## 11. Матрица проверок
 

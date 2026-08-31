@@ -28,6 +28,18 @@ if (/\b(?:src|href)="(?:\.\/)?(?:script\.js|style\.css)"/u.test(indexHtml)) {
     throw new Error('Public index must use the hashed runtime instead of source entry files');
 }
 
+const publicScript = await readFile(
+    path.join(projectDirectory, release.entry.script),
+    'utf8'
+);
+const sharedFrameworkSpecifier = '../../../framework/src/index.js';
+if (
+    !publicScript.includes(`"${sharedFrameworkSpecifier}"`) &&
+    !publicScript.includes(`'${sharedFrameworkSpecifier}'`)
+) {
+    throw new Error('Public runtime must import the shared Upgrade framework at runtime');
+}
+
 const runtimeFiles = (await readdir(path.join(runtimeDirectory, 'assets'), { recursive: true }))
     .filter(file => !file.endsWith('.map'))
     .sort();

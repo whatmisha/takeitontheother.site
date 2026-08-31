@@ -1,14 +1,14 @@
 /* Font Face Declarations */
 @font-face {
     font-family: 'TT Commons Classic';
-    src: url('fonts/TT_Commons_Classic_Regular.woff2') format('woff2');
+    src: url('../framework/fonts/TT_Commons_Classic_Regular.woff2') format('woff2');
     font-weight: 400;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'TT Commons Classic';
-    src: url('fonts/TT_Commons_Classic_Medium.woff2') format('woff2');
+    src: url('../framework/fonts/TT_Commons_Classic_Medium.woff2') format('woff2');
     font-weight: 500;
     font-style: normal;
 }
@@ -477,7 +477,8 @@ body:not(.edit-mode-active) .edit-mode-only {
 
 .panel-header span:first-child {
     font-weight: 500;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    line-height: 1rem;
     color: var(--color-text);
 }
 

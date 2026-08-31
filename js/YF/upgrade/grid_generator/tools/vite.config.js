@@ -9,6 +9,22 @@ import { readBuildEntry, renderApplicationDocument } from './public-runtime-util
 const toolsDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(toolsDirectory, '..');
 const outputDirectory = path.join(projectRoot, 'build');
+const frameworkEntryPath = path.resolve(projectRoot, '..', 'framework', 'src', 'index.js');
+const frameworkRuntimeSpecifier = '../../../framework/src/index.js';
+const frameworkExternalId = 'upgrade-framework-runtime';
+
+function externalizeSharedFramework() {
+    return {
+        name: 'externalize-shared-upgrade-framework',
+        enforce: 'pre',
+        resolveId(source, importer) {
+            if (!importer || !source.startsWith('.')) return null;
+            if (path.resolve(path.dirname(importer), source) !== frameworkEntryPath) return null;
+            return { id: frameworkExternalId, external: true };
+        }
+    };
+}
+
 function copyRuntimeAssets() {
     return {
         name: 'copy-runtime-assets',
@@ -58,7 +74,12 @@ export default defineConfig({
     cacheDir: path.join(toolsDirectory, '.vite'),
     base: './',
     publicDir: false,
-    plugins: [serveDevelopmentDocument(), copyRuntimeAssets(), writeBuildDocument()],
+    plugins: [
+        externalizeSharedFramework(),
+        serveDevelopmentDocument(),
+        copyRuntimeAssets(),
+        writeBuildDocument()
+    ],
     server: {
         host: '127.0.0.1',
         port: 8000,
@@ -76,7 +97,12 @@ export default defineConfig({
         sourcemap: true,
         target: ['chrome120', 'safari17'],
         rollupOptions: {
-            input: path.join(projectRoot, 'src', 'runtime', 'PublicEntry.js')
+            input: path.join(projectRoot, 'src', 'runtime', 'PublicEntry.js'),
+            output: {
+                paths(id) {
+                    return id === frameworkExternalId ? frameworkRuntimeSpecifier : id;
+                }
+            }
         }
     }
 });

@@ -1,0 +1,17 @@
+/** Shared framework foundation below Sticky Fingers' frozen application skin. */
+@import url('../framework/css/othersite-styles.css?v=g5-sticky-2') layer(framework);
+
+/* Promotion over Sticky Fingers' unlayered universal padding reset. */
+.top-link {
+    padding: var(--spacing-md) var(--spacing-3xl);
+}
+
+/* Parity bridge: the legacy action buttons previously inherited Arial. */
+.btn-fixed {
+    font-family: Arial;
+}
+
+/* Parity bridge: edit-mode panels historically extend beyond the viewport. */
+.controls-panel {
+    max-height: none;
+}
