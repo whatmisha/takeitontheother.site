@@ -65,3 +65,35 @@ Restoring the original link markup and styles restored the exact baseline hash
 `aa118d76bc5106b2147d6eeeb1df8a9291a429d1a6d10bcc037d94f50d9e0591`.
 Dither therefore keeps its legacy navigation until the raster coupling is
 isolated in a dedicated investigation; no changed baseline was accepted.
+
+## G5 value-display rollout
+
+UPG-054h removes Dither's unscoped `.value-display` base and focus rules. The
+shared stylesheet now owns normal/focus/disabled presentation. Dither retains
+only a scoped flex-layout extension and its existing `.hsb-value` variant;
+percentage/degree formatting, focus snapshots, private range handlers, cache
+invalidation, Canvas processing and PNG export remain application-owned.
+
+A direct move from the legacy `font-variant-numeric: normal` to shared
+`tabular-nums` changed the default full-page capture from `89276268…` to
+`c799d96b…` and the canvas-area capture from `aa118d76…` to `698cacf2…` even
+though all DOM values and geometry were exact. Per Dither's documented rollback
+rule, that single glyph-metric change was rejected. Scoped normal glyph metrics
+restore the original raster while the unscoped base/focus duplicate stays
+removed. The ten visible fields now compute `min-width: auto` instead of 40 px,
+but remain at the exact 140.5×15 positions; the three HSB fields retain their
+private 40 px presentation.
+
+Final browser evidence is byte-identical for default (`89276268…`, canvas
+`aa118d76…`), Bayer (`ef32e2fa…`, canvas `01021af1…`) and Pixel Size 4
+(`06d19922…`, canvas `0941d49e…`). All 38 inputs, 13 ranges, both panels,
+bottom actions, 1280×860 document and Canvas/overlay geometry match. Expanded
+HSB also matches after animation settles (`c580826c…`, canvas `26c782d3…`), and
+closing the help modal returns the exact default bytes.
+
+Browser keyboard checks retain Scale's percentage-space behavior
+(100%→101%→111%, Escape→100%; 125% blur keeps the source's native slider
+coercion to 1.3) and Rotation's degree behavior (0°→1°→11°, Escape→0°).
+The boundary suite additionally guards focus-snapshot rollback, raster cache
+invalidation and the unchanged PNG `toBlob` path. `npm run test:dither` passes
+10/10.

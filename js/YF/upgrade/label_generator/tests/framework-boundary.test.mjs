@@ -58,7 +58,7 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
     assert.match(style, /\.\.\/framework\/fonts\/TT_Commons_Classic_Medium\.woff2/u);
     assert.match(textToPath, /\.\.\/framework\/fonts\/TT Commons Classic Regular\.otf/u);
     assert.match(textToPath, /\.\.\/framework\/fonts\/TT Commons Classic Medium\.otf/u);
-    assert.match(html, /href="style\.css\?v=g5-sticky-3"/u);
+    assert.match(html, /href="style\.css\?v=g5-sticky-value-1"/u);
     assert.match(
         style,
         /\.panel-header span:first-child\s*\{[^}]*font-size:\s*0\.9rem;[^}]*line-height:\s*1rem;/su
@@ -75,6 +75,45 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
         );
         await access(new URL(`../framework/fonts/${file}`, appRoot));
     }
+});
+
+test('Sticky Fingers keeps native number inputs outside the value-display contract', async () => {
+    const [html, style, sharedStyles, script, controller] = await Promise.all([
+        readFile(new URL('index.html', appRoot), 'utf8'),
+        readFile(new URL('style.css', appRoot), 'utf8'),
+        readFile(new URL('../framework/css/othersite-styles.css', appRoot), 'utf8'),
+        readFile(new URL('script.js', appRoot), 'utf8'),
+        readFile(new URL('src/ui/NumberInputController.js', appRoot), 'utf8')
+    ]);
+
+    assert.equal(html.match(/type="number"/gu)?.length || 0, 39);
+    assert.equal(html.match(/class="number-input"/gu)?.length || 0, 39);
+    assert.equal(html.match(/class="value-display(?!-)/gu)?.length || 0, 0);
+    assert.equal(script.match(/input\.type = 'number';/gu)?.length || 0, 1);
+    assert.match(script, /input\.className = 'number-input';/u);
+
+    const styleWithoutComments = style.replace(/\/\*[\s\S]*?\*\//gu, '');
+    assert.doesNotMatch(
+        styleWithoutComments,
+        /(?:^|\})\s*[^{}]*\.value-display(?![\w-])[^{}]*\{/gu,
+        'Sticky has no active text value-display and must consume shared CSS if one is added'
+    );
+    assert.match(
+        sharedStyles,
+        /(?:^|\n)\.value-display\s*\{[\s\S]*?font-variant-numeric: tabular-nums;[\s\S]*?\}/u
+    );
+    assert.match(
+        style,
+        /\.number-input\s*\{[\s\S]*?height: 32px;[\s\S]*?font-size: 0\.85rem;[\s\S]*?margin-top: var\(--spacing-md\);[\s\S]*?\}/u
+    );
+    assert.match(
+        style,
+        /\.number-input::-webkit-inner-spin-button,\s*\.number-input::-webkit-outer-spin-button\s*\{\s*opacity: 1;\s*\}/u
+    );
+    assert.match(controller, /if \(event\.shiftKey && config\.decimals === 2\)/u);
+    assert.match(controller, /const roundedToTenth = Math\.round\(currentValue \* 10\) \/ 10;/u);
+    assert.match(controller, /newValue = this\.settings\.get\(config\.setting\);/u);
+    assert.match(controller, /element\.value = newValue\.toFixed\(config\.decimals\);/u);
 });
 
 test('manifest.json is the only Sticky Fingers preset discovery source', async () => {

@@ -786,10 +786,6 @@ body:not(.edit-mode-active) .edit-mode-only {
     background: #333;
 }
 
-.control-group label .value-display {
-    flex-shrink: 0;
-}
-
 /* Range slider styles */
 .control-group input[type="range"] {
     width: 100%;
@@ -1292,26 +1288,6 @@ body:not(.edit-mode-active) .edit-mode-only {
     display: inline-flex;
     align-items: center;
     margin-left: auto;
-}
-
-.value-display {
-    display: inline-block;
-    min-width: 40px;
-    text-align: right;
-    font-weight: 400;
-    color: var(--color-text-muted);
-    font-size: 0.8rem;
-    background: transparent;
-    border: none;
-    outline: none;
-    padding: 0;
-    padding-right: 4px;
-    cursor: text;
-    font-family: inherit;
-}
-
-.value-display:focus {
-    color: var(--color-text);
 }
 
 .dropdown-toggle {

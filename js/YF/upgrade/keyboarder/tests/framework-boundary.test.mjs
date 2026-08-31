@@ -43,6 +43,55 @@ assert.match(
 );
 assert.doesNotMatch(themeSource, /\.panel-header span:first-child/u, 'Keyboarder must not fork the shared panel-title presentation');
 
+assert.match(
+    frameworkStylesSource,
+    /(?:^|\n)\.value-display\s*\{[\s\S]*?font-variant-numeric: tabular-nums;[\s\S]*?\}/u,
+    'shared value-display presentation changed'
+);
+assert.match(
+    frameworkStylesSource,
+    /(?:^|\n)\.value-display:focus\s*\{[\s\S]*?color: var\(--color-text\);[\s\S]*?\}/u,
+    'shared value-display focus state changed'
+);
+assert.match(
+    frameworkStylesSource,
+    /(?:^|\n)\.value-display:disabled\s*\{[\s\S]*?opacity: 0\.4;[\s\S]*?cursor: default;[\s\S]*?\}/u,
+    'shared value-display disabled state changed'
+);
+
+const themeWithoutComments = themeSource.replace(/\/\*[\s\S]*?\*\//gu, '');
+const privateValueDisplaySelectors = Array.from(
+    themeWithoutComments.matchAll(/(?:^|\})\s*([^{}]*value-display[^{}]*)\{/gu),
+    (match) => match[1].trim()
+);
+assert.deepEqual(
+    privateValueDisplaySelectors,
+    [
+        '#gridPanel .value-display',
+        '.control-group > label .value-display',
+        '#typePanel .value-display'
+    ],
+    'Keyboarder value-display extensions must stay scoped to private numeric editors'
+);
+assert.match(
+    themeWithoutComments,
+    /\.control-group > label \.value-display\s*\{[^}]*height:\s*26px;[^}]*border:\s*1px solid var\(--color-border\);[^}]*font-family:\s*var\(--font-mono\);[^}]*font-size:\s*10px;[^}]*font-variant-numeric:\s*tabular-nums;[^}]*\}/su,
+    'Keyboarder bordered numeric-field presentation changed'
+);
+assert.doesNotMatch(
+    themeWithoutComments,
+    /value-display:(?:focus|disabled)/u,
+    'Keyboarder must inherit shared value-display state selectors'
+);
+assert.equal(htmlSource.match(/class="value-display"/gu)?.length, 6, 'Keyboarder mm-field inventory changed');
+assert.equal(
+    toolSource.match(/\{\s*inputId:\s*'[^']+'[^}]*suffix:\s*' mm'\s*\}/gu)?.length,
+    6,
+    'Keyboarder private mm numeric-control contract changed'
+);
+assert.match(toolSource, /input\.dataset\.numericSetting\s*=\s*config\.setting/u, 'mm fields lost private ownership');
+assert.match(htmlSource, /<div id="unifiedColorPickerContainer"><\/div>/u, 'shared readonly HSB host changed');
+
 for (const [relativePath, label] of [
     ['../vendor/framework/', 'local framework copy'],
     ['../fonts/CoFo Sans/', 'local CoFo copy'],

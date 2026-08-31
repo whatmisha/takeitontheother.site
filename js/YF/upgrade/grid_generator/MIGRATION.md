@@ -56,4 +56,31 @@ remains 1280×720 with exact 94 374-character markup, and all 113 form states an
 bottom actions match the pre-change baseline. The accepted differences are only
 font/glyph metrics inside fixed headers.
 
+## G5 value-display rollout
+
+UPG-054g removes only Pizza Boxer's duplicate `.value-display` base and focus
+rules from `styles/controls.css`. Normal, focus and disabled presentation now
+comes from the shared stylesheet; `.control-group label .value-display` remains
+as the sole private layout extension. The application-owned
+`SliderController`, `SliderHistoryController`, 29 range inputs, settings
+callbacks and nine standalone Paragraph/Graphics editor fields are unchanged.
+The source/build/release pipeline regenerated the 15 content-hashed public
+assets (`PublicEntry-BHgSr6RE.css`, `PublicEntry-DQlud4F0.js`).
+
+At 1280×720 the 38 displays differ only by the accepted removal of legacy
+`min-width: 40px` and `padding-right: 4px`. Ordinary visible fields shrink from
+144.5 to 140.5 px, move 4 px right and retain their right edge; Graphics Height
+keeps its private adjacent-control position while shrinking by the same 4 px.
+Font, color, 15 px height, values and tabular-number presentation are exact.
+Default, Paragraph (300×680) and Graphics (300×451) captures retain all 113
+input states, 29 ranges, panel/surface geometry and the exact 94 374-character
+SVG (`4abbde0d…`).
+
+Browser acceptance confirms Front Width 500.0→501.0 by Arrow and →510.0 by
+Shift+Arrow, Escape rollback of draft 999, blur commit at 501.5 and Enter restore
+to 500.0 with exact SVG/state. Grid collapse/restore is 300×526.1016 → 300×46
+→ 300×526.1016. The dedicated mouse gesture, document mouseup, focus/blur,
+Arrow/Shift and `setting: null` Escape tests remain green; the complete Pizza
+suite passes 167/167.
+
 Run `npm run test:pizza` from `upgrade/` for the complete Pizza Boxer acceptance suite.

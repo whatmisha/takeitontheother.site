@@ -52,4 +52,41 @@ assert.match(
 );
 assert.doesNotMatch(stylesSource, /\.panel-header span:first-child/u, 'Wordplayer must not fork the shared panel-title presentation');
 
+assert.match(
+    frameworkStylesSource,
+    /(?:^|\n)\.value-display\s*\{[\s\S]*?font-variant-numeric: tabular-nums;[\s\S]*?\}/u,
+    'shared value-display presentation changed'
+);
+assert.match(
+    frameworkStylesSource,
+    /(?:^|\n)\.value-display:focus\s*\{[\s\S]*?color: var\(--color-text\);[\s\S]*?\}/u,
+    'shared value-display focus state changed'
+);
+assert.match(
+    frameworkStylesSource,
+    /(?:^|\n)\.value-display:disabled\s*\{[\s\S]*?opacity: 0\.4;[\s\S]*?cursor: default;[\s\S]*?\}/u,
+    'shared value-display disabled state changed'
+);
+
+const privateValueDisplaySelectors = Array.from(
+    stylesSource.matchAll(/(?:^|\})\s*([^{}]*value-display[^{}]*)\{/gu),
+    (match) => match[1].trim()
+);
+assert.deepEqual(
+    privateValueDisplaySelectors,
+    ['#formsPanel .compact-slider-control .value-display'],
+    'Wordplayer may extend value-display only through the compact Forms variant'
+);
+assert.match(
+    stylesSource,
+    /#formsPanel \.compact-slider-control \.value-display\s*\{[^}]*width:\s*3\.2em;[^}]*min-width:\s*0;[^}]*font-size:\s*0\.72rem;[^}]*\}/su,
+    'compact Forms value-display geometry changed'
+);
+assert.equal(htmlSource.match(/class="value-display"/gu)?.length, 20, 'Wordplayer slider display inventory changed');
+assert.equal(
+    htmlSource.match(/class="control-group compact-slider-control"/gu)?.length,
+    8,
+    'Wordplayer compact Forms slider inventory changed'
+);
+
 console.log(`Wordplayer framework boundary passed (${appRoot})`);

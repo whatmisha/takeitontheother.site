@@ -378,26 +378,6 @@ body {
     border-radius: var(--radius-input);
 }
 
-.value-display {
-    display: inline-block;
-    min-width: 40px;
-    text-align: right;
-    font-weight: 400;
-    color: var(--color-text-muted);
-    font-size: 0.8rem;
-    margin-left: auto;
-    background: transparent;
-    border: none;
-    outline: none;
-    padding: 0;
-    cursor: text;
-    font-family: inherit;
-}
-
-.value-display:focus {
-    color: var(--color-text);
-}
-
 .color-preset {
     font-size: 0.85rem;
     color: var(--color-text-dim);
@@ -472,6 +452,7 @@ body {
     padding: 0;
     cursor: text;
     font-family: inherit;
+    font-variant-numeric: normal;
     position: relative;
 }
 
@@ -1143,9 +1124,7 @@ legend {
 
 .control-group label .value-display {
     flex-shrink: 1;
-}
-
-.value-display {
+    margin-left: auto;
     font-variant-numeric: normal;
 }
 

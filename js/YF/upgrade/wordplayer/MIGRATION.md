@@ -43,4 +43,17 @@ UPG-053g adds shared focus/ARIA and Enter/Space collapse without changing CSS.
 Dither collapses to its 46 px shell and restores exact panels and all 68 inputs;
 mode visibility remains application-owned and both worker suites stay green.
 
+UPG-054e verifies the shared value-display contract without changing
+Wordplayer HTML, runtime or CSS. Twenty static slider displays consume the
+shared normal/focus/disabled rules and the shared color picker creates three
+readonly HSB fields. The only application selector is deliberately preserved
+as the eight-field compact Forms extension (3.2 em wide at 11.52 px); the
+boundary test now rejects any additional private value-display fork.
+
+At 1280×720 Dither keeps ordinary 135×14.5 fields and 136/670/305.5 px panel
+heights, while Forms keeps 36.859×13 fields and its 513 px panel/46 px collapsed
+shell. Mode round-trips restore the 1280×720 Canvas, all 68 input states and all
+23 displays. Arrow, Shift+Arrow, Escape, blur and Enter were accepted separately
+for the ordinary and compact variants; boundary plus both worker suites pass.
+
 Run `npm run test:wordplayer` from `upgrade/` to verify the boundary contract and both worker suites.

@@ -1,15 +1,15 @@
 {
   "version": 1,
-  "fingerprint": "3ab3584943d621133ee3a2aedfb83f203e8b00e01572024c69536479a189b241",
+  "fingerprint": "c0cd031ea3eddf6d1112f0627568a1d57927260888ed2412a2bc1dfb292fda2a",
   "entry": {
-    "script": "runtime/assets/PublicEntry-BhFIS2QE.js",
-    "style": "runtime/assets/PublicEntry-DO5uVDQ1.css"
+    "script": "runtime/assets/PublicEntry-DQlud4F0.js",
+    "style": "runtime/assets/PublicEntry-BHgSr6RE.css"
   },
   "files": [
     "LunnenDisplay-VariableVF-5DlFmosS.woff2",
     "LunnenDisplay-VariableVF-nXG1IVZg.ttf",
-    "PublicEntry-BhFIS2QE.js",
-    "PublicEntry-DO5uVDQ1.css",
+    "PublicEntry-BHgSr6RE.css",
+    "PublicEntry-DQlud4F0.js",
     "TT_Commons_Classic_Medium-C-Nzrc8f.woff2",
     "TT_Commons_Classic_Regular-BUtFdW8L.woff2",
     "actions-Dua7WNeI.html",

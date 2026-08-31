@@ -56,4 +56,34 @@ and
 Google Sheets remains explicit and user-initiated; the local PDF code path was
 not modified. Four tests and the complete isolation check pass.
 
+## G5 native-number boundary
+
+UPG-054i confirms that Sticky Fingers is not part of the text
+`.value-display` family. Its active runtime contains 39 static native number
+inputs plus one dynamic fixed-column input and zero text value displays. Three
+unused local value-display selectors were removed; the shared stylesheet is now
+the only base if a text display is added later. No active number-field CSS,
+markup or JavaScript changed.
+
+The main `.number-input` contract remains native: 32 px height, 13.6 px system
+font, 8 px horizontal padding/top margin and visible browser spinners. The
+dynamic fixed-column input remains a private 60×24/16 px variant. The
+`NumberInputController` keeps live settings updates, per-field decimals and its
+special decimal Shift snap; dynamic column, Paragraph, Graphics and Barcode
+fields keep separate application handlers.
+
+At 1280×720 the old/new normal (`c021f8ed…`) and edit (`ea806751…`) captures
+are byte-identical. All 79 form states (73 inputs), 40 native numbers, panels,
+680×680 artboard and SVG outputs match: normal 18 640 characters/hash
+`1592eaac…`, edit 18 607/hash `8850fd2f…`. Paragraph (300×855.492) and Barcode
+Graphics (300×463) editors also retain exact inputs, number-field presentation,
+panels and SVG.
+
+Browser behavior confirms Front Width 120.0→120.5→130.5; because the source
+updates settings on live input, draft 999 followed by Escape remains 999.0.
+Headline keeps 7.00→7.01→7.10. The dynamic fixed-column field retains its own
+change-only formatting lifecycle, and a clean reload restores exact normal/edit
+baselines. Google Sheets remains the sole user-initiated network exception.
+`npm run test:sticky` passes 5/5.
+
 Run `npm run test:sticky` from `upgrade/` for the automated Sticky Fingers checks.

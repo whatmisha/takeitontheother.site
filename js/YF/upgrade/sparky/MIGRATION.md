@@ -45,4 +45,15 @@ the added attributes. Keyboard collapse/restore keeps the 47 px shell, exact
 character SVG and 68 inputs. The mobile showcase logic remains private and the
 196-test suite stays green.
 
+UPG-054d verifies the shared value-display contract without changing Sparky
+HTML, runtime or CSS. Its 24 static domain displays already consume the shared
+slider presentation; three additional readonly HSB displays are created by the
+shared color picker. The boundary test now fixes that inventory, the shared
+normal/focus/disabled states and the absence of any private value-display fork.
+At 1280×720 the 26 806-character character SVG, all 68 inputs, 27 displays and
+four panel rectangles restore exactly; Arrow, Shift+Arrow, Escape, blur and the
+47 px collapsed Shape shell retain their behavior. With no visual source diff,
+the accepted 390×844 and 430×932 mobile baselines remain unchanged and are still
+protected by the complete 196-test suite.
+
 Run `npm run test:sparky` from `upgrade/`. Browser acceptance covers desktop plus 390×844 and 430×932 mobile viewports, mode controls, panel/shortcut behavior and static exports.

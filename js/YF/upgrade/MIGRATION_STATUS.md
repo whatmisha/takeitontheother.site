@@ -63,6 +63,12 @@
 | UPG-054a | Numeric/value-display compatibility matrix | Complete | 137 text displays, 48 native number inputs, 122 ranges; ownership/state families fixed; Pulsar selected as presentation-only canary |
 | UPG-054b | Pulsar shared value-display canary | Complete | 8 displays consume shared base; intentional 4 px padding/min-width diff; panels/ranges/exact 22 inputs and 40 180-char SVG restore; keyboard/commit semantics exact |
 | UPG-054c | Wander shared value-display rollout | Complete | 19 displays shared/tabular; private disabled extension exact; Auto/Max + dynamic max, 41 inputs, panel and three SVG modes restore |
+| UPG-054d | Sparky canonical value-display verification | Complete | verification-only: 24 shared pairs + 3 readonly HSB; desktop SVG/68 inputs/panels/keyboard exact; unchanged sources preserve accepted mobile baselines; 196 tests |
+| UPG-054e | Wordplayer ordinary/compact value-display verification | Complete | verification-only: 20 shared pairs + 3 readonly HSB; sole scoped 8-field Forms extension protected; both modes, Canvas, panels, 68 inputs and workers exact |
+| UPG-054f | Keyboarder shared HSB/private mm verification | Complete | verification-only: canonical 3 HSB + six 100×26 suffix fields; private precision lifecycle recorded; 133 295-char SVG/82 inputs/panels exact after reload; 6 suites |
+| UPG-054g | Pizza Boxer shared value-display rollout | Complete | shared base + one scoped layout selector; intentional 4 px normalization across 38 displays; 15-asset rebuild; 113 inputs/29 ranges/editors/panels/SVG exact; 167 tests |
+| UPG-054h | Dither raster-safe shared value-display | Complete | shared base with scoped normal-glyph/HSB compatibility; rejected tabular raster drift; default/Bayer/Pixel4 byte-identical; 38 inputs/13 ranges/panels exact; 10 tests |
+| UPG-054i | Sticky Fingers native-number boundary | Complete | zero active text displays; dead CSS removed; 39 static + 1 dynamic native number fields preserved; normal/edit 79 form states/panels/SVG exact; 5 tests |
 
 ## Подтверждённые исходные результаты
 
@@ -73,9 +79,9 @@
 | Sparky | 196/196 tests pass (195 исходных + shared-framework boundary) |
 | Wordplayer | Shared-framework boundary, Dither worker и Forms worker tests pass |
 | Keyboarder | Boundary + 5 domain suites; SVG text/outline и editable PDF browser export pass |
-| Sticky Fingers | 4/4 boundary/domain tests; manifest presets, Google Sheets and local-font PDF browser acceptance pass |
+| Sticky Fingers | 5/5 boundary/domain tests; manifest presets, Google Sheets and local-font PDF browser acceptance pass |
 | Pulsar Coder | 8/8 boundary/codec tests; exact 1280×720 SVG/panel/input parity and SVG export pass |
-| Dither | 9/9 boundary/algorithm tests; byte-identical default, Bayer and Pixel Size 4 browser captures |
+| Dither | 10/10 boundary/algorithm tests; byte-identical default, Bayer and Pixel Size 4 browser captures |
 | Wander Bender | 10/10 boundary/mode tests; exact three-mode canvas/panel parity plus Rays, collapse and extraction browser acceptance |
 
 ## Известные исходные особенности
@@ -99,8 +105,9 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-UPG-054d: выполнить приоритетный Sparky value-display rollout по
-`CONTROL_COMPATIBILITY_MATRIX.md`. Не менять shared SliderController, animation,
-focus/bolid/eyes callbacks или HSB readonly controls. Обязательны desktop и
-390×844/430×932 mobile captures, exact character SVG/input restore и полный
-Gate G4.
+UPG-054j: составить отдельную compatibility matrix для 122 single-thumb ranges.
+Разделить shared SliderController pairs, Pizza transaction/history controls,
+Dither raster/cache, Wander Auto/Max disabled, Sticky native-number companions
+и HSB gradients. В этой подзадаче не менять runtime/CSS: выбрать первый
+presentation-only canary, зафиксировать thumb/track/focus/disabled states,
+mouse/keyboard lifecycle и rollback criteria для SVG/Canvas/export.

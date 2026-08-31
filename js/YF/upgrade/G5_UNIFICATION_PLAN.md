@@ -257,6 +257,68 @@ Radial/Random/Flow SVG точны. Auto/Max и dynamic width 30 дают те ж
 states, stroke 25, corner/max 15 и byte-identical `b6564ee2…` SVG. Keyboard
 steps, 10 tests, isolation и Gate G4 проходят.
 
+Результат UPG-054d — Sparky уже находился на canonical contract, поэтому
+завершён verification-only без HTML/runtime/CSS diff. Boundary test фиксирует
+24 статических slider displays, отсутствие private `.value-display` fork и
+shared normal/focus/disabled states; три readonly HSB fields остаются у shared
+color picker. Desktop точен: viewport `4c57d661…`, character SVG
+26 806/hash `12b209a2…`, 68 inputs, 27 displays и четыре panel rect. Keyboard
+Arrow/Shift/Escape/blur и Shape collapse 300×47 с exact restoration совпадают.
+Отсутствие visual/runtime source diff сохраняет принятые 390×844/430×932
+mobile baselines; 196 Sparky tests проходят.
+
+Результат UPG-054e — Wordplayer завершён verification-only. Shared contract
+напрямую обслуживает 20 static displays и три readonly HSB; единственный
+private selector остаётся допустимым scoped Forms extension для восьми fields
+(3.2 em/11.52 px). В Dither ordinary displays сохраняют 12.8 px и 135×14.5,
+в Forms compact displays — 36.859×13; Canvas 1280×720, все 68 inputs и панели
+136/670/305.5/513 px восстанавливаются точно, Forms collapse остаётся 46 px.
+Arrow/Shift/Escape/blur/Enter проверены в обоих вариантах. Boundary и оба
+worker suites проходят; HTML/runtime/CSS приложения не менялись.
+
+Результат UPG-054f — Keyboarder завершён verification-only с разделением
+shared readonly HSB и шести private `mm` fields. HSB сохраняют canonical
+12.8 px/135×14.5, mm variant — 100×26, mono 10 px, border/background, suffix и
+собственный binder. Colors проходит 46→284→453 px без SVG/input diff; default
+SVG 133 295/hash `f1c3d795…` и 82 inputs точны после reload. Arrow/Shift,
+Escape и comma/suffix blur проверены. Трёхзнаковый display намеренно может
+округлить более точное preset value при ручном commit, поэтому generic
+SliderController здесь запрещён; boundary и пять domain suites проходят.
+
+Результат UPG-054g — Pizza Boxer переведён на shared value-display
+presentation без изменения app-owned поведения. Из source CSS удалены только
+дубли base/focus; единственный scoped layout selector, 38 displays, private
+`SliderController`/`SliderHistoryController` и девять editor fields защищены
+boundary tests. Штатный release пересобрал 15 hashed assets. Единственный
+browser diff — удаление legacy min-width/right padding: большинство видимых
+fields 144.5→140.5 px со сдвигом x на 4 px и тем же right edge; Graphics Height
+сохраняет собственную позицию adjacent-control layout. Default/Paragraph/
+Graphics совпадают по 113 inputs, 29 ranges, panels, surface и SVG 94 374/hash
+`4abbde0d…`. Arrow 1, Shift 10, Escape draft rollback, blur/Enter commit и
+Grid 526.1016→46→526.1016 px проверены; все 167 тестов проходят.
+
+Результат UPG-054h — Dither переведён на shared value-display base с
+raster-safe scoped extension. Прямой `normal`→`tabular-nums` воспроизводимо
+менял canvas `aa118d76…`→`698cacf2…`, поэтому по плановому rollback rule
+сохранены private normal glyph metrics и HSB variant; unscoped base/focus при
+этом удалены. Default, Bayer и Pixel Size 4 вернули исходные full-page hashes
+`89276268…`, `ef32e2fa…`, `06d19922…` и точные canvas bytes. 38 inputs,
+13 ranges, panels/actions/canvas geometry, HSB и modal state совпадают.
+Scale percentage, Rotation degree, focus/Escape, cache invalidation и PNG path
+остаются app-owned и защищены boundary test; десять тестов проходят.
+
+Результат UPG-054i — Sticky Fingers завершён как native-number boundary. В
+runtime нет text `.value-display`; 39 статических и один динамический native
+number input сохраняют spinners, 32 px/private custom-column geometry и разные
+NumberInputController/editor/change lifecycles. Удалены только три неактивных
+local value-display selectors. Normal/edit screenshots `c021f8ed…`/
+`ea806751…`, 79 form states, 40 number fields, panels, artboard и SVG
+`1592eaac…`/`8850fd2f…` точны; Paragraph/Graphics DOM и SVG также совпадают.
+Front Width 120.0→120.5→130.5 и live-settings Escape, Headline
+7.00→7.01→7.10, clean reload и Google Sheets boundary проверены. Пять тестов
+проходят. Value-display component закрыт; далее начинается отдельная range
+matrix, без одновременного изменения toggle/segmented.
+
 ### UPG-055. Preset toolbar
 
 1. Канонический shared toolbar остаётся источником Sparky/Keyboarder/Wordplayer.

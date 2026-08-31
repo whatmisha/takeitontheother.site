@@ -35,12 +35,16 @@ test('Pizza Boxer consumes shared capabilities through one explicit adapter', as
 });
 
 test('Pizza Boxer layers shared CSS below its production compatibility skin', async () => {
-    const [html, bridge, workspace, template, panelStyles] = await Promise.all([
+    const [html, bridge, workspace, typography, editors, template, panelStyles, controlsStyles, frameworkStyles] = await Promise.all([
         readFile(new URL('../index.html', import.meta.url), 'utf8'),
         readFile(new URL('../framework-base.css', import.meta.url), 'utf8'),
         readFile(new URL('../src/ui/fragments/workspace.html', import.meta.url), 'utf8'),
+        readFile(new URL('../src/ui/fragments/typography.html', import.meta.url), 'utf8'),
+        readFile(new URL('../src/ui/fragments/object-editors.html', import.meta.url), 'utf8'),
         readFile(new URL('../src/ui/ApplicationDocument.html', import.meta.url), 'utf8'),
-        readFile(new URL('../styles/layout-panels.css', import.meta.url), 'utf8')
+        readFile(new URL('../styles/layout-panels.css', import.meta.url), 'utf8'),
+        readFile(new URL('../styles/controls.css', import.meta.url), 'utf8'),
+        readFile(new URL('../../framework/css/othersite-styles.css', import.meta.url), 'utf8')
     ]);
 
     assert.match(
@@ -65,6 +69,35 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
     assert.match(
         panelStyles,
         /\.panel-header span:first-child\s*\{[^}]*font-size:\s*0\.9rem;[^}]*line-height:\s*1rem;/su
+    );
+    assert.match(
+        frameworkStyles,
+        /(?:^|\n)\.value-display\s*\{[\s\S]*?font-variant-numeric: tabular-nums;[\s\S]*?\}/u
+    );
+    assert.match(
+        frameworkStyles,
+        /(?:^|\n)\.value-display:focus\s*\{[\s\S]*?color: var\(--color-text\);[\s\S]*?\}/u
+    );
+    assert.match(
+        frameworkStyles,
+        /(?:^|\n)\.value-display:disabled\s*\{[\s\S]*?opacity: 0\.4;[\s\S]*?cursor: default;[\s\S]*?\}/u
+    );
+    const controlsWithoutComments = controlsStyles.replace(/\/\*[\s\S]*?\*\//gu, '');
+    const privateValueDisplaySelectors = Array.from(
+        controlsWithoutComments.matchAll(/(?:^|\})\s*([^{}]*\.value-display(?![\w-])[^{}]*)\{/gu),
+        match => match[1].trim()
+    );
+    assert.deepEqual(
+        privateValueDisplaySelectors,
+        ['.control-group label .value-display'],
+        'Pizza Boxer must retain only its local flex-layout extension'
+    );
+    assert.equal(
+        (workspace.match(/class="value-display(?!-)/gu)?.length || 0)
+            + (typography.match(/class="value-display(?!-)/gu)?.length || 0)
+            + (editors.match(/class="value-display(?!-)/gu)?.length || 0),
+        38,
+        'Pizza Boxer value-display inventory changed'
     );
     assert.doesNotMatch(html, /(?:src|href)="https?:\/\//u);
 });

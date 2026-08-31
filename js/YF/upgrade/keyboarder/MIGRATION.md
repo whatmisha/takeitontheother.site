@@ -36,4 +36,21 @@ through the shared manager. Colors repeats 300×46 → 300×284 → 300×46 by
 keyboard; panel state, exact keyboard SVG and 82 inputs restore unchanged.
 Legend show/hide/edit ownership remains application-private.
 
+UPG-054f verifies two distinct value-display contracts without changing
+Keyboarder HTML, runtime or CSS. Three readonly HSB fields remain canonical
+shared color-picker controls (12.8 px, transparent, 135×14.5 when visible).
+Six grid fields remain private 100×26 mono editors with border/background,
+three decimals, ` mm` suffix and their own `NUMERIC_CONTROLS` binder. The
+boundary test fixes those inventories, allows only the existing scoped private
+selectors and rejects private focus/disabled state forks.
+
+At 1280×720 Colors remains 46 px collapsed, 284 px expanded and 453 px with Key
+HSB open; all transitions preserve the 133 295-character/hash `f1c3d795…`
+keyboard SVG and 82 input states. Arrow, Shift+Arrow, Escape and comma/suffix
+blur parsing retain their private behavior. Because a three-decimal display can
+round a more precise preset value on manual commit, exact geometry is restored
+by reload/preset application rather than by retyping the displayed value; a
+clean reload returns exact SVG, inputs, displays and panels. All six Keyboarder
+boundary/domain suites pass.
+
 Run `npm run test:keyboarder` from `upgrade/` for the boundary, SVG encoding, geometry, model, preset and layout/content checks.
