@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import { access, readFile } from 'node:fs/promises';
 
-const [toolSource, htmlSource, themeSource, typographySource, frameworkStylesSource] = await Promise.all([
+const [toolSource, htmlSource, themeSource, typographySource, frameworkStylesSource, colorPickerSource] = await Promise.all([
     readFile(new URL('../app/tool.js', import.meta.url), 'utf8'),
     readFile(new URL('../index.html', import.meta.url), 'utf8'),
     readFile(new URL('../app/theme.css', import.meta.url), 'utf8'),
     readFile(new URL('../app/kb/typography.js', import.meta.url), 'utf8'),
-    readFile(new URL('../../framework/css/othersite-styles.css', import.meta.url), 'utf8')
+    readFile(new URL('../../framework/css/othersite-styles.css', import.meta.url), 'utf8'),
+    readFile(new URL('../../framework/src/ui/ColorPicker.js', import.meta.url), 'utf8')
 ]);
 
 assert.match(
@@ -91,6 +92,32 @@ assert.equal(
 );
 assert.match(toolSource, /input\.dataset\.numericSetting\s*=\s*config\.setting/u, 'mm fields lost private ownership');
 assert.match(htmlSource, /<div id="unifiedColorPickerContainer"><\/div>/u, 'shared readonly HSB host changed');
+assert.equal(
+    htmlSource.match(/<input\b[^>]*\btype="range"[^>]*>/gu)?.length || 0,
+    0,
+    'Keyboarder must not add ordinary range controls'
+);
+assert.doesNotMatch(
+    themeWithoutComments,
+    /input\[type=["']range["']\]|slider-(?:thumb|runnable-track)|range-(?:thumb|track)/u,
+    'Keyboarder theme must not fork shared range presentation'
+);
+assert.match(
+    frameworkStylesSource,
+    /\.hsb-control-group input\[type="range"\]\s*\{[\s\S]*?height: 10px;[\s\S]*?background: transparent;[\s\S]*?\}/u,
+    'shared HSB range base changed'
+);
+assert.match(
+    frameworkStylesSource,
+    /\.hsb-control-group input\[type="range"\]::-webkit-slider-thumb\s*\{[\s\S]*?width: 12px;[\s\S]*?height: 12px;[\s\S]*?\}/u,
+    'shared HSB range thumb changed'
+);
+assert.equal(
+    colorPickerSource.match(/<input type="range"/gu)?.length,
+    3,
+    'shared ColorPicker HSB range inventory changed'
+);
+assert.match(toolSource, /colorPickers:\s*\{[\s\S]*?containerId:\s*'unifiedColorPickerContainer'/u);
 
 for (const [relativePath, label] of [
     ['../vendor/framework/', 'local framework copy'],

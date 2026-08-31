@@ -75,7 +75,7 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
         html.indexOf('yf-styles.css') < html.indexOf('wander-bender.css'),
         'shared CSS must load before the two frozen Wander stylesheets'
     );
-    assert.match(html, /css\/yf-styles\.css\?v=g5-wander-value-1/u);
+    assert.match(html, /css\/yf-styles\.css\?v=g5-wander-range-1/u);
     assert.match(html, /css\/wander-bender\.css\?v=g5-wander-value-1/u);
     assert.match(
         html,
@@ -104,6 +104,33 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
         /(?:^|\n)\.value-display\s*\{[\s\S]*?font-variant-numeric: tabular-nums;[\s\S]*?\}/u
     );
     assert.match(skin, /input\[type="range"\]:disabled\s*\{\s*opacity: 1;/u);
+    assert.match(
+        legacySkin,
+        /Base range\/thumb\/track\/focus presentation comes from the shared framework\.[\s\S]*?\.control-group input\[type="range"\]\s*\{\s*margin-top: calc\(var\(--spacing-md\) - 2px\);\s*\}/u
+    );
+    assert.doesNotMatch(
+        legacySkin,
+        /\.control-group input\[type="range"\](?::focus)?::(?:-webkit-slider-thumb|-moz-range-thumb|-webkit-slider-runnable-track|-moz-range-track)/u,
+        'Wander must consume active thumb, track, hover and focus presentation from shared CSS'
+    );
+    assert.match(
+        sharedStyles,
+        /\.control-group input\[type="range"\]::-webkit-slider-thumb:hover\s*\{[\s\S]*?transform: scale\(1\.25\);[\s\S]*?\}/u
+    );
+    assert.match(
+        sharedStyles,
+        /\.control-group input\[type="range"\]:focus::-webkit-slider-thumb\s*\{[\s\S]*?box-shadow: 0 0 0 2px var\(--color-bg\), 0 0 0 4px var\(--color-text\);[\s\S]*?\}/u
+    );
+    assert.match(
+        skin,
+        /\.control-group input\[type="range"\]:disabled\s*\{\s*opacity: 1;\s*cursor: pointer;\s*\}/u,
+        'Wander Auto/Max disabled range presentation must stay private'
+    );
+    assert.equal(
+        [...html.matchAll(/<input\b[^>]*\btype="range"[^>]*>/gu)].length,
+        19,
+        'Wander range inventory must remain stable'
+    );
 });
 
 test('Paper.js is local and donor Pattern never enters the active runtime', async () => {

@@ -177,85 +177,12 @@
     stroke: currentColor;
 }
 
-/* Визуальная индикация заблокированных параметров - убрана, достаточно белой иконки */
-
-/* Range slider styles */
+/*
+ * Base range/thumb/track/focus presentation comes from the shared framework.
+ * Keep only the top margin above the unlayered universal margin reset.
+ */
 .control-group input[type="range"] {
-    width: 100%;
-    height: 10px; /* Кликабельная область = размер hover thumb */
-    border-radius: var(--radius);
-    background: transparent; /* Делаем фон прозрачным */
-    outline: none;
-    appearance: none;
-    -webkit-appearance: none;
-    margin-top: calc(var(--spacing-md) - 2px); /* Опускаем слайдер: 8px - 2px = 6px */
-    cursor: pointer;
-    position: relative;
-}
-
-/* Unified slider thumb styles */
-.control-group input[type="range"]::-webkit-slider-thumb {
-    appearance: none;
-    -webkit-appearance: none;
-    width: var(--slider-thumb-size);
-    height: var(--slider-thumb-size);
-    border-radius: 50%;
-    background: var(--color-text);
-    cursor: pointer;
-    border: none;
-    transition: all var(--transition-fast);
-    margin-top: calc((1px - var(--slider-thumb-size)) / 2); /* Центрируем 8px thumb относительно 1px track = -3.5px */
-}
-
-.control-group input[type="range"]::-moz-range-thumb {
-    width: var(--slider-thumb-size);
-    height: var(--slider-thumb-size);
-    border-radius: 50%;
-    background: var(--color-text);
-    cursor: pointer;
-    border: none;
-    transition: all var(--transition-fast);
-    margin-top: 0; /* Firefox centers automatically */
-}
-
-.control-group input[type="range"]::-webkit-slider-thumb:hover {
-    transform: scale(1.25); /* 8px × 1.25 = 10px */
-    background: var(--color-text);
-}
-
-.control-group input[type="range"]::-moz-range-thumb:hover {
-    transform: scale(1.25); /* 8px × 1.25 = 10px */
-    background: var(--color-text);
-}
-
-/* Track styles */
-.control-group input[type="range"]::-webkit-slider-runnable-track {
-    width: 100%;
-    height: 1px; /* Оставляем визуально тонкую линию */
-    background: var(--color-border);
-    border: none;
-    border-radius: var(--radius);
-}
-
-.control-group input[type="range"]::-moz-range-track {
-    width: 100%;
-    height: 1px;
-    background: var(--color-border);
-    border: none;
-    border-radius: var(--radius);
-}
-
-/* Focus styles */
-.control-group input[type="range"]:focus {
-    outline: none;
-}
-
-.control-group input[type="range"]:focus::-webkit-slider-thumb {
-    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
-}
-
-.control-group input[type="range"]:focus::-moz-range-thumb {
-    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
+    margin-top: calc(var(--spacing-md) - 2px);
 }
 
 .color-input-group {

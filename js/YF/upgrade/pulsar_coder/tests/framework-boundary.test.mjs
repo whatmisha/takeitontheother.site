@@ -75,7 +75,7 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
         html.indexOf('css/framework-base.css') < html.indexOf('css/yf-styles.css'),
         'shared CSS must load before Pulsar compatibility CSS'
     );
-    assert.match(html, /css\/yf-styles\.css\?v=g5-pulsar-value-1/u);
+    assert.match(html, /css\/yf-styles\.css\?v=g5-pulsar-range-1/u);
     assert.match(
         html,
         /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u
@@ -102,6 +102,36 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
     assert.match(
         sharedStyles,
         /(?:^|\n)\.value-display:disabled\s*\{[\s\S]*?opacity: 0\.4;[\s\S]*?cursor: default;[\s\S]*?\}/u
+    );
+    assert.match(
+        legacySkin,
+        /Base range\/thumb\/track\/focus presentation comes from the shared framework\.[\s\S]*?\.control-group input\[type="range"\]\s*\{\s*margin-top: calc\(var\(--spacing-md\) - 2px\);\s*\}/u
+    );
+    assert.doesNotMatch(
+        legacySkin,
+        /\.control-group input\[type="range"\](?::focus)?::(?:-webkit-slider-thumb|-moz-range-thumb|-webkit-slider-runnable-track|-moz-range-track)/u,
+        'Pulsar must consume active thumb, track, hover and focus presentation from shared CSS'
+    );
+    assert.match(
+        sharedStyles,
+        /\.control-group input\[type="range"\]\s*\{[\s\S]*?height: 10px;[\s\S]*?cursor: pointer;[\s\S]*?\}/u
+    );
+    assert.match(
+        sharedStyles,
+        /\.control-group input\[type="range"\]::-webkit-slider-thumb\s*\{[\s\S]*?width: var\(--slider-thumb-size\);[\s\S]*?\}/u
+    );
+    assert.match(
+        sharedStyles,
+        /\.control-group input\[type="range"\]::-webkit-slider-thumb:hover\s*\{[\s\S]*?transform: scale\(1\.25\);[\s\S]*?\}/u
+    );
+    assert.match(
+        sharedStyles,
+        /\.control-group input\[type="range"\]:focus::-webkit-slider-thumb\s*\{[\s\S]*?box-shadow: 0 0 0 2px var\(--color-bg\), 0 0 0 4px var\(--color-text\);[\s\S]*?\}/u
+    );
+    assert.equal(
+        [...html.matchAll(/<input\b[^>]*\btype="range"[^>]*>/gu)].length,
+        8,
+        'Pulsar range inventory must remain stable'
     );
 });
 

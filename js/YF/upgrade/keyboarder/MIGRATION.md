@@ -54,3 +54,13 @@ clean reload returns exact SVG, inputs, displays and panels. All six Keyboarder
 boundary/domain suites pass.
 
 Run `npm run test:keyboarder` from `upgrade/` for the boundary, SVG encoding, geometry, model, preset and layout/content checks.
+
+## G5 range verification
+
+UPG-054l changes no Keyboarder production source. It has zero ordinary ranges
+and exactly three shared HSB ranges created by `ColorPicker`; the theme has no
+private range selector. Browser Colors expands to 300×453 with a 260×161 picker
+and three 244×10 gradient controls; docking between Cap/Guide/Ink rows works.
+The existing integer HSB conversion can normalize achromatic `#aaaaaa` to
+`#ababab` after a manual edit. This is recorded as color behavior, not changed
+here; clean reload restores the exact 133 295-character SVG and `#aaaaaa`.

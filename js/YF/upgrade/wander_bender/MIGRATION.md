@@ -115,3 +115,18 @@ restore, and Radial/Random/Flow SVG hashes stay exact. Auto/Max off/on behavior
 is unchanged. With width 30, Stroke stays disabled at 25 and Corner Radius at
 the dynamic maximum 15; old/new CSS tabs produce the same `b6564ee2…` SVG.
 Arrow/Shift+Arrow/Escape behavior, 10 tests, isolation and full Gate G4 pass.
+
+## G5 ordinary-range rollout
+
+UPG-054m removes the local ordinary range/thumb/track/hover/focus duplicate;
+all 19 ranges now consume shared presentation. A 6 px top-margin bridge remains
+above the unlayered reset. Private Auto/Max disabled styling is unchanged:
+ranges remain opacity 1 with pointer/white thumb while displays remain 0.3 and
+`not-allowed`.
+
+The 1280×720 normal capture, all 19 range records, 48 controls and the
+300×605.703 panel are byte/geometry exact. Radial/Random/Flow screenshots and
+1 838/12 261/26 292-character SVGs match before/after. Auto/Max off/on and
+width 30 still produce stroke 25, corner maximum/value 15 and the same disabled
+states; clean reload restores the exact Radial baseline. Ten tests, isolation
+and Gate G4 pass.

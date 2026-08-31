@@ -457,6 +457,12 @@ settings уже обновлён. Headline сохраняет 7.00→7.01→7.10
 После value-display rollout single-thumb range получает собственную матрицу и
 canaries. Toggle и segmented не начинаются, пока value-display/range не закрыты.
 
+UPG-054j завершён без runtime/CSS/HTML diff. Полная классификация 122 ranges,
+state/ownership/cascade matrix, rollout order и rollback criteria вынесены в
+`RANGE_COMPATIBILITY_MATRIX.md`. 106 ranges совместимы с shared presentation
+без нового visual baseline; Pizza HSB 3 и все Dither 13 остаются private.
+Первым zero-diff canary выбран Pulsar Coder.
+
 ## 8. Acceptance template каждой подзадачи
 
 1. Зафиксировать current screenshot, DOM values и computed states.

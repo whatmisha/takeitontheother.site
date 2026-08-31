@@ -72,6 +72,37 @@ test('Sparky consumes the shared framework without surrendering private mobile a
         24,
         'Sparky domain slider display inventory changed'
     );
+    assert.equal(
+        htmlSource.match(/<input\b[^>]*\btype="range"[^>]*>/gu)?.length,
+        24,
+        'Sparky ordinary range inventory changed'
+    );
+    assert.doesNotMatch(
+        stylesSource,
+        /input\[type=["']range["']\]|slider-(?:thumb|runnable-track)|range-(?:thumb|track)/u,
+        'Sparky desktop/mobile CSS must not fork shared range presentation'
+    );
+    assert.match(
+        frameworkStylesSource,
+        /\.control-group input\[type="range"\]\s*\{[\s\S]*?height: 10px;[\s\S]*?cursor: pointer;[\s\S]*?\}/u,
+        'shared ordinary range base changed'
+    );
+    assert.match(
+        frameworkStylesSource,
+        /\.control-group input\[type="range"\]::-webkit-slider-thumb:hover\s*\{[\s\S]*?transform: scale\(1\.25\);[\s\S]*?\}/u,
+        'shared ordinary range hover state changed'
+    );
+    assert.match(
+        frameworkStylesSource,
+        /\.hsb-control-group input\[type="range"\]::-webkit-slider-thumb\s*\{[\s\S]*?width: 12px;[\s\S]*?height: 12px;[\s\S]*?\}/u,
+        'shared HSB range thumb changed'
+    );
+    assert.match(toolSource, /colorPickers:\s*\{[\s\S]*?containerId:\s*'unifiedColorPickerContainer'/u);
+    assert.match(
+        toolSource,
+        /function bindInteractivePlacement\(app\)[\s\S]*?document\.addEventListener\('input',[\s\S]*?document\.addEventListener\('change'/u,
+        'Sparky range input/change placement lifecycle changed'
+    );
     await assert.rejects(
         access(new URL('../framework/', import.meta.url)),
         (error) => error?.code === 'ENOENT',

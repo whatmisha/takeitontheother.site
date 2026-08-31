@@ -57,3 +57,14 @@ shell. Mode round-trips restore the 1280×720 Canvas, all 68 input states and al
 for the ordinary and compact variants; boundary plus both worker suites pass.
 
 Run `npm run test:wordplayer` from `upgrade/` to verify the boundary contract and both worker suites.
+
+## G5 range verification
+
+UPG-054l changes no Wordplayer production source. Twenty ordinary ranges and
+the shared three-range HSB picker consume canonical presentation; the sole
+private range selector remains the scoped 100% width rule for eight compact
+Forms controls. Browser Forms ranges stay 120×10, the panel stays 300×513 and
+Canvas stays 1280×720 CSS/2560×1440 backing pixels. Focus and 25→26→25 restore
+all inputs and panel geometry; the shared picker docks between Ink/Background.
+The running Forms simulation is intentionally not treated as a byte-stable
+screenshot baseline.

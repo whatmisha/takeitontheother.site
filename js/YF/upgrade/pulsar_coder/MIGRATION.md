@@ -102,3 +102,19 @@ and min/max/step, panel rectangles, 22 form states and the exact
 40 180-character SVG remain unchanged after reload. Arrow 14→15,
 Shift+Arrow 14→16, Enter/blur, Escape and live range behavior match the
 pre-change baseline. Eight Pulsar tests, isolation and full Gate G4 pass.
+
+## G5 ordinary-range canary
+
+UPG-054k removes Pulsar's duplicate ordinary range/thumb/track/hover/focus
+skin. All eight active ranges now consume shared presentation. One narrow
+`margin-top: 6px` bridge remains because the frozen unlayered universal reset
+would otherwise beat the lower-layer framework margin and move every range.
+Controller/config/codec behavior and the inactive legacy HSB block are not
+changed.
+
+At 1280×720 the before/after normal, hover and focus captures are byte-exact.
+All eight range records retain 252×10 geometry, min/max/step, 6 px top and 0 px
+bottom margins; panels, canvas and 22 input/select states are exact. The SVG
+remains 40 180 characters with hash `97155e5a…`. Live range 14→15→14, draft
+999 + Escape, Arrow and Enter restoration preserve the accepted lifecycle.
+Eight Pulsar tests, isolation and full Gate G4 pass.

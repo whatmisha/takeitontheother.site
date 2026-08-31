@@ -57,3 +57,13 @@ the accepted 390×844 and 430×932 mobile baselines remain unchanged and are sti
 protected by the complete 196-test suite.
 
 Run `npm run test:sparky` from `upgrade/`. Browser acceptance covers desktop plus 390×844 and 430×932 mobile viewports, mode controls, panel/shortcut behavior and static exports.
+
+## G5 range verification
+
+UPG-054l is verification-only: Sparky production sources do not change. The
+boundary test fixes 24 static ordinary ranges, the shared three-range HSB
+picker and the absence of any private thumb/track skin. Browser runtime has 27
+ranges; ordinary controls are 260×10 with 6/12 px margins, HSB controls are
+244×10, and picker docking between Head and Eyes works. Ray Count 5→6→5
+changes and then exactly restores the 26 806-character SVG. With no production
+diff, the accepted desktop and 390×844/430×932 mobile baselines remain intact.

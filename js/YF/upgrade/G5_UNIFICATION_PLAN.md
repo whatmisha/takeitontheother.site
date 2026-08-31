@@ -319,6 +319,43 @@ Front Width 120.0→120.5→130.5 и live-settings Escape, Headline
 проходят. Value-display component закрыт; далее начинается отдельная range
 matrix, без одновременного изменения toggle/segmented.
 
+Результат UPG-054j — выполнено без runtime/CSS/HTML изменений. В
+`RANGE_COMPATIBILITY_MATRIX.md` зафиксированы 122 single-thumb ranges: 107
+ordinary и 15 HSB. 106 могут использовать shared presentation без visual diff;
+три Pizza HSB сохраняют private 8 px skin/history/color lifecycle, а все 13
+Dither — private 10 px raster-safe variant. Sticky имеет zero active ranges.
+Определены state/behavior/cascade matrix, точные rollback criteria и порядок
+UPG-054k–UPG-054q. Первым zero-diff canary выбран Pulsar Coder.
+
+Результат UPG-054k — Pulsar Coder переведён на shared ordinary range skin.
+Удалены local thumb/track/hover/focus duplicates; из-за unlayered universal
+margin reset оставлен один явный 6 px top-margin bridge. Normal, hover и focus
+captures побайтно совпадают до/после; все восемь range states, panels, canvas,
+22 input/select states и SVG 40 180/hash `97155e5a…` точны. Live 14→15→14,
+draft 999 + Escape, Arrow и Enter восстановление сохранены. Восемь tests,
+isolation и полный Gate G4 проходят.
+
+Результат UPG-054l — direct canonical family завершена verification-only без
+production CSS/runtime/HTML diff. Boundary tests фиксируют 44 ordinary ranges
+(Sparky 24 + Wordplayer 20), девять shared HSB и отсутствие private range skin;
+единственное приложение-расширение — 100% width восьми compact Forms ranges.
+Browser подтверждает 27/23/3 runtime ranges, canonical ordinary/HSB geometry,
+gradients и picker docking. Sparky 5→6→5 возвращает exact 26 806-character SVG;
+Wordplayer Forms 25→26→25 возвращает inputs/panels при 120×10 controls и
+1280×720 Canvas; Keyboarder HSB gradients/docking и clean-reload exact
+133 295-character SVG сохранены. Существующее HSB integer round-trip
+`#aaaaaa`→`#ababab` при ручном редактировании зафиксировано как private color
+behavior, не range regression. App suites, isolation и Gate G4 проходят.
+
+Результат UPG-054m — Wander Bender переведён на shared ordinary range skin.
+Local normal/thumb/track/hover/focus duplicate удалён; сохранены 6 px reset
+bridge и все private disabled rules, поэтому `stroke`/`cornerRadius` ranges
+остаются opacity 1/pointer, а displays — 0.3/`not-allowed`. Normal capture
+`47dacdc3…`, все 19 ranges, 48 controls и panel 300×605.703 совпадают точно.
+Radial/Random/Flow captures и SVG 1 838/12 261/26 292 characters совпадают
+побайтно. Auto/Max off/on, width 30 → stroke 25/corner max 15 и clean reload
+идентичны до/после. Десять tests проходят; isolation/Gate G4 остаются зелёными.
+
 ### UPG-055. Preset toolbar
 
 1. Канонический shared toolbar остаётся источником Sparky/Keyboarder/Wordplayer.

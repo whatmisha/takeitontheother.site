@@ -69,6 +69,10 @@
 | UPG-054g | Pizza Boxer shared value-display rollout | Complete | shared base + one scoped layout selector; intentional 4 px normalization across 38 displays; 15-asset rebuild; 113 inputs/29 ranges/editors/panels/SVG exact; 167 tests |
 | UPG-054h | Dither raster-safe shared value-display | Complete | shared base with scoped normal-glyph/HSB compatibility; rejected tabular raster drift; default/Bayer/Pixel4 byte-identical; 38 inputs/13 ranges/panels exact; 10 tests |
 | UPG-054i | Sticky Fingers native-number boundary | Complete | zero active text displays; dead CSS removed; 39 static + 1 dynamic native number fields preserved; normal/edit 79 form states/panels/SVG exact; 5 tests |
+| UPG-054j | Single-thumb range compatibility matrix | Complete | 122 ranges: 107 ordinary + 15 HSB; 106 shared-compatible, Pizza HSB 3 + Dither 13 private; Pulsar selected as zero-diff canary |
+| UPG-054k | Pulsar shared ordinary-range canary | Complete | shared thumb/track/hover/focus + one 6 px reset bridge; normal/hover/focus byte-exact; 8 ranges/panels/22 input-select states/40 180-char SVG exact; 8 tests + Gate G4 |
+| UPG-054l | Direct canonical range verification | Complete | Sparky 24+3, Wordplayer 20+3, Keyboarder 0+3; no production diff; shared skin/HSB gradients/docking/live restore and compact Forms protected |
+| UPG-054m | Wander shared ordinary-range rollout | Complete | 19 shared ranges + 6 px reset bridge; private disabled Auto/Max exact; byte-identical Radial/Random/Flow captures/SVG, dynamic max 15; 10 tests |
 
 ## Подтверждённые исходные результаты
 
@@ -105,9 +109,9 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-UPG-054j: составить отдельную compatibility matrix для 122 single-thumb ranges.
-Разделить shared SliderController pairs, Pizza transaction/history controls,
-Dither raster/cache, Wander Auto/Max disabled, Sticky native-number companions
-и HSB gradients. В этой подзадаче не менять runtime/CSS: выбрать первый
-presentation-only canary, зафиксировать thumb/track/focus/disabled states,
-mouse/keyboard lifecycle и rollback criteria для SVG/Canvas/export.
+UPG-054n: перевести 26 ordinary ranges Pizza Boxer на shared skin, не затрагивая
+три private HSB ranges. Удалить только ordinary normal/thumb/track/hover/focus
+duplicate, оставить reset-safe margin bridge и HSB gradients/controller.
+Пересобрать 15 public assets; проверить default/Paragraph/Graphics, normal/
+focus, pointer history begin/commit/document mouseup, undo/redo, 113 inputs,
+29 ranges, panels/surface/SVG, 167 tests, isolation и Gate G4.

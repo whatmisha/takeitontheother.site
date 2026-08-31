@@ -99,5 +99,36 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
         38,
         'Pizza Boxer value-display inventory changed'
     );
+    assert.equal(
+        (workspace.match(/<input\b[^>]*\btype="range"[^>]*>/gu)?.length || 0)
+            + (typography.match(/<input\b[^>]*\btype="range"[^>]*>/gu)?.length || 0)
+            + (editors.match(/<input\b[^>]*\btype="range"[^>]*>/gu)?.length || 0),
+        29,
+        'Pizza Boxer range inventory changed'
+    );
+    assert.match(
+        controlsWithoutComments,
+        /\.control-group input\[type="range"\]\s*\{\s*margin-top: calc\(var\(--spacing-md\) - 2px\);\s*\}/u,
+        'Pizza Boxer must retain only the reset-safe ordinary range margin bridge'
+    );
+    assert.doesNotMatch(
+        controlsWithoutComments,
+        /\.control-group input\[type="range"\](?::focus)?::(?:-webkit-slider-thumb|-moz-range-thumb|-webkit-slider-runnable-track|-moz-range-track)/u,
+        'Pizza Boxer ordinary thumb, track, hover and focus must come from shared CSS'
+    );
+    assert.match(
+        frameworkStyles,
+        /\.control-group input\[type="range"\]::-webkit-slider-thumb:hover\s*\{[\s\S]*?transform: scale\(1\.25\);[\s\S]*?\}/u
+    );
+    assert.match(
+        frameworkStyles,
+        /\.control-group input\[type="range"\]:focus::-webkit-slider-thumb\s*\{[\s\S]*?box-shadow: 0 0 0 2px var\(--color-bg\), 0 0 0 4px var\(--color-text\);[\s\S]*?\}/u
+    );
+    assert.match(
+        controlsWithoutComments,
+        /\.hsb-control-group input\[type="range"\]::-webkit-slider-thumb\s*\{[\s\S]*?width: var\(--slider-thumb-size\);[\s\S]*?height: var\(--slider-thumb-size\);[\s\S]*?\}/u,
+        'Pizza Boxer private 8 px HSB thumb must remain application-owned'
+    );
+    assert.match(controlsWithoutComments, /#hueSlider::-webkit-slider-runnable-track\s*\{/u);
     assert.doesNotMatch(html, /(?:src|href)="https?:\/\//u);
 });

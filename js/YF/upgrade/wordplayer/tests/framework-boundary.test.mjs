@@ -88,5 +88,35 @@ assert.equal(
     8,
     'Wordplayer compact Forms slider inventory changed'
 );
+assert.equal(
+    htmlSource.match(/<input\b[^>]*\btype="range"[^>]*>/gu)?.length,
+    20,
+    'Wordplayer ordinary range inventory changed'
+);
+const privateRangeSelectors = Array.from(
+    stylesSource.matchAll(/(?:^|\})\s*([^{}]*input\[type="range"\][^{}]*)\{/gu),
+    (match) => match[1].trim()
+);
+assert.deepEqual(
+    privateRangeSelectors,
+    ['#formsPanel .compact-slider-control input[type="range"]'],
+    'Wordplayer may extend range layout only through the compact Forms width rule'
+);
+assert.match(
+    stylesSource,
+    /#formsPanel \.compact-slider-control input\[type="range"\]\s*\{\s*width:\s*100%;\s*\}/u,
+    'compact Forms range layout extension changed'
+);
+assert.match(
+    frameworkStylesSource,
+    /\.control-group input\[type="range"\]::-webkit-slider-thumb\s*\{[\s\S]*?width: var\(--slider-thumb-size\);[\s\S]*?\}/u,
+    'shared ordinary range thumb changed'
+);
+assert.match(
+    frameworkStylesSource,
+    /\.hsb-control-group input\[type="range"\]::-webkit-slider-thumb\s*\{[\s\S]*?width: 12px;[\s\S]*?height: 12px;[\s\S]*?\}/u,
+    'shared HSB range thumb changed'
+);
+assert.match(toolSource, /colorPickers:\s*\{[\s\S]*?containerId:\s*'unifiedColorPickerContainer'/u);
 
 console.log(`Wordplayer framework boundary passed (${appRoot})`);
