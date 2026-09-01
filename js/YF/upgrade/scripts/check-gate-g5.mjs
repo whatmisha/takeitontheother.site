@@ -1,11 +1,17 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const upgradeRoot = path.dirname(scriptDir);
 const read = relativePath => readFile(path.join(upgradeRoot, relativePath), 'utf8');
+
+const rootMarkdownFiles = (await readdir(upgradeRoot, { withFileTypes: true }))
+    .filter(entry => entry.isFile() && entry.name.toLowerCase().endsWith('.md'))
+    .map(entry => entry.name);
+assert.deepEqual(rootMarkdownFiles, [],
+    'Markdown documentation must live in upgrade/docs, not in the upgrade root');
 
 const apps = [
     {
@@ -112,7 +118,7 @@ for (const relativePath of deltaFiles) {
         `${relativePath} restored a reset-promotion block`);
 }
 
-const cleanupMatrix = await read('LEGACY_CSS_CLEANUP_MATRIX.md');
+const cleanupMatrix = await read('docs/LEGACY_CSS_CLEANUP_MATRIX.md');
 for (const owner of ['Dither', 'Sticky Fingers', 'Pizza Boxer', 'Wander Bender', 'Pulsar Coder']) {
     assert.match(cleanupMatrix, new RegExp(`\\| ${owner.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')} \\|`, 'u'),
         `${owner} app deltas lack an ownership record`);

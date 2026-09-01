@@ -10,7 +10,14 @@ Gate G5 пройден: все восемь инструментов подкл�
 
 ## Неприкосновенное правило
 
-Все изменения проекта должны находиться внутри этой папки. Исходные проекты в `../lunnen`, framework в `../../othersite-ui-framework` и проект Void используются только для чтения и сравнения.
+Все изменения проекта должны находиться внутри корня `upgrade`. Исходные проекты в `../lunnen`, framework в `../../othersite-ui-framework` и проект Void используются только для чтения и сравнения; пути здесь указаны относительно корня `upgrade`.
+
+## Карта документации
+
+- Основные решения: [PLAN.md](./PLAN.md), [ARCHITECTURE.md](./ARCHITECTURE.md), [MIGRATION_STATUS.md](./MIGRATION_STATUS.md), [POST_G5_RELEASE_READINESS.md](./POST_G5_RELEASE_READINESS.md).
+- Приёмочные gates: [G1](./GATE_G1.md), [G2](./GATE_G2.md), [G3](./GATE_G3.md), [G4](./GATE_G4.md), [G5](./GATE_G5.md).
+- Унификация UI: [план G5](./G5_UNIFICATION_PLAN.md), матрицы [controls](./CONTROL_COMPATIBILITY_MATRIX.md), [ranges](./RANGE_COMPATIBILITY_MATRIX.md), [toggles](./TOGGLE_COMPATIBILITY_MATRIX.md), [panels](./PANEL_COMPATIBILITY_MATRIX.md), [preset toolbar](./PRESET_TOOLBAR_COMPATIBILITY_MATRIX.md), [dialogs/feedback](./DIALOG_FEEDBACK_COMPATIBILITY_MATRIX.md), [actions/export](./ACTION_EXPORT_COMPATIBILITY_MATRIX.md) и [legacy CSS](./LEGACY_CSS_CLEANUP_MATRIX.md).
+- Политики автономности: [network](./NETWORK_POLICY.md) и [storage](./STORAGE_POLICY.md).
 
 ## Приоритет
 
@@ -25,7 +32,7 @@ Gate G5 пройден: все восемь инструментов подкл�
 
 ## Проверка текущего состояния
 
-Из этой папки:
+Из корня `upgrade`:
 
 ```sh
 npm run gate:g1:static

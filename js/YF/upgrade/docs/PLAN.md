@@ -32,11 +32,13 @@
 upgrade/
 ├── index.html
 ├── package.json
-├── README.md
-├── ARCHITECTURE.md
-├── MIGRATION_STATUS.md
 ├── SOURCE_MANIFEST.json
 ├── .gitignore
+├── docs/
+│   ├── README.md
+│   ├── ARCHITECTURE.md
+│   ├── MIGRATION_STATUS.md
+│   └── PLAN.md
 ├── framework/
 │   ├── README.md
 │   ├── src/
@@ -137,7 +139,7 @@ IndexedDB Pizza Boxer: `upgrade-pizza-boxer-v1`.
 
 ### UPG-000. Документация решений
 
-Создать `README.md`, `ARCHITECTURE.md`, `MIGRATION_STATUS.md` и `SOURCE_MANIFEST.json`.
+Создать `docs/README.md`, `docs/ARCHITECTURE.md`, `docs/MIGRATION_STATUS.md` и `SOURCE_MANIFEST.json`.
 
 Зафиксировать:
 
@@ -399,9 +401,9 @@ js/YF/upgrade/...
 всё вне js/YF/upgrade
 
 Прочитать:
-- upgrade/PLAN.md
-- upgrade/ARCHITECTURE.md
-- upgrade/MIGRATION_STATUS.md
+- upgrade/docs/PLAN.md
+- upgrade/docs/ARCHITECTURE.md
+- upgrade/docs/MIGRATION_STATUS.md
 - перечисленные source files
 
 Требуемые изменения:

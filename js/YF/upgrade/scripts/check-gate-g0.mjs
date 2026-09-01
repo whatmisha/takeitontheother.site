@@ -7,10 +7,10 @@ const upgradeRoot = path.dirname(scriptDir);
 const failures = [];
 
 const requiredFiles = [
-    'PLAN.md',
-    'README.md',
-    'ARCHITECTURE.md',
-    'MIGRATION_STATUS.md',
+    'docs/PLAN.md',
+    'docs/README.md',
+    'docs/ARCHITECTURE.md',
+    'docs/MIGRATION_STATUS.md',
     'SOURCE_MANIFEST.json',
     'baselines/TEST_BASELINES.md',
     'baselines/VISUAL_BASELINES.md',
