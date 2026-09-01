@@ -3,6 +3,8 @@ import { access, readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import {
+    DialogHost,
+    OverlayDialogHost,
     PanelManager,
     SliderController
 } from '../../framework/src/index.js';
@@ -15,12 +17,12 @@ test('Pulsar Coder reaches shared UI behavior through one public-barrel facade',
         readFile(new URL('pulsar-main.js', appRoot), 'utf8')
     ]);
 
-    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/framework\/src\/index\.js';/u);
+    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=g5-feedback-2';/u);
     assert.match(
         adapter,
-        /sharedCapabilities: Object\.freeze\(\[\s*'PanelManager',\s*'SliderController'/u
+        /sharedCapabilities: Object\.freeze\(\[\s*'DialogHost',\s*'OverlayDialogHost',\s*'PanelManager',\s*'SliderController'/u
     );
-    assert.match(main, /from '\.\/js\/framework\/FrameworkAdapter\.js';/u);
+    assert.match(main, /from '\.\/js\/framework\/FrameworkAdapter\.js\?v=g5-feedback-2';/u);
     assert.match(main, /from '\.\/js\/ui\/ZoomPanManager\.js';/u);
     assert.doesNotMatch(main, /from '\.\/js\/ui\/(?:PanelManager|SliderController)\.js';/u);
     assert.match(main, /panelManager\.initCollapse\(\);/u);
@@ -32,6 +34,13 @@ test('Pulsar Coder reaches shared UI behavior through one public-barrel facade',
 
     assert.equal(typeof PanelManager, 'function');
     assert.equal(typeof SliderController, 'function');
+    assert.equal(typeof DialogHost, 'function');
+    assert.equal(typeof OverlayDialogHost, 'function');
+    assert.match(main, /new OverlayDialogHost\(\{/u);
+    assert.match(main, /verifyModalHost\.open\(\);/u);
+    assert.match(main, /return feedbackDialogHost\.alert\(\{/u);
+    assert.doesNotMatch(main, /(?:^|[^\w$.])alert\s*\(/u);
+    assert.doesNotMatch(main, /verifyModal[^\n]*classList\.(?:add|remove)\('active'\)/u);
 
     for (const file of ['js/ui/PanelManager.js', 'js/ui/SliderController.js']) {
         await assert.rejects(

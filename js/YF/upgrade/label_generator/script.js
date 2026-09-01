@@ -9920,6 +9920,9 @@ class GridGenerator {
 
         this.dom.dataStatus.textContent = message;
         this.dom.dataStatus.className = `data-status ${type}`;
+        const isError = type === 'error';
+        this.dom.dataStatus.setAttribute('role', isError ? 'alert' : 'status');
+        this.dom.dataStatus.setAttribute('aria-live', isError ? 'assertive' : 'polite');
         this.dom.dataStatus.style.display = 'block';
     }
 

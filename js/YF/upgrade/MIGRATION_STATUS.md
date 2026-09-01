@@ -104,12 +104,13 @@
 | UPG-057c | Scoped modal CSS + native DialogHost hardening | Complete | overlay/native content shells isolated with exact Keyboarder geometry; native cancel/close/replacement/focus/destroy covered; 3 labelled dialogs; 38 framework tests and full Gate G4 pass |
 | UPG-057d | Keyboard-accessible TooltipService | Complete | 47 hosts gain focus/Escape/role/description lifecycle; pointer geometry/styles exact in Sparky, Keyboarder and Wordplayer; dynamic/disabled/cleanup tested; 39 framework tests + Gate G4 pass |
 | UPG-057e | Dither shared OverlayDialogHost canary | Complete | exact 600×483.523 overlay geometry; shared Escape/backdrop/Tab/focus/ARIA/scroll lifecycle; default/Bayer/Pixel Size 4 states and pixels exact; 41 framework tests + Gate G4 pass |
+| UPG-057f | Pulsar overlay rollout + dormant proof | Complete | Verify keeps exact rich failure HTML, 600×272.820 shell and `97155e5a…` SVG; shared focus/Tab/Escape/backdrop/ARIA/scroll; Pizza has no trigger/controller and Sticky no trigger; 42 framework tests + Gate G4 pass |
 
 ## Подтверждённые исходные результаты
 
 | Проект | Результат |
 |---|---|
-| Shared framework | 41/41 tests pass; range, toggle, preset, action and feedback contracts are part of Gate G4 |
+| Shared framework | 42/42 tests pass; range, toggle, preset, action and feedback contracts are part of Gate G4 |
 | Pizza Boxer top-level | 167/167 tests pass (165 original + JS/CSS boundary); source/public runtime checks pass |
 | Pizza Boxer `v2` donor | 221/222; один failure в Node test mock без `requestAnimationFrame` |
 | Sparky | 196/196 tests pass (195 исходных + shared-framework boundary) |
@@ -141,7 +142,7 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-UPG-057f: перевести активный Pulsar Verify overlay на проверенный shared
-`OverlayDialogHost`, сохранив rich verification HTML, Copy flash и известное
-CRC-поведение; затем machine-readable и browser-проверками доказать, что
-дремлющие Pizza/Sticky fragments не получили controller или trigger.
+UPG-057g: начать миграцию feedback с самого малого риска — добавить live
+semantics к Sticky `dataStatus` без изменения Google Sheets и заменить только
+clipboard-fallback `alert` Wander Bender на проверенную неблокирующую shared
+поверхность; затем отдельно идти по Pulsar и Sticky blocking calls.

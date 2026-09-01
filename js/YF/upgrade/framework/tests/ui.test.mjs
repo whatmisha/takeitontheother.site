@@ -528,6 +528,22 @@ test('OverlayDialogHost contains focus, handles Escape and removes every listene
     assert.equal(dom.documentListeners.get('keydown').size, 0);
 });
 
+test('OverlayDialogHost can expose trigger semantics without owning its domain action', () => {
+    const dom = fakeOverlayDocument();
+    const host = new OverlayDialogHost({
+        ownerDocument: dom.documentRef,
+        bindTrigger: false
+    }).init();
+
+    assert.equal(dom.trigger.listeners.has('click'), false);
+    assert.equal(dom.trigger.getAttribute('aria-haspopup'), 'dialog');
+    assert.equal(dom.trigger.getAttribute('aria-expanded'), 'false');
+    assert.equal(dom.overlay.getAttribute('aria-hidden'), 'true');
+    host.open();
+    assert.equal(host.isOpen(), true);
+    host.destroy();
+});
+
 function fakeTooltipDocument() {
     const listeners = new Map();
     const bodyChildren = [];

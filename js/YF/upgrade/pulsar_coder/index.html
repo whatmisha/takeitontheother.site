@@ -224,22 +224,31 @@
 
     <!-- Bottom Action Buttons -->
     <nav class="bottom-buttons" role="toolbar" aria-label="Verify and export actions">
-        <button class="btn-fixed" id="verifyBtn">Verify</button>
+        <button class="btn-fixed" id="verifyBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="verifyModal">Verify</button>
         <button class="btn-fixed" id="copyBtn">Copy SVG</button>
         <button class="btn-fixed btn-export" id="downloadBtn">Download SVG</button>
     </nav>
 
     <!-- Verification Modal -->
-    <div class="modal-overlay" id="verifyModal">
-        <div class="modal-content">
-            <button class="modal-close" id="modalClose">&times;</button>
-            <h2>Verification Result</h2>
+    <div class="modal-overlay" id="verifyModal" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-labelledby="verifyModalTitle" aria-modal="true">
+            <button class="modal-close" id="modalClose" type="button" aria-label="Close verification result">&times;</button>
+            <h2 id="verifyModalTitle">Verification Result</h2>
             <div class="modal-body" id="verifyModalBody">
                 <p>Checking pulsar code integrity...</p>
             </div>
         </div>
     </div>
 
-    <script type="module" src="pulsar-main.js?v=g4-pulsar-1"></script>
+    <dialog id="feedbackDialog" class="modal" aria-labelledby="feedbackDialogTitle">
+        <div class="modal-content">
+            <h2 id="feedbackDialogTitle"></h2>
+            <div id="feedbackDialogText"></div>
+            <input id="feedbackDialogInput" class="modal-input" type="text">
+            <div id="feedbackDialogButtons" class="modal-buttons"></div>
+        </div>
+    </dialog>
+
+    <script type="module" src="pulsar-main.js?v=g5-feedback-2"></script>
 </body>
 </html>

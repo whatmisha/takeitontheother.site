@@ -218,6 +218,14 @@ test('Google Sheets remains explicit user-initiated external functionality', asy
     assert.match(script, /https:\/\/docs\.google\.com\/spreadsheets/u);
     assert.match(html, /id="loadDataBtn"/u);
     assert.match(html, /id="googleSheetsUrl"/u);
+    assert.match(html, /src="script\.js\?v=g5-feedback-2"/u);
+    assert.match(
+        html,
+        /id="dataStatus" class="data-status" role="status" aria-live="polite" aria-atomic="true"/u
+    );
+    assert.match(script, /const isError = type === 'error';/u);
+    assert.match(script, /setAttribute\('role', isError \? 'alert' : 'status'\)/u);
+    assert.match(script, /setAttribute\('aria-live', isError \? 'assertive' : 'polite'\)/u);
 });
 
 test('the existing EAN-13 checksum warning behavior is preserved', async () => {

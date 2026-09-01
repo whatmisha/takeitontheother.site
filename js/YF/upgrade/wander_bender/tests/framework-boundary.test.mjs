@@ -3,11 +3,12 @@ import { access, readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import {
+    DialogHost as AdaptedDialogHost,
     SliderController as AdaptedSliderController,
     WANDER_FRAMEWORK_ADAPTER,
     WanderPanelManager
 } from '../js/framework/FrameworkAdapter.js';
-import { PanelManager, SliderController } from '../../framework/src/index.js';
+import { DialogHost, PanelManager, SliderController } from '../../framework/src/index.js';
 
 const appRoot = new URL('../', import.meta.url);
 
@@ -17,15 +18,20 @@ test('Wander reaches shared panels and sliders through one public-barrel facade'
         readFile(new URL('js/wander-bender.js', appRoot), 'utf8')
     ]);
 
-    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/framework\/src\/index\.js';/u);
+    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=g5-feedback-2';/u);
     assert.deepEqual(WANDER_FRAMEWORK_ADAPTER.sharedCapabilities, [
+        'DialogHost',
         'PanelManager',
         'SliderController'
     ]);
     assert.ok(new WanderPanelManager() instanceof PanelManager);
+    assert.equal(AdaptedDialogHost, DialogHost);
     assert.equal(AdaptedSliderController, SliderController);
 
-    assert.match(app, /from '\.\/framework\/FrameworkAdapter\.js';/u);
+    assert.match(app, /from '\.\/framework\/FrameworkAdapter\.js\?v=g5-feedback-2';/u);
+    assert.match(app, /const feedbackDialogHost = new DialogHost\(\);/u);
+    assert.match(app, /await feedbackDialogHost\.alert\(\{/u);
+    assert.doesNotMatch(app, /(?:^|[^\w$.])alert\s*\(/u);
     assert.match(app, /from '\.\/ui\/ZoomPanManager\.js';/u);
     assert.match(app, /new WanderPanelManager\(\)/u);
     assert.match(app, /panelManager\.initCollapse\(\);/u);

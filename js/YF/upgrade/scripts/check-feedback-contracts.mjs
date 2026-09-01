@@ -49,12 +49,12 @@ assert.deepEqual(nativeDialogInventory, {
     Wordplayer: 1,
     'Pizza Boxer': 0,
     'Sticky Fingers': 0,
-    'Pulsar Coder': 0,
+    'Pulsar Coder': 1,
     Dither: 0,
-    'Wander Bender': 0
+    'Wander Bender': 1
 }, 'native dialog inventory changed');
 
-for (const name of ['Sparky', 'Keyboarder', 'Wordplayer']) {
+for (const name of ['Sparky', 'Keyboarder', 'Wordplayer', 'Wander Bender']) {
     assert.equal(countClass(html[name], 'modal'), 1, `${name} shared native modal shell changed`);
     assert.match(
         html[name],
@@ -68,6 +68,21 @@ for (const name of ['Sparky', 'Keyboarder', 'Wordplayer']) {
             `${name} DialogHost element ${id} changed`
         );
     }
+}
+assert.match(
+    html['Pulsar Coder'],
+    /<dialog\b[^>]*\bid=["']feedbackDialog["'][^>]*\baria-labelledby=["']feedbackDialogTitle["']/u,
+    'Pulsar feedback dialog label changed'
+);
+for (const id of [
+    'feedbackDialog', 'feedbackDialogTitle', 'feedbackDialogText',
+    'feedbackDialogInput', 'feedbackDialogButtons'
+]) {
+    assert.equal(
+        count(html['Pulsar Coder'], new RegExp(`\\bid=["']${id}["']`, 'gu')),
+        1,
+        `Pulsar feedback DialogHost element ${id} changed`
+    );
 }
 
 const overlayInventory = Object.fromEntries(
@@ -85,10 +100,14 @@ assert.deepEqual(overlayInventory, {
 }, 'legacy overlay inventory changed');
 
 for (const name of ['Pizza Boxer', 'Sticky Fingers', 'Pulsar Coder', 'Dither']) {
-    assert.equal(countClass(html[name], 'modal-content'), 1, `${name} overlay content shell changed`);
+    assert.equal(
+        countClass(html[name], 'modal-content'),
+        name === 'Pulsar Coder' ? 2 : 1,
+        `${name} dialog/overlay content shell changed`
+    );
     assert.equal(countClass(html[name], 'modal-close'), 1, `${name} overlay close action changed`);
 }
-for (const name of ['Pizza Boxer', 'Sticky Fingers', 'Dither']) {
+for (const name of ['Pizza Boxer', 'Sticky Fingers', 'Pulsar Coder', 'Dither']) {
     assert.match(html[name], /\brole=["']dialog["']/u, `${name} overlay dialog role changed`);
     assert.match(html[name], /\baria-modal=["']true["']/u, `${name} overlay modal semantics changed`);
     assert.match(html[name], /\baria-hidden=["']true["']/u, `${name} closed overlay state changed`);
@@ -229,26 +248,40 @@ const pizzaReferencesOutsideFragment = stripComments(pizzaSourceJs)
     .match(/(?:modalOverlay|modalClose)/gu)?.length || 0;
 assert.equal(pizzaReferencesOutsideFragment, 0,
     'Pizza orphan help overlay gained a controller outside a dedicated rollout');
+assert.doesNotMatch(pizzaSourceJs, /OverlayDialogHost/u,
+    'Pizza orphan help overlay unexpectedly gained a shared host');
 
-assert.match(html['Sticky Fingers'], /id=["']dataStatus["'][^>]*class=["']data-status["']/u);
+assert.match(
+    html['Sticky Fingers'],
+    /id=["']dataStatus["'][^>]*class=["']data-status["'][^>]*role=["']status["'][^>]*aria-live=["']polite["'][^>]*aria-atomic=["']true["']/u
+);
 for (const state of ['loading', 'error', 'success']) {
     assert.match(stickyCss, new RegExp(`\\.data-status\\.${state}\\s*\\{`, 'u'),
         `Sticky data status ${state} presentation changed`);
 }
 assert.match(stickyScript, /this\.dom\.dataStatus\.className = `data-status \$\{type\}`/u);
+assert.match(stickyScript, /setAttribute\('role', isError \? 'alert' : 'status'\)/u);
+assert.match(stickyScript, /setAttribute\('aria-live', isError \? 'assertive' : 'polite'\)/u);
 assert.equal(count(stripComments(stickyScript), /\balert\s*\(/gu), 5,
     'Sticky primary alert inventory changed');
 assert.equal(count(stripComments(stickyNavigator), /\bconfirm\s*\(/gu), 1,
     'Sticky primary confirm inventory changed');
 assert.match(stickyController, /initializeModals\(\)/u);
 assert.match(stickyController, /showHelp\(\)/u);
+assert.doesNotMatch(`${stickyScript}\n${stickyNavigator}\n${stickyController}`, /OverlayDialogHost/u,
+    'Sticky dormant help overlay unexpectedly gained a shared host');
 assert.doesNotMatch(html['Sticky Fingers'], /\bid=["']helpButton["']/u,
     'Sticky dormant help overlay unexpectedly gained a UI trigger');
 
-assert.equal(count(stripComments(pulsarScript), /\balert\s*\(/gu), 3,
-    'Pulsar primary alert inventory changed');
-assert.match(pulsarScript, /document\.getElementById\('verifyModal'\)\.classList\.remove\('active'\)/u);
-assert.match(pulsarScript, /modal\.classList\.add\('active'\)/u);
+assert.equal(count(stripComments(pulsarScript), /(?:^|[^\w$.])alert\s*\(/gu), 0,
+    'Pulsar blocking alerts returned');
+assert.match(pulsarScript, /return feedbackDialogHost\.alert\(\{/u,
+    'Pulsar empty-map guards must use DialogHost');
+assert.match(pulsarScript, /new OverlayDialogHost\(\{/u,
+    'Pulsar must consume the shared overlay lifecycle');
+assert.match(pulsarScript, /verifyModalHost\.open\(\);/u);
+assert.doesNotMatch(pulsarScript, /verifyModal[^\n]*classList\.(?:add|remove)\('active'\)/u,
+    'Pulsar duplicated shared overlay class lifecycle');
 assert.match(pulsarScript, /btn\.textContent = '✓ Copied!'/u);
 
 assert.match(ditherScript, /new OverlayDialogHost\(\{/u,
@@ -258,8 +291,10 @@ assert.doesNotMatch(ditherScript, /modalOverlay\.classList\.(?:add|remove)\('act
 assert.doesNotMatch(ditherScript, /document\.body\.style\.overflow\s*=/u,
     'Dither duplicated shared scroll locking');
 
-assert.equal(count(stripComments(wanderScript), /\balert\s*\(/gu), 1,
-    'Wander clipboard fallback alert inventory changed');
+assert.equal(count(stripComments(wanderScript), /(?:^|[^\w$.])alert\s*\(/gu), 0,
+    'Wander blocking alert returned');
+assert.match(wanderScript, /await feedbackDialogHost\.alert\(\{/u,
+    'Wander clipboard fallback must use the shared DialogHost');
 assert.match(wanderCss, /\.modal-overlay\s*\{/u,
     'Wander dead modal CSS must remain visible to the UPG-058 cleanup gate');
 
@@ -282,9 +317,9 @@ assert.match(activeSharedCss, /^\.modal > \.modal-content\s*\{/mu,
 const activeOverlays = overlayInventory['Pulsar Coder']
     + overlayInventory.Dither;
 const dormantOverlays = overlayInventory['Pizza Boxer'] + overlayInventory['Sticky Fingers'];
-const primaryBlockingCalls = 5 + 1 + 3 + 1;
+const primaryBlockingCalls = 5 + 1;
 console.log(
-    `Feedback contract passed: 3 native dialogs; ${activeOverlays} active overlays + ${dormantOverlays} dormant fragments; `
+    `Feedback contract passed: 5 native dialogs; ${activeOverlays} active overlays + ${dormantOverlays} dormant fragments; `
     + `1 private popup; ${tooltipTotal} tooltip hosts; ${primaryBlockingCalls} primary blocking calls; `
     + 'shared shells and private feedback/recovery ownership protected.'
 );

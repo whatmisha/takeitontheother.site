@@ -344,3 +344,28 @@ instead of remaining behind the overlay on `helpButton`. The trigger receives
 overflow. The single close control forms a contained Tab loop. Dither passes
 11/11, framework 41/41, the feedback contract and full Gate G4. Next is the
 Pulsar overlay rollout and dormant Pizza/Sticky proof.
+
+## 14. UPG-057f result
+
+Pulsar now consumes the same shared host with `bindTrigger: false`: the app
+still verifies first, owns its rich HTML and calls `open()` only after the
+domain result is ready. The legacy CRC failure body is unchanged. The open
+content remains exactly `[340, 223.5859375, 600, 272.8203125]` with the same
+30 px padding, 12 px radius, max sizes, background and transform. Its 22 fields,
+three panels and 40,180-character SVG hash `97155e5a…` are unchanged; Copy flash
+still restores after 1.5 seconds.
+
+Initial focus moves intentionally from the obscured Verify trigger to Close.
+Tab wraps on the only focusable control; Escape, backdrop and Close return to
+Verify, restore body overflow and synchronize `aria-hidden`/`aria-expanded`.
+The content is labelled by `verifyModalTitle`, and the close action has an
+accessible name. No browser/module error is introduced.
+
+Dormant-fragment proof is both static and runtime. Pizza loads one orphan
+overlay but has zero Help/ARIA trigger and no modal controller or shared-host
+reference. Sticky keeps one closed overlay and its pre-existing old controller,
+but has zero `helpButton`; runtime remains inactive, `aria-hidden="true"`,
+opacity 0 and pointer-events none. The shared host is absent from both apps, so
+UPG-057f cannot revive their removed Help UI. Framework passes 42/42, Pulsar
+8/8, feedback contract and full Gate G4. Next is UPG-057g feedback accessibility
+and blocking-call migration.

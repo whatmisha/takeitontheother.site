@@ -15,9 +15,11 @@
  */
 
 import {
+    DialogHost,
+    OverlayDialogHost,
     PanelManager,
     SliderController
-} from './js/framework/FrameworkAdapter.js';
+} from './js/framework/FrameworkAdapter.js?v=g5-feedback-2';
 import { ZoomPanManager } from './js/ui/ZoomPanManager.js';
 
 // ============================================
@@ -596,6 +598,15 @@ function verifyPulsar(raysBits, params) {
 
 let currentSvg = '';
 let currentRaysBits = [];
+let feedbackDialogHost = null;
+let verifyModalHost = null;
+
+function showGenerateFirst() {
+    return feedbackDialogHost.alert({
+        title: 'Nothing to export',
+        text: 'Generate a pulsar map first!'
+    });
+}
 
 // Store fixed ray endpoints for center dragging
 let fixedRayEndpoints = null;
@@ -660,7 +671,7 @@ function generate(preserveEndpoints = false) {
 
 function downloadSvg() {
     if (!currentSvg) {
-        alert('Generate a pulsar map first!');
+        void showGenerateFirst();
         return;
     }
     
@@ -675,7 +686,7 @@ function downloadSvg() {
 
 function copySvg() {
     if (!currentSvg) {
-        alert('Generate a pulsar map first!');
+        void showGenerateFirst();
         return;
     }
     
@@ -694,7 +705,7 @@ function copySvg() {
 
 function verify() {
     if (!currentRaysBits.length) {
-        alert('Generate a pulsar map first!');
+        void showGenerateFirst();
         return;
     }
     
@@ -707,7 +718,6 @@ function verify() {
     const result = verifyPulsar(currentRaysBits, params);
     
     // Show modal
-    const modal = document.getElementById('verifyModal');
     const body = document.getElementById('verifyModalBody');
     
     if (result.success) {
@@ -730,7 +740,7 @@ function verify() {
         `;
     }
     
-    modal.classList.add('active');
+    verifyModalHost.open();
 }
 
 // ============================================
@@ -813,6 +823,20 @@ function applyPreset(presetName) {
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    feedbackDialogHost = new DialogHost({
+        dialog: 'feedbackDialog',
+        title: 'feedbackDialogTitle',
+        text: 'feedbackDialogText',
+        input: 'feedbackDialogInput',
+        buttons: 'feedbackDialogButtons'
+    });
+    verifyModalHost = new OverlayDialogHost({
+        overlayId: 'verifyModal',
+        closeButtonId: 'modalClose',
+        triggerId: 'verifyBtn',
+        bindTrigger: false
+    }).init();
+
     // Initialize SliderController
     const sliderController = new SliderController(settings);
     
@@ -997,17 +1021,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!e.target.closest('.preset-dropdown')) {
             presetToggle.setAttribute('aria-expanded', 'false');
             presetMenu.classList.remove('active');
-        }
-    });
-    
-    // Modal
-    document.getElementById('modalClose').addEventListener('click', () => {
-        document.getElementById('verifyModal').classList.remove('active');
-    });
-    
-    document.getElementById('verifyModal').addEventListener('click', (e) => {
-        if (e.target.id === 'verifyModal') {
-            document.getElementById('verifyModal').classList.remove('active');
         }
     });
     

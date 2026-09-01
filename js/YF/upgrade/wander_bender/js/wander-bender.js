@@ -1,13 +1,16 @@
 // Import shared framework capabilities through the application façade.
 import {
+    DialogHost,
     SliderController,
     WanderPanelManager
-} from './framework/FrameworkAdapter.js';
+} from './framework/FrameworkAdapter.js?v=g5-feedback-2';
 import { ZoomPanManager } from './ui/ZoomPanManager.js';
 import { debounce, DEBOUNCE_DELAYS } from './utils/DebounceUtils.js';
 import { RadialMode } from './modes/RadialMode.js';
 import { RandomMode } from './modes/RandomMode.js';
 import { FlowFieldMode } from './modes/FlowFieldMode.js';
+
+const feedbackDialogHost = new DialogHost();
 
 // Settings storage
 const settings = {
@@ -655,7 +658,10 @@ if (copyBtn) {
             }, 2000);
         } catch (fallbackErr) {
             console.error('Fallback copy also failed:', fallbackErr);
-            alert('Failed to copy SVG to clipboard. Please use Export SVG instead.');
+            await feedbackDialogHost.alert({
+                title: 'Copy failed',
+                text: 'Failed to copy SVG to clipboard. Please use Export SVG instead.'
+            });
         }
         document.body.removeChild(textArea);
     }

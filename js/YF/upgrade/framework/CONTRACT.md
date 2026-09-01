@@ -92,8 +92,10 @@ Escape/native cancel, external close, exact-once Promise resolution и возв�
 containment, initial/return focus и обратимым body scroll lock. Предыдущее
 inline-значение `body.style.overflow` восстанавливается буквально. Текст,
 rich HTML, CSS, вычисления и решения о том, когда открыть окно, принадлежат
-приложению; `init()` идемпотентен, `destroy()` закрывает окно и снимает все
-созданные listeners.
+приложению. `bindTrigger: false` оставляет trigger semantics и focus return у
+host, но позволяет приложению открыть окно только после своей domain-операции.
+`init()` идемпотентен, `destroy()` закрывает окно и снимает все созданные
+listeners.
 
 Legacy overlay и native dialog имеют отдельные CSS roots:
 `.modal-overlay > .modal-content` и `.modal > .modal-content`. Возврат широкого

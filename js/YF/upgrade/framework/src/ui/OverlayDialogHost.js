@@ -26,7 +26,8 @@ export class OverlayDialogHost {
         content = null,
         contentSelector = '[role="dialog"], .modal-content',
         activeClass = 'active',
-        lockBodyScroll = true
+        lockBodyScroll = true,
+        bindTrigger = true
     } = {}) {
         this.document = ownerDocument;
         this.overlay = overlay || this.document?.getElementById(overlayId) || null;
@@ -35,6 +36,7 @@ export class OverlayDialogHost {
         this.content = content || this.overlay?.querySelector?.(contentSelector) || null;
         this.activeClass = activeClass;
         this.lockBodyScroll = lockBodyScroll;
+        this.bindTrigger = bindTrigger;
         this.previousActiveElement = null;
         this.previousBodyOverflow = '';
         this.scrollLocked = false;
@@ -51,8 +53,9 @@ export class OverlayDialogHost {
         this.trigger?.setAttribute?.('aria-haspopup', 'dialog');
         if (this.overlay.id) this.trigger?.setAttribute?.('aria-controls', this.overlay.id);
         this.trigger?.setAttribute?.('aria-expanded', String(this.isOpen()));
+        this.overlay.setAttribute?.('aria-hidden', String(!this.isOpen()));
 
-        this._addListener(this.trigger, 'click', () => this.open());
+        if (this.bindTrigger) this._addListener(this.trigger, 'click', () => this.open());
         this._addListener(this.closeButton, 'click', () => this.close());
         this._addListener(this.overlay, 'click', (event) => {
             if (event.target === this.overlay) this.close();

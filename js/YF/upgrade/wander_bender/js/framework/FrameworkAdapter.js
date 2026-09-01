@@ -1,7 +1,8 @@
 import {
+    DialogHost,
     PanelManager,
     SliderController
-} from '../../../framework/src/index.js';
+} from '../../../framework/src/index.js?v=g5-feedback-2';
 
 /**
  * Shared PanelManager with Wander's original drag-position write preserved.
@@ -21,11 +22,12 @@ export class WanderPanelManager extends PanelManager {
     }
 }
 
-export { SliderController };
+export { DialogHost, SliderController };
 
 export const WANDER_FRAMEWORK_ADAPTER = Object.freeze({
     app: 'wander_bender',
     sharedCapabilities: Object.freeze([
+        'DialogHost',
         'PanelManager',
         'SliderController'
     ]),

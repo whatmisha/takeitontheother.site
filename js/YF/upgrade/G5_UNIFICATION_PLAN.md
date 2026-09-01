@@ -773,6 +773,18 @@ trigger state и полный destroy contract. Framework 41/41, Dither 11/11,
 feedback contract, isolation и полный Gate G4 проходят. Следующий шаг —
 UPG-057f Pulsar rollout и доказательство dormant Pizza/Sticky fragments.
 
+Результат UPG-057f — Pulsar подключён к тому же `OverlayDialogHost` с
+`bindTrigger: false`: codec и rich verification HTML остаются app-owned, а
+окно открывается после вычисления результата. Известный CRC failure body,
+shell 600×272.820 px, 22 fields, три panels и SVG 40 180 символов/hash
+`97155e5a…` точны. Copy flash восстанавливается через 1.5 s. Initial focus
+на Close, Tab loop, Escape/backdrop/close focus return, scroll restore и ARIA
+прошли browser acceptance без новых ошибок. Pizza runtime имеет orphan overlay,
+но не trigger/controller; Sticky сохраняет старый controller и закрытый fragment,
+но не имеет Help trigger. Shared host отсутствует в обоих, поэтому UI не оживлён.
+Framework 42/42, Pulsar 8/8, feedback contract, isolation и полный Gate G4
+проходят. Следующий шаг — UPG-057g feedback accessibility/blocking calls.
+
 ### UPG-058. Удалить подтверждённые legacy CSS-дубли
 
 Удалять только rules, которые:

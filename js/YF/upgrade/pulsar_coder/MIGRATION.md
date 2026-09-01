@@ -153,3 +153,28 @@ Verify retains the recorded legacy CRC failure and closes normally. All 22
 fields, three panel rectangles and the exact 40,180-character SVG hash
 `97155e5a…` remain unchanged. Browser/module errors are zero; eight Pulsar tests
 and the action contract pass.
+
+## G5 shared verification overlay rollout
+
+UPG-057f routes the existing Verify overlay through the shared
+`OverlayDialogHost`. Pulsar retains ownership of codec verification, the known
+CRC mismatch, rich result HTML and the decision to open the dialog. The host is
+configured with `bindTrigger: false`, so pressing Verify still computes and
+writes the result before the presentation lifecycle starts. Duplicate local
+close and backdrop handlers and direct `active` writes were removed.
+
+The accepted failure body is byte-identical, including the decoded corrupted
+payload. The shell keeps the exact `[340, 223.5859375, 600, 272.8203125]`
+rectangle, 30 px padding, 12 px radius, 600 px max-width, 576 px max-height,
+background and transform. All 22 fields, the three panel rectangles and the
+40,180-character SVG with hash `97155e5a…` remain exact. Copy still flashes
+`✓ Copied!` for 1.5 seconds and restores with the same SVG; browser errors are
+zero.
+
+The deliberate accessibility additions are initial focus on `modalClose`, a
+one-control Tab loop, Escape/backdrop/close-button focus return to `verifyBtn`,
+body scroll lock/restore and synchronized `aria-hidden`/`aria-expanded` plus
+dialog labelling. Pizza's loaded orphan fragment still has no trigger or JS
+controller; Sticky's closed fragment retains its old controller but has no Help
+trigger and remains opacity 0/pointer-events none. Neither receives the shared
+host. Pulsar passes 8/8, framework 42/42, and full Gate G4 remains green.
