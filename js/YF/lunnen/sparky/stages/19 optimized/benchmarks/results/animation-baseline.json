@@ -1,0 +1,794 @@
+{
+  "version": 1,
+  "profile": "standard",
+  "startedAt": "2026-08-25T17:03:14.095Z",
+  "completedAt": "2026-08-25T17:03:37.511Z",
+  "passed": true,
+  "environment": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+    "platform": "MacIntel",
+    "hardwareConcurrency": 12,
+    "deviceMemoryGb": 32,
+    "crossOriginIsolated": true,
+    "offscreenCanvas": true,
+    "videoEncoder": true
+  },
+  "configuration": {
+    "previewFps": 30,
+    "exportFps": 60,
+    "exportSize": 1080,
+    "scenarios": [
+      {
+        "id": "short-light",
+        "duration": 1,
+        "points": 2,
+        "complexity": 0,
+        "stops": 0,
+        "blinks": 0
+      },
+      {
+        "id": "medium-balanced",
+        "duration": 5,
+        "points": 6,
+        "complexity": 50,
+        "stops": 40,
+        "blinks": 2
+      },
+      {
+        "id": "long-heavy",
+        "duration": 10,
+        "points": 16,
+        "complexity": 100,
+        "stops": 100,
+        "blinks": 12
+      }
+    ]
+  },
+  "preview": [
+    {
+      "scenario": {
+        "id": "short-light",
+        "duration": 1,
+        "points": 2,
+        "complexity": 0,
+        "stops": 0,
+        "blinks": 0
+      },
+      "frameCount": 30,
+      "total": {
+        "samples": 30,
+        "totalMs": 168.77,
+        "meanMs": 5.626,
+        "p50Ms": 5.635,
+        "p95Ms": 7.01,
+        "maxMs": 7.025,
+        "framesOverBudget": 0,
+        "droppedFrames": 0,
+        "droppedFrameRate": 0
+      },
+      "phases": {
+        "character": {
+          "samples": 30,
+          "totalMs": 2.245,
+          "meanMs": 0.075,
+          "p50Ms": 0.07,
+          "p95Ms": 0.1,
+          "maxMs": 0.18,
+          "framesOverBudget": 0,
+          "droppedFrames": 0,
+          "droppedFrameRate": 0
+        },
+        "eyes": {
+          "samples": 30,
+          "totalMs": 159.465,
+          "meanMs": 5.316,
+          "p50Ms": 5.335,
+          "p95Ms": 6.72,
+          "maxMs": 6.73,
+          "framesOverBudget": 0,
+          "droppedFrames": 0,
+          "droppedFrameRate": 0
+        },
+        "lids": {
+          "samples": 30,
+          "totalMs": 5.06,
+          "meanMs": 0.169,
+          "p50Ms": 0.155,
+          "p95Ms": 0.29,
+          "maxMs": 0.365,
+          "framesOverBudget": 0,
+          "droppedFrames": 0,
+          "droppedFrameRate": 0
+        },
+        "dom": {
+          "samples": 30,
+          "totalMs": 1.835,
+          "meanMs": 0.061,
+          "p50Ms": 0.065,
+          "p95Ms": 0.09,
+          "maxMs": 0.1,
+          "framesOverBudget": 0,
+          "droppedFrames": 0,
+          "droppedFrameRate": 0
+        }
+      }
+    },
+    {
+      "scenario": {
+        "id": "medium-balanced",
+        "duration": 5,
+        "points": 6,
+        "complexity": 50,
+        "stops": 40,
+        "blinks": 2
+      },
+      "frameCount": 150,
+      "total": {
+        "samples": 150,
+        "totalMs": 771.47,
+        "meanMs": 5.143,
+        "p50Ms": 5.11,
+        "p95Ms": 6.45,
+        "maxMs": 7.48,
+        "framesOverBudget": 0,
+        "droppedFrames": 0,
+        "droppedFrameRate": 0
+      },
+      "phases": {
+        "character": {
+          "samples": 150,
+          "totalMs": 7.78,
+          "meanMs": 0.052,
+          "p50Ms": 0.05,
+          "p95Ms": 0.065,
+          "maxMs": 0.155,
+          "framesOverBudget": 0,
+          "droppedFrames": 0,
+          "droppedFrameRate": 0
+        },
+        "eyes": {
+          "samples": 150,
+          "totalMs": 732.755,
+          "meanMs": 4.885,
+          "p50Ms": 4.87,
+          "p95Ms": 6.19,
+          "maxMs": 7.02,
+          "framesOverBudget": 0,
+          "droppedFrames": 0,
+          "droppedFrameRate": 0
+        },
+        "lids": {
+          "samples": 150,
+          "totalMs": 21.725,
+          "meanMs": 0.145,
+          "p50Ms": 0.14,
+          "p95Ms": 0.165,
+          "maxMs": 0.31,
+          "framesOverBudget": 0,
+          "droppedFrames": 0,
+          "droppedFrameRate": 0
+        },
+        "dom": {
+          "samples": 150,
+          "totalMs": 8.445,
+          "meanMs": 0.056,
+          "p50Ms": 0.055,
+          "p95Ms": 0.08,
+          "maxMs": 0.225,
+          "framesOverBudget": 0,
+          "droppedFrames": 0,
+          "droppedFrameRate": 0
+        }
+      }
+    },
+    {
+      "scenario": {
+        "id": "long-heavy",
+        "duration": 10,
+        "points": 16,
+        "complexity": 100,
+        "stops": 100,
+        "blinks": 12
+      },
+      "frameCount": 300,
+      "total": {
+        "samples": 300,
+        "totalMs": 1601.725,
+        "meanMs": 5.339,
+        "p50Ms": 5.26,
+        "p95Ms": 7.015,
+        "maxMs": 7.98,
+        "framesOverBudget": 0,
+        "droppedFrames": 0,
+        "droppedFrameRate": 0
+      },
+      "phases": {
+        "character": {
+          "samples": 300,
+          "totalMs": 17.825,
+          "meanMs": 0.059,
+          "p50Ms": 0.055,
+          "p95Ms": 0.065,
+          "maxMs": 0.98,
+          "framesOverBudget": 0,
+          "droppedFrames": 0,
+          "droppedFrameRate": 0
+        },
+        "eyes": {
+          "samples": 300,
+          "totalMs": 1525.22,
+          "meanMs": 5.084,
+          "p50Ms": 5.015,
+          "p95Ms": 6.735,
+          "maxMs": 7.735,
+          "framesOverBudget": 0,
+          "droppedFrames": 0,
+          "droppedFrameRate": 0
+        },
+        "lids": {
+          "samples": 300,
+          "totalMs": 42.64,
+          "meanMs": 0.142,
+          "p50Ms": 0.14,
+          "p95Ms": 0.155,
+          "maxMs": 0.31,
+          "framesOverBudget": 0,
+          "droppedFrames": 0,
+          "droppedFrameRate": 0
+        },
+        "dom": {
+          "samples": 300,
+          "totalMs": 15.02,
+          "meanMs": 0.05,
+          "p50Ms": 0.05,
+          "p95Ms": 0.08,
+          "maxMs": 0.19,
+          "framesOverBudget": 0,
+          "droppedFrames": 0,
+          "droppedFrameRate": 0
+        }
+      }
+    }
+  ],
+  "exports": [
+    {
+      "scenario": {
+        "id": "short-light",
+        "duration": 1,
+        "points": 2,
+        "complexity": 0,
+        "stops": 0,
+        "blinks": 0
+      },
+      "format": "mp4",
+      "status": "complete",
+      "wallTimeMs": 880.125,
+      "wallFramesPerSecond": 68.172,
+      "outputBytes": 235681,
+      "inputLatency": {
+        "samples": 54,
+        "totalMs": 6.165,
+        "meanMs": 0.114,
+        "p50Ms": 0.02,
+        "p95Ms": 1.03,
+        "maxMs": 1.53,
+        "framesOverBudget": 0,
+        "droppedFrames": 0,
+        "droppedFrameRate": 0
+      },
+      "memory": {
+        "source": "performance.memory",
+        "initialBytes": 2448876,
+        "peakBytes": 2712305,
+        "deltaBytes": 263429
+      },
+      "worker": {
+        "frameCount": 60,
+        "totalMs": 871.35,
+        "framesPerSecond": 68.859,
+        "outputBytes": 235681,
+        "peakKnownBytes": 470455,
+        "peakMemoryToFileRatio": 1.996,
+        "bufferedPngBytes": 0,
+        "intermediateFlushes": 6,
+        "maxEncodeQueueSize": 9,
+        "phases": {
+          "characterMs": {
+            "totalMs": 4.57,
+            "perFrameMs": 0.076
+          },
+          "eyesMs": {
+            "totalMs": 390.69,
+            "perFrameMs": 6.511
+          },
+          "lidsMs": {
+            "totalMs": 9.965,
+            "perFrameMs": 0.166
+          },
+          "canvasDrawMs": {
+            "totalMs": 13.745,
+            "perFrameMs": 0.229
+          },
+          "timelineMs": {
+            "totalMs": 0.82,
+            "perFrameMs": 0.014
+          },
+          "eyeWarmupMs": {
+            "totalMs": 165.585,
+            "perFrameMs": 2.76
+          },
+          "pngEncodeMs": {
+            "totalMs": 0,
+            "perFrameMs": 0
+          },
+          "zipPackageMs": {
+            "totalMs": 0,
+            "perFrameMs": 0
+          },
+          "videoSubmitMs": {
+            "totalMs": 0.19,
+            "perFrameMs": 0.003
+          },
+          "encoderFlushMs": {
+            "totalMs": 233.31,
+            "perFrameMs": 3.889
+          },
+          "mp4MuxMs": {
+            "totalMs": 0.53,
+            "perFrameMs": 0.009
+          }
+        }
+      }
+    },
+    {
+      "scenario": {
+        "id": "short-light",
+        "duration": 1,
+        "points": 2,
+        "complexity": 0,
+        "stops": 0,
+        "blinks": 0
+      },
+      "format": "png-sequence",
+      "status": "complete",
+      "wallTimeMs": 800.97,
+      "wallFramesPerSecond": 74.909,
+      "outputBytes": 2401036,
+      "inputLatency": {
+        "samples": 49,
+        "totalMs": 14.585,
+        "meanMs": 0.298,
+        "p50Ms": 0.025,
+        "p95Ms": 1.51,
+        "maxMs": 1.69,
+        "framesOverBudget": 0,
+        "droppedFrames": 0,
+        "droppedFrameRate": 0
+      },
+      "memory": {
+        "source": "performance.memory",
+        "initialBytes": 2737605,
+        "peakBytes": 5158061,
+        "deltaBytes": 2420456
+      },
+      "worker": {
+        "frameCount": 60,
+        "totalMs": 793.35,
+        "framesPerSecond": 75.629,
+        "outputBytes": 2401036,
+        "peakKnownBytes": 4793890,
+        "peakMemoryToFileRatio": 1.997,
+        "bufferedPngBytes": 2392854,
+        "intermediateFlushes": 0,
+        "maxEncodeQueueSize": 0,
+        "phases": {
+          "characterMs": {
+            "totalMs": 4.705,
+            "perFrameMs": 0.078
+          },
+          "eyesMs": {
+            "totalMs": 388.695,
+            "perFrameMs": 6.478
+          },
+          "lidsMs": {
+            "totalMs": 9.93,
+            "perFrameMs": 0.165
+          },
+          "canvasDrawMs": {
+            "totalMs": 13.96,
+            "perFrameMs": 0.233
+          },
+          "timelineMs": {
+            "totalMs": 0.71,
+            "perFrameMs": 0.012
+          },
+          "eyeWarmupMs": {
+            "totalMs": 162.555,
+            "perFrameMs": 2.709
+          },
+          "pngEncodeMs": {
+            "totalMs": 209.68,
+            "perFrameMs": 3.495
+          },
+          "zipPackageMs": {
+            "totalMs": 5.915,
+            "perFrameMs": 0.099
+          },
+          "videoSubmitMs": {
+            "totalMs": 0,
+            "perFrameMs": 0
+          },
+          "encoderFlushMs": {
+            "totalMs": 0,
+            "perFrameMs": 0
+          },
+          "mp4MuxMs": {
+            "totalMs": 0,
+            "perFrameMs": 0
+          }
+        }
+      }
+    },
+    {
+      "scenario": {
+        "id": "medium-balanced",
+        "duration": 5,
+        "points": 6,
+        "complexity": 50,
+        "stops": 40,
+        "blinks": 2
+      },
+      "format": "mp4",
+      "status": "complete",
+      "wallTimeMs": 3189.69,
+      "wallFramesPerSecond": 94.053,
+      "outputBytes": 1029904,
+      "inputLatency": {
+        "samples": 199,
+        "totalMs": 22.565,
+        "meanMs": 0.113,
+        "p50Ms": 0.02,
+        "p95Ms": 1.02,
+        "maxMs": 1.52,
+        "framesOverBudget": 0,
+        "droppedFrames": 0,
+        "droppedFrameRate": 0
+      },
+      "memory": {
+        "source": "performance.memory",
+        "initialBytes": 5334661,
+        "peakBytes": 6245585,
+        "deltaBytes": 910924
+      },
+      "worker": {
+        "frameCount": 300,
+        "totalMs": 3182.895,
+        "framesPerSecond": 94.254,
+        "outputBytes": 1029904,
+        "peakKnownBytes": 2057925,
+        "peakMemoryToFileRatio": 1.998,
+        "bufferedPngBytes": 0,
+        "intermediateFlushes": 33,
+        "maxEncodeQueueSize": 9,
+        "phases": {
+          "characterMs": {
+            "totalMs": 22.42,
+            "perFrameMs": 0.075
+          },
+          "eyesMs": {
+            "totalMs": 1983.475,
+            "perFrameMs": 6.612
+          },
+          "lidsMs": {
+            "totalMs": 44.215,
+            "perFrameMs": 0.147
+          },
+          "canvasDrawMs": {
+            "totalMs": 60.72,
+            "perFrameMs": 0.202
+          },
+          "timelineMs": {
+            "totalMs": 1.005,
+            "perFrameMs": 0.003
+          },
+          "eyeWarmupMs": {
+            "totalMs": 173.615,
+            "perFrameMs": 0.579
+          },
+          "pngEncodeMs": {
+            "totalMs": 0,
+            "perFrameMs": 0
+          },
+          "zipPackageMs": {
+            "totalMs": 0,
+            "perFrameMs": 0
+          },
+          "videoSubmitMs": {
+            "totalMs": 1.14,
+            "perFrameMs": 0.004
+          },
+          "encoderFlushMs": {
+            "totalMs": 912.885,
+            "perFrameMs": 3.043
+          },
+          "mp4MuxMs": {
+            "totalMs": 0.875,
+            "perFrameMs": 0.003
+          }
+        }
+      }
+    },
+    {
+      "scenario": {
+        "id": "medium-balanced",
+        "duration": 5,
+        "points": 6,
+        "complexity": 50,
+        "stops": 40,
+        "blinks": 2
+      },
+      "format": "png-sequence",
+      "status": "complete",
+      "wallTimeMs": 3217.935,
+      "wallFramesPerSecond": 93.227,
+      "outputBytes": 11681327,
+      "inputLatency": {
+        "samples": 201,
+        "totalMs": 53.04,
+        "meanMs": 0.264,
+        "p50Ms": 0,
+        "p95Ms": 1.135,
+        "maxMs": 1.78,
+        "framesOverBudget": 0,
+        "droppedFrames": 0,
+        "droppedFrameRate": 0
+      },
+      "memory": {
+        "source": "performance.memory",
+        "initialBytes": 6297417,
+        "peakBytes": 18010992,
+        "deltaBytes": 11713575
+      },
+      "worker": {
+        "frameCount": 300,
+        "totalMs": 3209.885,
+        "framesPerSecond": 93.461,
+        "outputBytes": 11681327,
+        "peakKnownBytes": 23319432,
+        "peakMemoryToFileRatio": 1.996,
+        "bufferedPngBytes": 11638105,
+        "intermediateFlushes": 0,
+        "maxEncodeQueueSize": 0,
+        "phases": {
+          "characterMs": {
+            "totalMs": 20.485,
+            "perFrameMs": 0.068
+          },
+          "eyesMs": {
+            "totalMs": 1923.175,
+            "perFrameMs": 6.411
+          },
+          "lidsMs": {
+            "totalMs": 43.555,
+            "perFrameMs": 0.145
+          },
+          "canvasDrawMs": {
+            "totalMs": 59.225,
+            "perFrameMs": 0.197
+          },
+          "timelineMs": {
+            "totalMs": 1.21,
+            "perFrameMs": 0.004
+          },
+          "eyeWarmupMs": {
+            "totalMs": 176.81,
+            "perFrameMs": 0.589
+          },
+          "pngEncodeMs": {
+            "totalMs": 973.095,
+            "perFrameMs": 3.244
+          },
+          "zipPackageMs": {
+            "totalMs": 25.605,
+            "perFrameMs": 0.085
+          },
+          "videoSubmitMs": {
+            "totalMs": 0,
+            "perFrameMs": 0
+          },
+          "encoderFlushMs": {
+            "totalMs": 0,
+            "perFrameMs": 0
+          },
+          "mp4MuxMs": {
+            "totalMs": 0,
+            "perFrameMs": 0
+          }
+        }
+      }
+    },
+    {
+      "scenario": {
+        "id": "long-heavy",
+        "duration": 10,
+        "points": 16,
+        "complexity": 100,
+        "stops": 100,
+        "blinks": 12
+      },
+      "format": "mp4",
+      "status": "complete",
+      "wallTimeMs": 6160.475,
+      "wallFramesPerSecond": 97.395,
+      "outputBytes": 1389380,
+      "inputLatency": {
+        "samples": 384,
+        "totalMs": 38.905,
+        "meanMs": 0.101,
+        "p50Ms": 0.02,
+        "p95Ms": 1.015,
+        "maxMs": 1.925,
+        "framesOverBudget": 0,
+        "droppedFrames": 0,
+        "droppedFrameRate": 0
+      },
+      "memory": {
+        "source": "performance.memory",
+        "initialBytes": 18067252,
+        "peakBytes": 18067252,
+        "deltaBytes": 0
+      },
+      "worker": {
+        "frameCount": 600,
+        "totalMs": 6152.22,
+        "framesPerSecond": 97.526,
+        "outputBytes": 1389380,
+        "peakKnownBytes": 2775657,
+        "peakMemoryToFileRatio": 1.998,
+        "bufferedPngBytes": 0,
+        "intermediateFlushes": 66,
+        "maxEncodeQueueSize": 9,
+        "phases": {
+          "characterMs": {
+            "totalMs": 44.75,
+            "perFrameMs": 0.075
+          },
+          "eyesMs": {
+            "totalMs": 3958.215,
+            "perFrameMs": 6.597
+          },
+          "lidsMs": {
+            "totalMs": 88.785,
+            "perFrameMs": 0.148
+          },
+          "canvasDrawMs": {
+            "totalMs": 121.655,
+            "perFrameMs": 0.203
+          },
+          "timelineMs": {
+            "totalMs": 1.44,
+            "perFrameMs": 0.002
+          },
+          "eyeWarmupMs": {
+            "totalMs": 186.885,
+            "perFrameMs": 0.311
+          },
+          "pngEncodeMs": {
+            "totalMs": 0,
+            "perFrameMs": 0
+          },
+          "zipPackageMs": {
+            "totalMs": 0,
+            "perFrameMs": 0
+          },
+          "videoSubmitMs": {
+            "totalMs": 2.265,
+            "perFrameMs": 0.004
+          },
+          "encoderFlushMs": {
+            "totalMs": 1791.4,
+            "perFrameMs": 2.986
+          },
+          "mp4MuxMs": {
+            "totalMs": 1.205,
+            "perFrameMs": 0.002
+          }
+        }
+      }
+    },
+    {
+      "scenario": {
+        "id": "long-heavy",
+        "duration": 10,
+        "points": 16,
+        "complexity": 100,
+        "stops": 100,
+        "blinks": 12
+      },
+      "format": "png-sequence",
+      "status": "complete",
+      "wallTimeMs": 6413.57,
+      "wallFramesPerSecond": 93.552,
+      "outputBytes": 23045548,
+      "inputLatency": {
+        "samples": 400,
+        "totalMs": 108.15,
+        "meanMs": 0.27,
+        "p50Ms": 0.025,
+        "p95Ms": 1.17,
+        "maxMs": 1.935,
+        "framesOverBudget": 0,
+        "droppedFrames": 0,
+        "droppedFrameRate": 0
+      },
+      "memory": {
+        "source": "performance.memory",
+        "initialBytes": 3398004,
+        "peakBytes": 26502416,
+        "deltaBytes": 23104412
+      },
+      "worker": {
+        "frameCount": 600,
+        "totalMs": 6404.135,
+        "framesPerSecond": 93.689,
+        "outputBytes": 23045548,
+        "peakKnownBytes": 46010674,
+        "peakMemoryToFileRatio": 1.997,
+        "bufferedPngBytes": 22965126,
+        "intermediateFlushes": 0,
+        "maxEncodeQueueSize": 0,
+        "phases": {
+          "characterMs": {
+            "totalMs": 43.88,
+            "perFrameMs": 0.073
+          },
+          "eyesMs": {
+            "totalMs": 3941.35,
+            "perFrameMs": 6.569
+          },
+          "lidsMs": {
+            "totalMs": 89.725,
+            "perFrameMs": 0.15
+          },
+          "canvasDrawMs": {
+            "totalMs": 122.675,
+            "perFrameMs": 0.204
+          },
+          "timelineMs": {
+            "totalMs": 1.58,
+            "perFrameMs": 0.003
+          },
+          "eyeWarmupMs": {
+            "totalMs": 198.455,
+            "perFrameMs": 0.331
+          },
+          "pngEncodeMs": {
+            "totalMs": 1973.67,
+            "perFrameMs": 3.289
+          },
+          "zipPackageMs": {
+            "totalMs": 59.465,
+            "perFrameMs": 0.099
+          },
+          "videoSubmitMs": {
+            "totalMs": 0,
+            "perFrameMs": 0
+          },
+          "encoderFlushMs": {
+            "totalMs": 0,
+            "perFrameMs": 0
+          },
+          "mp4MuxMs": {
+            "totalMs": 0,
+            "perFrameMs": 0
+          }
+        }
+      }
+    }
+  ],
+  "runner": {
+    "chromePath": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "projectRoot": "/Users/mishaivanov/Library/Mobile Documents/com~apple~CloudDocs/Documents/GitHub/takeitontheother.site/js/YF/lunnen/sparky",
+    "command": "npm run benchmark:animation"
+  }
+}

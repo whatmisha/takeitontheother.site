@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pattern Studio — Othersite UI Framework v3 demo</title>
+    <link rel="stylesheet" href="../css/othersite-styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Top navigation: preset dropdown + share + save -->
+        <div class="top-links">
+            <a href="../" class="top-link">Othersite UI</a>
+
+            <div class="preset-toolbar-cluster" style="display:flex;align-items:center;gap:var(--spacing-md);">
+                <div class="preset-dropdown" id="presetDropdown">
+                    <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button"
+                            aria-haspopup="listbox" aria-expanded="false" aria-controls="presetDropdownMenu">
+                        <span class="preset-dropdown-text">Presets</span>
+                        <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox"></ul>
+                </div>
+                <button type="button" id="presetToolbarShareBtn" class="preset-toolbar-share-btn" title="Copy share link" aria-label="Copy share link"
+                        data-tooltip="Copy share link">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="18" height="18" fill="none" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M5.7410987,3.4304742l.6124561-.6124561c.7810478-.7810478,2.0473765-.7810478,2.8284243,0l.0000028.0000028c.7810478.7810478.7810478,2.0473765,0,2.8284243l-.6124561.6124561"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M6.2589013,8.5695258l-.6124561.6124561c-.7810478.7810478-2.0473765.7810478-2.8284243,0l-.0000028-.0000028c-.7810478-.7810478-.7810478-2.0473765,0-2.8284243l.6124561-.6124561"/><line x1="7.5184826" y1="4.4815174" x2="4.4815174" y2="7.5184826" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"/></svg>
+                </button>
+            </div>
+
+            <button class="top-link" id="savePresetBtn" type="button" style="display:none;">Save preset</button>
+
+            <!-- Zoom indicator: lives in the top control group (rightmost). -->
+            <div class="zoom-indicator" id="zoomIndicator" data-tooltip="Click to fit to screen">100%</div>
+        </div>
+
+        <main class="main-content" id="mainContent">
+            <h1 class="sr-only">Pattern Studio</h1>
+
+            <div class="canvas-container" id="canvasContainer">
+                <svg id="mainSvg" role="img" aria-label="Pattern preview"></svg>
+            </div>
+
+            <!-- GRID panel (top-left) -->
+            <aside class="controls-panel controls-panel-left" id="gridPanel">
+                <div class="panel-header" id="gridPanelHeader">
+                    <span>Grid</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="colsSlider"><span>Columns</span>
+                                <input type="text" class="value-display" id="colsValue" value="6"></label>
+                            <input type="range" id="colsSlider" min="1" max="24" value="6" step="1">
+                        </div>
+                        <div class="control-group">
+                            <label for="rowsSlider"><span>Rows</span>
+                                <input type="text" class="value-display" id="rowsValue" value="6"></label>
+                            <input type="range" id="rowsSlider" min="1" max="24" value="6" step="1">
+                        </div>
+                        <div class="control-group pill-toggle-row">
+                            <label class="pill-toggle" for="showGrid" data-tooltip="Show background grid">
+                                <input type="checkbox" id="showGrid" class="sr-only" data-setting="showGrid">
+                                <span>Show grid</span>
+                            </label>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <!-- SHAPE panel (top-right) -->
+            <aside class="controls-panel" id="shapePanel">
+                <div class="panel-header" id="shapePanelHeader">
+                    <span>Shape</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <!-- Size with dice → range -->
+                        <div class="control-group dice-slider-group" id="scaleDiceGroup">
+                            <label for="scaleSlider">
+                                <span>Size
+                                    <button type="button" class="dice-btn dice-btn--diamond" id="scaleDiceBtn"
+                                            data-param="scale" data-tooltip="Randomize size per cell"
+                                            aria-label="Toggle random range for Size"></button>
+                                </span>
+                                <input type="text" class="value-display" id="scaleValue" value="0.72">
+                            </label>
+                            <div class="dice-single" id="scaleSingleWrap">
+                                <input type="range" id="scaleSlider" min="0.05" max="1" value="0.72" step="0.01">
+                            </div>
+                            <div class="dice-range" id="scaleRangeWrap" style="display:none;">
+                                <div id="scaleRangeSlider" class="range-slider-container"></div>
+                                <div class="range-slider-values">
+                                    <input type="text" class="value-display" id="scaleMinValue" value="0.3">
+                                    <input type="text" class="value-display" id="scaleMaxValue" value="0.9">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="rotationSlider"><span>Rotation <span class="unit">°</span></span>
+                                <input type="text" class="value-display" id="rotationValue" value="0"></label>
+                            <input type="range" id="rotationSlider" min="0" max="360" value="0" step="1">
+                        </div>
+
+                        <div class="control-group pill-toggle-row">
+                            <label class="pill-toggle" for="square" data-tooltip="Draw squares instead of circles">
+                                <input type="checkbox" id="square" class="sr-only" data-setting="square">
+                                <span>Square shapes</span>
+                            </label>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <!-- COLORS panel (bottom-left) -->
+            <aside class="controls-panel controls-panel-text" id="colorsPanel">
+                <div class="panel-header" id="colorsPanelHeader">
+                    <span>Colors</span>
+                    <span class="collapse-icon">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <div class="color-swatches-compact" id="colorPickersGroup">
+                                <div class="color-swatch-row">
+                                    <div class="color-swatch-compact" id="shapeColorItem" data-color-type="shape">
+                                        <button type="button" class="color-dot color-dot--expandable" id="shapeColorPreview" title="HSB — click to expand" aria-label="Open Shape color controls"></button>
+                                        <span class="color-label">Shape</span>
+                                        <input type="text" class="color-swatch-hex" id="shapeColorHex" value="#82A9D9" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Shape color hex">
+                                    </div>
+                                    <div class="color-hsb-slot" id="shapeColorHsbSlot">
+                                        <div id="unifiedColorPickerContainer"></div>
+                                    </div>
+                                </div>
+                                <div class="color-swatch-row">
+                                    <div class="color-swatch-compact" id="bgColorItem" data-color-type="bg">
+                                        <button type="button" class="color-dot color-dot--expandable" id="bgColorPreview" title="HSB — click to expand" aria-label="Open Background color controls"></button>
+                                        <span class="color-label">Background</span>
+                                        <input type="text" class="color-swatch-hex" id="bgColorHex" value="#0a0a0a" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Background color hex">
+                                    </div>
+                                    <div class="color-hsb-slot" id="bgColorHsbSlot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Bottom actions -->
+        <nav class="bottom-buttons">
+            <button class="btn-fixed btn-intro-help" id="introHelpBtn" type="button" aria-label="About" data-tooltip="About this demo">?</button>
+            <button class="btn-fixed" id="shuffleBtn" type="button" data-tooltip="Reshuffle random sizes">Shuffle</button>
+            <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
+            <button class="btn-fixed" id="exportSvgBtn" type="button">Export ⌘E</button>
+        </nav>
+
+        <!-- Dialog host -->
+        <dialog id="dialog" class="modal">
+            <div class="modal-content">
+                <h2 id="dialogTitle" class="modal-title"></h2>
+                <div id="dialogText" class="modal-text"></div>
+                <input id="dialogInput" class="modal-input" type="text" style="display:none;">
+                <div id="dialogButtons" class="modal-buttons"></div>
+            </div>
+        </dialog>
+    </div>
+
+    <script type="module" src="./tool.js"></script>
+</body>
+</html>
