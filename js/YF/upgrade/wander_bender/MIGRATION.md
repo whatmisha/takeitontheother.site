@@ -147,3 +147,35 @@ The controls panel remains 300×605.703125, all 41 fields restore, and exact
 Radial, Random and Flow Field SVG hashes remain 8bcdfde2…, fa1daf28… and
 f6fa2d66…. Browser errors are zero; all ten Wander tests and the action
 contract pass.
+
+## G5 nonblocking clipboard feedback
+
+UPG-057g replaces Wander's single clipboard-fallback `alert` with the shared
+native `DialogHost`. Clipboard feature detection, export serialization and the
+existing failure text remain application-owned; the framework owns only the
+nonblocking presentation and dismissal lifecycle. The current page has no Copy
+trigger, so the fallback remains dormant and is protected by component tests and
+the static feedback boundary rather than being artificially revived.
+
+The hidden dialog produces no closed-state visual or geometry change: the
+1280×720 capture is byte-identical to its immediate baseline. All 41 fields, the
+300×605.703125 panel and exact Radial SVG markup remain unchanged, with no
+browser/module errors. Wander passes 10/10, the feedback contract reports zero
+primary blocking calls, and full Gate G4 passes.
+
+## G5 legacy modal cleanup
+
+UPG-058b removes Wander's complete copied overlay family: overlay, active state,
+close control, help body, broad content/title, modal scrollbar and responsive
+rules. No matching overlay markup, controller or `OverlayDialogHost` exists.
+The native clipboard-feedback dialog remains and now consumes the canonical
+shared shell through one narrow `.modal > .modal-content { all: revert-layer; }`
+promotion required by the frozen universal padding reset.
+
+The closed 1280×720 screenshot remains byte-identical at `10b48338…`. All 41
+fields, the `[960,20,300,605.703125]` panel and the 1,838-character Radial SVG
+hash `8bcdfde2…` are exact. Browser errors remain zero. The hidden native content
+is intentionally unified from 30 to 20 px padding, 90% to 100% width and title
+weight 600 to 500; 12 px radius, 600 px max-width and explicit labelling remain.
+The added promotion is temporary until the Wander universal reset is removed.
+Ten tests, legacy/feedback contracts and full Gate G4 pass.

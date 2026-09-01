@@ -785,6 +785,34 @@ shell 600×272.820 px, 22 fields, три panels и SVG 40 180 символов/h
 Framework 42/42, Pulsar 8/8, feedback contract, isolation и полный Gate G4
 проходят. Следующий шаг — UPG-057g feedback accessibility/blocking calls.
 
+Результат UPG-057g — все 10 оставшихся blocking `alert/confirm` устранены.
+Sticky направляет пять error paths и dormant navigator delete decision через
+общий `DialogHost`; Pulsar — три empty-map guards; Wander — clipboard fallback.
+Тексты, validation, export/codec/persistence решения остаются app-owned.
+Sticky `dataStatus` стал atomic live region: progress/success получает
+`status`/polite, ошибка — `alert`/assertive; Google Sheets остаётся явным
+user-initiated boundary. Closed Sticky и Wander captures точны; Sticky сохраняет
+79 fields, Wander 41 fields, panel 300×605.703125 и Radial SVG. Pulsar сохраняет
+22 fields, три panels, rich CRC failure body и SVG 40 180/`97155e5a…`; виден
+только уже зафиксированный reload SVG jitter 291 RGB/max 2. Итоговый contract:
+6 native dialogs, 2 active overlays + 2 dormant fragments, 1 private popup,
+47 tooltip hosts и 0 primary blocking calls. Framework 42/42, Sticky 5/5,
+Pulsar 8/8, Wander 10/10, isolation и полный Gate G4 проходят. Следующий шаг —
+UPG-057h final feedback component gate.
+
+Результат UPG-057h — feedback family закрыта. Итоговое владение зафиксировано:
+framework обслуживает 6 native dialogs, 2 active overlay lifecycle и 47
+tooltips; app-owned остаются Pizza ErrorPresenter/DraftRecovery, Sticky Sheets
+status, Sparky shortcut/animation state, Pulsar Copy flash, Keyboarder toast
+copy/timing и Wordplayer busy state. Для dormant Pizza/Sticky overlay и dead
+Wander modal CSS заданы отдельные removal proofs; они не были оживлены ради
+теста. Cumulative browser acceptance покрывает open/close, Escape, backdrop,
+Tab/focus return, scroll restore и tooltip keyboard lifecycle. Финальный smoke
+загружает все 8 entrypoints до complete с закрытыми поверхностями и 0 errors.
+Feedback contract, isolation, framework 42/42, все app suites и полный Gate G4
+проходят. UPG-057 завершён; следующий шаг — UPG-058a legacy CSS inventory без
+production diff.
+
 ### UPG-058. Удалить подтверждённые legacy CSS-дубли
 
 Удалять только rules, которые:
@@ -795,6 +823,24 @@ Framework 42/42, Pulsar 8/8, feedback contract, isolation и полный Gate G
 - не используются donor/example HTML как отдельный контракт.
 
 После каждого приложения запускать поиск orphan selectors и boundary tests.
+
+Результат UPG-058a — создан `LEGACY_CSS_CLEANUP_MATRIX.md`, а новый
+`check:legacy-css` включён в Gate G4 до первого удаления. Он зафиксировал
+5 frozen universal resets, 17 initial `revert-layer` promotions, 2 dormant
+overlays, 3 broad local native-dialog collisions и одну Wander overlay-family
+без markup. Обнаружено, что broad `.modal-content` Sticky/Pulsar/Wander нельзя
+удалять как обычный orphan: он перекрывает новые native dialogs. Production на
+этом шаге не изменён; полный Gate G4 проходит.
+
+Результат UPG-058b — Wander удалил всю markup-less overlay/close/body family,
+broad content, scrollbar и responsive copies. Закрытый capture `10b48338…`,
+41 fields, panel 300×605.703125 и Radial SVG 1 838/`8bcdfde2…` точны. Для
+native dialog потребовался один узкий `revert-layer` bridge поверх frozen
+universal padding reset; его canonical shell намеренно меняется 30→20 px,
+90→100% и title 600→500 при неизменных radius/max-width/label. Текущий contract:
+18 promotions, 2 dormant overlays, 2 broad collisions, 0 overlay-only orphan
+families. Wander 10/10 и полный Gate G4 проходят. Следующий шаг — UPG-058c
+Pizza orphan fragment.
 
 ### UPG-059. Gate G5
 

@@ -1493,119 +1493,6 @@ textarea::placeholder {
     letter-spacing: 0;
 }
 
-/* ============================================
-   15. МОДАЛЬНЫЕ ОКНА
-   ============================================ */
-
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 20000;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--duration-fade) var(--easing-standard);
-}
-
-.modal-overlay.active {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.modal-content {
-    background: var(--color-bg-panel);
-    border: none;
-    border-radius: var(--radius-sm);
-    max-width: 600px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-    padding: var(--spacing-4xl);
-    position: relative;
-    transform: scale(0.95);
-    transition: transform var(--duration-expand) var(--easing-decelerate);
-}
-
-.modal-overlay.active .modal-content {
-    transform: scale(1);
-}
-
-.modal-close {
-    position: absolute;
-    top: var(--spacing-2xl);
-    right: var(--spacing-2xl);
-    background: transparent;
-    border: none;
-    color: var(--color-text-secondary);
-    font-size: 2rem;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color var(--transition-fast);
-}
-
-.modal-close:hover {
-    color: var(--color-text);
-}
-
-.modal-content h2 {
-    font-size: 1.5rem;
-    margin-bottom: var(--spacing-3xl);
-    color: var(--color-text);
-    font-weight: 600;
-}
-
-.modal-body {
-    color: var(--color-text-secondary);
-    line-height: 1.7;
-    font-size: 0.85rem;
-}
-
-.modal-body h3 {
-    color: var(--color-text);
-    font-size: 1rem;
-    font-weight: 600;
-    margin-top: var(--spacing-4xl);
-    margin-bottom: var(--spacing-lg);
-}
-
-.modal-body h3:first-child {
-    margin-top: 0;
-}
-
-.modal-body p {
-    margin-bottom: var(--spacing-2xl);
-}
-
-.modal-body ul {
-    margin-bottom: var(--spacing-2xl);
-    padding-left: var(--spacing-3xl);
-}
-
-.modal-body li {
-    margin-bottom: var(--spacing-md);
-}
-
-.modal-body p:last-child {
-    margin-bottom: 0;
-}
-
-.modal-body strong {
-    color: var(--color-text);
-    font-weight: 600;
-}
-
 /* Toggle Label для "Outline fonts" и подобных */
 .toggle-label {
     display: flex;
@@ -1806,25 +1693,6 @@ textarea::placeholder {
     background: var(--color-text-dim);
 }
 
-/* Modal Content Scrollbar */
-.modal-content::-webkit-scrollbar {
-    width: 6px;
-}
-
-.modal-content::-webkit-scrollbar-track {
-    background: var(--color-bg);
-    border-radius: var(--radius);
-}
-
-.modal-content::-webkit-scrollbar-thumb {
-    background: var(--color-text-dim);
-    border-radius: var(--radius);
-}
-
-.modal-content::-webkit-scrollbar-thumb:hover {
-    background: var(--color-text-secondary);
-}
-
 /* ============================================
    19. АДАПТИВНОСТЬ (Responsive Design)
    ============================================ */
@@ -1853,14 +1721,6 @@ textarea::placeholder {
         padding-bottom: var(--spacing-xl);
     }
     
-    .modal-content {
-        padding: var(--spacing-3xl);
-    }
-    
-    .modal-content h2 {
-        font-size: 1.3rem;
-        margin-bottom: var(--spacing-3xl);
-    }
 }
 
 /* ============================================

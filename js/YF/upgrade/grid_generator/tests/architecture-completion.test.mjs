@@ -165,7 +165,7 @@ test('root shell stays minimal while HTML and CSS modules retain unique element 
     const style = fs.readFileSync(path.join(projectDir, 'style.css'), 'utf8');
     const fragmentsDir = path.join(projectDir, 'src', 'ui', 'fragments');
     const fragmentNames = [
-        'workspace', 'actions', 'objects', 'typography', 'object-editors', 'help'
+        'workspace', 'actions', 'objects', 'typography', 'object-editors'
     ];
     const fragments = fragmentNames.map(name => (
         fs.readFileSync(path.join(fragmentsDir, `${name}.html`), 'utf8')

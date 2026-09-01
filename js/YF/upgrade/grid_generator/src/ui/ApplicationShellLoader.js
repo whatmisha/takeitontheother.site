@@ -3,8 +3,7 @@ const FRAGMENTS = Object.freeze([
     Object.freeze({ name: 'actions', url: new URL('./fragments/actions.html', import.meta.url) }),
     Object.freeze({ name: 'objects', url: new URL('./fragments/objects.html', import.meta.url) }),
     Object.freeze({ name: 'typography', url: new URL('./fragments/typography.html', import.meta.url) }),
-    Object.freeze({ name: 'object-editors', url: new URL('./fragments/object-editors.html', import.meta.url) }),
-    Object.freeze({ name: 'help', url: new URL('./fragments/help.html', import.meta.url) })
+    Object.freeze({ name: 'object-editors', url: new URL('./fragments/object-editors.html', import.meta.url) })
 ]);
 const pendingLoads = new WeakMap();
 

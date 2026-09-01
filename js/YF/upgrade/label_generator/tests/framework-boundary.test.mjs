@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { access, readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-import { ColorUtils } from '../../framework/src/index.js';
+import { ColorUtils, DialogHost } from '../../framework/src/index.js';
 
 const appRoot = new URL('../', import.meta.url);
 
@@ -14,8 +14,8 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
         readFile(new URL('../framework/css/othersite-styles.css', appRoot), 'utf8'),
         readFile(new URL('style.css', appRoot), 'utf8')
     ]);
-    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/framework\/src\/index\.js';/u);
-    assert.match(adapter, /sharedCapabilities: Object\.freeze\(\['ColorUtils'\]\)/u);
+    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=g5-feedback-2';/u);
+    assert.match(adapter, /sharedCapabilities: Object\.freeze\(\['ColorUtils', 'DialogHost'\]\)/u);
     assert.match(
         bridge,
         /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g5-dialog-scope-1'\) layer\(framework\);/u
@@ -107,9 +107,10 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
     assert.match(html, /id="presetDropdownToggle" type="button"[\s\S]*?aria-controls="presetDropdownMenu"/u);
 
     for (const [source, expectedImport] of [
-        ['script.js', "./src/framework/FrameworkAdapter.js"],
-        ['src/ui/ColorPicker.js', "../framework/FrameworkAdapter.js"],
-        ['src/core/GridGenerator.js', "../framework/FrameworkAdapter.js"]
+        ['script.js', "./src/framework/FrameworkAdapter.js?v=g5-feedback-2"],
+        ['src/ui/ColorPicker.js', "../framework/FrameworkAdapter.js?v=g5-feedback-2"],
+        ['src/core/GridGenerator.js', "../framework/FrameworkAdapter.js?v=g5-feedback-2"],
+        ['src/elements/ElementsNavigator.js', "../framework/FrameworkAdapter.js?v=g5-feedback-2"]
     ]) {
         assert.equal(
             (await readFile(new URL(source, appRoot), 'utf8'))
@@ -120,6 +121,7 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
 
     assert.equal(ColorUtils.rgbToHex(130, 169, 217), '#82a9d9');
     assert.equal(ColorUtils.getContrastColor('#ffffff'), '#000000');
+    assert.equal(typeof DialogHost, 'function');
     await assert.rejects(
         access(new URL('src/utils/ColorUtils.js', appRoot)),
         error => error?.code === 'ENOENT'
@@ -218,7 +220,7 @@ test('Google Sheets remains explicit user-initiated external functionality', asy
     assert.match(script, /https:\/\/docs\.google\.com\/spreadsheets/u);
     assert.match(html, /id="loadDataBtn"/u);
     assert.match(html, /id="googleSheetsUrl"/u);
-    assert.match(html, /src="script\.js\?v=g5-feedback-2"/u);
+    assert.match(html, /src="script\.js\?v=g5-feedback-3"/u);
     assert.match(
         html,
         /id="dataStatus" class="data-status" role="status" aria-live="polite" aria-atomic="true"/u
@@ -226,6 +228,14 @@ test('Google Sheets remains explicit user-initiated external functionality', asy
     assert.match(script, /const isError = type === 'error';/u);
     assert.match(script, /setAttribute\('role', isError \? 'alert' : 'status'\)/u);
     assert.match(script, /setAttribute\('aria-live', isError \? 'assertive' : 'polite'\)/u);
+    assert.match(html, /<dialog id="dialog" class="modal" aria-labelledby="dialogTitle">/u);
+    assert.match(script, /this\.feedbackDialogHost = new DialogHost\(\);/u);
+    assert.equal((script.match(/await this\.feedbackDialogHost\.alert\(\{/gu) || []).length, 5);
+    assert.doesNotMatch(script, /(?:^|[^\w$.])alert\s*\(/u);
+
+    const navigator = await readFile(new URL('src/elements/ElementsNavigator.js', appRoot), 'utf8');
+    assert.match(navigator, /await this\.dialogHost\.confirm\(\{/u);
+    assert.doesNotMatch(navigator, /(?:^|[^\w$.])confirm\s*\(/u);
 });
 
 test('the existing EAN-13 checksum warning behavior is preserved', async () => {

@@ -178,3 +178,19 @@ dialog labelling. Pizza's loaded orphan fragment still has no trigger or JS
 controller; Sticky's closed fragment retains its old controller but has no Help
 trigger and remains opacity 0/pointer-events none. Neither receives the shared
 host. Pulsar passes 8/8, framework 42/42, and full Gate G4 remains green.
+
+## G5 nonblocking export feedback
+
+UPG-057g replaces the three remaining empty-map export `alert` calls with the
+shared native `DialogHost`. Pulsar still decides when a map is absent and keeps
+the original “Generate a pulsar map first!” message; only presentation and
+dismissal are shared. The Verify overlay remains a separate rich-result family
+owned by `OverlayDialogHost`.
+
+The added native dialog is closed at startup and introduces no layout geometry.
+All 22 fields, three panels, Verify's known CRC failure body and the exact
+40,180-character SVG hash `97155e5a…` remain unchanged. The only screenshot
+difference is the already recorded reload-only SVG raster jitter (291 RGB
+channels, maximum delta 2). There are no browser/module errors. Pulsar passes
+8/8, the feedback contract reports zero primary blocking calls, and full Gate
+G4 passes.

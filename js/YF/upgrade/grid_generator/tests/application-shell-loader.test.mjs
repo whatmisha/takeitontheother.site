@@ -4,7 +4,7 @@ import test from 'node:test';
 import { loadApplicationShell } from '../src/ui/ApplicationShellLoader.js';
 
 const fragmentNames = [
-    'workspace', 'actions', 'objects', 'typography', 'object-editors', 'help'
+    'workspace', 'actions', 'objects', 'typography', 'object-editors'
 ];
 
 function createDocument() {

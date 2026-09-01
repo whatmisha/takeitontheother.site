@@ -24,7 +24,7 @@ UPG-057 унифицирует presentation и базовый lifecycle диал
 
 На этапе UPG-057a production files не меняются.
 
-## 2. Фактический инвентарь
+## 2. Фактический инвентарь до rollout
 
 В восьми runtime найдено:
 
@@ -369,3 +369,74 @@ opacity 0 and pointer-events none. The shared host is absent from both apps, so
 UPG-057f cannot revive their removed Help UI. Framework passes 42/42, Pulsar
 8/8, feedback contract and full Gate G4. Next is UPG-057g feedback accessibility
 and blocking-call migration.
+
+## 15. UPG-057g result
+
+The remaining ten primary browser-blocking calls are now zero. Sticky Fingers
+routes its five error paths and the dormant navigator delete decision through
+the shared `DialogHost`; Pulsar routes its three empty-map export guards through
+the same host; Wander Bender routes its clipboard fallback through it. Domain
+copy, validation, codec, export, persistence and recovery decisions remain in
+their applications. The private Pizza error/draft presenters, Sparky shortcut
+popup and Wordplayer busy/error lifecycle are deliberately unchanged.
+
+Sticky `dataStatus` is now an atomic live region: normal progress/success is
+`status`/polite and validation failure is `alert`/assertive. Its Google Sheets
+request remains explicit and user-initiated; the blank-URL acceptance path makes
+no request and reports the existing “Please enter a URL” text. The dormant Help
+fragment remains closed and untriggered.
+
+Closed Sticky and Wander captures are byte-identical to their immediate
+baselines. Sticky retains 79 fields and exact SVG markup; Wander retains 41
+fields, the 300×605.703125 panel and exact Radial SVG. Pulsar retains all 22
+fields, three panels, rich Verify failure body and the 40,180-character SVG hash
+`97155e5a…`; its known reload-only SVG raster jitter remains 291 RGB channels,
+maximum delta 2. Hidden dialogs introduce no geometry or paint difference and
+no browser/module error.
+
+The feedback gate now protects 6 native dialogs, 2 active overlays plus 2
+dormant fragments, 1 private popup, 47 tooltip hosts and 0 primary blocking
+calls. Sticky passes 5/5, Pulsar 8/8, Wander 10/10, framework 42/42, isolation,
+all other application suites and full Gate G4 pass. UPG-057h is the final
+ownership/removal-condition audit before UPG-058.
+
+## 16. UPG-057h final component gate
+
+The accepted runtime inventory after rollout is:
+
+| Family | Shared owner | Application owner | Removal rule |
+|---|---|---|---|
+| 6 native dialogs | `DialogHost` lifecycle and shell | copy, validation, rich HTML and decisions in Sparky, Keyboarder, Wordplayer, Sticky, Pulsar and Wander | keep; remove only with the consuming feature |
+| 2 active overlays | `OverlayDialogHost` lifecycle | Dither help and Pulsar verification body/style extensions | keep; local duplicate lifecycle must not return |
+| 2 dormant overlay fragments | none | Pizza orphan markup; Sticky orphan markup/controller | UPG-058 only after selector/controller proof and exact closed-state capture |
+| 47 tooltips | `TooltipService` and shared presentation | dynamic copy on 4 Sparky, 21 Keyboarder and 22 Wordplayer hosts | keep; other apps get no speculative hosts |
+| Keyboarder toast | shared `ApplicationShell` lifecycle | eight messages and invoking decisions | keep; timing stays 2200 ms |
+| Pizza error/recovery | none | `ErrorPresenter` and `DraftRecoveryController` | keep private; not a duplicate of generic feedback |
+| Sticky Sheets status | shared neutral tokens only | inline placement, loading/error/success and Sheets lifecycle | keep private live region |
+| Sparky feedback | shared dialog where generic; private shortcut popup and animation live region | shortcut disclosure, progress/cancel/Done/failure | keep private domain state |
+| Pulsar Copy flash | shared button tokens only | copy result and 1.5 s restore | keep private |
+| Wordplayer busy feedback | shared dialog for errors | button busy/restore and export state | keep private |
+
+UPG-058 may delete Pizza's orphan overlay only when no opener, controller,
+ARIA relationship, test or generated public-runtime reference remains. It may
+delete Sticky's dormant overlay/controller only when `helpButton` is still absent
+and removing both leaves its 79-field normal/edit baselines, exports and Sheets
+status exact. Wander's overlay-only selectors may be removed after proving there
+is no overlay runtime markup. Its broad `.modal-content` is not an orphan: it
+now also matches the native feedback dialog and must be separated with an open-
+state capture. Dither and Pulsar local overlay CSS may lose only declarations
+fully covered by the shared shell; their measured geometry, help/verifier
+content and private visual extensions remain protected.
+
+Cumulative browser acceptance covers native Escape/backdrop/focus return in the
+priority consumers, Dither and Pulsar overlay Tab/Escape/backdrop/scroll paths,
+tooltip pointer/focus/Escape behavior and every changed closed state. The final
+runtime smoke loads all eight entrypoints to `readyState=complete`, with every
+dialog/overlay closed and zero browser errors. The intentionally dormant Wander
+clipboard and Sticky navigator paths are not revived solely for testing; their
+presentation lifecycle is covered by the shared host tests and their call sites
+by the feedback boundary.
+
+Final evidence: `check:feedback`, `check:isolation`, framework 42/42, all eight
+application suites and full Gate G4 pass. UPG-057 is complete; the next task is
+UPG-058a, a no-production-diff legacy CSS/orphan-selector inventory.

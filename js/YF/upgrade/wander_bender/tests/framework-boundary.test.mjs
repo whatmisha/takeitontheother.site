@@ -81,8 +81,8 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
         html.indexOf('yf-styles.css') < html.indexOf('wander-bender.css'),
         'shared CSS must load before the two frozen Wander stylesheets'
     );
-    assert.match(html, /css\/yf-styles\.css\?v=g5-wander-actions-1/u);
-    assert.match(html, /css\/wander-bender\.css\?v=g5-wander-actions-1/u);
+    assert.match(html, /css\/yf-styles\.css\?v=g5-legacy-2/u);
+    assert.match(html, /css\/wander-bender\.css\?v=g5-legacy-2/u);
     assert.match(
         html,
         /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u
@@ -90,6 +90,12 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
     assert.doesNotMatch(html, /class="yf-tools-link"/u);
     assert.match(skin, /Shared-framework parity bridge/u);
     assert.match(skin, /\.controls-panel\s*\{\s*max-height: none;/u);
+    assert.match(skin, /\.modal > \.modal-content\s*\{\s*all: revert-layer;/u);
+    assert.doesNotMatch(
+        legacySkin,
+        /\.(?:modal-overlay|modal-close|modal-body)\b|^\s*\.modal-content(?:\s|:|\{)/mu,
+        'Wander removed overlay-only CSS and broad modal collision must not return'
+    );
     assert.match(skin, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
     assert.match(
         skin,

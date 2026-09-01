@@ -156,3 +156,24 @@ actions do not mutate state; Outline and Prepress round-trip exactly. Browser
 errors are zero, the Sheets boundary is unchanged and all five tests pass.
 
 Run `npm run test:sticky` from `upgrade/` for the automated Sticky Fingers checks.
+
+## G5 feedback accessibility rollout
+
+UPG-057g makes the existing `dataStatus` an atomic live region without changing
+its copy or Google Sheets lifecycle. Progress and success use `status`/polite;
+validation and request failures use `alert`/assertive. The blank-URL path still
+shows “Please enter a URL” and performs no external request.
+
+The five blocking export/preset/settings errors now use the shared `DialogHost`.
+The dormant `ElementsNavigator` delete decision also uses the host, but remains
+dormant: it is not introduced into the active 10k-line runtime. Message text,
+validation, export generation and application decisions stay private. The old
+Help overlay remains closed, has no trigger and does not receive the shared
+overlay host.
+
+The hidden dialog causes no closed-state geometry or paint difference. The
+1280×720 capture is byte-identical to its immediate baseline, all 79 fields and
+generated SVG markup are exact, and browser errors remain zero. Google Sheets
+is still the sole explicit user-initiated network boundary. Sticky passes 5/5,
+the feedback contract reports zero primary blocking calls, and full Gate G4
+passes.

@@ -35,7 +35,7 @@ export class PanelDragController {
             panel.header.style.cursor = 'grab';
             begin = event => {
                 if (event.button !== undefined && event.button !== 0) return;
-                if (event.target.closest('.collapse-toggle, .collapse-icon, .modal-close')) return;
+                if (event.target.closest('.collapse-toggle, .collapse-icon')) return;
                 this.start(panelId, event);
             };
             this.listeners.listen(panel.header, 'mousedown', begin);

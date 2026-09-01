@@ -105,6 +105,10 @@
 | UPG-057d | Keyboard-accessible TooltipService | Complete | 47 hosts gain focus/Escape/role/description lifecycle; pointer geometry/styles exact in Sparky, Keyboarder and Wordplayer; dynamic/disabled/cleanup tested; 39 framework tests + Gate G4 pass |
 | UPG-057e | Dither shared OverlayDialogHost canary | Complete | exact 600×483.523 overlay geometry; shared Escape/backdrop/Tab/focus/ARIA/scroll lifecycle; default/Bayer/Pixel Size 4 states and pixels exact; 41 framework tests + Gate G4 pass |
 | UPG-057f | Pulsar overlay rollout + dormant proof | Complete | Verify keeps exact rich failure HTML, 600×272.820 shell and `97155e5a…` SVG; shared focus/Tab/Escape/backdrop/ARIA/scroll; Pizza has no trigger/controller and Sticky no trigger; 42 framework tests + Gate G4 pass |
+| UPG-057g | Feedback accessibility + blocking-call migration | Complete | Sticky live status is polite/assertive by severity; Sticky, Pulsar and Wander use shared DialogHost without changing domain text; 6 native dialogs and 0 primary blocking calls; closed presentation/domain state exact; 42 framework tests + Gate G4 pass |
+| UPG-057h | Feedback component gate | Complete | final shared/private ownership and dormant-fragment removal rules recorded; all 8 entrypoints complete with closed surfaces and 0 browser errors; 6 dialogs/2 overlays/47 tooltips/0 blocking calls; isolation + full Gate G4 pass |
+| UPG-058a | Legacy CSS/orphan inventory gate | Complete | 5 frozen resets, 17 initial promotions, 2 dormant overlays, 3 broad native-dialog collisions and Wander overlay-only family classified; machine checker added to Gate G4; production unchanged |
+| UPG-058b | Wander legacy modal canary | Complete | markup-less overlay/close/body and broad content CSS removed; canonical native shell promoted through frozen reset; closed screenshot, 41 fields, panel and SVG exact; 10 tests + Gate G4 pass |
 
 ## Подтверждённые исходные результаты
 
@@ -142,7 +146,6 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-UPG-057g: начать миграцию feedback с самого малого риска — добавить live
-semantics к Sticky `dataStatus` без изменения Google Sheets и заменить только
-clipboard-fallback `alert` Wander Bender на проверенную неблокирующую shared
-поверхность; затем отдельно идти по Pulsar и Sticky blocking calls.
+UPG-058c: удалить orphan Help fragment Pizza Boxer атомарно из source document,
+loader manifest и modal CSS, пересобрать public runtime и принять New/E-ink/New,
+113 fields, panels, JSON/SVG/PDF и private ErrorPresenter/DraftRecovery.

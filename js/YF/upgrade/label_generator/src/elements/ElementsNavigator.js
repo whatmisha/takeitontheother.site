@@ -3,12 +3,14 @@
  * Список элементов, управление видимостью, удаление
  */
 import { DOMUtils } from '../utils/DOMUtils.js';
+import { DialogHost } from '../framework/FrameworkAdapter.js?v=g5-feedback-2';
 
 export class ElementsNavigator {
     constructor(textBlockManager, graphicsManager, callbacks = {}) {
         this.textBlockManager = textBlockManager;
         this.graphicsManager = graphicsManager;
         this.callbacks = callbacks; // { onSelect, onDelete, onToggleVisibility, onUpdate }
+        this.dialogHost = callbacks.dialogHost || new DialogHost();
         
         this.containerElement = null;
     }
@@ -106,7 +108,7 @@ export class ElementsNavigator {
             deleteBtn.title = 'Delete';
             deleteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.deleteElement(type, block.id);
+                void this.deleteElement(type, block.id);
             });
             item.appendChild(deleteBtn);
         }
@@ -210,9 +212,15 @@ export class ElementsNavigator {
     /**
      * Удаление элемента
      */
-    deleteElement(type, blockId) {
+    async deleteElement(type, blockId) {
         // Подтверждение удаления
-        if (!confirm('Delete this element?')) {
+        const confirmed = await this.dialogHost.confirm({
+            title: 'Delete this element?',
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            danger: true
+        });
+        if (!confirmed) {
             return;
         }
 
@@ -367,4 +375,3 @@ export class ElementsNavigator {
         this.render();
     }
 }
-

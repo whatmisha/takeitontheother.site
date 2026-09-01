@@ -2,7 +2,7 @@
 // Импорты модулей
 // ============================================
 // Итерация 1: Утилиты
-import { ColorUtils } from './src/framework/FrameworkAdapter.js';
+import { ColorUtils, DialogHost } from './src/framework/FrameworkAdapter.js?v=g5-feedback-2';
 import { MathUtils } from './src/utils/MathUtils.js';
 import { DOMUtils } from './src/utils/DOMUtils.js';
 import { TextToPath } from './src/utils/TextToPath.js?v=g3-sticky-1';
@@ -35,6 +35,7 @@ import { PDFExporter } from './src/svg/PDFExporter.js';
 
 class GridGenerator {
     constructor() {
+        this.feedbackDialogHost = new DialogHost();
         // Input configuration - defines behavior for each input
         this.INPUT_CONFIG = {
             frontWidthValue: {
@@ -1724,7 +1725,10 @@ class GridGenerator {
         } catch (error) {
             console.error('Ошибка при загрузке пресета:', error);
             const errorMessage = error.message || 'Неизвестная ошибка';
-            alert(`Не удалось загрузить пресет "${filename}": ${errorMessage}`);
+            await this.feedbackDialogHost.alert({
+                title: 'Ошибка загрузки пресета',
+                text: `Не удалось загрузить пресет "${filename}": ${errorMessage}`
+            });
             throw error; // Пробрасываем ошибку дальше для обработки на верхнем уровне
         }
     }
@@ -9260,7 +9264,10 @@ class GridGenerator {
             });
         } catch (error) {
             console.error('Ошибка при экспорте SVG:', error);
-            alert(`Не удалось экспортировать SVG: ${error.message || 'Неизвестная ошибка'}`);
+            await this.feedbackDialogHost.alert({
+                title: 'Ошибка экспорта SVG',
+                text: `Не удалось экспортировать SVG: ${error.message || 'Неизвестная ошибка'}`
+            });
             throw error;
         }
     }
@@ -9308,7 +9315,10 @@ class GridGenerator {
             });
         } catch (error) {
             console.error('Ошибка при экспорте PDF:', error);
-            alert(`Не удалось экспортировать PDF: ${error.message || 'Неизвестная ошибка'}`);
+            await this.feedbackDialogHost.alert({
+                title: 'Ошибка экспорта PDF',
+                text: `Не удалось экспортировать PDF: ${error.message || 'Неизвестная ошибка'}`
+            });
             throw error;
         }
     }
@@ -9319,7 +9329,10 @@ class GridGenerator {
             await this.exportSVG();
         } catch (error) {
             console.error('Ошибка при экспорте текущего лейбла SVG:', error);
-            alert(`Не удалось экспортировать SVG: ${error.message || 'Неизвестная ошибка'}`);
+            await this.feedbackDialogHost.alert({
+                title: 'Ошибка экспорта SVG',
+                text: `Не удалось экспортировать SVG: ${error.message || 'Неизвестная ошибка'}`
+            });
             throw error;
         }
     }
@@ -9573,7 +9586,10 @@ class GridGenerator {
             console.log('✅ Settings imported successfully');
         } catch (error) {
             console.error('❌ Failed to import settings:', error);
-            alert('Ошибка при импорте настроек: ' + error.message);
+            await this.feedbackDialogHost.alert({
+                title: 'Ошибка импорта настроек',
+                text: 'Ошибка при импорте настроек: ' + error.message
+            });
         }
     }
     
