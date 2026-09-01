@@ -115,12 +115,4 @@
         padding-bottom: var(--spacing-xl);
     }
     
-    .modal-content {
-        padding: var(--spacing-3xl);
-    }
-    
-    .modal-content h2 {
-        font-size: 1.3rem;
-        margin-bottom: var(--spacing-3xl);
-    }
 }

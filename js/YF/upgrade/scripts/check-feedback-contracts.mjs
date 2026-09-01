@@ -29,7 +29,7 @@ const htmlPaths = {
     Sparky: 'sparky/index.html',
     Keyboarder: 'keyboarder/index.html',
     Wordplayer: 'wordplayer/index.html',
-    'Pizza Boxer': 'grid_generator/src/ui/fragments/help.html',
+    'Pizza Boxer': 'grid_generator/src/ui/ApplicationDocument.html',
     'Sticky Fingers': 'label_generator/index.html',
     'Pulsar Coder': 'pulsar_coder/index.html',
     Dither: 'dither/index.html',
@@ -92,14 +92,14 @@ assert.deepEqual(overlayInventory, {
     Sparky: 0,
     Keyboarder: 0,
     Wordplayer: 0,
-    'Pizza Boxer': 1,
+    'Pizza Boxer': 0,
     'Sticky Fingers': 1,
     'Pulsar Coder': 1,
     Dither: 1,
     'Wander Bender': 0
 }, 'legacy overlay inventory changed');
 
-for (const name of ['Pizza Boxer', 'Sticky Fingers', 'Pulsar Coder', 'Dither']) {
+for (const name of ['Sticky Fingers', 'Pulsar Coder', 'Dither']) {
     assert.equal(
         countClass(html[name], 'modal-content'),
         ['Sticky Fingers', 'Pulsar Coder'].includes(name) ? 2 : 1,
@@ -107,7 +107,7 @@ for (const name of ['Pizza Boxer', 'Sticky Fingers', 'Pulsar Coder', 'Dither']) 
     );
     assert.equal(countClass(html[name], 'modal-close'), 1, `${name} overlay close action changed`);
 }
-for (const name of ['Pizza Boxer', 'Sticky Fingers', 'Pulsar Coder', 'Dither']) {
+for (const name of ['Sticky Fingers', 'Pulsar Coder', 'Dither']) {
     assert.match(html[name], /\brole=["']dialog["']/u, `${name} overlay dialog role changed`);
     assert.match(html[name], /\baria-modal=["']true["']/u, `${name} overlay modal semantics changed`);
     assert.match(html[name], /\baria-hidden=["']true["']/u, `${name} closed overlay state changed`);
@@ -244,12 +244,12 @@ assert.match(pizzaDraftRecovery, /setAttribute\('role', 'dialog'\)/u);
 for (const action of ['Restore', 'Discard']) {
     assert.ok(pizzaDraftRecovery.includes(action), `Pizza draft action ${action} changed`);
 }
-const pizzaReferencesOutsideFragment = stripComments(pizzaSourceJs)
+const pizzaRemovedOverlayReferences = stripComments(pizzaSourceJs)
     .match(/(?:modalOverlay|modalClose)/gu)?.length || 0;
-assert.equal(pizzaReferencesOutsideFragment, 0,
-    'Pizza orphan help overlay gained a controller outside a dedicated rollout');
+assert.equal(pizzaRemovedOverlayReferences, 0,
+    'Pizza removed help overlay runtime references returned');
 assert.doesNotMatch(pizzaSourceJs, /OverlayDialogHost/u,
-    'Pizza orphan help overlay unexpectedly gained a shared host');
+    'Pizza removed help overlay unexpectedly gained a shared host');
 
 assert.match(
     html['Sticky Fingers'],

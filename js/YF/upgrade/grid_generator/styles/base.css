@@ -114,9 +114,8 @@ body {
     position: relative;
 }
 
-/* Shared dark scrollbar primitive for panels, modals and menus. */
+/* Shared dark scrollbar primitive for panels and menus. */
 .panel-content,
-.modal-content,
 .dropdown-menu,
 .preset-dropdown-menu {
     scrollbar-width: thin;
@@ -124,25 +123,21 @@ body {
 }
 
 .panel-content::-webkit-scrollbar,
-.modal-content::-webkit-scrollbar,
 .dropdown-menu::-webkit-scrollbar,
 .preset-dropdown-menu::-webkit-scrollbar {
     width: 6px;
 }
 
 .panel-content::-webkit-scrollbar-track,
-.modal-content::-webkit-scrollbar-track,
 .dropdown-menu::-webkit-scrollbar-track,
 .preset-dropdown-menu::-webkit-scrollbar-track {
     background: transparent;
 }
 
 .panel-content::-webkit-scrollbar-thumb,
-.modal-content::-webkit-scrollbar-thumb,
 .dropdown-menu::-webkit-scrollbar-thumb,
 .preset-dropdown-menu::-webkit-scrollbar-thumb,
 .panel-content::-webkit-scrollbar-thumb:hover,
-.modal-content::-webkit-scrollbar-thumb:hover,
 .dropdown-menu::-webkit-scrollbar-thumb:hover,
 .preset-dropdown-menu::-webkit-scrollbar-thumb:hover {
     background: #000;

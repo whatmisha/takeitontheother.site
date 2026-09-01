@@ -73,8 +73,10 @@ const [
     sharedCss,
     pizzaDocument,
     pizzaLoader,
-    pizzaHelp,
     pizzaSourceJs,
+    pizzaBaseCss,
+    pizzaModalCss,
+    pizzaResponsiveCss,
     stickyHtml,
     stickyController,
     stickyCss,
@@ -88,8 +90,10 @@ const [
     read('framework/css/othersite-styles.css'),
     read('grid_generator/src/ui/ApplicationDocument.html'),
     read('grid_generator/src/ui/ApplicationShellLoader.js'),
-    read('grid_generator/src/ui/fragments/help.html'),
     readJavaScriptTree('grid_generator/src/'),
+    read('grid_generator/styles/base.css'),
+    read('grid_generator/styles/actions-modal.css'),
+    read('grid_generator/styles/canvas-responsive.css'),
     read('label_generator/index.html'),
     read('label_generator/src/core/GridGenerator.js'),
     read('label_generator/style.css'),
@@ -106,12 +110,15 @@ assert.match(sharedCss, /\.modal-overlay\s*>\s*\.modal-content\s*\{/u,
 assert.match(sharedCss, /\.modal\s*>\s*\.modal-content\s*\{/u,
     'shared native-dialog content shell must remain scoped');
 
-assert.equal(countClass(pizzaHelp, 'modal-overlay'), 1,
-    'Pizza dormant overlay fragment inventory changed');
-assert.match(pizzaDocument, /data-ui-fragment=["']help["']/u,
-    'Pizza help fragment slot changed before its dedicated removal');
-assert.match(pizzaLoader, /name:\s*["']help["']/u,
-    'Pizza help fragment loader changed before its dedicated removal');
+assert.doesNotMatch(pizzaDocument, /data-ui-fragment=["']help["']/u,
+    'Pizza removed help fragment slot returned');
+assert.doesNotMatch(pizzaLoader, /name:\s*["']help["']/u,
+    'Pizza removed help fragment loader returned');
+assert.doesNotMatch(
+    `${pizzaBaseCss}\n${pizzaModalCss}\n${pizzaResponsiveCss}`,
+    /\.(?:btn-help|modal-overlay|modal-content|modal-close|modal-body)\b/u,
+    'Pizza removed help/modal CSS returned'
+);
 const pizzaRuntimeReferences = pizzaSourceJs
     .replace(/\/\*[\s\S]*?\*\//gu, '')
     .replace(/\/\/[^\n]*/gu, '')
@@ -161,7 +168,7 @@ assert.equal(countClass(pulsarHtml, 'modal-overlay'), 1,
 
 console.log(
     'Legacy CSS contract passed: 5 frozen universal resets; '
-    + '18 revert-layer promotions; 2 dormant overlays; '
+    + '18 revert-layer promotions; 1 dormant overlay; '
     + '2 broad local native-dialog collisions; '
     + '0 overlay-selector families without overlay markup.'
 );
