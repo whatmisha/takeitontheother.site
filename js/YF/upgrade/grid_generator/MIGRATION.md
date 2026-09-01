@@ -201,3 +201,14 @@ jitter rather than a Help-removal effect. New→E-ink→New retains exact
 all 113 fields. Overlay count changes only from the intended orphan 1 to 0;
 browser/module/application errors remain zero. All 167 tests, public-runtime
 reproducibility, legacy/feedback contracts and full Gate G4 pass.
+
+## G5 universal-reset removal
+
+UPG-058f removes Pizza Boxer's local universal reset and nine remaining
+`all: revert-layer` promotions. Narrow property bridges preserve compact
+range/HSB/choice and repository-preset metrics without copying shared component
+bases. The 1280×720 capture `e8e782e1…`, all 1,155 element style/geometry
+records, 113 fields, five panels and New→E-ink→New SVG hashes remain exact.
+The release is rebuilt and source/public runtime still matches in 14 hashed
+assets. Pizza passes 167/167; the final legacy contract reports 0 resets and
+0 promotions.

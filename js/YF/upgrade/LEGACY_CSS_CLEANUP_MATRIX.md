@@ -216,3 +216,68 @@ capture имеет только уже известный SVG-local jitter 291 R
 0 broad native collisions и 0 overlay-only orphan families. Они кандидаты на
 совместное удаление с reset conflicts в UPG-058f, а не самостоятельный мусор.
 Feedback/legacy contracts, isolation и полный Gate G4 проходят.
+
+## 11. UPG-058f result
+
+Пять universal resets удалены по одному приложению вместе с зависевшими от них
+promotion-блоками. Инвентарь менялся монотонно: Wander `5→4` resets и `21→18`
+promotions, Sticky `4→3`/`18→13`, Pizza `3→2`/`13→9`, Dither `2→1`/`9→4`,
+Pulsar `1→0`/`4→0`. Итоговый machine contract: 0 universal resets,
+0 `all: revert-layer`, 0 dormant overlays, 0 broad native-dialog collisions и
+0 overlay selector families без markup.
+
+Удаление не превратилось в редизайн: каждое broad promotion заменено только
+нужными для исходной геометрии свойствами. Wander сохраняет точный capture
+`8897b8c2…`, panel 300×605.703125 и три SVG; Sticky — normal/edit captures,
+четыре edit-panel rect и SVG `8850fd2f…`; Pizza — capture `e8e782e1…`, все
+1 155 style/geometry records и New→E-ink→New SVG round-trip; Dither — capture
+`1908fc0e…`, все 160 element records, Canvas и active Help dialog; Pulsar —
+capture `f8b4fa57…`, panels, controls, Verify/Copy и SVG `97155e5a…`.
+
+Два скрытых, неиспользуемых поля native dialog теперь получают canonical shared
+reset; активные dialog/overlay paths, domain output и пользовательские состояния
+не изменились. Pizza public runtime пересобран в 14 assets и совпадает с source.
+Все затронутые boundary suites, feedback/legacy contracts и isolation проходят.
+
+### Оставшиеся узкие app deltas
+
+Это не универсальные reset/promotion bridges, а минимальные документированные
+различия приложений поверх общих компонентов.
+
+| Delta | Owner | Причина | Условие удаления |
+|---|---|---|---|
+| Dither `.bottom-buttons` left anchor | Dither | raster tool держит actions слева, а не по центру | только вместе с принятым редизайном action bar и Canvas/export pixel proof |
+| Dither compact range/HSB rhythm и 1/1/2 px segmented metrics | Dither | сохраняют измеренную v1 panel geometry | после явного принятия shared rhythm с 0 changed Canvas pixels и exact panel/control records |
+| Dither Arial/legacy canvas-label/button properties | Dither | замороженная raster-safe typography и intrinsic geometry | после отдельного typography/layout canary с byte/geometry evidence |
+| Sticky `.controls-panel { max-height:none }` | Sticky Fingers | edit panels исторически выходят за viewport | только при согласованном desktop edit-layout redesign с normal/edit round-trip proof |
+| Sticky compact chip/checkbox/segment properties | Sticky Fingers | компенсируют broad local `.control-group` metrics | после миграции этой local control family и exact 79-field/edit-panel proof |
+| Sticky manifest preset sizing/scrollbar | Sticky Fingers | фиксирует исходный dropdown viewport и текстовые метрики | после общего preset sizing redesign с three-preset, Sheets и edit-state acceptance |
+| Pizza compact range/HSB/choice properties | Pizza Boxer | сохраняют 113-field repository-view geometry | после миграции broad local control metrics и source/public rebuild с exact form/SVG round-trip |
+| Pizza repository preset sizing | Pizza Boxer | 400 px menu, ellipsis и font metrics — часть текущего view | после согласованного preset redesign и New/E-ink/New acceptance |
+| Wander unbounded panel, Arial action и segmented metrics | Wander Bender | длинная control surface и исходный 1280×720 layout | после отдельного long-panel/navigation redesign с тремя точными режимами |
+| Wander disabled Auto/Max range presentation | Wander Bender | disabled inputs намеренно выглядят как интерактивные geometry controls | только вместе с изменением domain interaction и отдельным owner approval |
+| Pulsar compact range/HSB/choice и preset metrics | Pulsar Coder | сохраняют плотную v1 coder panel geometry | после отдельного control/preset redesign с 22-field и three-preset SVG evidence |
+| Pulsar rich verifier typography | Pulsar Coder | Verify overlay содержит domain-rich CRC report | после отдельной verifier redesign acceptance с exact body semantics and focus lifecycle |
+
+Следующий шаг — UPG-058g cleanup gate; новые compatibility deltas в нём
+запрещены без отдельного owner/reason/removal-condition record.
+
+## 12. UPG-058g result
+
+Cleanup gate закрыт без новых production-дельт. Таблица выше покрывает каждый
+оставшийся property-level app delta. `check:legacy-css`, `check:toggles`,
+`check:presets`, `check:actions` и `check:feedback` запрещают возврат broad
+reset/promotion/modal families и фиксируют актуальные частные свойства.
+
+Live smoke на `http://127.0.0.1:8010/upgrade/` загрузил 8/8 entrypoints до
+`document.readyState=complete`: каждый имеет видимый SVG или Canvas и локальную
+обратную ссылку; native dialogs закрыты. Dither и Pulsar overlays имеют
+`aria-hidden=true`, opacity 0 и `pointer-events:none`. Browser error log пуст;
+Sticky выдаёт только документированный EAN-13 checksum warning.
+
+Pizza source/schema/preset/vendor/static graph и public runtime совпадают;
+release содержит 14 hashed assets. `gate:g4:static` проходит полностью:
+framework 42/42, Sparky 196/196, Pizza 167/167, Sticky 5/5, Pulsar 8/8,
+Dither 11/11, Wander 10/10 плюс Keyboarder/Wordplayer suites, source manifest,
+storage, assets and boundaries. UPG-058 завершён; следующий этап — UPG-059
+Gate G5.

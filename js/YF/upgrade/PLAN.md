@@ -338,6 +338,13 @@ Gate G4 — пройден: восемь ссылок работают, восе
 
 Исполнимая разбивка UPG-050—UPG-059, compatibility matrix, порядок rollout и acceptance template находятся в [G5_UNIFICATION_PLAN.md](./G5_UNIFICATION_PLAN.md). Первый runtime-шаг — нижнеслойное подключение shared CSS к Pizza Boxer, затем отдельной задачей к Sticky Fingers, без изменения внешнего вида.
 
+Текущий статус: UPG-050—UPG-059 завершены, Gate G5 пройден. Все восемь приложений используют
+shared component boundaries; пять frozen universal resets и 21 временный
+`all: revert-layer` promotion удалены до 0/0 без изменения активной геометрии,
+domain output или dialog lifecycle. Финальный cleanup/smoke gate и отдельная
+машинная команда `gate:g5:static` зелёные; обязательных миграционных этапов не
+осталось.
+
 ## 11. Матрица проверок
 
 | Проверка | Все | Sparky | Pizza Boxer | Sticky Fingers |
@@ -372,6 +379,7 @@ npm run test:sticky-fingers
 npm run test:visual
 npm run test:visual:sparky
 npm run check:isolation
+npm run gate:g5:static
 npm run check:storage
 npm run check:network
 npm run check:assets

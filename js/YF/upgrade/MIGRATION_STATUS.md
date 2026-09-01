@@ -11,7 +11,7 @@
 | G2 | Общий framework и conformance suite | Passed |
 | G3 | Wordplayer, Keyboarder, Sparky, Pizza Boxer, Sticky Fingers | Passed |
 | G4 | Pulsar Coder, Dither, Wander Bender | Passed |
-| G5 | Последующая визуальная и API-унификация | In progress |
+| G5 | Последующая визуальная и API-унификация | Passed |
 
 ## Задачи
 
@@ -112,6 +112,9 @@
 | UPG-058c | Pizza Boxer orphan Help removal | Complete | help slot/loader/fragment and modal-only CSS removed; public runtime 15→14 assets; 113 fields/panels and New/E-ink/New SVG exact; private error/recovery retained; 167 tests + Gate G4 pass |
 | UPG-058d | Sticky Fingers dormant Help removal | Complete | orphan markup/controller/modal CSS removed; canonical native shell promoted; normal/edit screenshots, 79 fields, panels and SVG exact; Sheets/EAN retained; 5 tests + Gate G4 pass |
 | UPG-058e | Active Dither/Pulsar overlay CSS reduction | Complete | shared structural shells/headings with scoped private deltas; Dither closed/open exact; Pulsar Verify/CRC/Copy/SVG exact and native feedback canonical; 21 temporary promotions, 0 dormant/collisions; Gate G4 pass |
+| UPG-058f | Universal reset/promotion removal | Complete | five local universal resets and 21 temporary `all: revert-layer` promotions reduced to 0/0; Wander, Sticky, Pizza, Dither and Pulsar retain exact active geometry/state/output through narrow property bridges; all app suites and isolation pass |
+| UPG-058g | Legacy CSS cleanup gate | Complete | every remaining app delta has owner/reason/removal condition; 8/8 live entrypoints complete with visible output and 0 browser errors; Pizza source/public 14-asset runtime, isolation and full Gate G4 pass |
+| UPG-059 | Gate G5 | Complete | `gate:g5:static` passes: 8 hub links, 8 shared CSS + 8 shared JS boundaries, 0 resets/promotions, owned app deltas, accepted Sparky desktop/390×844/430×932, full G4/isolation/app suites |
 
 ## Подтверждённые исходные результаты
 
@@ -149,6 +152,5 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-UPG-058f: построить selector-level карту пяти universal resets и убрать только
-доказанные component conflicts вместе с соответствующими `revert-layer`, не
-затрагивая Dither anchor, Sticky edit max-height и private disabled variants.
+План UPG-000—UPG-059 выполнен. Новую работу начинать отдельной задачей поверх
+зелёного `npm run gate:g5:static`, не меняя принятые baselines автоматически.

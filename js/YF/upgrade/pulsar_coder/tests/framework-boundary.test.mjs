@@ -84,14 +84,16 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
         html.indexOf('css/framework-base.css') < html.indexOf('css/yf-styles.css'),
         'shared CSS must load before Pulsar compatibility CSS'
     );
-    assert.match(html, /css\/yf-styles\.css\?v=g5-legacy-1/u);
-    assert.match(html, /pulsar-styles\.css\?v=g5-legacy-1/u);
+    assert.match(html, /css\/yf-styles\.css\?v=g5-reset-1/u);
+    assert.match(html, /pulsar-styles\.css\?v=g5-reset-1/u);
+    assert.doesNotMatch(legacySkin, /^\s*\*\s*\{/mu, 'Pulsar must consume the shared universal reset');
+    assert.doesNotMatch(skin, /all:\s*revert-layer/u);
     assert.match(
         html,
         /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u
     );
     assert.doesNotMatch(html, /class="yf-tools-link"/u);
-    assert.match(skin, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
+    assert.match(sharedStyles, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
     assert.match(
         skin,
         /\.panel-header span:first-child\s*\{\s*font-size: 0\.9rem;\s*line-height: 1rem;/u
@@ -100,10 +102,6 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
         legacySkin,
         /^\s*\.(?:modal-overlay|modal-content|modal-close|modal-body)(?:\s|:|\{)/mu,
         'Pulsar must consume shared modal structure'
-    );
-    assert.match(
-        skin,
-        /\.modal-overlay > \.modal-content,[\s\S]*?\.modal > \.modal-content h2\s*\{\s*all:\s*revert-layer;/u
     );
     assert.match(skin, /\.modal-overlay \.modal-body\s*\{[\s\S]*?font-size:\s*0\.85rem;/u);
     assert.doesNotMatch(
@@ -125,8 +123,9 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
     );
     assert.match(
         legacySkin,
-        /Base range\/thumb\/track\/focus presentation comes from the shared framework\.[\s\S]*?\.control-group input\[type="range"\]\s*\{\s*margin-top: calc\(var\(--spacing-md\) - 2px\);\s*\}/u
+        /Base range\/thumb\/track\/focus presentation comes from the shared framework\.[\s\S]*?\.control-group input\[type="range"\]\s*\{\s*margin-top: calc\(var\(--spacing-md\) - 2px\);\s*margin-bottom: 0;\s*\}/u
     );
+    assert.match(legacySkin, /\.hsb-picker\s*\{\s*margin-top:\s*var\(--spacing-lg\);\s*margin-bottom:\s*0;/u);
     assert.doesNotMatch(
         legacySkin,
         /\.control-group input\[type="range"\](?::focus)?::(?:-webkit-slider-thumb|-moz-range-thumb|-webkit-slider-runnable-track|-moz-range-track)/u,
@@ -188,20 +187,16 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
         /\.segmented-control\s*\{\s*--segmented-control-font-size:\s*0\.85rem;\s*\}/u,
         'Pulsar must preserve the frozen 13.6 px segmented label metric'
     );
+    assert.match(skin, /\.control-group:has\(\.checkbox-label\)\s*\{\s*margin-bottom:\s*var\(--spacing-xs\);/u);
+    assert.match(skin, /\.control-group \.segmented-control label\s*\{\s*margin-bottom:\s*0;/u);
     assert.match(
         skin,
-        /\.segmented-control,\s*[\s\S]*?\.checkbox-label::after\s*\{\s*all:\s*revert-layer;\s*\}/u,
-        'Pulsar must promote only the shared choice components through unlayered resets'
+        /\.control-group \.segmented-control input\[type="radio"\]:checked \+ label\s*\{\s*color:\s*var\(--color-bg\);\s*font-weight:\s*500;/u
     );
     assert.doesNotMatch(
         legacySkin.replace(/\/\*[\s\S]*?\*\//gu, ''),
         /(?:^|\})\s*\.preset-dropdown(?:-toggle|-text|-arrow|-menu|-item)?(?:\s|:|\{)/u,
         'Pulsar must not retain the preset dropdown component base in its legacy skin'
-    );
-    assert.match(
-        skin,
-        /\.preset-dropdown,\s*[\s\S]*?\.preset-dropdown-item\s*\{\s*all:\s*revert-layer;\s*\}/u,
-        'Pulsar must promote shared preset dropdown presentation through the frozen reset'
     );
     assert.match(
         skin,
@@ -218,11 +213,6 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
         legacySkin.replace(/\/\*[\s\S]*?\*\//gu, ''),
         /(?:^|\})\s*\.(?:bottom-buttons|btn-fixed)(?:\s|:|\{|,)/u,
         'Pulsar must consume the shared action-bar and fixed-button base'
-    );
-    assert.match(
-        skin,
-        /\.bottom-buttons,\s*\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
-        'Pulsar must promote the shared action presentation through the frozen reset'
     );
 });
 

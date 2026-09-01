@@ -208,21 +208,24 @@ assert.equal(localPresetBase(stickyCss), false, 'Sticky reintroduced a local pre
 assert.equal(localPresetBase(pulsarCss), false, 'Pulsar reintroduced a local preset component base');
 assert.equal(localPresetBase(wanderCss), true, 'Wander dormant legacy preset CSS changed before cleanup');
 assert.equal(localPresetBase(ditherCss), false, 'Dither acquired preset-dropdown CSS');
-assert.match(
-    stripComments(await read('pulsar_coder/pulsar-styles.css')),
-    /\.preset-dropdown,\s*[\s\S]*?\.preset-dropdown-item\s*\{\s*all:\s*revert-layer;\s*\}/u,
-    'Pulsar shared preset promotion bridge changed'
-);
-assert.match(
-    stripComments(await read('label_generator/framework-base.css')),
-    /\.preset-dropdown,\s*[\s\S]*?\.preset-dropdown-item\s*\{\s*all:\s*revert-layer;\s*\}/u,
-    'Sticky shared preset promotion bridge changed'
-);
-assert.match(
-    stripComments(await read('grid_generator/framework-base.css')),
-    /\.preset-dropdown,\s*[\s\S]*?\.preset-dropdown-item\s*\{\s*all:\s*revert-layer;\s*\}/u,
-    'Pizza shared preset promotion bridge changed'
-);
+for (const [name, css] of [
+    ['Pulsar', await read('pulsar_coder/pulsar-styles.css')],
+    ['Sticky', await read('label_generator/framework-base.css')],
+    ['Pizza', await read('grid_generator/framework-base.css')]
+]) {
+    const bridge = stripComments(css);
+    assert.doesNotMatch(bridge, /all:\s*revert-layer/u,
+        `${name} must not restore preset reset-promotion blocks`);
+    assert.match(bridge,
+        /\.preset-dropdown-toggle\s*\{[\s\S]*?font-size:\s*0\.9rem;[\s\S]*?font-weight:\s*600;[\s\S]*?\}/u,
+        `${name} preset toggle metrics changed`);
+    assert.match(bridge,
+        /\.preset-dropdown-menu\s*\{\s*max-height:\s*400px;\s*overflow-y:\s*auto;\s*\}/u,
+        `${name} preset viewport metrics changed`);
+    assert.match(bridge,
+        /\.preset-dropdown-item\s*\{[\s\S]*?white-space:\s*nowrap;[\s\S]*?text-overflow:\s*ellipsis;[\s\S]*?\}/u,
+        `${name} preset item metrics changed`);
+}
 
 assert.match(pizzaManager, /class PresetManager/u);
 assert.match(pizzaManager, /hasChanges = false/u);

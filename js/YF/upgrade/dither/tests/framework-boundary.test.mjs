@@ -55,8 +55,9 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
         html.indexOf('framework-base.css') < html.indexOf('style.css'),
         'shared CSS must load before Dither compatibility CSS'
     );
-    assert.match(html, /framework-base\.css\?v=g5-legacy-1/u);
-    assert.match(html, /style\.css\?v=g5-legacy-1/u);
+    assert.match(html, /framework-base\.css\?v=g5-reset-1/u);
+    assert.match(html, /style\.css\?v=g5-reset-1/u);
+    assert.doesNotMatch(skin, /^\s*\*\s*\{/mu, 'Dither must consume the shared universal reset');
     assert.match(skin, /Shared-framework parity bridge/u);
     assert.match(skin, /\.main-content\s*\{\s*height: auto;\s*flex: 0 1 auto;/u);
     assert.match(
@@ -72,15 +73,11 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
         /(?:^|\n)\.value-display:disabled\s*\{[\s\S]*?opacity: 0\.4;[\s\S]*?cursor: default;[\s\S]*?\}/u
     );
     const skinWithoutComments = skin.replace(/\/\*[\s\S]*?\*\//gu, '');
+    assert.doesNotMatch(bridge, /all:\s*revert-layer/u);
     assert.match(
         bridge,
-        /\.bottom-buttons\s*\{\s*all:\s*revert-layer;\s*left:\s*var\(--spacing-3xl\);\s*transform:\s*none;\s*z-index:\s*1000;\s*\}/u,
+        /\.bottom-buttons\s*\{\s*left:\s*var\(--spacing-3xl\);\s*transform:\s*none;\s*z-index:\s*1000;\s*\}/u,
         'Dither must keep only its private left action-bar anchor'
-    );
-    assert.match(bridge, /\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u);
-    assert.match(
-        bridge,
-        /\.modal-overlay > \.modal-content,\s*\.modal-overlay > \.modal-content h2\s*\{\s*all:\s*revert-layer;/u
     );
     assert.doesNotMatch(
         skinWithoutComments,
@@ -138,12 +135,14 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
     );
     assert.match(
         bridge,
-        /\.segmented-control,[\s\S]*?\.checkbox-label::after\s*\{\s*all:\s*revert-layer;\s*\}/u
+        /\.control-group \.segmented-control label\s*\{\s*margin-top:\s*1px;\s*margin-left:\s*1px;\s*margin-bottom:\s*var\(--spacing-xs\);\s*gap:\s*normal;\s*\}/u
     );
     assert.match(
         bridge,
-        /\.control-group \.segmented-control label\s*\{\s*all:\s*revert-layer;\s*margin-top:\s*1px;\s*margin-left:\s*1px;\s*margin-bottom:\s*var\(--spacing-xs\);\s*gap:\s*normal;\s*\}/u
+        /\.control-group \.segmented-control input\[type="radio"\]:checked \+ label\s*\{\s*color:\s*var\(--color-bg\);\s*font-weight:\s*500;/u
     );
+    assert.match(bridge, /\.control-group:has\(\.checkbox-label\)\s*\{\s*margin-bottom:\s*var\(--spacing-xs\);/u);
+    assert.match(bridge, /\.control-section > \.control-group:has\(\.checkbox-label\):last-child\s*\{\s*margin-bottom:\s*0;/u);
     assert.match(
         bridge,
         /\.segmented-control\s*\{\s*--segmented-control-font-size:\s*0\.85rem;\s*\}/u
@@ -169,8 +168,9 @@ test('all thirteen Dither ranges remain in the private raster-safe variant', asy
     assert.match(skinWithoutComments, /--slider-thumb-size:\s*10px;/u);
     assert.match(
         skinWithoutComments,
-        /\.control-group input\[type="range"\]\s*\{[^}]*height:\s*1px;[^}]*background:\s*var\(--color-border\);[^}]*margin-top:\s*var\(--spacing-md\);[^}]*\}/su
+        /\.control-group input\[type="range"\]\s*\{[^}]*height:\s*1px;[^}]*background:\s*var\(--color-border\);[^}]*margin-top:\s*var\(--spacing-md\);[^}]*margin-bottom:\s*0;[^}]*\}/su
     );
+    assert.match(skinWithoutComments, /\.hsb-picker\s*\{\s*margin-top:\s*var\(--spacing-lg\);\s*margin-bottom:\s*0;/u);
     assert.match(
         skinWithoutComments,
         /\.control-group input\[type="range"\]::-webkit-slider-thumb\s*\{[^}]*width:\s*var\(--slider-thumb-size\);[^}]*height:\s*var\(--slider-thumb-size\);[^}]*margin-top:\s*-4\.5px;[^}]*\}/su

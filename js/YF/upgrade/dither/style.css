@@ -38,11 +38,7 @@
     --handle-size: 8px;
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* Universal reset is owned by the shared framework. */
 
 /* Screen reader only - for accessibility */
 .sr-only {
@@ -264,6 +260,7 @@ body {
     appearance: none;
     -webkit-appearance: none;
     margin-top: var(--spacing-md);
+    margin-bottom: 0;
 }
 
 /* Unified slider thumb styles */
@@ -399,6 +396,7 @@ body {
 /* HSB Picker */
 .hsb-picker {
     margin-top: var(--spacing-lg);
+    margin-bottom: 0;
     animation: slideDown var(--transition-normal) ease-out;
 }
 

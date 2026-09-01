@@ -24,22 +24,14 @@ async function readJavaScriptTree(relativeDirectory) {
     return sources.join('\n');
 }
 
-const universalResetPaths = [
-    'grid_generator/styles/base.css',
-    'pulsar_coder/css/yf-styles.css',
-    'dither/style.css'
-];
+const universalResetPaths = [];
 const universalResetSources = await Promise.all(universalResetPaths.map(read));
 for (const [index, source] of universalResetSources.entries()) {
     assert.match(source, /^\s*\*\s*\{/mu,
         `${universalResetPaths[index]} lost its frozen universal-reset marker`);
 }
 
-const promotionBridgeCounts = {
-    'grid_generator/framework-base.css': 4,
-    'pulsar_coder/pulsar-styles.css': 4,
-    'dither/framework-base.css': 5
-};
+const promotionBridgeCounts = {};
 const promotionBridgeSources = Object.fromEntries(await Promise.all(
     Object.entries(promotionBridgeCounts).map(async ([path, expected]) => {
         const source = await read(path);
@@ -50,22 +42,26 @@ const promotionBridgeSources = Object.fromEntries(await Promise.all(
 ));
 const promotionBridgeTotal = Object.values(promotionBridgeCounts)
     .reduce((total, value) => total + value, 0);
-assert.equal(promotionBridgeTotal, 13);
+assert.equal(promotionBridgeTotal, 0);
+
+const pizzaBridge = await read('grid_generator/framework-base.css');
+assert.doesNotMatch(pizzaBridge, /all:\s*revert-layer/u,
+    'Pizza reset promotions returned');
 
 const stickyBridge = await read('label_generator/framework-base.css');
 assert.doesNotMatch(stickyBridge, /all:\s*revert-layer/u,
     'Sticky reset promotions returned');
 assert.match(stickyBridge, /\.controls-panel\s*\{\s*max-height:\s*none;/u,
     'Sticky edit-panel parity bridge changed');
-assert.match(promotionBridgeSources['dither/framework-base.css'],
+const ditherBridge = await read('dither/framework-base.css');
+assert.doesNotMatch(ditherBridge, /all:\s*revert-layer/u,
+    'Dither reset promotions returned');
+assert.match(ditherBridge,
     /\.bottom-buttons\s*\{[\s\S]*?left:\s*var\(--spacing-3xl\);[\s\S]*?transform:\s*none;/u,
     'Dither raster-safe action anchor changed');
-assert.match(promotionBridgeSources['dither/framework-base.css'],
-    /\.modal-overlay\s*>\s*\.modal-content,[\s\S]*?\.modal-overlay\s*>\s*\.modal-content h2\s*\{\s*all:\s*revert-layer;/u,
-    'Dither shared overlay promotion changed');
-assert.match(promotionBridgeSources['pulsar_coder/pulsar-styles.css'],
-    /\.modal-overlay\s*>\s*\.modal-content,[\s\S]*?\.modal\s*>\s*\.modal-content h2\s*\{\s*all:\s*revert-layer;/u,
-    'Pulsar shared overlay/native promotion changed');
+const pulsarBridge = await read('pulsar_coder/pulsar-styles.css');
+assert.doesNotMatch(pulsarBridge, /all:\s*revert-layer/u,
+    'Pulsar reset promotions returned');
 
 const [
     sharedCss,
@@ -117,6 +113,8 @@ assert.doesNotMatch(
     /\.(?:btn-help|modal-overlay|modal-content|modal-close|modal-body)\b/u,
     'Pizza removed help/modal CSS returned'
 );
+assert.doesNotMatch(pizzaBaseCss, /^\s*\*\s*\{/mu,
+    'Pizza local universal reset returned');
 const pizzaRuntimeReferences = pizzaSourceJs
     .replace(/\/\*[\s\S]*?\*\//gu, '')
     .replace(/\/\/[^\n]*/gu, '')
@@ -156,6 +154,8 @@ assert.doesNotMatch(wanderCss, /\.yf-tools-link\b/u,
 
 assert.doesNotMatch(pulsarCss, /^\s*\.modal-content(?:\s|:|\{)/mu,
     'Pulsar broad local modal-content collision returned');
+assert.doesNotMatch(pulsarCss, /^\s*\*\s*\{/mu,
+    'Pulsar local universal reset returned');
 
 const localNativeDialogCollisions = {};
 for (const [name, sources] of Object.entries(localNativeDialogCollisions)) {
@@ -169,12 +169,15 @@ for (const [name, sources] of Object.entries(localNativeDialogCollisions)) {
 
 assert.equal(countClass(ditherHtml, 'modal-overlay'), 1,
     'Dither active overlay must remain protected during orphan cleanup');
+const ditherCss = await read('dither/style.css');
+assert.doesNotMatch(ditherCss, /^\s*\*\s*\{/mu,
+    'Dither local universal reset returned');
 assert.equal(countClass(pulsarHtml, 'modal-overlay'), 1,
     'Pulsar active overlay must remain protected during orphan cleanup');
 
 console.log(
-    'Legacy CSS contract passed: 3 frozen universal resets; '
-    + '13 revert-layer promotions; 0 dormant overlays; '
+    'Legacy CSS contract passed: 0 frozen universal resets; '
+    + '0 revert-layer promotions; 0 dormant overlays; '
     + '0 broad local native-dialog collisions; '
     + '0 overlay-selector families without overlay markup.'
 );

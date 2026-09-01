@@ -194,10 +194,10 @@ for (const [name, css] of [
     assert.equal(localButtonBase(css), false, `${name} reintroduced a local button base`);
     assert.equal(localBarBase(css), false, `${name} reintroduced a local action-bar base`);
 }
-assert.match(
+assert.doesNotMatch(
     stripComments(await read('grid_generator/framework-base.css')),
-    /\.bottom-buttons,\s*\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
-    'Pizza Boxer must promote the canonical shared action presentation through legacy resets'
+    /all:\s*revert-layer/u,
+    'Pizza Boxer must consume the canonical shared action presentation without reset promotions'
 );
 assert.equal(localButtonBase(pizzaEditorCss), false, 'Pizza Boxer editor CSS reintroduced a local button base');
 assert.equal(localBarBase(pizzaResponsiveCss), false, 'Pizza Boxer responsive CSS reintroduced a local action-bar base');
@@ -205,31 +205,24 @@ assert.equal(localButtonBase(pizzaResponsiveCss), false, 'Pizza Boxer responsive
 assert.match(stripComments(pizzaCss), /\.btn-export-pdf\s*\{/u);
 assert.match(stripComments(pizzaCss), /\.btn-export-settings,\s*\.btn-import-settings\s*\{/u);
 assert.match(stripComments(pizzaCss), /\.export-group-right\s*\{/u);
-assert.match(
-    stripComments(stickyBridge),
-    /\.bottom-buttons,\s*\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
-    'Sticky Fingers must promote the canonical shared action presentation through legacy resets'
-);
+assert.doesNotMatch(stripComments(stickyBridge), /all:\s*revert-layer/u,
+    'Sticky Fingers must consume the canonical shared action presentation without reset promotions');
 assert.match(stripComments(stickyCss), /\.btn-export-settings,\s*\.btn-import-settings\s*\{/u);
 assert.match(stripComments(stickyCss), /\.export-group-right\s*\{/u);
 assert.match(stripComments(stickyCss), /body:not\(\.edit-mode-active\) \.edit-mode-only\s*\{/u);
+assert.doesNotMatch(stripComments(ditherBridge), /all:\s*revert-layer/u,
+    'Dither must consume the shared action shell without reset promotions');
 assert.match(
     stripComments(ditherBridge),
-    /\.bottom-buttons\s*\{\s*all:\s*revert-layer;\s*left:\s*var\(--spacing-3xl\);\s*transform:\s*none;\s*z-index:\s*1000;\s*\}[\s\S]*?\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
-    'Dither must consume the shared shell while retaining only its left anchor'
+    /\.bottom-buttons\s*\{\s*left:\s*var\(--spacing-3xl\);\s*transform:\s*none;\s*z-index:\s*1000;\s*\}/u,
+    'Dither must retain only its private left action anchor'
 );
 assert.match(stripComments(ditherCss), /\.btn-remove\s*\{/u);
 assert.match(stripComments(ditherCss), /\.export-transparency-label\s*\{/u);
-assert.match(
-    stripComments(pulsarBridge),
-    /\.bottom-buttons,\s*\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
-    'Pulsar must promote the canonical shared action presentation through legacy resets'
-);
-assert.match(
-    stripComments(wanderBridge),
-    /\.bottom-buttons,\s*\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
-    'Wander must promote the canonical shared action presentation through legacy resets'
-);
+assert.doesNotMatch(stripComments(pulsarBridge), /all:\s*revert-layer/u,
+    'Pulsar must consume the canonical shared action presentation without reset promotions');
+assert.doesNotMatch(stripComments(wanderBridge), /all:\s*revert-layer/u,
+    'Wander must consume the canonical shared action presentation without reset promotions');
 
 assert.match(sparkyCss, /\.sparky-export-status\s*\{/u);
 assert.match(sparkyCss, /\.sparky-export-actions\.is-exporting > \.btn-fixed\s*\{/u);

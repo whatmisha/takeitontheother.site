@@ -872,6 +872,25 @@ promotions, 0 dormant, 0 broad collisions, 0 orphan families. Dither 11/11,
 Pulsar 8/8 и полный Gate G4 проходят. Следующий шаг — UPG-058f reset/bridge
 reduction.
 
+Результат UPG-058f — все пять local universal resets удалены атомарно с
+зависевшими от них promotion blocks: Wander `5→4` resets/`21→18` promotions,
+Sticky `4→3`/`18→13`, Pizza `3→2`/`13→9`, Dither `2→1`/`9→4`, Pulsar
+`1→0`/`4→0`. Итоговый contract фиксирует 0 resets, 0 `all: revert-layer`,
+0 dormant overlays, 0 broad native-dialog collisions и 0 markup-less overlay
+families. Активные screenshots, field/panel records, Dither Canvas, SVG states,
+dialogs и preset round-trips сохранены; Pizza public runtime пересобран в 14
+assets и совпадает с source. Оставшиеся property-level app deltas получили
+owner/reason/removal condition в `LEGACY_CSS_CLEANUP_MATRIX.md`. Следующий шаг —
+UPG-058g cleanup gate.
+
+Результат UPG-058g — remaining-delta table полностью заполнена, а component
+contracts обновлены с временных promotion expectations на запрет broad
+`all: revert-layer` и проверку узких app metrics. Live smoke загрузил 8/8
+entrypoints до complete с видимым output, закрытыми dialogs/overlays и 0 browser
+errors; сохранён только известный Sticky EAN warning. Pizza source/public runtime
+совпадает в 14 assets. Isolation и полный Gate G4 проходят со всеми app suites.
+UPG-058 закрыт; следующий и последний этап — UPG-059 Gate G5.
+
 ### UPG-059. Gate G5
 
 Критерии:
@@ -883,6 +902,14 @@ reduction.
 - Sparky desktop, 390×844 и 430×932 приняты;
 - isolation/storage/network checks проходят;
 - bridges сведены в таблицу и каждый имеет владельца/причину удаления.
+
+Результат UPG-059 — выполнено. Добавлена воспроизводимая команда
+`npm run gate:g5:static`, которая запускает полный Gate G4 и затем проверяет
+ровно восемь hub links, 8 shared CSS и 8 public JavaScript boundaries, отсутствие
+пяти local universal resets и всех reset promotions, ownership оставшихся app
+deltas и принятые Sparky desktop/390×844/430×932 captures. Финальный прогон
+зелёный; 8/8 live runtime smoke имеет visible output и 0 browser errors. Полная
+приёмка записана в `GATE_G5.md`. План UPG-050—UPG-059 завершён.
 
 ## 4. Шаблон приёмки каждой задачи
 

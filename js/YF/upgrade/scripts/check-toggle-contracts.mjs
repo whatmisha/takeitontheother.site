@@ -255,11 +255,8 @@ for (const [family, css, selector] of [
     assert.doesNotMatch(stripComments(css), selector,
         `Pizza Boxer reintroduced a local ${family} base after rollout`);
 }
-assert.match(
-    stripComments(pizzaBridgeCss),
-    /\.show-toggle-chip-group,[\s\S]*?\.toggle-slider::before\s*\{\s*all:\s*revert-layer;\s*\}/u,
-    'Pizza Boxer shared choice promotion bridge changed'
-);
+assert.doesNotMatch(stripComments(pizzaBridgeCss), /all:\s*revert-layer/u,
+    'Pizza Boxer must not restore reset-promotion blocks');
 assert.match(
     stripComments(pizzaBridgeCss),
     /\.segmented-control\s*\{\s*--segmented-control-font-size:\s*0\.85rem;\s*\}/u,
@@ -271,11 +268,11 @@ assert.match(
 );
 assert.match(
     stripComments(pizzaBridgeCss),
-    /\.control-group\.show-toggle-chip-group\s*\{\s*padding-top:\s*revert-layer;\s*margin-bottom:\s*revert-layer;\s*\}/u
+    /\.control-group\.show-toggle-chip-group\s*\{\s*padding-top:\s*0;\s*margin-bottom:\s*var\(--spacing-md\);\s*\}/u
 );
 assert.match(
     stripComments(pizzaBridgeCss),
-    /\.control-group \.segmented-control label\s*\{\s*all:\s*revert-layer;\s*\}/u
+    /\.control-group \.segmented-control label\s*\{\s*margin-bottom:\s*0;\s*\}/u
 );
 assert.match(stripComments(pizzaSideCss), /\.surface-tabs\.segmented-control label\s*\{/u);
 assert.match(stripComments(pizzaSideCss), /\.surface-quick-controls \.toggle-chip-group\s*\{/u);
@@ -288,11 +285,8 @@ for (const [family, selector] of [
     assert.doesNotMatch(stripComments(stickyCss), selector,
         `Sticky Fingers reintroduced a local ${family} base after rollout`);
 }
-assert.match(
-    stripComments(stickyBridgeCss),
-    /\.show-toggle-chip-group,[\s\S]*?\.toggle-slider::before\s*\{\s*all:\s*revert-layer;\s*\}/u,
-    'Sticky Fingers shared choice promotion bridge changed'
-);
+assert.doesNotMatch(stripComments(stickyBridgeCss), /all:\s*revert-layer/u,
+    'Sticky Fingers must not restore reset-promotion blocks');
 assert.match(
     stripComments(stickyBridgeCss),
     /\.toggle-chip span\s*\{\s*justify-content:\s*center;\s*padding:\s*var\(--spacing-sm\) var\(--spacing-xl\);\s*font-size:\s*0\.85rem;\s*\}/u,
@@ -305,7 +299,7 @@ assert.match(
 );
 assert.match(
     stripComments(stickyBridgeCss),
-    /\.control-group\.show-toggle-chip-group\s*\{\s*padding-top:\s*revert-layer;\s*margin-bottom:\s*var\(--spacing-md\);\s*\}/u
+    /\.control-group\.show-toggle-chip-group\s*\{\s*padding-top:\s*0;\s*margin-bottom:\s*var\(--spacing-md\);\s*\}/u
 );
 assert.match(
     stripComments(stickyBridgeCss),
@@ -313,7 +307,7 @@ assert.match(
 );
 assert.match(
     stripComments(stickyBridgeCss),
-    /\.control-group \.segmented-control label\s*\{\s*all:\s*revert-layer;\s*\}/u
+    /\.control-group \.segmented-control label\s*\{\s*margin-bottom:\s*0;\s*\}/u
 );
 
 assert.doesNotMatch(
@@ -321,14 +315,11 @@ assert.doesNotMatch(
     /(?:^|\})\s*\.(?:checkbox-label|segmented-control)(?:\s|:|\{)/u,
     'Dither reintroduced a local checkbox/segmented base after rollout'
 );
+assert.doesNotMatch(stripComments(ditherBridgeCss), /all:\s*revert-layer/u,
+    'Dither must not restore raster reset-promotion blocks');
 assert.match(
     stripComments(ditherBridgeCss),
-    /\.segmented-control,[\s\S]*?\.checkbox-label::after\s*\{\s*all:\s*revert-layer;\s*\}/u,
-    'Dither raster-safe shared choice promotion bridge changed'
-);
-assert.match(
-    stripComments(ditherBridgeCss),
-    /\.control-group \.segmented-control label\s*\{\s*all:\s*revert-layer;\s*margin-top:\s*1px;\s*margin-left:\s*1px;\s*margin-bottom:\s*var\(--spacing-xs\);\s*gap:\s*normal;\s*\}/u,
+    /\.control-group \.segmented-control label\s*\{\s*margin-top:\s*1px;\s*margin-left:\s*1px;\s*margin-bottom:\s*var\(--spacing-xs\);\s*gap:\s*normal;\s*\}/u,
     'Dither private segment offsets changed'
 );
 assert.match(
@@ -347,10 +338,12 @@ assert.doesNotMatch(
     /(?:^|\})\s*\.(?:checkbox-label|segmented-control)(?:\s|:|\{)/u,
     'Pulsar reintroduced a local checkbox/segmented base after canary promotion'
 );
+assert.doesNotMatch(stripComments(pulsarExtensionCss), /all:\s*revert-layer/u,
+    'Pulsar must not restore reset-promotion blocks');
 assert.match(
     stripComments(pulsarExtensionCss),
-    /\.segmented-control,\s*[\s\S]*?\.checkbox-label::after\s*\{\s*all:\s*revert-layer;\s*\}/u,
-    'Pulsar shared component promotion bridge changed'
+    /\.control-group \.segmented-control label\s*\{\s*margin-bottom:\s*0;\s*\}/u,
+    'Pulsar compact segment metric changed'
 );
 assert.match(
     stripComments(pulsarExtensionCss),
@@ -363,11 +356,8 @@ assert.doesNotMatch(
     /(?:^|\})\s*\.segmented-control(?:\s|:|\{)/u,
     'Wander reintroduced a local segmented-control base after rollout'
 );
-assert.match(
-    stripComments(wanderExtensionCss),
-    /\.segmented-control,\s*[\s\S]*?\.segmented-control label\s*\{\s*all:\s*revert-layer;\s*\}/u,
-    'Wander shared segmented promotion bridge changed'
-);
+assert.doesNotMatch(stripComments(wanderExtensionCss), /all:\s*revert-layer/u,
+    'Wander must not restore reset-promotion blocks');
 assert.match(
     stripComments(wanderExtensionCss),
     /\.segmented-control\s*\{\s*--segmented-control-font-size:\s*0\.85rem;\s*\}/u,

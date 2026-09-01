@@ -35,6 +35,7 @@ test('Pizza Boxer consumes shared capabilities through one explicit adapter', as
 });
 
 test('Pizza Boxer layers shared CSS below its production compatibility skin', async () => {
+    const baseStyles = await readFile(new URL('../styles/base.css', import.meta.url), 'utf8');
     const [
         html,
         bridge,
@@ -67,28 +68,21 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
         readFile(new URL('../../framework/css/othersite-styles.css', import.meta.url), 'utf8')
     ]);
 
+    assert.doesNotMatch(baseStyles, /^\s*\*\s*\{/mu, 'Pizza must consume the shared universal reset');
+
     assert.match(
         bridge,
         /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g5-dialog-scope-1'\) layer\(framework\);/u
     );
-    assert.match(bridge, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
+    assert.doesNotMatch(bridge, /all:\s*revert-layer/u);
+    assert.match(frameworkStyles, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
     assert.match(
         bridge,
-        /\.bottom-buttons,\s*\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
-        'Pizza Boxer must promote the canonical shared action presentation'
+        /\.control-group:has\(\.checkbox-label\)\s*\{\s*margin-bottom:\s*var\(--spacing-xs\);\s*\}/u
     );
     assert.match(
         bridge,
-        /\.show-toggle-chip-group,[\s\S]*?\.toggle-slider::before\s*\{\s*all:\s*revert-layer;\s*\}/u,
-        'Pizza Boxer must promote only the shared choice presentation families'
-    );
-    assert.match(
-        bridge,
-        /\.control-group:has\(\.checkbox-label\)\s*\{\s*margin-bottom:\s*revert-layer;\s*\}/u
-    );
-    assert.match(
-        bridge,
-        /\.control-group\.show-toggle-chip-group\s*\{\s*padding-top:\s*revert-layer;\s*margin-bottom:\s*revert-layer;\s*\}/u
+        /\.control-group\.show-toggle-chip-group\s*\{\s*padding-top:\s*0;\s*margin-bottom:\s*var\(--spacing-md\);\s*\}/u
     );
     assert.match(
         bridge,
@@ -96,16 +90,15 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
     );
     assert.match(
         bridge,
-        /\.control-group \.segmented-control label\s*\{\s*all:\s*revert-layer;\s*\}/u
+        /\.control-group \.segmented-control label\s*\{\s*margin-bottom:\s*0;\s*\}/u
+    );
+    assert.match(
+        bridge,
+        /\.control-group \.segmented-control input\[type="radio"\]:checked \+ label\s*\{\s*color:\s*var\(--color-bg\);\s*font-weight:\s*500;/u
     );
     assert.match(
         bridge,
         /\.segmented-control\s*\{\s*--segmented-control-font-size:\s*0\.85rem;\s*\}/u
-    );
-    assert.match(
-        bridge,
-        /\.preset-dropdown,\s*[\s\S]*?\.preset-dropdown-item\s*\{\s*all:\s*revert-layer;\s*\}/u,
-        'Pizza Boxer must promote shared preset dropdown presentation'
     );
     assert.match(
         bridge,
@@ -124,7 +117,7 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
     );
     assert.match(
         template,
-        /href="\.\.\/\.\.\/framework-base\.css\?v=[^"]+"/u,
+        /href="\.\.\/\.\.\/framework-base\.css\?v=g5-reset-1"/u,
         'development document must resolve the bridge from src/ui'
     );
     assert.ok(
@@ -225,8 +218,12 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
     );
     assert.match(
         controlsWithoutComments,
-        /\.control-group input\[type="range"\]\s*\{\s*margin-top: calc\(var\(--spacing-md\) - 2px\);\s*\}/u,
-        'Pizza Boxer must retain only the reset-safe ordinary range margin bridge'
+        /\.control-group input\[type="range"\]\s*\{\s*margin-top: calc\(var\(--spacing-md\) - 2px\);\s*margin-bottom: 0;\s*\}/u,
+        'Pizza Boxer must preserve its compact ordinary range rhythm'
+    );
+    assert.match(
+        controlsWithoutComments,
+        /\.hsb-picker\s*\{\s*margin-top:\s*var\(--spacing-lg\);\s*margin-bottom:\s*0;/u
     );
     assert.doesNotMatch(
         controlsWithoutComments,

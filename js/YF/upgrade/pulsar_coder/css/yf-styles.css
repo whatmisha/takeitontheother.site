@@ -73,11 +73,7 @@
    2. БАЗОВЫЕ СТИЛИ
    ============================================ */
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* Universal reset is owned by the shared framework. */
 
 /* Screen reader only - для accessibility */
 .sr-only {
@@ -522,10 +518,12 @@ body {
 
 /*
  * Base range/thumb/track/focus presentation comes from the shared framework.
- * Keep only the top margin above the unlayered universal margin reset.
+ * Preserve Pulsar's compact vertical rhythm while the shared framework owns
+ * the reset and the rest of the range presentation.
  */
 .control-group input[type="range"] {
     margin-top: calc(var(--spacing-md) - 2px);
+    margin-bottom: 0;
 }
 
 /* ============================================
@@ -685,6 +683,7 @@ body {
 /* HSB Picker - выпадающий HSB пикер */
 .hsb-picker {
     margin-top: var(--spacing-lg);
+    margin-bottom: 0;
     animation: slideDown var(--transition-normal) ease-out;
 }
 

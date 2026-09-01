@@ -210,3 +210,13 @@ difference is only the recorded SVG-local 291 RGB/max 2 jitter. The native
 feedback shell is intentionally canonical at 20 px/100%/title 500 instead of
 the former overlay-derived 30 px/90%/600. There are no browser errors; Pulsar
 passes 8/8, legacy/feedback contracts and full Gate G4 pass.
+
+## G5 universal-reset removal
+
+UPG-058f removes Pulsar's local universal reset and its final four
+`all: revert-layer` promotions. Property-level deltas retain compact
+range/HSB/choice/preset metrics and rich verifier typography. Capture
+`f8b4fa57…`, panels, controls, Verify 600×272.820/body `d05830eb…`, Copy flash
+and SVG 40,180/`97155e5a…` remain exact. The only computed-style change is a
+hidden unused feedback input receiving canonical shared reset properties.
+Pulsar passes 8/8; the final legacy contract reports 0 resets and 0 promotions.

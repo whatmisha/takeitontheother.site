@@ -3,44 +3,33 @@
 
 /* G5 raster-safe action rollout with Dither's private left anchor. */
 .bottom-buttons {
-    all: revert-layer;
     left: var(--spacing-3xl);
     transform: none;
     z-index: 1000;
 }
 
-.btn-fixed {
-    all: revert-layer;
-}
-
-/* UPG-058e: shared overlay shell/title through Dither's frozen reset. */
-.modal-overlay > .modal-content,
-.modal-overlay > .modal-content h2 {
-    all: revert-layer;
-}
-
-/* G5 raster-safe choice rollout through the frozen universal reset. */
-.segmented-control,
-.segmented-control input[type="radio"],
-.segmented-control label,
-.checkbox-label,
-.checkbox-label span,
-.checkbox-label input[type="checkbox"],
-.checkbox-label::before,
-.checkbox-label::after {
-    all: revert-layer;
-}
-
 .control-group:has(.checkbox-label) {
-    margin-bottom: revert-layer;
+    margin-bottom: var(--spacing-xs);
+}
+
+.control-section > .control-group:has(.checkbox-label):last-child {
+    margin-bottom: 0;
 }
 
 .control-group .segmented-control label {
-    all: revert-layer;
     margin-top: 1px;
     margin-left: 1px;
     margin-bottom: var(--spacing-xs);
     gap: normal;
+}
+
+.control-group .segmented-control label:hover {
+    color: var(--color-text);
+}
+
+.control-group .segmented-control input[type="radio"]:checked + label {
+    color: var(--color-bg);
+    font-weight: 500;
 }
 
 .segmented-control {

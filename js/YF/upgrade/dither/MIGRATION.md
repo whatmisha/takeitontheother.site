@@ -186,3 +186,13 @@ exact: overlay 1280×720, content `[340,118.234375,600,483.5234375]`, padding
 30 px, title 24/600, z-index 1000 and the same transitions. Close returns focus
 to Help and restores ARIA/body overflow with no errors. Dither passes 11/11,
 legacy/feedback contracts and full Gate G4 pass.
+
+## G5 universal-reset removal
+
+UPG-058f removes Dither's final local universal reset and all four dependent
+`all: revert-layer` promotions. The app keeps only property-level raster deltas:
+its left action anchor, compact range/HSB rhythm, 1/1/2 px segment offsets and
+measured Arial/canvas-label geometry. Closed capture `1908fc0e…`, all 160
+element records, both panels, Canvas and action/choice styles are exact. Help
+remains exact at 600×483.523 with unchanged focus/ARIA/scroll lifecycle. Dither
+passes 11/11; the final legacy contract reports 0 resets and 0 promotions.

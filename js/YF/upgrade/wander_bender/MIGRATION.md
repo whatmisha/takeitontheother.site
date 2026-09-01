@@ -179,3 +179,13 @@ is intentionally unified from 30 to 20 px padding, 90% to 100% width and title
 weight 600 to 500; 12 px radius, 600 px max-width and explicit labelling remain.
 The added promotion is temporary until the Wander universal reset is removed.
 Ten tests, legacy/feedback contracts and full Gate G4 pass.
+
+## G5 universal-reset removal
+
+UPG-058f removes Wander's local universal reset and all three dependent
+`all: revert-layer` promotions. The remaining deltas are explicit: unbounded
+long-panel layout, Arial action typography, 13.6 px segmented labels and the
+private disabled Auto/Max range presentation. Capture `8897b8c2…`, panel
+`[960,20,300,605.703125]`, 41 form fields and Radial/Random/Flow SVG hashes
+`8bcdfde2…`/`fa1daf28…`/`f6fa2d66…` remain exact. Wander passes 10/10; the final
+legacy contract reports 0 resets and 0 promotions.

@@ -199,3 +199,13 @@ The blank Google Sheets URL still reports “Please enter a URL” as an atomic
 assertive alert without making a request. The EAN checksum warning, explicit
 user-initiated Sheets boundary and exports are unchanged. Sticky passes 5/5,
 legacy/feedback contracts and full Gate G4 pass.
+
+## G5 universal-reset removal
+
+UPG-058f removes Sticky Fingers' local universal reset and thirteen remaining
+`all: revert-layer` promotions. The only compatibility rules left are explicit
+properties for the unbounded edit panel, compact chips/segments/checkboxes and
+manifest preset sizing. Normal capture is exact; edit keeps Data 300×242,
+Layout 300×878.703125, Objects 300×383, Text 300×237 and SVG `8850fd2f…`.
+Google Sheets, EAN warning and export paths remain unchanged. Sticky passes 5/5;
+the final legacy contract reports 0 resets and 0 promotions.
