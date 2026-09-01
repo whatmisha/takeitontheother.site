@@ -12,8 +12,8 @@
     <meta property="og:type" content="website">
     
     <title>Dither - Image Dithering Tool</title>
-    <link rel="stylesheet" href="framework-base.css?v=g5-reset-1">
-    <link rel="stylesheet" href="style.css?v=g5-reset-1">
+    <link rel="stylesheet" href="framework-base.css?v=g6-panel-1">
+    <link rel="stylesheet" href="style.css?v=g6-panel-1">
 </head>
 <body>
     <div class="container">
@@ -30,8 +30,12 @@
 
             <aside class="controls-panel controls-panel-left" id="transformPanel" role="complementary" aria-label="Transform controls">
                 <div class="panel-header" id="transformPanelHeader">
-                    <span>Texture Transform</span>
-                    <span class="drag-icon" aria-hidden="true">⋮⋮</span>
+                    <span>Texture Transform <span class="panel-params" id="textureTransformParams"></span></span>
+                    <button class="collapse-icon" type="button" aria-label="Collapse panel" aria-expanded="true">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
                 </div>
                 <div class="panel-content">
                     <section class="control-section">
@@ -76,8 +80,12 @@
 
             <aside class="controls-panel" id="controlsPanel" role="complementary" aria-label="Pattern settings">
                 <div class="panel-header" id="panelHeader">
-                    <span>Texture Settings</span>
-                    <span class="drag-icon" aria-hidden="true">⋮⋮</span>
+                    <span>Texture Settings <span class="panel-params" id="textureSettingsParams"></span></span>
+                    <button class="collapse-icon" type="button" aria-label="Collapse panel" aria-expanded="true">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
                 </div>
                 <div class="panel-content">
                 <section class="control-section">
@@ -279,6 +287,6 @@
         </div>
     </div>
 
-    <script src="dither.js?v=g5-overlay-1" defer></script>
+    <script src="dither.js?v=g6-panel-2" defer></script>
 </body>
 </html>

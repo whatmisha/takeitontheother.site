@@ -31,12 +31,18 @@ export class PanelManager {
         const panelData = {
             element: panel,
             header: header,
+            summaryElement: config.summaryId
+                ? document.getElementById(config.summaryId)
+                : panel.querySelector?.('.panel-params') || null,
             config: {
                 draggable: config.draggable !== false,
                 initialPosition: config.initialPosition || null,
                 onOpen: config.onOpen || null,
                 onClose: config.onClose || null,
-                persistent: config.persistent || false // Doesn't close on outside click
+                persistent: config.persistent || false, // Doesn't close on outside click
+                summaryProvider: typeof config.summaryProvider === 'function'
+                    ? config.summaryProvider
+                    : null
             },
             isOpen: !panel.style.display || panel.style.display !== 'none',
             position: { x: 0, y: 0 }
@@ -57,6 +63,8 @@ export class PanelManager {
             );
         }
 
+        this.refreshSummary(panelId);
+
         // Click on panel brings it to front
         panel.addEventListener('mousedown', () => this.bringToFront(panelId));
     }
@@ -74,7 +82,7 @@ export class PanelManager {
         
         header.addEventListener('mousedown', (e) => {
             // Check that click is not on close button
-            if (e.target.closest('.collapse-toggle, .modal-close')) {
+            if (e.target.closest('.collapse-icon, .collapse-toggle, .modal-close')) {
                 return;
             }
             
@@ -376,6 +384,35 @@ export class PanelManager {
         if (!panelData) return;
         const icon = panelData.element.querySelector('.collapse-icon');
         this._syncCollapseControl(panelData.element, icon, collapsed);
+    }
+
+    /**
+     * Update the short application-provided summary shown in a collapsed header.
+     * The framework owns only the destination and presentation; applications own
+     * the wording and the settings used to produce it.
+     */
+    setSummary(panelId, summary) {
+        const panelData = this.panels.get(panelId);
+        if (!panelData?.summaryElement) return false;
+        panelData.summaryElement.textContent = String(summary ?? '').trim();
+        return true;
+    }
+
+    /** Refresh one registered summary provider, when the panel has one. */
+    refreshSummary(panelId) {
+        const panelData = this.panels.get(panelId);
+        const provider = panelData?.config.summaryProvider;
+        if (!provider) return false;
+        return this.setSummary(panelId, provider());
+    }
+
+    /** Refresh every registered application-owned panel summary. */
+    refreshSummaries() {
+        let refreshed = 0;
+        this.panels.forEach((panelData, panelId) => {
+            if (panelData.config.summaryProvider && this.refreshSummary(panelId)) refreshed += 1;
+        });
+        return refreshed;
     }
 
     /** Collapse all expanded panels, then restore exactly that set. */

@@ -127,6 +127,32 @@ test('PanelManager global toggle restores only panels that were expanded', () =>
     assert.equal(focus.element.classList.contains('panel-collapsed'), true);
 });
 
+test('PanelManager renders application-provided collapsed summaries without owning their meaning', () => {
+    const manager = new PanelManager();
+    const transformSummary = { textContent: '' };
+    const settingsSummary = { textContent: '' };
+    let scale = 100;
+    manager.panels.set('transform', {
+        summaryElement: transformSummary,
+        config: { summaryProvider: () => `0, 0 • ${scale}% • 0°` }
+    });
+    manager.panels.set('settings', {
+        summaryElement: settingsSummary,
+        config: { summaryProvider: () => 'FS • Px 1 • T 128' }
+    });
+
+    assert.equal(manager.refreshSummaries(), 2);
+    assert.equal(transformSummary.textContent, '0, 0 • 100% • 0°');
+    assert.equal(settingsSummary.textContent, 'FS • Px 1 • T 128');
+
+    scale = 125;
+    assert.equal(manager.refreshSummary('transform'), true);
+    assert.equal(transformSummary.textContent, '0, 0 • 125% • 0°');
+    assert.equal(manager.setSummary('settings', null), true);
+    assert.equal(settingsSummary.textContent, '');
+    assert.equal(manager.setSummary('missing', 'ignored'), false);
+});
+
 test('SliderController can show a transient value without changing settings', () => {
     const writes = [];
     const controller = new SliderController({ set: (...args) => writes.push(args) });

@@ -19,6 +19,7 @@ function localizeFrameworkFonts(text) {
 
 test('public barrel exports the documented framework surface', async () => {
     const api = await import('../src/index.js');
+    const source = await readFile(path.join(srcRoot, 'index.js'), 'utf8');
     const expected = [
         'ApplicationShell', 'CanvasTarget', 'ColorPicker', 'DOMCache', 'DialogHost',
         'DicePanel', 'ExportGuard', 'GradientStrokeEffect', 'HistoryBridge', 'HistoryManager',
@@ -29,6 +30,7 @@ test('public barrel exports the documented framework surface', async () => {
         'WobblyEffect', 'ZoomPanManager', 'defineTool', 'seedToUint32', 'svgDocumentString'
     ];
     for (const name of expected) assert.ok(name in api, `Missing public export: ${name}`);
+    assert.match(source, /PanelManager\.js\?v=g6-panel-1/u);
 });
 
 test('framework source graph stays local and application-agnostic', async () => {
@@ -76,7 +78,7 @@ test('working CSS and exporters use checked-in same-origin assets', async () => 
     assert.match(textToPath, /opentype\.module\.js/);
 });
 
-test('working CSS preserves v3 provenance and documents intentional G5 extensions', async () => {
+test('working CSS preserves v3 provenance and documents intentional G5/G6 extensions', async () => {
     const provenance = JSON.parse(await readFile(path.join(frameworkRoot, 'CSS_PROVENANCE.json'), 'utf8'));
     const pairs = [
         ['css/othersite-styles.css', provenance.upstreamStylesSha256, provenance.workingStylesSha256],
@@ -94,6 +96,7 @@ test('working CSS preserves v3 provenance and documents intentional G5 extension
         assert.notEqual(localizeFrameworkFonts(upstream), working);
         assert.match(working, /font-size: var\(--segmented-control-font-size, 0\.9rem\);/u);
         assert.match(working, /\.checkbox-label\s*\{[^}]*display: flex !important;/su);
+        assert.match(working, /\.collapse-icon:focus-visible\s*\{[^}]*outline: 1px solid var\(--color-text\);/su);
     }
 });
 

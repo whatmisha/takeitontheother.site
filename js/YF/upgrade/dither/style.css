@@ -139,66 +139,6 @@ body {
 
 /* Placeholder removed */
 
-.controls-panel {
-    position: fixed;
-    top: var(--spacing-3xl);
-    right: var(--spacing-3xl);
-    width: 300px;
-    background: var(--color-bg-panel);
-    border-radius: var(--radius);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    border: none;
-    padding: 0;
-    max-height: calc(100vh - 40px);
-    overflow: hidden;
-    color: var(--color-text);
-    z-index: 999;
-    display: flex;
-    flex-direction: column;
-}
-
-.controls-panel-left {
-    left: var(--spacing-3xl);
-    right: auto;
-}
-
-.panel-header {
-    background: var(--color-bg-panel);
-    padding: var(--spacing-3xl) var(--spacing-3xl) 0;
-    border-radius: var(--radius);
-    cursor: move;
-    user-select: none;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: none;
-    flex-shrink: 0;
-}
-
-.panel-header:active {
-    cursor: grabbing;
-}
-
-.drag-icon {
-    color: var(--color-text-subtle);
-    font-size: 1rem;
-    line-height: 1;
-}
-
-.panel-header span:first-child {
-    font-weight: 500;
-    font-size: 0.85rem;
-    color: var(--color-text-dim);
-}
-
-.panel-content {
-    padding: var(--spacing-3xl) var(--spacing-3xl);
-    overflow-y: auto;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
 .control-section {
     margin-bottom: 20px;
     border-bottom: none;
@@ -719,25 +659,6 @@ body {
     color: var(--color-text-secondary);
 }
 
-/* Scrollbar styling */
-.panel-content::-webkit-scrollbar {
-    width: var(--spacing-md);
-}
-
-.panel-content::-webkit-scrollbar-track {
-    background: var(--color-bg-panel);
-    border-radius: var(--radius);
-}
-
-.panel-content::-webkit-scrollbar-thumb {
-    background: var(--color-text);
-    border-radius: var(--radius);
-}
-
-.panel-content::-webkit-scrollbar-thumb:hover {
-    background: var(--color-text);
-}
-
 /* Help Container and Button */
 .help-container {
     position: fixed;
@@ -798,25 +719,7 @@ body {
 }
 
 /* Responsive design - consolidated media queries */
-@media (max-width: 1024px) {
-    .controls-panel {
-        width: 280px;
-        max-height: calc(100vh - 40px);
-    }
-}
-
 @media (max-width: 768px) {
-    .controls-panel {
-        width: 260px;
-        top: var(--spacing-lg);
-        right: var(--spacing-lg);
-        max-height: calc(100vh - var(--spacing-3xl));
-    }
-    
-    .panel-content {
-        padding: var(--spacing-xl) 16px;
-    }
-    
     .help-container {
         bottom: calc(var(--spacing-3xl) + 250px);
         right: var(--spacing-3xl);

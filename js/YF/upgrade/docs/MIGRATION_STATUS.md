@@ -12,6 +12,7 @@
 | G3 | Wordplayer, Keyboarder, Sparky, Pizza Boxer, Sticky Fingers | Passed |
 | G4 | Pulsar Coder, Dither, Wander Bender | Passed |
 | G5 | Последующая визуальная и API-унификация | Passed |
+| G6 | Осознанная унификация интерфейса поверх G5 | In progress |
 
 ## Задачи
 
@@ -115,6 +116,7 @@
 | UPG-058f | Universal reset/promotion removal | Complete | five local universal resets and 21 temporary `all: revert-layer` promotions reduced to 0/0; Wander, Sticky, Pizza, Dither and Pulsar retain exact active geometry/state/output through narrow property bridges; all app suites and isolation pass |
 | UPG-058g | Legacy CSS cleanup gate | Complete | every remaining app delta has owner/reason/removal condition; 8/8 live entrypoints complete with visible output and 0 browser errors; Pizza source/public 14-asset runtime, isolation and full Gate G4 pass |
 | UPG-059 | Gate G5 | Complete | `gate:g5:static` passes: 8 hub links, 8 shared CSS + 8 shared JS boundaries, 0 resets/promotions, owned app deltas, accepted Sparky desktop/390×844/430×932, full G4/isolation/app suites |
+| UPG-060 | Общий PanelShell/summary и Dither panel redesign | In progress | shared summary API; collapse buttons; common clamp/stack/header; Dither Canvas proof pending |
 
 ## Подтверждённые исходные результаты
 
@@ -152,5 +154,6 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-План UPG-000—UPG-059 выполнен. Новую работу начинать отдельной задачей поверх
-зелёного `npm run gate:g5:static`, не меняя принятые baselines автоматически.
+План UPG-000—UPG-059 выполнен. Начат отдельный Gate G6 по плану
+`G6_INTERFACE_UNIFICATION_PLAN.md`. Текущий шаг — завершить UPG-060 browser
+acceptance и нулевой Dither Canvas diff, не обновляя G5 baselines автоматически.

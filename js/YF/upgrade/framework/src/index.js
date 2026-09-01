@@ -22,7 +22,7 @@ export { CanvasTarget } from './render/CanvasTarget.js';
 // UI components
 export { SliderController } from './ui/SliderController.js';
 export { RangeSliderController } from './ui/RangeSliderController.js';
-export { PanelManager } from './ui/PanelManager.js';
+export { PanelManager } from './ui/PanelManager.js?v=g6-panel-1';
 export { ColorPicker } from './ui/ColorPicker.js';
 export { UnifiedColorPicker } from './ui/UnifiedColorPicker.js';
 export { DicePanel } from './ui/DicePanel.js';

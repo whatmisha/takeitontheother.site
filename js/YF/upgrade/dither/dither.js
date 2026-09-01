@@ -1,6 +1,6 @@
 let ColorUtils;
-let DitherPanelManager;
 let OverlayDialogHost;
+let PanelManager;
 
 class DitheringTool {
     // Constants
@@ -121,15 +121,20 @@ class DitheringTool {
             triggerId: 'helpButton'
         }).init();
         this.initEventListeners();
-        this.panelManager = new DitherPanelManager();
+        this.panelManager = new PanelManager();
         this.panelManager.registerPanel('controlsPanel', {
             headerId: 'panelHeader',
-            persistent: true
+            persistent: true,
+            summaryId: 'textureSettingsParams',
+            summaryProvider: () => this.getTextureSettingsSummary()
         });
         this.panelManager.registerPanel('transformPanel', {
             headerId: 'transformPanelHeader',
-            persistent: true
+            persistent: true,
+            summaryId: 'textureTransformParams',
+            summaryProvider: () => this.getTextureTransformSummary()
         });
+        this.panelManager.initCollapse();
         this.initCanvasInteraction();
         this.initValueInputs();
         this.initColorPreview();
@@ -193,6 +198,21 @@ class DitheringTool {
             brightnessValue: document.getElementById('brightnessValue')
         };
     }
+
+    getTextureTransformSummary() {
+        return `${Math.round(this.transform.positionX)}, ${Math.round(this.transform.positionY)}`
+            + `  •  ${Math.round(this.transform.scale * 100)}%`
+            + `  •  ${Math.round(this.transform.rotation)}°`;
+    }
+
+    getTextureSettingsSummary() {
+        const pattern = {
+            'floyd-steinberg': 'FS',
+            bayer: 'Bayer',
+            random: 'Random'
+        }[this.settings.pattern] || this.settings.pattern;
+        return `${pattern}  •  Px ${this.settings.pixelSize}  •  T ${this.settings.threshold}`;
+    }
     
     // Debounce utility function
     debounce(func, delay) {
@@ -218,6 +238,7 @@ class DitheringTool {
     
     // Выполнить быструю отрисовку без пересчета эффектов
     performRedraw() {
+        this.panelManager?.refreshSummaries();
         if (!this.cache.processedImage) {
             this.applyEffects();
             return;
@@ -1785,6 +1806,7 @@ class DitheringTool {
     }
     
     applyEffects() {
+        this.panelManager?.refreshSummaries();
         // If there's no original image, just draw the overlay (which handles sample-only case)
         if (!this.originalImage) {
             this.drawOverlay();
@@ -2256,8 +2278,8 @@ class DitheringTool {
 
 // Initialize the tool when the page loads
 document.addEventListener('DOMContentLoaded', async () => {
-    ({ ColorUtils, DitherPanelManager, OverlayDialogHost } = await import(
-        './js/framework/FrameworkAdapter.js?v=g5-overlay-1'
+    ({ ColorUtils, OverlayDialogHost, PanelManager } = await import(
+        './js/framework/FrameworkAdapter.js?v=g6-panel-2'
     ));
     new DitheringTool();
 });

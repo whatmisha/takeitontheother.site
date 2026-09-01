@@ -4,8 +4,8 @@ import test from 'node:test';
 
 import {
     DITHER_FRAMEWORK_ADAPTER,
-    DitherPanelManager,
-    OverlayDialogHost
+    OverlayDialogHost,
+    PanelManager as AdapterPanelManager
 } from '../js/framework/FrameworkAdapter.js';
 import { ColorUtils, OverlayDialogHost as SharedOverlayDialogHost, PanelManager } from '../../framework/src/index.js';
 
@@ -17,22 +17,26 @@ test('Dither reaches shared UI and color behavior through one public-barrel faca
         readFile(new URL('dither.js', appRoot), 'utf8')
     ]);
 
-    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=g5-overlay-1';/u);
+    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=g6-panel-2';/u);
     assert.deepEqual(DITHER_FRAMEWORK_ADAPTER.sharedCapabilities, [
         'ColorUtils',
         'OverlayDialogHost',
         'PanelManager'
     ]);
-    assert.ok(new DitherPanelManager() instanceof PanelManager);
+    assert.equal(AdapterPanelManager, PanelManager);
     assert.equal(OverlayDialogHost, SharedOverlayDialogHost);
     assert.equal(typeof ColorUtils.hexToRgb, 'function');
 
-    assert.match(app, /\.\/js\/framework\/FrameworkAdapter\.js\?v=g5-overlay-1/u);
-    assert.match(app, /new DitherPanelManager\(\)/u);
+    assert.match(app, /\.\/js\/framework\/FrameworkAdapter\.js\?v=g6-panel-2/u);
+    assert.match(app, /new PanelManager\(\)/u);
+    assert.match(app, /this\.panelManager\.initCollapse\(\);/u);
+    assert.match(app, /summaryProvider:\s*\(\) => this\.getTextureSettingsSummary\(\)/u);
+    assert.match(app, /summaryProvider:\s*\(\) => this\.getTextureTransformSummary\(\)/u);
     assert.match(app, /new OverlayDialogHost\(\{/u);
     assert.doesNotMatch(app, /modalOverlay\.classList\.(?:add|remove)\('active'\)/u);
     assert.doesNotMatch(app, /document\.body\.style\.overflow\s*=/u);
     assert.doesNotMatch(app, /initPanelDrag\s*\(/u);
+    assert.doesNotMatch(adapter, /class DitherPanelManager/u);
     assert.match(app, /return ColorUtils\.hexToRgb\(hex\);/u);
     assert.match(app, /return ColorUtils\.rgbToHex\(r, g, b\);/u);
     assert.match(app, /return ColorUtils\.rgbToHsb\(r, g, b\);/u);
@@ -49,14 +53,14 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
 
     assert.match(
         bridge,
-        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g5-dialog-scope-1'\) layer\(framework\);/u
+        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g6-panel-1'\) layer\(framework\);/u
     );
     assert.ok(
         html.indexOf('framework-base.css') < html.indexOf('style.css'),
         'shared CSS must load before Dither compatibility CSS'
     );
-    assert.match(html, /framework-base\.css\?v=g5-reset-1/u);
-    assert.match(html, /style\.css\?v=g5-reset-1/u);
+    assert.match(html, /framework-base\.css\?v=g6-panel-1/u);
+    assert.match(html, /style\.css\?v=g6-panel-1/u);
     assert.doesNotMatch(skin, /^\s*\*\s*\{/mu, 'Dither must consume the shared universal reset');
     assert.match(skin, /Shared-framework parity bridge/u);
     assert.match(skin, /\.main-content\s*\{\s*height: auto;\s*flex: 0 1 auto;/u);
@@ -97,6 +101,17 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
         /(?:^|\})\s*\.(?:bottom-buttons|btn-fixed|btn-export)(?:\s|:|\{|,)/u,
         'Dither must consume the shared action bar and fixed-button base'
     );
+    assert.doesNotMatch(
+        skinWithoutComments,
+        /(?:^|\})\s*\.(?:controls-panel|panel-header|drag-icon)(?:\s|:|\{|,)/u,
+        'Dither must consume the shared panel shell/header and must not restore a drag glyph'
+    );
+    assert.equal(html.match(/class="collapse-icon"/gu)?.length || 0, 2);
+    assert.equal(html.match(/class="panel-params"/gu)?.length || 0, 2);
+    assert.equal(html.match(/class="drag-icon"/gu)?.length || 0, 0);
+    assert.match(sharedStyles, /(?:^|\n)\.panel-header\s*\{/u);
+    assert.match(sharedStyles, /(?:^|\n)\.collapse-icon\s*\{/u);
+    assert.match(sharedStyles, /(?:^|\n)\.panel-params\s*\{/u);
     assert.match(skinWithoutComments, /\.btn-remove\s*\{/u);
     assert.match(skinWithoutComments, /\.export-transparency-label\s*\{/u);
     const privateValueDisplaySelectors = Array.from(
@@ -207,28 +222,37 @@ test('Dither keeps private value formatting, raster invalidation and PNG export'
     assert.match(app, /link\.download = 'dithered-image\.png';/u);
 });
 
-test('ordinary panel clicks remain paint-neutral while a drag restores legacy stacking', () => {
-    const manager = new DitherPanelManager();
-    const controls = { style: { zIndex: '999' } };
-    const transform = { style: { zIndex: '999' } };
+test('Dither panels use shared stacking behavior', () => {
+    const manager = new AdapterPanelManager();
+    const controls = {
+        style: { zIndex: '999' },
+        getBoundingClientRect: () => ({ width: 300, height: 400 })
+    };
+    const transform = {
+        style: { zIndex: '999' },
+        getBoundingClientRect: () => ({ width: 300, height: 300 })
+    };
     manager.panels = new Map([
         ['controlsPanel', { element: controls }],
         ['transformPanel', { element: transform }]
     ]);
 
     manager.bringToFront('controlsPanel');
-    assert.equal(controls.style.zIndex, '999');
-    assert.equal(transform.style.zIndex, '999');
-
-    manager.dragState.isDragging = true;
-    manager.bringToFront('controlsPanel');
-    assert.equal(controls.style.zIndex, '1000');
+    assert.equal(controls.style.zIndex, 1001);
     assert.equal(transform.style.zIndex, '999');
 });
 
-test('Dither panel drag preserves the legacy unbounded coordinates', () => {
-    const manager = new DitherPanelManager();
+test('Dither panels use shared viewport-clamped drag behavior', () => {
+    const previousWindow = globalThis.window;
+    globalThis.window = { innerWidth: 1280, innerHeight: 720 };
+    const manager = new AdapterPanelManager();
+    const controls = {
+        style: {},
+        getBoundingClientRect: () => ({ width: 300, height: 400 })
+    };
+
     const calls = [];
+    manager.panels = new Map([['controlsPanel', { element: controls }]]);
     manager.setPosition = (...args) => calls.push(args);
     manager.dragState = {
         isDragging: true,
@@ -239,7 +263,10 @@ test('Dither panel drag preserves the legacy unbounded coordinates', () => {
         initialY: 20
     };
 
-    manager.onDragging({ clientX: -40, clientY: 900 });
-
-    assert.deepEqual(calls, [['controlsPanel', 720, 820]]);
+    try {
+        manager.onDragging({ clientX: -40, clientY: 900 });
+        assert.deepEqual(calls, [['controlsPanel', 720, 320]]);
+    } finally {
+        globalThis.window = previousWindow;
+    }
 });

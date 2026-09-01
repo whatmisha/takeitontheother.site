@@ -1,5 +1,5 @@
 /** Shared framework foundation below the frozen Dither skin. */
-@import url('../framework/css/othersite-styles.css?v=g5-dialog-scope-1') layer(framework);
+@import url('../framework/css/othersite-styles.css?v=g6-panel-1') layer(framework);
 
 /* G5 raster-safe action rollout with Dither's private left anchor. */
 .bottom-buttons {
