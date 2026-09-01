@@ -1,0 +1,91 @@
+/**
+ * Othersite UI Framework v3 — design tokens.
+ *
+ * Override any of these custom properties in your own stylesheet (after
+ * othersite-styles.css) to re-theme a tool without touching component CSS. To build a
+ * light theme, redefine the `--color-*` group; to rescale, adjust `--spacing-*`
+ * and `--radius-*`.
+ *
+ * This file is also embedded inside othersite-styles.css — include it standalone only
+ * when you compose the component layers yourself.
+ */
+
+@font-face {
+    font-family: 'CoFo Sans';
+    src: url('https://mishaivanov.ru/fonts/CoFoSans-Regular.woff2') format('woff2'),
+         url('https://mishaivanov.ru/fonts/CoFoSans-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+}
+
+@font-face {
+    font-family: 'CoFo Sans';
+    src: url('https://mishaivanov.ru/fonts/CoFoSans-Medium.woff2') format('woff2'),
+         url('https://mishaivanov.ru/fonts/CoFoSans-Medium.woff') format('woff');
+    font-weight: 500;
+    font-style: normal;
+    font-display: block;
+}
+
+:root {
+    /* Color scheme — dark theme */
+    --color-bg: #000;
+    --color-bg-panel: #1a1a1a;
+    --color-bg-input: #0a0a0a;
+    --color-text: #d2d2d2;
+    --color-text-secondary: #ccc;
+    --color-text-muted: #888;
+    --color-text-dim: #666;
+    --color-text-subtle: #555;
+    --color-border: #333;
+    --color-grid: #d2d2d2;
+
+    /* Inactive / disabled element colours */
+    --color-inactive-bg: #0E0E0E;
+    --color-inactive-text: #4B4B4B;
+
+    /* Spacing scale */
+    --spacing-xs: 2px;
+    --spacing-sm: 4px;
+    --spacing-md: 8px;
+    --spacing-lg: 10px;
+    --spacing-xl: 12px;
+    --spacing-2xl: 15px;
+    --spacing-3xl: 20px;
+    --spacing-4xl: 30px;
+
+    /* Border radius */
+    --radius: 12px;            /* Panels */
+    --radius-sm: 12px;
+    --radius-button: 20px;     /* Buttons */
+    --radius-input: 6px;       /* Inputs, dropdowns */
+
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.2s ease;
+    --transition-slow: 0.3s ease;
+
+    /* Premium easing functions */
+    --easing-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+    --easing-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
+    --easing-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
+    --easing-sharp: cubic-bezier(0.4, 0.0, 0.6, 1);
+
+    /* Animation durations */
+    --duration-collapse: 0.35s;
+    --duration-expand: 0.35s;
+    --duration-fade: 0.25s;
+
+    /* UI element sizes */
+    --slider-thumb-size: 8px;
+    --checkbox-size: 14px;
+    --handle-size: 8px;
+    --button-height: 36px;
+
+    /* Mobile visual viewport (kept in sync for iOS Safari chrome changes) */
+    --mobile-vw: 100vw;
+    --mobile-vh: 100dvh;
+    --mobile-vx: 0px;
+    --mobile-vy: 0px;
+}

@@ -1,0 +1,374 @@
+import { defineTool } from './framework/src/core/defineTool.js';
+import {
+    DEFAULT_GEOMETRY,
+    buildCharacterGeometry
+} from './src/geometry/characterGeometry.js';
+import { clamp, distance, point, scale, subtract, add } from './src/geometry/vector.js';
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const GUIDE_CLIP_ID = 'sparky-artboard-clip';
+
+const settings = {
+    width: DEFAULT_GEOMETRY.artboardWidth,
+    height: DEFAULT_GEOMETRY.artboardHeight,
+    boundaryType: DEFAULT_GEOMETRY.boundaryType,
+    boundaryCenterX: DEFAULT_GEOMETRY.boundaryCenterX,
+    boundaryCenterY: DEFAULT_GEOMETRY.boundaryCenterY,
+    boundaryRadius: DEFAULT_GEOMETRY.boundaryRadius,
+    boundaryRadiusX: DEFAULT_GEOMETRY.boundaryRadiusX,
+    boundaryRadiusY: DEFAULT_GEOMETRY.boundaryRadiusY,
+    boundaryRotation: DEFAULT_GEOMETRY.boundaryRotation,
+    focusX: DEFAULT_GEOMETRY.focusX,
+    focusY: DEFAULT_GEOMETRY.focusY,
+    rayCount: DEFAULT_GEOMETRY.rayCount,
+    centerAngle: DEFAULT_GEOMETRY.centerAngle,
+    angleStep: DEFAULT_GEOMETRY.angleStep,
+    rayLength: DEFAULT_GEOMETRY.rayLength,
+    rayWidth: DEFAULT_GEOMETRY.rayWidth,
+    cornerRadius: DEFAULT_GEOMETRY.cornerRadius,
+    rayOverrides: [{}, {}, {}, {}, {}],
+    headColor: '#ffffff',
+    eyeColor: '#000000',
+    backgroundColor: '#000000',
+    showGuides: true,
+    eyeDiameter: 32,
+    eyeGap: 32,
+    eyeCenterY: 270
+};
+
+const STATE_KEYS = Object.freeze(Object.keys(settings));
+
+function extractState(source) {
+    return Object.fromEntries(STATE_KEYS.map((key) => [key, source[key]]));
+}
+
+function setAttributes(element, attributes) {
+    Object.entries(attributes).forEach(([name, value]) => {
+        if (value != null) element.setAttribute(name, String(value));
+    });
+    return element;
+}
+
+function makeSvgElement(tag, attributes = {}) {
+    return setAttributes(document.createElementNS(SVG_NS, tag), attributes);
+}
+
+function append(parent, ...children) {
+    children.forEach((child) => parent.appendChild(child));
+    return parent;
+}
+
+function createClipPath(width, height) {
+    const defs = makeSvgElement('defs');
+    const clipPath = makeSvgElement('clipPath', { id: GUIDE_CLIP_ID });
+    clipPath.appendChild(makeSvgElement('rect', { x: 0, y: 0, width, height }));
+    defs.appendChild(clipPath);
+    return defs;
+}
+
+function drawCharacter(ctx, geometry) {
+    const { svg, create, width, height, settings: state } = ctx;
+    svg.appendChild(createClipPath(width, height));
+    svg.appendChild(create('rect', {
+        x: 0,
+        y: 0,
+        width,
+        height,
+        fill: state.backgroundColor,
+        'data-layer': 'background'
+    }));
+
+    svg.appendChild(create('path', {
+        d: geometry.rounded.path,
+        fill: state.headColor,
+        'fill-rule': 'nonzero',
+        'data-layer': 'head'
+    }));
+
+    const eyeRadius = state.eyeDiameter / 2;
+    const eyeOffset = state.eyeGap / 2 + eyeRadius;
+    const eyes = create('g', { fill: state.eyeColor, 'data-layer': 'eyes' });
+    append(eyes,
+        create('circle', { cx: width / 2 - eyeOffset, cy: state.eyeCenterY, r: eyeRadius }),
+        create('circle', { cx: width / 2 + eyeOffset, cy: state.eyeCenterY, r: eyeRadius })
+    );
+    svg.appendChild(eyes);
+
+    if (state.showGuides) drawGuides(ctx, geometry);
+}
+
+function drawGuides(ctx, geometry) {
+    const { svg, create, width, height } = ctx;
+    const state = geometry.values;
+    const commonStroke = {
+        fill: 'none',
+        'stroke-width': 0.75,
+        'vector-effect': 'non-scaling-stroke'
+    };
+    const guides = create('g', {
+        'clip-path': `url(#${GUIDE_CLIP_ID})`,
+        'data-interactive': 'true',
+        'data-export-exclude': 'true',
+        'aria-hidden': 'true'
+    });
+
+    append(guides,
+        create('line', {
+            x1: state.boundaryCenterX,
+            y1: 0,
+            x2: state.boundaryCenterX,
+            y2: height,
+            stroke: '#315bff',
+            opacity: 0.55,
+            ...commonStroke
+        }),
+        create('line', {
+            x1: 0,
+            y1: state.boundaryCenterY,
+            x2: width,
+            y2: state.boundaryCenterY,
+            stroke: '#315bff',
+            opacity: 0.55,
+            ...commonStroke
+        })
+    );
+
+    if (geometry.boundary.type === 'circle') {
+        guides.appendChild(create('circle', {
+            cx: geometry.boundary.center.x,
+            cy: geometry.boundary.center.y,
+            r: geometry.boundary.radius,
+            stroke: '#315bff',
+            opacity: 0.8,
+            ...commonStroke
+        }));
+    } else if (geometry.boundary.type === 'ellipse') {
+        guides.appendChild(create('ellipse', {
+            cx: geometry.boundary.center.x,
+            cy: geometry.boundary.center.y,
+            rx: geometry.boundary.radiusX,
+            ry: geometry.boundary.radiusY,
+            transform: `rotate(${geometry.boundary.rotationDeg} ${geometry.boundary.center.x} ${geometry.boundary.center.y})`,
+            stroke: '#315bff',
+            opacity: 0.8,
+            ...commonStroke
+        }));
+    }
+
+    geometry.rays.forEach((ray) => {
+        guides.appendChild(create('path', {
+            d: `M ${ray.baseMinus.x} ${ray.baseMinus.y} L ${ray.tip.x} ${ray.tip.y} L ${ray.basePlus.x} ${ray.basePlus.y}`,
+            stroke: '#ff4c48',
+            opacity: 0.72,
+            ...commonStroke
+        }));
+        guides.appendChild(create('line', {
+            x1: ray.baseCenter.x,
+            y1: ray.baseCenter.y,
+            x2: ray.tip.x,
+            y2: ray.tip.y,
+            stroke: '#38e972',
+            opacity: 0.68,
+            ...commonStroke
+        }));
+    });
+
+    append(guides,
+        create('circle', {
+            cx: geometry.focus.x,
+            cy: geometry.focus.y,
+            r: 4.5,
+            fill: '#38e972',
+            stroke: '#000000',
+            'stroke-width': 1.5,
+            'vector-effect': 'non-scaling-stroke',
+            'pointer-events': 'none'
+        }),
+        create('circle', {
+            cx: geometry.focus.x,
+            cy: geometry.focus.y,
+            r: 14,
+            fill: 'transparent',
+            stroke: '#38e972',
+            'stroke-width': 0.75,
+            opacity: 0.85,
+            'vector-effect': 'non-scaling-stroke',
+            class: 'sparky-focus-hit-area',
+            'data-focus-handle': 'true'
+        })
+    );
+
+    svg.appendChild(guides);
+}
+
+function renderFailure(ctx, error) {
+    const { svg, create, width, height, settings: state } = ctx;
+    svg.appendChild(create('rect', { x: 0, y: 0, width, height, fill: state.backgroundColor }));
+    const message = create('text', {
+        x: width / 2,
+        y: height / 2,
+        fill: '#ff765f',
+        'text-anchor': 'middle',
+        class: 'sparky-error-message',
+        'data-interactive': 'true'
+    });
+    message.textContent = 'This combination cannot form a closed character.';
+    svg.appendChild(message);
+    console.warn('Sparky geometry:', error.message);
+}
+
+function constrainFocus(raw, state) {
+    let constrained = point(clamp(raw.x, 120, 360), clamp(raw.y, 180, 390));
+    if (state.boundaryType !== 'circle') return constrained;
+
+    const center = point(state.boundaryCenterX, state.boundaryCenterY);
+    const delta = subtract(constrained, center);
+    const magnitude = distance(constrained, center);
+    const maximum = state.boundaryRadius - 2;
+    if (magnitude > maximum) constrained = add(center, scale(delta, maximum / magnitude));
+    return constrained;
+}
+
+function pointFromPointer(svg, event) {
+    const matrix = svg.getScreenCTM();
+    if (!matrix) return null;
+    return new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
+}
+
+function bindFocusDragging(app) {
+    const svg = document.getElementById('mainSvg');
+    if (!svg) return;
+    let pointerId = null;
+
+    const update = (event) => {
+        const raw = pointFromPointer(svg, event);
+        if (!raw) return;
+        const focus = constrainFocus(raw, app.settings);
+        const x = Number(focus.x.toFixed(1));
+        const y = Number(focus.y.toFixed(1));
+        app.settingsStore.setMultiple({ focusX: x, focusY: y });
+        app.sliders?.setValue('focusXSlider', x, false);
+        app.sliders?.setValue('focusYSlider', y, false);
+    };
+
+    svg.addEventListener('pointerdown', (event) => {
+        const handle = event.target.closest?.('[data-focus-handle="true"]');
+        if (!handle) return;
+        event.preventDefault();
+        event.stopPropagation();
+        pointerId = event.pointerId;
+        svg.setPointerCapture(pointerId);
+        app.history?.beginTransaction('focus-drag');
+        update(event);
+    });
+
+    svg.addEventListener('pointermove', (event) => {
+        if (event.pointerId !== pointerId) return;
+        event.preventDefault();
+        update(event);
+    });
+
+    const finish = (event) => {
+        if (event.pointerId !== pointerId) return;
+        if (svg.hasPointerCapture(pointerId)) svg.releasePointerCapture(pointerId);
+        pointerId = null;
+        app.history?.endTransaction();
+    };
+    svg.addEventListener('pointerup', finish);
+    svg.addEventListener('pointercancel', finish);
+}
+
+function setFocus(app, x, y) {
+    app.settingsStore.setMultiple({ focusX: x, focusY: y });
+    app.sliders?.setValue('focusXSlider', x, false);
+    app.sliders?.setValue('focusYSlider', y, false);
+}
+
+const app = defineTool({
+    renderer: 'svg',
+    autoStart: true,
+    dom: {
+        canvas: 'canvasContainer',
+        surface: 'mainSvg',
+        zoomIndicator: 'zoomIndicator'
+    },
+    settings,
+    controls: {
+        sliders: [
+            { id: 'rayLengthSlider', valueId: 'rayLengthValue', setting: 'rayLength', min: 220, max: 360, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'rayWidthSlider', valueId: 'rayWidthValue', setting: 'rayWidth', min: 20, max: 160, decimals: 0, baseStep: 1, shiftStep: 10 },
+            { id: 'cornerRadiusSlider', valueId: 'cornerRadiusValue', setting: 'cornerRadius', min: 0, max: 30, decimals: 1, baseStep: 0.5, shiftStep: 5 },
+            { id: 'focusXSlider', valueId: 'focusXValue', setting: 'focusX', min: 120, max: 360, decimals: 1, baseStep: 0.5, shiftStep: 5 },
+            { id: 'focusYSlider', valueId: 'focusYValue', setting: 'focusY', min: 180, max: 390, decimals: 1, baseStep: 0.5, shiftStep: 5 }
+        ],
+        toggles: true
+    },
+    panels: [
+        { id: 'shapePanel', headerId: 'shapePanelHeader', persistent: true },
+        { id: 'focusPanel', headerId: 'focusPanelHeader', persistent: true },
+        { id: 'colorsPanel', headerId: 'colorsPanelHeader', persistent: true }
+    ],
+    colorPickers: {
+        containerId: 'unifiedColorPickerContainer',
+        swatches: [
+            { type: 'head', setting: 'headColor', label: 'Head', itemId: 'headColorItem', dotId: 'headColorPreview', hexId: 'headColorHex', hsbSlotId: 'headColorHsbSlot' },
+            { type: 'eyes', setting: 'eyeColor', label: 'Eyes', itemId: 'eyeColorItem', dotId: 'eyeColorPreview', hexId: 'eyeColorHex', hsbSlotId: 'eyeColorHsbSlot' },
+            { type: 'background', setting: 'backgroundColor', label: 'Background', itemId: 'backgroundColorItem', dotId: 'backgroundColorPreview', hexId: 'backgroundColorHex', hsbSlotId: 'backgroundColorHsbSlot' }
+        ]
+    },
+    presets: {
+        storageKey: 'lunnenSparkyGeneratorV1',
+        basePath: 'presets',
+        defaultName: '+ Precise Five',
+        pinnedPrefix: '+',
+        colorDots: (blob) => [
+            { kind: 'solid', value: blob.headColor || '#ffffff' },
+            { kind: 'solid', value: blob.backgroundColor || '#000000' }
+        ]
+    },
+    share: {
+        stripKeys: ['width', 'height'],
+        quantizableFloatKeys: [
+            'focusX', 'focusY', 'rayLength', 'rayWidth', 'cornerRadius',
+            'boundaryCenterX', 'boundaryCenterY', 'boundaryRadius'
+        ],
+        decimals: 2
+    },
+    history: { maxSize: 80, debounceMs: 180 },
+    snapshot: (tool) => extractState(tool.settingsStore.toObject()),
+    restore: (tool, snapshot) => tool.settingsStore.setMultiple(extractState({ ...settings, ...snapshot }), true),
+    collectPreset: (tool) => extractState(tool.settingsStore.toObject()),
+    applyPreset: (tool, preset) => tool.settingsStore.setMultiple(extractState({ ...settings, ...preset }), true),
+    export: { filename: 'lunnen-sparky.svg' },
+    zoom: { fitPadding: { top: 58, right: 58, bottom: 58, left: 58 } },
+    shortcuts: {
+        g: (tool) => tool.settingsStore.set('showGuides', !tool.settings.showGuides)
+    },
+    render(ctx) {
+        try {
+            const geometry = buildCharacterGeometry(ctx.settings);
+            ctx.app.characterGeometry = geometry;
+            ctx.app.geometryError = null;
+            drawCharacter(ctx, geometry);
+        } catch (error) {
+            ctx.app.geometryError = error;
+            renderFailure(ctx, error);
+        }
+    },
+    onReady(tool) {
+        bindFocusDragging(tool);
+        document.getElementById('resetFocusBtn')?.addEventListener('click', () => {
+            setFocus(tool, DEFAULT_GEOMETRY.focusX, DEFAULT_GEOMETRY.focusY);
+        });
+        document.getElementById('exportSvgBtn')?.addEventListener('click', () => tool.exportSVG());
+        document.getElementById('exportPngBtn')?.addEventListener('click', () => tool.exportPNG());
+        document.getElementById('introHelpBtn')?.addEventListener('click', () => {
+            tool.dialog?.alert({
+                title: 'Lunnen Sparky',
+                text: 'A mathematically precise five-ray character. Change ray geometry, drag the green focus, save or share presets, and export a clean SVG or PNG. Guides are always excluded from export.'
+            });
+        });
+    }
+});
+
+export default app;

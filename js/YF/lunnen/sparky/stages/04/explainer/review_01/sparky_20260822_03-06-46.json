@@ -1,0 +1,48 @@
+{
+  "format": "sparky-settings",
+  "version": 1,
+  "exportedAt": "2026-08-22T01:06:46.242Z",
+  "asset": "sparky_20260822_03-06-46.svg",
+  "artboard": {
+    "width": 480,
+    "height": 480
+  },
+  "settings": {
+    "width": 480,
+    "height": 480,
+    "boundaryType": "circle",
+    "boundaryCenterX": 240,
+    "boundaryCenterY": 334,
+    "boundaryRadius": 240,
+    "boundaryRadiusX": 240,
+    "boundaryRadiusY": 240,
+    "boundaryRotation": 0,
+    "focusX": 120,
+    "focusY": 180,
+    "rayCount": 11,
+    "centerAngle": -90,
+    "angleStep": 36,
+    "angleSpan": 144,
+    "rayLength": 240,
+    "rayWidth": 80,
+    "roundness": 0,
+    "cornerSmoothing": 0,
+    "rayOverrides": [
+      {},
+      {},
+      {},
+      {},
+      {}
+    ],
+    "headColor": "#ffffff",
+    "eyeColor": "#000000",
+    "backgroundColor": "#000000",
+    "showGuides": true,
+    "showPoint": true,
+    "eyePerspective": 50,
+    "eyeSize": 0,
+    "eyeDistance": -20,
+    "cute": 0,
+    "angry": 0
+  }
+}

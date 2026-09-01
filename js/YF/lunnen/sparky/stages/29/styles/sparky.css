@@ -1,0 +1,509 @@
+@font-face {
+    font-family: 'CoFo Sans';
+    src: url('../framework/fonts/TT_Commons_Classic_Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CoFo Sans';
+    src: url('../framework/fonts/TT_Commons_Classic_Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+.preset-toolbar-cluster {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+html,
+body,
+.container,
+.main-content,
+.canvas-container {
+    background-color: var(--sparky-page-background, #000000);
+}
+
+#mainSvg {
+    display: block;
+    touch-action: none;
+    user-select: none;
+}
+
+/* The framework intentionally renders before async preset bootstrap and zoom
+   setup. Keep that provisional frame out of sight and reveal only the final,
+   synchronously fitted viewBox from onReady. */
+.sparky-initializing #mainSvg {
+    visibility: hidden;
+}
+
+.mobile-desktop-hint {
+    display: none;
+}
+
+.sparky-panel-action {
+    width: 100%;
+    height: 32px;
+    margin-top: var(--spacing-sm);
+    border: 0;
+    border-radius: var(--radius-button);
+    color: var(--color-text-secondary);
+    background: var(--color-bg-input);
+    font: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background var(--transition-normal), color var(--transition-normal);
+}
+
+.sparky-panel-action:hover:not(:disabled),
+.sparky-panel-action:focus-visible:not(:disabled) {
+    color: var(--color-bg);
+    background: var(--color-text);
+    outline: none;
+}
+
+.sparky-panel-action:disabled {
+    color: var(--color-inactive-text);
+    background: var(--color-inactive-bg);
+    box-shadow: none;
+    cursor: default;
+}
+
+.sparky-pill-button {
+    appearance: none;
+    font: inherit;
+}
+
+#showMotionPathToggle[hidden] {
+    display: none;
+}
+
+#bolidAngryToggleRow[hidden] {
+    display: none;
+}
+
+.sparky-focus-tabs {
+    margin: 0 0 20px;
+}
+
+/* Animated modes are taller than the space above Eyes. Keep the expanded surface in
+   front even after another panel has received the framework's inline z-index. */
+#focusPanel.sparky-focus-panel--animate:not(.panel-collapsed) {
+    z-index: 1002 !important;
+}
+
+.sparky-focus-tabs label {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+[data-focus-mode-panel][hidden] {
+    display: none;
+}
+
+.sparky-inline-segments {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.sparky-inline-segments label {
+    min-width: 0;
+    padding-right: 8px;
+    padding-left: 8px;
+    font-size: 0.78rem;
+}
+
+.sparky-animation-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 32px 32px;
+    gap: 6px;
+    margin-top: 24px;
+}
+
+#focusPanel.sparky-focus-panel--bolid .sparky-animation-actions {
+    grid-template-columns: minmax(0, 1fr) 32px;
+}
+
+.sparky-motion-edit-action[aria-pressed="true"] {
+    color: var(--color-bg);
+    background: var(--color-text);
+}
+
+.sparky-motion-edit-action:not([aria-pressed="true"]) {
+    color: var(--color-text-secondary);
+    background: transparent;
+    box-shadow: inset 0 0 0 1px #000000;
+}
+
+.sparky-motion-edit-action {
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+.sparky-motion-edit-action:not([aria-pressed="true"]):hover:not(:disabled),
+.sparky-motion-edit-action:not([aria-pressed="true"]):focus-visible:not(:disabled) {
+    color: var(--color-bg);
+    background: var(--color-text);
+    box-shadow: none;
+}
+
+.sparky-motion-path-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 32px;
+    gap: 6px;
+    margin-top: var(--spacing-sm);
+}
+
+.sparky-motion-path-actions .sparky-panel-action {
+    margin-top: 0;
+}
+
+.sparky-motion-import-action {
+    display: grid;
+    width: 32px;
+    padding: 0;
+    color: #ffffff;
+    background: transparent;
+    box-shadow: inset 0 0 0 1px #000000;
+    place-items: center;
+}
+
+.sparky-motion-import-action:hover:not(:disabled),
+.sparky-motion-import-action:focus-visible:not(:disabled) {
+    color: var(--color-bg);
+    background: var(--color-text);
+    box-shadow: none;
+}
+
+.sparky-motion-import-status {
+    margin: 7px 0 0;
+    color: var(--color-text-secondary);
+    font-size: 0.72rem;
+    line-height: 1.3;
+}
+
+.sparky-motion-import-status[hidden] {
+    display: none;
+}
+
+.sparky-motion-generator-control.is-import-disabled {
+    opacity: 0.42;
+}
+
+@keyframes sparky-sphere-feedback-temporary {
+    0% { opacity: 0; }
+    14% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes sparky-sphere-feedback-visible {
+    0%, 100% {
+        opacity: var(--sparky-sphere-guide-opacity);
+        stroke: #315bff;
+    }
+    18% {
+        opacity: 1;
+        stroke: #8da8ff;
+    }
+}
+
+.sparky-sphere-feedback--temporary [data-sphere-guide] {
+    animation: sparky-sphere-feedback-temporary 720ms ease-out forwards;
+}
+
+.sparky-sphere-feedback--visible [data-sphere-guide] {
+    animation: sparky-sphere-feedback-visible 720ms ease-out forwards;
+}
+
+.sparky-motion-editor-hint {
+    margin: 7px 0 0;
+    color: var(--color-text-secondary);
+    font-size: 0.72rem;
+    line-height: 1.3;
+}
+
+.sparky-motion-editor-hint[hidden] {
+    display: none;
+}
+
+.sparky-motion-editor-control {
+    cursor: grab;
+    pointer-events: all;
+}
+
+.sparky-motion-editor-control:active {
+    cursor: grabbing;
+}
+
+.sparky-motion-editor-anchor {
+    cursor: move;
+}
+
+.sparky-motion-editor-control[data-selected="true"] {
+    stroke: #00ff2a;
+    stroke-width: 0.7;
+    vector-effect: non-scaling-stroke;
+}
+
+.sparky-animation-actions .sparky-panel-action {
+    margin-top: 0;
+    padding: 0 6px;
+    font-size: 0.74rem;
+}
+
+.sparky-animation-actions .sparky-animation-primary-action {
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+.sparky-animation-actions .sparky-icon-action {
+    display: grid;
+    width: 32px;
+    padding: 0;
+    place-items: center;
+}
+
+.sparky-animation-actions .sparky-panel-action[hidden] {
+    display: none;
+}
+
+.sparky-export-actions {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.sparky-export-actions.is-exporting > .btn-fixed {
+    visibility: hidden;
+}
+
+.sparky-export-status {
+    --sparky-export-progress: 0%;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--button-height);
+    overflow: hidden;
+    border-radius: var(--radius-button);
+    background: var(--color-bg-panel);
+    color: var(--color-text);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+    font-size: 1rem;
+    font-weight: 400;
+    isolation: isolate;
+}
+
+.sparky-export-status::before {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: -1;
+    width: var(--sparky-export-progress);
+    background: #3a3a3a;
+    content: '';
+    transition: width 120ms linear;
+}
+
+.sparky-export-status[hidden] {
+    display: none;
+}
+
+.sparky-export-status progress {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+}
+
+.sparky-export-status button {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    width: 22px;
+    height: 22px;
+    transform: translateY(-50%);
+    appearance: none;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font: inherit;
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.sparky-export-status button:hover {
+    color: var(--color-text);
+}
+
+.sparky-export-status[data-state="complete"]::before {
+    background: #505050;
+}
+
+.bottom-buttons button:disabled {
+    cursor: wait;
+    opacity: 0.45;
+}
+
+.sparky-shortcut-help {
+    position: absolute;
+    right: calc(100% + var(--spacing-lg));
+    bottom: 0;
+}
+
+.sparky-shortcut-help-button {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.sparky-shortcut-help-popup {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 10px);
+    width: 260px;
+    padding: 16px;
+    border-radius: var(--radius);
+    background: var(--color-bg-panel);
+    color: var(--color-text);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+}
+
+.sparky-shortcut-help-popup[hidden] {
+    display: none;
+}
+
+.sparky-shortcut-help-popup h2 {
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.sparky-shortcut-help-popup ul {
+    display: grid;
+    gap: 9px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sparky-shortcut-help-popup li {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    align-items: baseline;
+    gap: 10px;
+    color: var(--color-text-secondary);
+    font-size: 0.76rem;
+    line-height: 1.25;
+}
+
+.sparky-shortcut-help-popup kbd {
+    color: var(--color-text);
+    font: inherit;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.sparky-focus-hit-area {
+    cursor: grab;
+    pointer-events: all;
+}
+
+.sparky-focus-hit-area:active {
+    cursor: grabbing;
+}
+
+.sparky-bolid-target-control {
+    cursor: grab;
+    pointer-events: all;
+}
+
+.sparky-bolid-target-control:active {
+    cursor: grabbing;
+}
+
+.sparky-error-message {
+    font: 500 14px 'CoFo Sans', sans-serif;
+    letter-spacing: 0.01em;
+}
+
+@media (max-height: 700px) {
+    .controls-panel .panel-content {
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 760px) {
+    .controls-panel {
+        width: 240px;
+    }
+
+    #colorsPanel {
+        display: none;
+    }
+}
+
+/* Mobile showcase: the shipped Basic character is the complete interface. */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+    html,
+    body,
+    body * {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
+
+    html,
+    body,
+    .container,
+    .main-content,
+    .canvas-container {
+        width: 100%;
+        height: 100dvh;
+        min-height: 100dvh;
+        overflow: hidden;
+    }
+
+    .top-links,
+    .controls-panel,
+    .bottom-buttons,
+    dialog {
+        display: none !important;
+    }
+
+    .container,
+    .main-content,
+    .canvas-container {
+        position: fixed;
+        inset: 0;
+        padding: 0;
+    }
+
+    #mainSvg {
+        width: 100% !important;
+        height: 100% !important;
+        -webkit-user-drag: none;
+    }
+
+    .mobile-desktop-hint {
+        position: fixed;
+        left: 50%;
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        z-index: 2;
+        display: block;
+        width: calc(100% - 32px);
+        transform: translateX(-50%);
+        color: #777;
+        font-size: 16px;
+        line-height: 1.25;
+        text-align: center;
+        pointer-events: none;
+    }
+}

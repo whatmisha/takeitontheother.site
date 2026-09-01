@@ -1,0 +1,16 @@
+{
+  "width": 800,
+  "height": 800,
+  "cols": 10,
+  "rows": 10,
+  "scale": 0.6,
+  "scaleMin": 0.1,
+  "scaleMax": 1,
+  "rotation": 20,
+  "randomScale": true,
+  "square": true,
+  "showGrid": true,
+  "color": "#7FB685",
+  "bg": "#101418",
+  "seed": 42
+}

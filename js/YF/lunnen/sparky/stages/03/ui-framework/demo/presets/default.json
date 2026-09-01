@@ -1,0 +1,16 @@
+{
+  "width": 800,
+  "height": 800,
+  "cols": 6,
+  "rows": 6,
+  "scale": 0.72,
+  "scaleMin": 0.3,
+  "scaleMax": 0.9,
+  "rotation": 0,
+  "randomScale": false,
+  "square": false,
+  "showGrid": false,
+  "color": "#82A9D9",
+  "bg": "#0a0a0a",
+  "seed": 1
+}
