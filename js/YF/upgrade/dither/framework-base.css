@@ -13,6 +13,12 @@
     all: revert-layer;
 }
 
+/* UPG-058e: shared overlay shell/title through Dither's frozen reset. */
+.modal-overlay > .modal-content,
+.modal-overlay > .modal-content h2 {
+    all: revert-layer;
+}
+
 /* G5 raster-safe choice rollout through the frozen universal reset. */
 .segmented-control,
 .segmented-control input[type="radio"],

@@ -135,8 +135,6 @@ export class GridGenerator {
         // Инициализация кнопок
         this.initializeButtons();
         
-        // Инициализация модальных окон
-        this.initializeModals();
     }
 
     /**
@@ -420,12 +418,6 @@ export class GridGenerator {
             exportSettingsBtn.addEventListener('click', () => this.exportSettings());
         }
 
-        // Help Button
-        const helpButton = document.getElementById('helpButton');
-        if (helpButton) {
-            helpButton.addEventListener('click', () => this.showHelp());
-        }
-
         // Add Text Button
         const addTextBtn = document.getElementById('addTextBtn');
         if (addTextBtn) {
@@ -443,28 +435,6 @@ export class GridGenerator {
         if (lunnenBlueBtn) {
             lunnenBlueBtn.addEventListener('click', () => {
                 this.colorPicker.setPresetColor(COLORS.LUNNEN_BLUE);
-            });
-        }
-    }
-
-    /**
-     * Инициализация модальных окон
-     */
-    initializeModals() {
-        const modalOverlay = document.getElementById('modalOverlay');
-        const modalClose = document.getElementById('modalClose');
-
-        if (modalClose && modalOverlay) {
-            modalClose.addEventListener('click', () => {
-                modalOverlay.setAttribute('aria-hidden', 'true');
-                modalOverlay.style.display = 'none';
-            });
-
-            modalOverlay.addEventListener('click', (e) => {
-                if (e.target === modalOverlay) {
-                    modalOverlay.setAttribute('aria-hidden', 'true');
-                    modalOverlay.style.display = 'none';
-                }
             });
         }
     }
@@ -706,17 +676,6 @@ export class GridGenerator {
         };
 
         this.svgExporter.exportSettings(settingsData, 'grid-settings.json');
-    }
-
-    /**
-     * Показать справку
-     */
-    showHelp() {
-        const modalOverlay = document.getElementById('modalOverlay');
-        if (modalOverlay) {
-            modalOverlay.style.display = 'flex';
-            modalOverlay.setAttribute('aria-hidden', 'false');
-        }
     }
 
     /**

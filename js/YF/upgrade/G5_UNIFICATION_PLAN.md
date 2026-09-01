@@ -842,6 +842,36 @@ universal padding reset; его canonical shell намеренно меняет�
 families. Wander 10/10 и полный Gate G4 проходят. Следующий шаг — UPG-058c
 Pizza orphan fragment.
 
+Результат UPG-058c — Pizza Boxer удалил недостижимые help slot/loader/fragment,
+modal-only CSS/scrollbar members и orphan drag guard. Reproducible public runtime
+уменьшился 15→14 hashed assets. 113 fields, пять visible panels и SVG
+94 374/`4abbde0d…` точны; первый 16×16 SVG-local jitter 522 RGB/max 7 исчез
+на следующем reload, вернув byte-identical screenshot `0549d478…`.
+New→E-ink→New сохраняет 94 374/`4abbde0d…`, 78 234/`9d4f24e9…`,
+94 374/`4abbde0d…` и exact field restore. Overlay inventory 1→0; private
+ErrorPresenter/DraftRecovery не менялись. Pizza 167/167, isolation и полный
+Gate G4 проходят. Следующий шаг — UPG-058d Sticky dormant Help.
+
+Результат UPG-058d — Sticky Fingers удалил dormant Help markup/controller и
+всю local modal family. Один scoped native-dialog promotion пропускает shared
+shell через frozen reset. Normal/edit screenshots `dd028e0f…`/`e08e621f…`,
+79 fields, panels и SVG 18 640/`1592eaac…`, 18 607/`8850fd2f…` точны; round-trip
+точен. Overlay 1→0. Native dialog намеренно 30→20 px, 90→100%, title 600→500.
+Sheets blank-URL guard сохраняет copy и assertive live semantics без запроса;
+EAN warning и Google Sheets boundary не менялись. Sticky 5/5 и полный Gate G4
+проходят. Следующий шаг — UPG-058e active Dither/Pulsar overlay reduction.
+
+Результат UPG-058e — Dither/Pulsar удалили local structural overlay/content/
+close/scrollbar/responsive copies. Dither private сохраняет z-index 1000,
+0.2 s timing, scale 0.9 и help typography; его closed `f6e17c56…`, 38 fields,
+panels/Canvas и open 600×483.523 record точны. Pulsar сохраняет rich verifier;
+22 fields, panels, SVG `97155e5a…`, Verify 600×272.820/body `d05830eb…` и Copy
+flash точны. Closed отличается только известным jitter 291 RGB/max 2. Native
+feedback canonical 30→20 px, 90→100%, 600→500. Текущий contract: 21 temporary
+promotions, 0 dormant, 0 broad collisions, 0 orphan families. Dither 11/11,
+Pulsar 8/8 и полный Gate G4 проходят. Следующий шаг — UPG-058f reset/bridge
+reduction.
+
 ### UPG-059. Gate G5
 
 Критерии:

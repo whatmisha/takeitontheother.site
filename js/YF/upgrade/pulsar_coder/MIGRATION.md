@@ -194,3 +194,19 @@ difference is the already recorded reload-only SVG raster jitter (291 RGB
 channels, maximum delta 2). There are no browser/module errors. Pulsar passes
 8/8, the feedback contract reports zero primary blocking calls, and full Gate
 G4 passes.
+
+## G5 shared overlay presentation cleanup
+
+UPG-058e removes Pulsar's duplicated structural overlay, content, close,
+scrollbar and responsive shells. Shared CSS owns those rules; Pulsar keeps only
+the rich verifier typography. A scoped promotion passes both overlay and native
+dialog shells/headings through the frozen universal reset.
+
+All 22 fields, three panels and the 40,180-character SVG hash `97155e5a…` remain
+exact. Verify keeps the exact `[340,223.5859375,600,272.8203125]` content,
+30 px padding, title 24/600, transitions and failure-body hash `d05830eb…`.
+Copy still flashes `✓ Copied!` and restores after 1.5 seconds. The closed raster
+difference is only the recorded SVG-local 291 RGB/max 2 jitter. The native
+feedback shell is intentionally canonical at 20 px/100%/title 500 instead of
+the former overlay-derived 30 px/90%/600. There are no browser errors; Pulsar
+passes 8/8, legacy/feedback contracts and full Gate G4 pass.

@@ -142,3 +142,77 @@ field, panel `[960,20,300,605.703125]` и Radial SVG 1 838 символов/hash
 padding 30→20 px, width 90→100%, title weight 600→500; radius 12, max-width 600
 и labelling сохранены. Wander 10/10, legacy/feedback contracts, isolation и
 полный Gate G4 проходят. Следующий rollout — UPG-058c Pizza orphan fragment.
+
+## 8. UPG-058c result
+
+Pizza Boxer больше не загружает недостижимую Help family. Атомарно удалены
+`help` slot из source document, loader manifest entry, fragment file,
+`.btn-help`, modal overlay/content/close/body, responsive modal rules, scrollbar
+members и ненужный `.modal-close` drag guard. Panel/menu scrollbar lists не
+изменены. Reproducible release уменьшился с 15 до 14 hashed assets; source,
+build и public-runtime checks совпадают.
+
+Первый after capture отличался на 522 RGB channel, max 7, строго в SVG-local
+16×16 region `[48,192,63,207]`. Повторный clean reload вернул исходный
+byte-identical screenshot `0549d478…`, а DOM/state оставались точными во всех
+трёх captures: 113 fields, пять visible panel rects и SVG 94 374/hash
+`4abbde0d…`. Это reload raster jitter, а не результат удаления hidden overlay.
+New→E-ink→New даёт точные 94 374/`4abbde0d…`, 78 234/`9d4f24e9…`,
+94 374/`4abbde0d…` и полное восстановление 113 fields. Overlay count 1→0,
+browser/module/app errors — 0.
+
+Private `ErrorPresenter` и `DraftRecoveryController` не изменялись и остаются
+покрытыми suite. Pizza проходит 167/167, feedback contract теперь фиксирует
+2 active + 1 dormant overlay, legacy contract — 18 promotions, 1 dormant,
+2 broad collisions и 0 overlay-only orphan families. Isolation и полный Gate
+G4 проходят. Следующий rollout — UPG-058d Sticky dormant Help.
+
+## 9. UPG-058d result
+
+Sticky Fingers больше не содержит dormant Help: удалены HTML overlay, guarded
+`helpButton`, `initializeModals()`/`showHelp()`, help/modal/content/close/body,
+scrollbar и responsive CSS. Пять error paths и delete decision продолжают
+использовать native `DialogHost`. Один узкий
+`.modal > .modal-content { all: revert-layer; }` promotion пропускает canonical
+shell через frozen universal reset и будет удалён вместе с ним в UPG-058f.
+
+Normal и edit 1280×720 screenshots byte-identical: `dd028e0f…` и `e08e621f…`.
+Оба состояния сохраняют 79 fields и exact panels. SVG остаются
+18 640/`1592eaac…` и 18 607/`8850fd2f…`; normal→edit→normal возвращает exact
+fields/panels/SVG. Overlay count 1→0. Native dialog намеренно унифицирован:
+padding 30→20 px, width 90→100%, title 600→500 при неизменных radius 12,
+max-width 600 и labelling. Blank Sheets URL сохраняет существующий
+`Please enter a URL`, `alert`/assertive/atomic и не делает внешний запрос.
+
+EAN warning, Google Sheets boundary и exports не менялись. Sticky 5/5,
+feedback contract теперь фиксирует 2 active + 0 dormant overlays; legacy
+contract — 19 promotions, 0 dormant, 1 broad collision и 0 orphan families.
+Isolation и полный Gate G4 проходят. Следующий rollout — UPG-058e active
+Dither/Pulsar overlay duplicate reduction.
+
+## 10. UPG-058e result
+
+Dither и Pulsar больше не дублируют structural overlay/content/close/scrollbar/
+responsive shells. Framework владеет этой структурой и headings через scoped
+promotions. Dither сохраняет только private `z-index:1000`, 0.2 s transition,
+closed scale 0.9 и legacy help typography. Pulsar сохраняет только rich verifier
+typography; его native feedback title больше не получает overlay weight.
+
+Dither closed capture `f6e17c56…`, 38 fields, обе panel rect и Canvas geometry
+точны. Open record полностью совпал: overlay 1280×720, content
+`[340,118.234375,600,483.5234375]`, padding 30, z-index 1000, body 13.6,
+title 24/600 и 0.2 s timing; focus/ARIA/scroll restore точны. Dither 11/11.
+
+Pulsar сохраняет 22 fields, три panels и SVG 40 180/`97155e5a…`. Verify open
+record и rich failure body hash `d05830eb…` точны: content
+`[340,223.5859375,600,272.8203125]`, padding 30, title 24/600 и прежние
+transitions. Copy flash `Copy SVG → ✓ Copied! → Copy SVG` и SVG точны. Closed
+capture имеет только уже известный SVG-local jitter 291 RGB/max 2/bounds
+`[64,336,119,479]`. Native feedback shell намеренно унифицирован 30→20 px,
+90→100%, title 600→500. Pulsar 8/8.
+
+Из-за пяти frozen universal resets понадобились два scoped promotion blocks;
+текущий machine contract фиксирует 21 promotion, 0 dormant overlays,
+0 broad native collisions и 0 overlay-only orphan families. Они кандидаты на
+совместное удаление с reset conflicts в UPG-058f, а не самостоятельный мусор.
+Feedback/legacy contracts, isolation и полный Gate G4 проходят.

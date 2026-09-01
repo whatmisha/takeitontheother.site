@@ -34,31 +34,14 @@
     max-height: none;
 }
 
-/* UPG-058b: expose the canonical native-dialog shell through the frozen reset. */
-.modal > .modal-content {
-    all: revert-layer;
-}
-
 .top-links {
     flex-wrap: nowrap;
-}
-
-/* G5 navigation: promote the shared top-link above the legacy universal reset. */
-.top-link {
-    padding: var(--spacing-md) var(--spacing-3xl);
 }
 
 /* G5 panel canary: promote the title to the shared header typography. */
 .panel-header span:first-child {
     font-size: 0.9rem;
     line-height: 1rem;
-}
-
-/* G5 segmented rollout: promote shared presentation through legacy resets. */
-.segmented-control,
-.segmented-control input[type="radio"],
-.segmented-control label {
-    all: revert-layer;
 }
 
 .segmented-control {
@@ -71,12 +54,6 @@
 
 .btn-secondary {
     font-family: Arial;
-}
-
-/* G5 action canary: consume the canonical shared bar and button presentation. */
-.bottom-buttons,
-.btn-fixed {
-    all: revert-layer;
 }
 
 .control-group input[type="range"]:disabled {

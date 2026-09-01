@@ -84,7 +84,8 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
         html.indexOf('css/framework-base.css') < html.indexOf('css/yf-styles.css'),
         'shared CSS must load before Pulsar compatibility CSS'
     );
-    assert.match(html, /css\/yf-styles\.css\?v=g5-pulsar-actions-1/u);
+    assert.match(html, /css\/yf-styles\.css\?v=g5-legacy-1/u);
+    assert.match(html, /pulsar-styles\.css\?v=g5-legacy-1/u);
     assert.match(
         html,
         /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u
@@ -95,6 +96,16 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
         skin,
         /\.panel-header span:first-child\s*\{\s*font-size: 0\.9rem;\s*line-height: 1rem;/u
     );
+    assert.doesNotMatch(
+        legacySkin,
+        /^\s*\.(?:modal-overlay|modal-content|modal-close|modal-body)(?:\s|:|\{)/mu,
+        'Pulsar must consume shared modal structure'
+    );
+    assert.match(
+        skin,
+        /\.modal-overlay > \.modal-content,[\s\S]*?\.modal > \.modal-content h2\s*\{\s*all:\s*revert-layer;/u
+    );
+    assert.match(skin, /\.modal-overlay \.modal-body\s*\{[\s\S]*?font-size:\s*0\.85rem;/u);
     assert.doesNotMatch(
         legacySkin,
         /(?:^|\n)\.value-display(?::(?:focus|disabled))?\s*\{/u,

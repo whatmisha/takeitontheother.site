@@ -1,48 +1,13 @@
 /** Shared framework foundation below Pizza Boxer's frozen production skin. */
 @import url('../framework/css/othersite-styles.css?v=g5-dialog-scope-1') layer(framework);
 
-/* Promotion over Pizza Boxer's unlayered universal padding reset. */
-.top-link {
-    padding: var(--spacing-md) var(--spacing-3xl);
-}
-
-/* G5 action rollout: consume the canonical shared bar and button shell. */
-.bottom-buttons,
-.btn-fixed {
-    all: revert-layer;
-}
-
-/* G5 choice rollout: promote shared presentation through the frozen reset. */
-.show-toggle-chip-group,
-.toggle-chip-group,
-.toggle-chip,
-.toggle-chip input,
-.toggle-chip span,
-.toggle-chip-icon-wrapper,
-.toggle-chip-icon,
-.checkbox-label,
-.checkbox-label span,
-.checkbox-icon,
-.checkbox-label input[type="checkbox"],
-.checkbox-label::before,
-.checkbox-label::after,
-.segmented-control,
-.segmented-control input[type="radio"],
-.segmented-control label,
-.toggle-switch,
-.toggle-switch input[type="checkbox"],
-.toggle-slider,
-.toggle-slider::before {
-    all: revert-layer;
-}
-
 .control-group:has(.checkbox-label) {
-    margin-bottom: revert-layer;
+    margin-bottom: var(--spacing-xs);
 }
 
 .control-group.show-toggle-chip-group {
-    padding-top: revert-layer;
-    margin-bottom: revert-layer;
+    padding-top: 0;
+    margin-bottom: var(--spacing-md);
 }
 
 .control-group .toggle-chip input[type="checkbox"] {
@@ -51,23 +16,23 @@
 }
 
 .control-group .segmented-control label {
-    all: revert-layer;
+    margin-bottom: 0;
+}
+
+.control-group .segmented-control label:hover {
+    color: var(--color-text);
+}
+
+.control-group .segmented-control input[type="radio"]:checked + label {
+    color: var(--color-bg);
+    font-weight: 500;
 }
 
 .segmented-control {
     --segmented-control-font-size: 0.85rem;
 }
 
-/* G5 preset rollout: shared skin with Pizza's repository-view metrics. */
-.preset-dropdown,
-.preset-dropdown-toggle,
-.preset-dropdown-text,
-.preset-dropdown-arrow,
-.preset-dropdown-menu,
-.preset-dropdown-item {
-    all: revert-layer;
-}
-
+/* Pizza's repository-view preset metrics. */
 .preset-dropdown-toggle {
     padding: var(--spacing-md) var(--spacing-xl) var(--spacing-md) var(--spacing-3xl);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;

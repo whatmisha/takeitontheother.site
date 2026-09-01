@@ -6,7 +6,8 @@ Pizza Boxer keeps its modular vanilla-JavaScript Grid Application and Vite produ
 
 - Grid document, surfaces, placement, objects, typography, render scheduling and canvas geometry remain under `src/`.
 - Pizza Boxer's panel, slider, history, zoom, preset, draft-recovery and export controllers remain application-owned because they implement product-specific transactions and document behavior.
-- Schema 1.2, all 19 bundled presets and the 15-file content-hashed public runtime contract are unchanged.
+- Schema 1.2 and all 19 bundled presets are unchanged; the reproducible public
+  runtime now has 14 hashed assets after UPG-058c removed the orphan Help asset.
 - JSON, SVG and outlined PDF export retain Pizza Boxer's document builders and lazy local vendor loaders.
 - The Vite source/build/public-runtime reproducibility checks remain authoritative.
 - IndexedDB remains isolated as `upgrade-pizza-boxer-v1`.
@@ -25,7 +26,8 @@ Pizza Boxer keeps its modular vanilla-JavaScript Grid Application and Vite produ
 ## Acceptance evidence
 
 - 165 original tests plus JavaScript- and CSS-boundary tests pass (167/167).
-- The source graph, schema, 19-preset manifest, local vendors and 15 hashed runtime assets pass reproducibility checks.
+- The source graph, schema, 19-preset manifest, local vendors and 14 current
+  hashed runtime assets pass reproducibility checks.
 - Browser before/after metrics match exactly at 1280×720: `gridSvg` viewBox `0 0 680 680`, canvas/body geometry, SVG counts, panel positions and form values.
 - Panel collapse/restore and SVG export work without module, application or browser-console errors.
 - Before/after G5 CSS checks cover 289 representative elements: selected computed styles, panel/canvas/toolbar geometry and collapse/restore state are exact after the single documented Arial bridge.
@@ -178,3 +180,24 @@ confined to the action region. Browser JSON, SVG and PDF actions leave all 113
 fields, panels and exact SVG unchanged. New→E-ink→New retains 94,374/
 `4abbde0d…`, 78,234/`9d4f24e9…`, 94,374/`4abbde0d…`. The synchronized release
 contains 15 hashed assets; browser errors are zero and all 167 tests pass.
+
+## G5 orphan Help cleanup
+
+UPG-058c removes the unreachable Help slot, loader entry, HTML fragment,
+help/modal CSS, modal scrollbar members, responsive rules and the obsolete
+`.modal-close` panel-drag guard. There was no opener, ARIA trigger, controller or
+shared overlay host. Panel/menu scrollbars and the private `ErrorPresenter` and
+`DraftRecoveryController` families are unchanged. The reproducible release now
+contains 14 rather than 15 hashed assets because the Help fragment asset no
+longer exists.
+
+The accepted closed state is exact after a clean reload: screenshot
+`0549d478…`, 113 fields, five visible panels and 94,374-character SVG hash
+`4abbde0d…`. One intermediate reload showed 522 changed RGB channels, maximum 7,
+inside the SVG-local 16×16 box `[48,192,63,207]`; the next reload returned the
+exact original screenshot while DOM/state stayed identical, proving raster
+jitter rather than a Help-removal effect. New→E-ink→New retains exact
+94,374/`4abbde0d…`, 78,234/`9d4f24e9…`, 94,374/`4abbde0d…` outputs and restores
+all 113 fields. Overlay count changes only from the intended orphan 1 to 0;
+browser/module/application errors remain zero. All 167 tests, public-runtime
+reproducibility, legacy/feedback contracts and full Gate G4 pass.

@@ -93,13 +93,13 @@ assert.deepEqual(overlayInventory, {
     Keyboarder: 0,
     Wordplayer: 0,
     'Pizza Boxer': 0,
-    'Sticky Fingers': 1,
+    'Sticky Fingers': 0,
     'Pulsar Coder': 1,
     Dither: 1,
     'Wander Bender': 0
 }, 'legacy overlay inventory changed');
 
-for (const name of ['Sticky Fingers', 'Pulsar Coder', 'Dither']) {
+for (const name of ['Pulsar Coder', 'Dither']) {
     assert.equal(
         countClass(html[name], 'modal-content'),
         ['Sticky Fingers', 'Pulsar Coder'].includes(name) ? 2 : 1,
@@ -107,7 +107,7 @@ for (const name of ['Sticky Fingers', 'Pulsar Coder', 'Dither']) {
     );
     assert.equal(countClass(html[name], 'modal-close'), 1, `${name} overlay close action changed`);
 }
-for (const name of ['Sticky Fingers', 'Pulsar Coder', 'Dither']) {
+for (const name of ['Pulsar Coder', 'Dither']) {
     assert.match(html[name], /\brole=["']dialog["']/u, `${name} overlay dialog role changed`);
     assert.match(html[name], /\baria-modal=["']true["']/u, `${name} overlay modal semantics changed`);
     assert.match(html[name], /\baria-hidden=["']true["']/u, `${name} closed overlay state changed`);
@@ -270,12 +270,13 @@ assert.equal(count(stickyScript, /await this\.feedbackDialogHost\.alert\(\{/gu),
     'Sticky shared error-dialog paths changed');
 assert.match(stickyNavigator, /await this\.dialogHost\.confirm\(\{/u,
     'Sticky delete confirmation must use DialogHost');
-assert.match(stickyController, /initializeModals\(\)/u);
-assert.match(stickyController, /showHelp\(\)/u);
-assert.doesNotMatch(`${stickyScript}\n${stickyNavigator}\n${stickyController}`, /OverlayDialogHost/u,
-    'Sticky dormant help overlay unexpectedly gained a shared host');
-assert.doesNotMatch(html['Sticky Fingers'], /\bid=["']helpButton["']/u,
-    'Sticky dormant help overlay unexpectedly gained a UI trigger');
+assert.doesNotMatch(
+    `${stickyScript}\n${stickyNavigator}\n${stickyController}`,
+    /(?:OverlayDialogHost|initializeModals\(\)|showHelp\(\)|getElementById\('helpButton'\))/u,
+    'Sticky removed Help overlay/controller returned'
+);
+assert.doesNotMatch(html['Sticky Fingers'], /(?:modal-overlay|\bid=["']helpButton["'])/u,
+    'Sticky removed Help markup/trigger returned');
 
 assert.equal(count(stripComments(pulsarScript), /(?:^|[^\w$.])alert\s*\(/gu), 0,
     'Pulsar blocking alerts returned');

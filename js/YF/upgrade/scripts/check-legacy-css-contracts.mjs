@@ -26,10 +26,8 @@ async function readJavaScriptTree(relativeDirectory) {
 
 const universalResetPaths = [
     'grid_generator/styles/base.css',
-    'label_generator/style.css',
     'pulsar_coder/css/yf-styles.css',
-    'dither/style.css',
-    'wander_bender/css/yf-styles.css'
+    'dither/style.css'
 ];
 const universalResetSources = await Promise.all(universalResetPaths.map(read));
 for (const [index, source] of universalResetSources.entries()) {
@@ -39,10 +37,8 @@ for (const [index, source] of universalResetSources.entries()) {
 
 const promotionBridgeCounts = {
     'grid_generator/framework-base.css': 4,
-    'label_generator/framework-base.css': 4,
-    'pulsar_coder/pulsar-styles.css': 3,
-    'dither/framework-base.css': 4,
-    'wander_bender/css/wander-bender.css': 3
+    'pulsar_coder/pulsar-styles.css': 4,
+    'dither/framework-base.css': 5
 };
 const promotionBridgeSources = Object.fromEntries(await Promise.all(
     Object.entries(promotionBridgeCounts).map(async ([path, expected]) => {
@@ -54,20 +50,22 @@ const promotionBridgeSources = Object.fromEntries(await Promise.all(
 ));
 const promotionBridgeTotal = Object.values(promotionBridgeCounts)
     .reduce((total, value) => total + value, 0);
-assert.equal(promotionBridgeTotal, 18);
+assert.equal(promotionBridgeTotal, 13);
 
-assert.match(promotionBridgeSources['label_generator/framework-base.css'],
-    /\.controls-panel\s*\{\s*max-height:\s*none;/u,
+const stickyBridge = await read('label_generator/framework-base.css');
+assert.doesNotMatch(stickyBridge, /all:\s*revert-layer/u,
+    'Sticky reset promotions returned');
+assert.match(stickyBridge, /\.controls-panel\s*\{\s*max-height:\s*none;/u,
     'Sticky edit-panel parity bridge changed');
-assert.match(promotionBridgeSources['wander_bender/css/wander-bender.css'],
-    /\.controls-panel\s*\{\s*max-height:\s*none;/u,
-    'Wander panel parity bridge changed');
-assert.match(promotionBridgeSources['wander_bender/css/wander-bender.css'],
-    /\.modal\s*>\s*\.modal-content\s*\{\s*all:\s*revert-layer;/u,
-    'Wander canonical native-dialog promotion changed');
 assert.match(promotionBridgeSources['dither/framework-base.css'],
     /\.bottom-buttons\s*\{[\s\S]*?left:\s*var\(--spacing-3xl\);[\s\S]*?transform:\s*none;/u,
     'Dither raster-safe action anchor changed');
+assert.match(promotionBridgeSources['dither/framework-base.css'],
+    /\.modal-overlay\s*>\s*\.modal-content,[\s\S]*?\.modal-overlay\s*>\s*\.modal-content h2\s*\{\s*all:\s*revert-layer;/u,
+    'Dither shared overlay promotion changed');
+assert.match(promotionBridgeSources['pulsar_coder/pulsar-styles.css'],
+    /\.modal-overlay\s*>\s*\.modal-content,[\s\S]*?\.modal\s*>\s*\.modal-content h2\s*\{\s*all:\s*revert-layer;/u,
+    'Pulsar shared overlay/native promotion changed');
 
 const [
     sharedCss,
@@ -126,18 +124,22 @@ const pizzaRuntimeReferences = pizzaSourceJs
 assert.equal(pizzaRuntimeReferences, 0,
     'Pizza dormant overlay unexpectedly gained an active controller');
 
-assert.equal(countClass(stickyHtml, 'modal-overlay'), 1,
-    'Sticky dormant overlay fragment inventory changed');
+assert.equal(countClass(stickyHtml, 'modal-overlay'), 0,
+    'Sticky removed overlay fragment returned');
 assert.doesNotMatch(stickyHtml, /\bid=["']helpButton["']/u,
-    'Sticky dormant overlay unexpectedly regained its Help trigger');
-for (const marker of [
-    "document.getElementById('helpButton')",
-    'initializeModals()',
-    'showHelp()'
-]) {
-    assert.ok(stickyController.includes(marker),
-        `Sticky dormant controller marker ${marker} changed`);
-}
+    'Sticky removed Help trigger returned');
+assert.doesNotMatch(
+    stickyController,
+    /(?:modalOverlay|modalClose|initializeModals\(\)|showHelp\(\)|getElementById\('helpButton'\))/u,
+    'Sticky removed Help controller returned'
+);
+assert.doesNotMatch(
+    stickyCss,
+    /\.(?:btn-help|modal-overlay|modal-content|modal-close|modal-body)\b/u,
+    'Sticky removed Help/modal CSS returned'
+);
+assert.doesNotMatch(stickyCss, /^\s*\*\s*\{/mu,
+    'Sticky local universal reset returned');
 
 assert.equal(countClass(wanderHtml, 'modal-overlay'), 0,
     'Wander unexpectedly gained overlay markup');
@@ -147,11 +149,15 @@ assert.doesNotMatch(wanderCss, /\.(?:modal-overlay|modal-close|modal-body)\b/u,
     'Wander overlay-only legacy selector family returned');
 assert.doesNotMatch(wanderCss, /^\s*\.modal-content(?:\s|:|\{)/mu,
     'Wander broad local modal-content collision returned');
+assert.doesNotMatch(wanderCss, /^\s*\*\s*\{/mu,
+    'Wander local universal reset returned');
+assert.doesNotMatch(wanderCss, /\.yf-tools-link\b/u,
+    'Wander removed navigation selector returned');
 
-const localNativeDialogCollisions = {
-    'Sticky Fingers': { html: stickyHtml, css: stickyCss },
-    'Pulsar Coder': { html: pulsarHtml, css: pulsarCss }
-};
+assert.doesNotMatch(pulsarCss, /^\s*\.modal-content(?:\s|:|\{)/mu,
+    'Pulsar broad local modal-content collision returned');
+
+const localNativeDialogCollisions = {};
 for (const [name, sources] of Object.entries(localNativeDialogCollisions)) {
     assert.equal(count(sources.html, /<dialog\b/gu), 1,
         `${name} native-dialog inventory changed`);
@@ -167,8 +173,8 @@ assert.equal(countClass(pulsarHtml, 'modal-overlay'), 1,
     'Pulsar active overlay must remain protected during orphan cleanup');
 
 console.log(
-    'Legacy CSS contract passed: 5 frozen universal resets; '
-    + '18 revert-layer promotions; 1 dormant overlay; '
-    + '2 broad local native-dialog collisions; '
+    'Legacy CSS contract passed: 3 frozen universal resets; '
+    + '13 revert-layer promotions; 0 dormant overlays; '
+    + '0 broad local native-dialog collisions; '
     + '0 overlay-selector families without overlay markup.'
 );

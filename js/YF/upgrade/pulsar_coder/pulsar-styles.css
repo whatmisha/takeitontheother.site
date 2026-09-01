@@ -80,6 +80,59 @@
     all: revert-layer;
 }
 
+/* UPG-058e: shared overlay/native shells and headings through the frozen reset. */
+.modal-overlay > .modal-content,
+.modal > .modal-content,
+.modal-overlay > .modal-content h2,
+.modal > .modal-content h2 {
+    all: revert-layer;
+}
+
+/* Pulsar verifier keeps its measured legacy content typography. */
+.modal-overlay > .modal-content h2 {
+    font-weight: 600;
+}
+
+.modal-overlay .modal-body {
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    font-size: 0.85rem;
+}
+
+.modal-overlay .modal-body h3 {
+    color: var(--color-text);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: var(--spacing-4xl);
+    margin-bottom: var(--spacing-lg);
+}
+
+.modal-overlay .modal-body h3:first-child {
+    margin-top: 0;
+}
+
+.modal-overlay .modal-body p {
+    margin-bottom: var(--spacing-2xl);
+}
+
+.modal-overlay .modal-body ul {
+    margin-bottom: var(--spacing-2xl);
+    padding-left: var(--spacing-3xl);
+}
+
+.modal-overlay .modal-body li {
+    margin-bottom: var(--spacing-md);
+}
+
+.modal-overlay .modal-body p:last-child {
+    margin-bottom: 0;
+}
+
+.modal-overlay .modal-body strong {
+    color: var(--color-text);
+    font-weight: 600;
+}
+
 /* Info Display - Status information panel */
 .info-display {
     background: var(--color-bg-input);

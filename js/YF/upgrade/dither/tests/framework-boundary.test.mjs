@@ -55,8 +55,8 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
         html.indexOf('framework-base.css') < html.indexOf('style.css'),
         'shared CSS must load before Dither compatibility CSS'
     );
-    assert.match(html, /framework-base\.css\?v=g5-dither-actions-1/u);
-    assert.match(html, /style\.css\?v=g5-dither-actions-1/u);
+    assert.match(html, /framework-base\.css\?v=g5-legacy-1/u);
+    assert.match(html, /style\.css\?v=g5-legacy-1/u);
     assert.match(skin, /Shared-framework parity bridge/u);
     assert.match(skin, /\.main-content\s*\{\s*height: auto;\s*flex: 0 1 auto;/u);
     assert.match(
@@ -78,6 +78,23 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
         'Dither must keep only its private left action-bar anchor'
     );
     assert.match(bridge, /\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u);
+    assert.match(
+        bridge,
+        /\.modal-overlay > \.modal-content,\s*\.modal-overlay > \.modal-content h2\s*\{\s*all:\s*revert-layer;/u
+    );
+    assert.doesNotMatch(
+        skinWithoutComments,
+        /^\s*\.(?:modal-content|modal-close)(?:\s|:|\{)/mu,
+        'Dither must consume shared modal structure'
+    );
+    assert.match(
+        skinWithoutComments,
+        /\.modal-overlay\s*\{\s*z-index:\s*1000;\s*transition:\s*opacity var\(--transition-normal\);\s*\}/u
+    );
+    assert.match(
+        skinWithoutComments,
+        /\.modal-overlay > \.modal-content\s*\{\s*transform:\s*scale\(0\.9\);\s*transition:\s*transform var\(--transition-normal\);/u
+    );
     assert.doesNotMatch(
         skinWithoutComments,
         /(?:^|\})\s*\.(?:bottom-buttons|btn-fixed|btn-export)(?:\s|:|\{|,)/u,

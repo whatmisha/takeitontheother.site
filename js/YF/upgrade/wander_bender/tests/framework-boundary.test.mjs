@@ -81,8 +81,8 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
         html.indexOf('yf-styles.css') < html.indexOf('wander-bender.css'),
         'shared CSS must load before the two frozen Wander stylesheets'
     );
-    assert.match(html, /css\/yf-styles\.css\?v=g5-legacy-2/u);
-    assert.match(html, /css\/wander-bender\.css\?v=g5-legacy-2/u);
+    assert.match(html, /css\/yf-styles\.css\?v=g5-reset-1/u);
+    assert.match(html, /css\/wander-bender\.css\?v=g5-reset-1/u);
     assert.match(
         html,
         /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u
@@ -90,13 +90,27 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
     assert.doesNotMatch(html, /class="yf-tools-link"/u);
     assert.match(skin, /Shared-framework parity bridge/u);
     assert.match(skin, /\.controls-panel\s*\{\s*max-height: none;/u);
-    assert.match(skin, /\.modal > \.modal-content\s*\{\s*all: revert-layer;/u);
+    assert.doesNotMatch(
+        legacySkin,
+        /^\s*\*\s*\{/mu,
+        'Wander must consume the shared universal reset'
+    );
+    assert.doesNotMatch(
+        skin,
+        /all:\s*revert-layer/u,
+        'Wander no longer needs reset-promotion bridges'
+    );
     assert.doesNotMatch(
         legacySkin,
         /\.(?:modal-overlay|modal-close|modal-body)\b|^\s*\.modal-content(?:\s|:|\{)/mu,
         'Wander removed overlay-only CSS and broad modal collision must not return'
     );
-    assert.match(skin, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
+    assert.doesNotMatch(
+        legacySkin,
+        /\.yf-tools-link\b/u,
+        'removed navigation selector must not return'
+    );
+    assert.match(sharedStyles, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
     assert.match(
         skin,
         /\.panel-header span:first-child\s*\{\s*font-size: 0\.9rem;\s*line-height: 1rem;/u
@@ -118,7 +132,7 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
     assert.match(skin, /input\[type="range"\]:disabled\s*\{\s*opacity: 1;/u);
     assert.match(
         legacySkin,
-        /Base range\/thumb\/track\/focus presentation comes from the shared framework\.[\s\S]*?\.control-group input\[type="range"\]\s*\{\s*margin-top: calc\(var\(--spacing-md\) - 2px\);\s*\}/u
+        /Base range\/thumb\/track\/focus presentation comes from the shared framework\.[\s\S]*?\.control-group input\[type="range"\]\s*\{\s*margin-top: calc\(var\(--spacing-md\) - 2px\);\s*margin-bottom: 0;\s*\}/u
     );
     assert.doesNotMatch(
         legacySkin,
@@ -159,11 +173,7 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
         /(?:^|\})\s*\.segmented-control(?:\s|:|\{)/u,
         'Wander must not retain segmented-control base CSS'
     );
-    assert.match(
-        skin,
-        /\.segmented-control,\s*[\s\S]*?\.segmented-control label\s*\{\s*all:\s*revert-layer;\s*\}/u,
-        'Wander must promote only the shared segmented component through resets'
-    );
+    assert.doesNotMatch(skin, /\.segmented-control,\s*[\s\S]*?all:\s*revert-layer;/u);
     assert.match(
         skin,
         /\.segmented-control\s*\{\s*--segmented-control-font-size:\s*0\.85rem;\s*\}/u,
@@ -174,11 +184,7 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
         /(?:^|\})\s*\.(?:bottom-buttons|btn-fixed)\s*\{/u,
         'Wander must not retain the shared action component base'
     );
-    assert.match(
-        skin,
-        /\.bottom-buttons,\s*\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
-        'Wander must promote the canonical shared action presentation through resets'
-    );
+    assert.doesNotMatch(skin, /\.bottom-buttons,\s*\.btn-fixed\s*\{/u);
     assert.match(skin, /\.unit-btn\.active\s*\{[^}]*background:\s*#fff;/su, 'Auto/Max must remain private');
 });
 

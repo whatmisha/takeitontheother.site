@@ -179,10 +179,12 @@
 
 /*
  * Base range/thumb/track/focus presentation comes from the shared framework.
- * Keep only the top margin above the unlayered universal margin reset.
+ * Preserve Pizza's compact vertical rhythm while the shared framework owns
+ * the reset and the rest of the range presentation.
  */
 .control-group input[type="range"] {
     margin-top: calc(var(--spacing-md) - 2px);
+    margin-bottom: 0;
 }
 
 .color-input-group {
@@ -223,6 +225,7 @@
 /* HSB Picker */
 .hsb-picker {
     margin-top: var(--spacing-lg);
+    margin-bottom: 0;
     animation: slideDown var(--transition-normal) ease-out;
 }
 

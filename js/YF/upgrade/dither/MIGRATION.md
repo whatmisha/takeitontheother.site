@@ -171,3 +171,18 @@ dismissal, focus return to `helpButton`, `aria-haspopup`/`aria-controls`/
 `aria-expanded`, and exact scroll restoration. Browser checks cover all of
 those states with no module error. Framework tests pass 41/41, Dither 11/11,
 and the full Gate G4 remains green.
+
+## G5 shared overlay presentation cleanup
+
+UPG-058e removes Dither's duplicated structural overlay, content, close,
+scrollbar and responsive shells. The framework now owns those rules through a
+scoped promotion above the frozen reset. Dither retains only its measured
+private deltas: z-index 1000, 0.2 s opacity/transform timing, closed scale 0.9,
+title weight 600 and 13.6 px help copy.
+
+The closed screenshot remains byte-identical at `f6e17c56…`; all 38 fields,
+both panels and Canvas geometry are exact. The complete open record is also
+exact: overlay 1280×720, content `[340,118.234375,600,483.5234375]`, padding
+30 px, title 24/600, z-index 1000 and the same transitions. Close returns focus
+to Help and restores ARIA/body overflow with no errors. Dither passes 11/11,
+legacy/feedback contracts and full Gate G4 pass.

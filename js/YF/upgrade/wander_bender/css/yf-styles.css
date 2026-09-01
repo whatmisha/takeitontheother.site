@@ -73,11 +73,7 @@
    2. БАЗОВЫЕ СТИЛИ
    ============================================ */
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* Universal reset is owned by the shared framework. */
 
 /* Screen reader only - для accessibility */
 .sr-only {
@@ -126,29 +122,6 @@ body {
     gap: var(--spacing-md);
     z-index: 10000;
     align-items: center;
-}
-
-/* YF Tools Link - кнопка возврата */
-.yf-tools-link {
-    padding: var(--spacing-md) var(--spacing-2xl);
-    background: var(--color-text);
-    color: var(--color-bg);
-    border: none;
-    border-radius: var(--radius-button);
-    font-size: 0.9rem;
-    font-weight: 600;
-    text-decoration: none;
-    cursor: pointer;
-    transition: all var(--transition-slow);
-    height: var(--button-height);
-    display: inline-flex;
-    align-items: center;
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
-}
-
-.yf-tools-link:hover {
-    background: var(--color-bg);
-    color: var(--color-text);
 }
 
 /* Main Content Area */
@@ -522,10 +495,12 @@ body {
 
 /*
  * Base range/thumb/track/focus presentation comes from the shared framework.
- * Keep only the top margin above the unlayered universal margin reset.
+ * Preserve Wander's compact vertical rhythm while the shared framework owns
+ * the reset and the rest of the range presentation.
  */
 .control-group input[type="range"] {
     margin-top: calc(var(--spacing-md) - 2px);
+    margin-bottom: 0;
 }
 
 /* ============================================

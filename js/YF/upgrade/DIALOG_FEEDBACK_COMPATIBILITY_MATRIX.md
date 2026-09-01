@@ -440,3 +440,15 @@ by the feedback boundary.
 Final evidence: `check:feedback`, `check:isolation`, framework 42/42, all eight
 application suites and full Gate G4 pass. UPG-057 is complete; the next task is
 UPG-058a, a no-production-diff legacy CSS/orphan-selector inventory.
+
+## 17. UPG-058 cleanup updates
+
+UPG-058b removes Wander's overlay-only CSS and broad native collision; its
+native feedback dialog now consumes the shared shell through one reset bridge.
+UPG-058c removes Pizza's orphan Help slot, loader, fragment and modal CSS without
+touching private ErrorPresenter or DraftRecovery. UPG-058d removes Sticky's
+dormant Help markup/controller/CSS while retaining its native error dialog and
+Sheets live region. The live contract therefore tracks 6 native dialogs,
+2 active overlays, 0 dormant fragments, 1 private popup, 47 tooltip hosts and
+0 primary blocking calls. The historical UPG-057 inventory above remains the
+before-cleanup record.

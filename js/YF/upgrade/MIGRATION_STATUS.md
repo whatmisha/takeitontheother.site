@@ -110,6 +110,8 @@
 | UPG-058a | Legacy CSS/orphan inventory gate | Complete | 5 frozen resets, 17 initial promotions, 2 dormant overlays, 3 broad native-dialog collisions and Wander overlay-only family classified; machine checker added to Gate G4; production unchanged |
 | UPG-058b | Wander legacy modal canary | Complete | markup-less overlay/close/body and broad content CSS removed; canonical native shell promoted through frozen reset; closed screenshot, 41 fields, panel and SVG exact; 10 tests + Gate G4 pass |
 | UPG-058c | Pizza Boxer orphan Help removal | Complete | help slot/loader/fragment and modal-only CSS removed; public runtime 15→14 assets; 113 fields/panels and New/E-ink/New SVG exact; private error/recovery retained; 167 tests + Gate G4 pass |
+| UPG-058d | Sticky Fingers dormant Help removal | Complete | orphan markup/controller/modal CSS removed; canonical native shell promoted; normal/edit screenshots, 79 fields, panels and SVG exact; Sheets/EAN retained; 5 tests + Gate G4 pass |
+| UPG-058e | Active Dither/Pulsar overlay CSS reduction | Complete | shared structural shells/headings with scoped private deltas; Dither closed/open exact; Pulsar Verify/CRC/Copy/SVG exact and native feedback canonical; 21 temporary promotions, 0 dormant/collisions; Gate G4 pass |
 
 ## Подтверждённые исходные результаты
 
@@ -147,6 +149,6 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-UPG-058d: удалить dormant Help markup/controller Sticky Fingers, развести его
-native DialogHost и broad overlay CSS, сохранив 79 fields, normal/edit panels,
-SVG/PDF/settings, EAN warning и user-initiated Google Sheets boundary.
+UPG-058f: построить selector-level карту пяти universal resets и убрать только
+доказанные component conflicts вместе с соответствующими `revert-layer`, не
+затрагивая Dither anchor, Sticky edit max-height и private disabled variants.

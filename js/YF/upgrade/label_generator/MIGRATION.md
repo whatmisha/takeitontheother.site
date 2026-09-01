@@ -177,3 +177,25 @@ generated SVG markup are exact, and browser errors remain zero. Google Sheets
 is still the sole explicit user-initiated network boundary. Sticky passes 5/5,
 the feedback contract reports zero primary blocking calls, and full Gate G4
 passes.
+
+## G5 dormant Help cleanup
+
+UPG-058d removes the unreachable Help overlay markup, guarded `helpButton`,
+`initializeModals()`/`showHelp()` controller code, and the complete local
+help/modal/content/close/body, scrollbar and responsive CSS family. The five
+error paths and dormant navigator delete decision still use native `DialogHost`.
+One narrow `.modal > .modal-content { all: revert-layer; }` promotion exposes
+the canonical shared shell through the frozen universal padding reset.
+
+Normal and edit 1280×720 screenshots remain byte-identical at `dd028e0f…` and
+`e08e621f…`. Both retain all 79 fields and exact panel rectangles. Generated SVG
+stays 18,640/`1592eaac…` and 18,607/`8850fd2f…`; normal→edit→normal restores the
+exact fields, panels and markup. Overlay count changes only from the intended
+orphan 1 to 0. The native error-dialog is intentionally unified from 30 to 20 px
+padding, 90% to 100% width and title weight 600 to 500 while retaining 12 px
+radius, 600 px max-width and explicit labelling.
+
+The blank Google Sheets URL still reports “Please enter a URL” as an atomic
+assertive alert without making a request. The EAN checksum warning, explicit
+user-initiated Sheets boundary and exports are unchanged. Sticky passes 5/5,
+legacy/feedback contracts and full Gate G4 pass.

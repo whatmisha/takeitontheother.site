@@ -20,13 +20,10 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
         bridge,
         /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g5-dialog-scope-1'\) layer\(framework\);/u
     );
-    assert.match(bridge, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
-    assert.match(
-        bridge,
-        /\.bottom-buttons,\s*\.btn-fixed\s*\{\s*all:\s*revert-layer;\s*\}/u,
-        'Sticky Fingers must promote the canonical shared action presentation'
-    );
+    assert.doesNotMatch(bridge, /all:\s*revert-layer/u);
     assert.match(bridge, /\.controls-panel\s*\{\s*max-height: none;/u);
+    assert.doesNotMatch(style, /^\s*\*\s*\{/mu, 'Sticky must consume the shared universal reset');
+    assert.match(sharedStyles, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
     assert.match(
         html,
         /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">\s*←Upgrade Tools\s*<\/a>/u
@@ -36,8 +33,9 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
         html.indexOf('framework-base.css') < html.indexOf('style.css'),
         'shared CSS must load below the frozen Sticky Fingers skin'
     );
-    assert.match(html, /href="framework-base\.css\?v=g5-sticky-actions-1"/u);
-    assert.match(html, /href="style\.css\?v=g5-sticky-actions-1"/u);
+    assert.match(html, /href="framework-base\.css\?v=g5-reset-1"/u);
+    assert.match(html, /href="style\.css\?v=g5-reset-1"/u);
+    assert.doesNotMatch(html, /(?:modal-overlay|\bid="helpButton")/u);
 
     assert.equal(html.match(/class="toggle-chip"/gu)?.length || 0, 9);
     assert.equal(html.match(/class="checkbox-label"/gu)?.length || 0, 10);
@@ -50,6 +48,11 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
 
     const sharedWithoutComments = sharedStyles.replace(/\/\*[\s\S]*?\*\//gu, '');
     const styleWithoutComments = style.replace(/\/\*[\s\S]*?\*\//gu, '');
+    assert.doesNotMatch(
+        styleWithoutComments,
+        /\.(?:btn-help|modal-overlay|modal-content|modal-close|modal-body)\b/u,
+        'Sticky removed Help/modal CSS must not return'
+    );
     assert.doesNotMatch(
         styleWithoutComments,
         /(?:^|\})\s*\.(?:bottom-buttons|btn-fixed|btn-export)(?:\s|:|\{|,)/u,
@@ -67,10 +70,6 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
     }
     assert.match(
         bridge,
-        /\.show-toggle-chip-group,[\s\S]*?\.toggle-slider::before\s*\{\s*all:\s*revert-layer;\s*\}/u
-    );
-    assert.match(
-        bridge,
         /\.toggle-chip span\s*\{\s*justify-content:\s*center;\s*padding:\s*var\(--spacing-sm\) var\(--spacing-xl\);\s*font-size:\s*0\.85rem;\s*\}/u
     );
     assert.match(
@@ -79,25 +78,25 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
     );
     assert.match(
         bridge,
-        /\.control-group\.show-toggle-chip-group\s*\{\s*padding-top:\s*revert-layer;\s*margin-bottom:\s*var\(--spacing-md\);\s*\}/u
+        /\.control-group\.show-toggle-chip-group\s*\{\s*padding-top:\s*0;\s*margin-bottom:\s*var\(--spacing-md\);\s*\}/u
     );
+    assert.match(bridge, /\.control-group:has\(\.checkbox-label\)\s*\{\s*margin-bottom:\s*var\(--spacing-xs\);/u);
     assert.match(
         bridge,
         /\.control-group \.toggle-chip input\[type="checkbox"\]\s*\{\s*width:\s*0;\s*height:\s*0;\s*\}/u
     );
     assert.match(
         bridge,
-        /\.control-group \.segmented-control label\s*\{\s*all:\s*revert-layer;\s*\}/u
+        /\.control-group \.segmented-control label\s*\{\s*margin-bottom:\s*0;\s*\}/u
+    );
+    assert.match(
+        bridge,
+        /\.control-group \.segmented-control input\[type="radio"\]:checked \+ label\s*\{\s*color:\s*var\(--color-bg\);\s*font-weight:\s*500;/u
     );
     assert.doesNotMatch(
         styleWithoutComments,
         /(?:^|\})\s*\.preset-dropdown(?:-toggle|-text|-arrow|-menu|-item)?(?:\s|:|\{)/u,
         'Sticky Fingers must not retain the preset dropdown component base'
-    );
-    assert.match(
-        bridge,
-        /\.preset-dropdown,\s*[\s\S]*?\.preset-dropdown-item\s*\{\s*all:\s*revert-layer;\s*\}/u,
-        'Sticky Fingers must promote shared preset dropdown presentation'
     );
     assert.match(
         bridge,
