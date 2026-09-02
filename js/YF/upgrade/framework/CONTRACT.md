@@ -13,7 +13,7 @@
 - `defineTool`, `ApplicationShell`;
 - `Settings`, `DOMCache`, `ShortcutRouter`;
 - `RenderTarget`, `SvgTarget`, `CanvasTarget`;
-- sliders/ranges, panels, color picker, dice, dialogs, tooltips, zoom/pan;
+- sliders/ranges, panels, color picker, dice, dialogs, tooltips, file intake, zoom/pan;
 - `HistoryManager`, `HistoryBridge`;
 - `PresetStore`, `PresetSession`, `ShareCodec`;
 - `SVGExporter`, `svgDocumentString`, `TextToPath`, `ExportGuard`;
@@ -109,6 +109,17 @@ Legacy overlay и native dialog имеют отдельные CSS roots:
 только собственный token при focus-out/Escape и полностью очищается в
 `destroy()`. Positioning использует `ownerDocument.defaultView`, поэтому
 внедрённый document остаётся тестируемым и изолированным.
+
+`FileIntakeController` связывает уже существующие hidden input, trigger,
+необязательные dropzone/status/remove controls. Он владеет picker/drop/keyboard
+semantics, `accept` и configurable `maxBytes` guards, синхронным reset input для
+повторного выбора того же файла, `loading/ready/error/empty` state, ARIA live и
+полным снятием listeners. Необязательный `selectFile(files)` позволяет приложению
+выбрать один подходящий файл из multi-file drop, не перенося во framework знание
+о формате. App callback владеет чтением файла, parsing,
+sanitization, schema/domain validation, confirmation, history и применением
+результата. Framework не читает содержимое файла и не знает форматов конкретных
+инструментов.
 
 ## 6. Storage
 

@@ -217,10 +217,10 @@
         <div class="panel-content">
             <section class="control-section">
                 <div class="control-group">
-                    <div class="file-upload-area" id="fileUploadArea">
-                        <input type="file" id="svgFileInput" accept=".svg" style="display: none;">
+                    <div class="file-upload-area file-intake" id="fileUploadArea">
+                        <input type="file" id="svgFileInput" accept=".svg,image/svg+xml" hidden>
                         <div class="upload-placeholder">
-                            <p>Click or drag & drop SVG file here</p>
+                            <p class="file-intake__status" id="svgFileStatus">Click or drag & drop SVG file here</p>
                         </div>
                     </div>
                 </div>

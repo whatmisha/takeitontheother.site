@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Upgrade viewport harness</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            min-width: 100%;
+            min-height: 100%;
+            background: #242424;
+        }
+
+        iframe {
+            display: block;
+            width: var(--qa-width);
+            height: var(--qa-height);
+            border: 0;
+            background: #000;
+        }
+    </style>
+</head>
+<body>
+    <iframe title="Upgrade viewport under test"></iframe>
+    <output id="qaCanvasHash" hidden></output>
+    <output id="qaViewportMetrics" hidden></output>
+    <script>
+        const tools = new Set([
+            'sparky',
+            'grid_generator',
+            'label_generator',
+            'keyboarder',
+            'wordplayer',
+            'dither',
+            'wander_bender',
+            'pulsar_coder'
+        ]);
+        const params = new URLSearchParams(window.location.search);
+        const tool = tools.has(params.get('tool')) ? params.get('tool') : 'sparky';
+        const boundedSize = (name, fallback, maximum) => {
+            const value = Number.parseInt(params.get(name), 10);
+            return Number.isFinite(value) ? Math.min(Math.max(value, 240), maximum) : fallback;
+        };
+        const width = boundedSize('width', 390, 1920);
+        const height = boundedSize('height', 844, 2160);
+        const ditherPattern = params.get('pattern');
+        const ditherPixelSize = params.get('pixelSize');
+
+        const iframe = document.querySelector('iframe');
+        const canvasHashOutput = document.getElementById('qaCanvasHash');
+        const viewportMetricsOutput = document.getElementById('qaViewportMetrics');
+        let hashingCanvas = false;
+
+        const updateViewportMetrics = () => {
+            const documentUnderTest = iframe.contentDocument;
+            const root = documentUnderTest?.documentElement;
+            if (!root) return;
+            viewportMetricsOutput.textContent = JSON.stringify({
+                tool,
+                viewport: {
+                    width: iframe.contentWindow.innerWidth,
+                    height: iframe.contentWindow.innerHeight
+                },
+                readyState: documentUnderTest.readyState,
+                appReady: root.dataset.appReady || null,
+                overflowX: root.scrollWidth > root.clientWidth,
+                fileInputs: documentUnderTest.querySelectorAll('input[type="file"]').length,
+                fileControls: Array.from(documentUnderTest.querySelectorAll('[aria-controls]'))
+                    .filter(element => documentUnderTest.getElementById(
+                        element.getAttribute('aria-controls')
+                    )?.type === 'file').length
+            });
+        };
+
+        const updateCanvasHash = async () => {
+            if (tool !== 'dither' || hashingCanvas) return;
+            const documentUnderTest = iframe.contentDocument;
+            const canvas = documentUnderTest?.getElementById('canvas');
+            if (!canvas?.width || !canvas?.height) return;
+
+            hashingCanvas = true;
+            try {
+                const pixels = canvas.getContext('2d', { willReadFrequently: true })
+                    .getImageData(0, 0, canvas.width, canvas.height).data;
+                const digest = await crypto.subtle.digest('SHA-256', pixels);
+                const sha256 = Array.from(
+                    new Uint8Array(digest),
+                    byte => byte.toString(16).padStart(2, '0')
+                ).join('');
+                canvasHashOutput.textContent = JSON.stringify({
+                    width: canvas.width,
+                    height: canvas.height,
+                    pattern: documentUnderTest.querySelector('input[name="pattern"]:checked')?.value,
+                    pixelSize: documentUnderTest.getElementById('pixelSize')?.value,
+                    sha256
+                });
+            } catch (error) {
+                canvasHashOutput.textContent = JSON.stringify({ error: error.message });
+            } finally {
+                hashingCanvas = false;
+            }
+        };
+
+        document.documentElement.style.setProperty('--qa-width', `${width}px`);
+        document.documentElement.style.setProperty('--qa-height', `${height}px`);
+        iframe.addEventListener('load', () => {
+            updateViewportMetrics();
+            window.setInterval(updateViewportMetrics, 250);
+            if (tool === 'dither') {
+                window.setTimeout(() => {
+                    const documentUnderTest = iframe.contentDocument;
+                    const pattern = documentUnderTest.querySelector(
+                        `input[name="pattern"][value="${CSS.escape(ditherPattern || '')}"]`
+                    );
+                    if (pattern) pattern.click();
+                    const pixelSize = documentUnderTest.getElementById('pixelSize');
+                    if (pixelSize && ditherPixelSize) {
+                        pixelSize.value = ditherPixelSize;
+                        pixelSize.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                }, 500);
+                window.setInterval(updateCanvasHash, 250);
+            }
+        });
+        iframe.src = `../${tool}/`;
+        document.title = `${tool} — ${width}×${height}`;
+    </script>
+</body>
+</html>

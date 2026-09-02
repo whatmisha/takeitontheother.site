@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { access, readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-import { ColorUtils, DialogHost } from '../../framework/src/index.js';
+import { ColorUtils, DialogHost, FileIntakeController } from '../../framework/src/index.js';
 
 const appRoot = new URL('../', import.meta.url);
 
@@ -14,11 +14,11 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
         readFile(new URL('../framework/css/othersite-styles.css', appRoot), 'utf8'),
         readFile(new URL('style.css', appRoot), 'utf8')
     ]);
-    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=g5-feedback-2';/u);
-    assert.match(adapter, /sharedCapabilities: Object\.freeze\(\['ColorUtils', 'DialogHost'\]\)/u);
+    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=g6-file-intake-1';/u);
+    assert.match(adapter, /sharedCapabilities: Object\.freeze\(\['ColorUtils', 'DialogHost', 'FileIntakeController'\]\)/u);
     assert.match(
         bridge,
-        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g5-dialog-scope-1'\) layer\(framework\);/u
+        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g6-file-intake-1'\) layer\(framework\);/u
     );
     assert.doesNotMatch(bridge, /all:\s*revert-layer/u);
     assert.match(bridge, /\.controls-panel\s*\{\s*max-height: none;/u);
@@ -33,8 +33,8 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
         html.indexOf('framework-base.css') < html.indexOf('style.css'),
         'shared CSS must load below the frozen Sticky Fingers skin'
     );
-    assert.match(html, /href="framework-base\.css\?v=g5-reset-1"/u);
-    assert.match(html, /href="style\.css\?v=g5-reset-1"/u);
+    assert.match(html, /href="framework-base\.css\?v=g6-file-intake-1"/u);
+    assert.match(html, /href="style\.css\?v=g6-file-intake-1"/u);
     assert.doesNotMatch(html, /(?:modal-overlay|\bid="helpButton")/u);
 
     assert.equal(html.match(/class="toggle-chip"/gu)?.length || 0, 9);
@@ -59,7 +59,16 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
         'Sticky Fingers must retain only semantic action variants locally'
     );
     assert.match(styleWithoutComments, /\.btn-export-settings,\s*\.btn-import-settings\s*\{/u);
-    assert.match(styleWithoutComments, /\.export-group-right\s*\{/u);
+    assert.doesNotMatch(
+        styleWithoutComments,
+        /\.export-group-right\s*\{/u,
+        'Sticky retired its centered-bar grouping after adopting ActionDock slots'
+    );
+    assert.match(
+        html,
+        /action-dock__slot--utility[\s\S]*?id="exportSettingsBtn"[\s\S]*?id="importSettingsBtn"[\s\S]*?action-dock__slot--primary[\s\S]*?id="exportPdfBtn"[\s\S]*?id="generateAllStickersBtn"[\s\S]*?id="exportCurrentSvgBtn"[\s\S]*?id="exportAllSvgBtn"[\s\S]*?action-dock__slot--options[\s\S]*?id="convertToOutlinesCheckbox"[\s\S]*?id="prepressCheckbox"/u,
+        'Sticky must separate preset utilities, PDF/SVG exports and export options in ActionDock'
+    );
     for (const selector of [
         /(?:^|\})\s*\.toggle-chip(?:\s|:|\{)/u,
         /(?:^|\})\s*\.(?:checkbox-label|segmented-control)(?:\s|:|\{)/u,
@@ -106,10 +115,10 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
     assert.match(html, /id="presetDropdownToggle" type="button"[\s\S]*?aria-controls="presetDropdownMenu"/u);
 
     for (const [source, expectedImport] of [
-        ['script.js', "./src/framework/FrameworkAdapter.js?v=g5-feedback-2"],
-        ['src/ui/ColorPicker.js', "../framework/FrameworkAdapter.js?v=g5-feedback-2"],
-        ['src/core/GridGenerator.js', "../framework/FrameworkAdapter.js?v=g5-feedback-2"],
-        ['src/elements/ElementsNavigator.js', "../framework/FrameworkAdapter.js?v=g5-feedback-2"]
+        ['script.js', "./src/framework/FrameworkAdapter.js?v=g6-file-intake-1"],
+        ['src/ui/ColorPicker.js', "../framework/FrameworkAdapter.js?v=g6-file-intake-1"],
+        ['src/core/GridGenerator.js', "../framework/FrameworkAdapter.js?v=g6-file-intake-1"],
+        ['src/elements/ElementsNavigator.js', "../framework/FrameworkAdapter.js?v=g6-file-intake-1"]
     ]) {
         assert.equal(
             (await readFile(new URL(source, appRoot), 'utf8'))
@@ -121,6 +130,7 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
     assert.equal(ColorUtils.rgbToHex(130, 169, 217), '#82a9d9');
     assert.equal(ColorUtils.getContrastColor('#ffffff'), '#000000');
     assert.equal(typeof DialogHost, 'function');
+    assert.equal(typeof FileIntakeController, 'function');
     await assert.rejects(
         access(new URL('src/utils/ColorUtils.js', appRoot)),
         error => error?.code === 'ENOENT'
@@ -219,7 +229,7 @@ test('Google Sheets remains explicit user-initiated external functionality', asy
     assert.match(script, /https:\/\/docs\.google\.com\/spreadsheets/u);
     assert.match(html, /id="loadDataBtn"/u);
     assert.match(html, /id="googleSheetsUrl"/u);
-    assert.match(html, /src="script\.js\?v=g5-feedback-3"/u);
+    assert.match(html, /src="script\.js\?v=g6-file-intake-1"/u);
     assert.match(
         html,
         /id="dataStatus" class="data-status" role="status" aria-live="polite" aria-atomic="true"/u

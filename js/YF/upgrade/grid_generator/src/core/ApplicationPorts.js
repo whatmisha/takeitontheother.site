@@ -119,6 +119,9 @@ export function createObjectEditorPort(application) {
         set initialBlockState(value) { application.initialBlockState = value; },
         get uploadedSvgData() { return application.uploadedSvgData; },
         set uploadedSvgData(value) { application.uploadedSvgData = value; },
+        syncGraphicsFileIntake: (state, options) => (
+            application.graphicsEditorEventController?.syncFileIntakeState(state, options)
+        ),
         columnsToMm: bind(application, 'columnsToMm'),
         getBlockY: bind(application, 'getBlockY'),
         getStateSnapshot: bind(application, 'getStateSnapshot'),

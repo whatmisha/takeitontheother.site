@@ -56,9 +56,11 @@ assert.match(stickyBridge, /\.controls-panel\s*\{\s*max-height:\s*none;/u,
 const ditherBridge = await read('dither/framework-base.css');
 assert.doesNotMatch(ditherBridge, /all:\s*revert-layer/u,
     'Dither reset promotions returned');
+assert.doesNotMatch(ditherBridge, /\.bottom-buttons\s*\{/u,
+    'Dither private left action anchor returned');
 assert.match(ditherBridge,
-    /\.bottom-buttons\s*\{[\s\S]*?left:\s*var\(--spacing-3xl\);[\s\S]*?transform:\s*none;/u,
-    'Dither raster-safe action anchor changed');
+    /\.dither-action-dock\s*\{\s*z-index:\s*1000;\s*\}/u,
+    'Dither modal/action stacking extension changed');
 const pulsarBridge = await read('pulsar_coder/pulsar-styles.css');
 assert.doesNotMatch(pulsarBridge, /all:\s*revert-layer/u,
     'Pulsar reset promotions returned');

@@ -1,4 +1,5 @@
 let ColorUtils;
+let FileIntakeController;
 let OverlayDialogHost;
 let PanelManager;
 
@@ -120,6 +121,7 @@ class DitheringTool {
             closeButtonId: 'modalClose',
             triggerId: 'helpButton'
         }).init();
+        this.initFileIntakes();
         this.initEventListeners();
         this.panelManager = new PanelManager();
         this.panelManager.registerPanel('controlsPanel', {
@@ -400,32 +402,6 @@ class DitheringTool {
     }
     
     initEventListeners() {
-        // File input
-        this.dom.imageInput.addEventListener('change', (e) => this.handleFileSelect(e));
-        
-        // Sample input
-        this.dom.sampleInput.addEventListener('change', (e) => this.handleSampleSelect(e));
-        
-        // Drag and drop
-        const canvasContainer = document.querySelector('.canvas-container');
-        canvasContainer.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            canvasContainer.classList.add('dragover');
-        });
-        
-        canvasContainer.addEventListener('dragleave', () => {
-            canvasContainer.classList.remove('dragover');
-        });
-        
-        canvasContainer.addEventListener('drop', (e) => {
-            e.preventDefault();
-            canvasContainer.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) {
-                this.loadImage(file);
-            }
-        });
-        
         // Preprocessing controls
         this.addSliderListener('grain', (val) => parseInt(val));
         this.addSliderListener('gamma', (val) => parseFloat(val));
@@ -598,27 +574,6 @@ class DitheringTool {
             this.dom.resetTransform.addEventListener('click', () => this.resetTransform());
         }
         
-        // Upload buttons (replaced inline onclick handlers)
-        const uploadBtnFixed = document.getElementById('uploadBtnFixed');
-        if (uploadBtnFixed) {
-            uploadBtnFixed.addEventListener('click', () => this.dom.imageInput.click());
-        }
-        
-        const uploadSampleBtn = document.getElementById('uploadSampleBtn');
-        if (uploadSampleBtn) {
-            uploadSampleBtn.addEventListener('click', () => this.dom.sampleInput.click());
-        }
-        
-        // Remove image button
-        if (this.dom.removeImageBtn) {
-            this.dom.removeImageBtn.addEventListener('click', () => this.removeImage());
-        }
-        
-        // Remove sample button
-        if (this.dom.removeSampleBtn) {
-            this.dom.removeSampleBtn.addEventListener('click', () => this.removeSample());
-        }
-        
         // Position X slider
         if (this.dom.positionXSlider) {
             this.dom.positionXSlider.addEventListener('input', (e) => {
@@ -668,13 +623,50 @@ class DitheringTool {
             }
             if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
                 e.preventDefault();
-                this.dom.imageInput.click();
+                this.imageFileIntake.open();
             }
             if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
                 e.preventDefault();
-                this.dom.sampleInput.click();
+                this.sampleFileIntake.open();
             }
         });
+    }
+
+    initFileIntakes() {
+        this.imageFileIntake = new FileIntakeController({
+            input: this.dom.imageInput,
+            trigger: 'uploadBtnFixed',
+            dropzone: document.querySelector('.canvas-container'),
+            status: 'imageInputStatus',
+            removeButton: this.dom.removeImageBtn,
+            accept: 'image/*',
+            initialState: 'ready',
+            initialStatus: 'Default image loaded.',
+            typeErrorText: 'Choose a supported image file.',
+            errorText: 'Could not load this image.',
+            onSelect: async file => {
+                await this.loadImage(file);
+                return { statusText: file.name };
+            },
+            onRemove: () => this.removeImage()
+        }).init();
+
+        this.sampleFileIntake = new FileIntakeController({
+            input: this.dom.sampleInput,
+            trigger: 'uploadSampleBtn',
+            status: 'sampleInputStatus',
+            removeButton: this.dom.removeSampleBtn,
+            accept: 'image/*',
+            initialState: 'ready',
+            initialStatus: 'Default layout loaded.',
+            typeErrorText: 'Choose a supported image file.',
+            errorText: 'Could not load this layout image.',
+            onSelect: async file => {
+                await this.loadSampleImage(file);
+                return { statusText: file.name };
+            },
+            onRemove: () => this.removeSample()
+        }).init();
     }
     
     openModal() {
@@ -1645,61 +1637,41 @@ class DitheringTool {
         }
     }
     
-    handleFileSelect(event) {
-        const file = event.target.files[0];
-        if (file) {
-            this.loadImage(file);
-            event.target.value = ''; // Reset input to allow reloading the same file
-        }
-    }
-    
     loadImage(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-                this.originalImage = img;
-                this.cache.processedImage = null;
-                this.updateCanvasSize();
-                // Enable export button and show remove button
-                if (this.dom.exportBtn) {
-                    this.dom.exportBtn.disabled = false;
-                }
-                if (this.dom.removeImageBtn) {
-                    this.dom.removeImageBtn.classList.add('visible');
-                }
-                this.applyEffects();
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-    
-    handleSampleSelect(event) {
-        const file = event.target.files[0];
-        if (file) {
-            this.loadSampleImage(file);
-            event.target.value = ''; // Reset input to allow reloading the same file
-        }
+        return this.decodeImageFile(file).then((img) => {
+            this.originalImage = img;
+            this.cache.processedImage = null;
+            this.updateCanvasSize();
+            if (this.dom.exportBtn) this.dom.exportBtn.disabled = false;
+            if (this.dom.removeImageBtn) this.dom.removeImageBtn.classList.add('visible');
+            this.applyEffects();
+            return img;
+        });
     }
     
     loadSampleImage(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-                this.sampleImage = img;
-                this.cache.processedImage = null;
-                this.updateCanvasSize();
-                // Show remove button
-                if (this.dom.removeSampleBtn) {
-                    this.dom.removeSampleBtn.classList.add('visible');
-                }
-                this.applyEffects();
+        return this.decodeImageFile(file).then((img) => {
+            this.sampleImage = img;
+            this.cache.processedImage = null;
+            this.updateCanvasSize();
+            if (this.dom.removeSampleBtn) this.dom.removeSampleBtn.classList.add('visible');
+            this.applyEffects();
+            return img;
+        });
+    }
+
+    decodeImageFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = () => reject(reader.error || new Error('Could not read image file.'));
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onerror = () => reject(new Error('Could not decode image file.'));
+                img.onload = () => resolve(img);
+                img.src = event.target.result;
             };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+            reader.readAsDataURL(file);
+        });
     }
     
     updateCanvasSize() {
@@ -2278,8 +2250,8 @@ class DitheringTool {
 
 // Initialize the tool when the page loads
 document.addEventListener('DOMContentLoaded', async () => {
-    ({ ColorUtils, OverlayDialogHost, PanelManager } = await import(
-        './js/framework/FrameworkAdapter.js?v=g6-panel-2'
+    ({ ColorUtils, FileIntakeController, OverlayDialogHost, PanelManager } = await import(
+        './js/framework/FrameworkAdapter.js?v=g6-file-intake-1'
     ));
     new DitheringTool();
 });

@@ -361,9 +361,7 @@ body,
 }
 
 .sparky-shortcut-help {
-    position: absolute;
-    right: calc(100% + var(--spacing-lg));
-    bottom: 0;
+    position: relative;
 }
 
 .sparky-shortcut-help-button {

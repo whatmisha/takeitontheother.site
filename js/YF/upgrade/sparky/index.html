@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#000000">
     <title>Lunnen Sparky — Parametric Character</title>
-    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g5-dialog-scope-1">
+    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g6-file-intake-1">
     <link id="applicationStyles" rel="stylesheet" href="./styles/sparky.css?v=g3-sparky-2">
 </head>
 <body>
@@ -239,7 +239,7 @@
                                 <div class="sparky-motion-path-actions">
                                     <button type="button" class="sparky-panel-action sparky-motion-edit-action"
                                             id="motionEditPathBtn" aria-pressed="false">Edit path</button>
-                                    <button type="button" class="sparky-panel-action sparky-motion-import-action"
+                                    <button type="button" class="sparky-panel-action sparky-motion-import-action file-intake__trigger"
                                             id="motionImportPathBtn" aria-label="Import SVG path"
                                             title="Import SVG path" data-tooltip="Import SVG path">
                                         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -249,7 +249,7 @@
                                     </button>
                                     <input type="file" id="motionImportPathInput" accept=".svg,image/svg+xml" hidden>
                                 </div>
-                                <p class="sparky-motion-import-status" id="motionImportStatus" hidden></p>
+                                <p class="sparky-motion-import-status file-intake__status" id="motionImportStatus" hidden></p>
                                 <p class="sparky-motion-editor-hint" id="motionEditorHint" hidden>
                                     Drag points and Bézier handles on the canvas.
                                 </p>
@@ -362,34 +362,38 @@
             </aside>
         </main>
 
-        <nav class="bottom-buttons" role="toolbar" aria-label="Export actions">
-            <div class="sparky-shortcut-help" id="shortcutHelp">
-                <button type="button" class="preset-toolbar-share-btn sparky-shortcut-help-button"
-                        id="shortcutHelpBtn" aria-label="Keyboard shortcuts" aria-haspopup="dialog"
-                        aria-expanded="false" aria-controls="shortcutHelpPopup">?</button>
-                <div class="sparky-shortcut-help-popup" id="shortcutHelpPopup" role="dialog"
-                     aria-label="Keyboard shortcuts" hidden>
-                    <h2>Shortcuts</h2>
-                    <ul>
-                        <li><kbd>Space</kbd><span>Play, pause or freeze focus</span></li>
-                        <li><kbd>G</kbd><span>Toggle all guides</span></li>
-                        <li><kbd>⌘ \</kbd><span>Hide or restore panels</span></li>
-                        <li><kbd>⌘ E</kbd><span>Export SVG or MP4</span></li>
-                        <li><kbd>⌘ Z</kbd><span>Undo</span></li>
-                        <li><kbd>⇧ ⌘ Z</kbd><span>Redo</span></li>
-                        <li><kbd>⌘ J</kbd><span>Export settings JSON</span></li>
-                    </ul>
+        <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Export actions">
+            <div class="action-dock__slot action-dock__slot--utility">
+                <div class="sparky-shortcut-help" id="shortcutHelp">
+                    <button type="button" class="preset-toolbar-share-btn sparky-shortcut-help-button"
+                            id="shortcutHelpBtn" aria-label="Keyboard shortcuts" aria-haspopup="dialog"
+                            aria-expanded="false" aria-controls="shortcutHelpPopup">?</button>
+                    <div class="sparky-shortcut-help-popup" id="shortcutHelpPopup" role="dialog"
+                         aria-label="Keyboard shortcuts" hidden>
+                        <h2>Shortcuts</h2>
+                        <ul>
+                            <li><kbd>Space</kbd><span>Play, pause or freeze focus</span></li>
+                            <li><kbd>G</kbd><span>Toggle all guides</span></li>
+                            <li><kbd>⌘ \</kbd><span>Hide or restore panels</span></li>
+                            <li><kbd>⌘ E</kbd><span>Export SVG or MP4</span></li>
+                            <li><kbd>⌘ Z</kbd><span>Undo</span></li>
+                            <li><kbd>⇧ ⌘ Z</kbd><span>Redo</span></li>
+                            <li><kbd>⌘ J</kbd><span>Export settings JSON</span></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
-            <div class="sparky-export-actions" id="animationExportActions">
-                <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
-                <button class="btn-fixed" id="exportSvgBtn" type="button">Export ⌘E</button>
-                <div class="sparky-export-status" id="animationExportStatus" hidden
-                     data-state="idle" aria-live="polite">
-                    <progress id="animationExportProgress" max="1" value="0"></progress>
-                    <span id="animationExportMessage">Preparing</span>
-                    <button type="button" id="animationExportCancelBtn"
-                            aria-label="Cancel export" title="Cancel export">×</button>
+            <div class="action-dock__slot action-dock__slot--primary">
+                <div class="sparky-export-actions" id="animationExportActions">
+                    <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
+                    <button class="btn-fixed" id="exportSvgBtn" type="button">Export ⌘E</button>
+                    <div class="sparky-export-status" id="animationExportStatus" hidden
+                         data-state="idle" aria-live="polite">
+                        <progress id="animationExportProgress" max="1" value="0"></progress>
+                        <span id="animationExportMessage">Preparing</span>
+                        <button type="button" id="animationExportCancelBtn"
+                                aria-label="Cancel export" title="Cancel export">×</button>
+                    </div>
                 </div>
             </div>
         </nav>
@@ -406,6 +410,6 @@
         </dialog>
     </div>
 
-    <script type="module" src="./tool.js?v=g5-feedback-1"></script>
+    <script type="module" src="./tool.js?v=g6-file-intake-1"></script>
 </body>
 </html>

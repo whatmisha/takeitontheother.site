@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sparky FileIntake QA</title>
+    <style>
+        html, body { margin: 0; width: 100%; height: 100%; background: #242424; }
+        iframe { display: block; width: 1280px; height: 720px; border: 0; }
+    </style>
+</head>
+<body>
+    <iframe title="Sparky under FileIntake test" src="../sparky/"></iframe>
+    <output id="qaResult" hidden></output>
+    <script>
+        const iframe = document.querySelector('iframe');
+        const output = document.getElementById('qaResult');
+        const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+        const waitFor = async (predicate, timeout = 6000) => {
+            const started = performance.now();
+            while (!predicate()) {
+                if (performance.now() - started > timeout) throw new Error('QA probe timed out.');
+                await wait(25);
+            }
+        };
+        const choose = (input, file) => {
+            const transfer = new DataTransfer();
+            transfer.items.add(file);
+            input.files = transfer.files;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+
+        iframe.addEventListener('load', async () => {
+            try {
+                const documentUnderTest = iframe.contentDocument;
+                await waitFor(() => documentUnderTest.getElementById('motionImportPathBtn')
+                    ?.getAttribute('aria-controls') === 'motionImportPathInput');
+                const input = documentUnderTest.getElementById('motionImportPathInput');
+                const status = documentUnderTest.getElementById('motionImportStatus');
+                const trigger = documentUnderTest.getElementById('motionImportPathBtn');
+
+                choose(input, new File([
+                    new Uint8Array(2 * 1024 * 1024 + 1)
+                ], 'too-large.svg', { type: 'image/svg+xml' }));
+                await waitFor(() => status.dataset.state === 'error');
+                const oversized = {
+                    state: status.dataset.state,
+                    text: status.textContent,
+                    inputReset: input.value === '' && input.files.length === 0
+                };
+                documentUnderTest.querySelector('#dialogButtons button')?.click();
+
+                const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'
+                    + '<path d="M0 0 L100 0 L100 100 L0 100 Z"/></svg>';
+                choose(input, new File([svg], 'motion.svg', { type: '' }));
+                await waitFor(() => status.dataset.state === 'ready');
+                const valid = {
+                    state: status.dataset.state,
+                    text: status.textContent,
+                    inputReset: input.value === '' && input.files.length === 0,
+                    visible: !status.hidden,
+                    busy: trigger.getAttribute('aria-busy')
+                };
+                output.textContent = JSON.stringify({
+                    ok: oversized.inputReset
+                        && oversized.text === 'The SVG file must be smaller than 2 MB.'
+                        && valid.inputReset
+                        && valid.visible
+                        && valid.busy === 'false'
+                        && /^Imported · \d+ points$/u.test(valid.text),
+                    oversized,
+                    valid,
+                    aria: {
+                        controls: trigger.getAttribute('aria-controls'),
+                        describedBy: trigger.getAttribute('aria-describedby'),
+                        role: status.getAttribute('role'),
+                        live: status.getAttribute('aria-live')
+                    }
+                });
+            } catch (error) {
+                output.textContent = JSON.stringify({ ok: false, error: error.message });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -7,7 +7,7 @@
     <link rel="icon" href="data:,">
     <link rel="preload" href="../framework/fonts/CoFoSans-Regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="../framework/fonts/CoFoSans-Medium.woff2" as="font" type="font/woff2" crossorigin>
-    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g6-action-dock-1">
+    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g6-file-intake-1">
     <link id="applicationStyles" rel="stylesheet" href="styles.css?v=g3-wordplayer-2">
 </head>
 <body>
@@ -225,10 +225,10 @@
                     </span>
                 </div>
                 <div class="panel-content">
-                    <section class="control-section image-load-section">
+                    <section class="control-section image-load-section file-intake">
                         <input type="file" id="imageInput" accept="image/*" hidden>
-                        <button type="button" class="btn-secondary btn-full" id="imageLoadBtn">Load image</button>
-                        <div class="file-status" id="imageStatus">default-image.avif</div>
+                        <button type="button" class="btn-secondary btn-full file-intake__trigger" id="imageLoadBtn">Load image</button>
+                        <div class="file-status file-intake__status" id="imageStatus">default-image.avif</div>
                     </section>
                     <section class="control-section">
                         <div class="control-group">
@@ -260,10 +260,10 @@
                     </span>
                 </div>
                 <div class="panel-content">
-                    <section class="control-section image-load-section">
+                    <section class="control-section image-load-section file-intake">
                         <input type="file" id="formInput" accept=".svg,image/svg+xml" hidden>
-                        <button type="button" class="btn-secondary btn-full" id="formLoadBtn">Load SVG</button>
-                        <div class="file-status" id="formStatus">default-form.svg</div>
+                        <button type="button" class="btn-secondary btn-full file-intake__trigger" id="formLoadBtn">Load SVG</button>
+                        <div class="file-status file-intake__status" id="formStatus">default-form.svg</div>
                     </section>
                     <section class="control-section forms-groups">
                         <section class="tone-param-group" role="group" aria-labelledby="formBoundaryGroupLabel">
@@ -355,6 +355,6 @@
         </dialog>
     </div>
 
-    <script type="module" src="./tool.js?v=g5-feedback-1"></script>
+    <script type="module" src="./tool.js?v=g6-file-intake-3"></script>
 </body>
 </html>

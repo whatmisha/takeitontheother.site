@@ -1,4 +1,5 @@
 import { ListenerScope } from '../core/ListenerScope.js';
+import { FileIntakeController } from '../framework/FrameworkAdapter.js';
 
 /** Owns graphics-panel events that mutate the editable graphics document. */
 export class GraphicsEditorEventController {
@@ -6,6 +7,7 @@ export class GraphicsEditorEventController {
         this.host = host;
         this.document = documentRef;
         this.listeners = new ListenerScope();
+        this.fileIntake = null;
         this.initialized = false;
     }
 
@@ -69,34 +71,32 @@ export class GraphicsEditorEventController {
     }
 
     bindFileUpload() {
-        const { fileUploadArea, svgFileInput } = this.host.dom;
-        if (fileUploadArea) {
-            this.listeners.listen(fileUploadArea, 'click', () => svgFileInput?.click());
-            this.listeners.listen(fileUploadArea, 'dragover', event => {
-                event.preventDefault();
-                event.stopPropagation();
-                fileUploadArea.classList.add('dragover');
-            });
-            this.listeners.listen(fileUploadArea, 'dragleave', event => {
-                event.preventDefault();
-                event.stopPropagation();
-                fileUploadArea.classList.remove('dragover');
-            });
-            this.listeners.listen(fileUploadArea, 'drop', event => {
-                event.preventDefault();
-                event.stopPropagation();
-                fileUploadArea.classList.remove('dragover');
-                const file = event.dataTransfer?.files?.[0];
-                if (file?.type === 'image/svg+xml') {
-                    this.host.graphicsAssetController.handleFile(file);
-                }
-            });
-        }
+        const { fileUploadArea, svgFileInput, svgFileStatus } = this.host.dom;
+        if (!fileUploadArea || !svgFileInput) return;
+        this.fileIntake = new FileIntakeController({
+            ownerDocument: this.document,
+            root: fileUploadArea,
+            input: svgFileInput,
+            trigger: fileUploadArea,
+            dropzone: fileUploadArea,
+            status: svgFileStatus,
+            accept: '.svg,image/svg+xml',
+            initialState: 'empty',
+            initialStatus: 'Click or drag & drop SVG file here',
+            typeErrorText: 'Choose an SVG file.',
+            loadingText: file => `Loading ${file.name || 'SVG'}…`,
+            errorText: error => error?.message || 'Could not load this SVG file.',
+            onSelect: async file => {
+                const block = await this.host.graphicsAssetController.handleFile(file);
+                if (!block) throw new Error('This file does not contain a valid SVG.');
+                const text = svgFileStatus?.textContent || `✓ ${file.name}`;
+                return { block, statusText: text };
+            }
+        }).init();
+    }
 
-        this.listeners.listen(svgFileInput, 'change', event => {
-            const file = event.target.files?.[0];
-            if (file) this.host.graphicsAssetController.handleFile(file);
-        });
+    syncFileIntakeState(state, { text = null, preserveText = false } = {}) {
+        this.fileIntake?.setState(state, { text, preserveText });
     }
 
     bindObjectActions() {
@@ -196,6 +196,8 @@ export class GraphicsEditorEventController {
     }
 
     dispose() {
+        this.fileIntake?.destroy();
+        this.fileIntake = null;
         return this.listeners.dispose();
     }
 }

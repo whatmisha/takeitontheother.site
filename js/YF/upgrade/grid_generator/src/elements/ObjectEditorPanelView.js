@@ -53,6 +53,11 @@ export class ObjectEditorPanelView {
             graphicsHeightInput: '3.00'
         }).forEach(([key, value]) => this.setValue(dom[key], value));
         this.setChecked(dom.graphicsLockPositionToggle, false);
+        const placeholder = dom.fileUploadArea?.querySelector('.upload-placeholder p');
+        if (placeholder) placeholder.textContent = 'Click or drag & drop SVG file here';
+        this.host.syncGraphicsFileIntake?.('empty', {
+            text: 'Click or drag & drop SVG file here'
+        });
         this.document.getElementById('graphicsHideBtn')?.style.setProperty('display', 'none');
         this.document.getElementById('graphicsDeleteBtn')?.style.setProperty('display', 'none');
     }
@@ -82,7 +87,9 @@ export class ObjectEditorPanelView {
         if (dom.fileUploadArea) {
             dom.fileUploadArea.style.display = 'block';
             const placeholder = dom.fileUploadArea.querySelector('.upload-placeholder p');
-            if (placeholder) placeholder.textContent = `Current: ${block.name || 'Graphic'} — Upload new SVG to replace`;
+            const text = `Current: ${block.name || 'Graphic'} — Upload new SVG to replace`;
+            if (placeholder) placeholder.textContent = text;
+            this.host.syncGraphicsFileIntake?.('ready', { text });
         }
         const hideButton = this.document.getElementById('graphicsHideBtn');
         const deleteButton = this.document.getElementById('graphicsDeleteBtn');
@@ -97,7 +104,9 @@ export class ObjectEditorPanelView {
         if (dom.fileUploadArea) {
             dom.fileUploadArea.style.display = 'block';
             const placeholder = dom.fileUploadArea.querySelector('.upload-placeholder p');
-            if (placeholder) placeholder.textContent = 'Click or drag & drop SVG file here';
+            const text = 'Click or drag & drop SVG file here';
+            if (placeholder) placeholder.textContent = text;
+            this.host.syncGraphicsFileIntake?.('empty', { text });
         }
         if (dom.graphicsPanelTitle) dom.graphicsPanelTitle.textContent = 'Add Graphics';
     }

@@ -1,11 +1,11 @@
-import { defineTool } from '../framework/src/index.js?v=g5-feedback-1';
+import { defineTool, FileIntakeController } from '../framework/src/index.js?v=g6-file-intake-1';
 import { DEFAULT_SETTINGS, SLIDER_DEFINITIONS } from './src/config/defaults.js';
 import { WordplayerExporter } from './src/export/exporters.js';
-import { AssetController } from './src/io/assets.js';
+import { AssetController } from './src/io/assets.js?v=g6-file-intake-2';
 import { DitherEngine } from './src/modes/dither.js';
 import { FormsEngine } from './src/modes/forms.js';
 import { drawScene } from './src/render/canvas-renderer.js';
-import { normalizeMode, WordplayerUI } from './src/ui/controls.js';
+import { normalizeMode, WordplayerUI } from './src/ui/controls.js?v=g6-file-intake-1';
 
 let app = null;
 let currentScene = null;
@@ -13,7 +13,12 @@ const ditherEngine = new DitherEngine(() => app?.renderNow());
 const formsEngine = new FormsEngine(() => app?.renderNow());
 const exporter = new WordplayerExporter();
 const assets = new AssetController({ ditherEngine, formsEngine, getApp: () => app });
-const ui = new WordplayerUI({ assets, exporter, getScene: () => currentScene });
+const ui = new WordplayerUI({
+    assets,
+    exporter,
+    getScene: () => currentScene,
+    FileIntakeController
+});
 
 function snapshot(appInstance) {
     return { settings: appInstance.settingsStore.toObject() };

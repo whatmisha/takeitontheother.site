@@ -32,6 +32,15 @@ function imageFromUrl(url) {
     });
 }
 
+function readFile(file, method) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error(`Could not read ${file.name || 'this file'}.`));
+        reader[method](file);
+    });
+}
+
 export class AssetController {
     constructor({ ditherEngine, formsEngine, getApp }) {
         this.ditherEngine = ditherEngine;
@@ -58,25 +67,28 @@ export class AssetController {
         this.getApp()?.renderNow();
     }
 
-    loadImageFile(file) {
+    async loadImageFile(file) {
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-            void this.loadImageUrl(String(reader.result), file.name).catch((error) => this.showError('Image', error));
-        };
-        reader.readAsDataURL(file);
+        await this.loadImageUrl(String(await readFile(file, 'readAsDataURL')), file.name);
     }
 
     async loadFormText(svgText, label = 'default-form.svg') {
         const normalized = normalizeFormSvg(svgText);
         if (!normalized) throw new Error('Could not read this SVG.');
+        const formKey = `svg:${hashString(normalized)}`;
+        if (this.formsEngine.formImage && this.formsEngine.formKey === formKey) {
+            this.formLabel = label;
+            this.syncLabels();
+            this.getApp()?.renderNow();
+            return;
+        }
         const version = ++this.formVersion;
         const blobUrl = URL.createObjectURL(new Blob([normalized], { type: 'image/svg+xml' }));
         try {
             const image = await imageFromUrl(blobUrl);
             if (version !== this.formVersion) return;
             this.formLabel = label;
-            this.formsEngine.setFormImage(image, `svg:${hashString(normalized)}`);
+            this.formsEngine.setFormImage(image, formKey);
             this.syncLabels();
             this.getApp()?.renderNow();
         } finally {
@@ -90,13 +102,9 @@ export class AssetController {
         await this.loadFormText(await response.text(), label);
     }
 
-    loadFormFile(file) {
+    async loadFormFile(file) {
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-            void this.loadFormText(String(reader.result), file.name).catch((error) => this.showError('SVG form', error));
-        };
-        reader.readAsText(file);
+        await this.loadFormText(String(await readFile(file, 'readAsText')), file.name);
     }
 
     loadDefaultImage() {

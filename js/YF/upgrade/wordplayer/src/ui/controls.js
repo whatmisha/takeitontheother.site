@@ -4,10 +4,12 @@ const AVAILABLE_MODES = new Set(['dither', 'forms']);
 export const normalizeMode = (mode) => AVAILABLE_MODES.has(mode) ? mode : 'dither';
 
 export class WordplayerUI {
-    constructor({ assets, exporter, getScene }) {
+    constructor({ assets, exporter, getScene, FileIntakeController }) {
         this.assets = assets;
         this.exporter = exporter;
         this.getScene = getScene;
+        this.FileIntakeController = FileIntakeController;
+        this.fileIntakes = [];
         this.bound = false;
     }
 
@@ -137,12 +139,54 @@ export class WordplayerUI {
 
         if (typeof ResizeObserver === 'function') {
             const observer = new ResizeObserver(sync);
-            observer.observe(content);
-            if (section) observer.observe(section);
-            this.textPanelResizeObserver = observer;
+            try {
+                observer.observe(content);
+                if (section) observer.observe(section);
+                this.textPanelResizeObserver = observer;
+            } catch {
+                observer.disconnect?.();
+            }
         }
         window.addEventListener('resize', sync);
         sync();
+    }
+
+    bindFileIntakes() {
+        if (!this.FileIntakeController || this.fileIntakes.length) return;
+        const create = ({ inputId, triggerId, statusId, ...options }) => {
+            const input = document.getElementById(inputId);
+            const controller = new this.FileIntakeController({
+                input,
+                trigger: document.getElementById(triggerId),
+                status: document.getElementById(statusId),
+                root: input?.closest('.file-intake'),
+                dropzone: input?.closest('.file-intake'),
+                initialState: 'ready',
+                ...options
+            }).init();
+            this.fileIntakes.push(controller);
+        };
+
+        create({
+            inputId: 'imageInput',
+            triggerId: 'imageLoadBtn',
+            statusId: 'imageStatus',
+            accept: 'image/*',
+            typeErrorText: 'Choose an image file.',
+            errorText: () => 'Could not load this image.',
+            onSelect: file => this.assets.loadImageFile(file),
+            onError: error => this.assets.showError('Image', error)
+        });
+        create({
+            inputId: 'formInput',
+            triggerId: 'formLoadBtn',
+            statusId: 'formStatus',
+            accept: '.svg,image/svg+xml',
+            typeErrorText: 'Choose an SVG file.',
+            errorText: () => 'Could not load this SVG.',
+            onSelect: file => this.assets.loadFormFile(file),
+            onError: error => this.assets.showError('SVG form', error)
+        });
     }
 
     bind(app) {
@@ -171,18 +215,7 @@ export class WordplayerUI {
             app.settingsStore.subscribe(key, () => this.syncPixelControls(app.settings));
         });
 
-        const imageInput = document.getElementById('imageInput');
-        document.getElementById('imageLoadBtn')?.addEventListener('click', () => imageInput?.click());
-        imageInput?.addEventListener('change', (event) => {
-            this.assets.loadImageFile(event.target.files?.[0]);
-            event.target.value = '';
-        });
-        const formInput = document.getElementById('formInput');
-        document.getElementById('formLoadBtn')?.addEventListener('click', () => formInput?.click());
-        formInput?.addEventListener('change', (event) => {
-            this.assets.loadFormFile(event.target.files?.[0]);
-            event.target.value = '';
-        });
+        this.bindFileIntakes();
 
         const pngButton = document.getElementById('exportPngBtn');
         pngButton?.addEventListener('click', () => {

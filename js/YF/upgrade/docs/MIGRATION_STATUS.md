@@ -117,13 +117,15 @@
 | UPG-058g | Legacy CSS cleanup gate | Complete | every remaining app delta has owner/reason/removal condition; 8/8 live entrypoints complete with visible output and 0 browser errors; Pizza source/public 14-asset runtime, isolation and full Gate G4 pass |
 | UPG-059 | Gate G5 | Complete | `gate:g5:static` passes: 8 hub links, 8 shared CSS + 8 shared JS boundaries, 0 resets/promotions, owned app deltas, accepted Sparky desktop/390×844/430×932, full G4/isolation/app suites |
 | UPG-060 | Общий PanelShell/summary и Dither panel redesign | Complete | 2 native collapse buttons; app summaries; shared clamp/stack/header; clean browser smoke; exact G5/G6 SHA-256 for Default/Bayer/Pixel4; Gate G5 pass |
+| UPG-061 | Трёхслотовый ActionDock | Complete | all 8 consumers use shared slots and pass static/domain/browser acceptance; Sparky mobile reaccepted; Dither default/Bayer/Pixel4 raw-RGBA hashes exact |
+| UPG-062 | FileIntake | Complete | 14/14 surfaces in six tools use the shared controller; 0 added to Wander/Pulsar; 6 component tests + machine contract; private parsers/history and Sticky Sheets retained; Wordplayer/Pizza/Sparky/Dither browser probes, Sparky mobile and Dither hashes pass; full Gate G5 green |
 
 ## Подтверждённые исходные результаты
 
 | Проект | Результат |
 |---|---|
-| Shared framework | 43/43 tests pass; range, toggle, preset, action and feedback contracts are part of Gate G4 |
-| Pizza Boxer top-level | 167/167 tests pass (165 original + JS/CSS boundary); source/public runtime checks pass |
+| Shared framework | 49/49 tests pass; range, toggle, preset, action, feedback and FileIntake contracts pass |
+| Pizza Boxer top-level | 169/169 tests pass; source/public 14-asset runtime checks pass |
 | Pizza Boxer `v2` donor | 221/222; один failure в Node test mock без `requestAnimationFrame` |
 | Sparky | 196/196 tests pass (195 исходных + shared-framework boundary) |
 | Wordplayer | Shared-framework boundary, Dither worker и Forms worker tests pass |
@@ -154,6 +156,8 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-План UPG-000—UPG-060 выполнен. Gate G6 продолжается по плану
-`G6_INTERFACE_UNIFICATION_PLAN.md`. Следующий шаг — UPG-061: определить общий
-трёхслотовый ActionDock и пройти canary на Wander без изменения export pipeline.
+План UPG-000—UPG-062 выполнен. FileIntake раскатан на 14 file surfaces в шести
+инструментах без переноса private parser/schema/history/render logic во
+framework; Sticky Google Sheets сохранён отдельно. Новый `check:file-intake`
+включён в Gate G5, все app suites и браузерные проверки проходят. Работа
+намеренно остановлена: UPG-063 не начат.

@@ -3,16 +3,18 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 const appRoot = fileURLToPath(new URL('../', import.meta.url));
-const [toolSource, htmlSource, stylesSource, frameworkStylesSource] = await Promise.all([
+const [toolSource, htmlSource, stylesSource, frameworkStylesSource, controlsSource, assetsSource] = await Promise.all([
     readFile(new URL('../tool.js', import.meta.url), 'utf8'),
     readFile(new URL('../index.html', import.meta.url), 'utf8'),
     readFile(new URL('../styles.css', import.meta.url), 'utf8'),
-    readFile(new URL('../../framework/css/othersite-styles.css', import.meta.url), 'utf8')
+    readFile(new URL('../../framework/css/othersite-styles.css', import.meta.url), 'utf8'),
+    readFile(new URL('../src/ui/controls.js', import.meta.url), 'utf8'),
+    readFile(new URL('../src/io/assets.js', import.meta.url), 'utf8')
 ]);
 
 assert.match(
     toolSource,
-    /import\s*\{\s*defineTool\s*\}\s*from\s*['"]\.\.\/framework\/src\/index\.js\?v=g5-feedback-1['"];/,
+    /import\s*\{\s*defineTool,\s*FileIntakeController\s*\}\s*from\s*['"]\.\.\/framework\/src\/index\.js\?v=g6-file-intake-1['"];/,
     'Wordplayer must consume the shared framework through its public barrel'
 );
 assert.doesNotMatch(
@@ -32,7 +34,8 @@ const frameworkCss = htmlSource.indexOf('../framework/css/othersite-styles.css')
 const applicationCss = htmlSource.indexOf('href="styles.css');
 assert.ok(frameworkCss >= 0, 'shared framework stylesheet is missing');
 assert.ok(applicationCss > frameworkCss, 'application stylesheet must load after framework CSS');
-assert.match(htmlSource, /othersite-styles\.css\?v=g6-action-dock-1/u, 'ActionDock CSS cache boundary changed');
+assert.match(htmlSource, /othersite-styles\.css\?v=g6-file-intake-1/u, 'FileIntake CSS cache boundary changed');
+assert.match(htmlSource, /tool\.js\?v=g6-file-intake-3/u, 'FileIntake JS cache boundary changed');
 assert.doesNotMatch(htmlSource, /href=["']foundation\.css["']/, 'retired local foundation CSS is still linked');
 assert.match(htmlSource, /\.\.\/framework\/fonts\/CoFoSans-Regular\.woff2/, 'shared regular CoFo font is not preloaded');
 assert.match(htmlSource, /\.\.\/framework\/fonts\/CoFoSans-Medium\.woff2/, 'shared medium CoFo font is not preloaded');
@@ -50,6 +53,25 @@ assert.match(htmlSource, /<nav class="bottom-buttons action-dock" role="toolbar"
 assert.match(htmlSource, /action-dock__slot action-dock__slot--utility[\s\S]*?\bid="introHelpBtn"/u);
 assert.match(htmlSource, /action-dock__slot action-dock__slot--primary[\s\S]*?\bid="exportPngBtn"[\s\S]*?\bid="exportSvgBtn"/u);
 assert.match(htmlSource, /action-dock__slot action-dock__slot--options[\s\S]*?\bid="transparentPngCheckbox"/u);
+assert.equal(htmlSource.match(/class="control-section image-load-section file-intake"/gu)?.length, 2);
+assert.equal(htmlSource.match(/file-intake__trigger/gu)?.length, 2);
+assert.equal(htmlSource.match(/file-intake__status/gu)?.length, 2);
+assert.match(toolSource, /FileIntakeController/u, 'Wordplayer must receive FileIntake from the public barrel');
+assert.match(toolSource, /src\/ui\/controls\.js\?v=g6-file-intake-1/u);
+assert.match(toolSource, /src\/io\/assets\.js\?v=g6-file-intake-2/u);
+assert.match(controlsSource, /new this\.FileIntakeController/u);
+assert.match(controlsSource, /dropzone:\s*input\?\.closest\('\.file-intake'\)/u);
+assert.match(controlsSource, /accept:\s*'image\/\*'/u);
+assert.match(controlsSource, /accept:\s*'\.svg,image\/svg\+xml'/u);
+assert.doesNotMatch(controlsSource, /imageInput\?\.addEventListener\('change'/u);
+assert.match(controlsSource, /catch \{\s*observer\.disconnect\?\.\(\);\s*\}/u);
+assert.match(assetsSource, /async loadImageFile\(file\)/u);
+assert.match(assetsSource, /async loadFormFile\(file\)/u);
+assert.match(
+    assetsSource,
+    /this\.formsEngine\.formImage && this\.formsEngine\.formKey === formKey/u,
+    'same-content Forms SVG imports must preserve the current deterministic geometry'
+);
 assert.match(
     frameworkStylesSource,
     /\.panel-header span:first-child\s*\{[^}]*font-weight:\s*500;[^}]*font-size:\s*0\.9rem;/su,

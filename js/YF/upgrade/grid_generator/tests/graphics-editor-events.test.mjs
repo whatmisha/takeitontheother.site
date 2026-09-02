@@ -7,7 +7,15 @@ class FakeElement {
     constructor(values = {}) {
         Object.assign(this, values);
         this.listeners = new Map();
+        this.attributes = new Map();
         this.style ||= {};
+        this.dataset ||= {};
+        const classes = new Set();
+        this.classList ||= {
+            add: value => classes.add(value),
+            remove: value => classes.delete(value),
+            contains: value => classes.has(value)
+        };
     }
 
     addEventListener(type, callback) {
@@ -16,11 +24,26 @@ class FakeElement {
         this.listeners.set(type, callbacks);
     }
 
+    removeEventListener(type, callback) {
+        const callbacks = this.listeners.get(type) || [];
+        this.listeners.set(type, callbacks.filter(candidate => candidate !== callback));
+    }
+
+    setAttribute(name, value) { this.attributes.set(name, String(value)); }
+    getAttribute(name) { return this.attributes.get(name) ?? null; }
+    contains(target) { return target === this; }
+    click() { this.clickCount = (this.clickCount || 0) + 1; }
+
     dispatch(type, event = {}) {
         event.target ||= this;
+        event.preventDefault ||= function preventDefault() { this.defaultPrevented = true; };
+        event.stopPropagation ||= function stopPropagation() { this.propagationStopped = true; };
         for (const callback of this.listeners.get(type) || []) callback(event);
+        return event;
     }
 }
+
+const settle = () => new Promise(resolve => setTimeout(resolve, 0));
 
 function createHost(block, dom = {}) {
     const calls = [];
@@ -148,4 +171,45 @@ test('graphics size-mode conversion uses the selected surface own grid', () => {
     assert.equal(heightInput.value, '3.00');
     assert.deepEqual(convertedSurfaces, ['left', 'left']);
     assert.equal(calls.filter(call => call === 'commit').length, 2);
+});
+
+test('graphics SVG FileIntake accepts extension-only drops and rejects other files', async () => {
+    const block = { id: 'graphic' };
+    const zone = new FakeElement({ tagName: 'DIV' });
+    const input = new FakeElement({ tagName: 'INPUT', id: 'svgFileInput', files: [], value: '' });
+    const status = new FakeElement({ tagName: 'P', id: 'svgFileStatus', textContent: '' });
+    const { host } = createHost(block, {
+        fileUploadArea: zone,
+        svgFileInput: input,
+        svgFileStatus: status
+    });
+    const handled = [];
+    host.graphicsAssetController = {
+        handleFile: async file => {
+            handled.push(file.name);
+            status.textContent = `✓ ${file.name}`;
+            return block;
+        }
+    };
+    const controller = new GraphicsEditorEventController(host, {
+        documentRef: { getElementById: () => null }
+    });
+    controller.init();
+
+    zone.dispatch('drop', {
+        dataTransfer: { files: [{ name: 'wrong.json', type: 'application/json', size: 10 }] }
+    });
+    await settle();
+    assert.deepEqual(handled, []);
+    assert.equal(status.dataset.fileState, 'error');
+
+    zone.dispatch('drop', {
+        dataTransfer: { files: [{ name: 'mark.svg', type: '', size: 20 }] }
+    });
+    await settle();
+    assert.deepEqual(handled, ['mark.svg']);
+    assert.equal(status.dataset.fileState, 'ready');
+    assert.equal(status.textContent, '✓ mark.svg');
+    controller.dispose();
+    assert.equal(input.listeners.get('change')?.length || 0, 0);
 });

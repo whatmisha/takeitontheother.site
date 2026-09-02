@@ -521,10 +521,11 @@ export class GridGenerator {
 
     async importSettings(file) {
         try {
-            await this.presetApplicationController.importFile(file);
+            return await this.presetApplicationController.importFile(file);
         } catch (error) {
             console.error('❌ Failed to import settings:', error);
             this.errorPresenter.show(error, { title: 'Import failed' });
+            throw error;
         }
     }
 

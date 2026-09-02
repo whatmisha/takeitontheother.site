@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dither FileIntake QA</title>
+    <style>
+        html, body { margin: 0; width: 100%; height: 100%; background: #242424; }
+        iframe { display: block; width: 1280px; height: 860px; border: 0; }
+    </style>
+</head>
+<body>
+    <iframe title="Dither under FileIntake test" src="../dither/"></iframe>
+    <output id="qaResult" hidden></output>
+    <script>
+        const iframe = document.querySelector('iframe');
+        const output = document.getElementById('qaResult');
+        const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+        const hashCanvas = async (documentUnderTest) => {
+            const canvas = documentUnderTest.getElementById('canvas');
+            const pixels = canvas.getContext('2d', { willReadFrequently: true })
+                .getImageData(0, 0, canvas.width, canvas.height).data;
+            const digest = await crypto.subtle.digest('SHA-256', pixels);
+            return Array.from(
+                new Uint8Array(digest),
+                byte => byte.toString(16).padStart(2, '0')
+            ).join('');
+        };
+        const choose = async (documentUnderTest, inputId, file, expectedState) => {
+            const input = documentUnderTest.getElementById(inputId);
+            const transfer = new DataTransfer();
+            transfer.items.add(file);
+            input.files = transfer.files;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            for (let attempt = 0; attempt < 40; attempt += 1) {
+                await wait(50);
+                const status = documentUnderTest.getElementById(`${inputId}Status`);
+                if (status?.dataset.state === expectedState) {
+                    return {
+                        state: status.dataset.state,
+                        text: status.textContent,
+                        inputReset: input.value === '' && input.files.length === 0,
+                        hash: await hashCanvas(documentUnderTest)
+                    };
+                }
+            }
+            throw new Error(`${inputId} did not reach ${expectedState}`);
+        };
+
+        iframe.addEventListener('load', async () => {
+            try {
+                await wait(1000);
+                const documentUnderTest = iframe.contentDocument;
+                const baseline = await hashCanvas(documentUnderTest);
+                const imageBlob = await (await fetch('../dither/images/sample_image_01.jpg')).blob();
+                const sampleBlob = await (await fetch('../dither/images/sample_image_02.png')).blob();
+                const imageFile = new File([imageBlob], 'sample_image_01.jpg', { type: imageBlob.type });
+                const sampleFile = new File([sampleBlob], 'sample_image_02.png', { type: sampleBlob.type });
+                const imageRuns = [];
+                const sampleRuns = [];
+                for (let index = 0; index < 3; index += 1) {
+                    imageRuns.push(await choose(documentUnderTest, 'imageInput', imageFile, 'ready'));
+                }
+                const imageInvalid = await choose(
+                    documentUnderTest,
+                    'imageInput',
+                    new File(['not an image'], 'notes.txt', { type: 'text/plain' }),
+                    'error'
+                );
+                for (let index = 0; index < 3; index += 1) {
+                    sampleRuns.push(await choose(documentUnderTest, 'sampleInput', sampleFile, 'ready'));
+                }
+                const sampleInvalid = await choose(
+                    documentUnderTest,
+                    'sampleInput',
+                    new File(['not an image'], 'notes.txt', { type: 'text/plain' }),
+                    'error'
+                );
+                const allRuns = [...imageRuns, ...sampleRuns];
+                output.textContent = JSON.stringify({
+                    ok: allRuns.every(run => run.inputReset && run.hash === baseline)
+                        && imageInvalid.inputReset && imageInvalid.hash === baseline
+                        && sampleInvalid.inputReset && sampleInvalid.hash === baseline,
+                    baseline,
+                    imageRuns,
+                    imageInvalid,
+                    sampleRuns,
+                    sampleInvalid
+                });
+            } catch (error) {
+                output.textContent = JSON.stringify({ ok: false, error: error.message });
+            }
+        });
+    </script>
+</body>
+</html>

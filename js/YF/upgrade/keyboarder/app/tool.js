@@ -7,7 +7,11 @@
  * В интерфейсе размеры сетки — только мм, кегли (когда появятся) — только pt. Внутри геометрия
  * по-прежнему в px (= pt = 1/72″), перевод через toPx / toMm.
  */
-import { defineTool, SVGExporter } from '../../framework/src/index.js?v=g5-feedback-1';
+import {
+    defineTool,
+    FileIntakeController,
+    SVGExporter
+} from '../../framework/src/index.js?v=g6-file-intake-1';
 import { installKeyboarderPerf, perfEnabled, perfMarkStartup, perfNow, perfRecord, perfSince } from './perf.js';
 import { buildLayout, gapOf, widthInU } from './kb/grid.js';
 import { attachGuides } from './kb/guides.js';
@@ -48,6 +52,7 @@ import { analyzeSvgBlueprint, blueprintSummaryLines, selectSvgRecognitionPass } 
 const SIZE_EPS = 0.0001;
 const MIN_KEY_WIDTH_MM = 4;
 const MAX_KEY_WIDTH_MM = 80;
+const FILE_INTAKES = {};
 
 const TYPE_DEFAULTS = {
     glyphSize: 15.1999,
@@ -1348,6 +1353,7 @@ const app = defineTool({
         initFontImport(readyApp);
         initNewLayoutImport(readyApp);
         initCompensationTableEditor(readyApp);
+        installFileIntakes(readyApp);
 
         document.getElementById('exportSvgBtn')?.addEventListener('click', () => readyApp.exportSVG());
         document.getElementById('exportPngBtn')?.addEventListener('click', () => readyApp.exportPNG());
@@ -1356,29 +1362,6 @@ const app = defineTool({
         });
         document.getElementById('exportJsonBtn')?.addEventListener('click', () => {
             exportModelJSON(readyApp);
-        });
-        document.getElementById('importJsonBtn')?.addEventListener('click', () => {
-            openModelJSONPicker();
-        });
-        document.getElementById('importJsonInput')?.addEventListener('change', (e) => {
-            const file = e.target.files?.[0] || null;
-            e.target.value = '';
-            void importModelJSONFile(readyApp, file);
-        });
-        document.getElementById('newLayoutInput')?.addEventListener('change', (e) => {
-            const file = e.target.files?.[0] || null;
-            e.target.value = '';
-            void createNewLayoutFromFile(readyApp, file);
-        });
-        document.getElementById('drawingSvgInput')?.addEventListener('change', (e) => {
-            const file = e.target.files?.[0] || null;
-            e.target.value = '';
-            void createNewLayoutFromSvgFile(readyApp, file);
-        });
-        document.getElementById('fontFileInput')?.addEventListener('change', (e) => {
-            const file = e.target.files?.[0] || null;
-            e.target.value = '';
-            void importFontFile(readyApp, file);
         });
 
         document.getElementById('resetGridBtn')?.addEventListener('click', () => {
@@ -1423,14 +1406,6 @@ const app = defineTool({
         });
         document.getElementById('addLegendIconBtn')?.addEventListener('click', () => {
             addLegendElement(readyApp, 'ico');
-        });
-        document.getElementById('uploadLegendIconBtn')?.addEventListener('click', () => {
-            document.getElementById('legendIconFileInput')?.click();
-        });
-        document.getElementById('legendIconFileInput')?.addEventListener('change', (e) => {
-            const file = e.target.files?.[0] || null;
-            e.target.value = '';
-            void importLegendIconFile(readyApp, file);
         });
         document.getElementById('resetKeyColorBtn')?.addEventListener('click', () => {
             const input = document.getElementById('legendKeyColorInput');
@@ -3264,16 +3239,86 @@ function initLanguageLayerSelect(app) {
     });
 }
 
+function installFileIntakes(app) {
+    const create = (key, options) => {
+        FILE_INTAKES[key]?.destroy?.();
+        FILE_INTAKES[key] = new FileIntakeController(options).init();
+    };
+    const resultError = result => result?.error || result?.message || 'File import failed.';
+
+    create('model', {
+        input: 'importJsonInput',
+        trigger: 'importJsonBtn',
+        status: 'importJsonStatus',
+        accept: 'application/json,.json',
+        initialStatus: 'Choose a Keyboarder JSON model.',
+        typeErrorText: 'Choose a Keyboarder JSON model.',
+        onSelect: async file => {
+            await importModelJSONFile(app, file);
+            return `Imported ${file.name}`;
+        }
+    });
+    create('newLayout', {
+        input: 'newLayoutInput',
+        trigger: 'newLayoutInput',
+        status: 'newLayoutStatus',
+        accept: 'image/svg+xml,.svg,application/json,.json',
+        initialStatus: 'Choose an SVG drawing or Keyboarder JSON model.',
+        typeErrorText: 'Choose an SVG drawing or Keyboarder JSON model.',
+        onSelect: async file => {
+            const result = await createNewLayoutFromFile(app, file);
+            if (result?.ok === false) throw new Error(resultError(result));
+            return `Imported ${file.name}`;
+        }
+    });
+    create('drawing', {
+        input: 'drawingSvgInput',
+        trigger: 'drawingSvgInput',
+        status: 'drawingSvgStatus',
+        accept: 'image/svg+xml,.svg',
+        initialStatus: 'Choose an SVG factory drawing.',
+        typeErrorText: 'Choose an SVG factory drawing.',
+        onSelect: async file => {
+            const result = await createNewLayoutFromSvgFile(app, file);
+            if (result?.ok === false) throw new Error(resultError(result));
+            return `Imported ${file.name}`;
+        }
+    });
+    create('font', {
+        root: 'fontDropzone',
+        input: 'fontFileInput',
+        trigger: 'fontBrowseBtn',
+        dropzone: 'fontDropzone',
+        status: 'fontProbeStatus',
+        accept: '.ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2',
+        selectFile: files => files.find(isFontFile) || files[0] || null,
+        typeErrorText: 'Choose an OpenType font file: TTF, OTF, WOFF, or WOFF2.',
+        onSelect: async file => {
+            await importFontFile(app, file);
+            return document.getElementById('fontProbeStatus')?.textContent || file.name;
+        }
+    });
+    create('legendIcon', {
+        input: 'legendIconFileInput',
+        trigger: 'uploadLegendIconBtn',
+        status: 'legendIconStatus',
+        accept: '.svg,image/svg+xml',
+        initialStatus: 'Choose an SVG legend icon.',
+        typeErrorText: 'Choose an SVG legend icon.',
+        onSelect: async file => {
+            await importLegendIconFile(app, file);
+            return `Imported ${file.name}`;
+        }
+    });
+}
+
 function initFontImport(app) {
-    const dropzone = document.getElementById('fontDropzone');
-    const browse = document.getElementById('fontBrowseBtn');
     const reference = document.getElementById('fontReferenceBtn');
     const applySelected = document.getElementById('fontApplySelectedBtn');
     const controlSheet = document.getElementById('fontControlSheetBtn');
     const select = document.getElementById('fontSelect');
     const axes = document.getElementById('fontAxisControls');
     const instances = document.getElementById('fontInstanceControls');
-    browse?.addEventListener('click', () => openFontPicker());
     reference?.addEventListener('click', () => resetReferenceFont(app));
     applySelected?.addEventListener('click', () => applyActiveFontToSelection(app));
     controlSheet?.addEventListener('click', () => exportFontControlSheet(app));
@@ -3291,30 +3336,11 @@ function initFontImport(app) {
     instances?.addEventListener('change', (e) => {
         if (e.target.id === 'fontInstanceSelect') applyFontInstance(app, e.target.value);
     });
-    if (dropzone) {
-        for (const eventName of ['dragenter', 'dragover']) {
-            dropzone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                dropzone.classList.add('is-dragover');
-            });
-        }
-        for (const eventName of ['dragleave', 'drop']) {
-            dropzone.addEventListener(eventName, () => {
-                dropzone.classList.remove('is-dragover');
-            });
-        }
-        dropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            const files = [...(e.dataTransfer?.files || [])];
-            const file = files.find(isFontFile) || files[0] || null;
-            void importFontFile(app, file);
-        });
-    }
     syncFontImportStatus();
 }
 
 function openFontPicker() {
-    document.getElementById('fontFileInput')?.click();
+    FILE_INTAKES.font?.open();
 }
 
 function isFontFile(file) {
@@ -3444,12 +3470,14 @@ async function importFontFile(app, file) {
         FONT_REGISTRY.set(entry.id, entry);
         setActiveFontId(app, entry.id);
         app._showToast?.('Font loaded');
+        return entry;
     } catch (e) {
         await app.dialog?.alert({
             title: 'Font import failed',
             text: e?.message || 'Could not parse this font file.',
             okText: 'Close'
         });
+        throw e;
     }
 }
 
@@ -3810,7 +3838,7 @@ function newLayoutRequirementsHtml() {
 }
 
 function openNewLayoutFilePicker() {
-    document.getElementById('newLayoutInput')?.click();
+    FILE_INTAKES.newLayout?.open();
 }
 
 function openNewLayoutSvgPicker() {
@@ -5124,12 +5152,14 @@ async function importLegendIconFile(app, file) {
             requestAnimationFrame(() => commitActiveLegendElements(app, nextElements, { forceRender: true }));
         }
         app._showToast?.(`${savedIcon.name} uploaded`);
+        return savedIcon;
     } catch (e) {
         await app.dialog?.alert({
             title: 'SVG icon import failed',
             text: e?.message || 'Could not import this SVG icon.',
             okText: 'Close'
         });
+        throw e;
     }
 }
 
@@ -6753,7 +6783,7 @@ function layoutSlug(name) {
 }
 
 function openModelJSONPicker() {
-    document.getElementById('importJsonInput')?.click();
+    FILE_INTAKES.model?.open();
 }
 
 async function importModelJSONFile(app, file) {
@@ -6763,12 +6793,14 @@ async function importModelJSONFile(app, file) {
         if (app.presets?.openShared) app.presets.openShared(preset);
         else app.applyPresetBlob(preset);
         app._showToast?.('JSON imported');
+        return preset;
     } catch (e) {
         await app.dialog?.alert({
             title: 'Import failed',
             text: e?.message || 'Could not read this JSON file.',
             okText: 'Close'
         });
+        throw e;
     }
 }
 

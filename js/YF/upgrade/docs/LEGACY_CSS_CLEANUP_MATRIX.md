@@ -246,7 +246,7 @@ reset; активные dialog/overlay paths, domain output и пользова�
 
 | Delta | Owner | Причина | Условие удаления |
 |---|---|---|---|
-| Dither `.bottom-buttons` left anchor | Dither | raster tool держит actions слева, а не по центру | только вместе с принятым редизайном action bar и Canvas/export pixel proof |
+| Dither `.dither-action-dock` z-index + elevated Help | Dither | общий right options-slot не должен пересекаться с Help, а private overlay обязан оставаться поверх dock | после перевода Help/overlay на общий feedback/navigation contract и отдельного Canvas/export pixel proof |
 | Dither compact range/HSB rhythm и 1/1/2 px segmented metrics | Dither | сохраняют измеренную v1 panel geometry | после явного принятия shared rhythm с 0 changed Canvas pixels и exact panel/control records |
 | Dither Arial/legacy canvas-label/button properties | Dither | замороженная raster-safe typography и intrinsic geometry | после отдельного typography/layout canary с byte/geometry evidence |
 | Sticky `.controls-panel { max-height:none }` | Sticky Fingers | edit panels исторически выходят за viewport | только при согласованном desktop edit-layout redesign с normal/edit round-trip proof |

@@ -49,6 +49,31 @@ assert.match(
     /action-dock__slot--utility[\s\S]*?\bid=["']introHelpBtn["'][\s\S]*?action-dock__slot--primary[\s\S]*?\bid=["']exportPngBtn["'][\s\S]*?\bid=["']exportSvgBtn["'][\s\S]*?action-dock__slot--options[\s\S]*?\bid=["']transparentPngCheckbox["']/u,
     'Wordplayer must keep About/exports/Transparent in utility/primary/options slots'
 );
+assert.match(
+    bars.Keyboarder,
+    /action-dock__slot--utility[\s\S]*?\bid=["']aboutBtn["'][\s\S]*?\bid=["']verifyBtn["'][\s\S]*?\bid=["']exportJsonBtn["'][\s\S]*?\bid=["']importJsonBtn["'][\s\S]*?action-dock__slot--primary[\s\S]*?\bid=["']exportPdfBtn["'][\s\S]*?\bid=["']exportPngBtn["'][\s\S]*?\bid=["']exportSvgBtn["'][\s\S]*?action-dock__slot--options[\s\S]*?\bid=["']convertToOutlinesCheckbox["']/u,
+    'Keyboarder must keep document utilities, primary exports and Outline in their ActionDock slots'
+);
+assert.match(
+    bars['Pizza Boxer'],
+    /action-dock__slot--utility[\s\S]*?\bid=["']exportSettingsBtn["'][\s\S]*?\bid=["']importSettingsBtn["'][\s\S]*?action-dock__slot--primary[\s\S]*?\bid=["']exportPDFBtn["'][\s\S]*?\bid=["']exportBtn["'][\s\S]*?action-dock__slot--options[\s\S]*?\bid=["']convertToOutlinesCheckbox["']/u,
+    'Pizza Boxer must keep setup utilities, primary exports and Outline in their ActionDock slots'
+);
+assert.match(
+    bars['Sticky Fingers'],
+    /action-dock__slot--utility[\s\S]*?\bid=["']exportSettingsBtn["'][\s\S]*?\bid=["']importSettingsBtn["'][\s\S]*?action-dock__slot--primary[\s\S]*?\bid=["']exportPdfBtn["'][\s\S]*?\bid=["']generateAllStickersBtn["'][\s\S]*?\bid=["']exportCurrentSvgBtn["'][\s\S]*?\bid=["']exportAllSvgBtn["'][\s\S]*?action-dock__slot--options[\s\S]*?\bid=["']convertToOutlinesCheckbox["'][\s\S]*?\bid=["']prepressCheckbox["']/u,
+    'Sticky Fingers must keep preset utilities, PDF/SVG exports and options in their ActionDock slots'
+);
+assert.match(
+    bars.Sparky,
+    /action-dock__slot--utility[\s\S]*?\bid=["']shortcutHelpBtn["'][\s\S]*?action-dock__slot--primary[\s\S]*?\bid=["']animationExportActions["'][\s\S]*?\bid=["']exportPngBtn["'][\s\S]*?\bid=["']exportSvgBtn["'][\s\S]*?\bid=["']animationExportStatus["'][\s\S]*?\bid=["']animationExportCancelBtn["']/u,
+    'Sparky must keep shortcut help separate from its private export/progress lifecycle'
+);
+assert.match(
+    bars.Dither,
+    /action-dock__slot--utility[\s\S]*?\bid=["']uploadBtnFixed["'][\s\S]*?\bid=["']removeImageBtn["'][\s\S]*?\bid=["']uploadSampleBtn["'][\s\S]*?\bid=["']removeSampleBtn["'][\s\S]*?action-dock__slot--primary[\s\S]*?\bid=["']exportBtn["'][\s\S]*?action-dock__slot--options[\s\S]*?\bid=["']exportWithAlpha["'][\s\S]*?\bid=["']export2x["'][\s\S]*?\bid=["']export4x["'][\s\S]*?\bid=["']export8x["']/u,
+    'Dither must keep source actions, PNG export and raster options in their ActionDock slots'
+);
 
 const expected = {
     Sparky: {
@@ -222,19 +247,29 @@ assert.equal(localBarBase(pizzaResponsiveCss), false, 'Pizza Boxer responsive CS
 assert.equal(localButtonBase(pizzaResponsiveCss), false, 'Pizza Boxer responsive CSS reintroduced a local button base');
 assert.match(stripComments(pizzaCss), /\.btn-export-pdf\s*\{/u);
 assert.match(stripComments(pizzaCss), /\.btn-export-settings,\s*\.btn-import-settings\s*\{/u);
-assert.match(stripComments(pizzaCss), /\.export-group-right\s*\{/u);
+assert.doesNotMatch(
+    stripComments(pizzaCss),
+    /\.export-group-right\s*\{/u,
+    'Pizza Boxer retired its centered-bar grouping after adopting ActionDock slots'
+);
 assert.doesNotMatch(stripComments(stickyBridge), /all:\s*revert-layer/u,
     'Sticky Fingers must consume the canonical shared action presentation without reset promotions');
 assert.match(stripComments(stickyCss), /\.btn-export-settings,\s*\.btn-import-settings\s*\{/u);
-assert.match(stripComments(stickyCss), /\.export-group-right\s*\{/u);
+assert.doesNotMatch(
+    stripComments(stickyCss),
+    /\.export-group-right\s*\{/u,
+    'Sticky Fingers retired its centered-bar grouping after adopting ActionDock slots'
+);
 assert.match(stripComments(stickyCss), /body:not\(\.edit-mode-active\) \.edit-mode-only\s*\{/u);
 assert.doesNotMatch(stripComments(ditherBridge), /all:\s*revert-layer/u,
     'Dither must consume the shared action shell without reset promotions');
 assert.match(
     stripComments(ditherBridge),
-    /\.bottom-buttons\s*\{\s*left:\s*var\(--spacing-3xl\);\s*transform:\s*none;\s*z-index:\s*1000;\s*\}/u,
-    'Dither must retain only its private left action anchor'
+    /\.dither-action-dock\s*\{\s*z-index:\s*1000;\s*\}/u,
+    'Dither must retain only its private overlay-order extension'
 );
+assert.doesNotMatch(stripComments(ditherBridge), /\.bottom-buttons\s*\{/u,
+    'Dither must not retain its private left action anchor');
 assert.match(stripComments(ditherCss), /\.btn-remove\s*\{/u);
 assert.match(stripComments(ditherCss), /\.export-transparency-label\s*\{/u);
 assert.doesNotMatch(stripComments(pulsarBridge), /all:\s*revert-layer/u,
@@ -289,10 +324,10 @@ assert.match(ditherScript, /if \(this\.settings\.export8x\)/u);
 assert.match(ditherScript, /else if \(this\.settings\.export4x\)/u);
 assert.match(ditherScript, /else if \(this\.settings\.export2x\)/u);
 assert.match(ditherScript, /if \(this\.settings\.exportWithAlpha\)/u);
-assert.match(stripComments(ditherBridge), /\.bottom-buttons\s*\{[^}]*left:\s*var\(--spacing-3xl\);/su);
+assert.match(stripComments(ditherCss), /\.help-container\s*\{[^}]*bottom:\s*calc\(var\(--spacing-3xl\) \+ var\(--button-height\) \+ var\(--spacing-lg\)\);/su);
 
 console.log(
     `Action contract passed: 8 toolbars; ${fixedCount} btn-fixed + ${buttonCount - fixedCount} `
     + `special buttons + ${labelCount} labels = ${buttonCount + labelCount} direct controls; `
-    + '8 shared shells + 1 private Dither anchor extension; 8 private export pipelines protected.'
+    + '8 shared shells + 1 private Dither overlay-order extension; 8 private export pipelines protected.'
 );

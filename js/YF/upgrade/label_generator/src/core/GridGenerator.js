@@ -4,7 +4,7 @@
  */
 import { Settings } from './Settings.js';
 import { COLORS } from './Constants.js';
-import { ColorUtils } from '../framework/FrameworkAdapter.js?v=g5-feedback-2';
+import { ColorUtils } from '../framework/FrameworkAdapter.js?v=g6-file-intake-1';
 import { MathUtils } from '../utils/MathUtils.js';
 import { GridCalculator } from '../grid/GridCalculator.js';
 import { GridRenderer } from '../grid/GridRenderer.js';

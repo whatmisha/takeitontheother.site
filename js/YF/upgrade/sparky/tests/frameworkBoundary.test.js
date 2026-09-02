@@ -12,7 +12,7 @@ test('Sparky consumes the shared framework without surrendering private mobile a
 
     assert.match(
         toolSource,
-        /import\s*\{\s*defineTool\s*\}\s*from\s*['"]\.\.\/framework\/src\/index\.js\?v=g5-feedback-1['"];/,
+        /import\s*\{\s*defineTool\s*,\s*FileIntakeController\s*\}\s*from\s*['"]\.\.\/framework\/src\/index\.js\?v=g6-file-intake-1['"];/,
         'Sparky must consume shared infrastructure through the public barrel'
     );
     assert.doesNotMatch(toolSource, /from\s*['"]\.\/framework\//, 'Sparky runtime still imports its retired framework copy');
@@ -38,6 +38,21 @@ test('Sparky consumes the shared framework without surrendering private mobile a
         htmlSource,
         /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u,
         'Sparky back link must expose the canonical navigation contract'
+    );
+    assert.match(
+        htmlSource,
+        /othersite-styles\.css\?v=g6-file-intake-1/u,
+        'Sparky must load the ActionDock-capable shared stylesheet revision'
+    );
+    assert.match(
+        htmlSource,
+        /<nav\b[^>]*\bclass="[^"]*\baction-dock\b[^"]*"[^>]*>[\s\S]*?action-dock__slot--utility[\s\S]*?\bid="shortcutHelpBtn"[\s\S]*?action-dock__slot--primary[\s\S]*?\bid="animationExportActions"[\s\S]*?\bid="exportPngBtn"[\s\S]*?\bid="exportSvgBtn"[\s\S]*?\bid="animationExportStatus"[\s\S]*?\bid="animationExportCancelBtn"[\s\S]*?<\/nav>/u,
+        'Sparky must keep shortcut help separate from its app-owned export/progress lifecycle'
+    );
+    assert.match(
+        stylesSource,
+        /\.sparky-shortcut-help\s*\{\s*position:\s*relative;\s*\}/u,
+        'Sparky shortcut popup must anchor within the ActionDock utility slot'
     );
     assert.match(stylesSource, /\.\.\/fonts\/TT_Commons_Classic_Regular\.woff2/, 'private regular TT Commons font moved incorrectly');
     assert.match(stylesSource, /\.\.\/fonts\/TT_Commons_Classic_Medium\.woff2/, 'private medium TT Commons font moved incorrectly');
@@ -138,6 +153,8 @@ test('Sparky consumes the shared framework without surrendering private mobile a
         /id="showMotionPathToggle" hidden/u,
         'Sparky Path-only toggle visibility contract changed'
     );
+    assert.match(toolSource, /maxBytes:\s*2 \* 1024 \* 1024/u);
+    assert.match(toolSource, /new FileIntakeController\(/u);
     assert.match(toolSource, /colorPickers:\s*\{[\s\S]*?containerId:\s*'unifiedColorPickerContainer'/u);
     assert.match(
         toolSource,

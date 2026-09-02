@@ -1,4 +1,4 @@
-import { defineTool } from '../framework/src/index.js?v=g5-feedback-1';
+import { defineTool, FileIntakeController } from '../framework/src/index.js?v=g6-file-intake-1';
 import {
     DEFAULT_GEOMETRY,
     buildCharacterGeometry
@@ -928,38 +928,50 @@ function showMotionImportError(app, error) {
 function bindMotionPathImport(app) {
     const button = document.getElementById('motionImportPathBtn');
     const input = document.getElementById('motionImportPathInput');
+    const status = document.getElementById('motionImportStatus');
     if (!button || !input) return;
-    button.addEventListener('click', () => input.click());
-    input.addEventListener('change', async () => {
-        const file = input.files?.[0];
-        input.value = '';
-        if (!file) return;
-        if (file.size > 2 * 1024 * 1024) {
-            showMotionImportError(app, new Error('The SVG file must be smaller than 2 MB.'));
-            return;
+    app.motionPathFileIntake?.destroy?.();
+    app.motionPathFileIntake = new FileIntakeController({
+        root: button,
+        input,
+        trigger: button,
+        status,
+        accept: '.svg,image/svg+xml',
+        maxBytes: 2 * 1024 * 1024,
+        initialStatus: null,
+        typeErrorText: 'Choose an SVG file.',
+        sizeErrorText: 'The SVG file must be smaller than 2 MB.',
+        loadingText: file => `Importing ${file.name || 'SVG'}…`,
+        errorText: error => error?.message || 'Could not import this SVG.',
+        onReject: validation => showMotionImportError(app, new Error(validation.message)),
+        onSelect: async file => {
+            if (!await confirmMotionPathReplacement(app)) {
+                return status?.textContent || 'Current path kept';
+            }
+            try {
+                const region = createMotionPathRegion(app.settings);
+                const imported = importSvgMotionPath(await file.text(), {
+                    center: region.center,
+                    radius: region.radius,
+                    startFocus: focusAnimation.currentFocus || currentStoredFocus(app.settings),
+                    fileName: file.name
+                });
+                focusAnimation.editedPath = imported;
+                focusAnimation.manuallyEdited = true;
+                focusAnimation.editing = false;
+                focusAnimation.selectedEditorControl = null;
+                rebuildFocusAnimation(app, { restart: true, regenerate: false });
+                syncFocusAnimationControls(app);
+                app.presets?.markDirty();
+                app.history?.beginTransaction('motion-path-import');
+                app.history?.endTransaction();
+                return status?.textContent || `Imported ${file.name}`;
+            } catch (error) {
+                showMotionImportError(app, error);
+                throw error;
+            }
         }
-        if (!await confirmMotionPathReplacement(app)) return;
-        try {
-            const region = createMotionPathRegion(app.settings);
-            const imported = importSvgMotionPath(await file.text(), {
-                center: region.center,
-                radius: region.radius,
-                startFocus: focusAnimation.currentFocus || currentStoredFocus(app.settings),
-                fileName: file.name
-            });
-            focusAnimation.editedPath = imported;
-            focusAnimation.manuallyEdited = true;
-            focusAnimation.editing = false;
-            focusAnimation.selectedEditorControl = null;
-            rebuildFocusAnimation(app, { restart: true, regenerate: false });
-            syncFocusAnimationControls(app);
-            app.presets?.markDirty();
-            app.history?.beginTransaction('motion-path-import');
-            app.history?.endTransaction();
-        } catch (error) {
-            showMotionImportError(app, error);
-        }
-    });
+    }).init();
 }
 
 function bindFocusAnimation(app) {

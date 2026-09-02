@@ -1,5 +1,5 @@
 /** Shared framework foundation below Sticky Fingers' frozen application skin. */
-@import url('../framework/css/othersite-styles.css?v=g5-dialog-scope-1') layer(framework);
+@import url('../framework/css/othersite-styles.css?v=g6-file-intake-1') layer(framework);
 
 /* Parity bridge: edit-mode panels historically extend beyond the viewport. */
 .controls-panel {

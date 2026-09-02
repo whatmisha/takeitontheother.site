@@ -96,14 +96,6 @@
     color: var(--color-bg);
 }
 
-/* Export group right */
-.export-group-right {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xl);
-    margin-left: auto;
-}
-
 /* Toggle switch */
 .toggle-label {
     display: flex;

@@ -22,15 +22,16 @@ test('public barrel exports the documented framework surface', async () => {
     const source = await readFile(path.join(srcRoot, 'index.js'), 'utf8');
     const expected = [
         'ApplicationShell', 'CanvasTarget', 'ColorPicker', 'DOMCache', 'DialogHost',
-        'DicePanel', 'ExportGuard', 'GradientStrokeEffect', 'HistoryBridge', 'HistoryManager',
+        'DicePanel', 'ExportGuard', 'FileIntakeController', 'GradientStrokeEffect', 'HistoryBridge', 'HistoryManager',
         'MathUtils', 'MobileBootstrap', 'NoiseGenerator', 'OverlayDialogHost', 'PanelManager', 'PresetSession', 'PresetStore',
         'RangeSliderController', 'RenderTarget', 'SVGExporter', 'SHARED_SLOT',
         'SeededRandom', 'ShareCodec', 'ShortcutRouter', 'SliderController', 'StripeGeometry',
         'SvgTarget', 'TextToPath', 'TooltipService', 'UnifiedColorPicker',
-        'WobblyEffect', 'ZoomPanManager', 'defineTool', 'seedToUint32', 'svgDocumentString'
+        'WobblyEffect', 'ZoomPanManager', 'defineTool', 'fileMatchesAccept', 'seedToUint32', 'svgDocumentString'
     ];
     for (const name of expected) assert.ok(name in api, `Missing public export: ${name}`);
     assert.match(source, /PanelManager\.js\?v=g6-panel-1/u);
+    assert.match(source, /FileIntakeController\.js\?v=g6-file-intake-1/u);
 });
 
 test('framework source graph stays local and application-agnostic', async () => {
@@ -62,7 +63,7 @@ test('framework source graph stays local and application-agnostic', async () => 
             assert.ok(resolved.startsWith(`${frameworkRoot}${path.sep}`));
         }
     }
-    assert.equal(files.length, 37);
+    assert.equal(files.length, 38);
 });
 
 test('working CSS and exporters use checked-in same-origin assets', async () => {
@@ -101,6 +102,8 @@ test('working CSS preserves v3 provenance and documents intentional G5/G6 extens
         assert.match(working, /\.action-dock__slot--primary\s*\{[^}]*position: absolute;[^}]*left: 50%;[^}]*transform: translateX\(-50%\);/su);
         assert.match(working, /\.action-dock__slot--utility\s*\{[^}]*justify-self: start;[^}]*justify-content: flex-start;/su);
         assert.match(working, /\.action-dock__slot--options\s*\{[^}]*justify-self: end;[^}]*justify-content: flex-end;/su);
+        assert.match(working, /\.file-intake\.is-dragover\s*\{[^}]*outline: 1px dashed var\(--color-text\);/su);
+        assert.match(working, /\.file-intake__trigger\[aria-busy="true"\]\s*\{[^}]*cursor: progress;/su);
     }
 });
 

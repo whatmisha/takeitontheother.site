@@ -5,12 +5,16 @@
  * exposed here incrementally so the 10k-line application is never rewritten in
  * one migration step.
  */
-import { ColorUtils, DialogHost } from '../../../framework/src/index.js?v=g5-feedback-2';
+import {
+    ColorUtils,
+    DialogHost,
+    FileIntakeController
+} from '../../../framework/src/index.js?v=g6-file-intake-1';
 
 export const STICKY_FINGERS_FRAMEWORK_ADAPTER = Object.freeze({
     appId: 'sticky-fingers',
     mode: 'legacy-grid-facade',
-    sharedCapabilities: Object.freeze(['ColorUtils', 'DialogHost'])
+    sharedCapabilities: Object.freeze(['ColorUtils', 'DialogHost', 'FileIntakeController'])
 });
 
-export { ColorUtils, DialogHost };
+export { ColorUtils, DialogHost, FileIntakeController };

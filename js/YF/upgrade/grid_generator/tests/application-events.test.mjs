@@ -33,6 +33,35 @@ function createHost() {
     };
 }
 
+function intakeElement(tagName, id = '') {
+    const listeners = new Map();
+    const attributes = new Map();
+    return {
+        tagName: tagName.toUpperCase(),
+        id,
+        files: [],
+        value: '',
+        textContent: '',
+        dataset: {},
+        clickCount: 0,
+        addEventListener(type, listener) {
+            if (!listeners.has(type)) listeners.set(type, new Set());
+            listeners.get(type).add(listener);
+        },
+        removeEventListener(type, listener) { listeners.get(type)?.delete(listener); },
+        setAttribute(name, value) { attributes.set(name, String(value)); },
+        getAttribute(name) { return attributes.get(name) ?? null; },
+        click() { this.clickCount += 1; },
+        dispatch(type, event = {}) {
+            const payload = { target: this, ...event };
+            for (const listener of listeners.get(type) || []) listener(payload);
+        },
+        listenerCount(type) { return listeners.get(type)?.size || 0; }
+    };
+}
+
+const settle = () => new Promise(resolve => setTimeout(resolve, 0));
+
 test('export and history keyboard commands are routed through one controller', () => {
     const host = createHost();
     const activeElement = { tagName: 'INPUT', blur: () => host.calls.push('blur') };
@@ -112,4 +141,42 @@ test('delete ignores editor keystrokes and removes the selected canvas object ot
         'text-1',
         'Selected text block'
     ]);
+});
+
+test('settings import uses one reusable shared FileIntake surface', async () => {
+    const host = createHost();
+    const trigger = intakeElement('button', 'importSettingsBtn');
+    const input = intakeElement('input', 'importSettingsInput');
+    const status = intakeElement('span', 'importSettingsStatus');
+    const imported = [];
+    Object.assign(host.dom, {
+        importSettingsBtn: trigger,
+        importSettingsInput: input,
+        importSettingsStatus: status
+    });
+    host.exportController.exportPdf = () => {};
+    host.exportController.exportSettings = () => {};
+    host.importSettings = async file => imported.push(file.name);
+    const controller = new ApplicationEventController(host, { activeElement: null });
+
+    controller.bindActionButtons();
+    trigger.dispatch('click');
+    assert.equal(input.clickCount, 1);
+
+    const file = { name: 'layout.json', type: 'application/json', size: 50 };
+    input.files = [file];
+    input.value = '/fake/layout.json';
+    input.dispatch('change');
+    assert.equal(input.value, '');
+    await settle();
+    input.files = [file];
+    input.value = '/fake/layout.json';
+    input.dispatch('change');
+    await settle();
+
+    assert.deepEqual(imported, ['layout.json', 'layout.json']);
+    assert.equal(status.dataset.fileState, 'ready');
+    assert.equal(status.textContent, 'Imported layout.json');
+    controller.dispose();
+    assert.equal(input.listenerCount('change'), 0);
 });

@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Upgrade FileIntake probe</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            background: #242424;
+        }
+
+        iframe {
+            display: block;
+            width: 1280px;
+            height: 720px;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <iframe src="../wordplayer/" title="Wordplayer FileIntake canary"></iframe>
+    <output id="qaFileIntakeResult" hidden></output>
+    <script>
+        const iframe = document.querySelector('iframe');
+        const output = document.getElementById('qaFileIntakeResult');
+
+        const wait = delay => new Promise(resolve => window.setTimeout(resolve, delay));
+        const waitFor = async (predicate, timeout = 5000) => {
+            const started = performance.now();
+            while (!predicate()) {
+                if (performance.now() - started > timeout) throw new Error('QA probe timed out.');
+                await wait(50);
+            }
+        };
+        const shaCanvas = async (documentUnderTest) => {
+            const canvas = documentUnderTest.getElementById('mainCanvas');
+            const pixels = canvas.getContext('2d', { willReadFrequently: true })
+                .getImageData(0, 0, canvas.width, canvas.height).data;
+            const digest = await crypto.subtle.digest('SHA-256', pixels);
+            return Array.from(
+                new Uint8Array(digest),
+                byte => byte.toString(16).padStart(2, '0')
+            ).join('');
+        };
+        const waitForDitherIdle = windowUnderTest => waitFor(() => {
+            const engine = windowUnderTest.wordplayer?.ditherEngine;
+            return engine?.sourceImage && engine?.geometry && !engine.inFlight && !engine.pendingRequest;
+        });
+        const waitForFormsIdle = windowUnderTest => waitFor(() => {
+            const engine = windowUnderTest.wordplayer?.formsEngine;
+            return engine?.formImage && engine?.geometry && engine.geometryKey === engine.requestedKey;
+        });
+        const transferFor = (file) => {
+            const transfer = new DataTransfer();
+            transfer.items.add(file);
+            return transfer;
+        };
+        const choose = (documentUnderTest, input, file) => {
+            input.files = transferFor(file).files;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+        const drop = (zone, file) => {
+            zone.dispatchEvent(new DragEvent('drop', {
+                bubbles: true,
+                cancelable: true,
+                dataTransfer: transferFor(file)
+            }));
+        };
+        const runFlow = async ({
+            documentUnderTest,
+            windowUnderTest,
+            inputId,
+            statusId,
+            assetUrl,
+            validName,
+            validType,
+            waitForStable
+        }) => {
+            const input = documentUnderTest.getElementById(inputId);
+            const status = documentUnderTest.getElementById(statusId);
+            const zone = input.closest('.file-intake');
+            const states = [];
+            const observer = new MutationObserver(() => states.push(status.dataset.state));
+            observer.observe(status, { attributes: true, attributeFilter: ['data-state'] });
+
+            await waitForStable(windowUnderTest);
+            const before = await shaCanvas(documentUnderTest);
+            drop(zone, new File(['invalid'], 'invalid.txt', { type: 'text/plain' }));
+            await waitFor(() => status.dataset.state === 'error');
+            const invalid = {
+                state: status.dataset.state,
+                text: status.textContent,
+                canvasUnchanged: before === await shaCanvas(documentUnderTest)
+            };
+
+            const blob = await fetch(assetUrl).then((response) => {
+                if (!response.ok) throw new Error(`Could not load ${assetUrl}`);
+                return response.blob();
+            });
+            const file = new File([blob], validName, { type: validType });
+            choose(documentUnderTest, input, file);
+            await waitFor(() => status.dataset.state === 'ready' && status.textContent === validName);
+            await waitForStable(windowUnderTest);
+            await wait(250);
+            const firstHash = await shaCanvas(documentUnderTest);
+            const first = {
+                inputReset: input.value === '',
+                hash: firstHash,
+                canvasRestored: before === firstHash
+            };
+
+            choose(documentUnderTest, input, file);
+            await waitFor(() => states.filter(state => state === 'loading').length >= 2);
+            await waitFor(() => status.dataset.state === 'ready');
+            await waitForStable(windowUnderTest);
+            await wait(250);
+            const secondHash = await shaCanvas(documentUnderTest);
+            const second = {
+                inputReset: input.value === '',
+                hash: secondHash,
+                canvasRestored: before === secondHash,
+                matchesFirst: firstHash === secondHash
+            };
+            choose(documentUnderTest, input, file);
+            await waitFor(() => states.filter(state => state === 'loading').length >= 3);
+            await waitFor(() => status.dataset.state === 'ready');
+            await waitForStable(windowUnderTest);
+            await wait(250);
+            const thirdHash = await shaCanvas(documentUnderTest);
+            const third = {
+                inputReset: input.value === '',
+                hash: thirdHash,
+                matchesSecond: secondHash === thirdHash
+            };
+            observer.disconnect();
+            return { before, invalid, first, second, third, states };
+        };
+
+        iframe.addEventListener('load', async () => {
+            try {
+                const documentUnderTest = iframe.contentDocument;
+                const windowUnderTest = iframe.contentWindow;
+                await documentUnderTest.fonts?.ready;
+                await waitFor(() => documentUnderTest.getElementById('imageStatus')?.dataset.state === 'ready');
+                await wait(1500);
+                const image = await runFlow({
+                    documentUnderTest,
+                    windowUnderTest,
+                    inputId: 'imageInput',
+                    statusId: 'imageStatus',
+                    assetUrl: '../wordplayer/assets/default-image.avif',
+                    validName: 'default-image.avif',
+                    validType: 'image/avif',
+                    waitForStable: waitForDitherIdle
+                });
+                await documentUnderTest.fonts.load('400 16px "YSTextPattern"');
+                await documentUnderTest.fonts.ready;
+                const formsMode = documentUnderTest.getElementById('modeForms');
+                formsMode.checked = true;
+                formsMode.dispatchEvent(new Event('change', { bubbles: true }));
+                await waitForFormsIdle(windowUnderTest);
+                await wait(100);
+                const form = await runFlow({
+                    documentUnderTest,
+                    windowUnderTest,
+                    inputId: 'formInput',
+                    statusId: 'formStatus',
+                    assetUrl: '../wordplayer/assets/default-form.svg',
+                    validName: 'default-form.svg',
+                    validType: 'image/svg+xml',
+                    waitForStable: waitForFormsIdle
+                });
+                const flowIsStable = flow => (
+                    flow.invalid.canvasUnchanged
+                    && flow.first.inputReset
+                    && flow.first.canvasRestored
+                    && flow.second.inputReset
+                    && flow.second.canvasRestored
+                    && flow.third.inputReset
+                    && flow.second.matchesFirst
+                    && flow.third.matchesSecond
+                    && flow.states.includes('error')
+                    && flow.states.includes('loading')
+                    && flow.states.includes('ready')
+                );
+                output.textContent = JSON.stringify({
+                    ok: flowIsStable(image) && flowIsStable(form),
+                    image,
+                    form
+                });
+            } catch (error) {
+                output.textContent = JSON.stringify({ ok: false, error: error.message });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 /** Shared framework foundation below Pizza Boxer's frozen production skin. */
-@import url('../framework/css/othersite-styles.css?v=g5-dialog-scope-1') layer(framework);
+@import url('../framework/css/othersite-styles.css?v=g6-action-dock-1') layer(framework);
 
 .control-group:has(.checkbox-label) {
     margin-bottom: var(--spacing-xs);

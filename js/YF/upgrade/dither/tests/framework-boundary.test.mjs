@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import {
     DITHER_FRAMEWORK_ADAPTER,
+    FileIntakeController,
     OverlayDialogHost,
     PanelManager as AdapterPanelManager
 } from '../js/framework/FrameworkAdapter.js';
@@ -17,17 +18,23 @@ test('Dither reaches shared UI and color behavior through one public-barrel faca
         readFile(new URL('dither.js', appRoot), 'utf8')
     ]);
 
-    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=g6-panel-2';/u);
+    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=g6-file-intake-1';/u);
     assert.deepEqual(DITHER_FRAMEWORK_ADAPTER.sharedCapabilities, [
         'ColorUtils',
+        'FileIntakeController',
         'OverlayDialogHost',
         'PanelManager'
     ]);
     assert.equal(AdapterPanelManager, PanelManager);
     assert.equal(OverlayDialogHost, SharedOverlayDialogHost);
     assert.equal(typeof ColorUtils.hexToRgb, 'function');
+    assert.equal(typeof FileIntakeController, 'function');
 
-    assert.match(app, /\.\/js\/framework\/FrameworkAdapter\.js\?v=g6-panel-2/u);
+    assert.match(app, /\.\/js\/framework\/FrameworkAdapter\.js\?v=g6-file-intake-1/u);
+    assert.equal((app.match(/new FileIntakeController\(\{/gu) || []).length, 2);
+    assert.match(app, /dropzone:\s*document\.querySelector\('\.canvas-container'\)/u);
+    assert.doesNotMatch(app, /imageInput\.addEventListener\('change'/u);
+    assert.doesNotMatch(app, /sampleInput\.addEventListener\('change'/u);
     assert.match(app, /new PanelManager\(\)/u);
     assert.match(app, /this\.panelManager\.initCollapse\(\);/u);
     assert.match(app, /summaryProvider:\s*\(\) => this\.getTextureSettingsSummary\(\)/u);
@@ -53,14 +60,15 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
 
     assert.match(
         bridge,
-        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g6-panel-1'\) layer\(framework\);/u
+        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g6-file-intake-1'\) layer\(framework\);/u
     );
     assert.ok(
         html.indexOf('framework-base.css') < html.indexOf('style.css'),
         'shared CSS must load before Dither compatibility CSS'
     );
-    assert.match(html, /framework-base\.css\?v=g6-panel-1/u);
-    assert.match(html, /style\.css\?v=g6-panel-1/u);
+    assert.match(html, /framework-base\.css\?v=g6-file-intake-1/u);
+    assert.match(html, /style\.css\?v=g6-file-intake-1/u);
+    assert.match(html, /dither\.js\?v=g6-file-intake-1/u);
     assert.doesNotMatch(skin, /^\s*\*\s*\{/mu, 'Dither must consume the shared universal reset');
     assert.match(skin, /Shared-framework parity bridge/u);
     assert.match(skin, /\.main-content\s*\{\s*height: auto;\s*flex: 0 1 auto;/u);
@@ -80,8 +88,19 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
     assert.doesNotMatch(bridge, /all:\s*revert-layer/u);
     assert.match(
         bridge,
-        /\.bottom-buttons\s*\{\s*left:\s*var\(--spacing-3xl\);\s*transform:\s*none;\s*z-index:\s*1000;\s*\}/u,
-        'Dither must keep only its private left action-bar anchor'
+        /\.dither-action-dock\s*\{\s*z-index:\s*1000;\s*\}/u,
+        'Dither must keep its overlay-order extension without forking ActionDock layout'
+    );
+    assert.doesNotMatch(bridge, /\.bottom-buttons\s*\{/u, 'Dither must retire its private left action anchor');
+    assert.match(
+        html,
+        /action-dock__slot--utility[\s\S]*?id="uploadBtnFixed"[\s\S]*?id="removeImageBtn"[\s\S]*?id="uploadSampleBtn"[\s\S]*?id="removeSampleBtn"[\s\S]*?action-dock__slot--primary[\s\S]*?id="exportBtn"[\s\S]*?action-dock__slot--options[\s\S]*?id="exportWithAlpha"[\s\S]*?id="export2x"[\s\S]*?id="export4x"[\s\S]*?id="export8x"/u,
+        'Dither must separate source actions, PNG export and raster options in ActionDock'
+    );
+    assert.match(
+        skinWithoutComments,
+        /\.help-container\s*\{[^}]*bottom:\s*calc\(var\(--spacing-3xl\) \+ var\(--button-height\) \+ var\(--spacing-lg\)\);/su,
+        'Dither help must clear the right-side export options'
     );
     assert.doesNotMatch(
         skinWithoutComments,

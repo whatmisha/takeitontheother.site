@@ -12,8 +12,8 @@
     <meta property="og:type" content="website">
     
     <title>Dither - Image Dithering Tool</title>
-    <link rel="stylesheet" href="framework-base.css?v=g6-panel-1">
-    <link rel="stylesheet" href="style.css?v=g6-panel-1">
+    <link rel="stylesheet" href="framework-base.css?v=g6-file-intake-1">
+    <link rel="stylesheet" href="style.css?v=g6-file-intake-1">
 </head>
 <body>
     <div class="container">
@@ -226,38 +226,46 @@
         </div>
     </div>
 
-    <nav class="bottom-buttons" role="toolbar" aria-label="Main actions">
-        <button class="btn-fixed" id="uploadBtnFixed" aria-label="Add image (Command/Control + O)">
-            + Add Image ⌘O
-        </button>
-        <button class="btn-fixed btn-remove" id="removeImageBtn" aria-label="Remove image">
-            ‒
-        </button>
-        <button class="btn-fixed" id="uploadSampleBtn" aria-label="Add layout sample (Command/Control + I)">
-            + Add Layout ⌘I
-        </button>
-        <button class="btn-fixed btn-remove" id="removeSampleBtn" aria-label="Remove layout">
-            ‒
-        </button>
-        <button class="btn-fixed btn-export" id="exportBtn" disabled aria-label="Export image (Command/Control + E)">
-            Export ⌘E
-        </button>
-        <label class="export-transparency-label">
-            <input type="checkbox" id="exportWithAlpha" checked aria-label="Export with transparent background">
-            <span>Export with Transparency</span>
-        </label>
-        <label class="export-transparency-label">
-            <input type="checkbox" id="export2x" aria-label="Export at 2x resolution">
-            <span>×2</span>
-        </label>
-        <label class="export-transparency-label">
-            <input type="checkbox" id="export4x" aria-label="Export at 4x resolution">
-            <span>×4</span>
-        </label>
-        <label class="export-transparency-label">
-            <input type="checkbox" id="export8x" aria-label="Export at 8x resolution">
-            <span>×8</span>
-        </label>
+    <nav class="bottom-buttons action-dock dither-action-dock" role="toolbar" aria-label="Main actions">
+        <div class="action-dock__slot action-dock__slot--utility">
+            <button class="btn-fixed file-intake__trigger" id="uploadBtnFixed" aria-label="Add image (Command/Control + O)">
+                + Add Image ⌘O
+            </button>
+            <button class="btn-fixed btn-remove" id="removeImageBtn" aria-label="Remove image">
+                ‒
+            </button>
+            <span class="sr-only file-intake__status" id="imageInputStatus">Default image loaded.</span>
+            <button class="btn-fixed file-intake__trigger" id="uploadSampleBtn" aria-label="Add layout sample (Command/Control + I)">
+                + Add Layout ⌘I
+            </button>
+            <button class="btn-fixed btn-remove" id="removeSampleBtn" aria-label="Remove layout">
+                ‒
+            </button>
+            <span class="sr-only file-intake__status" id="sampleInputStatus">Default layout loaded.</span>
+        </div>
+        <div class="action-dock__slot action-dock__slot--primary">
+            <button class="btn-fixed btn-export" id="exportBtn" disabled aria-label="Export image (Command/Control + E)">
+                Export ⌘E
+            </button>
+        </div>
+        <div class="action-dock__slot action-dock__slot--options">
+            <label class="export-transparency-label">
+                <input type="checkbox" id="exportWithAlpha" checked aria-label="Export with transparent background">
+                <span>Export with Transparency</span>
+            </label>
+            <label class="export-transparency-label">
+                <input type="checkbox" id="export2x" aria-label="Export at 2x resolution">
+                <span>×2</span>
+            </label>
+            <label class="export-transparency-label">
+                <input type="checkbox" id="export4x" aria-label="Export at 4x resolution">
+                <span>×4</span>
+            </label>
+            <label class="export-transparency-label">
+                <input type="checkbox" id="export8x" aria-label="Export at 8x resolution">
+                <span>×8</span>
+            </label>
+        </div>
     </nav>
 
     <div class="help-container">
@@ -287,6 +295,6 @@
         </div>
     </div>
 
-    <script src="dither.js?v=g6-panel-2" defer></script>
+    <script src="dither.js?v=g6-file-intake-1" defer></script>
 </body>
 </html>

@@ -12,7 +12,7 @@ const [toolSource, htmlSource, themeSource, typographySource, frameworkStylesSou
 
 assert.match(
     toolSource,
-    /import\s*\{\s*defineTool\s*,\s*SVGExporter\s*\}\s*from\s*['"]\.\.\/\.\.\/framework\/src\/index\.js\?v=g5-feedback-1['"];/,
+    /import\s*\{[\s\S]*?defineTool[\s\S]*?FileIntakeController[\s\S]*?SVGExporter[\s\S]*?\}\s*from\s*['"]\.\.\/\.\.\/framework\/src\/index\.js\?v=g6-file-intake-1['"];/,
     'Keyboarder must consume shared infrastructure through the public barrel'
 );
 assert.doesNotMatch(toolSource, /vendor\/framework/, 'Keyboarder runtime still imports its retired framework copy');
@@ -32,6 +32,16 @@ assert.match(
     htmlSource,
     /<a class="top-link" href="\.\.\/" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u,
     'Keyboarder back link must expose the canonical navigation contract'
+);
+assert.match(
+    htmlSource,
+    /othersite-styles\.css\?v=g6-file-intake-1/u,
+    'Keyboarder must load the ActionDock-capable shared stylesheet revision'
+);
+assert.match(
+    htmlSource,
+    /<nav\b[^>]*\bclass="[^"]*\baction-dock\b[^"]*"[^>]*>[\s\S]*?action-dock__slot--utility[\s\S]*?\bid="aboutBtn"[\s\S]*?\bid="verifyBtn"[\s\S]*?\bid="exportJsonBtn"[\s\S]*?\bid="importJsonBtn"[\s\S]*?action-dock__slot--primary[\s\S]*?\bid="exportPdfBtn"[\s\S]*?\bid="exportPngBtn"[\s\S]*?\bid="exportSvgBtn"[\s\S]*?action-dock__slot--options[\s\S]*?\bid="convertToOutlinesCheckbox"[\s\S]*?<\/nav>/u,
+    'Keyboarder must keep document utilities, primary exports and Outline in their ActionDock slots'
 );
 assert.match(themeSource, /\.\.\/\.\.\/framework\/fonts\/CoFoSans-Regular\.woff2/, 'shared regular CoFo font is missing');
 assert.match(themeSource, /\.\.\/\.\.\/framework\/fonts\/CoFoSans-Medium\.woff2/, 'shared medium CoFo font is missing');
@@ -118,6 +128,9 @@ assert.equal(
     'shared ColorPicker HSB range inventory changed'
 );
 assert.match(toolSource, /colorPickers:\s*\{[\s\S]*?containerId:\s*'unifiedColorPickerContainer'/u);
+assert.equal(htmlSource.match(/type="file"/gu)?.length, 5, 'Keyboarder file-surface inventory changed');
+assert.match(toolSource, /installFileIntakes\(readyApp\)/u);
+assert.match(toolSource, /new FileIntakeController\(options\)\.init\(\)/u);
 
 assert.equal(
     htmlSource.match(/<input\b[^>]*\btype="checkbox"[^>]*>/gu)?.length,

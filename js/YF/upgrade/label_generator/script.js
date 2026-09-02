@@ -2,7 +2,11 @@
 // Импорты модулей
 // ============================================
 // Итерация 1: Утилиты
-import { ColorUtils, DialogHost } from './src/framework/FrameworkAdapter.js?v=g5-feedback-2';
+import {
+    ColorUtils,
+    DialogHost,
+    FileIntakeController
+} from './src/framework/FrameworkAdapter.js?v=g6-file-intake-1';
 import { MathUtils } from './src/utils/MathUtils.js';
 import { DOMUtils } from './src/utils/DOMUtils.js';
 import { TextToPath } from './src/utils/TextToPath.js?v=g3-sticky-1';
@@ -654,6 +658,8 @@ class GridGenerator {
             prepressToggleLabel: document.getElementById('prepressToggleLabel'),
             exportSettingsBtn: document.getElementById('exportSettingsBtn'),
             importSettingsBtn: document.getElementById('importSettingsBtn'),
+            importSettingsInput: document.getElementById('importSettingsInput'),
+            importSettingsStatus: document.getElementById('importSettingsStatus'),
             exportCurrentSvgBtn: document.getElementById('exportCurrentSvgBtn'),
             exportAllSvgBtn: document.getElementById('exportAllSvgBtn'),
             presetDropdown: document.getElementById('presetDropdown'),
@@ -759,6 +765,7 @@ class GridGenerator {
             graphicsAlignRightToggle: document.getElementById('graphicsAlignRightToggle'),
             fileUploadArea: document.getElementById('fileUploadArea'),
             svgFileInput: document.getElementById('svgFileInput'),
+            svgFileStatus: document.getElementById('svgFileStatus'),
             barcodeInputArea: document.getElementById('barcodeInputArea'),
             barcodeDataInput: document.getElementById('barcodeDataInput'),
             barcodeCharCounter: document.getElementById('barcodeCharCounter'),
@@ -1060,21 +1067,21 @@ class GridGenerator {
         // Export Settings button
         this.dom.exportSettingsBtn.addEventListener('click', () => this.exportSettings());
         
-        // Import Settings button (Итерация 7)
-        if (this.dom.importSettingsBtn) {
-            this.dom.importSettingsBtn.addEventListener('click', () => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = '.json';
-                input.onchange = (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        this.importSettings(file);
-                    }
-                };
-                input.click();
-            });
-        }
+        this.settingsFileIntake = new FileIntakeController({
+            root: this.dom.importSettingsBtn,
+            input: this.dom.importSettingsInput,
+            trigger: this.dom.importSettingsBtn,
+            status: this.dom.importSettingsStatus,
+            accept: '.json,application/json',
+            initialStatus: 'Choose a JSON preset file.',
+            typeErrorText: 'Choose a JSON preset file.',
+            loadingText: file => `Importing ${file.name || 'preset'}…`,
+            errorText: error => error?.message || 'Could not import this preset.',
+            onSelect: async file => {
+                await this.importSettings(file);
+                return `Imported ${file.name || 'preset'}`;
+            }
+        }).init();
         
         // Default Google Sheets URL preset for laptop labels
         if (this.dom.defaultSheetsUrl) {
@@ -3163,47 +3170,25 @@ class GridGenerator {
     
     // Initialize Graphics Panel
     initGraphicsPanel() {
-        // File upload area click handler
-        if (this.dom.fileUploadArea) {
-            this.dom.fileUploadArea.addEventListener('click', () => {
-                if (this.dom.svgFileInput) {
-                    this.dom.svgFileInput.click();
-                }
-            });
-            
-            // Drag and drop handlers
-            this.dom.fileUploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.dom.fileUploadArea.classList.add('dragover');
-            });
-            
-            this.dom.fileUploadArea.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.dom.fileUploadArea.classList.remove('dragover');
-            });
-            
-            this.dom.fileUploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.dom.fileUploadArea.classList.remove('dragover');
-                
-                const files = e.dataTransfer.files;
-                if (files.length > 0 && files[0].type === 'image/svg+xml') {
-                    this.handleSvgFile(files[0]);
-                }
-            });
-        }
-        
-        // File input change handler
-        if (this.dom.svgFileInput) {
-            this.dom.svgFileInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    this.handleSvgFile(e.target.files[0]);
-                }
-            });
-        }
+        this.graphicsFileIntake = new FileIntakeController({
+            root: this.dom.fileUploadArea,
+            input: this.dom.svgFileInput,
+            trigger: this.dom.fileUploadArea,
+            dropzone: this.dom.fileUploadArea,
+            status: this.dom.svgFileStatus,
+            accept: '.svg,image/svg+xml',
+            initialStatus: 'Click or drag & drop SVG file here',
+            typeErrorText: 'Choose an SVG file.',
+            loadingText: file => `Loading ${file.name || 'SVG'}…`,
+            errorText: error => error?.message || 'Could not load this SVG file.',
+            onSelect: async file => {
+                const editing = Boolean(this.currentEditingGraphicsId);
+                await this.handleSvgFile(file);
+                return editing
+                    ? this.dom.svgFileStatus?.textContent
+                    : `✓ ${file.name}`;
+            }
+        }).init();
         
         // Barcode data input handler
         if (this.dom.barcodeDataInput) {
@@ -3460,15 +3445,17 @@ class GridGenerator {
     
     // Handle SVG file upload
     handleSvgFile(file) {
-        const reader = new FileReader();
-        
-        reader.onload = (e) => {
-            const svgContent = e.target.result;
-            const parser = new DOMParser();
-            const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
-            const svgElement = svgDoc.querySelector('svg');
-            
-            if (svgElement) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                try {
+                    const svgContent = e.target.result;
+                    const parser = new DOMParser();
+                    const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
+                    const svgElement = svgDoc.querySelector('svg');
+                    if (!svgElement) throw new Error('This file does not contain a valid SVG.');
+
                 // Extract viewBox or width/height
                 const viewBox = svgElement.getAttribute('viewBox');
                 let width, height;
@@ -3600,10 +3587,14 @@ class GridGenerator {
                     // Close the panel after creating
                     this.closeGraphicsPanel();
                 }
-            }
-        };
-        
-        reader.readAsText(file);
+                    resolve({ name: file.name, width, height });
+                } catch (error) {
+                    reject(error);
+                }
+            };
+            reader.onerror = () => reject(new Error(`Failed to read ${file.name || 'SVG file'}`));
+            reader.readAsText(file);
+        });
     }
     
     /**
@@ -9590,6 +9581,7 @@ class GridGenerator {
                 title: 'Ошибка импорта настроек',
                 text: 'Ошибка при импорте настроек: ' + error.message
             });
+            throw error;
         }
     }
     

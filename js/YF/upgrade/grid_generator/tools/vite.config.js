@@ -10,7 +10,7 @@ const toolsDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(toolsDirectory, '..');
 const outputDirectory = path.join(projectRoot, 'build');
 const frameworkEntryPath = path.resolve(projectRoot, '..', 'framework', 'src', 'index.js');
-const frameworkRuntimeSpecifier = '../../../framework/src/index.js';
+const frameworkRuntimeSpecifier = '../../../framework/src/index.js?v=g6-file-intake-1';
 const frameworkExternalId = 'upgrade-framework-runtime';
 
 function externalizeSharedFramework() {

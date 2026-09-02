@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pizza Boxer FileIntake probe</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            background: #242424;
+        }
+
+        iframe {
+            display: block;
+            width: 1280px;
+            height: 720px;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <iframe src="../grid_generator/?qa=file-intake" title="Pizza Boxer FileIntake probe"></iframe>
+    <output id="qaPizzaFileIntakeResult" hidden></output>
+    <script>
+        const iframe = document.querySelector('iframe');
+        const output = document.getElementById('qaPizzaFileIntakeResult');
+        const wait = delay => new Promise(resolve => window.setTimeout(resolve, delay));
+        const waitFor = async (predicate, timeout = 5000) => {
+            const started = performance.now();
+            while (!predicate()) {
+                if (performance.now() - started > timeout) throw new Error('QA probe timed out.');
+                await wait(25);
+            }
+        };
+        const shaText = async (value) => {
+            const digest = await crypto.subtle.digest(
+                'SHA-256',
+                new TextEncoder().encode(String(value))
+            );
+            return Array.from(
+                new Uint8Array(digest),
+                byte => byte.toString(16).padStart(2, '0')
+            ).join('');
+        };
+        const transferFor = (file) => {
+            const transfer = new DataTransfer();
+            transfer.items.add(file);
+            return transfer;
+        };
+        const choose = (input, file) => {
+            input.files = transferFor(file).files;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+        const drop = (zone, file) => {
+            zone.dispatchEvent(new DragEvent('drop', {
+                bubbles: true,
+                cancelable: true,
+                dataTransfer: transferFor(file)
+            }));
+        };
+        const formState = documentUnderTest => JSON.stringify(
+            Array.from(
+                documentUnderTest.querySelectorAll(
+                    'input:not([type="file"]), select, textarea'
+                ),
+                element => [element.id, element.type, element.value, element.checked]
+            )
+        );
+        const capture = async documentUnderTest => ({
+            svg: await shaText(documentUnderTest.getElementById('gridSvg').outerHTML),
+            form: await shaText(formState(documentUnderTest))
+        });
+
+        iframe.addEventListener('load', async () => {
+            try {
+                const documentUnderTest = iframe.contentDocument;
+                const windowUnderTest = iframe.contentWindow;
+                await waitFor(() => documentUnderTest.documentElement.dataset.appReady === 'true');
+                await documentUnderTest.fonts?.ready;
+                await wait(250);
+
+                const baseline = await capture(documentUnderTest);
+                const dockRect = documentUnderTest.querySelector('.action-dock')
+                    .getBoundingClientRect();
+                baseline.fields = documentUnderTest.querySelectorAll(
+                    'input:not([type="file"]), select, textarea'
+                ).length;
+                baseline.fileInputs = documentUnderTest.querySelectorAll(
+                    'input[type="file"]'
+                ).length;
+                baseline.dock = [dockRect.x, dockRect.y, dockRect.width, dockRect.height];
+
+                const jsonInput = documentUnderTest.getElementById('importSettingsInput');
+                const jsonStatus = documentUnderTest.getElementById('importSettingsStatus');
+                const jsonStates = [];
+                const jsonObserver = new MutationObserver(() => {
+                    jsonStates.push(jsonStatus.dataset.state);
+                });
+                jsonObserver.observe(jsonStatus, {
+                    attributes: true,
+                    attributeFilter: ['data-state']
+                });
+
+                choose(jsonInput, new File(['invalid'], 'invalid.txt', {
+                    type: 'text/plain'
+                }));
+                await waitFor(() => jsonStatus.dataset.state === 'error');
+                const invalidJson = {
+                    state: jsonStatus.dataset.state,
+                    text: jsonStatus.textContent,
+                    outputUnchanged: (await capture(documentUnderTest)).svg === baseline.svg
+                };
+
+                const presetBlob = await fetch('../grid_generator/presets/New.json')
+                    .then(response => {
+                        if (!response.ok) throw new Error('Could not load New.json');
+                        return response.blob();
+                    });
+                const presetFile = new File([presetBlob], 'New.json', {
+                    type: 'application/json'
+                });
+                const jsonRuns = [];
+                for (let index = 1; index <= 3; index += 1) {
+                    choose(jsonInput, presetFile);
+                    await waitFor(() => (
+                        jsonStates.filter(state => state === 'loading').length >= index
+                        && jsonStatus.dataset.state === 'ready'
+                    ));
+                    jsonRuns.push({
+                        inputReset: jsonInput.value === '',
+                        status: jsonStatus.textContent,
+                        ...await capture(documentUnderTest)
+                    });
+                }
+                jsonObserver.disconnect();
+
+                documentUnderTest.getElementById('addGraphicsBtn').click();
+                await waitFor(() => documentUnderTest.getElementById('graphicsPanel')
+                    .classList.contains('active'));
+                const zone = documentUnderTest.getElementById('fileUploadArea');
+                const svgStatus = documentUnderTest.getElementById('svgFileStatus');
+                const beforeInvalidSvg = (await capture(documentUnderTest)).svg;
+                drop(zone, new File(['invalid'], 'invalid.json', {
+                    type: 'application/json'
+                }));
+                await waitFor(() => svgStatus.dataset.state === 'error');
+                const invalidSvg = {
+                    state: svgStatus.dataset.state,
+                    text: svgStatus.textContent,
+                    outputUnchanged: (await capture(documentUnderTest)).svg === beforeInvalidSvg
+                };
+
+                const svgFile = new File([
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 10">' +
+                    '<rect width="20" height="10" fill="#000"/></svg>'
+                ], 'qa-mark.svg', { type: '' });
+                drop(zone, svgFile);
+                await waitFor(() => svgStatus.dataset.state === 'ready');
+                const application = windowUnderTest[
+                    Symbol.for('lunnen.grid-generator.application')
+                ];
+                const added = application?.objectDocument.graphicsBlocks
+                    .find(block => block.name === 'qa-mark');
+                if (!added) throw new Error('Imported graphics block was not created.');
+                const svgRuns = [{
+                    inputReset: documentUnderTest.getElementById('svgFileInput').value === '',
+                    blocks: application.objectDocument.graphicsBlocks
+                        .filter(block => block.name === 'qa-mark').length,
+                    ...await capture(documentUnderTest)
+                }];
+                for (let index = 0; index < 2; index += 1) {
+                    application.objectEditorPanelController.openGraphicsPanel(added.id);
+                    await waitFor(() => documentUnderTest.getElementById('graphicsPanel')
+                        .classList.contains('active'));
+                    drop(zone, svgFile);
+                    await waitFor(() => svgStatus.dataset.state === 'ready');
+                    svgRuns.push({
+                        inputReset: documentUnderTest.getElementById('svgFileInput').value === '',
+                        status: svgStatus.textContent,
+                        blocks: application.objectDocument.graphicsBlocks
+                            .filter(block => block.name === 'qa-mark').length,
+                        ...await capture(documentUnderTest)
+                    });
+                }
+
+                const jsonStable = jsonRuns.every(run => (
+                    run.inputReset
+                    && run.svg === baseline.svg
+                    && run.form === baseline.form
+                ));
+                const svgHash = svgRuns[0].svg;
+                const svgStable = svgRuns.every(run => (
+                    run.inputReset && run.blocks === 1 && run.svg === svgHash
+                ));
+                output.textContent = JSON.stringify({
+                    ok: invalidJson.outputUnchanged && invalidSvg.outputUnchanged
+                        && jsonStable && svgStable,
+                    baseline,
+                    invalidJson,
+                    jsonRuns,
+                    invalidSvg,
+                    svgRuns,
+                    aria: {
+                        jsonControls: documentUnderTest.getElementById('importSettingsBtn')
+                            .getAttribute('aria-controls'),
+                        jsonDescribedBy: documentUnderTest.getElementById('importSettingsBtn')
+                            .getAttribute('aria-describedby'),
+                        svgRole: zone.getAttribute('role'),
+                        svgTabindex: zone.getAttribute('tabindex'),
+                        svgControls: zone.getAttribute('aria-controls'),
+                        svgDescribedBy: zone.getAttribute('aria-describedby')
+                    },
+                    states: { json: jsonStates }
+                });
+            } catch (error) {
+                output.textContent = JSON.stringify({ ok: false, error: error.message });
+            }
+        });
+    </script>
+</body>
+</html>

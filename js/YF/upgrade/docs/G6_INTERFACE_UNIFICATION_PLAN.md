@@ -45,7 +45,7 @@ Pixel Size 4 (`1b4c210c…`, `9f8f96ab…`, `f93c0e2a…`). Полный
 
 ### UPG-061 — трехслотовый ActionDock
 
-- статус: **Next**;
+- статус: **Complete** (2026-09-02);
 - viewport-centered primary export slot;
 - независимые utility и export-option slots;
 - общие primary/secondary/utility/muted/danger/icon variants;
@@ -53,14 +53,45 @@ Pixel Size 4 (`1b4c210c…`, `9f8f96ab…`, `f93c0e2a…`). Полный
 - Keyboarder, Pizza, Sticky и Sparky после canary;
 - Dither отдельно после переноса source actions из export dock.
 
+Текущий rollout: общий CSS-only contract добавлен в framework; все восемь
+инструментов переведены на utility/primary/options slots, проходят свои
+static/domain suites и приняты в браузере на desktop. Для Wordplayer проверены
+Dither и Forms, для Sticky — normal/edit, для Dither — unloaded, default,
+Bayer, Pixel Size 4 и collapse-summary. Sticky сохраняет mode/data visibility
+и Sheets boundary; Sparky сохраняет private progress/cancel и mobile hide rule.
+Dither отделяет source actions от центрального PNG и правых raster options,
+сохраняя private overlay-order extension. Sparky повторно принят через локальный
+viewport-harness на 390×844 и 430×932: document и SVG равны viewport без
+горизонтального overflow, mobile hint видим, desktop panels/top links/ActionDock
+скрыты. Повторный raw-RGBA proof Dither выполнен отдельно: скриншот не
+использовался как его замена.
+
+Финальная Dither-проверка выполнена в same-origin viewport-harness при
+1280×860. Сырые `579×600` RGBA-хеши совпали с сохранёнными эталонами:
+default/FS/Pixel 1 — `1b4c210c87d08f9b628d8f1fd8c146b3258544c82c1bef41822f4178abc7ff9e`,
+Bayer/Pixel 1 — `9f8f96ab4f5f184a1e89f824a661ccd74c9794d135e7a56e52222d69083d4ce1`,
+FS/Pixel 4 — `f93c0e2a0e8402df5182b479935ba7223dbc2d6212c21114061e12a8b3ef75df`.
+UPG-061 завершён.
+
 ### UPG-062 — FileIntake
 
+- статус: **Complete** (2026-09-02);
 - общая accessible picker/dropzone оболочка;
 - accept/help/status/replace/remove/loading/error;
 - одинаковый повторный выбор того же файла;
 - configurable size/type guards и app parser callbacks;
 - canary Wordplayer, затем Pizza, Sticky, Keyboarder, Sparky и Dither;
 - Google Sheets не входит в FileIntake.
+
+Инвентарь и результат зафиксированы в `FILE_INTAKE_COMPATIBILITY_MATRIX.md`: все
+14 file surfaces в Wordplayer, Pizza, Sticky, Keyboarder, Sparky и Dither
+используют общий controller; Wander и Pulsar не получили лишних inputs. Шесть
+component tests фиксируют type/size guards, state/ARIA, drop/keyboard, same-file
+reset, nested input guard и multi-file selection. Private decode, parsers,
+sanitizers, schemas, confirmation, history и render/export pipelines остались в
+приложениях; Sticky Google Sheets не менялся. Wordplayer, Pizza, Sparky и Dither
+приняты end-to-end browser probes, все шесть consumers — live semantics smoke.
+`check:file-intake` и полный Gate G5 проходят. UPG-063 не начат.
 
 ### UPG-063 — navigation, zoom, choice semantics
 
@@ -89,7 +120,13 @@ Pixel Size 4 (`1b4c210c…`, `9f8f96ab…`, `f93c0e2a…`). Полный
 
 ## Текущий срез
 
-UPG-060 завершён без изменения Canvas algorithms, source image lifecycle,
-raster cache, modal, bottom actions или PNG export. Следующий шаг — UPG-061:
-сначала contract и canary Wander, затем Pulsar и Wordplayer; Dither переносится
-только после отделения source actions от export dock.
+UPG-060 и UPG-061 завершены. Все восемь consumers используют общий ActionDock,
+проходят static/domain gate и приняты на desktop. Чистый browser smoke не
+выявил новых warning/error; остаётся только известный Sticky EAN-13 checksum
+warning. Sparky повторно принят на 390×844 и 430×932, а Dither — по raw-RGBA
+SHA-256 для default, Bayer и Pixel Size 4 через локальный viewport-harness.
+UPG-062 завершён: 14/14 file surfaces используют общий FileIntake, private
+domain callbacks сохранены, Pizza runtime воспроизводим, Sparky mobile и Dither
+raw-RGBA эталоны повторно приняты. `check:file-intake` включён в Gate G5 и все
+static/domain/browser проверки зелёные. Работа намеренно остановлена перед
+UPG-063.

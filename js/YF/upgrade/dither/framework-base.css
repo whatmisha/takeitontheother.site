@@ -1,10 +1,8 @@
 /** Shared framework foundation below the frozen Dither skin. */
-@import url('../framework/css/othersite-styles.css?v=g6-panel-1') layer(framework);
+@import url('../framework/css/othersite-styles.css?v=g6-file-intake-1') layer(framework);
 
-/* G5 raster-safe action rollout with Dither's private left anchor. */
-.bottom-buttons {
-    left: var(--spacing-3xl);
-    transform: none;
+/* Keep Dither's overlay above its ActionDock without changing the shared shell. */
+.dither-action-dock {
     z-index: 1000;
 }
 

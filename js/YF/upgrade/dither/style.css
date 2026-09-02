@@ -662,7 +662,7 @@ body {
 /* Help Container and Button */
 .help-container {
     position: fixed;
-    bottom: var(--spacing-3xl);
+    bottom: calc(var(--spacing-3xl) + var(--button-height) + var(--spacing-lg));
     right: var(--spacing-3xl);
     z-index: 1000;
 }

@@ -1,4 +1,5 @@
 import { ListenerScope } from '../core/ListenerScope.js';
+import { FileIntakeController } from '../framework/FrameworkAdapter.js';
 
 const VISIBILITY_CONTROLS = [
     ['showColumns', 'showColumns', 'toggle columns'],
@@ -24,6 +25,7 @@ export class ApplicationEventController {
         this.host = host;
         this.document = documentRef;
         this.listeners = new ListenerScope();
+        this.settingsFileIntake = null;
         this.bound = false;
         this.handleDocumentKeydown = event => this.handleKeyboard(event);
     }
@@ -98,22 +100,23 @@ export class ApplicationEventController {
             'click',
             () => this.host.exportController.exportSettings()
         );
-        this.listeners.listen(
-            this.host.dom.importSettingsBtn,
-            'click',
-            () => this.openImportPicker()
-        );
-    }
-
-    openImportPicker() {
-        const input = this.document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.addEventListener('change', event => {
-            const [file] = event.target.files || [];
-            if (file) this.host.importSettings(file);
-        });
-        input.click();
+        this.settingsFileIntake = new FileIntakeController({
+            ownerDocument: this.document,
+            root: this.host.dom.importSettingsBtn,
+            input: this.host.dom.importSettingsInput,
+            trigger: this.host.dom.importSettingsBtn,
+            status: this.host.dom.importSettingsStatus,
+            accept: '.json,application/json',
+            initialState: 'empty',
+            initialStatus: 'Choose a JSON setup file.',
+            typeErrorText: 'Choose a JSON setup file.',
+            loadingText: file => `Importing ${file.name || 'setup'}…`,
+            errorText: error => error?.message || 'Could not import this setup.',
+            onSelect: async file => {
+                await this.host.importSettings(file);
+                return `Imported ${file.name || 'setup'}`;
+            }
+        }).init();
     }
 
     handleKeyboard(event) {
@@ -214,6 +217,8 @@ export class ApplicationEventController {
 
     dispose() {
         this.bound = false;
+        this.settingsFileIntake?.destroy();
+        this.settingsFileIntake = null;
         return this.listeners.dispose();
     }
 }

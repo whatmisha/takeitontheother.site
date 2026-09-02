@@ -29,6 +29,7 @@ export { DicePanel } from './ui/DicePanel.js';
 export { DialogHost } from './ui/DialogHost.js?v=g5-feedback-1';
 export { OverlayDialogHost } from './ui/OverlayDialogHost.js?v=g5-overlay-1';
 export { TooltipService } from './ui/TooltipService.js?v=g5-feedback-1';
+export { FileIntakeController, fileMatchesAccept } from './ui/FileIntakeController.js?v=g6-file-intake-1';
 export { ZoomPanManager } from './ui/ZoomPanManager.js';
 
 // Features

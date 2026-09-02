@@ -33,10 +33,7 @@ const publicScript = await readFile(
     'utf8'
 );
 const sharedFrameworkSpecifier = '../../../framework/src/index.js';
-if (
-    !publicScript.includes(`"${sharedFrameworkSpecifier}"`) &&
-    !publicScript.includes(`'${sharedFrameworkSpecifier}'`)
-) {
+if (!publicScript.includes(sharedFrameworkSpecifier)) {
     throw new Error('Public runtime must import the shared Upgrade framework at runtime');
 }
 

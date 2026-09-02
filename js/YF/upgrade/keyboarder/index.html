@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Keyboarder</title>
     <link rel="icon" href="data:,">
-    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g5-dialog-scope-1">
+    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g6-file-intake-1">
     <link id="applicationStyles" rel="stylesheet" href="app/theme.css?v=g3-keyboarder-2">
 </head>
 <body class="ui-simple">
@@ -125,7 +125,7 @@
                         </div>
                     </div>
                     <div class="font-import" id="fontImport" data-advanced-only>
-                        <div class="font-dropzone" id="fontDropzone">
+                        <div class="font-dropzone file-intake" id="fontDropzone">
                             <span>Drop font file</span>
                         </div>
                         <label class="font-select-row" for="fontSelect">
@@ -135,12 +135,12 @@
                         <div class="font-instance-controls" id="fontInstanceControls"></div>
                         <div class="font-axis-controls" id="fontAxisControls"></div>
                         <div class="font-actions">
-                            <button type="button" class="btn-inline" id="fontBrowseBtn">Browse Font</button>
+                            <button type="button" class="btn-inline file-intake__trigger" id="fontBrowseBtn">Browse Font</button>
                             <button type="button" class="btn-inline" id="fontReferenceBtn">Reference font</button>
                             <button type="button" class="btn-inline" id="fontApplySelectedBtn">Apply selected</button>
                             <button type="button" class="btn-inline" id="fontControlSheetBtn">Control sheet</button>
                         </div>
-                        <div class="font-status" id="fontProbeStatus"></div>
+                        <div class="font-status file-intake__status" id="fontProbeStatus"></div>
                     </div>
                     <div class="comp-table-editor" id="compTableEditor" data-advanced-only>
                         <div class="comp-table-row">
@@ -287,8 +287,9 @@
                         <div class="legend-element-actions">
                             <button type="button" class="btn-inline" id="addLegendTextBtn">+ Text</button>
                             <button type="button" class="btn-inline" id="addLegendIconBtn">+ Icon</button>
-                            <button type="button" class="btn-inline" id="uploadLegendIconBtn">SVG ↑</button>
+                            <button type="button" class="btn-inline file-intake__trigger" id="uploadLegendIconBtn">SVG ↑</button>
                             <input id="legendIconFileInput" type="file" accept=".svg,image/svg+xml" hidden>
+                            <span class="sr-only file-intake__status" id="legendIconStatus">Choose an SVG legend icon.</span>
                         </div>
                         <div id="legendElementEditor" class="legend-element-editor"></div>
                     </div>
@@ -359,26 +360,35 @@
         </aside>
     </main>
 
-    <nav class="bottom-buttons" role="toolbar" aria-label="Export and document actions">
-        <button class="btn-fixed btn-intro-help" id="aboutBtn" type="button" aria-label="About" data-tooltip="About">?</button>
-        <button class="btn-fixed" id="verifyBtn" type="button" data-tooltip="Compare geometry to the reference" data-advanced-only>Verify</button>
-        <button class="btn-fixed" id="exportJsonBtn" type="button" aria-label="Export model JSON" data-tooltip="Export model JSON">JSON</button>
-        <button class="btn-fixed" id="importJsonBtn" type="button" aria-label="Import model JSON" data-tooltip="Import model JSON" data-advanced-only>Import</button>
-        <button class="btn-fixed" id="exportPdfBtn" type="button">PDF</button>
-        <button class="btn-fixed" id="exportPngBtn" type="button">PNG</button>
-        <button class="btn-fixed" id="exportSvgBtn" type="button">SVG ⌘E</button>
-        <label class="toggle-label svg-outline-toggle" for="convertToOutlinesCheckbox"
-               data-tooltip="Convert editable SVG text to outlines">
-            <div class="toggle-switch">
-                <input type="checkbox" id="convertToOutlinesCheckbox" aria-label="Outline SVG text">
-                <span class="toggle-slider"></span>
-            </div>
-            <span class="toggle-label-text">Outline</span>
-        </label>
+    <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Export and document actions">
+        <div class="action-dock__slot action-dock__slot--utility">
+            <button class="btn-fixed btn-intro-help" id="aboutBtn" type="button" aria-label="About" data-tooltip="About">?</button>
+            <button class="btn-fixed" id="verifyBtn" type="button" data-tooltip="Compare geometry to the reference" data-advanced-only>Verify</button>
+            <button class="btn-fixed" id="exportJsonBtn" type="button" aria-label="Export model JSON" data-tooltip="Export model JSON">JSON</button>
+            <button class="btn-fixed file-intake__trigger" id="importJsonBtn" type="button" aria-label="Import model JSON" data-tooltip="Import model JSON" data-advanced-only>Import</button>
+        </div>
+        <div class="action-dock__slot action-dock__slot--primary">
+            <button class="btn-fixed" id="exportPdfBtn" type="button">PDF</button>
+            <button class="btn-fixed" id="exportPngBtn" type="button">PNG</button>
+            <button class="btn-fixed" id="exportSvgBtn" type="button">SVG ⌘E</button>
+        </div>
+        <div class="action-dock__slot action-dock__slot--options">
+            <label class="toggle-label svg-outline-toggle" for="convertToOutlinesCheckbox"
+                   data-tooltip="Convert editable SVG text to outlines">
+                <div class="toggle-switch">
+                    <input type="checkbox" id="convertToOutlinesCheckbox" aria-label="Outline SVG text">
+                    <span class="toggle-slider"></span>
+                </div>
+                <span class="toggle-label-text">Outline</span>
+            </label>
+        </div>
     </nav>
     <input id="newLayoutInput" type="file" accept="image/svg+xml,.svg,application/json,.json" hidden>
+    <span class="sr-only file-intake__status" id="newLayoutStatus">Choose an SVG drawing or Keyboarder JSON model.</span>
     <input id="importJsonInput" type="file" accept="application/json,.json" hidden>
+    <span class="sr-only file-intake__status" id="importJsonStatus">Choose a Keyboarder JSON model.</span>
     <input id="drawingSvgInput" type="file" accept="image/svg+xml,.svg" hidden>
+    <span class="sr-only file-intake__status" id="drawingSvgStatus">Choose an SVG factory drawing.</span>
     <input id="fontFileInput" type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden>
 
     <dialog id="dialog" class="modal" aria-labelledby="dialogTitle">
@@ -391,6 +401,6 @@
     </dialog>
 </div>
 
-<script type="module" src="app/tool.js?v=g5-feedback-1"></script>
+<script type="module" src="app/tool.js?v=g6-file-intake-1"></script>
 </body>
 </html>

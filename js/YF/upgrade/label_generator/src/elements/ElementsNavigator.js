@@ -3,7 +3,7 @@
  * Список элементов, управление видимостью, удаление
  */
 import { DOMUtils } from '../utils/DOMUtils.js';
-import { DialogHost } from '../framework/FrameworkAdapter.js?v=g5-feedback-2';
+import { DialogHost } from '../framework/FrameworkAdapter.js?v=g6-file-intake-1';
 
 export class ElementsNavigator {
     constructor(textBlockManager, graphicsManager, callbacks = {}) {

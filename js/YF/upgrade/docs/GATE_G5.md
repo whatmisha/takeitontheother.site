@@ -15,8 +15,8 @@ code, presets/data, renderers, exports и согласованные вариа�
 npm run gate:g5:static
 ```
 
-Она запускает полный Gate G4, все component/app suites и финальный машинный
-контракт `scripts/check-gate-g5.mjs`.
+Она запускает FileIntake contract, полный Gate G4, все component/app suites и
+финальный машинный контракт `scripts/check-gate-g5.mjs`.
 
 ## Финальный контракт
 
@@ -32,6 +32,8 @@ npm run gate:g5:static
 - Sparky desktop, 390×844 и 430×932 captures приняты без horizontal overflow
   и browser errors;
 - storage, assets, source manifest и filesystem/runtime boundaries изолированы.
+- FileIntake: 14 surfaces в шести tools, 0 в Wander/Pulsar; private parsers и
+  Sticky Google Sheets остаются за границей framework.
 
 ## Runtime smoke
 
@@ -43,9 +45,9 @@ Live smoke на `http://127.0.0.1:8010/upgrade/` загрузил все вос�
 
 ## Suites
 
-- framework: 42/42;
+- framework: 49/49;
 - Sparky: 196/196;
-- Pizza Boxer: 167/167;
+- Pizza Boxer: 169/169;
 - Sticky Fingers: 5/5;
 - Pulsar Coder: 8/8;
 - Dither: 11/11;

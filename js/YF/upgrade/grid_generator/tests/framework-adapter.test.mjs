@@ -4,16 +4,21 @@ import test from 'node:test';
 
 import {
     ColorUtils as AdaptedColorUtils,
+    FileIntakeController as AdaptedFileIntakeController,
     PIZZA_BOXER_FRAMEWORK_ADAPTER
 } from '../src/framework/FrameworkAdapter.js';
-import { ColorUtils as SharedColorUtils } from '../../framework/src/index.js';
+import {
+    ColorUtils as SharedColorUtils,
+    FileIntakeController as SharedFileIntakeController
+} from '../../framework/src/index.js';
 
 test('Pizza Boxer consumes shared capabilities through one explicit adapter', async () => {
     assert.equal(AdaptedColorUtils, SharedColorUtils);
+    assert.equal(AdaptedFileIntakeController, SharedFileIntakeController);
     assert.deepEqual(PIZZA_BOXER_FRAMEWORK_ADAPTER, {
         appId: 'pizza-boxer',
         mode: 'grid-application-adapter',
-        sharedCapabilities: ['ColorUtils']
+        sharedCapabilities: ['ColorUtils', 'FileIntakeController']
     });
     assert.equal(Object.isFrozen(PIZZA_BOXER_FRAMEWORK_ADAPTER), true);
     assert.equal(Object.isFrozen(PIZZA_BOXER_FRAMEWORK_ADAPTER.sharedCapabilities), true);
@@ -25,7 +30,9 @@ test('Pizza Boxer consumes shared capabilities through one explicit adapter', as
     for (const source of [
         '../src/grid/CanvasRendererController.js',
         '../src/grid/GridRenderer.js',
-        '../src/ui/ColorPanelController.js'
+        '../src/ui/ColorPanelController.js',
+        '../src/ui/ApplicationEventController.js',
+        '../src/elements/GraphicsEditorEventController.js'
     ]) {
         assert.match(
             await readFile(new URL(source, import.meta.url), 'utf8'),
@@ -72,7 +79,7 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
 
     assert.match(
         bridge,
-        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g5-dialog-scope-1'\) layer\(framework\);/u
+        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g6-action-dock-1'\) layer\(framework\);/u
     );
     assert.doesNotMatch(bridge, /all:\s*revert-layer/u);
     assert.match(frameworkStyles, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
@@ -117,9 +124,16 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
     );
     assert.match(
         template,
-        /href="\.\.\/\.\.\/framework-base\.css\?v=g5-reset-1"/u,
+        /href="\.\.\/\.\.\/framework-base\.css\?v=g6-action-dock-1"/u,
         'development document must resolve the bridge from src/ui'
     );
+    const actionFragment = await readFile(new URL('../src/ui/fragments/actions.html', import.meta.url), 'utf8');
+    assert.match(
+        actionFragment,
+        /action-dock__slot--utility[\s\S]*?id="exportSettingsBtn"[\s\S]*?id="importSettingsBtn"[\s\S]*?action-dock__slot--primary[\s\S]*?id="exportPDFBtn"[\s\S]*?id="exportBtn"[\s\S]*?action-dock__slot--options[\s\S]*?id="convertToOutlinesCheckbox"/u,
+        'Pizza Boxer must separate setup utilities, primary exports and Outline in ActionDock'
+    );
+    assert.doesNotMatch(actionStyles, /\.export-group-right/u, 'retired centered-bar group must stay removed');
     assert.ok(
         html.indexOf('framework-base.css') < html.search(/PublicEntry-[^"/]+\.css/u),
         'shared CSS must load below the frozen Pizza Boxer production skin'

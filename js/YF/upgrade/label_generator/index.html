@@ -7,8 +7,8 @@
     <meta name="keywords" content="grid generator, packaging, print design, Adobe Illustrator, SVG">
     
     <title>Sticky Fingers — Packaging Label Generator</title>
-    <link rel="stylesheet" href="framework-base.css?v=g5-reset-1">
-    <link rel="stylesheet" href="style.css?v=g5-reset-1">
+    <link rel="stylesheet" href="framework-base.css?v=g6-file-intake-1">
+    <link rel="stylesheet" href="style.css?v=g6-file-intake-1">
 </head>
 <body>
     <div class="container">
@@ -353,15 +353,18 @@
         </div>
     </div>
 
-    <nav class="bottom-buttons" role="toolbar" aria-label="Main actions">
-        <button class="btn-fixed btn-export-settings edit-mode-only" id="exportSettingsBtn" aria-label="Export Preset">
-            ↓ Preset
-        </button>
-        <button class="btn-fixed btn-import-settings edit-mode-only" id="importSettingsBtn" aria-label="Import Preset">
-            ↑ Preset
-        </button>
-        
-        <div class="export-group-right">
+    <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Main actions">
+        <div class="action-dock__slot action-dock__slot--utility">
+            <button class="btn-fixed btn-export-settings edit-mode-only" id="exportSettingsBtn" aria-label="Export Preset">
+                ↓ Preset
+            </button>
+            <button class="btn-fixed btn-import-settings edit-mode-only file-intake__trigger" id="importSettingsBtn" aria-label="Import Preset">
+                ↑ Preset
+            </button>
+            <input type="file" id="importSettingsInput" accept=".json,application/json" hidden>
+            <span class="sr-only file-intake__status" id="importSettingsStatus">Choose a JSON preset file.</span>
+        </div>
+        <div class="action-dock__slot action-dock__slot--primary">
             <button class="btn-fixed btn-export" id="exportPdfBtn" aria-label="Export PDF">
                 ↓ Current Label PDF
             </button>
@@ -374,6 +377,8 @@
             <button class="btn-fixed btn-import-settings edit-mode-only" id="exportAllSvgBtn" aria-label="Export All Labels SVG" style="display: none;">
                 ↓ All SVG
             </button>
+        </div>
+        <div class="action-dock__slot action-dock__slot--options">
             <label class="toggle-label edit-mode-only">
                 <div class="toggle-switch">
                     <input type="checkbox" id="convertToOutlinesCheckbox" checked aria-label="Outline">
@@ -799,10 +804,10 @@
         <div class="panel-content">
             <section class="control-section">
                 <div class="control-group">
-                    <div class="file-upload-area" id="fileUploadArea">
-                        <input type="file" id="svgFileInput" accept=".svg" style="display: none;">
+                    <div class="file-upload-area file-intake" id="fileUploadArea">
+                        <input type="file" id="svgFileInput" accept=".svg,image/svg+xml" hidden>
                         <div class="upload-placeholder">
-                            <p>Click or drag & drop SVG file here</p>
+                            <p class="file-intake__status" id="svgFileStatus">Click or drag & drop SVG file here</p>
                         </div>
                     </div>
                     <div class="control-group" id="barcodeInputArea" style="display: none;">
@@ -893,6 +898,6 @@
         }
     </script>
     
-    <script type="module" src="script.js?v=g5-feedback-3"></script>
+    <script type="module" src="script.js?v=g6-file-intake-1"></script>
 </body>
 </html>

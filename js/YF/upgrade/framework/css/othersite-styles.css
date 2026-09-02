@@ -3996,7 +3996,8 @@ html.is-mobile body {
     background: rgba(255, 255, 255, 0.02);
 }
 
-.file-upload-area.dragover {
+.file-upload-area.dragover,
+.file-upload-area.is-dragover {
     border-color: var(--color-text);
     background: rgba(255, 255, 255, 0.05);
 }
@@ -4005,6 +4006,32 @@ html.is-mobile body {
     margin: 0;
     color: var(--color-text-secondary);
     font-size: 0.9rem;
+}
+
+/* FileIntake adds state and accessibility without owning file parsing. */
+.file-intake {
+    position: relative;
+    border-radius: var(--radius-input);
+}
+
+.file-intake.is-dragover {
+    outline: 1px dashed var(--color-text);
+    outline-offset: 4px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.file-intake__trigger[aria-busy="true"] {
+    cursor: progress;
+}
+
+.file-intake__status[data-state="error"] {
+    color: var(--color-text);
+}
+
+.file-intake[role="button"]:focus-visible,
+.file-upload-area[role="button"]:focus-visible {
+    outline: 1px solid var(--color-text);
+    outline-offset: 2px;
 }
 
 /* Row Presets Buttons */
