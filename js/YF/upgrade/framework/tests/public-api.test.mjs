@@ -97,6 +97,10 @@ test('working CSS preserves v3 provenance and documents intentional G5/G6 extens
         assert.match(working, /font-size: var\(--segmented-control-font-size, 0\.9rem\);/u);
         assert.match(working, /\.checkbox-label\s*\{[^}]*display: flex !important;/su);
         assert.match(working, /\.collapse-icon:focus-visible\s*\{[^}]*outline: 1px solid var\(--color-text\);/su);
+        assert.match(working, /\.bottom-buttons\.action-dock\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\) auto minmax\(0, 1fr\);/su);
+        assert.match(working, /\.action-dock__slot--primary\s*\{[^}]*position: absolute;[^}]*left: 50%;[^}]*transform: translateX\(-50%\);/su);
+        assert.match(working, /\.action-dock__slot--utility\s*\{[^}]*justify-self: start;[^}]*justify-content: flex-start;/su);
+        assert.match(working, /\.action-dock__slot--options\s*\{[^}]*justify-self: end;[^}]*justify-content: flex-end;/su);
     }
 });
 

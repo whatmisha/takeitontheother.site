@@ -78,12 +78,13 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
 
     assert.match(
         bridge,
-        /@import url\('\.\.\/\.\.\/framework\/css\/othersite-styles\.css\?v=g5-dialog-scope-1'\) layer\(framework\);/u
+        /@import url\('\.\.\/\.\.\/framework\/css\/othersite-styles\.css\?v=g6-action-dock-2'\) layer\(framework\);/u
     );
     assert.ok(
         html.indexOf('css/framework-base.css') < html.indexOf('css/yf-styles.css'),
         'shared CSS must load before Pulsar compatibility CSS'
     );
+    assert.match(html, /css\/framework-base\.css\?v=g6-action-dock-2/u);
     assert.match(html, /css\/yf-styles\.css\?v=g5-reset-1/u);
     assert.match(html, /pulsar-styles\.css\?v=g5-reset-1/u);
     assert.doesNotMatch(legacySkin, /^\s*\*\s*\{/mu, 'Pulsar must consume the shared universal reset');
@@ -93,6 +94,9 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
         /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u
     );
     assert.doesNotMatch(html, /class="yf-tools-link"/u);
+    assert.match(html, /<nav class="bottom-buttons action-dock" role="toolbar" aria-label="Verify and export actions">/u);
+    assert.match(html, /class="action-dock__slot action-dock__slot--utility"/u);
+    assert.match(html, /class="action-dock__slot action-dock__slot--primary"/u);
     assert.match(sharedStyles, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
     assert.match(
         skin,

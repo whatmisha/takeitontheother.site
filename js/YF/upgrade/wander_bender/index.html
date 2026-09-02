@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wander Bender - YF Tools</title>
-    <link rel="stylesheet" href="css/framework-base.css?v=g5-reset-1">
+    <link rel="stylesheet" href="css/framework-base.css?v=g6-action-dock-4">
     <link rel="stylesheet" href="css/yf-styles.css?v=g5-reset-1">
     <link rel="stylesheet" href="css/wander-bender.css?v=g5-reset-1">
     <script src="../framework/vendor/paper/0.12.17/paper-full.min.js"></script>
@@ -248,8 +248,10 @@
     </div>
 
     <!-- Bottom Action Buttons -->
-    <nav class="bottom-buttons" role="toolbar" aria-label="Export actions">
-        <button class="btn-fixed btn-export" id="exportBtn">Export SVG</button>
+    <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Export actions">
+        <div class="action-dock__slot action-dock__slot--primary">
+            <button class="btn-fixed btn-export" id="exportBtn">Export SVG</button>
+        </div>
     </nav>
 
     <dialog id="dialog" class="modal" aria-labelledby="dialogTitle">

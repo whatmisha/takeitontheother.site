@@ -22,6 +22,7 @@
     "notes": [
       "Top-level grid_generator is the current Pizza Boxer baseline.",
       "grid_generator/v2 is excluded from the runtime copy and documented as a donor.",
+      "sparky/stages is the author-owned history archive and is excluded from the Upgrade runtime copy.",
       "wander_bender/pattern and its embedded framework are donor-only.",
       "Void wip snapshots are excluded; active Void files are donor-only.",
       "No manifest target may resolve outside the upgrade directory."
@@ -286,6 +287,10 @@
     {
       "path": "takeitontheother.site/js/YF/lunnen/sparky/presets/.DS_Store",
       "reason": "excluded-file"
+    },
+    {
+      "path": "takeitontheother.site/js/YF/lunnen/sparky/stages",
+      "reason": "excluded-directory"
     },
     {
       "path": "takeitontheother.site/js/YF/lunnen/wander_bender/.DS_Store",

@@ -146,6 +146,15 @@ unlayered resets оформляется узким app bridge с `revert-layer` 
 проверяется exact before/after capture; копировать component declarations
 обратно в приложение запрещено.
 
+`ActionDock` — CSS-only layout contract: `.bottom-buttons.action-dock` содержит
+до трёх `.action-dock__slot` с модификаторами `--utility`, `--primary` и
+`--options`. Primary всегда остаётся в центре viewport независимо от ширины
+соседних slots; utility растёт вправо от левого края, options — влево от
+правого. Dock и пустое
+пространство не перехватывают pointer events, интерактивны только slots.
+Framework владеет layout/spacing, приложение — составом controls, handlers,
+busy/error state, export pipeline, filename и output.
+
 ## 9. Compatibility and versioning
 
 До Gate G4 совместимость проверяется приложениями, а не обещанием semver. Breaking change public export, config semantics, DOM/CSS contract, storage format или lifecycle требует:

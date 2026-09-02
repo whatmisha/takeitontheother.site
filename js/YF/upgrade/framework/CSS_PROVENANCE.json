@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "base": "Othersite UI Framework v3 / Void active root",
   "upstreamStylesSha256": "1ea9314b39ce5de366a17b90d5536d7cfaf2854a788028e9b26a7a6b3e26e0a0",
-  "workingStylesSha256": "4652beb5367877de74365a38cf24ff550faabc7c9de71112749568e30d42cde9",
+  "workingStylesSha256": "1bce8cd0c67d5aa0044c2af2878cab74633712ffd064d9bf6b96b046a1caa031",
   "upstreamTokensSha256": "6e47fac2e182feeea3aa1755bb524617c8ba84ed7b72159f8be3a49a9515348d",
   "workingTokensSha256": "3b9e83edc4a133264fcd18ae29f8b8300b469505d0c6ed484a5a51196f4276b4",
-  "workingDifference": "CoFo Sans URLs are localized. G5 adds the exact-compatible 33x18 checkbox-label presentation, a segmented-control font-size token, and separately scoped legacy-overlay/native-dialog content shells. G6 makes collapse icons native-button-safe with a shared focus ring; upstream-v3 remains immutable.",
+  "workingDifference": "CoFo Sans URLs are localized. G5 adds the exact-compatible 33x18 checkbox-label presentation, a segmented-control font-size token, and separately scoped legacy-overlay/native-dialog content shells. G6 makes collapse icons native-button-safe with a shared focus ring and adds the opt-in three-slot ActionDock layout; upstream-v3 remains immutable.",
   "loadOrder": "framework css first, application css second",
   "mobile": "opt-in; only Sparky requires a mobile application stylesheet"
 }

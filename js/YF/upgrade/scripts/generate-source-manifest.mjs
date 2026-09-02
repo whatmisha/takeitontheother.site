@@ -58,6 +58,7 @@ const excludedFileNames = new Set(['.DS_Store']);
 function decisionFor(root, relativePath) {
     const segments = relativePath.split('/');
     if (root.id === 'grid_generator' && segments[0] === 'v2') return 'exclude';
+    if (root.id === 'sparky' && segments[0] === 'stages') return 'exclude';
     if (root.id === 'wander_bender' && segments[0] === 'pattern') return 'donor-only';
     if (root.id === 'wander_bender' && segments[0] === 'othersite-ui-framework') return 'donor-only';
     if (root.id === 'void-active' && segments[0] === 'wip') return 'exclude';
@@ -174,6 +175,7 @@ async function buildManifest() {
             notes: [
                 'Top-level grid_generator is the current Pizza Boxer baseline.',
                 'grid_generator/v2 is excluded from the runtime copy and documented as a donor.',
+                'sparky/stages is the author-owned history archive and is excluded from the Upgrade runtime copy.',
                 'wander_bender/pattern and its embedded framework are donor-only.',
                 'Void wip snapshots are excluded; active Void files are donor-only.',
                 'No manifest target may resolve outside the upgrade directory.'

@@ -34,6 +34,22 @@ const bars = Object.fromEntries(
     Object.entries(appHtml).map(([name, html]) => [name, bottomBar(html, name)])
 );
 
+assert.match(
+    bars['Wander Bender'],
+    /<nav\b[^>]*\bclass=["'][^"']*\baction-dock\b[^"']*["'][^>]*>[\s\S]*?action-dock__slot--primary/u,
+    'Wander Bender must remain the ActionDock primary-slot canary'
+);
+assert.match(
+    bars['Pulsar Coder'],
+    /<nav\b[^>]*\bclass=["'][^"']*\baction-dock\b[^"']*["'][^>]*>[\s\S]*?action-dock__slot--utility[\s\S]*?\bid=["']verifyBtn["'][\s\S]*?\bid=["']copyBtn["'][\s\S]*?action-dock__slot--primary[\s\S]*?\bid=["']downloadBtn["']/u,
+    'Pulsar must keep Verify/Copy in utility and Download in the primary ActionDock slot'
+);
+assert.match(
+    bars.Wordplayer,
+    /action-dock__slot--utility[\s\S]*?\bid=["']introHelpBtn["'][\s\S]*?action-dock__slot--primary[\s\S]*?\bid=["']exportPngBtn["'][\s\S]*?\bid=["']exportSvgBtn["'][\s\S]*?action-dock__slot--options[\s\S]*?\bid=["']transparentPngCheckbox["']/u,
+    'Wordplayer must keep About/exports/Transparent in utility/primary/options slots'
+);
+
 const expected = {
     Sparky: {
         buttons: 4,
@@ -178,6 +194,8 @@ for (const selector of ['bottom-buttons', 'btn-fixed']) {
 assert.match(activeSharedCss, /\.btn-fixed:disabled\s*\{/u);
 assert.match(activeSharedCss, /\.btn-fixed\.btn-intro-help\s*\{/u);
 assert.match(activeSharedCss, /\.btn-fixed\.btn-fixed--muted,/u);
+assert.match(activeSharedCss, /\.bottom-buttons\.action-dock\s*\{/u);
+assert.match(activeSharedCss, /\.action-dock__slot--primary\s*\{/u);
 
 const localButtonBase = css => /(?:^|\})\s*\.btn-fixed\s*\{/u.test(stripComments(css));
 const localBarBase = css => /(?:^|\})\s*\.bottom-buttons\s*\{/u.test(stripComments(css));

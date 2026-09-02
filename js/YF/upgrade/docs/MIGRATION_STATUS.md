@@ -1,6 +1,6 @@
 # Migration Status
 
-Последнее обновление: 2026-09-01.
+Последнее обновление: 2026-09-02.
 
 ## Gates
 
@@ -19,7 +19,7 @@
 | ID | Результат | Статус | Проверка |
 |---|---|---|---|
 | UPG-000 | Основные документы | Complete | Документы согласованы между собой |
-| UPG-001 | `SOURCE_MANIFEST.json` | Complete | `npm run manifest:check` |
+| UPG-001 | `SOURCE_MANIFEST.json` | Complete | `npm run manifest:check`; author-owned `sparky/stages` исключён из runtime copy |
 | UPG-002 | Test baselines | Complete | Команды и результаты записаны |
 | UPG-003 | Visual/runtime baselines | Complete | 8 desktop + 2 Sparky mobile captures |
 | UPG-010 | Чистое копирование | Complete | 915 файлов сверены до relocation-правок |
@@ -28,7 +28,7 @@
 | UPG-013 | Local vendor/fonts | Complete | 5 source-backed + 6 canonical assets + 3 pinned downloads |
 | UPG-014 | Storage isolation | Complete | 6 original sentinel keys неизменны |
 | UPG-015 | Boundary scanner | Complete | `npm run check:isolation` |
-| UPG-020 | v3 snapshot и working framework | Complete | 50 immutable / 15 modified upstream files |
+| UPG-020 | v3 snapshot и working framework | Complete | 50 immutable / 17 modified upstream files |
 | UPG-021 | Public contracts | Complete | `framework/CONTRACT.md`, public barrel |
 | UPG-022 | Keyboarder improvements | Complete | export/font/preset conformance |
 | UPG-023 | Sparky improvements | Complete | 34 framework + 195 Sparky tests |
@@ -116,13 +116,13 @@
 | UPG-058f | Universal reset/promotion removal | Complete | five local universal resets and 21 temporary `all: revert-layer` promotions reduced to 0/0; Wander, Sticky, Pizza, Dither and Pulsar retain exact active geometry/state/output through narrow property bridges; all app suites and isolation pass |
 | UPG-058g | Legacy CSS cleanup gate | Complete | every remaining app delta has owner/reason/removal condition; 8/8 live entrypoints complete with visible output and 0 browser errors; Pizza source/public 14-asset runtime, isolation and full Gate G4 pass |
 | UPG-059 | Gate G5 | Complete | `gate:g5:static` passes: 8 hub links, 8 shared CSS + 8 shared JS boundaries, 0 resets/promotions, owned app deltas, accepted Sparky desktop/390×844/430×932, full G4/isolation/app suites |
-| UPG-060 | Общий PanelShell/summary и Dither panel redesign | In progress | shared summary API; collapse buttons; common clamp/stack/header; Dither Canvas proof pending |
+| UPG-060 | Общий PanelShell/summary и Dither panel redesign | Complete | 2 native collapse buttons; app summaries; shared clamp/stack/header; clean browser smoke; exact G5/G6 SHA-256 for Default/Bayer/Pixel4; Gate G5 pass |
 
 ## Подтверждённые исходные результаты
 
 | Проект | Результат |
 |---|---|
-| Shared framework | 42/42 tests pass; range, toggle, preset, action and feedback contracts are part of Gate G4 |
+| Shared framework | 43/43 tests pass; range, toggle, preset, action and feedback contracts are part of Gate G4 |
 | Pizza Boxer top-level | 167/167 tests pass (165 original + JS/CSS boundary); source/public runtime checks pass |
 | Pizza Boxer `v2` donor | 221/222; один failure в Node test mock без `requestAnimationFrame` |
 | Sparky | 196/196 tests pass (195 исходных + shared-framework boundary) |
@@ -154,6 +154,6 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-План UPG-000—UPG-059 выполнен. Начат отдельный Gate G6 по плану
-`G6_INTERFACE_UNIFICATION_PLAN.md`. Текущий шаг — завершить UPG-060 browser
-acceptance и нулевой Dither Canvas diff, не обновляя G5 baselines автоматически.
+План UPG-000—UPG-060 выполнен. Gate G6 продолжается по плану
+`G6_INTERFACE_UNIFICATION_PLAN.md`. Следующий шаг — UPG-061: определить общий
+трёхслотовый ActionDock и пройти canary на Wander без изменения export pipeline.

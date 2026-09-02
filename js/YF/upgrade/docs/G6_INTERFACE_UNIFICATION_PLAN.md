@@ -28,6 +28,7 @@ rendering, export и mode/editor lifecycle.
 
 ### UPG-060 — PanelShell и Dither panel redesign
 
+- статус: **Complete** (2026-09-02);
 - добавить нейтральный `PanelManager` summary API;
 - не начинать drag с collapse control;
 - перевести Dither с private unbounded/z-index adapter на общий manager;
@@ -36,8 +37,15 @@ rendering, export и mode/editor lifecycle.
 - принять общий panel header/shell/scrollbar;
 - проверить clamp, stacking, click/Enter/Space, ARIA и Canvas pixels.
 
+Принято: Dither использует общий shell/header/scrollbar, две нативные collapse
+buttons и app-owned summary. Чистый browser smoke не имеет warning/error.
+SHA-256 сырых `579×600` RGBA-пикселей совпадает с G5 для Default, Bayer и
+Pixel Size 4 (`1b4c210c…`, `9f8f96ab…`, `f93c0e2a…`). Полный
+`gate:g5:static` проходит.
+
 ### UPG-061 — трехслотовый ActionDock
 
+- статус: **Next**;
 - viewport-centered primary export slot;
 - независимые utility и export-option slots;
 - общие primary/secondary/utility/muted/danger/icon variants;
@@ -79,8 +87,9 @@ rendering, export и mode/editor lifecycle.
 - Sparky desktop + 390×844 + 430×932 приняты;
 - все intentional visual diffs перечислены отдельно от G5.
 
-## Первый срез
+## Текущий срез
 
-UPG-060 начинается с общего summary API и Dither. В этом срезе не меняются
-Canvas algorithms, source image lifecycle, raster cache, modal, bottom actions
-или PNG export.
+UPG-060 завершён без изменения Canvas algorithms, source image lifecycle,
+raster cache, modal, bottom actions или PNG export. Следующий шаг — UPG-061:
+сначала contract и canary Wander, затем Pulsar и Wordplayer; Dither переносится
+только после отделения source actions от export dock.

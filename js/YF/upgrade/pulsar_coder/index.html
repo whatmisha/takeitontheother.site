@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pulsar Coder - YF Tools</title>
-    <link rel="stylesheet" href="css/framework-base.css?v=g5-reset-1">
+    <link rel="stylesheet" href="css/framework-base.css?v=g6-action-dock-2">
     <link rel="stylesheet" href="css/yf-styles.css?v=g5-reset-1">
     <link rel="stylesheet" href="pulsar-styles.css?v=g5-reset-1">
 </head>
@@ -223,10 +223,14 @@
     </div>
 
     <!-- Bottom Action Buttons -->
-    <nav class="bottom-buttons" role="toolbar" aria-label="Verify and export actions">
-        <button class="btn-fixed" id="verifyBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="verifyModal">Verify</button>
-        <button class="btn-fixed" id="copyBtn">Copy SVG</button>
-        <button class="btn-fixed btn-export" id="downloadBtn">Download SVG</button>
+    <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Verify and export actions">
+        <div class="action-dock__slot action-dock__slot--utility">
+            <button class="btn-fixed" id="verifyBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="verifyModal">Verify</button>
+            <button class="btn-fixed" id="copyBtn">Copy SVG</button>
+        </div>
+        <div class="action-dock__slot action-dock__slot--primary">
+            <button class="btn-fixed btn-export" id="downloadBtn">Download SVG</button>
+        </div>
     </nav>
 
     <!-- Verification Modal -->

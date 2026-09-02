@@ -32,6 +32,7 @@ const frameworkCss = htmlSource.indexOf('../framework/css/othersite-styles.css')
 const applicationCss = htmlSource.indexOf('href="styles.css');
 assert.ok(frameworkCss >= 0, 'shared framework stylesheet is missing');
 assert.ok(applicationCss > frameworkCss, 'application stylesheet must load after framework CSS');
+assert.match(htmlSource, /othersite-styles\.css\?v=g6-action-dock-1/u, 'ActionDock CSS cache boundary changed');
 assert.doesNotMatch(htmlSource, /href=["']foundation\.css["']/, 'retired local foundation CSS is still linked');
 assert.match(htmlSource, /\.\.\/framework\/fonts\/CoFoSans-Regular\.woff2/, 'shared regular CoFo font is not preloaded');
 assert.match(htmlSource, /\.\.\/framework\/fonts\/CoFoSans-Medium\.woff2/, 'shared medium CoFo font is not preloaded');
@@ -45,6 +46,10 @@ assert.doesNotMatch(
     /class="[^"]*top-link[^"]*"[^>]*>←Upgrade Tools<\/a>/u,
     'Wordplayer back link must retain its explicit mode-navigation presentation'
 );
+assert.match(htmlSource, /<nav class="bottom-buttons action-dock" role="toolbar" aria-label="Export actions">/u);
+assert.match(htmlSource, /action-dock__slot action-dock__slot--utility[\s\S]*?\bid="introHelpBtn"/u);
+assert.match(htmlSource, /action-dock__slot action-dock__slot--primary[\s\S]*?\bid="exportPngBtn"[\s\S]*?\bid="exportSvgBtn"/u);
+assert.match(htmlSource, /action-dock__slot action-dock__slot--options[\s\S]*?\bid="transparentPngCheckbox"/u);
 assert.match(
     frameworkStylesSource,
     /\.panel-header span:first-child\s*\{[^}]*font-weight:\s*500;[^}]*font-size:\s*0\.9rem;/su,

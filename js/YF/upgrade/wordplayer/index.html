@@ -7,7 +7,7 @@
     <link rel="icon" href="data:,">
     <link rel="preload" href="../framework/fonts/CoFoSans-Regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="../framework/fonts/CoFoSans-Medium.woff2" as="font" type="font/woff2" crossorigin>
-    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g5-dialog-scope-1">
+    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g6-action-dock-1">
     <link id="applicationStyles" rel="stylesheet" href="styles.css?v=g3-wordplayer-2">
 </head>
 <body>
@@ -326,17 +326,23 @@
             </aside>
         </main>
 
-        <nav class="bottom-buttons" role="toolbar" aria-label="Export actions">
-            <button class="btn-fixed btn-intro-help" id="introHelpBtn" type="button" aria-label="About" data-tooltip="About">?</button>
-            <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
-            <button class="btn-fixed" id="exportSvgBtn" type="button">Export SVG</button>
-            <label class="toggle-label" data-tooltip="Transparent background on PNG export">
-                <span class="toggle-switch">
-                    <input type="checkbox" id="transparentPngCheckbox" data-setting="exportTransparent" aria-label="Transparent" checked>
-                    <span class="toggle-slider"></span>
-                </span>
-                <span class="toggle-label-text">Transparent</span>
-            </label>
+        <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Export actions">
+            <div class="action-dock__slot action-dock__slot--utility">
+                <button class="btn-fixed btn-intro-help" id="introHelpBtn" type="button" aria-label="About" data-tooltip="About">?</button>
+            </div>
+            <div class="action-dock__slot action-dock__slot--primary">
+                <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
+                <button class="btn-fixed" id="exportSvgBtn" type="button">Export SVG</button>
+            </div>
+            <div class="action-dock__slot action-dock__slot--options">
+                <label class="toggle-label" data-tooltip="Transparent background on PNG export">
+                    <span class="toggle-switch">
+                        <input type="checkbox" id="transparentPngCheckbox" data-setting="exportTransparent" aria-label="Transparent" checked>
+                        <span class="toggle-slider"></span>
+                    </span>
+                    <span class="toggle-label-text">Transparent</span>
+                </label>
+            </div>
         </nav>
 
         <dialog id="dialog" class="modal" aria-labelledby="dialogTitle">
