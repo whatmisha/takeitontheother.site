@@ -126,6 +126,7 @@
 | UPG-070 | Post-G6 live release-readiness | Complete | 8/8 live entrypoints, centered ActionDock geometry, zero horizontal overflow/errors, live J-toggle in 4 JSON-capable tools and non-empty outputs accepted |
 | UPG-071 | Export acceptance inventory | Complete | 8 apps/9 primary actions/4 JSON exports/3 JSON imports mapped to implementation and evidence; 3 artifact-covered and 5 explicit G7 gaps; machine check added |
 | UPG-072 | Priority export artifacts | Complete | all 5 priority tools artifact-covered; Sticky vector PDF/SVG cleanup and page geometry; Wordplayer SVG/PNG MIME, dimensions, signature and filenames; focused suite added |
+| UPG-073 | Secondary export artifacts | Complete | Dither 1×/2×/4×/8× PNG packaging/signature; Wander clean SVG without area boundary; Pulsar exact generated SVG packaging; app-private helpers and focused suite added |
 
 ## Подтверждённые исходные результаты
 
@@ -171,5 +172,5 @@ framework. `check:file-intake`, `check:choices`, `check:capabilities` и
 surface, capability-driven `ApplicationShell` и Component Lab готовы. Финальный
 Gate G6 проходит. UPG-070 повторно принял все восемь live entrypoints и
 ActionDock/JSON shortcut behavior. G7 начат: UPG-071 зафиксировал export
-acceptance inventory. UPG-072 закрыл artifact coverage всех пяти priority tools;
-следующий шаг — UPG-073 для трёх secondary exporters.
+acceptance inventory. UPG-072 и UPG-073 закрыли artifact coverage всех восьми
+tools; следующий шаг — UPG-074 import/export round-trip.

@@ -43,7 +43,7 @@ G6 принял общий интерфейс и сохранил визуаль
 
 ### UPG-073 — Secondary export artifacts
 
-- статус: **Pending**;
+- статус: **Complete** (2026-09-04);
 - Dither: PNG для 1×/2×/4×/8×, alpha и raster hashes;
 - Wander Bender: SVG трёх modes без area boundary;
 - Pulsar Coder: export SVG отдельно от известной encoder/verifier CRC проблемы;
@@ -102,6 +102,8 @@ G6 принял общий интерфейс и сохранил визуаль
 
 UPG-071 и UPG-072 завершены. Общий export surface описан в
 `EXPORT_ACCEPTANCE.json` и проверяется `npm run check:export-acceptance`.
-Artifact-level coverage есть у всех пяти priority tools; Sticky Fingers получил
-vector PDF/SVG contract tests, Wordplayer — SVG/PNG MIME, geometry, signature и
-filename tests. Следующий шаг — UPG-073 для Dither, Wander Bender и Pulsar Coder.
+Artifact-level coverage есть у всех восьми tools. Sticky Fingers получил vector
+PDF/SVG contract tests, Wordplayer — SVG/PNG MIME, geometry, signature и filename
+tests. Dither проверяет 1×/2×/4×/8× PNG packaging, Wander — очистку area boundary,
+а Pulsar — неизменность generated SVG независимо от известной CRC проблемы.
+Следующий шаг — UPG-074, import/export round-trip.

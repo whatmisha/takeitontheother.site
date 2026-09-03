@@ -21,6 +21,7 @@ import {
     SliderController
 } from './js/framework/FrameworkAdapter.js?v=g5-feedback-2';
 import { ZoomPanManager } from './js/ui/ZoomPanManager.js';
+import { downloadPulsarSvg } from './js/export/PulsarSvgExport.js?v=g7-export-1';
 
 // ============================================
 // SETTINGS STORAGE
@@ -675,13 +676,7 @@ function downloadSvg() {
         return;
     }
     
-    const blob = new Blob([currentSvg], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `pulsar-code-${Date.now()}.svg`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadPulsarSvg(currentSvg);
 }
 
 function copySvg() {

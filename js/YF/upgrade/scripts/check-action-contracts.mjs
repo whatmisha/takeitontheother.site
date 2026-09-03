@@ -193,7 +193,10 @@ const [
     wanderScript,
     stickyScript,
     pizzaExportController,
-    ditherScript
+    ditherScript,
+    ditherExport,
+    wanderExport,
+    pulsarExport
 ] = await Promise.all([
     read('framework/css/othersite-styles.css'),
     read('sparky/styles/sparky.css'),
@@ -217,7 +220,10 @@ const [
     read('wander_bender/js/wander-bender.js'),
     read('label_generator/script.js'),
     read('grid_generator/src/svg/ExportController.js'),
-    read('dither/dither.js')
+    read('dither/dither.js'),
+    read('dither/js/export/DitherPngExport.js'),
+    read('wander_bender/js/export/WanderSvgExport.js'),
+    read('pulsar_coder/js/export/PulsarSvgExport.js')
 ]);
 
 const activeSharedCss = stripComments(sharedCss);
@@ -312,7 +318,10 @@ for (const marker of ['function downloadSvg()', 'function copySvg()', 'function 
 }
 assert.match(pulsarScript, /btn\.textContent = '✓ Copied!'/u);
 assert.match(wanderScript, /areaBoundary\.remove\(\)/u);
-assert.match(wanderScript, /wander-bender-\$\{settings\.get\('rays'\)\}-rays\.svg/u);
+assert.match(wanderScript, /downloadWanderSvg\(svgElement, \{ rays: settings\.get\('rays'\) \}\)/u);
+assert.match(wanderExport, /filename: `wander-bender-\$\{rays\}-rays\.svg`/u);
+assert.match(pulsarScript, /downloadPulsarSvg\(currentSvg\)/u);
+assert.match(pulsarExport, /filename: `pulsar-code-\$\{timestamp\}\.svg`/u);
 
 for (const marker of [
     'exportPDF()',
@@ -334,10 +343,14 @@ assert.match(pizzaExportController, /convertToOutlinesCheckbox/u);
 
 assert.match(ditherScript, /exportBtn\.disabled = true/u);
 assert.match(ditherScript, /exportBtn\.disabled = false/u);
-assert.match(ditherScript, /if \(this\.settings\.export8x\)/u);
-assert.match(ditherScript, /else if \(this\.settings\.export4x\)/u);
-assert.match(ditherScript, /else if \(this\.settings\.export2x\)/u);
+assert.match(ditherScript, /DitherPngExport\.resolveScale\(this\.settings\)/u);
+assert.match(ditherExport, /if \(settings\.export8x\) return 8;/u);
+assert.match(ditherExport, /if \(settings\.export4x\) return 4;/u);
+assert.match(ditherExport, /if \(settings\.export2x\) return 2;/u);
 assert.match(ditherScript, /if \(this\.settings\.exportWithAlpha\)/u);
+assert.match(ditherScript, /DitherPngExport\.downloadCanvas\(exportCanvas\)/u);
+assert.match(ditherExport, /canvas\.toBlob\(blob =>/u);
+assert.match(ditherExport, /const FILENAME = 'dithered-image\.png';/u);
 assert.match(bars.Dither, /\bid=["']helpButton["'][^>]*>\?<\/button>/u);
 assert.doesNotMatch(stripComments(ditherCss), /\.(?:help-container|btn-help)\b/u);
 

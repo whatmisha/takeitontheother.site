@@ -36,6 +36,7 @@
     "test:keyboarder": "node keyboarder/tests/framework-boundary.test.mjs && node keyboarder/analysis/svg-export-encoding.mjs && node keyboarder/analysis/svg-geometry.mjs && node keyboarder/analysis/model-io.mjs && node keyboarder/analysis/presets.mjs && node keyboarder/analysis/layout-content.mjs",
     "test:sticky": "node --test label_generator/tests/*.test.mjs",
     "test:priority-exports": "node --test sparky/tests/staticSvgExporter.test.js sparky/tests/exportFormats.test.js sparky/tests/animationExporter.test.js grid_generator/tests/svg-file-export.test.mjs grid_generator/tests/pdf-exporter.test.mjs label_generator/tests/export-artifact.test.mjs wordplayer/tests/export-artifact.test.mjs && node keyboarder/analysis/svg-export-encoding.mjs",
+    "test:secondary-exports": "node --test dither/tests/export-artifact.test.mjs wander_bender/tests/export-artifact.test.mjs pulsar_coder/tests/export-artifact.test.mjs",
     "test:pulsar": "node --test pulsar_coder/tests/*.test.mjs",
     "test:dither": "node --test dither/tests/*.test.mjs",
     "test:wander": "node --test wander_bender/tests/*.test.mjs",

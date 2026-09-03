@@ -2071,15 +2071,8 @@ class DitheringTool {
     exportImage() {
         if (!this.originalImage) return;
         
-        // Determine export scale: 8x, 4x, 2x, or 1x (default)
-        let exportScale = 1;
-        if (this.settings.export8x) {
-            exportScale = 8;
-        } else if (this.settings.export4x) {
-            exportScale = 4;
-        } else if (this.settings.export2x) {
-            exportScale = 2;
-        }
+        // Determine export scale through the app-private artifact contract.
+        const exportScale = globalThis.DitherPngExport.resolveScale(this.settings);
         
         // Create export canvas with scaled dimensions
         const exportCanvas = document.createElement('canvas');
@@ -2185,21 +2178,8 @@ class DitheringTool {
             exportCtx.putImageData(exportImageData, 0, 0);
         }
         
-        // Use toBlob for better Safari compatibility
-        exportCanvas.toBlob((blob) => {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.download = 'dithered-image.png';
-            link.href = url;
-            
-            // Add to DOM, click, and remove (Safari compatibility)
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Clean up the URL object
-            setTimeout(() => URL.revokeObjectURL(url), 100);
-        }, 'image/png');
+        // Keep Safari-compatible DOM insertion and delayed URL cleanup private.
+        void globalThis.DitherPngExport.downloadCanvas(exportCanvas);
     }
 }
 

@@ -63,10 +63,10 @@ for (const app of manifest.applications) {
 assert.equal(primaryCount, 9, 'primary export action count changed');
 assert.equal(jsonExports, 4, 'JSON export surface count changed');
 assert.equal(jsonImports, 3, 'JSON import surface count changed');
-assert.equal(artifactCoverage, 5, 'artifact coverage baseline changed; update G7 evidence explicitly');
+assert.equal(artifactCoverage, 8, 'all eight applications require artifact coverage at UPG-073');
 
 console.log(
     `Export acceptance inventory passed: 8 apps; ${primaryCount} primary actions; `
     + `${jsonExports} JSON exports/${jsonImports} JSON imports; `
-    + `${artifactCoverage}/8 artifact-covered, ${8 - artifactCoverage}/8 scheduled for G7.`
+    + `${artifactCoverage}/8 artifact-covered.`
 );

@@ -9,6 +9,7 @@ import { debounce, DEBOUNCE_DELAYS } from './utils/DebounceUtils.js';
 import { RadialMode } from './modes/RadialMode.js';
 import { RandomMode } from './modes/RandomMode.js';
 import { FlowFieldMode } from './modes/FlowFieldMode.js';
+import { downloadWanderSvg } from './export/WanderSvgExport.js?v=g7-export-1';
 
 const feedbackDialogHost = new DialogHost();
 
@@ -677,22 +678,7 @@ if (copyBtn) {
 // Export functionality
 document.getElementById('exportBtn').addEventListener('click', () => {
     const svgElement = document.getElementById('mainSvg');
-    const clone = svgElement.cloneNode(true);
-    
-    // Remove area-boundary from the clone (should not be exported)
-    const areaBoundary = clone.querySelector('.area-boundary');
-    if (areaBoundary) {
-        areaBoundary.remove();
-    }
-    
-    const svgData = new XMLSerializer().serializeToString(clone);
-    const blob = new Blob([svgData], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `wander-bender-${settings.get('rays')}-rays.svg`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadWanderSvg(svgElement, { rays: settings.get('rays') });
 });
 
 // Initialize when DOM and Paper.js are ready

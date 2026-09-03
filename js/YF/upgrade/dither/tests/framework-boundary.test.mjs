@@ -227,6 +227,7 @@ test('all thirteen Dither ranges remain in the private raster-safe variant', asy
 
 test('Dither keeps private value formatting, raster invalidation and PNG export', async () => {
     const app = await readFile(new URL('dither.js', appRoot), 'utf8');
+    const exporter = await readFile(new URL('js/export/DitherPngExport.js', appRoot), 'utf8');
 
     assert.match(app, /input\.dataset\.originalValue = input\.value;/u);
     assert.match(
@@ -239,8 +240,10 @@ test('Dither keeps private value formatting, raster invalidation and PNG export'
     assert.match(app, /this\.dom\.scaleValue\.value = percentage \+ '%';/u);
     assert.match(app, /this\.dom\.rotationValue\.value = numValue \+ '°';/u);
     assert.match(app, /this\.cache\.processedImage = null;/u);
-    assert.match(app, /exportCanvas\.toBlob\(\(blob\) =>/u);
-    assert.match(app, /link\.download = 'dithered-image\.png';/u);
+    assert.match(app, /DitherPngExport\.resolveScale\(this\.settings\)/u);
+    assert.match(app, /DitherPngExport\.downloadCanvas\(exportCanvas\)/u);
+    assert.match(exporter, /canvas\.toBlob\(blob =>/u);
+    assert.match(exporter, /const FILENAME = 'dithered-image\.png';/u);
 });
 
 test('Dither panels use shared stacking behavior', () => {

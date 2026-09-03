@@ -61,9 +61,9 @@
       "primary": [{ "id": "exportBtn", "format": "png", "label": "PNG ⌘E" }],
       "additionalFormats": [],
       "json": { "exportId": null, "importId": null },
-      "implementation": ["dither/dither.js"],
-      "testEvidence": ["dither/tests/framework-boundary.test.mjs", "dither/tests/algorithms.test.mjs"],
-      "artifactCoverage": false
+      "implementation": ["dither/dither.js", "dither/js/export/DitherPngExport.js"],
+      "testEvidence": ["dither/tests/framework-boundary.test.mjs", "dither/tests/algorithms.test.mjs", "dither/tests/export-artifact.test.mjs"],
+      "artifactCoverage": true
     },
     {
       "id": "pulsar_coder",
@@ -71,9 +71,9 @@
       "primary": [{ "id": "downloadBtn", "format": "svg", "label": "SVG ⌘E" }],
       "additionalFormats": ["clipboard-svg"],
       "json": { "exportId": null, "importId": null },
-      "implementation": ["pulsar_coder/pulsar-main.js"],
-      "testEvidence": ["pulsar_coder/tests/framework-boundary.test.mjs", "pulsar_coder/tests/codec.test.mjs"],
-      "artifactCoverage": false
+      "implementation": ["pulsar_coder/pulsar-main.js", "pulsar_coder/js/export/PulsarSvgExport.js"],
+      "testEvidence": ["pulsar_coder/tests/framework-boundary.test.mjs", "pulsar_coder/tests/codec.test.mjs", "pulsar_coder/tests/export-artifact.test.mjs"],
+      "artifactCoverage": true
     },
     {
       "id": "wander_bender",
@@ -81,9 +81,9 @@
       "primary": [{ "id": "exportBtn", "format": "svg", "label": "SVG ⌘E" }],
       "additionalFormats": [],
       "json": { "exportId": null, "importId": null },
-      "implementation": ["wander_bender/js/wander-bender.js"],
-      "testEvidence": ["wander_bender/tests/framework-boundary.test.mjs", "wander_bender/tests/modes.test.mjs"],
-      "artifactCoverage": false
+      "implementation": ["wander_bender/js/wander-bender.js", "wander_bender/js/export/WanderSvgExport.js"],
+      "testEvidence": ["wander_bender/tests/framework-boundary.test.mjs", "wander_bender/tests/modes.test.mjs", "wander_bender/tests/export-artifact.test.mjs"],
+      "artifactCoverage": true
     }
   ]
 }
