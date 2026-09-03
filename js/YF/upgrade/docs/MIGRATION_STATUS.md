@@ -123,6 +123,9 @@
 | UPG-064a | Capability manifest + optional barrel | Complete | 8 app capabilities are machine-readable; 5 priority/1 mobile boundaries fixed; unused DicePanel/RangeSliderController moved from stable API to `experimental.js`; `check:capabilities` green |
 | UPG-064b | Capability-driven shell + Component Lab | Complete | ApplicationShell constructs only configured/live subsystems; empty config proof; local lab covers 6 UI states and 4 component families; 55/55 framework tests |
 | UPG-069 | Gate G6 | Complete | full `gate:g6:static` passes; UPG-060—UPG-064, intentional diffs, browser evidence, isolation and all app suites accepted |
+| UPG-070 | Post-G6 live release-readiness | Complete | 8/8 live entrypoints, centered ActionDock geometry, zero horizontal overflow/errors, live J-toggle in 4 JSON-capable tools and non-empty outputs accepted |
+| UPG-071 | Export acceptance inventory | Complete | 8 apps/9 primary actions/4 JSON exports/3 JSON imports mapped to implementation and evidence; 3 artifact-covered and 5 explicit G7 gaps; machine check added |
+| UPG-072 | Priority export artifacts | Complete | all 5 priority tools artifact-covered; Sticky vector PDF/SVG cleanup and page geometry; Wordplayer SVG/PNG MIME, dimensions, signature and filenames; focused suite added |
 
 ## Подтверждённые исходные результаты
 
@@ -134,7 +137,7 @@
 | Sparky | 196/196 tests pass (195 исходных + shared-framework boundary) |
 | Wordplayer | Shared-framework boundary, Dither worker и Forms worker tests pass |
 | Keyboarder | Boundary + 5 domain suites; SVG text/outline и editable PDF browser export pass |
-| Sticky Fingers | 5/5 boundary/domain tests; manifest presets, Google Sheets and local-font PDF browser acceptance pass |
+| Sticky Fingers | 7/7 boundary/domain/export tests; manifest presets, vector PDF/SVG artifacts, Google Sheets and local-font PDF browser acceptance pass |
 | Pulsar Coder | 8/8 boundary/codec tests; exact 1280×720 SVG/panel/input parity and SVG export pass |
 | Dither | 11/11 boundary/algorithm tests; byte-identical default, Bayer and Pixel Size 4 browser captures |
 | Wander Bender | 10/10 boundary/mode tests; exact three-mode canvas/panel parity plus Rays, collapse and extraction browser acceptance |
@@ -166,4 +169,7 @@ ActionDock, FileIntake раскатан на 14 surfaces, navigation/zoom/choice
 framework. `check:file-intake`, `check:choices`, `check:capabilities` и
 `check:component-lab` включены в Gate G5. UPG-064 завершён: manifest, optional
 surface, capability-driven `ApplicationShell` и Component Lab готовы. Финальный
-Gate G6 проходит; следующий этап намеренно не начат.
+Gate G6 проходит. UPG-070 повторно принял все восемь live entrypoints и
+ActionDock/JSON shortcut behavior. G7 начат: UPG-071 зафиксировал export
+acceptance inventory. UPG-072 закрыл artifact coverage всех пяти priority tools;
+следующий шаг — UPG-073 для трёх secondary exporters.

@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "scope": "upgrade-only",
+  "applications": [
+    {
+      "id": "sparky",
+      "html": "sparky/index.html",
+      "primary": [{ "id": "exportSvgBtn", "format": "svg", "label": "SVG ⌘E" }],
+      "additionalFormats": ["png", "png-zip", "mp4"],
+      "json": { "exportId": "exportSettingsBtn", "importId": null },
+      "implementation": ["sparky/tool.js", "sparky/src/export/staticSvgExporter.js", "sparky/src/export/animationExporter.js"],
+      "testEvidence": ["sparky/tests/staticSvgExporter.test.js", "sparky/tests/exportFormats.test.js", "sparky/tests/animationExporter.test.js"],
+      "artifactCoverage": true
+    },
+    {
+      "id": "grid_generator",
+      "html": "grid_generator/src/ui/fragments/actions.html",
+      "primary": [{ "id": "exportBtn", "format": "svg", "label": "SVG ⌘E" }],
+      "additionalFormats": ["pdf"],
+      "json": { "exportId": "exportSettingsBtn", "importId": "importSettingsBtn" },
+      "implementation": ["grid_generator/src/svg/ExportController.js", "grid_generator/src/svg/PDFExporter.js"],
+      "testEvidence": ["grid_generator/tests/svg-file-export.test.mjs", "grid_generator/tests/pdf-exporter.test.mjs", "grid_generator/tests/export-controller.test.mjs"],
+      "artifactCoverage": true
+    },
+    {
+      "id": "label_generator",
+      "html": "label_generator/index.html",
+      "primary": [
+        { "id": "exportPdfBtn", "format": "pdf", "label": "PDF ⌘E" },
+        { "id": "generateAllStickersBtn", "format": "pdf", "label": "All PDF ⌘E" }
+      ],
+      "additionalFormats": ["svg"],
+      "json": { "exportId": "exportSettingsBtn", "importId": "importSettingsBtn" },
+      "implementation": ["label_generator/script.js"],
+      "testEvidence": ["label_generator/tests/framework-boundary.test.mjs", "label_generator/tests/export-artifact.test.mjs"],
+      "artifactCoverage": true
+    },
+    {
+      "id": "keyboarder",
+      "html": "keyboarder/index.html",
+      "primary": [{ "id": "exportSvgBtn", "format": "svg", "label": "SVG ⌘E" }],
+      "additionalFormats": ["pdf", "png"],
+      "json": { "exportId": "exportJsonBtn", "importId": "importJsonBtn" },
+      "implementation": ["keyboarder/app/tool.js", "keyboarder/analysis/export-artifact-qa.mjs"],
+      "testEvidence": ["keyboarder/analysis/svg-export-encoding.mjs", "keyboarder/analysis/export-artifact-qa.mjs"],
+      "artifactCoverage": true
+    },
+    {
+      "id": "wordplayer",
+      "html": "wordplayer/index.html",
+      "primary": [{ "id": "exportSvgBtn", "format": "svg", "label": "SVG ⌘E" }],
+      "additionalFormats": ["png"],
+      "json": { "exportId": null, "importId": null },
+      "implementation": ["wordplayer/src/export/exporters.js"],
+      "testEvidence": ["wordplayer/tests/framework-boundary.test.mjs", "wordplayer/tests/export-artifact.test.mjs"],
+      "artifactCoverage": true
+    },
+    {
+      "id": "dither",
+      "html": "dither/index.html",
+      "primary": [{ "id": "exportBtn", "format": "png", "label": "PNG ⌘E" }],
+      "additionalFormats": [],
+      "json": { "exportId": null, "importId": null },
+      "implementation": ["dither/dither.js"],
+      "testEvidence": ["dither/tests/framework-boundary.test.mjs", "dither/tests/algorithms.test.mjs"],
+      "artifactCoverage": false
+    },
+    {
+      "id": "pulsar_coder",
+      "html": "pulsar_coder/index.html",
+      "primary": [{ "id": "downloadBtn", "format": "svg", "label": "SVG ⌘E" }],
+      "additionalFormats": ["clipboard-svg"],
+      "json": { "exportId": null, "importId": null },
+      "implementation": ["pulsar_coder/pulsar-main.js"],
+      "testEvidence": ["pulsar_coder/tests/framework-boundary.test.mjs", "pulsar_coder/tests/codec.test.mjs"],
+      "artifactCoverage": false
+    },
+    {
+      "id": "wander_bender",
+      "html": "wander_bender/index.html",
+      "primary": [{ "id": "exportBtn", "format": "svg", "label": "SVG ⌘E" }],
+      "additionalFormats": [],
+      "json": { "exportId": null, "importId": null },
+      "implementation": ["wander_bender/js/wander-bender.js"],
+      "testEvidence": ["wander_bender/tests/framework-boundary.test.mjs", "wander_bender/tests/modes.test.mjs"],
+      "artifactCoverage": false
+    }
+  ]
+}
