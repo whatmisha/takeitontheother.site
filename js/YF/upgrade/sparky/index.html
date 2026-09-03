@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#000000">
     <title>Lunnen Sparky — Parametric Character</title>
-    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g6-file-intake-1">
-    <link id="applicationStyles" rel="stylesheet" href="./styles/sparky.css?v=g3-sparky-2">
+    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g6-choice-1">
+    <link id="applicationStyles" rel="stylesheet" href="./styles/sparky.css?v=g6-choice-1">
 </head>
 <body>
     <div class="container">
@@ -365,7 +365,7 @@
         <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Export actions">
             <div class="action-dock__slot action-dock__slot--utility">
                 <div class="sparky-shortcut-help" id="shortcutHelp">
-                    <button type="button" class="preset-toolbar-share-btn sparky-shortcut-help-button"
+                    <button type="button" class="btn-fixed btn-intro-help sparky-shortcut-help-button"
                             id="shortcutHelpBtn" aria-label="Keyboard shortcuts" aria-haspopup="dialog"
                             aria-expanded="false" aria-controls="shortcutHelpPopup">?</button>
                     <div class="sparky-shortcut-help-popup" id="shortcutHelpPopup" role="dialog"
@@ -379,14 +379,18 @@
                             <li><kbd>⌘ Z</kbd><span>Undo</span></li>
                             <li><kbd>⇧ ⌘ Z</kbd><span>Redo</span></li>
                             <li><kbd>⌘ J</kbd><span>Export settings JSON</span></li>
+                            <li><kbd>J</kbd><span>Show or hide JSON actions</span></li>
                         </ul>
                     </div>
                 </div>
+                <button class="btn-fixed btn-fixed--muted" id="exportSettingsBtn" type="button"
+                        data-action-dock-extra data-action-dock-json-export hidden>JSON ⌘J</button>
             </div>
             <div class="action-dock__slot action-dock__slot--primary">
                 <div class="sparky-export-actions" id="animationExportActions">
-                    <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
-                    <button class="btn-fixed" id="exportSvgBtn" type="button">Export ⌘E</button>
+                    <button class="btn-fixed" id="exportPngBtn" type="button">PNG</button>
+                    <button class="btn-fixed" id="exportSvgBtn" type="button"
+                            data-action-dock-primary-export>SVG ⌘E</button>
                     <div class="sparky-export-status" id="animationExportStatus" hidden
                          data-state="idle" aria-live="polite">
                         <progress id="animationExportProgress" max="1" value="0"></progress>
@@ -410,6 +414,8 @@
         </dialog>
     </div>
 
-    <script type="module" src="./tool.js?v=g6-file-intake-1"></script>
+    <script type="module" src="../framework/src/ui/actionDockAutoInit.js?v=g6-action-dock-5"></script>
+    <script type="module" src="../framework/src/ui/presetMenuKeyboardAutoInit.js?v=g6-choice-1"></script>
+    <script type="module" src="./tool.js?v=g6-capabilities-1"></script>
 </body>
 </html>

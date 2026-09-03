@@ -74,13 +74,12 @@
 .btn-export-pdf {
     background: var(--color-bg-panel);
     color: var(--color-text);
-    border: 1px solid var(--color-border);
+    border: none;
 }
 
 .btn-export-pdf:hover {
     background: var(--color-text);
     color: var(--color-bg);
-    border-color: var(--color-text);
 }
 
 .btn-export-settings,

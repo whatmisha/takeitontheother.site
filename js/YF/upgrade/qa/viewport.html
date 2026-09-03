@@ -57,6 +57,11 @@
             const documentUnderTest = iframe.contentDocument;
             const root = documentUnderTest?.documentElement;
             if (!root) return;
+            const view = iframe.contentWindow;
+            const actionDock = documentUnderTest.querySelector('.action-dock');
+            const actionDockRect = actionDock?.getBoundingClientRect();
+            const primaryActions = documentUnderTest.querySelector('.action-dock__slot--primary');
+            const utilityActions = documentUnderTest.querySelector('.action-dock__slot--utility');
             viewportMetricsOutput.textContent = JSON.stringify({
                 tool,
                 viewport: {
@@ -65,12 +70,22 @@
                 },
                 readyState: documentUnderTest.readyState,
                 appReady: root.dataset.appReady || null,
+                rootClass: root.className,
+                mobileMedia: view.matchMedia('(max-width: 768px)').matches,
                 overflowX: root.scrollWidth > root.clientWidth,
                 fileInputs: documentUnderTest.querySelectorAll('input[type="file"]').length,
                 fileControls: Array.from(documentUnderTest.querySelectorAll('[aria-controls]'))
                     .filter(element => documentUnderTest.getElementById(
                         element.getAttribute('aria-controls')
-                    )?.type === 'file').length
+                    )?.type === 'file').length,
+                actionDock: actionDock ? {
+                    hidden: actionDock.hidden,
+                    display: view.getComputedStyle(actionDock).display,
+                    centerDelta: Math.round(actionDockRect.left + actionDockRect.width / 2 - view.innerWidth / 2),
+                    bottom: Math.round(view.innerHeight - actionDockRect.bottom),
+                    primaryDisplay: primaryActions ? view.getComputedStyle(primaryActions).display : null,
+                    utilityDisplay: utilityActions ? view.getComputedStyle(utilityActions).display : null
+                } : null
             });
         };
 

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Keyboarder</title>
     <link rel="icon" href="data:,">
-    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g6-file-intake-1">
+    <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g6-choice-1">
     <link id="applicationStyles" rel="stylesheet" href="app/theme.css?v=g3-keyboarder-2">
 </head>
 <body class="ui-simple">
@@ -35,7 +35,8 @@
                 data-tooltip="Create a new layout from an SVG drawing">New layout</button>
         <button class="top-link" id="savePresetBtn" type="button" style="display:none;">Save preset</button>
 
-        <div class="zoom-indicator" id="zoomIndicator" data-tooltip="Click to fit to screen">100%</div>
+        <button type="button" class="zoom-indicator" id="zoomIndicator"
+                aria-label="Fit canvas to screen" data-tooltip="Click to fit to screen">100%</button>
     </div>
 
     <main class="main-content" id="mainContent">
@@ -364,13 +365,13 @@
         <div class="action-dock__slot action-dock__slot--utility">
             <button class="btn-fixed btn-intro-help" id="aboutBtn" type="button" aria-label="About" data-tooltip="About">?</button>
             <button class="btn-fixed" id="verifyBtn" type="button" data-tooltip="Compare geometry to the reference" data-advanced-only>Verify</button>
-            <button class="btn-fixed" id="exportJsonBtn" type="button" aria-label="Export model JSON" data-tooltip="Export model JSON">JSON</button>
-            <button class="btn-fixed file-intake__trigger" id="importJsonBtn" type="button" aria-label="Import model JSON" data-tooltip="Import model JSON" data-advanced-only>Import</button>
+            <button class="btn-fixed btn-fixed--muted" id="exportJsonBtn" type="button" aria-label="Export model JSON (Command/Control + J)" data-tooltip="Export model JSON" data-action-dock-extra data-action-dock-json-export hidden>JSON ⌘J</button>
+            <button class="btn-fixed btn-fixed--muted file-intake__trigger" id="importJsonBtn" type="button" aria-label="Import model JSON (Command/Control + Shift + J)" data-tooltip="Import model JSON" data-action-dock-extra data-action-dock-json-import hidden>Import JSON ⇧⌘J</button>
         </div>
         <div class="action-dock__slot action-dock__slot--primary">
             <button class="btn-fixed" id="exportPdfBtn" type="button">PDF</button>
             <button class="btn-fixed" id="exportPngBtn" type="button">PNG</button>
-            <button class="btn-fixed" id="exportSvgBtn" type="button">SVG ⌘E</button>
+            <button class="btn-fixed" id="exportSvgBtn" type="button" data-action-dock-primary-export>SVG ⌘E</button>
         </div>
         <div class="action-dock__slot action-dock__slot--options">
             <label class="toggle-label svg-outline-toggle" for="convertToOutlinesCheckbox"
@@ -401,6 +402,8 @@
     </dialog>
 </div>
 
-<script type="module" src="app/tool.js?v=g6-file-intake-1"></script>
+<script type="module" src="../framework/src/ui/actionDockAutoInit.js?v=g6-action-dock-5"></script>
+<script type="module" src="../framework/src/ui/presetMenuKeyboardAutoInit.js?v=g6-choice-1"></script>
+<script type="module" src="app/tool.js?v=g6-capabilities-1"></script>
 </body>
 </html>

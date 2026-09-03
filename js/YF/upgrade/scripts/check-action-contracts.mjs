@@ -71,16 +71,16 @@ assert.match(
 );
 assert.match(
     bars.Dither,
-    /action-dock__slot--utility[\s\S]*?\bid=["']uploadBtnFixed["'][\s\S]*?\bid=["']removeImageBtn["'][\s\S]*?\bid=["']uploadSampleBtn["'][\s\S]*?\bid=["']removeSampleBtn["'][\s\S]*?action-dock__slot--primary[\s\S]*?\bid=["']exportBtn["'][\s\S]*?action-dock__slot--options[\s\S]*?\bid=["']exportWithAlpha["'][\s\S]*?\bid=["']export2x["'][\s\S]*?\bid=["']export4x["'][\s\S]*?\bid=["']export8x["']/u,
+    /action-dock__slot--utility[\s\S]*?\bid=["']uploadBtnFixed["'][\s\S]*?\bid=["']removeImageBtn["'][\s\S]*?\bid=["']uploadSampleBtn["'][\s\S]*?\bid=["']removeSampleBtn["'][\s\S]*?action-dock__slot--primary[\s\S]*?\bid=["']exportBtn["'][\s\S]*?action-dock__slot--options[\s\S]*?\bid=["']exportWithAlpha["'][\s\S]*?action-dock__segment[\s\S]*?\bid=["']export1x["'][\s\S]*?\bid=["']export2x["'][\s\S]*?\bid=["']export4x["'][\s\S]*?\bid=["']export8x["']/u,
     'Dither must keep source actions, PNG export and raster options in their ActionDock slots'
 );
 
 const expected = {
     Sparky: {
-        buttons: 4,
-        fixed: 2,
+        buttons: 5,
+        fixed: 4,
         labels: 0,
-        ids: ['shortcutHelpBtn', 'exportPngBtn', 'exportSvgBtn', 'animationExportCancelBtn']
+        ids: ['shortcutHelpBtn', 'exportSettingsBtn', 'exportPngBtn', 'exportSvgBtn', 'animationExportCancelBtn']
     },
     'Pizza Boxer': {
         buttons: 4,
@@ -117,11 +117,11 @@ const expected = {
         ids: ['verifyBtn', 'copyBtn', 'downloadBtn']
     },
     Dither: {
-        buttons: 5,
-        fixed: 5,
-        labels: 4,
-        ids: ['uploadBtnFixed', 'removeImageBtn', 'uploadSampleBtn', 'removeSampleBtn',
-            'exportBtn', 'exportWithAlpha', 'export2x', 'export4x', 'export8x']
+        buttons: 6,
+        fixed: 6,
+        labels: 5,
+        ids: ['helpButton', 'uploadBtnFixed', 'removeImageBtn', 'uploadSampleBtn', 'removeSampleBtn',
+            'exportBtn', 'exportWithAlpha', 'export1x', 'export2x', 'export4x', 'export8x']
     },
     'Wander Bender': {
         buttons: 1,
@@ -153,10 +153,22 @@ for (const [name, contract] of Object.entries(expected)) {
 const buttonCount = Object.values(bars).reduce((total, bar) => total + count(bar, /<button\b/gu), 0);
 const fixedCount = Object.values(bars).reduce((total, bar) => total + countClass(bar, 'btn-fixed'), 0);
 const labelCount = Object.values(bars).reduce((total, bar) => total + count(bar, /<label\b/gu), 0);
-assert.equal(buttonCount, 33);
-assert.equal(fixedCount, 31);
-assert.equal(labelCount, 9);
-assert.equal(buttonCount + labelCount, 42);
+assert.equal(buttonCount, 35);
+assert.equal(fixedCount, 34);
+assert.equal(labelCount, 10);
+assert.equal(buttonCount + labelCount, 45);
+
+for (const [name, bar] of Object.entries(bars)) {
+    assert.match(bar, /data-action-dock-primary-export/u, `${name} canonical primary export missing`);
+}
+for (const name of ['Sparky', 'Pizza Boxer', 'Sticky Fingers', 'Keyboarder']) {
+    assert.match(bars[name], /data-action-dock-json-export[^>]*hidden/u,
+        `${name} JSON export must be hidden by default`);
+}
+for (const name of ['Pizza Boxer', 'Sticky Fingers', 'Keyboarder']) {
+    assert.match(bars[name], /data-action-dock-json-import[^>]*hidden/u,
+        `${name} JSON import must be hidden by default`);
+}
 
 const [
     sharedCss,
@@ -221,6 +233,7 @@ assert.match(activeSharedCss, /\.btn-fixed\.btn-intro-help\s*\{/u);
 assert.match(activeSharedCss, /\.btn-fixed\.btn-fixed--muted,/u);
 assert.match(activeSharedCss, /\.bottom-buttons\.action-dock\s*\{/u);
 assert.match(activeSharedCss, /\.action-dock__slot--primary\s*\{/u);
+assert.match(activeSharedCss, /\[data-action-dock-extra\]\[hidden\]\s*\{/u);
 
 const localButtonBase = css => /(?:^|\})\s*\.btn-fixed\s*\{/u.test(stripComments(css));
 const localBarBase = css => /(?:^|\})\s*\.bottom-buttons\s*\{/u.test(stripComments(css));
@@ -246,6 +259,7 @@ assert.equal(localButtonBase(pizzaEditorCss), false, 'Pizza Boxer editor CSS rei
 assert.equal(localBarBase(pizzaResponsiveCss), false, 'Pizza Boxer responsive CSS reintroduced a local action-bar base');
 assert.equal(localButtonBase(pizzaResponsiveCss), false, 'Pizza Boxer responsive CSS reintroduced a local button base');
 assert.match(stripComments(pizzaCss), /\.btn-export-pdf\s*\{/u);
+assert.match(stripComments(pizzaCss), /\.btn-export-pdf\s*\{[^}]*border:\s*none;/su);
 assert.match(stripComments(pizzaCss), /\.btn-export-settings,\s*\.btn-import-settings\s*\{/u);
 assert.doesNotMatch(
     stripComments(pizzaCss),
@@ -271,7 +285,7 @@ assert.match(
 assert.doesNotMatch(stripComments(ditherBridge), /\.bottom-buttons\s*\{/u,
     'Dither must not retain its private left action anchor');
 assert.match(stripComments(ditherCss), /\.btn-remove\s*\{/u);
-assert.match(stripComments(ditherCss), /\.export-transparency-label\s*\{/u);
+assert.match(bars.Dither, /class=["']toggle-label["'][\s\S]*?id=["']exportWithAlpha["']/u);
 assert.doesNotMatch(stripComments(pulsarBridge), /all:\s*revert-layer/u,
     'Pulsar must consume the canonical shared action presentation without reset promotions');
 assert.doesNotMatch(stripComments(wanderBridge), /all:\s*revert-layer/u,
@@ -279,10 +293,10 @@ assert.doesNotMatch(stripComments(wanderBridge), /all:\s*revert-layer/u,
 
 assert.match(sparkyCss, /\.sparky-export-status\s*\{/u);
 assert.match(sparkyCss, /\.sparky-export-actions\.is-exporting > \.btn-fixed\s*\{/u);
-assert.match(sparkyCss, /@media[^\{]*max-width:\s*768px[\s\S]*?\.bottom-buttons,[\s\S]*?display:\s*none\s*!important;/u);
+assert.match(sparkyCss, /@media[^\{]*max-width:\s*768px[\s\S]*?\.bottom-buttons\.action-dock\s*\{[^}]*display:\s*flex\s*!important;/u);
 assert.match(sparkyTool, /new AnimationExporter\s*\(/u);
-assert.match(sparkyTool, /Export PNG sequence/u);
-assert.match(sparkyTool, /Export MP4/u);
+assert.match(sparkyTool, /PNG ZIP/u);
+assert.match(sparkyTool, /MP4 ⌘E/u);
 assert.match(sparkyTool, /animationExportCancelBtn/u);
 
 for (const marker of ['exportSVG()', 'exportPNG()', 'exportPDF()', 'exportModelJSON']) {
@@ -324,7 +338,8 @@ assert.match(ditherScript, /if \(this\.settings\.export8x\)/u);
 assert.match(ditherScript, /else if \(this\.settings\.export4x\)/u);
 assert.match(ditherScript, /else if \(this\.settings\.export2x\)/u);
 assert.match(ditherScript, /if \(this\.settings\.exportWithAlpha\)/u);
-assert.match(stripComments(ditherCss), /\.help-container\s*\{[^}]*bottom:\s*calc\(var\(--spacing-3xl\) \+ var\(--button-height\) \+ var\(--spacing-lg\)\);/su);
+assert.match(bars.Dither, /\bid=["']helpButton["'][^>]*>\?<\/button>/u);
+assert.doesNotMatch(stripComments(ditherCss), /\.(?:help-container|btn-help)\b/u);
 
 console.log(
     `Action contract passed: 8 toolbars; ${fixedCount} btn-fixed + ${buttonCount - fixedCount} `

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pulsar Coder - YF Tools</title>
-    <link rel="stylesheet" href="css/framework-base.css?v=g6-action-dock-2">
+    <link rel="stylesheet" href="css/framework-base.css?v=g6-choice-1">
     <link rel="stylesheet" href="css/yf-styles.css?v=g5-reset-1">
     <link rel="stylesheet" href="pulsar-styles.css?v=g5-reset-1">
 </head>
@@ -24,14 +24,14 @@
                     </svg>
                 </button>
                 <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox">
-                    <li class="preset-dropdown-item selected" data-preset="voyager">Voyager 14 rays</li>
-                    <li class="preset-dropdown-item" data-preset="dense">Dense 20 rays</li>
-                    <li class="preset-dropdown-item" data-preset="minimal">Minimal 8 rays</li>
-                    <li class="preset-dropdown-item" data-preset="accurate">Accurate 16 rays</li>
+                    <li class="preset-dropdown-item selected" data-preset="voyager" role="option">Voyager 14 rays</li>
+                    <li class="preset-dropdown-item" data-preset="dense" role="option">Dense 20 rays</li>
+                    <li class="preset-dropdown-item" data-preset="minimal" role="option">Minimal 8 rays</li>
+                    <li class="preset-dropdown-item" data-preset="accurate" role="option">Accurate 16 rays</li>
                 </ul>
             </div>
             
-            <button class="zoom-indicator" id="zoomIndicator">100%</button>
+            <button type="button" class="zoom-indicator" id="zoomIndicator" aria-label="Fit canvas to screen">100%</button>
         </div>
 
         <div class="main-content">
@@ -229,7 +229,7 @@
             <button class="btn-fixed" id="copyBtn">Copy SVG</button>
         </div>
         <div class="action-dock__slot action-dock__slot--primary">
-            <button class="btn-fixed btn-export" id="downloadBtn">Download SVG</button>
+            <button class="btn-fixed btn-export" id="downloadBtn" data-action-dock-primary-export>SVG ⌘E</button>
         </div>
     </nav>
 
@@ -253,6 +253,8 @@
         </div>
     </dialog>
 
-    <script type="module" src="pulsar-main.js?v=g5-feedback-2"></script>
+    <script type="module" src="../framework/src/ui/actionDockAutoInit.js?v=g6-action-dock-5"></script>
+    <script type="module" src="../framework/src/ui/presetMenuKeyboardAutoInit.js?v=g6-choice-1"></script>
+    <script type="module" src="pulsar-main.js?v=g6-action-dock-5"></script>
 </body>
 </html>

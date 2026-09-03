@@ -3313,47 +3313,61 @@ textarea::-moz-selection {
     z-index: 10000;
 }
 
-/* ActionDock - three independent slots around a viewport-centered primary action. */
+/* ActionDock - one viewport-centered group; slots preserve semantic ordering. */
 .bottom-buttons.action-dock {
-    left: 0;
-    right: 0;
-    width: 100vw;
-    transform: none;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    column-gap: var(--spacing-lg);
-    height: var(--button-height);
-    padding: 0 var(--spacing-3xl);
-    box-sizing: border-box;
-    pointer-events: none;
+    left: 50%;
+    right: auto;
+    width: max-content;
+    max-width: calc(100vw - (2 * var(--spacing-3xl)));
+    height: auto;
+    padding: 0;
+    transform: translateX(-50%);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: var(--spacing-md);
+    pointer-events: auto;
 }
 
 .action-dock__slot {
     min-width: 0;
     display: flex;
     align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap;
     gap: var(--spacing-lg);
     pointer-events: auto;
 }
 
 .action-dock__slot--utility {
-    grid-column: 1;
-    justify-self: start;
-    justify-content: flex-start;
+    order: 1;
 }
 
 .action-dock__slot--primary {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    justify-content: center;
+    order: 2;
 }
 
 .action-dock__slot--options {
-    grid-column: 3;
-    justify-self: end;
-    justify-content: flex-end;
+    order: 3;
+}
+
+.action-dock__segment {
+    height: var(--button-height);
+    margin-top: 0;
+    padding: 3px;
+    gap: 3px;
+    border-radius: var(--radius-button);
+}
+
+.action-dock__segment label {
+    min-width: 34px;
+    padding: 0 var(--spacing-md);
+    margin: 0;
+    font-size: 1rem;
+}
+
+.action-dock [data-action-dock-extra][hidden] {
+    display: none !important;
 }
 
 .mobile-preset-select-wrap {

@@ -12,7 +12,7 @@
 | G3 | Wordplayer, Keyboarder, Sparky, Pizza Boxer, Sticky Fingers | Passed |
 | G4 | Pulsar Coder, Dither, Wander Bender | Passed |
 | G5 | Последующая визуальная и API-унификация | Passed |
-| G6 | Осознанная унификация интерфейса поверх G5 | In progress |
+| G6 | Осознанная унификация интерфейса поверх G5 | Complete |
 
 ## Задачи
 
@@ -117,14 +117,18 @@
 | UPG-058g | Legacy CSS cleanup gate | Complete | every remaining app delta has owner/reason/removal condition; 8/8 live entrypoints complete with visible output and 0 browser errors; Pizza source/public 14-asset runtime, isolation and full Gate G4 pass |
 | UPG-059 | Gate G5 | Complete | `gate:g5:static` passes: 8 hub links, 8 shared CSS + 8 shared JS boundaries, 0 resets/promotions, owned app deltas, accepted Sparky desktop/390×844/430×932, full G4/isolation/app suites |
 | UPG-060 | Общий PanelShell/summary и Dither panel redesign | Complete | 2 native collapse buttons; app summaries; shared clamp/stack/header; clean browser smoke; exact G5/G6 SHA-256 for Default/Bayer/Pixel4; Gate G5 pass |
-| UPG-061 | Трёхслотовый ActionDock | Complete | all 8 consumers use shared slots and pass static/domain/browser acceptance; Sparky mobile reaccepted; Dither default/Bayer/Pixel4 raw-RGBA hashes exact |
+| UPG-061 | Единый центрированный ActionDock | Complete | all 8 consumers use one centered group with semantic slots, shared styles/shortcuts and hidden JSON extras; Sparky primary mobile exports retained; Dither hashes exact |
 | UPG-062 | FileIntake | Complete | 14/14 surfaces in six tools use the shared controller; 0 added to Wander/Pulsar; 6 component tests + machine contract; private parsers/history and Sticky Sheets retained; Wordplayer/Pizza/Sparky/Dither browser probes, Sparky mobile and Dither hashes pass; full Gate G5 green |
+| UPG-063 | Navigation, zoom and choice semantics | Complete | Dither shared back link; 5 button zoom indicators; Dither 1×/2×/4×/8× radio scale; 8 synchronized state buttons; shared keyboard navigation for 6 preset menus; `check:choices` green |
+| UPG-064a | Capability manifest + optional barrel | Complete | 8 app capabilities are machine-readable; 5 priority/1 mobile boundaries fixed; unused DicePanel/RangeSliderController moved from stable API to `experimental.js`; `check:capabilities` green |
+| UPG-064b | Capability-driven shell + Component Lab | Complete | ApplicationShell constructs only configured/live subsystems; empty config proof; local lab covers 6 UI states and 4 component families; 55/55 framework tests |
+| UPG-069 | Gate G6 | Complete | full `gate:g6:static` passes; UPG-060—UPG-064, intentional diffs, browser evidence, isolation and all app suites accepted |
 
 ## Подтверждённые исходные результаты
 
 | Проект | Результат |
 |---|---|
-| Shared framework | 49/49 tests pass; range, toggle, preset, action, feedback and FileIntake contracts pass |
+| Shared framework | 55/55 tests pass; stable/optional API, capability resolution, Component Lab, range, toggle, preset, action, feedback, FileIntake and choice contracts pass |
 | Pizza Boxer top-level | 169/169 tests pass; source/public 14-asset runtime checks pass |
 | Pizza Boxer `v2` donor | 221/222; один failure в Node test mock без `requestAnimationFrame` |
 | Sparky | 196/196 tests pass (195 исходных + shared-framework boundary) |
@@ -156,8 +160,10 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-План UPG-000—UPG-062 выполнен. FileIntake раскатан на 14 file surfaces в шести
-инструментах без переноса private parser/schema/history/render logic во
-framework; Sticky Google Sheets сохранён отдельно. Новый `check:file-intake`
-включён в Gate G5, все app suites и браузерные проверки проходят. Работа
-намеренно остановлена: UPG-063 не начат.
+План UPG-000—UPG-069 выполнен. Нижние действия собраны в единый центрированный
+ActionDock, FileIntake раскатан на 14 surfaces, navigation/zoom/choice semantics
+унифицированы без переноса private parser/schema/history/render logic во
+framework. `check:file-intake`, `check:choices`, `check:capabilities` и
+`check:component-lab` включены в Gate G5. UPG-064 завершён: manifest, optional
+surface, capability-driven `ApplicationShell` и Component Lab готовы. Финальный
+Gate G6 проходит; следующий этап намеренно не начат.

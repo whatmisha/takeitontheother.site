@@ -12,7 +12,7 @@ test('Sparky consumes the shared framework without surrendering private mobile a
 
     assert.match(
         toolSource,
-        /import\s*\{\s*defineTool\s*,\s*FileIntakeController\s*\}\s*from\s*['"]\.\.\/framework\/src\/index\.js\?v=g6-file-intake-1['"];/,
+        /import\s*\{\s*defineTool\s*,\s*FileIntakeController\s*\}\s*from\s*['"]\.\.\/framework\/src\/index\.js\?v=g6-capabilities-1['"];/,
         'Sparky must consume shared infrastructure through the public barrel'
     );
     assert.doesNotMatch(toolSource, /from\s*['"]\.\/framework\//, 'Sparky runtime still imports its retired framework copy');
@@ -41,18 +41,23 @@ test('Sparky consumes the shared framework without surrendering private mobile a
     );
     assert.match(
         htmlSource,
-        /othersite-styles\.css\?v=g6-file-intake-1/u,
+        /othersite-styles\.css\?v=g6-choice-1/u,
         'Sparky must load the ActionDock-capable shared stylesheet revision'
     );
     assert.match(
         htmlSource,
-        /<nav\b[^>]*\bclass="[^"]*\baction-dock\b[^"]*"[^>]*>[\s\S]*?action-dock__slot--utility[\s\S]*?\bid="shortcutHelpBtn"[\s\S]*?action-dock__slot--primary[\s\S]*?\bid="animationExportActions"[\s\S]*?\bid="exportPngBtn"[\s\S]*?\bid="exportSvgBtn"[\s\S]*?\bid="animationExportStatus"[\s\S]*?\bid="animationExportCancelBtn"[\s\S]*?<\/nav>/u,
+        /<nav\b[^>]*\bclass="[^"]*\baction-dock\b[^"]*"[^>]*>[\s\S]*?action-dock__slot--utility[\s\S]*?\bid="shortcutHelpBtn"[\s\S]*?\bid="exportSettingsBtn"[^>]*data-action-dock-json-export[^>]*hidden[\s\S]*?action-dock__slot--primary[\s\S]*?\bid="animationExportActions"[\s\S]*?\bid="exportPngBtn"[\s\S]*?\bid="exportSvgBtn"[^>]*data-action-dock-primary-export[\s\S]*?\bid="animationExportStatus"[\s\S]*?\bid="animationExportCancelBtn"[\s\S]*?<\/nav>/u,
         'Sparky must keep shortcut help separate from its app-owned export/progress lifecycle'
     );
     assert.match(
         stylesSource,
         /\.sparky-shortcut-help\s*\{\s*position:\s*relative;\s*\}/u,
         'Sparky shortcut popup must anchor within the ActionDock utility slot'
+    );
+    assert.match(
+        stylesSource,
+        /\.bottom-buttons\.action-dock\s*\{[^}]*display:\s*flex\s*!important;[^}]*max-width:\s*calc\(100% - 24px\);/su,
+        'Sparky mobile must retain a centered export ActionDock'
     );
     assert.match(stylesSource, /\.\.\/fonts\/TT_Commons_Classic_Regular\.woff2/, 'private regular TT Commons font moved incorrectly');
     assert.match(stylesSource, /\.\.\/fonts\/TT_Commons_Classic_Medium\.woff2/, 'private medium TT Commons font moved incorrectly');

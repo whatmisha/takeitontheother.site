@@ -79,7 +79,7 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
 
     assert.match(
         bridge,
-        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g6-action-dock-1'\) layer\(framework\);/u
+        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g6-choice-1'\) layer\(framework\);/u
     );
     assert.doesNotMatch(bridge, /all:\s*revert-layer/u);
     assert.match(frameworkStyles, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
@@ -124,7 +124,7 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
     );
     assert.match(
         template,
-        /href="\.\.\/\.\.\/framework-base\.css\?v=g6-action-dock-1"/u,
+        /href="\.\.\/\.\.\/framework-base\.css\?v=g6-choice-1"/u,
         'development document must resolve the bridge from src/ui'
     );
     const actionFragment = await readFile(new URL('../src/ui/fragments/actions.html', import.meta.url), 'utf8');

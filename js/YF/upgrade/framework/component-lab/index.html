@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Upgrade Framework — Component Lab</title>
+    <link rel="stylesheet" href="../css/othersite-styles.css?v=g6-choice-1">
+    <link rel="stylesheet" href="./styles.css?v=g6-component-lab-1">
+</head>
+<body>
+    <main class="component-lab">
+        <header class="component-lab__header">
+            <a class="top-link" href="../../">←Upgrade Tools</a>
+            <div>
+                <p class="component-lab__eyebrow">Framework QA</p>
+                <h1>Component Lab</h1>
+                <p>Stable visual states without application data or render logic.</p>
+            </div>
+        </header>
+
+        <section class="component-lab__section" aria-labelledby="buttonStatesTitle">
+            <h2 id="buttonStatesTitle">Action states</h2>
+            <div class="component-lab__states">
+                <article data-state="normal"><span>Normal</span><button class="btn-fixed">SVG ⌘E</button></article>
+                <article data-state="hover"><span>Hover</span><button class="btn-fixed lab-hover">SVG ⌘E</button></article>
+                <article data-state="focus"><span>Focus</span><button class="btn-fixed lab-focus">SVG ⌘E</button></article>
+                <article data-state="disabled"><span>Disabled</span><button class="btn-fixed" disabled>SVG ⌘E</button></article>
+                <article data-state="loading"><span>Loading</span><button class="btn-fixed lab-loading" aria-busy="true">Preparing…</button></article>
+                <article data-state="error"><span>Error</span><button class="btn-fixed btn-fixed--danger">Try again</button></article>
+            </div>
+        </section>
+
+        <section class="component-lab__section" aria-labelledby="dockTitle">
+            <h2 id="dockTitle">Centered ActionDock</h2>
+            <nav class="bottom-buttons action-dock component-lab__dock" role="toolbar" aria-label="Example export actions">
+                <div class="action-dock__slot action-dock__slot--utility">
+                    <button class="btn-fixed btn-intro-help" aria-label="Help">?</button>
+                    <button class="btn-fixed btn-fixed--muted">JSON ⌘J</button>
+                </div>
+                <div class="action-dock__slot action-dock__slot--primary">
+                    <button class="btn-fixed">PNG</button>
+                    <button class="btn-fixed">SVG ⌘E</button>
+                </div>
+                <div class="action-dock__slot action-dock__slot--options">
+                    <label class="toggle-label">
+                        <span class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></span>
+                        <span class="toggle-label-text">Transparent</span>
+                    </label>
+                </div>
+            </nav>
+        </section>
+
+        <section class="component-lab__section component-lab__columns" aria-label="Choice and intake components">
+            <article>
+                <h2>Choice semantics</h2>
+                <div class="segmented-control" role="radiogroup" aria-label="Example scale">
+                    <input type="radio" id="lab1x" name="labScale" checked><label for="lab1x">1×</label>
+                    <input type="radio" id="lab2x" name="labScale"><label for="lab2x">2×</label>
+                    <input type="radio" id="lab4x" name="labScale"><label for="lab4x">4×</label>
+                    <input type="radio" id="lab8x" name="labScale"><label for="lab8x">8×</label>
+                </div>
+            </article>
+            <article>
+                <h2>FileIntake states</h2>
+                <div class="component-lab__intakes">
+                    <div class="file-intake" data-file-state="empty"><span>Empty</span></div>
+                    <div class="file-intake" data-file-state="loading" aria-busy="true"><span>Loading</span></div>
+                    <div class="file-intake" data-file-state="ready"><span>Ready</span></div>
+                    <div class="file-intake" data-file-state="error" role="status"><span>Error</span></div>
+                </div>
+            </article>
+        </section>
+
+        <section class="component-lab__section" aria-labelledby="panelTitle">
+            <h2 id="panelTitle">Panel shell</h2>
+            <aside class="controls-panel component-lab__panel" aria-label="Example panel">
+                <div class="panel-header">
+                    <span>Texture Settings <span class="panel-params">FS · Pixel 1</span></span>
+                    <button class="collapse-icon" type="button" aria-label="Collapse panel" aria-expanded="true">
+                        <svg width="10" height="6" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1 6 6 11 1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                    </button>
+                </div>
+                <div class="panel-content">
+                    <div class="control-group">
+                        <label for="labRange"><span>Intensity</span><output class="value-display">50</output></label>
+                        <input id="labRange" type="range" min="0" max="100" value="50">
+                    </div>
+                </div>
+            </aside>
+        </section>
+    </main>
+</body>
+</html>

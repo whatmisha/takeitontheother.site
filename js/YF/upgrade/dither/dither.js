@@ -140,7 +140,6 @@ class DitheringTool {
         this.initCanvasInteraction();
         this.initValueInputs();
         this.initColorPreview();
-        this.initYFToolsLink();
         this.loadDefaultImage();
         this.loadDefaultSample();
     }
@@ -182,6 +181,7 @@ class DitheringTool {
             invertImage: document.getElementById('invertImage'),
             showEffect: document.getElementById('showEffect'),
             exportWithAlpha: document.getElementById('exportWithAlpha'),
+            exportScaleInputs: document.querySelectorAll('input[name="exportScale"]'),
             export2x: document.getElementById('export2x'),
             export4x: document.getElementById('export4x'),
             export8x: document.getElementById('export8x'),
@@ -442,43 +442,15 @@ class DitheringTool {
             this.settings.exportWithAlpha = e.target.checked;
         });
         
-        // Export x2 checkbox (mutually exclusive with x4 and x8)
-        this.dom.export2x.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                this.settings.export2x = true;
-                this.settings.export4x = false;
-                this.settings.export8x = false;
-                this.dom.export4x.checked = false;
-                this.dom.export8x.checked = false;
-            } else {
-                this.settings.export2x = false;
-            }
-        });
-        
-        // Export x4 checkbox (mutually exclusive with x2 and x8)
-        this.dom.export4x.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                this.settings.export4x = true;
-                this.settings.export2x = false;
-                this.settings.export8x = false;
-                this.dom.export2x.checked = false;
-                this.dom.export8x.checked = false;
-            } else {
-                this.settings.export4x = false;
-            }
-        });
-        
-        // Export x8 checkbox (mutually exclusive with x2 and x4)
-        this.dom.export8x.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                this.settings.export8x = true;
-                this.settings.export2x = false;
-                this.settings.export4x = false;
-                this.dom.export2x.checked = false;
-                this.dom.export4x.checked = false;
-            } else {
-                this.settings.export8x = false;
-            }
+        // Export scale is a single semantic choice; legacy flags stay intact for the export pipeline.
+        this.dom.exportScaleInputs.forEach((input) => {
+            input.addEventListener('change', (e) => {
+                if (!e.target.checked) return;
+                const scale = Number(e.target.value);
+                this.settings.export2x = scale === 2;
+                this.settings.export4x = scale === 4;
+                this.settings.export8x = scale === 8;
+            });
         });
         
         // Color preview button - toggle HSB picker
@@ -880,23 +852,6 @@ class DitheringTool {
         });
     }
 
-    initYFToolsLink() {
-        // Initialize YF Tools link with relative URL
-        const yfToolsLink = document.querySelector('.yf-tools-link');
-        if (yfToolsLink) {
-            // Use relative path that works on any domain
-            const yfToolsUrl = `../`;
-            
-            yfToolsLink.href = yfToolsUrl;
-            
-            // Add click handler for analytics or additional functionality if needed
-            yfToolsLink.addEventListener('click', (e) => {
-                // Optional: Add analytics tracking here
-                console.log('Navigating to YF Tools');
-            });
-        }
-    }
-    
     getStepForSlider(sliderId) {
         // Determine appropriate step based on slider type
         const integerSliders = ['positionX', 'positionY', 'rotation', 'grain', 'blackPoint', 'whitePoint', 'pixelSize', 'threshold'];

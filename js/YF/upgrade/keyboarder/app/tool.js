@@ -11,7 +11,7 @@ import {
     defineTool,
     FileIntakeController,
     SVGExporter
-} from '../../framework/src/index.js?v=g6-file-intake-1';
+} from '../../framework/src/index.js?v=g6-capabilities-1';
 import { installKeyboarderPerf, perfEnabled, perfMarkStartup, perfNow, perfRecord, perfSince } from './perf.js';
 import { buildLayout, gapOf, widthInU } from './kb/grid.js';
 import { attachGuides } from './kb/guides.js';

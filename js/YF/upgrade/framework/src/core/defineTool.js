@@ -1,4 +1,4 @@
-import { ApplicationShell } from './ApplicationShell.js?v=g5-feedback-1';
+import { ApplicationShell } from './ApplicationShell.js?v=g6-capabilities-1';
 
 /**
  * defineTool — declare a tool with a single config object.

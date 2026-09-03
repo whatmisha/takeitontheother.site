@@ -1,4 +1,4 @@
-import { defineTool, FileIntakeController } from '../framework/src/index.js?v=g6-file-intake-1';
+import { defineTool, FileIntakeController } from '../framework/src/index.js?v=g6-capabilities-1';
 import { DEFAULT_SETTINGS, SLIDER_DEFINITIONS } from './src/config/defaults.js';
 import { WordplayerExporter } from './src/export/exporters.js';
 import { AssetController } from './src/io/assets.js?v=g6-file-intake-2';

@@ -1,4 +1,4 @@
-import { defineTool, FileIntakeController } from '../framework/src/index.js?v=g6-file-intake-1';
+import { defineTool, FileIntakeController } from '../framework/src/index.js?v=g6-capabilities-1';
 import {
     DEFAULT_GEOMETRY,
     buildCharacterGeometry
@@ -857,8 +857,8 @@ function syncFocusModeUI(app) {
     document.getElementById('showMotionPathToggle')?.toggleAttribute('hidden', !path);
     const pngButton = document.getElementById('exportPngBtn');
     const primaryButton = document.getElementById('exportSvgBtn');
-    if (pngButton) pngButton.textContent = animated ? 'Export PNG sequence' : 'Export PNG';
-    if (primaryButton) primaryButton.textContent = animated ? 'Export MP4' : 'Export ⌘E';
+    if (pngButton) pngButton.textContent = animated ? 'PNG ZIP' : 'PNG';
+    if (primaryButton) primaryButton.textContent = animated ? 'MP4 ⌘E' : 'SVG ⌘E';
 }
 
 function syncFocusAnimationControls(app) {
@@ -2650,6 +2650,10 @@ const app = defineTool({
     },
     onInit(tool) {
         bindShortcutHelp();
+        document.getElementById('exportSettingsBtn')?.addEventListener(
+            'click',
+            () => exportSettingsJSON(tool)
+        );
         tool.shortcuts?.register(
             'mod+j',
             () => exportSettingsJSON(tool),

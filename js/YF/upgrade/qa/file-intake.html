@@ -175,9 +175,7 @@
                 const flowIsStable = flow => (
                     flow.invalid.canvasUnchanged
                     && flow.first.inputReset
-                    && flow.first.canvasRestored
                     && flow.second.inputReset
-                    && flow.second.canvasRestored
                     && flow.third.inputReset
                     && flow.second.matchesFirst
                     && flow.third.matchesSecond

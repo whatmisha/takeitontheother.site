@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "scope": "upgrade-only",
+  "applications": [
+    {
+      "id": "sparky",
+      "entry": "sparky/index.html",
+      "priority": "primary",
+      "renderer": "svg",
+      "frameworkMode": "defineTool",
+      "mobileRequired": true,
+      "shared": { "actionDock": true, "panelShell": true, "fileIntake": 1, "presetKeyboard": true, "zoomIndicatorButton": false },
+      "private": ["animation", "motionPath", "mobileShowcase", "exportProgress"]
+    },
+    {
+      "id": "grid_generator",
+      "entry": "grid_generator/index.html",
+      "priority": "primary",
+      "renderer": "svg",
+      "frameworkMode": "adapter",
+      "mobileRequired": false,
+      "shared": { "actionDock": true, "panelShell": true, "fileIntake": 2, "presetKeyboard": true, "zoomIndicatorButton": true },
+      "private": ["boxDocument", "surfaceLayout", "objectEditors", "pdfExport"]
+    },
+    {
+      "id": "label_generator",
+      "entry": "label_generator/index.html",
+      "priority": "primary",
+      "renderer": "svg",
+      "frameworkMode": "adapter",
+      "mobileRequired": false,
+      "shared": { "actionDock": true, "panelShell": true, "fileIntake": 2, "presetKeyboard": true, "zoomIndicatorButton": false },
+      "private": ["labels", "barcodes", "googleSheets", "prepress"]
+    },
+    {
+      "id": "keyboarder",
+      "entry": "keyboarder/index.html",
+      "priority": "primary",
+      "renderer": "svg",
+      "frameworkMode": "defineTool",
+      "mobileRequired": false,
+      "shared": { "actionDock": true, "panelShell": true, "fileIntake": 5, "presetKeyboard": true, "zoomIndicatorButton": true },
+      "private": ["keyboardModel", "fontRegistry", "layoutReview", "compensation"]
+    },
+    {
+      "id": "wordplayer",
+      "entry": "wordplayer/index.html",
+      "priority": "primary",
+      "renderer": "canvas",
+      "frameworkMode": "defineTool",
+      "mobileRequired": false,
+      "shared": { "actionDock": true, "panelShell": true, "fileIntake": 2, "presetKeyboard": true, "zoomIndicatorButton": true },
+      "private": ["ditherWorker", "formsWorker", "assetDecode"]
+    },
+    {
+      "id": "dither",
+      "entry": "dither/index.html",
+      "priority": "secondary",
+      "renderer": "canvas",
+      "frameworkMode": "adapter",
+      "mobileRequired": false,
+      "shared": { "actionDock": true, "panelShell": true, "fileIntake": 2, "presetKeyboard": false, "zoomIndicatorButton": false },
+      "private": ["ditherAlgorithms", "canvasOverlay", "rasterExport"]
+    },
+    {
+      "id": "pulsar_coder",
+      "entry": "pulsar_coder/index.html",
+      "priority": "secondary",
+      "renderer": "svg",
+      "frameworkMode": "adapter",
+      "mobileRequired": false,
+      "shared": { "actionDock": true, "panelShell": true, "fileIntake": 0, "presetKeyboard": true, "zoomIndicatorButton": true },
+      "private": ["pulsarCodec", "rayRenderer", "zoomPan"]
+    },
+    {
+      "id": "wander_bender",
+      "entry": "wander_bender/index.html",
+      "priority": "secondary",
+      "renderer": "svg",
+      "frameworkMode": "adapter",
+      "mobileRequired": false,
+      "shared": { "actionDock": true, "panelShell": true, "fileIntake": 0, "presetKeyboard": false, "zoomIndicatorButton": true },
+      "private": ["paperGeometry", "distributionModes", "extraction", "zoomPan"]
+    }
+  ],
+  "optionalFrameworkSurface": {
+    "entry": "framework/src/experimental.js",
+    "components": ["DicePanel", "RangeSliderController"],
+    "productionConsumers": [],
+    "referenceConsumers": ["framework/demo"]
+  }
+}

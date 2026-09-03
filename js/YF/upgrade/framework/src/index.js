@@ -6,8 +6,9 @@
  */
 
 // Engine
-export { defineTool } from './core/defineTool.js?v=g5-feedback-1';
-export { ApplicationShell } from './core/ApplicationShell.js?v=g5-feedback-1';
+export { defineTool } from './core/defineTool.js?v=g6-capabilities-1';
+export { ApplicationShell } from './core/ApplicationShell.js?v=g6-capabilities-1';
+export { resolveApplicationCapabilities } from './core/ApplicationCapabilities.js?v=g6-capabilities-1';
 
 // Core
 export { Settings } from './core/Settings.js';
@@ -21,15 +22,15 @@ export { CanvasTarget } from './render/CanvasTarget.js';
 
 // UI components
 export { SliderController } from './ui/SliderController.js';
-export { RangeSliderController } from './ui/RangeSliderController.js';
 export { PanelManager } from './ui/PanelManager.js?v=g6-panel-1';
 export { ColorPicker } from './ui/ColorPicker.js';
 export { UnifiedColorPicker } from './ui/UnifiedColorPicker.js';
-export { DicePanel } from './ui/DicePanel.js';
 export { DialogHost } from './ui/DialogHost.js?v=g5-feedback-1';
 export { OverlayDialogHost } from './ui/OverlayDialogHost.js?v=g5-overlay-1';
 export { TooltipService } from './ui/TooltipService.js?v=g5-feedback-1';
 export { FileIntakeController, fileMatchesAccept } from './ui/FileIntakeController.js?v=g6-file-intake-1';
+export { ActionDockController, initActionDocks } from './ui/ActionDockController.js?v=g6-action-dock-5';
+export { PresetMenuKeyboardController, initPresetMenuKeyboards } from './ui/PresetMenuKeyboardController.js?v=g6-choice-1';
 export { ZoomPanManager } from './ui/ZoomPanManager.js';
 
 // Features

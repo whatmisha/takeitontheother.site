@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wander Bender - YF Tools</title>
-    <link rel="stylesheet" href="css/framework-base.css?v=g6-action-dock-4">
+    <link rel="stylesheet" href="css/framework-base.css?v=g6-choice-1">
     <link rel="stylesheet" href="css/yf-styles.css?v=g5-reset-1">
     <link rel="stylesheet" href="css/wander-bender.css?v=g5-reset-1">
     <script src="../framework/vendor/paper/0.12.17/paper-full.min.js"></script>
@@ -14,7 +14,7 @@
         <!-- Top Navigation -->
         <div class="top-links">
             <a href="../" class="top-link" aria-label="Back to Upgrade Tools">←Upgrade Tools</a>
-            <button class="zoom-indicator" id="zoomIndicator">100%</button>
+            <button type="button" class="zoom-indicator" id="zoomIndicator" aria-label="Fit canvas to screen">100%</button>
         </div>
 
         <div class="main-content">
@@ -79,7 +79,7 @@
                                 <span>Stroke</span>
                                 <div class="value-display-wrapper">
                                     <input type="text" class="value-display" id="strokeValue" value="22.5">
-                                    <button type="button" class="unit-btn" id="strokeAutoBtn">auto</button>
+                                    <button type="button" class="unit-btn" id="strokeAutoBtn" aria-pressed="false">auto</button>
                                 </div>
                             </label>
                             <input type="range" id="strokeSlider" min="1" max="100" value="22.5" step="1">
@@ -90,7 +90,7 @@
                                 <span>Corner Radius</span>
                                 <div class="value-display-wrapper">
                                     <input type="text" class="value-display" id="cornerRadiusValue" value="12.5">
-                                    <button type="button" class="unit-btn" id="cornerRadiusMaxBtn">max</button>
+                                    <button type="button" class="unit-btn" id="cornerRadiusMaxBtn" aria-pressed="false">max</button>
                                 </div>
                             </label>
                             <input type="range" id="cornerRadiusSlider" min="0" max="12.5" value="12.5" step="1">
@@ -250,7 +250,7 @@
     <!-- Bottom Action Buttons -->
     <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Export actions">
         <div class="action-dock__slot action-dock__slot--primary">
-            <button class="btn-fixed btn-export" id="exportBtn">Export SVG</button>
+            <button class="btn-fixed btn-export" id="exportBtn" data-action-dock-primary-export>SVG ⌘E</button>
         </div>
     </nav>
 
@@ -263,6 +263,7 @@
         </div>
     </dialog>
 
-    <script type="module" src="js/wander-bender.js?v=g5-feedback-2"></script>
+    <script type="module" src="../framework/src/ui/actionDockAutoInit.js?v=g6-action-dock-5"></script>
+    <script type="module" src="js/wander-bender.js?v=g6-action-dock-5"></script>
 </body>
 </html>

@@ -74,25 +74,25 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
 
     assert.match(
         bridge,
-        /@import url\('\.\.\/\.\.\/framework\/css\/othersite-styles\.css\?v=g6-action-dock-4'\) layer\(framework\);/u
+        /@import url\('\.\.\/\.\.\/framework\/css\/othersite-styles\.css\?v=g6-choice-1'\) layer\(framework\);/u
     );
     assert.ok(
         html.indexOf('framework-base.css') < html.indexOf('yf-styles.css') &&
         html.indexOf('yf-styles.css') < html.indexOf('wander-bender.css'),
         'shared CSS must load before the two frozen Wander stylesheets'
     );
-    assert.match(html, /css\/framework-base\.css\?v=g6-action-dock-4/u);
+    assert.match(html, /css\/framework-base\.css\?v=g6-choice-1/u);
     assert.match(html, /css\/yf-styles\.css\?v=g5-reset-1/u);
     assert.match(html, /css\/wander-bender\.css\?v=g5-reset-1/u);
     assert.match(html, /<nav class="bottom-buttons action-dock" role="toolbar" aria-label="Export actions">/u);
     assert.match(html, /class="action-dock__slot action-dock__slot--primary"/u);
     assert.match(
         sharedStyles,
-        /\.bottom-buttons\.action-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto minmax\(0, 1fr\);[^}]*pointer-events:\s*none;/su
+        /\.bottom-buttons\.action-dock\s*\{[^}]*left:\s*50%;[^}]*width:\s*max-content;[^}]*display:\s*flex;[^}]*justify-content:\s*center;[^}]*pointer-events:\s*auto;/su
     );
     assert.match(
         sharedStyles,
-        /\.action-dock__slot--primary\s*\{[^}]*position:\s*absolute;[^}]*left:\s*50%;[^}]*transform:\s*translateX\(-50%\);/su
+        /\.action-dock__slot--primary\s*\{[^}]*order:\s*2;/su
     );
     assert.match(
         html,

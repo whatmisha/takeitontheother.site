@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "base": "Othersite UI Framework v3 / Void active root",
   "upstreamStylesSha256": "1ea9314b39ce5de366a17b90d5536d7cfaf2854a788028e9b26a7a6b3e26e0a0",
-  "workingStylesSha256": "932996b3d5b8b380ba28de04b178d26e11393d290d94b5ba5cc3371709c1c94c",
+  "workingStylesSha256": "5591cb0dbaa3848f8cc207d62ef8b396a99f263a83beae48be618010eb09a548",
   "upstreamTokensSha256": "6e47fac2e182feeea3aa1755bb524617c8ba84ed7b72159f8be3a49a9515348d",
   "workingTokensSha256": "3b9e83edc4a133264fcd18ae29f8b8300b469505d0c6ed484a5a51196f4276b4",
-  "workingDifference": "CoFo Sans URLs are localized. G5 adds the exact-compatible 33x18 checkbox-label presentation, a segmented-control font-size token, and separately scoped legacy-overlay/native-dialog content shells. G6 makes collapse icons native-button-safe with a shared focus ring, adds the opt-in three-slot ActionDock layout, and adds state-only FileIntake drag, busy, error, and focus presentation; upstream-v3 remains immutable.",
+  "workingDifference": "CoFo Sans URLs are localized. G5 adds the exact-compatible 33x18 checkbox-label presentation, a segmented-control font-size token, and separately scoped legacy-overlay/native-dialog content shells. G6 makes collapse icons native-button-safe with a shared focus ring, adds the opt-in centered ActionDock group with ordered semantic slots, hidden extra actions and a compact radio segment, and adds state-only FileIntake drag, busy, error, and focus presentation; upstream-v3 remains immutable.",
   "loadOrder": "framework css first, application css second",
   "mobile": "opt-in; only Sparky requires a mobile application stylesheet"
 }

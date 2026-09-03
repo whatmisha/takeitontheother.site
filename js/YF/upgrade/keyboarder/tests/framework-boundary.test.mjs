@@ -12,7 +12,7 @@ const [toolSource, htmlSource, themeSource, typographySource, frameworkStylesSou
 
 assert.match(
     toolSource,
-    /import\s*\{[\s\S]*?defineTool[\s\S]*?FileIntakeController[\s\S]*?SVGExporter[\s\S]*?\}\s*from\s*['"]\.\.\/\.\.\/framework\/src\/index\.js\?v=g6-file-intake-1['"];/,
+    /import\s*\{[\s\S]*?defineTool[\s\S]*?FileIntakeController[\s\S]*?SVGExporter[\s\S]*?\}\s*from\s*['"]\.\.\/\.\.\/framework\/src\/index\.js\?v=g6-capabilities-1['"];/,
     'Keyboarder must consume shared infrastructure through the public barrel'
 );
 assert.doesNotMatch(toolSource, /vendor\/framework/, 'Keyboarder runtime still imports its retired framework copy');
@@ -35,7 +35,7 @@ assert.match(
 );
 assert.match(
     htmlSource,
-    /othersite-styles\.css\?v=g6-file-intake-1/u,
+    /othersite-styles\.css\?v=g6-choice-1/u,
     'Keyboarder must load the ActionDock-capable shared stylesheet revision'
 );
 assert.match(

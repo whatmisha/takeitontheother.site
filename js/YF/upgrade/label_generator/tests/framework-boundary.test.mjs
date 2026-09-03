@@ -18,7 +18,7 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
     assert.match(adapter, /sharedCapabilities: Object\.freeze\(\['ColorUtils', 'DialogHost', 'FileIntakeController'\]\)/u);
     assert.match(
         bridge,
-        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g6-file-intake-1'\) layer\(framework\);/u
+        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g6-choice-1'\) layer\(framework\);/u
     );
     assert.doesNotMatch(bridge, /all:\s*revert-layer/u);
     assert.match(bridge, /\.controls-panel\s*\{\s*max-height: none;/u);
@@ -33,7 +33,7 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
         html.indexOf('framework-base.css') < html.indexOf('style.css'),
         'shared CSS must load below the frozen Sticky Fingers skin'
     );
-    assert.match(html, /href="framework-base\.css\?v=g6-file-intake-1"/u);
+    assert.match(html, /href="framework-base\.css\?v=g6-choice-1"/u);
     assert.match(html, /href="style\.css\?v=g6-file-intake-1"/u);
     assert.doesNotMatch(html, /(?:modal-overlay|\bid="helpButton")/u);
 
@@ -229,7 +229,7 @@ test('Google Sheets remains explicit user-initiated external functionality', asy
     assert.match(script, /https:\/\/docs\.google\.com\/spreadsheets/u);
     assert.match(html, /id="loadDataBtn"/u);
     assert.match(html, /id="googleSheetsUrl"/u);
-    assert.match(html, /src="script\.js\?v=g6-file-intake-1"/u);
+    assert.match(html, /src="script\.js\?v=g6-action-dock-5"/u);
     assert.match(
         html,
         /id="dataStatus" class="data-status" role="status" aria-live="polite" aria-atomic="true"/u

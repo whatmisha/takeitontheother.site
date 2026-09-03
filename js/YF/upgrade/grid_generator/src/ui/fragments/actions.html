@@ -1,20 +1,20 @@
     <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Main actions">
         <div class="action-dock__slot action-dock__slot--utility">
-            <button class="btn-fixed btn-export-settings" id="exportSettingsBtn" aria-label="Export Setup">
-                Export Setup
+            <button class="btn-fixed btn-export-settings" id="exportSettingsBtn" aria-label="Export setup JSON (Command/Control + J)" data-action-dock-extra data-action-dock-json-export hidden>
+                JSON ⌘J
             </button>
-            <button class="btn-fixed btn-import-settings file-intake__trigger" id="importSettingsBtn" aria-label="Import Setup">
-                Import Setup
+            <button class="btn-fixed btn-import-settings file-intake__trigger" id="importSettingsBtn" aria-label="Import setup JSON (Command/Control + Shift + J)" data-action-dock-extra data-action-dock-json-import hidden>
+                Import JSON ⇧⌘J
             </button>
             <input type="file" id="importSettingsInput" accept=".json,application/json" hidden>
             <span class="sr-only file-intake__status" id="importSettingsStatus">Choose a JSON setup file.</span>
         </div>
         <div class="action-dock__slot action-dock__slot--primary">
             <button class="btn-fixed btn-export btn-export-pdf" id="exportPDFBtn" aria-label="Export PDF">
-                Export PDF
+                PDF
             </button>
-            <button class="btn-fixed btn-export" id="exportBtn" aria-label="Export SVG (Command/Control + E)">
-                Export SVG ⌘E
+            <button class="btn-fixed btn-export" id="exportBtn" aria-label="Export SVG (Command/Control + E)" data-action-dock-primary-export>
+                SVG ⌘E
             </button>
         </div>
         <div class="action-dock__slot action-dock__slot--options">

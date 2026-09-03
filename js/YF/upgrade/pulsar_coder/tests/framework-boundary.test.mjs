@@ -78,13 +78,13 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
 
     assert.match(
         bridge,
-        /@import url\('\.\.\/\.\.\/framework\/css\/othersite-styles\.css\?v=g6-action-dock-2'\) layer\(framework\);/u
+        /@import url\('\.\.\/\.\.\/framework\/css\/othersite-styles\.css\?v=g6-choice-1'\) layer\(framework\);/u
     );
     assert.ok(
         html.indexOf('css/framework-base.css') < html.indexOf('css/yf-styles.css'),
         'shared CSS must load before Pulsar compatibility CSS'
     );
-    assert.match(html, /css\/framework-base\.css\?v=g6-action-dock-2/u);
+    assert.match(html, /css\/framework-base\.css\?v=g6-choice-1/u);
     assert.match(html, /css\/yf-styles\.css\?v=g5-reset-1/u);
     assert.match(html, /pulsar-styles\.css\?v=g5-reset-1/u);
     assert.doesNotMatch(legacySkin, /^\s*\*\s*\{/mu, 'Pulsar must consume the shared universal reset');

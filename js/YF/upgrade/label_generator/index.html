@@ -7,7 +7,7 @@
     <meta name="keywords" content="grid generator, packaging, print design, Adobe Illustrator, SVG">
     
     <title>Sticky Fingers — Packaging Label Generator</title>
-    <link rel="stylesheet" href="framework-base.css?v=g6-file-intake-1">
+    <link rel="stylesheet" href="framework-base.css?v=g6-choice-1">
     <link rel="stylesheet" href="style.css?v=g6-file-intake-1">
 </head>
 <body>
@@ -355,27 +355,27 @@
 
     <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Main actions">
         <div class="action-dock__slot action-dock__slot--utility">
-            <button class="btn-fixed btn-export-settings edit-mode-only" id="exportSettingsBtn" aria-label="Export Preset">
-                ↓ Preset
+            <button class="btn-fixed btn-export-settings" id="exportSettingsBtn" aria-label="Export preset JSON (Command/Control + J)" data-action-dock-extra data-action-dock-json-export hidden>
+                JSON ⌘J
             </button>
-            <button class="btn-fixed btn-import-settings edit-mode-only file-intake__trigger" id="importSettingsBtn" aria-label="Import Preset">
-                ↑ Preset
+            <button class="btn-fixed btn-import-settings file-intake__trigger" id="importSettingsBtn" aria-label="Import preset JSON (Command/Control + Shift + J)" data-action-dock-extra data-action-dock-json-import hidden>
+                Import JSON ⇧⌘J
             </button>
             <input type="file" id="importSettingsInput" accept=".json,application/json" hidden>
             <span class="sr-only file-intake__status" id="importSettingsStatus">Choose a JSON preset file.</span>
         </div>
         <div class="action-dock__slot action-dock__slot--primary">
-            <button class="btn-fixed btn-export" id="exportPdfBtn" aria-label="Export PDF">
-                ↓ Current Label PDF
+            <button class="btn-fixed btn-export" id="exportPdfBtn" aria-label="Export current label PDF (Command/Control + E)" data-action-dock-primary-export>
+                PDF ⌘E
             </button>
-            <button class="btn-fixed btn-export" id="generateAllStickersBtn" aria-label="Generate All Labels PDF (Command/Control + E)" style="display: none;">
-                ↓ All Labels PDF ⌘E
+            <button class="btn-fixed btn-export" id="generateAllStickersBtn" aria-label="Generate all labels PDF (Command/Control + E)" data-action-dock-primary-export style="display: none;">
+                All PDF ⌘E
             </button>
             <button class="btn-fixed btn-export-settings edit-mode-only" id="exportCurrentSvgBtn" aria-label="Export Current Label SVG">
-                ↓ SVG
+                SVG
             </button>
             <button class="btn-fixed btn-import-settings edit-mode-only" id="exportAllSvgBtn" aria-label="Export All Labels SVG" style="display: none;">
-                ↓ All SVG
+                All SVG
             </button>
         </div>
         <div class="action-dock__slot action-dock__slot--options">
@@ -898,6 +898,8 @@
         }
     </script>
     
-    <script type="module" src="script.js?v=g6-file-intake-1"></script>
+    <script type="module" src="../framework/src/ui/actionDockAutoInit.js?v=g6-action-dock-5"></script>
+    <script type="module" src="../framework/src/ui/presetMenuKeyboardAutoInit.js?v=g6-choice-1"></script>
+    <script type="module" src="script.js?v=g6-action-dock-5"></script>
 </body>
 </html>

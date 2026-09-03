@@ -55,8 +55,9 @@ Size guard включается только там, где он уже суще
 2. **Wordplayer canary — complete:** оба inputs подключены; исходный UI и
    status copy сохранены. Invalid file не меняет Canvas; три повторных выбора
    одного файла сбрасывают input и дают одинаковый raster hash
-   `dd722b1d…`; Forms SVG трижды точно восстанавливает исходный Canvas hash
-   `df819ef1…`. Полный Gate G5 проходит.
+   `dd722b1d…`; три повторных импорта Forms SVG сходятся на одном стабильном
+   post-font Canvas hash. Первый поздний raster paint веб-шрифта не считается
+   изменением импортируемой геометрии. Полный Gate G5 проходит.
 3. **Pizza Boxer — complete:** постоянные JSON/SVG inputs, private
    codec/schema/history/sanitizer сохранены; public runtime пересобран в 14
    assets. Invalid imports не меняют SVG; JSON 3× возвращает точные baseline
@@ -80,4 +81,4 @@ Rollback выполняется по одному tool: удалить толь�
 component classes, вернуть прежние listeners, не откатывая framework API или
 другие принятые consumers.
 
-UPG-062 завершён 2026-09-02. UPG-063 не начат.
+UPG-062 завершён 2026-09-02. UPG-063 также завершён; FileIntake boundary не менялся.

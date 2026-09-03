@@ -21,17 +21,27 @@ test('public barrel exports the documented framework surface', async () => {
     const api = await import('../src/index.js');
     const source = await readFile(path.join(srcRoot, 'index.js'), 'utf8');
     const expected = [
-        'ApplicationShell', 'CanvasTarget', 'ColorPicker', 'DOMCache', 'DialogHost',
-        'DicePanel', 'ExportGuard', 'FileIntakeController', 'GradientStrokeEffect', 'HistoryBridge', 'HistoryManager',
-        'MathUtils', 'MobileBootstrap', 'NoiseGenerator', 'OverlayDialogHost', 'PanelManager', 'PresetSession', 'PresetStore',
-        'RangeSliderController', 'RenderTarget', 'SVGExporter', 'SHARED_SLOT',
+        'ActionDockController', 'ApplicationShell', 'CanvasTarget', 'ColorPicker', 'DOMCache', 'DialogHost',
+        'ExportGuard', 'FileIntakeController', 'GradientStrokeEffect', 'HistoryBridge', 'HistoryManager',
+        'MathUtils', 'MobileBootstrap', 'NoiseGenerator', 'OverlayDialogHost', 'PanelManager', 'PresetMenuKeyboardController', 'PresetSession', 'PresetStore',
+        'RenderTarget', 'SVGExporter', 'SHARED_SLOT',
         'SeededRandom', 'ShareCodec', 'ShortcutRouter', 'SliderController', 'StripeGeometry',
         'SvgTarget', 'TextToPath', 'TooltipService', 'UnifiedColorPicker',
-        'WobblyEffect', 'ZoomPanManager', 'defineTool', 'fileMatchesAccept', 'seedToUint32', 'svgDocumentString'
+        'WobblyEffect', 'ZoomPanManager', 'defineTool', 'fileMatchesAccept', 'initActionDocks', 'initPresetMenuKeyboards', 'resolveApplicationCapabilities', 'seedToUint32', 'svgDocumentString'
     ];
     for (const name of expected) assert.ok(name in api, `Missing public export: ${name}`);
     assert.match(source, /PanelManager\.js\?v=g6-panel-1/u);
     assert.match(source, /FileIntakeController\.js\?v=g6-file-intake-1/u);
+    assert.match(source, /ActionDockController\.js\?v=g6-action-dock-5/u);
+    assert.match(source, /PresetMenuKeyboardController\.js\?v=g6-choice-1/u);
+    assert.match(source, /defineTool\.js\?v=g6-capabilities-1/u);
+    assert.match(source, /ApplicationShell\.js\?v=g6-capabilities-1/u);
+});
+
+test('unadopted controls live on the optional framework surface', async () => {
+    const optional = await import('../src/experimental.js');
+    assert.equal(typeof optional.DicePanel, 'function');
+    assert.equal(typeof optional.RangeSliderController, 'function');
 });
 
 test('framework source graph stays local and application-agnostic', async () => {
@@ -63,7 +73,7 @@ test('framework source graph stays local and application-agnostic', async () => 
             assert.ok(resolved.startsWith(`${frameworkRoot}${path.sep}`));
         }
     }
-    assert.equal(files.length, 38);
+    assert.equal(files.length, 44);
 });
 
 test('working CSS and exporters use checked-in same-origin assets', async () => {
@@ -98,10 +108,11 @@ test('working CSS preserves v3 provenance and documents intentional G5/G6 extens
         assert.match(working, /font-size: var\(--segmented-control-font-size, 0\.9rem\);/u);
         assert.match(working, /\.checkbox-label\s*\{[^}]*display: flex !important;/su);
         assert.match(working, /\.collapse-icon:focus-visible\s*\{[^}]*outline: 1px solid var\(--color-text\);/su);
-        assert.match(working, /\.bottom-buttons\.action-dock\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\) auto minmax\(0, 1fr\);/su);
-        assert.match(working, /\.action-dock__slot--primary\s*\{[^}]*position: absolute;[^}]*left: 50%;[^}]*transform: translateX\(-50%\);/su);
-        assert.match(working, /\.action-dock__slot--utility\s*\{[^}]*justify-self: start;[^}]*justify-content: flex-start;/su);
-        assert.match(working, /\.action-dock__slot--options\s*\{[^}]*justify-self: end;[^}]*justify-content: flex-end;/su);
+        assert.match(working, /\.bottom-buttons\.action-dock\s*\{[^}]*left: 50%;[^}]*width: max-content;[^}]*display: flex;[^}]*justify-content: center;/su);
+        assert.match(working, /\.action-dock__slot--primary\s*\{[^}]*order: 2;/su);
+        assert.match(working, /\.action-dock__slot--utility\s*\{[^}]*order: 1;/su);
+        assert.match(working, /\.action-dock__slot--options\s*\{[^}]*order: 3;/su);
+        assert.match(working, /\[data-action-dock-extra\]\[hidden\]\s*\{[^}]*display: none !important;/su);
         assert.match(working, /\.file-intake\.is-dragover\s*\{[^}]*outline: 1px dashed var\(--color-text\);/su);
         assert.match(working, /\.file-intake__trigger\[aria-busy="true"\]\s*\{[^}]*cursor: progress;/su);
     }

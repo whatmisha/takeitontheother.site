@@ -478,9 +478,19 @@ body,
 
     .top-links,
     .controls-panel,
-    .bottom-buttons,
     dialog {
         display: none !important;
+    }
+
+    .bottom-buttons.action-dock {
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        display: flex !important;
+        width: max-content;
+        max-width: calc(100% - 24px);
+    }
+
+    .bottom-buttons.action-dock .action-dock__slot--utility {
+        display: none;
     }
 
     .container,
@@ -500,7 +510,7 @@ body,
     .mobile-desktop-hint {
         position: fixed;
         left: 50%;
-        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        bottom: calc(60px + env(safe-area-inset-bottom, 0px));
         z-index: 2;
         display: block;
         width: calc(100% - 32px);

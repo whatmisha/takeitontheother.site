@@ -63,8 +63,11 @@ capture changed deterministically from
 
 Restoring the original link markup and styles restored the exact baseline hash
 `aa118d76bc5106b2147d6eeeb1df8a9291a429d1a6d10bcc037d94f50d9e0591`.
-Dither therefore keeps its legacy navigation until the raster coupling is
-isolated in a dedicated investigation; no changed baseline was accepted.
+Dither therefore kept its legacy navigation through Gate G5; no changed G5
+baseline was accepted. UPG-063 later introduced the canonical `top-links` /
+`top-link` navigation as an explicitly approved G6 visual change. The Dither
+render/export pipeline remains private and its raw-RGBA invariants are still
+checked separately from screenshots.
 
 ## G5 value-display rollout
 

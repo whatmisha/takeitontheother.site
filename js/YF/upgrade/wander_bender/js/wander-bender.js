@@ -474,6 +474,7 @@ sliderController.initSlider('strokeSlider', {
         const autoBtn = document.getElementById('strokeAutoBtn');
         if (autoBtn.classList.contains('active')) {
             autoBtn.classList.remove('active');
+            autoBtn.setAttribute('aria-pressed', 'false');
             settings.set('strokeAuto', false);
         }
         updateVisualizationFast();
@@ -488,12 +489,14 @@ const strokeValue = document.getElementById('strokeValue');
 // Set initial state
 if (settings.get('strokeAuto')) {
     strokeAutoBtn.classList.add('active');
+    strokeAutoBtn.setAttribute('aria-pressed', 'true');
     strokeSlider.disabled = true;
     strokeValue.disabled = true;
 }
 
 strokeAutoBtn.addEventListener('click', () => {
     const isActive = strokeAutoBtn.classList.toggle('active');
+    strokeAutoBtn.setAttribute('aria-pressed', String(isActive));
     settings.set('strokeAuto', isActive);
     
     if (isActive) {
@@ -526,6 +529,7 @@ sliderController.initSlider('cornerRadiusSlider', {
         const maxBtn = document.getElementById('cornerRadiusMaxBtn');
         if (maxBtn.classList.contains('active')) {
             maxBtn.classList.remove('active');
+            maxBtn.setAttribute('aria-pressed', 'false');
             settings.set('cornerRadiusMax', false);
         }
         updateVisualizationFast();
@@ -551,12 +555,14 @@ const cornerRadiusValue = document.getElementById('cornerRadiusValue');
 // Set initial state
 if (settings.get('cornerRadiusMax')) {
     cornerRadiusMaxBtn.classList.add('active');
+    cornerRadiusMaxBtn.setAttribute('aria-pressed', 'true');
     cornerRadiusSlider.disabled = true;
     cornerRadiusValue.disabled = true;
 }
 
 cornerRadiusMaxBtn.addEventListener('click', () => {
     const isActive = cornerRadiusMaxBtn.classList.toggle('active');
+    cornerRadiusMaxBtn.setAttribute('aria-pressed', String(isActive));
     settings.set('cornerRadiusMax', isActive);
     
     if (isActive) {

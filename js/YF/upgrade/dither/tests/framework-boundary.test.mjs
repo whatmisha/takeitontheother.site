@@ -51,24 +51,25 @@ test('Dither reaches shared UI and color behavior through one public-barrel faca
 });
 
 test('shared CSS stays below the Dither compatibility skin', async () => {
-    const [html, bridge, skin, sharedStyles] = await Promise.all([
+    const [html, bridge, skin, sharedStyles, app] = await Promise.all([
         readFile(new URL('index.html', appRoot), 'utf8'),
         readFile(new URL('framework-base.css', appRoot), 'utf8'),
         readFile(new URL('style.css', appRoot), 'utf8'),
-        readFile(new URL('../framework/css/othersite-styles.css', appRoot), 'utf8')
+        readFile(new URL('../framework/css/othersite-styles.css', appRoot), 'utf8'),
+        readFile(new URL('dither.js', appRoot), 'utf8')
     ]);
 
     assert.match(
         bridge,
-        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g6-file-intake-1'\) layer\(framework\);/u
+        /@import url\('\.\.\/framework\/css\/othersite-styles\.css\?v=g6-choice-1'\) layer\(framework\);/u
     );
     assert.ok(
         html.indexOf('framework-base.css') < html.indexOf('style.css'),
         'shared CSS must load before Dither compatibility CSS'
     );
-    assert.match(html, /framework-base\.css\?v=g6-file-intake-1/u);
+    assert.match(html, /framework-base\.css\?v=g6-choice-1/u);
     assert.match(html, /style\.css\?v=g6-file-intake-1/u);
-    assert.match(html, /dither\.js\?v=g6-file-intake-1/u);
+    assert.match(html, /dither\.js\?v=g6-action-dock-5/u);
     assert.doesNotMatch(skin, /^\s*\*\s*\{/mu, 'Dither must consume the shared universal reset');
     assert.match(skin, /Shared-framework parity bridge/u);
     assert.match(skin, /\.main-content\s*\{\s*height: auto;\s*flex: 0 1 auto;/u);
@@ -94,14 +95,13 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
     assert.doesNotMatch(bridge, /\.bottom-buttons\s*\{/u, 'Dither must retire its private left action anchor');
     assert.match(
         html,
-        /action-dock__slot--utility[\s\S]*?id="uploadBtnFixed"[\s\S]*?id="removeImageBtn"[\s\S]*?id="uploadSampleBtn"[\s\S]*?id="removeSampleBtn"[\s\S]*?action-dock__slot--primary[\s\S]*?id="exportBtn"[\s\S]*?action-dock__slot--options[\s\S]*?id="exportWithAlpha"[\s\S]*?id="export2x"[\s\S]*?id="export4x"[\s\S]*?id="export8x"/u,
+        /action-dock__slot--utility[\s\S]*?id="uploadBtnFixed"[\s\S]*?id="removeImageBtn"[\s\S]*?id="uploadSampleBtn"[\s\S]*?id="removeSampleBtn"[\s\S]*?action-dock__slot--primary[\s\S]*?id="exportBtn"[\s\S]*?action-dock__slot--options[\s\S]*?id="exportWithAlpha"[\s\S]*?class="segmented-control action-dock__segment"[\s\S]*?id="export1x"[\s\S]*?id="export2x"[\s\S]*?id="export4x"[\s\S]*?id="export8x"/u,
         'Dither must separate source actions, PNG export and raster options in ActionDock'
     );
-    assert.match(
-        skinWithoutComments,
-        /\.help-container\s*\{[^}]*bottom:\s*calc\(var\(--spacing-3xl\) \+ var\(--button-height\) \+ var\(--spacing-lg\)\);/su,
-        'Dither help must clear the right-side export options'
-    );
+    assert.match(html, /\bid="helpButton"[^>]*>\?<\/button>/u,
+        'Dither help must live inside the shared ActionDock');
+    assert.doesNotMatch(skinWithoutComments, /\.(?:help-container|btn-help)\b/u,
+        'Dither must retire its old floating help presentation');
     assert.doesNotMatch(
         skinWithoutComments,
         /^\s*\.(?:modal-content|modal-close)(?:\s|:|\{)/mu,
@@ -132,7 +132,7 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
     assert.match(sharedStyles, /(?:^|\n)\.collapse-icon\s*\{/u);
     assert.match(sharedStyles, /(?:^|\n)\.panel-params\s*\{/u);
     assert.match(skinWithoutComments, /\.btn-remove\s*\{/u);
-    assert.match(skinWithoutComments, /\.export-transparency-label\s*\{/u);
+    assert.doesNotMatch(skinWithoutComments, /\.export-transparency-label\b/u);
     const privateValueDisplaySelectors = Array.from(
         skinWithoutComments.matchAll(/(?:^|\})\s*([^{}]*\.value-display(?![\w-])[^{}]*)\{/gu),
         match => match[1].trim()
@@ -158,8 +158,8 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
     );
 
     assert.equal(html.match(/class="checkbox-label"/gu)?.length || 0, 2);
-    assert.equal(html.match(/class="export-transparency-label"/gu)?.length || 0, 4);
-    assert.equal(html.match(/<input\b[^>]*\btype="radio"[^>]*>/gu)?.length || 0, 3);
+    assert.equal(html.match(/class="toggle-label"/gu)?.length || 0, 1);
+    assert.equal(html.match(/<input\b[^>]*\btype="radio"[^>]*>/gu)?.length || 0, 7);
     assert.match(sharedStyles, /(?:^|\n)\.checkbox-label\s*\{/u);
     assert.match(sharedStyles, /(?:^|\n)\.segmented-control\s*\{/u);
     assert.doesNotMatch(
@@ -181,11 +181,13 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
         bridge,
         /\.segmented-control\s*\{\s*--segmented-control-font-size:\s*0\.85rem;\s*\}/u
     );
-    assert.match(
-        skinWithoutComments,
-        /\.export-transparency-label input\[type="checkbox"\]\s*\{[^}]*width:\s*16px;[^}]*height:\s*16px;/su,
-        'four raster-export checkboxes must remain private'
-    );
+    assert.equal(html.match(/class="toggle-label"/gu)?.length || 0, 1,
+        'only the independent transparency option must use the shared toggle presentation');
+    assert.match(html, /role="radiogroup" aria-label="Export resolution"/u);
+    assert.equal(html.match(/name="exportScale"/gu)?.length || 0, 4);
+    assert.match(app, /this\.dom\.exportScaleInputs\.forEach/u);
+    assert.match(app, /this\.settings\.export2x = scale === 2;/u);
+    assert.match(sharedStyles, /(?:^|\n)\.toggle-switch\s*\{/u);
 });
 
 test('all thirteen Dither ranges remain in the private raster-safe variant', async () => {

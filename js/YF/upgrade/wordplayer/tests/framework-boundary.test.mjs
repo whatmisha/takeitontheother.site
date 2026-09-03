@@ -14,7 +14,7 @@ const [toolSource, htmlSource, stylesSource, frameworkStylesSource, controlsSour
 
 assert.match(
     toolSource,
-    /import\s*\{\s*defineTool,\s*FileIntakeController\s*\}\s*from\s*['"]\.\.\/framework\/src\/index\.js\?v=g6-file-intake-1['"];/,
+    /import\s*\{\s*defineTool,\s*FileIntakeController\s*\}\s*from\s*['"]\.\.\/framework\/src\/index\.js\?v=g6-capabilities-1['"];/,
     'Wordplayer must consume the shared framework through its public barrel'
 );
 assert.doesNotMatch(
@@ -34,8 +34,8 @@ const frameworkCss = htmlSource.indexOf('../framework/css/othersite-styles.css')
 const applicationCss = htmlSource.indexOf('href="styles.css');
 assert.ok(frameworkCss >= 0, 'shared framework stylesheet is missing');
 assert.ok(applicationCss > frameworkCss, 'application stylesheet must load after framework CSS');
-assert.match(htmlSource, /othersite-styles\.css\?v=g6-file-intake-1/u, 'FileIntake CSS cache boundary changed');
-assert.match(htmlSource, /tool\.js\?v=g6-file-intake-3/u, 'FileIntake JS cache boundary changed');
+assert.match(htmlSource, /othersite-styles\.css\?v=g6-choice-1/u, 'shared CSS cache boundary changed');
+assert.match(htmlSource, /tool\.js\?v=g6-capabilities-1/u, 'ApplicationShell JS cache boundary changed');
 assert.doesNotMatch(htmlSource, /href=["']foundation\.css["']/, 'retired local foundation CSS is still linked');
 assert.match(htmlSource, /\.\.\/framework\/fonts\/CoFoSans-Regular\.woff2/, 'shared regular CoFo font is not preloaded');
 assert.match(htmlSource, /\.\.\/framework\/fonts\/CoFoSans-Medium\.woff2/, 'shared medium CoFo font is not preloaded');

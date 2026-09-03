@@ -22,6 +22,7 @@ import { PanelManager } from '../ui/PanelManager.js';
 import { ColorPicker } from '../ui/ColorPicker.js';
 import { UnifiedColorPicker } from '../ui/UnifiedColorPicker.js';
 import { DicePanel } from '../ui/DicePanel.js';
+import { resolveApplicationCapabilities } from './ApplicationCapabilities.js?v=g6-capabilities-1';
 import { TooltipService } from '../ui/TooltipService.js?v=g5-feedback-1';
 import { DialogHost } from '../ui/DialogHost.js?v=g5-feedback-1';
 import { PresetStore } from '../preset/PresetStore.js';
@@ -43,6 +44,7 @@ const PRESET_ICONS = {
 export class ApplicationShell {
     constructor(config = {}) {
         this.config = config;
+        this.capabilities = null;
 
         // Subsystems (populated in init()).
         this.settingsStore = null;
@@ -79,6 +81,7 @@ export class ApplicationShell {
 
     async init() {
         const c = this.config;
+        this.capabilities = resolveApplicationCapabilities(c, document);
 
         this._initSettings();
         this._initDom();
@@ -103,8 +106,10 @@ export class ApplicationShell {
 
         // First render must run before zoom so the surface has real dimensions.
         this.renderNow();
-        this.target.initZoom(c.zoom || {});
-        this._bindZoomIndicator();
+        if (this.capabilities.zoom) {
+            this.target.initZoom(c.zoom || {});
+            this._bindZoomIndicator();
+        }
 
         // Load presets / shared payload after the first paint.
         await this._bootstrapPresets();
@@ -191,6 +196,7 @@ export class ApplicationShell {
     }
 
     _initPanels() {
+        if (!this.capabilities?.panels) return;
         const defs = this.config.panels || [];
         this.panels = new PanelManager();
         for (const def of defs) {
@@ -249,18 +255,18 @@ export class ApplicationShell {
     }
 
     _initTooltips() {
-        if (this.config.tooltips === false) return;
+        if (!this.capabilities?.tooltips) return;
         this.tooltips = new TooltipService();
         this.tooltips.init();
     }
 
     _initDialog() {
-        if (this.config.dialog === false) return;
+        if (!this.capabilities?.dialog) return;
         this.dialog = new DialogHost(this.config.dialog || {});
     }
 
     _initExport() {
-        if (this.config.export === false) return;
+        if (!this.capabilities?.export) return;
         const exportConfig = this.config.export || {};
         this.exporter = new SVGExporter(exportConfig.exporter || {});
         if (exportConfig.guard !== false) {
@@ -278,6 +284,7 @@ export class ApplicationShell {
     }
 
     _initMobile() {
+        if (!this.capabilities?.mobile) return;
         const mobileConfig = this.config.mobile;
         if (!mobileConfig) return;
         this.mobile = new MobileBootstrap({
@@ -288,6 +295,7 @@ export class ApplicationShell {
     }
 
     _initHistoryAndPresets() {
+        if (!this.capabilities?.history) return;
         const snapshot = () => this.getSnapshot();
         const restore = (snap) => this.applySnapshot(snap);
 
@@ -320,7 +328,7 @@ export class ApplicationShell {
     }
 
     _initShare() {
-        if (!this.config.share) return;
+        if (!this.capabilities?.share) return;
         this.share = new ShareCodec({
             pristineDefaults: this.settingsStore.getDefaults(),
             ...this.config.share
@@ -328,6 +336,7 @@ export class ApplicationShell {
     }
 
     _initShortcuts() {
+        if (!this.capabilities?.shortcuts) return;
         this.shortcuts = new ShortcutRouter();
         const defaults = {};
         if (this.history || this.presets) {

@@ -88,7 +88,7 @@ const apps = [
     ['Keyboarder', keyboarderHtml, 12, 0],
     ['Wordplayer', wordplayerHtml, 11, 2],
     ['Pulsar Coder', pulsarHtml, 1, 3],
-    ['Dither', ditherHtml, 6, 3],
+    ['Dither', ditherHtml, 3, 7],
     ['Wander Bender', wanderHtml, 0, 3]
 ];
 
@@ -100,9 +100,9 @@ assert.deepEqual(
 
 const checkboxCount = apps.reduce((total, [, html]) => total + countType(html, 'checkbox'), 0);
 const radioCount = apps.reduce((total, [, html]) => total + countType(html, 'radio'), 0);
-assert.equal(checkboxCount, 77);
-assert.equal(radioCount, 37);
-assert.equal(checkboxCount + radioCount, 114);
+assert.equal(checkboxCount, 74);
+assert.equal(radioCount, 41);
+assert.equal(checkboxCount + radioCount, 115);
 
 const families = {
     pillCheckbox: [sparkyHtml, keyboarderHtml, wordplayerHtml]
@@ -113,7 +113,7 @@ const families = {
     chipRadio: countInputsInLabelClass(pizzaHtml, 'toggle-chip', 'radio'),
     checkboxLabel: [pizzaHtml, stickyHtml, pulsarHtml, ditherHtml]
         .reduce((total, html) => total + countInputsInLabelClass(html, 'checkbox-label', 'checkbox'), 0),
-    toggleSwitch: [pizzaHtml, stickyHtml, keyboarderHtml, wordplayerHtml]
+    toggleSwitch: [pizzaHtml, stickyHtml, keyboarderHtml, wordplayerHtml, ditherHtml]
         .reduce((total, html) => total + countInputsInLabelClass(html, 'toggle-label', 'checkbox'), 0),
     segmentedRadio: [sparkyHtml, pizzaHtml, stickyHtml, pulsarHtml, ditherHtml, wanderHtml]
         .reduce((total, html) => total + countInputsInContainerClass(html, 'segmented-control', 'radio'), 0),
@@ -127,10 +127,10 @@ assert.deepEqual(families, {
     chipCheckbox: 22,
     chipRadio: 2,
     checkboxLabel: 20,
-    toggleSwitch: 6,
-    segmentedRadio: 31,
+    toggleSwitch: 7,
+    segmentedRadio: 35,
     wordplayerModeRadio: 2,
-    ditherExportCheckbox: 4
+    ditherExportCheckbox: 0
 }, 'toggle presentation family ownership changed');
 
 assert.equal(
@@ -162,12 +162,12 @@ assert.match(
     pizzaSurfaceController,
     /surfaceLockModuleBtn\?\.setAttribute\('aria-pressed',[\s\S]*?surfaceLockMarginsBtn\?\.setAttribute\('aria-pressed'/u
 );
-assert.match(wanderScript, /strokeAutoBtn\.classList\.toggle\('active'\)/u);
-assert.match(wanderScript, /cornerRadiusMaxBtn\.classList\.toggle\('active'\)/u);
-assert.doesNotMatch(
+assert.match(wanderScript, /strokeAutoBtn\.classList\.toggle\('active'\)[\s\S]*?strokeAutoBtn\.setAttribute\('aria-pressed', String\(isActive\)\)/u);
+assert.match(wanderScript, /cornerRadiusMaxBtn\.classList\.toggle\('active'\)[\s\S]*?cornerRadiusMaxBtn\.setAttribute\('aria-pressed', String\(isActive\)\)/u);
+assert.match(
     wanderHtml,
-    /id=["'](?:strokeAutoBtn|cornerRadiusMaxBtn)["'][^>]*\baria-pressed=/u,
-    'Wander Auto/Max accessibility debt changed outside its private component task'
+    /id=["']strokeAutoBtn["'][^>]*\baria-pressed=["']false["'][\s\S]*?id=["']cornerRadiusMaxBtn["'][^>]*\baria-pressed=["']false["']/u,
+    'Wander Auto/Max must expose synchronized pressed state'
 );
 
 const [
@@ -238,7 +238,7 @@ for (const [app, css] of [
 
 assert.match(stripComments(keyboarderCss), /\.segmented-control\s*\{[^}]*display:\s*grid;/su);
 assert.match(stripComments(wordplayerCss), /\.mode-nav-options input\[type="radio"\]/u);
-assert.match(stripComments(ditherCss), /\.export-transparency-label input\[type="checkbox"\]/u);
+assert.doesNotMatch(stripComments(ditherCss), /\.export-transparency-label/u);
 
 for (const [app, css] of [
     ['Wander Bender', wanderCss]
@@ -327,11 +327,8 @@ assert.match(
     /\.segmented-control\s*\{\s*--segmented-control-font-size:\s*0\.85rem;\s*\}/u,
     'Dither legacy segmented font bridge changed'
 );
-assert.match(
-    stripComments(ditherCss),
-    /\.export-transparency-label input\[type="checkbox"\]\s*\{[^}]*width:\s*16px;[^}]*height:\s*16px;/su,
-    'Dither private raster-export checkbox contract changed'
-);
+assert.doesNotMatch(stripComments(ditherCss), /\.toggle-switch\s*\{/u,
+    'Dither must consume the shared export toggle presentation');
 
 assert.doesNotMatch(
     stripComments(pulsarCss),
@@ -365,7 +362,7 @@ assert.match(
 );
 
 console.log(
-    `Toggle contract passed: ${checkboxCount} checkbox + ${radioCount} radio = 114 native; `
-        + '27 pill + 24 chip + 20 checkbox-label + 6 switch + 31 segment + 6 private inputs; '
+    `Toggle contract passed: ${checkboxCount} checkbox + ${radioCount} radio = 115 native; `
+        + '27 pill + 24 chip + 20 checkbox-label + 7 switch + 35 segment + 2 private inputs; '
         + `${privateStateButtonCount} private state buttons protected.`
 );

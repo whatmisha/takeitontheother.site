@@ -19,12 +19,14 @@ are clamped to safe finite ranges. All iframe sources remain relative and inside
 `upgrade/`.
 
 For Sparky, accept both mobile sizes only when the document and main stage fit
-the iframe width without horizontal overflow, the top navigation remains
-usable, panels follow the mobile layout, and the desktop ActionDock is hidden.
+the iframe width without horizontal overflow, panels follow the mobile layout,
+primary PNG/SVG ActionDock exports remain reachable, and desktop-only utility
+actions and top navigation are hidden.
 
 Accepted on 2026-09-02: at both 390×844 and 430×932, `html`, `body` and
 `#mainSvg` equal the requested viewport with no horizontal overflow. The mobile
-hint is visible; desktop panels, top links and ActionDock are hidden.
+hint and primary export actions are visible; desktop panels, top links and
+utility actions are hidden.
 
 For Dither, the harness can reproduce the accepted 1280×860 layout, but a
 screenshot is not a substitute for the required raw-RGBA comparison of the
@@ -48,8 +50,9 @@ touching the filesystem. Accepted on 2026-09-02:
 - invalid raster and SVG drops enter `error` and leave the Canvas unchanged;
 - three repeated selections of the same raster reset the input each time and
   converge on `dd722b1dec1ef47c7e556b9987f030ce7f156618ae8648c585c0ad3be73ffe1b`;
-- three repeated Forms SVG selections reset the input and restore
-  `df819ef180c0a7f11a3c1d15380e0d188994252858cffe4c75ad3978373dee00`;
+- three repeated Forms SVG selections reset the input and converge on the same
+  post-font Canvas hash; the initial late web-font raster paint is recorded but
+  is not treated as an imported-geometry change;
 - both surfaces expose `error → loading → ready` state transitions and no new
   browser errors.
 
@@ -78,3 +81,13 @@ changing that hash. `viewport.html` additionally accepts `pattern` and
 
 A live smoke of all six consumers confirms 14 inputs, paired status regions,
 `aria-controls`, `aria-describedby`, `aria-live=polite` and idle triggers.
+
+UPG-063 browser acceptance on 2026-09-02:
+
+- Dither uses the shared `←Upgrade Tools` link and a centered ActionDock with
+  zero horizontal overflow; its export radio segment is 36 px high and starts at 1×;
+- Pizza Boxer, Keyboarder, Wordplayer, Pulsar Coder and Wander Bender expose
+  button zoom indicators; Keyboarder and Wordplayer now have explicit fit labels;
+- six preset consumers report `data-preset-keyboard-ready=true`; their rendered
+  options receive roving programmatic focus and synchronized `aria-selected`;
+- all checked entrypoints have an empty `data-module-error` state.

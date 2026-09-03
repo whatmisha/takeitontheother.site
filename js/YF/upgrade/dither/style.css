@@ -73,30 +73,6 @@ body {
     position: relative;
 }
 
-/* YF Tools Link */
-.yf-tools-link {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: var(--spacing-md) var(--spacing-2xl);
-    background: var(--color-text);
-    color: var(--color-bg);
-    border: none;
-    border-radius: var(--radius-button);
-    font-size: 0.9rem;
-    font-weight: 600;
-    text-decoration: none;
-    cursor: pointer;
-    transition: all var(--transition-slow);
-    z-index: 1000;
-}
-
-.yf-tools-link:hover {
-    background: var(--color-bg);
-    color: var(--color-text);
-}
-
 .main-content {
     display: flex;
     align-items: center;
@@ -582,9 +558,9 @@ body {
 }
 
 .btn-remove {
-    background: transparent !important;
+    background: var(--color-bg-panel) !important;
     color: var(--color-text) !important;
-    border: 1px solid var(--color-text) !important;
+    border: none !important;
     padding: var(--spacing-md) !important;
     min-width: auto !important;
     width: 36px !important;  /* Равно высоте кнопки */
@@ -634,54 +610,6 @@ body {
     border: 3px solid var(--color-text);
 }
 
-.export-transparency-label {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-    color: var(--color-text);
-    font-size: 0.9rem;
-    cursor: pointer;
-    user-select: none;
-    margin-left: var(--spacing-lg);
-}
-
-.export-transparency-label input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-}
-
-.export-transparency-label span {
-    color: var(--color-text);
-}
-
-.export-transparency-label:hover span {
-    color: var(--color-text-secondary);
-}
-
-/* Help Container and Button */
-.help-container {
-    position: fixed;
-    bottom: calc(var(--spacing-3xl) + var(--button-height) + var(--spacing-lg));
-    right: var(--spacing-3xl);
-    z-index: 1000;
-}
-
-.btn-help {
-    background: none !important;
-    border: none !important;
-    color: var(--color-text-muted);
-    transition: color var(--transition-fast);
-    box-shadow: none !important;
-}
-
-.btn-help:hover {
-    background: none !important;
-    border: none !important;
-    color: var(--color-text);
-    box-shadow: none !important;
-}
-
 /* Private deltas over the shared overlay shell. */
 .modal-overlay {
     z-index: 1000;
@@ -719,18 +647,6 @@ body {
 }
 
 /* Responsive design - consolidated media queries */
-@media (max-width: 768px) {
-    .help-container {
-        bottom: calc(var(--spacing-3xl) + 250px);
-        right: var(--spacing-3xl);
-    }
-    
-    .btn-help {
-        font-size: 0.8rem;
-    }
-    
-}
-
 /* ============================================
    Shared-framework parity bridge
    ============================================
