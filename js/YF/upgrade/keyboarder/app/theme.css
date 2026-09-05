@@ -58,15 +58,6 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Layers: pack as many pills as fit, grow to fill the row width. */
-#layersPanel .pill-toggle-row {
-    width: 100%;
-}
-
-#layersPanel .pill-toggle {
-    flex: 1 1 auto;
-    white-space: nowrap;
-}
 #gridPanel .value-display {
     width: 6.25rem;
 }

@@ -135,39 +135,19 @@
                     </section>
                     
                     <section class="control-section">
-                        <div class="control-group show-toggle-chip-group">
-                            <div class="toggle-chip-group" role="group" aria-label="Show grid options">
-                                <label class="toggle-chip">
-                                    <input type="checkbox" id="showColumns" checked aria-label="Show columns">
-                                    <span>
-                                        <span class="toggle-chip-icon-wrapper">
-                                            <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
-                                            <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                                        </span>
-                                        Columns
-                                    </span>
-                                </label>
-                                <label class="toggle-chip">
-                                    <input type="checkbox" id="showRows" checked aria-label="Show rows">
-                                    <span>
-                                        <span class="toggle-chip-icon-wrapper">
-                                            <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
-                                            <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                                        </span>
-                                        Rows
-                                    </span>
-                                </label>
-                                <label class="toggle-chip">
-                                    <input type="checkbox" id="showBaseline" checked aria-label="Show baseline grid">
-                                    <span>
-                                        <span class="toggle-chip-icon-wrapper">
-                                            <svg class="toggle-chip-icon toggle-chip-icon-open" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
-                                            <svg class="toggle-chip-icon toggle-chip-icon-crossed" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3C4.5 3 1.7 5.6 1 8c.7 2.4 3.5 5 7 5s6.3-2.6 7-5c-.7-2.4-3.5-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="2" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                                        </span>
-                                        Baseline
-                                    </span>
-                                </label>
-                            </div>
+                        <div class="control-group pill-toggle-row" role="group" aria-label="Show grid options">
+                            <label class="pill-toggle" for="showColumns">
+                                <input type="checkbox" id="showColumns" class="sr-only" checked aria-label="Show columns">
+                                <span>Columns</span>
+                            </label>
+                            <label class="pill-toggle" for="showRows">
+                                <input type="checkbox" id="showRows" class="sr-only" checked aria-label="Show rows">
+                                <span>Rows</span>
+                            </label>
+                            <label class="pill-toggle" for="showBaseline">
+                                <input type="checkbox" id="showBaseline" class="sr-only" checked aria-label="Show baseline grid">
+                                <span>Baseline</span>
+                            </label>
                         </div>
                     </section>
 

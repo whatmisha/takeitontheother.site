@@ -105,7 +105,7 @@ assert.equal(radioCount, 41);
 assert.equal(checkboxCount + radioCount, 115);
 
 const families = {
-    pillCheckbox: [sparkyHtml, keyboarderHtml, wordplayerHtml]
+    pillCheckbox: [sparkyHtml, pizzaHtml, stickyHtml, keyboarderHtml, wordplayerHtml]
         .reduce((total, html) => total + countInputsInLabelClass(html, 'pill-toggle', 'checkbox'), 0),
     pillRadio: countInputsInLabelClass(sparkyHtml, 'pill-toggle', 'radio'),
     chipCheckbox: [pizzaHtml, stickyHtml]
@@ -122,9 +122,9 @@ const families = {
 };
 
 assert.deepEqual(families, {
-    pillCheckbox: 25,
+    pillCheckbox: 31,
     pillRadio: 2,
-    chipCheckbox: 22,
+    chipCheckbox: 16,
     chipRadio: 2,
     checkboxLabel: 20,
     toggleSwitch: 7,

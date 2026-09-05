@@ -28,12 +28,14 @@ assert.match(contractCss, /\.controls-panel\.panel-collapsed[\s\S]*?height:\s*va
 assert.match(contractCss, /\.controls-panel \.control-group > input\[type="range"\][\s\S]*?height:\s*10px\s*!important[\s\S]*?margin-top:\s*6px\s*!important[\s\S]*?margin-bottom:\s*12px\s*!important/u);
 assert.match(contractCss, /\.controls-panel \.segmented-control label[\s\S]*?height:\s*30px[\s\S]*?white-space:\s*nowrap/u);
 assert.match(contractCss, /\.controls-panel,[\s\S]*?color:\s*var\(--ui-foreground\)\s*!important/u);
+assert.match(contractCss, /\.controls-panel \.control-group:not\(\[data-ui-custom-spacing\]\)[\s\S]*?padding-top:\s*0\s*!important/u);
+assert.match(contractCss, /\.controls-panel \.pill-toggle:has\(input:checked:not\(:disabled\)\)[\s\S]*?background:\s*var\(--ui-foreground\)\s*!important/u);
 assert.doesNotMatch(contractCss, /\b(?:600|700|800|900|bold)\b/u);
 assert.doesNotMatch(contractCss, /Arial|TT Commons|CoFo Sans/u);
 
 entrypoints.forEach((html, index) => {
     const app = applications[index];
-    assert.match(html, /framework\/css\/ui-contract\.css\?v=g9-rhythm-1/u, `${app}: missing final UI CSS`);
+    assert.match(html, /framework\/css\/ui-contract\.css\?v=g10-toggle-2/u, `${app}: missing final UI CSS`);
     assert.match(html, /framework\/src\/ui\/unifiedUiAutoInit\.js\?v=g8-ui-1/u, `${app}: missing shared UI controller`);
     if (app !== 'grid_generator') {
         assert.match(html, /←\s+Upgrade Tools/u, `${app}: back link needs a readable arrow gap`);
@@ -78,5 +80,23 @@ const [ditherHtml, keyboarderSource, wordplayerSource] = await Promise.all([
 assert.doesNotMatch(ditherHtml, /How it Works|Show instructions/u);
 assert.doesNotMatch(keyboarderSource, /getElementById\('aboutBtn'\).*addEventListener/u);
 assert.doesNotMatch(wordplayerSource, /getElementById\('introHelpBtn'\).*addEventListener/u);
+
+const [wordplayerHtml, keyboarderCss, stickyHtml] = await Promise.all([
+    read('wordplayer/index.html'),
+    read('keyboarder/app/theme.css'),
+    read('label_generator/index.html')
+]);
+assert.match(wordplayerHtml, /class="control-group pill-toggle-row pixel-toggle-row" data-ui-custom-spacing/u);
+assert.doesNotMatch(keyboarderCss, /#layersPanel\s+\.pill-toggle(?:-row)?/u);
+for (const html of [pizzaNavigation, stickyHtml]) {
+    for (const id of ['showColumns', 'showRows', 'showBaseline']) {
+        assert.match(
+            html,
+            new RegExp(`<label class="pill-toggle" for="${id}">[\\s\\S]*?<input[^>]*id="${id}"[^>]*class="sr-only"`, 'u')
+        );
+    }
+}
+const pizzaGridToggleBlock = pizzaNavigation.match(/aria-label="Show grid options"[\s\S]*?<\/div>/u)?.[0] || '';
+assert.doesNotMatch(pizzaGridToggleBlock, /toggle-chip|<svg/u);
 
 console.log('G8 UI contract passed: 8 entrypoints, system typography, fixed summaries, shortcuts and export feedback are wired.');

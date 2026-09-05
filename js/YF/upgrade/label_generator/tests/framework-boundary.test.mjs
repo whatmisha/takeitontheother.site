@@ -37,7 +37,8 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
     assert.match(html, /href="style\.css\?v=g6-file-intake-1"/u);
     assert.doesNotMatch(html, /(?:modal-overlay|\bid="helpButton")/u);
 
-    assert.equal(html.match(/class="toggle-chip"/gu)?.length || 0, 9);
+    assert.equal(html.match(/class="toggle-chip"/gu)?.length || 0, 6);
+    assert.equal(html.match(/class="pill-toggle"/gu)?.length || 0, 3);
     assert.equal(html.match(/class="checkbox-label"/gu)?.length || 0, 10);
     assert.equal(html.match(/class="toggle-switch"/gu)?.length || 0, 3);
     assert.equal(

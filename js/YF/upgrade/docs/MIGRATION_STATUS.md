@@ -144,6 +144,9 @@
 | UPG-086 | Shared control rhythm | Complete | 47 px slider groups, 10 px inputs, 6/12 px margins, 30 px segments and `#d2d2d2` |
 | UPG-087 | Navigation and hub naming | Complete | `← Upgrade Tools`; YF Tools/Lunnen/Muted; future tools disabled |
 | UPG-088 | Gate G9 | Complete | desktop 8/8 + Sparky 390×844 accepted; `gate:g9:static` green |
+| UPG-089 | Semantic control corrections | Complete | Wordplayer separator spacing; intrinsic Keyboarder Layers pills; Pizza/Sticky grid pills without icons or borders; shared `#d2d2d2` state |
+| UPG-090 | UI variance audit | Complete | all 8 tools and 115 native toggles classified; next shared candidates and intentional private controls documented |
+| UPG-091 | Gate G10 | Complete | desktop 8/8 targeted live acceptance; `gate:g10:static` green |
 
 ## Подтверждённые исходные результаты
 
@@ -181,7 +184,7 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-UPG-000—UPG-088 выполнены. G9 исправил оставшийся control rhythm всех восьми
-инструментов поверх сохранённых G8 и G7 domain/export/import contracts.
+UPG-000—UPG-091 выполнены. G10 исправил semantic control regressions и отделил
+следующие реальные кандидаты унификации от оправданной специфики инструментов.
 Дальнейшая работа должна начинаться новым планом и не расширять общий framework
 частной логикой отдельных генераторов.

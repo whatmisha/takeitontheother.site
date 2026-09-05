@@ -44,7 +44,7 @@ assert.match(
     'Keyboarder must keep document utilities, primary exports and Outline in their ActionDock slots'
 );
 assert.doesNotMatch(themeSource, /CoFoSans-(?:Regular|Medium)\.woff2/u, 'Keyboarder UI must use the shared system stack');
-assert.match(htmlSource, /framework\/css\/ui-contract\.css\?v=g9-rhythm-1/u, 'Keyboarder must load the shared system-font UI contract');
+assert.match(htmlSource, /framework\/css\/ui-contract\.css\?v=g10-toggle-2/u, 'Keyboarder must load the shared system-font UI contract');
 assert.match(themeSource, /\.\.\/fonts\/YS%20Text%20Variable\/YSText-Upright-weight-VF\.ttf/, 'application YS Text font changed');
 assert.match(typographySource, /\.\.\/\.\.\/vendor\/lib\/opentype\.module\.js/, 'Keyboarder typography dependency changed');
 assert.match(
@@ -71,6 +71,11 @@ assert.match(
 );
 
 const themeWithoutComments = themeSource.replace(/\/\*[\s\S]*?\*\//gu, '');
+assert.doesNotMatch(
+    themeWithoutComments,
+    /#layersPanel\s+\.pill-toggle(?:-row)?/u,
+    'Layers pills must use the shared intrinsic-width wrapping contract'
+);
 const privateValueDisplaySelectors = Array.from(
     themeWithoutComments.matchAll(/(?:^|\})\s*([^{}]*value-display[^{}]*)\{/gu),
     (match) => match[1].trim()

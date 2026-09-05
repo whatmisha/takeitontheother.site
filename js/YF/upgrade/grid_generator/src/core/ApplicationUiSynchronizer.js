@@ -88,6 +88,10 @@ export class ApplicationUiSynchronizer {
     updateEyeIcon(checkbox) {
         const label = checkbox?.closest('label');
         if (!label) return;
+        if (!label.classList.contains('toggle-chip')) {
+            label.classList.remove('toggle-chip-checked');
+            return;
+        }
         label.classList.toggle('toggle-chip-checked', checkbox.checked);
     }
 

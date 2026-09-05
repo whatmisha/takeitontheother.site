@@ -64,6 +64,9 @@ body,
 
 .controls-panel .control-group {
     margin-bottom: 12px !important;
+}
+
+.controls-panel .control-group:not([data-ui-custom-spacing]) {
     padding-top: 0 !important;
 }
 
@@ -108,6 +111,20 @@ body,
 
 .controls-panel .segmented-control input[type="radio"]:checked + label {
     background: var(--ui-foreground) !important;
+}
+
+.controls-panel .pill-toggle {
+    border: 0 !important;
+}
+
+.controls-panel .pill-toggle:hover:not(.inactive):not(.controls-disabled),
+.controls-panel .pill-toggle:has(input:checked:not(:disabled)):not(.controls-disabled) {
+    background: var(--ui-foreground) !important;
+}
+
+.controls-panel .pill-toggle:hover:not(.inactive):not(.controls-disabled) span,
+.controls-panel .pill-toggle:has(input:checked:not(:disabled)):not(.controls-disabled) span {
+    color: #000 !important;
 }
 
 .panel-header {

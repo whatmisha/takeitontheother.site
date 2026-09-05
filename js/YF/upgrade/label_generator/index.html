@@ -9,7 +9,7 @@
     <title>Sticky Fingers — Packaging Label Generator</title>
     <link rel="stylesheet" href="framework-base.css?v=g6-choice-1">
     <link rel="stylesheet" href="style.css?v=g6-file-intake-1">
-    <link rel="stylesheet" href="../framework/css/ui-contract.css?v=g9-rhythm-1">
+    <link rel="stylesheet" href="../framework/css/ui-contract.css?v=g10-toggle-2">
 </head>
 <body>
     <div class="container">
@@ -255,21 +255,19 @@
                             </fieldset>
                         </div>
                         
-                        <div class="control-group show-toggle-chip-group">
-                            <div class="toggle-chip-group" role="group" aria-label="Show grid options">
-                                <label class="toggle-chip">
-                                    <input type="checkbox" id="showColumns" checked aria-label="Show columns">
-                                    <span>Columns</span>
-                                </label>
-                                <label class="toggle-chip">
-                                    <input type="checkbox" id="showRows" checked aria-label="Show rows">
-                                    <span>Rows</span>
-                                </label>
-                                <label class="toggle-chip">
-                                    <input type="checkbox" id="showBaseline" checked aria-label="Show baseline grid">
-                                    <span>Baseline</span>
-                                </label>
-                            </div>
+                        <div class="control-group pill-toggle-row" role="group" aria-label="Show grid options">
+                            <label class="pill-toggle" for="showColumns">
+                                <input type="checkbox" id="showColumns" class="sr-only" checked aria-label="Show columns">
+                                <span>Columns</span>
+                            </label>
+                            <label class="pill-toggle" for="showRows">
+                                <input type="checkbox" id="showRows" class="sr-only" checked aria-label="Show rows">
+                                <span>Rows</span>
+                            </label>
+                            <label class="pill-toggle" for="showBaseline">
+                                <input type="checkbox" id="showBaseline" class="sr-only" checked aria-label="Show baseline grid">
+                                <span>Baseline</span>
+                            </label>
                         </div>
                     </section>
 
