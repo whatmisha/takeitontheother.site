@@ -252,7 +252,7 @@ export class CanvasRendererController {
             Object.assign(attrs, {
                 'font-size': fontSize,
                 'font-weight': '600',
-                'font-family': 'Arial, sans-serif',
+                'font-family': 'sans-serif',
                 fill: '#999999'
             });
         } else {

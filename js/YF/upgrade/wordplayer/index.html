@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Wordplayer</title>
     <link rel="icon" href="data:,">
-    <link rel="preload" href="../framework/fonts/CoFoSans-Regular.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="../framework/fonts/CoFoSans-Medium.woff2" as="font" type="font/woff2" crossorigin>
     <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g6-choice-1">
     <link id="applicationStyles" rel="stylesheet" href="styles.css?v=g3-wordplayer-2">
+    <link rel="stylesheet" href="../framework/css/ui-contract.css?v=g8-ui-1">
 </head>
 <body>
     <div class="container" data-mode="dither">
@@ -329,7 +328,7 @@
 
         <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Export actions">
             <div class="action-dock__slot action-dock__slot--utility">
-                <button class="btn-fixed btn-intro-help" id="introHelpBtn" type="button" aria-label="About" data-tooltip="About">?</button>
+                <button class="btn-fixed btn-intro-help" id="shortcutHelpBtn" type="button" aria-label="Keyboard shortcuts" data-tooltip="Keyboard shortcuts">?</button>
             </div>
             <div class="action-dock__slot action-dock__slot--primary">
                 <button class="btn-fixed" id="exportPngBtn" type="button">PNG</button>
@@ -359,5 +358,6 @@
     <script type="module" src="../framework/src/ui/actionDockAutoInit.js?v=g7-resilience-4"></script>
     <script type="module" src="../framework/src/ui/presetMenuKeyboardAutoInit.js?v=g7-resilience-4"></script>
     <script type="module" src="./tool.js?v=g6-capabilities-1"></script>
+    <script type="module" src="../framework/src/ui/unifiedUiAutoInit.js?v=g8-ui-1"></script>
 </body>
 </html>

@@ -1,6 +1,5 @@
 let ColorUtils;
 let FileIntakeController;
-let OverlayDialogHost;
 let PanelManager;
 
 class DitheringTool {
@@ -116,11 +115,6 @@ class DitheringTool {
             backgroundColor: '#000000'
         };
         
-        this.modalHost = new OverlayDialogHost({
-            overlayId: 'modalOverlay',
-            closeButtonId: 'modalClose',
-            triggerId: 'helpButton'
-        }).init();
         this.initFileIntakes();
         this.initEventListeners();
         this.panelManager = new PanelManager();
@@ -639,14 +633,6 @@ class DitheringTool {
             },
             onRemove: () => this.removeSample()
         }).init();
-    }
-    
-    openModal() {
-        return this.modalHost?.open();
-    }
-    
-    closeModal() {
-        return this.modalHost?.close();
     }
     
     // Unified slider update handler map
@@ -2185,7 +2171,7 @@ class DitheringTool {
 
 // Initialize the tool when the page loads
 document.addEventListener('DOMContentLoaded', async () => {
-    ({ ColorUtils, FileIntakeController, OverlayDialogHost, PanelManager } = await import(
+    ({ ColorUtils, FileIntakeController, PanelManager } = await import(
         './js/framework/FrameworkAdapter.js?v=g6-file-intake-1'
     ));
     new DitheringTool();

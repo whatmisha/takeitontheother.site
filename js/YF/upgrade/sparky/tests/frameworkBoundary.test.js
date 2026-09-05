@@ -64,8 +64,8 @@ test('Sparky consumes the shared framework without surrendering private mobile a
         /\.bottom-buttons\.action-dock\s*\{[^}]*display:\s*flex\s*!important;[^}]*max-width:\s*calc\(100% - 24px\);/su,
         'Sparky mobile must retain a centered export ActionDock'
     );
-    assert.match(stylesSource, /\.\.\/fonts\/TT_Commons_Classic_Regular\.woff2/, 'private regular TT Commons font moved incorrectly');
-    assert.match(stylesSource, /\.\.\/fonts\/TT_Commons_Classic_Medium\.woff2/, 'private medium TT Commons font moved incorrectly');
+    assert.doesNotMatch(stylesSource, /TT_Commons_Classic_(?:Regular|Medium)\.woff2/u, 'Sparky UI must not disguise TT Commons as CoFo Sans');
+    assert.match(htmlSource, /framework\/css\/ui-contract\.css\?v=g8-ui-1/u, 'Sparky must load the shared system-font UI contract');
     assert.doesNotMatch(stylesSource, /\.\.\/framework\/fonts\/TT_Commons/, 'Sparky CSS still depends on the retired local framework directory');
     assert.match(
         frameworkStylesSource,

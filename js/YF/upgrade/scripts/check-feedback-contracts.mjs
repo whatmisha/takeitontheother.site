@@ -95,11 +95,11 @@ assert.deepEqual(overlayInventory, {
     'Pizza Boxer': 0,
     'Sticky Fingers': 0,
     'Pulsar Coder': 1,
-    Dither: 1,
+    Dither: 0,
     'Wander Bender': 0
 }, 'legacy overlay inventory changed');
 
-for (const name of ['Pulsar Coder', 'Dither']) {
+for (const name of ['Pulsar Coder']) {
     assert.equal(
         countClass(html[name], 'modal-content'),
         ['Sticky Fingers', 'Pulsar Coder'].includes(name) ? 2 : 1,
@@ -107,7 +107,7 @@ for (const name of ['Pulsar Coder', 'Dither']) {
     );
     assert.equal(countClass(html[name], 'modal-close'), 1, `${name} overlay close action changed`);
 }
-for (const name of ['Pulsar Coder', 'Dither']) {
+for (const name of ['Pulsar Coder']) {
     assert.match(html[name], /\brole=["']dialog["']/u, `${name} overlay dialog role changed`);
     assert.match(html[name], /\baria-modal=["']true["']/u, `${name} overlay modal semantics changed`);
     assert.match(html[name], /\baria-hidden=["']true["']/u, `${name} closed overlay state changed`);
@@ -148,6 +148,7 @@ const [
     tooltipService,
     applicationShell,
     sharedCss,
+    unifiedUiController,
     sparkyTool,
     keyboarderTool,
     wordplayerControls,
@@ -168,6 +169,7 @@ const [
     read('framework/src/ui/TooltipService.js'),
     read('framework/src/core/ApplicationShell.js'),
     read('framework/css/othersite-styles.css'),
+    read('framework/src/ui/UnifiedUiController.js'),
     read('sparky/tool.js'),
     read('keyboarder/app/tool.js'),
     read('wordplayer/src/ui/controls.js'),
@@ -289,8 +291,8 @@ assert.doesNotMatch(pulsarScript, /verifyModal[^\n]*classList\.(?:add|remove)\('
     'Pulsar duplicated shared overlay class lifecycle');
 assert.match(pulsarScript, /btn\.textContent = '✓ Copied!'/u);
 
-assert.match(ditherScript, /new OverlayDialogHost\(\{/u,
-    'Dither must consume the shared overlay lifecycle');
+assert.doesNotMatch(ditherScript, /OverlayDialogHost/u,
+    'Dither removed instructions overlay unexpectedly returned');
 assert.doesNotMatch(ditherScript, /modalOverlay\.classList\.(?:add|remove)\('active'\)/u,
     'Dither duplicated shared overlay class lifecycle');
 assert.doesNotMatch(ditherScript, /document\.body\.style\.overflow\s*=/u,
@@ -304,8 +306,10 @@ assert.doesNotMatch(wanderCss, /\.(?:modal-overlay|modal-close|modal-body)\b/u,
     'Wander removed overlay-only CSS returned after UPG-058b');
 
 assert.match(html.Sparky, /id=["']animationExportStatus["'][^>]*aria-live=["']polite["']/u);
-assert.match(sparkyTool, /function bindShortcutHelp\(\)/u);
-assert.match(sparkyTool, /if \(event\.key === 'Escape'/u);
+assert.doesNotMatch(sparkyTool, /function bindShortcutHelp\(\)/u,
+    'Sparky private shortcut popup controller returned');
+assert.match(unifiedUiController, /setHelpOpen\(/u);
+assert.match(unifiedUiController, /key === 'escape'/u);
 assert.match(keyboarderTool, /svg-import-review-live["'] aria-live=["']polite/u);
 assert.match(wordplayerControls, /app\.dialog\?\.alert/u);
 
@@ -325,6 +329,6 @@ const dormantOverlays = overlayInventory['Pizza Boxer'] + overlayInventory['Stic
 const primaryBlockingCalls = 0;
 console.log(
     `Feedback contract passed: 6 native dialogs; ${activeOverlays} active overlays + ${dormantOverlays} dormant fragments; `
-    + `1 private popup; ${tooltipTotal} tooltip hosts; ${primaryBlockingCalls} primary blocking calls; `
+    + `1 shared popup shell; ${tooltipTotal} tooltip hosts; ${primaryBlockingCalls} primary blocking calls; `
     + 'shared shells and private feedback/recovery ownership protected.'
 );

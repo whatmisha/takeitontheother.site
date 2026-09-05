@@ -14,6 +14,7 @@
     <title>Dither - Image Dithering Tool</title>
     <link rel="stylesheet" href="framework-base.css?v=g6-choice-1">
     <link rel="stylesheet" href="style.css?v=g6-file-intake-1">
+    <link rel="stylesheet" href="../framework/css/ui-contract.css?v=g8-ui-1">
 </head>
 <body>
     <div class="container">
@@ -228,7 +229,7 @@
 
     <nav class="bottom-buttons action-dock dither-action-dock" role="toolbar" aria-label="Main actions">
         <div class="action-dock__slot action-dock__slot--utility">
-            <button class="btn-fixed btn-intro-help" id="helpButton" aria-label="Show instructions">?</button>
+            <button class="btn-fixed btn-intro-help" id="shortcutHelpBtn" aria-label="Keyboard shortcuts">?</button>
             <button class="btn-fixed file-intake__trigger" id="uploadBtnFixed" aria-label="Add image (Command/Control + O)">
                 Image ⌘O
             </button>
@@ -270,29 +271,9 @@
         </div>
     </nav>
 
-    <!-- Instructions Modal -->
-    <div class="modal-overlay" id="modalOverlay" aria-hidden="true">
-        <div class="modal-content" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
-            <button class="modal-close" id="modalClose" aria-label="Close instructions">&times;</button>
-            <h2 id="modalTitle">How it Works?</h2>
-            <div class="modal-body">
-                <p>Click <strong>Add Image</strong> to add an image for processing.</p>
-                
-                <p>Click <strong>Add Layout</strong> to upload a transparent PNG with your layout mockup. This will help you scale the texture according to your layout.</p>
-                
-                <p>By default, the texture is exported at 600 pixels on the larger side with a transparent background.</p>
-                
-                <p>You can save a non-transparent PNG with a background of your chosen color by selecting it in the <strong>Background Color</strong> setting and unchecking the <strong>Export with Transparency</strong> checkbox.</p>
-                
-                <p>The image can be exported at ×2, ×4, and ×8 resolutions, but keep in mind that processing settings will be applied to the enlarged image — for example, if <strong>Pixel Size</strong> is set to 1, it will also be 1 in the final enlarged image (not 2, 4, or 8).</p>
-
-                <p>Both <strong>Texture Transform</strong> and <strong>Texture Settings</strong> panels can be freely moved around the screen by dragging their headers.</p>
-            </div>
-        </div>
-    </div>
-
     <script type="module" src="../framework/src/ui/actionDockAutoInit.js?v=g7-resilience-4"></script>
     <script src="js/export/DitherPngExport.js?v=g7-export-1" defer></script>
     <script src="dither.js?v=g7-export-1" defer></script>
+    <script type="module" src="../framework/src/ui/unifiedUiAutoInit.js?v=g8-ui-1"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 # Migration Status
 
-Последнее обновление: 2026-09-02.
+Последнее обновление: 2026-09-05.
 
 ## Gates
 
@@ -13,6 +13,8 @@
 | G4 | Pulsar Coder, Dither, Wander Bender | Passed |
 | G5 | Последующая визуальная и API-унификация | Passed |
 | G6 | Осознанная унификация интерфейса поверх G5 | Complete |
+| G7 | Export/round-trip/persistence/resilience и live release readiness | Passed |
+| G8 | Единая типографика, сводки, хоткеи и export feedback | Passed |
 
 ## Задачи
 
@@ -133,6 +135,11 @@
 | UPG-077 | Runtime resilience | Complete | 24/24 desktop and 6/6 Sparky mobile cold/warm loads; idempotent init; observer/listener/file/worker teardown; 12 balanced Blob URL owners; 0 errors/404 |
 | UPG-078 | Final live acceptance | Complete | 5 priority + 3 secondary workflows; 24 desktop/6 mobile loads; real repeated Pizza JSON import fixed and accepted; 0 errors/404 |
 | UPG-079 | Gate G7 | Complete | `gate:g7:static` green: full G6 + export/round-trip/persistence/keyboard/resilience/live acceptance; upgrade-only isolation retained |
+| UPG-081 | Typography and color contract | Complete | system stack, 400/500, `#d2d2d2`, no Arial/TT Commons in computed UI |
+| UPG-082 | Shared interaction controller | Complete | shortcut help, `⌘/Ctrl+\\`, capability list and export feedback shared by eight tools |
+| UPG-083 | Compact panel summaries | Complete | smart abbreviation, one-line ellipsis and fixed 47 px collapsed geometry |
+| UPG-084 | Integration and cleanup | Complete | eight entrypoints wired; About/instructions removed; Pizza rebuilt |
+| UPG-085 | Gate G8 | Complete | desktop 8/8 + Sparky 390×844 accepted; `gate:g8:static` green |
 
 ## Подтверждённые исходные результаты
 
@@ -170,16 +177,7 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-План UPG-000—UPG-069 выполнен. Нижние действия собраны в единый центрированный
-ActionDock, FileIntake раскатан на 14 surfaces, navigation/zoom/choice semantics
-унифицированы без переноса private parser/schema/history/render logic во
-framework. `check:file-intake`, `check:choices`, `check:capabilities` и
-`check:component-lab` включены в Gate G5. UPG-064 завершён: manifest, optional
-surface, capability-driven `ApplicationShell` и Component Lab готовы. Финальный
-Gate G6 проходит. UPG-070 повторно принял все восемь live entrypoints и
-ActionDock/JSON shortcut behavior. G7 начат: UPG-071 зафиксировал export
-acceptance inventory. UPG-072 и UPG-073 закрыли artifact coverage всех восьми
-tools. UPG-074 закрыл JSON/file-intake round-trip contract. UPG-075 зафиксировал
-reload/isolation/recovery contracts и два rollback proof; следующий шаг —
-UPG-076 принял keyboard/ARIA path всех восьми tools; следующий шаг — UPG-077
-runtime resilience.
+UPG-000—UPG-085 выполнены. G8 унифицировал визуальный и интерактивный слой всех
+восьми инструментов поверх сохранённых G7 domain/export/import contracts.
+Дальнейшая работа должна начинаться новым планом и не расширять общий framework
+частной логикой отдельных генераторов.

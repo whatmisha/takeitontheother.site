@@ -1,0 +1,176 @@
+/* G8 final UI contract. Keep this stylesheet last so application renderers stay private. */
+:root {
+    --ui-font-stack: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    --ui-foreground: #d2d2d2;
+    --ui-panel-collapsed-height: 47px;
+}
+
+body,
+:where(.top-links, .preset-toolbar, .controls-panel, .action-dock, .modal, .modal-overlay, .zoom-indicator),
+:where(.top-links, .preset-toolbar, .controls-panel, .action-dock, .modal, .modal-overlay, .zoom-indicator) *,
+:where(.top-links, .preset-toolbar, .controls-panel, .action-dock, .modal, .modal-overlay, .zoom-indicator) :where(button, input, select, textarea, label) {
+    font-family: var(--ui-font-stack) !important;
+    font-weight: 400 !important;
+}
+
+:where(.top-link, .mode-nav-button, .preset-dropdown-toggle, .zoom-indicator, .btn-fixed, .btn-primary, .btn-secondary),
+.panel-header > span:first-child,
+.control-section > h3,
+.modal h2,
+:where(.top-links, .preset-toolbar, .controls-panel, .action-dock, .modal) :where(strong, b) {
+    font-weight: 500 !important;
+}
+
+.top-link,
+.mode-nav-back {
+    background: var(--ui-foreground) !important;
+    color: #000 !important;
+}
+
+.top-link:hover,
+.mode-nav-back:hover {
+    background: #000 !important;
+    color: var(--ui-foreground) !important;
+}
+
+.control-group > label,
+.control-group-header,
+.collapsible-header,
+.panel-header > span:first-child {
+    font-size: 0.9rem !important;
+}
+
+.controls-panel .segmented-control label {
+    min-height: 30px;
+    font-size: 0.9rem !important;
+}
+
+.panel-header {
+    min-height: var(--ui-panel-collapsed-height);
+}
+
+.controls-panel.panel-collapsed {
+    height: var(--ui-panel-collapsed-height) !important;
+    min-height: var(--ui-panel-collapsed-height) !important;
+    max-height: var(--ui-panel-collapsed-height) !important;
+}
+
+.controls-panel.panel-collapsed > .panel-header {
+    height: var(--ui-panel-collapsed-height);
+    min-height: var(--ui-panel-collapsed-height);
+    max-height: var(--ui-panel-collapsed-height);
+}
+
+.panel-header > span:first-child {
+    display: flex;
+    align-items: baseline;
+    min-width: 0;
+    max-width: calc(100% - 22px);
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.panel-header .panel-params,
+.panel-header .upgrade-panel-summary {
+    display: inline-block;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+
+.action-dock .btn-fixed,
+.action-dock button {
+    min-height: 36px;
+    border: 0;
+    font-size: 1rem;
+    font-weight: 500 !important;
+}
+
+.ui-shortcut-help {
+    position: relative;
+    display: inline-flex;
+}
+
+.ui-shortcut-help__popup {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 10px);
+    width: max-content;
+    min-width: 240px;
+    max-width: min(320px, calc(100vw - 40px));
+    padding: 12px;
+    border: 1px solid #333;
+    border-radius: 12px;
+    background: #1a1a1a;
+    color: var(--ui-foreground);
+    box-shadow: 0 12px 48px rgb(0 0 0 / 70%);
+    transform: translateX(-50%);
+    z-index: 11000;
+}
+
+.ui-shortcut-help__popup[hidden] {
+    display: none;
+}
+
+.ui-shortcut-help__list {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 7px 18px;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.ui-shortcut-help__list dt,
+.ui-shortcut-help__list dd {
+    margin: 0;
+    font-weight: 400;
+}
+
+.ui-shortcut-help__list dd {
+    color: #888;
+    text-align: right;
+    white-space: nowrap;
+}
+
+[data-export-feedback-state] {
+    position: relative;
+    isolation: isolate;
+    transition: color 140ms ease, background-color 140ms ease, opacity 140ms ease;
+}
+
+[data-export-feedback-state="working"],
+[data-export-feedback-state="success"] {
+    background: var(--ui-foreground) !important;
+    color: transparent !important;
+}
+
+[data-export-feedback-state]::after {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 140ms ease;
+}
+
+[data-export-feedback-state="working"]::after {
+    content: "Exporting…";
+    opacity: 1;
+}
+
+[data-export-feedback-state="success"]::after {
+    content: "Done";
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-export-feedback-state],
+    [data-export-feedback-state]::after {
+        transition-duration: 1ms;
+    }
+}

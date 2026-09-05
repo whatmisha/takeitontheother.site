@@ -169,8 +169,8 @@ for (const [name, sources] of Object.entries(localNativeDialogCollisions)) {
         `${name} responsive broad modal-content collision changed`);
 }
 
-assert.equal(countClass(ditherHtml, 'modal-overlay'), 1,
-    'Dither active overlay must remain protected during orphan cleanup');
+assert.equal(countClass(ditherHtml, 'modal-overlay'), 0,
+    'Dither removed instructions overlay returned');
 const ditherCss = await read('dither/style.css');
 assert.doesNotMatch(ditherCss, /^\s*\*\s*\{/mu,
     'Dither local universal reset returned');

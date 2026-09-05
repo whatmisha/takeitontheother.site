@@ -5,27 +5,6 @@
  * не форкаем, только переопределяем кастомные свойства и добавляем то, чего в нём нет.
  */
 
-/**
- * Keep Keyboarder's original font-display behavior while using the shared local CoFo files.
- */
-@font-face {
-    font-family: 'CoFo Sans';
-    src: url('../../framework/fonts/CoFoSans-Regular.woff2') format('woff2'),
-         url('../../framework/fonts/CoFoSans-Regular.woff') format('woff');
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'CoFo Sans';
-    src: url('../../framework/fonts/CoFoSans-Medium.woff2') format('woff2'),
-         url('../../framework/fonts/CoFoSans-Medium.woff') format('woff');
-    font-weight: 500;
-    font-style: normal;
-    font-display: swap;
-}
-
 @font-face {
     font-family: 'YS Text';
     src: url('../fonts/YS%20Text%20Variable/YSText-Upright-weight-VF.ttf') format('truetype');

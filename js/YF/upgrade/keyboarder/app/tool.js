@@ -1603,23 +1603,6 @@ const app = defineTool({
             }
         });
 
-        document.getElementById('aboutBtn')?.addEventListener('click', () => {
-            readyApp.dialog?.alert({
-                title: 'Keyboarder',
-                text: 'Geometry is derived from a declarative row description: each row has one '
-                    + 'key marked flex that takes the remaining block width, so widths do not '
-                    + 'need to be hard-coded. In the UI, sizes are millimetres and type sizes '
-                    + 'are pt; internally 1 px = 1 pt = 1/72″, and the reference column pitch '
-                    + 'is exactly 19 mm.\n\n'
-                    + 'Legends are placed by rules, not by coordinates from the drawing: the '
-                    + 'safety guide is a coordinate system, a slot picks an anchor pair, and a '
-                    + 'glyph at the guide edge is released outward by optical compensation — '
-                    + 'computed from the contour edge shape, not from sidebearings. Verify '
-                    + 'shows how close this matches the active reference.',
-                okText: 'Close'
-            });
-        });
-
         // Reference assets are optional and layout-specific; preload the startup layout only.
         ensureReferenceAssetsLoaded(referenceAssetsForLayout(sourceLayoutFor(readyApp.settings)), readyApp);
 
@@ -3765,20 +3748,20 @@ function exportFontControlSheet(app) {
     const height = 58 + entries.length * rowH;
     const now = new Date().toISOString();
     const rows = [];
-    rows.push(`<text x="24" y="28" font-family="Arial, sans-serif" font-size="13" fill="#333">Keyboarder font control sheet · ${html(now)}</text>`);
-    rows.push(`<text x="${labelW}" y="28" font-family="Arial, sans-serif" font-size="10" fill="#666">Each sample is edge-aligned against the blue line with its active compensation model.</text>`);
+    rows.push(`<text x="24" y="28" font-family="sans-serif" font-size="13" fill="#333">Keyboarder font control sheet · ${html(now)}</text>`);
+    rows.push(`<text x="${labelW}" y="28" font-family="sans-serif" font-size="10" fill="#666">Each sample is edge-aligned against the blue line with its active compensation model.</text>`);
     FONT_CONTROL_SHEET_CHARS.forEach((ch, i) => {
         const x = labelW + i * colW + colW / 2;
-        rows.push(`<text x="${x}" y="48" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#555">${html(ch)}</text>`);
+        rows.push(`<text x="${x}" y="48" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#555">${html(ch)}</text>`);
     });
     entries.forEach((entry, row) => {
         const y = 72 + row * rowH;
         const comp = new Compensator(entry.tf, entry.params || YS_TEXT_REGULAR);
         const title = fontEntryDisplayName(entry);
         const meta = `${entry.kind === 'reference' ? 'reference' : entry.fileName} · ${fontMetricText(entry.probe)} · ${fontInvariantText(entry.invariants)}`;
-        rows.push(`<text x="24" y="${y}" font-family="Arial, sans-serif" font-size="12" fill="#222">${html(title)}</text>`);
-        rows.push(`<text x="24" y="${y + 16}" font-family="Arial, sans-serif" font-size="8.5" fill="#666">${html(meta)}</text>`);
-        rows.push(`<text x="24" y="${y + 30}" font-family="Arial, sans-serif" font-size="8.5" fill="#666">${html(activeFontCoordinatesText(entry))}</text>`);
+        rows.push(`<text x="24" y="${y}" font-family="sans-serif" font-size="12" fill="#222">${html(title)}</text>`);
+        rows.push(`<text x="24" y="${y + 16}" font-family="sans-serif" font-size="8.5" fill="#666">${html(meta)}</text>`);
+        rows.push(`<text x="24" y="${y + 30}" font-family="sans-serif" font-size="8.5" fill="#666">${html(activeFontCoordinatesText(entry))}</text>`);
         FONT_CONTROL_SHEET_CHARS.forEach((ch, i) => {
             const x = labelW + i * colW + colW / 2;
             const baseline = y + 62;

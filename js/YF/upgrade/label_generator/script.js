@@ -8609,7 +8609,7 @@ class GridGenerator {
         if (fontSize) {
             // Export mode
             attrs['font-size'] = fontSize;
-            attrs['font-family'] = 'Arial, sans-serif';
+            attrs['font-family'] = 'sans-serif';
             attrs['fill'] = '#666666';
         } else {
             // Display mode
@@ -8639,7 +8639,7 @@ class GridGenerator {
             // Export mode
             attrs['font-size'] = fontSize;
             attrs['font-weight'] = '600';
-            attrs['font-family'] = 'Arial, sans-serif';
+            attrs['font-family'] = 'sans-serif';
             attrs['fill'] = '#999999';
         } else {
             // Display mode

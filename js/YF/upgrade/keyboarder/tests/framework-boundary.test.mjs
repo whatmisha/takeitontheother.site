@@ -40,11 +40,11 @@ assert.match(
 );
 assert.match(
     htmlSource,
-    /<nav\b[^>]*\bclass="[^"]*\baction-dock\b[^"]*"[^>]*>[\s\S]*?action-dock__slot--utility[\s\S]*?\bid="aboutBtn"[\s\S]*?\bid="verifyBtn"[\s\S]*?\bid="exportJsonBtn"[\s\S]*?\bid="importJsonBtn"[\s\S]*?action-dock__slot--primary[\s\S]*?\bid="exportPdfBtn"[\s\S]*?\bid="exportPngBtn"[\s\S]*?\bid="exportSvgBtn"[\s\S]*?action-dock__slot--options[\s\S]*?\bid="convertToOutlinesCheckbox"[\s\S]*?<\/nav>/u,
+    /<nav\b[^>]*\bclass="[^"]*\baction-dock\b[^"]*"[^>]*>[\s\S]*?action-dock__slot--utility[\s\S]*?\bid="shortcutHelpBtn"[\s\S]*?\bid="verifyBtn"[\s\S]*?\bid="exportJsonBtn"[\s\S]*?\bid="importJsonBtn"[\s\S]*?action-dock__slot--primary[\s\S]*?\bid="exportPdfBtn"[\s\S]*?\bid="exportPngBtn"[\s\S]*?\bid="exportSvgBtn"[\s\S]*?action-dock__slot--options[\s\S]*?\bid="convertToOutlinesCheckbox"[\s\S]*?<\/nav>/u,
     'Keyboarder must keep document utilities, primary exports and Outline in their ActionDock slots'
 );
-assert.match(themeSource, /\.\.\/\.\.\/framework\/fonts\/CoFoSans-Regular\.woff2/, 'shared regular CoFo font is missing');
-assert.match(themeSource, /\.\.\/\.\.\/framework\/fonts\/CoFoSans-Medium\.woff2/, 'shared medium CoFo font is missing');
+assert.doesNotMatch(themeSource, /CoFoSans-(?:Regular|Medium)\.woff2/u, 'Keyboarder UI must use the shared system stack');
+assert.match(htmlSource, /framework\/css\/ui-contract\.css\?v=g8-ui-1/u, 'Keyboarder must load the shared system-font UI contract');
 assert.match(themeSource, /\.\.\/fonts\/YS%20Text%20Variable\/YSText-Upright-weight-VF\.ttf/, 'application YS Text font changed');
 assert.match(typographySource, /\.\.\/\.\.\/vendor\/lib\/opentype\.module\.js/, 'Keyboarder typography dependency changed');
 assert.match(

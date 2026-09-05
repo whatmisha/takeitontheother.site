@@ -7,6 +7,7 @@
     <title>Lunnen Sparky — Parametric Character</title>
     <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g6-choice-1">
     <link id="applicationStyles" rel="stylesheet" href="./styles/sparky.css?v=g6-choice-1">
+    <link rel="stylesheet" href="../framework/css/ui-contract.css?v=g8-ui-1">
 </head>
 <body>
     <div class="container">
@@ -369,19 +370,7 @@
                             id="shortcutHelpBtn" aria-label="Keyboard shortcuts" aria-haspopup="dialog"
                             aria-expanded="false" aria-controls="shortcutHelpPopup">?</button>
                     <div class="sparky-shortcut-help-popup" id="shortcutHelpPopup" role="dialog"
-                         aria-label="Keyboard shortcuts" hidden>
-                        <h2>Shortcuts</h2>
-                        <ul>
-                            <li><kbd>Space</kbd><span>Play, pause or freeze focus</span></li>
-                            <li><kbd>G</kbd><span>Toggle all guides</span></li>
-                            <li><kbd>⌘ \</kbd><span>Hide or restore panels</span></li>
-                            <li><kbd>⌘ E</kbd><span>Export SVG or MP4</span></li>
-                            <li><kbd>⌘ Z</kbd><span>Undo</span></li>
-                            <li><kbd>⇧ ⌘ Z</kbd><span>Redo</span></li>
-                            <li><kbd>⌘ J</kbd><span>Export settings JSON</span></li>
-                            <li><kbd>J</kbd><span>Show or hide JSON actions</span></li>
-                        </ul>
-                    </div>
+                         aria-label="Keyboard shortcuts" hidden></div>
                 </div>
                 <button class="btn-fixed btn-fixed--muted" id="exportSettingsBtn" type="button"
                         data-action-dock-extra data-action-dock-json-export hidden>JSON ⌘J</button>
@@ -417,5 +406,6 @@
     <script type="module" src="../framework/src/ui/actionDockAutoInit.js?v=g7-resilience-4"></script>
     <script type="module" src="../framework/src/ui/presetMenuKeyboardAutoInit.js?v=g7-resilience-4"></script>
     <script type="module" src="./tool.js?v=g6-capabilities-1"></script>
+    <script type="module" src="../framework/src/ui/unifiedUiAutoInit.js?v=g8-ui-1"></script>
 </body>
 </html>

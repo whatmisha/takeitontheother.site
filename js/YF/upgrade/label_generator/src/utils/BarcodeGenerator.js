@@ -162,7 +162,7 @@ export class BarcodeGenerator {
             // Позиционируем baseline текста так, чтобы cap-height заканчивался на нижней границе
             const textBaselineY = height;
             const textX = width / 2;
-            svg += `<text x="${textX.toFixed(2)}" y="${textBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="${color}">${cleanData}</text>`;
+            svg += `<text x="${textX.toFixed(2)}" y="${textBaselineY.toFixed(2)}" font-family="TT Commons Classic, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="${color}">${cleanData}</text>`;
         }
 
         svg += '</svg>';
@@ -342,7 +342,7 @@ export class BarcodeGenerator {
             
             // Первая цифра слева - слегка сдвинута правее
             const firstDigitX = firstDigitWidth * 0.65;
-            svg += `<text x="${firstDigitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="${color}">${firstDigit}</text>`;
+            svg += `<text x="${firstDigitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="${color}">${firstDigit}</text>`;
             
             // Левая группа (6 цифр) - располагаем между start и middle guards
             // Структура: start guard (3 модуля) + левая группа (42 модуля) + center guard (5 модулей)
@@ -370,7 +370,7 @@ export class BarcodeGenerator {
             // Позиции цифр левой группы
             for (let i = 0; i < 6; i++) {
                 const digitX = startGuardEndX + guardToDigitDistance + i * digitSpacing;
-                svg += `<text x="${digitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="${color}">${leftGroup[i]}</text>`;
+                svg += `<text x="${digitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="${color}">${leftGroup[i]}</text>`;
             }
             
             // Правая группа (6 цифр) - располагаем между middle и end guards
@@ -381,7 +381,7 @@ export class BarcodeGenerator {
             // Позиции цифр правой группы
             for (let i = 0; i < 6; i++) {
                 const digitX = centerGuardEndX + guardToDigitDistance + i * rightDigitSpacing;
-                svg += `<text x="${digitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, Arial, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="${color}">${rightGroup[i]}</text>`;
+                svg += `<text x="${digitX.toFixed(2)}" y="${finalTextBaselineY.toFixed(2)}" font-family="TT Commons Classic, sans-serif" font-size="${textFontSize.toFixed(2)}" font-weight="${fontWeight}" text-anchor="middle" dominant-baseline="alphabetic" fill="${color}">${rightGroup[i]}</text>`;
             }
         }
 
@@ -396,7 +396,7 @@ export class BarcodeGenerator {
     static generateEmptyBarcode(width, height) {
         return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
             <rect x="0" y="0" width="${width}" height="${height}" fill="transparent"/>
-            <text x="${width / 2}" y="${height / 2}" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#999999">No barcode data</text>
+            <text x="${width / 2}" y="${height / 2}" font-family="sans-serif" font-size="14" text-anchor="middle" fill="#999999">No barcode data</text>
         </svg>`;
     }
 
@@ -534,4 +534,3 @@ export class BarcodeGenerator {
         console.log(`✅ ${barcodeType.toUpperCase()} Barcode updated with data: ${barcodeData}`);
     }
 }
-

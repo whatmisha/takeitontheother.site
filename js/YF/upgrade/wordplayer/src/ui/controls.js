@@ -238,13 +238,6 @@ export class WordplayerUI {
             }).catch((error) => this.showExportError(app, 'SVG export', error))
                 .finally(() => svgButton.setAttribute('aria-busy', 'false'));
         });
-        document.getElementById('introHelpBtn')?.addEventListener('click', () => {
-            app.dialog?.alert({
-                title: 'Wordplayer',
-                text: 'Dither maps an image through text. Forms settles letters inside an SVG with gravity, contour attraction, adhesion and friction.'
-            });
-        });
-
         app.settingsStore.subscribe('mode', () => this.sync(app));
         this.sync(app);
     }

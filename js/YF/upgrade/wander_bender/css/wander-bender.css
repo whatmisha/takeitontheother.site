@@ -53,7 +53,7 @@
 }
 
 .btn-secondary {
-    font-family: Arial;
+    font-family: inherit;
 }
 
 .control-group input[type="range"]:disabled {

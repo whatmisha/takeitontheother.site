@@ -27,12 +27,13 @@ test('public barrel exports the documented framework surface', async () => {
         'RenderTarget', 'SVGExporter', 'SHARED_SLOT',
         'SeededRandom', 'ShareCodec', 'ShortcutRouter', 'SliderController', 'StripeGeometry',
         'SvgTarget', 'TextToPath', 'TooltipService', 'UnifiedColorPicker',
-        'WobblyEffect', 'ZoomPanManager', 'defineTool', 'fileMatchesAccept', 'initActionDocks', 'initPresetMenuKeyboards', 'resolveApplicationCapabilities', 'seedToUint32', 'svgDocumentString'
+        'UnifiedUiController', 'WobblyEffect', 'ZoomPanManager', 'defineTool', 'fileMatchesAccept', 'initActionDocks', 'initPresetMenuKeyboards', 'initUnifiedUi', 'resolveApplicationCapabilities', 'seedToUint32', 'svgDocumentString'
     ];
     for (const name of expected) assert.ok(name in api, `Missing public export: ${name}`);
     assert.match(source, /PanelManager\.js\?v=g6-panel-1/u);
     assert.match(source, /FileIntakeController\.js\?v=g6-file-intake-1/u);
     assert.match(source, /ActionDockController\.js\?v=g7-keyboard-2/u);
+    assert.match(source, /UnifiedUiController\.js\?v=g8-ui-1/u);
     assert.match(source, /PresetMenuKeyboardController\.js\?v=g7-keyboard-2/u);
     assert.match(source, /defineTool\.js\?v=g6-capabilities-1/u);
     assert.match(source, /ApplicationShell\.js\?v=g6-capabilities-1/u);
@@ -73,7 +74,7 @@ test('framework source graph stays local and application-agnostic', async () => 
             assert.ok(resolved.startsWith(`${frameworkRoot}${path.sep}`));
         }
     }
-    assert.equal(files.length, 45);
+    assert.equal(files.length, 47);
 });
 
 test('working CSS and exporters use checked-in same-origin assets', async () => {

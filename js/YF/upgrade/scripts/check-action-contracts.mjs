@@ -46,12 +46,12 @@ assert.match(
 );
 assert.match(
     bars.Wordplayer,
-    /action-dock__slot--utility[\s\S]*?\bid=["']introHelpBtn["'][\s\S]*?action-dock__slot--primary[\s\S]*?\bid=["']exportPngBtn["'][\s\S]*?\bid=["']exportSvgBtn["'][\s\S]*?action-dock__slot--options[\s\S]*?\bid=["']transparentPngCheckbox["']/u,
-    'Wordplayer must keep About/exports/Transparent in utility/primary/options slots'
+    /action-dock__slot--utility[\s\S]*?\bid=["']shortcutHelpBtn["'][\s\S]*?action-dock__slot--primary[\s\S]*?\bid=["']exportPngBtn["'][\s\S]*?\bid=["']exportSvgBtn["'][\s\S]*?action-dock__slot--options[\s\S]*?\bid=["']transparentPngCheckbox["']/u,
+    'Wordplayer must keep shortcuts/exports/Transparent in utility/primary/options slots'
 );
 assert.match(
     bars.Keyboarder,
-    /action-dock__slot--utility[\s\S]*?\bid=["']aboutBtn["'][\s\S]*?\bid=["']verifyBtn["'][\s\S]*?\bid=["']exportJsonBtn["'][\s\S]*?\bid=["']importJsonBtn["'][\s\S]*?action-dock__slot--primary[\s\S]*?\bid=["']exportPdfBtn["'][\s\S]*?\bid=["']exportPngBtn["'][\s\S]*?\bid=["']exportSvgBtn["'][\s\S]*?action-dock__slot--options[\s\S]*?\bid=["']convertToOutlinesCheckbox["']/u,
+    /action-dock__slot--utility[\s\S]*?\bid=["']shortcutHelpBtn["'][\s\S]*?\bid=["']verifyBtn["'][\s\S]*?\bid=["']exportJsonBtn["'][\s\S]*?\bid=["']importJsonBtn["'][\s\S]*?action-dock__slot--primary[\s\S]*?\bid=["']exportPdfBtn["'][\s\S]*?\bid=["']exportPngBtn["'][\s\S]*?\bid=["']exportSvgBtn["'][\s\S]*?action-dock__slot--options[\s\S]*?\bid=["']convertToOutlinesCheckbox["']/u,
     'Keyboarder must keep document utilities, primary exports and Outline in their ActionDock slots'
 );
 assert.match(
@@ -101,14 +101,14 @@ const expected = {
         buttons: 7,
         fixed: 7,
         labels: 1,
-        ids: ['aboutBtn', 'verifyBtn', 'exportJsonBtn', 'importJsonBtn', 'exportPdfBtn',
+        ids: ['shortcutHelpBtn', 'verifyBtn', 'exportJsonBtn', 'importJsonBtn', 'exportPdfBtn',
             'exportPngBtn', 'exportSvgBtn', 'convertToOutlinesCheckbox']
     },
     Wordplayer: {
         buttons: 3,
         fixed: 3,
         labels: 1,
-        ids: ['introHelpBtn', 'exportPngBtn', 'exportSvgBtn', 'transparentPngCheckbox']
+        ids: ['shortcutHelpBtn', 'exportPngBtn', 'exportSvgBtn', 'transparentPngCheckbox']
     },
     'Pulsar Coder': {
         buttons: 3,
@@ -120,7 +120,7 @@ const expected = {
         buttons: 6,
         fixed: 6,
         labels: 5,
-        ids: ['helpButton', 'uploadBtnFixed', 'removeImageBtn', 'uploadSampleBtn', 'removeSampleBtn',
+        ids: ['shortcutHelpBtn', 'uploadBtnFixed', 'removeImageBtn', 'uploadSampleBtn', 'removeSampleBtn',
             'exportBtn', 'exportWithAlpha', 'export1x', 'export2x', 'export4x', 'export8x']
     },
     'Wander Bender': {
@@ -351,7 +351,7 @@ assert.match(ditherScript, /if \(this\.settings\.exportWithAlpha\)/u);
 assert.match(ditherScript, /DitherPngExport\.downloadCanvas\(exportCanvas\)/u);
 assert.match(ditherExport, /canvas\.toBlob\(blob =>/u);
 assert.match(ditherExport, /const FILENAME = 'dithered-image\.png';/u);
-assert.match(bars.Dither, /\bid=["']helpButton["'][^>]*>\?<\/button>/u);
+assert.match(bars.Dither, /\bid=["']shortcutHelpBtn["'][^>]*>\?<\/button>/u);
 assert.doesNotMatch(stripComments(ditherCss), /\.(?:help-container|btn-help)\b/u);
 
 console.log(

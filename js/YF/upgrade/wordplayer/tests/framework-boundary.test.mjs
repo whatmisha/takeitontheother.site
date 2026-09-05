@@ -37,8 +37,7 @@ assert.ok(applicationCss > frameworkCss, 'application stylesheet must load after
 assert.match(htmlSource, /othersite-styles\.css\?v=g6-choice-1/u, 'shared CSS cache boundary changed');
 assert.match(htmlSource, /tool\.js\?v=g6-capabilities-1/u, 'ApplicationShell JS cache boundary changed');
 assert.doesNotMatch(htmlSource, /href=["']foundation\.css["']/, 'retired local foundation CSS is still linked');
-assert.match(htmlSource, /\.\.\/framework\/fonts\/CoFoSans-Regular\.woff2/, 'shared regular CoFo font is not preloaded');
-assert.match(htmlSource, /\.\.\/framework\/fonts\/CoFoSans-Medium\.woff2/, 'shared medium CoFo font is not preloaded');
+assert.doesNotMatch(htmlSource, /CoFoSans-(?:Regular|Medium)\.woff2/, 'system UI must not preload the retired CoFo files');
 assert.match(
     htmlSource,
     /<a href="\.\.\/" class="mode-nav-button mode-nav-back" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u,
@@ -50,7 +49,7 @@ assert.doesNotMatch(
     'Wordplayer back link must retain its explicit mode-navigation presentation'
 );
 assert.match(htmlSource, /<nav class="bottom-buttons action-dock" role="toolbar" aria-label="Export actions">/u);
-assert.match(htmlSource, /action-dock__slot action-dock__slot--utility[\s\S]*?\bid="introHelpBtn"/u);
+assert.match(htmlSource, /action-dock__slot action-dock__slot--utility[\s\S]*?\bid="shortcutHelpBtn"/u);
 assert.match(htmlSource, /action-dock__slot action-dock__slot--primary[\s\S]*?\bid="exportPngBtn"[\s\S]*?\bid="exportSvgBtn"/u);
 assert.match(htmlSource, /action-dock__slot action-dock__slot--options[\s\S]*?\bid="transparentPngCheckbox"/u);
 assert.equal(htmlSource.match(/class="control-section image-load-section file-intake"/gu)?.length, 2);

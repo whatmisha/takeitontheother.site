@@ -688,7 +688,7 @@ body {
 
 .btn-primary,
 .btn-secondary {
-    font-family: Arial;
+    font-family: inherit;
     height: auto;
     display: inline-block;
     align-items: normal;

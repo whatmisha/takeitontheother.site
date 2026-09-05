@@ -493,33 +493,6 @@ function triggerSphereFeedback(app) {
     }, SPHERE_FEEDBACK_DURATION_MS);
 }
 
-function bindShortcutHelp() {
-    const root = document.getElementById('shortcutHelp');
-    const button = document.getElementById('shortcutHelpBtn');
-    const popup = document.getElementById('shortcutHelpPopup');
-    if (!root || !button || !popup) return;
-
-    const setOpen = (open) => {
-        popup.toggleAttribute('hidden', !open);
-        button.setAttribute('aria-expanded', String(open));
-    };
-
-    button.addEventListener('click', () => {
-        setOpen(button.getAttribute('aria-expanded') !== 'true');
-    });
-    document.addEventListener('pointerdown', (event) => {
-        if (button.getAttribute('aria-expanded') === 'true' && !root.contains(event.target)) {
-            setOpen(false);
-        }
-    });
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && button.getAttribute('aria-expanded') === 'true') {
-            setOpen(false);
-            button.focus();
-        }
-    });
-}
-
 function cancelFocusAnimationFrame() {
     if (focusAnimation.frame != null) cancelAnimationFrame(focusAnimation.frame);
     focusAnimation.frame = null;
@@ -2636,7 +2609,6 @@ const app = defineTool({
         }
     },
     onInit(tool) {
-        bindShortcutHelp();
         document.getElementById('exportSettingsBtn')?.addEventListener(
             'click',
             () => exportSettingsJSON(tool)
@@ -2650,10 +2622,6 @@ const app = defineTool({
             if (event.repeat) return;
             toggleFocusFreeze(tool);
         });
-        tool.shortcuts?.register('mod+\\', (event) => {
-            if (event.repeat) return;
-            tool.panels?.toggleAllCollapsed();
-        }, { allowInInput: true });
     },
     render(ctx) {
         try {

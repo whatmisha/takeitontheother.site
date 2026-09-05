@@ -32,6 +32,7 @@
     "check:live-acceptance": "node scripts/check-final-live-acceptance.mjs",
     "check:legacy-css": "node scripts/check-legacy-css-contracts.mjs",
     "check:storage": "node scripts/check-storage-namespaces.mjs",
+    "check:ui-contract": "node scripts/check-ui-contract.mjs",
     "check:isolation": "npm run assets:check && npm run framework:upstream:check && npm run check:storage && npm run check:boundaries",
     "build:pizza": "npm --prefix grid_generator/tools run release",
     "test:sparky": "npm --prefix sparky test",
@@ -57,6 +58,7 @@
     "gate:g4:static": "npm run check:ranges && npm run check:toggles && npm run check:presets && npm run check:actions && npm run check:feedback && npm run check:legacy-css && npm run gate:g3:static && npm run test:tier2",
     "gate:g5:static": "npm run check:file-intake && npm run check:choices && npm run check:capabilities && npm run check:component-lab && npm run gate:g4:static && node scripts/check-gate-g5.mjs",
     "gate:g6:static": "npm run gate:g5:static && node scripts/check-gate-g6.mjs",
-    "gate:g7:static": "npm run gate:g6:static && npm run check:export-acceptance && npm run check:round-trip && npm run check:persistence && npm run check:keyboard && npm run check:resilience && npm run check:live-acceptance && npm run test:resilience && npm run test:persistence && npm run test:keyboard && node scripts/check-gate-g7.mjs"
+    "gate:g7:static": "npm run gate:g6:static && npm run check:export-acceptance && npm run check:round-trip && npm run check:persistence && npm run check:keyboard && npm run check:resilience && npm run check:live-acceptance && npm run test:resilience && npm run test:persistence && npm run test:keyboard && node scripts/check-gate-g7.mjs",
+    "gate:g8:static": "npm run check:ui-contract && npm run gate:g7:static && node scripts/check-gate-g8.mjs"
   }
 }

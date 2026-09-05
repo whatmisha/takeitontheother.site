@@ -39,7 +39,7 @@ test('Dither reaches shared UI and color behavior through one public-barrel faca
     assert.match(app, /this\.panelManager\.initCollapse\(\);/u);
     assert.match(app, /summaryProvider:\s*\(\) => this\.getTextureSettingsSummary\(\)/u);
     assert.match(app, /summaryProvider:\s*\(\) => this\.getTextureTransformSummary\(\)/u);
-    assert.match(app, /new OverlayDialogHost\(\{/u);
+    assert.doesNotMatch(app, /new OverlayDialogHost\(\{/u, 'Dither must not retain the removed instructions dialog');
     assert.doesNotMatch(app, /modalOverlay\.classList\.(?:add|remove)\('active'\)/u);
     assert.doesNotMatch(app, /document\.body\.style\.overflow\s*=/u);
     assert.doesNotMatch(app, /initPanelDrag\s*\(/u);
@@ -99,8 +99,9 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
         /action-dock__slot--utility[\s\S]*?id="uploadBtnFixed"[\s\S]*?id="removeImageBtn"[\s\S]*?id="uploadSampleBtn"[\s\S]*?id="removeSampleBtn"[\s\S]*?action-dock__slot--primary[\s\S]*?id="exportBtn"[\s\S]*?action-dock__slot--options[\s\S]*?id="exportWithAlpha"[\s\S]*?class="segmented-control action-dock__segment"[\s\S]*?id="export1x"[\s\S]*?id="export2x"[\s\S]*?id="export4x"[\s\S]*?id="export8x"/u,
         'Dither must separate source actions, PNG export and raster options in ActionDock'
     );
-    assert.match(html, /\bid="helpButton"[^>]*>\?<\/button>/u,
-        'Dither help must live inside the shared ActionDock');
+    assert.match(html, /\bid="shortcutHelpBtn"[^>]*>\?<\/button>/u,
+        'Dither shortcuts must live inside the shared ActionDock');
+    assert.doesNotMatch(html, /How it Works|Show instructions/u);
     assert.doesNotMatch(skinWithoutComments, /\.(?:help-container|btn-help)\b/u,
         'Dither must retire its old floating help presentation');
     assert.doesNotMatch(
