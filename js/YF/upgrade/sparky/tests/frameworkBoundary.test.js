@@ -41,7 +41,7 @@ test('Sparky consumes the shared framework without surrendering private mobile a
     assert.doesNotMatch(htmlSource, /(?:href|src)=["']\.\/framework\//, 'Sparky HTML still links its retired framework copy');
     assert.match(
         htmlSource,
-        /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u,
+        /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">← Upgrade Tools<\/a>/u,
         'Sparky back link must expose the canonical navigation contract'
     );
     assert.match(
@@ -65,7 +65,7 @@ test('Sparky consumes the shared framework without surrendering private mobile a
         'Sparky mobile must retain a centered export ActionDock'
     );
     assert.doesNotMatch(stylesSource, /TT_Commons_Classic_(?:Regular|Medium)\.woff2/u, 'Sparky UI must not disguise TT Commons as CoFo Sans');
-    assert.match(htmlSource, /framework\/css\/ui-contract\.css\?v=g8-ui-1/u, 'Sparky must load the shared system-font UI contract');
+    assert.match(htmlSource, /framework\/css\/ui-contract\.css\?v=g9-rhythm-1/u, 'Sparky must load the shared system-font UI contract');
     assert.doesNotMatch(stylesSource, /\.\.\/framework\/fonts\/TT_Commons/, 'Sparky CSS still depends on the retired local framework directory');
     assert.match(
         frameworkStylesSource,

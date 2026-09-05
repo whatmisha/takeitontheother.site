@@ -25,7 +25,7 @@ const [
 
 const pizza = `${pizzaDocument}\n${pizzaWorkspace}`;
 
-assert.match(dither, /class="top-links"[\s\S]*?<a href="\.\.\/" class="top-link"[^>]*>←Upgrade Tools<\/a>/u);
+assert.match(dither, /class="top-links"[\s\S]*?<a href="\.\.\/" class="top-link"[^>]*>← Upgrade Tools<\/a>/u);
 assert.doesNotMatch(dither, /yf-tools-link/u);
 assert.doesNotMatch(ditherJs, /initYFToolsLink|yf-tools-link/u);
 assert.doesNotMatch(ditherCss.replace(/\/\*[\s\S]*?\*\//gu, ''), /\.yf-tools-link\b/u);

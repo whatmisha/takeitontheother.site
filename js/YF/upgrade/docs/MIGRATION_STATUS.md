@@ -15,6 +15,7 @@
 | G6 | Осознанная унификация интерфейса поверх G5 | Complete |
 | G7 | Export/round-trip/persistence/resilience и live release readiness | Passed |
 | G8 | Единая типографика, сводки, хоткеи и export feedback | Passed |
+| G9 | Единый ритм контролов и структура YF Tools hub | Passed |
 
 ## Задачи
 
@@ -140,6 +141,9 @@
 | UPG-083 | Compact panel summaries | Complete | smart abbreviation, one-line ellipsis and fixed 47 px collapsed geometry |
 | UPG-084 | Integration and cleanup | Complete | eight entrypoints wired; About/instructions removed; Pizza rebuilt |
 | UPG-085 | Gate G8 | Complete | desktop 8/8 + Sparky 390×844 accepted; `gate:g8:static` green |
+| UPG-086 | Shared control rhythm | Complete | 47 px slider groups, 10 px inputs, 6/12 px margins, 30 px segments and `#d2d2d2` |
+| UPG-087 | Navigation and hub naming | Complete | `← Upgrade Tools`; YF Tools/Lunnen/Muted; future tools disabled |
+| UPG-088 | Gate G9 | Complete | desktop 8/8 + Sparky 390×844 accepted; `gate:g9:static` green |
 
 ## Подтверждённые исходные результаты
 
@@ -177,7 +181,7 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-UPG-000—UPG-085 выполнены. G8 унифицировал визуальный и интерактивный слой всех
-восьми инструментов поверх сохранённых G7 domain/export/import contracts.
+UPG-000—UPG-088 выполнены. G9 исправил оставшийся control rhythm всех восьми
+инструментов поверх сохранённых G8 и G7 domain/export/import contracts.
 Дальнейшая работа должна начинаться новым планом и не расширять общий framework
 частной логикой отдельных генераторов.

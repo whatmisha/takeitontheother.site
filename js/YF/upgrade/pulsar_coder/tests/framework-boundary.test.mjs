@@ -91,7 +91,7 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
     assert.doesNotMatch(skin, /all:\s*revert-layer/u);
     assert.match(
         html,
-        /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u
+        /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">← Upgrade Tools<\/a>/u
     );
     assert.doesNotMatch(html, /class="yf-tools-link"/u);
     assert.match(html, /<nav class="bottom-buttons action-dock" role="toolbar" aria-label="Verify and export actions">/u);

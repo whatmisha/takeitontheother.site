@@ -25,13 +25,19 @@ assert.match(contractCss, /--ui-foreground:\s*#d2d2d2/u);
 assert.match(contractCss, /--ui-panel-collapsed-height:\s*47px/u);
 assert.match(contractCss, /text-overflow:\s*ellipsis/u);
 assert.match(contractCss, /\.controls-panel\.panel-collapsed[\s\S]*?height:\s*var\(--ui-panel-collapsed-height\)\s*!important/u);
+assert.match(contractCss, /\.controls-panel \.control-group > input\[type="range"\][\s\S]*?height:\s*10px\s*!important[\s\S]*?margin-top:\s*6px\s*!important[\s\S]*?margin-bottom:\s*12px\s*!important/u);
+assert.match(contractCss, /\.controls-panel \.segmented-control label[\s\S]*?height:\s*30px[\s\S]*?white-space:\s*nowrap/u);
+assert.match(contractCss, /\.controls-panel,[\s\S]*?color:\s*var\(--ui-foreground\)\s*!important/u);
 assert.doesNotMatch(contractCss, /\b(?:600|700|800|900|bold)\b/u);
 assert.doesNotMatch(contractCss, /Arial|TT Commons|CoFo Sans/u);
 
 entrypoints.forEach((html, index) => {
     const app = applications[index];
-    assert.match(html, /framework\/css\/ui-contract\.css\?v=g8-ui-1/u, `${app}: missing final UI CSS`);
+    assert.match(html, /framework\/css\/ui-contract\.css\?v=g9-rhythm-1/u, `${app}: missing final UI CSS`);
     assert.match(html, /framework\/src\/ui\/unifiedUiAutoInit\.js\?v=g8-ui-1/u, `${app}: missing shared UI controller`);
+    if (app !== 'grid_generator') {
+        assert.match(html, /←\s+Upgrade Tools/u, `${app}: back link needs a readable arrow gap`);
+    }
     assert.ok(
         html.lastIndexOf('ui-contract.css') > html.lastIndexOf('framework-base.css')
             || html.lastIndexOf('ui-contract.css') > html.lastIndexOf('othersite-styles.css'),
@@ -48,6 +54,21 @@ assert.match(controller, /\(\?:mm\|keys\?\)/u);
 assert.match(controller, /Number\(target\?\.scrollWidth\) > Number\(target\?\.clientWidth\)/u);
 assert.match(controller, /mainFileTrigger\(\)/u);
 assert.match(plan, /никогда не меняет габариты панели/u);
+
+const hub = await read('index.html');
+const pizzaNavigation = await read('grid_generator/src/ui/fragments/workspace.html');
+assert.match(pizzaNavigation, /←\s+Upgrade Tools/u, 'grid_generator: back link needs a readable arrow gap');
+assert.match(hub, /<title>YF Tools<\/title>/u);
+assert.match(hub, /<h1>YF Tools<\/h1>/u);
+assert.match(hub, /<h2 id="lunnen-heading">Lunnen<\/h2>/u);
+assert.match(hub, /<h2 id="muted-heading">Muted<\/h2>/u);
+for (const name of [
+    'Hyperspace', 'Pattern 01', 'Pattern 02', 'Random Lines',
+    'Rays Pattern', 'Asterisk Pattern', 'Calendar Randomizer', 'Chladni Sound Pattern'
+]) {
+    assert.match(hub, new RegExp(`<span class="tool-placeholder">${name}<\\/span>`, 'u'));
+    assert.doesNotMatch(hub, new RegExp(`<a[^>]*>${name}<\\/a>`, 'u'));
+}
 
 const [ditherHtml, keyboarderSource, wordplayerSource] = await Promise.all([
     read('dither/index.html'),

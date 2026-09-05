@@ -40,12 +40,12 @@ assert.doesNotMatch(htmlSource, /href=["']foundation\.css["']/, 'retired local f
 assert.doesNotMatch(htmlSource, /CoFoSans-(?:Regular|Medium)\.woff2/, 'system UI must not preload the retired CoFo files');
 assert.match(
     htmlSource,
-    /<a href="\.\.\/" class="mode-nav-button mode-nav-back" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u,
+    /<a href="\.\.\/" class="mode-nav-button mode-nav-back" aria-label="Back to Upgrade Tools">← Upgrade Tools<\/a>/u,
     'Wordplayer mode-navigation extension must expose the canonical back-link semantics'
 );
 assert.doesNotMatch(
     htmlSource,
-    /class="[^"]*top-link[^"]*"[^>]*>←Upgrade Tools<\/a>/u,
+    /class="[^"]*top-link[^"]*"[^>]*>← Upgrade Tools<\/a>/u,
     'Wordplayer back link must retain its explicit mode-navigation presentation'
 );
 assert.match(htmlSource, /<nav class="bottom-buttons action-dock" role="toolbar" aria-label="Export actions">/u);

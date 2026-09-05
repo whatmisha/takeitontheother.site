@@ -30,7 +30,7 @@ assert.ok(applicationCss > frameworkCss, 'Keyboarder theme must load after frame
 assert.doesNotMatch(htmlSource, /vendor\/framework/, 'Keyboarder HTML still links its retired framework copy');
 assert.match(
     htmlSource,
-    /<a class="top-link" href="\.\.\/" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u,
+    /<a class="top-link" href="\.\.\/" aria-label="Back to Upgrade Tools">← Upgrade Tools<\/a>/u,
     'Keyboarder back link must expose the canonical navigation contract'
 );
 assert.match(
@@ -44,7 +44,7 @@ assert.match(
     'Keyboarder must keep document utilities, primary exports and Outline in their ActionDock slots'
 );
 assert.doesNotMatch(themeSource, /CoFoSans-(?:Regular|Medium)\.woff2/u, 'Keyboarder UI must use the shared system stack');
-assert.match(htmlSource, /framework\/css\/ui-contract\.css\?v=g8-ui-1/u, 'Keyboarder must load the shared system-font UI contract');
+assert.match(htmlSource, /framework\/css\/ui-contract\.css\?v=g9-rhythm-1/u, 'Keyboarder must load the shared system-font UI contract');
 assert.match(themeSource, /\.\.\/fonts\/YS%20Text%20Variable\/YSText-Upright-weight-VF\.ttf/, 'application YS Text font changed');
 assert.match(typographySource, /\.\.\/\.\.\/vendor\/lib\/opentype\.module\.js/, 'Keyboarder typography dependency changed');
 assert.match(

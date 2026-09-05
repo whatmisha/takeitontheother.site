@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Experimental isolated workspace for Lunnen design tools">
-  <title>Lunnen Upgrade</title>
+  <meta name="description" content="Experimental isolated workspace for YF Tools">
+  <title>YF Tools</title>
   <style>
     :root {
       color-scheme: dark;
@@ -58,6 +58,10 @@
       margin-bottom: 10px;
     }
 
+    section + section {
+      margin-top: 40px;
+    }
+
     a {
       color: #d2d2d2;
       font-size: 18px;
@@ -68,13 +72,18 @@
     a:focus-visible {
       color: #777;
     }
+
+    .tool-placeholder {
+      color: rgb(210 210 210 / 38%);
+      font-size: 18px;
+    }
   </style>
 </head>
 <body>
-  <h1>Lunnen</h1>
+  <h1>YF Tools</h1>
   <main>
-    <section aria-labelledby="tools-heading">
-      <h2 id="tools-heading">Upgrade tools</h2>
+    <section aria-labelledby="lunnen-heading">
+      <h2 id="lunnen-heading">Lunnen</h2>
       <ul>
         <li><a href="sparky/">Sparky</a></li>
         <li><a href="grid_generator/">Pizza Boxer</a></li>
@@ -84,6 +93,19 @@
         <li><a href="dither/">Dither Wizard</a></li>
         <li><a href="wander_bender/">Wander Bender</a></li>
         <li><a href="pulsar_coder/">Pulsar Coder</a></li>
+        <li><span class="tool-placeholder">Hyperspace</span></li>
+        <li><span class="tool-placeholder">Pattern 01</span></li>
+        <li><span class="tool-placeholder">Pattern 02</span></li>
+        <li><span class="tool-placeholder">Random Lines</span></li>
+        <li><span class="tool-placeholder">Rays Pattern</span></li>
+        <li><span class="tool-placeholder">Asterisk Pattern</span></li>
+      </ul>
+    </section>
+    <section aria-labelledby="muted-heading">
+      <h2 id="muted-heading">Muted</h2>
+      <ul>
+        <li><span class="tool-placeholder">Calendar Randomizer</span></li>
+        <li><span class="tool-placeholder">Chladni Sound Pattern</span></li>
       </ul>
     </section>
   </main>

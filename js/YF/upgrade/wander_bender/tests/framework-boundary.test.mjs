@@ -96,7 +96,7 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
     );
     assert.match(
         html,
-        /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">←Upgrade Tools<\/a>/u
+        /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">← Upgrade Tools<\/a>/u
     );
     assert.doesNotMatch(html, /class="yf-tools-link"/u);
     assert.match(skin, /Shared-framework parity bridge/u);

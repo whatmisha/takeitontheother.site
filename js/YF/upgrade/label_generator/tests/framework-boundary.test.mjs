@@ -26,7 +26,7 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
     assert.match(sharedStyles, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
     assert.match(
         html,
-        /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">\s*←Upgrade Tools\s*<\/a>/u
+        /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">\s*← Upgrade Tools\s*<\/a>/u
     );
     assert.doesNotMatch(html, /class="yf-tools-link"/u);
     assert.ok(

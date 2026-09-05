@@ -114,7 +114,7 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
     );
     assert.match(
         workspace,
-        /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">\s*←Upgrade Tools\s*<\/a>/u
+        /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">\s*← Upgrade Tools\s*<\/a>/u
     );
     assert.doesNotMatch(workspace, /class="yf-tools-link"/u);
     assert.match(workspace, /id="presetDropdownToggle" type="button"[\s\S]*?aria-controls="presetDropdownMenu"/u);
