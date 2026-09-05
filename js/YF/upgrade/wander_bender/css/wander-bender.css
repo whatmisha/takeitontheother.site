@@ -1,10 +1,3 @@
-/* Custom styles for max button */
-.unit-btn.active {
-    background: #fff;
-    color: #000;
-    opacity: 1;
-}
-
 /* Auto/Max remains an explicit disabled-presentation extension. */
 .value-display:disabled {
     opacity: 0.3;

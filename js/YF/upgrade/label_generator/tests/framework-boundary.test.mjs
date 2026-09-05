@@ -23,6 +23,7 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
     );
     assert.doesNotMatch(bridge, /all:\s*revert-layer/u);
     assert.match(bridge, /\.controls-panel\s*\{\s*max-height: none;/u);
+    assert.match(style, /#controlsPanel\s*\{\s*max-height:\s*calc\(100vh - 2 \* var\(--spacing-3xl\)\);/u);
     assert.doesNotMatch(style, /^\s*\*\s*\{/mu, 'Sticky must consume the shared universal reset');
     assert.match(sharedStyles, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
     assert.match(
@@ -35,7 +36,7 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
         'shared CSS must load below the frozen Sticky Fingers skin'
     );
     assert.match(html, /href="framework-base\.css\?v=g6-choice-1"/u);
-    assert.match(html, /href="style\.css\?v=g6-file-intake-1"/u);
+    assert.match(html, /href="style\.css\?v=g13-ui-repair-1"/u);
     assert.doesNotMatch(html, /(?:modal-overlay|\bid="helpButton")/u);
 
     assert.equal(html.match(/class="toggle-chip feature-chip"/gu)?.length || 0, 6);
@@ -165,7 +166,7 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
     }
 });
 
-test('Sticky Fingers keeps native number inputs outside the value-display contract', async () => {
+test('Sticky Fingers keeps legacy numeric controls while color and custom-column controls use sliders', async () => {
     const [html, style, sharedStyles, script, controller] = await Promise.all([
         readFile(new URL('index.html', appRoot), 'utf8'),
         readFile(new URL('style.css', appRoot), 'utf8'),
@@ -174,19 +175,19 @@ test('Sticky Fingers keeps native number inputs outside the value-display contra
         readFile(new URL('src/ui/NumberInputController.js', appRoot), 'utf8')
     ]);
 
-    assert.equal(html.match(/type="number"/gu)?.length || 0, 39);
-    assert.equal(html.match(/class="number-input"/gu)?.length || 0, 39);
-    assert.equal(html.match(/<input\b[^>]*\btype="range"[^>]*>/gu)?.length || 0, 0);
-    assert.equal(html.match(/class="value-display(?!-)/gu)?.length || 0, 0);
-    assert.equal(script.match(/input\.type = 'number';/gu)?.length || 0, 1);
-    assert.match(script, /input\.className = 'number-input';/u);
+    assert.equal(html.match(/type="number"/gu)?.length || 0, 33);
+    assert.equal(html.match(/class="number-input"/gu)?.length || 0, 33);
+    assert.equal(html.match(/<input\b[^>]*\btype="range"[^>]*>/gu)?.length || 0, 6);
+    assert.equal(html.match(/class="value-display(?!-)/gu)?.length || 0, 6);
+    for (const id of [
+        'hueSlider', 'saturationSlider', 'brightnessSlider',
+        'contentHueSlider', 'contentSaturationSlider', 'contentBrightnessSlider'
+    ]) assert.match(html, new RegExp(`id="${id}"`, 'u'));
+    assert.match(script, /slider\.type = 'range';/u);
+    assert.match(script, /className = 'value-display'/u);
 
     const styleWithoutComments = style.replace(/\/\*[\s\S]*?\*\//gu, '');
-    assert.doesNotMatch(
-        styleWithoutComments,
-        /(?:^|\})\s*[^{}]*\.value-display(?![\w-])[^{}]*\{/gu,
-        'Sticky has no active text value-display and must consume shared CSS if one is added'
-    );
+    assert.doesNotMatch(styleWithoutComments, /(?:^|\})\s*\.value-display(?![\w-])\s*\{/gu);
     assert.match(
         sharedStyles,
         /(?:^|\n)\.value-display\s*\{[\s\S]*?font-variant-numeric: tabular-nums;[\s\S]*?\}/u
@@ -208,6 +209,7 @@ test('Sticky Fingers keeps native number inputs outside the value-display contra
     assert.match(controller, /const roundedToTenth = Math\.round\(currentValue \* 10\) \/ 10;/u);
     assert.match(controller, /newValue = this\.settings\.get\(config\.setting\);/u);
     assert.match(controller, /element\.value = newValue\.toFixed\(config\.decimals\);/u);
+    assert.match(script, /setFixedColumnWidth\(i, nextWidth, \{ render: false \}\)/u);
 });
 
 test('manifest.json is the only Sticky Fingers preset discovery source', async () => {
@@ -233,7 +235,7 @@ test('Google Sheets remains explicit user-initiated external functionality', asy
     assert.match(script, /https:\/\/docs\.google\.com\/spreadsheets/u);
     assert.match(html, /id="loadDataBtn"/u);
     assert.match(html, /id="googleSheetsUrl"/u);
-    assert.match(html, /src="script\.js\?v=g6-action-dock-5"/u);
+    assert.match(html, /src="script\.js\?v=g13-ui-repair-1"/u);
     assert.match(
         html,
         /id="dataStatus" class="data-status" role="status" aria-live="polite" aria-atomic="true"/u

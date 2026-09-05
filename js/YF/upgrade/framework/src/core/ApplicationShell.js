@@ -627,9 +627,13 @@ export class ApplicationShell {
         const indicator = this.dom?.zoomIndicator
             || document.getElementById(this.config.dom?.zoomIndicator || 'zoomIndicator');
         if (!indicator) return;
-        this.target.onZoomChange((pct) => { indicator.textContent = `${pct}%`; });
+        this.target.onZoomChange((pct) => {
+            indicator.dataset.uiZoomValue = `${pct}%`;
+            if (indicator.dataset.uiZoomHovered !== 'true') indicator.textContent = `${pct}%`;
+        });
         indicator.addEventListener('click', () => this.target.fitToScreen());
-        indicator.textContent = `${this.target.getZoomPercent()}%`;
+        indicator.dataset.uiZoomValue = `${this.target.getZoomPercent()}%`;
+        indicator.textContent = indicator.dataset.uiZoomValue;
     }
 
     /** Re-sync every control to current settings (after preset/undo). */

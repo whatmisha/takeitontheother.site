@@ -93,6 +93,9 @@ export class UnifiedUiController {
         this.bound = false;
         this.handleClick = this.handleClick.bind(this);
         this.handleKeydown = this.handleKeydown.bind(this);
+        this.handleMouseover = this.handleMouseover.bind(this);
+        this.handleMouseout = this.handleMouseout.bind(this);
+        this.handleZoomChange = this.handleZoomChange.bind(this);
         this.handleMutation = this.handleMutation.bind(this);
         this.handleSummaryChange = this.handleSummaryChange.bind(this);
     }
@@ -103,6 +106,9 @@ export class UnifiedUiController {
         this.sync();
         this.document.addEventListener('click', this.handleClick, true);
         this.document.addEventListener('keydown', this.handleKeydown, true);
+        this.document.addEventListener('mouseover', this.handleMouseover, true);
+        this.document.addEventListener('mouseout', this.handleMouseout, true);
+        this.document.addEventListener('zoomchange', this.handleZoomChange, true);
         this.document.addEventListener('input', this.handleSummaryChange, true);
         this.document.addEventListener('change', this.handleSummaryChange, true);
         this.observer = new this.window.MutationObserver(this.handleMutation);
@@ -121,6 +127,9 @@ export class UnifiedUiController {
         if (!this.bound) return;
         this.document.removeEventListener('click', this.handleClick, true);
         this.document.removeEventListener('keydown', this.handleKeydown, true);
+        this.document.removeEventListener('mouseover', this.handleMouseover, true);
+        this.document.removeEventListener('mouseout', this.handleMouseout, true);
+        this.document.removeEventListener('zoomchange', this.handleZoomChange, true);
         this.document.removeEventListener('input', this.handleSummaryChange, true);
         this.document.removeEventListener('change', this.handleSummaryChange, true);
         this.observer?.disconnect();
@@ -134,6 +143,7 @@ export class UnifiedUiController {
     }
 
     sync() {
+        this.syncZoomHover();
         this.ensureShortcutHelp();
         this.ensureSummaries();
         this.refreshSummaries();
@@ -146,6 +156,14 @@ export class UnifiedUiController {
 
     handleSummaryChange() {
         this.refreshSummaries();
+    }
+
+    syncZoomHover() {
+        const indicator = this.document.querySelector('.zoom-indicator');
+        if (!indicator || indicator.dataset.uiZoomHovered !== 'true') return;
+        const current = indicator.textContent?.trim();
+        if (current && current !== 'Fit') indicator.dataset.uiZoomValue = current;
+        if (current !== 'Fit') indicator.textContent = 'Fit';
     }
 
     helpButton() {
@@ -210,7 +228,6 @@ export class UnifiedUiController {
         if (this.document.querySelector('[data-action-dock-json-import]')) rows.push(['JSON import', '⇧⌘J']);
         if (this.document.querySelector('[data-action-dock-extra]')) rows.push(['JSON actions', 'J']);
         if (this.mainFileTrigger()) rows.push(['Open file', '⌘O']);
-        if (this.document.querySelector('.zoom-indicator')) rows.push(['Fit / actual size', '⌘0 / ⌘1']);
         if (this.document.querySelector('#undoBtn, [data-history-undo]') || this.tool === 'sparky') rows.push(['Undo / redo', '⌘Z / ⇧⌘Z']);
         if (this.eligiblePanels().length) rows.push(['Collapse panels', '⌘\\']);
         rows.push(['Shortcuts', '?']);
@@ -318,6 +335,35 @@ export class UnifiedUiController {
             this.exportTimers.delete(button);
         }, 620);
         this.exportTimers.set(button, [clear]);
+    }
+
+    handleMouseover(event) {
+        const indicator = event.target.closest?.('.zoom-indicator');
+        if (!indicator || indicator.contains?.(event.relatedTarget)) return;
+        if (indicator.textContent?.trim() !== 'Fit') {
+            indicator.dataset.uiZoomValue = indicator.textContent?.trim() || '100%';
+        }
+        indicator.dataset.uiZoomHovered = 'true';
+        indicator.textContent = 'Fit';
+    }
+
+    handleMouseout(event) {
+        const indicator = event.target.closest?.('.zoom-indicator');
+        if (!indicator || indicator.contains?.(event.relatedTarget)) return;
+        delete indicator.dataset.uiZoomHovered;
+        indicator.textContent = indicator.dataset.uiZoomValue || indicator.textContent || '100%';
+    }
+
+    handleZoomChange(event) {
+        const indicator = this.document.querySelector('.zoom-indicator');
+        const percent = Number(event.detail?.percent);
+        if (!indicator || !Number.isFinite(percent)) return;
+        indicator.dataset.uiZoomValue = `${Math.round(percent)}%`;
+        if (indicator.dataset.uiZoomHovered !== 'true') return;
+        const defer = this.window.queueMicrotask || (callback => Promise.resolve().then(callback));
+        defer(() => {
+            if (indicator.dataset.uiZoomHovered === 'true') indicator.textContent = 'Fit';
+        });
     }
 
     exportButtons() {

@@ -54,6 +54,26 @@ test('Command/Control backslash owns the shared collapse route', () => {
     assert.equal(event.stopped, true);
 });
 
+test('zoom indicator offers Fit on hover without claiming browser size shortcuts', () => {
+    const indicator = {
+        dataset: {},
+        textContent: '125%',
+        contains: () => false
+    };
+    const documentRef = {
+        querySelector: selector => selector === '.zoom-indicator' ? indicator : null,
+        querySelectorAll: () => []
+    };
+    const controller = new UnifiedUiController({ ownerDocument: documentRef, ownerWindow: {} });
+    const target = { closest: selector => selector === '.zoom-indicator' ? indicator : null };
+
+    controller.handleMouseover({ target, relatedTarget: null });
+    assert.equal(indicator.textContent, 'Fit');
+    controller.handleMouseout({ target, relatedTarget: null });
+    assert.equal(indicator.textContent, '125%');
+    assert.equal(controller.shortcutRows().some(([label]) => label.includes('actual size')), false);
+});
+
 test('overflowing summaries drop expendable units before CSS ellipsis', () => {
     const controller = new UnifiedUiController({ ownerDocument: {}, ownerWindow: {} });
     const target = { clientWidth: 120, scrollWidth: 240 };

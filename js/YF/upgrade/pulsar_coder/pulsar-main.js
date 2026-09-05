@@ -20,7 +20,7 @@ import {
     PanelManager,
     SliderController
 } from './js/framework/FrameworkAdapter.js?v=g5-feedback-2';
-import { ZoomPanManager } from './js/ui/ZoomPanManager.js';
+import { ZoomPanManager } from './js/ui/ZoomPanManager.js?v=g13-ui-repair-1';
 import { downloadPulsarSvg } from './js/export/PulsarSvgExport.js?v=g7-export-1';
 
 // ============================================

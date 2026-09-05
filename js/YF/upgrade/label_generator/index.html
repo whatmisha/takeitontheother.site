@@ -8,8 +8,8 @@
     
     <title>Sticky Fingers — Packaging Label Generator</title>
     <link rel="stylesheet" href="framework-base.css?v=g6-choice-1">
-    <link rel="stylesheet" href="style.css?v=g6-file-intake-1">
-    <link rel="stylesheet" href="../framework/css/ui-contract.css?v=g12-opentype-1">
+    <link rel="stylesheet" href="style.css?v=g13-ui-repair-1">
+    <link rel="stylesheet" href="../framework/css/ui-contract.css?v=g13-ui-repair-2">
 </head>
 <body>
     <div class="container">
@@ -54,17 +54,19 @@
                 <div class="panel-content">
                     <div class="data-rows-list" id="dataRowsList"></div>
                     
-                    <section class="control-section">
-                        <div class="control-group">
+                    <section class="control-section data-import-section">
+                        <div class="control-group data-import-controls" data-ui-custom-spacing>
                             <div class="control-group-header">
                                 <label for="googleSheetsUrl">
                                     <span>URL</span>
                                 </label>
-                                <button type="button" class="color-preset" id="defaultSheetsUrl" aria-label="laptop test link" style="font-size: 0.7rem;">laptop test link</button>
-                                <button type="button" class="color-preset" id="tabletSheetsUrl" aria-label="tablet test link" style="font-size: 0.7rem;">tablet test link</button>
+                                <div class="data-import-presets" aria-label="Test links">
+                                    <button type="button" class="color-preset" id="defaultSheetsUrl" aria-label="laptop test link">laptop test link</button>
+                                    <button type="button" class="color-preset" id="tabletSheetsUrl" aria-label="tablet test link">tablet test link</button>
+                                </div>
                             </div>
                             <input type="text" class="text-input" id="googleSheetsUrl" placeholder="https://docs.google.com/spreadsheets/d/..." aria-label="URL">
-                            <small style="display: block; margin-top: 4px; color: #666; font-size: 11px;">Please paste a link to the specific sheet (its URL should end with gid=...).</small>
+                            <small class="data-import-help">Please paste a link to the specific sheet (its URL should end with gid=...).</small>
                             <button type="button" class="btn-load-data" id="loadDataBtn">Load Data</button>
                         </div>
                         
@@ -288,24 +290,27 @@
                         <div class="hsb-picker" id="hsbPicker" style="display: none;">
                             <div class="hsb-controls">
                                 <div class="hsb-control-group">
-                                    <label for="hueValue">
-                                        <span>Hue <span class="unit">°</span></span>
+                                    <label for="hueSlider">
+                                        <span>Hue</span>
+                                        <input type="text" class="value-display hsb-value" id="hueValue" value="0" data-min="0" data-max="360" data-suffix="°" aria-label="Hue value">
                                     </label>
-                                    <input type="number" class="number-input" id="hueValue" value="0" min="0" max="360" step="1" aria-label="Hue value">
+                                    <input type="range" id="hueSlider" min="0" max="360" step="1" value="0" aria-label="Hue slider">
                                 </div>
                                 
                                 <div class="hsb-control-group">
-                                    <label for="saturationValue">
-                                        <span>Saturation <span class="unit">%</span></span>
+                                    <label for="saturationSlider">
+                                        <span>Saturation</span>
+                                        <input type="text" class="value-display hsb-value" id="saturationValue" value="0" data-min="0" data-max="100" data-suffix="%" aria-label="Saturation value">
                                     </label>
-                                    <input type="number" class="number-input" id="saturationValue" value="0" min="0" max="100" step="1" aria-label="Saturation value">
+                                    <input type="range" id="saturationSlider" min="0" max="100" step="1" value="0" aria-label="Saturation slider">
                                 </div>
                                 
                                 <div class="hsb-control-group">
-                                    <label for="brightnessValue">
-                                        <span>Brightness <span class="unit">%</span></span>
+                                    <label for="brightnessSlider">
+                                        <span>Brightness</span>
+                                        <input type="text" class="value-display hsb-value" id="brightnessValue" value="0" data-min="0" data-max="100" data-suffix="%" aria-label="Brightness value">
                                     </label>
-                                    <input type="number" class="number-input" id="brightnessValue" value="0" min="0" max="100" step="1" aria-label="Brightness value">
+                                    <input type="range" id="brightnessSlider" min="0" max="100" step="1" value="0" aria-label="Brightness slider">
                                 </div>
                             </div>
                         </div>
@@ -324,24 +329,27 @@
                         <div class="hsb-picker" id="contentHsbPicker" style="display: none;">
                             <div class="hsb-controls">
                                 <div class="hsb-control-group">
-                                    <label for="contentHueValue">
-                                        <span>Hue <span class="unit">°</span></span>
+                                    <label for="contentHueSlider">
+                                        <span>Hue</span>
+                                        <input type="text" class="value-display hsb-value" id="contentHueValue" value="0" data-min="0" data-max="360" data-suffix="°" aria-label="Content hue value">
                                     </label>
-                                    <input type="number" class="number-input" id="contentHueValue" value="0" min="0" max="360" step="1" aria-label="Content hue value">
+                                    <input type="range" id="contentHueSlider" min="0" max="360" step="1" value="0" aria-label="Content hue slider">
                                 </div>
                                 
                                 <div class="hsb-control-group">
-                                    <label for="contentSaturationValue">
-                                        <span>Saturation <span class="unit">%</span></span>
+                                    <label for="contentSaturationSlider">
+                                        <span>Saturation</span>
+                                        <input type="text" class="value-display hsb-value" id="contentSaturationValue" value="0" data-min="0" data-max="100" data-suffix="%" aria-label="Content saturation value">
                                     </label>
-                                    <input type="number" class="number-input" id="contentSaturationValue" value="0" min="0" max="100" step="1" aria-label="Content saturation value">
+                                    <input type="range" id="contentSaturationSlider" min="0" max="100" step="1" value="0" aria-label="Content saturation slider">
                                 </div>
                                 
                                 <div class="hsb-control-group">
-                                    <label for="contentBrightnessValue">
-                                        <span>Brightness <span class="unit">%</span></span>
+                                    <label for="contentBrightnessSlider">
+                                        <span>Brightness</span>
+                                        <input type="text" class="value-display hsb-value" id="contentBrightnessValue" value="0" data-min="0" data-max="100" data-suffix="%" aria-label="Content brightness value">
                                     </label>
-                                    <input type="number" class="number-input" id="contentBrightnessValue" value="0" min="0" max="100" step="1" aria-label="Content brightness value">
+                                    <input type="range" id="contentBrightnessSlider" min="0" max="100" step="1" value="0" aria-label="Content brightness slider">
                                 </div>
                             </div>
                         </div>
@@ -900,7 +908,7 @@
     
     <script type="module" src="../framework/src/ui/actionDockAutoInit.js?v=g7-resilience-4"></script>
     <script type="module" src="../framework/src/ui/presetMenuKeyboardAutoInit.js?v=g7-resilience-4"></script>
-    <script type="module" src="script.js?v=g6-action-dock-5"></script>
-    <script type="module" src="../framework/src/ui/unifiedUiAutoInit.js?v=g11-controls-1"></script>
+    <script type="module" src="script.js?v=g13-ui-repair-1"></script>
+    <script type="module" src="../framework/src/ui/unifiedUiAutoInit.js?v=g13-ui-repair-2"></script>
 </body>
 </html>

@@ -63,6 +63,7 @@
     "gate:g9:static": "npm run gate:g8:static && node scripts/check-gate-g9.mjs",
     "gate:g10:static": "npm run gate:g9:static && node scripts/check-gate-g10.mjs",
     "gate:g11:static": "npm run check:ui-contract && npm run check:toggles && npm run gate:g10:static && node scripts/check-gate-g11.mjs",
-    "gate:g12:static": "npm run check:ui-contract && npm run check:toggles && npm run test:pizza && npm run test:sticky && npm run gate:g11:static && node scripts/check-gate-g12.mjs"
+    "gate:g12:static": "npm run check:ui-contract && npm run check:toggles && npm run test:pizza && npm run test:sticky && npm run gate:g11:static && node scripts/check-gate-g12.mjs",
+    "gate:g13:static": "npm run check:ui-contract && npm run check:ranges && npm run check:toggles && npm run test:framework && npm run test:pizza && npm run test:sticky && npm run test:wander && npm run gate:g12:static && node scripts/check-gate-g13.mjs"
   }
 }

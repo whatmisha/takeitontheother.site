@@ -29,6 +29,10 @@ assert.match(contractCss, /\.controls-panel \.control-group > input\[type="range
 assert.match(contractCss, /\.controls-panel \.segmented-control label[\s\S]*?height:\s*30px[\s\S]*?white-space:\s*nowrap/u);
 assert.match(contractCss, /\.controls-panel,[\s\S]*?color:\s*var\(--ui-foreground\)\s*!important/u);
 assert.match(contractCss, /\.controls-panel \.control-group:not\(\[data-ui-custom-spacing\]\)[\s\S]*?padding-top:\s*0\s*!important/u);
+assert.match(contractCss, /\.controls-panel \.stacked-select-label[\s\S]*?flex-direction:\s*column/u);
+assert.match(contractCss, /\.controls-panel \.control-field-heading[\s\S]*?border-top:\s*1px solid var\(--color-border\)/u);
+assert.match(contractCss, /\.ui-shortcut-help__list[\s\S]*?gap:\s*9px 18px/u);
+assert.match(contractCss, /\.controls-panel > \.panel-content::-webkit-scrollbar-thumb[\s\S]*?background:\s*#000/u);
 assert.match(contractCss, /\.controls-panel \.pill-toggle:has\(input:checked:not\(:disabled\)\)[\s\S]*?background:\s*var\(--ui-foreground\)\s*!important/u);
 assert.match(contractCss, /\.controls-panel \.opentype-features-label[\s\S]*?font-size:\s*0\.8rem\s*!important/u);
 assert.match(contractCss, /\.controls-panel \.feature-chip > span[\s\S]*?min-height:\s*24px[\s\S]*?padding:\s*4px 10px\s*!important[\s\S]*?font-weight:\s*500\s*!important/u);
@@ -39,8 +43,8 @@ assert.doesNotMatch(contractCss, /Arial|TT Commons|CoFo Sans/u);
 
 entrypoints.forEach((html, index) => {
     const app = applications[index];
-    assert.match(html, /framework\/css\/ui-contract\.css\?v=g12-opentype-1/u, `${app}: missing final UI CSS`);
-    assert.match(html, /framework\/src\/ui\/unifiedUiAutoInit\.js\?v=g11-controls-1/u, `${app}: missing shared UI controller`);
+    assert.match(html, /framework\/css\/ui-contract\.css\?v=g13-ui-repair-2/u, `${app}: missing final UI CSS`);
+    assert.match(html, /framework\/src\/ui\/unifiedUiAutoInit\.js\?v=g13-ui-repair-2/u, `${app}: missing shared UI controller`);
     if (app !== 'grid_generator') {
         assert.match(html, /←\s+Upgrade Tools/u, `${app}: back link needs a readable arrow gap`);
     }
@@ -60,6 +64,8 @@ assert.match(controller, /\(\?:mm\|keys\?\)/u);
 assert.match(controller, /Number\(target\?\.scrollWidth\) > Number\(target\?\.clientWidth\)/u);
 assert.match(controller, /Static · \$\{d\.getElementById\('followCursor'\)\?\.checked \? 'Follow' : 'Fixed'\}/u);
 assert.match(controller, /mainFileTrigger\(\)/u);
+assert.match(controller, /indicator\.textContent = 'Fit'/u);
+assert.doesNotMatch(controller, /Fit \/ actual size|⌘0 \/ ⌘1/u);
 assert.match(plan, /никогда не меняет габариты панели/u);
 
 const hub = await read('index.html');
@@ -92,6 +98,7 @@ const [wordplayerHtml, keyboarderCss, stickyHtml] = await Promise.all([
     read('label_generator/index.html')
 ]);
 const pizzaEditors = await read('grid_generator/src/ui/fragments/object-editors.html');
+assert.equal(pizzaEditors.match(/class="stacked-select-label"/gu)?.length || 0, 2);
 for (const html of [pizzaEditors, stickyHtml]) {
     assert.equal(html.match(/class="toggle-chip feature-chip"/gu)?.length || 0, 6);
     assert.match(html, /class="control-label opentype-features-label">OpenType</u);

@@ -19,6 +19,7 @@
 | G10 | Semantic control corrections и UI variance audit | Passed |
 | G11 | Boolean/segment/color consolidation и Sparky Follow cursor | Passed |
 | G12 | OpenType feature chips Pizza Boxer и Sticky Fingers | Passed |
+| G13 | Zoom/shortcut contract и repair Pizza/Sticky/Wander | Passed |
 
 ## Задачи
 
@@ -156,6 +157,10 @@
 | UPG-095 | Gate G11 | Complete | live control acceptance; `gate:g11:static` green |
 | UPG-096 | OpenType discoverability | Complete | явная подпись `OpenType`; документирован условный путь через text object → `Lunnen Display` |
 | UPG-097 | Gate G12 | Complete | Pizza/Sticky live acceptance; `gate:g12:static` green |
+| UPG-098 | Zoom, shortcuts и Pizza repairs | Complete | Fit hover 5/5; no active ⌘0/⌘1; fixed preset trigger/Surface stack |
+| UPG-099 | Sticky Fingers controls | Complete | 6 HSB sliders; dynamic custom-column sliders; Data Import rhythm; viewport scroll |
+| UPG-100 | Wander + eight-tool audit | Complete | Shape/Distribution; Pizza-style auto/max; shortcut/scrollbar rhythm; browser 8/8 |
+| UPG-101 | Gate G13 | Complete | `gate:g13:static` green; upgrade-only isolation retained |
 
 ## Подтверждённые исходные результаты
 
@@ -193,6 +198,6 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-UPG-000—UPG-097 выполнены. Следующая работа не должна менять смысл OpenType
-tags или переносить частную типографическую/генеративную логику приложений в
-общий framework.
+UPG-000—UPG-101 выполнены. Обязательных задач текущего плана не осталось.
+Следующая работа не должна переносить частную типографическую, color/settings
+или генеративную логику приложений в общий framework.

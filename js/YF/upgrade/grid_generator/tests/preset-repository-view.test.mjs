@@ -163,6 +163,7 @@ test('preset dropdown view renders, selects and sizes built-in and imported item
 
     view.open();
     assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+    assert.equal(toggle.style.width, '90px', 'opening the menu must not resize its trigger');
     newItem.emit('click');
     assert.deepEqual(selections, [{ file: 'New.json', name: '+ New' }]);
     assert.equal(toggle.getAttribute('aria-expanded'), 'false');

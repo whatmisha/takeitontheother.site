@@ -472,7 +472,9 @@ js/YF/upgrade/...
   checkbox `Follow cursor` в Sparky.
 - G12: единый presentation contract для OpenType feature chips Pizza Boxer и
   Sticky Fingers без переноса их типографической логики во framework.
+- G13: Fit hover и отказ от `⌘0/⌘1`; repair Pizza/Sticky/Wander и повторный
+  visual audit всех восьми инструментов.
 
-Текущий исполнимый документ: [G12_OPENTYPE_FEATURES.md](./G12_OPENTYPE_FEATURES.md).
-Технические имена и поведение OpenType feature tags сохранены; унифицированы
-только подпись, метрики и checked state их отдельного `feature-chip` family.
+Текущий исполнимый документ: [G13_UI_REPAIR.md](./G13_UI_REPAIR.md). После
+закрытия G13 обязательных UI repair-задач по текущему списку нет; дальнейшие
+изменения начинаются новым отдельно ограниченным этапом.

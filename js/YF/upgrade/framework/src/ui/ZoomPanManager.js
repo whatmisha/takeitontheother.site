@@ -174,19 +174,6 @@ export class ZoomPanManager {
             this.container.style.cursor = 'grab';
         }
         
-        // Zoom shortcuts
-        // Cmd/Ctrl + 0: Fit to screen
-        if ((e.metaKey || e.ctrlKey) && e.key === '0') {
-            e.preventDefault();
-            this.fitToScreen();
-        }
-        
-        // Cmd/Ctrl + 1: Reset to 100%
-        if ((e.metaKey || e.ctrlKey) && e.key === '1') {
-            e.preventDefault();
-            this.resetZoom();
-        }
-        
         // Cmd/Ctrl + Plus: Zoom in
         if ((e.metaKey || e.ctrlKey) && (e.key === '+' || e.key === '=')) {
             e.preventDefault();

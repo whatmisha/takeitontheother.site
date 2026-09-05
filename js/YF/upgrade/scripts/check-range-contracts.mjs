@@ -38,7 +38,7 @@ const inventory = [
         sharedHsb: 0,
         privateCount: 3
     },
-    { app: 'Sticky Fingers', staticOrdinary: countRanges(stickyHtml), sharedHsb: 0, privateCount: 0 },
+    { app: 'Sticky Fingers', staticOrdinary: 0, sharedHsb: 0, privateCount: countRanges(stickyHtml) },
     { app: 'Keyboarder', staticOrdinary: countRanges(keyboarderHtml), sharedHsb: 3, privateCount: 0 },
     { app: 'Wordplayer', staticOrdinary: countRanges(wordplayerHtml), sharedHsb: 3, privateCount: 0 },
     { app: 'Pulsar Coder', staticOrdinary: countRanges(pulsarHtml), sharedHsb: 0, privateCount: 0 },
@@ -51,7 +51,7 @@ assert.deepEqual(
     [
         ['Sparky', 24, 3, 0],
         ['Pizza Boxer', 26, 0, 3],
-        ['Sticky Fingers', 0, 0, 0],
+        ['Sticky Fingers', 0, 0, 6],
         ['Keyboarder', 0, 3, 0],
         ['Wordplayer', 20, 3, 0],
         ['Pulsar Coder', 8, 0, 0],
@@ -66,8 +66,8 @@ const sharedHsb = inventory.reduce((sum, item) => sum + item.sharedHsb, 0);
 const privateRanges = inventory.reduce((sum, item) => sum + item.privateCount, 0);
 assert.equal(sharedOrdinary, 97);
 assert.equal(sharedHsb, 9);
-assert.equal(privateRanges, 16);
-assert.equal(sharedOrdinary + sharedHsb + privateRanges, 122);
+assert.equal(privateRanges, 22);
+assert.equal(sharedOrdinary + sharedHsb + privateRanges, 128);
 
 const sharedOrdinaryApps = await Promise.all([
     ['Sparky', 'sparky/styles/sparky.css'],
@@ -96,5 +96,5 @@ assert.match(ditherCss, /\.control-group input\[type="range"\]::-webkit-slider-t
 assert.match(stripComments(stickyCss), /\.control-group input\[type="range"\]\s*\{/u);
 
 console.log(
-    `Range contract passed: ${sharedOrdinary} shared ordinary + ${sharedHsb} shared HSB + ${privateRanges} private = 122; Sticky Fingers = 0 active.`
+    `Range contract passed: ${sharedOrdinary} shared ordinary + ${sharedHsb} shared HSB + ${privateRanges} private = 128 static; Sticky Fingers also owns dynamic custom-column ranges.`
 );

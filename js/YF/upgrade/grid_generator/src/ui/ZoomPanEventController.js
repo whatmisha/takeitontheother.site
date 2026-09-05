@@ -76,13 +76,7 @@ export class ZoomPanEventController {
         }
         if (!(event.metaKey || event.ctrlKey)) return;
 
-        if (event.key === '0') {
-            event.preventDefault();
-            this.host.fitToScreen();
-        } else if (event.key === '1') {
-            event.preventDefault();
-            this.host.resetZoom();
-        } else if (event.key === '+' || event.key === '=') {
+        if (event.key === '+' || event.key === '=') {
             event.preventDefault();
             this.host.zoomIn();
         } else if (event.key === '-') {

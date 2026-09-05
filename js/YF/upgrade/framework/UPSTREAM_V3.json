@@ -212,7 +212,7 @@
       "path": "src/render/CanvasTarget.js",
       "sha256": "cee736794e0a345ea02ccfd6fb42b55c50c4702dff0034d39fad5b2ddb8a2720",
       "bytes": 8767,
-      "workingStatus": "upstream-exact"
+      "workingStatus": "upgrade-modified"
     },
     {
       "path": "src/render/RenderTarget.js",

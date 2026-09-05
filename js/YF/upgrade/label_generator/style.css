@@ -221,6 +221,14 @@ body:not(.edit-mode-active) .edit-mode-only {
     flex-direction: column;
 }
 
+#controlsPanel {
+    max-height: calc(100vh - 2 * var(--spacing-3xl));
+}
+
+#controlsPanel > .panel-content {
+    overscroll-behavior: contain;
+}
+
 .panel-content {
     transition: max-height var(--duration-expand) var(--easing-standard), 
                 opacity var(--duration-fade) var(--easing-decelerate),
@@ -776,12 +784,15 @@ body:not(.edit-mode-active) .edit-mode-only {
     pointer-events: none;
 }
 
-#hueValue::after {
+#hueValue::after,
+#contentHueValue::after {
     content: '°';
 }
 
 #saturationValue::after,
-#brightnessValue::after {
+#brightnessValue::after,
+#contentSaturationValue::after,
+#contentBrightnessValue::after {
     content: '%';
 }
 
@@ -859,7 +870,8 @@ body:not(.edit-mode-active) .edit-mode-only {
 }
 
 /* Color gradients for HSB sliders - preserved! */
-#hueSlider {
+#hueSlider,
+#contentHueSlider {
     background: linear-gradient(to right, 
         #ff0000 0%, 
         #ffff00 17%, 
@@ -871,7 +883,8 @@ body:not(.edit-mode-active) .edit-mode-only {
     ) !important;
 }
 
-#hueSlider::-webkit-slider-runnable-track {
+#hueSlider::-webkit-slider-runnable-track,
+#contentHueSlider::-webkit-slider-runnable-track {
     background: linear-gradient(to right, 
         #ff0000 0%, 
         #ffff00 17%, 
@@ -883,7 +896,8 @@ body:not(.edit-mode-active) .edit-mode-only {
     );
 }
 
-#hueSlider::-moz-range-track {
+#hueSlider::-moz-range-track,
+#contentHueSlider::-moz-range-track {
     background: linear-gradient(to right, 
         #ff0000 0%, 
         #ffff00 17%, 
@@ -896,12 +910,14 @@ body:not(.edit-mode-active) .edit-mode-only {
 }
 
 /* Saturation slider - will be updated dynamically */
-#saturationSlider {
+#saturationSlider,
+#contentSaturationSlider {
     background: linear-gradient(to right, #808080, #ff0000) !important;
 }
 
 /* Brightness slider - will be updated dynamically */
-#brightnessSlider {
+#brightnessSlider,
+#contentBrightnessSlider {
     background: linear-gradient(to right, #000000, #ffffff) !important;
 }
 
@@ -1695,6 +1711,44 @@ textarea::placeholder {
     left: auto;
 }
 
+#dataImportPanel > .panel-content {
+    padding-top: 12px !important;
+}
+
+#dataImportPanel .data-import-controls {
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+}
+
+#dataImportPanel .data-import-controls > .control-group-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+#dataImportPanel .data-import-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+#dataImportPanel .data-import-presets .color-preset {
+    font-size: 0.75rem;
+}
+
+#dataImportPanel .data-import-help {
+    display: block;
+    margin-top: 8px;
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    line-height: 1.35;
+}
+
+#dataImportPanel .btn-load-data {
+    margin-top: 12px;
+}
+
 .elements-list,
 .data-rows-list {
     display: flex;
@@ -1799,59 +1853,41 @@ textarea::placeholder {
 .custom-columns-list {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 12px;
 }
 
 .custom-column-row {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    min-height: 28px;
-}
-
-.custom-column-label {
-    font-size: var(--font-size-sm);
-    opacity: 0.5;
-    width: 14px;
-    text-align: right;
-    flex-shrink: 0;
-    font-variant-numeric: tabular-nums;
+    display: block;
+    margin: 0;
 }
 
 .custom-column-type {
-    display: flex;
-    gap: 0;
-    flex-shrink: 0;
+    margin-left: 4px;
 }
 
 .custom-column-type .unit-btn {
-    font-size: 10px;
-    padding: 2px 6px;
-    min-width: 32px;
-    text-align: center;
+    min-width: 0;
 }
 
-.custom-column-width {
-    flex: 1;
+.custom-column-row > label {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    margin-bottom: 2px;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
 }
 
-.custom-column-width .number-input {
-    width: 60px;
-    font-size: var(--font-size-sm);
-    padding: 2px 6px;
-    height: 24px;
+.custom-column-row > label > span:first-child {
+    flex: 1 1 auto;
 }
 
-.custom-column-width .computed-width {
-    font-size: var(--font-size-sm);
-    opacity: 0.35;
-    font-variant-numeric: tabular-nums;
+.custom-column-row > input[type="range"] {
+    width: 100%;
+    height: 10px;
+    margin-top: 6px;
+    margin-bottom: 0;
 }
 
-.custom-column-width .unit {
-    font-size: var(--font-size-sm);
+.custom-column-row > input[type="range"]:disabled {
     opacity: 0.3;
 }

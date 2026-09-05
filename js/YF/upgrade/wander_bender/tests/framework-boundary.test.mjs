@@ -32,7 +32,7 @@ test('Wander reaches shared panels and sliders through one public-barrel facade'
     assert.match(app, /const feedbackDialogHost = new DialogHost\(\);/u);
     assert.match(app, /await feedbackDialogHost\.alert\(\{/u);
     assert.doesNotMatch(app, /(?:^|[^\w$.])alert\s*\(/u);
-    assert.match(app, /from '\.\/ui\/ZoomPanManager\.js';/u);
+    assert.match(app, /from '\.\/ui\/ZoomPanManager\.js\?v=g13-ui-repair-1';/u);
     assert.match(app, /new WanderPanelManager\(\)/u);
     assert.match(app, /panelManager\.initCollapse\(\);/u);
     assert.doesNotMatch(app, /from '\.\/ui\/(?:PanelManager|SliderController)\.js';/u);
@@ -83,7 +83,7 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
     );
     assert.match(html, /css\/framework-base\.css\?v=g6-choice-1/u);
     assert.match(html, /css\/yf-styles\.css\?v=g5-reset-1/u);
-    assert.match(html, /css\/wander-bender\.css\?v=g5-reset-1/u);
+    assert.match(html, /css\/wander-bender\.css\?v=g13-ui-repair-1/u);
     assert.match(html, /<nav class="bottom-buttons action-dock" role="toolbar" aria-label="Export actions">/u);
     assert.match(html, /class="action-dock__slot action-dock__slot--primary"/u);
     assert.match(
@@ -196,7 +196,10 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
         'Wander must not retain the shared action component base'
     );
     assert.doesNotMatch(skin, /\.bottom-buttons,\s*\.btn-fixed\s*\{/u);
-    assert.match(skin, /\.unit-btn\.active\s*\{[^}]*background:\s*#fff;/su, 'Auto/Max must remain private');
+    assert.doesNotMatch(skin, /\.unit-btn\.active\s*\{/u, 'Auto/Max must use the same unit-button skin as Pizza Boxer');
+    assert.match(html, /Stroke[\s\S]*?class="unit-buttons"[\s\S]*?id="strokeAutoBtn"/u);
+    assert.match(html, /Corner Radius[\s\S]*?class="unit-buttons"[\s\S]*?id="cornerRadiusMaxBtn"/u);
+    assert.equal(html.match(/class="control-field-heading"/gu)?.length || 0, 2);
 });
 
 test('Paper.js is local and donor Pattern never enters the active runtime', async () => {

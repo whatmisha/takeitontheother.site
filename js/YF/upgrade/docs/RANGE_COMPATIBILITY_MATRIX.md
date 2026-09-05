@@ -31,20 +31,22 @@ Range rollout является presentation-only. Runtime owner каждого f
 
 ## 2. Полный inventory
 
-В восьми инструментах находятся 122 одноползунковых range: 107 ordinary и 15
-HSB. Sticky Fingers не содержит активных range.
+После G13 в восьми инструментах находятся 128 статических одноползунковых
+range: 107 ordinary и 21 HSB. Sticky Fingers добавляет шесть private HSB range
+и создаёт ещё по одному private ordinary range на каждую custom column; число
+последних зависит от выбранного preset и поэтому не входит в статический итог.
 
 | Инструмент | Ordinary | HSB | Всего | Runtime owner | Особый контракт |
 |---|---:|---:|---:|---|---|
 | Sparky | 24 | 3 | 27 | shared `SliderController` + shared `UnifiedColorPicker` | interactive/settled placement, render/history callbacks, desktop и mobile |
 | Pizza Boxer | 26 | 3 | 29 | private `SliderController`, `SliderHistoryController`, `ColorPanelController` | pointer transactions, unit conversion, editors, dynamic HSB gradients |
-| Sticky Fingers | 0 | 0 | 0 | native number/edit handlers | 40 native number fields; старый range CSS не является runtime contract |
+| Sticky Fingers | dynamic | 6 | 6 + N | private legacy controller | HSB sliders и N custom-column sliders; остальные controls сохраняют native number inputs |
 | Keyboarder | 0 | 3 | 3 | shared `UnifiedColorPicker` | общий picker перемещается между color rows; SVG/PDF остаются частными |
 | Wordplayer | 20 | 3 | 23 | shared `SliderController` + shared `UnifiedColorPicker` | Dither/Forms mode visibility, worker invalidation, Canvas/export |
 | Pulsar Coder | 8 | 0 | 8 | shared `SliderController` через adapter | live codec regeneration, preset sync, SVG |
 | Dither | 10 | 3 | 13 | private `DitheringTool` | percent/degree display, focus snapshot, raster cache, Canvas/PNG |
 | Wander Bender | 19 | 0 | 19 | shared `SliderController` через adapter | `Auto`, `Max`, dynamic corner maximum, two disabled pairs, Paper/SVG |
-| **Итого** | **107** | **15** | **122** |  |  |
+| **Итого static** | **107** | **21** | **128** |  | плюс N dynamic custom-column ranges |
 
 Shared behavior уже непосредственно обслуживает 71 ordinary pair: Sparky 24,
 Wordplayer 20, Pulsar 8 и Wander 19. Ещё девять HSB ranges в Sparky,
@@ -68,11 +70,12 @@ Upgrade использует две схемы подключения framework 
 | direct canonical HSB | 9 | shared CSS: Sparky/Keyboarder/Wordplayer по 3 | verification-only |
 | Pizza HSB variant | 3 | `grid_generator/styles/controls.css` | оставить private: 8 px thumb и app gradients |
 | Dither ordinary + HSB variants | 13 | `dither/style.css` | оставить private: 1 px control box, 10 px thumb, 1.3 hover и raster-sensitive capture |
-| inactive Sticky slider skin | 0 runtime | `label_generator/style.css` | не считать rollout; удалить только в UPG-058 с orphan proof |
+| Sticky HSB/custom-column variant | 6 + N runtime | `label_generator/style.css` | private gradients и dynamic column settings остаются внутри приложения |
 
 Итого 106 ranges могут потреблять shared base без принятия нового визуального
-baseline: 97 ordinary и девять shared HSB. Остальные 16 сохраняют явный private
-variant: Pizza HSB 3 и Dither 13.
+baseline: 97 ordinary и девять shared HSB. После G13 22 статических range
+сохраняют явный private variant: Pizza HSB 3, Dither 13 и Sticky HSB 6; N
+custom-column ranges Sticky также остаются private.
 
 ### Ordinary canonical source
 
@@ -168,9 +171,11 @@ variant, а не косметическую замену shared CSS.
 
 ### Sticky Fingers
 
-У Sticky нет range companion: его 40 native number fields нельзя включать в
-range rollout статистически или визуально. Наличие неиспользуемых slider rules
-в stylesheet не является основанием создавать range DOM.
+G13 добавил шесть HSB companions по той же прикладной модели, что Pizza Boxer:
+редактируемое числовое значение, range и private gradient callbacks. Custom
+columns создают dynamic range только для существующих колонок; `auto/fixed`,
+settings и grid recalculation остаются в Sticky. Остальные native number fields
+не переводятся на range автоматически.
 
 ## 6. Rollout order
 

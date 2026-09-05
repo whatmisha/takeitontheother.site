@@ -640,15 +640,21 @@ class GridGenerator {
             hexColorInput: document.getElementById('hexColorInput'),
             lunnenBlue: document.getElementById('lunnenBlue'),
             hsbPicker: document.getElementById('hsbPicker'),
+            hueSlider: document.getElementById('hueSlider'),
             hueValue: document.getElementById('hueValue'),
+            saturationSlider: document.getElementById('saturationSlider'),
             saturationValue: document.getElementById('saturationValue'),
+            brightnessSlider: document.getElementById('brightnessSlider'),
             brightnessValue: document.getElementById('brightnessValue'),
             // Color controls - Content
             contentColorPreview: document.getElementById('contentColorPreview'),
             contentHexColorInput: document.getElementById('contentHexColorInput'),
             contentHsbPicker: document.getElementById('contentHsbPicker'),
+            contentHueSlider: document.getElementById('contentHueSlider'),
             contentHueValue: document.getElementById('contentHueValue'),
+            contentSaturationSlider: document.getElementById('contentSaturationSlider'),
             contentSaturationValue: document.getElementById('contentSaturationValue'),
+            contentBrightnessSlider: document.getElementById('contentBrightnessSlider'),
             contentBrightnessValue: document.getElementById('contentBrightnessValue'),
             
             // Buttons
@@ -916,6 +922,23 @@ class GridGenerator {
         }
         
         // Lunnen Display doesn't have font weight dropdown (always Regular)
+
+        [
+            ['hueSlider', 'hueValue', () => this.updateColorFromHSB()],
+            ['saturationSlider', 'saturationValue', () => this.updateColorFromHSB()],
+            ['brightnessSlider', 'brightnessValue', () => this.updateColorFromHSB()],
+            ['contentHueSlider', 'contentHueValue', () => this.updateContentColorFromHSB()],
+            ['contentSaturationSlider', 'contentSaturationValue', () => this.updateContentColorFromHSB()],
+            ['contentBrightnessSlider', 'contentBrightnessValue', () => this.updateContentColorFromHSB()]
+        ].forEach(([sliderId, valueId, onInput]) => {
+            const slider = this.dom[sliderId];
+            const valueInput = this.dom[valueId];
+            if (!slider || !valueInput) return;
+            slider.addEventListener('input', event => {
+                valueInput.value = event.target.value;
+                onInput();
+            });
+        });
         
         // Color preview button - toggle HSB picker
         this.dom.colorPreview.addEventListener('click', () => {
@@ -3732,9 +3755,9 @@ class GridGenerator {
             this.dom.hueValue.value = hsb.h;
             this.dom.saturationValue.value = hsb.s;
             this.dom.brightnessValue.value = hsb.b;
-            this.dom.hueValue.value = hsb.h;
-            this.dom.saturationValue.value = hsb.s;
-            this.dom.brightnessValue.value = hsb.b;
+            this.dom.hueSlider.value = hsb.h;
+            this.dom.saturationSlider.value = hsb.s;
+            this.dom.brightnessSlider.value = hsb.b;
             this.updateSaturationGradient();
             this.updateBrightnessGradient();
         }
@@ -3744,6 +3767,9 @@ class GridGenerator {
         const h = parseInt(this.dom.hueValue.value);
         const s = parseInt(this.dom.saturationValue.value);
         const b = parseInt(this.dom.brightnessValue.value);
+        this.dom.hueSlider.value = h;
+        this.dom.saturationSlider.value = s;
+        this.dom.brightnessSlider.value = b;
         
         const rgb = ColorUtils.hsbToRgb(h, s, b);
         const hex = ColorUtils.rgbToHex(rgb.r, rgb.g, rgb.b);
@@ -3753,6 +3779,8 @@ class GridGenerator {
         this.settingsModule.set('boxColor', hex);
         this.dom.hexColorInput.value = hex;
         this.dom.colorPreview.style.backgroundColor = hex;
+        this.updateSaturationGradient();
+        this.updateBrightnessGradient();
         this.updateGrid();
     }
     
@@ -3763,6 +3791,11 @@ class GridGenerator {
             this.dom.contentHueValue.value = hsb.h;
             this.dom.contentSaturationValue.value = hsb.s;
             this.dom.contentBrightnessValue.value = hsb.b;
+            this.dom.contentHueSlider.value = hsb.h;
+            this.dom.contentSaturationSlider.value = hsb.s;
+            this.dom.contentBrightnessSlider.value = hsb.b;
+            this.updateContentSaturationGradient();
+            this.updateContentBrightnessGradient();
         }
     }
     
@@ -3770,6 +3803,9 @@ class GridGenerator {
         const h = parseInt(this.dom.contentHueValue.value);
         const s = parseInt(this.dom.contentSaturationValue.value);
         const b = parseInt(this.dom.contentBrightnessValue.value);
+        this.dom.contentHueSlider.value = h;
+        this.dom.contentSaturationSlider.value = s;
+        this.dom.contentBrightnessSlider.value = b;
         
         const rgb = ColorUtils.hsbToRgb(h, s, b);
         const hex = ColorUtils.rgbToHex(rgb.r, rgb.g, rgb.b);
@@ -3779,6 +3815,8 @@ class GridGenerator {
         this.settingsModule.set('contentColor', hex);
         this.dom.contentHexColorInput.value = hex;
         this.dom.contentColorPreview.style.backgroundColor = hex;
+        this.updateContentSaturationGradient();
+        this.updateContentBrightnessGradient();
         
         // Обновляем цвет всех штрихкодов
         this.updateAllBarcodesColor(hex);
@@ -3865,9 +3903,9 @@ class GridGenerator {
         const leftHex = ColorUtils.rgbToHex(leftColor.r, leftColor.g, leftColor.b);
         const rightHex = ColorUtils.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
         
-        // Gradients не нужны для number inputs
-        // const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
-        // this.dom.saturationValue.style.background = gradient;
+        const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
+        this.dom.saturationSlider.style.background = gradient;
+        this.updateSliderTrackGradient('saturationSlider', gradient);
     }
     
     updateBrightnessGradient() {
@@ -3880,9 +3918,29 @@ class GridGenerator {
         const leftHex = ColorUtils.rgbToHex(leftColor.r, leftColor.g, leftColor.b);
         const rightHex = ColorUtils.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
         
-        // Gradients не нужны для number inputs
-        // const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
-        // this.dom.brightnessValue.style.background = gradient;
+        const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
+        this.dom.brightnessSlider.style.background = gradient;
+        this.updateSliderTrackGradient('brightnessSlider', gradient);
+    }
+
+    updateContentSaturationGradient() {
+        const h = parseInt(this.dom.contentHueValue.value);
+        const b = parseInt(this.dom.contentBrightnessValue.value);
+        const leftColor = ColorUtils.hsbToRgb(h, 0, b);
+        const rightColor = ColorUtils.hsbToRgb(h, 100, b);
+        const gradient = `linear-gradient(to right, ${ColorUtils.rgbToHex(leftColor.r, leftColor.g, leftColor.b)}, ${ColorUtils.rgbToHex(rightColor.r, rightColor.g, rightColor.b)})`;
+        this.dom.contentSaturationSlider.style.background = gradient;
+        this.updateSliderTrackGradient('contentSaturationSlider', gradient);
+    }
+
+    updateContentBrightnessGradient() {
+        const h = parseInt(this.dom.contentHueValue.value);
+        const s = parseInt(this.dom.contentSaturationValue.value);
+        const leftColor = ColorUtils.hsbToRgb(h, s, 0);
+        const rightColor = ColorUtils.hsbToRgb(h, s, 100);
+        const gradient = `linear-gradient(to right, ${ColorUtils.rgbToHex(leftColor.r, leftColor.g, leftColor.b)}, ${ColorUtils.rgbToHex(rightColor.r, rightColor.g, rightColor.b)})`;
+        this.dom.contentBrightnessSlider.style.background = gradient;
+        this.updateSliderTrackGradient('contentBrightnessSlider', gradient);
     }
     
     updateSliderTrackGradient(sliderId, gradient) {
@@ -8105,12 +8163,11 @@ class GridGenerator {
             
             const row = document.createElement('div');
             row.className = 'custom-column-row';
-            
-            // Номер колонки
-            const label = document.createElement('span');
-            label.className = 'custom-column-label';
-            label.textContent = i;
-            row.appendChild(label);
+
+            const label = document.createElement('label');
+            label.htmlFor = `customColumnWidth-${i}`;
+            const labelText = document.createElement('span');
+            labelText.textContent = `Column ${i}`;
             
             // Переключатель auto/fixed
             const typeGroup = document.createElement('div');
@@ -8130,40 +8187,41 @@ class GridGenerator {
             
             typeGroup.appendChild(autoBtn);
             typeGroup.appendChild(fixedBtn);
-            row.appendChild(typeGroup);
-            
-            // Ширина (инпут или отображение)
-            const widthGroup = document.createElement('div');
-            widthGroup.className = 'custom-column-width';
-            
-            if (isFixed) {
-                const input = document.createElement('input');
-                input.type = 'number';
-                input.className = 'number-input';
-                input.value = fixedColumns[i].toFixed(2);
-                input.min = '1';
-                input.max = '500';
-                input.step = '0.5';
-                input.addEventListener('change', (e) => {
-                    const val = parseFloat(e.target.value);
-                    if (!isNaN(val) && val > 0) {
-                        this.setFixedColumnWidth(i, val);
-                    }
-                });
-                widthGroup.appendChild(input);
-                
-                const unit = document.createElement('span');
-                unit.className = 'unit';
-                unit.textContent = 'mm';
-                widthGroup.appendChild(unit);
-            } else {
-                const computed = document.createElement('span');
-                computed.className = 'computed-width';
-                computed.textContent = width.toFixed(2) + ' mm';
-                widthGroup.appendChild(computed);
-            }
-            
-            row.appendChild(widthGroup);
+            typeGroup.classList.add('unit-buttons');
+            labelText.appendChild(typeGroup);
+            label.appendChild(labelText);
+
+            const valueInput = document.createElement('input');
+            valueInput.type = 'text';
+            valueInput.className = 'value-display';
+            valueInput.value = (isFixed ? fixedColumns[i] : width).toFixed(2);
+            valueInput.dataset.min = '1';
+            valueInput.dataset.max = '500';
+            valueInput.dataset.suffix = ' mm';
+            valueInput.setAttribute('aria-label', `Column ${i} width in millimetres`);
+            valueInput.addEventListener('change', event => {
+                const nextWidth = Number.parseFloat(event.target.value);
+                if (Number.isFinite(nextWidth) && nextWidth > 0) this.setFixedColumnWidth(i, nextWidth);
+            });
+            label.appendChild(valueInput);
+            row.appendChild(label);
+
+            const slider = document.createElement('input');
+            slider.type = 'range';
+            slider.id = `customColumnWidth-${i}`;
+            slider.min = '1';
+            slider.max = '500';
+            slider.step = '0.5';
+            slider.value = isFixed ? fixedColumns[i] : width;
+            slider.disabled = !isFixed;
+            slider.setAttribute('aria-label', `Column ${i} width slider`);
+            slider.addEventListener('input', event => {
+                const nextWidth = Number.parseFloat(event.target.value);
+                valueInput.value = nextWidth.toFixed(2);
+                this.setFixedColumnWidth(i, nextWidth, { render: false });
+            });
+            slider.addEventListener('change', () => this.renderCustomColumnsUI());
+            row.appendChild(slider);
             list.appendChild(row);
         }
     }
@@ -8194,13 +8252,13 @@ class GridGenerator {
     /**
      * Установить ширину фиксированной колонки
      */
-    setFixedColumnWidth(columnIndex, widthMm) {
+    setFixedColumnWidth(columnIndex, widthMm, { render = true } = {}) {
         const fixedColumns = { ...(this.settings.fixedColumns || {}) };
         fixedColumns[columnIndex] = widthMm;
         
         this.settings.fixedColumns = fixedColumns;
         this.settingsModule.set('fixedColumns', fixedColumns);
-        this.renderCustomColumnsUI();
+        if (render) this.renderCustomColumnsUI();
         this.updateGrid();
     }
     

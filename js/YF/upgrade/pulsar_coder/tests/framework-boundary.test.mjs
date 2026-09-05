@@ -23,7 +23,7 @@ test('Pulsar Coder reaches shared UI behavior through one public-barrel facade',
         /sharedCapabilities: Object\.freeze\(\[\s*'DialogHost',\s*'OverlayDialogHost',\s*'PanelManager',\s*'SliderController'/u
     );
     assert.match(main, /from '\.\/js\/framework\/FrameworkAdapter\.js\?v=g5-feedback-2';/u);
-    assert.match(main, /from '\.\/js\/ui\/ZoomPanManager\.js';/u);
+    assert.match(main, /from '\.\/js\/ui\/ZoomPanManager\.js\?v=g13-ui-repair-1';/u);
     assert.doesNotMatch(main, /from '\.\/js\/ui\/(?:PanelManager|SliderController)\.js';/u);
     assert.match(main, /panelManager\.initCollapse\(\);/u);
     assert.doesNotMatch(

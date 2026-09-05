@@ -164,7 +164,6 @@ export class PresetDropdownView {
         if (!this.toggleElement || !this.menu) return;
         this.toggleElement.setAttribute('aria-expanded', 'true');
         this.menu.classList.add('active');
-        if (this.maxPresetWidth) this.toggleElement.style.width = `${this.maxPresetWidth}px`;
     }
 
     close(currentPreset = this.currentPreset) {

@@ -142,8 +142,6 @@ export class CanvasTarget extends RenderTarget {
             this._isSpacePressed = true;
             this.container.style.cursor = 'grab';
         }
-        if ((e.metaKey || e.ctrlKey) && e.key === '0') { e.preventDefault(); this.fitToScreen(); }
-        if ((e.metaKey || e.ctrlKey) && e.key === '1') { e.preventDefault(); this.resetZoom(); }
         if ((e.metaKey || e.ctrlKey) && (e.key === '+' || e.key === '=')) { e.preventDefault(); this.zoomIn(); }
         if ((e.metaKey || e.ctrlKey) && e.key === '-') { e.preventDefault(); this.zoomOut(); }
     }

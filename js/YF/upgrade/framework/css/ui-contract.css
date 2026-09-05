@@ -62,6 +62,21 @@ body,
     font-size: 0.9rem !important;
 }
 
+.controls-panel .stacked-select-label {
+    align-items: stretch !important;
+    flex-direction: column;
+}
+
+.controls-panel .control-field-heading {
+    margin: 20px -20px 20px !important;
+    padding: 20px 20px 0;
+    border-top: 1px solid var(--color-border);
+    color: var(--color-text-muted) !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    text-transform: uppercase;
+}
+
 .controls-panel .control-group {
     margin-bottom: 12px !important;
 }
@@ -87,6 +102,26 @@ body,
 
 .controls-panel .hsb-control-group:last-child {
     margin-bottom: 0 !important;
+}
+
+.controls-panel > .panel-content {
+    scrollbar-color: #000 transparent;
+    scrollbar-width: thin;
+}
+
+.controls-panel > .panel-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.controls-panel > .panel-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.controls-panel > .panel-content::-webkit-scrollbar-thumb,
+.controls-panel > .panel-content::-webkit-scrollbar-thumb:hover {
+    border-right: 1px solid var(--color-bg-panel, #1a1a1a);
+    border-radius: 3px;
+    background: #000;
 }
 
 .controls-panel .hsb-control-group > label {
@@ -249,7 +284,7 @@ body,
 .ui-shortcut-help__list {
     display: grid;
     grid-template-columns: 1fr auto;
-    gap: 7px 18px;
+    gap: 9px 18px;
     margin: 0;
     font-size: 0.9rem;
 }

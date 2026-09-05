@@ -30,7 +30,7 @@ export { OverlayDialogHost } from './ui/OverlayDialogHost.js?v=g5-overlay-1';
 export { TooltipService } from './ui/TooltipService.js?v=g5-feedback-1';
 export { FileIntakeController, fileMatchesAccept } from './ui/FileIntakeController.js?v=g6-file-intake-1';
 export { ActionDockController, initActionDocks } from './ui/ActionDockController.js?v=g7-keyboard-2';
-export { UnifiedUiController, initUnifiedUi } from './ui/UnifiedUiController.js?v=g11-controls-1';
+export { UnifiedUiController, initUnifiedUi } from './ui/UnifiedUiController.js?v=g13-ui-repair-2';
 export { PresetMenuKeyboardController, initPresetMenuKeyboards } from './ui/PresetMenuKeyboardController.js?v=g7-keyboard-2';
 export { ZoomPanManager } from './ui/ZoomPanManager.js';
 

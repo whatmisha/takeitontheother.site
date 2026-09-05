@@ -4,7 +4,7 @@ import {
     SliderController,
     WanderPanelManager
 } from './framework/FrameworkAdapter.js?v=g5-feedback-2';
-import { ZoomPanManager } from './ui/ZoomPanManager.js';
+import { ZoomPanManager } from './ui/ZoomPanManager.js?v=g13-ui-repair-1';
 import { debounce, DEBOUNCE_DELAYS } from './utils/DebounceUtils.js';
 import { RadialMode } from './modes/RadialMode.js';
 import { RandomMode } from './modes/RandomMode.js';
