@@ -29,6 +29,7 @@ assert.match(contractCss, /\.controls-panel \.control-group > input\[type="range
 assert.match(contractCss, /\.controls-panel \.segmented-control label[\s\S]*?height:\s*30px[\s\S]*?white-space:\s*nowrap/u);
 assert.match(contractCss, /\.controls-panel,[\s\S]*?color:\s*var\(--ui-foreground\)\s*!important/u);
 assert.match(contractCss, /\.controls-panel \.control-group:not\(\[data-ui-custom-spacing\]\)[\s\S]*?padding-top:\s*0\s*!important/u);
+assert.match(contractCss, /\.controls-panel \.ui-control-stack > \.control-group:last-child[\s\S]*?margin-bottom:\s*0\s*!important/u);
 assert.match(contractCss, /\.controls-panel \.stacked-select-label[\s\S]*?flex-direction:\s*column/u);
 assert.match(contractCss, /\.controls-panel \.control-field-heading[\s\S]*?border-top:\s*1px solid var\(--color-border\)/u);
 assert.match(contractCss, /\.ui-shortcut-help__list[\s\S]*?gap:\s*9px 18px/u);
@@ -43,7 +44,7 @@ assert.doesNotMatch(contractCss, /Arial|TT Commons|CoFo Sans/u);
 
 entrypoints.forEach((html, index) => {
     const app = applications[index];
-    assert.match(html, /framework\/css\/ui-contract\.css\?v=g13-ui-repair-2/u, `${app}: missing final UI CSS`);
+    assert.match(html, /framework\/css\/ui-contract\.css\?v=g14-panel-spacing-1/u, `${app}: missing final UI CSS`);
     assert.match(html, /framework\/src\/ui\/unifiedUiAutoInit\.js\?v=g13-ui-repair-2/u, `${app}: missing shared UI controller`);
     if (app !== 'grid_generator') {
         assert.match(html, /←\s+Upgrade Tools/u, `${app}: back link needs a readable arrow gap`);

@@ -89,6 +89,11 @@ body,
     margin-bottom: 0 !important;
 }
 
+/* Nested mode/state wrappers opt into the same flush-bottom rhythm explicitly. */
+.controls-panel .ui-control-stack > .control-group:last-child {
+    margin-bottom: 0 !important;
+}
+
 .controls-panel .control-group > input[type="range"] {
     height: 10px !important;
     margin-top: 6px !important;
