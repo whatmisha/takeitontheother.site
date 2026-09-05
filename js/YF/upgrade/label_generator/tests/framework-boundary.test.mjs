@@ -7,11 +7,12 @@ import { ColorUtils, DialogHost, FileIntakeController } from '../../framework/sr
 const appRoot = new URL('../', import.meta.url);
 
 test('Sticky Fingers exposes shared behavior through one public-barrel facade', async () => {
-    const [adapter, html, bridge, sharedStyles, style] = await Promise.all([
+    const [adapter, html, bridge, sharedStyles, uiContract, style] = await Promise.all([
         readFile(new URL('src/framework/FrameworkAdapter.js', appRoot), 'utf8'),
         readFile(new URL('index.html', appRoot), 'utf8'),
         readFile(new URL('framework-base.css', appRoot), 'utf8'),
         readFile(new URL('../framework/css/othersite-styles.css', appRoot), 'utf8'),
+        readFile(new URL('../framework/css/ui-contract.css', appRoot), 'utf8'),
         readFile(new URL('style.css', appRoot), 'utf8')
     ]);
     assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=g6-file-intake-1';/u);
@@ -37,7 +38,8 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
     assert.match(html, /href="style\.css\?v=g6-file-intake-1"/u);
     assert.doesNotMatch(html, /(?:modal-overlay|\bid="helpButton")/u);
 
-    assert.equal(html.match(/class="toggle-chip"/gu)?.length || 0, 6);
+    assert.equal(html.match(/class="toggle-chip feature-chip"/gu)?.length || 0, 6);
+    assert.match(html, /class="control-label opentype-features-label">OpenType</u);
     assert.equal(html.match(/class="pill-toggle"/gu)?.length || 0, 3);
     assert.equal(html.match(/class="checkbox-label"/gu)?.length || 0, 10);
     assert.equal(html.match(/class="toggle-switch"/gu)?.length || 0, 3);
@@ -78,9 +80,10 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
         assert.match(sharedWithoutComments, selector);
         assert.doesNotMatch(styleWithoutComments, selector);
     }
+    assert.doesNotMatch(bridge, /(?:^|\})\s*\.toggle-chip span\s*\{/u);
     assert.match(
-        bridge,
-        /\.toggle-chip span\s*\{\s*justify-content:\s*center;\s*padding:\s*var\(--spacing-sm\) var\(--spacing-xl\);\s*font-size:\s*0\.85rem;\s*\}/u
+        uiContract,
+        /\.controls-panel \.feature-chip > span\s*\{[^}]*min-height:\s*24px;[^}]*padding:\s*4px 10px !important;[^}]*font-size:\s*0\.8rem !important;/su
     );
     assert.match(
         bridge,

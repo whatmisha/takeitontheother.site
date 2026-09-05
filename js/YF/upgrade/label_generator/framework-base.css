@@ -34,12 +34,6 @@
     font-weight: 500;
 }
 
-.toggle-chip span {
-    justify-content: center;
-    padding: var(--spacing-sm) var(--spacing-xl);
-    font-size: 0.85rem;
-}
-
 .segmented-control {
     --segmented-control-font-size: 0.85rem;
 }

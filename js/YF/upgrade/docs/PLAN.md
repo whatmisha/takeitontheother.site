@@ -470,7 +470,9 @@ js/YF/upgrade/...
 - G10: semantic corrections и variance audit.
 - G11: Pizza boolean/segment cleanup, единый color trigger, Dither Reset и
   checkbox `Follow cursor` в Sparky.
+- G12: единый presentation contract для OpenType feature chips Pizza Boxer и
+  Sticky Fingers без переноса их типографической логики во framework.
 
-Текущий исполнимый документ: [G11_CONTROL_CONSOLIDATION.md](./G11_CONTROL_CONSOLIDATION.md).
-OpenType feature tags в G11 не мигрируются: до отдельного решения сохраняются
-их технические имена, поведение и `toggle-chip` family.
+Текущий исполнимый документ: [G12_OPENTYPE_FEATURES.md](./G12_OPENTYPE_FEATURES.md).
+Технические имена и поведение OpenType feature tags сохранены; унифицированы
+только подпись, метрики и checked state их отдельного `feature-chip` family.

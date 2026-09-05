@@ -4,12 +4,14 @@
 
 ## Статус
 
-Gate G11 пройден: все восемь инструментов используют единый системный UI-стек,
+Gate G12 пройден: все восемь инструментов используют единый системный UI-стек,
 центрированный ActionDock, shortcut help, collapse/restore и export feedback.
 Slider stacks, panel padding и segmented controls имеют общий ритм.
 Однострочные сводки не меняют фиксированные габариты свёрнутых панелей. Sparky
 остаётся protected mobile sentinel; частные codec/SVG/Canvas/algorithm/Paper
-особенности инструментов не переносились в framework.
+особенности инструментов не переносились в framework. OpenType feature chips
+Pizza Boxer и Sticky Fingers имеют единые метрики и явную подпись, сохраняя
+частное типографическое поведение.
 
 Актуальный порядок и критерии работы находятся в [PLAN.md](./PLAN.md),
 архитектурные границы — в [ARCHITECTURE.md](./ARCHITECTURE.md), прогресс — в
@@ -24,8 +26,8 @@ Slider stacks, panel padding и segmented controls имеют общий рит�
 ## Карта документации
 
 - Основные решения: [PLAN.md](./PLAN.md), [ARCHITECTURE.md](./ARCHITECTURE.md), [MIGRATION_STATUS.md](./MIGRATION_STATUS.md), [POST_G5_RELEASE_READINESS.md](./POST_G5_RELEASE_READINESS.md), [POST_G6_RELEASE_READINESS.md](./POST_G6_RELEASE_READINESS.md).
-- Приёмочные gates: [G1](./GATE_G1.md), [G2](./GATE_G2.md), [G3](./GATE_G3.md), [G4](./GATE_G4.md), [G5](./GATE_G5.md), [G6](./GATE_G6.md), [G7](./GATE_G7.md), [G8](./GATE_G8.md), [G9](./GATE_G9.md), [G10](./GATE_G10.md), [G11](./GATE_G11.md).
-- Текущий UI-цикл: [G11 consolidation](./G11_CONTROL_CONSOLIDATION.md) и [live acceptance](./G11_UI_ACCEPTANCE.md); исходный список различий — [G10 variance audit](./G10_UI_VARIANCE_AUDIT.md).
+- Приёмочные gates: [G1](./GATE_G1.md), [G2](./GATE_G2.md), [G3](./GATE_G3.md), [G4](./GATE_G4.md), [G5](./GATE_G5.md), [G6](./GATE_G6.md), [G7](./GATE_G7.md), [G8](./GATE_G8.md), [G9](./GATE_G9.md), [G10](./GATE_G10.md), [G11](./GATE_G11.md), [G12](./GATE_G12.md).
+- Текущий UI-цикл: [G12 OpenType](./G12_OPENTYPE_FEATURES.md) и [live acceptance](./G12_UI_ACCEPTANCE.md); исходный список различий — [G10 variance audit](./G10_UI_VARIANCE_AUDIT.md).
 - Унификация UI: [план G5](./G5_UNIFICATION_PLAN.md), матрицы [controls](./CONTROL_COMPATIBILITY_MATRIX.md), [ranges](./RANGE_COMPATIBILITY_MATRIX.md), [toggles](./TOGGLE_COMPATIBILITY_MATRIX.md), [panels](./PANEL_COMPATIBILITY_MATRIX.md), [preset toolbar](./PRESET_TOOLBAR_COMPATIBILITY_MATRIX.md), [dialogs/feedback](./DIALOG_FEEDBACK_COMPATIBILITY_MATRIX.md), [actions/export](./ACTION_EXPORT_COMPATIBILITY_MATRIX.md) и [legacy CSS](./LEGACY_CSS_CLEANUP_MATRIX.md).
 - Политики автономности: [network](./NETWORK_POLICY.md) и [storage](./STORAGE_POLICY.md).
 
@@ -56,6 +58,7 @@ npm run gate:g8:static
 npm run gate:g9:static
 npm run gate:g10:static
 npm run gate:g11:static
+npm run gate:g12:static
 ```
 
 Команда G3 проверяет исходный manifest и baseline, локальные зависимости, storage namespaces, filesystem/network boundaries, framework/domain suites Wordplayer и Keyboarder, 196 тестов Sparky, 169 тестов Pizza Boxer и 7 тестов Sticky Fingers. G4 дополнительно запускает component contracts, 8 Pulsar, 11 Dither и 10 Wander Bender boundary/domain checks. G5 повторяет полный G4 и машинно закрывает восемь hub/CSS/JS boundaries, отсутствие resets/promotions, ownership app deltas и принятые Sparky desktop/mobile captures. G6 дополнительно проверяет PanelShell, ActionDock, FileIntake, choice/capability contracts, Component Lab и intentional visual diffs.

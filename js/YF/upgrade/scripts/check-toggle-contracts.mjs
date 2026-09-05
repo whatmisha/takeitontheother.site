@@ -134,6 +134,16 @@ assert.deepEqual(families, {
 }, 'toggle presentation family ownership changed');
 
 assert.equal(
+    [pizzaEditors, stickyHtml]
+        .reduce((total, html) => total + countInputsInLabelClass(html, 'feature-chip', 'checkbox'), 0),
+    12,
+    'Pizza Boxer and Sticky Fingers must share 12 OpenType feature chips'
+);
+for (const html of [pizzaEditors, stickyHtml]) {
+    assert.match(html, /class=["']control-label opentype-features-label["']>OpenType</u);
+}
+
+assert.equal(
     families.pillCheckbox + families.chipCheckbox + families.checkboxLabel
         + families.toggleSwitch + families.ditherExportCheckbox,
     checkboxCount
@@ -172,6 +182,7 @@ assert.match(
 
 const [
     sharedCss,
+    uiContractCss,
     sparkyCss,
     keyboarderCss,
     wordplayerCss,
@@ -190,6 +201,7 @@ const [
     wanderExtensionCss
 ] = await Promise.all([
     read('framework/css/othersite-styles.css'),
+    read('framework/css/ui-contract.css'),
     read('sparky/styles/sparky.css'),
     read('keyboarder/app/theme.css'),
     read('wordplayer/styles.css'),
@@ -209,6 +221,7 @@ const [
 ]);
 
 const activeShared = stripComments(sharedCss);
+const activeUiContract = stripComments(uiContractCss);
 assert.match(activeShared, /\.pill-toggle\s*\{/u);
 assert.match(activeShared, /\.toggle-chip\s*\{/u);
 assert.match(activeShared, /\.toggle-switch\s*\{/u);
@@ -217,6 +230,16 @@ assert.match(activeShared, /\.checkbox-label\s*\{[^}]*display:\s*flex !important
 assert.match(
     activeShared,
     /\.segmented-control label\s*\{[^}]*font-size:\s*var\(--segmented-control-font-size, 0\.9rem\);/su
+);
+assert.match(
+    activeUiContract,
+    /\.controls-panel \.feature-chip > span\s*\{[^}]*min-height:\s*24px;[^}]*padding:\s*4px 10px !important;[^}]*font-size:\s*0\.8rem !important;[^}]*font-weight:\s*500 !important;/su,
+    'shared OpenType feature-chip metrics changed'
+);
+assert.match(
+    activeUiContract,
+    /\.controls-panel \.feature-chip input:checked \+ span\s*\{[^}]*background:\s*var\(--ui-foreground\) !important;[^}]*color:\s*#000 !important;/su,
+    'shared OpenType checked state changed'
 );
 
 for (const [app, css] of [
@@ -300,10 +323,10 @@ for (const [family, selector] of [
 }
 assert.doesNotMatch(stripComments(stickyBridgeCss), /all:\s*revert-layer/u,
     'Sticky Fingers must not restore reset-promotion blocks');
-assert.match(
+assert.doesNotMatch(
     stripComments(stickyBridgeCss),
-    /\.toggle-chip span\s*\{\s*justify-content:\s*center;\s*padding:\s*var\(--spacing-sm\) var\(--spacing-xl\);\s*font-size:\s*0\.85rem;\s*\}/u,
-    'Sticky Fingers private chip metrics changed'
+    /(?:^|\})\s*\.toggle-chip span\s*\{/u,
+    'Sticky Fingers must consume shared OpenType feature-chip metrics'
 );
 assert.match(
     stripComments(stickyBridgeCss),

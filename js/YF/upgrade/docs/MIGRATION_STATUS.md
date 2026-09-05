@@ -18,6 +18,7 @@
 | G9 | Единый ритм контролов и структура YF Tools hub | Passed |
 | G10 | Semantic control corrections и UI variance audit | Passed |
 | G11 | Boolean/segment/color consolidation и Sparky Follow cursor | Passed |
+| G12 | OpenType feature chips Pizza Boxer и Sticky Fingers | Passed |
 
 ## Задачи
 
@@ -151,8 +152,10 @@
 | UPG-091 | Gate G10 | Complete | desktop 8/8 targeted live acceptance; `gate:g10:static` green |
 | UPG-092 | Boolean и exclusive controls | Complete | Pizza pills/segment без eye icons; один Sparky Follow cursor checkbox |
 | UPG-093 | Color trigger и Dither Reset | Complete | 13 swatches: 30 px hit/18 px dot; Reset 36 px без border |
-| UPG-094 | OpenType feature tags | Deferred by design | теги/поведение сохранены; обсуждается только общий visual metric |
+| UPG-094 | OpenType feature tags | Complete | общий `feature-chip`: 12.8 px/500, 24 px, 4×10 px, `#d2d2d2`; теги и поведение сохранены |
 | UPG-095 | Gate G11 | Complete | live control acceptance; `gate:g11:static` green |
+| UPG-096 | OpenType discoverability | Complete | явная подпись `OpenType`; документирован условный путь через text object → `Lunnen Display` |
+| UPG-097 | Gate G12 | Complete | Pizza/Sticky live acceptance; `gate:g12:static` green |
 
 ## Подтверждённые исходные результаты
 
@@ -190,6 +193,6 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-UPG-000—UPG-093 и UPG-095 выполнены. UPG-094 намеренно отложен до отдельного
-визуального решения OpenType feature tags. Следующая работа не должна менять
-их смысл или переносить частную генеративную логику в общий framework.
+UPG-000—UPG-097 выполнены. Следующая работа не должна менять смысл OpenType
+tags или переносить частную типографическую/генеративную логику приложений в
+общий framework.

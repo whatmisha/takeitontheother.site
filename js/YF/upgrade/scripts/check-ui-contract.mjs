@@ -30,13 +30,16 @@ assert.match(contractCss, /\.controls-panel \.segmented-control label[\s\S]*?hei
 assert.match(contractCss, /\.controls-panel,[\s\S]*?color:\s*var\(--ui-foreground\)\s*!important/u);
 assert.match(contractCss, /\.controls-panel \.control-group:not\(\[data-ui-custom-spacing\]\)[\s\S]*?padding-top:\s*0\s*!important/u);
 assert.match(contractCss, /\.controls-panel \.pill-toggle:has\(input:checked:not\(:disabled\)\)[\s\S]*?background:\s*var\(--ui-foreground\)\s*!important/u);
+assert.match(contractCss, /\.controls-panel \.opentype-features-label[\s\S]*?font-size:\s*0\.8rem\s*!important/u);
+assert.match(contractCss, /\.controls-panel \.feature-chip > span[\s\S]*?min-height:\s*24px[\s\S]*?padding:\s*4px 10px\s*!important[\s\S]*?font-weight:\s*500\s*!important/u);
+assert.match(contractCss, /\.controls-panel \.feature-chip input:checked \+ span[\s\S]*?background:\s*var\(--ui-foreground\)\s*!important/u);
 assert.match(contractCss, /button:is\(\.color-dot, \.color-preview\)[\s\S]*?width:\s*30px\s*!important[\s\S]*?padding:\s*6px\s*!important[\s\S]*?background-clip:\s*content-box\s*!important/u);
 assert.doesNotMatch(contractCss, /\b(?:600|700|800|900|bold)\b/u);
 assert.doesNotMatch(contractCss, /Arial|TT Commons|CoFo Sans/u);
 
 entrypoints.forEach((html, index) => {
     const app = applications[index];
-    assert.match(html, /framework\/css\/ui-contract\.css\?v=g11-controls-1/u, `${app}: missing final UI CSS`);
+    assert.match(html, /framework\/css\/ui-contract\.css\?v=g12-opentype-1/u, `${app}: missing final UI CSS`);
     assert.match(html, /framework\/src\/ui\/unifiedUiAutoInit\.js\?v=g11-controls-1/u, `${app}: missing shared UI controller`);
     if (app !== 'grid_generator') {
         assert.match(html, /←\s+Upgrade Tools/u, `${app}: back link needs a readable arrow gap`);
@@ -88,6 +91,11 @@ const [wordplayerHtml, keyboarderCss, stickyHtml] = await Promise.all([
     read('keyboarder/app/theme.css'),
     read('label_generator/index.html')
 ]);
+const pizzaEditors = await read('grid_generator/src/ui/fragments/object-editors.html');
+for (const html of [pizzaEditors, stickyHtml]) {
+    assert.equal(html.match(/class="toggle-chip feature-chip"/gu)?.length || 0, 6);
+    assert.match(html, /class="control-label opentype-features-label">OpenType</u);
+}
 assert.match(wordplayerHtml, /class="control-group pill-toggle-row pixel-toggle-row" data-ui-custom-spacing/u);
 assert.doesNotMatch(keyboarderCss, /#layersPanel\s+\.pill-toggle(?:-row)?/u);
 for (const html of [pizzaNavigation, stickyHtml]) {
@@ -121,7 +129,7 @@ for (const id of ['surfaceVisibleToggle', 'surfaceOwnGridToggle', 'showSidePanel
 }
 assert.doesNotMatch(pizzaNavigation, /toggle-chip-icon-wrapper/u);
 assert.match(
-    await read('grid_generator/src/ui/fragments/object-editors.html'),
+    pizzaEditors,
     /class="segmented-control segmented-control-compact"[^>]*>[\s\S]*?graphicsSizeModeWidth[\s\S]*?graphicsSizeModeHeight/u
 );
 assert.match(ditherCss, /#transformPanel \.btn-secondary\s*\{[^}]*border:\s*0;[^}]*height:\s*36px;/su);

@@ -127,6 +127,35 @@ body,
     color: #000 !important;
 }
 
+/* Compact technical tags shared by the Lunnen Display editors. */
+.controls-panel .opentype-features-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--ui-foreground) !important;
+    font-size: 0.8rem !important;
+    line-height: 1.2;
+    opacity: 0.7;
+}
+
+.controls-panel .feature-chip > span {
+    min-height: 24px;
+    justify-content: center;
+    padding: 4px 10px !important;
+    color: var(--ui-foreground) !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    line-height: 1 !important;
+}
+
+.controls-panel .feature-chip input:checked + span {
+    background: var(--ui-foreground) !important;
+    color: #000 !important;
+}
+
+.controls-panel .feature-chip input:checked + span:hover {
+    background: #e0e0e0 !important;
+}
+
 /* One swatch size, one hit target: 18 px color inside a 30 px control. */
 .controls-panel button:is(.color-dot, .color-preview) {
     width: 30px !important;
