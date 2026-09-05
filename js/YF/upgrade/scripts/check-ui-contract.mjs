@@ -30,13 +30,14 @@ assert.match(contractCss, /\.controls-panel \.segmented-control label[\s\S]*?hei
 assert.match(contractCss, /\.controls-panel,[\s\S]*?color:\s*var\(--ui-foreground\)\s*!important/u);
 assert.match(contractCss, /\.controls-panel \.control-group:not\(\[data-ui-custom-spacing\]\)[\s\S]*?padding-top:\s*0\s*!important/u);
 assert.match(contractCss, /\.controls-panel \.pill-toggle:has\(input:checked:not\(:disabled\)\)[\s\S]*?background:\s*var\(--ui-foreground\)\s*!important/u);
+assert.match(contractCss, /button:is\(\.color-dot, \.color-preview\)[\s\S]*?width:\s*30px\s*!important[\s\S]*?padding:\s*6px\s*!important[\s\S]*?background-clip:\s*content-box\s*!important/u);
 assert.doesNotMatch(contractCss, /\b(?:600|700|800|900|bold)\b/u);
 assert.doesNotMatch(contractCss, /Arial|TT Commons|CoFo Sans/u);
 
 entrypoints.forEach((html, index) => {
     const app = applications[index];
-    assert.match(html, /framework\/css\/ui-contract\.css\?v=g10-toggle-2/u, `${app}: missing final UI CSS`);
-    assert.match(html, /framework\/src\/ui\/unifiedUiAutoInit\.js\?v=g8-ui-1/u, `${app}: missing shared UI controller`);
+    assert.match(html, /framework\/css\/ui-contract\.css\?v=g11-controls-1/u, `${app}: missing final UI CSS`);
+    assert.match(html, /framework\/src\/ui\/unifiedUiAutoInit\.js\?v=g11-controls-1/u, `${app}: missing shared UI controller`);
     if (app !== 'grid_generator') {
         assert.match(html, /←\s+Upgrade Tools/u, `${app}: back link needs a readable arrow gap`);
     }
@@ -54,6 +55,7 @@ assert.match(controller, /\.paragraph-settings-panel, #paragraphPanel, #graphics
 assert.match(controller, /if \(target\.textContent !== summary\)/u);
 assert.match(controller, /\(\?:mm\|keys\?\)/u);
 assert.match(controller, /Number\(target\?\.scrollWidth\) > Number\(target\?\.clientWidth\)/u);
+assert.match(controller, /Static · \$\{d\.getElementById\('followCursor'\)\?\.checked \? 'Follow' : 'Fixed'\}/u);
 assert.match(controller, /mainFileTrigger\(\)/u);
 assert.match(plan, /никогда не меняет габариты панели/u);
 
@@ -99,4 +101,30 @@ for (const html of [pizzaNavigation, stickyHtml]) {
 const pizzaGridToggleBlock = pizzaNavigation.match(/aria-label="Show grid options"[\s\S]*?<\/div>/u)?.[0] || '';
 assert.doesNotMatch(pizzaGridToggleBlock, /toggle-chip|<svg/u);
 
-console.log('G8 UI contract passed: 8 entrypoints, system typography, fixed summaries, shortcuts and export feedback are wired.');
+const swatchCount = entrypoints.reduce(
+    (count, html) => count + (html.match(/class="[^"]*\b(?:color-dot|color-preview)\b[^"]*"/gu)?.length || 0),
+    0
+) + (pizzaNavigation.match(/class="[^"]*\b(?:color-dot|color-preview)\b[^"]*"/gu)?.length || 0);
+assert.equal(swatchCount, 13, 'the six color-enabled tools must expose 13 shared swatch triggers');
+
+const [sparkyHtml, ditherCss] = await Promise.all([
+    read('sparky/index.html'),
+    read('dither/style.css')
+]);
+assert.doesNotMatch(sparkyHtml, /\bid="showPoint"/u);
+assert.match(sparkyHtml, /type="checkbox"[^>]*\bid="followCursor"/u);
+for (const id of ['surfaceVisibleToggle', 'surfaceOwnGridToggle', 'showSidePanels']) {
+    assert.match(
+        pizzaNavigation,
+        new RegExp(`<label class="[^"]*pill-toggle[^"]*" for="${id}">[\\s\\S]*?<input[^>]*id="${id}"[^>]*class="sr-only"`, 'u')
+    );
+}
+assert.doesNotMatch(pizzaNavigation, /toggle-chip-icon-wrapper/u);
+assert.match(
+    await read('grid_generator/src/ui/fragments/object-editors.html'),
+    /class="segmented-control segmented-control-compact"[^>]*>[\s\S]*?graphicsSizeModeWidth[\s\S]*?graphicsSizeModeHeight/u
+);
+assert.match(ditherCss, /#transformPanel \.btn-secondary\s*\{[^}]*border:\s*0;[^}]*height:\s*36px;/su);
+assert.match(ditherCss, /#transformPanel \.btn-secondary:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--color-text\);/su);
+
+console.log('Shared UI contract passed: 8 entrypoints, common swatches, controls, summaries, shortcuts and feedback are wired.');

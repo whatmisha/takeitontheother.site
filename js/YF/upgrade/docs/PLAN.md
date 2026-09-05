@@ -458,3 +458,19 @@ js/YF/upgrade/...
 - `git diff` не содержит изменений вне `/upgrade`.
 
 Первый практический этап — UPG-000–UPG-003. Копирование начинается только после Gate G0.
+
+## 16. Post-plan UI consolidation
+
+Основная миграция завершена. Последующие интерфейсные решения фиксируются
+отдельными cumulative gates, чтобы быстрые модели не переоткрывали принятые
+границы.
+
+- G8: typography, summaries, shortcuts, export feedback.
+- G9: control rhythm и YF Tools hub.
+- G10: semantic corrections и variance audit.
+- G11: Pizza boolean/segment cleanup, единый color trigger, Dither Reset и
+  checkbox `Follow cursor` в Sparky.
+
+Текущий исполнимый документ: [G11_CONTROL_CONSOLIDATION.md](./G11_CONTROL_CONSOLIDATION.md).
+OpenType feature tags в G11 не мигрируются: до отдельного решения сохраняются
+их технические имена, поведение и `toggle-chip` family.

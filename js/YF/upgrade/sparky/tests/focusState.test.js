@@ -47,7 +47,7 @@ test('mobile Basic-only showcase starts with Focus at the boundary center', () =
     assert.deepEqual(centeredFocus(state), { x: 240, y: 240 });
 });
 
-test('Manual and Follow cursor always resolve to opposite modes', () => {
+test('Follow cursor checkbox always derives the complementary internal manual mode', () => {
     assert.deepEqual(
         resolveManualFocusMode({ followCursor: true, showPoint: true }),
         { followCursor: true, showPoint: false }

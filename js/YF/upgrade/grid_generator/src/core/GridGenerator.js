@@ -321,7 +321,6 @@ export class GridGenerator {
         this.gridSettingsController.updateLinkedControlsVisual();
         this.colorPanelController.initialize();
         this.applicationUi.updateViewportSize();
-        this.applicationUi.initializeEyeIcons();
 
         // Update canvas size on window resize
         this.globalListeners.listen(globalThis.window, 'resize', () => {
@@ -385,8 +384,7 @@ export class GridGenerator {
             onMarkChanged: () => this.markAsChanged(),
             onConstrainObjects: () => this.constrainAllObjectsToGrid(),
             onRender: () => this.updateGrid(),
-            onRenderDebounced: () => this.updateGridDebounced(),
-            onUpdateEyeIcon: input => this.updateEyeIcon(input)
+            onRenderDebounced: () => this.updateGridDebounced()
         }));
         this.surfacePanelController.init();
     }
@@ -488,12 +486,6 @@ export class GridGenerator {
     mmToColumns(widthMm, surface = 'front') {
         return this.surfaceCoordinates.mmToColumns(widthMm, surface);
     }
-
-    // Update eye icon for toggle-chip and checkbox-label elements
-    updateEyeIcon(checkbox) {
-        this.applicationUi.updateEyeIcon(checkbox);
-    }
-
 
     /**
      * Немедленное обновление сетки (для критичных операций)

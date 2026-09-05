@@ -260,19 +260,13 @@
                 </div>
                 
                 <div class="control-group">
-                    <label>
-                        <span>Size Mode</span>
-                        <div class="toggle-group" style="display: flex; gap: 4px; margin-top: 4px;">
-                            <label class="toggle-chip" style="flex: 1;">
-                                <input type="radio" name="graphicsSizeMode" id="graphicsSizeModeWidth" value="width" aria-label="Size by width">
-                                <span>Width</span>
-                            </label>
-                            <label class="toggle-chip" style="flex: 1;">
-                                <input type="radio" name="graphicsSizeMode" id="graphicsSizeModeHeight" value="height" checked aria-label="Size by height">
-                                <span>Height</span>
-                            </label>
-                        </div>
-                    </label>
+                    <span class="control-label">Size Mode</span>
+                    <div class="segmented-control segmented-control-compact" role="radiogroup" aria-label="Graphics size mode">
+                        <input type="radio" name="graphicsSizeMode" id="graphicsSizeModeWidth" value="width" aria-label="Size by width">
+                        <label for="graphicsSizeModeWidth">Width</label>
+                        <input type="radio" name="graphicsSizeMode" id="graphicsSizeModeHeight" value="height" checked aria-label="Size by height">
+                        <label for="graphicsSizeModeHeight">Height</label>
+                    </div>
                 </div>
                 
                 <div class="control-group" id="graphicsWidthGroup">

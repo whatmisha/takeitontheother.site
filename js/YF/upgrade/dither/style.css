@@ -596,13 +596,19 @@ body {
 
 #transformPanel .btn-secondary {
     background: var(--color-bg-panel);
-    border: 1px solid var(--color-border);
+    border: 0;
+    height: 36px;
 }
 
 #transformPanel .btn-secondary:hover:not(:disabled) {
     background: var(--color-text);
     color: var(--color-bg);
-    border: 1px solid var(--color-text);
+    border: 0;
+}
+
+#transformPanel .btn-secondary:focus-visible {
+    outline: 2px solid var(--color-text);
+    outline-offset: 2px;
 }
 
 /* Drag and drop styles */

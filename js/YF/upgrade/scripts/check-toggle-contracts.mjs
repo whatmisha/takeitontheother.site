@@ -82,7 +82,7 @@ const [pizzaSurfaceController, wanderScript] = await Promise.all([
 ]);
 
 const apps = [
-    ['Sparky', sparkyHtml, 4, 5],
+    ['Sparky', sparkyHtml, 5, 3],
     ['Pizza Boxer', pizzaHtml, 21, 15],
     ['Sticky Fingers', stickyHtml, 22, 6],
     ['Keyboarder', keyboarderHtml, 12, 0],
@@ -100,9 +100,9 @@ assert.deepEqual(
 
 const checkboxCount = apps.reduce((total, [, html]) => total + countType(html, 'checkbox'), 0);
 const radioCount = apps.reduce((total, [, html]) => total + countType(html, 'radio'), 0);
-assert.equal(checkboxCount, 74);
-assert.equal(radioCount, 41);
-assert.equal(checkboxCount + radioCount, 115);
+assert.equal(checkboxCount, 75);
+assert.equal(radioCount, 39);
+assert.equal(checkboxCount + radioCount, 114);
 
 const families = {
     pillCheckbox: [sparkyHtml, pizzaHtml, stickyHtml, keyboarderHtml, wordplayerHtml]
@@ -122,13 +122,13 @@ const families = {
 };
 
 assert.deepEqual(families, {
-    pillCheckbox: 31,
-    pillRadio: 2,
-    chipCheckbox: 16,
-    chipRadio: 2,
+    pillCheckbox: 36,
+    pillRadio: 0,
+    chipCheckbox: 12,
+    chipRadio: 0,
     checkboxLabel: 20,
     toggleSwitch: 7,
-    segmentedRadio: 35,
+    segmentedRadio: 37,
     wordplayerModeRadio: 2,
     ditherExportCheckbox: 0
 }, 'toggle presentation family ownership changed');
@@ -275,7 +275,20 @@ assert.match(
     /\.control-group \.segmented-control label\s*\{\s*margin-bottom:\s*0;\s*\}/u
 );
 assert.match(stripComments(pizzaSideCss), /\.surface-tabs\.segmented-control label\s*\{/u);
-assert.match(stripComments(pizzaSideCss), /\.surface-quick-controls \.toggle-chip-group\s*\{/u);
+assert.match(stripComments(pizzaSideCss), /\.surface-visible-chip,\s*\.surface-own-grid-chip\s*\{/u);
+assert.doesNotMatch(pizzaWorkspace, /toggle-chip-icon-wrapper/u, 'Pizza Boxer must not restore eye icons');
+assert.doesNotMatch(pizzaObjects, /toggle-chip-icon-wrapper/u, 'Pizza Boxer object visibility must use a plain pill');
+assert.match(
+    pizzaEditors,
+    /class=["']segmented-control segmented-control-compact["'][^>]*>[\s\S]*?id=["']graphicsSizeModeWidth["'][\s\S]*?id=["']graphicsSizeModeHeight["']/u,
+    'Pizza Boxer graphics size mode must use the shared segmented control'
+);
+assert.doesNotMatch(sparkyHtml, /\bid=["']showPoint["']/u, 'Sparky must not expose a redundant Manual pill');
+assert.match(
+    sparkyHtml,
+    /type=["']checkbox["'][^>]*\bid=["']followCursor["']/u,
+    'Sparky Follow cursor must be a single checkbox pill'
+);
 
 for (const [family, selector] of [
     ['toggle-chip', /(?:^|\})\s*\.toggle-chip(?:\s|:|\{)/u],
@@ -362,7 +375,10 @@ assert.match(
 );
 
 console.log(
-    `Toggle contract passed: ${checkboxCount} checkbox + ${radioCount} radio = 115 native; `
-        + '27 pill + 24 chip + 20 checkbox-label + 7 switch + 35 segment + 2 private inputs; '
+    `Toggle contract passed: ${checkboxCount} checkbox + ${radioCount} radio = ${checkboxCount + radioCount} native; `
+        + `${families.pillCheckbox + families.pillRadio} pill + `
+        + `${families.chipCheckbox + families.chipRadio} chip + `
+        + `${families.checkboxLabel} checkbox-label + ${families.toggleSwitch} switch + `
+        + `${families.segmentedRadio} segment + ${families.wordplayerModeRadio} private inputs; `
         + `${privateStateButtonCount} private state buttons protected.`
 );

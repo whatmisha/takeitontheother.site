@@ -75,7 +75,6 @@ export function createApplicationEventPort(application) {
         redo: bind(application, 'redo'),
         getStateSnapshot: bind(application, 'getStateSnapshot'),
         markAsChanged: bind(application, 'markAsChanged'),
-        updateEyeIcon: bind(application, 'updateEyeIcon'),
         syncSurfaceControls: bind(application, 'syncSurfaceControls'),
         updateGrid: bind(application, 'updateGrid')
     });

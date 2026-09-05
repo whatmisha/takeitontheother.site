@@ -37,10 +37,10 @@ export class ApplicationEventController {
         this.host.gridSettingsController.bind();
 
         VISIBILITY_CONTROLS.forEach(([domKey, setting, label]) => {
-            this.bindSettingToggle(this.host.dom[domKey], setting, label, true);
+            this.bindSettingToggle(this.host.dom[domKey], setting, label);
         });
         TYPOGRAPHY_TOGGLES.forEach(([domKey, setting, label]) => {
-            this.bindSettingToggle(this.host.dom[domKey], setting, label, false);
+            this.bindSettingToggle(this.host.dom[domKey], setting, label);
         });
 
         this.host.typographyUnitController.bindButtons();
@@ -55,18 +55,16 @@ export class ApplicationEventController {
         this.listeners.listen(this.host.dom.showSidePanels, 'change', event => {
             this.runAction('toggle side panels', () => {
                 this.host.surfaceManager.setAllSideVisibility(event.target.checked);
-                this.host.updateEyeIcon(event.target);
                 this.host.syncSurfaceControls();
                 this.host.updateGrid();
             });
         });
     }
 
-    bindSettingToggle(input, setting, label, updateEyeIcon) {
+    bindSettingToggle(input, setting, label) {
         this.listeners.listen(input, 'change', event => {
             this.runAction(label, () => {
                 this.host.settingsModule.set(setting, event.target.checked);
-                if (updateEyeIcon) this.host.updateEyeIcon(event.target);
                 this.host.updateGrid();
             });
         });

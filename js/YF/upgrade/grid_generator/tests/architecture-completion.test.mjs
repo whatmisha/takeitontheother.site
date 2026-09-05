@@ -54,7 +54,7 @@ function createApplication() {
     for (const method of [
         'resetChangesFlag', 'syncApplicationUI', 'updateGrid', 'mmToColumns',
         'recalculateGraphicsWidthFromHeight', 'importSettings', 'undo', 'redo',
-        'getStateSnapshot', 'markAsChanged', 'updateEyeIcon', 'syncSurfaceControls',
+        'getStateSnapshot', 'markAsChanged', 'syncSurfaceControls',
         'constrainAllObjectsToGrid', 'updateGridDebounced', 'columnsToMm', 'getBlockY',
         'getStyleDisplayName', 'getSurfaceGridContext', 'moveBlockToSurface',
         'rowBaselineToY', 'yToRowBaseline'

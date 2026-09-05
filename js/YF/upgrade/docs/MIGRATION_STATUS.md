@@ -16,6 +16,8 @@
 | G7 | Export/round-trip/persistence/resilience и live release readiness | Passed |
 | G8 | Единая типографика, сводки, хоткеи и export feedback | Passed |
 | G9 | Единый ритм контролов и структура YF Tools hub | Passed |
+| G10 | Semantic control corrections и UI variance audit | Passed |
+| G11 | Boolean/segment/color consolidation и Sparky Follow cursor | Passed |
 
 ## Задачи
 
@@ -147,6 +149,10 @@
 | UPG-089 | Semantic control corrections | Complete | Wordplayer separator spacing; intrinsic Keyboarder Layers pills; Pizza/Sticky grid pills without icons or borders; shared `#d2d2d2` state |
 | UPG-090 | UI variance audit | Complete | all 8 tools and 115 native toggles classified; next shared candidates and intentional private controls documented |
 | UPG-091 | Gate G10 | Complete | desktop 8/8 targeted live acceptance; `gate:g10:static` green |
+| UPG-092 | Boolean и exclusive controls | Complete | Pizza pills/segment без eye icons; один Sparky Follow cursor checkbox |
+| UPG-093 | Color trigger и Dither Reset | Complete | 13 swatches: 30 px hit/18 px dot; Reset 36 px без border |
+| UPG-094 | OpenType feature tags | Deferred by design | теги/поведение сохранены; обсуждается только общий visual metric |
+| UPG-095 | Gate G11 | Complete | live control acceptance; `gate:g11:static` green |
 
 ## Подтверждённые исходные результаты
 
@@ -184,7 +190,6 @@ Gate G0 passed: 1179 source entries, 10 screenshots, architecture and test basel
 
 ## Следующее действие
 
-UPG-000—UPG-091 выполнены. G10 исправил semantic control regressions и отделил
-следующие реальные кандидаты унификации от оправданной специфики инструментов.
-Дальнейшая работа должна начинаться новым планом и не расширять общий framework
-частной логикой отдельных генераторов.
+UPG-000—UPG-093 и UPG-095 выполнены. UPG-094 намеренно отложен до отдельного
+визуального решения OpenType feature tags. Следующая работа не должна менять
+их смысл или переносить частную генеративную логику в общий framework.

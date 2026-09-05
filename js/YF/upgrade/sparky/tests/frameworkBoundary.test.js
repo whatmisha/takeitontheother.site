@@ -65,7 +65,7 @@ test('Sparky consumes the shared framework without surrendering private mobile a
         'Sparky mobile must retain a centered export ActionDock'
     );
     assert.doesNotMatch(stylesSource, /TT_Commons_Classic_(?:Regular|Medium)\.woff2/u, 'Sparky UI must not disguise TT Commons as CoFo Sans');
-    assert.match(htmlSource, /framework\/css\/ui-contract\.css\?v=g10-toggle-2/u, 'Sparky must load the shared system-font UI contract');
+    assert.match(htmlSource, /framework\/css\/ui-contract\.css\?v=g11-controls-1/u, 'Sparky must load the shared system-font UI contract');
     assert.doesNotMatch(stylesSource, /\.\.\/framework\/fonts\/TT_Commons/, 'Sparky CSS still depends on the retired local framework directory');
     assert.match(
         frameworkStylesSource,
@@ -129,10 +129,16 @@ test('Sparky consumes the shared framework without surrendering private mobile a
     );
     assert.equal(
         htmlSource.match(/<input\b[^>]*\btype="(?:checkbox|radio)"[^>]*>/gu)?.length,
-        9,
+        8,
         'Sparky toggle/radio inventory changed'
     );
-    assert.equal(htmlSource.match(/class="pill-toggle"/gu)?.length, 6, 'Sparky pill input family changed');
+    assert.equal(htmlSource.match(/class="pill-toggle"/gu)?.length, 5, 'Sparky pill input family changed');
+    assert.doesNotMatch(htmlSource, /\bid="showPoint"/u, 'Sparky must not expose a redundant Manual pill');
+    assert.match(
+        htmlSource,
+        /type="checkbox"[^>]*\bid="followCursor"/u,
+        'Sparky Follow cursor must remain a single checkbox pill'
+    );
     assert.equal(
         htmlSource.match(/<input\b[^>]*\bname="focusMode"[^>]*>/gu)?.length,
         3,

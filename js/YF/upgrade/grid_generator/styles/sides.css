@@ -34,22 +34,9 @@
     gap: var(--spacing-sm);
 }
 
-.surface-quick-controls .toggle-chip-group {
-    flex: 0 0 auto;
-}
-
-.surface-visible-chip span {
-    padding-left: var(--spacing-md);
-    padding-right: var(--spacing-md);
-}
-
+.surface-visible-chip,
 .surface-own-grid-chip {
     flex: 0 0 auto;
-}
-
-.surface-own-grid-chip span {
-    padding-left: var(--spacing-md);
-    padding-right: var(--spacing-md);
 }
 
 .surface-orientation-control {

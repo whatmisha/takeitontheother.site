@@ -1887,9 +1887,7 @@ let focusControlsSyncing = false;
 
 function syncManualFocusModeControls(app) {
     const followCursor = Boolean(app.settings.followCursor);
-    const manual = document.getElementById('showPoint');
     const follow = document.getElementById('followCursor');
-    if (manual) manual.checked = !followCursor;
     if (follow) follow.checked = followCursor;
 }
 
@@ -2284,15 +2282,12 @@ function disableFollowCursor(app, { syncControls = true } = {}) {
 }
 
 function bindManualFocusControls(app) {
-    document.getElementById('showPoint')?.addEventListener('change', (event) => {
-        if (event.target.checked) {
-            settleManualFocusTransition(app);
-            disableFollowCursor(app);
-        }
-    });
     document.getElementById('followCursor')?.addEventListener('change', (event) => {
-        if (!event.target.checked) return;
         settleManualFocusTransition(app);
+        if (!event.target.checked) {
+            disableFollowCursor(app);
+            return;
+        }
         app.settingsStore.setMultiple({
             showPoint: false,
             followCursor: true

@@ -7,7 +7,7 @@
     <title>Lunnen Sparky — Parametric Character</title>
     <link id="frameworkStyles" rel="stylesheet" href="../framework/css/othersite-styles.css?v=g6-choice-1">
     <link id="applicationStyles" rel="stylesheet" href="./styles/sparky.css?v=g6-choice-1">
-    <link rel="stylesheet" href="../framework/css/ui-contract.css?v=g10-toggle-2">
+    <link rel="stylesheet" href="../framework/css/ui-contract.css?v=g11-controls-1">
 </head>
 <body>
     <div class="container">
@@ -141,12 +141,8 @@
                             </div>
 
                             <div class="control-group pill-toggle-row" role="group" aria-label="Focus behavior">
-                                <label class="pill-toggle" for="showPoint">
-                                    <input type="radio" id="showPoint" class="sr-only" name="manualFocusBehavior" value="manual">
-                                    <span>Manual</span>
-                                </label>
                                 <label class="pill-toggle" for="followCursor">
-                                    <input type="radio" id="followCursor" class="sr-only" name="manualFocusBehavior" value="follow" checked>
+                                    <input type="checkbox" id="followCursor" class="sr-only" checked>
                                     <span>Follow cursor</span>
                                 </label>
                                 <button type="button" class="pill-toggle sparky-pill-button" id="resetFocusBtn">
@@ -406,6 +402,6 @@
     <script type="module" src="../framework/src/ui/actionDockAutoInit.js?v=g7-resilience-4"></script>
     <script type="module" src="../framework/src/ui/presetMenuKeyboardAutoInit.js?v=g7-resilience-4"></script>
     <script type="module" src="./tool.js?v=g6-capabilities-1"></script>
-    <script type="module" src="../framework/src/ui/unifiedUiAutoInit.js?v=g8-ui-1"></script>
+    <script type="module" src="../framework/src/ui/unifiedUiAutoInit.js?v=g11-controls-1"></script>
 </body>
 </html>

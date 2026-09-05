@@ -26,7 +26,11 @@ function summaryConfig(tool) {
     const configs = {
         sparky: {
             shapePanel: d => `${value(d, 'rayCountValue')} · ${value(d, 'rayLengthValue')}×${value(d, 'rayWidthValue')}`,
-            focusPanel: d => `${titleCase(checkedValue(d, 'focusMode'))} · ${d.getElementById('followCursor')?.checked ? 'Follow' : 'Static'}`,
+            focusPanel: d => {
+                const mode = checkedValue(d, 'focusMode');
+                if (mode !== 'manual') return titleCase(mode);
+                return `Static · ${d.getElementById('followCursor')?.checked ? 'Follow' : 'Fixed'}`;
+            },
             eyesPanel: d => `Size ${value(d, 'eyeSizeValue')} · Cute ${value(d, 'cuteValue')}`,
             colorsPanel: d => `${value(d, 'headColorHex')} · ${value(d, 'eyeColorHex')} · ${value(d, 'backgroundColorHex')}`
         },

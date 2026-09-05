@@ -20,8 +20,7 @@ export class SurfacePanelController {
         onMarkChanged = () => {},
         onConstrainObjects = () => {},
         onRender = () => {},
-        onRenderDebounced = () => {},
-        onUpdateEyeIcon = () => {}
+        onRenderDebounced = () => {}
     }) {
         this.dom = dom;
         this.surfaceManager = surfaceManager;
@@ -30,7 +29,6 @@ export class SurfacePanelController {
         this.activeSurface = sideSurfaces[0];
         this.listeners = new ListenerScope();
         this.initialized = false;
-        this.onUpdateEyeIcon = onUpdateEyeIcon;
         this.commands = new SurfacePanelCommands({
             surfaceManager,
             onBeginAction,
@@ -137,7 +135,6 @@ export class SurfacePanelController {
         });
         if (this.dom.surfaceVisibleToggle) {
             this.dom.surfaceVisibleToggle.checked = settings.visible !== false;
-            this.onUpdateEyeIcon(this.dom.surfaceVisibleToggle);
         }
         if (this.dom.surfaceOwnGridToggle) {
             this.dom.surfaceOwnGridToggle.checked = settings.gridMode === 'own';
@@ -153,7 +150,6 @@ export class SurfacePanelController {
 
         if (this.dom.showSidePanels) {
             this.dom.showSidePanels.checked = this.sideSurfaces.some(surface => this.surfaceManager.isVisible(surface));
-            this.onUpdateEyeIcon(this.dom.showSidePanels);
         }
 
         [this.dom.paragraphSurfaceSelect, this.dom.graphicsSurfaceSelect].forEach(select => {

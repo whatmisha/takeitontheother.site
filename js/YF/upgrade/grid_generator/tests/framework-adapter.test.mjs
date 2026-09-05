@@ -189,7 +189,7 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
         'Pizza Boxer must not override the shared action shell responsively'
     );
     assert.match(sideStyles, /\.surface-tabs\.segmented-control label\s*\{/u);
-    assert.match(sideStyles, /\.surface-quick-controls \.toggle-chip-group\s*\{/u);
+    assert.match(sideStyles, /\.surface-visible-chip,\s*\.surface-own-grid-chip\s*\{/u);
     assert.match(frameworkStyles, /(?:^|\n)\.toggle-chip\s*\{/u);
     assert.match(frameworkStyles, /(?:^|\n)\.checkbox-label\s*\{/u);
     assert.match(frameworkStyles, /(?:^|\n)\.segmented-control\s*\{/u);

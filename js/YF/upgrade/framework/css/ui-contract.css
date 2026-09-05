@@ -1,4 +1,4 @@
-/* G8 final UI contract. Keep this stylesheet last so application renderers stay private. */
+/* Shared UI contract. Keep this stylesheet last so application renderers stay private. */
 :root {
     --ui-font-stack: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
     --ui-foreground: #d2d2d2;
@@ -125,6 +125,26 @@ body,
 .controls-panel .pill-toggle:hover:not(.inactive):not(.controls-disabled) span,
 .controls-panel .pill-toggle:has(input:checked:not(:disabled)):not(.controls-disabled) span {
     color: #000 !important;
+}
+
+/* One swatch size, one hit target: 18 px color inside a 30 px control. */
+.controls-panel button:is(.color-dot, .color-preview) {
+    width: 30px !important;
+    height: 30px !important;
+    padding: 6px !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background-clip: content-box !important;
+    flex: 0 0 30px;
+}
+
+.controls-panel button:is(.color-dot, .color-preview):hover {
+    transform: scale(1.06);
+}
+
+.controls-panel button:is(.color-dot, .color-preview):focus-visible {
+    outline: 2px solid var(--ui-foreground) !important;
+    outline-offset: 0 !important;
 }
 
 .panel-header {

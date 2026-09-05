@@ -18,15 +18,6 @@ const SIZE_STYLES = Object.freeze({
     lunnenDisplaySize: 'lunnenDisplay'
 });
 
-const EYE_TOGGLE_KEYS = Object.freeze([
-    'showColumns',
-    'showRows',
-    'showBaseline',
-    'showSidePanels',
-    'surfaceVisibleToggle',
-    'showObjects'
-]);
-
 /** Keeps application-wide controls in sync with the settings source of truth. */
 export class ApplicationUiSynchronizer {
     constructor(host, windowRef = window) {
@@ -83,19 +74,5 @@ export class ApplicationUiSynchronizer {
 
     updateViewportSize() {
         this.host.DISPLAY_SIZE = this.window.innerHeight - 40;
-    }
-
-    updateEyeIcon(checkbox) {
-        const label = checkbox?.closest('label');
-        if (!label) return;
-        if (!label.classList.contains('toggle-chip')) {
-            label.classList.remove('toggle-chip-checked');
-            return;
-        }
-        label.classList.toggle('toggle-chip-checked', checkbox.checked);
-    }
-
-    initializeEyeIcons() {
-        EYE_TOGGLE_KEYS.forEach(key => this.updateEyeIcon(this.host.dom[key]));
     }
 }
