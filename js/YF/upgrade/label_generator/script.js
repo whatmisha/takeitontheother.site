@@ -1846,6 +1846,10 @@ class GridGenerator {
     }
     
     initColorPreview() {
+        const hueGradient = 'linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%)';
+        this.setColorSliderGradient(this.dom.hueSlider, hueGradient);
+        this.setColorSliderGradient(this.dom.contentHueSlider, hueGradient);
+
         // Set initial background color preview
         this.dom.colorPreview.style.backgroundColor = this.settings.boxColor;
         this.updateHSBFromHex(this.settings.boxColor);
@@ -3904,8 +3908,7 @@ class GridGenerator {
         const rightHex = ColorUtils.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
         
         const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
-        this.dom.saturationSlider.style.background = gradient;
-        this.updateSliderTrackGradient('saturationSlider', gradient);
+        this.setColorSliderGradient(this.dom.saturationSlider, gradient);
     }
     
     updateBrightnessGradient() {
@@ -3919,8 +3922,7 @@ class GridGenerator {
         const rightHex = ColorUtils.rgbToHex(rightColor.r, rightColor.g, rightColor.b);
         
         const gradient = `linear-gradient(to right, ${leftHex}, ${rightHex})`;
-        this.dom.brightnessSlider.style.background = gradient;
-        this.updateSliderTrackGradient('brightnessSlider', gradient);
+        this.setColorSliderGradient(this.dom.brightnessSlider, gradient);
     }
 
     updateContentSaturationGradient() {
@@ -3929,8 +3931,7 @@ class GridGenerator {
         const leftColor = ColorUtils.hsbToRgb(h, 0, b);
         const rightColor = ColorUtils.hsbToRgb(h, 100, b);
         const gradient = `linear-gradient(to right, ${ColorUtils.rgbToHex(leftColor.r, leftColor.g, leftColor.b)}, ${ColorUtils.rgbToHex(rightColor.r, rightColor.g, rightColor.b)})`;
-        this.dom.contentSaturationSlider.style.background = gradient;
-        this.updateSliderTrackGradient('contentSaturationSlider', gradient);
+        this.setColorSliderGradient(this.dom.contentSaturationSlider, gradient);
     }
 
     updateContentBrightnessGradient() {
@@ -3939,30 +3940,11 @@ class GridGenerator {
         const leftColor = ColorUtils.hsbToRgb(h, s, 0);
         const rightColor = ColorUtils.hsbToRgb(h, s, 100);
         const gradient = `linear-gradient(to right, ${ColorUtils.rgbToHex(leftColor.r, leftColor.g, leftColor.b)}, ${ColorUtils.rgbToHex(rightColor.r, rightColor.g, rightColor.b)})`;
-        this.dom.contentBrightnessSlider.style.background = gradient;
-        this.updateSliderTrackGradient('contentBrightnessSlider', gradient);
+        this.setColorSliderGradient(this.dom.contentBrightnessSlider, gradient);
     }
-    
-    updateSliderTrackGradient(sliderId, gradient) {
-        // Remove existing style if present
-        let styleId = `${sliderId}-track-style`;
-        let existingStyle = document.getElementById(styleId);
-        if (existingStyle) {
-            existingStyle.remove();
-        }
-        
-        // Create new style element
-        const style = document.createElement('style');
-        style.id = styleId;
-        style.textContent = `
-            #${sliderId}::-webkit-slider-runnable-track {
-                background: ${gradient};
-            }
-            #${sliderId}::-moz-range-track {
-                background: ${gradient};
-            }
-        `;
-        document.head.appendChild(style);
+
+    setColorSliderGradient(slider, gradient) {
+        if (slider) slider.style.background = gradient;
     }
     
     // ============================================
@@ -8133,6 +8115,15 @@ class GridGenerator {
     }
     
     // ========== Custom Columns ==========
+
+    getCustomColumnWidthMax() {
+        const columnCount = Math.max(1, Number(this.settings.columnCount) || 1);
+        const module = Math.max(0, Number(this.settings.gridModule) || 0);
+        const margins = Math.max(0, Number(this.settings.margins) || 0);
+        const frontWidth = Math.max(1, Number(this.settings.frontWidth) || 1);
+        const usableWidth = frontWidth - module * margins * 2 - module * (columnCount - 1);
+        return Math.max(1, Math.floor(usableWidth * 2) / 2);
+    }
     
     /**
      * Построить/обновить UI кастомных колонок
@@ -8144,6 +8135,7 @@ class GridGenerator {
         
         const columnCount = this.settings.columnCount;
         const fixedColumns = this.settings.fixedColumns || {};
+        const maxWidth = this.getCustomColumnWidthMax();
         
         // Показываем секцию только если колонок > 1
         section.style.display = columnCount > 1 ? '' : 'none';
@@ -8162,7 +8154,7 @@ class GridGenerator {
             const width = widths[i - 1] || 0;
             
             const row = document.createElement('div');
-            row.className = 'custom-column-row';
+            row.className = 'control-group custom-column-row';
 
             const label = document.createElement('label');
             label.htmlFor = `customColumnWidth-${i}`;
@@ -8188,16 +8180,18 @@ class GridGenerator {
             typeGroup.appendChild(autoBtn);
             typeGroup.appendChild(fixedBtn);
             typeGroup.classList.add('unit-buttons');
-            labelText.appendChild(typeGroup);
             label.appendChild(labelText);
+            label.appendChild(typeGroup);
 
             const valueInput = document.createElement('input');
             valueInput.type = 'text';
             valueInput.className = 'value-display';
             valueInput.value = (isFixed ? fixedColumns[i] : width).toFixed(2);
             valueInput.dataset.min = '1';
-            valueInput.dataset.max = '500';
+            valueInput.dataset.max = String(maxWidth);
             valueInput.dataset.suffix = ' mm';
+            valueInput.readOnly = !isFixed;
+            valueInput.setAttribute('aria-readonly', String(!isFixed));
             valueInput.setAttribute('aria-label', `Column ${i} width in millimetres`);
             valueInput.addEventListener('change', event => {
                 const nextWidth = Number.parseFloat(event.target.value);
@@ -8210,7 +8204,7 @@ class GridGenerator {
             slider.type = 'range';
             slider.id = `customColumnWidth-${i}`;
             slider.min = '1';
-            slider.max = '500';
+            slider.max = String(maxWidth);
             slider.step = '0.5';
             slider.value = isFixed ? fixedColumns[i] : width;
             slider.disabled = !isFixed;
@@ -8254,7 +8248,7 @@ class GridGenerator {
      */
     setFixedColumnWidth(columnIndex, widthMm, { render = true } = {}) {
         const fixedColumns = { ...(this.settings.fixedColumns || {}) };
-        fixedColumns[columnIndex] = widthMm;
+        fixedColumns[columnIndex] = Math.min(this.getCustomColumnWidthMax(), Math.max(1, widthMm));
         
         this.settings.fixedColumns = fixedColumns;
         this.settingsModule.set('fixedColumns', fixedColumns);

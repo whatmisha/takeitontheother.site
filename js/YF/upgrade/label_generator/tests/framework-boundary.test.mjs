@@ -36,7 +36,7 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
         'shared CSS must load below the frozen Sticky Fingers skin'
     );
     assert.match(html, /href="framework-base\.css\?v=g6-choice-1"/u);
-    assert.match(html, /href="style\.css\?v=g13-ui-repair-1"/u);
+    assert.match(html, /href="style\.css\?v=g15-sticky-controls-1"/u);
     assert.doesNotMatch(html, /(?:modal-overlay|\bid="helpButton")/u);
 
     assert.equal(html.match(/class="toggle-chip feature-chip"/gu)?.length || 0, 6);
@@ -167,10 +167,11 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
 });
 
 test('Sticky Fingers keeps legacy numeric controls while color and custom-column controls use sliders', async () => {
-    const [html, style, sharedStyles, script, controller] = await Promise.all([
+    const [html, style, sharedStyles, uiContract, script, controller] = await Promise.all([
         readFile(new URL('index.html', appRoot), 'utf8'),
         readFile(new URL('style.css', appRoot), 'utf8'),
         readFile(new URL('../framework/css/othersite-styles.css', appRoot), 'utf8'),
+        readFile(new URL('../framework/css/ui-contract.css', appRoot), 'utf8'),
         readFile(new URL('script.js', appRoot), 'utf8'),
         readFile(new URL('src/ui/NumberInputController.js', appRoot), 'utf8')
     ]);
@@ -185,6 +186,10 @@ test('Sticky Fingers keeps legacy numeric controls while color and custom-column
     ]) assert.match(html, new RegExp(`id="${id}"`, 'u'));
     assert.match(script, /slider\.type = 'range';/u);
     assert.match(script, /className = 'value-display'/u);
+    assert.match(html, /class="custom-columns-section" id="customColumnsSection"/u);
+    assert.match(html, /class="control-group-header custom-columns-header"/u);
+    assert.match(html, /class="custom-columns-list ui-control-stack"/u);
+    assert.match(script, /row\.className = 'control-group custom-column-row'/u);
 
     const styleWithoutComments = style.replace(/\/\*[\s\S]*?\*\//gu, '');
     assert.doesNotMatch(styleWithoutComments, /(?:^|\})\s*\.value-display(?![\w-])\s*\{/gu);
@@ -200,16 +205,22 @@ test('Sticky Fingers keeps legacy numeric controls while color and custom-column
         style,
         /\.number-input::-webkit-inner-spin-button,\s*\.number-input::-webkit-outer-spin-button\s*\{\s*opacity: 1;\s*\}/u
     );
-    assert.match(
-        styleWithoutComments,
-        /\.control-group input\[type="range"\]\s*\{/u,
-        'legacy range presentation remains dormant until dead-CSS cleanup'
-    );
+    assert.doesNotMatch(styleWithoutComments, /(?:^|\})\s*\.hsb-(?:picker|controls|control-group|value)(?:\s|:|\{|,)/u);
+    assert.doesNotMatch(styleWithoutComments, /#(?:hue|saturation|brightness|contentHue|contentSaturation|contentBrightness)Slider/u);
+    assert.doesNotMatch(styleWithoutComments, /\.custom-column-row\s*>\s*input\[type="range"\]/u);
+    assert.match(styleWithoutComments, /\.custom-column-row \.value-display\s*\{[^}]*width:\s*48px;[^}]*min-width:\s*48px;/su);
+    assert.match(uiContract, /\.controls-panel \.control-group > input\[type="range"\][\s\S]*?background:\s*transparent\s*!important/u);
+    assert.match(sharedStyles, /\.hsb-control-group input\[type="range"\][\s\S]*?height:\s*10px;[\s\S]*?background:\s*transparent;/u);
+    assert.match(script, /setColorSliderGradient\(slider, gradient\)/u);
+    assert.doesNotMatch(script, /updateSliderTrackGradient|slider-runnable-track/u);
+    assert.match(script, /const maxWidth = this\.getCustomColumnWidthMax\(\);/u);
+    assert.doesNotMatch(script, /slider\.max = '500'|valueInput\.dataset\.max = '500'/u);
     assert.match(controller, /if \(event\.shiftKey && config\.decimals === 2\)/u);
     assert.match(controller, /const roundedToTenth = Math\.round\(currentValue \* 10\) \/ 10;/u);
     assert.match(controller, /newValue = this\.settings\.get\(config\.setting\);/u);
     assert.match(controller, /element\.value = newValue\.toFixed\(config\.decimals\);/u);
     assert.match(script, /setFixedColumnWidth\(i, nextWidth, \{ render: false \}\)/u);
+    assert.match(script, /fixedColumns\[columnIndex\] = Math\.min\(this\.getCustomColumnWidthMax\(\), Math\.max\(1, widthMm\)\);/u);
 });
 
 test('manifest.json is the only Sticky Fingers preset discovery source', async () => {
@@ -235,7 +246,7 @@ test('Google Sheets remains explicit user-initiated external functionality', asy
     assert.match(script, /https:\/\/docs\.google\.com\/spreadsheets/u);
     assert.match(html, /id="loadDataBtn"/u);
     assert.match(html, /id="googleSheetsUrl"/u);
-    assert.match(html, /src="script\.js\?v=g13-ui-repair-1"/u);
+    assert.match(html, /src="script\.js\?v=g15-sticky-controls-1"/u);
     assert.match(
         html,
         /id="dataStatus" class="data-status" role="status" aria-live="polite" aria-atomic="true"/u

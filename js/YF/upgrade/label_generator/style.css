@@ -713,214 +713,6 @@ body:not(.edit-mode-active) .edit-mode-only {
     outline: none;
 }
 
-/* HSB Picker */
-.hsb-picker {
-    margin-top: var(--spacing-lg);
-    animation: slideDown var(--transition-normal) ease-out;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        max-height: 0;
-        overflow: hidden;
-    }
-    to {
-        opacity: 1;
-        max-height: 300px;
-        overflow: visible;
-    }
-}
-
-.hsb-controls {
-    display: flex;
-    flex-direction: column;
-}
-
-.hsb-control-group {
-    margin-bottom: var(--spacing-lg);
-    padding-top: 6px;
-}
-
-.hsb-control-group:last-child {
-    margin-bottom: 0;
-}
-
-.hsb-control-group label {
-    display: flex;
-    align-items: center;
-    font-weight: 400;
-    margin-bottom: var(--spacing-xs);
-    color: var(--color-text-secondary);
-    font-size: 0.85rem;
-}
-
-.hsb-value {
-    display: inline-block;
-    min-width: 40px;
-    text-align: right;
-    font-weight: 400;
-    color: var(--color-text-muted);
-    font-size: 0.8rem;
-    margin-left: auto;
-    background: transparent;
-    border: none;
-    outline: none;
-    padding: 0;
-    cursor: text;
-    font-family: inherit;
-    position: relative;
-}
-
-.hsb-value:focus {
-    color: var(--color-text);
-}
-
-/* Add suffix after value */
-.hsb-value::after {
-    content: attr(data-suffix);
-    position: absolute;
-    right: -0.5em;
-    pointer-events: none;
-}
-
-#hueValue::after,
-#contentHueValue::after {
-    content: '°';
-}
-
-#saturationValue::after,
-#brightnessValue::after,
-#contentSaturationValue::after,
-#contentBrightnessValue::after {
-    content: '%';
-}
-
-/* HSB sliders - same styles as main sliders but with color gradients */
-.hsb-control-group input[type="range"] {
-    width: 100%;
-    height: 1px;
-    border-radius: var(--radius);
-    outline: none;
-    appearance: none;
-    -webkit-appearance: none;
-    margin-top: var(--spacing-md);
-}
-
-/* HSB slider thumbs - matching main slider thumbs */
-.hsb-control-group input[type="range"]::-webkit-slider-thumb {
-    appearance: none;
-    -webkit-appearance: none;
-    width: var(--slider-thumb-size);
-    height: var(--slider-thumb-size);
-    border-radius: 50%;
-    background: var(--color-text);
-    cursor: pointer;
-    border: none;
-    transition: all var(--transition-fast);
-    margin-top: -4.5px;
-}
-
-.hsb-control-group input[type="range"]::-moz-range-thumb {
-    width: var(--slider-thumb-size);
-    height: var(--slider-thumb-size);
-    border-radius: 50%;
-    background: var(--color-text);
-    cursor: pointer;
-    border: none;
-    transition: all var(--transition-fast);
-}
-
-.hsb-control-group input[type="range"]::-webkit-slider-thumb:hover {
-    transform: scale(1.3);
-    background: var(--color-text);
-}
-
-.hsb-control-group input[type="range"]::-moz-range-thumb:hover {
-    transform: scale(1.3);
-    background: var(--color-text);
-}
-
-/* Track styles for HSB sliders */
-.hsb-control-group input[type="range"]::-webkit-slider-runnable-track {
-    width: 100%;
-    height: 1px;
-    border: none;
-    border-radius: var(--radius);
-}
-
-.hsb-control-group input[type="range"]::-moz-range-track {
-    width: 100%;
-    height: 1px;
-    border: none;
-    border-radius: var(--radius);
-}
-
-/* Focus styles for HSB sliders */
-.hsb-control-group input[type="range"]:focus {
-    outline: none;
-}
-
-.hsb-control-group input[type="range"]:focus::-webkit-slider-thumb {
-    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
-}
-
-.hsb-control-group input[type="range"]:focus::-moz-range-thumb {
-    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
-}
-
-/* Color gradients for HSB sliders - preserved! */
-#hueSlider,
-#contentHueSlider {
-    background: linear-gradient(to right, 
-        #ff0000 0%, 
-        #ffff00 17%, 
-        #00ff00 33%, 
-        #00ffff 50%, 
-        #0000ff 67%, 
-        #ff00ff 83%, 
-        #ff0000 100%
-    ) !important;
-}
-
-#hueSlider::-webkit-slider-runnable-track,
-#contentHueSlider::-webkit-slider-runnable-track {
-    background: linear-gradient(to right, 
-        #ff0000 0%, 
-        #ffff00 17%, 
-        #00ff00 33%, 
-        #00ffff 50%, 
-        #0000ff 67%, 
-        #ff00ff 83%, 
-        #ff0000 100%
-    );
-}
-
-#hueSlider::-moz-range-track,
-#contentHueSlider::-moz-range-track {
-    background: linear-gradient(to right, 
-        #ff0000 0%, 
-        #ffff00 17%, 
-        #00ff00 33%, 
-        #00ffff 50%, 
-        #0000ff 67%, 
-        #ff00ff 83%, 
-        #ff0000 100%
-    );
-}
-
-/* Saturation slider - will be updated dynamically */
-#saturationSlider,
-#contentSaturationSlider {
-    background: linear-gradient(to right, #808080, #ff0000) !important;
-}
-
-/* Brightness slider - will be updated dynamically */
-#brightnessSlider,
-#contentBrightnessSlider {
-    background: linear-gradient(to right, #000000, #ffffff) !important;
-}
-
 .control-group input[type="text"]#hexColorInput {
     flex: 1;
     height: 30px;
@@ -1835,59 +1627,28 @@ textarea::placeholder {
 
 .custom-columns-section {
     padding-top: 0;
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: 12px;
 }
 
 .custom-columns-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--spacing-md);
-}
-
-.custom-columns-header .control-label {
-    font-size: var(--font-size-sm);
-    opacity: 0.6;
+    margin-bottom: 8px;
 }
 
 .custom-columns-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-}
-
-.custom-column-row {
-    display: block;
-    margin: 0;
 }
 
 .custom-column-type {
     margin-left: 4px;
+    flex-shrink: 0;
 }
 
 .custom-column-type .unit-btn {
     min-width: 0;
 }
 
-.custom-column-row > label {
-    display: flex;
-    align-items: center;
-    margin-bottom: 2px;
-    color: var(--color-text-secondary);
-    font-size: 0.9rem;
-}
-
-.custom-column-row > label > span:first-child {
-    flex: 1 1 auto;
-}
-
-.custom-column-row > input[type="range"] {
-    width: 100%;
-    height: 10px;
-    margin-top: 6px;
-    margin-bottom: 0;
-}
-
-.custom-column-row > input[type="range"]:disabled {
-    opacity: 0.3;
+.custom-column-row .value-display {
+    width: 48px;
+    min-width: 48px;
 }
