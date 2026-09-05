@@ -2,6 +2,7 @@ import { buildGlobalScene } from '../geometry/globalGeometry.js';
 import { drawSceneOnContext } from '../render/globalRenderer.js';
 import { muxAvcToMp4 } from './mp4Muxer.js';
 import { StoredZipBlobBuilder } from './zipStore.js';
+import { rotationFrameCount, rotationFrameOptions } from '../animation/rotationAnimation.js';
 
 const FPS = 60;
 const SIZE = 1080;
@@ -10,22 +11,36 @@ function postProgress(jobId, completed, total, message) {
     self.postMessage({ type: 'progress', jobId, completed, total, message });
 }
 
-function drawFrame(context, settings, frameIndex) {
-    const timeSeconds = frameIndex / FPS;
-    const scene = buildGlobalScene(settings, { timeSeconds });
+function frameCountForJob(job) {
+    return job.animationKind === 'rotation'
+        ? rotationFrameCount(job.settings, FPS)
+        : Math.max(1, Math.round(job.settings.duration * FPS));
+}
+
+function sceneForFrame(job, frameIndex, frameCount) {
+    if (job.animationKind === 'rotation') {
+        return buildGlobalScene(
+            { ...job.settings, animationMode: 'static' },
+            rotationFrameOptions(job.settings, frameIndex, frameCount)
+        );
+    }
+    return buildGlobalScene(job.settings, { timeSeconds: frameIndex / FPS });
+}
+
+function drawFrame(context, job, frameIndex, frameCount) {
+    const scene = sceneForFrame(job, frameIndex, frameCount);
     drawSceneOnContext(context, scene, { size: SIZE, transparent: false });
 }
 
 async function exportPngSequence(job) {
-    const frameCount = Math.round(job.settings.duration * FPS);
+    const frameCount = frameCountForJob(job);
     const canvas = new OffscreenCanvas(SIZE, SIZE);
     const context = canvas.getContext('2d', { alpha: true });
     const archive = new StoredZipBlobBuilder();
     const digits = Math.max(4, String(frameCount).length);
 
     for (let index = 0; index < frameCount; index += 1) {
-        const timeSeconds = index / FPS;
-        const scene = buildGlobalScene(job.settings, { timeSeconds });
+        const scene = sceneForFrame(job, index, frameCount);
         drawSceneOnContext(context, scene, { size: SIZE, transparent: true });
         const blob = await canvas.convertToBlob({ type: 'image/png' });
         archive.add(
@@ -84,7 +99,7 @@ async function waitForCapacity(encoder) {
 }
 
 async function exportMp4(job) {
-    const frameCount = Math.round(job.settings.duration * FPS);
+    const frameCount = frameCountForJob(job);
     const canvas = new OffscreenCanvas(SIZE, SIZE);
     const context = canvas.getContext('2d', { alpha: false });
     const chunks = [];
@@ -109,7 +124,7 @@ async function exportMp4(job) {
     try {
         for (let index = 0; index < frameCount; index += 1) {
             if (encoderError) throw encoderError;
-            drawFrame(context, job.settings, index);
+            drawFrame(context, job, index, frameCount);
             const frame = new VideoFrame(canvas, {
                 timestamp: Math.round(index * frameDuration),
                 duration: Math.round(frameDuration)

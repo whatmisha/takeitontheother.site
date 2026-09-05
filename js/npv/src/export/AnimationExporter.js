@@ -62,11 +62,14 @@ export class AnimationExporter {
         reject?.(new DOMException('Export cancelled.', 'AbortError'));
     }
 
-    export({ format, settings, baseName }) {
+    export({ format, settings, baseName, animationKind = 'growth' }) {
         if (this.worker) return Promise.reject(new Error('An export is already running.'));
         const jobId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const worker = new Worker(new URL('./animationExportWorker.js', import.meta.url), { type: 'module' });
-        const frameCount = Math.round(settings.duration * 60);
+        const duration = animationKind === 'rotation'
+            ? settings.rotationAnimation.duration
+            : settings.duration;
+        const frameCount = Math.max(1, Math.round(duration * 60));
         this.worker = worker;
         this.setBusy(true);
         this.update(0, frameCount, 'Preparing');
@@ -109,7 +112,7 @@ export class AnimationExporter {
                 this.onError?.(error);
                 reject(error);
             }, { once: true });
-            worker.postMessage({ type: 'export', jobId, format, settings, baseName });
+            worker.postMessage({ type: 'export', jobId, format, animationKind, settings, baseName });
         });
     }
 }

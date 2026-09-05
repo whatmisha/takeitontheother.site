@@ -1093,4 +1093,15 @@ input[type="range"]:disabled {
     .action-button {
         min-width: 112px;
     }
+
+    .export-actions {
+        display: grid;
+        width: min(360px, calc(100vw - 24px));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .export-actions .action-button {
+        min-width: 0;
+        padding: 0 12px;
+    }
 }

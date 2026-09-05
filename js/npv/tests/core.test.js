@@ -9,6 +9,7 @@ import { buildGlobalScene, defaultSettings } from '../src/geometry/globalGeometr
 import { sceneToSvgString } from '../src/render/globalRenderer.js';
 import { crc32, StoredZipBlobBuilder } from '../src/export/zipStore.js';
 import { muxAvcToMp4 } from '../src/export/mp4Muxer.js';
+import { rotationFrameCount, rotationFrameOptions } from '../src/animation/rotationAnimation.js';
 
 test('history groups a changing value into one undoable snapshot', () => {
     const history = new HistoryManager({ value: 1 });
@@ -127,6 +128,29 @@ test('the temporary play control previews the saved eased rotation beside zoom',
     assert.equal(rotationControlValue(140 + rotationPreviewOffsets(0.5).rotationY), -40);
     assert.match(app, /const durationMs = duration \* 1000/);
     assert.match(app, /rotationPreviewOffsets\(progress, axis, degrees, easing\);\s*this\.syncRotationControls\(\)/);
+});
+
+test('rotation animation exports MP4 and a transparent PNG sequence at 60 fps', async () => {
+    const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+    const app = await readFile(new URL('../src/GlobalApp.js', import.meta.url), 'utf8');
+    const exporter = await readFile(new URL('../src/export/AnimationExporter.js', import.meta.url), 'utf8');
+    const worker = await readFile(new URL('../src/export/animationExportWorker.js', import.meta.url), 'utf8');
+    const settings = { ...defaultSettings(), ...SEEDED_PRESETS['Person Five'] };
+    const frameCount = rotationFrameCount(settings);
+    assert.equal(frameCount, 180);
+    assert.deepEqual(rotationFrameOptions(settings, 0, frameCount), {
+        rotationX: 0, rotationY: 0, rotationZ: 0
+    });
+    assert.deepEqual(rotationFrameOptions(settings, frameCount - 1, frameCount), {
+        rotationX: 0, rotationY: 180, rotationZ: 0
+    });
+    assert.match(html, /id="exportPngSequence"[^>]*>Export PNG sequence/);
+    assert.match(html, /id="exportVideo"[^>]*>Export MP4/);
+    assert.match(app, /animationKind: 'rotation'/);
+    assert.match(exporter, /settings\.rotationAnimation\.duration/);
+    assert.match(worker, /rotationFrameOptions\(job\.settings, frameIndex, frameCount\)/);
+    assert.match(worker, /animationMode: 'static'/);
+    assert.match(worker, /transparent: true/);
 });
 
 test('rotation animation settings survive JSON and old states receive safe defaults', () => {

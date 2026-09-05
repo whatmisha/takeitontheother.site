@@ -15,6 +15,9 @@ import { renderSceneToSvg, sceneToSvgString } from './render/globalRenderer.js';
 import { PanelManager } from './ui/PanelManager.js';
 import { ZoomPanManager } from './ui/ZoomPanManager.js';
 import { AnimationExporter } from './export/AnimationExporter.js';
+import { rotationPreviewOffsets } from './animation/rotationAnimation.js';
+
+export { rotationPreviewOffsets } from './animation/rotationAnimation.js';
 
 const clone = (value) => structuredClone(value);
 const pad = (value) => String(value).padStart(2, '0');
@@ -22,24 +25,6 @@ const SPHERE_SESSION_KEY = 'yfToolsSphereSessionV1';
 const DEFAULT_PRESET_VERSION = 3;
 const isEditable = (target) => target instanceof Element
     && Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
-
-export function rotationPreviewOffsets(
-    progress,
-    axis = 'y',
-    degrees = 360,
-    easing = 'smootherstep'
-) {
-    const time = Math.min(1, Math.max(0, Number(progress) || 0));
-    const eased = easing === 'linear'
-        ? time
-        : time * time * time * (time * (time * 6 - 15) + 10);
-    const angle = Number(degrees) * eased;
-    return {
-        rotationX: axis === 'x' ? angle : 0,
-        rotationY: axis === 'y' ? angle : 0,
-        rotationZ: axis === 'z' ? angle : 0
-    };
-}
 
 export function rotationControlValue(value) {
     return ((Number(value) + 180) % 360 + 360) % 360 - 180;
@@ -114,7 +99,12 @@ export class GlobalApp {
             progress: document.getElementById('exportProgress'),
             message: document.getElementById('exportMessage'),
             cancelButton: document.getElementById('cancelExport'),
-            buttons: [document.getElementById('exportPng'), document.getElementById('exportPrimary')],
+            buttons: [
+                document.getElementById('exportPng'),
+                document.getElementById('exportPrimary'),
+                document.getElementById('exportPngSequence'),
+                document.getElementById('exportVideo')
+            ],
             onError: (error) => this.alert('Export failed', error.message)
         });
     }
@@ -842,6 +832,23 @@ export class GlobalApp {
         document.getElementById('restartAnimation').addEventListener('click', () => this.restartAnimation());
         document.getElementById('exportPng').addEventListener('click', () => this.exportPngAction());
         document.getElementById('exportPrimary').addEventListener('click', () => this.exportPrimaryAction());
+        document.getElementById('exportPngSequence').addEventListener('click', () => {
+            this.exportRotationAnimation('png-sequence');
+        });
+        document.getElementById('exportVideo').addEventListener('click', () => {
+            this.exportRotationAnimation('mp4');
+        });
+    }
+
+    exportRotationAnimation(format) {
+        return this.animationExporter.export({
+            format,
+            animationKind: 'rotation',
+            settings: this.exportSnapshot(),
+            baseName: exportBaseName()
+        }).catch((error) => {
+            if (error.name !== 'AbortError') console.error(error);
+        });
     }
 
     exportPrimaryAction() {
