@@ -292,10 +292,11 @@ export function defaultSettings() {
         animationFrom: 1,
         duration: 5,
         rotationAnimation: {
-            axis: 'x',
+            axis: 'y',
             degrees: 360,
             duration: 3,
-            easing: 'smootherstep'
+            easing: 'smootherstep',
+            coordinateMode: 'screen'
         },
         overrides: {}
     };
@@ -331,15 +332,21 @@ export function normalizeSettings(source = {}) {
         && typeof settings.rotationAnimation === 'object'
         ? settings.rotationAnimation
         : defaults.rotationAnimation;
+    const hasExplicitAnimationAxis = ['x', 'y', 'z'].includes(rotationAnimation.axis);
+    const normalizedAnimationAxis = hasExplicitAnimationAxis
+        ? rotationAnimation.axis
+        : defaults.rotationAnimation.axis;
+    const animationAxis = rotationAnimation.coordinateMode !== 'screen' && hasExplicitAnimationAxis
+        ? normalizedAnimationAxis === 'x' ? 'y' : normalizedAnimationAxis === 'y' ? 'x' : 'z'
+        : normalizedAnimationAxis;
     settings.rotationAnimation = {
-        axis: ['x', 'y', 'z'].includes(rotationAnimation.axis)
-            ? rotationAnimation.axis
-            : defaults.rotationAnimation.axis,
+        axis: animationAxis,
         degrees: clamp(finiteOr(rotationAnimation.degrees, defaults.rotationAnimation.degrees), -720, 720),
         duration: clamp(finiteOr(rotationAnimation.duration, defaults.rotationAnimation.duration), 0.25, 60),
         easing: ['linear', 'smootherstep'].includes(rotationAnimation.easing)
             ? rotationAnimation.easing
-            : defaults.rotationAnimation.easing
+            : defaults.rotationAnimation.easing,
+        coordinateMode: 'screen'
     };
     settings.overrides = settings.overrides && typeof settings.overrides === 'object'
         ? structuredClone(settings.overrides)

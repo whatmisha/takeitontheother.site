@@ -88,10 +88,11 @@ export const SEEDED_PRESETS = Object.freeze({
         animationFrom: 1,
         duration: 5,
         rotationAnimation: {
-            axis: 'x',
+            axis: 'y',
             degrees: 360,
             duration: 3,
-            easing: 'smootherstep'
+            easing: 'smootherstep',
+            coordinateMode: 'screen'
         },
         overrides: {}
     },
@@ -123,10 +124,11 @@ export const SEEDED_PRESETS = Object.freeze({
         animationFrom: 1,
         duration: 5,
         rotationAnimation: {
-            axis: 'x',
+            axis: 'y',
             degrees: 180,
             duration: 3,
-            easing: 'smootherstep'
+            easing: 'smootherstep',
+            coordinateMode: 'screen'
         },
         overrides: {}
     },

@@ -25,7 +25,7 @@ const isEditable = (target) => target instanceof Element
 
 export function rotationPreviewOffsets(
     progress,
-    axis = 'x',
+    axis = 'y',
     degrees = 360,
     easing = 'smootherstep'
 ) {

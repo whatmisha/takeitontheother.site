@@ -108,23 +108,23 @@ test('the temporary play control previews the saved eased rotation beside zoom',
     const middle = rotationPreviewOffsets(0.25);
     const end = rotationPreviewOffsets(1);
     assert.deepEqual(start, { rotationX: 0, rotationY: 0, rotationZ: 0 });
-    assert.ok(middle.rotationX > 0);
-    assert.equal(middle.rotationY, 0);
+    assert.equal(middle.rotationX, 0);
+    assert.ok(middle.rotationY > 0);
     assert.equal(middle.rotationZ, 0);
-    assert.deepEqual(end, { rotationX: 360, rotationY: 0, rotationZ: 0 });
+    assert.deepEqual(end, { rotationX: 0, rotationY: 360, rotationZ: 0 });
     assert.deepEqual(rotationPreviewOffsets(1, 'z'), { rotationX: 0, rotationY: 0, rotationZ: 360 });
     assert.deepEqual(rotationPreviewOffsets(1, 'x', 180), { rotationX: 180, rotationY: 0, rotationZ: 0 });
     assert.doesNotMatch(app, /Math\.sin/);
     const samples = Array.from({ length: 101 }, (_, index) => rotationPreviewOffsets(index / 100));
     samples.slice(1).forEach((sample, index) => {
-        assert.ok(sample.rotationX >= samples[index].rotationX);
-        assert.equal(sample.rotationY, 0);
+        assert.equal(sample.rotationX, 0);
+        assert.ok(sample.rotationY >= samples[index].rotationY);
         assert.equal(sample.rotationZ, 0);
     });
-    assert.equal(samples.at(-1).rotationX - samples[0].rotationX, 360);
-    assert.ok(rotationPreviewOffsets(0.001).rotationX < 0.00001);
-    assert.ok(360 - rotationPreviewOffsets(0.999).rotationX < 0.00001);
-    assert.equal(rotationControlValue(140 + rotationPreviewOffsets(0.5).rotationX), -40);
+    assert.equal(samples.at(-1).rotationY - samples[0].rotationY, 360);
+    assert.ok(rotationPreviewOffsets(0.001).rotationY < 0.00001);
+    assert.ok(360 - rotationPreviewOffsets(0.999).rotationY < 0.00001);
+    assert.equal(rotationControlValue(140 + rotationPreviewOffsets(0.5).rotationY), -40);
     assert.match(app, /const durationMs = duration \* 1000/);
     assert.match(app, /rotationPreviewOffsets\(progress, axis, degrees, easing\);\s*this\.syncRotationControls\(\)/);
 });
@@ -132,13 +132,20 @@ test('the temporary play control previews the saved eased rotation beside zoom',
 test('rotation animation settings survive JSON and old states receive safe defaults', () => {
     const settings = defaultSettings();
     assert.deepEqual(JSON.parse(JSON.stringify(settings)).rotationAnimation, {
-        axis: 'x',
+        axis: 'y',
         degrees: 360,
         duration: 3,
-        easing: 'smootherstep'
+        easing: 'smootherstep',
+        coordinateMode: 'screen'
     });
     const scene = buildGlobalScene({ ellipseCount: 9 });
     assert.deepEqual(scene.settings.rotationAnimation, settings.rotationAnimation);
+    const migrated = buildGlobalScene({
+        ...settings,
+        rotationAnimation: { axis: 'x', degrees: 180, duration: 3, easing: 'smootherstep' }
+    });
+    assert.equal(migrated.settings.rotationAnimation.axis, 'y');
+    assert.equal(migrated.settings.rotationAnimation.coordinateMode, 'screen');
 });
 
 test('Transform ends with one reset button that clears all rotation axes', async () => {
@@ -211,10 +218,11 @@ test('Iconic Five preserves the supplied settings as a built-in preset', () => {
         animationFrom: 1,
         duration: 5,
         rotationAnimation: {
-            axis: 'x',
+            axis: 'y',
             degrees: 360,
             duration: 3,
-            easing: 'smootherstep'
+            easing: 'smootherstep',
+            coordinateMode: 'screen'
         },
         overrides: {}
     });
@@ -249,10 +257,11 @@ test('Person Five preserves the supplied settings as a built-in preset', () => {
         animationFrom: 1,
         duration: 5,
         rotationAnimation: {
-            axis: 'x',
+            axis: 'y',
             degrees: 180,
             duration: 3,
-            easing: 'smootherstep'
+            easing: 'smootherstep',
+            coordinateMode: 'screen'
         },
         overrides: {}
     });
@@ -260,10 +269,10 @@ test('Person Five preserves the supplied settings as a built-in preset', () => {
 
 test('Five presets keep their own rotation animation settings', () => {
     assert.deepEqual(SEEDED_PRESETS['Iconic Five'].rotationAnimation, {
-        axis: 'x', degrees: 360, duration: 3, easing: 'smootherstep'
+        axis: 'y', degrees: 360, duration: 3, easing: 'smootherstep', coordinateMode: 'screen'
     });
     assert.deepEqual(SEEDED_PRESETS['Person Five'].rotationAnimation, {
-        axis: 'x', degrees: 180, duration: 3, easing: 'smootherstep'
+        axis: 'y', degrees: 180, duration: 3, easing: 'smootherstep', coordinateMode: 'screen'
     });
     assert.equal(Object.keys(SEEDED_PRESETS).filter((name) => name.startsWith('Iconic Five')).length, 1);
 });

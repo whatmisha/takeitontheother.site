@@ -99,7 +99,7 @@ test('Packed coverage changes every local mark radius without a hidden ceiling',
     });
 });
 
-test('the Iconic Five X preview makes one closed 360-degree turn', () => {
+test('the Iconic Five Y preview makes one closed 360-degree turn', () => {
     const preset = SEEDED_PRESETS['Iconic Five'];
     const { axis, degrees, easing } = preset.rotationAnimation;
     const start = buildGlobalScene(preset, rotationPreviewOffsets(0, axis, degrees, easing));
@@ -115,11 +115,11 @@ test('the Iconic Five X preview makes one closed 360-degree turn', () => {
     });
 });
 
-test('the Person Five preview is exactly one half-turn on X', () => {
+test('the Person Five preview is exactly one half-turn on Y', () => {
     const { axis, degrees, easing } = SEEDED_PRESETS['Person Five'].rotationAnimation;
     assert.deepEqual(rotationPreviewOffsets(1, axis, degrees, easing), {
-        rotationX: 180,
-        rotationY: 0,
+        rotationX: 0,
+        rotationY: 180,
         rotationZ: 0
     });
 });
