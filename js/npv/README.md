@@ -36,12 +36,13 @@ All numeric slider values are editable text fields. Enter or blur applies a type
 
 ## Flat model
 
+- Flat opens on the built-in `Basic` preset at 960×540. `Talent` reproduces the supplied 09:39 Person configuration; both presets are available from the header menu.
 - `Basic` enlarges the ellipse under the cursor and spreads a distance-based influence to its neighbors.
 - `Maximum size`, `Field radius`, and `Falloff curve` separately control the peak, affected area, and the soft/linear/tight shape of that transition.
 - `Person` snaps the field to a vertical pair whose radii and center spacing use the exact proportions from `references/person_01.svg`, independent of the base ellipse aspect ratio.
 - Person reverses the field: the reference icon remains fixed while surrounding ellipses shrink toward `Minimum size`. `Field radius` and `Falloff curve` control the complete transition back to the regular pattern.
 - Person targets use a short temporal interpolation, so entering and leaving a snapped pair never changes its size in a single frame.
-- `Canvas width/height` controls the artboard from 80 to 1920 px; the default remains 640×480. The lattice lives in a permanent center-origin coordinate space, so resizing reveals or clips cells on every edge without changing any existing mark coordinates. `Spacing X/Y` remains center-to-center.
+- `Canvas width/height` controls the artboard from 80 to 1920 px; the Basic default is 960×540. The lattice lives in a permanent center-origin coordinate space, so resizing reveals or clips cells on every edge without changing any existing mark coordinates. `Spacing X/Y` remains center-to-center.
 - `Paired tiles` offsets complete two-row bands instead of individual rows. This produces a brick/hex-like rhythm while keeping every potential head exactly above its shoulders.
 - Click the artboard to pin any number of field points while retaining the live cursor field. Every point freezes its mode, radius, falloff, and size limit; later control changes apply only to the live field and future pins. Each point can be disabled or deleted from its coordinate pill.
 - Field coordinates stay editable while `Follows cursor` is active and track the pointer live. They are signed absolute pixel coordinates in the permanent center-origin space. Resizing changes only their projection into the SVG, so their values and their position relative to the pattern remain unchanged.

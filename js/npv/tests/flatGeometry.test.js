@@ -11,12 +11,17 @@ import {
     flatFalloff,
     normalizeFlatSettings
 } from '../src/geometry/flatGeometry.js';
+import {
+    FLAT_DEFAULT_PRESET_NAME,
+    FLAT_PRESETS,
+    getFlatPreset
+} from '../src/core/flatPresets.js';
 import { flatSceneToSvgString } from '../src/render/flatRenderer.js';
 
 test('Person defaults reproduce the density and proportions of the supplied reference', () => {
     const settings = defaultFlatSettings();
     const scene = buildFlatScene({ ...settings, mode: 'person' });
-    assert.equal(scene.elements.length, 609);
+    assert.equal(scene.elements.length, 1075);
 
     const head = scene.elements.find((element) => element.role === 'head');
     const shoulders = scene.elements.find((element) => element.role === 'shoulders');
@@ -250,13 +255,13 @@ test('Spacing is center-to-center and ellipse dimensions never move the lattice'
     ) < 1e-9);
 });
 
-test('The default canvas derives a centered 29×21 lattice without editable row or column counts', () => {
+test('The default canvas derives a centered 43×25 lattice without editable row or column counts', () => {
     const layout = buildFlatLayout(defaultFlatSettings());
-    assert.equal(layout.columnCount, 29);
-    assert.equal(layout.rowCount, 21);
-    assert.equal(layout.elements.length, 609);
+    assert.equal(layout.columnCount, 43);
+    assert.equal(layout.rowCount, 25);
+    assert.equal(layout.elements.length, 1075);
     assert.ok(layout.elements[0].cx < 0);
-    assert.ok(layout.elements[28].cx > 640);
+    assert.ok(layout.elements[42].cx > 960);
     const center = layout.elementById.get('0:0');
     assert.equal(center.worldX, 0);
     assert.equal(center.worldY, 0);
@@ -295,6 +300,8 @@ test('Canvas growth adds cells on every edge while centered mark and field coord
     const settings = {
         ...defaultFlatSettings(),
         mode: 'basic',
+        width: 640,
+        height: 480,
         fieldFollow: false,
         fieldX: 197,
         fieldY: 137,
@@ -362,9 +369,13 @@ test('Flat UI exposes pinned fields and brush-radius shortcuts without editable 
     const app = await readFile(new URL('../src/FlatApp.js', import.meta.url), 'utf8');
     const renderer = await readFile(new URL('../src/render/flatRenderer.js', import.meta.url), 'utf8');
     const css = await readFile(new URL('../styles/global.css', import.meta.url), 'utf8');
-    assert.match(html, /viewBox="0 0 640 480"/);
-    assert.match(html, /id="canvasWidth"[^>]*value="640"[^>]*data-flat-setting="width"/);
-    assert.match(html, /id="canvasHeight"[^>]*value="480"[^>]*data-flat-setting="height"/);
+    assert.match(html, /viewBox="0 0 960 540"/);
+    assert.match(html, /id="canvasWidth"[^>]*value="960"[^>]*data-flat-setting="width"/);
+    assert.match(html, /id="canvasHeight"[^>]*value="540"[^>]*data-flat-setting="height"/);
+    assert.match(html, /id="flatPresetToggle"/);
+    assert.match(html, /id="flatPresetName">Basic/);
+    assert.match(html, /id="flatPresetList"[^>]*role="listbox"/);
+    assert.doesNotMatch(html, /id="resetFlat"/);
     assert.doesNotMatch(html, /id="columns"|id="rows"/);
     assert.match(html, /id="fieldX"[^>]*min="-960"[^>]*max="960"[^>]*value="0"[^>]*data-flat-coordinate="x"/);
     assert.match(html, /id="fieldY"[^>]*min="-960"[^>]*max="960"[^>]*value="0"[^>]*data-flat-coordinate="y"/);
@@ -381,6 +392,8 @@ test('Flat UI exposes pinned fields and brush-radius shortcuts without editable 
     assert.match(app, /interpolatePersonScene/);
     assert.match(app, /radius: this\.settings\.fieldRadius/);
     assert.match(app, /syncFieldCoordinates/);
+    assert.match(app, /flatPresetNames\(\)/);
+    assert.match(app, /openPreset\(name\)/);
     assert.match(app, /document\.querySelectorAll\('\[data-flat-coordinate\]'\)/);
     assert.match(app, /point\.x - this\.settings\.width \/ 2/);
     assert.doesNotMatch(app, /point\[axis\] - center/);
@@ -395,17 +408,37 @@ test('Flat UI exposes pinned fields and brush-radius shortcuts without editable 
     assert.doesNotMatch(app, /canvas\.addEventListener\('pointerleave'/);
     assert.match(app, /patch\.fieldX = this\.transientField\.x/);
 });
-test('Flat uses a 640×480 artboard with immutable center-origin field coordinates', () => {
+test('Flat uses a 960×540 artboard with immutable center-origin field coordinates', () => {
     const settings = defaultFlatSettings();
     const scene = buildFlatScene(settings);
-    assert.equal(scene.width, 640);
-    assert.equal(scene.height, 480);
+    assert.equal(scene.width, 960);
+    assert.equal(scene.height, 540);
     assert.equal(settings.fieldX, 0);
     assert.equal(settings.fieldY, 0);
     assert.equal(scene.field.coordinateX, 0);
     assert.equal(scene.field.coordinateY, 0);
     assert.equal(scene.field.x, FLAT_ARTBOARD_CENTER_X);
     assert.equal(scene.field.y, FLAT_ARTBOARD_CENTER_Y);
+});
+
+test('Flat exposes Basic as default and Talent as the supplied Person preset', () => {
+    assert.equal(FLAT_DEFAULT_PRESET_NAME, 'Basic');
+    assert.deepEqual(Object.keys(FLAT_PRESETS), ['Basic', 'Talent']);
+    const basic = normalizeFlatSettings(getFlatPreset('Basic'));
+    const talent = normalizeFlatSettings(getFlatPreset('Talent'));
+    assert.deepEqual(basic, defaultFlatSettings());
+    assert.equal(basic.width, 960);
+    assert.equal(basic.height, 540);
+    assert.equal(basic.mode, 'basic');
+    assert.equal(talent.width, 960);
+    assert.equal(talent.height, 540);
+    assert.equal(talent.mode, 'person');
+    assert.equal(talent.ellipseWidth, 18);
+    assert.equal(talent.ellipseHeight, 18);
+    assert.equal(talent.spacingX, 30);
+    assert.equal(talent.spacingY, 30);
+    assert.equal(talent.personMinimumScale, 10);
+    assert.equal(talent.fieldRadius, 200);
 });
 
 test('legacy top-left field coordinates migrate once into the center-origin space', () => {

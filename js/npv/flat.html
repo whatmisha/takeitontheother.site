@@ -17,7 +17,16 @@
                 <a class="top-button tool-tab" href="./flat.html" aria-current="page">Flat</a>
             </nav>
             <div class="preset-cluster">
-                <button class="top-button" id="resetFlat" type="button">Reset</button>
+                <div class="preset-menu" id="flatPresetMenu">
+                    <button class="top-button preset-toggle" id="flatPresetToggle" type="button"
+                            aria-haspopup="listbox" aria-expanded="false" aria-controls="flatPresetList">
+                        <span id="flatPresetName">Basic</span>
+                        <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <div class="preset-list" id="flatPresetList" role="listbox" hidden></div>
+                </div>
                 <button class="icon-button" id="shareButton" type="button" aria-label="Copy share link" title="Copy share link">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="18" height="18" fill="none" aria-hidden="true">
                         <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M5.7410987,3.4304742l.6124561-.6124561c.7810478-.7810478,2.0473765-.7810478,2.8284243,0l.0000028.0000028c.7810478.7810478.7810478,2.0473765,0,2.8284243l-.6124561.6124561"/>
@@ -32,7 +41,7 @@
         <main class="workspace" id="workspace">
             <h1 class="sr-only">Flat parametric ellipse pattern generator</h1>
             <div class="canvas-container" id="canvasContainer">
-                <svg id="mainSvg" viewBox="0 0 640 480" role="img" aria-label="Flat ellipse pattern preview"></svg>
+                <svg id="mainSvg" viewBox="0 0 960 540" role="img" aria-label="Flat ellipse pattern preview"></svg>
             </div>
 
             <aside class="controls-panel controls-panel--left-top" id="flatPatternPanel">
@@ -55,12 +64,12 @@
                         </div>
                     </div>
                     <div class="control-group">
-                        <label for="canvasWidth"><span>Canvas width <span class="unit">px</span></span><input type="text" class="value-display" id="canvasWidthValue" value="640" inputmode="numeric" autocomplete="off" aria-label="Canvas width value"></label>
-                        <input id="canvasWidth" type="range" min="80" max="1920" step="1" value="640" data-flat-setting="width">
+                        <label for="canvasWidth"><span>Canvas width <span class="unit">px</span></span><input type="text" class="value-display" id="canvasWidthValue" value="960" inputmode="numeric" autocomplete="off" aria-label="Canvas width value"></label>
+                        <input id="canvasWidth" type="range" min="80" max="1920" step="1" value="960" data-flat-setting="width">
                     </div>
                     <div class="control-group">
-                        <label for="canvasHeight"><span>Canvas height <span class="unit">px</span></span><input type="text" class="value-display" id="canvasHeightValue" value="480" inputmode="numeric" autocomplete="off" aria-label="Canvas height value"></label>
-                        <input id="canvasHeight" type="range" min="80" max="1920" step="1" value="480" data-flat-setting="height">
+                        <label for="canvasHeight"><span>Canvas height <span class="unit">px</span></span><input type="text" class="value-display" id="canvasHeightValue" value="540" inputmode="numeric" autocomplete="off" aria-label="Canvas height value"></label>
+                        <input id="canvasHeight" type="range" min="80" max="1920" step="1" value="540" data-flat-setting="height">
                     </div>
                     <div class="control-group">
                         <label for="ellipseWidth"><span>Ellipse width <span class="unit">px</span></span><input type="text" class="value-display" id="ellipseWidthValue" value="8.4" inputmode="decimal" autocomplete="off" aria-label="Ellipse width value"></label>

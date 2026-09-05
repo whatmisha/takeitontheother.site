@@ -2,16 +2,21 @@ import {
     FLAT_ARTBOARD_HEIGHT,
     FLAT_ARTBOARD_WIDTH,
     buildFlatScene,
-    defaultFlatSettings,
     normalizeFlatSettings
 } from './geometry/flatGeometry.js';
 import { HistoryManager } from './core/history.js';
+import {
+    FLAT_DEFAULT_PRESET_NAME,
+    flatPresetNames,
+    getFlatPreset
+} from './core/flatPresets.js';
 import { PanelManager } from './ui/PanelManager.js';
 import { ZoomPanManager } from './ui/ZoomPanManager.js';
 import { flatSceneToSvgString, renderFlatSceneToSvg } from './render/flatRenderer.js';
 
 const pad = (value) => String(value).padStart(2, '0');
 const FLAT_SESSION_KEY = 'yfToolsFlatSessionV1';
+const FLAT_SESSION_VERSION = 2;
 const isEditable = (target) => target instanceof Element
     && Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
 
@@ -53,7 +58,9 @@ export class FlatApp {
     constructor() {
         this.svg = document.getElementById('mainSvg');
         this.canvas = document.getElementById('canvasContainer');
-        this.settings = normalizeFlatSettings(defaultFlatSettings());
+        this.settings = normalizeFlatSettings(getFlatPreset(FLAT_DEFAULT_PRESET_NAME));
+        this.currentPresetName = FLAT_DEFAULT_PRESET_NAME;
+        this.presetDirty = false;
         this.scene = null;
         this.transientField = null;
         this.renderFrame = null;
@@ -85,9 +92,13 @@ export class FlatApp {
         return this;
     }
 
-    update(patch, { history = true } = {}) {
+    update(patch, { history = true, markDirty = true } = {}) {
         this.settings = normalizeFlatSettings({ ...this.settings, ...patch });
         if (history) this.history.schedule(this.settings);
+        if (markDirty) {
+            this.presetDirty = true;
+            this.syncPresetChrome();
+        }
         this.saveSessionState();
         this.requestRender();
     }
@@ -352,20 +363,67 @@ export class FlatApp {
     }
 
     bindChrome() {
-        document.getElementById('resetFlat').addEventListener('click', () => {
-            this.settings = normalizeFlatSettings(defaultFlatSettings());
-            this.transientField = null;
-            this.hoveredStaticFieldId = null;
-            this.personMotion.clear();
-            this.personMotionTime = null;
-            this.history.reset(this.settings);
-            this.saveSessionState();
-            this.syncControls();
-            this.renderNow();
+        const toggle = document.getElementById('flatPresetToggle');
+        const list = document.getElementById('flatPresetList');
+        toggle.addEventListener('click', () => {
+            const open = toggle.getAttribute('aria-expanded') !== 'true';
+            toggle.setAttribute('aria-expanded', String(open));
+            list.hidden = !open;
+            if (open) this.renderPresetList();
+        });
+        document.addEventListener('pointerdown', (event) => {
+            if (!document.getElementById('flatPresetMenu').contains(event.target)) {
+                this.closePresetMenu();
+            }
         });
         document.getElementById('shareButton').addEventListener('click', () => this.share());
         document.getElementById('exportSvg').addEventListener('click', () => this.exportSvg());
         document.getElementById('exportPng').addEventListener('click', () => this.exportPng());
+    }
+
+    renderPresetList() {
+        const list = document.getElementById('flatPresetList');
+        list.replaceChildren();
+        flatPresetNames().forEach((name) => {
+            const row = document.createElement('div');
+            row.className = `preset-entry${name === this.currentPresetName ? ' is-active' : ''}`;
+            row.setAttribute('role', 'option');
+            row.setAttribute('aria-selected', String(name === this.currentPresetName));
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'preset-row';
+            button.textContent = name;
+            button.addEventListener('click', () => this.openPreset(name));
+            row.appendChild(button);
+            list.appendChild(row);
+        });
+    }
+
+    openPreset(name) {
+        const preset = getFlatPreset(name);
+        if (!preset) return;
+        this.currentPresetName = name;
+        this.presetDirty = false;
+        this.settings = normalizeFlatSettings(preset);
+        this.transientField = null;
+        this.hoveredStaticFieldId = null;
+        this.personMotion.clear();
+        this.personMotionTime = null;
+        this.history.reset(this.settings);
+        this.saveSessionState();
+        this.syncControls();
+        this.renderNow();
+        this.closePresetMenu();
+    }
+
+    closePresetMenu() {
+        document.getElementById('flatPresetToggle').setAttribute('aria-expanded', 'false');
+        document.getElementById('flatPresetList').hidden = true;
+    }
+
+    syncPresetChrome() {
+        const name = document.getElementById('flatPresetName');
+        if (name) name.textContent = `${this.currentPresetName}${this.presetDirty ? ' *' : ''}`;
     }
 
     bindShortcuts() {
@@ -392,6 +450,7 @@ export class FlatApp {
                 if (restored) {
                     this.settings = normalizeFlatSettings(restored);
                     this.transientField = null;
+                    this.presetDirty = true;
                     this.saveSessionState();
                     this.syncControls();
                     this.renderNow();
@@ -469,6 +528,8 @@ export class FlatApp {
         if (!location.hash.startsWith('#f=')) return;
         try {
             this.settings = normalizeFlatSettings(decodeState(location.hash.slice(3)));
+            this.currentPresetName = 'Shared';
+            this.presetDirty = false;
             this.history.reset(this.settings);
             this.saveSessionState();
         } catch {
@@ -480,7 +541,18 @@ export class FlatApp {
         try {
             const saved = JSON.parse(sessionStorage.getItem(FLAT_SESSION_KEY) || 'null');
             if (!saved) return;
-            this.settings = normalizeFlatSettings(saved);
+            if (saved.version === FLAT_SESSION_VERSION && saved.settings) {
+                this.settings = normalizeFlatSettings(saved.settings);
+                this.currentPresetName = typeof saved.presetName === 'string'
+                    ? saved.presetName
+                    : FLAT_DEFAULT_PRESET_NAME;
+                this.presetDirty = Boolean(saved.dirty);
+            } else {
+                this.settings = normalizeFlatSettings(saved);
+                this.currentPresetName = FLAT_DEFAULT_PRESET_NAME;
+                const basic = normalizeFlatSettings(getFlatPreset(FLAT_DEFAULT_PRESET_NAME));
+                this.presetDirty = JSON.stringify(this.settings) !== JSON.stringify(basic);
+            }
             this.history.reset(this.settings);
         } catch {
             // Session persistence is optional when browser storage is unavailable.
@@ -489,7 +561,12 @@ export class FlatApp {
 
     saveSessionState() {
         try {
-            sessionStorage.setItem(FLAT_SESSION_KEY, JSON.stringify(this.settings));
+            sessionStorage.setItem(FLAT_SESSION_KEY, JSON.stringify({
+                version: FLAT_SESSION_VERSION,
+                settings: this.settings,
+                presetName: this.currentPresetName,
+                dirty: this.presetDirty
+            }));
         } catch {
             // The tool remains usable without cross-page state persistence.
         }
@@ -526,6 +603,7 @@ export class FlatApp {
         document.getElementById('flatFieldHint').textContent = person
             ? 'The reference-ratio Person stays fixed while nearby ellipses shrink across the field radius.'
             : 'Basic scales every ellipse by distance from the field. Click the artboard to pin fields.';
+        this.syncPresetChrome();
         this.syncFieldCoordinates();
         this.syncStaticFieldUI();
         this.syncColors();
