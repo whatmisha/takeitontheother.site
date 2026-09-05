@@ -6,7 +6,8 @@ import {
     animatedEllipseCount,
     buildGlobalScene,
     constrainSettings,
-    defaultSettings
+    defaultSettings,
+    worldRotationForScreenSettings
 } from '../src/geometry/globalGeometry.js';
 import { SEEDED_PRESETS } from '../src/core/presets.js';
 import { rotationPreviewOffsets } from '../src/GlobalApp.js';
@@ -121,6 +122,23 @@ test('the Person Five preview is exactly one half-turn on X', () => {
         rotationY: 0,
         rotationZ: 0
     });
+});
+
+test('Transform X is horizontal, Y is vertical, and legacy JSON keeps its view', () => {
+    assert.deepEqual(worldRotationForScreenSettings({ rotationX: 30, rotationY: 0, rotationZ: 5 }), {
+        x: 0,
+        y: 30,
+        z: 5
+    });
+    assert.deepEqual(worldRotationForScreenSettings({ rotationX: 0, rotationY: 30, rotationZ: 5 }), {
+        x: 30,
+        y: 0,
+        z: 5
+    });
+    const migrated = constrainSettings({ rotationX: 30, rotationY: 10 });
+    assert.equal(migrated.rotationX, 10);
+    assert.equal(migrated.rotationY, 30);
+    assert.equal(migrated.rotationCoordinateMode, 'screen');
 });
 
 test('progressive and rings remain distinct optional distributions', () => {

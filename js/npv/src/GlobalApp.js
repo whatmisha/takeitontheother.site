@@ -10,7 +10,7 @@ import {
     visibleElementIds
 } from './geometry/globalGeometry.js';
 import { HistoryManager } from './core/history.js';
-import { PresetManager, SEEDED_PRESETS } from './core/presets.js';
+import { DEFAULT_PRESET_NAME, PresetManager, SEEDED_PRESETS } from './core/presets.js';
 import { renderSceneToSvg, sceneToSvgString } from './render/globalRenderer.js';
 import { PanelManager } from './ui/PanelManager.js';
 import { ZoomPanManager } from './ui/ZoomPanManager.js';
@@ -19,6 +19,7 @@ import { AnimationExporter } from './export/AnimationExporter.js';
 const clone = (value) => structuredClone(value);
 const pad = (value) => String(value).padStart(2, '0');
 const SPHERE_SESSION_KEY = 'yfToolsSphereSessionV1';
+const DEFAULT_PRESET_VERSION = 2;
 const isEditable = (target) => target instanceof Element
     && Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
 
@@ -83,7 +84,9 @@ export class GlobalApp {
     constructor() {
         this.svg = document.getElementById('mainSvg');
         this.canvas = document.getElementById('canvasContainer');
-        this.settings = constrainSettings(defaultSettings());
+        const defaults = defaultSettings();
+        this.presetManager = new PresetManager(defaults);
+        this.settings = constrainSettings(this.presetManager.get(DEFAULT_PRESET_NAME) || defaults);
         this.scene = null;
         this.selectedIds = new Set();
         this.selectionMode = 'relative';
@@ -96,7 +99,6 @@ export class GlobalApp {
         this.rotationPreview = null;
         this.rotationPreviewFrame = null;
         this.rotationDrag = null;
-        this.presetManager = new PresetManager(defaultSettings());
         this.history = new HistoryManager(this.settings, { limit: 100, debounceMs: 160 });
         this.panels = new PanelManager([
             'geometryPanel', 'transformPanel', 'colorsPanel', 'magnetPanel'
@@ -423,8 +425,8 @@ export class GlobalApp {
                 const dy = event.clientY - this.rotationDrag.startY;
                 if (Math.hypot(dx, dy) > 3) this.rotationDrag.moved = true;
                 if (this.rotationDrag.moved) {
-                    this.settings.rotationY = this.rotationDrag.rotationY + dx * 0.42;
-                    this.settings.rotationX = this.rotationDrag.rotationX - dy * 0.42;
+                    this.settings.rotationX = this.rotationDrag.rotationX + dx * 0.42;
+                    this.settings.rotationY = this.rotationDrag.rotationY - dy * 0.42;
                     this.presetManager.markDirty();
                     this.syncRotationControls();
                     this.requestRender();
@@ -695,6 +697,10 @@ export class GlobalApp {
         try {
             const saved = JSON.parse(sessionStorage.getItem(SPHERE_SESSION_KEY) || 'null');
             if (!saved?.settings) return;
+            if (saved.defaultPresetVersion !== DEFAULT_PRESET_VERSION && !saved.dirty) {
+                this.saveSessionState();
+                return;
+            }
             this.settings = constrainSettings(saved.settings);
             const savedName = saved.presetName || 'Session';
             const availableNames = new Set([...this.presetManager.names(), 'Session', 'Shared', 'Untitled']);
@@ -711,7 +717,8 @@ export class GlobalApp {
             sessionStorage.setItem(SPHERE_SESSION_KEY, JSON.stringify({
                 settings: this.settings,
                 presetName: this.presetManager.currentName,
-                dirty: this.presetManager.dirty
+                dirty: this.presetManager.dirty,
+                defaultPresetVersion: DEFAULT_PRESET_VERSION
             }));
         } catch {
             // The generators remain fully usable without navigation persistence.

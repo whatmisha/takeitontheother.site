@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 import { HistoryManager } from '../src/core/history.js';
-import { SEEDED_PRESETS } from '../src/core/presets.js';
+import { DEFAULT_PRESET_NAME, SEEDED_PRESETS } from '../src/core/presets.js';
 import { rotationControlValue, rotationPreviewOffsets } from '../src/GlobalApp.js';
 import { buildGlobalScene, defaultSettings } from '../src/geometry/globalGeometry.js';
 import { sceneToSvgString } from '../src/render/globalRenderer.js';
@@ -85,6 +85,16 @@ test('the staged Selection panel stays hidden and outside panel shortcuts', asyn
     assert.doesNotMatch(panelList, /selectionPanel/);
     assert.doesNotMatch(app, /this\.bindSelectionControls\(\)/);
     assert.doesNotMatch(app, /selectEllipse\(drag\.hitId/);
+});
+
+test('Person Five is the initial preset for a fresh Global session', async () => {
+    const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+    const app = await readFile(new URL('../src/GlobalApp.js', import.meta.url), 'utf8');
+    assert.equal(DEFAULT_PRESET_NAME, 'Person Five');
+    assert.match(html, /id="presetName">Person Five</);
+    assert.match(app, /this\.presetManager\.get\(DEFAULT_PRESET_NAME\)/);
+    assert.match(app, /saved\.defaultPresetVersion !== DEFAULT_PRESET_VERSION && !saved\.dirty/);
+    assert.doesNotMatch(html, /←YF Tools/);
 });
 
 test('the temporary play control previews the saved eased rotation beside zoom', async () => {
@@ -182,6 +192,7 @@ test('Iconic Five preserves the supplied settings as a built-in preset', () => {
         rotationX: 0,
         rotationY: 0,
         rotationZ: 0,
+        rotationCoordinateMode: 'screen',
         magnetStrength: 0,
         magnetRadius: 42,
         magnetX: 240,
@@ -219,6 +230,7 @@ test('Person Five preserves the supplied settings as a built-in preset', () => {
         rotationX: 0,
         rotationY: 0,
         rotationZ: 0,
+        rotationCoordinateMode: 'screen',
         magnetStrength: 66,
         magnetRadius: 5,
         magnetX: 240,
@@ -251,6 +263,14 @@ test('Five presets keep their own rotation animation settings', () => {
         axis: 'x', degrees: 180, duration: 3, easing: 'smootherstep'
     });
     assert.equal(Object.keys(SEEDED_PRESETS).filter((name) => name.startsWith('Iconic Five')).length, 1);
+});
+
+test('Transform axes and canvas drag use the same screen-oriented coordinates', async () => {
+    const app = await readFile(new URL('../src/GlobalApp.js', import.meta.url), 'utf8');
+    const presets = await readFile(new URL('../src/core/presets.js', import.meta.url), 'utf8');
+    assert.match(app, /rotationX = this\.rotationDrag\.rotationX \+ dx \* 0\.42/);
+    assert.match(app, /rotationY = this\.rotationDrag\.rotationY - dy \* 0\.42/);
+    assert.match(presets, /if \(!Object\.hasOwn\(source, 'rotationCoordinateMode'\)\) delete state\.rotationCoordinateMode/);
 });
 
 test('preset dropdown and share icon retain the framework chrome', async () => {

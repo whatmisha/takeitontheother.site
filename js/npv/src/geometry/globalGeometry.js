@@ -276,6 +276,7 @@ export function defaultSettings() {
         rotationX: 0,
         rotationY: 0,
         rotationZ: 0,
+        rotationCoordinateMode: 'screen',
         magnetStrength: 0,
         magnetRadius: 42,
         magnetX: ARTBOARD_CENTER,
@@ -308,9 +309,13 @@ export function normalizeSettings(source = {}) {
     settings.packingCoverage = clamp(Number(settings.packingCoverage) || defaults.packingCoverage, 1, 200);
     settings.sphereRadius = clamp(Number(settings.sphereRadius) || 190, 1, ARTBOARD_CENTER);
     settings.perspective = clamp(Number(settings.perspective) || 0, 0, 100);
-    settings.rotationX = Number(settings.rotationX) || 0;
-    settings.rotationY = Number(settings.rotationY) || 0;
+    const legacyRotationCoordinates = source.rotationCoordinateMode !== 'screen';
+    const sourceRotationX = finiteOr(source.rotationX, defaults.rotationX);
+    const sourceRotationY = finiteOr(source.rotationY, defaults.rotationY);
+    settings.rotationX = legacyRotationCoordinates ? sourceRotationY : sourceRotationX;
+    settings.rotationY = legacyRotationCoordinates ? sourceRotationX : sourceRotationY;
     settings.rotationZ = Number(settings.rotationZ) || 0;
+    settings.rotationCoordinateMode = 'screen';
     settings.magnetStrength = clamp(Number(settings.magnetStrength) || 0, 0, 200);
     settings.magnetRadius = clamp(Number(settings.magnetRadius) || 42, 5, 100);
     settings.magnetX = clamp(finiteOr(settings.magnetX, ARTBOARD_CENTER), 0, ARTBOARD_SIZE);
@@ -687,13 +692,17 @@ function buildWireframe(settings, rotation) {
     };
 }
 
+export function worldRotationForScreenSettings(settings, options = {}) {
+    return {
+        x: finiteOr(settings.rotationY, 0) + finiteOr(options.rotationY, 0),
+        y: finiteOr(settings.rotationX, 0) + finiteOr(options.rotationX, 0),
+        z: finiteOr(settings.rotationZ, 0) + finiteOr(options.rotationZ, 0)
+    };
+}
+
 export function buildGlobalScene(rawSettings, options = {}) {
     const settings = constrainSettings(rawSettings);
-    const rotation = {
-        x: settings.rotationX + Number(options.rotationX || 0),
-        y: settings.rotationY + Number(options.rotationY || 0),
-        z: settings.rotationZ + Number(options.rotationZ || 0)
-    };
+    const rotation = worldRotationForScreenSettings(settings, options);
     const visibleCount = options.visibleCount ?? animatedEllipseCount(settings, options.timeSeconds || 0);
     const axes = axesForSettings(settings);
     const camera = cameraModel(settings);

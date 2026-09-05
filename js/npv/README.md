@@ -57,6 +57,8 @@ All numeric slider values are editable text fields. Enter or blur applies a type
 
 The temporary play button beside the zoom control uses the current preset's saved `rotationAnimation` settings (`axis`, `degrees`, `duration`, and `easing`), then returns to the exact stored view without changing scene settings, history, or preset state. Defaults and `Iconic Five` use one three-second 360° X turn; `Person Five` uses a three-second 180° X turn. Both use soft quintic acceleration and deceleration, with no secondary-axis wobble. Transform sliders display the effective angles throughout the preview. Rotation animation settings are included in JSON exports, share links, history, sessions, and saved presets; older JSON files receive the default animation settings when loaded.
 
+`Person Five` is the initial preset for a fresh session. Transform uses screen-oriented coordinates: Rotation X turns the sphere horizontally, Rotation Y turns it vertically, and Rotation Z spins it in the canvas plane. Existing JSON and browser states from the earlier world-axis mapping are converted on load and resaved with `rotationCoordinateMode: "screen"`.
+
 `Reset position` at the bottom of Transform returns all three rotation axes to 0° in one undoable action.
 
 When `Field follows cursor` is active, the disabled X/Y controls display the live field coordinates. Clicking the artboard fixes the field at that point, turns cursor following off, and re-enables manual X/Y editing. Dragging still rotates the sphere without fixing the field.

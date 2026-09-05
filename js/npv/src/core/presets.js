@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'globalEllipseGeneratorV1';
+export const DEFAULT_PRESET_NAME = 'Person Five';
 
 const clone = (value) => structuredClone(value);
 
@@ -12,6 +13,7 @@ export const SEEDED_PRESETS = Object.freeze({
         rotationX: 0,
         rotationY: 0,
         rotationZ: 0,
+        rotationCoordinateMode: 'screen',
         magnetStrength: 0,
         preventOverlap: true,
         overlapGap: 4
@@ -25,6 +27,7 @@ export const SEEDED_PRESETS = Object.freeze({
         rotationX: 0,
         rotationY: 0,
         rotationZ: 0,
+        rotationCoordinateMode: 'screen',
         magnetStrength: 0,
         preventOverlap: true,
         overlapGap: 4
@@ -38,6 +41,7 @@ export const SEEDED_PRESETS = Object.freeze({
         rotationX: 0,
         rotationY: 0,
         rotationZ: 0,
+        rotationCoordinateMode: 'screen',
         magnetStrength: 0,
         preventOverlap: true,
         overlapGap: 4
@@ -48,9 +52,10 @@ export const SEEDED_PRESETS = Object.freeze({
         sphereRadius: 224,
         perspective: 38,
         topologyMode: 'rings',
-        rotationX: -12,
-        rotationY: 10,
+        rotationX: 10,
+        rotationY: -12,
         rotationZ: 0,
+        rotationCoordinateMode: 'screen',
         magnetStrength: 0,
         preventOverlap: true,
         overlapGap: 4
@@ -67,6 +72,7 @@ export const SEEDED_PRESETS = Object.freeze({
         rotationX: 0,
         rotationY: 0,
         rotationZ: 0,
+        rotationCoordinateMode: 'screen',
         magnetStrength: 0,
         magnetRadius: 42,
         magnetX: 240,
@@ -101,6 +107,7 @@ export const SEEDED_PRESETS = Object.freeze({
         rotationX: 0,
         rotationY: 0,
         rotationZ: 0,
+        rotationCoordinateMode: 'screen',
         magnetStrength: 66,
         magnetRadius: 5,
         magnetX: 240,
@@ -129,9 +136,10 @@ export const SEEDED_PRESETS = Object.freeze({
         sphereRadius: 202,
         perspective: 65,
         topologyMode: 'tessellated',
-        rotationX: 34,
-        rotationY: 0,
+        rotationX: 0,
+        rotationY: 34,
         rotationZ: 0,
+        rotationCoordinateMode: 'screen',
         magnetStrength: 105,
         magnetRadius: 38,
         magnetX: 240,
@@ -145,9 +153,10 @@ export const SEEDED_PRESETS = Object.freeze({
         sphereRadius: 205,
         perspective: 40,
         topologyMode: 'tessellated',
-        rotationX: -12,
-        rotationY: 18,
+        rotationX: 18,
+        rotationY: -12,
         rotationZ: 0,
+        rotationCoordinateMode: 'screen',
         magnetStrength: 0,
         preventOverlap: true,
         overlapGap: 3
@@ -157,7 +166,7 @@ export const SEEDED_PRESETS = Object.freeze({
 export class PresetManager {
     constructor(defaults) {
         this.defaults = clone(defaults);
-        this.currentName = 'Packed';
+        this.currentName = DEFAULT_PRESET_NAME;
         this.dirty = false;
     }
 
@@ -181,7 +190,10 @@ export class PresetManager {
 
     get(name) {
         const source = SEEDED_PRESETS[name] || this.loadUserPresets()[name];
-        return source ? { ...clone(this.defaults), ...clone(source) } : null;
+        if (!source) return null;
+        const state = { ...clone(this.defaults), ...clone(source) };
+        if (!Object.hasOwn(source, 'rotationCoordinateMode')) delete state.rotationCoordinateMode;
+        return state;
     }
 
     save(name, state) {
