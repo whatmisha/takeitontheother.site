@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en" class="global-initializing">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="Global — a parametric spherical ellipse pattern generator.">
+    <title>Global — Ellipse Generator</title>
+    <link rel="stylesheet" href="./styles/global.css">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar" aria-label="Tool navigation">
+            <nav class="tool-switcher" aria-label="YF tools">
+                <a class="top-button top-button--light" href="../">←YF Tools</a>
+                <a class="top-button tool-tab" href="./" aria-current="page">Sphere</a>
+                <a class="top-button tool-tab" href="./flat.html">Flat</a>
+            </nav>
+            <div class="preset-cluster">
+                <div class="preset-menu" id="presetMenu">
+                    <button class="top-button preset-toggle" id="presetToggle" type="button"
+                            aria-haspopup="listbox" aria-expanded="false" aria-controls="presetList">
+                        <span id="presetName">Packed</span>
+                        <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <div class="preset-list" id="presetList" role="listbox" hidden></div>
+                </div>
+                <button class="icon-button" id="shareButton" type="button" aria-label="Copy share link" title="Copy share link">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="18" height="18" fill="none" aria-hidden="true">
+                        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M5.7410987,3.4304742l.6124561-.6124561c.7810478-.7810478,2.0473765-.7810478,2.8284243,0l.0000028.0000028c.7810478.7810478.7810478,2.0473765,0,2.8284243l-.6124561.6124561"/>
+                        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M6.2589013,8.5695258l-.6124561.6124561c-.7810478.7810478-2.0473765.7810478-2.8284243,0l-.0000028-.0000028c-.7810478-.7810478-.7810478-2.0473765,0-2.8284243l.6124561-.6124561"/>
+                        <line x1="7.5184826" y1="4.4815174" x2="4.4815174" y2="7.5184826" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"/>
+                    </svg>
+                </button>
+                <button class="top-button" id="savePresetButton" type="button" hidden>Save preset</button>
+            </div>
+            <button class="zoom-display" id="zoomDisplay" type="button" title="Fit to screen">100%</button>
+            <button class="icon-button rotation-preview-button" id="rotationPreviewButton" type="button" aria-label="Preview one full rotation" aria-pressed="false" title="Preview one full rotation">▶</button>
+        </header>
+
+        <main class="workspace" id="workspace">
+            <h1 class="sr-only">Global parametric spherical ellipse pattern generator</h1>
+            <div class="canvas-container" id="canvasContainer">
+                <svg id="mainSvg" viewBox="0 0 480 480" role="img" aria-label="Global ellipse pattern preview"></svg>
+            </div>
+
+            <aside class="controls-panel controls-panel--left-top" id="geometryPanel">
+                <button class="panel-header" id="geometryPanelHeader" type="button" aria-expanded="true">
+                    <span>Geometry</span><span class="panel-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div class="panel-content">
+                    <div class="control-group">
+                        <label for="ellipseCount"><span>Ellipses</span><input type="text" class="value-display" id="ellipseCountValue" value="15" inputmode="numeric" autocomplete="off" aria-label="Ellipses value"></label>
+                        <input id="ellipseCount" type="range" min="1" max="48" step="1" value="15" data-setting="ellipseCount">
+                    </div>
+                    <div class="topology-control">
+                        <div class="control-caption">Distribution</div>
+                        <div class="segmented-control segmented-control--four" role="group" aria-label="Sphere distribution">
+                            <label><input type="radio" name="topologyMode" value="packed" checked><span>Packed</span></label>
+                            <label><input type="radio" name="topologyMode" value="tessellated"><span>Tessellated</span></label>
+                            <label><input type="radio" name="topologyMode" value="progressive"><span>Progressive</span></label>
+                            <label><input type="radio" name="topologyMode" value="rings"><span>Rings</span></label>
+                        </div>
+                    </div>
+                    <div class="control-group" id="packingCoverageGroup">
+                        <label for="packingCoverage"><span>Coverage <span class="unit">%</span></span><input type="text" class="value-display" id="packingCoverageValue" value="100" inputmode="decimal" autocomplete="off" aria-label="Coverage value"></label>
+                        <input id="packingCoverage" type="range" min="1" max="200" step="1" value="100" data-setting="packingCoverage">
+                    </div>
+                    <div class="control-group" id="diameterGroup" hidden>
+                        <label for="diameter"><span>Diameter <span class="unit">px</span></span><input type="text" class="value-display" id="diameterValue" value="130" inputmode="decimal" autocomplete="off" aria-label="Diameter value"></label>
+                        <input id="diameter" type="range" min="1" max="480" step="1" value="130" data-setting="diameter">
+                    </div>
+                    <div class="control-group">
+                        <label for="sphereRadius"><span>Sphere <span class="unit">px</span></span><input type="text" class="value-display" id="sphereRadiusValue" value="224" inputmode="decimal" autocomplete="off" aria-label="Sphere value"></label>
+                        <input id="sphereRadius" type="range" min="80" max="230" step="1" value="224" data-setting="sphereRadius">
+                    </div>
+                    <div class="control-group">
+                        <label for="perspective"><span>Perspective</span><input type="text" class="value-display" id="perspectiveValue" value="50" inputmode="decimal" autocomplete="off" aria-label="Perspective value"></label>
+                        <input id="perspective" type="range" min="0" max="100" step="1" value="50" data-setting="perspective">
+                    </div>
+                    <div class="control-group overlap-gap" id="overlapGapGroup">
+                        <label for="overlapGap"><span>Minimum gap <span class="unit">px</span></span><input type="text" class="value-display" id="overlapGapValue" value="4" inputmode="decimal" autocomplete="off" aria-label="Minimum gap value"></label>
+                        <input id="overlapGap" type="range" min="0" max="100" step="1" value="4" data-setting="overlapGap">
+                    </div>
+                    <div class="pill-row">
+                        <label class="pill"><input id="showGuides" type="checkbox" data-setting="showGuides"><span>Guides</span></label>
+                        <label class="pill"><input id="showBackside" type="checkbox" data-setting="showBackside"><span>Back side</span></label>
+                        <label class="pill"><input id="preventOverlap" type="checkbox" data-setting="preventOverlap" checked><span>No overlap</span></label>
+                    </div>
+                    <p class="panel-hint" id="geometryHint">Packed derives every ellipse from its local spherical cell. Coverage 100% preserves the requested gap.</p>
+                </div>
+            </aside>
+
+            <aside class="controls-panel controls-panel--right-top" id="transformPanel">
+                <button class="panel-header" id="transformPanelHeader" type="button" aria-expanded="true">
+                    <span>Transform</span><span class="panel-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div class="panel-content">
+                    <div class="control-group">
+                        <label for="rotationX"><span>Rotation X <span class="unit">°</span></span><input type="text" class="value-display" id="rotationXValue" value="0" inputmode="decimal" autocomplete="off" aria-label="Rotation X value"></label>
+                        <input id="rotationX" type="range" min="-180" max="180" step="1" value="0" data-setting="rotationX">
+                    </div>
+                    <div class="control-group">
+                        <label for="rotationY"><span>Rotation Y <span class="unit">°</span></span><input type="text" class="value-display" id="rotationYValue" value="0" inputmode="decimal" autocomplete="off" aria-label="Rotation Y value"></label>
+                        <input id="rotationY" type="range" min="-180" max="180" step="1" value="0" data-setting="rotationY">
+                    </div>
+                    <div class="control-group">
+                        <label for="rotationZ"><span>Rotation Z <span class="unit">°</span></span><input type="text" class="value-display" id="rotationZValue" value="0" inputmode="decimal" autocomplete="off" aria-label="Rotation Z value"></label>
+                        <input id="rotationZ" type="range" min="-180" max="180" step="1" value="0" data-setting="rotationZ">
+                    </div>
+                    <button class="pill-button panel-reset-button" id="resetTransform" type="button"><span>Reset position</span></button>
+                </div>
+            </aside>
+
+            <aside class="controls-panel controls-panel--left-bottom" id="colorsPanel">
+                <button class="panel-header" id="colorsPanelHeader" type="button" aria-expanded="true">
+                    <span>Colors</span><span class="panel-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div class="panel-content color-controls">
+                    <label class="color-row" for="ellipseColor">
+                        <span class="color-dot" id="ellipseColorDot"></span><span>Ellipses</span>
+                        <input id="ellipseColor" type="text" value="#ffffff" maxlength="7" spellcheck="false" data-color-setting="ellipseColor">
+                    </label>
+                    <label class="color-row" for="backgroundColor">
+                        <span class="color-dot" id="backgroundColorDot"></span><span>Background</span>
+                        <input id="backgroundColor" type="text" value="#000000" maxlength="7" spellcheck="false" data-color-setting="backgroundColor">
+                    </label>
+                </div>
+            </aside>
+
+            <aside class="controls-panel controls-panel--right-bottom" id="magnetPanel">
+                <button class="panel-header" id="magnetPanelHeader" type="button" aria-expanded="true">
+                    <span>Magnet</span><span class="panel-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div class="panel-content">
+                    <div class="control-group">
+                        <label for="magnetStrength"><span>Growth</span><input type="text" class="value-display" id="magnetStrengthValue" value="0" inputmode="decimal" autocomplete="off" aria-label="Magnet growth value"></label>
+                        <input id="magnetStrength" type="range" min="0" max="200" step="1" value="0" data-setting="magnetStrength">
+                    </div>
+                    <div class="control-group">
+                        <label for="magnetRadius"><span>Field radius</span><input type="text" class="value-display" id="magnetRadiusValue" value="42" inputmode="decimal" autocomplete="off" aria-label="Magnet field radius value" disabled></label>
+                        <input id="magnetRadius" type="range" min="5" max="100" step="1" value="42" data-setting="magnetRadius" disabled>
+                    </div>
+                    <div id="magnetManualControls">
+                        <div class="control-group">
+                            <label for="magnetX"><span>Field X</span><input type="text" class="value-display" id="magnetXValue" value="240" inputmode="decimal" autocomplete="off" aria-label="Magnet field X value" disabled></label>
+                            <input id="magnetX" type="range" min="0" max="480" step="1" value="240" data-setting="magnetX" disabled>
+                        </div>
+                        <div class="control-group">
+                            <label for="magnetY"><span>Field Y</span><input type="text" class="value-display" id="magnetYValue" value="240" inputmode="decimal" autocomplete="off" aria-label="Magnet field Y value" disabled></label>
+                            <input id="magnetY" type="range" min="0" max="480" step="1" value="240" data-setting="magnetY" disabled>
+                        </div>
+                    </div>
+                    <div class="pill-row">
+                        <label class="pill"><input id="magnetFollow" type="checkbox" data-setting="magnetFollow" checked disabled><span>Field follows cursor</span></label>
+                        <button class="pill pill-button" id="centerMagnet" type="button" disabled><span>Fix at center</span></button>
+                    </div>
+                </div>
+            </aside>
+
+            <aside class="controls-panel controls-panel--right-bottom" id="selectionPanel" hidden aria-hidden="true">
+                <button class="panel-header" id="selectionPanelHeader" type="button" aria-expanded="true">
+                    <span>Selection</span><span class="panel-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div class="panel-content">
+                    <div class="selection-summary"><span id="selectionCount">None selected</span><button id="clearSelection" type="button">Clear</button></div>
+                    <div class="segmented-control" role="group" aria-label="Selected ellipse sizing">
+                        <label><input type="radio" name="sizeMode" value="relative" checked><span>Relative</span></label>
+                        <label><input type="radio" name="sizeMode" value="fixed"><span>Fixed</span></label>
+                    </div>
+                    <div class="control-group">
+                        <label for="selectedSize"><span id="selectedSizeLabel">Size <span class="unit">%</span></span><input type="text" class="value-display" id="selectedSizeValue" value="100" inputmode="decimal" autocomplete="off" aria-label="Selected size value" disabled></label>
+                        <input id="selectedSize" type="range" min="10" max="300" step="1" value="100" disabled>
+                    </div>
+                    <div class="selection-actions">
+                        <button id="selectCenter" type="button">Center</button>
+                        <button id="selectCore" type="button">Core 9</button>
+                        <button id="selectVisible" type="button">Visible</button>
+                    </div>
+                    <div class="section-rule"></div>
+                    <div class="segmented-control" role="group" aria-label="Animation mode">
+                        <label><input type="radio" name="animationMode" value="static" checked><span>Static</span></label>
+                        <label><input type="radio" name="animationMode" value="grow"><span>Grow</span></label>
+                    </div>
+                    <div id="animationControls" hidden>
+                        <div class="control-group">
+                            <label for="animationFrom"><span>From</span><input type="text" class="value-display" id="animationFromValue" value="1" inputmode="numeric" autocomplete="off" aria-label="Animation start count"></label>
+                            <input id="animationFrom" type="range" min="1" max="47" step="1" value="1" data-setting="animationFrom">
+                        </div>
+                        <div class="control-group">
+                            <label for="duration"><span>Duration <span class="unit">sec</span></span><input type="text" class="value-display" id="durationValue" value="5" inputmode="decimal" autocomplete="off" aria-label="Animation duration value"></label>
+                            <input id="duration" type="range" min="1" max="10" step="1" value="5" data-setting="duration">
+                        </div>
+                        <div class="animation-actions">
+                            <button id="playPause" type="button">Pause</button>
+                            <button id="restartAnimation" type="button" aria-label="Restart animation" title="Restart animation">↺</button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <nav class="action-dock" aria-label="Export actions">
+            <div class="help-menu" id="helpMenu">
+                <button class="icon-button help-button" id="helpButton" type="button" aria-label="Keyboard shortcuts" aria-expanded="false">?</button>
+                <div class="help-popup" id="helpPopup" role="dialog" aria-label="Keyboard shortcuts" hidden>
+                    <h2>Shortcuts</h2>
+                    <ul>
+                        <li><kbd>Space</kbd><span>Play or pause growth</span></li>
+                        <li><kbd>G</kbd><span>Toggle guides</span></li>
+                        <li><kbd>⌘ \\</kbd><span>Hide or restore panels</span></li>
+                        <li><kbd>⌘ E</kbd><span>Export SVG or MP4</span></li>
+                        <li><kbd>⇧ ⌘ E</kbd><span>Export PNG or sequence</span></li>
+                        <li><kbd>⌘ Z</kbd><span>Undo</span></li>
+                        <li><kbd>⇧ ⌘ Z</kbd><span>Redo</span></li>
+                        <li><kbd>⌘ J</kbd><span>Export settings JSON</span></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="export-actions" id="exportActions">
+                <button class="action-button" id="exportPng" type="button">Export PNG</button>
+                <button class="action-button" id="exportPrimary" type="button">Export ⌘E</button>
+                <div class="export-status" id="exportStatus" hidden data-state="idle" aria-live="polite">
+                    <progress id="exportProgress" max="1" value="0"></progress>
+                    <span id="exportMessage">Preparing</span>
+                    <button id="cancelExport" type="button" aria-label="Cancel export" title="Cancel export">×</button>
+                </div>
+            </div>
+        </nav>
+
+        <dialog class="dialog" id="dialog">
+            <form method="dialog">
+                <h2 id="dialogTitle"></h2>
+                <p id="dialogText"></p>
+                <input id="dialogInput" type="text" autocomplete="off" hidden>
+                <div id="dialogButtons" class="dialog-buttons"></div>
+            </form>
+        </dialog>
+    </div>
+
+    <script type="module" src="./src/tool.js"></script>
+</body>
+</html>

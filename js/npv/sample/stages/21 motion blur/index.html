@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en" class="sparky-initializing">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <title>Lunnen Sparky — Parametric Character</title>
+    <link rel="stylesheet" href="./framework/css/othersite-styles.css">
+    <link rel="stylesheet" href="./styles/sparky.css?v=20260825-14">
+</head>
+<body>
+    <div class="container">
+        <header class="top-links" aria-label="Tool navigation">
+            <a href="../../" class="top-link">←YF Tools</a>
+
+            <div class="preset-toolbar-cluster">
+                <div class="preset-dropdown" id="presetDropdown">
+                    <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button"
+                            aria-haspopup="listbox" aria-expanded="false" aria-controls="presetDropdownMenu">
+                        <span class="preset-dropdown-text">Presets</span>
+                        <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox"></ul>
+                </div>
+                <button type="button" id="presetToolbarShareBtn" class="preset-toolbar-share-btn"
+                        title="Copy share link" aria-label="Copy share link" data-tooltip="Copy share link">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="18" height="18" fill="none" aria-hidden="true">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M5.74 3.43l.61-.61a2 2 0 0 1 2.83 2.83l-.61.61M6.26 8.57l-.61.61a2 2 0 0 1-2.83-2.83l.61-.61M7.52 4.48 4.48 7.52"/>
+                    </svg>
+                </button>
+            </div>
+
+            <button class="top-link" id="savePresetBtn" type="button" style="display:none;">Save preset</button>
+        </header>
+
+        <main class="main-content" id="mainContent">
+            <h1 class="sr-only">Lunnen Sparky parametric character generator</h1>
+            <div class="canvas-container" id="canvasContainer">
+                <svg id="mainSvg" data-fit-artboard="true" role="img" aria-label="Parametric Sparky character preview"></svg>
+            </div>
+
+            <aside class="controls-panel controls-panel-left" id="shapePanel">
+                <div class="panel-header" id="shapePanelHeader">
+                    <span>General</span>
+                    <span class="collapse-icon" aria-hidden="true">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="rayCountSlider"><span>Rays</span>
+                                <input type="text" class="value-display" id="rayCountValue" value="5"></label>
+                            <input type="range" id="rayCountSlider" min="3" max="13" step="1" value="5">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="rayLengthSlider"><span>Length <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="rayLengthValue" value="240"></label>
+                            <input type="range" id="rayLengthSlider" min="220" max="360" step="1" value="240">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="rayWidthSlider"><span>Width <span class="unit">px</span></span>
+                                <input type="text" class="value-display" id="rayWidthValue" value="80"></label>
+                            <input type="range" id="rayWidthSlider" min="20" max="160" step="1" value="80">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="roundnessSlider"><span>Roundness</span>
+                                <input type="text" class="value-display" id="roundnessValue" value="60"></label>
+                            <input type="range" id="roundnessSlider" min="0" max="100" step="1" value="60">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="cornerSmoothingSlider"><span>Corner smoothing</span>
+                                <input type="text" class="value-display" id="cornerSmoothingValue" value="100"></label>
+                            <input type="range" id="cornerSmoothingSlider" min="0" max="100" step="1" value="100">
+                        </div>
+
+                        <div class="control-group pill-toggle-row">
+                            <label class="pill-toggle" for="showSphere">
+                                <input type="checkbox" id="showSphere" class="sr-only" data-setting="showSphere">
+                                <span>Sphere</span>
+                            </label>
+                            <label class="pill-toggle" for="showRayGuides">
+                                <input type="checkbox" id="showRayGuides" class="sr-only" data-setting="showRayGuides">
+                                <span>Rays</span>
+                            </label>
+                            <label class="pill-toggle" for="showBisectors">
+                                <input type="checkbox" id="showBisectors" class="sr-only" data-setting="showBisectors">
+                                <span>Bisectors</span>
+                            </label>
+                            <label class="pill-toggle" for="showMotionPath" id="showMotionPathToggle" hidden>
+                                <input type="checkbox" id="showMotionPath" class="sr-only" data-setting="showMotionPath" checked>
+                                <span>Motion path</span>
+                            </label>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <aside class="controls-panel" id="focusPanel">
+                <div class="panel-header" id="focusPanelHeader">
+                    <span>Focus</span>
+                    <span class="collapse-icon" aria-hidden="true">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <fieldset class="segmented-control segmented-control-compact sparky-focus-tabs" aria-label="Focus mode">
+                            <input type="radio" id="focusModeManual" name="focusMode" value="manual" checked>
+                            <label for="focusModeManual">Manual</label>
+                            <input type="radio" id="focusModeAnimate" name="focusMode" value="animate">
+                            <label for="focusModeAnimate">Animate</label>
+                        </fieldset>
+
+                        <div id="focusManualControls" data-focus-mode-panel="manual">
+                            <div class="control-group">
+                                <label for="focusAngleSlider"><span>Angle <span class="unit">°</span></span>
+                                    <input type="text" class="value-display" id="focusAngleValue" value="0"></label>
+                                <input type="range" id="focusAngleSlider" min="0" max="360" step="1" value="0">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="focusDistanceSlider"><span>Distance <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="focusDistanceValue" value="0"></label>
+                                <input type="range" id="focusDistanceSlider" min="0" max="100" step="1" value="0">
+                            </div>
+
+                            <div class="control-group pill-toggle-row" role="group" aria-label="Focus behavior">
+                                <label class="pill-toggle" for="showPoint">
+                                    <input type="radio" id="showPoint" class="sr-only" name="manualFocusBehavior" value="manual">
+                                    <span>Manual</span>
+                                </label>
+                                <label class="pill-toggle" for="followCursor">
+                                    <input type="radio" id="followCursor" class="sr-only" name="manualFocusBehavior" value="follow" checked>
+                                    <span>Follow cursor</span>
+                                </label>
+                                <button type="button" class="pill-toggle sparky-pill-button" id="resetFocusBtn">
+                                    <span>Center focus</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="focusAnimationControls" data-focus-mode-panel="animate" hidden>
+                            <div class="control-group">
+                                <label for="motionDurationSlider"><span>Duration <span class="unit">sec</span></span>
+                                    <input type="text" class="value-display" id="motionDurationValue" value="5"></label>
+                                <input type="range" id="motionDurationSlider" min="1" max="10" step="1" value="5">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="motionPointCountSlider"><span>Points</span>
+                                    <input type="text" class="value-display" id="motionPointCountValue" value="6"></label>
+                                <input type="range" id="motionPointCountSlider" min="2" max="16" step="1" value="6">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="motionComplexitySlider"><span>Complexity</span>
+                                    <input type="text" class="value-display" id="motionComplexityValue" value="0"></label>
+                                <input type="range" id="motionComplexitySlider" min="0" max="100" step="1" value="0">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="motionSmoothnessSlider"><span>Smoothness</span>
+                                    <input type="text" class="value-display" id="motionSmoothnessValue" value="50"></label>
+                                <input type="range" id="motionSmoothnessSlider" min="0" max="100" step="1" value="50">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="motionStopsSlider"><span>Stops</span>
+                                    <input type="text" class="value-display" id="motionStopsValue" value="40"></label>
+                                <input type="range" id="motionStopsSlider" min="0" max="100" step="1" value="40">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="motionBlinkCountSlider"><span>Blinks <span class="unit">/ loop</span></span>
+                                    <input type="text" class="value-display" id="motionBlinkCountValue" value="2"></label>
+                                <input type="range" id="motionBlinkCountSlider" min="0" max="12" step="1" value="2">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="motionEmotionVariationSlider"><span>Emotion variation <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="motionEmotionVariationValue" value="0"></label>
+                                <input type="range" id="motionEmotionVariationSlider" min="0" max="100" step="1" value="0">
+                            </div>
+
+                            <div class="control-group">
+                                <label for="motionBlurSlider"><span>Motion blur <span class="unit">%</span></span>
+                                    <input type="text" class="value-display" id="motionBlurValue" value="0"></label>
+                                <input type="range" id="motionBlurSlider" min="0" max="100" step="1" value="0">
+                            </div>
+
+                            <button type="button" class="sparky-panel-action sparky-motion-edit-action"
+                                    id="motionEditPathBtn" aria-pressed="false">Edit path</button>
+                            <p class="sparky-motion-editor-hint" id="motionEditorHint" hidden>
+                                Drag points and Bézier handles on the canvas.
+                            </p>
+
+                            <div class="sparky-animation-actions">
+                                <button type="button" class="sparky-panel-action sparky-animation-primary-action" id="motionPlayPauseBtn">Pause</button>
+                                <button type="button" class="sparky-panel-action sparky-icon-action" id="motionRestartBtn"
+                                        aria-label="Restart" title="Restart" data-tooltip="Restart">
+                                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                        <path d="M3.2 5.1A5.5 5.5 0 1 1 2.6 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                                        <path d="M3.25 2.4v2.85H6.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </button>
+                                <button type="button" class="sparky-panel-action sparky-icon-action" id="motionRegenerateBtn"
+                                        aria-label="Regenerate path" title="Regenerate path" data-tooltip="Regenerate path">
+                                    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                        <path d="M8 1.8l.7 2.05L10.8 4.6l-2.1.75L8 7.4l-.7-2.05-2.1-.75 2.1-.75L8 1.8Z" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/>
+                                        <path d="M12.35 8.1l.45 1.3 1.3.45-1.3.45-.45 1.3-.45-1.3-1.3-.45 1.3-.45.45-1.3ZM4.05 9.4l.6 1.7 1.7.6-1.7.6-.6 1.7-.6-1.7-1.7-.6 1.7-.6.6-1.7Z" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round"/>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div class="sparky-export-status" id="animationExportStatus" hidden aria-live="polite">
+                                <progress id="animationExportProgress" max="1" value="0"></progress>
+                                <div class="sparky-export-status-row">
+                                    <span id="animationExportMessage">Preparing animation</span>
+                                    <button type="button" id="animationExportCancelBtn">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <aside class="controls-panel controls-panel-effects" id="eyesPanel">
+                <div class="panel-header" id="eyesPanelHeader">
+                    <span>Eyes</span>
+                    <span class="collapse-icon" aria-hidden="true">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="eyePerspectiveSlider"><span>Perspective</span>
+                                <input type="text" class="value-display" id="eyePerspectiveValue" value="100"></label>
+                            <input type="range" id="eyePerspectiveSlider" min="0" max="100" step="1" value="100">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="eyeSizeSlider"><span>Size</span>
+                                <input type="text" class="value-display" id="eyeSizeValue" value="50"></label>
+                            <input type="range" id="eyeSizeSlider" min="0" max="100" step="1" value="50">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="eyeDistanceSlider"><span>Distance <span class="unit">%</span></span>
+                                <input type="text" class="value-display" id="eyeDistanceValue" value="0"></label>
+                            <input type="range" id="eyeDistanceSlider" min="-100" max="100" step="1" value="0">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="cuteSlider"><span>Cute</span>
+                                <input type="text" class="value-display" id="cuteValue" value="50"></label>
+                            <input type="range" id="cuteSlider" min="0" max="100" step="1" value="50">
+                        </div>
+
+                        <div class="control-group">
+                            <label for="angrySlider"><span>Angry</span>
+                                <input type="text" class="value-display" id="angryValue" value="0"></label>
+                            <input type="range" id="angrySlider" min="0" max="100" step="1" value="0">
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <aside class="controls-panel controls-panel-text" id="colorsPanel">
+                <div class="panel-header" id="colorsPanelHeader">
+                    <span>Colors</span>
+                    <span class="collapse-icon" aria-hidden="true">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <div class="color-swatches-compact" id="colorPickersGroup">
+                                <div class="color-swatch-row">
+                                    <div class="color-swatch-compact" id="headColorItem" data-color-type="head">
+                                        <button type="button" class="color-dot color-dot--expandable" id="headColorPreview" aria-label="Open Head color controls"></button>
+                                        <span class="color-label">Head</span>
+                                        <input type="text" class="color-swatch-hex" id="headColorHex" value="#ffffff" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Head color hex">
+                                    </div>
+                                    <div class="color-hsb-slot" id="headColorHsbSlot">
+                                        <div id="unifiedColorPickerContainer"></div>
+                                    </div>
+                                </div>
+                                <div class="color-swatch-row">
+                                    <div class="color-swatch-compact" id="eyeColorItem" data-color-type="eyes">
+                                        <button type="button" class="color-dot color-dot--expandable" id="eyeColorPreview" aria-label="Open Eyes color controls"></button>
+                                        <span class="color-label">Eyes</span>
+                                        <input type="text" class="color-swatch-hex" id="eyeColorHex" value="#000000" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Eyes color hex">
+                                    </div>
+                                    <div class="color-hsb-slot" id="eyeColorHsbSlot"></div>
+                                </div>
+                                <div class="color-swatch-row">
+                                    <div class="color-swatch-compact" id="backgroundColorItem" data-color-type="background">
+                                        <button type="button" class="color-dot color-dot--expandable" id="backgroundColorPreview" aria-label="Open Background color controls"></button>
+                                        <span class="color-label">Background</span>
+                                        <input type="text" class="color-swatch-hex" id="backgroundColorHex" value="#000000" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Background color hex">
+                                    </div>
+                                    <div class="color-hsb-slot" id="backgroundColorHsbSlot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        </main>
+
+        <nav class="bottom-buttons" aria-label="Export actions">
+            <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
+            <button class="btn-fixed" id="exportSvgBtn" type="button">Export ⌘E</button>
+        </nav>
+
+        <p class="mobile-desktop-hint">Try swiping and tapping — it’s fun!<br>The desktop version is better.</p>
+
+        <dialog id="dialog" class="modal">
+            <div class="modal-content">
+                <h2 id="dialogTitle" class="modal-title"></h2>
+                <div id="dialogText" class="modal-text"></div>
+                <input id="dialogInput" class="modal-input" type="text" style="display:none;">
+                <div id="dialogButtons" class="modal-buttons"></div>
+            </div>
+        </dialog>
+    </div>
+
+    <script type="module" src="./tool.js?v=20260825-71"></script>
+</body>
+</html>

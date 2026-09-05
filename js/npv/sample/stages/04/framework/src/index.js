@@ -1,0 +1,53 @@
+/**
+ * Othersite UI Framework v3 — public API barrel.
+ *
+ * Most tools only need `defineTool`. The individual modules are re-exported for
+ * advanced wiring or for building on top of single subsystems.
+ */
+
+// Engine
+export { defineTool } from './core/defineTool.js';
+export { ApplicationShell } from './core/ApplicationShell.js';
+
+// Core
+export { Settings } from './core/Settings.js';
+export { DOMCache } from './core/DOMCache.js';
+export { ShortcutRouter } from './core/ShortcutRouter.js';
+
+// Render targets
+export { RenderTarget } from './render/RenderTarget.js';
+export { SvgTarget } from './render/SvgTarget.js';
+export { CanvasTarget } from './render/CanvasTarget.js';
+
+// UI components
+export { SliderController } from './ui/SliderController.js';
+export { RangeSliderController } from './ui/RangeSliderController.js';
+export { PanelManager } from './ui/PanelManager.js';
+export { ColorPicker } from './ui/ColorPicker.js';
+export { UnifiedColorPicker } from './ui/UnifiedColorPicker.js';
+export { DicePanel } from './ui/DicePanel.js';
+export { DialogHost } from './ui/DialogHost.js';
+export { TooltipService } from './ui/TooltipService.js';
+export { ZoomPanManager } from './ui/ZoomPanManager.js';
+
+// Features
+export { HistoryManager } from './history/HistoryManager.js';
+export { HistoryBridge } from './history/HistoryBridge.js';
+export { PresetStore } from './preset/PresetStore.js';
+export { PresetSession, SHARED_SLOT, NEW_SLOT } from './preset/PresetSession.js';
+export { ShareCodec, SHARE_SOFT_LIMIT_CHARS } from './preset/ShareCodec.js';
+export { SVGExporter } from './export/SVGExporter.js';
+export { TextToPath } from './export/TextToPath.js';
+
+// Effects
+export { WobblyEffect } from './effects/WobblyEffect.js';
+export { GradientStrokeEffect } from './effects/GradientStrokeEffect.js';
+
+// Utils
+export { ColorUtils } from './utils/ColorUtils.js';
+export { MathUtils } from './utils/MathUtils.js';
+export { NoiseGenerator } from './utils/NoiseGenerator.js';
+export * as StripeGeometry from './geometry/StrokeGeometry.js';
+
+// Config
+export * from './config/timings.js';

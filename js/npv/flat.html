@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" class="global-initializing">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="Flat — a parametric interactive ellipse pattern generator.">
+    <title>Flat — Ellipse Pattern Generator</title>
+    <link rel="stylesheet" href="./styles/global.css">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar" aria-label="Tool navigation">
+            <nav class="tool-switcher" aria-label="YF tools">
+                <a class="top-button top-button--light" href="../">←YF Tools</a>
+                <a class="top-button tool-tab" href="./">Sphere</a>
+                <a class="top-button tool-tab" href="./flat.html" aria-current="page">Flat</a>
+            </nav>
+            <div class="preset-cluster">
+                <button class="top-button" id="resetFlat" type="button">Reset</button>
+                <button class="icon-button" id="shareButton" type="button" aria-label="Copy share link" title="Copy share link">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="18" height="18" fill="none" aria-hidden="true">
+                        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M5.7410987,3.4304742l.6124561-.6124561c.7810478-.7810478,2.0473765-.7810478,2.8284243,0l.0000028.0000028c.7810478.7810478.7810478,2.0473765,0,2.8284243l-.6124561.6124561"/>
+                        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M6.2589013,8.5695258l-.6124561.6124561c-.7810478.7810478-2.0473765.7810478-2.8284243,0l-.0000028-.0000028c-.7810478-.7810478-.7810478-2.0473765,0-2.8284243l.6124561-.6124561"/>
+                        <line x1="7.5184826" y1="4.4815174" x2="4.4815174" y2="7.5184826" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"/>
+                    </svg>
+                </button>
+            </div>
+            <button class="zoom-display" id="zoomDisplay" type="button" title="Fit to screen">100%</button>
+        </header>
+
+        <main class="workspace" id="workspace">
+            <h1 class="sr-only">Flat parametric ellipse pattern generator</h1>
+            <div class="canvas-container" id="canvasContainer">
+                <svg id="mainSvg" viewBox="0 0 640 480" role="img" aria-label="Flat ellipse pattern preview"></svg>
+            </div>
+
+            <aside class="controls-panel controls-panel--left-top" id="flatPatternPanel">
+                <button class="panel-header" type="button" aria-expanded="true">
+                    <span>Pattern</span><span class="panel-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div class="panel-content">
+                    <div class="topology-control">
+                        <div class="control-caption">Mode</div>
+                        <div class="segmented-control" role="group" aria-label="Flat distortion mode">
+                            <label><input type="radio" name="flatMode" value="basic" checked><span>Basic</span></label>
+                            <label><input type="radio" name="flatMode" value="person"><span>Person</span></label>
+                        </div>
+                    </div>
+                    <div class="topology-control">
+                        <div class="control-caption">Distribution</div>
+                        <div class="segmented-control" role="group" aria-label="Flat pattern distribution">
+                            <label><input type="radio" name="flatDistribution" value="grid" checked><span>Grid</span></label>
+                            <label><input type="radio" name="flatDistribution" value="paired"><span>Paired tiles</span></label>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label for="canvasWidth"><span>Canvas width <span class="unit">px</span></span><input type="text" class="value-display" id="canvasWidthValue" value="640" inputmode="numeric" autocomplete="off" aria-label="Canvas width value"></label>
+                        <input id="canvasWidth" type="range" min="80" max="1920" step="1" value="640" data-flat-setting="width">
+                    </div>
+                    <div class="control-group">
+                        <label for="canvasHeight"><span>Canvas height <span class="unit">px</span></span><input type="text" class="value-display" id="canvasHeightValue" value="480" inputmode="numeric" autocomplete="off" aria-label="Canvas height value"></label>
+                        <input id="canvasHeight" type="range" min="80" max="1920" step="1" value="480" data-flat-setting="height">
+                    </div>
+                    <div class="control-group">
+                        <label for="ellipseWidth"><span>Ellipse width <span class="unit">px</span></span><input type="text" class="value-display" id="ellipseWidthValue" value="8.4" inputmode="decimal" autocomplete="off" aria-label="Ellipse width value"></label>
+                        <input id="ellipseWidth" type="range" min="1" max="120" step="0.1" value="8.4" data-flat-setting="ellipseWidth">
+                    </div>
+                    <div class="control-group">
+                        <label for="ellipseHeight"><span>Ellipse height <span class="unit">px</span></span><input type="text" class="value-display" id="ellipseHeightValue" value="8.4" inputmode="decimal" autocomplete="off" aria-label="Ellipse height value"></label>
+                        <input id="ellipseHeight" type="range" min="1" max="120" step="0.1" value="8.4" data-flat-setting="ellipseHeight">
+                    </div>
+                    <div class="control-group">
+                        <label for="spacingX"><span>Spacing X <span class="unit">px</span></span><input type="text" class="value-display" id="spacingXValue" value="23.1" inputmode="decimal" autocomplete="off" aria-label="Horizontal center spacing value"></label>
+                        <input id="spacingX" type="range" min="1" max="160" step="0.1" value="23.1" data-flat-setting="spacingX">
+                    </div>
+                    <div class="control-group">
+                        <label for="spacingY"><span>Spacing Y <span class="unit">px</span></span><input type="text" class="value-display" id="spacingYValue" value="23.1" inputmode="decimal" autocomplete="off" aria-label="Vertical center spacing value"></label>
+                        <input id="spacingY" type="range" min="1" max="160" step="0.1" value="23.1" data-flat-setting="spacingY">
+                    </div>
+                    <div class="control-group" id="staggerGroup" hidden>
+                        <label for="stagger"><span>Stagger <span class="unit">%</span></span><input type="text" class="value-display" id="staggerValue" value="50" inputmode="decimal" autocomplete="off" aria-label="Paired tile stagger value"></label>
+                        <input id="stagger" type="range" min="0" max="100" step="1" value="50" data-flat-setting="stagger">
+                    </div>
+                    <p class="panel-hint" id="flatPatternHint"></p>
+                </div>
+            </aside>
+
+            <aside class="controls-panel controls-panel--right-top" id="flatFieldPanel">
+                <button class="panel-header" type="button" aria-expanded="true">
+                    <span>Field</span><span class="panel-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div class="panel-content">
+                    <div class="control-group" id="basicGrowthGroup" hidden>
+                        <label for="basicScale"><span>Maximum size <span class="unit">%</span></span><input type="text" class="value-display" id="basicScaleValue" value="215" inputmode="decimal" autocomplete="off" aria-label="Maximum ellipse size value"></label>
+                        <input id="basicScale" type="range" min="25" max="600" step="1" value="215" data-flat-setting="basicScale">
+                    </div>
+                    <div class="control-group" id="personReductionGroup" hidden>
+                        <label for="personMinimumScale"><span>Minimum size <span class="unit">%</span></span><input type="text" class="value-display" id="personMinimumScaleValue" value="48" inputmode="decimal" autocomplete="off" aria-label="Minimum neighboring ellipse size value"></label>
+                        <input id="personMinimumScale" type="range" min="10" max="100" step="1" value="48" data-flat-setting="personMinimumScale">
+                    </div>
+                    <div class="control-group">
+                        <label for="fieldRadius"><span>Field radius <span class="unit">px</span></span><input type="text" class="value-display" id="fieldRadiusValue" value="78" inputmode="decimal" autocomplete="off" aria-label="Field radius value"></label>
+                        <input id="fieldRadius" type="range" min="5" max="240" step="1" value="78" data-flat-setting="fieldRadius">
+                    </div>
+                    <div class="control-group">
+                        <label for="falloffCurve"><span>Falloff curve</span><input type="text" class="value-display" id="falloffCurveValue" value="0" inputmode="decimal" autocomplete="off" aria-label="Falloff curve value"></label>
+                        <input id="falloffCurve" type="range" min="-100" max="100" step="1" value="0" data-flat-setting="falloffCurve">
+                        <div class="range-legend" aria-hidden="true"><span>Soft</span><span>Linear</span><span>Tight</span></div>
+                    </div>
+                    <div class="control-group">
+                        <label for="fieldX"><span>Field X <span class="unit">px</span></span><input type="text" class="value-display" id="fieldXValue" value="0" inputmode="decimal" autocomplete="off" aria-label="Center-relative field X value"></label>
+                        <input id="fieldX" type="range" min="-960" max="960" step="1" value="0" data-flat-coordinate="x">
+                    </div>
+                    <div class="control-group">
+                        <label for="fieldY"><span>Field Y <span class="unit">px</span></span><input type="text" class="value-display" id="fieldYValue" value="0" inputmode="decimal" autocomplete="off" aria-label="Center-relative field Y value"></label>
+                        <input id="fieldY" type="range" min="-960" max="960" step="1" value="0" data-flat-coordinate="y">
+                    </div>
+                    <div class="pill-row">
+                        <label class="pill"><input id="fieldFollow" type="checkbox" data-flat-setting="fieldFollow" checked><span>Follows cursor</span></label>
+                        <label class="pill"><input id="showField" type="checkbox" data-flat-setting="showField"><span>Guide</span></label>
+                    </div>
+                    <p class="panel-hint" id="flatFieldHint"></p>
+                    <div class="static-fields-section" id="staticFieldsSection" hidden>
+                        <div class="section-rule"></div>
+                        <div class="static-fields-caption"><span>Pinned fields</span><span id="staticFieldCount">0</span></div>
+                        <div class="static-field-list" id="staticFieldList"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <aside class="controls-panel controls-panel--left-bottom" id="flatColorsPanel">
+                <button class="panel-header" type="button" aria-expanded="true">
+                    <span>Colors</span><span class="panel-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div class="panel-content color-controls">
+                    <label class="color-row" for="ellipseColor">
+                        <span class="color-dot" id="ellipseColorDot"></span><span>Ellipses</span>
+                        <input id="ellipseColor" type="text" value="#d9d9d9" maxlength="7" spellcheck="false" data-flat-color="ellipseColor">
+                    </label>
+                    <label class="color-row" for="backgroundColor">
+                        <span class="color-dot" id="backgroundColorDot"></span><span>Background</span>
+                        <input id="backgroundColor" type="text" value="#000000" maxlength="7" spellcheck="false" data-flat-color="backgroundColor">
+                    </label>
+                </div>
+            </aside>
+        </main>
+
+        <nav class="action-dock" aria-label="Export actions">
+            <div class="help-menu" id="helpMenu">
+                <button class="icon-button help-button" id="helpButton" type="button" aria-label="Keyboard shortcuts" aria-expanded="false">?</button>
+                <div class="help-popup" id="helpPopup" role="dialog" aria-label="Keyboard shortcuts" hidden>
+                    <h2>Shortcuts</h2>
+                    <ul>
+                        <li><kbd>Click</kbd><span>Pin a field point</span></li>
+                        <li><kbd>[ ]</kbd><span>Change field radius</span></li>
+                        <li><kbd>G</kbd><span>Toggle field guide</span></li>
+                        <li><kbd>⌘ \\</kbd><span>Hide or restore panels</span></li>
+                        <li><kbd>⌘ E</kbd><span>Export SVG</span></li>
+                        <li><kbd>⇧ ⌘ E</kbd><span>Export PNG</span></li>
+                        <li><kbd>⌘ Z</kbd><span>Undo</span></li>
+                        <li><kbd>⇧ ⌘ Z</kbd><span>Redo</span></li>
+                        <li><kbd>⌘ J</kbd><span>Export settings JSON</span></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="export-actions">
+                <button class="action-button" id="exportPng" type="button">Export PNG</button>
+                <button class="action-button" id="exportSvg" type="button">Export SVG ⌘E</button>
+            </div>
+        </nav>
+    </div>
+
+    <script type="module" src="./src/flatTool.js"></script>
+    <script>
+        const helpButton = document.getElementById('helpButton');
+        const helpPopup = document.getElementById('helpPopup');
+        helpButton.addEventListener('click', () => {
+            helpPopup.hidden = !helpPopup.hidden;
+            helpButton.setAttribute('aria-expanded', String(!helpPopup.hidden));
+        });
+        document.addEventListener('pointerdown', (event) => {
+            if (!helpPopup.hidden && !document.getElementById('helpMenu').contains(event.target)) {
+                helpPopup.hidden = true;
+                helpButton.setAttribute('aria-expanded', 'false');
+            }
+        });
+    </script>
+</body>
+</html>

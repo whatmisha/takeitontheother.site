@@ -1,0 +1,291 @@
+@font-face {
+    font-family: 'CoFo Sans';
+    src: url('../framework/fonts/TT_Commons_Classic_Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'CoFo Sans';
+    src: url('../framework/fonts/TT_Commons_Classic_Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+.preset-toolbar-cluster {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+html,
+body,
+.container,
+.main-content,
+.canvas-container {
+    background-color: var(--sparky-page-background, #000000);
+}
+
+#mainSvg {
+    display: block;
+    touch-action: none;
+    user-select: none;
+}
+
+/* The framework intentionally renders before async preset bootstrap and zoom
+   setup. Keep that provisional frame out of sight and reveal only the final,
+   synchronously fitted viewBox from onReady. */
+.sparky-initializing #mainSvg {
+    visibility: hidden;
+}
+
+.mobile-desktop-hint {
+    display: none;
+}
+
+.sparky-panel-action {
+    width: 100%;
+    height: 32px;
+    margin-top: var(--spacing-sm);
+    border: 0;
+    border-radius: var(--radius-button);
+    color: var(--color-text-secondary);
+    background: var(--color-bg-input);
+    font: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background var(--transition-normal), color var(--transition-normal);
+}
+
+.sparky-panel-action:hover,
+.sparky-panel-action:focus-visible {
+    color: var(--color-bg);
+    background: var(--color-text);
+    outline: none;
+}
+
+.sparky-focus-mode-toggles {
+    margin-top: 24px;
+}
+
+.sparky-pill-button {
+    appearance: none;
+    font: inherit;
+}
+
+#showMotionPathToggle[hidden] {
+    display: none;
+}
+
+.sparky-focus-tabs {
+    margin: 0 0 20px;
+}
+
+#focusPanel .panel-content {
+    max-height: calc(100vh - 88px);
+    overflow-y: auto;
+}
+
+[data-focus-mode-panel][hidden] {
+    display: none;
+}
+
+.sparky-compact-group {
+    gap: 8px;
+}
+
+.sparky-control-label,
+.sparky-select-label {
+    display: block;
+    color: var(--color-text);
+    font-size: 0.82rem;
+}
+
+.sparky-inline-segments {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.sparky-inline-segments label {
+    min-width: 0;
+    padding-right: 8px;
+    padding-left: 8px;
+    font-size: 0.78rem;
+}
+
+.sparky-select {
+    width: 100%;
+    height: 32px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: var(--radius-input);
+    color: var(--color-text);
+    background: var(--color-bg-input);
+    font: inherit;
+    font-size: 0.82rem;
+}
+
+.sparky-animation-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 16px;
+}
+
+.sparky-animation-actions .sparky-panel-action {
+    margin-top: 0;
+    padding: 0 6px;
+    font-size: 0.74rem;
+}
+
+.sparky-motion-toggles {
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+.sparky-eye-animation-subsection {
+    display: grid;
+    gap: 2px;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--color-border);
+}
+
+.sparky-eye-animation-subsection > .control-group {
+    margin-top: 14px;
+}
+
+.sparky-eye-animation-subsection > .sparky-motion-toggles {
+    margin-top: 10px;
+}
+
+.sparky-export-status {
+    display: grid;
+    gap: 7px;
+    margin-top: 12px;
+}
+
+.sparky-export-status[hidden] {
+    display: none;
+}
+
+.sparky-export-status progress {
+    width: 100%;
+    height: 6px;
+    accent-color: currentColor;
+}
+
+.sparky-export-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--text-secondary, #777);
+    font-size: 11px;
+}
+
+.sparky-export-status-row button {
+    appearance: none;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.bottom-buttons button:disabled {
+    cursor: wait;
+    opacity: 0.45;
+}
+
+.sparky-focus-hit-area {
+    cursor: grab;
+    pointer-events: all;
+}
+
+.sparky-focus-hit-area:active {
+    cursor: grabbing;
+}
+
+.sparky-error-message {
+    font: 500 14px 'CoFo Sans', sans-serif;
+    letter-spacing: 0.01em;
+}
+
+@media (max-height: 700px) {
+    .controls-panel .panel-content {
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 760px) {
+    .controls-panel {
+        width: 240px;
+    }
+
+    #colorsPanel {
+        display: none;
+    }
+}
+
+/* Mobile showcase: the shipped Basic character is the complete interface. */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+    html,
+    body,
+    body * {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
+
+    html,
+    body,
+    .container,
+    .main-content,
+    .canvas-container {
+        width: 100%;
+        height: 100dvh;
+        min-height: 100dvh;
+        overflow: hidden;
+    }
+
+    .top-links,
+    .controls-panel,
+    .bottom-buttons,
+    dialog {
+        display: none !important;
+    }
+
+    .container,
+    .main-content,
+    .canvas-container {
+        position: fixed;
+        inset: 0;
+        padding: 0;
+    }
+
+    #mainSvg {
+        width: 100% !important;
+        height: 100% !important;
+        -webkit-user-drag: none;
+    }
+
+    .mobile-desktop-hint {
+        position: fixed;
+        left: 50%;
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        z-index: 2;
+        display: block;
+        width: calc(100% - 32px);
+        transform: translateX(-50%);
+        color: #777;
+        font-size: 16px;
+        line-height: 1.25;
+        text-align: center;
+        pointer-events: none;
+    }
+}
