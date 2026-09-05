@@ -22,7 +22,7 @@ Import only the public barrel:
 import { defineTool } from './ui-garage/src/index.js';
 ```
 
-Do not import `src/core/*`, `src/ui/*` or auto-init modules directly. Advanced
+Do not import `src/core/*`, `src/ui/*` or create side-effect auto-init modules. Advanced
 exports are available from the same barrel; optional, not-yet-stable controls
 live in `src/experimental.js`.
 

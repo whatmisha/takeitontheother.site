@@ -50,6 +50,9 @@ function fakeCollapseDom(collapsed = false) {
             listenerCount += 1;
             listeners.set(type, handler);
         },
+        removeEventListener(type, handler) {
+            if (listeners.get(type) === handler) listeners.delete(type);
+        },
         setAttribute: (name, value) => attributes.set(name, String(value)),
         getAttribute: name => attributes.get(name) ?? null,
         removeAttribute: name => attributes.delete(name)
@@ -105,6 +108,9 @@ test('PanelManager collapse controls synchronize click, keyboard and ARIA idempo
         assert.equal(dom.panel.classList.contains('panel-collapsed'), true);
         assert.equal(dom.icon.getAttribute('aria-expanded'), 'false');
         assert.equal(dom.icon.getAttribute('aria-label'), 'Expand panel');
+        manager.destroy();
+        assert.equal(dom.listeners.size, 0);
+        assert.equal(dom.icon.dataset.collapseBound, undefined);
     } finally {
         globalThis.document = previousDocument;
     }
@@ -166,6 +172,38 @@ test('SliderController can show a transient value without changing settings', ()
     assert.equal(element.value, 100);
     assert.equal(valueInput.value, '100%');
     assert.deepEqual(writes, []);
+});
+
+test('SliderController replaces bindings and removes every listener on destroy', () => {
+    const previousDocument = globalThis.document;
+    const makeTarget = (value = '') => {
+        const listeners = new Map();
+        return {
+            value,
+            listeners,
+            addEventListener(type, listener) { listeners.set(type, listener); },
+            removeEventListener(type, listener) {
+                if (listeners.get(type) === listener) listeners.delete(type);
+            }
+        };
+    };
+    const slider = makeTarget('5');
+    const valueInput = makeTarget('5');
+    globalThis.document = {
+        getElementById(id) { return id === 'amount' ? slider : id === 'amountValue' ? valueInput : null; }
+    };
+    try {
+        const controller = new SliderController({ set() {} });
+        const config = { valueId: 'amountValue', min: 0, max: 10, decimals: 0, baseStep: 1 };
+        controller.initSlider('amount', { ...config });
+        assert.equal(slider.listeners.size + valueInput.listeners.size, 4);
+        controller.initSlider('amount', { ...config });
+        assert.equal(slider.listeners.size + valueInput.listeners.size, 4, 'replacement must not duplicate listeners');
+        controller.destroy();
+        assert.equal(slider.listeners.size + valueInput.listeners.size, 0);
+    } finally {
+        globalThis.document = previousDocument;
+    }
 });
 
 test('ColorPicker keeps HSB values, gradients and HEX callbacks synchronized', () => {

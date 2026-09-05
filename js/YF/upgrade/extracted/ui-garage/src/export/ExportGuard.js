@@ -19,17 +19,17 @@ export class ExportGuard {
         this.equals = equals;
     }
 
-    async run(format, operation) {
+    async run(format, operation, { signal } = {}) {
         if (typeof operation !== 'function') throw new TypeError('Export operation must be a function.');
         const canRestore = typeof this.capture === 'function' && typeof this.restore === 'function';
-        const before = canRestore ? cloneValue(await this.capture({ format })) : null;
+        const before = canRestore ? cloneValue(await this.capture({ format, signal })) : null;
         try {
-            if (typeof this.prepare === 'function') await this.prepare({ format });
-            return await operation();
+            if (typeof this.prepare === 'function') await this.prepare({ format, signal });
+            return await operation({ format, signal });
         } finally {
-            if (canRestore) {
-                const after = await this.capture({ format });
-                if (!this.equals(before, after)) await this.restore(cloneValue(before), { format });
+            if (canRestore && !signal?.aborted) {
+                const after = await this.capture({ format, signal });
+                if (!this.equals(before, after)) await this.restore(cloneValue(before), { format, signal });
             }
         }
     }

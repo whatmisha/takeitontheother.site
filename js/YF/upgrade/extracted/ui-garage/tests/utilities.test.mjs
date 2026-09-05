@@ -40,6 +40,23 @@ test('MathUtils unit conversion and range helpers round-trip', () => {
     assert.equal(MathUtils.roundTo(1.23456, 3), 1.235);
 });
 
+test('MathUtils timed wrappers expose cancellation', async () => {
+    let debouncedCalls = 0;
+    const debounced = MathUtils.debounce(() => { debouncedCalls += 1; }, 5);
+    debounced();
+    debounced.cancel();
+
+    let throttledCalls = 0;
+    const throttled = MathUtils.throttle(() => { throttledCalls += 1; }, 5);
+    throttled();
+    throttled.cancel();
+    throttled();
+    await new Promise(resolve => setTimeout(resolve, 10));
+
+    assert.equal(debouncedCalls, 0);
+    assert.equal(throttledCalls, 2);
+});
+
 test('StripeGeometry keeps band arithmetic consistent', () => {
     const { gap, strokeWidth } = computeStripeLayout(100, 4, 2);
     assert.ok(Math.abs(stripeBandWidth(4, strokeWidth, gap) - 100) < 1e-9);
@@ -90,6 +107,50 @@ test('SVGExporter registers editable PDF fonts and preserves variable data on re
     assert.deepEqual(metadata.subset.encode(), [1, 2, 3]);
 });
 
+test('SVGExporter destroy revokes Blob URLs created by pending downloads', () => {
+    const previousDocument = globalThis.document;
+    const previousCreateObjectURL = URL.createObjectURL;
+    const previousRevokeObjectURL = URL.revokeObjectURL;
+    const revoked = [];
+    URL.createObjectURL = () => 'blob:test-export';
+    URL.revokeObjectURL = url => revoked.push(url);
+    globalThis.document = {
+        createElement: () => ({ click() {} }),
+        body: { appendChild() {}, removeChild() {} }
+    };
+    try {
+        const exporter = new SVGExporter();
+        exporter._downloadBlob('data', 'test.svg', 'image/svg+xml');
+        exporter.destroy();
+        assert.deepEqual(revoked, ['blob:test-export']);
+        assert.equal(exporter._objectUrls.size, 0);
+        assert.equal(exporter._revokeTimers.size, 0);
+    } finally {
+        globalThis.document = previousDocument;
+        URL.createObjectURL = previousCreateObjectURL;
+        URL.revokeObjectURL = previousRevokeObjectURL;
+    }
+});
+
+test('SVGExporter import can be aborted without leaving a live reader', async () => {
+    const PreviousFileReader = globalThis.FileReader;
+    class PendingReader {
+        readAsText() {}
+        abort() { this.onabort?.(); }
+    }
+    globalThis.FileReader = PendingReader;
+    try {
+        const exporter = new SVGExporter();
+        const controller = new AbortController();
+        const pending = exporter.importJSON({}, { signal: controller.signal });
+        controller.abort();
+        await assert.rejects(pending, error => error?.name === 'AbortError');
+        assert.equal(exporter._readers.size, 0);
+    } finally {
+        globalThis.FileReader = PreviousFileReader;
+    }
+});
+
 test('ExportGuard restores state changed by export preparation or rendering', async () => {
     let state = { seed: 7, cache: ['preview'] };
     const phases = [];
@@ -106,4 +167,20 @@ test('ExportGuard restores state changed by export preparation or rendering', as
     assert.equal(result, 'done');
     assert.deepEqual(state, { seed: 7, cache: ['preview'] });
     assert.deepEqual(phases, ['prepare:svg', 'export', 'restore:svg']);
+});
+
+test('ExportGuard skips state work after its owner aborts', async () => {
+    const controller = new AbortController();
+    let captures = 0;
+    let restores = 0;
+    const guard = new ExportGuard({
+        capture: () => { captures += 1; return { value: 1 }; },
+        restore: () => { restores += 1; }
+    });
+    await guard.run('svg', () => {
+        controller.abort();
+        throw Object.assign(new Error('cancelled'), { name: 'AbortError' });
+    }, { signal: controller.signal }).catch(() => {});
+    assert.equal(captures, 1);
+    assert.equal(restores, 0);
 });

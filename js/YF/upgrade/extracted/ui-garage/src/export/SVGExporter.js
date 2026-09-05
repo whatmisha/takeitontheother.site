@@ -14,6 +14,9 @@ export class SVGExporter {
             svg2pdf: new URL('../../vendor/svg2pdf/2.2.3/svg2pdf.umd.min.js', import.meta.url).href,
             ...options.pdfLibPaths
         };
+        this._objectUrls = new Set();
+        this._revokeTimers = new Set();
+        this._readers = new Set();
     }
 
     /**
@@ -25,6 +28,7 @@ export class SVGExporter {
      * @param {boolean} [options.convertTextToOutlines] — конвертировать текст в кривые
      */
     async exportToFile(svgElement, filename = 'export.svg', options = {}) {
+        this._throwIfAborted(options.signal);
         const clonedSvg = svgElement.cloneNode(true);
         this.normalizeSvgForExport(clonedSvg);
 
@@ -35,6 +39,7 @@ export class SVGExporter {
         if (options.convertTextToOutlines && this.textToPath) {
             try {
                 await this.textToPath.convertAllTextToPaths(clonedSvg);
+                this._throwIfAborted(options.signal);
             } catch (error) {
                 console.error('Error converting text to paths:', error);
             }
@@ -42,7 +47,7 @@ export class SVGExporter {
 
         const serializer = new XMLSerializer();
         const svgString = svgDocumentString(serializer.serializeToString(clonedSvg));
-        this._downloadBlob(svgString, filename, 'image/svg+xml;charset=utf-8');
+        this._downloadBlob(svgString, filename, 'image/svg+xml;charset=utf-8', options.signal);
     }
 
     /**
@@ -79,7 +84,9 @@ export class SVGExporter {
      * @param {Object} [options.format] — { width, height }
      */
     async exportToPDF(svgElement, filename = 'export.pdf', options = {}) {
+        this._throwIfAborted(options.signal);
         await this.loadPDFLibraries();
+        this._throwIfAborted(options.signal);
 
         const clonedSvg = svgElement.cloneNode(true);
         this.normalizeSvgForExport(clonedSvg);
@@ -91,6 +98,7 @@ export class SVGExporter {
         if (options.convertTextToOutlines !== false && this.textToPath) {
             try {
                 await this.textToPath.convertAllTextToPaths(clonedSvg);
+                this._throwIfAborted(options.signal);
             } catch (error) {
                 throw new Error('Failed to convert text to paths: ' + error.message);
             }
@@ -128,6 +136,7 @@ export class SVGExporter {
             width: pageWidth, height: pageHeight
         });
 
+        this._throwIfAborted(options.signal);
         pdf.save(filename);
     }
 
@@ -161,9 +170,9 @@ export class SVGExporter {
      * @param {Object} data
      * @param {string} filename
      */
-    exportJSON(data, filename = 'settings.json') {
+    exportJSON(data, filename = 'settings.json', options = {}) {
         const jsonString = JSON.stringify(data, null, 2);
-        this._downloadBlob(jsonString, filename, 'application/json;charset=utf-8');
+        this._downloadBlob(jsonString, filename, 'application/json;charset=utf-8', options.signal);
     }
 
     /**
@@ -171,17 +180,33 @@ export class SVGExporter {
      * @param {File} file
      * @returns {Promise<Object>}
      */
-    async importJSON(file) {
+    async importJSON(file, { signal } = {}) {
+        this._throwIfAborted(signal);
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
+            this._readers.add(reader);
+            const cleanup = () => {
+                this._readers.delete(reader);
+                signal?.removeEventListener?.('abort', onAbort);
+            };
+            const onAbort = () => {
+                reader.abort?.();
+                cleanup();
+                reject(this._abortError());
+            };
             reader.onload = (e) => {
                 try {
+                    this._throwIfAborted(signal);
                     resolve(JSON.parse(e.target.result));
                 } catch (error) {
                     reject(error);
+                } finally {
+                    cleanup();
                 }
             };
-            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.onerror = () => { cleanup(); reject(new Error('Failed to read file')); };
+            reader.onabort = () => { cleanup(); reject(this._abortError()); };
+            signal?.addEventListener('abort', onAbort, { once: true });
             reader.readAsText(file);
         });
     }
@@ -288,16 +313,48 @@ export class SVGExporter {
     }
 
     /** @private */
-    _downloadBlob(content, filename, mimeType) {
+    _downloadBlob(content, filename, mimeType, signal) {
+        this._throwIfAborted(signal);
         const blob = new Blob([content], { type: mimeType });
         const url = URL.createObjectURL(blob);
+        this._objectUrls.add(url);
         const link = document.createElement('a');
         link.href = url;
         link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 100);
+        const timer = setTimeout(() => {
+            this._revokeTimers.delete(timer);
+            this._releaseObjectUrl(url);
+        }, 100);
+        this._revokeTimers.add(timer);
+    }
+
+    _releaseObjectUrl(url) {
+        if (!this._objectUrls.delete(url)) return;
+        URL.revokeObjectURL(url);
+    }
+
+    _abortError() {
+        if (typeof DOMException === 'function') return new DOMException('Operation aborted', 'AbortError');
+        const error = new Error('Operation aborted');
+        error.name = 'AbortError';
+        return error;
+    }
+
+    _throwIfAborted(signal) {
+        if (signal?.aborted) throw this._abortError();
+    }
+
+    destroy() {
+        for (const reader of this._readers) reader.abort?.();
+        this._readers.clear();
+        for (const timer of this._revokeTimers) clearTimeout(timer);
+        this._revokeTimers.clear();
+        for (const url of this._objectUrls) URL.revokeObjectURL(url);
+        this._objectUrls.clear();
+        this.pdfLibsPromise = null;
     }
 }
 

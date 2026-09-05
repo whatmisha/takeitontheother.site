@@ -86,14 +86,19 @@ export class MathUtils {
      */
     static debounce(func, wait) {
         let timeout;
-        return function executedFunction(...args) {
+        function executedFunction(...args) {
             const later = () => {
-                clearTimeout(timeout);
+                timeout = null;
                 func(...args);
             };
             clearTimeout(timeout);
             timeout = setTimeout(later, wait);
+        }
+        executedFunction.cancel = () => {
+            clearTimeout(timeout);
+            timeout = null;
         };
+        return executedFunction;
     }
 
     /**
@@ -103,14 +108,23 @@ export class MathUtils {
      * @returns {Function}
      */
     static throttle(func, limit) {
-        let inThrottle;
-        return function(...args) {
+        let inThrottle = false;
+        let timeout = null;
+        function throttled(...args) {
             if (!inThrottle) {
                 func.apply(this, args);
                 inThrottle = true;
-                setTimeout(() => inThrottle = false, limit);
+                timeout = setTimeout(() => {
+                    inThrottle = false;
+                    timeout = null;
+                }, limit);
             }
+        }
+        throttled.cancel = () => {
+            clearTimeout(timeout);
+            timeout = null;
+            inThrottle = false;
         };
+        return throttled;
     }
 }
-

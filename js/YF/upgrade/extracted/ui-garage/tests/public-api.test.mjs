@@ -45,6 +45,21 @@ test('machine-readable API snapshot matches both entrypoints and framework versi
     assert.equal(snapshot.optional.entrypoint, 'src/experimental.js');
 });
 
+test('every public resource-owning controller exposes destroy()', async () => {
+    const stable = await import('../src/index.js');
+    const optional = await import('../src/experimental.js');
+    for (const name of [
+        'ActionDockController', 'ApplicationShell', 'CanvasTarget', 'ColorPicker',
+        'DialogHost', 'FileIntakeController', 'HistoryBridge', 'MobileBootstrap',
+        'OverlayDialogHost', 'PanelManager', 'PresetMenuKeyboardController',
+        'RenderTarget', 'SVGExporter', 'SliderController', 'SvgTarget',
+        'TooltipService', 'UnifiedColorPicker', 'UnifiedUiController', 'ZoomPanManager'
+    ]) assert.equal(typeof stable[name]?.prototype?.destroy, 'function', `${name} must expose destroy()`);
+    for (const name of ['DicePanel', 'RangeSliderController']) {
+        assert.equal(typeof optional[name]?.prototype?.destroy, 'function', `${name} must expose destroy()`);
+    }
+});
+
 test('every source module has one explicit owner and API surface classification', async () => {
     const ownership = JSON.parse(await readFile(path.join(frameworkRoot, 'MODULE_OWNERSHIP.json'), 'utf8'));
     const actual = [];
@@ -62,7 +77,7 @@ test('every source module has one explicit owner and API surface classification'
     const declared = ownership.modules.map(module => module.path);
     assert.deepEqual(declared, [...declared].sort(), 'ownership rows must stay path-sorted');
     assert.deepEqual(declared, actual.sort());
-    assert.equal(new Set(declared).size, 47);
+    assert.equal(new Set(declared).size, 43);
     for (const module of ownership.modules) {
         assert.ok(['stable', 'optional', 'internal'].includes(module.surface), `${module.path}: invalid surface`);
         assert.ok(module.owner, `${module.path}: missing owner`);
@@ -97,7 +112,7 @@ test('framework source graph stays local and application-agnostic', async () => 
             assert.ok(resolved.startsWith(`${frameworkRoot}${path.sep}`));
         }
     }
-    assert.equal(files.length, 47);
+    assert.equal(files.length, 43);
 });
 
 test('working CSS and exporters use checked-in same-origin assets', async () => {

@@ -163,6 +163,7 @@ export class DialogHost {
             this.modal?.removeEventListener(type, listener);
         }
         this._listeners.length = 0;
+        this.buttonsEl?.replaceChildren?.();
         this.previousActiveElement = null;
     }
 

@@ -1,6 +1,6 @@
 # План выделения переносимого UI Garage
 
-Статус: **Active — clean-slate boundary завершён; далее FX-03 → FX-04**
+Статус: **Active — FX-03 завершён; далее FX-04**
 Дата фиксации: 2026-09-05
 Область текущего source of truth: `upgrade/**`
 Изолированный extraction workspace: `upgrade/extracted/ui-garage/**`
@@ -187,6 +187,12 @@ evidence вынесен наружу, legacy compatibility vendor удалён, 
 inventory очищены. Текущий результат — 92 manifested files, 47 source modules и
 74/74 tests. В portable folder остаются только CoFo Sans Regular/Medium; обе
 outline-версии проверены bundled OpenType parser.
+
+FX-03 завершён в candidate `0.1.0-dev.2`: stable/optional API и ownership всех
+модулей зафиксированы машинно-проверяемыми snapshots; shell/controllers получили
+симметричный teardown, re-init и async cancellation; side-effect auto-init
+entrypoints удалены. Текущий результат — 89 manifested files, 43 source modules
+и 85/85 tests.
 
 ## 7. Целевой формат переносимой папки
 
@@ -648,8 +654,8 @@ Gate не должен автоматически перезаписывать v
 | FX-00 Baseline | Complete | clean `5700146f`; полный `npm run gate:g13:static` green |
 | FX-01 Clean-slate boundary | Complete | нет app-name/URL branching, project-specific metadata, старого branding или запрещённых font assets/references внутри `ui-garage` |
 | FX-02 UI/shortcut convergence | Not started | — |
-| FX-03 Lifecycle/public API | Not started | — |
-| FX-04 Portable folder | In progress | 92-file manifest; 47 source modules; 74/74 tests; copied path with spaces/Unicode green after clean-slate cleanup |
+| FX-03 Lifecycle/public API | Complete | `0.1.0-dev.2`; exact API/ownership snapshots; init/destroy/re-init, failed-init, duplicate/aborted export, aborted import and Blob URL cleanup tests green |
+| FX-04 Portable folder | In progress | 89-file manifest; 43 source modules; 85/85 tests; copied path with spaces/Unicode green for `0.1.0-dev.2` |
 | FX-05 Eight consumers | Not started | — |
 | FX-06 Starters | Not started | — |
 | FX-07 Ninth-tool proof | Not started | — |
@@ -665,7 +671,7 @@ Gate не должен автоматически перезаписывать v
 - [x] canonical shortcuts совпадают, включая `⌘/Ctrl+\\` и отказ от
       browser-owned `⌘/Ctrl+0`/`⌘/Ctrl+1`;
 - [ ] public API versioned и не содержит внутренних imports у consumers;
-- [ ] framework полностью очищается и повторно инициализируется;
+- [x] framework полностью очищается и повторно инициализируется;
 - [ ] переносимая папка автономна;
 - [ ] fonts/vendor/licenses входят в release;
 - [ ] SVG и Canvas starters актуальны;

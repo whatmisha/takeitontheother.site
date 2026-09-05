@@ -4,7 +4,7 @@ UI Garage is a self-contained foundation for static SVG and Canvas graphics
 tools. Runtime source, CSS, fonts, vendor libraries, licenses, tests and the
 Component Lab are local to this folder.
 
-Current version: `0.1.0-dev.1`. It is an extraction candidate, not a `1.0.0`
+Current version: `0.1.0-dev.2`. It is an extraction candidate, not a `1.0.0`
 release.
 
 Requirements:
@@ -21,4 +21,5 @@ npm run verify
 ```
 
 Read `START_HERE.md` before creating an application and `CONTRACT.md` before
-extending the public API.
+extending the public API. `PUBLIC_API.json` and `MODULE_OWNERSHIP.json` are the
+machine-readable API and ownership snapshots enforced by the test gate.

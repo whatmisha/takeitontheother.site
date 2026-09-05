@@ -1,6 +1,6 @@
 # Portable framework contract
 
-Status: extraction candidate `0.1.0-dev.1`.
+Status: extraction candidate `0.1.0-dev.2`.
 
 ## Dependency direction
 
@@ -36,8 +36,9 @@ source module and must stay in exact lockstep with `src/`.
 
 `UnifiedUiController` accepts `toolName`, `summaryProviders`, `shortcutRows`,
 `fileTriggerSelector`/`resolveFileTrigger`, `panelSelector`,
-`excludedPanelSelector` and `historySelector`. The optional auto-init module
-reads these options from `globalThis.UI_GARAGE_CONFIG.ui`.
+`excludedPanelSelector` and `historySelector`. Side-effect auto-init entrypoints
+are not shipped; applications initialize controllers through the public API or
+through `defineTool`.
 
 The default file trigger is `[data-shortcut-open-file]`. The default collapse
 scope is visible `.controls-panel` elements with a direct-header

@@ -186,3 +186,44 @@ test('destroy invalidates initialization that is still awaiting async work', asy
     assert.equal(shell._initialized, false);
     assert.equal(shell._initializationPromise, null);
 });
+
+test('ApplicationShell joins duplicate exports and aborts active work on destroy', async () => {
+    const shell = new ApplicationShell();
+    let operationCount = 0;
+    const first = shell.runExport('svg', ({ signal }) => new Promise((resolve, reject) => {
+        operationCount += 1;
+        signal.addEventListener('abort', () => {
+            const error = new Error('cancelled');
+            error.name = 'AbortError';
+            reject(error);
+        }, { once: true });
+    }));
+    const second = shell.runExport('svg', () => Promise.resolve('duplicate'));
+
+    assert.equal(first, second, 'same-format export must share one in-flight promise');
+    await Promise.resolve();
+    assert.equal(operationCount, 1);
+    shell.destroy();
+    await assert.rejects(first, error => error?.name === 'AbortError');
+    assert.equal(shell._activeOperations.size, 0);
+});
+
+test('failed initialization tears down resources before it rejects', async () => {
+    const listeners = new Set();
+    const target = {
+        addEventListener(type, listener) { listeners.add(listener); },
+        removeEventListener(type, listener) { listeners.delete(listener); }
+    };
+    class FailingShell extends ApplicationShell {
+        async _initialize() {
+            this._listen(target, 'change', () => {});
+            throw new Error('init failed');
+        }
+    }
+
+    const shell = new FailingShell();
+    await assert.rejects(shell.init(), /init failed/u);
+    assert.equal(listeners.size, 0);
+    assert.equal(shell._initialized, false);
+    assert.equal(shell._initializationPromise, null);
+});

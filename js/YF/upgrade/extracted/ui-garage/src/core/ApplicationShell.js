@@ -81,6 +81,8 @@ export class ApplicationShell {
         this._presetChromeBound = false;
         this._toastTimer = null;
         this._standaloneHistory = null;
+        this._operationController = new AbortController();
+        this._activeOperations = new Map();
     }
 
     /* ================================================================== */
@@ -90,6 +92,7 @@ export class ApplicationShell {
     async init() {
         if (this._initialized) return this;
         if (this._initializationPromise) return this._initializationPromise;
+        if (this._operationController.signal.aborted) this._operationController = new AbortController();
         const lifecycleId = ++this._lifecycleId;
         this._isInitializing = true;
         const initializationPromise = this._initialize(lifecycleId);
@@ -103,8 +106,7 @@ export class ApplicationShell {
             return result;
         } catch (error) {
             if (lifecycleId === this._lifecycleId) {
-                this._initializationPromise = null;
-                this._isInitializing = false;
+                this.destroy();
             }
             throw error;
         }
@@ -143,7 +145,7 @@ export class ApplicationShell {
         }
 
         // Load presets / shared payload after the first paint.
-        await this._bootstrapPresets();
+        await this._bootstrapPresets(lifecycleId);
         if (lifecycleId !== this._lifecycleId) return this;
 
         this._isInitializing = false;
@@ -532,11 +534,12 @@ export class ApplicationShell {
         this.renderNow();
     }
 
-    async _bootstrapPresets() {
+    async _bootstrapPresets(lifecycleId = this._lifecycleId) {
         if (!this.presets) return;
         const c = this.config.presets;
         if (typeof c.migrate === 'function') {
             await c.migrate(this.presetStore);
+            if (lifecycleId !== this._lifecycleId) return;
         }
         if (c.seed !== false) {
             await this.presetStore.loadSeed({
@@ -544,6 +547,7 @@ export class ApplicationShell {
                 force: c.forceSeed === true,
                 transform: c.transform
             });
+            if (lifecycleId !== this._lifecycleId) return;
         }
 
         // 1) Full share payload in the hash (#p=...)
@@ -551,6 +555,7 @@ export class ApplicationShell {
             const payload = this.share.parsePayloadFromHash(location.hash);
             if (payload) {
                 const decoded = await this.share.decode(payload);
+                if (lifecycleId !== this._lifecycleId) return;
                 if (decoded) {
                     this.presets.openShared(decoded.full);
                     this._refreshChrome();
@@ -581,14 +586,15 @@ export class ApplicationShell {
 
     async exportSVG(filename) {
         if (!this.exporter) return;
-        return this.runExport('svg', async () => {
+        return this.runExport('svg', async ({ signal }) => {
             const name = filename || this.config.export?.filename || 'export.svg';
             if (this.target.type === 'svg') {
                 const outlines = document.getElementById('convertToOutlinesCheckbox')?.checked
                     ?? this.config.export?.outlineFonts ?? false;
                 await this.exporter.exportToFile(this.target.element, name, {
                     removeInteractive: true,
-                    convertTextToOutlines: outlines
+                    convertTextToOutlines: outlines,
+                    signal
                 });
             } else {
                 // Canvas tools provide an SVG string via config.renderSVG(ctx) if needed.
@@ -596,13 +602,14 @@ export class ApplicationShell {
                     ? this.config.renderSVG(this._renderContext())
                     : await this.target.toSVGString();
                 if (!svgString) { console.warn('exportSVG: no SVG available for canvas target.'); return; }
+                this._throwIfAborted(signal);
                 this._downloadText(svgString, name, 'image/svg+xml');
             }
         });
     }
 
     async exportPNG(filename, scale = 2) {
-        return this.runExport('png', async () => {
+        return this.runExport('png', async ({ signal }) => {
             const name = filename || (this.config.export?.filename || 'export').replace(/\.svg$/, '') + '.png';
             const { width, height } = this._logicalSize();
             if (this.target.type === 'canvas') {
@@ -617,18 +624,44 @@ export class ApplicationShell {
                 } else {
                     octx.drawImage(this.target.element, 0, 0, width, height);
                 }
-                off.toBlob((blob) => this._downloadBlob(blob, name));
+                const blob = await this._canvasToBlob(off, signal);
+                this._throwIfAborted(signal);
+                this._downloadBlob(blob, name);
             } else {
                 const svgString = await this.target.toSVGString();
-                await this._rasterizeSVG(svgString, width * scale, height * scale, name);
+                await this._rasterizeSVG(svgString, width * scale, height * scale, name, signal);
             }
         });
     }
 
-    async runExport(format, operation) {
-        return this.exportGuard
-            ? this.exportGuard.run(format, operation)
-            : operation();
+    runExport(format, operation) {
+        if (typeof operation !== 'function') return Promise.reject(new TypeError('Export operation must be a function.'));
+        const existing = this._activeOperations.get(format);
+        if (existing) return existing;
+
+        const signal = this._operationController.signal;
+        const guardedOperation = () => {
+            this._throwIfAborted(signal);
+            const operationPromise = Promise.resolve().then(() => operation({ format, signal }));
+            return new Promise((resolve, reject) => {
+                const cleanup = () => signal.removeEventListener('abort', onAbort);
+                const onAbort = () => { cleanup(); reject(this._abortError()); };
+                signal.addEventListener('abort', onAbort, { once: true });
+                operationPromise.then(
+                    value => { cleanup(); resolve(value); },
+                    error => { cleanup(); reject(error); }
+                );
+            });
+        };
+        const task = Promise.resolve(
+            this.exportGuard
+                ? this.exportGuard.run(format, guardedOperation, { signal })
+                : guardedOperation()
+        ).finally(() => {
+            if (this._activeOperations.get(format) === task) this._activeOperations.delete(format);
+        });
+        this._activeOperations.set(format, task);
+        return task;
     }
 
     /* ================================================================== */
@@ -1160,6 +1193,30 @@ export class ApplicationShell {
         URL.revokeObjectURL(url);
     }
 
+    _abortError() {
+        if (typeof DOMException === 'function') return new DOMException('Operation aborted', 'AbortError');
+        const error = new Error('Operation aborted');
+        error.name = 'AbortError';
+        return error;
+    }
+
+    _throwIfAborted(signal) {
+        if (signal?.aborted) throw this._abortError();
+    }
+
+    _canvasToBlob(canvas, signal) {
+        return new Promise((resolve, reject) => {
+            const onAbort = () => reject(this._abortError());
+            signal?.addEventListener('abort', onAbort, { once: true });
+            canvas.toBlob((blob) => {
+                signal?.removeEventListener?.('abort', onAbort);
+                if (signal?.aborted) reject(this._abortError());
+                else if (blob) resolve(blob);
+                else reject(new Error('Canvas export produced no data.'));
+            });
+        });
+    }
+
     _downloadBlob(blob, filename) {
         const url = this._ownObjectUrl(URL.createObjectURL(blob));
         const a = document.createElement('a');
@@ -1175,21 +1232,41 @@ export class ApplicationShell {
         this._downloadBlob(new Blob([text], { type: mime }), filename);
     }
 
-    async _rasterizeSVG(svgString, w, h, filename) {
+    async _rasterizeSVG(svgString, w, h, filename, signal) {
         const blob = new Blob([svgString], { type: 'image/svg+xml' });
         const url = this._ownObjectUrl(URL.createObjectURL(blob));
         const img = new Image();
-        await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        this._releaseObjectUrl(url);
-        canvas.toBlob((b) => this._downloadBlob(b, filename));
+        try {
+            await new Promise((resolve, reject) => {
+                const cleanup = () => signal?.removeEventListener?.('abort', onAbort);
+                const onAbort = () => {
+                    img.src = '';
+                    cleanup();
+                    reject(this._abortError());
+                };
+                img.onload = () => { cleanup(); resolve(); };
+                img.onerror = (error) => { cleanup(); reject(error); };
+                signal?.addEventListener('abort', onAbort, { once: true });
+                this._throwIfAborted(signal);
+                img.src = url;
+            });
+            this._throwIfAborted(signal);
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            const rasterBlob = await this._canvasToBlob(canvas, signal);
+            this._throwIfAborted(signal);
+            this._downloadBlob(rasterBlob, filename);
+        } finally {
+            this._releaseObjectUrl(url);
+        }
     }
 
     destroy() {
         const wasActive = this._initialized || this._isInitializing || this._initializationPromise != null;
         this._lifecycleId += 1;
+        this._operationController.abort();
+        this._activeOperations.clear();
 
         if (this._rafId != null) {
             cancelAnimationFrame(this._rafId);
@@ -1205,7 +1282,7 @@ export class ApplicationShell {
         }
 
         const destroyables = [
-            this.shortcuts, this.mobile, this.tooltips, this.dialog, this.history,
+            this.shortcuts, this.mobile, this.tooltips, this.dialog, this.history, this.exporter,
             this.dice, this.unifiedColorPicker, ...this.colorPickers.map(({ picker }) => picker),
             this.ranges, this.sliders, this.panels, this.target
         ];

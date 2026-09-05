@@ -1,18 +1,18 @@
 {
   "schemaVersion": 1,
   "name": "UI Garage",
-  "version": "0.1.0-dev.1",
+  "version": "0.1.0-dev.2",
   "hashAlgorithm": "sha256",
   "files": [
     {
       "path": "CHANGELOG.md",
-      "bytes": 454,
-      "sha256": "53aba6f8cd937144e6d160170cae0f133f7059b6d8886dc98195825caa155925"
+      "bytes": 889,
+      "sha256": "f341608ccee210d98562946e4c38f70ac5f785a93e4bb3814d7d29e8686d7423"
     },
     {
       "path": "CONTRACT.md",
-      "bytes": 2443,
-      "sha256": "50953075d35c9935ed44ee228665426978f75fd695b94e2be78d57c9a21bd5ca"
+      "bytes": 3074,
+      "sha256": "224602a60cbeb06672399820517a4e0667943a0600e13a5229e09b8a7078d138"
     },
     {
       "path": "LICENSES.md",
@@ -20,19 +20,29 @@
       "sha256": "a1bb5741c704f1ae3df0f5d7ab6260d972cee7d5f21c08f126c700987f1bbf28"
     },
     {
+      "path": "MODULE_OWNERSHIP.json",
+      "bytes": 5431,
+      "sha256": "df8e978c193ff750c165361ee637a1215383191bc6b4e160902e0a0c60c4b5e8"
+    },
+    {
+      "path": "PUBLIC_API.json",
+      "bytes": 1570,
+      "sha256": "9651c38e7511a2e986b1d6e2032a5e8fa0557a7a1dc9b2fe795396a2ffe990aa"
+    },
+    {
       "path": "README.md",
-      "bytes": 672,
-      "sha256": "22e2d69f46d319b197a0b833b3851760d5f3f2dabaeb34381e6fb213b4eaf8fa"
+      "bytes": 798,
+      "sha256": "fe747a9834b414e0682c2867bda4339ab42c9551fe2ebb4f97120366198fbae4"
     },
     {
       "path": "START_HERE.md",
-      "bytes": 1307,
-      "sha256": "be15383e62552d1e9a74f4a77a2405a5579c5bcbcf8417ce1dfa31265d6b1ff2"
+      "bytes": 1317,
+      "sha256": "8d5016c4534a2b6b194339abf5cc83263cf2ede3d5804a7b2d87e36c2fa7bbfb"
     },
     {
       "path": "VERSION.json",
       "bytes": 141,
-      "sha256": "0cee001729d231379aefd868b497b559155f1283aeba3608f38ade96623206f0"
+      "sha256": "92b87657d36fbd4eddd6912f5c2f6e5a8e339cf0d0d153697fc8a7eddd6a5d3e"
     },
     {
       "path": "component-lab/index.html",
@@ -46,8 +56,8 @@
     },
     {
       "path": "css/framework.css",
-      "bytes": 107149,
-      "sha256": "5591cb0dbaa3848f8cc207d62ef8b396a99f263a83beae48be618010eb09a548"
+      "bytes": 107141,
+      "sha256": "460339d94cb7ad68729340b8fe2fc1f58c43e9761f8d2079644c4bef4b92f2bf"
     },
     {
       "path": "css/tokens.css",
@@ -87,7 +97,7 @@
     {
       "path": "package.json",
       "bytes": 304,
-      "sha256": "bba36451412dd16cc9b35180e96795c3aa2ccd3b163b4ec8e60da5349a69e52b"
+      "sha256": "0ff0ede2e2a0939f9548618f3ec9ea5ecca4237ed1b1d9b3c840d32a709dc4b4"
     },
     {
       "path": "scripts/build-manifest.mjs",
@@ -96,8 +106,8 @@
     },
     {
       "path": "scripts/verify-portable.mjs",
-      "bytes": 5362,
-      "sha256": "2113e0022b6ac774ce68f80ba5c9679da8e763e617b2464bc6f405823a4c9ad2"
+      "bytes": 5853,
+      "sha256": "30f8d13be280b0098415ffbe57b7053499ddabad789d762ae062085d4d52df85"
     },
     {
       "path": "src/config/timings.js",
@@ -111,8 +121,8 @@
     },
     {
       "path": "src/core/ApplicationShell.js",
-      "bytes": 48590,
-      "sha256": "3ff5fec9aff43a1134039e6df40d37d89cceb2daa74ce5caafdc92aa836de43d"
+      "bytes": 56093,
+      "sha256": "13b2ef01d9c5b6edec6c54ce3c30c13138c006d771f1438cd7a56aa79e24eed8"
     },
     {
       "path": "src/core/DOMCache.js",
@@ -131,8 +141,8 @@
     },
     {
       "path": "src/core/defineTool.js",
-      "bytes": 1772,
-      "sha256": "7c66bd6cba07532d72d8939eb3627ab6b183f7a1f604eb3aaf9826f473eaa1f0"
+      "bytes": 1864,
+      "sha256": "7525345f3b874efb03e472f0055e6d600243e8342e8201c26854382b7ba6c70f"
     },
     {
       "path": "src/effects/GradientStrokeEffect.js",
@@ -141,8 +151,8 @@
     },
     {
       "path": "src/effects/WobblyEffect.js",
-      "bytes": 12100,
-      "sha256": "1ab70d3234738c63f7f57ce58a36cb4ef84453b6bebe9fd939588a10a54c8e52"
+      "bytes": 12094,
+      "sha256": "897edbaa94416ca9b7f0396adaab489622fa55a0d34224ad3a8ef33842f70f0e"
     },
     {
       "path": "src/experimental.js",
@@ -151,13 +161,13 @@
     },
     {
       "path": "src/export/ExportGuard.js",
-      "bytes": 1405,
-      "sha256": "ae06f295a57bb9de83e43929d9e28063c06948313ebf2a5f0f499a579289662b"
+      "bytes": 1492,
+      "sha256": "d0c50379237b216e2ed0c674712b442f1aba3f7a4677f8ab133fd9615e424fd7"
     },
     {
       "path": "src/export/SVGExporter.js",
-      "bytes": 12899,
-      "sha256": "160ad5e57d11c5a6bf7cdac324f0c43a12c47fd8f75540ca5481ae9c4a77dd56"
+      "bytes": 15066,
+      "sha256": "a637e45febe28c7542030cb1ff2344013cd359cdece2cff3d14f1601c9ada29a"
     },
     {
       "path": "src/export/TextToPath.js",
@@ -166,13 +176,13 @@
     },
     {
       "path": "src/geometry/StrokeGeometry.js",
-      "bytes": 3429,
-      "sha256": "2dc22b951c08087b3510b3eae917545dcad9aee466efd2a43adef534dffb2202"
+      "bytes": 3403,
+      "sha256": "b8f3cfc503a268d5e6794035e253b63b3b7221110d45bb022a0ce730319fa4c2"
     },
     {
       "path": "src/history/HistoryBridge.js",
-      "bytes": 3061,
-      "sha256": "2905aee081790f3bd289a1015c7199dcebdec9d7ee192f79a4b9295c371cc6d7"
+      "bytes": 3184,
+      "sha256": "0e9ce4cfd641a825dd2a177ce62f2d46c0ba1ed7c6e662bfc13ae479dde3d45c"
     },
     {
       "path": "src/history/HistoryManager.js",
@@ -216,8 +226,8 @@
     },
     {
       "path": "src/render/SvgTarget.js",
-      "bytes": 3424,
-      "sha256": "9771ff1c81913780a64adf4ed29553b98d6789c7202c6b5accb0df497ae0bb4d"
+      "bytes": 3703,
+      "sha256": "5892553164d9f14f4c6ba7570220caea5cede78d64266f882f8fc755259c6fc9"
     },
     {
       "path": "src/ui/ActionDockController.js",
@@ -226,28 +236,23 @@
     },
     {
       "path": "src/ui/ColorPicker.js",
-      "bytes": 12595,
-      "sha256": "822aade8209fab2f3a46980c6de4350ced2981715b38aab25265043161ca754c"
+      "bytes": 13044,
+      "sha256": "10febe5d41b552969ad69a9cdc5c475fcf66c400de82b905621842ff3e97c4f9"
     },
     {
       "path": "src/ui/DialogHost.js",
-      "bytes": 8018,
-      "sha256": "306bb7a949fe92934745d6d709d53f98cda5a78c1a35d39253b8594ef5ee7280"
+      "bytes": 8063,
+      "sha256": "6ba1a699e3e3966f70d136084e96ec21b8d65f582511077911148d35551d898f"
     },
     {
       "path": "src/ui/DicePanel.js",
-      "bytes": 5461,
-      "sha256": "b8af6e85a600fc55c4ba08bc8043cd4add435c55b2cb489657b42e8bd454f7ad"
+      "bytes": 5800,
+      "sha256": "a426041c9c1ae8811b8cc12c99e3219e278cdccf54e6a54b66e83e2b4a122316"
     },
     {
       "path": "src/ui/FileIntakeController.js",
       "bytes": 10765,
       "sha256": "38bdfdd4dc30d08eb7fe60abf873f594df6a9e65d2f0f4db0b5b444c86d252eb"
-    },
-    {
-      "path": "src/ui/ObservedControllerLifecycle.js",
-      "bytes": 2798,
-      "sha256": "058fe8fa3347150456eb799f320567d0223129d5c934861d140e1183848c5083"
     },
     {
       "path": "src/ui/OverlayDialogHost.js",
@@ -256,8 +261,8 @@
     },
     {
       "path": "src/ui/PanelManager.js",
-      "bytes": 13481,
-      "sha256": "54481000e125d5afbf7989d35e693d034d52313cb58631325de1adf38c1db9c2"
+      "bytes": 14136,
+      "sha256": "edf9e97fd4cbfea7e312e4ab217c5e0f07cbc1af52019fbaa37553ab6fecac7b"
     },
     {
       "path": "src/ui/PresetMenuKeyboardController.js",
@@ -266,13 +271,13 @@
     },
     {
       "path": "src/ui/RangeSliderController.js",
-      "bytes": 19958,
-      "sha256": "7fe54cae5d97023cdeb5c32913a27a4dc357de61a6788fe25de9791ee8f9a9d6"
+      "bytes": 20940,
+      "sha256": "6f1af4d6b1ec95417a2994778e96edd1b0b7b781bc725d7e31eb026c4134ffa7"
     },
     {
       "path": "src/ui/SliderController.js",
-      "bytes": 14393,
-      "sha256": "97f37b8af2d6f2630769ebc4ff66d52cedc26d7a3bb7eafbd621668801c54d7a"
+      "bytes": 15165,
+      "sha256": "4c5070ab44c67e1172c804103fb2e378e83f312e1536865d4aade456a1089dd7"
     },
     {
       "path": "src/ui/TooltipService.js",
@@ -281,8 +286,8 @@
     },
     {
       "path": "src/ui/UnifiedColorPicker.js",
-      "bytes": 7295,
-      "sha256": "3bca3f1b32f4de0f4839b42ba9ca841529c4733d3213910eac2f918aa841cefc"
+      "bytes": 7837,
+      "sha256": "03cb7bfbe9e89c7ea7253ec25ac0e8f5a1273ec66b5149b3ed28f9690aa949c4"
     },
     {
       "path": "src/ui/UnifiedUiController.js",
@@ -293,21 +298,6 @@
       "path": "src/ui/ZoomPanManager.js",
       "bytes": 16109,
       "sha256": "5d8fcb1a720238e3f3c3a8638b4ec708ed486115d4f354c20dbd67ee0eac2028"
-    },
-    {
-      "path": "src/ui/actionDockAutoInit.js",
-      "bytes": 544,
-      "sha256": "5383946f2f5b44047daa94be791123b452654ef654f05a0618c392c12a474586"
-    },
-    {
-      "path": "src/ui/presetMenuKeyboardAutoInit.js",
-      "bytes": 678,
-      "sha256": "b960728d80a53f2b2529a811e00d9fb6fc24b9223ecc0c9084ad6501a0a034fd"
-    },
-    {
-      "path": "src/ui/unifiedUiAutoInit.js",
-      "bytes": 212,
-      "sha256": "e7b5599b2bb7218130911e74c2fb6b149b8efea6dfd6df8a7f3ee296d7a5d3f9"
     },
     {
       "path": "src/utils/ColorUtils.js",
@@ -321,8 +311,8 @@
     },
     {
       "path": "src/utils/MathUtils.js",
-      "bytes": 4299,
-      "sha256": "b8d69c1452be5541343483839da087c73bc339cbe279b6fac5cdcea9032b616d"
+      "bytes": 4724,
+      "sha256": "83fe84682e301cfa031d643592b490434bd4839ec08df6e7dc565c56e891af3d"
     },
     {
       "path": "src/utils/NoiseGenerator.js",
@@ -346,8 +336,8 @@
     },
     {
       "path": "tests/core.test.mjs",
-      "bytes": 4835,
-      "sha256": "b84bc7ac6a5c4be7b5793f22828b017e1002f843ba7fbc99a4fc853424c326b9"
+      "bytes": 8620,
+      "sha256": "c2730c7f08f9cf96f5c7437ea8b1e6ffc1593331840604ba560e396e79fc4bf5"
     },
     {
       "path": "tests/file-intake.test.mjs",
@@ -358,11 +348,6 @@
       "path": "tests/mobile.test.mjs",
       "bytes": 2051,
       "sha256": "9e1601c6123a57d87efcd73dcf220673eecfc3374bf2cc3821830bfa936f0196"
-    },
-    {
-      "path": "tests/observed-controller-lifecycle.test.mjs",
-      "bytes": 2049,
-      "sha256": "f98f5786ab9570c6883baf337a0321cf181fc5898965105e82a49b8a02ee7105"
     },
     {
       "path": "tests/persistence-recovery.test.mjs",
@@ -376,8 +361,8 @@
     },
     {
       "path": "tests/public-api.test.mjs",
-      "bytes": 7268,
-      "sha256": "7a55b84b5e7eb860cdfca55fbc6da45d5eac0b6c55f61fbe58db782ef75488d7"
+      "bytes": 10214,
+      "sha256": "05d1947062c077c6709afcf65c745549d63b9c0462d21a45469323b455488a05"
     },
     {
       "path": "tests/state.test.mjs",
@@ -386,8 +371,8 @@
     },
     {
       "path": "tests/ui.test.mjs",
-      "bytes": 28521,
-      "sha256": "a079ca0db37f48b4cae4c2695100de61cd3c37994ac272b0170f98a38e736d2d"
+      "bytes": 30178,
+      "sha256": "e1bbf677c1d62f62bacd0ff9ae1ff77eaa8ecbecce955e8359463603c248402e"
     },
     {
       "path": "tests/unified-ui.test.mjs",
@@ -396,8 +381,8 @@
     },
     {
       "path": "tests/utilities.test.mjs",
-      "bytes": 5300,
-      "sha256": "3b6c83ab287cc1429048c6f7af0301ff0f0c27945a3d368eb98ace7d3fa6e7cf"
+      "bytes": 8096,
+      "sha256": "5347a4b93a75e8d3714796f1e2cd7d4711fe056ceaefe64be9fa0d46f99f15ca"
     },
     {
       "path": "vendor/README.md",

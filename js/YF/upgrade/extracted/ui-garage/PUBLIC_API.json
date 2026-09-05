@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "frameworkVersion": "0.1.0-dev.1",
+  "frameworkVersion": "0.1.0-dev.2",
   "stable": {
     "entrypoint": "src/index.js",
     "exports": [

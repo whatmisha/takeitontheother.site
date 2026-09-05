@@ -78,6 +78,8 @@ for (const file of sourceFiles) {
 
 for (const required of [
     'src/index.js',
+    'PUBLIC_API.json',
+    'MODULE_OWNERSHIP.json',
     'css/framework.css',
     'css/ui-contract.css',
     'fonts/CoFoSans-Regular.woff2',
@@ -102,8 +104,16 @@ assert.deepEqual(
 
 const packageMetadata = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
 const versionMetadata = JSON.parse(await readFile(path.join(root, 'VERSION.json'), 'utf8'));
+const apiSnapshot = JSON.parse(await readFile(path.join(root, 'PUBLIC_API.json'), 'utf8'));
+const moduleOwnership = JSON.parse(await readFile(path.join(root, 'MODULE_OWNERSHIP.json'), 'utf8'));
 assert.equal(packageMetadata.name, 'ui-garage');
 assert.equal(versionMetadata.name, 'UI Garage');
+assert.equal(apiSnapshot.frameworkVersion, versionMetadata.version);
+assert.deepEqual(
+    moduleOwnership.modules.map(module => module.path),
+    sourceFiles.map(portablePath),
+    'Module ownership inventory is stale'
+);
 
 for (const cssFile of actualFiles.filter(file => file.endsWith('.css'))) {
     const css = await readFile(cssFile, 'utf8');
@@ -111,10 +121,8 @@ for (const cssFile of actualFiles.filter(file => file.endsWith('.css'))) {
 }
 
 const api = await import(pathToFileURL(path.join(root, 'src/index.js')).href);
-for (const name of [
-    'defineTool', 'SvgTarget', 'CanvasTarget', 'HistoryManager', 'PresetStore',
-    'ShareCodec', 'SVGExporter', 'TextToPath', 'FileIntakeController',
-    'UnifiedUiController', 'MobileBootstrap'
-]) assert.equal(typeof api[name], 'function', `Missing public API export: ${name}`);
+const optionalApi = await import(pathToFileURL(path.join(root, 'src/experimental.js')).href);
+assert.deepEqual(Object.keys(api).sort(), apiSnapshot.stable.exports, 'Stable public API snapshot changed');
+assert.deepEqual(Object.keys(optionalApi).sort(), apiSnapshot.optional.exports, 'Optional public API snapshot changed');
 
 console.log(`Portable verification passed: ${actualFiles.length} files, ${sourceFiles.length} source modules, manifest and boundaries valid.`);
