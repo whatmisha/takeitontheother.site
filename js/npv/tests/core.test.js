@@ -93,7 +93,10 @@ test('Person Five is the initial preset for a fresh Global session', async () =>
     assert.equal(DEFAULT_PRESET_NAME, 'Person Five');
     assert.match(html, /id="presetName">Person Five</);
     assert.match(app, /this\.presetManager\.get\(DEFAULT_PRESET_NAME\)/);
-    assert.match(app, /saved\.defaultPresetVersion !== DEFAULT_PRESET_VERSION && !saved\.dirty/);
+    assert.match(app, /DEFAULT_PRESET_VERSION = 3/);
+    assert.match(app, /saved\.defaultPresetVersion !== DEFAULT_PRESET_VERSION/);
+    assert.match(app, /if \(saved\.dirty\) this\.recoverSessionPreset\(saved\.settings\)/);
+    assert.match(app, /name = 'Recovered session'/);
     assert.doesNotMatch(html, /←YF Tools/);
 });
 

@@ -19,7 +19,7 @@ import { AnimationExporter } from './export/AnimationExporter.js';
 const clone = (value) => structuredClone(value);
 const pad = (value) => String(value).padStart(2, '0');
 const SPHERE_SESSION_KEY = 'yfToolsSphereSessionV1';
-const DEFAULT_PRESET_VERSION = 2;
+const DEFAULT_PRESET_VERSION = 3;
 const isEditable = (target) => target instanceof Element
     && Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
 
@@ -697,7 +697,8 @@ export class GlobalApp {
         try {
             const saved = JSON.parse(sessionStorage.getItem(SPHERE_SESSION_KEY) || 'null');
             if (!saved?.settings) return;
-            if (saved.defaultPresetVersion !== DEFAULT_PRESET_VERSION && !saved.dirty) {
+            if (saved.defaultPresetVersion !== DEFAULT_PRESET_VERSION) {
+                if (saved.dirty) this.recoverSessionPreset(saved.settings);
                 this.saveSessionState();
                 return;
             }
@@ -710,6 +711,18 @@ export class GlobalApp {
         } catch {
             // Private browsing and strict storage policies may disable session storage.
         }
+    }
+
+    recoverSessionPreset(settings) {
+        const names = new Set(this.presetManager.names());
+        let name = 'Recovered session';
+        let suffix = 2;
+        while (names.has(name)) {
+            name = `Recovered session ${suffix}`;
+            suffix += 1;
+        }
+        this.presetManager.save(name, constrainSettings(settings));
+        this.presetManager.markClean(DEFAULT_PRESET_NAME);
     }
 
     saveSessionState() {
