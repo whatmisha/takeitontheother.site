@@ -293,6 +293,22 @@ test('magnet enlarges nearby surface marks without pulling their anchors', () =>
     assert.ok(Math.abs(magnetized.anchorY - base.anchorY) < 1e-9);
 });
 
+test('the Field toggle hides only the magnet guide, not its growth effect', () => {
+    const settings = {
+        ...SEEDED_PRESETS['Person Five'],
+        magnetStrength: 80,
+        showMagnetField: true
+    };
+    const visible = buildGlobalScene(settings);
+    const hidden = buildGlobalScene({ ...settings, showMagnetField: false });
+    assert.ok(visible.magnet.path.length > 0);
+    assert.equal(hidden.magnet.path, '');
+    assert.deepEqual(
+        hidden.elements.map(({ id, angularRadius }) => [id, angularRadius]),
+        visible.elements.map(({ id, angularRadius }) => [id, angularRadius])
+    );
+});
+
 test('magnet strength falls gradually across the field and includes partial mark overlap', () => {
     const settings = {
         ...SEEDED_PRESETS['Iconic Five'],

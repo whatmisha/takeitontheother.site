@@ -208,6 +208,7 @@ test('Iconic Five preserves the supplied settings as a built-in preset', () => {
         magnetX: 240,
         magnetY: 240,
         magnetFollow: true,
+        showMagnetField: true,
         preventOverlap: true,
         overlapGap: 0,
         showGuides: false,
@@ -247,6 +248,7 @@ test('Person Five preserves the supplied settings as a built-in preset', () => {
         magnetX: 240,
         magnetY: 480,
         magnetFollow: false,
+        showMagnetField: true,
         preventOverlap: true,
         overlapGap: 0,
         showGuides: false,
@@ -307,6 +309,9 @@ test('Magnet occupies its own managed bottom-right panel without explanatory cop
     assert.doesNotMatch(transform, /magnetStrength|Field radius|magnetFollow/);
     assert.match(magnet, /controls-panel--right-bottom/);
     assert.match(magnet, /id="magnetStrength"/);
+    assert.match(magnet, /id="showMagnetField"[^>]*data-setting="showMagnetField"[^>]*checked/);
+    assert.match(magnet, />Field<\/span>/);
+    assert.match(app, /getElementById\('showMagnetField'\)\.disabled = !active/);
     assert.doesNotMatch(magnet, /panel-hint|<p/);
     const panelList = app.match(/new PanelManager\(\[([\s\S]*?)\]\)/)?.[1] || '';
     assert.match(panelList, /magnetPanel/);

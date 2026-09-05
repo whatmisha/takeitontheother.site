@@ -958,6 +958,7 @@ export class GlobalApp {
         const active = this.settings.magnetStrength > 0;
         document.getElementById('magnetRadius').disabled = !active;
         document.getElementById('magnetRadiusValue').disabled = !active;
+        document.getElementById('showMagnetField').disabled = !active;
         document.getElementById('magnetFollow').disabled = !active;
         document.getElementById('centerMagnet').disabled = !active;
         ['magnetX', 'magnetY'].forEach((id) => {

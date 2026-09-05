@@ -63,6 +63,8 @@ The temporary play button beside the zoom control uses the current preset's save
 
 When `Field follows cursor` is active, the disabled X/Y controls display the live field coordinates. Clicking the artboard fixes the field at that point, turns cursor following off, and re-enables manual X/Y editing. Dragging still rotates the sphere without fixing the field.
 
+The Magnet `Field` toggle controls only the green dashed field indicator; hiding it does not disable or change the magnetic growth effect. Its state is stored with the rest of the scene settings.
+
 The Selection panel and canvas mark picking are currently inactive. The dormant sizing implementation remains isolated in the source so it can be restored with the panel later.
 
 Run the focused regression suite with `npm test`.

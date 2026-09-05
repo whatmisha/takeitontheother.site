@@ -282,6 +282,7 @@ export function defaultSettings() {
         magnetX: ARTBOARD_CENTER,
         magnetY: ARTBOARD_CENTER,
         magnetFollow: true,
+        showMagnetField: true,
         preventOverlap: true,
         overlapGap: 4,
         showGuides: false,
@@ -321,6 +322,7 @@ export function normalizeSettings(source = {}) {
     settings.magnetRadius = clamp(Number(settings.magnetRadius) || 42, 5, 100);
     settings.magnetX = clamp(finiteOr(settings.magnetX, ARTBOARD_CENTER), 0, ARTBOARD_SIZE);
     settings.magnetY = clamp(finiteOr(settings.magnetY, ARTBOARD_CENTER), 0, ARTBOARD_SIZE);
+    settings.showMagnetField = Boolean(settings.showMagnetField);
     settings.overlapGap = clamp(Number(settings.overlapGap) || 0, 0, 100);
     settings.animationFrom = clamp(Number(settings.animationFrom) || 1, 1, settings.ellipseCount);
     settings.duration = clamp(Number(settings.duration) || 5, 1, 10);
@@ -786,7 +788,7 @@ export function buildGlobalScene(rawSettings, options = {}) {
         options.transientMagnet?.y ?? settings.magnetY,
         settings
     );
-    const magnetGuidePoints = settings.magnetStrength > 0
+    const magnetGuidePoints = settings.magnetStrength > 0 && settings.showMagnetField
         ? sphericalCapPolygon(magnetCenter, magnetAngularRadius(settings), settings, true, camera)
         : [];
 

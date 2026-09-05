@@ -64,7 +64,8 @@ export function renderSceneToSvg(svg, scene, {
     });
     svg.append(backMarks, frontMarks);
 
-    if (includeGuides && (scene.settings.showGuides || scene.settings.magnetStrength > 0)) {
+    const showMagnetField = scene.settings.magnetStrength > 0 && scene.settings.showMagnetField;
+    if (includeGuides && (scene.settings.showGuides || showMagnetField)) {
         const guides = createSvgElement('g', {
             class: 'guide-layer',
             'data-export-exclude': 'true'
@@ -79,7 +80,7 @@ export function renderSceneToSvg(svg, scene, {
                 d: scene.wireframe.frontPath
             }));
         }
-        if (scene.settings.magnetStrength > 0) {
+        if (showMagnetField) {
             guides.appendChild(createSvgElement('path', {
                 class: 'guide-magnet',
                 d: scene.magnet.path
