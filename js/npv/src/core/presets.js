@@ -115,7 +115,7 @@ export const SEEDED_PRESETS = Object.freeze({
         magnetX: 240,
         magnetY: 480,
         magnetFollow: false,
-        showMagnetField: true,
+        showMagnetField: false,
         preventOverlap: true,
         overlapGap: 0,
         showGuides: false,

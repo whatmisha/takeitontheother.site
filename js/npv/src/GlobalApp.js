@@ -692,6 +692,13 @@ export class GlobalApp {
                 this.saveSessionState();
                 return;
             }
+            if (SEEDED_PRESETS[saved.presetName] && !saved.dirty) {
+                this.settings = constrainSettings(this.presetManager.get(saved.presetName));
+                this.presetManager.markClean(saved.presetName);
+                this.history.reset(this.settings);
+                this.saveSessionState();
+                return;
+            }
             this.settings = constrainSettings(saved.settings);
             const savedName = saved.presetName || 'Session';
             const availableNames = new Set([...this.presetManager.names(), 'Session', 'Shared', 'Untitled']);

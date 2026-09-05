@@ -97,7 +97,9 @@ test('Person Five is the initial preset for a fresh Global session', async () =>
     assert.match(app, /DEFAULT_PRESET_VERSION = 3/);
     assert.match(app, /saved\.defaultPresetVersion !== DEFAULT_PRESET_VERSION/);
     assert.match(app, /if \(saved\.dirty\) this\.recoverSessionPreset\(saved\.settings\)/);
+    assert.match(app, /SEEDED_PRESETS\[saved\.presetName\] && !saved\.dirty/);
     assert.match(app, /name = 'Recovered session'/);
+    assert.equal(SEEDED_PRESETS['Person Five'].showMagnetField, false);
     assert.doesNotMatch(html, /←YF Tools/);
 });
 
@@ -272,7 +274,7 @@ test('Person Five preserves the supplied settings as a built-in preset', () => {
         magnetX: 240,
         magnetY: 480,
         magnetFollow: false,
-        showMagnetField: true,
+        showMagnetField: false,
         preventOverlap: true,
         overlapGap: 0,
         showGuides: false,
@@ -333,7 +335,8 @@ test('Magnet occupies its own managed bottom-right panel without explanatory cop
     assert.doesNotMatch(transform, /magnetStrength|Field radius|magnetFollow/);
     assert.match(magnet, /controls-panel--right-bottom/);
     assert.match(magnet, /id="magnetStrength"/);
-    assert.match(magnet, /id="showMagnetField"[^>]*data-setting="showMagnetField"[^>]*checked/);
+    assert.match(magnet, /id="showMagnetField"[^>]*data-setting="showMagnetField"/);
+    assert.doesNotMatch(magnet, /id="showMagnetField"[^>]*checked/);
     assert.match(magnet, />Field<\/span>/);
     assert.match(app, /getElementById\('showMagnetField'\)\.disabled = !active/);
     assert.doesNotMatch(magnet, /panel-hint|<p/);
