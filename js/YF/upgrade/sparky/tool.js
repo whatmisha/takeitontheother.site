@@ -10,7 +10,7 @@ import {
 } from './src/geometry/eyeGeometry.js?v=20260828-1';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import { createStaticSparkySvg } from './src/export/staticSvgExporter.js?v=20260825-2';
-import { AnimationExporter } from './src/export/animationExporter.js?v=20260828-7';
+import { AnimationExporter } from './src/export/animationExporter.js?v=g7-resilience-1';
 import {
     BOLID_EYE_MOTION_TIME_CONSTANT,
     EYE_MOTION_TIME_CONSTANT,
@@ -104,6 +104,7 @@ import {
     migrateCoordinateSpace
 } from './src/geometry/coordinateSpace.js?v=20260823-2';
 import { applyPresetPlaybackPolicy } from './src/state/presetAnimation.js?v=20260827-2';
+import { migrateSparkyPresetLibrary } from './src/state/presetMigration.js?v=g7-persistence-1';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const GUIDE_CLIP_ID = 'sparky-artboard-clip';
@@ -2586,21 +2587,7 @@ const app = defineTool({
         basePath: 'presets',
         defaultName: 'Basic',
         forceSeed: true,
-        migrate: (store) => {
-            const storedPresets = store.loadAll();
-            let removedObsoleteSeed = false;
-            if (storedPresets.Basic?.seeded === true) {
-                delete storedPresets.Basic;
-                removedObsoleteSeed = true;
-            }
-            ['Needle Crown', 'Wide Crown'].forEach((name) => {
-                if (storedPresets[name]?.seeded !== true) return;
-                delete storedPresets[name];
-                removedObsoleteSeed = true;
-            });
-            if (removedObsoleteSeed) store.saveAll(storedPresets);
-
-        },
+        migrate: migrateSparkyPresetLibrary,
         pinnedPrefix: '+',
         colorDots: (blob) => [
             { kind: 'solid', value: blob.headColor || '#ffffff' },
@@ -2704,6 +2691,7 @@ const app = defineTool({
     },
     onReady(tool) {
         const frameworkExportPNG = tool.exportPNG.bind(tool);
+        tool.animationExporter?.destroy?.();
         tool.animationExporter = new AnimationExporter({
             container: document.getElementById('animationExportActions'),
             status: document.getElementById('animationExportStatus'),

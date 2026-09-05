@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "apps": [
+    {
+      "id": "sparky",
+      "historyLifetime": "session-only",
+      "surfaces": ["sparky-presets"],
+      "recovery": "preset-migration"
+    },
+    {
+      "id": "grid_generator",
+      "historyLifetime": "session-only-with-draft-recovery",
+      "surfaces": ["pizza-draft"],
+      "recovery": "explicit-restore-or-discard"
+    },
+    {
+      "id": "label_generator",
+      "historyLifetime": "session-only",
+      "surfaces": [],
+      "recovery": "none"
+    },
+    {
+      "id": "keyboarder",
+      "historyLifetime": "session-only",
+      "surfaces": [
+        "keyboarder-presets",
+        "keyboarder-ui-mode",
+        "keyboarder-svg-mode",
+        "keyboarder-performance"
+      ],
+      "recovery": "safe-default-on-unavailable-storage"
+    },
+    {
+      "id": "wordplayer",
+      "historyLifetime": "session-only",
+      "surfaces": ["wordplayer-presets"],
+      "recovery": "safe-default-on-unavailable-storage"
+    },
+    {
+      "id": "dither",
+      "historyLifetime": "none",
+      "surfaces": [],
+      "recovery": "none"
+    },
+    {
+      "id": "pulsar_coder",
+      "historyLifetime": "none",
+      "surfaces": [],
+      "recovery": "none"
+    },
+    {
+      "id": "wander_bender",
+      "historyLifetime": "none",
+      "surfaces": [],
+      "recovery": "none"
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "sparky-presets",
+      "owner": "sparky",
+      "medium": "localStorage",
+      "key": "upgrade:sparky:presets:v1",
+      "source": "sparky/tool.js",
+      "reloadContract": "saved-library",
+      "test": "sparky/tests/presetMigration.test.js"
+    },
+    {
+      "id": "pizza-draft",
+      "owner": "grid_generator",
+      "medium": "IndexedDB",
+      "key": "upgrade-pizza-boxer-v1",
+      "source": "grid_generator/src/persistence/DraftStore.js",
+      "reloadContract": "latest-unsaved-document",
+      "test": "grid_generator/tests/draft-recovery.test.mjs"
+    },
+    {
+      "id": "keyboarder-presets",
+      "owner": "keyboarder",
+      "medium": "localStorage",
+      "key": "upgrade:keyboarder:presets:v1",
+      "source": "keyboarder/app/tool.js",
+      "reloadContract": "saved-library",
+      "test": "framework/tests/persistence-recovery.test.mjs"
+    },
+    {
+      "id": "keyboarder-ui-mode",
+      "owner": "keyboarder",
+      "medium": "localStorage",
+      "key": "upgrade:keyboarder:ui-mode:v1",
+      "source": "keyboarder/app/tool.js",
+      "reloadContract": "last-selected-mode",
+      "test": "framework/tests/persistence-recovery.test.mjs"
+    },
+    {
+      "id": "keyboarder-svg-mode",
+      "owner": "keyboarder",
+      "medium": "localStorage",
+      "key": "upgrade:keyboarder:svg-export-mode:v1",
+      "source": "keyboarder/app/tool.js",
+      "reloadContract": "last-selected-export-mode",
+      "test": "framework/tests/persistence-recovery.test.mjs"
+    },
+    {
+      "id": "keyboarder-performance",
+      "owner": "keyboarder",
+      "medium": "localStorage",
+      "key": "upgrade:keyboarder:perf:v1",
+      "source": "keyboarder/app/perf.js",
+      "reloadContract": "last-selected-flag",
+      "test": "framework/tests/persistence-recovery.test.mjs"
+    },
+    {
+      "id": "wordplayer-presets",
+      "owner": "wordplayer",
+      "medium": "localStorage",
+      "key": "upgrade:wordplayer:presets:v1",
+      "source": "wordplayer/tool.js",
+      "reloadContract": "saved-library",
+      "test": "framework/tests/persistence-recovery.test.mjs"
+    }
+  ],
+  "rollbackProofs": [
+    {
+      "owner": "sparky",
+      "operation": "preset-migration",
+      "test": "sparky/tests/presetMigration.test.js"
+    },
+    {
+      "owner": "grid_generator",
+      "operation": "draft-restore",
+      "test": "grid_generator/tests/preset-application.test.mjs"
+    }
+  ]
+}

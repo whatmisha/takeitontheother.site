@@ -79,6 +79,7 @@ export class FileIntakeController {
         this.currentFile = null;
         this.bound = false;
         this.busy = false;
+        this.operationId = 0;
         this.listeners = [];
     }
 
@@ -148,6 +149,7 @@ export class FileIntakeController {
         }
 
         this.busy = true;
+        const operationId = ++this.operationId;
         this.setState('loading', {
             text: typeof this.loadingText === 'function'
                 ? this.loadingText(file)
@@ -155,6 +157,9 @@ export class FileIntakeController {
         });
         try {
             const result = await this.onSelect(file, { source, controller: this });
+            if (operationId !== this.operationId) {
+                return { ok: false, code: 'cancelled', file, result };
+            }
             this.currentFile = file;
             const text = typeof result === 'string'
                 ? result
@@ -162,6 +167,9 @@ export class FileIntakeController {
             this.setState('ready', { text });
             return { ok: true, code: 'accepted', file, result };
         } catch (error) {
+            if (operationId !== this.operationId) {
+                return { ok: false, code: 'cancelled', file, error };
+            }
             const text = typeof this.errorText === 'function'
                 ? this.errorText(error, file)
                 : this.errorText;
@@ -169,8 +177,10 @@ export class FileIntakeController {
             await this.onError(error, { file, source, controller: this });
             return { ok: false, code: 'error', file, error };
         } finally {
-            this.busy = false;
-            this._syncBusy();
+            if (operationId === this.operationId) {
+                this.busy = false;
+                this._syncBusy();
+            }
         }
     }
 
@@ -205,7 +215,10 @@ export class FileIntakeController {
         this.listeners.length = 0;
         this.dropzone?.classList?.remove('is-dragover');
         this.bound = false;
+        this.operationId += 1;
         this.busy = false;
+        if (this.state === 'loading') this.setState('empty', { preserveText: true });
+        else this._syncBusy();
     }
 
     _prepareSemantics() {

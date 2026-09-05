@@ -6,6 +6,7 @@ export class PresetMenuKeyboardController {
     constructor({ ownerDocument = globalThis.document } = {}) {
         this.document = ownerDocument;
         this.bound = false;
+        this.focusTimer = null;
         this.handleKeydown = this.handleKeydown.bind(this);
     }
 
@@ -20,6 +21,8 @@ export class PresetMenuKeyboardController {
     destroy() {
         if (!this.document || !this.bound) return;
         this.document.removeEventListener('keydown', this.handleKeydown, true);
+        clearTimeout(this.focusTimer);
+        this.focusTimer = null;
         this.bound = false;
     }
 
@@ -79,6 +82,16 @@ export class PresetMenuKeyboardController {
         if (event.key === 'ArrowUp' || event.key === 'End') index = items.length - 1;
         if (event.key === 'Home' || event.key === 'ArrowDown') index = selected >= 0 ? selected : 0;
         this.focusItem(items, index);
+        // Some application dropdowns complete their own click lifecycle after
+        // the shared capture handler. Reassert focus once that lifecycle has
+        // settled so the first Arrow key enters the list, not the second one.
+        clearTimeout(this.focusTimer);
+        this.focusTimer = setTimeout(() => {
+            this.focusTimer = null;
+            if (toggle.getAttribute('aria-expanded') === 'true') {
+                this.focusItem(this.items(menu), index);
+            }
+        }, 0);
         this.finish(event);
     }
 

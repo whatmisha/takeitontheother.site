@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "scope": "upgrade-only",
+  "jsonApplications": [
+    {
+      "id": "sparky",
+      "mode": "export-only",
+      "exportId": "exportSettingsBtn",
+      "importId": null,
+      "evidence": ["sparky/tests/exportNaming.test.js", "sparky/tests/presetAnimation.test.js"]
+    },
+    {
+      "id": "grid_generator",
+      "mode": "round-trip",
+      "exportId": "exportSettingsBtn",
+      "importId": "importSettingsBtn",
+      "evidence": ["grid_generator/tests/preset-format-adapter.test.mjs", "grid_generator/tests/preset-schema.test.mjs"]
+    },
+    {
+      "id": "label_generator",
+      "mode": "round-trip",
+      "exportId": "exportSettingsBtn",
+      "importId": "importSettingsBtn",
+      "evidence": ["label_generator/tests/json-roundtrip.test.mjs"]
+    },
+    {
+      "id": "keyboarder",
+      "mode": "round-trip",
+      "exportId": "exportJsonBtn",
+      "importId": "importJsonBtn",
+      "evidence": ["keyboarder/analysis/model-io.mjs"]
+    }
+  ],
+  "fileIntakeApplications": [
+    {
+      "id": "wordplayer",
+      "surfaces": 2,
+      "evidence": ["framework/tests/file-intake.test.mjs", "wordplayer/tests/framework-boundary.test.mjs"]
+    },
+    {
+      "id": "dither",
+      "surfaces": 2,
+      "evidence": ["framework/tests/file-intake.test.mjs", "dither/tests/framework-boundary.test.mjs"]
+    }
+  ]
+}

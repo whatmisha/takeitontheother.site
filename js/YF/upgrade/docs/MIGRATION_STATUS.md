@@ -127,6 +127,12 @@
 | UPG-071 | Export acceptance inventory | Complete | 8 apps/9 primary actions/4 JSON exports/3 JSON imports mapped to implementation and evidence; 3 artifact-covered and 5 explicit G7 gaps; machine check added |
 | UPG-072 | Priority export artifacts | Complete | all 5 priority tools artifact-covered; Sticky vector PDF/SVG cleanup and page geometry; Wordplayer SVG/PNG MIME, dimensions, signature and filenames; focused suite added |
 | UPG-073 | Secondary export artifacts | Complete | Dither 1×/2×/4×/8× PNG packaging/signature; Wander clean SVG without area boundary; Pulsar exact generated SVG packaging; app-private helpers and focused suite added |
+| UPG-074 | Import/export round-trip | Complete | Pizza/Sticky/Keyboarder bidirectional JSON; Sparky explicit export-only; Wordplayer/Dither 4 asset-intake surfaces; Sticky lossless private fallback and foreign-data rejection |
+| UPG-075 | Persistence and recovery | Complete | 8 tools/7 isolated surfaces; preset and Pizza draft reload; session-only history explicit; Pizza restore and Sparky migration rollback proofs |
+| UPG-076 | Keyboard and accessibility walkthrough | Complete | 8 back links/ActionDocks, 6 preset menus, 37 collapse controls, 795 live focus stops; direct hidden JSON shortcuts; Escape focus recovery; 0 live errors |
+| UPG-077 | Runtime resilience | Complete | 24/24 desktop and 6/6 Sparky mobile cold/warm loads; idempotent init; observer/listener/file/worker teardown; 12 balanced Blob URL owners; 0 errors/404 |
+| UPG-078 | Final live acceptance | Complete | 5 priority + 3 secondary workflows; 24 desktop/6 mobile loads; real repeated Pizza JSON import fixed and accepted; 0 errors/404 |
+| UPG-079 | Gate G7 | Complete | `gate:g7:static` green: full G6 + export/round-trip/persistence/keyboard/resilience/live acceptance; upgrade-only isolation retained |
 
 ## Подтверждённые исходные результаты
 
@@ -138,7 +144,7 @@
 | Sparky | 196/196 tests pass (195 исходных + shared-framework boundary) |
 | Wordplayer | Shared-framework boundary, Dither worker и Forms worker tests pass |
 | Keyboarder | Boundary + 5 domain suites; SVG text/outline и editable PDF browser export pass |
-| Sticky Fingers | 7/7 boundary/domain/export tests; manifest presets, vector PDF/SVG artifacts, Google Sheets and local-font PDF browser acceptance pass |
+| Sticky Fingers | 10/10 boundary/domain/export/round-trip tests; lossless JSON, manifest presets, vector PDF/SVG artifacts, Google Sheets and local-font PDF browser acceptance pass |
 | Pulsar Coder | 8/8 boundary/codec tests; exact 1280×720 SVG/panel/input parity and SVG export pass |
 | Dither | 11/11 boundary/algorithm tests; byte-identical default, Bayer and Pixel Size 4 browser captures |
 | Wander Bender | 10/10 boundary/mode tests; exact three-mode canvas/panel parity plus Rays, collapse and extraction browser acceptance |
@@ -173,4 +179,7 @@ surface, capability-driven `ApplicationShell` и Component Lab готовы. Ф�
 Gate G6 проходит. UPG-070 повторно принял все восемь live entrypoints и
 ActionDock/JSON shortcut behavior. G7 начат: UPG-071 зафиксировал export
 acceptance inventory. UPG-072 и UPG-073 закрыли artifact coverage всех восьми
-tools; следующий шаг — UPG-074 import/export round-trip.
+tools. UPG-074 закрыл JSON/file-intake round-trip contract. UPG-075 зафиксировал
+reload/isolation/recovery contracts и два rollback proof; следующий шаг —
+UPG-076 принял keyboard/ARIA path всех восьми tools; следующий шаг — UPG-077
+runtime resilience.

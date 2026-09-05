@@ -55,7 +55,7 @@ for (const [name, html] of [
 ]) {
     assert.match(
         html,
-        /presetMenuKeyboardAutoInit\.js\?v=g6-choice-1/u,
+        /presetMenuKeyboardAutoInit\.js\?v=g7-resilience-4/u,
         `${name} shared preset keyboard bootstrap missing`
     );
 }

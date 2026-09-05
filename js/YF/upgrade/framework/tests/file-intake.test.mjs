@@ -219,3 +219,30 @@ test('FileIntake lets an application choose one file from a multi-file drop', as
     assert.equal(result.ok, true);
     assert.deepEqual(selected, ['Display.otf']);
 });
+
+test('FileIntake destroy cancels late completion and clears busy semantics', async () => {
+    const input = fakeElement('input');
+    const trigger = fakeElement('button');
+    const status = fakeElement('div');
+    let resolveSelection;
+    const selection = new Promise(resolve => { resolveSelection = resolve; });
+    const controller = new FileIntakeController({
+        input,
+        trigger,
+        status,
+        accept: '.json',
+        onSelect: () => selection
+    }).init();
+
+    const pending = controller.consume([
+        { name: 'preset.json', type: 'application/json', size: 10 }
+    ]);
+    assert.equal(trigger.getAttribute('aria-busy'), 'true');
+    controller.destroy();
+    assert.equal(trigger.getAttribute('aria-busy'), 'false');
+    assert.equal(controller.busy, false);
+
+    resolveSelection('late result');
+    assert.equal((await pending).code, 'cancelled');
+    assert.notEqual(controller.state, 'ready', 'late completion must not mutate destroyed UI');
+});

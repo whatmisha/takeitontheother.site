@@ -101,3 +101,53 @@ test('animation exporter morphs both actions into one progress surface', () => {
     assert.equal(properties.get('--sparky-export-progress'), '100%');
     exporter.clearRestoreTimer();
 });
+
+test('animation exporter destroy removes its listener, cancels work and is idempotent', async () => {
+    const OriginalWorker = globalThis.Worker;
+    let cancelListener = null;
+    let removedListener = null;
+    let terminated = 0;
+    const cancelButton = {
+        hidden: false,
+        addEventListener(type, listener) {
+            if (type === 'click') cancelListener = listener;
+        },
+        removeEventListener(type, listener) {
+            if (type === 'click') removedListener = listener;
+        }
+    };
+    globalThis.Worker = class FakeWorker {
+        constructor() { this.listeners = new Map(); }
+        addEventListener(type, listener) { this.listeners.set(type, listener); }
+        postMessage() {}
+        terminate() { terminated += 1; }
+    };
+    const exporter = new AnimationExporter({ cancelButton });
+
+    try {
+        const pending = exporter.export({
+            format: 'mp4',
+            settings: { motionDuration: 1 },
+            startFocus: { x: 0, y: 0 },
+            baseName: 'destroyed-export'
+        });
+        assert.equal(typeof cancelListener, 'function');
+        assert.equal(exporter.destroy(), true);
+        assert.equal(exporter.destroy(), false);
+        assert.equal(removedListener, cancelListener);
+        assert.equal(terminated, 1);
+        await assert.rejects(pending, { name: 'AbortError' });
+        await assert.rejects(
+            exporter.export({
+                format: 'mp4',
+                settings: { motionDuration: 1 },
+                startFocus: { x: 0, y: 0 },
+                baseName: 'late-export'
+            }),
+            /destroyed/u
+        );
+    } finally {
+        if (OriginalWorker === undefined) delete globalThis.Worker;
+        else globalThis.Worker = OriginalWorker;
+    }
+});

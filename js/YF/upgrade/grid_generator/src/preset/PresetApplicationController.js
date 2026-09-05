@@ -23,8 +23,12 @@ export class PresetApplicationController {
     }
 
     async load(data, presetName) {
-        const normalized = await this.normalize(data);
         const isImported = this.host.presetManager?.currentPreset?.startsWith('imported-');
+        // Imported presets are stored after the file boundary has already
+        // validated and deserialized them. Running the document deserializer a
+        // second time treats the internal model as foreign JSON and reports a
+        // false failure while the picker still appears successful.
+        const normalized = isImported ? clone(data) : await this.normalize(data);
         const appliedName = isImported
             ? presetName
             : (data.presetName || presetName);
@@ -122,24 +126,51 @@ export class PresetApplicationController {
 
     restoreDraft(draft) {
         if (!draft?.snapshot) throw new Error('Draft document is missing');
+        const previous = {
+            history: this.host.historyManager,
+            historyKey: this.currentHistoryKey,
+            presetName: this.host.currentPresetName,
+            presetKey: this.host.presetManager?.currentPreset || null,
+            state: this.host.currentPresetName ? this.createSnapshot() : null
+        };
         this.storeCurrentHistory();
         const presetName = draft.presetName || 'Custom';
         const historyKey = draft.presetKey || `recovered:${presetName}`;
-        this.host.historyManager = new HistoryManager({ maxSize: 50 });
-        this.currentHistoryKey = historyKey;
-        if (draft.presetKey) {
-            this.host.presetManager?.applySelection?.(draft.presetKey, presetName);
-        } else {
-            this.host.presetManager?.updateDropdownText?.(presetName);
+        try {
+            this.host.historyManager = new HistoryManager({ maxSize: 50 });
+            this.currentHistoryKey = historyKey;
+            this.applyDocumentState(draft.snapshot, {
+                presetName,
+                defaultMissingUnits: false,
+                closeEditors: true
+            });
+            if (draft.presetKey) {
+                this.host.presetManager?.applySelection?.(draft.presetKey, presetName);
+            } else {
+                this.host.presetManager?.updateDropdownText?.(presetName);
+            }
+            this.host.historyManager.saveSnapshot(this.createSnapshot(), 'recovered draft');
+            this.host.markAsChanged();
+            return true;
+        } catch (error) {
+            this.host.historyManager = previous.history;
+            this.currentHistoryKey = previous.historyKey;
+            this.host.currentPresetName = previous.presetName;
+            if (previous.state) {
+                this.applyDocumentState(previous.state, {
+                    presetName: previous.presetName,
+                    defaultMissingUnits: false,
+                    closeEditors: false
+                });
+            }
+            if (previous.presetKey) {
+                this.host.presetManager?.applySelection?.(
+                    previous.presetKey,
+                    previous.presetName
+                );
+            }
+            throw error;
         }
-        this.applyDocumentState(draft.snapshot, {
-            presetName,
-            defaultMissingUnits: false,
-            closeEditors: true
-        });
-        this.host.historyManager.saveSnapshot(this.createSnapshot(), 'recovered draft');
-        this.host.markAsChanged();
-        return true;
     }
 
     applyDocumentState(source, options = {}) {

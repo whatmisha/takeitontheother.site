@@ -1,10 +1,15 @@
-import { initActionDocks } from './ActionDockController.js?v=g6-action-dock-5';
-
-const controller = initActionDocks();
+import { initActionDocks } from './ActionDockController.js?v=g7-keyboard-2';
+import {
+    installDocumentObserver,
+    replaceObservedController
+} from './ObservedControllerLifecycle.js?v=g7-resilience-4';
 
 // Pizza Boxer injects its action fragment after the document is ready.
-const observer = new MutationObserver(() => controller.sync());
-observer.observe(document.documentElement, { childList: true, subtree: true });
-
-globalThis[Symbol.for('lunnen.actionDockController')]?.destroy?.();
-globalThis[Symbol.for('lunnen.actionDockController')] = controller;
+replaceObservedController({
+    key: Symbol.for('lunnen.actionDockController'),
+    createController: () => initActionDocks(),
+    installObserver: controller => installDocumentObserver(controller, {
+        ownerDocument: document,
+        options: { childList: true, subtree: true }
+    })
+});

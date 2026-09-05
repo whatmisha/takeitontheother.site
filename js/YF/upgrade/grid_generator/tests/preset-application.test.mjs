@@ -141,6 +141,44 @@ test('draft recovery replaces the document without mutating bundled preset data'
     assert.equal(host.historyManager.history.length, 1);
 });
 
+test('failed draft recovery rolls back document, history and preset selection', () => {
+    const host = createHost();
+    host.presetManager.currentPreset = 'stable.json';
+    host.presetManager.applySelection = (key, name) => {
+        host.presetManager.currentPreset = key;
+        host.selectedPresetName = name;
+    };
+    const controller = new PresetApplicationController(host);
+    controller.applyPreset(preset, 'Stable');
+    const stableHistory = host.historyManager;
+    const stableSnapshot = controller.createSnapshot();
+    let shouldFail = true;
+    host.syncApplicationUI = () => {
+        if (shouldFail) {
+            shouldFail = false;
+            throw new Error('draft render failure');
+        }
+    };
+
+    assert.throws(
+        () => controller.restoreDraft({
+            version: 1,
+            presetKey: 'broken.json',
+            presetName: 'Broken',
+            snapshot: {
+                settings: { ...preset.settings, frontWidth: 999 },
+                document: { textBlocks: [], graphicsBlocks: [] }
+            }
+        }),
+        /draft render failure/
+    );
+
+    assert.equal(host.currentPresetName, 'Stable');
+    assert.equal(host.presetManager.currentPreset, 'stable.json');
+    assert.equal(host.historyManager, stableHistory);
+    assert.deepEqual(controller.createSnapshot(), stableSnapshot);
+});
+
 test('switching presets restores the latest per-preset history state', () => {
     const host = createHost();
     const controller = new PresetApplicationController(host);
@@ -215,6 +253,23 @@ test('import keeps normalized JSON independent from the source of truth', async 
 
     assert.equal(imported.displayName, 'Custom — Imported');
     assert.equal(normalized.textBlocks[0].text, 'Hello');
+});
+
+test('selecting a stored imported preset applies its normalized model without deserializing twice', async () => {
+    const host = createHost();
+    host.presetManager.currentPreset = 'imported-1';
+    let normalizeCalls = 0;
+    host.svgExporter.importSettings = async () => {
+        normalizeCalls += 1;
+        throw new Error('normalized data must not cross the file boundary again');
+    };
+    const controller = new PresetApplicationController(host);
+
+    await controller.load(preset, 'Custom — Imported');
+
+    assert.equal(normalizeCalls, 0);
+    assert.equal(host.currentPresetName, 'Custom — Imported');
+    assert.equal(host.objectDocument.textBlocks[0].text, 'Hello');
 });
 
 test('re-importing a custom preset does not stack synthetic name prefixes', async () => {

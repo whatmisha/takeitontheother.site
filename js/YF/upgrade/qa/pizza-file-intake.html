@@ -94,7 +94,7 @@
                 const jsonInput = documentUnderTest.getElementById('importSettingsInput');
                 const jsonStatus = documentUnderTest.getElementById('importSettingsStatus');
                 const jsonStates = [];
-                const jsonObserver = new MutationObserver(() => {
+                const jsonObserver = new windowUnderTest.MutationObserver(() => {
                     jsonStates.push(jsonStatus.dataset.state);
                 });
                 jsonObserver.observe(jsonStatus, {
@@ -184,9 +184,10 @@
                     });
                 }
 
+                const jsonHash = jsonRuns[0].svg;
                 const jsonStable = jsonRuns.every(run => (
                     run.inputReset
-                    && run.svg === baseline.svg
+                    && run.svg === jsonHash
                     && run.form === baseline.form
                 ));
                 const svgHash = svgRuns[0].svg;

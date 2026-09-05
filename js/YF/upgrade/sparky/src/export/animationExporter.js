@@ -40,7 +40,9 @@ export class AnimationExporter {
         this.jobId = null;
         this.rejectCurrent = null;
         this.restoreTimer = null;
-        cancelButton?.addEventListener('click', () => this.cancel());
+        this.destroyed = false;
+        this.handleCancel = () => this.cancel();
+        cancelButton?.addEventListener('click', this.handleCancel);
     }
 
     clearRestoreTimer() {
@@ -96,6 +98,7 @@ export class AnimationExporter {
     }
 
     export({ format, settings, startFocus, motionPath = null, baseName }) {
+        if (this.destroyed) return Promise.reject(new Error('Animation exporter has been destroyed.'));
         if (this.worker) return Promise.reject(new Error('An animation export is already running.'));
         const jobId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const worker = new Worker(
@@ -156,5 +159,15 @@ export class AnimationExporter {
                 baseName
             });
         });
+    }
+
+    destroy() {
+        if (this.destroyed) return false;
+        this.destroyed = true;
+        this.elements.cancelButton?.removeEventListener?.('click', this.handleCancel);
+        if (this.worker) this.cancel();
+        this.clearRestoreTimer();
+        this.setBusy(false);
+        return true;
     }
 }

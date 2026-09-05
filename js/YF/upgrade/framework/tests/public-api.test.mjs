@@ -32,8 +32,8 @@ test('public barrel exports the documented framework surface', async () => {
     for (const name of expected) assert.ok(name in api, `Missing public export: ${name}`);
     assert.match(source, /PanelManager\.js\?v=g6-panel-1/u);
     assert.match(source, /FileIntakeController\.js\?v=g6-file-intake-1/u);
-    assert.match(source, /ActionDockController\.js\?v=g6-action-dock-5/u);
-    assert.match(source, /PresetMenuKeyboardController\.js\?v=g6-choice-1/u);
+    assert.match(source, /ActionDockController\.js\?v=g7-keyboard-2/u);
+    assert.match(source, /PresetMenuKeyboardController\.js\?v=g7-keyboard-2/u);
     assert.match(source, /defineTool\.js\?v=g6-capabilities-1/u);
     assert.match(source, /ApplicationShell\.js\?v=g6-capabilities-1/u);
 });
@@ -73,7 +73,7 @@ test('framework source graph stays local and application-agnostic', async () => 
             assert.ok(resolved.startsWith(`${frameworkRoot}${path.sep}`));
         }
     }
-    assert.equal(files.length, 44);
+    assert.equal(files.length, 45);
 });
 
 test('working CSS and exporters use checked-in same-origin assets', async () => {

@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "acceptedAt": "2026-09-05",
+  "scope": "upgrade-only",
+  "desktop": {
+    "entrypoints": 8,
+    "coldLoads": 8,
+    "warmReloads": 16,
+    "consoleErrors": 0,
+    "resource404s": 0,
+    "horizontalOverflows": 0,
+    "intentionalWarnings": [
+      "Sticky Fingers: EAN-13 checksum mismatch: provided 7, calculated 6"
+    ]
+  },
+  "sparkyMobile": [
+    {
+      "viewport": "390x844",
+      "loads": 3,
+      "overflowX": false,
+      "consoleErrors": 0,
+      "actionDockCenterDelta": 0,
+      "actionDockBottom": 12
+    },
+    {
+      "viewport": "430x932",
+      "loads": 3,
+      "overflowX": false,
+      "consoleErrors": 0,
+      "actionDockCenterDelta": 0,
+      "actionDockBottom": 12
+    }
+  ],
+  "workflows": [
+    {
+      "id": "sparky",
+      "tier": "priority",
+      "workflow": "render, mobile showcase, motion-path intake and static/animation export",
+      "liveEvidence": "qa/sparky-file-intake.html",
+      "automatedEvidence": ["sparky/tests/staticSvgExporter.test.js", "sparky/tests/animationExporter.test.js"],
+      "status": "accepted"
+    },
+    {
+      "id": "grid_generator",
+      "tier": "priority",
+      "workflow": "preset render, repeated JSON/SVG intake and SVG/PDF export",
+      "liveEvidence": "qa/pizza-file-intake.html",
+      "automatedEvidence": ["grid_generator/tests/preset-application.test.mjs", "grid_generator/tests/svg-file-export.test.mjs"],
+      "status": "accepted"
+    },
+    {
+      "id": "label_generator",
+      "tier": "priority",
+      "workflow": "preset/template render, lossless JSON round-trip and PDF/SVG export",
+      "liveEvidence": "label_generator/index.html",
+      "automatedEvidence": ["label_generator/tests/json-roundtrip.test.mjs", "label_generator/tests/export-artifact.test.mjs"],
+      "status": "accepted"
+    },
+    {
+      "id": "keyboarder",
+      "tier": "priority",
+      "workflow": "layout render, JSON round-trip and UTF-8 SVG export",
+      "liveEvidence": "keyboarder/index.html",
+      "automatedEvidence": ["keyboarder/analysis/model-io.mjs", "keyboarder/analysis/svg-export-encoding.mjs"],
+      "status": "accepted"
+    },
+    {
+      "id": "wordplayer",
+      "tier": "priority",
+      "workflow": "repeated image/forms intake and SVG/PNG export",
+      "liveEvidence": "qa/file-intake.html",
+      "automatedEvidence": ["wordplayer/tests/export-artifact.test.mjs", "wordplayer/tests/dither-worker.test.mjs"],
+      "status": "accepted"
+    },
+    {
+      "id": "dither",
+      "tier": "secondary",
+      "workflow": "repeated image/sample intake, raster invariants and 1x/2x/4x/8x PNG export",
+      "liveEvidence": "qa/dither-file-intake.html",
+      "automatedEvidence": ["dither/tests/algorithms.test.mjs", "dither/tests/export-artifact.test.mjs"],
+      "status": "accepted"
+    },
+    {
+      "id": "pulsar_coder",
+      "tier": "secondary",
+      "workflow": "Voyager render, documented legacy verify mismatch and SVG export",
+      "liveEvidence": "pulsar_coder/index.html",
+      "automatedEvidence": ["pulsar_coder/tests/codec.test.mjs", "pulsar_coder/tests/export-artifact.test.mjs"],
+      "status": "accepted"
+    },
+    {
+      "id": "wander_bender",
+      "tier": "secondary",
+      "workflow": "Radial/Random/Flow Field modes and boundary-free SVG export",
+      "liveEvidence": "wander_bender/index.html",
+      "automatedEvidence": ["wander_bender/tests/modes.test.mjs", "wander_bender/tests/export-artifact.test.mjs"],
+      "status": "accepted"
+    }
+  ]
+}

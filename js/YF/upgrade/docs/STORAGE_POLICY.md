@@ -15,3 +15,11 @@
 Sparky намеренно не импортирует данные из `lunnenSparkyGeneratorV1` или `lunnenSparkyGeneratorV2`. Seed markers автоматически наследуют изолированный ключ пресетов.
 
 `npm run check:storage` проверяет литералы в исходном и собранном runtime, а затем записывает тестовые данные в новые namespace при наличии sentinel-значений во всех известных старых ключах. Sentinel-значения должны остаться неизменными.
+
+Полный контракт persistence/recovery записан в `PERSISTENCE_ACCEPTANCE.json`.
+`npm run check:persistence` проверяет восемь владельцев, семь persistent surfaces
+и отдельные rollback proofs Pizza Boxer/Sparky. `npm run test:persistence`
+доказывает reload библиотек пресетов, reload/clear IndexedDB-черновика и
+межинструментальную изоляцию. Undo/redo history намеренно живёт только в текущей
+сессии; исключение — Pizza Boxer сохраняет последний несохранённый документ как
+черновик, но не сериализует сам history stack.

@@ -264,7 +264,18 @@ export class SVGExporter {
                         result.svg = block.svgContent || '';
                         return result;
                     })
-            }
+            },
+
+            // Lossless app-private fallback. Human-readable sections above stay
+            // authoritative on import; fields they do not represent are restored
+            // from this snapshot instead of being silently discarded.
+            applicationState: this.cloneJSON({
+                settings,
+                textBlocks,
+                graphicsBlocks,
+                iconsBlock: data.iconsBlock || null,
+                claimBlock: data.claimBlock || null
+            })
         };
     }
 
@@ -324,12 +335,20 @@ export class SVGExporter {
      * @returns {Object} - Данные в старом формате для совместимости
      */
     normalizeImportedData(data) {
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+            throw new Error('Settings JSON root must be an object');
+        }
         // Если это новый формат (с организованной структурой)
         if (data.dimensions && data.grid && data.typography) {
             const converted = this.convertNewFormatToOld(data);
+            const merged = this.mergeApplicationState(data.applicationState, converted);
             // Мигрируем размеры шрифтов из модулей в пункты, если нужно
-            this.migrateFontSizesToPoints(converted, data.grid?.module);
-            return converted;
+            this.migrateFontSizesToPoints(merged, data.grid?.module);
+            return merged;
+        }
+
+        if (!data.settings || typeof data.settings !== 'object' || Array.isArray(data.settings)) {
+            throw new Error('Unsupported settings JSON format');
         }
         
         // Если это старый формат - мигрируем размеры шрифтов
@@ -545,5 +564,38 @@ export class SVGExporter {
             exampleRow: Array.isArray(newData.exampleRow) ? [...newData.exampleRow] : null
         };
     }
-}
 
+    cloneJSON(value) {
+        if (value === undefined) return undefined;
+        return JSON.parse(JSON.stringify(value));
+    }
+
+    mergeApplicationState(applicationState, converted) {
+        if (!applicationState || typeof applicationState !== 'object' || Array.isArray(applicationState)) {
+            return converted;
+        }
+
+        const state = this.cloneJSON(applicationState) || {};
+        const definedSettings = Object.fromEntries(
+            Object.entries(converted.settings || {}).filter(([, value]) => value !== undefined)
+        );
+        const mergeRecords = (base = [], incoming = []) => {
+            const pending = new Map(incoming.map(record => [record.id, record]));
+            const merged = base.map(record => {
+                if (!pending.has(record.id)) return record;
+                const next = { ...record, ...pending.get(record.id) };
+                pending.delete(record.id);
+                return next;
+            });
+            return [...merged, ...pending.values()];
+        };
+
+        return {
+            ...state,
+            ...converted,
+            settings: { ...(state.settings || {}), ...definedSettings },
+            textBlocks: mergeRecords(state.textBlocks, converted.textBlocks),
+            graphicsBlocks: mergeRecords(state.graphicsBlocks, converted.graphicsBlocks)
+        };
+    }
+}

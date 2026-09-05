@@ -69,7 +69,8 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
     );
     assert.match(html, /framework-base\.css\?v=g6-choice-1/u);
     assert.match(html, /style\.css\?v=g6-file-intake-1/u);
-    assert.match(html, /dither\.js\?v=g6-action-dock-5/u);
+    assert.match(html, /js\/export\/DitherPngExport\.js\?v=g7-export-1/u);
+    assert.match(html, /dither\.js\?v=g7-export-1/u);
     assert.doesNotMatch(skin, /^\s*\*\s*\{/mu, 'Dither must consume the shared universal reset');
     assert.match(skin, /Shared-framework parity bridge/u);
     assert.match(skin, /\.main-content\s*\{\s*height: auto;\s*flex: 0 1 auto;/u);

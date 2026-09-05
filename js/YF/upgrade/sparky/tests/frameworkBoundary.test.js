@@ -18,6 +18,11 @@ test('Sparky consumes the shared framework without surrendering private mobile a
     assert.doesNotMatch(toolSource, /from\s*['"]\.\/framework\//, 'Sparky runtime still imports its retired framework copy');
     assert.match(toolSource, /storageKey:\s*['"]upgrade:sparky:presets:v1['"]/, 'preset namespace changed');
     assert.match(toolSource, /forceSeed:\s*true/, 'Sparky preset refresh policy changed');
+    assert.match(
+        toolSource,
+        /migrate:\s*migrateSparkyPresetLibrary/u,
+        'Sparky must use its tested in-namespace preset migration'
+    );
     assert.match(toolSource, /export:\s*\{\s*filename:\s*['"]sparky\.svg['"],\s*guard:\s*false\s*\}/, 'custom export exception changed');
     assert.match(toolSource, /function bindMobileShowcase\(app\)/, 'Sparky mobile showcase must remain application-owned');
     assert.match(toolSource, /interactive:\s*false/, 'Sparky non-interactive zoom contract changed');

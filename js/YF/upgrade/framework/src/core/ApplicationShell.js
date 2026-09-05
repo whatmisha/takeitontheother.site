@@ -70,7 +70,8 @@ export class ApplicationShell {
         this.mobile = null;
 
         this._initialized = false;
-        this._isInitializing = true;
+        this._initializationPromise = null;
+        this._isInitializing = false;
         this._isApplying = false;
         this._rafId = null;
     }
@@ -80,6 +81,20 @@ export class ApplicationShell {
     /* ================================================================== */
 
     async init() {
+        if (this._initialized) return this;
+        if (this._initializationPromise) return this._initializationPromise;
+        this._isInitializing = true;
+        this._initializationPromise = this._initialize();
+        try {
+            return await this._initializationPromise;
+        } catch (error) {
+            this._initializationPromise = null;
+            this._isInitializing = false;
+            throw error;
+        }
+    }
+
+    async _initialize() {
         const c = this.config;
         this.capabilities = resolveApplicationCapabilities(c, document);
 

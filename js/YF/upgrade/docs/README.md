@@ -50,6 +50,7 @@ npm run gate:g3:static
 npm run gate:g4:static
 npm run gate:g5:static
 npm run gate:g6:static
+npm run gate:g7:static
 ```
 
 Команда G3 проверяет исходный manifest и baseline, локальные зависимости, storage namespaces, filesystem/network boundaries, framework/domain suites Wordplayer и Keyboarder, 196 тестов Sparky, 169 тестов Pizza Boxer и 7 тестов Sticky Fingers. G4 дополнительно запускает component contracts, 8 Pulsar, 11 Dither и 10 Wander Bender boundary/domain checks. G5 повторяет полный G4 и машинно закрывает восемь hub/CSS/JS boundaries, отсутствие resets/promotions, ownership app deltas и принятые Sparky desktop/mobile captures. G6 дополнительно проверяет PanelShell, ActionDock, FileIntake, choice/capability contracts, Component Lab и intentional visual diffs.
@@ -66,3 +67,9 @@ npm run serve
 G5 записан в [POST_G5_RELEASE_READINESS.md](./POST_G5_RELEASE_READINESS.md).
 Повторная живая приёмка всех восьми инструментов после G6 записана в
 [POST_G6_RELEASE_READINESS.md](./POST_G6_RELEASE_READINESS.md).
+Runtime resilience G7 — cold/warm reload, lifecycle cleanup, Blob URL ownership
+и два мобильных viewport Sparky — записан в
+[RUNTIME_RESILIENCE_ACCEPTANCE.md](./RUNTIME_RESILIENCE_ACCEPTANCE.md).
+Финальные workflows и release gate описаны в
+[G7_LIVE_ACCEPTANCE.md](./G7_LIVE_ACCEPTANCE.md) и
+[GATE_G7.md](./GATE_G7.md).

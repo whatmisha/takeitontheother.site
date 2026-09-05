@@ -25,6 +25,11 @@
     "check:capabilities": "node scripts/check-capability-manifest.mjs",
     "check:component-lab": "node scripts/check-component-lab.mjs",
     "check:export-acceptance": "node scripts/check-export-acceptance.mjs",
+    "check:round-trip": "node scripts/check-round-trip-acceptance.mjs",
+    "check:persistence": "node scripts/check-persistence-acceptance.mjs",
+    "check:keyboard": "node scripts/check-keyboard-acceptance.mjs",
+    "check:resilience": "node scripts/check-runtime-resilience.mjs",
+    "check:live-acceptance": "node scripts/check-final-live-acceptance.mjs",
     "check:legacy-css": "node scripts/check-legacy-css-contracts.mjs",
     "check:storage": "node scripts/check-storage-namespaces.mjs",
     "check:isolation": "npm run assets:check && npm run framework:upstream:check && npm run check:storage && npm run check:boundaries",
@@ -37,6 +42,10 @@
     "test:sticky": "node --test label_generator/tests/*.test.mjs",
     "test:priority-exports": "node --test sparky/tests/staticSvgExporter.test.js sparky/tests/exportFormats.test.js sparky/tests/animationExporter.test.js grid_generator/tests/svg-file-export.test.mjs grid_generator/tests/pdf-exporter.test.mjs label_generator/tests/export-artifact.test.mjs wordplayer/tests/export-artifact.test.mjs && node keyboarder/analysis/svg-export-encoding.mjs",
     "test:secondary-exports": "node --test dither/tests/export-artifact.test.mjs wander_bender/tests/export-artifact.test.mjs pulsar_coder/tests/export-artifact.test.mjs",
+    "test:round-trip": "node --test label_generator/tests/json-roundtrip.test.mjs grid_generator/tests/preset-format-adapter.test.mjs grid_generator/tests/preset-schema.test.mjs framework/tests/file-intake.test.mjs && node keyboarder/analysis/model-io.mjs && node --test sparky/tests/exportNaming.test.js sparky/tests/presetAnimation.test.js",
+    "test:persistence": "node --test framework/tests/persistence-recovery.test.mjs sparky/tests/presetMigration.test.js grid_generator/tests/draft-recovery.test.mjs grid_generator/tests/preset-application.test.mjs",
+    "test:keyboard": "node --test framework/tests/action-dock.test.mjs framework/tests/preset-menu-keyboard.test.mjs framework/tests/ui.test.mjs sparky/tests/shortcutRouter.test.js sparky/tests/panelManager.test.js grid_generator/tests/application-events.test.mjs grid_generator/tests/panel-ui.test.mjs",
+    "test:resilience": "node --test framework/tests/core.test.mjs framework/tests/file-intake.test.mjs framework/tests/observed-controller-lifecycle.test.mjs sparky/tests/animationExporter.test.js grid_generator/tests/application-lifecycle.test.mjs grid_generator/tests/application-startup.test.mjs grid_generator/tests/browser-file-transfer.test.mjs && npm run test:priority-exports && npm run test:secondary-exports && npm run test:round-trip",
     "test:pulsar": "node --test pulsar_coder/tests/*.test.mjs",
     "test:dither": "node --test dither/tests/*.test.mjs",
     "test:wander": "node --test wander_bender/tests/*.test.mjs",
@@ -47,6 +56,7 @@
     "gate:g3:static": "npm run gate:g0 && npm run check:isolation && npm run test:tier1",
     "gate:g4:static": "npm run check:ranges && npm run check:toggles && npm run check:presets && npm run check:actions && npm run check:feedback && npm run check:legacy-css && npm run gate:g3:static && npm run test:tier2",
     "gate:g5:static": "npm run check:file-intake && npm run check:choices && npm run check:capabilities && npm run check:component-lab && npm run gate:g4:static && node scripts/check-gate-g5.mjs",
-    "gate:g6:static": "npm run gate:g5:static && node scripts/check-gate-g6.mjs"
+    "gate:g6:static": "npm run gate:g5:static && node scripts/check-gate-g6.mjs",
+    "gate:g7:static": "npm run gate:g6:static && npm run check:export-acceptance && npm run check:round-trip && npm run check:persistence && npm run check:keyboard && npm run check:resilience && npm run check:live-acceptance && npm run test:resilience && npm run test:persistence && npm run test:keyboard && node scripts/check-gate-g7.mjs"
   }
 }

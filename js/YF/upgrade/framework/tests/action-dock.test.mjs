@@ -8,7 +8,9 @@ function action({ hidden = false } = {}) {
         disabled: false,
         hidden,
         clicks: 0,
-        click() { this.clicks += 1; }
+        focused: false,
+        click() { this.clicks += 1; },
+        focus() { this.focused = true; }
     };
 }
 
@@ -40,6 +42,10 @@ test('ActionDockController reveals extras and routes canonical export shortcuts'
         querySelectorAll(selector) {
             if (selector === '[data-action-dock-extra]') return extras;
             return [];
+        },
+        querySelector(selector) {
+            if (selector === '[data-action-dock-primary-export]') return primary;
+            return null;
         }
     };
     const selectors = {
@@ -87,4 +93,56 @@ test('ActionDockController ignores plain J while typing', () => {
     const event = keyboardEvent('j', { target: { tagName: 'INPUT' } });
     controller.handleKeydown(event);
     assert.equal(event.prevented, false);
+});
+
+test('hidden JSON actions remain available to their direct shortcuts', () => {
+    const jsonExport = action({ hidden: true });
+    const jsonImport = action({ hidden: true });
+    const controller = new ActionDockController({
+        ownerDocument: {
+            querySelectorAll(selector) {
+                if (selector === '[data-action-dock-json-export]') return [jsonExport];
+                if (selector === '[data-action-dock-json-import]') return [jsonImport];
+                return [];
+            }
+        }
+    });
+
+    controller.handleKeydown(keyboardEvent('j', { metaKey: true }));
+    controller.handleKeydown(keyboardEvent('j', { ctrlKey: true, shiftKey: true }));
+
+    assert.equal(jsonExport.clicks, 1);
+    assert.equal(jsonImport.clicks, 1);
+    assert.equal(jsonExport.hidden, true);
+    assert.equal(jsonImport.hidden, true);
+});
+
+test('Escape hides JSON extras and restores focus to the primary action', () => {
+    const primary = action();
+    const jsonExport = action();
+    const extras = [jsonExport];
+    const dock = {
+        dataset: { extrasExpanded: 'true' },
+        querySelectorAll(selector) {
+            return selector === '[data-action-dock-extra]' ? extras : [];
+        },
+        querySelector(selector) {
+            return selector === '[data-action-dock-primary-export]' ? primary : null;
+        }
+    };
+    const documentRef = {
+        activeElement: jsonExport,
+        querySelectorAll(selector) {
+            return selector === '.action-dock' ? [dock] : [];
+        }
+    };
+    const controller = new ActionDockController({ ownerDocument: documentRef });
+    const event = keyboardEvent('Escape', { target: jsonExport, defaultPrevented: true });
+
+    controller.handleKeydown(event);
+
+    assert.equal(jsonExport.hidden, true);
+    assert.equal(dock.dataset.extrasExpanded, 'false');
+    assert.equal(primary.focused, true);
+    assert.equal(event.prevented, true);
 });

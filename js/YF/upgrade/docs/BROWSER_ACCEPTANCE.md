@@ -59,8 +59,10 @@ touching the filesystem. Accepted on 2026-09-02:
 For Pizza Boxer, `qa/pizza-file-intake.html` accepts the public 14-asset runtime:
 
 - invalid JSON/SVG leaves the rendered SVG unchanged;
-- three imports of `New.json` reset the input and retain exact SVG
-  `4abbde0d74811c2d2997759ce0af21ac6d25321c8858a57cfafc2355e72240e4`
+- invalid input preserves baseline SVG
+  `4abbde0d74811c2d2997759ce0af21ac6d25321c8858a57cfafc2355e72240e4`;
+- three real applications of `New.json` reset the input and converge on exact
+  SVG `48cfa08a1e03c22358d3ff981649a2b72b11768c48a1ff37edcbea0ca6f457b8`
   and form-state
   `448f371864ee85e8301ca5ec022753fa0a7efb8e680db7221df430aa7a3c8349`;
 - extension-only SVG with empty MIME is accepted three times, replaces one

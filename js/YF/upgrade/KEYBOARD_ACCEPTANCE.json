@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-05",
+  "shortcuts": {
+    "primaryExport": "mod+e",
+    "jsonExport": "mod+j",
+    "jsonImport": "mod+shift+j",
+    "toggleJsonActions": "j",
+    "dismiss": "escape"
+  },
+  "apps": [
+    {
+      "id": "sparky",
+      "sources": ["sparky/index.html"],
+      "presetMenu": true,
+      "collapseControls": 4,
+      "primaryExports": 1,
+      "jsonExports": 1,
+      "jsonImports": 0,
+      "liveFocusable": 86
+    },
+    {
+      "id": "grid_generator",
+      "sources": [
+        "grid_generator/src/ui/ApplicationDocument.html",
+        "grid_generator/src/ui/fragments/workspace.html",
+        "grid_generator/src/ui/fragments/objects.html",
+        "grid_generator/src/ui/fragments/typography.html",
+        "grid_generator/src/ui/fragments/object-editors.html",
+        "grid_generator/src/ui/fragments/actions.html"
+      ],
+      "presetMenu": true,
+      "collapseControls": 9,
+      "primaryExports": 1,
+      "jsonExports": 1,
+      "jsonImports": 1,
+      "liveFocusable": 219
+    },
+    {
+      "id": "label_generator",
+      "sources": ["label_generator/index.html"],
+      "presetMenu": true,
+      "collapseControls": 9,
+      "primaryExports": 2,
+      "jsonExports": 1,
+      "jsonImports": 1,
+      "liveFocusable": 136
+    },
+    {
+      "id": "keyboarder",
+      "sources": ["keyboarder/index.html"],
+      "presetMenu": true,
+      "collapseControls": 5,
+      "primaryExports": 1,
+      "jsonExports": 1,
+      "jsonImports": 1,
+      "liveFocusable": 142
+    },
+    {
+      "id": "wordplayer",
+      "sources": ["wordplayer/index.html"],
+      "presetMenu": true,
+      "collapseControls": 4,
+      "primaryExports": 1,
+      "jsonExports": 0,
+      "jsonImports": 0,
+      "liveFocusable": 80
+    },
+    {
+      "id": "dither",
+      "sources": ["dither/index.html"],
+      "presetMenu": false,
+      "collapseControls": 2,
+      "primaryExports": 1,
+      "jsonExports": 0,
+      "jsonImports": 0,
+      "liveFocusable": 50
+    },
+    {
+      "id": "pulsar_coder",
+      "sources": ["pulsar_coder/index.html"],
+      "presetMenu": true,
+      "collapseControls": 3,
+      "primaryExports": 1,
+      "jsonExports": 0,
+      "jsonImports": 0,
+      "liveFocusable": 35
+    },
+    {
+      "id": "wander_bender",
+      "sources": ["wander_bender/index.html"],
+      "presetMenu": false,
+      "collapseControls": 1,
+      "primaryExports": 1,
+      "jsonExports": 0,
+      "jsonImports": 0,
+      "liveFocusable": 47
+    }
+  ],
+  "liveAssertions": [
+    "back-link-is-first-focusable",
+    "top-before-panels-before-action-dock",
+    "no-duplicate-ids",
+    "boolean-aria-state-valid",
+    "collapse-controls-keyboard-reachable",
+    "rendered-output-present",
+    "no-horizontal-overflow"
+  ]
+}

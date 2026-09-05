@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-05",
+  "reloadContract": {
+    "coldLoads": 1,
+    "warmReloads": 2,
+    "browserErrors": 0,
+    "resource404s": 0
+  },
+  "networkPolicy": {
+    "default": "same-origin-local-only",
+    "externalRuntimeExceptions": [
+      {
+        "app": "label_generator",
+        "service": "Google Sheets",
+        "activation": "explicit-user-action"
+      }
+    ]
+  },
+  "lifecycleEvidence": [
+    {
+      "source": "framework/src/core/ApplicationShell.js",
+      "test": "framework/tests/core.test.mjs",
+      "guarantee": "concurrent-and-repeat-init-coalesced"
+    },
+    {
+      "source": "framework/src/ui/ObservedControllerLifecycle.js",
+      "test": "framework/tests/observed-controller-lifecycle.test.mjs",
+      "guarantee": "previous-observer-and-controller-disposed"
+    },
+    {
+      "source": "framework/src/ui/FileIntakeController.js",
+      "test": "framework/tests/file-intake.test.mjs",
+      "guarantee": "destroy-cancels-late-completion-and-busy-state"
+    },
+    {
+      "source": "sparky/src/export/animationExporter.js",
+      "test": "sparky/tests/animationExporter.test.js",
+      "guarantee": "worker-listener-timer-and-busy-state-disposed"
+    },
+    {
+      "source": "grid_generator/src/core/ApplicationLifecycle.js",
+      "test": "grid_generator/tests/application-lifecycle.test.mjs",
+      "guarantee": "owned-resources-disposed-in-reverse-order"
+    },
+    {
+      "source": "grid_generator/src/core/ApplicationStartupController.js",
+      "test": "grid_generator/tests/application-startup.test.mjs",
+      "guarantee": "repeat-startup-coalesced"
+    }
+  ],
+  "blobUrlOwners": [
+    "framework/src/core/ApplicationShell.js",
+    "framework/src/export/SVGExporter.js",
+    "sparky/src/export/animationExporter.js",
+    "grid_generator/src/svg/BrowserFileTransfer.js",
+    "label_generator/src/svg/SVGExporter.js",
+    "label_generator/src/svg/PDFExporter.js",
+    "keyboarder/app/tool.js",
+    "wordplayer/src/export/exporters.js",
+    "wordplayer/src/io/assets.js",
+    "dither/js/export/DitherPngExport.js",
+    "pulsar_coder/js/export/PulsarSvgExport.js",
+    "wander_bender/js/export/WanderSvgExport.js"
+  ],
+  "apps": [
+    {
+      "id": "sparky",
+      "entrypoint": "sparky/index.html",
+      "priority": true,
+      "doubleOperationEvidence": "sparky/tests/animationExporter.test.js",
+      "viewports": ["desktop", "390x844", "430x932"]
+    },
+    {
+      "id": "grid_generator",
+      "entrypoint": "grid_generator/index.html",
+      "priority": true,
+      "doubleOperationEvidence": "grid_generator/tests/browser-file-transfer.test.mjs",
+      "viewports": ["desktop"]
+    },
+    {
+      "id": "label_generator",
+      "entrypoint": "label_generator/index.html",
+      "priority": true,
+      "doubleOperationEvidence": "label_generator/tests/json-roundtrip.test.mjs",
+      "viewports": ["desktop"]
+    },
+    {
+      "id": "keyboarder",
+      "entrypoint": "keyboarder/index.html",
+      "priority": true,
+      "doubleOperationEvidence": "keyboarder/analysis/model-io.mjs",
+      "viewports": ["desktop"]
+    },
+    {
+      "id": "wordplayer",
+      "entrypoint": "wordplayer/index.html",
+      "priority": true,
+      "doubleOperationEvidence": "wordplayer/tests/export-artifact.test.mjs",
+      "viewports": ["desktop"]
+    },
+    {
+      "id": "dither",
+      "entrypoint": "dither/index.html",
+      "priority": false,
+      "doubleOperationEvidence": "dither/tests/export-artifact.test.mjs",
+      "viewports": ["desktop"]
+    },
+    {
+      "id": "pulsar_coder",
+      "entrypoint": "pulsar_coder/index.html",
+      "priority": false,
+      "doubleOperationEvidence": "pulsar_coder/tests/export-artifact.test.mjs",
+      "viewports": ["desktop"]
+    },
+    {
+      "id": "wander_bender",
+      "entrypoint": "wander_bender/index.html",
+      "priority": false,
+      "doubleOperationEvidence": "wander_bender/tests/export-artifact.test.mjs",
+      "viewports": ["desktop"]
+    }
+  ]
+}

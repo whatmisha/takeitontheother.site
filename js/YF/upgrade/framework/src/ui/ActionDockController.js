@@ -33,9 +33,10 @@ export class ActionDockController {
         });
     }
 
-    setExpanded(dock, expanded) {
+    setExpanded(dock, expanded, { restoreFocus = false } = {}) {
         const extras = [...dock.querySelectorAll('[data-action-dock-extra]')];
         if (!extras.length) return false;
+        const focusedExtra = !expanded && extras.includes(this.document.activeElement);
         dock.dataset.extrasExpanded = String(expanded);
         extras.forEach(element => {
             element.hidden = !expanded;
@@ -43,14 +44,22 @@ export class ActionDockController {
         dock.querySelectorAll('[data-action-dock-extra-toggle]').forEach(toggle => {
             toggle.setAttribute('aria-expanded', String(expanded));
         });
+        if (focusedExtra && restoreFocus) {
+            const target = dock.querySelector('[data-action-dock-extra-toggle]')
+                || dock.querySelector('[data-action-dock-primary-export]');
+            target?.focus?.();
+        }
         return true;
     }
 
-    toggleExtras() {
+    toggleExtras({ forceCollapsed = false } = {}) {
         let changed = false;
         this.document.querySelectorAll('.action-dock').forEach(dock => {
             const expanded = dock.dataset.extrasExpanded === 'true';
-            changed = this.setExpanded(dock, !expanded) || changed;
+            if (forceCollapsed && !expanded) return;
+            changed = this.setExpanded(dock, forceCollapsed ? false : !expanded, {
+                restoreFocus: true
+            }) || changed;
         });
         return changed;
     }
@@ -60,27 +69,31 @@ export class ActionDockController {
         return target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
     }
 
-    visibleAction(selector) {
+    enabledAction(selector) {
         return [...this.document.querySelectorAll(selector)].find(element => {
-            if (element.disabled || element.hidden) return false;
+            if (element.disabled) return false;
+            if (element.hidden) return true;
             return globalThis.getComputedStyle?.(element).display !== 'none';
         });
     }
 
     activate(selector) {
-        const action = this.visibleAction(selector);
+        const action = this.enabledAction(selector);
         if (!action) return false;
         action.click();
         return true;
     }
 
     handleKeydown(event) {
-        if (event.defaultPrevented || event.repeat || this.isEditable(event.target)) return;
+        if (event.repeat || this.isEditable(event.target)) return;
         const key = String(event.key || '').toLowerCase();
         const command = event.metaKey || event.ctrlKey;
+        if (event.defaultPrevented && key !== 'escape') return;
         let handled = false;
 
-        if (!command && !event.altKey && !event.shiftKey && key === 'j') {
+        if (!command && !event.altKey && !event.shiftKey && key === 'escape') {
+            handled = this.toggleExtras({ forceCollapsed: true });
+        } else if (!command && !event.altKey && !event.shiftKey && key === 'j') {
             handled = this.toggleExtras();
         } else if (command && !event.altKey && !event.shiftKey && key === 'e') {
             handled = this.activate('[data-action-dock-primary-export]');

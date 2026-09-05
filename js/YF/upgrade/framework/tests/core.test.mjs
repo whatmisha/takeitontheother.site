@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { DOMCache } from '../src/core/DOMCache.js';
+import { ApplicationShell } from '../src/core/ApplicationShell.js';
 import { Settings } from '../src/core/Settings.js';
 import { ShortcutRouter } from '../src/core/ShortcutRouter.js';
 import { RenderTarget } from '../src/render/RenderTarget.js';
@@ -100,4 +101,28 @@ test('RenderTarget publishes zoom changes and clears listeners on destroy', () =
     target.setLogicalSize(320, 240);
     assert.deepEqual([target.width, target.height], [320, 240]);
     target.destroy();
+});
+
+test('ApplicationShell coalesces concurrent init calls and keeps completed init idempotent', async () => {
+    let initializeCount = 0;
+    let releaseInitialization;
+    class TestShell extends ApplicationShell {
+        async _initialize() {
+            initializeCount += 1;
+            await new Promise(resolve => { releaseInitialization = resolve; });
+            this._isInitializing = false;
+            this._initialized = true;
+            return this;
+        }
+    }
+
+    const shell = new TestShell();
+    const first = shell.init();
+    const second = shell.init();
+    assert.equal(initializeCount, 1);
+    releaseInitialization();
+    assert.equal(await first, shell);
+    assert.equal(await second, shell);
+    assert.equal(await shell.init(), shell);
+    assert.equal(initializeCount, 1);
 });
