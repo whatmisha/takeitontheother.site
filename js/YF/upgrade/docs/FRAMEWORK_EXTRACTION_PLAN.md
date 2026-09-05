@@ -1,8 +1,9 @@
-# План выделения переносимого Lunnen Framework
+# План выделения переносимого UI Garage
 
-Статус: **Deferred — не начинать до выполнения Preconditions**
+Статус: **Active — clean-slate boundary завершён; далее FX-03 → FX-04**
 Дата фиксации: 2026-09-05
-Область текущего source of truth: `js/YF/upgrade/**`
+Область текущего source of truth: `upgrade/**`
+Изолированный extraction workspace: `upgrade/extracted/ui-garage/**`
 
 ## 1. Как пользоваться этим документом в новом чате
 
@@ -12,18 +13,19 @@
 В начале нового чата:
 
 1. прочитать этот документ целиком;
-2. прочитать `MIGRATION_STATUS.md`, актуальный release-hardening plan и
-   `framework/CONTRACT.md`;
+2. прочитать `MIGRATION_STATUS.md`, последний gate-документ,
+   `framework/CONTRACT.md` и этот файл;
 3. проверить `git status` и не затирать чужие незакоммиченные изменения;
-4. выполнить все проверки из раздела Preconditions;
+4. выполнить актуальный baseline gate из раздела Preconditions;
 5. начинать с первой незавершённой фазы;
 6. после каждой принятой фазы обновлять раздел `Execution status` этого файла
    и прикладывать команды, результаты и ссылки на evidence;
 7. не объединять две фазы в одно изменение, если у них разные rollback
    conditions.
 
-Этот план не разрешает начинать extraction поверх красного gate или
-незавершённой унификации восьми инструментов.
+Extraction уже начат в изолированной папке. До FX-05 запрещено переключать на
+неё текущие приложения или менять их production runtime: сначала portable copy
+должна самостоятельно пройти свои проверки.
 
 ## 2. Зафиксированное намерение владельца проекта
 
@@ -139,34 +141,61 @@ runtime -> CDN or remote font/vendor fallback
 Все различия инструментов выражаются public config, hooks, adapters, tokens или
 named modifiers. Проверки имени приложения внутри framework запрещены.
 
-## 6. Preconditions — обязательная точка ожидания
+## 6. Preconditions — baseline принят 2026-09-05
 
-Extraction нельзя начинать, пока не выполнено всё перечисленное:
+- [x] завершены UPG-076—UPG-101;
+- [x] полный `npm run gate:g13:static` проходит из чистой рабочей копии;
+- [x] все восемь live entrypoints приняты без browser errors и 404;
+- [x] Pizza public runtime соответствует source fingerprint (14 assets);
+- [x] одинаковые component families и control rhythm сведены к общему contract;
+- [x] общий collapse shortcut `⌘/Ctrl+\\` реализован во всех применимых tools;
+- [x] desktop evidence восьми инструментов и mobile evidence Sparky актуальны;
+- [x] Dither raster/output invariants зелёные;
+- [x] lifecycle/re-init, export, round-trip и persistence gates зелёные;
+- [x] исходная рабочая копия чистая; baseline commit:
+      `5700146f4eff56d8d8ece8092dc5d85475c483b1`.
 
-- [ ] завершены UPG-076, UPG-077, UPG-078 и UPG-079;
-- [ ] актуальный Gate G7 проходит из чистой рабочей копии;
-- [ ] все восемь live entrypoints приняты без browser errors и 404;
-- [ ] Pizza public runtime соответствует source fingerprint;
-- [ ] завершена унификация одинаковых по функции компонентов;
-- [ ] закрыты либо преобразованы в публичные named variants все записи
-      `Оставшиеся узкие app deltas`;
-- [ ] утверждён и реализован общий shortcut contract;
-- [ ] desktop visual baselines всех восьми инструментов актуальны;
-- [ ] Sparky 390×844 и 430×932 baselines актуальны;
-- [ ] Dither raster/output invariants зелёные;
-- [ ] нет незадокументированных внутренних imports framework;
-- [ ] текущие изменения сохранены в понятной commit history или явно приняты
-      владельцем как extraction baseline.
+Проверенные extraction gaps не являются причиной снова откладывать работу: они
+становятся задачами FX-01—FX-04. В частности, рабочий
+`framework/src/ui/UnifiedUiController.js` пока содержит имена, DOM selectors и
+summary logic текущих apps, а HTML entrypoints напрямую подключают внутренние
+auto-init modules. Эти зависимости нельзя переносить в release как stable API.
 
-Если хотя бы один пункт не выполнен, следующий чат должен только сообщить
-актуальные blockers. Начинать package/API relocation нельзя.
+### 6.1. Граница первой итерации
+
+Первая итерация ограничена 30 минутами и обязана:
+
+1. зафиксировать baseline и обновить этот план;
+2. создать `upgrade/extracted/ui-garage/` как единственную папку новых
+   framework-файлов;
+3. скопировать туда runtime source, CSS, fonts, vendor, licenses и tests;
+4. добавить status/version/baseline metadata и автономную проверку границ;
+5. начать удаление app-specific knowledge только внутри isolated copy;
+6. повторно проверить текущий G13 и isolated framework tests;
+7. не менять imports, HTML, CSS или runtime восьми существующих tools.
+
+Итерация не объявляет `1.0.0`, не переключает consumers и не обещает готовые
+starters. Следующая итерация начинается с первой незакрытой записи в
+`upgrade/docs/UI_GARAGE_EXTRACTION_STATUS.md`.
+
+Результат итерации 1: isolated candidate `0.1.0-dev.1` содержит 103 файла и 47
+source modules; его 73/73 tests и boundary verifier проходят как на месте, так
+и после копирования во вложенный путь с пробелами и Unicode.
+
+Следующий выполненный пункт: папка переименована в `ui-garage`, project-specific
+evidence вынесен наружу, legacy compatibility vendor удалён, branding и font
+inventory очищены. Текущий результат — 92 manifested files, 47 source modules и
+74/74 tests. В portable folder остаются только CoFo Sans Regular/Medium; обе
+outline-версии проверены bundled OpenType parser.
 
 ## 7. Целевой формат переносимой папки
 
-Рабочее имя артефакта: `lunnen-framework/`.
+Рабочее имя артефакта в этом репозитории:
+`upgrade/extracted/ui-garage/`. При переносе копируется сама папка
+`ui-garage/`; её runtime не должен зависеть от родительского каталога.
 
 ```text
-lunnen-framework/
+ui-garage/
 ├── VERSION.json
 ├── README.md
 ├── START_HERE.md
@@ -257,8 +286,6 @@ defineTool({
 | `⇧⌘/Ctrl+J` | JSON/settings import, если capability существует |
 | `J` | Show/hide optional JSON actions, если они существуют |
 | `⌘/Ctrl+\` | Collapse all expanded panels / restore exactly the previous set |
-| `⌘/Ctrl+0` | Fit artboard |
-| `⌘/Ctrl+1` | Actual size / 100% |
 | `⌘/Ctrl++` | Zoom in |
 | `⌘/Ctrl+-` | Zoom out |
 | `Escape` | Закрыть верхний активный transient surface и вернуть focus |
@@ -275,6 +302,9 @@ defineTool({
 - collapse-all не превращает hidden/mode-specific panels в visible;
 - инструмент без соответствующей capability не получает фиктивное действие;
 - shortcut labels в UI генерируются или проверяются из той же карты.
+- `⌘/Ctrl+0` и `⌘/Ctrl+1` не перехватываются: это browser-level shortcuts;
+  Fit доступен через zoom indicator, actual size — только через явно
+  сконфигурированную app-команду без захвата системной комбинации.
 
 ## 10. Визуальный contract
 
@@ -318,7 +348,7 @@ open, closed, collapsed, mobile и reduced-motion states.
 Acceptance:
 
 - Gate G7 green;
-- отдельный `FRAMEWORK_EXTRACTION_BASELINE.json` содержит source commit и
+- отдельный `docs/UI_GARAGE_EXTRACTION_BASELINE.json` содержит source commit и
   проверяемые evidence;
 - production source не менялся.
 
@@ -503,9 +533,9 @@ Acceptance:
 Процедура:
 
 1. создать чистый временный repository/fixture;
-2. скопировать только release-папку `lunnen-framework/`;
+2. скопировать только release-папку `ui-garage/`;
 3. дать агенту краткую предметную задачу на новый генератор и указать
-   `lunnen-framework/START_HERE.md`;
+   `ui-garage/START_HERE.md`;
 4. не давать агенту доступ к восьми существующим apps;
 5. собрать новый tool;
 6. провести полную acceptance-проверку.
@@ -614,12 +644,12 @@ Gate не должен автоматически перезаписывать v
 
 | Phase | Status | Evidence |
 |---|---|---|
-| Preconditions | Blocked by unfinished G7/final unification | Не начинать extraction |
-| FX-00 Baseline | Not started | — |
-| FX-01 Capability audit | Not started | — |
+| Preconditions | Complete | UPG-076—UPG-101; Gate G13 green |
+| FX-00 Baseline | Complete | clean `5700146f`; полный `npm run gate:g13:static` green |
+| FX-01 Clean-slate boundary | Complete | нет app-name/URL branching, project-specific metadata, старого branding или запрещённых font assets/references внутри `ui-garage` |
 | FX-02 UI/shortcut convergence | Not started | — |
 | FX-03 Lifecycle/public API | Not started | — |
-| FX-04 Portable folder | Not started | — |
+| FX-04 Portable folder | In progress | 92-file manifest; 47 source modules; 74/74 tests; copied path with spaces/Unicode green after clean-slate cleanup |
 | FX-05 Eight consumers | Not started | — |
 | FX-06 Starters | Not started | — |
 | FX-07 Ninth-tool proof | Not started | — |
@@ -629,9 +659,11 @@ Gate не должен автоматически перезаписывать v
 
 Все пункты обязательны:
 
-- [ ] Gate G7 green;
-- [ ] одинаковые компоненты восьми apps визуально и поведенчески совпадают;
-- [ ] canonical shortcuts совпадают;
+- [x] Gate G13 green;
+- [x] одинаковые компоненты восьми apps визуально и поведенчески совпадают в
+      принятом G13 contract;
+- [x] canonical shortcuts совпадают, включая `⌘/Ctrl+\\` и отказ от
+      browser-owned `⌘/Ctrl+0`/`⌘/Ctrl+1`;
 - [ ] public API versioned и не содержит внутренних imports у consumers;
 - [ ] framework полностью очищается и повторно инициализируется;
 - [ ] переносимая папка автономна;

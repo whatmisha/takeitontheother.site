@@ -41,6 +41,64 @@ test('Person defaults reproduce the density and proportions of the supplied refe
     ) < 1e-9);
 });
 
+test('Person size scales the complete icon rigidly around its snapped anchor', () => {
+    const settings = { ...defaultFlatSettings(), mode: 'person' };
+    const regular = buildFlatScene({ ...settings, personIconScale: 100 });
+    const large = buildFlatScene({ ...settings, personIconScale: 300 });
+    const roles = (scene) => ({
+        head: scene.elements.find((element) => element.role === 'head'),
+        shoulders: scene.elements.find((element) => element.role === 'shoulders')
+    });
+    const normalIcon = roles(regular);
+    const largeIcon = roles(large);
+    const normalAnchorY = regular.field.y;
+    const largeAnchorY = large.field.y;
+
+    assert.equal(largeIcon.head.rx / normalIcon.head.rx, 3);
+    assert.equal(largeIcon.head.ry / normalIcon.head.ry, 3);
+    assert.equal(largeIcon.shoulders.rx / normalIcon.shoulders.rx, 3);
+    assert.equal(largeIcon.shoulders.ry / normalIcon.shoulders.ry, 3);
+    assert.ok(Math.abs(
+        (largeIcon.head.cy - largeAnchorY) / (normalIcon.head.cy - normalAnchorY) - 3
+    ) < 1e-9);
+    assert.ok(Math.abs(
+        (largeIcon.shoulders.cy - largeAnchorY)
+        / (normalIcon.shoulders.cy - normalAnchorY) - 3
+    ) < 1e-9);
+    const regularFar = regular.elements.find((element) => element.id === '-10:-10');
+    const largeFar = large.elements.find((element) => element.id === regularFar.id);
+    assert.equal(largeFar.cx, regularFar.cx);
+    assert.equal(largeFar.cy, regularFar.cy);
+});
+
+test('enlarged Person icons shrink neighbors enough to preserve clearance without moving them', () => {
+    const scene = buildFlatScene({
+        ...defaultFlatSettings(),
+        mode: 'person',
+        personIconScale: 400,
+        personMinimumScale: 100,
+        fieldRadius: 5
+    });
+    const shapes = [scene.field.head, scene.field.shoulders];
+    const support = (ellipse, dx, dy) => {
+        const distance = Math.hypot(dx, dy);
+        if (!distance) return 0;
+        return Math.hypot(ellipse.rx * dx / distance, ellipse.ry * dy / distance);
+    };
+    const neighbors = scene.elements.filter((element) => element.role === 'neighbor');
+    assert.ok(neighbors.some((element) => element.rx === 0));
+    neighbors.filter((element) => element.rx > 1e-9).forEach((neighbor) => {
+        shapes.forEach((shape) => {
+            const dx = neighbor.cx - shape.cx;
+            const dy = neighbor.cy - shape.cy;
+            const distance = Math.hypot(dx, dy);
+            assert.ok(
+                distance + 1e-9 >= support(shape, dx, dy) + support(neighbor, dx, dy) + 2
+            );
+        });
+    });
+});
+
 test('Basic mode gives the cursor mark maximum growth and fades continuously to regular size', () => {
     const settings = { ...defaultFlatSettings(), mode: 'basic', width: 101, height: 113 };
     const layout = buildFlatLayout(settings);
@@ -211,6 +269,7 @@ test('Pinned fields retain their own mode, radius, curve, and size limit', () =>
             radius: 18,
             falloffCurve: -40,
             basicScale: 150,
+            personIconScale: 240,
             personMinimumScale: 36
         }]
     });
@@ -220,6 +279,7 @@ test('Pinned fields retain their own mode, radius, curve, and size limit', () =>
     assert.equal(frozen.radius, 18);
     assert.equal(frozen.falloffCurve, -40);
     assert.equal(frozen.basicScale, 150);
+    assert.equal(frozen.personIconScale, 240);
     assert.equal(frozen.personMinimumScale, 36);
     assert.ok(Math.abs(mark.rx / center.rx - 1.5) < 1e-9);
 
@@ -380,6 +440,7 @@ test('Flat UI exposes pinned fields and brush-radius shortcuts without editable 
     assert.match(html, /id="fieldX"[^>]*min="-960"[^>]*max="960"[^>]*value="0"[^>]*data-flat-coordinate="x"/);
     assert.match(html, /id="fieldY"[^>]*min="-960"[^>]*max="960"[^>]*value="0"[^>]*data-flat-coordinate="y"/);
     assert.match(html, /id="personMinimumScale"/);
+    assert.match(html, /id="personIconScale"[^>]*min="100"[^>]*max="400"/);
     assert.doesNotMatch(html, /id="personScale"/);
     assert.match(html, /id="spacingX"/);
     assert.match(html, /id="staticFieldsSection"/);
@@ -430,6 +491,7 @@ test('Flat exposes Basic as default and Talent as the supplied Person preset', (
     assert.equal(basic.width, 960);
     assert.equal(basic.height, 540);
     assert.equal(basic.mode, 'basic');
+    assert.equal(basic.personIconScale, 100);
     assert.equal(talent.width, 960);
     assert.equal(talent.height, 540);
     assert.equal(talent.mode, 'person');
@@ -438,6 +500,7 @@ test('Flat exposes Basic as default and Talent as the supplied Person preset', (
     assert.equal(talent.spacingX, 30);
     assert.equal(talent.spacingY, 30);
     assert.equal(talent.personMinimumScale, 10);
+    assert.equal(talent.personIconScale, 100);
     assert.equal(talent.fieldRadius, 200);
 });
 

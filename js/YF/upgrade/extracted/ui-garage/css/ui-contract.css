@@ -1,0 +1,347 @@
+/* Shared UI contract. Keep this stylesheet last so application renderers stay private. */
+:root {
+    --ui-font-stack: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    --ui-foreground: #d2d2d2;
+    --ui-panel-collapsed-height: 47px;
+}
+
+body,
+:where(.top-links, .preset-toolbar, .controls-panel, .action-dock, .modal, .modal-overlay, .zoom-indicator),
+:where(.top-links, .preset-toolbar, .controls-panel, .action-dock, .modal, .modal-overlay, .zoom-indicator) *,
+:where(.top-links, .preset-toolbar, .controls-panel, .action-dock, .modal, .modal-overlay, .zoom-indicator) :where(button, input, select, textarea, label) {
+    font-family: var(--ui-font-stack) !important;
+    font-weight: 400 !important;
+}
+
+:where(.top-links, .preset-toolbar, .controls-panel, .action-dock, .modal, .modal-overlay, .zoom-indicator),
+:where(.top-links, .preset-toolbar, .controls-panel, .action-dock, .modal, .modal-overlay, .zoom-indicator) * {
+    box-sizing: border-box;
+}
+
+:where(.top-link, .mode-nav-button, .preset-dropdown-toggle, .zoom-indicator, .btn-fixed, .btn-primary, .btn-secondary),
+.panel-header > span:first-child,
+.control-section > h3,
+.modal h2,
+:where(.top-links, .preset-toolbar, .controls-panel, .action-dock, .modal) :where(strong, b) {
+    font-weight: 500 !important;
+}
+
+.top-link,
+.mode-nav-back {
+    background: var(--ui-foreground) !important;
+    color: #000 !important;
+}
+
+.top-link:hover,
+.mode-nav-back:hover {
+    background: #000 !important;
+    color: var(--ui-foreground) !important;
+}
+
+.control-group > label,
+.control-group-header,
+.collapsible-header,
+.panel-header > span:first-child {
+    font-size: 0.9rem !important;
+}
+
+.controls-panel,
+.controls-panel :where(.control-group > label, .control-group-header, .control-section > h3, .checkbox-label) {
+    color: var(--ui-foreground) !important;
+}
+
+.controls-panel:not(.paragraph-settings-panel):not(#paragraphPanel):not(#graphicsPanel) > .panel-content {
+    padding-top: 0 !important;
+    padding-right: 20px !important;
+    padding-bottom: 20px !important;
+    padding-left: 20px !important;
+}
+
+.controls-panel .control-section > h3 {
+    margin-bottom: 8px !important;
+    font-size: 0.9rem !important;
+}
+
+.controls-panel .stacked-select-label {
+    align-items: stretch !important;
+    flex-direction: column;
+}
+
+.controls-panel .control-field-heading {
+    margin: 20px -20px 20px !important;
+    padding: 20px 20px 0;
+    border-top: 1px solid var(--color-border);
+    color: var(--color-text-muted) !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    text-transform: uppercase;
+}
+
+.controls-panel .control-group {
+    margin-bottom: 12px !important;
+}
+
+.controls-panel .control-group:not([data-ui-custom-spacing]) {
+    padding-top: 0 !important;
+}
+
+.controls-panel .control-section > .control-group:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Nested mode/state wrappers opt into the same flush-bottom rhythm explicitly. */
+.controls-panel .ui-control-stack > .control-group:last-child {
+    margin-bottom: 0 !important;
+}
+
+.controls-panel .control-group > input[type="range"] {
+    height: 10px !important;
+    margin-top: 6px !important;
+    margin-bottom: 12px !important;
+    background: transparent !important;
+}
+
+.controls-panel .hsb-control-group {
+    margin-bottom: 12px !important;
+}
+
+.controls-panel .hsb-control-group:last-child {
+    margin-bottom: 0 !important;
+}
+
+.controls-panel > .panel-content {
+    scrollbar-color: #000 transparent;
+    scrollbar-width: thin;
+}
+
+.controls-panel > .panel-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.controls-panel > .panel-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.controls-panel > .panel-content::-webkit-scrollbar-thumb,
+.controls-panel > .panel-content::-webkit-scrollbar-thumb:hover {
+    border-right: 1px solid var(--color-bg-panel, #1a1a1a);
+    border-radius: 3px;
+    background: #000;
+}
+
+.controls-panel .hsb-control-group > label {
+    margin-bottom: 2px !important;
+}
+
+.controls-panel .hsb-control-group > input[type="range"] {
+    height: 10px !important;
+    margin-top: 6px !important;
+    margin-bottom: 12px !important;
+}
+
+.controls-panel .segmented-control label {
+    height: 30px;
+    min-height: 30px;
+    min-width: 0;
+    padding: 6px 8px !important;
+    line-height: 1 !important;
+    font-size: 0.9rem !important;
+    white-space: nowrap;
+}
+
+.controls-panel .segmented-control input[type="radio"]:checked + label {
+    background: var(--ui-foreground) !important;
+}
+
+.controls-panel .pill-toggle {
+    border: 0 !important;
+}
+
+.controls-panel .pill-toggle:hover:not(.inactive):not(.controls-disabled),
+.controls-panel .pill-toggle:has(input:checked:not(:disabled)):not(.controls-disabled) {
+    background: var(--ui-foreground) !important;
+}
+
+.controls-panel .pill-toggle:hover:not(.inactive):not(.controls-disabled) span,
+.controls-panel .pill-toggle:has(input:checked:not(:disabled)):not(.controls-disabled) span {
+    color: #000 !important;
+}
+
+/* Compact technical tags shared by OpenType-enabled editors. */
+.controls-panel .opentype-features-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--ui-foreground) !important;
+    font-size: 0.8rem !important;
+    line-height: 1.2;
+    opacity: 0.7;
+}
+
+.controls-panel .feature-chip > span {
+    min-height: 24px;
+    justify-content: center;
+    padding: 4px 10px !important;
+    color: var(--ui-foreground) !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    line-height: 1 !important;
+}
+
+.controls-panel .feature-chip input:checked + span {
+    background: var(--ui-foreground) !important;
+    color: #000 !important;
+}
+
+.controls-panel .feature-chip input:checked + span:hover {
+    background: #e0e0e0 !important;
+}
+
+/* One swatch size, one hit target: 18 px color inside a 30 px control. */
+.controls-panel button:is(.color-dot, .color-preview) {
+    width: 30px !important;
+    height: 30px !important;
+    padding: 6px !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background-clip: content-box !important;
+    flex: 0 0 30px;
+}
+
+.controls-panel button:is(.color-dot, .color-preview):hover {
+    transform: scale(1.06);
+}
+
+.controls-panel button:is(.color-dot, .color-preview):focus-visible {
+    outline: 2px solid var(--ui-foreground) !important;
+    outline-offset: 0 !important;
+}
+
+.panel-header {
+    min-height: var(--ui-panel-collapsed-height);
+}
+
+.controls-panel.panel-collapsed {
+    height: var(--ui-panel-collapsed-height) !important;
+    min-height: var(--ui-panel-collapsed-height) !important;
+    max-height: var(--ui-panel-collapsed-height) !important;
+}
+
+.controls-panel.panel-collapsed > .panel-header {
+    height: var(--ui-panel-collapsed-height);
+    min-height: var(--ui-panel-collapsed-height);
+    max-height: var(--ui-panel-collapsed-height);
+}
+
+.panel-header > span:first-child {
+    display: flex;
+    align-items: baseline;
+    min-width: 0;
+    max-width: calc(100% - 22px);
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.panel-header .panel-params,
+.panel-header .upgrade-panel-summary {
+    display: inline-block;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+
+.action-dock .btn-fixed,
+.action-dock button {
+    min-height: 36px;
+    border: 0;
+    font-size: 1rem;
+    font-weight: 500 !important;
+}
+
+.ui-shortcut-help {
+    position: relative;
+    display: inline-flex;
+}
+
+.ui-shortcut-help__popup {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 10px);
+    width: max-content;
+    min-width: 240px;
+    max-width: min(320px, calc(100vw - 40px));
+    padding: 12px;
+    border: 1px solid #333;
+    border-radius: 12px;
+    background: #1a1a1a;
+    color: var(--ui-foreground);
+    box-shadow: 0 12px 48px rgb(0 0 0 / 70%);
+    transform: translateX(-50%);
+    z-index: 11000;
+}
+
+.ui-shortcut-help__popup[hidden] {
+    display: none;
+}
+
+.ui-shortcut-help__list {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 9px 18px;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.ui-shortcut-help__list dt,
+.ui-shortcut-help__list dd {
+    margin: 0;
+    font-weight: 400;
+}
+
+.ui-shortcut-help__list dd {
+    color: #888;
+    text-align: right;
+    white-space: nowrap;
+}
+
+[data-export-feedback-state] {
+    position: relative;
+    isolation: isolate;
+    transition: color 140ms ease, background-color 140ms ease, opacity 140ms ease;
+}
+
+[data-export-feedback-state="working"],
+[data-export-feedback-state="success"] {
+    background: var(--ui-foreground) !important;
+    color: transparent !important;
+}
+
+[data-export-feedback-state]::after {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 140ms ease;
+}
+
+[data-export-feedback-state="working"]::after {
+    content: "Exporting…";
+    opacity: 1;
+}
+
+[data-export-feedback-state="success"]::after {
+    content: "Done";
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-export-feedback-state],
+    [data-export-feedback-state]::after {
+        transition-duration: 1ms;
+    }
+}

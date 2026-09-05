@@ -340,6 +340,7 @@ export class FlatApp {
             radius: this.settings.fieldRadius,
             falloffCurve: this.settings.falloffCurve,
             basicScale: this.settings.basicScale,
+            personIconScale: this.settings.personIconScale,
             personMinimumScale: this.settings.personMinimumScale
         };
         this.update({ staticFields: [...this.settings.staticFields, field] });
@@ -595,6 +596,7 @@ export class FlatApp {
 
         const person = this.settings.mode === 'person';
         document.getElementById('basicGrowthGroup').hidden = person;
+        document.getElementById('personSizeGroup').hidden = !person;
         document.getElementById('personReductionGroup').hidden = !person;
         document.getElementById('staggerGroup').hidden = this.settings.distribution !== 'paired';
         document.getElementById('flatPatternHint').textContent = this.settings.distribution === 'paired'
@@ -638,7 +640,8 @@ export class FlatApp {
             pill.dataset.enabled = String(field.enabled);
             const size = field.mode === 'person' ? field.personMinimumScale : field.basicScale;
             const sizeLabel = field.mode === 'person' ? 'minimum' : 'maximum';
-            pill.title = `${field.mode === 'person' ? 'Person' : 'Basic'} · radius ${field.radius}px · ${sizeLabel} ${size}% · curve ${field.falloffCurve}`;
+            const iconSize = field.mode === 'person' ? ` · icon ${field.personIconScale}%` : '';
+            pill.title = `${field.mode === 'person' ? 'Person' : 'Basic'} · radius ${field.radius}px${iconSize} · ${sizeLabel} ${size}% · curve ${field.falloffCurve}`;
 
             const toggle = document.createElement('button');
             toggle.type = 'button';

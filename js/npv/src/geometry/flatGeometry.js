@@ -15,6 +15,7 @@ const PERSON_PAIR_DISTANCE_RATIO = (246.523 - 228.386) / (PERSON_REFERENCE_BASE_
 const PERSON_PAIR_CENTER_SHIFT_RATIO = (
     (228.386 + 246.523) / 2 - (227.885 + 250.952) / 2
 ) / (PERSON_REFERENCE_BASE_RADIUS * 2);
+const PERSON_ICON_CLEARANCE = 2;
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const finiteOr = (value, fallback) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
@@ -30,6 +31,7 @@ export function defaultFlatSettings() {
         spacingY: 23.1,
         stagger: 50,
         basicScale: 215,
+        personIconScale: 100,
         personMinimumScale: 48,
         fieldRadius: 78,
         falloffCurve: 0,
@@ -73,6 +75,11 @@ export function normalizeFlatSettings(source = {}) {
     settings.spacingY = clamp(finiteOr(migratedSpacingY, defaults.spacingY), 1, 160);
     settings.stagger = clamp(finiteOr(settings.stagger, defaults.stagger), 0, 100);
     settings.basicScale = clamp(finiteOr(settings.basicScale, defaults.basicScale), 25, 600);
+    settings.personIconScale = clamp(
+        finiteOr(settings.personIconScale, defaults.personIconScale),
+        100,
+        400
+    );
     settings.personMinimumScale = clamp(
         finiteOr(settings.personMinimumScale, defaults.personMinimumScale),
         10,
@@ -116,6 +123,11 @@ export function normalizeFlatSettings(source = {}) {
             radius: clamp(finiteOr(field?.radius, settings.fieldRadius), 5, 240),
             falloffCurve: clamp(finiteOr(field?.falloffCurve, settings.falloffCurve), -100, 100),
             basicScale: clamp(finiteOr(field?.basicScale, settings.basicScale), 25, 600),
+            personIconScale: clamp(
+                finiteOr(field?.personIconScale, settings.personIconScale),
+                100,
+                400
+            ),
             personMinimumScale: clamp(
                 finiteOr(field?.personMinimumScale, settings.personMinimumScale),
                 10,
@@ -265,6 +277,7 @@ function activeFields(settings, transientField) {
         radius: settings.fieldRadius,
         falloffCurve: settings.falloffCurve,
         basicScale: settings.basicScale,
+        personIconScale: settings.personIconScale,
         personMinimumScale: settings.personMinimumScale
     };
     const pinned = settings.staticFields
@@ -292,24 +305,43 @@ function buildBasicElements(layout, fields) {
     });
 }
 
-function referencePersonShapes(pair, baseDiameter) {
+function referencePersonShapes(pair, baseDiameter, iconScale) {
     const baseRadius = baseDiameter / 2;
-    const pairCenterY = pair.y + baseDiameter * PERSON_PAIR_CENTER_SHIFT_RATIO;
-    const pairDistance = baseDiameter * PERSON_PAIR_DISTANCE_RATIO;
+    const pairCenterY = pair.y + baseDiameter * PERSON_PAIR_CENTER_SHIFT_RATIO * iconScale;
+    const pairDistance = baseDiameter * PERSON_PAIR_DISTANCE_RATIO * iconScale;
     return {
         head: {
             ...pair.head,
             cy: pairCenterY - pairDistance / 2,
-            rx: baseRadius * PERSON_HEAD_RADIUS_RATIO,
-            ry: baseRadius * PERSON_HEAD_RADIUS_RATIO
+            rx: baseRadius * PERSON_HEAD_RADIUS_RATIO * iconScale,
+            ry: baseRadius * PERSON_HEAD_RADIUS_RATIO * iconScale
         },
         shoulders: {
             ...pair.shoulders,
             cy: pairCenterY + pairDistance / 2,
-            rx: baseRadius * PERSON_SHOULDER_RX_RATIO,
-            ry: baseRadius * PERSON_SHOULDER_RY_RATIO
+            rx: baseRadius * PERSON_SHOULDER_RX_RATIO * iconScale,
+            ry: baseRadius * PERSON_SHOULDER_RY_RATIO * iconScale
         }
     };
+}
+
+function ellipseSupportInDirection(ellipse, dx, dy) {
+    const distance = Math.hypot(dx, dy);
+    if (distance < EPSILON || ellipse.rx < EPSILON || ellipse.ry < EPSILON) return 0;
+    const nx = dx / distance;
+    const ny = dy / distance;
+    return Math.hypot(ellipse.rx * nx, ellipse.ry * ny);
+}
+
+function nonContactScale(source, shape) {
+    const dx = source.cx - shape.cx;
+    const dy = source.cy - shape.cy;
+    const distance = Math.hypot(dx, dy);
+    if (distance < EPSILON) return 0;
+    const shapeRadius = ellipseSupportInDirection(shape, dx, dy);
+    const sourceRadius = ellipseSupportInDirection(source, dx, dy);
+    if (sourceRadius < EPSILON) return 0;
+    return clamp((distance - shapeRadius - PERSON_ICON_CLEARANCE) / sourceRadius, 0, 1);
 }
 
 function buildPersonElements(layout, fields) {
@@ -318,7 +350,7 @@ function buildPersonElements(layout, fields) {
     const pairedFields = fields.map((field) => {
         const pair = closestPersonPair(layout, field);
         if (!pair) return null;
-        const shapes = referencePersonShapes(pair, baseDiameter);
+        const shapes = referencePersonShapes(pair, baseDiameter, field.personIconScale / 100);
         return {
             ...field,
             x: pair.x,
@@ -351,9 +383,13 @@ function buildPersonElements(layout, fields) {
                 field.falloffCurve
             );
             const minimumScale = field.personMinimumScale / 100;
+            const exclusionScale = Math.min(
+                nonContactScale(source, field.head),
+                nonContactScale(source, field.shoulders)
+            );
             return {
-                scale: 1 - (1 - minimumScale) * influence,
-                influence
+                scale: Math.min(1 - (1 - minimumScale) * influence, exclusionScale),
+                influence: Math.max(influence, 1 - exclusionScale)
             };
         });
         const strongest = candidates.reduce(

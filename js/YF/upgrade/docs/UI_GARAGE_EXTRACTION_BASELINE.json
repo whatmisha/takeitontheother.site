@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "capturedOn": "2026-09-05",
+  "sourceCommit": "5700146f4eff56d8d8ece8092dc5d85475c483b1",
+  "sourceTreeClean": true,
+  "command": "npm run gate:g13:static",
+  "result": "passed",
+  "runtime": {
+    "node": "v24.11.1",
+    "npm": "11.6.2"
+  },
+  "evidence": {
+    "frameworkTests": "70/70",
+    "pizzaBoxerTests": "172/172",
+    "stickyFingersTests": "10/10",
+    "wanderBenderTests": "12/12",
+    "desktopEntrypoints": "8/8",
+    "sparkyMobileLoads": "6/6",
+    "browserErrorsOr404": 0,
+    "pizzaPublicAssets": 14
+  },
+  "portableCopy": {
+    "pathShape": "temporary nested path with spaces and Unicode",
+    "command": "npm run check",
+    "result": "passed",
+    "frameworkTests": "74/74",
+    "manifestFiles": 92,
+    "sourceModules": 47
+  },
+  "productionConsumersChanged": false
+}

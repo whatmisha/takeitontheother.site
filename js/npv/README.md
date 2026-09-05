@@ -40,7 +40,8 @@ All numeric slider values are editable text fields. Enter or blur applies a type
 - `Basic` enlarges the ellipse under the cursor and spreads a distance-based influence to its neighbors.
 - `Maximum size`, `Field radius`, and `Falloff curve` separately control the peak, affected area, and the soft/linear/tight shape of that transition.
 - `Person` snaps the field to a vertical pair whose radii and center spacing use the exact proportions from `references/person_01.svg`, independent of the base ellipse aspect ratio.
-- Person reverses the field: the reference icon remains fixed while surrounding ellipses shrink toward `Minimum size`. `Field radius` and `Falloff curve` control the complete transition back to the regular pattern.
+- `Person size` scales the complete head-and-shoulders icon as one rigid group without changing the Pattern settings. A geometry-aware exclusion zone automatically shrinks intersecting neighbors instead of moving their centers, preserving a 2 px clearance around the icon.
+- Person reverses the field: surrounding ellipses shrink toward `Minimum size`. `Field radius` and `Falloff curve` control the complete transition back to the regular pattern.
 - Person targets use a short temporal interpolation, so entering and leaving a snapped pair never changes its size in a single frame.
 - `Canvas width/height` controls the artboard from 80 to 1920 px; the Basic default is 960×540. The lattice lives in a permanent center-origin coordinate space, so resizing reveals or clips cells on every edge without changing any existing mark coordinates. `Spacing X/Y` remains center-to-center.
 - `Paired tiles` offsets complete two-row bands instead of individual rows. This produces a brick/hex-like rhythm while keeping every potential head exactly above its shoulders.
@@ -53,7 +54,8 @@ All numeric slider values are editable text fields. Enter or blur applies a type
 ## Export
 
 - Static: clean SVG and 1080×1080 PNG.
-- Grow mode: 1080×1080, 60 fps MP4/H.264 and transparent PNG sequence ZIP.
+- Rotation preview: 1080×1080, 60 fps MP4/H.264 and transparent PNG sequence ZIP, using the preset's saved axis, angle, duration, and easing.
+- Grow mode remains supported by the same export pipeline.
 - Animation export runs in a worker, replaces the export buttons with progress, and supports cancellation.
 
 The temporary play button beside the zoom control uses the current preset's saved `rotationAnimation` settings (`axis`, `degrees`, `duration`, `easing`, and `coordinateMode`), then returns to the exact stored view without changing scene settings, history, or preset state. Defaults and `Iconic Five` use one three-second 360° Y turn; `Person Five` uses a three-second 180° Y turn. Both use soft quintic acceleration and deceleration, with no secondary-axis wobble. Transform sliders display the effective angles throughout the preview. Rotation animation settings are included in JSON exports, share links, history, sessions, and saved presets; older X-axis animation settings are migrated to Y so they retain the same visual motion after the screen-coordinate correction.
