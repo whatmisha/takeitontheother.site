@@ -23,9 +23,11 @@
 7. не объединять две фазы в одно изменение, если у них разные rollback
    conditions.
 
-Extraction уже начат в изолированной папке. До FX-05 запрещено переключать на
-неё текущие приложения или менять их production runtime: сначала portable copy
-должна самостоятельно пройти свои проверки.
+Extraction уже начат в изолированной папке. Текущие приложения запрещено
+переключать на неё на любой фазе. Их imports, HTML, CSS, production runtime,
+build и storage остаются независимыми от portable copy. Папку `ui-garage/`
+должно быть можно переместить или удалить без каких-либо последствий для восьми
+существующих инструментов.
 
 ## 2. Зафиксированное намерение владельца проекта
 
@@ -37,8 +39,9 @@ Extraction уже начат в изолированной папке. До FX-0
    возможностей: controls, panels, shortcuts, history, presets, persistence,
    import/export, dialogs, file intake, zoom, mobile support и локальные assets;
 4. не переносить в новый репозиторий существующие восемь инструментов;
-5. оставить существующие восемь инструментов рабочими consumers того же
-   versioned framework contract.
+5. не связывать существующие восемь инструментов с выделенной папкой: они
+   продолжают работать на собственной текущей кодовой базе, а `ui-garage/`
+   служит только чистой основой для новых инструментов.
 
 Дополнительные решения владельца:
 
@@ -56,10 +59,12 @@ Extraction уже начат в изолированной папке. До FX-0
 Работа считается завершённой, когда существуют:
 
 1. одна каноническая, versioned, self-contained папка framework;
-2. восемь текущих инструментов, использующих только её публичный контракт;
+2. доказанная нулевая связь между этой папкой и восемью текущими инструментами:
+   нет imports, asset paths, symlinks, build steps, storage dependencies или
+   runtime loading ни в одну сторону;
 3. два актуальных starter-приложения — SVG и Canvas;
-4. один созданный с нуля девятый инструмент в отдельном чистом fixture/repo,
-   сделанный из скопированной папки без доступа к исходникам восьми apps;
+4. один созданный с нуля clean-room test tool в отдельном чистом fixture/repo,
+   сделанный из скопированной папки без доступа к исходникам существующих apps;
 5. единый Component Lab и visual/keyboard/accessibility contract;
 6. команды, которые доказывают автономность папки, полноту assets, отсутствие
    внешних runtime-зависимостей и отсутствие imports за её пределы;
@@ -174,8 +179,8 @@ auto-init modules. Эти зависимости нельзя переносит
 6. повторно проверить текущий G13 и isolated framework tests;
 7. не менять imports, HTML, CSS или runtime восьми существующих tools.
 
-Итерация не объявляет `1.0.0`, не переключает consumers и не обещает готовые
-starters. Следующая итерация начинается с первой незакрытой записи в
+Итерация не объявляет `1.0.0`, не связывает текущие приложения с candidate и не
+обещает готовые starters. Следующая итерация начинается с первой незакрытой записи в
 `upgrade/docs/UI_GARAGE_EXTRACTION_STATUS.md`.
 
 Результат итерации 1: isolated candidate `0.1.0-dev.1` содержит 103 файла и 47
@@ -370,7 +375,8 @@ Rollback: отсутствует — фаза read-only.
 - отдельно разобрать сложные workflows Pizza Boxer и свежие contracts Sparky;
 - найти duplicate controllers, direct internal imports, magic DOM discovery,
   app-name checks и paths за границу framework;
-- сопоставить каждый public export хотя бы с одним реальным consumer/test.
+- сопоставить каждый public export хотя бы с одним test, fixture или явно
+  обоснованным optional use case.
 
 Особое внимание:
 
@@ -384,29 +390,30 @@ Rollback: отсутствует — фаза read-only.
 Acceptance:
 
 - нет capability без owner;
-- нет public module без consumer, fixture или обоснованного optional status;
+- нет public module без test, fixture или обоснованного optional status;
 - список domain-private функций явно не обещается framework API.
 
-### FX-02 — Завершить UI и shortcut convergence
+### FX-02 — Завершить UI и shortcut contract внутри UI Garage
 
 Задачи:
 
-- удалить оставшиеся визуальные различия одинаковых компонентов;
+- удалить оставшиеся визуальные различия одинаковых компонентов внутри
+  Component Lab и обоих starters;
 - преобразовать настоящие варианты в named framework modifiers;
-- подключить общий shortcut contract ко всем применимым tools;
-- добавить общий collapse-all adapter для private panel implementations;
-- исключить двойную обработку ActionDock и app listeners;
-- синхронизировать shortcut help/copy во всех apps;
+- подключить общий shortcut contract к обоим starters;
+- добавить публичный collapse-all adapter для новых tool implementations;
+- исключить двойную обработку ActionDock и tool listeners;
+- синхронизировать shortcut help/copy в Component Lab и starters;
 - расширить Component Lab и visual tests.
 
 Acceptance:
 
-- computed component styles совпадают между apps для одинаковых states;
-- `⌘/Ctrl+\` работает во всех tools с collapsible panels;
-- keyboard walkthrough проходит полностью мышью не пользуясь;
-- Dither pixels, Pizza document round-trip, Sticky edit mode, Wander modes,
-  Pulsar SVG, Keyboarder model и Wordplayer workers не изменились;
-- Sparky проходит desktop и оба mobile viewports.
+- computed component styles совпадают между Component Lab и starters для
+  одинаковых states;
+- `⌘/Ctrl+\` работает в обоих starters с collapsible panels;
+- keyboard walkthrough проходит в обоих starters без использования мыши;
+- существующие восемь инструментов в этой фазе не изменяются и не используются
+  как runtime consumers UI Garage.
 
 Rollback:
 
@@ -422,8 +429,9 @@ Rollback:
 - снимать slider/toggle/panel/document listeners, subscriptions, timers,
   MutationObservers, RAF, workers и Blob URLs;
 - гарантировать re-init без дублирования;
-- удалить direct imports внутренних auto-init файлов из apps;
-- заменить их public API или декларативной частью `defineTool`;
+- удалить из isolated package внутренние side-effect auto-init entrypoints;
+- запуск новых инструментов выполнять только через public API или
+  декларативную часть `defineTool`;
 - убрать stage query strings из внутренних imports;
 - формализовать errors, async cancellation, busy state and cleanup;
 - отделить stable API от optional API;
@@ -469,39 +477,45 @@ Acceptance:
 - оба starters открываются через static HTTP server без 404/errors;
 - SVG, PNG, PDF и JSON artifact smoke проходят в изоляции.
 
-### FX-05 — Переключить восемь текущих apps на release contract
+### FX-05 — Доказать невмешательство в исходный проект
 
 Задачи:
 
-- apps продолжают жить в текущем проекте;
-- каждый app импортирует только stable public API/CSS;
-- private adapters остаются рядом с app и не попадают во framework;
-- все relative paths соответствуют portable layout;
-- current project фиксирует framework version/hash;
-- обновление framework становится отдельной явной операцией, а не случайным
-  копированием файлов;
-- Pizza release build externalizes только публичный framework entrypoint.
+- не менять imports, HTML, CSS, runtime, build или storage восьми текущих
+  инструментов;
+- проверить, что ни один файл текущих инструментов не импортирует, не загружает,
+  не копирует и не резолвит `upgrade/extracted/ui-garage/`;
+- проверить, что внутри `ui-garage/` нет imports, symlinks, asset paths, build
+  aliases или runtime requests к файлам исходного проекта;
+- зафиксировать scoped diff/hash для файлов текущих инструментов и подтвердить,
+  что extraction их не изменил;
+- выполнить baseline-проверки текущего проекта только как доказательство
+  невмешательства, а не как consumer gate UI Garage;
+- повторить portable check после копирования UI Garage в другой каталог;
+- проверить сценарий, в котором isolated folder временно отсутствует на своём
+  исходном пути.
 
 Acceptance:
 
-- 8/8 apps используют один и тот же version/hash;
-- direct `framework/src/ui/*` imports отсутствуют;
-- локальные копии framework logic отсутствуют;
-- Gate G7 и новый extraction gate проходят;
-- current runtime/output/storage baselines сохранены.
+- скан зависимостей в обе стороны даёт ноль связей;
+- файлы восьми инструментов не имеют extraction-related изменений;
+- текущие инструменты проходят свой baseline независимо от UI Garage;
+- перенос или отсутствие isolated folder не меняет behavior/build текущих
+  инструментов;
+- UI Garage проходит portable gate после копирования без исходного проекта.
 
 Rollback:
 
-- предыдущая versioned папка framework остаётся доступной;
-- каждый consumer может быть временно возвращён на предыдущую версию без
-  изменения user data.
+- isolated folder можно удалить или перенести обратно;
+- rollback приложений и миграция user data не требуются, потому что связи с
+  ними не создаются.
 
 ### FX-06 — Создать полные SVG и Canvas starters
 
 Оба starter должны быть маленькими приложениями, но демонстрировать весь общий
 lifecycle, а не старый минимальный demo.
 
-`svg-full` использует Pizza/Sparky как reference evidence и показывает:
+`svg-full` является самостоятельным generic use case и показывает:
 
 - declarative settings and render;
 - panels and collapse-all;
@@ -532,7 +546,7 @@ Acceptance:
 - старый `framework/demo` обновлён или удалён, чтобы не существовало двух
   конфликтующих шаблонов.
 
-### FX-07 — Ninth-tool proof в изолированном репозитории
+### FX-07 — Clean-room tool proof в изолированном репозитории
 
 Это главный тест пользовательского сценария.
 
@@ -546,7 +560,7 @@ Acceptance:
 5. собрать новый tool;
 6. провести полную acceptance-проверку.
 
-Девятый tool обязан доказать:
+Новый test tool обязан доказать:
 
 - узнаваемый канонический внешний вид без копирования app CSS;
 - history/undo/redo;
@@ -561,28 +575,28 @@ Acceptance:
 - отсутствие внешних runtime requests;
 - отсутствие импортов из исходного monorepo.
 
-Если создание нового tool требует посмотреть код Pizza/Sparky или скопировать
-из них controller/CSS, extraction считается неудачным и возвращается в FX-03,
-FX-04 или FX-06.
+Если создание нового tool требует посмотреть исходники существующих
+инструментов или скопировать из них controller/CSS, extraction считается
+неудачным и возвращается в FX-03, FX-04 или FX-06.
 
 ### FX-08 — Release и передача
 
 Задачи:
 
-- зафиксировать версию `1.0.0` только после successful ninth-tool proof;
+- зафиксировать версию `1.0.0` только после successful clean-room tool proof;
 - создать release notes и migration guide;
 - сохранить archive/hash переносимой папки;
 - описать процесс обновления копии в другом repository;
-- задокументировать совместимость framework version ↔ current eight apps;
-- добавить extraction gate в основной regression workflow;
-- провести финальный live smoke всех восьми apps и isolated ninth tool.
+- включить автономный extraction gate в сам release UI Garage;
+- задокументировать явное отсутствие зависимости исходного проекта от release;
+- провести финальный smoke isolated clean-room tool.
 
 Acceptance:
 
 - один канонический release artifact;
 - reproducible hashes;
-- current project и clean fixture используют одинаковую версию;
-- все tests, browser acceptance, visual and output invariants green;
+- скопированный artifact и clean fixture имеют одинаковые version/hash;
+- все portable tests, browser acceptance, visual and output invariants green;
 - владелец может выполнить сценарий «скопировал папку → описал generator →
   получил новый совместимый tool» без дополнительных архитектурных решений.
 
@@ -591,18 +605,19 @@ Acceptance:
 Итоговая команда может называться `gate:framework-extraction`. Она должна
 включать:
 
-1. полный Gate G7;
-2. UI/component ownership checks;
-3. shortcut matrix and keyboard walkthrough;
-4. public API snapshot;
-5. lifecycle/re-init/leak tests;
-6. portable path/assets/license verification;
-7. isolated SVG/Canvas starter smoke;
-8. all eight consumer suites;
-9. Pizza source/public reproducibility;
-10. Sparky desktop/mobile acceptance;
-11. Dither pixel hashes;
-12. ninth-tool isolated acceptance.
+1. UI/component ownership checks;
+2. shortcut matrix and keyboard walkthrough;
+3. public API snapshot;
+4. lifecycle/re-init/leak tests;
+5. portable path/assets/license/identity verification;
+6. isolated SVG/Canvas starter smoke;
+7. isolated network/404 scan;
+8. SVG/PNG/PDF/JSON artifact smoke;
+9. clean-room tool acceptance.
+
+Baseline текущего проекта запускается отдельно только в FX-05 для доказательства
+невмешательства. Он не входит в переносимый release gate и не делает восемь
+текущих инструментов consumers UI Garage.
 
 Gate не должен автоматически перезаписывать visual baselines, release hashes
 или generated public runtime без явной команды и review.
@@ -611,7 +626,7 @@ Gate не должен автоматически перезаписывать v
 
 - Каждый tool получает обязательный уникальный `id` и versioned namespace.
 - Framework не использует `upgrade:framework:*` как production fallback.
-- Existing namespaces восьми apps сохраняются через explicit config.
+- UI Garage не читает и не изменяет storage namespaces существующих apps.
 - Миграция данных выполняется атомарно и не удаляет исходные данные.
 - Framework update не запускает storage migration без app-owned migration hook.
 - Новая версия должна уметь откатиться на предыдущую без порчи сохранённых
@@ -623,7 +638,8 @@ Gate не должен автоматически перезаписывать v
 - `MINOR`: backward-compatible capability/component;
 - `PATCH`: исправление без изменения documented behavior;
 - каждый release содержит manifest и hashes;
-- current eight apps закрепляют точную версию;
+- каждый новый внешний проект фиксирует version/hash скопированной UI Garage;
+- текущие восемь инструментов не закрепляют и не используют этот release;
 - перенос в другой repo — копирование versioned release, а не произвольного
   рабочего каталога;
 - обновление копии всегда сопровождается CHANGELOG и migration check.
@@ -635,14 +651,13 @@ Gate не должен автоматически перезаписывать v
 | Две расходящиеся копии framework | version/hash manifest и явная update procedure |
 | Новый tool копирует старый app CSS | Component Lab + no-duplicate selector check |
 | Framework начинает знать apps | source graph/name boundary test |
+| Исходный проект начинает зависеть от extracted folder | bidirectional dependency scan + move/absence test |
+| Extraction незаметно меняет существующие apps | scoped diff/hash + независимый baseline текущего проекта |
 | Скрытые двойные listeners | init/destroy/re-init instrumentation |
-| Поломка Pizza при API cleanup | Pizza reproducible build + full document/export tests |
-| Поломка mobile | Sparky two-viewport sentinel |
-| Canvas drift | Dither/Wordplayer pixel and artifact checks |
 | Потеря user data | namespace isolation + atomic migration/rollback |
 | Отсутствующий font/vendor | manifest hashes + isolated 404/network scan |
 | Demo расходится с production | starters входят в extraction gate |
-| Уникальная app feature ошибочно объявлена generic | ownership matrix + ninth-tool proof |
+| Уникальная app feature ошибочно объявлена generic | ownership matrix + clean-room tool proof |
 
 ## 16. Execution status
 
@@ -656,29 +671,27 @@ Gate не должен автоматически перезаписывать v
 | FX-02 UI/shortcut convergence | Not started | — |
 | FX-03 Lifecycle/public API | Complete | `0.1.0-dev.2`; exact API/ownership snapshots; init/destroy/re-init, failed-init, duplicate/aborted export, aborted import and Blob URL cleanup tests green |
 | FX-04 Portable folder | In progress | 89-file manifest; 43 source modules; 85/85 tests; copied path with spaces/Unicode green for `0.1.0-dev.2` |
-| FX-05 Eight consumers | Not started | — |
+| FX-05 Source-project non-interference | Not started | — |
 | FX-06 Starters | Not started | — |
-| FX-07 Ninth-tool proof | Not started | — |
+| FX-07 Clean-room tool proof | Not started | — |
 | FX-08 Release | Not started | — |
 
 ## 17. Definition of Done
 
 Все пункты обязательны:
 
-- [x] Gate G13 green;
-- [x] одинаковые компоненты восьми apps визуально и поведенчески совпадают в
-      принятом G13 contract;
-- [x] canonical shortcuts совпадают, включая `⌘/Ctrl+\\` и отказ от
-      browser-owned `⌘/Ctrl+0`/`⌘/Ctrl+1`;
-- [ ] public API versioned и не содержит внутренних imports у consumers;
+- [x] исходный baseline G13 зафиксирован как историческая точка до extraction;
+- [x] isolated source очищен от app-specific knowledge, прежнего branding и
+      запрещённых font assets/references;
+- [ ] public API versioned; starters и новые tools не используют internal imports;
 - [x] framework полностью очищается и повторно инициализируется;
 - [ ] переносимая папка автономна;
 - [ ] fonts/vendor/licenses входят в release;
 - [ ] SVG и Canvas starters актуальны;
-- [ ] восемь текущих apps используют тот же release contract;
-- [ ] Pizza Boxer проходит как главный desktop/complexity sentinel;
-- [ ] Sparky проходит как declarative/mobile sentinel;
-- [ ] isolated ninth tool создан только по документации copied framework;
+- [ ] Component Lab задаёт единый visual/keyboard/accessibility contract;
+- [ ] зависимостей между исходным проектом и isolated folder нет в обе стороны;
+- [ ] восемь текущих apps не изменены extraction и работают независимо от неё;
+- [ ] isolated clean-room tool создан только по документации copied framework;
 - [ ] новый tool имеет history, persistence, presets, share, export, dialogs,
       file intake, panels, shortcuts и clean recovery;
 - [ ] source repo и isolated repo не имеют runtime-связей;

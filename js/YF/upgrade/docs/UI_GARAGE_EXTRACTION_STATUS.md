@@ -5,7 +5,7 @@ Candidate: `0.1.0-dev.2` in `upgrade/extracted/ui-garage/`.
 
 ## Completed in iteration 1
 
-- isolated folder created without changing current consumers;
+- isolated folder created without changing current applications;
 - runtime, CSS, fonts, vendors/licenses, tests and Component Lab copied;
 - G13 baseline captured;
 - app-name/URL branching removed from candidate `UnifiedUiController`;
@@ -38,10 +38,11 @@ Candidate: `0.1.0-dev.2` in `upgrade/extracted/ui-garage/`.
 | P0 | FX-04 | Run isolated browser network and artifact checks | No 404s, runtime network fallbacks or broken SVG/PNG/PDF/JSON artifacts |
 | P1 | FX-06 | Build complete `starters/svg-full` and `starters/canvas-full` | Both use only public API and pass artifact smoke tests |
 | P1 | FX-02 | Expand Component Lab to every accepted state and add visual baselines | Shared component states have one visual owner |
-| P1 | FX-05 | Switch the current eight tools to a pinned release copy | 8/8 use one version/hash and G13 remains green |
-| P1 | FX-07 | Build a ninth tool from only this copied folder | Full product workflow works without original apps |
+| P1 | FX-05 | Prove source-project non-interference | Zero links in either direction; moving or removing the isolated folder leaves current apps unchanged |
+| P1 | FX-07 | Build a clean-room tool from only this copied folder | Full product workflow works without original apps |
 | P2 | FX-08 | Release `1.0.0`, archive/hash and migration guide | Reproducible release artifact accepted |
 
-The clean-slate and lifecycle/public API tasks are complete. Do not mark this
-candidate portable or switch existing tools before FX-04 is complete. Do not
-release `1.0.0` before FX-07.
+The clean-slate and lifecycle/public API tasks are complete. Do not connect or
+switch existing tools at any phase; they remain independent of this folder. Do
+not mark this candidate portable before FX-04 is complete, and do not release
+`1.0.0` before FX-07.
